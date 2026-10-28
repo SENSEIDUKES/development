@@ -2,11 +2,11 @@
    Roles: navigation → navigation, panel → Create, card → Home, button → Familiar.
    Opt-in belongs to the Home host. Other pages keep their own presentation.
    The Reader stylesheet owns the shared rim; ManifestButton owns its rainbow.
-   Owner correction: neutral accents, with no glass overlay over video. */
+   Keep original text colors and navigation effects; only navigation icons turn white.
+   Artwork and video never receive the glass blur. */
 body:has(.library-home-palette) {
   --home-text: #fff;
   --home-muted: #ffffffb8;
-  --home-accent: #fff;
   --home-navigation: rgba(0, 0, 0, .95);
   --home-panel: radial-gradient(288px 160px at 88% -8%, rgba(0, 55, 74, .01), rgba(0, 55, 74, 0) 62%), linear-gradient(160deg, rgba(0, 55, 74, .016), rgba(0, 55, 74, .01) 50%, rgba(0, 55, 74, 0)), rgba(0, 55, 74, .12);
   --home-card: radial-gradient(130% 100% at 50% 0%, #0000000d, #0000 52%), linear-gradient(168deg, #0000000d, rgba(0, 0, 0, .01) 40%, rgba(0, 0, 0, .082)), rgba(0, 0, 0, .35);
@@ -19,12 +19,6 @@ body:has(.library-home-palette) {
   --home-control-shadow: inset 0 1px 0 #e3f6ff26, 0 12px 40px #0006;
 }
 .library-home-palette {
-  --color-sen-portal: var(--home-accent);
-  --color-sen-gold-accent: var(--home-accent);
-  --color-portal: var(--home-accent);
-  --color-gold-accent: var(--home-accent);
-  --color-sen-signal: var(--home-text);
-  --color-signal: var(--home-text);
   --reader-border-z: 25;
   color: var(--home-text);
   background: linear-gradient(#0009, #000b), var(--home-palette-art, none) center / cover;
@@ -34,7 +28,6 @@ body:has(.library-home-palette) {
 .library-home-palette .workspace-shell { background: transparent; }
 .library-home-palette :is([data-home-panel], .world-card-banner, [data-home-events], .workspace-preferences-panel) {
   background: var(--home-panel);
-  color: var(--home-text);
   border: 1px solid var(--reader-glass-edge);
   box-shadow: var(--home-panel-shadow);
   -webkit-backdrop-filter: var(--home-panel-blur);
@@ -43,7 +36,7 @@ body:has(.library-home-palette) {
 .library-home-palette :is([data-home-events], .home-event, [data-slot='empty-state']) { position: relative; }
 .library-home-palette [data-home-events] { border-radius: 1.35rem; padding: .5rem 1rem; }
 .library-home-palette :is([data-home-panel], .world-card-base)::before { display: none; }
-.library-home-palette :is([data-slot='empty-state'], .world-card-base, .home-event, .home-event-body) {
+.library-home-palette :is([data-slot='empty-state'], .world-card-base, .home-event) {
   background: var(--home-card);
   color: var(--home-text);
   border-color: var(--reader-glass-edge);
@@ -51,10 +44,10 @@ body:has(.library-home-palette) {
   -webkit-backdrop-filter: var(--home-card-blur);
   backdrop-filter: var(--home-card-blur);
 }
-.library-home-palette .home-event-body { border: 0; box-shadow: none; }
-/* Media remains clear. Glass belongs to the surrounding frame, never a
-   full-size layer between the reader and a playing video. */
-.library-home-palette .home-featured :is([data-home-panel], .world-card-banner) {
+/* Media cards keep their artwork clear, including still images. Text uses
+   the original contrast gradients, with no glass sheet over the media. */
+.library-home-palette .home-featured [data-home-panel],
+.library-home-palette :is(.home-event, .world-card-base, .world-card-banner) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -67,71 +60,23 @@ body:has(.library-home-palette) {
   backdrop-filter: var(--home-control-blur);
 }
 .library-home-palette .library-global-navigation > div { position: relative; }
-/* One glass layer per rail: the frame samples the scene, its content is clear. */
-.library-home-palette .library-navigation {
-  --sh-nav-accent: var(--home-accent);
-  --sh-nav-divider: #ffffff44;
-  --sh-nav-identity: var(--home-text);
-  --sh-nav-account-ring: #ffffff80;
-  background: transparent;
-  color: var(--home-text);
-}
-.library-home-palette :is([data-slot='navigation-account-name'], [data-slot='navigation-account-eyebrow']) { color: var(--home-text); }
-.library-home-palette [data-slot='navigation-emblem'] { border-color: #ffffff80; }
-.library-home-palette .library-footer {
-  --library-footer-cream: var(--home-text);
-  --library-footer-muted: var(--home-muted);
-  --library-footer-gold: var(--home-accent);
-  --library-footer-portal: var(--home-accent);
-  border-top: 1px solid var(--reader-glass-edge);
-}
+/* Keep the package's selected gradients, hover/press transitions, icon rings,
+   label colors and glow. Only the navigation glyphs are white. */
+.library-home-palette .library-navigation { background: transparent; }
+.library-home-palette :is([data-slot='navigation-icon'], .library-global-navigation button > span[aria-hidden='true']) { color: #fff; }
+.library-home-palette .workspace-header :is(button svg, .dao-insights-trigger svg) { color: #fff; }
+.library-home-palette .library-footer { border-top: 1px solid var(--reader-glass-edge); }
 .library-home-palette .library-footer::before { display: none; }
-.library-home-palette :is([data-slot='navigation-item'], .library-global-navigation button) {
-  color: var(--home-muted);
-  background: transparent;
-  box-shadow: none;
-}
-.library-home-palette :is([data-slot='navigation-item'][data-active='true'], [data-slot='navigation-item'][aria-current='page'], .library-global-navigation button[data-selected='true']) {
-  background: #ffffff14;
-  border-color: var(--home-accent);
-  color: var(--home-text);
-  box-shadow: inset 0 1px 0 #fff1;
-}
-.library-home-palette :is([data-slot='navigation-icon'], [data-slot='navigation-profile-name'], .home-featured-label, .home-filter-label, .home-events-label, .text-gold-accent) { color: var(--home-accent); }
-.library-home-palette :is([data-slot='navigation-icon'], [data-slot='navigation-profile-emblem']) { background: #0009; border-color: var(--reader-glass-edge); box-shadow: none; }
-.library-home-palette :is(.home-event-title, [data-slot='empty-state-title'], .text-signal) { color: var(--home-text); }
-.library-home-palette :is(.home-events-preview, .home-events-more, .home-event-description, .home-event-when, [data-slot='empty-state-description']) { color: var(--home-muted); }
-.library-home-palette [data-light-novels-home] .home-featured-dot[aria-current='true']::after { background: var(--home-accent); box-shadow: 0 0 6px #ffffff66; }
-.library-home-palette [data-light-novels-home] :is(.text-portal, .text-gold-accent, .home-featured-label) { color: var(--home-accent); }
-.library-home-palette .dao-insights-trigger > div:first-child > :is(svg, span) { color: var(--home-accent); }
-.library-home-palette [data-slot='filter-chip'] {
-  --sh-interactive-surface: #000000f2;
-  --sh-interactive-selected: #ffffff24;
-  --sh-interactive-selected-hover: #ffffff38;
-  --sh-interactive-selected-border: var(--home-accent);
-  --sh-interactive-selected-text: var(--home-text);
-  --sh-text-primary: var(--home-text);
-  --sh-text-muted: var(--home-muted);
-  --sh-focus-ring: var(--home-accent);
-}
-.library-home-palette :is(.world-card-caption-title, .world-card-caption-creator, .world-card-banner-title, .world-card-banner-byline) { color: var(--home-text); }
-.library-home-palette :is(.world-card-caption-details, .world-card-banner-details, .world-card-banner-synopsis, .world-card-banner-by) { color: var(--home-muted); }
-.library-home-palette :is(.world-card-tile:hover, .world-card-tile:focus-within) .world-card-caption-title { color: var(--home-accent); }
-.library-home-palette .world-card-banner-eyebrow { color: var(--home-accent); }
-.library-home-palette .world-card-cover-fallback { background: var(--home-card); color: var(--home-muted); }
-.library-home-palette :is(.world-card-base-format, .world-card-base-motion .motion-picture-control) { background: var(--home-navigation); color: var(--home-text); border-color: var(--reader-glass-edge); -webkit-backdrop-filter: var(--home-control-blur); backdrop-filter: var(--home-control-blur); }
+.library-home-palette .world-card-banner-backdrop { filter: none; }
+.library-home-palette .world-card-cover-fallback { background: var(--home-card); }
+.library-home-palette :is(.world-card-base-format, .world-card-base-motion .motion-picture-control) { background: var(--home-navigation); border-color: var(--reader-glass-edge); }
 /* Only the face changes. Never replace Manifest's ::before/::after spectrum. */
 .library-home-palette .library-glass-button {
   --glass-fill: var(--home-navigation);
-  --glass-fill-hover: #101010f5;
-  --glass-fill-press: #000;
   --glass-edge: var(--reader-glass-edge);
-  --glass-text: var(--home-text);
-  --glass-text-hover: var(--home-text);
   --glass-backdrop: var(--home-control-blur);
   --glass-backdrop-dim: none;
   background-image: none;
-  box-shadow: var(--home-control-shadow);
 }
 .library-home-palette :is(select, .home-featured-step, .library-footer-language) {
   background: var(--home-navigation);
@@ -141,7 +86,6 @@ body:has(.library-home-palette) {
   backdrop-filter: var(--home-control-blur);
 }
 .library-home-palette option { background: #000; color: #fff; }
-.library-home-palette :is(button, a, select, summary):focus-visible { outline: 2px solid var(--home-accent); outline-offset: 3px; }
 /* Familiar sheets are portaled outside the Home shell, but only opt in while
    Home is present. Route changes remove the skin without persisting a theme. */
 body:has(.library-home-palette) :is(.familiar-helper, .familiar-energy-panel, .familiar-actions) {
@@ -160,6 +104,6 @@ body:has(.library-home-palette) :is(.familiar-helper-context, .familiar-helper-f
   body:has(.library-home-palette) { --home-panel: #0c1c24; --home-card: #080b0d; --home-navigation: #000; }
 }
 @media (forced-colors: active) {
-  body:has(.library-home-palette) { --home-text: CanvasText; --home-muted: CanvasText; --home-accent: Highlight; --home-panel: Canvas; --home-card: Canvas; --home-navigation: Canvas; --reader-glass-edge: ButtonText; --home-panel-shadow: none; --home-card-shadow: none; --home-control-shadow: none; --home-navigation-shadow: none; --home-panel-blur: none; --home-card-blur: none; --home-control-blur: none; }
+  body:has(.library-home-palette) { --home-text: CanvasText; --home-muted: CanvasText; --home-panel: Canvas; --home-card: Canvas; --home-navigation: Canvas; --reader-glass-edge: ButtonText; --home-panel-shadow: none; --home-card-shadow: none; --home-control-shadow: none; --home-navigation-shadow: none; --home-panel-blur: none; --home-card-blur: none; --home-control-blur: none; }
   .library-home-palette { background: Canvas; }
 }

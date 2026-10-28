@@ -104,12 +104,18 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 
 ## Workshop history
 
-- **2026-10-28, owner correction:** Replaced Home's yellow accent with neutral
-  white, including selected navigation/filter fills, labels, focus and slide dots.
-  Removed the full-surface glass overlays from Featured's hero copy and world
-  banner wash; media frames do not apply backdrop blur. Videos keep their existing
-  contrast gradient, play clearly, and retain the rainbow button glow. Surrounding
-  panel/card materials and the shared Reader rim remain unchanged.
+- **2026-10-28, media/navigation correction:** All image/video cards remain clear,
+  including Events, covered World Cards and Featured still-image backdrops. The
+  event text overlay uses its original contrast gradient, with no backdrop blur.
+  Home preserves the navigation package's selected gradients, glow, hover/press
+  transitions, icon rings and label colors; only navigation glyphs are white.
+  Original Home/Dao/footer text colors are retained rather than globally remapping
+  accents. The V1 glass frames, empty panels and Reader rim remain in place.
+  `node scripts/verifyHomePalette.browser.mjs` checks 320/390/1440px in the real app
+  and Home Workshop, including saved-cover cards, clear media, actual hero playback,
+  original navigation states compared with the palette disabled, white icons and
+  the unchanged animated rainbow. Seven focused Home/header tests and the build,
+  ownership, package/app boundary and UI artifact checks passed.
 
 - **2026-10-28:** Applied the owner's latest `v1.json` V1 look to the real Home
   through the Home-only `library-home-palette` shell. Navigation uses black at

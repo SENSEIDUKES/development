@@ -16,7 +16,7 @@ The method was an import-graph reconstruction over all 1,634 source files, resol
 
 | # | Finding | Size | Risk | Needs a decision? |
 |---|---|---|---|---|
-| 1 | The superseded Codex page is still published as a first-class SEN surface | 18 files | Medium | **Yes** |
+| 1 | The superseded Codex page is still published as a first-class SEN surface | 18 files, 6 live callers | Medium | **Yes** |
 | 2 | A dead mock playback module, plus a published contract that describes it wrongly | 1 file | Low | No |
 | 3 | Eight server barrels that export nothing reachable | 8 files | Low | No |
 | 4 | Four "adapter" files that point back at the package that points at them | 4 files | Low | No |
@@ -39,6 +39,8 @@ The method was an import-graph reconstruction over all 1,634 source files, resol
 So the README **already knows** the old Codex page is superseded. What has not happened is the consequence. The old Codex is still exported as `@seihouse/sen/reader-codex` — a first-class published surface — and the repository's own rule says a remake replaces the old thing "in the same change."
 
 The conflict is real and it is yours to settle, because the README says "stays" while the rule says "delete." My recommendation is **delete the superseded page and keep the card surfaces**, but that needs your word because SEN is a licensable engine and something outside this repository may be consuming that entry today.
+
+One correction to the obvious plan, found while this was being reviewed: the entry **cannot simply be retired**. It also publishes live helpers that live Workshop features import — the Character Voice preview and both Card Workshop surfaces. Those have to be relocated and their callers updated first. The full inventory and the ordering are in finding 1.
 
 ### On #9 — the duplicated keyboard helper
 
@@ -73,7 +75,27 @@ The practical costs:
 - **`shared/hooks/useCodexCharacterEditing.ts`** (used by `character-cards/CharacterEditCard.tsx:9`), **`useCodexVoiceQuote.ts`** (`CharacterCard.tsx:8`), **`useCodexVoiceCards.ts`** (which `useCodexVoiceQuote` calls), **`useHistoricalMediaUrls.ts`** and **`shared/codex/entityImageHistory.ts`** (used by `CharacterCard`, `LocationCard` and `ReaderCodexImageGallery`).
 - **`src/components/reader-codex/shared/types.ts`**, still the shared reader contract (`checkNovelExpandedApp.mjs:44`) and imported by `src/narrative/codexHighlighting.ts`.
 
-**Recommended action.** Delete the 18 files above and keep everything in the "must stay" list. Repoint the `@seihouse/sen/reader-codex` entry at the HARNESS Codex, or retire the entry. Then correct `src/package/sen/README.md:165-167` so it no longer promises `extraPages`.
+**The entry itself cannot simply be retired.** The old Codex *page* is dead, but the entry also publishes live things that live Workshop features import. Retiring or repointing the entry without relocating those first would break them:
+
+| Consumer | Imports from `@seihouse/sen/reader-codex` |
+|---|---|
+| `src/workshop/previews/character-voice/CharacterVoiceWorkspace.tsx:3-8` | `CodexProvider`, `useCodexVoiceQuote`, `type CodexVoiceQuoteState`, `type Character`, `type Story` |
+| `src/components/card-workshop/development/CardWorkshopView.tsx:15` | `createCodexHighlighter`, `splitByCodexTerms` |
+| `src/components/card-workshop/development/CardWorkshopContextualReader.tsx:9-14` | `createCodexHighlighter`, `splitByCodexTerms`, `type CodexTerm`, `type CodexTermType` |
+| `src/components/reader-chamber/shared/stubs.ts:23` | `collectCodexTerms` |
+| `src/workshop/previews/card-workshop/previewData.ts:2` | `type CodexTerm` |
+| `src/workshop/reference-support/reader-codex/codexCompatibility.ts:10-11` | `canonicalAssetId`, `isSameAssetId`, `handleDownload` |
+
+None of these come from the superseded page or from the card surfaces. They come from the **surviving** parts of the tree: `src/narrative/codexHighlighting.ts` (which owns `CodexTerm`, `CodexTermType`, `CodexHighlighter`, `CodexSegment`, `escapeRegExp`, `collectCodexTerms`, `createCodexHighlighter` and `splitByCodexTerms`), `shared/codex/CodexContext.tsx`, `shared/hooks/useCodexVoiceQuote.ts`, `shared/codexContext.ts`, `shared/assetIdentity.ts` and `shared/downloadUtils.ts`.
+
+**Recommended action, in this order.**
+
+1. Delete the 18 dead files above. Keep everything in the "must stay" list.
+2. **Relocate the surviving exports and update the six consumers.** The highlighter is a `narrative/` module, so `@seihouse/sen/contracts` — which already re-exports `narrative/story`, `narrative/voice` and the rest of that layer — is its natural home. `CodexProvider`, `useCodexVoiceQuote` and the card-adjacent helpers belong with `@seihouse/sen/cards`, which already publishes `CharacterCard`, `CharacterEditCard` and `CodexHovercard` and already carries `reader-codex.css`. Then update the six consumers above to the new entry.
+3. **Only then** repoint `@seihouse/sen/reader-codex` at the HARNESS Codex, or retire the entry — whichever the owner prefers.
+4. Correct `src/package/sen/README.md:165-167` so it no longer promises `extraPages`.
+
+Step 2 is not optional. Retiring or repointing the entry first would break the Character Voice preview and both Card Workshop surfaces.
 
 **Risk: medium.** It is published API, and SEN is meant to be embedded by other products. The rollback is a revert of one commit; the real risk is a host we cannot see.
 

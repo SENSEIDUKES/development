@@ -23,10 +23,9 @@ body:has(.library-home-palette) {
 .library-home-palette {
   --reader-border-z: 25;
   color: var(--home-text);
-  background: linear-gradient(#0009, #000b), var(--home-palette-art, none) center / cover;
+  background: var(--home-chrome);
 }
-/* The existing Home artwork gives the glass a scene to soften. The fixed shell
-   owns scrolling, so the artwork stays still behind its panels and navigation. */
+/* Home shares the Story Seed blue-violet finish across the page and chrome. */
 .library-home-palette .workspace-shell { background: transparent; }
 .library-home-palette :is([data-home-panel], .world-card-banner, [data-home-events], .workspace-preferences-panel) {
   background: var(--home-panel);
@@ -62,7 +61,7 @@ body:has(.library-home-palette) {
   backdrop-filter: var(--home-control-blur);
 }
 /* Trial the Story Seed panel material on the frame, keeping controls black. */
-.library-home-palette :is(.workspace-header, [data-slot='app-shell-sidebar'], .library-global-navigation > div) { background: var(--home-chrome); }
+.library-home-palette :is(.workspace-header, [data-slot='app-shell-sidebar'], .library-global-navigation > div, .library-footer) { background: var(--home-chrome); }
 .library-home-palette .library-global-navigation > div { position: relative; }
 /* Keep the package's hover/press transitions, icon rings, label colors and
    glow around the black controls. Only the navigation glyphs are white. */

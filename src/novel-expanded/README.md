@@ -1,5 +1,11 @@
 # NovelExpanded app
 
+- **2026-10-28, background follow-up:** Home's page background and footer now share
+  the header's Story Seed blue-violet finish, replacing the page artwork backdrop.
+  Buttons retain black fills; media remains clear. Reader tests now locate their
+  subject content through the accent scope rather than assuming the provider
+  adds no DOM wrapper.
+
 - **2026-10-28** — Profile Settings → Customization → Appearance now has an accent color picker, saved immediately on the existing device profile with a reset to the original colors. It preserves unfinished identity edits, Cultivator Aura colors, artwork and rainbow button effects. Home trials Story Seed's blue-violet material on its header and navigation frames with a denser base; the buttons remain black and keep their glows and transitions. This chrome trial stays on Home; the saved accent follows the reader through the app's Library presentation. Home and Profile Workshop previews share the current surfaces, with Profile retaining its isolated mock state.
 
 - **2026-10-28** — Home trials the owner’s V1 palette: transparent blue outer panels, black nested cards and navigation, and the shared Reader border. Buttons retain the rainbow rim and halo. Image/video cards stay clear of glass overlays. Navigation retains its original colored labels, gradients, glows and hover transitions; only its icons are white. `AppShell` opts in only for Home; the existing Home Workshop iframe shows the same result. No saved Workshop looks or other routes are changed.

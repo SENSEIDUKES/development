@@ -104,6 +104,12 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 
 ## Workshop history
 
+- **2026-10-28, background follow-up:** Home's page background and footer now share
+  the header's Story Seed blue-violet finish, replacing the page artwork backdrop.
+  Buttons retain black fills; media remains clear. Reader tests now locate their
+  subject content through the accent scope rather than assuming the provider
+  adds no DOM wrapper.
+
 - **2026-10-28, chrome trial:** Home's header, sidebar and mobile dock use the
   shared Story Seed blue-violet panel recipe, with a denser 95% base for chrome;
   Story Seed keeps its existing 46% base. Navigation controls keep black fills,

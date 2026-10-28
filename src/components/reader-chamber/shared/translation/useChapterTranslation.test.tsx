@@ -85,7 +85,7 @@ afterEach(() => {
   container.remove();
 });
 
-const status = () => container.querySelector('div')!;
+const status = () => container.querySelector<HTMLElement>('[data-status]')!;
 
 describe('Reader translation request ordering', () => {
   it('does not let an older language request replace a newer language choice', async () => {

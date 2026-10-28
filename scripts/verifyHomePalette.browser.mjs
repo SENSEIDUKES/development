@@ -58,6 +58,16 @@ try {
     assert.equal(selected[1], 'rgba(0, 0, 0, 0.95)', 'Selected navigation button stays black');
     assert.equal(resting[1], 'rgba(0, 0, 0, 0.95)', 'Navigation button stays black');
     assert.equal(await page.locator('.workspace-header').evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(11, 14, 30, 0.95)', 'Header uses the Story Seed tint');
+    const chrome = await page.locator('.workspace-header').evaluate(element => {
+      const style = getComputedStyle(element);
+      return [style.backgroundImage, style.backgroundColor];
+    });
+    for (const selector of ['.library-home-palette', '.library-footer']) {
+      assert.deepEqual(await page.locator(selector).evaluate(element => {
+        const style = getComputedStyle(element);
+        return [style.backgroundImage, style.backgroundColor];
+      }), chrome, `${selector} shares the purple-blue chrome finish`);
+    }
     await inactiveNav.hover();
     await page.waitForTimeout(350);
     const hovered = await inactiveNav.evaluate(navState);

@@ -88,10 +88,6 @@ const FamiliarWorkspace = lazy(() => import('./workshop/previews/familiar/Famili
 const RewardLoopWorkspace = lazy(() => import('./workshop/previews/rewards/RewardLoopWorkspace').then(module => ({ default: module.RewardLoopWorkspace })));
 const AchievementsWorkspace = lazy(() => import('./workshop/previews/achievements/AchievementsWorkspace').then(module => ({ default: module.AchievementsWorkspace })));
 const FamiliarTrainingWorkspace = lazy(() => import('./workshop/previews/familiar-training/FamiliarTrainingWorkspace').then(module => ({ default: module.FamiliarTrainingWorkspace })));
-const AudioPlayerSmokeWorkspace = lazy(() =>
-  import('./workshop/previews/audio-player-smoke/AudioPlayerSmokeWorkspace')
-    .then(module => ({ default: module.AudioPlayerSmokeWorkspace })),
-);
 const LibraryComponentsWorkspace = lazy(() =>
   import('./workshop/previews/library-components/LibraryComponentsWorkspace')
     .then(module => ({ default: module.LibraryComponentsWorkspace })),
@@ -129,7 +125,6 @@ const previewRegistry: Record<string, ComponentType> = {
   'oauth': lazy(() => import('./workshop/previews/oauth/OAuthWorkspace').then(module => ({ default: module.OAuthWorkspace }))),
   'highlight-engine': lazy(() => import('./workshop/previews/highlight-engine/HighlightEngineWorkspace').then(module => ({ default: module.HighlightEngineWorkspace }))),
   'achievements': AchievementsWorkspace,
-  'audio-player-smoke': AudioPlayerSmokeWorkspace,
   'card-workshop': CardWorkshopWorkspace,
   'celestial-backdrop': CelestialBackdropWorkspace,
   'celestial-store': CelestialStoreWorkspace,

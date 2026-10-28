@@ -53,20 +53,17 @@ describe('the NovelExpanded app guard', () => {
     ]);
   });
 
-  it('lets in the Codex page the owner brought into the Reader Chamber, never the old production Codex', () => {
+  it('keeps the older Codex out: the app\'s Codex is the HARNESS record\'s', () => {
     const { violations } = findAppViolations(graphOf({
       [MAIN]: [
-        { specifier: '../components/reader-codex/development/ReaderCodex', target: 'src/components/reader-codex/development/ReaderCodex.tsx' },
-        { specifier: '../components/reader-codex/reference/ReaderCodex', target: 'src/components/reader-codex/reference/ReaderCodex.tsx' },
-      ],
-      'src/components/reader-codex/development/ReaderCodex.tsx': [
-        { specifier: '../shared/codex/ReaderCodexGlossary', target: 'src/components/reader-codex/shared/codex/ReaderCodexGlossary.tsx' },
+        { specifier: '../components/reader-codex/shared/codex/ReaderCodexGlossary', target: 'src/components/reader-codex/shared/codex/ReaderCodexGlossary.tsx' },
+        { specifier: '../components/reader-codex/shared/types', target: 'src/components/reader-codex/shared/types.ts' },
       ],
       'src/components/reader-codex/shared/codex/ReaderCodexGlossary.tsx': [],
-      'src/components/reader-codex/reference/ReaderCodex.tsx': [],
+      'src/components/reader-codex/shared/types.ts': [],
     }), MAIN, ownershipOf);
-    // The old production copy is Workshop reference material, so it stays out as Workshop code.
-    expect(violations).toEqual(['WORKSHOP_CODE src/novel-expanded/main.tsx → src/components/reader-codex/reference/ReaderCodex.tsx']);
+    // The shared reader contract stays allowed; the older Codex's own pieces do not.
+    expect(violations).toEqual(['THE_OLDER_READER src/novel-expanded/main.tsx → src/components/reader-codex/shared/codex/ReaderCodexGlossary.tsx']);
   });
 
   it('keeps the older Reader\'s narration out: the app reads aloud only with SEN\'s Read Aloud', () => {

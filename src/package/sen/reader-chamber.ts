@@ -10,14 +10,6 @@
  * entry deliberately does not re-export them: the Reader, the Codex, the
  * cards, and chapter generation all read the same authority rather than a
  * per-surface copy of it.
- *
- * `ReaderChamber`, `ReaderViewport`, and `ReaderControls/AudioMenu` still
- * import the Workshop's mock application state directly (`shared/stubs`,
- * `MOCK_VOICES`), so those mocks are bundled into this
- * entry today rather than excluded from it. They are temporary DEV runtime
- * dependencies, not a real store or audio catalog — replacing them with a
- * host-supplied store and audio catalog is follow-up work for production
- * integration, not something this restructure has done yet.
  */
 import '../../components/reader-chamber/shared/reader-chamber.css';
 

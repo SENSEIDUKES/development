@@ -65,8 +65,6 @@ const TOKEN = 'browser-walk-token';
 const VIEWPORTS = [{ name: 'phone', width: 390, height: 844 }, { name: 'laptop', width: 1440, height: 900 }];
 const SHARED_READER_CONTRACTS = /\/src\/components\/reader-(?:chamber\/shared\/(?:readerLanguage|manifestationEligibility|cinematicScroll\/anchors|cinematicScroll\/useSemanticReadingPosition)|codex\/shared\/types)\.ts/;
 const FORBIDDEN_MODULE = /\/src\/(?:workshop\/|library\/generation\/|components\/reader-(?:chamber|codex)\/|host\/reader\/webSpeechNarration)/;
-/** The Codex page the owner brought into the Reader Chamber on 2026-10-10 (as in `check:app`); its old production copy stays out. */
-const CODEX_PAGE = /\/src\/components\/reader-codex\/(?:development|shared)\//;
 
 const receipt = { provider: 'gemini', model: 'fixture', generatedAt: '2026-10-01T12:00:00.000Z', usage: { source: 'unavailable' } };
 const SOUNDSCAPES = JSON.parse(readFileSync('src/host/media/data/sen-soundscapes-v1.json', 'utf8')).entries;
@@ -235,7 +233,7 @@ async function walk(browser, viewport, sample) {
   page.on('pageerror', error => problems.push(`page error: ${error.message}`));
   page.on('request', request => {
     const path = new URL(request.url()).pathname;
-    if (/\.[cm]?[jt]sx?$/.test(path) && FORBIDDEN_MODULE.test(path) && !SHARED_READER_CONTRACTS.test(path) && !CODEX_PAGE.test(path)) problems.push(`module request: ${path}`);
+    if (/\.[cm]?[jt]sx?$/.test(path) && FORBIDDEN_MODULE.test(path) && !SHARED_READER_CONTRACTS.test(path)) problems.push(`module request: ${path}`);
   });
   // Every SEIHouse audio file is answered with silence; what was asked for is kept, in order.
   const audioAsked = [];

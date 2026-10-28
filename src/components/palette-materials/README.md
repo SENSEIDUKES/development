@@ -138,3 +138,12 @@ composition, with the supplied older looks still available. Returning browsers
 continue loading their saved look. Profile's app preset restores background and
 accent defaults together; its controls now recolor plain Home cards and chrome
 through the same shared fill.
+
+
+- **2026-10-28, color-only correction:** Purple is applied to RGB channels only.
+  Outer panels retain their original 12% opacity and gradient layers; nested cards
+  retain 35% opacity and their original gradients. The header retains its own 95%
+  recipe. Blur (24px panels, 25px with saturation for cards), borders and shadows
+  are unchanged. Custom tint/strength supplies RGB channels to each recipe, rather
+  than replacing it with the header fill. Browser verification compares all
+  non-color properties and gradient alpha/stops against the archived originals.

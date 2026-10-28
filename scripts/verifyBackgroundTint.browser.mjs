@@ -32,8 +32,8 @@ try {
     const original = await page.locator('.workspace-header').evaluate(fill);
     const panel = await page.locator('[data-home-panel]').nth(1).evaluate(fill);
     const inset = await page.locator('[data-slot="empty-state"]').evaluate(fill);
-    assert.deepEqual(panel.slice(0, 2), original.slice(0, 2), 'Default outer panels share the header purple');
-    assert.deepEqual(inset.slice(0, 2), original.slice(0, 2), 'Default nested cards share the header purple');
+    assert.equal(panel[0], 'rgba(11, 14, 30, 0.12)', 'Outer panels use purple with the original 12% opacity');
+    assert.equal(inset[0], 'rgba(11, 14, 30, 0.35)', 'Nested cards use purple with the original 35% opacity');
     const cta = page.getByRole('button', { name: 'Carve New Destiny', exact: true });
     const ring = await cta.evaluate(rainbow);
     await page.goto(`${base}${settings}`);
@@ -71,8 +71,8 @@ try {
     }
     const tintedPanel = await page.locator('[data-home-panel]').nth(1).evaluate(fill);
     const tintedInset = await page.locator('[data-slot="empty-state"]').evaluate(fill);
-    assert.deepEqual(tintedPanel.slice(0, 2), pink.slice(0, 2), 'Outer panels share the selected tint');
-    assert.deepEqual(tintedInset.slice(0, 2), pink.slice(0, 2), 'Nested cards share the selected tint');
+    assert.equal(tintedPanel[0], 'rgba(50, 21, 35, 0.12)', 'Picker recolors panels without changing opacity');
+    assert.equal(tintedInset[0], 'rgba(50, 21, 35, 0.35)', 'Picker recolors cards without changing opacity');
     assert.deepEqual(tintedPanel.slice(2), panel.slice(2), 'Panel blur and edge stay intact');
     assert.deepEqual(tintedInset.slice(2), inset.slice(2), 'Card blur and edge stay intact');
     assert.equal(await cta.evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(0, 0, 0, 0.95)');
@@ -114,8 +114,8 @@ try {
     assert.equal(await slider.getAttribute('aria-valuetext'), 'Black');
     await page.goto(`${base}/app/`); await page.getByTestId('novel-expanded-home').waitFor();
     assert.equal((await page.locator('.workspace-header').evaluate(fill))[0], 'rgba(0, 0, 0, 0.95)', 'Zero strength offers the black look');
-    assert.equal((await page.locator('[data-home-panel]').nth(1).evaluate(fill))[0], 'rgba(0, 0, 0, 0.95)');
-    assert.equal((await page.locator('[data-slot="empty-state"]').evaluate(fill))[0], 'rgba(0, 0, 0, 0.95)', 'Zero strength reaches nested cards too');
+    assert.equal((await page.locator('[data-home-panel]').nth(1).evaluate(fill))[0], 'rgba(0, 0, 0, 0.12)');
+    assert.equal((await page.locator('[data-slot="empty-state"]').evaluate(fill))[0], 'rgba(0, 0, 0, 0.35)', 'Zero strength reaches nested cards too');
     await page.goto(`${base}${settings}`); await open(page, 'Background tint');
     await page.getByRole('button', { name: 'Use default background', exact: true }).click();
     assert.equal(await page.getByRole('button', { name: 'Use default background', exact: true }).isDisabled(), true);

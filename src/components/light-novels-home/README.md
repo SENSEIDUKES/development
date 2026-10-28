@@ -203,3 +203,12 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
   role keeps its blur/shadow geometry. Image/video surfaces retain their earlier
   clear backings; black controls, rainbow effects and the artwork remain intact.
   App colors is the default preset in Profile and the material Workshop.
+
+
+- **2026-10-28, color-only correction:** Purple is applied to RGB channels only.
+  Outer panels retain their original 12% opacity and gradient layers; nested cards
+  retain 35% opacity and their original gradients. The header retains its own 95%
+  recipe. Blur (24px panels, 25px with saturation for cards), borders and shadows
+  are unchanged. Custom tint/strength supplies RGB channels to each recipe, rather
+  than replacing it with the header fill. Browser verification compares all
+  non-color properties and gradient alpha/stops against the archived originals.

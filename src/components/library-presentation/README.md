@@ -77,7 +77,7 @@ pages into the appearance system.
 
 ## 2026-10-28 — Unified purple and default preset
 
-Shell, panel and card fills now resolve the same shared color. The default is
+Shell, panel and card recipes share RGB tint inputs, with their own opacity and gradients. The default is
 Midnight violet; choosing a background color/strength updates all three together.
 Blur, borders, depth and black action/control faces retain their role-specific
 recipes. Home's artwork and media-bearing cards keep their clear existing backing;
@@ -94,3 +94,12 @@ Workshop exposes the same app foundation as a built-in preset, starts new browse
 on it, and retains all saved looks. Applying that preset changes only the current
 experiment until saved. Version 3 exports include the new IDs; versions 1 and 2
 continue to import.
+
+
+- **2026-10-28, color-only correction:** Purple is applied to RGB channels only.
+  Outer panels retain their original 12% opacity and gradient layers; nested cards
+  retain 35% opacity and their original gradients. The header retains its own 95%
+  recipe. Blur (24px panels, 25px with saturation for cards), borders and shadows
+  are unchanged. Custom tint/strength supplies RGB channels to each recipe, rather
+  than replacing it with the header fill. Browser verification compares all
+  non-color properties and gradient alpha/stops against the archived originals.

@@ -23,7 +23,10 @@ export function backgroundTintColor(tint: BackgroundTint): string {
   const scale = max === 0 ? 0 : (50 * tint.strength / 100) / max;
   return '#' + rgb.map(channel => Math.round(channel * scale).toString(16).padStart(2, '0')).join('');
 }
-export function backgroundTintFill(tint: BackgroundTint): string {
+export function backgroundTintRgb(tint: BackgroundTint): string {
   const hex = backgroundTintColor(tint);
-  return `rgba(${[1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(', ')}, 0.95)`;
+  return [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(', ');
+}
+export function backgroundTintFill(tint: BackgroundTint): string {
+  return `rgba(${backgroundTintRgb(tint)}, 0.95)`;
 }

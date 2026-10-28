@@ -30,6 +30,14 @@ try {
   assert.equal(await page.locator('.pm-archive .pm-sample').count(), 9);
   assert.equal((await catalog.locator('[data-pm-recipe="blue-glass"]').evaluate(material))[0], 'rgba(0, 55, 74, 0.12)', 'Archived blue keeps its original paint');
   assert.equal((await catalog.locator('[data-pm-recipe="smoked-glass"]').evaluate(material))[0], 'rgba(0, 0, 0, 0.35)', 'Archived smoked glass keeps its original paint');
+  // Compare every non-color part against the original paints, including gradient alpha/stops.
+  const removeRgb = value => value.replace(/rgba?\(([^)]+)\)/g, (_, body) => `rgba(R,G,B,${body.split(',')[3]?.trim() ?? '1'})`);
+  for (const [active, archived] of [['violet-panel', 'blue-glass'], ['violet-card', 'smoked-glass']]) {
+    const current = await catalog.locator(`[data-pm-recipe="${active}"]`).evaluate(material);
+    const previous = await catalog.locator(`[data-pm-recipe="${archived}"]`).evaluate(material);
+    assert.deepEqual(current.slice(2), previous.slice(2), 'Blur, borders and shadows are unchanged');
+    assert.deepEqual(current.slice(0, 2).map(removeRgb), previous.slice(0, 2).map(removeRgb), `${active}: only RGB changes; opacity, gradients, blur, borders and shadows stay intact`);
+  }
   const storedBefore = await page.evaluate(() => JSON.parse(localStorage.getItem('workshop.palette-materials.looks.v1')).looks);
   await catalog.locator('.pm-sample').filter({ has: page.locator('[data-pm-recipe="violet-panel"]') }).locator('button.pm-sample-select').click();
   if (width < 650) await page.getByRole('button', { name: /^Saved/ }).click();
@@ -49,7 +57,7 @@ try {
   await page.getByRole('button', { name: 'App colors · Default preset', exact: true }).click();
   const composition = page.locator('.pm-scene');
   const fills = await composition.locator('.pm-scene-nav, .pm-scene-panel, .pm-scene-card').evaluateAll(elements => elements.map(e => getComputedStyle(e).backgroundColor));
-  assert.ok(fills.every(color => color === fills[0]), 'Default preset composes one unified purple');
+  assert.ok(fills.every(color => color.match(/[\d.]+/g).slice(0, 3).join(',') === fills[0].match(/[\d.]+/g).slice(0, 3).join(',')), 'Default preset shares hue while retaining role opacity');
   if (width < 650) await page.getByRole('button', { name: 'Effects', exact: true }).click();
   else await page.locator('#pm-effects').scrollIntoViewIfNeeded();
   const action = page.locator('#pm-effects [data-library-material="rainbow-action"]').first();

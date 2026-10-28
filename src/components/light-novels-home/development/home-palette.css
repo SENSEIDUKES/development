@@ -75,7 +75,12 @@ body:has(.library-home-palette) {
 .library-home-palette :is([data-slot='navigation-item'], .library-global-navigation button):active { background-color: #000; }
 .library-home-palette :is([data-slot='navigation-icon'], .library-global-navigation button > span[aria-hidden='true']) { color: #fff; }
 .library-home-palette .workspace-header :is(button svg, .dao-insights-trigger svg) { color: #fff; }
-.library-home-palette .library-footer { border-top: 1px solid var(--reader-glass-edge); }
+/* Put dock clearance inside the footer so its fill reaches the viewport edge. */
+.library-home-palette .library-navigation-layout .workspace-shell-main { padding-bottom: 0; }
+.library-home-palette .library-footer {
+  border-top: 1px solid var(--reader-glass-edge);
+  padding-bottom: calc(.75rem + var(--library-bottom-clearance, 0px));
+}
 .library-home-palette .library-footer::before { display: none; }
 .library-home-palette .world-card-banner-backdrop { filter: none; }
 .library-home-palette .world-card-cover-fallback { background: var(--home-card); }

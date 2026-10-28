@@ -104,6 +104,11 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 
 ## Workshop history
 
+- **2026-10-28, footer clearance:** Home moves the bottom dock's existing clearance
+  inside the footer, so the purple-blue fill reaches the bottom without artwork
+  showing underneath. Legal controls remain above the dock, including safe-area
+  insets; desktop keeps its existing spacing.
+
 - **2026-10-28, background follow-up:** Home's plain footer now shares the header's
   Story Seed blue-violet finish. The artwork backdrop behind Home content remains.
   Buttons retain black fills; media remains clear. Reader tests now locate their

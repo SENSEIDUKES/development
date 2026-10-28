@@ -72,6 +72,25 @@ try {
       const style = getComputedStyle(element);
       return style.getPropertyValue('--home-palette-art').includes('url(') && style.backgroundImage.includes('url(');
     }), 'Home retains its artwork backdrop behind the content');
+    const assertFooterBottom = async () => {
+      const bounds = await page.locator('.workspace-shell-main').evaluate(main => {
+        main.scrollTop = main.scrollHeight;
+        const footer = main.querySelector('.library-footer');
+        return { main: main.getBoundingClientRect().bottom, footer: footer.getBoundingClientRect().bottom };
+      });
+      assert.ok(Math.abs(bounds.footer - bounds.main) <= 1, 'Footer reaches the bottom of the scrolling viewport');
+      if (width < 1024) {
+        const legal = await page.locator('.library-footer-legal').boundingBox();
+        const dock = await page.locator('.library-global-navigation').boundingBox();
+        assert.ok(legal.y + legal.height <= dock.y, 'Legal controls remain clear of the navigation dock');
+      }
+    };
+    await assertFooterBottom();
+    if (width < 1024) {
+      await page.locator('.library-navigation-layout').evaluate(element => element.style.setProperty('--sh-safe-bottom', '34px'));
+      await assertFooterBottom();
+      await page.locator('.library-navigation-layout').evaluate(element => element.style.removeProperty('--sh-safe-bottom'));
+    }
     await page.locator('.library-footer').screenshot({ path: `${output}/footer-${width}.png` });
     await inactiveNav.hover();
     await page.waitForTimeout(350);

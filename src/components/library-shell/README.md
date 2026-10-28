@@ -31,7 +31,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **First Workshop record:** 2026-09-08
 - **Last recorded Workshop update:** 2026-10-07
 - **Historical source inspection:** 2026-09-08
-- **Implementation status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
+- **Implementation status:** under refinement; Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
 ## Top navigation update
 
@@ -130,33 +130,29 @@ Development now vendors `@seihouse/ui@0.11.0` and `@seihouse/library-ui@0.10.0`;
 
 The Library Shell tab's **Laptop navigation** control switches the Development frame between the Pathways sidebar, the bottom strip (before), and **Compare both**, which stacks the two at the chosen viewport. Captures accept `&laptopNav=strip`.
 
-## Capture boundary
+## Development shell
 
+`development/LibraryShell.ts` exports the workspace system: `WorkspaceHeader` as a thin adapter over the canonical `SEIAppHeader`, `WorkspaceShell` as a thin adapter over `SEIAppShell`, and the shared header-action presentation. The custom `HeaderFoundation` and the old `WorkspaceHeader` visual implementation are gone; only one header system remains. `MainLibraryHeader` now supplies Home context and commands to the same shared top header. See [header contract and ownership](../../../docs/library-header-family.md).
 
+## Inspect the previews
 
-`reference/main-library/` freezes the global header, DAO presentation and animation logic, production theme stylesheet, and the exact collection-tab fragment that displays sync state. It localizes the source font payloads so external network and CSP changes cannot alter the captured layout. `reference/story-seed/` freezes the current shell components, section model, settings body, supporting pure helpers, and CSS. `StorySeedShell.tsx` copies the shell JSX from `CreationModal`; its domain editor, Story Bank, and Help children are explicit host slots. This capture is distinct from the older historical reference inside the existing Story Seed Workshop.
+Use Workshop Controls → Pages to select a page (Main Library, Cultivator Cave, Story Seed or Header states), a viewport such as Phone (390 × 844), Tablet (768 × 1024), or Desktop (1440 × 900), and a mock state. Desktop frames retain their actual viewport width and can be scrolled horizontally on smaller hosts. The **Open responsive capture at browser width** link is the appropriate route for inspecting 320px phones, tablets, landscape, or native browser resizing.
 
-`development/LibraryShell.ts` exports the workspace system: `WorkspaceHeader` as a thin adapter over the canonical `SEIAppHeader`, `WorkspaceShell` as a thin adapter over `SEIAppShell`, and the shared header-action presentation. The custom `HeaderFoundation` and the old `WorkspaceHeader` visual implementation are gone; only one header system remains. `MainLibraryHeader` now supplies Home context and commands to the same shared top header; the locked homepage capture stays unchanged. See [header contract and ownership](../../../docs/library-header-family.md).
-
-## Inspect the references
-
-Use Workshop Controls → Pages to select Main Library or Story Seed, Phone (390 × 844), Tablet (768 × 1024), or Desktop (1440 × 900), and a mock state. Desktop frames retain their actual viewport width and can be scrolled horizontally on smaller hosts. The **Open responsive capture at browser width** link is the appropriate route for inspecting 320px phones, tablets, landscape, or native browser resizing.
-
-| Reference | Phone preview | Desktop preview |
+| Page | Phone preview | Desktop preview |
 | --- | --- | --- |
 | Main Library | `?preview=library-shell&source=main-library&device=phone` | `?preview=library-shell&source=main-library&device=desktop` |
 | Story Seed | `?preview=library-shell&source=story-seed&device=phone` | `?preview=library-shell&source=story-seed&device=desktop` |
 
-The internal frame route is `/library-shell.html?source=main-library&state=linked` or `/library-shell.html?source=story-seed&state=filled`. It is a second Vite HTML entry, not a second Workshop feature or homepage card. Separate documents preserve source theme differences, viewport media queries, body portals, scroll locking, safe-area CSS, and overlay stacking in Compare mode.
+The internal frame route is `/library-shell.html?source=main-library&state=linked` or `/library-shell.html?source=story-seed&state=filled-intake`. It is a second Vite HTML entry, not a second Workshop feature or homepage card, and renders only the Development shell. A separate document preserves viewport media queries, body portals, scroll locking, safe-area CSS, and overlay stacking.
 
 Workshop Controls also carries a **Safe area** selector (notch, landscape) and a **Reduced motion** toggle. Both are preview-only environment simulations applied inside the Development frame, and a per-viewport verification checklist appears beside them.
 
 | Source | Available mock states |
 | --- | --- |
 | Main Library | Linked account, guest, syncing, offline/pending sync, profile active, active story, long account name, missing profile record, local DAO, failed DAO response |
-| Story Seed | Empty required fields, filled requirements, long equipped title, saved feedback, generating, VERSA drafting, error |
+| Story Seed | The Story Seed workspace's preview scenarios (`src/workshop/previews/story-seed/previewStates.ts`) |
 
-Additional states are exercised through the original controls: open/close Command Hub and DAO overlay, choose DAO categories, seek and copy wisdom, open Profile, select global destinations, open the mobile section drawer, choose all seven sections, toggle Story Bank/Help, open desktop/mobile Settings, change Rated 18+ and Fate Survival, select visibility/pressure, save, and manifest. Saving lasts 2.5 seconds as in the source; simulated manifesting lasts 1.5 seconds and reports the Blueprint destination. Refresh resets all fixture state.
+Refresh resets all fixture state.
 
 ## Ownership and dependencies
 
@@ -178,23 +174,19 @@ Additional states are exercised through the original controls: open/close Comman
 
 Both shells show an emblem, navigation, actions, and status, but their lifecycles differ. Main Library is a global, sticky host header (`sm` identity expansion; `md` active-story/system commands). Story Seed is a page workspace with desktop actions and sidebar at `lg` (1024px), and a drawer/bottom-navigation combination below that breakpoint. Its settings sheet is bottom-anchored and capped at `100dvh - 3rem`; its Manifest footer is sticky on desktop and in flow on smaller screens. The host frame must not substitute container-width styling for these viewport rules.
 
-The **cloud is not the sync spinner**. In current `GlobalHeader`, it is an animated Profile/Celestial Tools entry. `syncStatus` and `lastSavedTime` are read but do not render there. Syncing and pending/error dots render beside My Library in `LibraryScreen`. Likewise, Command Hub's **Online** label is current literal source copy and does not track connectivity; the offline fixture deliberately leaves it unchanged. `StorySeedSelector` has an old comment referring to a bottom Profile tab, but the current navigation has no such tab. The captured code preserves the source; this documentation records the actual behavior.
+The **cloud is not the sync spinner**. In current `GlobalHeader`, it is an animated Profile/Celestial Tools entry. `syncStatus` and `lastSavedTime` are read but do not render there. Syncing and pending/error dots render beside My Library in `LibraryScreen`. Likewise, Command Hub's **Online** label is current literal source copy and does not track connectivity; the offline fixture deliberately leaves it unchanged. `StorySeedSelector` has an old comment referring to a bottom Profile tab, but the current navigation has no such tab. This documentation records the source's actual behavior.
 
 ## Workshop adapters and excluded production dependencies
 
-`shared/MainLibraryAdapter.tsx` defines the narrow context consumed by the copied header/DAO. `MainLibraryPreview.tsx` provides account/profile fixtures, a mock active story, sync values, screen callbacks, overlay destinations, and local DAO responses. Firebase imports, the production app store, storage, unused login routine, and unused audio import are omitted. Haptics stop at a documented no-op. DAO presentation still handles loading, rotation, filtering, copy feedback, and fallback; its two network calls use `requestDao` instead. No keys or provider configuration are copied.
-
-`StorySeedPreview.tsx` owns only transient React fixture state. It passes the canonical type shape and updater contract into the captured shell without mounting `CreationModal`, the live Story Seed store, auth gate, repositories, generation pipelines, or persistence. Selecting a section exits the Story Bank fixture as in the original mobile integration. The emblem link retains its source markup and is intercepted at the preview boundary to report the local home destination.
+`shared/MainLibraryAdapter.tsx` defines the narrow context consumed by the header and DAO. `MainLibraryPreview.tsx` provides account/profile fixtures, a mock active story, sync values, screen callbacks, overlay destinations, and local DAO responses. Firebase imports, the production app store, storage, unused login routine, and unused audio import are omitted. Haptics stop at a documented no-op. DAO presentation still handles loading, rotation, filtering, copy feedback, and fallback; its two network calls use `requestDao` instead. No keys or provider configuration are copied.
 
 Account linking, full Profile, collection contents, Story Bank, Help content, editor forms, Blueprint review, reader, and Codex destinations are clearly labeled mock content slots. Their domain implementations are not captured. This preserves the shell's dimensions, classes, breakpoints and interaction structure; **full-page pixel parity and content-dependent footer positions are not claimed**. The neutral fixture's height differs from a complete editor or library hero. The requested work ends at these shell boundaries.
 
-The Library emblem, VERSA mark, and the source-requested Alegreya, Alegreya SC, Noto Serif, and Rubik font payloads are local copies under `public/library-shell/`. Story Seed retains `/favicon.jpg`. No production data, auth, generation, storage, sync, or media-service calls occur. No backend, API, schema, database, routing store, or auth system was added.
+The source-requested Alegreya, Alegreya SC, Noto Serif, and Rubik font payloads are local copies under `public/library-shell/fonts/`. No production data, auth, generation, storage, sync, or media-service calls occur. No backend, API, schema, database, routing store, or auth system was added.
 
 ## Lock and provenance
 
-`capture-manifest.json` records source commits, verified source paths, SHA-256 hashes of source text and each adapted capture, and dependency/asset hashes. Text hashes normalize CRLF to LF for Windows checkout compatibility. The unused capture-check script was retired on 2026-10-06 because it pins removed vendor archives. The provenance manifest is kept. Use `npm run check:ui-artifacts` and `npm run check:package-boundaries` for the current source graph.
-
-The capture reuses canonical presentation packages and type contracts rather than cloning shared UI or defining another schema. Historical captures and their provenance remain unchanged; they are not re-compared or recaptured. The dependency list is a drift guard, not a new package or distribution mechanism.
+The locked capture and its provenance manifest (`capture-manifest.json`) were removed on 2026-10-28. Use `npm run check:ui-artifacts` and `npm run check:package-boundaries` for the current source graph. The shell reuses canonical presentation packages and type contracts rather than cloning shared UI or defining another schema.
 
 ## Validation
 
@@ -204,13 +196,22 @@ See [validation evidence](../../../docs/history/library-shell-validation.md) for
 
 The packages and NovelExpanded app built here are the destination. Keep Workshop
 controls, fixtures and adapters outside reusable package entries; another repository
-changes only when the owner asks. Historical references stay untouched.
+changes only when the owner asks.
 
 The existing local files named by this inventory are:
 
 - `src/App.tsx`
 
 ## Workshop history
+
+- **2026-10-28 (locked capture removed):** With the owner's approval, the old
+  production copy (`reference/main-library/`, `reference/story-seed/`), its
+  Original Reference and Compare panes, the locked capture and its
+  `capture-manifest.json` were removed, with `StorySeedPreview.tsx`,
+  `previewData.ts`, the emblem and VERSA images, and Home's `homeReference=1`
+  URL. The collections strip moved into the Workshop preview
+  (`src/workshop/previews/library-shell/LibraryCollectionStrip.tsx`);
+  `library-shell.html` now renders only the Development shell.
 
 - **2026-10-27 (handles like an app):** From SENSEI, on an iPhone: the pages
   slid sideways like a web page, not an app. The cause was Create's scrolling

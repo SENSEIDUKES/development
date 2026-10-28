@@ -7,9 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UserProfile from './UserProfile';
 import { UserProfilePortraitModal } from './UserProfilePortraitModal';
 import { UserProfilePublicPanel } from './UserProfilePublicPanel';
-import ReferenceUserProfile from '../reference/UserProfile';
 import { UserProfileServicesProvider } from '@seihouse/library/profile';
-import { UserProfileServicesProvider as ReferenceUserProfileServicesProvider, type UserProfileController } from '../shared/userProfileServices';
+import type { UserProfileController } from '../shared/userProfileServices';
 import type { MockUserProfileServicesOptions } from '../../../workshop/previews/user-profile/mockUserProfileServices';
 import { UserProfileHome } from './UserProfileHome';
 import { buildPublicProfile, developmentPublicRecord, DEFAULT_PUBLIC_PROFILE_VISIBILITY } from './publicProfile';
@@ -193,7 +192,6 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
   services.useController = props => { controller = useOriginalController(props); return controller; };
   await act(async () => {
     root.render(
-      <ReferenceUserProfileServicesProvider services={services}>
       <UserProfileServicesProvider services={services}>
         <EnergyClientProvider client={energyClient}>
         <DaoPillarClientProvider client={daoPillarClient}>
@@ -210,8 +208,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
         </QiClientProvider>
         </DaoPillarClientProvider>
         </EnergyClientProvider>
-      </UserProfileServicesProvider>
-      </ReferenceUserProfileServicesProvider>,
+      </UserProfileServicesProvider>,
     );
   });
   // The mocked profile snapshot resolves on a 450 ms timer.
@@ -1358,14 +1355,6 @@ describe('rank colour system', () => {
     if (!document.body.querySelector<HTMLDetailsElement>('.cave-aura-picker')?.open) await click(document.body.querySelector('summary.cave-aura-summary')!);
     const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;
     expect(spectrum.disabled).toBe(true);
-  });
-});
-
-describe('locked reference replica', () => {
-  it('still renders the original Celestial Tools page', async () => {
-    await renderCave({ Component: ReferenceUserProfile });
-    expect(text()).toContain('Celestial Tools');
-    expect(text()).not.toContain('Cultivator Cave');
   });
 });
 

@@ -28,7 +28,6 @@ function DevelopmentHeaderContent({ source, state }: { source: HeaderConfigurati
     const app = <WorkspaceHeaderCenterProvider center={headerCenter} centerBreakpoint="always">
       <LibraryAppPreview source={source} state={state} message={message} setMessage={setMessage} />
     </WorkspaceHeaderCenterProvider>;
-    if (new URLSearchParams(window.location.search).get('homeReference') === '1') return app;
     return <ProductFamiliarSession initialState={source === 'cultivator-cave' ? state as UserProfilePreviewState : state === 'guest' ? 'signed-out' : 'developed-cultivator'}>
       <ProductFamiliarSurface viewport headerRecall bottomInset={72}>{app}</ProductFamiliarSurface>
     </ProductFamiliarSession>;
@@ -63,13 +62,10 @@ function LibraryAppPreview({ source, state, message, setMessage }: { source: Hea
   }, [state]);
 
   const copyText = async (text: string) => { setMessage(`Local preview clipboard: ${text}`); };
-  const isHomeReference = new URLSearchParams(window.location.search).get('homeReference') === '1';
   return <>
     <div hidden={profile}>
       <MainLibraryPreview state={source === 'cultivator-cave' ? 'linked' : state} developmentNavigation active={!profile}
-        homeReference={isHomeReference}
         developmentHeader={adapter => <MainLibraryHeader adapter={{ ...adapter, copyText }} landmark="none" />}
-        developmentHomeContent={isHomeReference ? adapter => <MainLibraryHomeInsights adapter={{ ...adapter, copyText }} /> : undefined}
         extraFeedback={message} />
     </div>
     {profileVisited && <div hidden={!profile}><UserProfileWorkspace embedded initialState={source === 'cultivator-cave' ? state as UserProfilePreviewState : 'developed-cultivator'} /></div>}

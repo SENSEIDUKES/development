@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { ClosedDoorCultivationModal as ReferenceClosedDoorCultivationModal } from '../../../components/closed-door-cultivation/reference/ClosedDoorCultivationModal';
 import {
   ClosedDoorCultivationModal as DevelopmentClosedDoorCultivationModal,
   type ClosedDoorCultivationModalProps,
@@ -90,7 +89,7 @@ export function ClosedDoorCultivationWorkspace() {
         sections: [
           {
             id: 'states',
-            description: 'One shared simulator drives the same reward state in Reference, Development, and Compare.',
+            description: 'One shared simulator drives the reward state.',
             content: (
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {scenarios.map(scenario => (
@@ -113,14 +112,6 @@ export function ClosedDoorCultivationWorkspace() {
           },
         ],
       }}
-      renderReference={() => (
-        <PreviewCanvas
-          Modal={ReferenceClosedDoorCultivationModal}
-          emblemId="cdc-emblem-reference"
-          qiEarned={qiEarned}
-          onStateChange={setActiveState}
-        />
-      )}
       renderDevelopment={() => (
         <PreviewCanvas
           Modal={DevelopmentClosedDoorCultivationModal}

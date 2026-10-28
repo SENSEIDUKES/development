@@ -2,13 +2,11 @@
 import React, { act } from 'react';
 import type { Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createReaderRoot';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { type FateResultData, type SystemEvent } from '@seihouse/sen/cards';
-import { type StoryWorld } from '@seihouse/sen/contracts';
 import { getColorCodeValue, resolveFateConsequenceDetailColorCode } from '@seihouse/sen/color-codes';
 import { FateResultCard } from '@seihouse/sen/cards';
 import { SystemBlock } from '@seihouse/sen/cards';
-import { FateSurvivalExplanation as StorySeedFateSurvivalExplanation } from '../../story-seed/reference/FateSurvivalExplanation';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -16,11 +14,6 @@ const baseResult: Omit<FateResultData, 'outcome'> = {
   timelineScar: 'The Rain Court remembers the wound.',
   permanentCosts: ['A permanent cost remains.'],
 };
-
-const fateTypeColorCodes = [
-  'corruption', 'bond', 'mentor', 'mystery', 'warning',
-  'warning', 'enemy', 'mainCharacter', 'unknown', 'itemGood',
-];
 
 describe('Reader fate Color Codes', () => {
   let container: HTMLDivElement;
@@ -106,18 +99,5 @@ describe('Reader fate Color Codes', () => {
       root.render(<div data-fate-subject><SystemBlock content="[ A broken notice. ]" system={malformedWorldNotice} /></div>);
     });
     expect(container.querySelector('[data-fate-subject]')!.innerHTML).toBe('');
-  });
-
-  it('keeps the locked Story Seed reference fate-type choices on the shared Color Codes', () => {
-    // The SEN Reader no longer shows the old genre-triggered Fate Survival
-    // banners; the locked Story Seed Original Reference still renders its fate
-    // taxonomy, and it must use the same palette as the Reader's mapping.
-    act(() => {
-      root.render(<StorySeedFateSurvivalExplanation />);
-    });
-    const fateButtons = [...container.querySelectorAll<HTMLButtonElement>('button[data-color-code]')];
-    expect(fateButtons.map(button => button.dataset.colorCode)).toEqual(fateTypeColorCodes);
-    act(() => fateButtons[0]?.click());
-    expect(fateButtons[0]?.style.color).toBe(getColorCodeValue('corruption'));
   });
 });

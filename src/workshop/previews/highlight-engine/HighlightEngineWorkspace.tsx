@@ -130,6 +130,5 @@ export function HighlightEnginePreview() {
 
 export function HighlightEngineWorkspace() {
   return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'highlight-engine')!}
-    allowCompare={false} renderDevelopment={() => <HighlightEnginePreview />}
-    renderReference={() => <p className="p-8 text-sm text-slate-400">New SEN primitive developed here. No production reference exists.</p>} />;
+    renderDevelopment={() => <HighlightEnginePreview />} />;
 }

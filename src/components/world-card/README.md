@@ -54,7 +54,7 @@ depend on the Library card.
 
 ## Source
 
-- The Full card came from the inline card in `src/components/light-novels-home/development/LightNovelsHome.tsx`. Its production original is `SENSEIDUKES/Light-Novels` `src/components/LibraryScreen.tsx`, via the locked `light-novels-home/reference/` replica.
+- The Full card came from the inline card in `src/components/light-novels-home/development/LightNovelsHome.tsx`. Its production original is `SENSEIDUKES/Light-Novels` `src/components/LibraryScreen.tsx`.
 - The Info page came from `src/components/light-novels-home/development/StoryDetailScreen.tsx`. Its production original is `SENSEIDUKES/Light-Novels` `src/components/StoryDetailScreen.tsx` @ 4a3dd02.
 - The Compact card came from `WorldsRow` in `src/components/creator-space/development/CreatorSpace.tsx`. It was built in DEV and has no production original.
 
@@ -64,11 +64,6 @@ depend on the Library card.
 - `development/WorldCard.tsx` owns the Full, Compact, and Info cover faces. Create supplies its world, cover, and selection through `face="compact"`; there is no separate Compact component.
 - `development/WorldCardCover.tsx` handles static art for every face; Compact keeps its celestial wash when art is missing.
 - `development/` is the active Workshop version, which the real pages render.
-- `reference/` is historical and not edited. It holds:
-  - the Full card as the production replica renders it;
-  - the Compact tile as it stood before extraction.
-
-  The Info page reference is the existing `light-novels-home/reference/StoryDetailScreen`.
 
 ## Mock boundaries
 
@@ -355,14 +350,13 @@ These are documented product requirements, not behavior implemented here.
 
 The packages and NovelExpanded app built here are the destination. Keep Workshop
 controls, fixtures and adapters outside reusable package entries; another repository
-changes only when the owner asks. Historical references stay untouched.
+changes only when the owner asks.
 
 The existing local files named by this inventory are:
 
 - `development/`
 - `shared/`
 - `development/world-card.css`
-- `reference/`
 
 ## Host boundary
 
@@ -374,9 +368,14 @@ synopsis/tags/activity/branching permission, and working destinations.
 
 The display uses `@seihouse/sen/motion-picture`, compatible `@seihouse/ui@0.10.1`
 components and `@seihouse/library-ui@0.9.0` (`LibraryPanel`, `LibraryCard`, `LibraryButton`).
-Workshop sample data and reference material remain outside the host adapter.
+Workshop sample data remains outside the host adapter.
 
 ## Workshop history
+
+- **2026-10-28** — With the owner's approval, removed the old copies in `reference/`
+  (`WorldCardFull`, `WorldCardCompact` and their stylesheet) and the Original Reference
+  and Compare panes, which also showed Home's old story detail. The workspace now shows
+  Development alone.
 
 - **2026-10-09** — **Codex, Portal, Information, Settings.** The format mark
   is off the Info cover: it now marks the **Information** card, which opens

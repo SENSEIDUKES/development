@@ -35,8 +35,6 @@ export function DiscoverWorkspace() {
       </div>;
 
   return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'discover')!}
-    allowCompare={false}
-    renderReference={() => <p className="p-6 text-sm text-white/70">Discover is new: there is no old production version to compare.</p>}
     renderDevelopment={render}
     workshopControls={{
       description: 'Development opens the app’s Discover page: Novel / Manga / Game / Video first, then Stories, Creators, Codex and Lore with a left browsing rail. Novel has the sample catalogue; the other mediums show coming soon states. Events are on Home. Lore is authored reference content shared across mediums. This preview uses the app’s saved language and Reading Mode preferences.',

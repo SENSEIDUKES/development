@@ -98,4 +98,21 @@ describe('FeatureWorkspace Workshop Controls', () => {
     expect(container.textContent).toContain('This preview has no external Workshop options.');
     expect(container.textContent).toContain('Development canvas');
   });
+
+  it('shows Development alone when a feature keeps no old production version', () => {
+    act(() => {
+      root.render(<FeatureWorkspace entry={entry} renderDevelopment={() => <div>Development canvas</div>} />);
+    });
+
+    expect(container.textContent).toContain('Development canvas');
+    expect(container.textContent).not.toContain('Original Reference');
+    expect(container.textContent).not.toContain('Compare');
+  });
+
+  it('offers Original Reference and Compare when a feature keeps its old version', () => {
+    renderWorkspace();
+
+    const labels = [...container.querySelectorAll('button')].map(button => button.textContent?.trim());
+    expect(labels).toEqual(expect.arrayContaining(['Original Reference', 'Development', 'Compare']));
+  });
 });

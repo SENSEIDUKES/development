@@ -96,24 +96,11 @@ function CelestialStorePreview({ state }: { state: CelestialStorePreviewState })
   );
 }
 
-function CelestialStoreReference() {
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-neutral-400 sm:px-8">
-      The Celestial Store has no production original. It extracts the official Store out of the
-      profile into its own destination, built here first against the approved reference art —
-      two framed shelves of daily Familiar offers, Energy above QI — and transfers to
-      Light-Novels as a whole system. The creator User Store on public profiles is a separate,
-      untouched surface.
-    </div>
-  );
-}
-
 export function CelestialStoreWorkspace() {
   const [previewState, setPreviewState] = useState<CelestialStorePreviewState>('wealthy');
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={false}
       workshopControls={{
         description: 'Balances, ownership, and purchases here are preview props; nothing is deducted or persisted. The User Profile preview mounts the same page against the live development ledgers.',
         defaultSection: 'states',
@@ -134,7 +121,6 @@ export function CelestialStoreWorkspace() {
           ),
         }],
       }}
-      renderReference={() => <CelestialStoreReference />}
       renderDevelopment={() => <CelestialStorePreview key={previewState} state={previewState} />}
     />
   );

@@ -197,24 +197,12 @@ function RewardLoop() {
   );
 }
 
-function RewardLoopReference() {
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-10 text-sm leading-relaxed text-neutral-400 sm:px-8">
-      The Reward Loop is a Workshop simulator, not a product page, so it has no production original.
-      The product surfaces it drives — Achievements and Mystery Scrolls, Fate Survival Relics, Familiar
-      training, the Dao Pillar and the Celestial Store — each have their own Rewards workspace and
-      appear together in the User Profile preview.
-    </div>
-  );
-}
-
 export function RewardLoopWorkspace() {
   const [state, setState] = useState<LoopState>('new');
   const [session, setSession] = useState(0);
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={false}
       workshopControls={{
         description: 'One cultivator on a development economy running in this tab. Activity, the Fate Survival outcome, and the starting account are simulated; every reward, balance and unlock is decided by real server code.',
         defaultSection: 'states',
@@ -232,7 +220,6 @@ export function RewardLoopWorkspace() {
           ),
         }],
       }}
-      renderReference={() => <RewardLoopReference />}
       renderDevelopment={() => (
         <WorkshopEconomyProvider key={`${state}-${session}`} seed={SEEDS[state]} options={{ daoPillarDay: state === 'new' ? 1 : 13 }}>
           <RewardLoop />

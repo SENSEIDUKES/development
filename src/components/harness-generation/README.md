@@ -37,6 +37,10 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-28 (Original Reference removed):** With the owner's approval, the
+  old `reference/` baseline message (`HarnessGenerationReference.tsx`) and its
+  Original Reference pane were removed. The workspace now shows Development alone.
+
 - **2026-10-26 (tagging leaves the chapter writer, and the HARNESS stops
   teaching craft):** Two changes to the words the writer reads, both SENSEI's.
 
@@ -688,8 +692,6 @@ existing Chapter Generation feature.
   development fallback.
 
 ## Implementation inventory and boundaries
-- `reference/` is a historical independent-baseline message. No legacy generator
-  component is copied or rendered there.
 - `development/` contains the active client workspace.
 - `shared/` owns the portable Foundation, response boundary, context compiler,
   controller, and browser repository contracts.

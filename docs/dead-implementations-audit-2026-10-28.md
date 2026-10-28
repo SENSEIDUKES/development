@@ -16,7 +16,7 @@ The method was an import-graph reconstruction over all 1,634 source files, resol
 
 | # | Finding | Size | Risk | Needs a decision? |
 |---|---|---|---|---|
-| 1 | The superseded Codex page is still published as a first-class SEN surface | ~30 files | Medium | **Yes** |
+| 1 | The superseded Codex page is still published as a first-class SEN surface | 18 files | Medium | **Yes** |
 | 2 | A dead mock playback module, plus a published contract that describes it wrongly | 1 file | Low | No |
 | 3 | Eight server barrels that export nothing reachable | 8 files | Low | No |
 | 4 | Four "adapter" files that point back at the package that points at them | 4 files | Low | No |
@@ -56,16 +56,24 @@ The practical costs:
 
 - **A promise the package cannot keep.** `src/package/sen/README.md:165-167` tells hosts that *"the top bar's Codex button opens the development Reader Codex as a page, with Holdings among its pages; `ReaderCodex` (in `./reader-codex`) takes `extraPages`."* The `extraPages` prop — the one documented way for a host to add its own Codex page — has **zero callers anywhere in the repository**. A host reading that README would build against an extension point that nothing demonstrates.
 - **Two sources of truth for the same idea.** An agent asked to "change the Codex" has two plausible targets and no signal about which one the product uses. That is exactly the confusion this audit exists to remove.
-- **Dead weight at the size of a feature.** Roughly 30 files and a third of a megabyte of source, all of it still passing its own tests, so nothing ever flags it as stale.
+- **Dead weight at the size of a feature.** The superseded set is **18 source files, 273 KB**, plus their tests — all still passing, so nothing ever flags it as stale.
 
 **What depends on it today.** Only the package barrel (`src/package/sen/reader-codex.ts`, 35 exports) and the tests that exercise it. The old section views are imported by exactly two Codex pages: the superseded development page and the locked historical `reference/` copy. The Workshop preview renders the **reference** copy on its Original Reference side and the **HARNESS** copy on its Development side — so the old page is not even on screen anywhere.
 
-**Important: not the whole tree is dead.** Two things in that folder are genuinely live and must stay:
+**The dead set, exactly** — 18 source files, 273 KB:
 
-- The **card surfaces** published through `@seihouse/sen/cards` — `CharacterCard`, `CharacterEditCard`, `CharacterProfile`, `LocationCard`, `LocationProfile`, `CodexHovercard`, `CodexCardAmbience`, `codexEntityAccent`. `CharacterCard` imports `ReaderCodexImageGallery`, so that one section view has a live caller.
-- **`src/components/reader-codex/shared/types.ts`**, which is still the shared reader contract (`checkNovelExpandedApp.mjs:44`) and is imported by `src/narrative/codexHighlighting.ts`.
+- `development/ReaderCodex.tsx`, `development/CodexSheetOverlay.tsx`, `development/ReaderCodexBestiary.tsx` — the page, its overlay, its bestiary.
+- `shared/codex/` — eleven of the twelve section views: `ReaderCodexCharacters`, `ReaderCodexFactions`, `ReaderCodexPower`, `ReaderCodexDashboards`, `ReaderCodexMysteries`, `ReaderCodexRelations`, `ReaderCodexTimeline`, `ReaderCodexArtifacts`, `ReaderCodexFate`, `ReaderCodexGlossary`, `ReaderCodexCollage`.
+- `shared/hooks/` — the four that only that page used: `useCodexAnalytics`, `useCodexImageEvolution`, `useCodexDeletions`, `useCodexLocations`.
 
-**Recommended action.** Delete the superseded page, its overlay, its bestiary, and the section views and hooks that only that page uses. Keep the card surfaces and `shared/types.ts`. Repoint the `@seihouse/sen/reader-codex` entry at the HARNESS Codex, or retire the entry. Then correct `src/package/sen/README.md:165-167` so it no longer promises `extraPages`.
+**Important: not the whole tree is dead.** These must stay:
+
+- The **card surfaces** published through `@seihouse/sen/cards` — `CharacterCard`, `CharacterEditCard`, `CharacterProfile`, `LocationCard`, `LocationProfile`, `CodexHovercard`, `CodexCardAmbience`, `codexEntityAccent`.
+- **`ReaderCodexImageGallery`** — the twelfth section view, imported by `character-cards/CharacterCard.tsx:99`.
+- **`shared/hooks/useCodexCharacterEditing.ts`** (used by `character-cards/CharacterEditCard.tsx:9`), **`useCodexVoiceQuote.ts`** (`CharacterCard.tsx:8`), **`useCodexVoiceCards.ts`** (which `useCodexVoiceQuote` calls), **`useHistoricalMediaUrls.ts`** and **`shared/codex/entityImageHistory.ts`** (used by `CharacterCard`, `LocationCard` and `ReaderCodexImageGallery`).
+- **`src/components/reader-codex/shared/types.ts`**, still the shared reader contract (`checkNovelExpandedApp.mjs:44`) and imported by `src/narrative/codexHighlighting.ts`.
+
+**Recommended action.** Delete the 18 files above and keep everything in the "must stay" list. Repoint the `@seihouse/sen/reader-codex` entry at the HARNESS Codex, or retire the entry. Then correct `src/package/sen/README.md:165-167` so it no longer promises `extraPages`.
 
 **Risk: medium.** It is published API, and SEN is meant to be embedded by other products. The rollback is a revert of one commit; the real risk is a host we cannot see.
 
@@ -206,7 +214,7 @@ Stated so the next audit does not repeat it:
 - **Every `vercelHandler.ts`** is a genuine bundler entry, not an orphan.
 - **The Postgres adapters** are test-reachable *and* documented as the durable reference in their own READMEs. Deliberately retained.
 - **No duplicate server implementation.** `src/server/model-router/*` over `src/library/model-router/*` is a correct facade-over-library pattern, with #7 the only divergence.
-- **No Workshop or mock file leaks into any published package entry.** I resolved every import closure for all 22 `@seihouse/sen/*` and `@seihouse/library/*` entries: zero Workshop, stub, `reference/`, or `readerPlayback` files.
+- **No Workshop or mock file leaks into any published package entry.** I resolved every import closure for all 37 `@seihouse/sen/*` and `@seihouse/library/*` entry points: zero Workshop, stub, `reference/`, or `readerPlayback` files.
 - **No orphan files under the `sen`/`library` component trees** — `check:ownership` already fails on those.
 - **No dead Workshop preview state.** Every mock and simulator under `src/workshop/previews/**` is referenced by its workspace.
 - **The `reference/` folders are not dead** — they are the historical material the repository rules require, and this audit leaves them alone. The one exception worth a decision is `src/components/reader-codex/reference/CodexSheetOverlay.tsx`, which nothing opens: the reader-chamber reference uses its own copy instead.

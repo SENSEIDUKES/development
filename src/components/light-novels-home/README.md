@@ -187,3 +187,11 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
   belong to Library presentation `materials.css`. Home retains component role mapping,
   artwork, media exceptions and footer clearance. Its rendered surfaces are compared
   against the active Palette & Materials samples in the browser regression.
+
+
+- **2026-10-28, background customization:** Home's existing shell role consumes the
+  profile's shared background tint and strength. Header, sidebar/mobile frame and
+  plain footer adopt it, including opaque accessibility fills. The artwork,
+  image/video cards, other glass panels, black buttons and spectrum effects remain
+  intact. Reset restores the original violet gradients; the Home Workshop iframe
+  shows the same saved app preference.

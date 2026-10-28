@@ -69,6 +69,20 @@ describe('The Cave on the device\'s profile', () => {
     expect(controller.formData.displayName).toBe('Unsaved name');
   });
 
+  it('saves the background independently of pending identity edits and the accent', async () => {
+    await mount();
+    await run(() => controller.handleAccentColorChange?.('#a78bfa'));
+    await run(() => controller.setFormData(previous => ({ ...previous, displayName: 'Unsaved name' })));
+    await run(() => controller.handleBackgroundTintChange?.({ color: '#FF69B4', strength: 65 }));
+    expect(store.read()).toMatchObject({ backgroundTint: { color: '#ff69b4', strength: 65 }, accentColor: '#a78bfa', displayName: '' });
+    expect(controller.formData.displayName).toBe('Unsaved name');
+    await run(() => controller.handleBackgroundTintChange?.({ color: '#ff69b4', strength: -1 }));
+    expect(store.read().backgroundTint?.strength).toBe(65);
+    await run(() => controller.handleBackgroundTintChange?.(undefined));
+    expect(store.read()).toMatchObject({ backgroundTint: undefined, accentColor: '#a78bfa' });
+    expect(controller.formData.displayName).toBe('Unsaved name');
+  });
+
   it('asks before a language change and reverts it after 30 seconds without an answer', async () => {
     vi.useFakeTimers();
     await mount();

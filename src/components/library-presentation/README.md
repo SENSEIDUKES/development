@@ -30,7 +30,7 @@ The change establishes reusable materials, not a global page migration. Other
 pages keep their current recipes until explicitly adopted. Future background hue
 and strength preferences belong with the existing Library presentation/profile
 flow, separate from material geometry, media and narrative Color Codes; no new
-per-page preference store. User tint controls are not added in this foundation pass.
+per-page preference store. Background tint controls were added in the follow-up below.
 
 ## Archive and saved work
 
@@ -44,3 +44,32 @@ The Effects section uses the live installed components/classes for action spectr
 brand emblem glow, Reader rim, Codex halo, navigation and button highlights. It is an
 inspection gallery; component-owned animation is not flattened into editable CSS
 shadow snapshots. Home remains the first adoption; Reader blue remains active.
+
+
+## 2026-10-28 — Background color and strength
+
+`BackgroundTint` is the shared Library appearance preference: a validated six-digit
+hex `color` and finite `strength` from 0 to 100. The existing device profile owns
+saving and reload; no page or material owns another preference store. Missing
+preferences preserve the original violet gradients. Zero strength is black;
+reset removes the preference and restores those exact gradients.
+
+`LibraryAppearanceScope` replaces the internal accent-only wrapper and keeps one
+stable DOM element through edits and resets. It supplies optional background
+inputs alongside the independent accent. `LibraryPresentationProvider` accepts
+`backgroundTint`; `LibraryMaterialSurface` and Home's role adapter resolve it at
+their own scope. Body-level material defaults remain for the existing portaled
+companion surfaces, without inheriting the background preference.
+
+`BackgroundTintControls` uses a native color picker and keyboard-operable strength
+slider, a live canonical material preview and reset. Brightness is bounded at a
+maximum RGB channel of 50 to retain readable light text. Color details show the
+chosen hue and resulting dark tone. Strength does not change material opacity,
+blur, borders or glows. Reduced-transparency fills retain the hue with an opaque
+surface; forced colors use the system palette.
+
+Home remains the adopter: header, navigation frame and plain footer. Artwork,
+black control faces, other glass roles, Reader blue and Story Seed retain their
+appearance. The Profile Workshop uses the same controls with its existing isolated
+mock state. This does not synchronize preferences to a backend or migrate other
+pages into the appearance system.

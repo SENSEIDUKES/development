@@ -1,7 +1,8 @@
+import { materialColors, THEME_COLORS } from './colors';
 import { EffectsGallery } from './EffectsGallery';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { MATERIALS, MaterialSurface, COLOR_GROUPS } from './samples';
+import { MATERIALS, MaterialSurface } from './samples';
 import {
   baseBlur, baseOpacity, baseTint, colorParts, decodeLooks, encodeLooks, freshSettings,
   isColoredShadow, materialStyle, measureMaterial, shadowLayers, writeLooks,
@@ -24,7 +25,7 @@ function Slider({ label, value, max, unit = '%', onChange }: { label: string; va
 }
 function RecipeDetails({ base, source }: { base?: MeasuredMaterial; source: string }) {
   return <details className="pm-details"><summary>Values & source</summary><p>{source}</p>
-    {base && <dl>{Object.entries(base).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>}
+    {base && <dl>{Object.entries(base).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{Array.isArray(value) ? value.join(', ') : value}</dd></div>)}</dl>}
   </details>;
 }
 
@@ -77,9 +78,7 @@ export function PaletteMaterials() {
       setMeasured(next);
       const root = getComputedStyle(document.documentElement);
       const nextTokens: Record<string, string> = {};
-      for (const group of COLOR_GROUPS) for (const color of group.colors) {
-        if ('token' in color) nextTokens[color.token] = root.getPropertyValue(color.token).trim() || color.value;
-      }
+      for (const color of THEME_COLORS) nextTokens[color.token] = root.getPropertyValue(color.token).trim();
       setTokens(nextTokens);
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(read); };
@@ -232,16 +231,16 @@ export function PaletteMaterials() {
 
     <EffectsGallery />
 
-    <section id="pm-colors" className="pm-section"><div className="pm-section-heading"><div><span className="pm-eyebrow">02 / The paints</span><h2>Colors already in the app.</h2></div>
+    <section id="pm-colors" className="pm-section"><div className="pm-section-heading"><div><span className="pm-eyebrow">02 / The paints</span><h2>Colors already in the app.</h2><p className="pm-note">Shared material defaults. Your personal background tint is shown in Profile settings.</p></div>
       <label>Use a swatch for<select aria-label="Use a swatch for" value={colorTarget} onChange={e => setColorTarget(e.target.value as 'text' | 'accent')}><option value="accent">Composition accent</option><option value="text">Composition text</option></select></label></div>
-      {COLOR_GROUPS.map(group => <details className="pm-color-group" key={group.name} open={!group.name.startsWith('Archived')}><summary>{group.name}</summary><div className="pm-swatches">{group.colors.map(color => {
-        const value = 'token' in color ? tokens[color.token] || color.value : measured[color.sample]?.[color.property] ?? color.value;
+      {materialColors(measured, tokens).map(group => <details className="pm-color-group" key={group.name} open={!group.name.startsWith('Archived') && group.name !== 'Surface gradient layers'}><summary>{group.name}</summary><div className="pm-swatches">{group.colors.map(color => {
+        const value = color.value;
         const hex = value.startsWith('#') ? value.slice(0, 7) : colorParts(value).hex;
         return <button key={color.name} type="button" className="pm-swatch" onClick={() => update({ colors: { ...settings.colors, [colorTarget]: hex } })} aria-label={`Use ${color.name} as ${colorTarget}`}>
           <span className="pm-color-chip"><span style={{ background: value }} /></span><strong>{color.name}</strong><code>{value}</code><small>{color.usage}</small>
         </button>;
       })}</div></details>)}
-      <p className="pm-note">Swatches use live theme values and sample colors. Transparent swatches show their opacity; applying one to text or an accent uses its solid color.</p>
+      <p className="pm-note">These are the shared materials’ default colors, read from their rendered layers and theme values. Your background tint is saved in Profile settings; material experiments and saved looks do not change this inventory. Transparent swatches show their opacity; applying one to text or an accent uses its solid color.</p>
     </section>
 
     <section id="pm-composition" className="pm-section"><div className="pm-section-heading"><div><span className="pm-eyebrow">03 / Put it together</span><h2>One small world.</h2></div><p>Assign materials, then see them next to each other.</p></div>

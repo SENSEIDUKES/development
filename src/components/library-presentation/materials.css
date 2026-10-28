@@ -1,17 +1,17 @@
 /* Canonical Library materials. Home is a role adapter; Workshop uses the same recipes. */
 /* One app-owned blue-violet recipe for Story Seed and the Home chrome trial. */
-.seed-field-scope, .library-material-scope, body:has(.library-home-palette) {
+.seed-field-scope, .library-material-scope, .library-home-palette, body:has(.library-home-palette) {
   --library-material-violet-fill:
     radial-gradient(18rem 10rem at 88% -8%, rgba(205, 178, 113, 0.05), transparent 62%),
     linear-gradient(160deg, rgba(105, 130, 225, 0.06), rgba(70, 60, 160, 0.04) 50%, rgba(12, 15, 34, 0)),
     rgba(11, 14, 30, var(--library-material-violet-opacity, 0.46));
 }
-.library-material-scope, body:has(.library-home-palette) {
+.library-material-scope, .library-home-palette, body:has(.library-home-palette) {
   --library-material-text: #fff;
   --library-material-muted: #ffffffb8;
   --library-material-control-fill: rgba(0, 0, 0, .95);
   --library-material-violet-opacity: .95;
-  --library-material-shell-fill: var(--library-material-violet-fill);
+  --library-material-shell-fill: var(--library-background-fill, var(--library-material-violet-fill));
   --library-material-panel-fill: radial-gradient(288px 160px at 88% -8%, rgba(0, 55, 74, .01), rgba(0, 55, 74, 0) 62%), linear-gradient(160deg, rgba(0, 55, 74, .016), rgba(0, 55, 74, .01) 50%, rgba(0, 55, 74, 0)), rgba(0, 55, 74, .12);
   --library-material-card-fill: radial-gradient(130% 100% at 50% 0%, #0000000d, #0000 52%), linear-gradient(168deg, #0000000d, rgba(0, 0, 0, .01) 40%, rgba(0, 0, 0, .082)), rgba(0, 0, 0, .35);
   --library-material-panel-blur: blur(24px);
@@ -60,11 +60,11 @@
   background-image: none;
 }
 @media (prefers-reduced-transparency: reduce) {
-  .library-material-scope, body:has(.library-home-palette) { --library-material-panel-fill: #0c1c24; --library-material-card-fill: #080b0d; --library-material-control-fill: #000; --library-material-shell-fill: #0b0e1e; --library-material-panel-blur: none; --library-material-card-blur: none; --library-material-control-blur: none; }
+  .library-material-scope, .library-home-palette, body:has(.library-home-palette) { --library-material-panel-fill: #0c1c24; --library-material-card-fill: #080b0d; --library-material-control-fill: #000; --library-material-shell-fill: var(--library-background-solid, #0b0e1e); --library-material-panel-blur: none; --library-material-card-blur: none; --library-material-control-blur: none; }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .library-material-scope, body:has(.library-home-palette) { --library-material-panel-fill: #0c1c24; --library-material-card-fill: #080b0d; --library-material-control-fill: #000; --library-material-shell-fill: #0b0e1e; }
+  .library-material-scope, .library-home-palette, body:has(.library-home-palette) { --library-material-panel-fill: #0c1c24; --library-material-card-fill: #080b0d; --library-material-control-fill: #000; --library-material-shell-fill: var(--library-background-solid, #0b0e1e); }
 }
 @media (forced-colors: active) {
-  .library-material-scope, body:has(.library-home-palette) { --library-material-text: CanvasText; --library-material-muted: CanvasText; --library-material-panel-fill: Canvas; --library-material-card-fill: Canvas; --library-material-control-fill: Canvas; --library-material-shell-fill: Canvas; --reader-glass-edge: ButtonText; --library-material-panel-shadow: none; --library-material-card-shadow: none; --library-material-control-shadow: none; --library-material-shell-shadow: none; --library-material-panel-blur: none; --library-material-card-blur: none; --library-material-control-blur: none; }
+  .library-material-scope, .library-home-palette, body:has(.library-home-palette) { --library-material-text: CanvasText; --library-material-muted: CanvasText; --library-material-panel-fill: Canvas; --library-material-card-fill: Canvas; --library-material-control-fill: Canvas; --library-material-shell-fill: Canvas; --reader-glass-edge: ButtonText; --library-material-panel-shadow: none; --library-material-card-shadow: none; --library-material-control-shadow: none; --library-material-shell-shadow: none; --library-material-panel-blur: none; --library-material-card-blur: none; --library-material-control-blur: none; }
 }

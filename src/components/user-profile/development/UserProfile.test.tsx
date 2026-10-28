@@ -820,7 +820,7 @@ describe('Cultivator Cave settings', () => {
     const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-label="Settings categories"] [role="tab"]'));
     expect(tabs.map(tab => tab.textContent)).toEqual(['Customization', 'Accessibility', 'Account', 'Advanced']);
     const visibleHeadings = () => Array.from(document.querySelectorAll('[data-cave-settings] [data-slot="disclosure-heading"]')).filter(node => !node.closest('[hidden]')).map(node => node.textContent);
-    expect(visibleHeadings()).toEqual(['Accent color', 'Identity & Cultivator Aura', 'Profile picture', 'Cave Environment', 'Sound']);
+    expect(visibleHeadings()).toEqual(['Background tint', 'Accent color', 'Identity & Cultivator Aura', 'Profile picture', 'Cave Environment', 'Sound']);
     await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Cloud Reader' })));
     await click(tabs[1]);
     expect(visibleHeadings()).toEqual(['Language', 'Writing Preferences', 'Keyboard Shortcuts']);
@@ -832,6 +832,33 @@ describe('Cultivator Cave settings', () => {
     await click(tabs[0]);
     expect(document.querySelector<HTMLInputElement>('#cave-display-name')?.value).toBe('Cloud Reader');
     expect(byText<HTMLButtonElement>('button', 'Guard Changes').disabled).toBe(false);
+  });
+
+  it('keeps background controls mounted and preserves identity and accent while editing', async () => {
+    const { controller } = await renderCave();
+    await navigateTo('/settings');
+    await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Keep draft' })));
+    await act(async () => controller().handleAccentColorChange?.('#a78bfa'));
+    await click(byText('[data-slot="disclosure-trigger"]', 'Background tint'));
+    const picker = document.querySelector<HTMLInputElement>('input[aria-label="Background color"]')!;
+    const strength = document.querySelector<HTMLInputElement>('input[aria-label="Tint strength"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(picker, '#ff69b4');
+      picker.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(strength, '0');
+      strength.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(controller().profile?.backgroundTint).toEqual({ color: '#ff69b4', strength: 0 });
+    expect(controller().profile?.accentColor).toBe('#a78bfa');
+    expect(controller().formData.displayName).toBe('Keep draft');
+    expect(document.querySelector('input[aria-label="Tint strength"]')).toBe(strength);
+    expect(byText('[data-slot="disclosure-trigger"]', 'Background tint').getAttribute('aria-expanded')).toBe('true');
+    expect(document.querySelector<HTMLElement>('.library-appearance-scope')?.style.getPropertyValue('--library-background-solid')).toBe('#000000');
+    await click(byText('button', 'Use default background'));
+    expect(controller().profile?.backgroundTint).toBeUndefined();
+    expect(controller().profile?.accentColor).toBe('#a78bfa');
   });
 
   it('changes the interface accent independently of the name aura and can restore native colors', async () => {
@@ -865,6 +892,7 @@ describe('Cultivator Cave settings', () => {
       element => element.textContent,
     );
     expect(headings).toEqual([
+      'Background tint',
       'Accent color',
       'Identity & Cultivator Aura',
       'Profile picture',

@@ -34,20 +34,34 @@ export interface MeasuredMaterial {
   backgroundColor: string; backgroundImage: string; borderColor: string;
   borderWidth: string; boxShadow: string; backdropFilter: string; color: string;
   hoverGlow?: string;
+  mutedColor?: string;
+  gradientColors?: string[];
+  rimColors?: string[];
+  shadowColors?: string[];
+  spectrumColors?: string[];
   gradientStart?: string;
   gradientEnd?: string;
 }
+export const cssColors = (value: string): string[] => [...new Set(value.match(/#[0-9a-f]{3,8}\b|rgba?\([^)]+\)/gi) ?? [])];
+
 export function measureMaterial(element: Element): MeasuredMaterial {
   const s = getComputedStyle(element);
-  const stops = s.backgroundImage.match(/rgba?\([^)]+\)/g);
+  const stops = cssColors(s.backgroundImage);
+  const spectrum = element.getAttribute('data-library-material') === 'rainbow-action'
+    ? cssColors(getComputedStyle(element, '::before').backgroundImage + ', ' + getComputedStyle(element, '::after').backgroundImage) : [];
   return { backgroundColor: s.backgroundColor, backgroundImage: s.backgroundImage,
     borderColor: s.borderTopColor, borderWidth: s.borderTopWidth,
     boxShadow: s.boxShadow, backdropFilter: s.backdropFilter, color: s.color,
-    hoverGlow: s.getPropertyValue('--glass-glow-hover').trim() || undefined,
+    hoverGlow: cssColors(s.getPropertyValue('--glass-glow-hover'))[0],
+    mutedColor: s.getPropertyValue('--library-material-muted').trim() || undefined,
+    gradientColors: stops, rimColors: cssColors(s.getPropertyValue('--reader-seam-colors')),
+    shadowColors: cssColors(s.boxShadow), spectrumColors: spectrum,
     gradientStart: stops?.[0], gradientEnd: stops?.[stops.length - 1] };
 }
 
 export function colorParts(value: string): { hex: string; alpha: number } {
+  const hex = value.match(/^#([\da-f]{6})([\da-f]{2})?$/i);
+  if (hex) return { hex: '#' + hex[1].toLowerCase(), alpha: hex[2] ? parseInt(hex[2], 16) / 255 : 1 };
   const parts = value.match(/[\d.]+/g)?.map(Number) ?? [];
   return { hex: parts.length >= 3 ? '#' + parts.slice(0, 3).map(n => Math.round(n).toString(16).padStart(2, '0')).join('') : '#000000', alpha: parts[3] ?? 1 };
 }

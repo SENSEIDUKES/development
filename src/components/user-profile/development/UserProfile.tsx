@@ -1,4 +1,4 @@
-import { LibraryAccentScope } from '../../library-presentation/LibraryAccentScope';
+import { LibraryAppearanceScope } from '../../library-presentation/LibraryAppearanceScope';
 import { useLibraryAssets } from '../../../library/assets';
 import { UserProfileHome } from './UserProfileHome';
 import type { CaveAccountControls } from './caveAccountControls';
@@ -560,7 +560,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       emblem: ownProfile?.avatarUrl ? <img src={ownProfile.avatarUrl} alt="" /> : undefined,
       onSelect: () => navigate('/home') };
   return (
-    <LibraryAccentScope color={hostController.profile?.accentColor}>
+    <LibraryAppearanceScope color={hostController.profile?.accentColor} backgroundTint={hostController.profile?.backgroundTint}>
     <LibraryNavigation location={{ screen: 'profile', cave: route.path }} onNavigate={target => {
       if (target.screen === 'profile') navigate(target.cave ?? '/home');
       else onNavigateLibrary(target);
@@ -669,6 +669,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       </SEIDialog>
     </div>
     </LibraryNavigation>
-    </LibraryAccentScope>
+    </LibraryAppearanceScope>
   );
 }

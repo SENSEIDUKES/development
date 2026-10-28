@@ -108,3 +108,17 @@ Effects has its own mobile tab and desktop section. It renders live action spect
 logo glow, Reader rim, Codex halo, navigation selection and button highlight owners;
 hover/focus/press work on real controls. Earlier color inventories are collapsed.
 See `../library-presentation/README.md` for ownership and adoption boundaries.
+
+
+## 2026-10-28 — Actual color inventory
+
+Colors now derives swatches from the rendered active material layers: base fills,
+text (including actual white and supporting white), Reader gradient/rim stops,
+border and shadow colors, and both the action ring and halo spectrum. Theme
+accents come from their live canonical tokens. The handwritten fallback list was
+removed; missing measurements are not presented as substitute paints. Base colors
+appear first, while subtle gradient layers and the prior inventory are collapsed.
+
+The inventory explicitly shows shared material defaults; the user's personal
+background tint and its exact dark tone are visible in Profile settings. Experiments
+and saved looks keep their own colors and never redefine this source inventory.

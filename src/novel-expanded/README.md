@@ -1,5 +1,7 @@
 # NovelExpanded app
 
+- **2026-10-28** — Profile Customization adds Background tint: a color picker, Black → Full color slider, live shared-material preview, and reset. It saves on the existing device profile, preserves unfinished identity edits and the independent accent, and currently colors only Home's header, navigation frame and plain footer. Hues stay dark enough for light text; artwork, black controls, panel glass and Reader blue retain their own appearance. Palette & Materials Colors now inventories actual rendered base, text, border, shadow and spectrum layers instead of fallback swatches.
+
 - **2026-10-28, background follow-up:** Home's plain footer now shares the header's
   Story Seed blue-violet finish. The artwork backdrop behind Home content remains.
   Buttons retain black fills; media remains clear. Reader tests now locate their

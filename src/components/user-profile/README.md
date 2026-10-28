@@ -938,3 +938,18 @@ yet."):
 Each control still shows, disabled, with the note beside it (`data-cave-not-yet-built`),
 so a reader sees what is coming and no control does nothing. Everything else stays the
 controller's. Omitted, the Cave is as before. `notYetBuiltNote(services, feature)` reads it.
+
+
+### 2026-10-28 — Background tint customization
+
+Settings → Customization → Appearance includes **Background tint** before Accent
+color when the host supplies `handleBackgroundTintChange`. Color and the
+Black → Full color strength slider save immediately through the existing device
+profile. A canonical preview shows the result with a black control face; **Use
+default background** restores the original gradients. A chosen hue is darkened to
+keep light text readable; expanded Color details shows both exact colors.
+
+Edits keep the disclosure and input nodes mounted, preserve unfinished identity
+edits, and leave accent and Cultivator Aura choices independent. NovelExpanded
+currently applies the preference only to Home's header, navigation frame and plain
+footer. Workshop Profile uses the same component with its isolated mock profile.

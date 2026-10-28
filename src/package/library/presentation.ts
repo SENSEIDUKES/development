@@ -9,3 +9,6 @@ export { LibraryDaoInsightIcon, type LibraryDaoInsightIconProps } from '../../co
 export { LibraryMortalPressureIcon, LibraryImmortalPressureIcon, LibraryHeavenPressureIcon, LibrarySurvivalIcon, LibraryGenreIcon } from '../../components/sen-icons/LibraryIcons';
 
 export { LIBRARY_MATERIALS, LibraryMaterialSurface, type LibraryMaterialId } from '../../components/library-presentation/LibraryMaterialSurface';
+
+export { LibraryAppearanceScope } from '../../components/library-presentation/LibraryAppearanceScope';
+export { DEFAULT_BACKGROUND_TINT, normalizeBackgroundTint, backgroundTintColor, backgroundTintFill, type BackgroundTint } from '../../components/library-presentation/backgroundTint';

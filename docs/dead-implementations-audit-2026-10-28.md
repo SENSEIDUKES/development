@@ -26,6 +26,7 @@ The method was an import-graph reconstruction over all 1,634 source files, resol
 | 8 | A preview route that exists but is not listed anywhere | 1 route | Low | No |
 | 9 | The same keyboard helper written twice, with different behaviour | 2 files | Medium | **Yes** |
 | 10 | A leftover nested checkout that breaks `npm test` locally | 390 MB | Low | No |
+| 11 | The test suite is not green on a Windows checkout | 4 files / 5 tests | Low | No |
 
 **The single most consequential item is #1** — not because of its volume (three files), but because it is the only one that leaves two competing answers to "what is the Codex," and the only one that needs your word before anything moves. Everything else is housekeeping that can land in one change.
 
@@ -241,6 +242,40 @@ This one is not repository code — it is in the working directory — but it co
 
 ---
 
+## 11. The test suite is not green on a Windows checkout
+
+This one costs every Windows contributor — and every agent working on this repository from a Windows machine — a red test run that has nothing to do with their change.
+
+**What it is.** With the leftover worktree from #10 excluded, `npm test` still fails **4 test files / 5 tests**. CI is green, so these are local-only. Three of the five are deterministic; two are timeouts.
+
+**Why it should be cleaned up.** The deterministic three are all in `src/components/reader-chamber/reference/snapshot.test.ts`, and all three are line-ending artifacts:
+
+| Test | Failure | Cause |
+|---|---|---|
+| "keeps every copied production file byte-for-byte unchanged" | `expected [ …(119) ] to deeply equal []` | all 119 verbatim files hash differently |
+| "lists every file in the copy, and nothing that is missing" | `expected [ …(127) ] to deeply equal [ …(127) ]` | Windows path separators against forward-slash paths |
+| "marks every stand-in as a Workshop seam" | `expected false to be true` | the seam check is `startsWith('/**\n * WORKSHOP SEAM')`, and the file starts `/**\r\n` |
+
+The cause is `core.autocrlf = true`. Git checks the reference copy out with CRLF line endings, while `snapshot.json` records SHA-256 hashes of the LF form stored in the repository. I verified this directly: across all 119 verbatim files, the working-tree hash mismatches the manifest **119 times**, and the hash of the same file read from git's index mismatches **0 times**.
+
+**The repository already has the fix, for the same reason.** `.gitattributes` carries:
+
+> `# Byte-verified Familiar assets retain their supplied bytes, including metadata line endings,` `# across platforms. Renderer-only pet-request projections are intentionally sanitized first.`
+> `public/familiars/** -text`
+> `src/host/familiar/package-metadata/** -text`
+
+The production Reader snapshot is byte-verified in exactly the same way, and is missing from that list.
+
+**The other two failures are timeouts.** `scripts/checkNovelExpandedApp.test.ts` ("passes the real app", 12.3 s) and `src/components/story-seed/development/ArcWorkspace.test.tsx` ("saves every Blueprint review edit…", 6.1 s) both fail with `Test timed out in 5000ms` — vitest's default budget. The surrounding `Not implemented: HTMLCanvasElement's getContext()` lines are jsdom noise from the missing `canvas` package, not the assertion.
+
+**What depends on it.** Nothing in the product — the failures are in the test harness only.
+
+**Recommended action.** Add `src/components/reader-chamber/reference/light-novels/** -text` to `.gitattributes`, matching the existing byte-verified rules, and normalise the paths and seam-header checks in `snapshot.test.ts` to be platform-independent. Then either raise the timeout for the two slow tests or give them an explicit budget — a five-second default is tight for a test that walks the whole app import graph.
+
+**Risk: low.** The `.gitattributes` change alters what Git writes to disk for those files, so it needs one `git rm --cached` + re-checkout for the rule to take effect on an existing clone. **Confidence: high** on the diagnosis — it was measured, not inferred.
+
+---
+
 ## The guard gap — why all of this survived
 
 `scripts/ownershipGraph.mjs:145` already computes reachability. It just never runs where it would matter:
@@ -274,5 +309,7 @@ Stated so the next audit does not repeat it:
 Import-graph reconstruction over all 1,634 files under `src/`, resolved against every entry point: `api/`, the ten `scripts/build*Api.mjs` bundlers, `src/server/developmentApis.ts`, `vite.config.ts`, `src/host/`, and the `exports` maps in `src/package/{sen,library}/package.json`. Cross-checked against `npm run check:ownership` (0 violations) and `npm run check:package-boundaries` so that nothing already guarded is reported as new. Every finding above was confirmed by grep before it was written down, and the published-package import closures were computed directly rather than assumed.
 
 Checks run against this branch: `npm run check:ownership` (1634 source files, 0 violations), `npm run check:package-boundaries` (0 violations), `npm run check:app` (690 files reached, 0 violations), `npm run typecheck` (clean), and CI's `verify` job (green, including `npm test`).
+
+The local `npm test` run on this Windows machine is **not** green, for the two reasons in findings 10 and 11. Neither is caused by this branch, which changes one Markdown file and no code.
 
 **This audit changed no product code.** It is a report only.

@@ -360,6 +360,26 @@ describe('sound tags', () => {
     expect(quoted.speakers).toEqual([{ name: 'Mara', offset: 'growled'.length }]);
   });
 
+  /**
+   * What follows a closing tag is not what follows it in the source: another
+   * tag can stand in between, and the script that spaces its words can be any
+   * of them (Codex on #463). The space is settled against the prose actually
+   * written next, whatever stands in the way of it.
+   */
+  it('settles a held space against the prose, not the next character', () => {
+    // A tag in the way: the space is still the only thing between two words.
+    expect(readMarks('He [[sound: footsteps | walked | low]][[sound: door | home | low]].').text).toBe('He walked home.');
+    expect(readMarks('He [[sound: footsteps | walked | low]][[@Mara]]home.').text).toBe('He walked home.');
+    expect(readMarks('He [[sound: footsteps | walked | low]][[equipped: MC | Sword]]home.').text).toBe('He walked home.');
+    // A tag in the way and punctuation past it: the space is the closing tag's own.
+    expect(readMarks('He [[sound: footsteps | walked | low]][[@Mara]], then stopped.').text).toBe('He walked, then stopped.');
+    // Korean spaces its words, so the space separates and stays.
+    expect(readMarks('그는 [[sound: footsteps | 걸어 | low]]집으로 갔다.').text).toBe('그는 걸어 집으로 갔다.');
+    expect(readMarks('그는 [[sound: footsteps | 걸어 | low]].').text).toBe('그는 걸어.');
+    // Japanese does not, so there it is the tag's and goes.
+    expect(readMarks('林は[[sound: growl | 唉った | low]]家に入った。').text).toBe('林は唉った家に入った。');
+  });
+
   it('reads a tag written the other way round the right way, given the story\'s sound words', () => {
     const reading = readMarks('He [[sound: drew his sword | blade drawn]] and waited.', { soundWords: ['blade drawn', 'beast roar'] });
     expect(reading.text).toBe('He drew his sword and waited.');

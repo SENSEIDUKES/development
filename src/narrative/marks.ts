@@ -292,8 +292,11 @@ const SOUNDTRACK_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${SOUNDTRACK_TAG_
 
 const toNumber = (digits: string) => Number(digits.replace(/[０-９]/g, digit => String(digit.charCodeAt(0) - 0xff10)));
 const isSpace = (character: string | undefined) => character !== undefined && /[ \t　]/.test(character);
-/** Scripts written without spaces between their words. */
-const SPACELESS_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u;
+/**
+ * Scripts written without spaces between their words. Hangul is not one of
+ * them: Korean spaces its words, so a space before it is doing the separating.
+ */
+const SPACELESS_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u;
 /** A word a space has to be kept in front of: a letter or digit in a script that spaces its words. */
 const spacesItsWords = (character: string | undefined) =>
   character !== undefined && /[\p{L}\p{N}]/u.test(character) && !SPACELESS_SCRIPT.test(character);
@@ -377,6 +380,9 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
    */
   let tagWords: number | undefined;
 
+  /** A closing tag's own space, waiting on the prose that follows to say whether it separates two words. */
+  let heldSpace: number | undefined;
+
   /** Removing a token between two spaces would leave a double space; keep one. */
   const skipDoubledSpace = (next: number) => (isSpace(text.at(-1)) && isSpace(source[next]) ? next + 1 : next);
 
@@ -390,19 +396,31 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
    * tagged clauses end. Never trimmed past the span's own start, so prose
    * space written before the tag stays prose.
    *
-   * `following` is the prose the closing tag gives way to. Where a word in a
-   * script that spaces its words begins there, the space is the only thing
-   * standing between two words — `[[sound: footsteps | walked ]]home.` — so one
-   * of them stays; before punctuation, a closing quote, an ideograph or nothing
-   * at all it is the tag's own and goes. A tag recorded inside the space that
-   * goes comes back to where the prose now ends, so it keeps its place in it.
+   * Whether it goes depends on the prose that follows, which the closing tag is
+   * not the end of: another tag may stand between them, so the character after
+   * `]]` is no answer. The space is held instead, and `settleHeldSpace` settles
+   * it against the first prose actually written after it.
    */
-  const dropSpaceInsideSpan = (start: number, following?: string) => {
+  const dropSpaceInsideSpan = (start: number) => {
     let end = text.length;
     while (end > start && isSpace(text[end - 1])) end -= 1;
-    if (end === text.length) return;
-    if (spacesItsWords(following)) end += 1;
-    if (end === text.length) return;
+    if (end < text.length) heldSpace = end;
+  };
+
+  /**
+   * Settles the held space against the prose that follows it. Where a word in a
+   * script that spaces its words begins there, the space is the only thing
+   * standing between two words — `[[sound: footsteps | walked ]]home.`, and the
+   * same with a tag in between — so it stays and becomes prose. Before
+   * punctuation, a closing quote, an ideograph, another space or nothing at all
+   * it is the tag's own and goes, and a tag recorded inside it comes back to
+   * where the prose now ends, so it keeps its place in it.
+   */
+  const settleHeldSpace = (following: string) => {
+    if (heldSpace === undefined) return;
+    const end = heldSpace;
+    heldSpace = undefined;
+    if (spacesItsWords(following[0])) return;
     text = text.slice(0, end);
     for (const tag of [...speakers, ...wordTags, ...soundtracks]) if (tag.offset > end) tag.offset = end;
   };
@@ -437,15 +455,16 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
    * span still leaves its closing space behind in the prose, so that is dropped
    * before the span it is nested in is given up on.
    */
-  const closeSpan = (trailing?: string, following?: string) => {
+  const closeSpan = (trailing?: string) => {
     const span = spans.pop()!;
-    dropSpaceInsideSpan(span.start, following);
+    dropSpaceInsideSpan(span.start);
     if (span.inner) return;
     if (span.kind === 'mark') { addSpan(span.id, span.start, text.length); return; }
     const words = text.slice(span.start).trim();
     // `[[sound: thunder | high]]` names an Energy, not words: it is removed whole.
     if (!span.energy && energyOf(words)) {
       text = text.slice(0, span.start);
+      heldSpace = undefined;
       soundIssues.push({ kind: 'incomplete' });
       return;
     }
@@ -455,6 +474,7 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
     if (knownSounds && !knownSounds.has(normalizeSoundWord(sound)) && knownSounds.has(normalizeSoundWord(words))
       && !speakers.some(tag => tag.offset > span.start) && !wordTags.some(tag => tag.offset > span.start)) {
       text = text.slice(0, span.start) + sound;
+      heldSpace = undefined;
       sound = words;
     }
     const range = wrapped(span.start, text.length);
@@ -522,6 +542,7 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
           const name = namedInPlace(text, source.slice(index + wordTag[0].length), named);
           if (name) {
             // The tag stood where its name belongs: the name stays, with the text's own spacing around it.
+            settleHeldSpace(name);
             text += isSpace(text.at(-1)) ? name : ` ${name}`;
             index += wordTag[0].length;
             continue;
@@ -545,6 +566,7 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
       }
       const reversed = matchAt(REVERSED, source, index);
       if (reversed) {
+        settleHeldSpace(reversed[1]);
         const start = text.length;
         text += reversed[1];
         const id = toNumber(reversed[2]);
@@ -563,7 +585,7 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
     if (spans.at(-1)?.kind === 'sound' && (character === '|' || character === '｜')) {
       const closing = matchAt(SOUND_CLOSE_WITH_PART, source, index);
       if (closing) {
-        closeSpan(closing[1], source[index + closing[0].length]);
+        closeSpan(closing[1]);
         index = skipDoubledSpace(index + closing[0].length);
         continue;
       }
@@ -573,20 +595,23 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
     }
     if (spans.length && (character === ']' || character === '］')) {
       const closing = matchAt(SPAN_CLOSE, source, index)!;
-      closeSpan(undefined, source[index + closing[0].length]);
+      closeSpan();
       index = skipDoubledSpace(index + closing[0].length);
       continue;
     }
     if (tagWords !== undefined && (character === ']' || character === '］')) {
       const closing = matchAt(SPAN_CLOSE, source, index)!;
-      dropSpaceInsideSpan(tagWords, source[index + closing[0].length]);
+      dropSpaceInsideSpan(tagWords);
       tagWords = undefined;
       index = skipDoubledSpace(index + closing[0].length);
       continue;
     }
+    settleHeldSpace(character);
     text += character;
     index += 1;
   }
+  // Nothing followed it, so it was the closing tag's own.
+  settleHeldSpace('');
   const outer = spans[0];
   if (outer?.kind === 'mark') issues.push({ kind: 'unclosed', id: outer.id });
   if (outer?.kind === 'sound') soundIssues.push({ kind: 'unclosed', sound: outer.sound });

@@ -26,6 +26,9 @@ describe('readMarks', () => {
     expect(words(readMarks('He [[drew his sword|1]] fast.'))).toEqual([[1, 'drew his sword']]);
     expect(words(readMarks('He [[1st strike|2]] landed.'))).toEqual([[2, '1st strike']]);
     expect(words(readMarks('[[1|2]] blows'))).toEqual([[1, '2']]);
+    // A space before the closing bracket is the mark's, not the sentence's: it never lands before punctuation.
+    expect(readMarks('He [[1|drew his sword ]], fast.').text).toBe('He drew his sword, fast.');
+    expect(readMarks('He [[1|drew his sword ]] fast.').text).toBe('He drew his sword fast.');
   });
 
   it('reads full-width brackets, pipes and digits in CJK prose', () => {
@@ -96,6 +99,9 @@ describe('speaker tags', () => {
     const inside = readMarks('[[@Mara|“Hold the gate.”]] she said.');
     expect(inside.text).toBe('“Hold the gate.” she said.');
     expect(tags(inside)).toEqual([['Mara', '“Hold the gate.” she said.']]);
+    // A space before the closing bracket is the tag's, not the sentence's: it never lands before punctuation.
+    expect(readMarks('[[@Mara| “Hold the gate” ]], she said.').text).toBe('“Hold the gate”, she said.');
+    expect(readMarks('[[@Mara| “Hold the gate” ]] she said.').text).toBe('“Hold the gate” she said.');
   });
 
   it('is read before marks: never a reversed span, and a tag inside a span leaves the span whole', () => {
@@ -303,6 +309,75 @@ describe('sound tags', () => {
       expect(reading.text).toBe(text);
       expect(sounds(reading)).toEqual(expected);
     }
+  });
+
+  /**
+   * The seam the first tagged chapter failed on (The Footnote Ascendant,
+   * 2026-10-27): a tag closed right before a comma or a full stop. The space
+   * the tagger writes before `| Energy]]` is the tag's own, and leaving it in
+   * put a space before the punctuation, which made the paragraph no longer the
+   * prose it was tagged from — so the whole chapter's tags were refused. It is
+   * invisible when a space follows the tag instead, which is the only shape
+   * the tagger is shown, so nothing taught it to avoid this one.
+   */
+  it('leaves no space behind when a tag closes on punctuation', () => {
+    const cases: Array<[string, string, ReturnType<typeof sounds>]> = [
+      ['Her palms [[sound: fire spell | glowed | medium]], red-gold and rising.', 'Her palms glowed, red-gold and rising.', [['fire spell', 'medium', 'glowed']]],
+      ['It [[sound: growl | growled | medium]]. Then it stopped.', 'It growled. Then it stopped.', [['growl', 'medium', 'growled']]],
+      ['It [[sound: growl | growled ]]. Then it stopped.', 'It growled. Then it stopped.', [['growl', undefined, 'growled']]],
+      ['It [[sound: growl | growled | medium]]: the yard fell still.', 'It growled: the yard fell still.', [['growl', 'medium', 'growled']]],
+      ['林は［［sound：growl｜唸った ｜ medium］］。', '林は唸った。', [['growl', 'medium', '唸った']]],
+      // A space after the tag is still one space, not two: the word space was always there.
+      ['It [[sound: growl | growled | medium]] and stopped.', 'It growled and stopped.', [['growl', 'medium', 'growled']]],
+      ['It [[sound: growl | growled ]] and stopped.', 'It growled and stopped.', [['growl', undefined, 'growled']]],
+      // A word right after the close: there that space is the only thing between two words, so one of them stays.
+      ['He [[sound: footsteps | walked ]]home.', 'He walked home.', [['footsteps', undefined, 'walked']]],
+      ['He [[sound: footsteps | walked | low]]home.', 'He walked home.', [['footsteps', 'low', 'walked']]],
+      // Not in a script that spaces its words: there it is the tag's own space either way.
+      ['［［sound：growl｜唉った ｜ medium］］家に入った。', '唉った家に入った。', [['growl', 'medium', '唉った']]],
+    ];
+    for (const [sample, text, expected] of cases) {
+      const reading = readMarks(sample);
+      expect(reading.text).toBe(text);
+      expect(sounds(reading)).toEqual(expected);
+    }
+  });
+
+  /**
+   * The same space, on the paths the first fix missed (CodeRabbit on #463).
+   * An inner span is given up on without being recorded, and used to be given
+   * up on with its closing space still in the prose; and a tag recorded inside
+   * a space that goes used to keep an offset past where the prose then ended.
+   */
+  it('drops a nested tag\'s closing space, and keeps the tags inside it in place', () => {
+    const nested = readMarks('[[sound: growl | he [[sound: footsteps | walked | low]], then stopped | medium]] after.');
+    expect(nested.text).toBe('he walked, then stopped after.');
+    const marked = readMarks('[[1|he [[2|walked ]], then stopped ]] after.');
+    expect(marked.text).toBe('he walked, then stopped after.');
+    // The speaker tag stood where the words ended; the quote that follows takes the space's place.
+    const quoted = readMarks('[[sound: growl | growled [[@Mara]] | medium]]“Run!”');
+    expect(quoted.text).toBe('growled“Run!”');
+    expect(quoted.speakers).toEqual([{ name: 'Mara', offset: 'growled'.length }]);
+  });
+
+  /**
+   * What follows a closing tag is not what follows it in the source: another
+   * tag can stand in between, and the script that spaces its words can be any
+   * of them (Codex on #463). The space is settled against the prose actually
+   * written next, whatever stands in the way of it.
+   */
+  it('settles a held space against the prose, not the next character', () => {
+    // A tag in the way: the space is still the only thing between two words.
+    expect(readMarks('He [[sound: footsteps | walked | low]][[sound: door | home | low]].').text).toBe('He walked home.');
+    expect(readMarks('He [[sound: footsteps | walked | low]][[@Mara]]home.').text).toBe('He walked home.');
+    expect(readMarks('He [[sound: footsteps | walked | low]][[equipped: MC | Sword]]home.').text).toBe('He walked home.');
+    // A tag in the way and punctuation past it: the space is the closing tag's own.
+    expect(readMarks('He [[sound: footsteps | walked | low]][[@Mara]], then stopped.').text).toBe('He walked, then stopped.');
+    // Korean spaces its words, so the space separates and stays.
+    expect(readMarks('그는 [[sound: footsteps | 걸어 | low]]집으로 갔다.').text).toBe('그는 걸어 집으로 갔다.');
+    expect(readMarks('그는 [[sound: footsteps | 걸어 | low]].').text).toBe('그는 걸어.');
+    // Japanese does not, so there it is the tag's and goes.
+    expect(readMarks('林は[[sound: growl | 唉った | low]]家に入った。').text).toBe('林は唉った家に入った。');
   });
 
   it('reads a tag written the other way round the right way, given the story\'s sound words', () => {

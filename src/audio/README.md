@@ -1,7 +1,7 @@
 # Portable narrative audio
 
 - **Created:** 2026-08-19
-- **Last updated:** 2026-10-11
+- **Last updated:** 2026-10-27
 - **Ownership status:** SEN contracts separated from Library catalogs and host playback
 
 ## Ownership
@@ -11,6 +11,8 @@ contracts. It describes what a story asks to play and the accepted resolved
 record that may be persisted with a chapter. It does not own a first-party
 catalog, entitlement, CDN location, provider credential, account, playback
 engine, or business rule.
+
+**2026-10-27:** The space a sound tag writes before its closing part is the tag's, not the sentence's: `[[sound: growl | growled | medium]].` reads back as `growled.`, not `growled .` (`readMarks`). Left in, it only showed where a tag closed on punctuation — the shape the tagger is never shown — and made the chapter no longer the prose it was tagged from, so the first tagged chapter lost every tag it had been given. Numbered marks and the words inside a speaker tag are read the same way, nested tags included. Where a word follows the closing tag rather than punctuation, one space stays: there it is the only thing standing between two words (`walked ]]home.` reads back as `walked home.`), unless the script does not space its words.
 
 **2026-10-11:** Recordings can live in a package installed on the device: `spp://<package id>/<version>/assets/…` (`packageMediaUrl`) is playable wherever a public HTTPS file is (`isPlayableMediaUrl`), and saved chapters keep it. The host keeps the package's bytes and gives its reader mixer the device's address for each file (`src/host/media/deviceMediaPacks.ts`).
 

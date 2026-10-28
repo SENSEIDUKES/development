@@ -1,6 +1,6 @@
 # Private UI artifacts
 
-Both UI tarballs are built from UI main through PR [#92](https://github.com/SENSEIDUKES/UI/pull/92), source commit `6f95f042f86806a9335832cfd4cc1b51c1726b74`:
+Both UI tarballs are built from UI main through PR [#94](https://github.com/SENSEIDUKES/UI/pull/94), source commit `8371b71aea79e52d591072bb65bd5590d3c21911`:
 
 - `@seihouse/ui@0.12.0`: universal SEIHouse primitives and experience tokens, including the application shell, shared overlay scrollbar and Pathways panel. The opt-in `double-tap` sidebar behavior toggles both widths and offers a keyboard-focus-only control; `automatic` and `click` remain available.
 - `@seihouse/library-ui@0.10.1`: stateless Celestial Library presentation. Its `@seihouse/ui` peer is `^0.11.0 || ^0.12.0`; its navigation skin supplies scroll-only gold thumbs and a stationary gold-and-cyan edge bevel. Domain behavior and persistence remain in `@seihouse/library` and its host.
@@ -67,6 +67,8 @@ Display under its own notices for authorized SEIHouse products. To refresh, pack
 release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm ci`.
 
 ## History
+
+- **2026-10-27:** Refreshed UI 0.12.0 and Library UI 0.10.1 from current UI main at `8371b71`, through UI [#94](https://github.com/SENSEIDUKES/UI/pull/94). Neither version moves from the #91 build below: only the bytes, the SHA-512 integrity in `ui-artifacts.json` and `package-lock.json`, and the recorded source provenance.
 
 - **2026-10-25:** Refreshed UI 0.12.0 and Library UI 0.10.1 from current UI main, including the studio primitives and measured virtual lists from UI #91. Library Components now displays all 16 Library UI families from the canonical UI workbench catalog.
 

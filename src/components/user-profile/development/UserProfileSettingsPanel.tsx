@@ -17,6 +17,7 @@ import {
   Keyboard,
   LockKeyhole,
   Mountain,
+  Palette,
   Music,
   RefreshCw,
   Shield,
@@ -256,6 +257,20 @@ export function UserProfileSettingsPanel({
             </SEITabsList>
             <SEITabsPanel value="appearance" keepMounted className="pt-4">
           <SEIDisclosureGroup type="multiple" defaultValue={['identity']}>
+            {controller.handleAccentColorChange && <SEIDisclosure value="accent" heading="Accent color" icon={Palette} supportingText="Choose a color for interface highlights and selected controls.">
+              <div className="space-y-3 py-1">
+                <label className="flex min-h-11 flex-wrap items-center gap-3">
+                  <span className="font-sc text-sm">Highlight color</span>
+                  <input type="color" aria-label="Accent color" value={profile?.accentColor ?? '#04acff'}
+                    disabled={!profile} onChange={event => controller.handleAccentColorChange?.(event.target.value)}
+                    className="h-11 w-14 cursor-pointer rounded-lg border border-white/25 bg-black p-1 disabled:cursor-not-allowed" />
+                  <span className="text-sm text-neutral-300" aria-live="polite">{profile?.accentColor ?? 'Original colors'}</span>
+                </label>
+                <p className="text-xs text-neutral-400">Artwork, your Cultivator Aura, and rainbow button glows keep their own colors.</p>
+                <LibraryButton variant="secondary" size="sm" className="min-h-11" disabled={!profile?.accentColor}
+                  onClick={() => controller.handleAccentColorChange?.(undefined)}>Use original colors</LibraryButton>
+              </div>
+            </SEIDisclosure>}
             {/* ---- Identity & Aura ------------------------------------------ */}
             <SEIDisclosure value="identity" heading="Identity & Cultivator Aura" icon={SENProfileIcon} supportingText="Your editable Dao Name and the aura it carries.">
               <div className="space-y-4 pt-1">

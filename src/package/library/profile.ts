@@ -10,3 +10,5 @@ export {
   translateInterfaceText,
   useInterfaceLanguageTranslation,
 } from '../../library/language/interfaceTranslation';
+
+export { normalizeAccentColor } from '../../components/user-profile/development/accentColor';

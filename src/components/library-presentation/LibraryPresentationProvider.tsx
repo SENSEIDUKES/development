@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { LibraryAccentScope } from './LibraryAccentScope';
 import { LoadingFamiliarProvider, type LoadingFamiliarPresentation } from '../../library/manifestations/familiar';
 import { LibraryAssetsProvider, type LibraryAssets } from '../../library/assets';
 import * as LibraryUI from '@seihouse/library-ui';
@@ -47,8 +48,11 @@ export function LibraryPresentationProvider({
   backdrops = [],
   assets = {},
   loadingFamiliar = null,
+  accentColor,
 }: {
   children: ReactNode;
+  /** Saved interface highlight preference. Absent preserves the original accents. */
+  accentColor?: string;
   backdrops?: readonly string[];
   assets?: LibraryAssets;
   /** The host's equipped Familiar, projected into generation presentation. */
@@ -56,9 +60,11 @@ export function LibraryPresentationProvider({
 }) {
   return (
     <NarrativePresentationProvider components={components}>
-      <LoadingFamiliarProvider value={loadingFamiliar}>
-        <LibraryAssetsProvider value={assets}><NarrativeArtProvider value={{ Icon: LibraryNarrativeIcon, backdrops }}>{children}</NarrativeArtProvider></LibraryAssetsProvider>
-      </LoadingFamiliarProvider>
+      <LibraryAccentScope color={accentColor}>
+        <LoadingFamiliarProvider value={loadingFamiliar}>
+          <LibraryAssetsProvider value={assets}><NarrativeArtProvider value={{ Icon: LibraryNarrativeIcon, backdrops }}>{children}</NarrativeArtProvider></LibraryAssetsProvider>
+        </LoadingFamiliarProvider>
+      </LibraryAccentScope>
     </NarrativePresentationProvider>
   );
 }

@@ -7,6 +7,7 @@
  * the Inbox) still show, each with the host's note. The profile picture is
  * made by the host's portrait maker when it gives one.
  */
+import { normalizeAccentColor } from '@seihouse/library/profile';
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/contracts';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
@@ -243,6 +244,11 @@ export function useDeviceProfileController(
     commit({ defaultChapterWritingStyle: value });
   }, [commit, profile]);
 
+  const handleAccentColorChange = useCallback((color?: string) => {
+    if (color !== undefined && !normalizeAccentColor(color)) return;
+    commit({ accentColor: normalizeAccentColor(color) });
+  }, [commit]);
+
   const handleFamiliarChange = useCallback((id: string) => {
     if (!profile) return;
     if (!familiars.some(option => option.id === id)) {
@@ -352,6 +358,7 @@ export function useDeviceProfileController(
 
   const rank = getDaoRankData(resolvePermanentDaoXp(profile?.dao_xp, profile?.dao_rank) ?? 0);
   return {
+    handleAccentColorChange,
     handleFamiliarChange,
     isSavingFamiliar: false,
     handleFamiliarSizeChange,

@@ -12,7 +12,7 @@
 import { useSyncExternalStore } from 'react';
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode } from '@seihouse/sen/contracts';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
-import type { UserProfile } from '@seihouse/library/profile';
+import { normalizeAccentColor, type UserProfile } from '@seihouse/library/profile';
 import { getDaoRankData, useDaoXpAccount } from '@seihouse/library/cultivation';
 import { defaultFamiliar } from '../familiar/catalogue';
 
@@ -50,6 +50,7 @@ function restore(raw: string | null, fresh: UserProfile): UserProfile {
     username: text(saved.username, fresh.username),
     displayName: text(saved.displayName, fresh.displayName),
     avatarUrl: text(saved.avatarUrl, fresh.avatarUrl),
+    accentColor: normalizeAccentColor(saved.accentColor),
     interfaceLanguage: normalizeSenLanguageCode(record.interfaceLanguage),
     defaultReadingLanguage: normalizeSenLanguageCode(record.defaultReadingLanguage),
     familiarSize: typeof saved.familiarSize === 'number' && Number.isFinite(saved.familiarSize) ? saved.familiarSize : undefined,
@@ -112,6 +113,10 @@ export function createDeviceProfileStore({ storage, uid, now = () => new Date() 
       const editable: Partial<UserProfile> = { ...changes };
       delete editable.uid;
       delete editable.role;
+      if ('accentColor' in editable) {
+        if (editable.accentColor !== undefined && !normalizeAccentColor(editable.accentColor)) delete editable.accentColor;
+        else editable.accentColor = normalizeAccentColor(editable.accentColor);
+      }
       const next = { ...read(), ...editable, updatedAt: now().toISOString() };
       write(next);
       listeners.forEach(listener => listener());

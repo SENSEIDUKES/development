@@ -104,6 +104,16 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 
 ## Workshop history
 
+- **2026-10-28, chrome trial:** Home's header, sidebar and mobile dock use the
+  shared Story Seed blue-violet panel recipe, with a denser 95% base for chrome;
+  Story Seed keeps its existing 46% base. Navigation controls keep black fills,
+  their native label colors, border/glow effects and hover transitions. White
+  icons, clear image/video cards, the Reader rim and rainbow action buttons remain.
+  A profile accent choice updates interface highlights; unset restores native
+  colors. Home's existing Workshop iframe shows the same trial. The browser
+  regressions cover 320/390/1440px, saved/reset accents, unfinished identity edits,
+  isolated Profile preview preferences, and unchanged Story Seed material.
+
 - **2026-10-28, media/navigation correction:** All image/video cards remain clear,
   including Events, covered World Cards and Featured still-image backdrops. The
   event text overlay uses its original contrast gradient, with no backdrop blur.

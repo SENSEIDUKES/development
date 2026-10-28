@@ -8,6 +8,8 @@ body:has(.library-home-palette) {
   --home-text: #fff;
   --home-muted: #ffffffb8;
   --home-navigation: rgba(0, 0, 0, .95);
+  --library-seed-panel-opacity: .95;
+  --home-chrome: var(--library-seed-panel-background);
   --home-panel: radial-gradient(288px 160px at 88% -8%, rgba(0, 55, 74, .01), rgba(0, 55, 74, 0) 62%), linear-gradient(160deg, rgba(0, 55, 74, .016), rgba(0, 55, 74, .01) 50%, rgba(0, 55, 74, 0)), rgba(0, 55, 74, .12);
   --home-card: radial-gradient(130% 100% at 50% 0%, #0000000d, #0000 52%), linear-gradient(168deg, #0000000d, rgba(0, 0, 0, .01) 40%, rgba(0, 0, 0, .082)), rgba(0, 0, 0, .35);
   --home-panel-blur: blur(24px);
@@ -59,10 +61,19 @@ body:has(.library-home-palette) {
   -webkit-backdrop-filter: var(--home-control-blur);
   backdrop-filter: var(--home-control-blur);
 }
+/* Trial the Story Seed panel material on the frame, keeping controls black. */
+.library-home-palette :is(.workspace-header, [data-slot='app-shell-sidebar'], .library-global-navigation > div) { background: var(--home-chrome); }
 .library-home-palette .library-global-navigation > div { position: relative; }
-/* Keep the package's selected gradients, hover/press transitions, icon rings,
-   label colors and glow. Only the navigation glyphs are white. */
-.library-home-palette .library-navigation { background: transparent; }
+/* Keep the package's hover/press transitions, icon rings, label colors and
+   glow around the black controls. Only the navigation glyphs are white. */
+.library-home-palette .library-navigation {
+  --sh-nav-selected: var(--home-navigation);
+  --sh-nav-hover: #101018;
+  background: transparent;
+}
+.library-home-palette :is([data-slot='navigation-item'], .library-global-navigation button) { background-color: var(--home-navigation); }
+.library-home-palette :is([data-slot='navigation-item'], .library-global-navigation button):hover { background-color: #101018; }
+.library-home-palette :is([data-slot='navigation-item'], .library-global-navigation button):active { background-color: #000; }
 .library-home-palette :is([data-slot='navigation-icon'], .library-global-navigation button > span[aria-hidden='true']) { color: #fff; }
 .library-home-palette .workspace-header :is(button svg, .dao-insights-trigger svg) { color: #fff; }
 .library-home-palette .library-footer { border-top: 1px solid var(--reader-glass-edge); }
@@ -98,12 +109,12 @@ body:has(.library-home-palette) :is(.familiar-helper, .familiar-energy-panel, .f
 }
 body:has(.library-home-palette) :is(.familiar-helper-context, .familiar-helper-footnote) { color: var(--home-muted); }
 @media (prefers-reduced-transparency: reduce) {
-  body:has(.library-home-palette) { --home-panel: #0c1c24; --home-card: #080b0d; --home-navigation: #000; --home-panel-blur: none; --home-card-blur: none; --home-control-blur: none; }
+  body:has(.library-home-palette) { --home-panel: #0c1c24; --home-card: #080b0d; --home-navigation: #000; --home-chrome: #0b0e1e; --home-panel-blur: none; --home-card-blur: none; --home-control-blur: none; }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  body:has(.library-home-palette) { --home-panel: #0c1c24; --home-card: #080b0d; --home-navigation: #000; }
+  body:has(.library-home-palette) { --home-panel: #0c1c24; --home-card: #080b0d; --home-navigation: #000; --home-chrome: #0b0e1e; }
 }
 @media (forced-colors: active) {
-  body:has(.library-home-palette) { --home-text: CanvasText; --home-muted: CanvasText; --home-panel: Canvas; --home-card: Canvas; --home-navigation: Canvas; --reader-glass-edge: ButtonText; --home-panel-shadow: none; --home-card-shadow: none; --home-control-shadow: none; --home-navigation-shadow: none; --home-panel-blur: none; --home-card-blur: none; --home-control-blur: none; }
+  body:has(.library-home-palette) { --home-text: CanvasText; --home-muted: CanvasText; --home-panel: Canvas; --home-card: Canvas; --home-navigation: Canvas; --home-chrome: Canvas; --reader-glass-edge: ButtonText; --home-panel-shadow: none; --home-card-shadow: none; --home-control-shadow: none; --home-navigation-shadow: none; --home-panel-blur: none; --home-card-blur: none; --home-control-blur: none; }
   .library-home-palette { background: Canvas; }
 }

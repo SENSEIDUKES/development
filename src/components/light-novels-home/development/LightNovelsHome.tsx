@@ -132,7 +132,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
         </span>}
       </div>
       {/* The first slide stays mounted while another shows, so its video resumes where it was. */}
-      <LibraryPanel
+      <LibraryPanel data-home-panel
         padding="none"
         className={`relative overflow-hidden h-60 sm:h-80 items-end ${currentSlide === 0 ? 'flex' : 'hidden'}`}
         aria-hidden={currentSlide === 0 ? undefined : true}
@@ -239,13 +239,13 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
       <div className="space-y-6 motion-safe:animate-fadeIn">
             <div id="published-worlds-list" className="contents">
               {/* Filtering and Sorting Panels */}
-              <LibraryPanel
+              <LibraryPanel data-home-panel
                 padding="sm"
                 className="flex flex-col md:flex-row md:items-center justify-between gap-4"
               >
                 {/* Genre Filter */}
                 <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-sc font-bold uppercase tracking-[0.2em] text-[#04ACFF]">
+                  <span className="home-filter-label text-[11px] font-sc font-bold uppercase tracking-[0.2em] text-[#04ACFF]">
                     Realm Filter (Genre)
                   </span>
                   <div
@@ -290,7 +290,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
               </LibraryPanel>
 
               {filteredAndSortedWorlds.length === 0 ? (
-                <LibraryPanel className="max-w-lg mx-auto">
+                <LibraryPanel data-home-panel className="max-w-lg mx-auto">
                   <SEIEmptyState
                     icon={SENDiscoveryIcon}
                     titleAs="h4"

@@ -83,6 +83,17 @@ describe('The Cave on the device\'s profile', () => {
     expect(controller.formData.displayName).toBe('Unsaved name');
   });
 
+  it('changes the shared image without saving an identity draft or changing material colors', async () => {
+    await mount();
+    await run(() => controller.setFormData(previous => ({ ...previous, displayName: 'Unsaved name' })));
+    await run(() => controller.handleBackgroundTintChange?.({ color: '#ff69b4', strength: 60 }));
+    await run(() => controller.handleBackgroundImageChange?.('blood-moon'));
+    expect(store.read()).toMatchObject({ displayName: '', backgroundImageId: 'blood-moon', backgroundTint: { color: '#ff69b4', strength: 60 } });
+    expect(controller.formData.displayName).toBe('Unsaved name');
+    await run(() => controller.handleBackgroundImageChange?.('unknown'));
+    expect(store.read().backgroundImageId).toBe('blood-moon');
+  });
+
   it('asks before a language change and reverts it after 30 seconds without an answer', async () => {
     vi.useFakeTimers();
     await mount();

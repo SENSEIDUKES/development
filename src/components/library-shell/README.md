@@ -411,3 +411,9 @@ Discover page (`/app/?page=discover`) uses the Library's own Discover location
 (`screen: home`, `collection: challenges`), so selecting Discover again on Discover
 is no move, and the app opens that location as Discover. The Workshop's Library
 preview still opens Fate Survival's collection there.
+
+
+- **2026-10-28:** Bottom navigation buttons now have explicit 6rem widths at the
+  existing tablet breakpoint as well as flex bases. Safari's shrink-to-fit frame
+  includes all button widths, keeping its border around the entire dock. Phone
+  dimensions and desktop sidebar behavior remain unchanged.

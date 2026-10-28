@@ -43,6 +43,8 @@ export interface UserProfile {
   accentColor?: string;
   /** Background hue and strength, independent of accents and identity. */
   backgroundTint?: BackgroundTint;
+  /** Selected image for shared page backgrounds. */
+  backgroundImageId?: string;
   avatarUrl: string;
   activePortraitId?: string;
   /** The equipped Familiar. Ownership is Familiar-account state; the host validates it when saving. */

@@ -103,3 +103,24 @@ continue to import.
   are unchanged. Custom tint/strength supplies RGB channels to each recipe, rather
   than replacing it with the header fill. Browser verification compares all
   non-color properties and gradient alpha/stops against the archived originals.
+
+
+## 2026-10-28 — Shared background image selection
+
+`backgroundImage.ts` owns the stable image catalog and resolves image locations
+through host-owned `LibraryAssets`. Home's current first artwork is the default;
+the existing five Cave choices retain their IDs and asset mapping. The existing
+device profile saves optional `backgroundImageId`, validates it against the catalog,
+and preserves tint/accent/identity fields independently.
+
+`LibraryBackgroundScope` is a stable, optional provider layer. NovelExpanded opts
+in once through `LibraryPresentationProvider.backgroundImageId`; shared menu-page
+WorkspaceShells consume its image, with Home retaining its original outer-frame
+placement/dimming. Profile uses the same choice with its existing Cave backdrop
+renderer and motes. Reader scenes remain owned by story media. Standalone hosts
+and historical Workshop references are not globally opted in.
+
+The Background Image controls use the existing Profile radio keyboard pattern.
+The Profile Workshop uses its isolated mock controller; the Home Workshop iframe
+continues using real app preferences. Changing the image changes no material
+opacity, blur, color, borders or shadows.

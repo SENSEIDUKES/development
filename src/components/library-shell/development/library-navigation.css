@@ -46,7 +46,9 @@
      each takes the same fixed basis instead. */
   /* One width for every destination, whatever its label, so no button grows
      or shrinks with its word; a longer label wraps inside its own button. */
+  /* Definite widths also contribute to Safari’s shrink-to-fit border sizing. */
   .library-global-navigation button {
+    width: 6rem;
     flex: 0 0 6rem;
     padding-inline: 0.5rem !important;
   }

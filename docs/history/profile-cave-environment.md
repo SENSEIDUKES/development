@@ -1,3 +1,12 @@
+# Archived Profile environment catalog — 2026-10-28
+
+The Cave-only image catalog was replaced by Library presentation's shared
+`backgroundImage.ts`. The same five image IDs remain available, with Home's art
+added as the default sixth choice. The old module's motto and stage helper had no
+production consumers; they are retained here as historical source rather than
+exported as unused runtime capabilities. Historical reference folders are unchanged.
+
+```ts
 /**
  * Cultivator Cave environment values.
  *
@@ -73,3 +82,5 @@ export function getCultivationStage(
   if (progress < 67) return "Middle Stage";
   return "Late Stage";
 }
+
+```

@@ -27,7 +27,7 @@ import { createMockUserProfileServices } from '../../../workshop/previews/user-p
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
 import { getPreviewScenario } from '../../../workshop/previews/user-profile/previewData';
 import type { UserProfilePreviewState } from '../../../workshop/previews/user-profile/previewStates';
-import { CAVE_ENVIRONMENTS, getCultivationStage } from './caveEnvironment';
+import { BACKGROUND_IMAGES } from '../../library-presentation/backgroundImage';
 import {
   DISPLAY_NAME_MAX_VISIBLE,
   clampDisplayName,
@@ -596,7 +596,7 @@ describe('Cultivator Cave home', () => {
     const scenario = getPreviewScenario('developed-cultivator');
     const profile = scenario.profile!;
 
-    expect(container.querySelector('[data-cave-backdrop]')?.getAttribute('src')).toBe(LIBRARY_ASSETS.caveImages![CAVE_ENVIRONMENTS[0].id]);
+    expect(container.querySelector('[data-cave-backdrop]')?.getAttribute('src')).toBe(LIBRARY_ASSETS.homeImages![0]);
     expect(container.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(profile.avatarUrl);
     expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain(profile.displayName);
     expect(container.querySelector('[data-cave-rank]')?.textContent).toContain('Leader');
@@ -820,7 +820,7 @@ describe('Cultivator Cave settings', () => {
     const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-label="Settings categories"] [role="tab"]'));
     expect(tabs.map(tab => tab.textContent)).toEqual(['Customization', 'Accessibility', 'Account', 'Advanced']);
     const visibleHeadings = () => Array.from(document.querySelectorAll('[data-cave-settings] [data-slot="disclosure-heading"]')).filter(node => !node.closest('[hidden]')).map(node => node.textContent);
-    expect(visibleHeadings()).toEqual(['Background tint', 'Accent color', 'Identity & Cultivator Aura', 'Profile picture', 'Cave Environment', 'Sound']);
+    expect(visibleHeadings()).toEqual(['Background tint', 'Accent color', 'Identity & Cultivator Aura', 'Profile picture', 'Background Image', 'Sound']);
     await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Cloud Reader' })));
     await click(tabs[1]);
     expect(visibleHeadings()).toEqual(['Language', 'Writing Preferences', 'Keyboard Shortcuts']);
@@ -901,7 +901,7 @@ describe('Cultivator Cave settings', () => {
       'Accent color',
       'Identity & Cultivator Aura',
       'Profile picture',
-      'Cave Environment',
+      'Background Image',
       'Sound',
       'Language',
       'Writing Preferences',
@@ -912,12 +912,12 @@ describe('Cultivator Cave settings', () => {
       'Backup, Import & Export',
       'Advanced Tools',
     ]);
-    expect(panel()!.querySelectorAll('[role="radiogroup"][aria-label="Cave environment"] [role="radio"]')).toHaveLength(
-      CAVE_ENVIRONMENTS.length,
+    expect(panel()!.querySelectorAll('[role="radiogroup"][aria-label="Background image"] [role="radio"]')).toHaveLength(
+      BACKGROUND_IMAGES.length,
     );
 
     // Changing the environment swaps the backdrop behind the cave.
-    await click(byText('[aria-label="Cave environment"] [role="radio"]', 'Blood Moon'));
+    await click(byText('[aria-label="Background image"] [role="radio"]', 'Blood Moon'));
     expect(container.querySelector('[data-cave-backdrop]')?.getAttribute('src')).toBe('/manifest-backdrops/immortal-land-5.jpg');
 
     // Sever Link lives in the panel.
@@ -1003,16 +1003,16 @@ describe('Cultivator Cave settings', () => {
     await press(selected(auraLabel), 'Home');
     expect(selected(auraLabel).textContent).toContain('Reader');
 
-    const environmentLabel = 'Cave environment';
-    await click(byText('[data-slot="disclosure-trigger"]', 'Cave Environment'));
+    const environmentLabel = 'Background image';
+    await click(byText('[data-slot="disclosure-trigger"]', 'Background Image'));
     expect(enabled(environmentLabel).filter(radio => radio.tabIndex === 0)).toHaveLength(1);
     selected(environmentLabel).focus();
     await press(selected(environmentLabel), 'End');
-    expect(selected(environmentLabel).textContent).toContain(CAVE_ENVIRONMENTS.at(-1)!.name);
+    expect(selected(environmentLabel).textContent).toContain(BACKGROUND_IMAGES.at(-1)!.name);
     await press(selected(environmentLabel), 'Home');
-    expect(selected(environmentLabel).textContent).toContain(CAVE_ENVIRONMENTS[0].name);
+    expect(selected(environmentLabel).textContent).toContain(BACKGROUND_IMAGES[0].name);
     await press(selected(environmentLabel), 'ArrowDown');
-    expect(selected(environmentLabel).textContent).toContain(CAVE_ENVIRONMENTS[1].name);
+    expect(selected(environmentLabel).textContent).toContain(BACKGROUND_IMAGES[1].name);
     expect(document.activeElement).toBe(selected(environmentLabel));
   });
 
@@ -1224,15 +1224,6 @@ describe('Cultivator Cave settings', () => {
     expect(selector.getAttribute('role')).toBe('group');
     expect(selector.querySelector<HTMLButtonElement>('button')?.getAttribute('aria-pressed')).not.toBeNull();
     expect(selector.querySelector<HTMLButtonElement>('button')?.className).toContain('min-h-11');
-  });
-});
-
-describe('Cultivator Cave stage helper', () => {
-  it('derives a stage from progress and reports the peak at max rank', () => {
-    expect(getCultivationStage(10, 'Master')).toBe('Early Stage');
-    expect(getCultivationStage(50, 'Master')).toBe('Middle Stage');
-    expect(getCultivationStage(80, 'Master')).toBe('Late Stage');
-    expect(getCultivationStage(100, null)).toBe('Peak');
   });
 });
 

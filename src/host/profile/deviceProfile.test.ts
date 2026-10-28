@@ -61,6 +61,18 @@ describe('The reader\'s profile on this device', () => {
     expect(createDeviceProfileStore({ storage: memory(damaged).storage, uid: 'reader' }).read().backgroundTint).toBeUndefined();
   });
 
+  it('persists only catalog image IDs and leaves other appearance choices intact', () => {
+    const { storage } = memory();
+    const store = createDeviceProfileStore({ storage, uid: 'reader' });
+    store.save({ accentColor: '#a78bfa', backgroundTint: { color: '#ff69b4', strength: 60 }, backgroundImageId: 'blood-moon' });
+    expect(createDeviceProfileStore({ storage, uid: 'reader' }).read().backgroundImageId).toBe('blood-moon');
+    store.save({ backgroundImageId: 'https://unknown.example/image.png' });
+    expect(store.read().backgroundImageId).toBe('blood-moon');
+    store.save({ backgroundImageId: 'home-background' });
+    expect(store.read()).toMatchObject({ backgroundImageId: 'home-background', accentColor: '#a78bfa', backgroundTint: { color: '#ff69b4', strength: 60 } });
+    expect(createDeviceProfileStore({ storage: memory(JSON.stringify({ backgroundImageId: 'bad' })).storage, uid: 'reader' }).read().backgroundImageId).toBeUndefined();
+  });
+
   it('never lets a save change who the reader is or what authority they have', () => {
     const { storage } = memory();
     const store = createDeviceProfileStore({ storage, uid: 'reader' });

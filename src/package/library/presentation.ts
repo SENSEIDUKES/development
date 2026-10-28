@@ -12,3 +12,5 @@ export { LIBRARY_MATERIALS, ARCHIVED_LIBRARY_MATERIALS, LibraryMaterialSurface, 
 
 export { LibraryAppearanceScope } from '../../components/library-presentation/LibraryAppearanceScope';
 export { DEFAULT_BACKGROUND_TINT, normalizeBackgroundTint, backgroundTintColor, backgroundTintFill, type BackgroundTint } from '../../components/library-presentation/backgroundTint';
+
+export { BACKGROUND_IMAGES, DEFAULT_BACKGROUND_IMAGE_ID, normalizeBackgroundImageId, getBackgroundImage, backgroundImageUrl } from '../../components/library-presentation/backgroundImage';

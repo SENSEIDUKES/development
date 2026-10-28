@@ -12,7 +12,7 @@
 import { useSyncExternalStore } from 'react';
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode } from '@seihouse/sen/contracts';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
-import { normalizeBackgroundTint } from '@seihouse/library/presentation';
+import { normalizeBackgroundTint, normalizeBackgroundImageId } from '@seihouse/library/presentation';
 import { normalizeAccentColor, type UserProfile } from '@seihouse/library/profile';
 import { getDaoRankData, useDaoXpAccount } from '@seihouse/library/cultivation';
 import { defaultFamiliar } from '../familiar/catalogue';
@@ -53,6 +53,7 @@ function restore(raw: string | null, fresh: UserProfile): UserProfile {
     avatarUrl: text(saved.avatarUrl, fresh.avatarUrl),
     accentColor: normalizeAccentColor(saved.accentColor),
     backgroundTint: normalizeBackgroundTint(saved.backgroundTint),
+    backgroundImageId: normalizeBackgroundImageId(saved.backgroundImageId),
     interfaceLanguage: normalizeSenLanguageCode(record.interfaceLanguage),
     defaultReadingLanguage: normalizeSenLanguageCode(record.defaultReadingLanguage),
     familiarSize: typeof saved.familiarSize === 'number' && Number.isFinite(saved.familiarSize) ? saved.familiarSize : undefined,
@@ -115,6 +116,10 @@ export function createDeviceProfileStore({ storage, uid, now = () => new Date() 
       const editable: Partial<UserProfile> = { ...changes };
       delete editable.uid;
       delete editable.role;
+      if ('backgroundImageId' in editable) {
+        if (editable.backgroundImageId !== undefined && !normalizeBackgroundImageId(editable.backgroundImageId)) delete editable.backgroundImageId;
+        else editable.backgroundImageId = normalizeBackgroundImageId(editable.backgroundImageId);
+      }
       if ('backgroundTint' in editable) {
         if (editable.backgroundTint !== undefined && !normalizeBackgroundTint(editable.backgroundTint)) delete editable.backgroundTint;
         else editable.backgroundTint = normalizeBackgroundTint(editable.backgroundTint);

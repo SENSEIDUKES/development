@@ -35,7 +35,7 @@
  * (`celestialStore` below is replaced by the Familiar account there).
  */
 
-import { normalizeBackgroundTint, type BackgroundTint } from '@seihouse/library/presentation';
+import { normalizeBackgroundImageId, normalizeBackgroundTint, type BackgroundTint } from '@seihouse/library/presentation';
 import { normalizeAccentColor } from '@seihouse/library/profile';
 import { createLocalReaderPreferenceStorage } from '../../../host/reader/readerPreferenceStorage';
 import type React from 'react';
@@ -330,6 +330,14 @@ export function createMockUserProfileServices({
         formData.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE,
       );
     }, [currentUser, formData, pendingLanguageChange, performSave, profile]);
+
+    const handleBackgroundImageChange = useCallback((id: string) => {
+      const backgroundImageId = normalizeBackgroundImageId(id);
+      if (!currentUser || !profileRef.current || !backgroundImageId) return;
+      const next = { ...profileRef.current, backgroundImageId, updatedAt: new Date().toISOString() };
+      profileRef.current = next; setProfile(next);
+      setFormData(previous => ({ ...previous, backgroundImageId }));
+    }, [currentUser]);
 
     const handleBackgroundTintChange = useCallback((tint?: BackgroundTint) => {
       if (!currentUser || !profileRef.current || (tint !== undefined && !normalizeBackgroundTint(tint))) return;
@@ -850,6 +858,7 @@ export function createMockUserProfileServices({
       handleSave,
       handleAccentColorChange,
       handleBackgroundTintChange,
+      handleBackgroundImageChange,
       handleFamiliarChange,
       handleFamiliarSizeChange,
       isSavingFamiliar,

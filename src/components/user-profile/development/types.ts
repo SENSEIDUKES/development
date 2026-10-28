@@ -19,6 +19,7 @@
  * persisted values and API compatibility strings. The language fields carry
  * SEN language codes rather than production's display names.
  */
+import type { BackgroundTint } from '../../library-presentation/backgroundTint';
 import { type ChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 
 /** SEN owns the Reading Mode values; the profile stores the account's default. */
@@ -40,6 +41,10 @@ export interface UserProfile {
   displayNameColor?: string;
   /** Optional six-digit hex for interface highlights; absent keeps original accents. */
   accentColor?: string;
+  /** Background hue and strength, independent of accents and identity. */
+  backgroundTint?: BackgroundTint;
+  /** Selected image for shared page backgrounds. */
+  backgroundImageId?: string;
   avatarUrl: string;
   activePortraitId?: string;
   /** The equipped Familiar. Ownership is Familiar-account state; the host validates it when saving. */

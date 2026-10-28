@@ -187,3 +187,28 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
   belong to Library presentation `materials.css`. Home retains component role mapping,
   artwork, media exceptions and footer clearance. Its rendered surfaces are compared
   against the active Palette & Materials samples in the browser regression.
+
+
+- **2026-10-28, background customization:** Home's existing shell role consumes the
+  profile's shared background tint and strength. Header, sidebar/mobile frame and
+  plain footer adopt it, including opaque accessibility fills. The artwork,
+  image/video cards, other glass panels, black buttons and spectrum effects remain
+  intact. Reset restores the original violet gradients; the Home Workshop iframe
+  shows the same saved app preference.
+
+
+- **2026-10-28, unified purple:** Header, navigation frame, Events container,
+  filters, empty panels, plain nested cards and footer now share the same violet
+  fill, and the background picker/strength slider controls them together. Each
+  role keeps its blur/shadow geometry. Image/video surfaces retain their earlier
+  clear backings; black controls, rainbow effects and the artwork remain intact.
+  App colors is the default preset in Profile and the material Workshop.
+
+
+- **2026-10-28, color-only correction:** Purple is applied to RGB channels only.
+  Outer panels retain their original 12% opacity and gradient layers; nested cards
+  retain 35% opacity and their original gradients. The header retains its own 95%
+  recipe. Blur (24px panels, 25px with saturation for cards), borders and shadows
+  are unchanged. Custom tint/strength supplies RGB channels to each recipe, rather
+  than replacing it with the header fill. Browser verification compares all
+  non-color properties and gradient alpha/stops against the archived originals.

@@ -1,5 +1,7 @@
+import { LibraryBackgroundScope } from './LibraryBackgroundScope';
 import type { ReactNode } from 'react';
-import { LibraryAccentScope } from './LibraryAccentScope';
+import type { BackgroundTint } from './backgroundTint';
+import { LibraryAppearanceScope } from './LibraryAppearanceScope';
 import { LoadingFamiliarProvider, type LoadingFamiliarPresentation } from '../../library/manifestations/familiar';
 import { LibraryAssetsProvider, type LibraryAssets } from '../../library/assets';
 import * as LibraryUI from '@seihouse/library-ui';
@@ -49,10 +51,16 @@ export function LibraryPresentationProvider({
   assets = {},
   loadingFamiliar = null,
   accentColor,
+  backgroundTint,
+  backgroundImageId,
 }: {
   children: ReactNode;
   /** Saved interface highlight preference. Absent preserves the original accents. */
   accentColor?: string;
+  /** Saved background preference; only adopted material roles consume it. */
+  backgroundTint?: BackgroundTint;
+  /** Opt into the shared page image selection; absent leaves standalone hosts unchanged. */
+  backgroundImageId?: string;
   backdrops?: readonly string[];
   assets?: LibraryAssets;
   /** The host's equipped Familiar, projected into generation presentation. */
@@ -60,11 +68,13 @@ export function LibraryPresentationProvider({
 }) {
   return (
     <NarrativePresentationProvider components={components}>
-      <LibraryAccentScope color={accentColor}>
-        <LoadingFamiliarProvider value={loadingFamiliar}>
-          <LibraryAssetsProvider value={assets}><NarrativeArtProvider value={{ Icon: LibraryNarrativeIcon, backdrops }}>{children}</NarrativeArtProvider></LibraryAssetsProvider>
-        </LoadingFamiliarProvider>
-      </LibraryAccentScope>
+      <LibraryBackgroundScope imageId={backgroundImageId} assets={assets}>
+        <LibraryAppearanceScope color={accentColor} backgroundTint={backgroundTint}>
+          <LoadingFamiliarProvider value={loadingFamiliar}>
+            <LibraryAssetsProvider value={assets}><NarrativeArtProvider value={{ Icon: LibraryNarrativeIcon, backdrops }}>{children}</NarrativeArtProvider></LibraryAssetsProvider>
+          </LoadingFamiliarProvider>
+        </LibraryAppearanceScope>
+      </LibraryBackgroundScope>
     </NarrativePresentationProvider>
   );
 }

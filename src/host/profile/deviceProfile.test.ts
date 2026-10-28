@@ -48,6 +48,31 @@ describe('The reader\'s profile on this device', () => {
     expect(createDeviceProfileStore({ storage: memory(JSON.stringify({ accentColor: '#oops' })).storage, uid: 'reader' }).read().accentColor).toBeUndefined();
   });
 
+  it('keeps background tint across reload, ignores invalid changes and resets only the tint', () => {
+    const { storage } = memory();
+    const store = createDeviceProfileStore({ storage, uid: 'reader' });
+    store.save({ accentColor: '#123456', displayName: 'Mara', backgroundTint: { color: '#FF69B4', strength: 75 } });
+    expect(createDeviceProfileStore({ storage, uid: 'reader' }).read().backgroundTint).toEqual({ color: '#ff69b4', strength: 75 });
+    store.save({ backgroundTint: { color: '#ff69b4', strength: Infinity } });
+    expect(store.read().backgroundTint?.strength).toBe(75);
+    store.save({ backgroundTint: undefined });
+    expect(createDeviceProfileStore({ storage, uid: 'reader' }).read()).toMatchObject({ backgroundTint: undefined, accentColor: '#123456', displayName: 'Mara' });
+    const damaged = JSON.stringify({ backgroundTint: { color: 'red', strength: 50 } });
+    expect(createDeviceProfileStore({ storage: memory(damaged).storage, uid: 'reader' }).read().backgroundTint).toBeUndefined();
+  });
+
+  it('persists only catalog image IDs and leaves other appearance choices intact', () => {
+    const { storage } = memory();
+    const store = createDeviceProfileStore({ storage, uid: 'reader' });
+    store.save({ accentColor: '#a78bfa', backgroundTint: { color: '#ff69b4', strength: 60 }, backgroundImageId: 'blood-moon' });
+    expect(createDeviceProfileStore({ storage, uid: 'reader' }).read().backgroundImageId).toBe('blood-moon');
+    store.save({ backgroundImageId: 'https://unknown.example/image.png' });
+    expect(store.read().backgroundImageId).toBe('blood-moon');
+    store.save({ backgroundImageId: 'home-background' });
+    expect(store.read()).toMatchObject({ backgroundImageId: 'home-background', accentColor: '#a78bfa', backgroundTint: { color: '#ff69b4', strength: 60 } });
+    expect(createDeviceProfileStore({ storage: memory(JSON.stringify({ backgroundImageId: 'bad' })).storage, uid: 'reader' }).read().backgroundImageId).toBeUndefined();
+  });
+
   it('never lets a save change who the reader is or what authority they have', () => {
     const { storage } = memory();
     const store = createDeviceProfileStore({ storage, uid: 'reader' });
@@ -70,7 +95,8 @@ describe('The reader\'s profile on this device', () => {
       remove: () => undefined,
     };
     const store = createDeviceProfileStore({ storage, uid: 'reader' });
-    expect(store.save({ displayName: 'Mara' }).displayName).toBe('Mara');
+    expect(store.save({ displayName: 'Mara', backgroundTint: { color: '#00ff00', strength: 40 } }).displayName).toBe('Mara');
     expect(store.read().displayName).toBe('Mara');
+    expect(store.read().backgroundTint).toEqual({ color: '#00ff00', strength: 40 });
   });
 });

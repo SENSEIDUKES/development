@@ -1,19 +1,29 @@
+/* Keep prefixed backdrop-filter before the standard declaration so the production
+   CSS optimizer retains the property supported by each browser. */
 /* Canonical Library materials. Home is a role adapter; Workshop uses the same recipes. */
 /* One app-owned blue-violet recipe for Story Seed and the Home chrome trial. */
-.seed-field-scope, .library-material-scope, body:has(.library-home-palette) {
+.seed-field-scope, .library-material-scope, .library-home-palette, body:has(.library-home-palette) {
   --library-material-violet-fill:
-    radial-gradient(18rem 10rem at 88% -8%, rgba(205, 178, 113, 0.05), transparent 62%),
-    linear-gradient(160deg, rgba(105, 130, 225, 0.06), rgba(70, 60, 160, 0.04) 50%, rgba(12, 15, 34, 0)),
-    rgba(11, 14, 30, var(--library-material-violet-opacity, 0.46));
+    radial-gradient(18rem 10rem at 88% -8%, rgba(var(--library-violet-warm-rgb, 205, 178, 113), 0.05), transparent 62%),
+    linear-gradient(160deg, rgba(var(--library-violet-light-rgb, 105, 130, 225), 0.06), rgba(var(--library-violet-soft-rgb, 70, 60, 160), 0.04) 50%, rgba(var(--library-violet-clear-rgb, 12, 15, 34), 0)),
+    rgba(var(--library-violet-base-rgb, 11, 14, 30), var(--library-material-violet-opacity, 0.46));
 }
-.library-material-scope, body:has(.library-home-palette) {
+.library-material-scope, .library-home-palette, body:has(.library-home-palette) {
   --library-material-text: #fff;
   --library-material-muted: #ffffffb8;
   --library-material-control-fill: rgba(0, 0, 0, .95);
   --library-material-violet-opacity: .95;
+  --library-violet-warm-rgb: var(--library-background-rgb, 205, 178, 113);
+  --library-violet-light-rgb: var(--library-background-rgb, 105, 130, 225);
+  --library-violet-soft-rgb: var(--library-background-rgb, 70, 60, 160);
+  --library-violet-clear-rgb: var(--library-background-rgb, 12, 15, 34);
+  --library-violet-base-rgb: var(--library-background-rgb, 11, 14, 30);
   --library-material-shell-fill: var(--library-material-violet-fill);
-  --library-material-panel-fill: radial-gradient(288px 160px at 88% -8%, rgba(0, 55, 74, .01), rgba(0, 55, 74, 0) 62%), linear-gradient(160deg, rgba(0, 55, 74, .016), rgba(0, 55, 74, .01) 50%, rgba(0, 55, 74, 0)), rgba(0, 55, 74, .12);
-  --library-material-card-fill: radial-gradient(130% 100% at 50% 0%, #0000000d, #0000 52%), linear-gradient(168deg, #0000000d, rgba(0, 0, 0, .01) 40%, rgba(0, 0, 0, .082)), rgba(0, 0, 0, .35);
+  --library-material-archived-blue-fill: radial-gradient(288px 160px at 88% -8%, rgba(0, 55, 74, .01), rgba(0, 55, 74, 0) 62%), linear-gradient(160deg, rgba(0, 55, 74, .016), rgba(0, 55, 74, .01) 50%, rgba(0, 55, 74, 0)), rgba(0, 55, 74, .12);
+  --library-material-archived-smoked-fill: radial-gradient(130% 100% at 50% 0%, #0000000d, #0000 52%), linear-gradient(168deg, #0000000d, rgba(0, 0, 0, .01) 40%, rgba(0, 0, 0, .082)), rgba(0, 0, 0, .35);
+  /* Recolor the original recipes; preserve every alpha, gradient stop and layer. */
+  --library-material-panel-fill: radial-gradient(288px 160px at 88% -8%, rgba(var(--library-background-rgb, 11, 14, 30), .01), rgba(var(--library-background-rgb, 11, 14, 30), 0) 62%), linear-gradient(160deg, rgba(var(--library-background-rgb, 11, 14, 30), .016), rgba(var(--library-background-rgb, 11, 14, 30), .01) 50%, rgba(var(--library-background-rgb, 11, 14, 30), 0)), rgba(var(--library-background-rgb, 11, 14, 30), .12);
+  --library-material-card-fill: radial-gradient(130% 100% at 50% 0%, rgba(var(--library-background-rgb, 11, 14, 30), .05), transparent 52%), linear-gradient(168deg, rgba(var(--library-background-rgb, 11, 14, 30), .05), rgba(var(--library-background-rgb, 11, 14, 30), .01) 40%, rgba(var(--library-background-rgb, 11, 14, 30), .082)), rgba(var(--library-background-rgb, 11, 14, 30), .35);
   --library-material-panel-blur: blur(24px);
   --library-material-card-blur: blur(25px) saturate(1.5);
   --library-material-control-blur: blur(20px);
@@ -31,26 +41,28 @@
 [data-library-material='violet-shell'] {
   background: var(--library-material-shell-fill);
   box-shadow: var(--library-material-shell-shadow);
-  backdrop-filter: var(--library-material-control-blur);
   -webkit-backdrop-filter: var(--library-material-control-blur);
+  backdrop-filter: var(--library-material-control-blur);
 }
-[data-library-material='blue-glass'] {
+[data-library-material='violet-panel'], [data-library-material='blue-glass'] {
   background: var(--library-material-panel-fill);
   box-shadow: var(--library-material-panel-shadow);
-  backdrop-filter: var(--library-material-panel-blur);
   -webkit-backdrop-filter: var(--library-material-panel-blur);
+  backdrop-filter: var(--library-material-panel-blur);
 }
-[data-library-material='smoked-glass'] {
+[data-library-material='violet-card'], [data-library-material='smoked-glass'] {
   background: var(--library-material-card-fill);
   box-shadow: var(--library-material-card-shadow);
-  backdrop-filter: var(--library-material-card-blur);
   -webkit-backdrop-filter: var(--library-material-card-blur);
+  backdrop-filter: var(--library-material-card-blur);
 }
+[data-library-material='blue-glass'] { background: var(--library-material-archived-blue-fill); }
+[data-library-material='smoked-glass'] { background: var(--library-material-archived-smoked-fill); }
 [data-library-material='black-control'] {
   background: var(--library-material-control-fill);
   box-shadow: var(--library-material-control-shadow);
-  backdrop-filter: var(--library-material-control-blur);
   -webkit-backdrop-filter: var(--library-material-control-blur);
+  backdrop-filter: var(--library-material-control-blur);
 }
 [data-library-material='rainbow-action'] {
   --glass-fill: var(--library-material-control-fill);
@@ -60,11 +72,11 @@
   background-image: none;
 }
 @media (prefers-reduced-transparency: reduce) {
-  .library-material-scope, body:has(.library-home-palette) { --library-material-panel-fill: #0c1c24; --library-material-card-fill: #080b0d; --library-material-control-fill: #000; --library-material-shell-fill: #0b0e1e; --library-material-panel-blur: none; --library-material-card-blur: none; --library-material-control-blur: none; }
+  .library-material-scope, .library-home-palette, body:has(.library-home-palette) { --library-material-panel-fill: var(--library-background-solid, #0b0e1e); --library-material-card-fill: var(--library-background-solid, #0b0e1e); --library-material-archived-blue-fill: #0c1c24; --library-material-archived-smoked-fill: #080b0d; --library-material-control-fill: #000; --library-material-shell-fill: var(--library-background-solid, #0b0e1e); --library-material-panel-blur: none; --library-material-card-blur: none; --library-material-control-blur: none; }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .library-material-scope, body:has(.library-home-palette) { --library-material-panel-fill: #0c1c24; --library-material-card-fill: #080b0d; --library-material-control-fill: #000; --library-material-shell-fill: #0b0e1e; }
+  .library-material-scope, .library-home-palette, body:has(.library-home-palette) { --library-material-panel-fill: var(--library-background-solid, #0b0e1e); --library-material-card-fill: var(--library-background-solid, #0b0e1e); --library-material-archived-blue-fill: #0c1c24; --library-material-archived-smoked-fill: #080b0d; --library-material-control-fill: #000; --library-material-shell-fill: var(--library-background-solid, #0b0e1e); }
 }
 @media (forced-colors: active) {
-  .library-material-scope, body:has(.library-home-palette) { --library-material-text: CanvasText; --library-material-muted: CanvasText; --library-material-panel-fill: Canvas; --library-material-card-fill: Canvas; --library-material-control-fill: Canvas; --library-material-shell-fill: Canvas; --reader-glass-edge: ButtonText; --library-material-panel-shadow: none; --library-material-card-shadow: none; --library-material-control-shadow: none; --library-material-shell-shadow: none; --library-material-panel-blur: none; --library-material-card-blur: none; --library-material-control-blur: none; }
+  .library-material-scope, .library-home-palette, body:has(.library-home-palette) { --library-material-text: CanvasText; --library-material-muted: CanvasText; --library-material-archived-blue-fill: Canvas; --library-material-archived-smoked-fill: Canvas; --library-material-panel-fill: Canvas; --library-material-card-fill: Canvas; --library-material-control-fill: Canvas; --library-material-shell-fill: Canvas; --reader-glass-edge: ButtonText; --library-material-panel-shadow: none; --library-material-card-shadow: none; --library-material-control-shadow: none; --library-material-shell-shadow: none; --library-material-panel-blur: none; --library-material-card-blur: none; --library-material-control-blur: none; }
 }

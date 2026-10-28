@@ -108,3 +108,42 @@ Effects has its own mobile tab and desktop section. It renders live action spect
 logo glow, Reader rim, Codex halo, navigation selection and button highlight owners;
 hover/focus/press work on real controls. Earlier color inventories are collapsed.
 See `../library-presentation/README.md` for ownership and adoption boundaries.
+
+
+## 2026-10-28 — Actual color inventory
+
+Colors now derives swatches from the rendered active material layers: base fills,
+text (including actual white and supporting white), Reader gradient/rim stops,
+border and shadow colors, and both the action ring and halo spectrum. Theme
+accents come from their live canonical tokens. The handwritten fallback list was
+removed; missing measurements are not presented as substitute paints. Base colors
+appear first, while subtle gradient layers and the prior inventory are collapsed.
+
+The inventory explicitly shows shared material defaults; the user's personal
+background tint and its exact dark tone are visible in Profile settings. Experiments
+and saved looks keep their own colors and never redefine this source inventory.
+
+
+## 2026-10-28 — Unified purple default
+
+Active outer/nested materials are now Violet glass and Violet inset, with the same
+purple fill as Midnight violet. Their original blur/shadow roles remain distinct.
+The former Tidal and Smoked glass paints are two additional archived materials;
+original IDs and settings keep rendering unchanged. Version 3 exports support the
+new IDs, while version 1/2 imports preserve earlier work.
+
+**App colors · Default preset** loads the current official purple composition and
+white/portal colors without replacing saved looks. New browsers begin on that
+composition, with the supplied older looks still available. Returning browsers
+continue loading their saved look. Profile's app preset restores background and
+accent defaults together; its controls now recolor plain Home cards and chrome
+through the same shared fill.
+
+
+- **2026-10-28, color-only correction:** Purple is applied to RGB channels only.
+  Outer panels retain their original 12% opacity and gradient layers; nested cards
+  retain 35% opacity and their original gradients. The header retains its own 95%
+  recipe. Blur (24px panels, 25px with saturation for cards), borders and shadows
+  are unchanged. Custom tint/strength supplies RGB channels to each recipe, rather
+  than replacing it with the header fill. Browser verification compares all
+  non-color properties and gradient alpha/stops against the archived originals.

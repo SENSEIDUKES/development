@@ -49,6 +49,9 @@ export interface UserProfileControllerProps {
  */
 export interface UserProfileController {
   /** Saves only the interface accent. Undefined restores the original colors. */
+  /** Undefined restores the default material tint. */
+  handleBackgroundImageChange?: (id: string) => void;
+  handleBackgroundTintChange?: (tint?: UserProfile['backgroundTint']) => void;
   handleAccentColorChange?: (color?: string) => void;
   /** Saves only the Familiar selection through the existing account owner. */
   handleFamiliarChange?: (id: string) => Promise<void> | void;

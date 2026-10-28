@@ -1,3 +1,4 @@
+import { BackgroundTintControls } from '../../library-presentation/BackgroundTintControls';
 import { useLibraryAssets } from '../../../library/assets';
 import { FamiliarSelection } from '../../familiar/development/FamiliarSelection';
 import type { FamiliarOption } from '../../familiar/shared/familiar';
@@ -51,7 +52,7 @@ import {
   resolvePermanentDaoXp,
   resolveRankVisual,
 } from '../../../library/cultivation/progression';
-import { CAVE_ENVIRONMENTS } from './caveEnvironment';
+import { BACKGROUND_IMAGES, backgroundImageUrl } from '../../library-presentation/backgroundImage';
 import { useMenuMusic } from '../../../library/sound/menuMusic';
 import { MenuMusicSlot, type MenuMusicSlotProps } from '../../../library/sound/MenuMusicSlot';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
@@ -77,8 +78,8 @@ interface UserProfileSettingsPanelProps {
   currentUser: AppUser | null;
   stories: Story[];
   onLogout: () => void;
-  environmentId: string;
-  onEnvironmentChange: (id: string) => void;
+  backgroundImageId: string;
+  onBackgroundImageChange?: (id: string) => void;
   ambientMotes: boolean;
   onAmbientMotesChange: (on: boolean) => void;
   onOpenPortrait: () => void;
@@ -108,8 +109,8 @@ export function UserProfileSettingsPanel({
   currentUser,
   stories,
   onLogout,
-  environmentId,
-  onEnvironmentChange,
+  backgroundImageId,
+  onBackgroundImageChange,
   ambientMotes,
   onAmbientMotesChange,
   onOpenPortrait,
@@ -172,7 +173,7 @@ export function UserProfileSettingsPanel({
     rank => Boolean(profile) && currentDaoXp !== null && currentDaoXp >= rank.unlockedAt && auraSelection === rankToken(rank),
   );
   const assets = useLibraryAssets();
-  const hasEnvironmentSelection = CAVE_ENVIRONMENTS.some(environment => environment.id === environmentId);
+  const hasEnvironmentSelection = BACKGROUND_IMAGES.some(environment => environment.id === backgroundImageId);
   const previewStyle = getAuraTextStyle(auraSelection, currentDaoXp ?? 0);
   // A custom spectrum is any stored value that resolves to the cultivator's own
   // colour rather than to a rank on the ladder.
@@ -257,6 +258,14 @@ export function UserProfileSettingsPanel({
             </SEITabsList>
             <SEITabsPanel value="appearance" keepMounted className="pt-4">
           <SEIDisclosureGroup type="multiple" defaultValue={['identity']}>
+            {controller.handleBackgroundTintChange && <SEIDisclosure value="background" heading="Background tint" icon={Palette} supportingText="Choose the color and strength of your background.">
+              <p className="py-2 text-xs text-neutral-400">Currently used on Home’s header, navigation background, plain glass panels and cards, and footer. Artwork, black buttons, accents and Reader blue keep their own colors.</p>
+              <BackgroundTintControls value={profile?.backgroundTint} onChange={controller.handleBackgroundTintChange} disabled={!profile}
+                appColorsActive={!profile?.backgroundTint && !profile?.accentColor}
+                onApplyAppColors={controller.handleAccentColorChange ? () => {
+                  controller.handleBackgroundTintChange?.(undefined); controller.handleAccentColorChange?.(undefined);
+                } : undefined} />
+            </SEIDisclosure>}
             {controller.handleAccentColorChange && <SEIDisclosure value="accent" heading="Accent color" icon={Palette} supportingText="Choose a color for interface highlights and selected controls.">
               <div className="space-y-3 py-1">
                 <label className="flex min-h-11 flex-wrap items-center gap-3">
@@ -450,11 +459,11 @@ export function UserProfileSettingsPanel({
             </SEIDisclosure>
 
             {/* ---- Cave environment ------------------------------------------ */}
-            <SEIDisclosure value="environment" heading="Cave Environment" icon={Mountain} supportingText="The realm seen from your cave mouth.">
+            <SEIDisclosure value="environment" heading="Background Image" icon={Mountain} supportingText="Choose the image behind your pages.">
               <div className="space-y-3 pt-1">
-                <div role="radiogroup" aria-label="Cave environment" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {CAVE_ENVIRONMENTS.map((environment, index) => {
-                    const isSelected = environment.id === environmentId;
+                <div role="radiogroup" aria-label="Background image" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {BACKGROUND_IMAGES.map((environment, index) => {
+                    const isSelected = environment.id === backgroundImageId;
                     return (
                       <button
                         key={environment.id}
@@ -463,12 +472,13 @@ export function UserProfileSettingsPanel({
                           aria-checked={isSelected}
                           tabIndex={profileRadioTabIndex(isSelected, hasEnvironmentSelection, index)}
                           onKeyDown={handleProfileRadioGroupKeyDown}
-                          onClick={() => onEnvironmentChange(environment.id)}
+                          disabled={!onBackgroundImageChange || !profile}
+                          onClick={() => onBackgroundImageChange?.(environment.id)}
                           className={`group relative overflow-hidden rounded-lg border text-start transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] ${
                           isSelected ? 'border-[#e2c46a]' : 'border-white/10 hover:border-white/30'
                         }`}
                       >
-                        <img src={assets.caveImages?.[environment.id]} alt="" className="aspect-[16/10] w-full object-cover" loading="lazy" />
+                        <img src={backgroundImageUrl(environment.id, assets)} alt="" className="aspect-[16/10] w-full object-cover" loading="lazy" />
                         <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-2 pb-1.5 pt-4">
                           <span className="block truncate font-sc text-[10px] font-bold uppercase tracking-wider text-neutral-100">{environment.name}</span>
                           <span className="block truncate font-sans text-[9px] text-neutral-400">{environment.mood}</span>

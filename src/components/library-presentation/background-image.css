@@ -1,0 +1,10 @@
+/* Opted-in shared page shells use one selected image. Profile retains its
+   existing Cave backdrop renderer/motes; Reader scenes stay with story media. */
+.library-background-scope[data-library-background] .workspace-shell:not(.cave-shell) {
+  background: linear-gradient(#0009, #000b), var(--library-background-image) center / cover;
+}
+/* Home's established artwork placement and dimming belong to its outer frame. */
+.library-background-scope[data-library-background] .library-home-palette .workspace-shell { background: transparent; }
+@media (forced-colors: active) {
+  .library-background-scope[data-library-background] .workspace-shell:not(.cave-shell) { background: Canvas; }
+}

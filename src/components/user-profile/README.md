@@ -360,7 +360,7 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | `UserProfilePublicPanel.tsx` | **Public Stories / Relics** — the published titles of the viewed cultivator, or the fact that they are private |
 | `publicProfile.ts` | The public view's domain: the visibility configuration, the stat/highlight shapes, and the record → presentation build |
 | `displayName.ts` | The twelve visible-character display-name rule (grapheme counting and clamping) |
-| `caveEnvironment.ts` | The five stock cave environments, the destination tile art, the emblem, the motto, and the stage helper |
+| `../library-presentation/backgroundImage.ts` | Shared Background Image catalog: existing five images plus current Home art |
 | `src/library/cultivation/rankVisuals.ts` | **The canonical Library rank colour system** — the ten ranks, their permanent DAO XP thresholds, and each rank's colour identity as data |
 | `src/library/cultivation/progression.ts` | Rank progression maths and Cultivator Aura helpers derived from permanent DAO XP |
 | `chapterWritingStyle.ts` | Unchanged presentation values from production |
@@ -938,3 +938,40 @@ yet."):
 Each control still shows, disabled, with the note beside it (`data-cave-not-yet-built`),
 so a reader sees what is coming and no control does nothing. Everything else stays the
 controller's. Omitted, the Cave is as before. `notYetBuiltNote(services, feature)` reads it.
+
+
+### 2026-10-28 — Background tint customization
+
+Settings → Customization → Appearance includes **Background tint** before Accent
+color when the host supplies `handleBackgroundTintChange`. Color and the
+Black → Full color strength slider save immediately through the existing device
+profile. A canonical preview shows the result with a black control face; **Use
+default background** restores the original gradients. A chosen hue is darkened to
+keep light text readable; expanded Color details shows both exact colors.
+
+Edits keep the disclosure and input nodes mounted, preserve unfinished identity
+edits, and leave accent and Cultivator Aura choices independent. NovelExpanded
+currently applies the preference only to Home's header, navigation frame and plain
+footer. Workshop Profile uses the same component with its isolated mock profile.
+
+
+### 2026-10-28 — App colors preset and coordinated cards
+
+Background tint now drives Home's plain panels and nested cards along with its
+header/navigation/footer. The live preview includes a nested card. **App colors ·
+Default** restores both default purple and original accents, preserves identity
+edits and other profile fields, and indicates when the full preset is selected.
+**Use default background** still resets only the tint, preserving a custom accent.
+
+
+### 2026-10-28 — Background Image
+
+Renamed Cave Environment to **Background Image**, added **Home background**, and
+connected image changes to the existing saved profile rather than visit-only Cave
+state. The same choice drives the app's shared menu-page backgrounds and Profile
+backdrop, survives reload, and preserves unfinished identity edits and all tint
+settings. Home art is the default when no image is saved. Existing image IDs remain
+valid; source locations remain host assets. The replaced Cave-only catalog (and its
+unused motto/stage helpers) is preserved in `docs/history/profile-cave-environment.md`.
+Historical reference files remain unchanged. Ambient spirit motes retain their
+existing Profile-only behavior.

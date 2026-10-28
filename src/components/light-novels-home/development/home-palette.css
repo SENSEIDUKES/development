@@ -1,5 +1,5 @@
 /* Home's first applied palette, from the owner's v1.json (2026-10-28).
-   Roles: navigation → navigation, panel → Create, card → Home, button → Familiar.
+   Plain surface roles share violet; control faces remain black.
    Opt-in belongs to the Home host. Other pages keep their own presentation.
    The Reader stylesheet owns the shared rim; ManifestButton owns its rainbow.
    Keep original text colors and navigation effects; only navigation icons turn white.
@@ -8,7 +8,7 @@
 .library-home-palette {
   --reader-border-z: 25;
   color: var(--library-material-text);
-  background: linear-gradient(#0009, #000b), var(--home-palette-art, none) center / cover;
+  background: linear-gradient(#0009, #000b), var(--library-background-image, var(--home-palette-art, none)) center / cover;
 }
 /* Keep Home artwork behind the content; the plain footer shares the chrome tint. */
 .library-home-palette .workspace-shell { background: transparent; }
@@ -29,6 +29,12 @@
   box-shadow: var(--library-material-card-shadow);
   -webkit-backdrop-filter: var(--library-material-card-blur);
   backdrop-filter: var(--library-material-card-blur);
+}
+/* Media keeps the original clear backing; tint applies to the surrounding glass. */
+.library-home-palette .home-featured [data-home-panel],
+.library-home-palette .world-card-banner { background: var(--library-material-archived-blue-fill); }
+.library-home-palette :is(.world-card-base:has(img, video), .home-event:has(.home-event-art)) {
+  background: var(--library-material-archived-smoked-fill);
 }
 /* Media cards keep their artwork clear, including still images. Text uses
    the original contrast gradients, with no glass sheet over the media. */

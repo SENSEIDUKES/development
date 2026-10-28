@@ -1,4 +1,4 @@
-import { LibraryAccentScope } from '../../library-presentation/LibraryAccentScope';
+import { LibraryAppearanceScope } from '../../library-presentation/LibraryAppearanceScope';
 import { useLibraryAssets } from '../../../library/assets';
 import { UserProfileHome } from './UserProfileHome';
 import type { CaveAccountControls } from './caveAccountControls';
@@ -27,10 +27,7 @@ import {
 import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/library/story-seed';
 import type { AppUser, Story } from './types';
 import { notYetBuiltNote, useUserProfileServices } from './userProfileServices';
-import {
-  DEFAULT_CAVE_ENVIRONMENT_ID,
-  getCaveEnvironment,
-} from './caveEnvironment';
+import { DEFAULT_BACKGROUND_IMAGE_ID, getBackgroundImage, backgroundImageUrl } from '../../library-presentation/backgroundImage';
 import { UserProfileCaveDestination, type CaveDestinationId } from './UserProfileCaveDestination';
 import { UserProfileAdminPanel } from './UserProfileAdminPanel';
 import { UserProfilePortraitModal } from './UserProfilePortraitModal';
@@ -223,7 +220,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     label: isPublicView ? 'Public profile navigation' : 'Cultivator Cave navigation',
     sections: [{ id: 'cave', items: navigationItems }],
   }), [isPublicView, navigationItems]);
-  const [environmentId, setEnvironmentId] = useState(DEFAULT_CAVE_ENVIRONMENT_ID);
+  const backgroundImageId = hostController.profile?.backgroundImageId ?? DEFAULT_BACKGROUND_IMAGE_ID;
   const [ambientMotes, setAmbientMotes] = useState(true);
   const [spiritLinkGateMounted, setSpiritLinkGateMounted] = useState(
     !currentUser && !localOnlyMode,
@@ -271,8 +268,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
 
   const assets = useLibraryAssets();
   const desktopNavigation = useLibraryDesktopNavigation();
-  const environment = getCaveEnvironment(environmentId);
-  const environmentImage = assets.caveImages?.[environment.id];
+  const environment = getBackgroundImage(backgroundImageId);
+  const environmentImage = backgroundImageUrl(backgroundImageId, assets);
   const isSignedOut = !currentUser && !localOnlyMode;
   const isPrivileged = profile?.role === 'owner' || profile?.role === 'admin';
   // Energy is server truth read through the host-mounted Energy client. The
@@ -439,8 +436,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
               currentUser={currentUser}
               stories={stories}
               onLogout={onLogout}
-              environmentId={environmentId}
-              onEnvironmentChange={setEnvironmentId}
+              backgroundImageId={backgroundImageId}
+              onBackgroundImageChange={hostController.handleBackgroundImageChange}
               ambientMotes={ambientMotes}
               onAmbientMotesChange={setAmbientMotes}
               onOpenPortrait={() => setShowPortraitModal(true)}
@@ -560,7 +557,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       emblem: ownProfile?.avatarUrl ? <img src={ownProfile.avatarUrl} alt="" /> : undefined,
       onSelect: () => navigate('/home') };
   return (
-    <LibraryAccentScope color={hostController.profile?.accentColor}>
+    <LibraryAppearanceScope color={hostController.profile?.accentColor} backgroundTint={hostController.profile?.backgroundTint}>
     <LibraryNavigation location={{ screen: 'profile', cave: route.path }} onNavigate={target => {
       if (target.screen === 'profile') navigate(target.cave ?? '/home');
       else onNavigateLibrary(target);
@@ -669,6 +666,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       </SEIDialog>
     </div>
     </LibraryNavigation>
-    </LibraryAccentScope>
+    </LibraryAppearanceScope>
   );
 }

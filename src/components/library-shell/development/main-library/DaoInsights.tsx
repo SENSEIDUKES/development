@@ -273,7 +273,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                 <motion.div role="dialog" aria-modal="true" aria-label="Dao Insights"
                   initial={{ y: 32, opacity: 0.6 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 32, opacity: 0 }}
                   transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-                  className="library-header-dialog dao-spark-panel seed-field-scope relative z-10 flex w-full max-w-xl flex-col overflow-hidden rounded-t-[1.75rem] sm:rounded-3xl border border-[rgba(196,182,148,0.16)] text-left font-sans max-h-[94dvh] sm:max-h-[90vh]">
+                  className="library-header-dialog dao-spark-panel seed-field-scope relative z-10 flex w-full max-w-xl flex-col overflow-hidden rounded-t-[1.75rem] sm:rounded-3xl border border-[rgba(196,182,148,0.16)] text-start font-sans max-h-[94dvh] sm:max-h-[90vh]">
                   <div className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-human via-portal to-gold-accent" aria-hidden="true" />
 
                   {/* Header: a grab bar on phones, then sigil, title and close in one row. */}
@@ -318,7 +318,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                         <AnimatePresence mode="wait">
                           <motion.div key={sparkKey} initial={{ opacity: 0, y: 8 }} animate={{ opacity: seeking ? 0.35 : 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                              <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-[rgba(167,139,250,0.45)] bg-[rgba(167,139,250,0.1)] py-0.5 pl-0.5 pr-2.5">
+                              <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-[rgba(167,139,250,0.45)] bg-[rgba(167,139,250,0.1)] py-0.5 ps-0.5 pe-2.5">
                                 <span aria-hidden="true" className="grid h-5 w-5 place-items-center rounded-full bg-[rgba(167,139,250,0.18)]">
                                   <SparkSigil size={11} className="text-[#C4B5FD]" />
                                 </span>
@@ -333,7 +333,9 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
 
                             {/* The rest of the Origin this spark plants, on one line. */}
                             <p className="mt-2 truncate text-xs text-[#CDB271]" aria-label="Origin this spark plants">
-                              {[`${getStoryStyleLabel(spark.style)} tradition`, ...sparkTags].join(' · ')}
+                              {/* One text per word, so each tradition and tag shows in the reader's language. */}
+                              {[`${getStoryStyleLabel(spark.style)} tradition`, ...sparkTags].map((word, index) =>
+                                <span key={word}>{index > 0 && ' · '}{word}</span>)}
                             </p>
                             {/* The aside gives way to the writer's beginning, and on short screens. */}
                             {(spark.aside || spark.voice) && mode !== 'custom' && (
@@ -379,7 +381,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                             <span className="font-sc text-[11px] font-bold uppercase tracking-[0.1em]">Survival</span>
                           </span>
                           <span aria-hidden="true" className={`relative inline-flex h-5 w-9 items-center rounded-full border transition-colors ${survival ? 'border-red-400/60 bg-red-400/50' : 'border-neutral-700 bg-neutral-800'}`}>
-                            <span className={`ml-0.5 size-4 rounded-full bg-white shadow-sm transition-transform motion-reduce:transition-none ${survival ? 'translate-x-4' : 'translate-x-0'}`} />
+                            <span className={`ms-0.5 size-4 rounded-full bg-white shadow-sm transition-transform motion-reduce:transition-none ${survival ? 'translate-x-4' : 'translate-x-0'}`} />
                           </span>
                         </button>
                       </div>

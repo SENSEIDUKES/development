@@ -143,7 +143,7 @@ export const OriginGenrePicker = ({
         <button type="button" onClick={() => setIsGenrePickerOpen(true)}
           aria-expanded={compact ? false : undefined} aria-label={compact ? `Genre: ${conjuring ? conjure!.title : trimmedGenre || emptyTitle}. Pick a path` : undefined}
           style={{ '--choice-accent': GENRE_PATH_ACCENT } as CSSProperties}
-          className={`glass-choice flex w-full items-center gap-3 text-left ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}>
+          className={`glass-choice flex w-full items-center gap-3 text-start ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}>
           <span aria-hidden="true" className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all ${
             conjuring
               ? 'border-[rgba(212,175,55,0.55)] bg-[rgba(212,175,55,0.1)] shadow-[0_0_12px_rgba(212,175,55,0.28)]'
@@ -216,7 +216,7 @@ export const OriginGenrePicker = ({
             <button type="button" onClick={toggleCustomPath}
               aria-expanded={isCustomPathActive} aria-controls={customFieldsId}
               data-selected={isCustomPathActive} style={{ '--choice-accent': CUSTOM_GENRE_PATH_ACCENT } as CSSProperties}
-              className="glass-choice mt-3 flex w-full items-center gap-3 px-4 py-3 text-left">
+              className="glass-choice mt-3 flex w-full items-center gap-3 px-4 py-3 text-start">
               <span aria-hidden="true" className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all ${isCustomPathActive ? 'border-[rgba(212,175,55,0.55)] bg-[rgba(212,175,55,0.1)] shadow-[0_0_12px_rgba(212,175,55,0.28)]' : 'border-[rgba(150,166,220,0.2)] bg-[rgba(11,14,30,0.6)]'}`}>
                 <Sparkle size={15} className="glass-choice-icon" />
               </span>
@@ -243,7 +243,7 @@ export const OriginGenrePicker = ({
             {conjure && (
               <button type="button" onClick={chooseConjure} aria-pressed={conjuring}
                 data-selected={conjuring} style={{ '--choice-accent': CUSTOM_GENRE_PATH_ACCENT } as CSSProperties}
-                className="glass-choice mt-3 flex w-full items-center gap-3 px-4 py-3 text-left">
+                className="glass-choice mt-3 flex w-full items-center gap-3 px-4 py-3 text-start">
                 <span aria-hidden="true" className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all ${conjuring ? 'border-[rgba(212,175,55,0.55)] bg-[rgba(212,175,55,0.1)] shadow-[0_0_12px_rgba(212,175,55,0.28)]' : 'border-[rgba(150,166,220,0.2)] bg-[rgba(11,14,30,0.6)]'}`}>
                   <Sparkles size={15} className="glass-choice-icon" />
                 </span>

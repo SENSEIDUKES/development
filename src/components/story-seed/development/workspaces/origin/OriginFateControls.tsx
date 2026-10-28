@@ -75,7 +75,7 @@ export const OriginFateControls = ({ settings, onChange }: FateSurvivalSettingPr
         className="story-seed-touch-target relative mt-0.5 inline-flex h-7 w-12 shrink-0 items-center rounded-full"
       >
         <span aria-hidden="true" className={`absolute inset-0 rounded-full border transition-colors motion-reduce:transition-none ${settings.enabled ? 'border-portal/60 bg-portal/60' : 'border-neutral-700 bg-neutral-800'}`} />
-        <span aria-hidden="true" className={`relative ml-0.5 size-6 rounded-full bg-white shadow-sm transition-transform motion-reduce:transition-none ${settings.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+        <span aria-hidden="true" className={`relative ms-0.5 size-6 rounded-full bg-white shadow-sm transition-transform motion-reduce:transition-none ${settings.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
     </div>
   </section>

@@ -126,14 +126,14 @@ export function UserProfileAdminPanel({
 
       {/* Search input */}
       <div className="relative">
-        <SENSearchIcon aria-hidden="true" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
+        <SENSearchIcon aria-hidden="true" size={16} className="absolute start-4 top-1/2 -translate-y-1/2 text-neutral-500" />
         <input
           type="text"
           aria-label={adminTab === 'users' ? 'Search users' : 'Search stories'}
           placeholder={adminTab === 'users' ? "Search users by name, username, or ID..." : "Search stories by title, MC name, genre, or ID..."}
           value={adminSearchQuery}
           onChange={(e) => setAdminSearchQuery(e.target.value)}
-          className="min-h-11 w-full pl-11 pr-4 py-3 bg-neutral-950/80 border border-neutral-900 rounded-xl text-xs font-sans text-signal placeholder-neutral-400 focus:outline-none focus-visible:border-portal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] transition-all motion-reduce:transition-none"
+          className="min-h-11 w-full ps-11 pe-4 py-3 bg-neutral-950/80 border border-neutral-900 rounded-xl text-xs font-sans text-signal placeholder-neutral-400 focus:outline-none focus-visible:border-portal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] transition-all motion-reduce:transition-none"
         />
       </div>
 

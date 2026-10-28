@@ -117,7 +117,9 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
           // A sideways swipe turns the slide; a mostly vertical one is the page scrolling.
           if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(event.clientY - start.y)) return;
           swiped.current = true;
-          showSlide(currentSlide + (dx < 0 ? 1 : -1));
+          // Slides run in the page's reading direction, so a right-to-left page swipes the other way.
+          const forward = getComputedStyle(event.currentTarget).direction === 'rtl' ? dx > 0 : dx < 0;
+          showSlide(currentSlide + (forward ? 1 : -1));
         }}
         onPointerCancel={() => { swipeStart.current = null; }}
         // A swipe ends on the card; it must not also open it.

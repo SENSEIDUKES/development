@@ -24,7 +24,9 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
     : displayStatus?.view === 'library' ? WORLD_STATUS_LABELS[displayStatus.value] : undefined;
   const genre = world.genre?.trim();
   const synopsis = world.synopsis?.trim();
-  const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean).join(' | ');
+  // One text per part, so the genre and status each show in the reader's language.
+  const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean)
+    .map((part, index) => <span key={part}>{index > 0 && ' | '}{part}</span>);
   const openLabel = `Open ${world.title}, ${world.chapterCount} chapters${world.creatorName ? `, creator ${world.creatorName}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
 
   return <article className="world-card-banner" data-world-card="feature" id={`feature-world-${world.id}`}

@@ -143,12 +143,12 @@ export function SoundWordsPanel({
               className={`flex items-center rounded-full border text-[11px] ${editing === word ? 'border-emerald-300/60 bg-emerald-400/15' : plays ? 'border-emerald-300/20 bg-black/25' : 'border-dashed border-white/20 bg-black/15'}`}>
               <button type="button" disabled={disabled} onClick={() => startEditing(word)}
                 title={plays ? `Change “${word}”` : `No recording plays “${word}” yet`}
-                className={`min-h-8 rounded-l-full py-1 pl-2.5 pr-1 ${plays ? 'text-emerald-50' : 'text-neutral-400'}`}>
-                {word}{!plays && <span className="ml-1 text-neutral-500">· no recording</span>}
+                className={`min-h-8 rounded-s-full py-1 ps-2.5 pe-1 ${plays ? 'text-emerald-50' : 'text-neutral-400'}`}>
+                {word}{!plays && <span className="ms-1 text-neutral-500">· no recording</span>}
               </button>
               <button type="button" disabled={disabled} aria-label={`Remove ${word}`}
                 onClick={() => { if (editing === word) stopEditing(); apply(words.filter(entry => entry !== word)); }}
-                className="flex min-h-8 min-w-8 items-center justify-center rounded-r-full pr-1 text-neutral-400 hover:text-white">
+                className="flex min-h-8 min-w-8 items-center justify-center rounded-e-full pe-1 text-neutral-400 hover:text-white">
                 <X size={12} aria-hidden="true" />
               </button>
             </li>;

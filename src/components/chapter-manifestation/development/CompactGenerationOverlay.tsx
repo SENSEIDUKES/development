@@ -65,7 +65,7 @@ export default function CompactGenerationOverlay({ task, familiar, onExpand }: C
             </div>
 
             {/* Floating Widget Body */}
-            <div className="text-left">
+            <div className="text-start">
               <p className="text-xs font-semibold text-zinc-150 leading-tight">
                 {task.compactBody}
               </p>

@@ -1,0 +1,183 @@
+/*
+ * Lettering for every script the interface speaks.
+ *
+ * The interface's Latin fonts (Alegreya, Alegreya SC, Noto Serif, Literata,
+ * Rubik) do not cover Hebrew, Arabic (with Persian and Urdu), Ethiopic
+ * (Amharic), Devanagari (Hindi) or Thai, so those letters fell back to
+ * whatever the phone had. Each family below gains a Noto face for those
+ * scripts, limited by unicode-range: a Latin word keeps its own font, the
+ * script's letters take the Noto face, and a face downloads only when a page
+ * shows its script. Serif families take Noto Serif (Naskh for Arabic); Rubik
+ * keeps its own Hebrew and Arabic and takes Noto Sans for the rest. Each
+ * script face repeats a family's existing styles and weights exactly: a face
+ * with any other weight or style would form a set of its own, which the
+ * browser could pick for Latin text too. Italic uses the same upright face,
+ * since these scripts have no italic.
+ * The files are the Noto script subsets, in public/fonts/scripts with their
+ * licence (OFL.txt, SIL Open Font License 1.1).
+ *
+ * Wide letter spacing and capitals are a Latin style. Arabic letters join, so
+ * spacing breaks the word apart; Hebrew, Ethiopic, Devanagari, Thai and the
+ * CJK scripts have no capitals, and spacing only spreads them out. For those
+ * languages every interface label sets its letters normally. The Reader's
+ * chapter text keeps the reader's own spacing setting.
+ */
+:is(:lang(ar), :lang(fa), :lang(ur), :lang(he), :lang(am), :lang(hi), :lang(th), :lang(zh), :lang(ja), :lang(ko)):not([data-chapter-number], [data-chapter-number] *, [data-sen-text-block], [data-sen-text-block] *) {
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+
+/*
+ * On a right-to-left page, each piece of text takes its direction from its own
+ * first letters: an English label, a story pitch written in English or a voice
+ * name stays left to right, with its full stop at its end and its ellipsis
+ * after the words it keeps, while Arabic or Hebrew text beside it stays right
+ * to left. The page's layout still mirrors (rows, navigation, icons), since
+ * this changes only how each run of letters is ordered. The Reader's chapter
+ * text keeps its own direction, from the story's language.
+ */
+[dir="rtl"] :where(body *):not([data-chapter-number], [data-chapter-number] *, [data-sen-text-block], [data-sen-text-block] *) {
+  unicode-bidi: plaintext;
+}
+
+/*
+ * Arrows and chevrons that mean back, next or open point the way the page
+ * reads, so on a right-to-left page they mirror. This covers every Lucide
+ * arrow, including those buttons draw from an `icon` prop. It follows the
+ * nearest `dir`, so controls kept left to right (the Reader's playback group,
+ * a left-to-right story) keep their arrows, and it sets the same `scale` as
+ * the `rtl:-scale-x-100` class some icons already carry, so the two agree
+ * rather than cancel. A rotated chevron (an open disclosure, pointing down)
+ * is left as it is.
+ */
+svg:is(.lucide-arrow-left, .lucide-arrow-right, .lucide-chevron-left, .lucide-chevron-right, .lucide-chevrons-left, .lucide-chevrons-right, .lucide-move-left, .lucide-move-right):dir(rtl):not([class*="rotate-"]) {
+  scale: -1 1;
+}
+
+/* Hebrew */
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Alegreya SC'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Alegreya SC'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 200; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 200; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-hebrew.woff2') format('woff2'); unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+
+/* Arabic, Persian and Urdu */
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Alegreya SC'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Alegreya SC'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 200; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 200; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-naskh-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+
+/* Ethiopic (Amharic) */
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Alegreya SC'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Alegreya SC'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 200; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 200; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-sans-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-sans-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-sans-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Rubik'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-sans-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Rubik'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-sans-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+@font-face { font-family: 'Rubik'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-sans-ethiopic.woff2') format('woff2'); unicode-range: U+1200-139F, U+2D80-2DDF, U+AB00-AB2F; }
+
+/* Devanagari (Hindi) */
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Alegreya SC'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Alegreya SC'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 200; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 200; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-sans-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-sans-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-sans-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Rubik'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-sans-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Rubik'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-sans-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+@font-face { font-family: 'Rubik'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-sans-devanagari.woff2') format('woff2'); unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF; }
+
+/* Thai */
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Alegreya SC'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Alegreya SC'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 200; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Noto Serif'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 200; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Noto Serif'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-serif-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-sans-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-sans-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-sans-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Rubik'; font-style: italic; font-weight: 300; font-display: swap; src: url('/fonts/scripts/noto-sans-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Rubik'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/scripts/noto-sans-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }
+@font-face { font-family: 'Rubik'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/scripts/noto-sans-thai.woff2') format('woff2'); unicode-range: U+0E00-0E7F; }

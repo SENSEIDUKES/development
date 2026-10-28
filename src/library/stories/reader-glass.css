@@ -3,7 +3,8 @@
    Keep it here in the host; SEN supplies layout and behavior without Library branding.
    Portaled selector menus carry the same hooks, so they need no ancestor scope. */
 .reader-glass,
-.reader-border-glow {
+.reader-border-glow,
+body:has(.library-home-palette) {
   --reader-glass-fill: linear-gradient(145deg, #29495a99, #0c1c3299);
   --reader-glass-solid: linear-gradient(145deg, #29495aeb, #0c1c32eb);
   --reader-glass-edge: #d6bd8766;
@@ -47,16 +48,20 @@ header.reader-glass-bar::after {
    Keep the rim inside its host: actual Reader sheets can have a border on only
    one side, while cards and buttons have four. Inherited radii follow each shape
    without clipping content, focus outlines or the surface's outer shadow. */
-.reader-border-glow::after { all: unset; }
+.reader-border-glow::after,
+:where(.library-home-palette) :is([data-home-panel], [data-slot='empty-state'], [data-home-events], .home-event, .world-card-base, .world-card-banner, .workspace-header, .workspace-preferences-panel, [data-slot='app-shell-sidebar'], .library-global-navigation > div, .library-footer)::after,
+:where(body:has(.library-home-palette)) :is(.familiar-helper, .familiar-energy-panel, .familiar-actions)::after { all: unset; }
 .reader-glass-panel::after,
-.reader-border-glow::after {
+.reader-border-glow::after,
+:where(.library-home-palette) :is([data-home-panel], [data-slot='empty-state'], [data-home-events], .home-event, .world-card-base, .world-card-banner, .workspace-header, .workspace-preferences-panel, [data-slot='app-shell-sidebar'], .library-global-navigation > div, .library-footer)::after,
+:where(body:has(.library-home-palette)) :is(.familiar-helper, .familiar-energy-panel, .familiar-actions)::after {
   content: '';
   position: absolute;
   inset: 0;
   box-sizing: border-box;
   border-radius: inherit;
   padding: 2px;
-  z-index: 1;
+  z-index: var(--reader-border-z, 1);
   pointer-events: none;
   background: linear-gradient(135deg, var(--reader-seam-colors));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -314,5 +319,7 @@ html[data-reader-scrollbar][data-reader-scrolling] { scrollbar-color: #c9a24a99 
   .reader-glass-bar::after,
   .reader-glass-panel::after,
   .reader-glass-picker::after,
-  .reader-border-glow::after { display: none; }
+  .reader-border-glow::after,
+  :where(.library-home-palette) :is([data-home-panel], [data-slot='empty-state'], [data-home-events], .home-event, .world-card-base, .world-card-banner, .workspace-header, .workspace-preferences-panel, [data-slot='app-shell-sidebar'], .library-global-navigation > div, .library-footer)::after,
+  :where(body:has(.library-home-palette)) :is(.familiar-helper, .familiar-energy-panel, .familiar-actions)::after { display: none; }
 }

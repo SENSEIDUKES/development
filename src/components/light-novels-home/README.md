@@ -104,6 +104,28 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 
 ## Workshop history
 
+- **2026-10-28:** Applied the owner's latest `v1.json` V1 look to the real Home
+  through the Home-only `library-home-palette` shell. Navigation uses black at
+  95% / 20px blur; outer panels use Create's `#00374a` at 12% / 24px;
+  nested cards use Home's **black** at 35% / 25px with saturation; controls use
+  Familiar's black at 95% / 20px. Text is white and accents `#fecb3e`.
+  The existing Reader rim is shared, including its rounded mask, while Manifest
+  buttons keep their canonical spectrum ring and animated rainbow halo.
+  Existing Home artwork supplies a stationary, darkened backdrop for the glass.
+  The same app iframe shows this in Workshop; other routes and historical
+  references retain their presentation. Reduced transparency uses opaque fills.
+  Validation: 68 focused Home/app/palette tests, typecheck, app/ownership/package
+  boundaries, UI artifact verification, production build and both package smoke
+  checks passed. Chromium and WebKit walks covered 320/390/1440px, Home and its
+  Workshop iframe, events, filters, sorting, keyboard focus, route cleanup and
+  unchanged button rainbow CSS. Chromium also covered saved covers and Featured;
+  this Linux WebKit environment could not persist cover Blobs, so its story-card
+  walk used coverless stories. Built-page checks covered both engines, with solid
+  reduced-transparency fills and forced-color border removal checked in Chromium.
+  WebKit's headless renderer did not paint blur even in an isolated CSS sample;
+  physical iPhone blur appearance remains unverified. Local evidence is in
+  `output/playwright/home-v1-palette/`.
+
 - **2026-10-26:** Moved Events from Discover to Home above Featured, retaining
   the compact expandable notice and Coming soon announcements. The Home app
   and existing Workshop iframe share the same Home-owned component.

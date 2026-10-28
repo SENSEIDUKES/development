@@ -56,7 +56,7 @@ export function LightNovelsHomeWorkspace() {
   return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'light-novels-home')!}
     renderReference={() => render(true)} renderDevelopment={() => render(false)}
     workshopControls={{
-      description: 'Development opens the live Expanded Novels app with this browser’s saved stories and the Events notice above Featured. Events are Coming soon samples. Actions and saved changes work just as they do in the app. Original Reference keeps the old Home for comparison. Mobile fills a phone edge to edge.',
+      description: 'Development opens the live Expanded Novels app with the owner’s V1 palette, preserved rainbow buttons, this browser’s saved stories, and the Events notice above Featured. Events are Coming soon samples. Actions and saved changes work just as they do in the app. Original Reference keeps the old Home for comparison. Mobile fills a phone edge to edge.',
       defaultSection: 'pages',
       sections: [{
         id: 'pages',

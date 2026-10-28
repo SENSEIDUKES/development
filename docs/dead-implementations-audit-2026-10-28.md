@@ -6,7 +6,7 @@ Prepared for SENSEI.
 
 A sweep of the whole `development` repository looking for code that is **outdated, redundant, unused, or superseded** — the kind of thing that quietly costs time every time a person or an agent works in this codebase.
 
-Nothing here is broken. The repository passes `check:ownership`, `check:package-boundaries` and `check:app` with zero violations. The problem is the opposite: work that was finished and then superseded, but never removed. It still compiles, it still passes its own tests, and it still looks like it belongs.
+No production-code regression was identified. The repository passes `check:ownership`, `check:package-boundaries` and `check:app` with zero violations. The problem is the opposite: work that was finished and then superseded, but never removed. It still compiles, it still passes its own tests, and it still looks like it belongs. The exceptions this audit does find are narrow and named: an unregistered preview route (#8), and a local test run that is red on a Windows checkout for reasons unrelated to any branch (#10, #11).
 
 The method was an import-graph reconstruction over all 1,634 source files, resolved against every real entry point (`api/`, the ten `scripts/build*Api.mjs` bundlers, `vite.config.ts`, the package `exports` maps, and the app). Every finding below was then confirmed by grep before it was written down.
 
@@ -21,14 +21,14 @@ The method was an import-graph reconstruction over all 1,634 source files, resol
 | 3 | Eight server barrels that export nothing reachable | 8 files | Low | No |
 | 4 | Four "adapter" files that point back at the package that points at them | 4 files | Low | No |
 | 5 | Environment settings nothing ever sets, for a system that no longer exists | 3 names | Low–Medium | No |
-| 6 | Exported symbols that ship publicly and are used by nobody | 9 symbols | Low | No |
+| 6 | Exported symbols that ship publicly and are used by nobody | 8 symbols | Low | No |
 | 7 | A one-line shim that only its own test imports | 1 file | Low | No |
 | 8 | A preview route that exists but is not listed anywhere | 1 route | Low | No |
 | 9 | The same keyboard helper written twice, with different behaviour | 2 files | Medium | **Yes** |
 | 10 | A leftover nested checkout that breaks `npm test` locally | 390 MB | Low | No |
 | 11 | The test suite is not green on a Windows checkout | 4 files / 5 tests | Low | No |
 
-**The single most consequential item is #1** — not because of its volume (three files), but because it is the only one that leaves two competing answers to "what is the Codex," and the only one that needs your word before anything moves. Everything else is housekeeping that can land in one change.
+**The single most consequential item is #1** — not because of its volume (three files), but because it is the only one that leaves two competing answers to "what is the Codex," and the only one that blocks the Codex cleanup until you say which way it goes. #9 also needs a call, but on a much smaller and reversible question. Everything else is housekeeping that can land in one change.
 
 ---
 
@@ -65,7 +65,7 @@ The practical costs:
 - **Two sources of truth for the same idea.** An agent asked to "change the Codex" has two plausible targets and no signal about which one the product uses. That is exactly the confusion this audit exists to remove.
 - **A published entry that mixes dead and live.** `@seihouse/sen/reader-codex` exports the dead page *and* the live helpers at the same time, so the entry can only be cleaned up by relocation, not deletion.
 
-**What depends on it today.** Only the package barrel (`src/package/sen/reader-codex.ts`, 35 exports) and the tests that exercise it. The Workshop preview renders the **reference** copy on its Original Reference side and the **HARNESS** copy on its Development side — so the superseded page is not on screen anywhere.
+**What depends on it today.** The superseded page itself is reached only by the package barrel (`src/package/sen/reader-codex.ts`, 35 exports) and the tests that exercise it — nothing renders it. The **entry** around it has six further live consumers, inventoried below. The Workshop preview renders the **reference** copy on its Original Reference side and the **HARNESS** copy on its Development side — so the superseded page is not on screen anywhere.
 
 **The dead set, exactly** — 3 source files, 55 KB, plus 2 test files:
 
@@ -152,7 +152,7 @@ Worse, it leaves a **false statement in the published package**. `src/package/se
 
 They also carry **stale claims**. `src/components/reader-codex/README.md:92` says `shared/CodexHovercard.tsx` *"now serves only the historical Reference Reader path"* — it serves nothing; the one test that touches it imports the `workshop/reference-support` module directly, bypassing the adapter. And `src/workshop/reference-support/story-seed/dialect.ts:3` cites *"the same pattern as `reader-chamber/shared/dialect.ts`"* — a file that now has no content of its own.
 
-**What depends on it.** Nothing. The only mention of each path in the repository is its own ownership row in `scripts/ownershipInventory.mjs:16-18,20`.
+**What depends on it.** Nothing executable. No file in the repository imports any of the four — the only code references are their own ownership rows in `scripts/ownershipInventory.mjs:16-18,20`, and the only prose references are the stale documentation claims quoted above.
 
 **Recommended action.** Delete all four and remove their four ownership rows.
 
@@ -205,7 +205,7 @@ The two tag constants are the clearest case: the reference form uses its own cop
 
 ## 8. A preview route that exists but is listed nowhere
 
-`src/App.tsx:92,132` registers `?preview=audio-player-smoke`, and it works. But it has **no entry** in `src/workshop/manifest.ts` — so it is reachable by URL yet invisible on the Workshop home, absent from the feature list, and absent from the owner inventory in `scripts/ownershipInventory.mjs`. The repository rule is one manifest entry per feature with an explicit owner.
+`src/App.tsx:92,132` registers `?preview=audio-player-smoke`, and it works. But it has **no entry** in `src/workshop/manifest.ts` — so it is reachable by URL yet invisible on the Workshop home and absent from the feature list. The repository rule is one manifest entry per feature with an explicit `owner`. The ownership inventory owns *paths*, not routes — `src/App.tsx` itself is owned there as the "preview router" (`scripts/ownershipInventory.mjs:74`) — so what this route is missing is its own manifest record carrying an `owner` and a `status`.
 
 **Recommended action.** Add the manifest row with its owner, or remove the route.
 
@@ -278,7 +278,7 @@ The production Reader snapshot is byte-verified in exactly the same way, and is 
 
 ## The guard gap — why all of this survived
 
-`scripts/ownershipGraph.mjs:145` already computes reachability. It just never runs where it would matter:
+`scripts/ownershipGraph.mjs:145` already computes reachability — the `UNREACHABLE` check inside the `for (const [owner, pkg] of Object.entries(packages))` loop that starts at line 127. It just never runs where it would matter:
 
 - The check iterates `Object.entries(packages)`, which is **`sen` and `library` only**.
 - `src/server/` is classified `host` (`ownershipInventory.mjs:71`), so **no server file is ever reachability-checked**.

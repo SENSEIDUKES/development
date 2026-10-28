@@ -62,12 +62,17 @@ try {
       const style = getComputedStyle(element);
       return [style.backgroundImage, style.backgroundColor];
     });
-    for (const selector of ['.library-home-palette', '.library-footer']) {
+    for (const selector of ['.library-footer']) {
       assert.deepEqual(await page.locator(selector).evaluate(element => {
         const style = getComputedStyle(element);
         return [style.backgroundImage, style.backgroundColor];
       }), chrome, `${selector} shares the purple-blue chrome finish`);
     }
+    assert.ok(await page.locator('.library-home-palette').evaluate(element => {
+      const style = getComputedStyle(element);
+      return style.getPropertyValue('--home-palette-art').includes('url(') && style.backgroundImage.includes('url(');
+    }), 'Home retains its artwork backdrop behind the content');
+    await page.locator('.library-footer').screenshot({ path: `${output}/footer-${width}.png` });
     await inactiveNav.hover();
     await page.waitForTimeout(350);
     const hovered = await inactiveNav.evaluate(navState);

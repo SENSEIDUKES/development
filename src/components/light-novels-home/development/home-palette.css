@@ -23,9 +23,9 @@ body:has(.library-home-palette) {
 .library-home-palette {
   --reader-border-z: 25;
   color: var(--home-text);
-  background: var(--home-chrome);
+  background: linear-gradient(#0009, #000b), var(--home-palette-art, none) center / cover;
 }
-/* Home shares the Story Seed blue-violet finish across the page and chrome. */
+/* Keep Home artwork behind the content; the plain footer shares the chrome tint. */
 .library-home-palette .workspace-shell { background: transparent; }
 .library-home-palette :is([data-home-panel], .world-card-banner, [data-home-events], .workspace-preferences-panel) {
   background: var(--home-panel);

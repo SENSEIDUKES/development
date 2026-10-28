@@ -1,7 +1,7 @@
 # NovelExpanded app
 
-- **2026-10-28, background follow-up:** Home's page background and footer now share
-  the header's Story Seed blue-violet finish, replacing the page artwork backdrop.
+- **2026-10-28, background follow-up:** Home's plain footer now shares the header's
+  Story Seed blue-violet finish. The artwork backdrop behind Home content remains.
   Buttons retain black fills; media remains clear. Reader tests now locate their
   subject content through the accent scope rather than assuming the provider
   adds no DOM wrapper.

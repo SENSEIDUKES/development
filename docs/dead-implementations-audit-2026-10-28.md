@@ -26,7 +26,7 @@ The method was an import-graph reconstruction over all 1,634 source files, resol
 | 8 | A preview route that exists but is not listed anywhere | 1 route | Low | No |
 | 9 | The same keyboard helper written twice, with different behaviour | 2 files | Medium | **Yes** |
 
-**The single most consequential item is #1.** Everything else is housekeeping that can land in one change.
+**The single most consequential item is #1** — not because of its volume (three files), but because it is the only one that leaves two competing answers to "what is the Codex," and the only one that needs your word before anything moves. Everything else is housekeeping that can land in one change.
 
 ---
 

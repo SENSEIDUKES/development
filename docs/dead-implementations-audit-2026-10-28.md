@@ -16,7 +16,7 @@ The method was an import-graph reconstruction over all 1,634 source files, resol
 
 | # | Finding | Size | Risk | Needs a decision? |
 |---|---|---|---|---|
-| 1 | The superseded Codex page is still published as a first-class SEN surface | 18 files, 6 live callers | Medium | **Yes** |
+| 1 | The superseded Codex page is still published as a first-class SEN surface | 3 files, 6 live callers | Medium | **Yes** |
 | 2 | A dead mock playback module, plus a published contract that describes it wrongly | 1 file | Low | No |
 | 3 | Eight server barrels that export nothing reachable | 8 files | Low | No |
 | 4 | Four "adapter" files that point back at the package that points at them | 4 files | Low | No |
@@ -38,9 +38,12 @@ The method was an import-graph reconstruction over all 1,634 source files, resol
 
 So the README **already knows** the old Codex page is superseded. What has not happened is the consequence. The old Codex is still exported as `@seihouse/sen/reader-codex` — a first-class published surface — and the repository's own rule says a remake replaces the old thing "in the same change."
 
-The conflict is real and it is yours to settle, because the README says "stays" while the rule says "delete." My recommendation is **delete the superseded page and keep the card surfaces**, but that needs your word because SEN is a licensable engine and something outside this repository may be consuming that entry today.
+The conflict is real and it is yours to settle, because the README says "stays" while the rule says "delete." My recommendation is **delete the superseded page and leave the rest of the tree alone**, but that needs your word because SEN is a licensable engine and something outside this repository may be consuming that entry today.
 
-One correction to the obvious plan, found while this was being reviewed: the entry **cannot simply be retired**. It also publishes live helpers that live Workshop features import — the Character Voice preview and both Card Workshop surfaces. Those have to be relocated and their callers updated first. The full inventory and the ordering are in finding 1.
+Two corrections to the obvious plan, both found while this was being reviewed:
+
+- **The entry cannot simply be retired.** It also publishes live helpers that live Workshop features import — the Character Voice preview and both Card Workshop surfaces. Those have to be relocated and their callers updated first. The full inventory and the ordering are in finding 1.
+- **The dead set is three files, not a whole feature.** The section views and hooks look like part of the old Codex but are shared with the locked Original Reference, which AGENTS.md requires be retained. Deleting them would break the Workshop's Original Reference pane.
 
 ### On #9 — the duplicated keyboard helper
 
@@ -50,7 +53,7 @@ Two feature folders each own a copy of the same WAI-ARIA radio-group keyboard be
 
 ## 1. The superseded Codex page is still a published first-class surface
 
-**What it is.** The Codex as it existed before the HARNESS took it over: the page shell, its sheet overlay, its bestiary, its twelve section views (Portraits, Factions, Power Rankings, Dashboards, Mysteries, Relations, Timeline, Artifacts, Fate, Lore, Collage, Image Gallery), and the eight hooks that drive Codex editing, imagery and voice.
+**What it is.** The Codex *page* as it existed before the HARNESS took it over: the page shell (`development/ReaderCodex.tsx`, 41 KB), its sheet overlay (`development/CodexSheetOverlay.tsx`, 4 KB), and its bestiary (`development/ReaderCodexBestiary.tsx`, 10 KB). **3 source files, 55 KB**, plus their two test files.
 
 **Why it should be cleaned up.** The repository currently contains **two Codex implementations with two different data models**. The live one is the HARNESS record: `StoryCodex` and `deriveStoryCodex` in `src/components/harness-generation/`, which the Reader renders at `HarnessReaderSession.tsx:535-558` and which the Workshop preview shows in its Development pane. The old one runs on `StoryMemory` from `src/components/reader-codex/shared/types.ts`.
 
@@ -58,22 +61,25 @@ The practical costs:
 
 - **A promise the package cannot keep.** `src/package/sen/README.md:165-167` tells hosts that *"the top bar's Codex button opens the development Reader Codex as a page, with Holdings among its pages; `ReaderCodex` (in `./reader-codex`) takes `extraPages`."* The `extraPages` prop — the one documented way for a host to add its own Codex page — has **zero callers anywhere in the repository**. A host reading that README would build against an extension point that nothing demonstrates.
 - **Two sources of truth for the same idea.** An agent asked to "change the Codex" has two plausible targets and no signal about which one the product uses. That is exactly the confusion this audit exists to remove.
-- **Dead weight at the size of a feature.** The superseded set is **18 source files, 273 KB**, plus their tests — all still passing, so nothing ever flags it as stale.
+- **A published entry that mixes dead and live.** `@seihouse/sen/reader-codex` exports the dead page *and* the live helpers at the same time, so the entry can only be cleaned up by relocation, not deletion.
 
-**What depends on it today.** Only the package barrel (`src/package/sen/reader-codex.ts`, 35 exports) and the tests that exercise it. The old section views are imported by exactly two Codex pages: the superseded development page and the locked historical `reference/` copy. The Workshop preview renders the **reference** copy on its Original Reference side and the **HARNESS** copy on its Development side — so the old page is not even on screen anywhere.
+**What depends on it today.** Only the package barrel (`src/package/sen/reader-codex.ts`, 35 exports) and the tests that exercise it. The Workshop preview renders the **reference** copy on its Original Reference side and the **HARNESS** copy on its Development side — so the superseded page is not on screen anywhere.
 
-**The dead set, exactly** — 18 source files, 273 KB:
+**The dead set, exactly** — 3 source files, 55 KB, plus 2 test files:
 
-- `development/ReaderCodex.tsx`, `development/CodexSheetOverlay.tsx`, `development/ReaderCodexBestiary.tsx` — the page, its overlay, its bestiary.
-- `shared/codex/` — eleven of the twelve section views: `ReaderCodexCharacters`, `ReaderCodexFactions`, `ReaderCodexPower`, `ReaderCodexDashboards`, `ReaderCodexMysteries`, `ReaderCodexRelations`, `ReaderCodexTimeline`, `ReaderCodexArtifacts`, `ReaderCodexFate`, `ReaderCodexGlossary`, `ReaderCodexCollage`.
-- `shared/hooks/` — the four that only that page used: `useCodexAnalytics`, `useCodexImageEvolution`, `useCodexDeletions`, `useCodexLocations`.
+- `development/ReaderCodex.tsx` — the page.
+- `development/CodexSheetOverlay.tsx` — its overlay.
+- `development/ReaderCodexBestiary.tsx` — its bestiary.
 
-**Important: not the whole tree is dead.** These must stay:
+**The scope is much smaller than it first looks, and that is the point.** The section views and hooks look like part of the old Codex, but they are **not** dead. The locked Original Reference page imports all eleven section views (`src/components/reader-codex/reference/ReaderCodex.tsx:16-26`) and three of the hooks (`:29-31`), and `ReaderCodexWorkspace.tsx:264` still renders that page on the Original Reference side of the Workshop preview. AGENTS.md requires that reference to be retained, so those files stay and must not be swept into a deletion.
 
+**Everything else in that folder is live and stays.** None of the following may be swept into a deletion:
+
+- The **eleven section views** in `shared/codex/` — `ReaderCodexCharacters`, `ReaderCodexFactions`, `ReaderCodexPower`, `ReaderCodexDashboards`, `ReaderCodexMysteries`, `ReaderCodexRelations`, `ReaderCodexTimeline`, `ReaderCodexArtifacts`, `ReaderCodexFate`, `ReaderCodexGlossary`, `ReaderCodexCollage` — plus `ReaderCodexImageGallery`, the twelfth. All are imported by the retained Original Reference page or by the card surfaces.
+- The **hooks** in `shared/hooks/` — `useCodexAnalytics`, `useCodexImageEvolution` and `useCodexDeletions` (reference page, `:29-31`), `useCodexLocations` (via `shared/codex/ReaderCodexCharacters.tsx:6`), `useCodexCharacterEditing` (via `character-cards/CharacterEditCard.tsx:9`), `useCodexVoiceQuote` and `useCodexVoiceCards`, `useHistoricalMediaUrls`.
 - The **card surfaces** published through `@seihouse/sen/cards` — `CharacterCard`, `CharacterEditCard`, `CharacterProfile`, `LocationCard`, `LocationProfile`, `CodexHovercard`, `CodexCardAmbience`, `codexEntityAccent`.
-- **`ReaderCodexImageGallery`** — the twelfth section view, imported by `character-cards/CharacterCard.tsx:99`.
-- **`shared/hooks/useCodexCharacterEditing.ts`** (used by `character-cards/CharacterEditCard.tsx:9`), **`useCodexVoiceQuote.ts`** (`CharacterCard.tsx:8`), **`useCodexVoiceCards.ts`** (which `useCodexVoiceQuote` calls), **`useHistoricalMediaUrls.ts`** and **`shared/codex/entityImageHistory.ts`** (used by `CharacterCard`, `LocationCard` and `ReaderCodexImageGallery`).
-- **`src/components/reader-codex/shared/types.ts`**, still the shared reader contract (`checkNovelExpandedApp.mjs:44`) and imported by `src/narrative/codexHighlighting.ts`.
+- **`development/CodexHovercard.tsx`, `development/CodexCardAmbience.tsx`, `development/codexEntityAccent.ts` and `development/codexHovercardStyles.ts`** — published through `@seihouse/sen/cards` and imported by `reader-chamber/development/CodexCard.tsx` and `ReaderChamber.tsx`. The `development/` folder is not a dead folder.
+- **`shared/codex/entityImageHistory.ts`**, **`shared/assetIdentity.ts`**, **`shared/codexContext.ts`**, **`shared/codexEntryContext.ts`**, **`shared/downloadUtils.ts`**, **`shared/codex/CodexContext.tsx`**, **`shared/codex/CodexEntryContextDialog.tsx`**, **`shared/codex/CodexEntryContextFields.tsx`**, **`shared/DestinyChoicePanel.tsx`** and **`src/components/reader-codex/shared/types.ts`** — the last is still the shared reader contract (`checkNovelExpandedApp.mjs:44`) and is imported by `src/narrative/codexHighlighting.ts`.
 
 **The entry itself cannot simply be retired.** The old Codex *page* is dead, but the entry also publishes live things that live Workshop features import. Retiring or repointing the entry without relocating those first would break them:
 
@@ -90,7 +96,7 @@ None of these come from the superseded page or from the card surfaces. They come
 
 **Recommended action, in this order.**
 
-1. Delete the 18 dead files above. Keep everything in the "must stay" list.
+1. Delete the 3 dead files and their 2 test files. **Nothing else in `reader-codex/` goes** — the section views, hooks, card surfaces and contracts are live through the retained Original Reference and the card system.
 2. **Relocate the surviving exports and update the six consumers.** The highlighter is a `narrative/` module, so `@seihouse/sen/contracts` — which already re-exports `narrative/story`, `narrative/voice` and the rest of that layer — is its natural home. `CodexProvider`, `useCodexVoiceQuote` and the card-adjacent helpers belong with `@seihouse/sen/cards`, which already publishes `CharacterCard`, `CharacterEditCard` and `CodexHovercard` and already carries `reader-codex.css`. Then update the six consumers above to the new entry.
 3. **Only then** repoint `@seihouse/sen/reader-codex` at the HARNESS Codex, or retire the entry — whichever the owner prefers.
 4. Correct `src/package/sen/README.md:165-167` so it no longer promises `extraPages`.

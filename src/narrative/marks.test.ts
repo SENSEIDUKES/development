@@ -330,12 +330,34 @@ describe('sound tags', () => {
       // A space after the tag is still one space, not two: the word space was always there.
       ['It [[sound: growl | growled | medium]] and stopped.', 'It growled and stopped.', [['growl', 'medium', 'growled']]],
       ['It [[sound: growl | growled ]] and stopped.', 'It growled and stopped.', [['growl', undefined, 'growled']]],
+      // A word right after the close: there that space is the only thing between two words, so one of them stays.
+      ['He [[sound: footsteps | walked ]]home.', 'He walked home.', [['footsteps', undefined, 'walked']]],
+      ['He [[sound: footsteps | walked | low]]home.', 'He walked home.', [['footsteps', 'low', 'walked']]],
+      // Not in a script that spaces its words: there it is the tag's own space either way.
+      ['［［sound：growl｜唉った ｜ medium］］家に入った。', '唉った家に入った。', [['growl', 'medium', '唉った']]],
     ];
     for (const [sample, text, expected] of cases) {
       const reading = readMarks(sample);
       expect(reading.text).toBe(text);
       expect(sounds(reading)).toEqual(expected);
     }
+  });
+
+  /**
+   * The same space, on the paths the first fix missed (CodeRabbit on #463).
+   * An inner span is given up on without being recorded, and used to be given
+   * up on with its closing space still in the prose; and a tag recorded inside
+   * a space that goes used to keep an offset past where the prose then ended.
+   */
+  it('drops a nested tag\'s closing space, and keeps the tags inside it in place', () => {
+    const nested = readMarks('[[sound: growl | he [[sound: footsteps | walked | low]], then stopped | medium]] after.');
+    expect(nested.text).toBe('he walked, then stopped after.');
+    const marked = readMarks('[[1|he [[2|walked ]], then stopped ]] after.');
+    expect(marked.text).toBe('he walked, then stopped after.');
+    // The speaker tag stood where the words ended; the quote that follows takes the space's place.
+    const quoted = readMarks('[[sound: growl | growled [[@Mara]] | medium]]“Run!”');
+    expect(quoted.text).toBe('growled“Run!”');
+    expect(quoted.speakers).toEqual([{ name: 'Mara', offset: 'growled'.length }]);
   });
 
   it('reads a tag written the other way round the right way, given the story\'s sound words', () => {

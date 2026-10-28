@@ -68,6 +68,8 @@ release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm c
 
 ## History
 
+- **2026-10-27:** Refreshed UI 0.12.0 and Library UI 0.10.1 from current UI main at `8371b71`, through UI [#94](https://github.com/SENSEIDUKES/UI/pull/94). Neither version moves from the #91 build below: only the bytes, the SHA-512 integrity in `ui-artifacts.json` and `package-lock.json`, and the recorded source provenance.
+
 - **2026-10-25:** Refreshed UI 0.12.0 and Library UI 0.10.1 from current UI main, including the studio primitives and measured virtual lists from UI #91. Library Components now displays all 16 Library UI families from the canonical UI workbench catalog.
 
 - **2026-10-11:** Updated the Display package to FONT-LAB's Living Titles 0.1.1 release, with its original archive and release hashes. This release updates the tooling/runtime; its four shipped Regular font files have the same hashes as 0.1.0. Kept SEIHouse Sans 0.39 and its original source provenance unchanged.

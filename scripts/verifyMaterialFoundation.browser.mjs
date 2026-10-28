@@ -39,7 +39,7 @@ try {
   assert.equal(saved.looks.at(-1).settings.selected, 'blue-glass');
   await page.reload();
   await page.locator('.pm-workbench').waitFor();
-  assert.match(await page.locator('#pm-mixing-table h3').textContent(), /Tidal glass/);
+  await page.waitForFunction(() => document.querySelector('#pm-mixing-table h3')?.textContent === 'Tidal glass');
   if (width < 650) await page.getByRole('button', { name: 'Effects', exact: true }).click();
   else await page.locator('#pm-effects').scrollIntoViewIfNeeded();
   assert.equal(await page.locator('#pm-effects article').count(), 6);

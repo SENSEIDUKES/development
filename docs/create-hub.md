@@ -103,11 +103,19 @@ and no phase starts on an undecided question.
 - **One tagging path.** Nothing is forked for imported novels. A generated
   chapter and an imported one go through the same stage and show the same
   record.
-- **Speakers are for named characters.** A speaker tag goes on a character the
-  story knows by name; the clerk, the buyer and "someone shouted" are the
+- **Speakers are for named characters, named by the prose.** A speaker tag
+  goes on anyone the prose names, whether or not the story's list has them
+  yet: the list is for spelling and aliases, never a gate, and an imported
+  novel has no list at all. The clerk, the buyer and "someone shouted" are the
   narrator's voice. (SENSEI, 2026-10-29: "the random person on the street
-  doesn't need a vocal tag. That's the narrator voice.") The warning that
-  counts untagged spoken lines is rewritten to count only named speakers.
+  doesn't need a vocal tag. That's the narrator voice.") The platform already
+  places a speaker tag with a new name and makes the Codex card from it; what
+  failed on The Nine-Fold Furnace was the teaching ("anyone else goes by the
+  name the story already has, listed below"), which the model read as "only
+  these people". That is the defect phase D's speaker step fixes and tests:
+  the tagger discovers a named speaker before anyone confirms the card
+  (confirmation is phase E's). The warning that counts untagged spoken lines
+  is rewritten to count only named speakers.
 - **The Codex opens for the author in Create.** An author knows what happens in
   chapter 159; the reader does not. In Create the Codex shows every card so the
   author can curate it; in the Reader it unlocks as the story reaches each
@@ -122,13 +130,15 @@ and no phase starts on an undecided question.
 | # | Phase | Agents build | SENSEI decides | SENSEI sees | Where it stands |
 |---|---|---|---|---|---|
 | A | This design | This document | Approve or cut | This doc | awaiting approval |
-| B | Tag any chapter, tag the whole story | In the world's Studio (today Create's Studio button opens Story View, where "Tag this chapter again" already lives): every chapter with its tagging state (read or not, by which model, notes placed, notes dropped and why), Tag this chapter and Tag all chapters, in order, with the same guards re-tagging has today (a hand-placed Sound Cue, a Holdings fixer merge) | Nothing new | The Nine-Fold Furnace with chapters 1 to 3 tagged, and a chapter's record on the page | next |
-| C | The manuscript way in | A second way to start a world beside the Seed: the author's chapters in (see decisions 1 to 3), a world with no Seed and no Blueprint, open to its reader, readable in the Reader, with Story Settings for its language, its main character and its sound words | Decisions 1 to 3 below | A novel of SENSEI's choosing in the app, untagged, opening in the Reader | waits on B |
+| B | Tag any chapter, tag the whole story | In the world's Studio (today Create's Studio button opens Story View, where "Tag this chapter again" already lives): every chapter with its tagging state (read or not, by which model, notes placed, notes dropped and why, tags set aside and why, and "the tagger found nothing here" said plainly), Tag this chapter and Tag all chapters, in order, with the same guards re-tagging has today (a chapter with a hand-placed Sound Cue or a Holdings fixer merge is skipped and named, never silently re-tagged) | Decisions 4 to 7 below | The Nine-Fold Furnace with chapters 1 to 3 tagged, and a chapter's record on the page | next |
+| C | The manuscript way in. *A manuscript world is an authored world; expansion is a later action, and the tagger discovers before it confirms.* | A second way to start a world beside the Seed: the author's chapters in (see decisions 1 to 3), a world with no Seed and no Blueprint, open to its reader, readable in the Reader, with Story Settings for its language, its main character and its sound words | Decisions 1 to 3 below | A novel of SENSEI's choosing in the app, untagged, opening in the Reader | waits on B |
 | D | The tagging loop, one kind at a time | For each kind: the teaching rewritten for that kind alone, re-tag, count against the sentences the prose offers (the agent lists them), fix, repeat. Order: soundscape and atmosphere (and the category vocabulary they choose from), Sound Cues (with the story's own words equipped), speakers for named characters, then holdings and appearances with the already-appeared list | Approve each kind's words; equip the packs for the test story | Each kind landing on a chapter SENSEI can hear and see: music that changes between chapters, cues on the bells, voices on the named cast | waits on B; C helps |
 | E | The Codex open in Create | The author's view of every card, ahead of the reader | When; what the author may edit | The whole world in Create, the reached part in the Reader | later |
 | F | The Studios hand-off | Nothing here: SPP export from the Studios (their repo), then Manga Studio, MP Studio and games reading the Codex | Separate missions | A pack made in a Studio equipped in Create; later, a manga drawn from the Codex | later |
 
-## Decisions for SENSEI (phase C), not to be guessed
+## Decisions for SENSEI, not to be guessed
+
+**Phase C:**
 
 1. **How a novel comes in.** Pasted text with chapter breaks the author marks,
    a file (plain text, Markdown, EPUB), or both. Recommendation: pasted text
@@ -141,6 +151,34 @@ and no phase starts on an undecided question.
 3. **What Story View shows for a world with no Seed.** The Seed and Blueprint
    sections have nothing to show. Recommendation: hide them for a manuscript
    world rather than show them empty.
+
+**Phase B** (a long run over a whole story is not one call; these were missed
+in the first draft and named by review, 2026-10-29):
+
+4. **A run that stops halfway.** Tag all chapters on a long novel is hundreds
+   of calls. Recommendation: it runs in order, saves each chapter's record as
+   it lands, can be cancelled, and resumes from the first chapter without a
+   record from this run; it never re-tags a chapter already done in the same
+   run, and a chapter that fails is named and skipped, not the end of the run.
+5. **Clearing a bad run.** Re-tagging replaces a chapter's tags; nothing keeps
+   the ones before. Recommendation: a Clear tags action per chapter and per
+   story (the chapter keeps every word and its record says it was cleared), and
+   no history of past taggings for now. Basic first.
+6. **What the record says when nothing landed.** Today the record names every
+   dropped note and its reason (the words are not in that paragraph, are in it
+   twice, name a paragraph the chapter lacks, or could not be placed without
+   changing the prose) and every placed tag the HARNESS set aside (no recording
+   for that sound, more than eight words, a name that reads as a note). It
+   cannot say "the tagger found nothing here", because silence is not a note.
+   Recommendation: the chapter view says it in those words, per kind, so a
+   quiet chapter and a failed one never look alike.
+7. **What Tag all chapters costs.** The product rule is paid at the point of
+   generation, in Energy. A tag call is small beside a chapter write (about a
+   third of the input, far less output) but five hundred of them are not
+   nothing. Recommendation: metered in Energy per chapter at a fraction of a
+   write's cost, with the owner's access token lifting it in Development as it
+   does for writes today; capped per world or free to a creator who imported
+   the novel are the alternatives. Undecided until SENSEI says.
 
 ## Hard constraints
 
@@ -167,3 +205,9 @@ and no phase starts on an undecided question.
 
 - **2026-10-29:** Written from SENSEI's direction after the first real run of
   the margin-note tagger. Phase A awaiting approval.
+- **2026-10-29 (review):** Phase B gains its decisions (a run that stops,
+  clearing, what the record says when nothing landed, cost); speakers are
+  named by the prose, not gated by the list, and the Nine-Fold Furnace failure
+  is named as the teaching defect phase D fixes; phase C opens with "a
+  manuscript world is an authored world; expansion is a later action, and the
+  tagger discovers before it confirms.

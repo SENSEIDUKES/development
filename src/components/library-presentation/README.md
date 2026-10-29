@@ -124,3 +124,24 @@ The Background Image controls use the existing Profile radio keyboard pattern.
 The Profile Workshop uses its isolated mock controller; the Home Workshop iframe
 continues using real app preferences. Changing the image changes no material
 opacity, blur, color, borders or shadows.
+
+
+## 2026-10-29 — Home adopts the supplied V2 combination
+
+Home now uses the owner's V2 combination: Midnight violet edited to 90% opacity
+and 40px blur for the header, navigation frame, footer and nested empty state;
+Violet inset (35%, 25px blur with its saturation and shadows) for outer panels;
+and the existing black Spectrum action. Image/video cards keep their clear
+backings and contrast layers. Shared ingredient samples and other pages retain
+their original recipes.
+
+The shared violet gradient accepts an internal alpha scale, defaulting to one.
+Home scales every gradient stop by 90/95 alongside its 90% base, matching the
+Workshop editor's exact opacity behavior. No copied gradient or Workshop import
+enters the app. Home's role adapter uses the existing material fills/shadows;
+reduced transparency, background hue/strength and image preferences still apply.
+
+Home supplies V2's #c9a24a accent through the existing appearance scope only when
+the reader has no saved accent. A saved accent continues to override it; other
+pages keep their defaults. The Palette & Materials Home mock uses this same
+composition with its selected experiment colors and measured ingredient recipes.

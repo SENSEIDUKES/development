@@ -1,5 +1,12 @@
 # NovelExpanded app
 
+- **2026-10-29** — Home adopts the owner's V2 default: edited Midnight violet
+  (90% opacity, 40px blur) for chrome and nested cards, Violet inset for outer
+  panels, the supplied gold accent, and black spectrum buttons. Home and its
+  Workshop previews share the composition. Saved accent/background preferences
+  remain respected; image/video cards stay clear and other pages retain their
+  existing defaults.
+
 - **2026-10-28** — Profile's Background Image replaces Cave Environment and includes the current Home artwork. The existing profile saves the choice for Home, Discover, Create and other shared menu-page backdrops; Profile uses it too. Story media stays with the Reader. Tint, glass opacity/blur and control styles remain independent. Tablet navigation uses definite button widths so its border encloses the full dock in Safari.
 
 - **2026-10-28** — Home's plain panels and cards now share the header/navigation's purple, and background tint/strength updates all of them together. Profile's App colors default preset restores purple and original accents, while background-only reset remains independent. Artwork, media cards, black controls, rainbow glows and Reader blue retain their treatments. The material Workshop has the same default preset, with prior blue/smoked paints archived and saved looks preserved.

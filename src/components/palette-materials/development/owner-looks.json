@@ -1,6 +1,6 @@
 {
   "format": "palette-materials",
-  "version": 1,
+  "version": 3,
   "looks": [
     {
       "id": "043230de-91c3-489e-ae02-67bdff93da9b",
@@ -172,6 +172,77 @@
         "colors": {
           "text": "#ffffff",
           "accent": "#fecb3e"
+        }
+      }
+    },
+    {
+      "id": "927a5a07-aa05-41fe-9c28-56c21e138c4b",
+      "name": "V2",
+      "settings": {
+        "background": "artwork",
+        "selected": "violet-card",
+        "edits": {
+          "home": {
+            "blur": 25,
+            "opacity": 35,
+            "tint": "#00374a",
+            "borderOpacity": 10,
+            "glowColor": "#000000",
+            "borderGlow": "reader"
+          },
+          "create": {
+            "opacity": 12,
+            "blur": 24,
+            "borderOpacity": 20,
+            "borderColor": "#000000",
+            "tint": "#00374a",
+            "glow": 100,
+            "borderGlow": "reader",
+            "shadow": 130,
+            "glowColor": "#000000"
+          },
+          "signin": {
+            "borderGlow": "reader"
+          },
+          "navigation": {
+            "opacity": 95,
+            "blur": 20,
+            "tint": "#000000",
+            "shadow": 140,
+            "borderColor": "#b68f25",
+            "glow": 100,
+            "borderOpacity": 70,
+            "borderGlow": "reader"
+          },
+          "familiar": {
+            "borderGlow": "reader",
+            "opacity": 95,
+            "blur": 20,
+            "tint": "#000000"
+          },
+          "reader": {
+            "borderGlow": "reader"
+          },
+          "button": {
+            "borderGlow": "reader"
+          },
+          "secondary": {
+            "borderGlow": "reader"
+          },
+          "violet-shell": {
+            "blur": 40,
+            "opacity": 90
+          }
+        },
+        "roles": {
+          "navigation": "violet-shell",
+          "panel": "violet-card",
+          "card": "violet-shell",
+          "button": "rainbow-action"
+        },
+        "colors": {
+          "text": "#ffffff",
+          "accent": "#c9a24a"
         }
       }
     }

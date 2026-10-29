@@ -13,7 +13,7 @@ import type { UserProfile } from '@seihouse/library/profile';
 import { useDeviceProfileRank } from '../host/profile/deviceProfile';
 import { APP_DESTINATIONS, appLibraryLocation, appRouteFor } from './appPlaces';
 import { HOME_ROUTE, routeHref, type Navigate, type NovelExpandedRoute } from './routes';
-import { useLibraryAssets } from '@seihouse/library/presentation';
+import { LibraryAppearanceScope, useLibraryAssets } from '@seihouse/library/presentation';
 import './app-header.css';
 
 export interface AppShellProps {
@@ -79,7 +79,8 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
       { id: 'settings', label: 'Settings', onSelect: settings },
     ] },
   ];
-  return <div className={`novel-expanded-shell bg-[#050505] text-[#dfd8cf] font-serif selection:bg-human/30 ${palette ? 'library-home-palette' : ''}`} data-testid="novel-expanded-shell"
+  return <LibraryAppearanceScope color={palette ? readerProfile.accentColor ?? '#c9a24a' : undefined}>
+  <div className={`novel-expanded-shell bg-[#050505] text-[#dfd8cf] font-serif selection:bg-human/30 ${palette ? 'library-home-palette' : ''}`} data-testid="novel-expanded-shell"
     style={palette && homeImages?.[0] ? { '--home-palette-art': `url(${JSON.stringify(homeImages[0])})` } as CSSProperties : undefined}>
     <LibraryNavigation location={appLibraryLocation(route)} destinations={APP_DESTINATIONS}
       profile={{ name: readerProfile.displayName.trim() || 'Cultivator',
@@ -112,5 +113,5 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
     </LibraryNavigation>
     {legalSheet}
     {helpOpen && createPortal(<LibraryHelpMenu open onClose={() => setHelpOpen(false)} />, document.body)}
-  </div>;
+  </div></LibraryAppearanceScope>;
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 const base = process.argv[2] ?? 'http://localhost:5173';
 const out = 'output/playwright/material-foundation';
 mkdirSync(out, { recursive: true });
@@ -23,9 +23,19 @@ try {
   if (width < 650) await page.getByRole('button', { name: /Browse all/ }).click();
   const catalog = page.locator('#pm-material-catalog');
   assert.equal(await catalog.locator('.pm-catalog').first().locator('.pm-sample').count(), 6);
-  for (const [id, expected] of [['violet-shell', shell], ['violet-panel', panel], ['violet-card', card]]) {
-    assert.deepEqual(await catalog.locator(`[data-pm-recipe="${id}"]`).evaluate(material), expected, `${id} equals actual Home surface`);
-  }
+  assert.deepEqual(await catalog.locator('[data-pm-recipe="violet-card"]').evaluate(material), panel, 'V2 outer panel uses Violet inset');
+  const shellEdit = JSON.parse(readFileSync('src/components/palette-materials/development/owner-looks.json', 'utf8')).looks.at(-1).settings.edits['violet-shell'];
+  const editedShell = await catalog.locator('[data-pm-recipe="violet-shell"]').evaluate(async (element, edit) => {
+    const { materialStyle, measureMaterial } = await import('/src/components/palette-materials/development/model.ts');
+    const original = element.getAttribute('style');
+    Object.assign(element.style, materialStyle(measureMaterial(element), edit));
+    const s = getComputedStyle(element);
+    const values = [s.backgroundColor, s.backgroundImage, s.backdropFilter, s.borderTopColor, s.boxShadow];
+    if (original === null) element.removeAttribute('style'); else element.setAttribute('style', original);
+    return values;
+  }, shellEdit);
+  assert.deepEqual(editedShell, shell, 'V2 header matches the supplied Midnight violet edit');
+  assert.deepEqual(editedShell, card, 'V2 nested card uses the same edited Midnight violet');
   await page.locator('.pm-archive summary').click();
   assert.equal(await page.locator('.pm-archive .pm-sample').count(), 9);
   assert.equal((await catalog.locator('[data-pm-recipe="blue-glass"]').evaluate(material))[0], 'rgba(0, 55, 74, 0.12)', 'Archived blue keeps its original paint');
@@ -54,10 +64,10 @@ try {
   else await page.locator('#pm-effects').scrollIntoViewIfNeeded();
   assert.equal(await page.locator('#pm-effects article').count(), 6);
   if (width < 650) await page.getByRole('button', { name: /^Saved/ }).click();
-  await page.getByRole('button', { name: 'App colors · Default preset', exact: true }).click();
+  await page.getByRole('button', { name: 'V2 · Default preset', exact: true }).click();
   const composition = page.frameLocator('iframe[title="Home material preview"]');
   await composition.locator('[data-home-events]').waitFor();
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('.pm-home-frame').contentDocument.querySelector('[data-home-events]')).backgroundColor === 'rgba(11, 14, 30, 0.12)');
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.pm-home-frame').contentDocument.querySelector('[data-home-events]')).backgroundColor === 'rgba(11, 14, 30, 0.35)');
   const fills = [];
   for (const selector of ['.workspace-header', '[data-home-events]', '[data-slot="empty-state"]']) fills.push(await composition.locator(selector).evaluate(e => getComputedStyle(e).backgroundColor));
   assert.ok(fills.every(color => color.match(/[\d.]+/g).slice(0, 3).join(',') === fills[0].match(/[\d.]+/g).slice(0, 3).join(',')), 'Default preset shares hue while retaining role opacity');

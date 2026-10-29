@@ -3,8 +3,9 @@ import { decodeLooks, encodeLooks, STORAGE_KEY, writeLooks, type SavedLook } fro
 
 // The owner's uploaded export is the source of these looks, not a new app theme.
 export const STARTING_LOOKS_KEY = `${STORAGE_KEY}.owner-export-2026-10-27`;
-export const STARTING_LOOKS_REVISION = 'owner-v1';
+export const STARTING_LOOKS_REVISION = 'owner-v2';
 export const startingLooks = (): SavedLook[] => decodeLooks(JSON.stringify(ownerExport));
+export const defaultStartingLook = (): SavedLook => startingLooks().at(-1)!;
 
 /** Add the supplied work once, without replacing browser work or reviving deletions. */
 export function loadStartingLooks(storage: Pick<Storage, 'getItem' | 'setItem'>): { looks: SavedLook[]; warning: string } {
@@ -38,7 +39,7 @@ export function loadStartingLooks(storage: Pick<Storage, 'getItem' | 'setItem'>)
   // The newly supplied final combination is the default on this revision's first
   // visit. Subsequent visits use saved browser work and respect deletions.
   const looks = [...previous, ...remaining, ...defaults];
-  if (looks.length > 100) return { looks: existing, warning: 'There is not enough room to add the four exported looks. Your browser looks were kept. Export and remove a few looks to make room.' };
+  if (looks.length > 100) return { looks: existing, warning: `There is not enough room to add the ${supplied.length} exported looks. Your browser looks were kept. Export and remove a few looks to make room.` };
   try {
     writeLooks(storage, looks);
     storage.setItem(STARTING_LOOKS_KEY, STARTING_LOOKS_REVISION);

@@ -4,16 +4,17 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { useLibraryAssets } from '@seihouse/library/presentation';
 import { MATERIALS, MaterialSurface } from './samples';
 import {
-  baseBlur, baseOpacity, baseTint, colorParts, decodeLooks, encodeLooks, freshSettings,
-  isColoredShadow, materialStyle, measureMaterial, shadowLayers, writeLooks, STORAGE_KEY,
+  baseBlur, baseOpacity, baseTint, colorParts, decodeLooks, encodeLooks,
+  isColoredShadow, materialStyle, measureMaterial, shadowLayers, writeLooks,
   type MaterialEdit, type MaterialId, type MeasuredMaterial, type PaletteSettings, type SavedLook,
 } from './model';
-import { loadStartingLooks, startingLooks } from './starting-looks';
+import { defaultStartingLook, loadStartingLooks, startingLooks } from './starting-looks';
 import './palette-materials.css';
 
 type Measurements = Partial<Record<MaterialId, MeasuredMaterial>>;
 const nameOf = (id: MaterialId) => MATERIALS.find(m => m.id === id)!.name;
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
+const suppliedDefault = defaultStartingLook();
 
 function ColorControl({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return <label className="pm-color-control"><span>{label}</span><input type="color" aria-label={label} value={value} onChange={e => onChange(e.target.value)} /><code>{value}</code></label>;
@@ -31,12 +32,12 @@ function RecipeDetails({ base, source }: { base?: MeasuredMaterial; source: stri
 
 export function PaletteMaterials({ renderComposition }: { renderComposition: (settings: PaletteSettings) => ReactNode }) {
   const { authImage } = useLibraryAssets();
-  const [settings, setSettings] = useState(freshSettings);
+  const [settings, setSettings] = useState(() => clone(suppliedDefault.settings));
   const [looks, setLooks] = useState<SavedLook[]>(startingLooks);
   const looksRef = useRef(looks);
   looksRef.current = looks;
   const [loadedId, setLoadedId] = useState('');
-  const [lookName, setLookName] = useState('App colors');
+  const [lookName, setLookName] = useState(suppliedDefault.name);
   const [message, setMessage] = useState('');
   const [storageError, setStorageError] = useState('');
   const [colorTarget, setColorTarget] = useState<'text' | 'accent'>('accent');
@@ -55,13 +56,12 @@ export function PaletteMaterials({ renderComposition }: { renderComposition: (se
 
   useEffect(() => {
     try {
-      const hadSavedLooks = window.localStorage.getItem(STORAGE_KEY) !== null;
       const { looks: available, warning } = loadStartingLooks(window.localStorage);
       setLooks(available);
-      const latest = hadSavedLooks ? available.at(-1) : undefined;
-      setSettings(latest ? clone(latest.settings) : freshSettings());
+      const latest = available.at(-1);
+      setSettings(clone((latest ?? suppliedDefault).settings));
       setLoadedId(latest?.id ?? '');
-      setLookName(latest?.name ?? 'App colors');
+      setLookName(latest?.name ?? suppliedDefault.name);
       setStorageError(warning);
     } catch {
       setStorageError('Browser storage is unavailable. Your exported looks are available for this visit. Export before leaving.');
@@ -243,9 +243,9 @@ export function PaletteMaterials({ renderComposition }: { renderComposition: (se
 
     <section id="pm-looks" className="pm-section"><div className="pm-section-heading"><div><span className="pm-eyebrow">04 / Keep your favorites</span><h2>Saved looks.</h2></div><p>Stored in this browser. Export to keep a portable copy.</p></div>
       <button type="button" className="pm-control pm-primary" onClick={() => {
-        setSettings(freshSettings()); setLoadedId(''); setLookName('App colors');
-        setMessage('Loaded App colors, the default purple foundation. Saved looks were kept.'); showSection('composition');
-      }}>App colors · Default preset</button>
+        setSettings(clone(suppliedDefault.settings)); setLoadedId(''); setLookName(suppliedDefault.name);
+        setMessage(`Loaded ${suppliedDefault.name}, your supplied default. Saved looks were kept.`); showSection('composition');
+      }}>{suppliedDefault.name} · Default preset</button>
       <div className="pm-save-bar"><label>Look name<input maxLength={80} placeholder="e.g. Midnight & silver" value={lookName} onChange={e => setLookName(e.target.value)} /></label>
         <button type="button" className="pm-control pm-primary" onClick={saveNew}>Save as new look</button>
         <button type="button" className="pm-control" disabled={!loadedLook} onClick={() => { const name = validName(); if (name && loadedLook) persist(looks.map(l => l.id === loadedId ? { ...l, name, settings: clone(settings) } : l), `Updated “${name}”.`); }}>Update loaded look</button>

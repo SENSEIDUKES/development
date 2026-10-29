@@ -246,7 +246,10 @@ export interface CodexEntryResolver {
 /**
  * A story's Codex entries with the ones a chapter brought in taken out: the
  * entries its tags created, and a declared character it was the first to name.
- * An entry any other chapter still names stays.
+ * An entry any other chapter still names stays, whichever chapter first made
+ * it: a chapter tagged again after later chapters were written may have been
+ * the first to name someone chapter 5 still names, and chapter 5's tags keep
+ * pointing at that entry.
  *
  * The second case is why an origin test alone is not enough: a character the
  * Foundation declares is created with `origin: { source: 'foundation' }` even
@@ -267,9 +270,8 @@ export function codexEntriesWithoutChapter({ entries, otherChapters, chapter, st
   ];
   const usedElsewhere = new Set(otherChapters.filter(other => other.storyId === storyId).flatMap(named));
   const usedHere = new Set(named(chapter));
-  return entries.filter(entry => entry.storyId !== storyId || !(
-    (entry.origin.source === 'tag' && entry.origin.chapterId === chapter.id)
-    || (usedHere.has(entry.id) && !usedElsewhere.has(entry.id))
+  return entries.filter(entry => entry.storyId !== storyId || usedElsewhere.has(entry.id) || !(
+    (entry.origin.source === 'tag' && entry.origin.chapterId === chapter.id) || usedHere.has(entry.id)
   ));
 }
 

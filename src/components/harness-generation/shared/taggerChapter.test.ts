@@ -113,7 +113,7 @@ describe('tagging a chapter as it is written', () => {
     expect(tagChapter.mock.calls[0][0].reasoningLevel).toBeUndefined();
     expect(chapter().tagging?.model).toBe('fixture');
     controller.setTagger({ model: 'cheap-model', reasoningLevel: 'high' });
-    await controller.retagLatestChapter(storyId);
+    await controller.retagChapter(storyId, chapter().id);
     expect(tagChapter.mock.calls[1][0]).toMatchObject({ model: 'cheap-model', reasoningLevel: 'high' });
     expect(chapter().tagging?.model).toBe('cheap-model');
     // A level alone keeps the chapter's writer.
@@ -230,7 +230,7 @@ describe('tagging a chapter as it is written', () => {
     expect(controller.snapshot().codexEntries.map(entry => entry.name)).toContain('Rusted Iron Sword');
     // Read again, this time the tagger names it differently.
     gained = 'Old Iron Blade';
-    await controller.retagLatestChapter(storyId);
+    await controller.retagChapter(storyId, chapter().id);
     expect(tagChapter).toHaveBeenCalledTimes(2);
     const after = chapter();
     expect(after.holdingChanges).toHaveLength(1);
@@ -252,8 +252,40 @@ describe('tagging a chapter as it is written', () => {
     await write([`\u201cHold.\u201d ${PROSE}`]);
     expect(chapter().tagging?.status).toBe('failed');
     fail = false;
-    await controller.retagLatestChapter(storyId);
+    await controller.retagChapter(storyId, chapter().id);
     expect(chapter().tagging?.status).toBe('tagged');
+  });
+
+  it('reads an earlier chapter again, keeps what later chapters still name, and counts its notes', async () => {
+    // Chapter 1 names the sword first; chapter 2 names it too. Reading chapter 1
+    // again must not take the sword's entry from under chapter 2's tag.
+    let tag = (paragraph: string) => paragraph === PROSE ? `[[gained: MC | Rusted Iron Sword]] ${paragraph}` : paragraph;
+    const tagChapter = tagging(paragraph => tag(paragraph));
+    const { write, controller, storyId } = await setup({ tagChapter });
+    await write();
+    tag = paragraph => paragraph === PROSE ? `[[equipped: MC | Rusted Iron Sword]] ${paragraph}` : paragraph;
+    await write();
+    const [first, second] = controller.snapshot().chapters.filter(entry => entry.storyId === storyId);
+    const sword = second.holdingChanges![0].payload.target!.entryId;
+    expect(first.holdingChanges![0].payload.target!.entryId).toBe(sword);
+    expect(first.tagging?.notes).toEqual({ written: 1, placed: 1 });
+
+    // Chapter 1 read again, and this time the tagger names nothing.
+    tag = paragraph => paragraph;
+    expect(controller.retagChapterGap(storyId, first.id)).toBeUndefined();
+    await controller.retagChapter(storyId, first.id);
+    expect(tagChapter).toHaveBeenCalledTimes(3);
+    expect(tagChapter.mock.calls[2][0]).toMatchObject({ chapterId: first.id, chapterNumber: 1 });
+    const after = controller.snapshot();
+    const reread = after.chapters.find(entry => entry.id === first.id)!;
+    expect(reread.holdingChanges).toBeUndefined();
+    expect(reread.tagging).toMatchObject({ status: 'tagged', notes: { written: 0, placed: 0 } });
+    // Chapter 2 still points at the sword, and the sword is still there.
+    expect(after.chapters.find(entry => entry.id === second.id)!.holdingChanges![0].payload.target!.entryId).toBe(sword);
+    expect(after.codexEntries.some(entry => entry.id === sword)).toBe(true);
+    // A chapter this story never saved, and a chapter whose attempt is gone, are refused in words.
+    expect(controller.retagChapterGap(storyId, 'hch-none')).toContain('not saved in this story');
+    expect(retagChapterGap({ ...after, attempts: [] }, storyId, first.id)).toContain('no longer has the record');
   });
 
   it('refuses a chapter carrying work only a person could have placed', async () => {
@@ -263,7 +295,8 @@ describe('tagging a chapter as it is written', () => {
     const { write, controller, storyId } = await setup({ tagChapter });
     await write();
     const state = controller.snapshot();
-    expect(retagChapterGap(state, storyId)).toBeUndefined();
+    const chapterId = state.chapters[0].id;
+    expect(retagChapterGap(state, storyId, chapterId)).toBeUndefined();
 
     // A Sound Cue the reader placed by hand: tagging again would take it away.
     const withManualCue = {
@@ -273,7 +306,7 @@ describe('tagging a chapter as it is written', () => {
         soundCues: [{ ...chapter.soundCues?.[0], payload: { origin: 'manual' } }] as never,
       })),
     };
-    expect(retagChapterGap(withManualCue, storyId)).toContain('placed yourself');
+    expect(retagChapterGap(withManualCue, storyId, chapterId)).toContain('placed yourself');
 
     // A name the Holdings fixer joined into an older entry: only a rewrite of
     // this chapter can take that alias back.
@@ -284,7 +317,7 @@ describe('tagging a chapter as it is written', () => {
         fixer: { checkedAt: 'now', fixes: [{ checks: [], problems: [], outcome: 'merged' as const, merged: { keptEntryId: 'e1', alias: 'the blade' } }] },
       })),
     };
-    expect(retagChapterGap(withMerge, storyId)).toContain('joined into one');
+    expect(retagChapterGap(withMerge, storyId, chapterId)).toContain('joined into one');
   });
 
   it('keeps the attempt\'s own record of the call, receipt included', async () => {

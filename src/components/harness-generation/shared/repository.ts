@@ -169,6 +169,8 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // read an older one is refused. No saved workspace was numbered before, so
   // each starts at 0; its stories, chapters and plans read as they are.
   39: stored => ({ ...stored, revision: 0, schemaVersion: 40 }),
+  // 41 adds only an optional field (a tagging record's note counts): every saved story reads as it is.
+  40: stored => ({ ...stored, schemaVersion: 41 }),
 };
 
 /** The CAPA slots that left the schema when the tagger took the tags (schema 39). */

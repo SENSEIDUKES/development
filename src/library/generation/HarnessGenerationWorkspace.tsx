@@ -25,6 +25,7 @@ import { NovelBlueprintTab } from './NovelBlueprintTab';
 import { useLibraryStories, type LibraryStoriesOptions } from '../stories/useLibraryStories';
 import { StoryPages } from '../stories/StoryPages';
 import { downloadHarnessStory } from '../stories/storyExport';
+import { ChapterTaggingRecord, TagChapterAction } from '../stories/ChapterTagging';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessCorrectionKind, type HarnessStory, type HarnessStoryMode, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 
@@ -727,7 +728,6 @@ export function HarnessGenerationWorkspace({
     : undefined;
   const chapters = state && selectedStory ? storyChapters(state, selectedStory.id) : [];
   // Why the newest chapter cannot be read again for its tags, when it cannot.
-  const retagGap = selectedStory ? controller.retagChapterGap(selectedStory.id) : undefined;
   const attempt = state && selectedStory ? latestAttemptForStory(state, selectedStory.id) : undefined;
   const arcPlanOperation = state && selectedStory ? state.arcPlanOperations
     .filter(operation => operation.storyId === selectedStory.id && ['provider_outcome_unknown', 'failed'].includes(operation.status)).at(-1) : undefined;
@@ -1260,16 +1260,12 @@ export function HarnessGenerationWorkspace({
                         {chapter.metrics.meetsScaleTarget ? '' : ' · below chapter-scale target'}
                         {chapter.metrics.paragraphTarget && chapter.metrics.paragraphTarget !== chapter.metrics.paragraphCount ? ' · paragraph count missed' : ''}
                       </p>
-                      {/* Reading the chapter again for its tags: only the newest, before anything is built on it. */}
-                      {chapter.id === chapters.at(-1)?.id && (retagGap
-                        ? <p className="mt-2 text-xs text-neutral-400">{retagGap}</p>
-                        : <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => controller.retagLatestChapter(selectedStory.id))}>Tag this chapter again</LibraryButton>)}
-                      {chapter.tagging && (
-                        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-                          Tagging: {chapter.tagging.status === 'tagged' ? 'read' : 'not read'}
-                          {chapter.tagging.problem ? ` · ${chapter.tagging.problem}` : ''}
-                        </p>
-                      )}
+                      {/* The chapter's tagging record, and reading any chapter again for its tags: the same record and action as World Info's Chapters card. */}
+                      <ChapterTaggingRecord chapter={chapter} entries={state?.codexEntries} />
+                      <div className="mt-2">
+                        <TagChapterAction chapter={chapter} gap={controller.retagChapterGap(selectedStory.id, chapter.id)} busy={busy}
+                          onTag={() => void run(() => controller.retagChapter(selectedStory.id, chapter.id))} />
+                      </div>
                       <ChapterRecapEditor chapter={chapter} busy={busy} onSave={text => saveRecap(chapter.id, text)} />
                       <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">
                         Chapter function: {chapter.rhythm?.chapterFunction ? CHAPTER_FUNCTION_LABELS[chapter.rhythm.chapterFunction] : 'not saved'}

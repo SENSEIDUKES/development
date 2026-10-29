@@ -50,6 +50,13 @@ export interface WorldCardInfoProps {
    */
   settings?: ReactNode;
   /**
+   * World Info's Chapters, opened below the cards: every chapter of the world
+   * and what the tagger made of it, with Tag this chapter, for its creator.
+   * The host owns the panel and the card's line; without it there is no
+   * Chapters card.
+   */
+  chapters?: { summary: string; panel: ReactNode };
+  /**
    * The viewer's reading language for this world, chosen in Settings (Read
    * it in). Without it Settings offers no language switch.
    */

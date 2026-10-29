@@ -38,7 +38,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * to it, seeded from each story's active Foundation; 40 numbers every saved
  * workspace with its revision, so a save made from an older one (another tab)
  * is refused instead of overwriting it. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 40 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 41 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -1220,6 +1220,12 @@ export interface HarnessChapterTagging {
   rawProviderResponse?: string;
   /** Why the answer placed no tag. */
   problem?: string;
+  /**
+   * How many notes the tagger wrote and how many the HARNESS placed on the
+   * chapter's own paragraphs. Absent when the answer was no list of notes at
+   * all, or the chapter was tagged before notes were counted.
+   */
+  notes?: { written: number; placed: number };
   /** What the tag reader set aside or could not use, as plain warnings. */
   warnings?: HarnessWarning[];
 }

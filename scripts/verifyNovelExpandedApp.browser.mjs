@@ -909,8 +909,8 @@ async function walk(browser, viewport, sample) {
   check((await page.locator('[data-world-info-chapters="action"]').getAttribute('aria-label')).startsWith('Continue at Chapter 1'), 'Story View should continue at Chapter 1.');
   // World Info's four cards, then Settings: closed until opened, it holds the story's language, Reading Mode, CAPA skills and media.
   const cardTitles = await page.locator('.world-card-info-tools .world-card-info-tool-title').allTextContents();
-  check(JSON.stringify(cardTitles) === JSON.stringify(['Portal', 'Information', 'Settings']),
-    `World Info should show Portal, Information and Settings, got ${cardTitles.join(', ')}`);
+  check(JSON.stringify(cardTitles) === JSON.stringify(['Portal', 'Information', 'Chapters', 'Settings']),
+    `World Info should show Portal, Information, Chapters and Settings, got ${cardTitles.join(', ')}`);
   const settingsCard = page.locator('button.world-card-info-settings-card');
   await settingsCard.scrollIntoViewIfNeeded();
   check(await page.getByTestId('story-settings').count() === 0, 'Story Settings should stay closed until the reader opens Settings.');
@@ -923,6 +923,26 @@ async function walk(browser, viewport, sample) {
   check(!(await page.evaluate(slidesSideways)), 'Settings must never scroll sideways.');
   await shot('4c-story-settings');
   await settingsCard.click();
+  // World Info's Chapters card: every chapter with what the tagger made of it, said per kind, and Tag this chapter again on any of them.
+  const chaptersCard = page.locator('button.world-card-info-chapters-card');
+  check((await chaptersCard.locator('.world-card-info-tool-description').textContent()).trim() === '1 chapter · 1 tagged',
+    `The Chapters card should count the chapters the tagger read, got ${await chaptersCard.textContent()}`);
+  await chaptersCard.click();
+  const chapterRecord = page.locator('[data-testid="story-chapter"][data-chapter-number="1"] [data-testid="chapter-tagging"]');
+  await chapterRecord.waitFor();
+  const recordText = await chapterRecord.innerText();
+  check(recordText.includes('Read by') && /\d+ notes? written · \d+ placed/.test(recordText), `The chapter's record should say who read it and how many notes landed, got ${recordText}`);
+  check((await chapterRecord.locator('[data-tagging-kind="Holdings"]').textContent()).includes('Bell Key'), `Holdings should name the key, got ${recordText}`);
+  check((await chapterRecord.locator('[data-tagging-kind="Speakers"]').textContent()).includes('Mara'), `Speakers should name Mara, got ${recordText}`);
+  check(!(await page.evaluate(slidesSideways)), 'The chapter list must never scroll sideways.');
+  await shot('4h-chapters');
+  await visibleButton('Tag this chapter again').click();
+  for (let waited = 0; waited < 100 && counts.tags.length < 3; waited += 1) await page.waitForTimeout(100);
+  check(counts.tags.length === 3 && counts.tags[2].chapterNumber === 1 && counts.tags[2].token,
+    `Tag this chapter again should read Chapter 1 once more, with the token, got ${counts.tags.length} taggings.`);
+  await chapterRecord.waitFor();
+  check((await chapterRecord.getAttribute('data-tagging-status')) === 'tagged', 'The record should stand after the chapter is read again.');
+  await chaptersCard.click();
   // Manifest on the cover: one cover or three; three unseal behind the veil, then the picker, then World Info and Home wear the one kept.
   const coverManifest = page.locator('[data-world-card="info"] [aria-label="Manifest cover art"]');
   await coverManifest.scrollIntoViewIfNeeded();

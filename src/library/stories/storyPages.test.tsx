@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapter } from '../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../test-utils/renderWithDevAudio';
-import { HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessGenerationRepository, type HarnessTagRequest } from '@seihouse/sen/harness-generation';
 import type { ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { StoryPages, storyHomeWorlds, useLibraryStories, type LibraryStories } from '@seihouse/library/stories';
 
@@ -142,6 +142,61 @@ describe('A story\'s own pages for any host', { timeout: 20_000 }, () => {
     // World Info's way back carries the host's name for it.
     await click(worldInfo()!.querySelector<HTMLButtonElement>('button[aria-label="Back to your stories"]'), 'Back to your stories');
     expect(container.querySelector('[data-testid="story-host-home"]')).toBeTruthy();
+  });
+
+  it('World Info lists the chapters with what the tagger made of each, and tags any one of them again on request', async () => {
+    const model = scriptedModel();
+    const tagChapter = vi.fn<NonNullable<HarnessGenerationModelAdapter['tagChapter']>>(async (request: HarnessTagRequest) => {
+      void request;
+      return {
+        rawProviderResponse: JSON.stringify({ notes: [{ paragraph: 2, words: 'Mara counted the bells that no longer rang.', tag: '[[appears: MC | character]]' }] }),
+        providerReceipt: { ...receipt, usage: { source: 'reported' as const, inputTokens: 4_200, outputTokens: 180 } },
+      };
+    });
+    const adapter: HarnessGenerationModelAdapter = { ...model.adapter, tagChapter };
+    const repository = new InMemoryHarnessGenerationRepository();
+    const story = await createSeededStory(repository, adapter, 'The Drowned Name');
+    await act(async () => root.render(renderWithDevAudio(<StoryHost repository={repository} adapter={adapter} storyId={story.id} />)));
+    await flush();
+    // No chapter yet: no Chapters card.
+    expect(worldInfo()!.querySelector('button.world-card-info-chapters-card')).toBeNull();
+
+    await click(chaptersAction(), 'Start Story');
+    await act(async () => { model.release(); });
+    await flush();
+    expect(tagChapter).toHaveBeenCalledTimes(1);
+    await click(buttonByText('Back'), 'Back');
+    await flush();
+
+    // The Chapters card says how many were read; open, each chapter carries its record.
+    const card = worldInfo()!.querySelector<HTMLButtonElement>('button.world-card-info-chapters-card');
+    expect(card?.textContent).toContain('1 chapter · 1 tagged');
+    await click(card, 'Chapters');
+    const chapter = () => container.querySelector<HTMLElement>('[data-testid="story-chapter"][data-chapter-number="1"]')!;
+    expect(chapter().textContent).toContain('Low Tide');
+    const record = () => chapter().querySelector<HTMLElement>('[data-testid="chapter-tagging"]')!;
+    const kind = (name: string) => record().querySelector<HTMLElement>(`[data-tagging-kind="${name}"]`)!;
+    expect(record().getAttribute('data-tagging-status')).toBe('tagged');
+    expect(record().textContent).toContain('Read by fixture');
+    expect(record().textContent).toContain('4,200 tokens in, 180 out');
+    expect(record().textContent).toContain('1 note written · 1 placed');
+    expect(kind('Appearances').textContent).toBe('1 appearance: Mara');
+    expect(kind('Appearances').getAttribute('data-tagging-state')).toBe('found');
+    // A kind the tagger was taught and found nothing for says so in those words; one it was never taught says why.
+    expect(kind('Speakers').textContent).toBe('The tagger found nothing here.');
+    expect(kind('Speakers').getAttribute('data-tagging-state')).toBe('nothing');
+    expect(kind('Sound Cues').getAttribute('data-tagging-state')).toBe('not-asked');
+    expect(kind('Soundscape and atmosphere').getAttribute('data-tagging-state')).toBe('not-asked');
+
+    // Tag this chapter again reads the same chapter once more, and the record follows the new answer.
+    tagChapter.mockResolvedValueOnce({ rawProviderResponse: JSON.stringify({ notes: [] }), providerReceipt: receipt });
+    await click([...chapter().querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'Tag this chapter again'), 'Tag this chapter again');
+    await flush();
+    expect(tagChapter).toHaveBeenCalledTimes(2);
+    expect(tagChapter.mock.calls[1][0]).toMatchObject({ chapterNumber: 1 });
+    expect(record().textContent).toContain('0 notes written · 0 placed');
+    expect(kind('Appearances').textContent).toBe('The tagger found nothing here.');
+    expect(model.generate).toHaveBeenCalledTimes(1);
   });
 
   it('World Info sits inside a host\'s frame, and Start Story still writes Chapter 1 once the Reader opens outside it', async () => {

@@ -8,6 +8,8 @@ import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { LIBRARY_READ_ALOUD_VOICES } from './readAloudVoices';
 import { LIBRARY_READER_FONTS } from './readerFonts';
 import { StorySettings } from './settings/StorySettings';
+import { StoryChapters } from './ChapterTagging';
+import { storyTaggingSummary } from './chapterTagging';
 import { useStoryCoverManifest } from './StoryCoverManifest';
 import { codexPictureRequest, storyCoverRequest, type CodexPictureService, type StoryCoverService } from './storyCover';
 import { downloadHarnessStory } from './storyExport';
@@ -73,7 +75,8 @@ const keepVeilOpen = () => undefined;
 
 /**
  * One story's own pages: its World Info page (Start Story, Start Reading,
- * Continue, its cover art, and the story's Story Settings) and the Reader, with the Generation Overlay while a chapter is written.
+ * Continue, its cover art, the story's Story Settings, and its Chapters with
+ * their tagging) and the Reader, with the Generation Overlay while a chapter is written.
  * The host decides which page shows and keeps this mounted, keyed by story,
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
@@ -145,6 +148,9 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
 
   // Story Settings live in World Info's Settings card.
   const settings = <StorySettings stories={stories} storyId={storyId} />;
+  // The creator's chapters and their tagging live in World Info's Chapters card, once there is a chapter.
+  const written = state.chapters.filter(chapter => chapter.storyId === storyId);
+  const chapters = written.length ? { summary: storyTaggingSummary(written), panel: <StoryChapters stories={stories} storyId={storyId} /> } : undefined;
   // Inside a host's frame, World Info is the frame's content, not a second <main>.
   const Page = frame ? 'div' : 'main';
   if (page === 'blueprint') {
@@ -163,11 +169,11 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       {covers
         ? <CoveredStoryDetail key={storyId} covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent}
             story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
-            onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET} settings={settings}
+            onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET} settings={settings} chapters={chapters}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />
         : <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
-            onBack={onBack} onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET} settings={settings}
+            onBack={onBack} onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET} settings={settings} chapters={chapters}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />}
       {/* For testing: the whole story as one file, so a test can be shared. */}

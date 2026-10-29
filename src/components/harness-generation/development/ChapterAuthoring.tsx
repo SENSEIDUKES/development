@@ -186,6 +186,11 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     soundCues: () => placedSoundCues(latest.current),
     addSoundCue: cue => {
       const current = latest.current;
+      // Reviewed before an edit: its words must still be exactly where they were, or it is asked for again.
+      const paragraph = current.manuscript.paragraphs.find(entry => entry.id === cue.anchor.blockId);
+      if (paragraph?.text.slice(cue.anchor.startOffset, cue.anchor.endOffset) !== cue.anchor.selectedText) {
+        return Promise.reject(new Error(`“${cue.anchor.selectedText}” changed after you reviewed it. Ask for the sound again.`));
+      }
       const cues = placedSoundCues(current);
       if (cues.length >= SOUND_CUE_RULES.maxPerChapter) return Promise.reject(new Error(`This chapter already has ${SOUND_CUE_RULES.maxPerChapter} Sound Cues, the most a chapter holds.`));
       const { blockId, startOffset, endOffset } = cue.anchor;

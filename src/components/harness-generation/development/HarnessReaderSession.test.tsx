@@ -1112,6 +1112,9 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(container.querySelector('[data-testid="create-mode-no-cues"]')).toBeNull();
     // The cue joined the page itself, through its saves: a second on the same words is refused, and it is saved once.
     await act(async () => { await expect(tools!.createMode!.sounds.place(placed.cue)).rejects.toThrow('already has a Sound Cue'); });
+    // A cue whose words moved or changed since it was reviewed is refused, never saved where it cannot play.
+    const moved = { ...placed.cue, anchor: { ...placed.cue.anchor, startOffset: placed.cue.anchor.startOffset + 1, endOffset: placed.cue.anchor.endOffset + 1 } };
+    await act(async () => { await expect(tools!.createMode!.sounds.place(moved)).rejects.toThrow('changed after you reviewed it'); });
     expect(controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 2)!.soundCues?.map(cue => cue.anchor.selectedText)).toEqual(['with a lantern']);
   });
 });

@@ -55,8 +55,11 @@ try {
   assert.equal(await page.locator('#pm-effects article').count(), 6);
   if (width < 650) await page.getByRole('button', { name: /^Saved/ }).click();
   await page.getByRole('button', { name: 'App colors · Default preset', exact: true }).click();
-  const composition = page.locator('.pm-scene');
-  const fills = await composition.locator('.pm-scene-nav, .pm-scene-panel, .pm-scene-card').evaluateAll(elements => elements.map(e => getComputedStyle(e).backgroundColor));
+  const composition = page.frameLocator('iframe[title="Home material preview"]');
+  await composition.locator('[data-home-events]').waitFor();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.pm-home-frame').contentDocument.querySelector('[data-home-events]')).backgroundColor === 'rgba(11, 14, 30, 0.12)');
+  const fills = [];
+  for (const selector of ['.workspace-header', '[data-home-events]', '[data-slot="empty-state"]']) fills.push(await composition.locator(selector).evaluate(e => getComputedStyle(e).backgroundColor));
   assert.ok(fills.every(color => color.match(/[\d.]+/g).slice(0, 3).join(',') === fills[0].match(/[\d.]+/g).slice(0, 3).join(',')), 'Default preset shares hue while retaining role opacity');
   if (width < 650) await page.getByRole('button', { name: 'Effects', exact: true }).click();
   else await page.locator('#pm-effects').scrollIntoViewIfNeeded();

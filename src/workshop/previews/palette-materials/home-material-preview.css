@@ -1,0 +1,10 @@
+.pm-home-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+.pm-home-toolbar label { width: 190px; }
+.pm-home-toolbar p { flex: 1 1 220px; color: var(--pm-muted); font-size: 13px; line-height: 1.6; }
+.pm-home-frame-container { width: 100%; overflow: hidden; border: 1px solid var(--pm-line); border-radius: 14px; background: #050505; }
+.pm-home-frame { display: block; border: 0; transform-origin: top left; max-width: none; }
+@media (max-width: 650px) {
+  .pm-workbench .pm-role-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pm-home-toolbar { align-items: center; gap: 12px; }
+  .pm-home-toolbar p { flex-basis: 100%; }
+}

@@ -80,24 +80,6 @@
 .pm-role-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .pm-composition-colors { display: flex; gap: 30px; }
 .pm-composition-colors .pm-color-control { width: 160px; }
-.pm-composition-stage { border-radius: 14px; padding: 32px; overflow: hidden; }
-.pm-scene { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 20px; }
-.pm-scene-nav, .pm-scene-panel, .pm-scene-card { border-radius: 16px; }
-.pm-scene-nav { display: flex; flex-direction: column; gap: 14px; padding: 24px 16px; }
-.pm-scene-wordmark { font: 23px/.85 var(--font-display, Georgia, serif); text-align: center; margin: 10px 0 25px; }
-.pm-scene-nav button { display: flex; justify-content: space-between; align-items: center; gap: 6px; color: inherit; min-height: 48px; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 8px; text-align: left; font-size: 12px; }
-.pm-scene-nav small { font-size: 8px; }
-.pm-scene-nav .pm-scene-selected { border-color: var(--pm-accent); background: color-mix(in srgb, var(--pm-accent) 12%, transparent); }
-.pm-scene-panel { padding: 28px; }
-.pm-scene-kicker { color: var(--pm-accent); font-size: 9px; letter-spacing: .18em; }
-.pm-scene-panel h3 { font-size: clamp(25px, 3vw, 38px); margin: 14px 0; }
-.pm-scene-panel p { font-size: 12px; line-height: 1.7; }
-.pm-scene-card { margin-top: 24px; padding: 24px; }
-.pm-scene-card h4 { font-size: 23px; margin: 12px 0; }
-.pm-scene-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 26px; }
-.pm-scene-button { min-height: 44px; border-radius: 999px; padding: 12px 18px; font-size: 10px; }
-.pm-scene-button:disabled { opacity: .45; cursor: not-allowed; }
-.pm-focus-example, .pm-scene-button:focus-visible { outline: 2px solid var(--pm-accent) !important; outline-offset: 3px !important; }
 .pm-save-bar { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; }
 .pm-save-bar label { flex: 1 1 200px; }
 .pm-status { color: #c2dfd5; font-size: 12px; min-height: 32px; padding-top: 12px; }
@@ -111,8 +93,8 @@
 .pm-saved-actions .pm-control { font-size: 10px; padding-inline: 10px; }
 .pm-empty { padding: 28px; border: 1px dashed var(--pm-line); color: var(--pm-muted); border-radius: 12px; font-size: 13px; line-height: 1.8; }
 .pm-mobile-nav, .pm-mobile-pickers, .pm-mobile-browse { display: none; }
-@media (max-width: 1050px) { .pm-catalog { grid-template-columns: repeat(3, minmax(0, 1fr)); } .pm-editor { grid-template-columns: minmax(0, 1fr); } .pm-adjustments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; border-left: 0; border-top: 1px solid var(--pm-line); padding: 24px 0 0; } .pm-adjustments > .pm-eyebrow { grid-column: 1 / -1; } .pm-scene { grid-template-columns: 155px minmax(0, 1fr); gap: 12px; } .pm-composition-stage { padding: 20px; } .pm-saved-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 650px) { .pm-workbench { padding-top: 26px; } .pm-section-heading { align-items: start; flex-direction: column; gap: 12px; } .pm-section { padding-top: 28px; } .pm-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .pm-sample-stage { padding: 14px 8px; min-height: 180px; } .pm-specimen-mark { font-size: 35px; } .pm-specimen-copy { font-size: 8px; text-align: center; } .pm-sample-select { gap: 6px; padding: 12px 8px 6px; } .pm-index { display: none; } .pm-origin { padding-left: 8px; } .pm-sample-select strong { font-size: 11px; } .pm-surface.library-glass-button { font-size: 9px; padding: 10px 8px; letter-spacing: .03em; } .pm-editor { padding: 16px; } .pm-comparison { grid-template-columns: minmax(0, 1fr); } .pm-adjustments { grid-template-columns: minmax(0, 1fr); } .pm-swatches, .pm-role-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .pm-scene { grid-template-columns: minmax(0, 1fr); } .pm-scene-nav { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px; } .pm-scene-nav > .pm-caption { display: none; } .pm-scene-wordmark { font-size: 14px; margin: 4px; margin-right: auto; } .pm-scene-nav button { font-size: 10px; } .pm-scene-nav small { display: none; } .pm-scene-panel, .pm-scene-card { padding: 18px; } .pm-composition-stage { padding: 12px; } .pm-saved-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1050px) { .pm-catalog { grid-template-columns: repeat(3, minmax(0, 1fr)); } .pm-editor { grid-template-columns: minmax(0, 1fr); } .pm-adjustments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; border-left: 0; border-top: 1px solid var(--pm-line); padding: 24px 0 0; } .pm-adjustments > .pm-eyebrow { grid-column: 1 / -1; } .pm-saved-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 650px) { .pm-workbench { padding-top: 26px; } .pm-section-heading { align-items: start; flex-direction: column; gap: 12px; } .pm-section { padding-top: 28px; } .pm-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .pm-sample-stage { padding: 14px 8px; min-height: 180px; } .pm-specimen-mark { font-size: 35px; } .pm-specimen-copy { font-size: 8px; text-align: center; } .pm-sample-select { gap: 6px; padding: 12px 8px 6px; } .pm-index { display: none; } .pm-origin { padding-left: 8px; } .pm-sample-select strong { font-size: 11px; } .pm-surface.library-glass-button { font-size: 9px; padding: 10px 8px; letter-spacing: .03em; } .pm-editor { padding: 16px; } .pm-comparison { grid-template-columns: minmax(0, 1fr); } .pm-adjustments { grid-template-columns: minmax(0, 1fr); } .pm-swatches, .pm-role-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .pm-saved-grid { grid-template-columns: minmax(0, 1fr); } }
 /* Phone workflow: one task at a time, with the material always above its controls. */
 @media (max-width: 650px) {
   .pm-workspace [data-workshop-controls] { display: none; }
@@ -188,7 +170,6 @@
    colors, light, size and responsive direction come from the Library recipe. */
 .pm-workbench .pm-reader-border { position: relative; overflow: visible; }
 .pm-workbench .pm-reader-border::before { display: none; }
-.pm-scene .reader-border-glow { position: relative; }
 .pm-border-choice { margin-block: 18px; grid-column: 1 / -1; }
 .pm-border-choice .pm-control { width: 100%; margin-top: 10px; }
 .pm-ingredients { grid-template-columns: repeat(2, minmax(0, 1fr)); }

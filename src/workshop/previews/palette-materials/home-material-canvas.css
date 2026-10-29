@@ -1,0 +1,8 @@
+/* All of these rules are loaded only by the private Workshop capture. */
+.pm-home-measurements { position: fixed; left: -10000px; top: 0; width: 400px; pointer-events: none; visibility: hidden; }
+.pm-home-canvas .library-home-palette { background: var(--pm-home-backdrop); }
+.pm-home-familiar { display: block; width: 44px; height: 44px; }
+.pm-home-familiar .familiar-sprite { width: 100%; height: 100%; }
+.pm-home-feedback { position: fixed; z-index: 300; inset-inline: 12px; bottom: calc(var(--library-bottom-clearance, 90px) + 16px); width: fit-content; max-width: calc(100% - 24px); margin: auto; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid #ffffff50; border-radius: 12px; background: #10131f; color: #fff; font: 14px/1.5 sans-serif; }
+.pm-home-feedback button { min-width: 44px; min-height: 44px; font-size: 24px; }
+@media (prefers-reduced-motion: reduce) { .pm-home-canvas *, .pm-home-canvas *::before, .pm-home-canvas *::after { animation: none !important; transition: none !important; } }

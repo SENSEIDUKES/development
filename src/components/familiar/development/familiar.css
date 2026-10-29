@@ -93,9 +93,13 @@
 @keyframes familiar-listening { 0% { box-shadow: 0 0 0 0 #96ddf999; } 100% { box-shadow: 0 0 0 9px #96ddf900; } }
 .familiar-helper .familiar-helper-mic[data-phase="connecting"] { opacity: .7; }
 @media (prefers-reduced-motion: reduce) { .familiar-helper .familiar-helper-mic[data-phase="listening"], .familiar-helper .familiar-helper-mic[data-phase="live"] { animation: none; box-shadow: 0 0 0 3px #96ddf9; } }
-.familiar-helper-live { margin: 8px 4px 0; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
-.familiar-helper-live p { margin: 0; }
-.familiar-helper-live span { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; opacity: .6; }
+.familiar-helper-conversation { margin-top: 10px; }
+.familiar-helper-chat { display: flex; flex-direction: column; gap: 6px; max-height: min(42dvh, 320px); overflow-y: auto; overscroll-behavior: contain; padding: 2px; }
+.familiar-helper-chat p { margin: 0; max-width: 85%; padding: 7px 11px; border-radius: 16px; font-size: 14px; line-height: 1.4; }
+.familiar-helper-chat .familiar-helper-line-reader { align-self: flex-end; background: #8bdbff2e; border-bottom-right-radius: 6px; }
+.familiar-helper-chat .familiar-helper-line-familiar { align-self: flex-start; background: #ffffff0f; border-bottom-left-radius: 6px; }
+.familiar-helper-chat .familiar-helper-line-note { align-self: center; max-width: 100%; padding: 2px 8px; font-size: 12px; opacity: .6; text-align: center; }
+.familiar-helper-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* Focus follows the Familiar's silhouette, without the header's blue box. */
 .familiar-recall-container .familiar-recall:focus-visible { outline: none; box-shadow: none; }
 .familiar-recall:focus-visible > span { filter: drop-shadow(0 0 3px #d6bd87); }

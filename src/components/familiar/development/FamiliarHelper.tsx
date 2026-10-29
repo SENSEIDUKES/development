@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Info, Keyboard, Lightbulb, Mic, Pause, Play, RotateCcw, Square, Volume2, X, Zap } from 'lucide-react';
+import { Check, Info, Keyboard, Lightbulb, MessagesSquare, Mic, Pause, Play, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice } from '../../../library/familiars/helper';
 
@@ -116,6 +116,10 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   const [text, setText] = useState('');
   const [typing, setTyping] = useState(false);
   const [info, setInfo] = useState(false);
+  // The conversation, behind its own button like info: never on the panel itself.
+  const [chat, setChat] = useState(false);
+  const [said, setSaid] = useState('');
+  const log = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const confirm = useRef<HTMLButtonElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -132,6 +136,9 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
     if (state.open) (confirm.current ?? panel.current)?.focus({ preventScroll: true });
   }, [state.open, state.proposal, state.context?.key]);
   useEffect(() => { setText(''); setTyping(false); setInfo(false); }, [state.open, state.context?.key]);
+  useEffect(() => { setChat(false); setSaid(''); }, [state.open]);
+  // The newest line stays in view as the conversation goes on.
+  useLayoutEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [chat, state.chat]);
   if (!state.open) return null;
   const busy = state.phase === 'saving';
   const context = state.context;
@@ -140,9 +147,9 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
     ? Math.max(longest ?? 0, action.input.maxLength + action.phrases[0].length + 2) : longest, undefined);
   const proposed = state.proposal && context?.actions.find(action => action.id === state.proposal!.actionId);
   const topic = state.mode === 'explain' ? context?.topics.find(entry => entry.id === state.topicId) : undefined;
-  const type = (prefill = '') => { helper.useText(); setInfo(false); setTyping(true); setText(prefill); setTimeout(() => input.current?.focus(), 0); };
+  const type = (prefill = '') => { helper.useText(); setInfo(false); setChat(false); setTyping(true); setText(prefill); setTimeout(() => input.current?.focus(), 0); };
   // Listening and speaking show on the microphone, not in words.
-  const message = state.phase === 'listening' ? '' : state.message;
+  const message = state.live?.status === 'connecting' ? 'Connecting…' : state.phase === 'listening' ? '' : state.message;
   const micLabel = state.live ? (state.live.status === 'connecting' ? 'Connecting… tap to stop' : 'Hang up')
     : helper.live ? 'Talk with your Familiar'
     : state.phase === 'listening' ? 'Done talking' : state.phase === 'speaking' ? 'Speaking' : state.proposal ? 'Speak Confirm or Cancel' : 'Speak';
@@ -154,7 +161,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
       <div className="familiar-helper-modes" role="group" aria-label="Familiar mode">
         {([['explain', 'Explain', Lightbulb], ['action', 'Action', Zap]] as const).map(([mode, label, Icon]) =>
           <button type="button" key={mode} aria-pressed={state.mode === mode && !info} aria-label={label} title={label}
-            disabled={busy || Boolean(state.proposal)} onClick={() => { helper.useText(); setTyping(false); setInfo(false); helper.setMode(mode); }}>
+            disabled={busy || Boolean(state.proposal)} onClick={() => { helper.useText(); setTyping(false); setInfo(false); setChat(false); helper.setMode(mode); }}>
             <Icon size={20} aria-hidden /></button>)}
       </div>
       <span className="familiar-helper-place">{context?.title}</span>
@@ -165,7 +172,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
       <p><Lightbulb size={16} aria-hidden /> <strong>Explain</strong> shows and tells you how things work here.</p>
       <p><Zap size={16} aria-hidden /> <strong>Action</strong> does things for you. It always asks before it changes anything.</p>
       {helper.live
-        ? <p><Mic size={16} aria-hidden /> Tap the microphone and talk with your Familiar like a friend; tap it again to hang up. Or <Keyboard size={16} aria-hidden /> type.</p>
+        ? <p><Mic size={16} aria-hidden /> Tap the microphone and talk with your Familiar like a friend; tap it again to hang up. <MessagesSquare size={16} aria-hidden /> shows the conversation, where you can type to it too.</p>
         : <p><Mic size={16} aria-hidden /> Tap the microphone and talk, or <Keyboard size={16} aria-hidden /> type. Say “Explain” or “Action” to switch.</p>}
       {context?.actions.length ? <p>{context.hint}</p> : null}
       <p className="familiar-helper-quiet">Voice commands are in English for now.</p>
@@ -179,6 +186,18 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
         <button type="button" disabled={busy} onClick={helper.change}><RotateCcw size={18} aria-hidden />Change</button>
         <button type="button" disabled={busy} onClick={helper.close}><X size={18} aria-hidden />Cancel</button>
       </div>
+    </div>
+
+    : chat ? <div className="familiar-helper-conversation">
+      <div ref={log} className="familiar-helper-chat" role="log" aria-label={`Conversation with ${helper.name}`}>
+        {state.chat.length ? state.chat.map((line, index) => <p key={index} className={`familiar-helper-line-${line.speaker}`}>
+          {line.speaker !== 'note' && <span className="familiar-helper-sr">{line.speaker === 'reader' ? 'You' : helper.name}: </span>}{line.text}</p>)
+          : <p className="familiar-helper-line-note">Nothing said yet. Tap the microphone to talk, or type below.</p>}
+      </div>
+      <form onSubmit={event => { event.preventDefault(); helper.say(said); setSaid(''); }}>
+        <input aria-label={`Message ${helper.name}`} placeholder={`Message ${helper.name}`} value={said} maxLength={500} onChange={event => setSaid(event.target.value)} />
+        <button type="submit" className="familiar-helper-icon" aria-label="Send" disabled={!said.trim()}><SendHorizontal size={20} aria-hidden /></button>
+      </form>
     </div>
 
     : state.mode === 'explain' ? <>
@@ -212,14 +231,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
           {action.detail && <small id={detail}>{action.detail}</small>}</span></button>; })}
     </div> : null}
 
-    {state.live ? <div className="familiar-helper-live" role="status" aria-live="polite">
-      {state.live.status === 'connecting' ? <p className="familiar-helper-quiet">Connecting…</p>
-        : !state.live.reader && !state.live.familiar ? <p className="familiar-helper-quiet">Listening. Talk any time.</p>
-        : <>
-          {state.live.reader && <p><span>You</span>{state.live.reader}</p>}
-          {state.live.familiar && <p><span>Familiar</span>{state.live.familiar}</p>}
-        </>}
-    </div> : <p role="status" aria-live="polite" className="familiar-helper-status">{message}</p>}
+    <p role="status" aria-live="polite" className="familiar-helper-status">{message}</p>
 
     {typing && !state.proposal && !info && <form onSubmit={event => { event.preventDefault(); helper.submit(text); }}>
       <input ref={input} aria-label="Type to your Familiar" id="familiar-command" value={text} maxLength={typedLimit} disabled={busy}
@@ -229,7 +241,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
 
     <div className="familiar-helper-bottom">
       <button type="button" className="familiar-helper-icon" aria-label="How to talk to your Familiar" title="How to talk to your Familiar"
-        aria-pressed={info} onClick={() => setInfo(!info)}><Info size={20} aria-hidden /></button>
+        aria-pressed={info} onClick={() => { setChat(false); setInfo(!info); }}><Info size={20} aria-hidden /></button>
       <button type="button" className="familiar-helper-mic" data-phase={state.live ? (state.live.status === 'on' ? 'live' : 'connecting') : state.phase}
         aria-label={micLabel} title={micLabel} aria-pressed={Boolean(state.live) || state.phase === 'listening'} disabled={busy && !state.live}
         onClick={() => {
@@ -238,8 +250,11 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
           if (state.phase === 'listening') { helper.doneTalking(); return; } if (state.phase === 'speaking') helper.quiet(); helper.listen();
         }}>
         {state.live?.status === 'on' ? <Square size={22} aria-hidden /> : <Mic size={26} aria-hidden />}</button>
-      <button type="button" className="familiar-helper-icon" aria-label="Type instead" title="Type instead" aria-pressed={typing}
-        disabled={Boolean(state.proposal)} onClick={() => { if (typing) setTyping(false); else type(); }}><Keyboard size={20} aria-hidden /></button>
+      {helper.live
+        ? <button type="button" className="familiar-helper-icon" aria-label="Conversation" title="Read and type to your Familiar" aria-pressed={chat}
+          onClick={() => { setInfo(false); setTyping(false); setChat(!chat); }}><MessagesSquare size={20} aria-hidden /></button>
+        : <button type="button" className="familiar-helper-icon" aria-label="Type instead" title="Type instead" aria-pressed={typing}
+          disabled={Boolean(state.proposal)} onClick={() => { if (typing) setTyping(false); else type(); }}><Keyboard size={20} aria-hidden /></button>}
     </div>
   </div>, document.body);
 }

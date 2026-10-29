@@ -111,6 +111,9 @@ describe('Familiar live talk in the browser', () => {
     socket.message({ toolCall: { functionCalls: [{ id: 'c1', name: 'show_topic', args: { topic_id: 'energy' } }] } });
     await vi.waitFor(() => expect(socket.sent).toContainEqual({ toolResponse: { functionResponses: [{ id: 'c1', name: 'show_topic', response: { result: 'Shown.' } }] } }));
     expect(handlers.call).toHaveBeenCalledWith({ name: 'show_topic', topicId: 'energy' });
+    // A typed message joins the conversation.
+    session.send('And manifesting?');
+    expect(socket.sent).toContainEqual({ realtimeInput: { text: 'And manifesting?' } });
     // Hanging up releases the microphone and ends quietly.
     session.end();
     expect(track.stop).toHaveBeenCalled();

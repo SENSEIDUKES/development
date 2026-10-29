@@ -102,7 +102,7 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
       let over = false;
       if (!Context || !Socket || !getUserMedia) {
         queueMicrotask(() => { if (!over) events.ended('Live talk is not available in this browser.', true); });
-        return { end() { over = true; } };
+        return { end() { over = true; }, send() {} };
       }
       // Made during the reader's tap, so a phone lets it play.
       const audio = new Context();
@@ -263,7 +263,10 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
           fallBack(error);
         }
       })();
-      return { end: cleanup };
+      return {
+        end: cleanup,
+        send: text => { if (opened) send({ realtimeInput: { text } }); },
+      };
     },
   };
 }

@@ -60,6 +60,12 @@ async function mount() {
   if (source === 'main-library' && query.get('source') !== 'cultivator-cave') await import('@seihouse/library/styles.css');
   else await import('../../../styles.css');
   await import('./preview-environment.css');
+  if (query.get('source') === 'palette-materials') {
+    const { HomeMaterialCanvas } = await import('../palette-materials/HomeMaterialCanvas');
+    document.title = 'Palette & Materials — Home mock';
+    root.render(<LibraryPresentationProvider assets={LIBRARY_ASSETS}><HomeMaterialCanvas /></LibraryPresentationProvider>);
+    return;
+  }
   const { DevelopmentHeaderPreview } = await import('./DevelopmentHeaderPreview');
   const { DevAudioPlaybackProvider } = await import('../../../audio/DevAudioPlayback');
   const { StoryCreationPreviewRuntime } = await import('../../StoryCreationPreviewRuntime');

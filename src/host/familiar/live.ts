@@ -60,6 +60,14 @@ export function liveCall(name: unknown, args: unknown): FamiliarLiveCall | undef
   return undefined;
 }
 
+/** What went wrong, in the words the phone or the server gave, short enough for a note. */
+export function describeFailure(why: unknown): string {
+  const text = why instanceof Error
+    ? (why.name && why.name !== 'Error' ? `${why.name}: ${why.message}` : why.message)
+    : typeof why === 'string' ? why : JSON.stringify(why);
+  return (text || 'unknown').slice(0, 200);
+}
+
 const errorText = (body: unknown, fallback: string) =>
   body && typeof body === 'object' && 'error' in body && typeof body.error === 'string' && body.error.trim() ? body.error : fallback;
 
@@ -93,14 +101,16 @@ export interface FamiliarLiveDependencies {
 export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies = {}): FamiliarLive {
   const saved = createSavedAccessToken();
   return {
-    start(brief, events) {
+    start(brief, events, options = {}) {
+      // Typed only: the Familiar answers aloud, and the microphone is never asked for.
+      const microphone = options.microphone !== false;
       const scope = globalThis as Partial<typeof globalThis> & { webkitAudioContext?: typeof AudioContext };
       const Context = dependencies.AudioContext ?? scope.AudioContext ?? scope.webkitAudioContext;
       const Socket = dependencies.WebSocket ?? scope.WebSocket;
       const devices = scope.navigator?.mediaDevices;
       const getUserMedia = dependencies.getUserMedia ?? (devices?.getUserMedia ? (constraints: MediaStreamConstraints) => devices.getUserMedia(constraints) : undefined);
       let over = false;
-      if (!Context || !Socket || !getUserMedia) {
+      if (!Context || !Socket || (microphone && !getUserMedia)) {
         queueMicrotask(() => { if (!over) events.ended('Live talk is not available in this browser.', true); });
         return { end() { over = true; }, send() {} };
       }
@@ -109,6 +119,13 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
       void audio.resume().catch(() => {});
       let socket: WebSocket | undefined;
       let stream: MediaStream | undefined;
+      // Asked for during the tap too: a phone may refuse a microphone asked for later.
+      let asking: Promise<MediaStream> | undefined;
+      if (microphone) {
+        try { asking = getUserMedia!({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } }); }
+        catch (error) { asking = Promise.reject(error); }
+        asking.then(given => { stream = given; if (over) given.getTracks().forEach(track => track.stop()); }, () => {});
+      }
       let capture: AudioWorkletNode | undefined;
       let source: MediaStreamAudioSourceNode | undefined;
       let opened = false;
@@ -134,10 +151,10 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
         if (socket && socket.readyState <= 1) socket.close(1000);
         void audio.close().catch(() => {});
       };
-      /** Live talk could not start: the device voice listens instead, so the reader is never left without a voice. */
+      /** Live talk could not start: the device voice listens instead, so the reader is never left without a voice. Says exactly why. */
       const fallBack = (why: unknown) => {
         console.warn('[familiar-live] could not start; the device voice listens instead.', why);
-        finish(undefined, true);
+        finish(`Live talk could not start: ${describeFailure(why)}`, true);
       };
       const finish = (problem?: string, unavailable = false) => {
         if (over) return;
@@ -145,7 +162,7 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
         events.ended(problem, unavailable);
       };
       const limit = setTimeout(() => finish('Your Familiar talked for ten minutes. Tap to talk again.'), SESSION_MS);
-      const connecting = setTimeout(() => { if (!opened) fallBack('no answer from Gemini'); }, CONNECT_MS);
+      const connecting = setTimeout(() => { if (!opened) fallBack('no answer from Gemini in 15 seconds'); }, CONNECT_MS);
       const send = (message: unknown) => { if (!over && socket?.readyState === 1) socket.send(JSON.stringify(message)); };
       const play = (data: string) => {
         const samples = base64ToFloat32(data);
@@ -207,7 +224,7 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
       const receive = (message: LiveMessage) => {
         if (message.setupComplete && !opened) {
           opened = true;
-          listen();
+          if (stream) listen();
           events.connected();
         }
         const content = message.serverContent;
@@ -234,19 +251,25 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
           if (over) return;
           if (response.status === 429) { finish('Your Familiar has talked enough for today. It still listens the usual way.', true); return; }
           if (response.status === 503) { finish(undefined, true); return; }
-          if (!response.ok) { fallBack(errorText(body, `status ${response.status}`)); return; }
-          const { token: liveToken, setup } = body as { token?: string; setup?: unknown };
-          if (!liveToken || !setup) { fallBack('no token'); return; }
-          try {
-            stream = await getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
-          } catch {
-            finish('Allow the microphone to talk with your Familiar.');
+          if (!response.ok) {
+            const detail = body && typeof body === 'object' && 'detail' in body && typeof body.detail === 'string' ? ` (${body.detail})` : '';
+            fallBack(`server ${response.status}, ${errorText(body, 'no reason given')}${detail}`);
             return;
           }
-          if (over) { stream.getTracks().forEach(track => track.stop()); return; }
-          if (!audio.audioWorklet) { finish('Live talk is not available in this browser.', true); return; }
-          await audio.audioWorklet.addModule(URL.createObjectURL(new Blob([CAPTURE_WORKLET], { type: 'application/javascript' })));
-          if (over) return;
+          const { token: liveToken, setup } = body as { token?: string; setup?: unknown };
+          if (!liveToken || !setup) { fallBack('no token'); return; }
+          if (asking) {
+            try {
+              stream = await asking;
+            } catch (error) {
+              finish(`Allow the microphone to talk with your Familiar. (${describeFailure(error)})`);
+              return;
+            }
+            if (over) return;
+            if (!audio.audioWorklet) { finish('Live talk is not available in this browser: it cannot capture the microphone.', true); return; }
+            await audio.audioWorklet.addModule(URL.createObjectURL(new Blob([CAPTURE_WORKLET], { type: 'application/javascript' })));
+            if (over) return;
+          }
           const live = new Socket(`${LIVE_URL}?access_token=${encodeURIComponent(liveToken)}`);
           socket = live;
           live.binaryType = 'arraybuffer';
@@ -256,8 +279,8 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
           };
           live.onclose = (event: CloseEvent) => {
             if (event.reason) console.warn('[familiar-live] closed:', event.code, event.reason);
-            if (opened) finish('Your Familiar stopped talking.');
-            else fallBack(`closed ${event.code} ${event.reason}`);
+            if (opened) finish(`Your Familiar stopped talking.${event.code !== 1000 ? ` (${event.code}${event.reason ? `: ${event.reason}` : ''})` : ''}`);
+            else fallBack(`Gemini closed the connection, ${event.code}${event.reason ? `: ${event.reason}` : ''}`);
           };
         } catch (error) {
           fallBack(error);

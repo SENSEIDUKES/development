@@ -65,12 +65,16 @@ export interface FamiliarSelectionProps {
   /** Whether the Familiar waits in the header until called, instead of floating over the page. */
   inHeader?: boolean;
   onInHeaderChange?: (inHeader: boolean) => void;
+  /** Live talk (beta): the Familiar converses in its own voice instead of listening with the device voice. */
+  liveTalk?: boolean;
+  onLiveTalkChange?: (liveTalk: boolean) => void;
 }
 
 /** Present host-owned unlock options and optional live sizing without storing preferences. */
-export function FamiliarSelection({ options, selectedId, pending = false, disabled = false, onSelect, size, onSizeChange, inHeader = false, onInHeaderChange }: FamiliarSelectionProps) {
+export function FamiliarSelection({ options, selectedId, pending = false, disabled = false, onSelect, size, onSizeChange, inHeader = false, onInHeaderChange, liveTalk = false, onLiveTalkChange }: FamiliarSelectionProps) {
   const sizeId = useId();
   const headerId = useId();
+  const liveId = useId();
   const mobile = useFamiliarMobile();
   const currentSize = familiarDisplaySize(size, mobile);
   const percent = Math.round((currentSize - (mobile ? 0.5 : 0)) * 100);
@@ -93,6 +97,11 @@ export function FamiliarSelection({ options, selectedId, pending = false, disabl
       <div><label htmlFor={headerId}>Keep in the header</label><p>Your Familiar waits in the header until you call it, instead of floating over the page.</p></div>
       <input id={headerId} type="checkbox" role="switch" className="familiar-header-switch" checked={inHeader} disabled={disabled}
         onChange={event => onInHeaderChange(event.target.checked)} />
+    </div>}
+    {onLiveTalkChange && <div className="familiar-size-control">
+      <div><label htmlFor={liveId}>Live talk (beta)</label><p>Talk with your Familiar like a person, in its own voice. Still being tested; off, it listens the usual way.</p></div>
+      <input id={liveId} type="checkbox" role="switch" className="familiar-header-switch" checked={liveTalk} disabled={disabled}
+        onChange={event => onLiveTalkChange(event.target.checked)} />
     </div>}
     {!options.length && <p>No Familiars are available yet.</p>}
     <div className="familiar-selection-options">

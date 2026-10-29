@@ -1110,7 +1110,7 @@ async function walk(browser, viewport, sample) {
   await page.locator('.workspace-header [aria-label="Show Phoenix actions"]').filter({ visible: true }).waitFor({ timeout: 5_000 });
   await shot('8d-settings-familiar');
   // Keep in the header: off, the Familiar floats over the page; on, it waits in the header again.
-  const keepInHeader = page.locator('.familiar-header-switch').filter({ visible: true });
+  const keepInHeader = page.getByRole('switch', { name: 'Keep in the header' }).filter({ visible: true });
   check(await keepInHeader.isChecked(), 'Keep in the header should show the reader\'s choice.');
   await keepInHeader.click();
   await page.locator('.familiar-companion').waitFor({ timeout: 5_000 });

@@ -77,11 +77,15 @@ describe('Familiar live talk route', () => {
     expect(result.status).toBe(400);
   });
 
-  it('says it could not start when Gemini mints no token, and never leaks the error', async () => {
+  it('says it could not start when Gemini mints no token, with Gemini\'s reason and never the key', async () => {
     const onError = vi.fn();
     const result = await handleFamiliarLiveHttp({ method: 'POST', body: { brief } },
-      { environment: { GEMINI_API_KEY: 'secret' }, tokens: () => ({ create: async () => { throw new Error('quota: secret detail'); } }), onError });
-    expect(result).toMatchObject({ status: 502, body: { error: 'Your Familiar could not start talking. Try again.' } });
+      { environment: { GEMINI_API_KEY: 'sk-live-123' }, tokens: () => ({ create: async () => { throw new Error('{"error":{"code":400,"message":"bad field for key sk-live-123"}}'); } }), onError });
+    expect(result).toMatchObject({ status: 502, body: {
+      error: 'Your Familiar could not start talking. Try again.',
+      detail: '{"error":{"code":400,"message":"bad field for key [key]"}}',
+    } });
+    expect(JSON.stringify(result.body)).not.toContain('sk-live-123');
     expect(onError).toHaveBeenCalledOnce();
   });
 });

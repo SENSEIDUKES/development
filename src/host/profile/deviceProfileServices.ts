@@ -280,6 +280,11 @@ export function useDeviceProfileController(
     commit({ familiarInHeader: inHeader || undefined });
   }, [commit, profile]);
 
+  const handleFamiliarLiveTalkChange = useCallback((liveTalk: boolean) => {
+    if (!profile) return;
+    commit({ familiarLiveTalk: liveTalk || undefined });
+  }, [commit, profile]);
+
   // The profile picture: the photo stays in the page; portraits are shown through object URLs until one is kept.
   const releasePortraits = useCallback(() => {
     portraitUrls.current.forEach(url => URL.revokeObjectURL(url));
@@ -381,6 +386,7 @@ export function useDeviceProfileController(
     isSavingFamiliar: false,
     handleFamiliarSizeChange,
     handleFamiliarInHeaderChange,
+    handleFamiliarLiveTalkChange,
     syncStatus: 'idle',
     lastSavedTime: profile ? new Date(profile.updatedAt) : null,
     setIsSettingsOpen: noop,

@@ -152,7 +152,8 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   const type = (prefill = '') => { helper.useText(); setInfo(false); setChat(false); setTyping(true); setText(prefill); setTimeout(() => input.current?.focus(), 0); };
   // Listening and speaking show on the microphone, not in words.
   const message = state.live?.status === 'connecting' ? 'Connecting…' : state.phase === 'listening' ? '' : state.message;
-  const micLabel = state.live ? (state.live.status === 'connecting' ? 'Connecting… tap to stop' : 'Hang up')
+  // A typed conversation is not listening: its microphone starts listening.
+  const micLabel = state.live ? (!state.live.listening ? 'Talk out loud' : state.live.status === 'connecting' ? 'Connecting… tap to stop' : 'Hang up')
     : helper.live ? 'Talk with your Familiar'
     : state.phase === 'listening' ? 'Done talking' : state.phase === 'speaking' ? 'Speaking' : state.proposal ? 'Speak Confirm or Cancel' : 'Speak';
 
@@ -244,14 +245,14 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
     <div className="familiar-helper-bottom">
       <button type="button" className="familiar-helper-icon" aria-label="How to talk to your Familiar" title="How to talk to your Familiar"
         aria-pressed={info} onClick={() => { setChat(false); setInfo(!info); }}><Info size={20} aria-hidden /></button>
-      <button type="button" className="familiar-helper-mic" data-phase={state.live ? (state.live.status === 'on' ? 'live' : 'connecting') : state.phase}
-        aria-label={micLabel} title={micLabel} aria-pressed={Boolean(state.live) || state.phase === 'listening'} disabled={busy && !state.live}
+      <button type="button" className="familiar-helper-mic" data-phase={state.live ? (!state.live.listening ? 'ready' : state.live.status === 'on' ? 'live' : 'connecting') : state.phase}
+        aria-label={micLabel} title={micLabel} aria-pressed={Boolean(state.live?.listening) || state.phase === 'listening'} disabled={busy && !state.live}
         onClick={() => {
           setInfo(false);
           if (helper.live) { if (state.phase === 'speaking') helper.quiet(); helper.talk(); return; }
           if (state.phase === 'listening') { helper.doneTalking(); return; } if (state.phase === 'speaking') helper.quiet(); helper.listen();
         }}>
-        {state.live?.status === 'on' ? <Square size={22} aria-hidden /> : <Mic size={26} aria-hidden />}</button>
+        {state.live?.listening && state.live.status === 'on' ? <Square size={22} aria-hidden /> : <Mic size={26} aria-hidden />}</button>
       {helper.live
         ? <button type="button" className="familiar-helper-icon" aria-label="Conversation" title="Read and type to your Familiar" aria-pressed={chat}
           onClick={() => { setInfo(false); setTyping(false); setChat(!chat); }}><MessagesSquare size={20} aria-hidden /></button>

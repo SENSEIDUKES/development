@@ -12,6 +12,36 @@ body:has(.library-home-palette) {
   --reader-seam-colors: #cbb57822, #f3e2b399 18%, #c9a24a77 55%, #49c9fa66 82%, #cbb57822;
 }
 
+/* Reader blue's own colors for what sits on the glass: control faces and
+   their light, icon and label ink, hover and press washes, focus, and the
+   settings sheet's fields. Named here so a look can recolor them; the glass
+   recipe above stays literal so Palette & Materials can measure it. */
+:root {
+  --reader-glass-ink: #e2f4ff;
+  --reader-glass-ink-bright: #eef7ff;
+  --reader-glass-ink-soft: #cfdee8;
+  --reader-glass-ink-muted: #b1c4d2;
+  --reader-glass-control-face: linear-gradient(145deg, #b9dbe51c, #29495a1a);
+  --reader-glass-control-edge: #d6bd8744;
+  --reader-glass-control-edge-hover: #d6bd8766;
+  --reader-glass-control-light: inset 0 1px 0 #e3f6ff1f;
+  --reader-glass-hover: #8bdbff26;
+  --reader-glass-press: #8bdbff38;
+  --reader-glass-focus: #96ddf9;
+  --reader-glass-focus-bright: #a5f3fc;
+  --reader-glass-rest-edge: #d6bd8733;
+  --reader-glass-rest-fill: linear-gradient(145deg, #29495a99, #0c1c32b3);
+  --reader-glass-rest-solid: linear-gradient(145deg, #29495aeb, #0c1c32eb);
+  --reader-glass-rest-light: inset 0 1px 0 #e3f6ff1f, 0 3px 12px #020b2033;
+  --reader-glass-sheet-edge: #d6bd872e;
+  --reader-glass-sheet-group: linear-gradient(145deg, #b9dbe50a, #07142624);
+  --reader-glass-sheet-light: inset 0 1px 0 #e3f6ff0d;
+  --reader-glass-sheet-mixer: #07142624;
+  --reader-glass-field: #0c1c3280;
+  --reader-glass-field-solid: #0c1c32;
+  --reader-glass-track: #b1c4d226;
+}
+
 .reader-glass.reader-glass {
   background: var(--reader-glass-solid);
   border-color: var(--reader-glass-edge);
@@ -109,10 +139,10 @@ header.reader-glass-bar::after {
   content: '';
   position: absolute;
   inset: 0;
-  border: 1px solid #d6bd8733;
+  border: 1px solid var(--reader-glass-rest-edge);
   border-radius: 999px;
-  background: linear-gradient(145deg, #29495a99, #0c1c32b3);
-  box-shadow: inset 0 1px 0 #e3f6ff1f, 0 3px 12px #020b2033;
+  background: var(--reader-glass-rest-fill);
+  box-shadow: var(--reader-glass-rest-light);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   pointer-events: none;
@@ -125,15 +155,15 @@ header.reader-glass-bar::after {
 
 /* Back to narration floats above the bar's left end in the note's resting glass. */
 .reader-glass-float {
-  border: 1px solid #d6bd8733;
-  background: linear-gradient(145deg, #29495a99, #0c1c32b3);
-  box-shadow: inset 0 1px 0 #e3f6ff1f, 0 3px 12px #020b2033;
+  border: 1px solid var(--reader-glass-rest-edge);
+  background: var(--reader-glass-rest-fill);
+  box-shadow: var(--reader-glass-rest-light);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   transition: border-color 150ms ease;
 }
-.reader-glass-float:hover { border-color: #d6bd8766; }
-.reader-glass-float:focus-visible { outline: 2px solid #96ddf9; outline-offset: 2px; }
+.reader-glass-float:hover { border-color: var(--reader-glass-control-edge-hover); }
+.reader-glass-float:focus-visible { outline: 2px solid var(--reader-glass-focus); outline-offset: 2px; }
 
 /* Same gold thumb tokens as Library navigation. Menus use the shared overlay;
    the chapter preserves document scrolling and its native scrollbar. */
@@ -182,30 +212,30 @@ html[data-reader-scrollbar][data-reader-scrolling] { scrollbar-color: #c9a24a99 
 /* Nested controls get their depth from light, not a second backdrop sampler. */
 .reader-glass-control.reader-glass-control,
 .reader-settings-scope.reader-settings-scope .reader-settings-icon {
-  background: linear-gradient(145deg, #b9dbe51c, #29495a1a);
-  border-color: #d6bd8744;
-  box-shadow: inset 0 1px 0 #e3f6ff1f;
-  color: #e2f4ff;
+  background: var(--reader-glass-control-face);
+  border-color: var(--reader-glass-control-edge);
+  box-shadow: var(--reader-glass-control-light);
+  color: var(--reader-glass-ink);
 }
 .reader-glass-control:is(button):enabled:hover,
 .reader-settings-scope.reader-settings-scope .reader-settings-icon:hover {
-  background: #8bdbff26;
-  border-color: #d6bd8766;
+  background: var(--reader-glass-hover);
+  border-color: var(--reader-glass-control-edge-hover);
 }
 .reader-glass-control:is(button):enabled:active,
-.reader-settings-scope.reader-settings-scope .reader-settings-icon:active { background: #8bdbff38; }
+.reader-settings-scope.reader-settings-scope .reader-settings-icon:active { background: var(--reader-glass-press); }
 /* Codex uses the same blue-gray control glass with only a faint halo from the
    exact library-spectrum-glow palette and shared 18s keyframe from Library UI.
    Two small, non-interactive layers keep the luminous edge behind a legible face. */
 .reader-glass-primary.reader-glass-primary {
-  --reader-codex-face: linear-gradient(145deg, #b9dbe51c, #29495a1a);
+  --reader-codex-face: var(--reader-glass-control-face);
   position: relative;
   isolation: isolate;
   overflow: visible;
   background: transparent;
-  border-color: #d6bd8744;
-  color: #e2f4ff;
-  box-shadow: inset 0 1px 0 #e3f6ff1f;
+  border-color: var(--reader-glass-control-edge);
+  color: var(--reader-glass-ink);
+  box-shadow: var(--reader-glass-control-light);
 }
 .reader-glass-primary::before,
 .reader-glass-primary::after {
@@ -232,15 +262,15 @@ html[data-reader-scrollbar][data-reader-scrolling] { scrollbar-color: #c9a24a99 
   background: var(--reader-codex-face);
 }
 .reader-glass-primary.reader-glass-primary:hover {
-  --reader-codex-face: #8bdbff26;
-  border-color: #d6bd8766;
+  --reader-codex-face: var(--reader-glass-hover);
+  border-color: var(--reader-glass-control-edge-hover);
 }
 .reader-glass-primary:hover::before,
 .reader-glass-primary:focus-visible::before { opacity: .28; }
 .reader-glass-primary.reader-glass-primary:active {
-  --reader-codex-face: #8bdbff38;
+  --reader-codex-face: var(--reader-glass-press);
 }
-.reader-glass-primary.reader-glass-primary:focus-visible { outline-color: #a5f3fc; }
+.reader-glass-primary.reader-glass-primary:focus-visible { outline-color: var(--reader-glass-focus-bright); }
 
 @media (prefers-reduced-motion: reduce) {
   .reader-glass-primary::before { animation: none; }
@@ -248,43 +278,43 @@ html[data-reader-scrollbar][data-reader-scrolling] { scrollbar-color: #c9a24a99 
 }
 
 .reader-settings-scope.reader-settings-scope {
-  --reader-settings-border: #d6bd872e;
-  --reader-settings-muted: #b1c4d2;
-  --reader-settings-accent: #96ddf9;
-  color: #eef7ff;
+  --reader-settings-border: var(--reader-glass-sheet-edge);
+  --reader-settings-muted: var(--reader-glass-ink-muted);
+  --reader-settings-accent: var(--reader-glass-focus);
+  color: var(--reader-glass-ink-bright);
 }
 .reader-settings-scope.reader-settings-scope .reader-settings-group,
 .reader-settings-scope.reader-settings-scope .reader-settings-tabs {
-  background: linear-gradient(145deg, #b9dbe50a, #07142624);
-  box-shadow: inset 0 1px 0 #e3f6ff0d;
+  background: var(--reader-glass-sheet-group);
+  box-shadow: var(--reader-glass-sheet-light);
 }
 .reader-settings-scope.reader-settings-scope .reader-settings-tab[aria-selected="true"],
 .reader-settings-scope.reader-settings-scope .reader-settings-options input:checked + .reader-settings-choice {
-  background: #8bdbff26;
-  color: #eef7ff;
+  background: var(--reader-glass-hover);
+  color: var(--reader-glass-ink-bright);
 }
-.reader-settings-scope.reader-settings-scope .reader-settings-choice { color: #cfdee8; }
-.reader-settings-scope.reader-settings-scope .reader-settings-label { color: #e2f4ff; }
+.reader-settings-scope.reader-settings-scope .reader-settings-choice { color: var(--reader-glass-ink-soft); }
+.reader-settings-scope.reader-settings-scope .reader-settings-label { color: var(--reader-glass-ink); }
 .reader-settings-scope.reader-settings-scope .reader-settings-select {
-  background: #0c1c3280;
-  color: #eef7ff;
+  background: var(--reader-glass-field);
+  color: var(--reader-glass-ink-bright);
 }
-.reader-settings-scope.reader-settings-scope .reader-settings-select option { background: #0c1c32; }
+.reader-settings-scope.reader-settings-scope .reader-settings-select option { background: var(--reader-glass-field-solid); }
 .reader-settings-scope.reader-settings-scope .sap-reader-mixer {
-  --sap-reader-mixer-bg: #07142624;
-  --sap-reader-mixer-fg: #eef7ff;
+  --sap-reader-mixer-bg: var(--reader-glass-sheet-mixer);
+  --sap-reader-mixer-fg: var(--reader-glass-ink-bright);
   --sh-text-muted: var(--reader-settings-muted);
-  --sh-field-surface: #0c1c32;
+  --sh-field-surface: var(--reader-glass-field-solid);
   --sh-field-border: var(--reader-settings-border);
-  --sh-progress-track: #b1c4d226;
-  box-shadow: inset 0 1px 0 #e3f6ff0d;
+  --sh-progress-track: var(--reader-glass-track);
+  box-shadow: var(--reader-glass-sheet-light);
 }
 
 /* Match the companion's touch fallback: retain its material, avoid sampling
    the moving chapter underneath large sheets during a mobile scroll. */
 @media (hover: none) and (pointer: coarse), (prefers-reduced-transparency: reduce) {
   .reader-audio-control::before {
-    background: linear-gradient(145deg, #29495aeb, #0c1c32eb);
+    background: var(--reader-glass-rest-solid);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }

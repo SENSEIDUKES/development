@@ -11,6 +11,7 @@ import { getSenLanguageLabel, normalizeSenLanguageCode } from '../../../lib/lang
 import { ReaderPanel } from './ReaderPanel';
 import { SoundtrackChoicePanel } from './SoundtrackChoicePanel';
 import './ReaderSettingsSheet.css';
+import './reader-colors.css';
 
 const legend = 'reader-settings-label';
 const pillChoice = 'reader-settings-choice';
@@ -173,7 +174,7 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer,
         <section aria-label="Audio" data-testid="reader-settings-audio">
           <h3 className="sr-only">Audio</h3>
           <p className="reader-settings-help mb-3">The story’s music, atmosphere and sound effects.</p>
-          <Suspense fallback={<p role="status" className="text-sm text-neutral-400">Opening Audio…</p>}>
+          <Suspense fallback={<p role="status" className="text-sm text-(--reader-text-dim)">Opening Audio…</p>}>
             {/* The atmosphere is chosen in Scene below, beside the music, so the panel's own picker is hidden. */}
             <ReaderMixerPanel mixer={mixer} showTitle={false} showPresets={false} showAtmospherePicker={!soundtrack} />
           </Suspense>
@@ -185,9 +186,9 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer,
           <h3 id="reader-settings-narration" className="sr-only">Narration</h3>
           <p className="reader-settings-help mb-3">Voices and speed for reading aloud in {plainLanguage(language)}.</p>
           {!readAloud.supported
-            ? <p role="note" className="mt-3 text-sm text-amber-200">This browser can't read aloud.</p>
+            ? <p role="note" className="mt-3 text-sm text-(--reader-warning-soft)">This browser can't read aloud.</p>
             : <>
-                {readAloud.languageVoices.length === 0 && <p role="note" className="mt-3 text-sm text-amber-200">
+                {readAloud.languageVoices.length === 0 && <p role="note" className="mt-3 text-sm text-(--reader-warning-soft)">
                   {`This device has no ${plainLanguage(language)} voice. Add one in your device's speech settings; until then the device chooses how to read ${plainLanguage(language)}.`}
                 </p>}
                 <div className="reader-settings-group">

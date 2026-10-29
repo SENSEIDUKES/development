@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { ReaderMixerNote, useReaderMixerState, type ReaderMixer, type ReaderMixerNoteLabels } from '@seihouse/audio-player';
+import './reader-colors.css';
 import './reader-audio-note.css';
 
 /**

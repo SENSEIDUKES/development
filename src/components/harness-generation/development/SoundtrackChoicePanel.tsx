@@ -2,6 +2,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 import type { ReaderAtmosphereOption, ReaderMixer } from '@seihouse/audio-player';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
 import { storySoundtrack, type SoundtrackChoice } from '@seihouse/sen/reader-runtime';
+import './reader-colors.css';
 
 const AUTOMATIC = 'automatic';
 
@@ -16,7 +17,7 @@ function grouped<T extends { group?: string }>(items: readonly T[]): Array<[stri
 }
 
 const selectClass = 'reader-settings-select w-full min-w-0';
-const labelClass = 'block text-sm font-medium text-neutral-200';
+const labelClass = 'block text-sm font-medium text-(--reader-text-soft)';
 
 /**
  * Who chooses the Reader's music and atmosphere. Automatic (the default)
@@ -40,8 +41,8 @@ export function SoundtrackChoicePanel({ mixer, choice, onChoice, pieces }: {
   const pieceValue = choice.soundscape === AUTOMATIC ? AUTOMATIC : choice.soundscape.pieceId;
   const atmosphereValue = choice.atmosphere === AUTOMATIC ? AUTOMATIC : choice.atmosphere.atmosphereId;
   return <fieldset data-testid="reader-soundtrack-choice" className="reader-settings-group pb-4">
-    <legend className="px-1 text-sm font-medium text-neutral-200">Scene</legend>
-    <p className="text-xs leading-relaxed text-neutral-400">
+    <legend className="px-1 text-sm font-medium text-(--reader-text-soft)">Scene</legend>
+    <p className="text-xs leading-relaxed text-(--reader-text-dim)">
       Follow the chapter’s soundtrack, or keep your own selection.
     </p>
     {pieces.length > 0 && <div className="mt-3">
@@ -64,7 +65,7 @@ export function SoundtrackChoicePanel({ mixer, choice, onChoice, pieces }: {
         </optgroup>)}
       </select>
     </div>}
-    {(playing || bed) && <p role="status" data-testid="reader-soundtrack-now" className="mt-3 text-xs text-neutral-400">
+    {(playing || bed) && <p role="status" data-testid="reader-soundtrack-now" className="mt-3 text-xs text-(--reader-text-dim)">
       {`Now: ${[playing?.label, bed?.label].filter(Boolean).join(' · ')}`}
     </p>}
   </fieldset>;

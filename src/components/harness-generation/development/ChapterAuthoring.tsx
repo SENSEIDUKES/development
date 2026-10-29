@@ -19,6 +19,7 @@ import { APPEARANCE_KIND, type AppearanceAttachment } from '../../../narrative/a
 import { harnessParagraphBlockId } from '../shared/chapterBody';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { ReaderChapter } from './readerChapterBody';
+import './reader-colors.css';
 
 type ChapterState = ManuscriptState<unknown>;
 
@@ -238,41 +239,41 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
 
   return <article ref={articleRef} className="mx-auto mt-6 max-w-[var(--reader-measure,34em)]" style={prose} data-chapter-number={chapter.chapterNumber}
     data-testid="chapter-authoring" lang={locale} aria-labelledby={`harness-reader-chapter-${chapter.chapterNumber}`}>
-    <div className="mb-5 space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 font-sans text-sm" data-testid="create-mode-panel">
+    <div className="mb-5 space-y-3 rounded-2xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] p-4 font-sans text-sm" data-testid="create-mode-panel">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-semibold text-neutral-100">Create mode</p>
-        <p role="status" className="text-xs text-neutral-400" data-testid="create-mode-saving">
+        <p className="font-semibold text-(--reader-text)">Create mode</p>
+        <p role="status" className="text-xs text-(--reader-text-dim)" data-testid="create-mode-saving">
           {saving === 'saving' ? 'Saving…' : saving === 'failed' ? 'Not saved' : 'Saved'}
         </p>
       </div>
-      <p className="text-xs leading-relaxed text-neutral-400">Hold a word or drag to select, then choose Edit, Copy or Media. Media places a Sound Cue or changes the soundscape or atmosphere there; in the first sentence, it chooses how the chapter opens. Changes save as you make them; moving on to the next chapter seals this one.</p>
+      <p className="text-xs leading-relaxed text-(--reader-text-dim)">Hold a word or drag to select, then choose Edit, Copy or Media. Media places a Sound Cue or changes the soundscape or atmosphere there; in the first sentence, it chooses how the chapter opens. Changes save as you make them; moving on to the next chapter seals this one.</p>
       <ManuscriptOverlaySwitch mode={overlayMode} onChange={setOverlayMode} overlay={overlay} />
       {/* A chapter may have no Sound Cues, but where there should be some their absence is loud: say so here, never in the Reader. */}
-      {cues.length === 0 && <p role="status" className="rounded-lg border border-amber-300/25 bg-amber-400/[0.06] px-3 py-2 text-xs leading-relaxed text-amber-100" data-testid="create-mode-no-cues">
+      {cues.length === 0 && <p role="status" className="rounded-lg border border-(--reader-warning-bright)/25 bg-(--reader-warning)/[0.06] px-3 py-2 text-xs leading-relaxed text-(--reader-warning-pale)" data-testid="create-mode-no-cues">
         This chapter has no Sound Cues. Where a sound happens, highlight its words and choose Media → Audio → Cue.
       </p>}
-      {notice && <p role="alert" className="rounded-lg border border-white/10 bg-neutral-900/70 px-3 py-2 text-xs text-amber-100">{notice}</p>}
+      {notice && <p role="alert" className="rounded-lg border border-(--reader-light)/10 bg-(--reader-surface-raised)/70 px-3 py-2 text-xs text-(--reader-warning-pale)">{notice}</p>}
       {flaggedAttachments(state).length > 0 && <section aria-labelledby="create-mode-waiting" className="space-y-2" data-testid="create-mode-waiting">
-        <h2 id="create-mode-waiting" className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-300">Needs a new spot</h2>
+        <h2 id="create-mode-waiting" className="text-xs font-semibold uppercase tracking-[0.14em] text-(--reader-text-muted)">Needs a new spot</h2>
         <ul className="space-y-2">
           {flaggedAttachments(state).map(attachment => {
             const { title, detail } = describeWaiting(attachment);
-            return <li key={attachment.id} className="flex items-start justify-between gap-3 rounded-lg border border-white/10 bg-neutral-900/50 px-3 py-2">
-              <span className="min-w-0 text-xs leading-relaxed"><span className="block font-medium text-neutral-100">{title}</span><span className="text-neutral-400">{detail}</span></span>
+            return <li key={attachment.id} className="flex items-start justify-between gap-3 rounded-lg border border-(--reader-light)/10 bg-(--reader-surface-raised)/50 px-3 py-2">
+              <span className="min-w-0 text-xs leading-relaxed"><span className="block font-medium text-(--reader-text)">{title}</span><span className="text-(--reader-text-dim)">{detail}</span></span>
               <button type="button" onClick={() => update(current => removeAttachment(current, attachment.id))}
-                className="min-h-9 shrink-0 rounded-lg border border-white/15 px-3 text-xs text-neutral-200 hover:bg-white/10">Remove</button>
+                className="min-h-9 shrink-0 rounded-lg border border-(--reader-light)/15 px-3 text-xs text-(--reader-text-soft) hover:bg-(--reader-light)/10">Remove</button>
             </li>;
           })}
         </ul>
       </section>}
     </div>
-    <p className="font-mono text-[10px] font-normal uppercase tracking-[0.2em] text-neutral-500">Chapter {chapter.chapterNumber}</p>
+    <p className="font-mono text-[10px] font-normal uppercase tracking-[0.2em] text-(--reader-text-faint)">Chapter {chapter.chapterNumber}</p>
     <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" style={{ fontFamily: text.titleFont.family }}
-      className="mt-1 text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-white sm:text-[length:calc(1.875rem*var(--reader-scale,1))]">{chapterTitleText(chapter.title) || chapter.title}</h1>
+      className="mt-1 text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-(--reader-light) sm:text-[length:calc(1.875rem*var(--reader-scale,1))]">{chapterTitleText(chapter.title) || chapter.title}</h1>
     {/* A quiet gutter on phones gives the overlay's ¶ numbers room, so turning an overlay on never moves a word. */}
     <div className="ps-3 sm:ps-0">
       <HighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={edit} actions={actions} removeActions={removeActions}
-        editable overlay={overlay} locale={locale} className="mt-6 text-neutral-200"
+        editable overlay={overlay} locale={locale} className="mt-6 text-(--reader-text-soft)"
         renderBlockText={block => {
           const blockCues = cues.filter(cue => cue.anchor.blockId === block.id);
           return blockCues.length ? <InlineAudioText text={block.text} cues={blockCues} renderText={words => words} /> : block.text;

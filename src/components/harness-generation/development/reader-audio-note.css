@@ -1,6 +1,6 @@
 /* Keep the shared player's interactions and scroll signal; only skin the Reader note. */
 .sap-reader-mixer-note.reader-story-audio-note {
-  --sap-reader-mixer-note-fg: #fff;
+  --sap-reader-mixer-note-fg: var(--reader-light);
   --sap-reader-mixer-note-opacity: 1;
   --sap-reader-mixer-note-ghost-opacity: 0.35;
 }
@@ -27,11 +27,11 @@
   place-items: center;
   width: 48px;
   padding: 12px 1px 48px;
-  border: 1px solid rgb(255 255 255 / 0.15);
+  border: 1px solid color-mix(in srgb, var(--reader-light) 15%, transparent);
   border-radius: 999px;
-  background: #171717;
-  color: #fff;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+  background: var(--reader-surface-raised);
+  color: var(--reader-light);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--reader-shade) 40%, transparent);
 }
 .reader-audio-volume input {
   appearance: none;
@@ -45,7 +45,7 @@
   background: transparent;
   cursor: pointer;
   touch-action: none;
-  --reader-audio-track: linear-gradient(to top, #e2f4ff var(--reader-audio-level), #b1c4d238 var(--reader-audio-level));
+  --reader-audio-track: linear-gradient(to top, var(--reader-meter) var(--reader-audio-level), var(--reader-meter-track) var(--reader-audio-level));
 }
 .reader-audio-volume input::-webkit-slider-runnable-track {
   width: 4px;
@@ -64,21 +64,21 @@
   width: 16px;
   height: 16px;
   margin-left: -6px;
-  border: 1px solid #fff9;
+  border: 1px solid color-mix(in srgb, var(--reader-light) 60%, transparent);
   border-radius: 50%;
-  background: #eef7ff;
+  background: var(--reader-meter-thumb);
   box-shadow: 0 1px 4px #020b2044;
 }
 .reader-audio-volume input::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  border: 1px solid #fff9;
+  border: 1px solid color-mix(in srgb, var(--reader-light) 60%, transparent);
   border-radius: 50%;
-  background: #eef7ff;
+  background: var(--reader-meter-thumb);
   box-shadow: 0 1px 4px #020b2044;
 }
 .reader-audio-volume input:focus { outline: none; }
-.reader-audio-volume input:focus-visible { outline: 2px solid #96ddf9; outline-offset: 1px; border-radius: 999px; }
+.reader-audio-volume input:focus-visible { outline: 2px solid var(--reader-focus); outline-offset: 1px; border-radius: 999px; }
 
 @keyframes reader-audio-volume-reveal {
   from { opacity: 0; transform: translateX(-50%) translateY(4px) scale(.94); }

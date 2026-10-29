@@ -54,6 +54,7 @@ import { useChapterFinished } from './useChapterFinished';
 import './reader-frame.css';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { HarnessChapter, HarnessWorkspaceState } from '../../../narrative/generation';
+import './reader-colors.css';
 
 /** What the host's writing screen shows. */
 export interface HarnessReaderWriting {
@@ -471,8 +472,8 @@ export function HarnessReaderSession({
     };
   }, [chapter, chapterWriting, controller, creating, language, state, storyId]);
 
-  if (!story) return <p role="alert" className="p-4 text-sm text-amber-200">This story is no longer available.</p>;
-  if (!readerState) return <main className="mx-auto w-full max-w-3xl px-4 py-6"><p role="status" className="text-sm text-neutral-400">Opening your place in the story…</p></main>;
+  if (!story) return <p role="alert" className="p-4 text-sm text-(--reader-warning-soft)">This story is no longer available.</p>;
+  if (!readerState) return <main className="mx-auto w-full max-w-3xl px-4 py-6"><p role="status" className="text-sm text-(--reader-text-dim)">Opening your place in the story…</p></main>;
 
   // One position for the writing screen in both views, so it can close smoothly.
   const writing = renderWriting?.({ active: writer.writing, chapterNumber: writer.writingChapter ?? upcoming });
@@ -505,7 +506,7 @@ export function HarnessReaderSession({
         chapterSelection={chapter ? { current: chapter.chapterNumber, entries: chapters.map(entry => ({ number: entry.chapterNumber, title: entry.title })), onSelect: openChapter } : undefined}
         onBack={onClose} onOpenSettings={() => openSettings()} companion={companion} pinned={Boolean(panel) || pageOpen} direction={direction} />
       <div className="reader-column">
-      {storageError && <p role="alert" className="mt-3 text-sm text-amber-300">{storageError}</p>}
+      {storageError && <p role="alert" className="mt-3 text-sm text-(--reader-warning-bright)">{storageError}</p>}
 
       {authoring
         ? <ChapterAuthoring key={chapter.id} handle={authoringHandle} chapter={chapter} controller={controller} locale={story.originalLanguage} text={text} articleRef={articleRef} />
@@ -513,19 +514,19 @@ export function HarnessReaderSession({
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
             highlight={highlight} reading={reading} text={text} />
         : <section className="py-16 text-center" aria-label="Story start">
-            <h1 className="font-display text-3xl text-white">{story.title}</h1>
-            <p className="mt-3 text-sm text-neutral-400">
+            <h1 className="font-display text-3xl text-(--reader-light)">{story.title}</h1>
+            <p className="mt-3 text-sm text-(--reader-text-dim)">
               {continueAfterLatest ? 'Your story begins here.' : 'The first chapter can’t be written here yet.'}
             </p>
           </section>}
 
-      {writer.error && <p role="alert" className="mt-6 text-sm text-amber-200">{writer.error}</p>}
+      {writer.error && <p role="alert" className="mt-6 text-sm text-(--reader-warning-soft)">{writer.error}</p>}
       {/* The chapter's end: at the newest chapter, the story's next step (write, direct, or see how it ended). */}
       <div ref={setChapterEnd} className="mt-8 flex min-h-11 items-center justify-end gap-3" data-testid="reader-chapter-end">
         {!later && continueAfterLatest && <span className="relative inline-flex items-center gap-2">
           {continueAfterLatest.writes && renderWriteAside?.(chapters.length)}
           <button type="button" disabled={continueAfterLatest.busy} aria-busy={continueAfterLatest.busy || undefined} onClick={continueAfterLatest.run}
-            className={`${navButton} border-cyan-300/50 bg-cyan-400/15 font-semibold text-cyan-50 hover:bg-cyan-400/25`}>{continueAfterLatest.label}</button>
+            className={`${navButton} border-(--reader-accent-bright)/50 bg-(--reader-accent)/15 font-semibold text-(--reader-accent-mist) hover:bg-(--reader-accent)/25`}>{continueAfterLatest.label}</button>
         </span>}
       </div>
       {rewritable && chapter && !authoring && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} />}

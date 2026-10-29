@@ -6,6 +6,7 @@ import type { HoldingVerb } from '../../../narrative/holdings';
 import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
 import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, CodexPictureCard, CodexPictures, CodexWorldCard, CodexWorldFact, StoryCodexRecord } from '../shared/storyCodex';
+import './reader-colors.css';
 
 /** How each change reads in the Codex. */
 const VERB_LABELS: Record<HoldingVerb, string> = {
@@ -67,10 +68,10 @@ function WorldAtTheStart({ name, facts, title = 'The world at the start' }: {
 }) {
   if (!facts.length) return null;
   return <Section title={title} icon={<ScrollText size={12} aria-hidden />} label={`${name}: ${title}`} testId="codex-chapter-zero">
-    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">
+    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] p-4 text-sm">
       {facts.map(fact => <Fragment key={fact.slot.id}>
-        <dt className="pt-0.5 text-[11px] uppercase tracking-[0.14em] text-neutral-500">{fact.slot.label}</dt>
-        <dd className="min-w-0 break-words text-neutral-200">{fact.value}</dd>
+        <dt className="pt-0.5 text-[11px] uppercase tracking-[0.14em] text-(--reader-text-faint)">{fact.slot.label}</dt>
+        <dd className="min-w-0 break-words text-(--reader-text-soft)">{fact.value}</dd>
       </Fragment>)}
     </dl>
   </Section>;
@@ -78,9 +79,9 @@ function WorldAtTheStart({ name, facts, title = 'The world at the start' }: {
 
 /** A small link to the paragraph a fact came from. */
 function PassageChip({ passage, label, onReadPassage }: { passage: CodexPassage; label: string; onReadPassage?: ReadPassage }) {
-  const chip = 'inline-flex min-h-8 items-center rounded-full border border-white/12 bg-white/[0.04] px-2.5 text-[11px] text-neutral-300';
+  const chip = 'inline-flex min-h-8 items-center rounded-full border border-(--reader-light)/12 bg-(--reader-light)/[0.04] px-2.5 text-[11px] text-(--reader-text-muted)';
   if (!onReadPassage) return <span className={chip} title={passage.text}>{label}</span>;
-  return <button type="button" className={`${chip} hover:border-white/30 hover:text-white`} title={passage.text}
+  return <button type="button" className={`${chip} hover:border-(--reader-light)/30 hover:text-(--reader-light)`} title={passage.text}
     aria-label={`${label}. Read the passage: ${passage.text}`} onClick={() => onReadPassage(passage.chapterNumber, passage.blockId)}>{label}</button>;
 }
 
@@ -90,16 +91,16 @@ const eventLabel = (event: HoldingEvent) => `Ch. ${event.passage.chapterNumber} 
 /** One part of a profile, under its own small heading. */
 function Section({ title, icon, label, testId, children }: { title: string; icon: ReactNode; label?: string; testId?: string; children: ReactNode }) {
   return <section className="space-y-2" aria-label={label} data-testid={testId}>
-    <h4 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-400">{icon}{title}</h4>
+    <h4 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-(--reader-text-dim)">{icon}{title}</h4>
     {children}
   </section>;
 }
 
 /** Spoken words, framed as a quote, with the passage they came from. */
 function Words({ passage, caption, onReadPassage }: { passage: CodexPassage; caption: string; onReadPassage?: ReadPassage }) {
-  return <figure className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-    <blockquote className="text-[15px] italic leading-relaxed text-neutral-100">{passage.text}</blockquote>
-    <figcaption className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-neutral-400">
+  return <figure className="rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] p-4">
+    <blockquote className="text-[15px] italic leading-relaxed text-(--reader-text)">{passage.text}</blockquote>
+    <figcaption className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-(--reader-text-dim)">
       <span>{caption}</span><PassageChip passage={passage} label={`Ch. ${passage.chapterNumber}`} onReadPassage={onReadPassage} />
     </figcaption>
   </figure>;
@@ -119,12 +120,12 @@ function History({ events, onReadPassage }: { events: readonly HoldingEvent[]; o
   const newest = [...events].reverse();
   const older = newest.length - shown;
   return <details className="mt-2" data-testid="codex-history">
-    <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-full px-1 text-[11px] text-neutral-400 hover:text-neutral-200">History ({events.length})</summary>
+    <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-full px-1 text-[11px] text-(--reader-text-dim) hover:text-(--reader-text-soft)">History ({events.length})</summary>
     <div className="mt-2 flex flex-wrap gap-1.5">
       {newest.slice(0, shown).map(event => <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={eventLabel(event)} onReadPassage={onReadPassage} />)}
     </div>
     {older > 0 && <button type="button" onClick={() => setShown(count => count + HISTORY_PAGE)}
-      className="mt-2 min-h-8 rounded-full border border-white/12 px-3 text-[11px] text-neutral-300 hover:border-white/30 hover:text-white">
+      className="mt-2 min-h-8 rounded-full border border-(--reader-light)/12 px-3 text-[11px] text-(--reader-text-muted) hover:border-(--reader-light)/30 hover:text-(--reader-light)">
       Show {Math.min(HISTORY_PAGE, older)} older
     </button>}
   </details>;
@@ -134,13 +135,13 @@ function History({ events, onReadPassage }: { events: readonly HoldingEvent[]; o
 const sinceLine = (events: readonly HoldingEvent[]) => (events.length ? ` since Ch. ${events.at(-1)!.passage.chapterNumber}` : '');
 
 function ItemSlot({ thing, onReadPassage }: { thing: HeldThing; onReadPassage?: ReadPassage }) {
-  return <li className="rounded-xl border border-white/10 bg-white/[0.03] p-3" data-testid="codex-slot">
-    <p className="flex items-start gap-2.5 text-sm text-white">
-      <Sword size={15} aria-hidden className="mt-0.5 shrink-0 text-neutral-500" />
+  return <li className="rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] p-3" data-testid="codex-slot">
+    <p className="flex items-start gap-2.5 text-sm text-(--reader-light)">
+      <Sword size={15} aria-hidden className="mt-0.5 shrink-0 text-(--reader-text-faint)" />
       <span className="min-w-0 flex-1 break-words">{thing.name}</span>
-      {thing.count > 1 && <span className="shrink-0 font-mono text-xs text-neutral-300">×{thing.count}</span>}
+      {thing.count > 1 && <span className="shrink-0 font-mono text-xs text-(--reader-text-muted)">×{thing.count}</span>}
     </p>
-    <p className="mt-1 text-xs text-neutral-400" data-testid="codex-slot-state">{thing.equipped ? 'In hand' : 'Carried'}{sinceLine(thing.events)}</p>
+    <p className="mt-1 text-xs text-(--reader-text-dim)" data-testid="codex-slot-state">{thing.equipped ? 'In hand' : 'Carried'}{sinceLine(thing.events)}</p>
     <History events={thing.events} onReadPassage={onReadPassage} />
   </li>;
 }
@@ -149,17 +150,17 @@ function ItemSlot({ thing, onReadPassage }: { thing: HeldThing; onReadPassage?: 
 function AbilityRow({ ability, onReadPassage }: { ability: KnownAbility; onReadPassage?: ReadPassage }) {
   const stage = ability.sealed ? 'Sealed' : ability.stage === 'learned' ? 'Known' : 'Learning';
   const lit = ability.stage === 'learned' ? 2 : 1;
-  return <li className={`rounded-xl border border-white/10 bg-white/[0.03] p-3 ${ability.sealed ? 'opacity-70' : ''}`} data-testid="codex-ability">
+  return <li className={`rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] p-3 ${ability.sealed ? 'opacity-70' : ''}`} data-testid="codex-ability">
     <div className="flex items-start justify-between gap-3">
-      <p className="min-w-0 break-words text-sm text-white">{ability.name}</p>
-      <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-neutral-300">
+      <p className="min-w-0 break-words text-sm text-(--reader-light)">{ability.name}</p>
+      <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-(--reader-text-muted)">
         {ability.sealed
-          ? <Lock size={12} aria-hidden className="text-neutral-400" />
-          : <span aria-hidden className="flex gap-0.5">{[0, 1].map(pip => <span key={pip} className={`h-1.5 w-3 rounded-full ${pip < lit ? 'bg-white/80' : 'bg-white/15'}`} />)}</span>}
+          ? <Lock size={12} aria-hidden className="text-(--reader-text-dim)" />
+          : <span aria-hidden className="flex gap-0.5">{[0, 1].map(pip => <span key={pip} className={`h-1.5 w-3 rounded-full ${pip < lit ? 'bg-(--reader-light)/80' : 'bg-(--reader-light)/15'}`} />)}</span>}
         {stage}{ability.level ? ` · ${ability.level}` : ''}
       </span>
     </div>
-    {ability.events.length > 0 && <p className="mt-1 text-xs text-neutral-400">{stage}{sinceLine(ability.events)}</p>}
+    {ability.events.length > 0 && <p className="mt-1 text-xs text-(--reader-text-dim)">{stage}{sinceLine(ability.events)}</p>}
     <History events={ability.events} onReadPassage={onReadPassage} />
   </li>;
 }
@@ -170,16 +171,16 @@ function Chronicle({ events, describe, onReadPassage }: { events: readonly Holdi
   // The newest first, ten at a time.
   const newest = [...events].reverse();
   const older = newest.length - shown;
-  return <details className="rounded-xl border border-white/10 bg-white/[0.02] p-4" data-testid="codex-chronicle">
-    <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-neutral-200"><ScrollText size={14} aria-hidden />Chronicle ({events.length})</summary>
-    <ol className="mt-3 space-y-2 border-s border-white/10 ps-4">
+  return <details className="rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.02] p-4" data-testid="codex-chronicle">
+    <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-(--reader-text-soft)"><ScrollText size={14} aria-hidden />Chronicle ({events.length})</summary>
+    <ol className="mt-3 space-y-2 border-s border-(--reader-light)/10 ps-4">
       {newest.slice(0, shown).map(event => <li key={event.passage.recordId} className="relative">
-        <span aria-hidden className="absolute -start-[21px] top-3 h-2 w-2 rounded-full bg-white/50" />
+        <span aria-hidden className="absolute -start-[21px] top-3 h-2 w-2 rounded-full bg-(--reader-light)/50" />
         <PassageChip passage={eventPassage(event)} label={describe(event)} onReadPassage={onReadPassage} />
       </li>)}
     </ol>
     {older > 0 && <button type="button" onClick={() => setShown(count => count + HISTORY_PAGE)}
-      className="mt-3 min-h-8 rounded-full border border-white/12 px-3 text-[11px] text-neutral-300 hover:border-white/30 hover:text-white">
+      className="mt-3 min-h-8 rounded-full border border-(--reader-light)/12 px-3 text-[11px] text-(--reader-text-muted) hover:border-(--reader-light)/30 hover:text-(--reader-light)">
       Show {Math.min(HISTORY_PAGE, older)} older
     </button>}
   </details>;
@@ -197,29 +198,29 @@ function LookSection({ name, appearance, traits, onReadPassage }: {
   const stated = look ? traits.flatMap(trait => (look.traits[trait] ? [[trait, look.traits[trait]!] as const] : [])) : [];
   return <Section title="Look" icon={<Eye size={12} aria-hidden />} label={`${name}: Look`} testId="codex-look">
     {look
-      ? <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-[15px] leading-relaxed text-neutral-100">{look.summary}</p>
+      ? <div className="rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] p-4">
+          <p className="text-[15px] leading-relaxed text-(--reader-text)">{look.summary}</p>
           {stated.length > 0 && <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
             {stated.map(([trait, value]) => <Fragment key={trait}>
-              <dt className="pt-0.5 text-[11px] uppercase tracking-[0.14em] text-neutral-500">{TRAIT_LABELS[trait]}</dt>
-              <dd className="min-w-0 break-words text-neutral-200">{value}</dd>
+              <dt className="pt-0.5 text-[11px] uppercase tracking-[0.14em] text-(--reader-text-faint)">{TRAIT_LABELS[trait]}</dt>
+              <dd className="min-w-0 break-words text-(--reader-text-soft)">{value}</dd>
             </Fragment>)}
           </dl>}
-          {look.conflict && <p className="mt-3 text-xs leading-relaxed text-amber-100/80">Differs from the author&rsquo;s notes: {look.conflict}</p>}
+          {look.conflict && <p className="mt-3 text-xs leading-relaxed text-(--reader-warning-pale)/80">Differs from the author&rsquo;s notes: {look.conflict}</p>}
         </div>
       : appearance.description
         // The writer's own words until a look is written: Manifest writes it from them.
-        ? <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4" data-testid="codex-look-description">
-            <p className="text-[15px] leading-relaxed text-neutral-200">{appearance.description}</p>
-            <p className="mt-3 text-xs text-neutral-500">In the story&rsquo;s words. Manifest writes the full look from them.</p>
+        ? <div className="rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] p-4" data-testid="codex-look-description">
+            <p className="text-[15px] leading-relaxed text-(--reader-text-soft)">{appearance.description}</p>
+            <p className="mt-3 text-xs text-(--reader-text-faint)">In the story&rsquo;s words. Manifest writes the full look from them.</p>
           </div>
-        : <p className="text-sm text-neutral-400">No look written down yet.</p>}
-    {look && appearance.lookStale && <p className="text-xs text-neutral-500" data-testid="codex-look-stale">The story has changed this look since. Manifest writes it again.</p>}
+        : <p className="text-sm text-(--reader-text-dim)">No look written down yet.</p>}
+    {look && appearance.lookStale && <p className="text-xs text-(--reader-text-faint)" data-testid="codex-look-stale">The story has changed this look since. Manifest writes it again.</p>}
     {look && <div className="flex flex-wrap gap-1.5">
       <PassageChip passage={look.passage} label={`Look · Ch. ${look.passage.chapterNumber}`} onReadPassage={onReadPassage} />
     </div>}
     {appearance.changes.length > 0 && <details data-testid="codex-look-changes">
-      <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-full px-1 text-[11px] text-neutral-400 hover:text-neutral-200">Changes ({appearance.changes.length})</summary>
+      <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-full px-1 text-[11px] text-(--reader-text-dim) hover:text-(--reader-text-soft)">Changes ({appearance.changes.length})</summary>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {[...appearance.changes].reverse().map(change => <PassageChip key={`${change.passage.chapterNumber}:${change.passage.blockId}:${change.change}`} passage={change.passage}
           label={`Ch. ${change.passage.chapterNumber} · ${change.change}`} onReadPassage={onReadPassage} />)}
@@ -239,7 +240,7 @@ function Profile({ category, name, line, badges, backLabel, onBack, art, childre
   art?: ProfileArt; children: ReactNode;
 }) {
   return <article className="space-y-5 motion-safe:animate-[codex-rise_260ms_ease-out]" aria-labelledby="codex-profile-name" data-testid="codex-profile">
-    <button type="button" onClick={onBack} className="inline-flex min-h-11 items-center gap-1 rounded-full pe-3 text-sm text-neutral-300 hover:text-white">
+    <button type="button" onClick={onBack} className="inline-flex min-h-11 items-center gap-1 rounded-full pe-3 text-sm text-(--reader-text-muted) hover:text-(--reader-light)">
       <ChevronLeft size={18} aria-hidden /> {backLabel}
     </button>
     <CodexProfileHeader category={category} name={name} line={line} badges={badges} picture={art?.picture} making={art?.making} nameId="codex-profile-name" />
@@ -263,16 +264,16 @@ interface ProfileArt {
  * record has no look for waits for one.
  */
 function ManifestControl({ art, name }: { art: ProfileArt; name: string }) {
-  if (!art.onManifest) return <p className="text-center text-xs text-neutral-500" data-testid="codex-manifest-waits">
+  if (!art.onManifest) return <p className="text-center text-xs text-(--reader-text-faint)" data-testid="codex-manifest-waits">
     Manifest waits until the story writes down how {name} looks.
   </p>;
   return <div className="flex flex-col items-center gap-2" data-testid="codex-manifest">
     <button type="button" onClick={art.onManifest} disabled={art.making}
-      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-white/[0.06] px-5 text-sm font-medium text-white hover:border-white/40 disabled:opacity-60">
+      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-(--reader-light)/20 bg-(--reader-light)/[0.06] px-5 text-sm font-medium text-(--reader-light) hover:border-(--reader-light)/40 disabled:opacity-60">
       {art.making ? <LoaderCircle size={16} aria-hidden className="motion-safe:animate-spin" /> : <WandSparkles size={16} aria-hidden />}
       {art.making ? 'Manifesting…' : art.picture ? 'Manifest again' : 'Manifest'}
     </button>
-    {art.problem && <p role="alert" className="max-w-sm text-center text-xs text-amber-200">{art.problem}</p>}
+    {art.problem && <p role="alert" className="max-w-sm text-center text-xs text-(--reader-warning-soft)">{art.problem}</p>}
   </div>;
 }
 
@@ -285,7 +286,7 @@ function CharacterProfile({ character, art, onBack, onReadPassage }: { character
     <div className="flex flex-wrap gap-1.5">
       {character.firstSeen
         ? <PassageChip passage={character.firstSeen} label={`First seen · Ch. ${character.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
-        : <span className="inline-flex min-h-8 items-center rounded-full border border-white/12 bg-white/[0.04] px-2.5 text-[11px] text-neutral-300">{AT_THE_START}</span>}
+        : <span className="inline-flex min-h-8 items-center rounded-full border border-(--reader-light)/12 bg-(--reader-light)/[0.04] px-2.5 text-[11px] text-(--reader-text-muted)">{AT_THE_START}</span>}
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>
@@ -302,7 +303,7 @@ function CharacterProfile({ character, art, onBack, onReadPassage }: { character
       <ul className="space-y-2">{character.abilities.map(ability => <AbilityRow key={ability.entryId} ability={ability} onReadPassage={onReadPassage} />)}</ul>
     </Section>}
     {!character.things.length && !character.abilities.length && !character.rank && !character.atChapterZero?.length
-      && <p className="text-sm text-neutral-400">The story has not shown them holding or learning anything yet.</p>}
+      && <p className="text-sm text-(--reader-text-dim)">The story has not shown them holding or learning anything yet.</p>}
     {character.chronicle.length > 0 && <Chronicle events={character.chronicle} onReadPassage={onReadPassage}
       describe={event => `${eventLabel(event)}${event.target && event.verb !== 'rank' ? ` ${event.target}` : event.level ? ` ${event.level}` : ''}`} />}
   </Profile>;
@@ -327,7 +328,7 @@ function WorldCardProfile({ category, card, backLabel, onBack }: {
   return <Profile category={category} name={card.name} line={worldFact(card.atChapterZero, 'within') ?? metLine(card)}
     badges={[]} backLabel={backLabel} onBack={onBack}>
     <WorldAtTheStart name={card.name} facts={card.atChapterZero} />
-    {!card.atChapterZero.length && <p className="text-sm text-neutral-400">The world records nothing about it yet but its name.</p>}
+    {!card.atChapterZero.length && <p className="text-sm text-(--reader-text-dim)">The world records nothing about it yet but its name.</p>}
   </Profile>;
 }
 
@@ -343,7 +344,7 @@ function ItemProfile({ item, art, onBack, onReadPassage }: { item: CodexItem; ar
     <div className="flex flex-wrap gap-1.5">
       {item.firstSeen
         ? <PassageChip passage={item.firstSeen} label={`First seen · Ch. ${item.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
-        : <span className="inline-flex min-h-8 items-center rounded-full border border-white/12 bg-white/[0.04] px-2.5 text-[11px] text-neutral-300">{AT_THE_START}</span>}
+        : <span className="inline-flex min-h-8 items-center rounded-full border border-(--reader-light)/12 bg-(--reader-light)/[0.04] px-2.5 text-[11px] text-(--reader-text-muted)">{AT_THE_START}</span>}
     </div>
     {item.atChapterZero && <WorldAtTheStart name={item.name} facts={item.atChapterZero} />}
     {item.appearance && <LookSection name={item.name} appearance={item.appearance} traits={THING_LOOK_TRAITS} onReadPassage={onReadPassage} />}
@@ -354,19 +355,19 @@ function ItemProfile({ item, art, onBack, onReadPassage }: { item: CodexItem; ar
 
 /** The record's own checks, for testing a story against its chapters. */
 function Checks({ checks, onReadPassage, onReadChapter }: { checks: readonly CodexCheck[]; onReadPassage?: ReadPassage; onReadChapter?: (chapterNumber: number) => void }) {
-  const chip = 'inline-flex min-h-8 items-center rounded-full border border-white/15 px-2.5 text-[11px] text-neutral-300 hover:border-white/30 hover:text-white';
-  return <details className="rounded-xl border border-white/10 bg-white/[0.02] p-4" data-testid="codex-checks">
-    <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-neutral-300">
-      <TriangleAlert size={14} aria-hidden className={checks.length ? 'text-amber-300' : 'text-neutral-500'} />Record checks ({checks.length})
+  const chip = 'inline-flex min-h-8 items-center rounded-full border border-(--reader-light)/15 px-2.5 text-[11px] text-(--reader-text-muted) hover:border-(--reader-light)/30 hover:text-(--reader-light)';
+  return <details className="rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.02] p-4" data-testid="codex-checks">
+    <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-(--reader-text-muted)">
+      <TriangleAlert size={14} aria-hidden className={checks.length ? 'text-(--reader-warning-bright)' : 'text-(--reader-text-faint)'} />Record checks ({checks.length})
     </summary>
     {checks.length
-      ? <ul className="mt-3 space-y-3">{checks.map((check, index) => <li key={`${check.kind}-${check.recordId ?? index}`} className="space-y-2 text-sm text-amber-100/90">
+      ? <ul className="mt-3 space-y-3">{checks.map((check, index) => <li key={`${check.kind}-${check.recordId ?? index}`} className="space-y-2 text-sm text-(--reader-warning-pale)/90">
           <p>{check.message}</p>
           {check.chapterNumber !== undefined && (check.blockId && onReadPassage
             ? <button type="button" className={chip} onClick={() => onReadPassage(check.chapterNumber!, check.blockId!)}>Read the passage</button>
             : onReadChapter && <button type="button" className={chip} onClick={() => onReadChapter(check.chapterNumber!)}>Read Chapter {check.chapterNumber}</button>)}
         </li>)}</ul>
-      : <p className="mt-3 text-sm text-neutral-400">Nothing to check: every change and appearance fits what came before it, and every closing list matches.</p>}
+      : <p className="mt-3 text-sm text-(--reader-text-dim)">Nothing to check: every change and appearance fits what came before it, and every closing list matches.</p>}
   </details>;
 }
 
@@ -502,24 +503,24 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
   return <section ref={root} className="mx-auto w-full min-w-0 max-w-3xl space-y-4 px-3 py-4 sm:px-4" aria-labelledby="codex-panel-title" data-testid="story-codex">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
-        <p className="truncate font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">{storyTitle}</p>
-        <h2 id="codex-panel-title" className="mt-1 font-display text-2xl text-white">Codex</h2>
+        <p className="truncate font-mono text-[10px] uppercase tracking-[0.2em] text-(--reader-text-faint)">{storyTitle}</p>
+        <h2 id="codex-panel-title" className="mt-1 font-display text-2xl text-(--reader-light)">Codex</h2>
       </div>
-      {onBack && <button type="button" onClick={onBack} className="min-h-11 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/30">Back to reading</button>}
+      {onBack && <button type="button" onClick={onBack} className="min-h-11 rounded-full border border-(--reader-light)/15 px-4 text-sm text-(--reader-text-soft) hover:border-(--reader-light)/30">Back to reading</button>}
     </div>
 
     {/* Seven card kinds, each shown once the record holds one: the pills wrap rather than shrink, so each stays readable on a phone. */}
-    {tabs.length > 0 && <div role="tablist" aria-label="Codex" className="flex flex-wrap gap-1 rounded-2xl border border-white/10 bg-black/30 p-1">
+    {tabs.length > 0 && <div role="tablist" aria-label="Codex" className="flex flex-wrap gap-1 rounded-2xl border border-(--reader-light)/10 bg-(--reader-shade)/30 p-1">
       {tabs.map(entry => <button key={entry.id} type="button" role="tab" id={`codex-tab-${entry.id}`} aria-selected={tab === entry.id} aria-controls="codex-tab-panel"
         onClick={() => { setTab(entry.id); setOpen(undefined); }}
-        className={`inline-flex min-h-10 min-w-0 flex-auto items-center justify-center gap-1.5 rounded-full px-2 text-sm transition-colors motion-reduce:transition-none ${tab === entry.id ? 'bg-white/10 text-white' : 'text-neutral-400 hover:text-neutral-100'}`}>
-        {entry.icon}<span className="truncate">{entry.label}</span><span className="font-mono text-[11px] text-neutral-500">{entry.count}</span>
+        className={`inline-flex min-h-10 min-w-0 flex-auto items-center justify-center gap-1.5 rounded-full px-2 text-sm transition-colors motion-reduce:transition-none ${tab === entry.id ? 'bg-(--reader-light)/10 text-(--reader-light)' : 'text-(--reader-text-dim) hover:text-(--reader-text)'}`}>
+        {entry.icon}<span className="truncate">{entry.label}</span><span className="font-mono text-[11px] text-(--reader-text-faint)">{entry.count}</span>
       </button>)}
     </div>}
 
     <div id="codex-tab-panel" {...(tabs.length > 0 ? { role: 'tabpanel', 'aria-labelledby': `codex-tab-${tab}` } : {})} className="space-y-4">
       {/* Nothing recorded at all: one line rather than a row of empty categories. */}
-      {tabs.length === 0 && <p data-testid="codex-empty" className="py-8 text-center text-sm text-neutral-400">
+      {tabs.length === 0 && <p data-testid="codex-empty" className="py-8 text-center text-sm text-(--reader-text-dim)">
         The Codex fills as the story reaches each person, thing and place.
       </p>}
       {character && <CharacterProfile key={character.key} character={character} onBack={close} onReadPassage={askToRead}
@@ -532,12 +533,12 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
       {tab === 'world-rules'
         ? codex.worldRules?.length
           ? <div data-testid="codex-world-rules"><WorldAtTheStart name={storyTitle} facts={codex.worldRules} title="World rules" /></div>
-          : <p className="py-8 text-center text-sm text-neutral-400">{EMPTY[tab]}</p>
+          : <p className="py-8 text-center text-sm text-(--reader-text-dim)">{EMPTY[tab]}</p>
         : !profileOpen && tabs.length > 0 && (cards.length || archived.length
           ? <ul className="grid grid-cols-2 gap-3">{cards}</ul>
-          : <p className="py-8 text-center text-sm text-neutral-400">{EMPTY[tab]}</p>)}
+          : <p className="py-8 text-center text-sm text-(--reader-text-dim)">{EMPTY[tab]}</p>)}
       {!profileOpen && archived.length > 0 && <section aria-labelledby="codex-archived-title" className="space-y-3" data-testid="codex-archived">
-        <h3 id="codex-archived-title" className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+        <h3 id="codex-archived-title" className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-(--reader-text-faint)">
           <Archive size={12} aria-hidden />Archived ({archived.length})
         </h3>
         <ul className="grid grid-cols-2 gap-3 opacity-60">{archived}</ul>
@@ -545,12 +546,12 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
       {!profileOpen && <Checks checks={codex.checks} onReadPassage={askToRead} onReadChapter={askToReadChapter} />}
     </div>
     {goTo && <div role="alertdialog" aria-labelledby="codex-go-title" data-testid="codex-go-confirm"
-      className="sticky bottom-3 z-10 rounded-2xl border border-white/15 bg-neutral-950/95 p-4 shadow-[0_12px_32px_#000c] backdrop-blur">
-      <p id="codex-go-title" className="text-sm text-neutral-100">Go to Chapter {goTo.chapterNumber}?</p>
-      <p className="mt-1 text-xs text-neutral-400">The chapter behind the Codex moves {goTo.blockId ? 'to this passage' : 'there'}, so you leave your place.</p>
+      className="sticky bottom-3 z-10 rounded-2xl border border-(--reader-light)/15 bg-(--reader-surface)/95 p-4 shadow-[0_12px_32px_color-mix(in_srgb,var(--reader-shade)_80%,transparent)] backdrop-blur">
+      <p id="codex-go-title" className="text-sm text-(--reader-text)">Go to Chapter {goTo.chapterNumber}?</p>
+      <p className="mt-1 text-xs text-(--reader-text-dim)">The chapter behind the Codex moves {goTo.blockId ? 'to this passage' : 'there'}, so you leave your place.</p>
       <div className="mt-3 flex gap-2">
-        <button type="button" onClick={go} className="min-h-11 flex-1 rounded-full bg-white/90 px-4 text-sm font-medium text-black hover:bg-white">Go</button>
-        <button type="button" onClick={() => setGoTo(undefined)} className="min-h-11 flex-1 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/30">Stay</button>
+        <button type="button" onClick={go} className="min-h-11 flex-1 rounded-full bg-(--reader-light)/90 px-4 text-sm font-medium text-(--reader-shade) hover:bg-(--reader-light)">Go</button>
+        <button type="button" onClick={() => setGoTo(undefined)} className="min-h-11 flex-1 rounded-full border border-(--reader-light)/15 px-4 text-sm text-(--reader-text-soft) hover:border-(--reader-light)/30">Stay</button>
       </div>
     </div>}
   </section>;

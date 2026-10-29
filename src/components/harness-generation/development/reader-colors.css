@@ -1,0 +1,58 @@
+/*
+ * The Reader's color roles. Every color the Reader, its panels (Fate, Codex,
+ * settings, authoring) and its audio note paint comes from one of these names,
+ * so a host or a look can recolor the whole Reader by setting them on `:root`
+ * or on an element holding the whole Reader: its Fate, Codex and settings
+ * panels render beside `.reader-frame`, not inside it, and the Library header
+ * reuses the audio note. The defaults are the Reader's own neutral face; the
+ * Library's Reader blue glass (reader-glass.css) paints the bars and panels
+ * above them.
+ *
+ * Translucent uses mix a role with transparency where they are painted
+ * (`border-(--reader-light)/10`), so a role is always one solid color.
+ */
+:root {
+  /* Surfaces: the bars and panels beneath any glass, raised fields and the darkest shade. */
+  --reader-surface: #0a0a0a;
+  --reader-surface-raised: #171717;
+  --reader-shade: #000;
+  /* The light thin borders, hover washes and the brightest text are made of. */
+  --reader-light: #fff;
+  /* Text, brightest to faintest, and text that sits on the accent. */
+  --reader-text-bright: oklch(98.5% 0 none);
+  --reader-text: oklch(97% 0 none);
+  --reader-text-soft: oklch(92.2% 0 none);
+  --reader-text-muted: oklch(87% 0 none);
+  --reader-text-dim: #a3a3a3;
+  --reader-text-faint: #737373;
+  --reader-on-accent: #0a0a0a;
+  /* The accent: the main action, selection, focus and links. */
+  --reader-accent-mist: oklch(98.4% 0.019 200.873);
+  --reader-accent-pale: oklch(95.6% 0.045 203.388);
+  --reader-accent-soft: oklch(91.7% 0.08 205.041);
+  --reader-accent-bright: oklch(86.5% 0.127 207.078);
+  --reader-accent: oklch(78.9% 0.154 211.53);
+  --reader-accent-deep: oklch(71.5% 0.143 215.221);
+  /* Warnings and notices. */
+  --reader-warning-pale: oklch(96.2% 0.059 95.617);
+  --reader-warning-soft: oklch(92.4% 0.12 95.746);
+  --reader-warning-bright: oklch(87.9% 0.169 91.605);
+  --reader-warning: oklch(82.8% 0.189 84.429);
+  /* Success: a goal reached, a chapter written. */
+  --reader-success-mist: oklch(97.9% 0.021 166.113);
+  --reader-success-pale: oklch(95% 0.052 163.051);
+  --reader-success-soft: oklch(90.5% 0.093 164.15);
+  --reader-success-bright: oklch(84.5% 0.143 164.978);
+  --reader-success: oklch(76.5% 0.177 163.223);
+  /* Controls: input fields, slider tracks and fills, and the focus ring. */
+  --reader-field: #202020;
+  --reader-track: #303030;
+  --reader-control: #67d4e3;
+  --reader-focus: #96ddf9;
+  /* The audio note's volume meter. */
+  --reader-meter: #e2f4ff;
+  --reader-meter-track: #b1c4d238;
+  --reader-meter-thumb: #eef7ff;
+  /* Behind Codex pictures while they load. */
+  --reader-art-backdrop: #07090d;
+}

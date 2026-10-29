@@ -1044,3 +1044,8 @@ From SENSEI: between the sentence skips, normal speed shows a dim divider (∶) 
 ### 2026-10-14 — A lighter dip under Listen, louder Sound Cues
 
 From SENSEI on mobile: with Listen reading aloud, Soundscapes and Atmosphere were inaudible even at full level, and Sound Cues were barely audible. Phones already lower a page's sound while their built-in speech voice talks, and the Reader's own dip (`LISTEN_DUCK`, music and atmosphere to 40%) stacked on top. The Reader's dip is now light (`LISTEN_DUCK` 0.25, to 75%), and a cue's Energy scales its level less (`SOUND_CUE_ENERGY_VOLUME`: low 0.8, medium 0.9, high 1; was 0.6, 0.8, 1).
+
+### 2026-10-29 — Named Reader colors
+
+From SENSEI, step one toward themed Reader Chambers: every color the Reader painted by hand (about 380 places across the bars, pickers, Fate, Codex, authoring, settings and the audio note) now points at a named role in `reader-colors.css`, and Library's Reader blue names its own control, ink, focus and settings colors in `reader-glass.css`. The defaults are the old colors: screenshots of the Reader, Codex, Settings, chapter list and playback picker at phone and desktop sizes match pixel for pixel. Setting the roles recolors the whole Reader, which is what a future Face pack will do.
+

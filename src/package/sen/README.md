@@ -42,6 +42,15 @@ was read at, and otherwise throws `HarnessWorkspaceConflictError` and writes
 nothing. `nextHarnessWorkspaceRevision` is that check for a host's own
 repository; `HARNESS_WORKSPACE_CONFLICT_MESSAGE` is what a stale tab is told.
 
+**Unreleased (2026-10-29):** The Reader's colors are named roles. Every color
+the Reader, its Fate, Codex and settings panels and its audio note paint comes from
+a `--reader-*` CSS custom property declared on `:root` in
+`harness-generation/development/reader-colors.css` (surfaces, light and shade, six
+text shades, accent, warning, success, fields, tracks, focus and the volume meter).
+The defaults are the previous colors, so nothing looks different. A host recolors
+the Reader by setting them on `:root` or an element holding the whole Reader; the
+panels render beside `.reader-frame`, not inside it.
+
 **0.40.0 (2026-10-26):** The root entry exports the shared `HighlightActionIcon`
 artwork and its names and props without importing Highlight Engine styles, so Library
 can reuse the same SVGs in its individually named icons.

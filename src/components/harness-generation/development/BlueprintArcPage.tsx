@@ -5,10 +5,11 @@ import type { HarnessWorkspaceState } from '../../../narrative/generation';
 import type { HarnessGenerationController } from '../shared/controller';
 import { arcGoalEditState, harnessArcPlan, harnessStoryMode, nextArcStep } from '../shared/arcState';
 import { FateDestinedEnding } from './FatePanel';
+import './reader-colors.css';
 
 const button = 'min-h-11 rounded-full border px-4 text-sm disabled:cursor-not-allowed disabled:opacity-45';
-const primaryButton = `${button} border-cyan-300/50 bg-cyan-400/15 font-semibold text-cyan-50 hover:bg-cyan-400/25`;
-const quietButton = `${button} border-white/15 text-neutral-200 hover:border-white/30`;
+const primaryButton = `${button} border-(--reader-accent-bright)/50 bg-(--reader-accent)/15 font-semibold text-(--reader-accent-mist) hover:bg-(--reader-accent)/25`;
+const quietButton = `${button} border-(--reader-light)/15 text-(--reader-text-soft) hover:border-(--reader-light)/30`;
 
 /**
  * The World Blueprint's goal section, reappearing in the Reader when a new arc
@@ -53,7 +54,7 @@ export function BlueprintArcPage({ state, storyId, controller, onBack, onPlanArc
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [needsPlan, onPlanArc]);
 
-  if (!story) return <p role="alert" className="p-4 text-sm text-amber-200">This story is no longer available.</p>;
+  if (!story) return <p role="alert" className="p-4 text-sm text-(--reader-warning-soft)">This story is no longer available.</p>;
   const nextChapter = story.head.nextChapterNumber;
   const arcNumber = createArcChapterPosition(nextChapter).arcNumber;
   const mode = harnessStoryMode(foundation);
@@ -78,22 +79,22 @@ export function BlueprintArcPage({ state, storyId, controller, onBack, onPlanArc
     <section className="mx-auto w-full min-w-0 max-w-3xl space-y-4 px-3 py-4 sm:px-4" aria-labelledby="blueprint-arc-title" data-testid="blueprint-arc-page">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/60">World Blueprint · {story.title}</p>
-          <h2 id="blueprint-arc-title" className="mt-1 font-display text-2xl text-white">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-(--reader-accent-soft)/60">World Blueprint · {story.title}</p>
+          <h2 id="blueprint-arc-title" className="mt-1 font-display text-2xl text-(--reader-light)">
             Arc {arcNumber}{foundation?.plannedArcCount ? ` of ${foundation.plannedArcCount}` : ''}{finalArc ? ' · the final arc' : ''}
           </h2>
         </div>
         <button type="button" onClick={onBack} className={quietButton}>Back to reading</button>
       </div>
-      <p className="text-sm leading-relaxed text-neutral-300">
+      <p className="text-sm leading-relaxed text-(--reader-text-muted)">
         Chapter {nextChapter} begins Arc {arcNumber}. Its goals are planned from where the story is now, continuing toward the Destined Ending.
         {finalArc ? ' This is the final arc: its last goal is the story reaching its Destined Ending.' : ''}
       </p>
 
       <FateDestinedEnding foundation={foundation} />
 
-      <div className="rounded-xl border border-cyan-300/20 bg-black/25 p-4" data-testid="blueprint-arc-goals">
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-neutral-500">Arc {arcNumber} goals · {ARC_LENGTH} chapters</p>
+      <div className="rounded-xl border border-(--reader-accent-bright)/20 bg-(--reader-shade)/25 p-4" data-testid="blueprint-arc-goals">
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-(--reader-text-faint)">Arc {arcNumber} goals · {ARC_LENGTH} chapters</p>
         {arcPlan ? (
           <ArcPlanView key={`${arcNumber}-${story.arcPlans?.length ?? 0}`} plan={arcPlan} defaultOpen
             title={`${arcPlan.goals.length} ${arcPlan.goals.length === 1 ? 'goal' : 'goals'}`}
@@ -102,27 +103,27 @@ export function BlueprintArcPage({ state, storyId, controller, onBack, onPlanArc
             editNotice={mode === 'survival' ? `This is Arc ${arcNumber}'s one-time edit. After you save, its goals are set and lock when its first chapter is generated.` : undefined}
             onEdit={edit.editable && !busy ? saveEdit : undefined} />
         ) : planning ? (
-          <p role="status" className="mt-3 text-sm text-cyan-100" data-testid="blueprint-arc-planning">Planning Arc {arcNumber}’s goals from where the story is…</p>
+          <p role="status" className="mt-3 text-sm text-(--reader-accent-pale)" data-testid="blueprint-arc-planning">Planning Arc {arcNumber}’s goals from where the story is…</p>
         ) : failure ? (
           <div className="mt-3 space-y-3">
-            <p role="alert" className="text-sm text-amber-200">{failure}</p>
+            <p role="alert" className="text-sm text-(--reader-warning-soft)">{failure}</p>
             {onPlanArc && <button type="button" className={primaryButton} onClick={() => void plan()}>Plan Arc {arcNumber} again</button>}
           </div>
         ) : onPlanArc ? (
           <button type="button" className={`${primaryButton} mt-3`} onClick={() => void plan()}>Plan Arc {arcNumber}</button>
         ) : (
-          <p className="mt-3 text-sm text-neutral-400">Arc {arcNumber}’s goals can’t be planned here yet.</p>
+          <p className="mt-3 text-sm text-(--reader-text-dim)">Arc {arcNumber}’s goals can’t be planned here yet.</p>
         )}
-        {arcPlan && !edit.editable && edit.reason && edit.review !== 'pending' && <p className="mt-1 text-xs text-neutral-500">{edit.reason}</p>}
+        {arcPlan && !edit.editable && edit.reason && edit.review !== 'pending' && <p className="mt-1 text-xs text-(--reader-text-faint)">{edit.reason}</p>}
       </div>
 
-      {arcPlan && error && <p role="alert" className="text-sm text-amber-200">{error}</p>}
+      {arcPlan && error && <p role="alert" className="text-sm text-(--reader-warning-soft)">{error}</p>}
       {arcPlan && (
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" className={primaryButton} disabled={busy} onClick={() => void accept()}>
             {edit.canAccept ? `Accept and ${mode === 'survival' ? 'direct' : 'write'} Chapter ${nextChapter}` : continueLabel}
           </button>
-          {edit.canAccept && <p className="text-xs text-neutral-400">{mode === 'survival'
+          {edit.canAccept && <p className="text-xs text-(--reader-text-dim)">{mode === 'survival'
             ? 'Accept the goals as written, or edit them once. They lock when the chapter is generated.'
             : 'Accept the goals as written, or edit them first.'}</p>}
         </div>

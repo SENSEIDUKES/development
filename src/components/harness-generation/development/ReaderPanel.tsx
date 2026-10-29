@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type PointerEvent, type ReactNode } from 'react';
 import { useOverlayScrollbar } from '@seihouse/ui';
+import './reader-colors.css';
 
 /** From this width a panel sits beside the chapter; below it, it rises from the bottom. */
 const WIDE_READER = '(min-width: 1024px)';
@@ -161,20 +162,20 @@ export function ReaderPanel({ open, onClose, labelledBy, testId, header, scrollK
       transition: drag !== undefined || still ? 'none' : GLIDE,
     }}
     className={wide
-      ? 'reader-glass reader-glass-panel fixed inset-y-0 right-0 z-[250] flex w-[28rem] flex-col border-l border-white/10 bg-neutral-950 pt-[env(safe-area-inset-top)] text-neutral-100 shadow-2xl'
-      : `reader-glass reader-glass-panel fixed inset-x-0 top-0 z-[250] flex h-[100dvh] flex-col border-t border-white/10 bg-neutral-950 text-neutral-100 shadow-2xl ${stop === 'full' && drag === undefined ? 'rounded-none pt-[env(safe-area-inset-top)]' : 'rounded-t-2xl'}`}>
+      ? 'reader-glass reader-glass-panel fixed inset-y-0 right-0 z-[250] flex w-[28rem] flex-col border-l border-(--reader-light)/10 bg-(--reader-surface) pt-[env(safe-area-inset-top)] text-(--reader-text) shadow-2xl'
+      : `reader-glass reader-glass-panel fixed inset-x-0 top-0 z-[250] flex h-[100dvh] flex-col border-t border-(--reader-light)/10 bg-(--reader-surface) text-(--reader-text) shadow-2xl ${stop === 'full' && drag === undefined ? 'rounded-none pt-[env(safe-area-inset-top)]' : 'rounded-t-2xl'}`}>
     {!wide && <div className="relative flex h-11 shrink-0 items-center justify-center">
       {/* Dragged to move the sheet; the circle beside it shows the stop and does the same for everyone. */}
       <div aria-hidden className="absolute inset-0 cursor-grab touch-none active:cursor-grabbing"
         onPointerDown={onHandleDown} onPointerMove={onHandleMove} onPointerUp={onHandleUp} onPointerCancel={onHandleUp} />
-      <span aria-hidden className="pointer-events-none h-1.5 w-12 rounded-full bg-white/30" />
+      <span aria-hidden className="pointer-events-none h-1.5 w-12 rounded-full bg-(--reader-light)/30" />
       <button type="button" onClick={() => setStop(stop === 'full' ? 'half' : 'full')}
         aria-label={stop === 'full' ? 'Show the chapter' : 'Raise the panel'} title={stop === 'full' ? 'Half height' : 'Full height'}
         className="absolute right-2 top-0 inline-flex h-11 w-11 items-center justify-center">
         <span aria-hidden data-testid="reader-panel-stop"
-          className={`block h-3.5 w-3.5 rounded-full border-2 border-cyan-200/80 ${stop === 'full'
-            ? 'bg-cyan-200/80'
-            : 'bg-[linear-gradient(to_top,rgb(165_243_252/0.8)_50%,transparent_50%)]'}`} />
+          className={`block h-3.5 w-3.5 rounded-full border-2 border-(--reader-accent-soft)/80 ${stop === 'full'
+            ? 'bg-(--reader-accent-soft)/80'
+            : 'bg-[linear-gradient(to_top,color-mix(in_srgb,var(--reader-accent-soft)_80%,transparent)_50%,transparent_50%)]'}`} />
       </button>
     </div>}
     {header}

@@ -4,12 +4,13 @@ import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import type { SoundCueAttachment } from '@seihouse/sen/audio';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
 import type { ReaderChapterBodyProps } from './readerChapterBody';
+import './reader-colors.css';
 
 /** The Reader shows chapters; it never edits them. */
 const keepProse = () => undefined;
 
 /** Behind the sentence being read aloud; a host theme may set its own. */
-const READ_ALOUD_TONE = 'var(--sen-read-aloud-highlight, rgba(103, 232, 249, 0.16))';
+const READ_ALOUD_TONE = 'var(--sen-read-aloud-highlight, color-mix(in srgb, var(--reader-accent-bright) 16%, transparent))';
 
 /**
  * The chapter as prose: its title and its paragraphs on the Highlight
@@ -41,13 +42,13 @@ export const ProseChapterBody = memo(function ProseChapterBody({ chapter, blocks
   return <article ref={articleRef} className="mx-auto mt-6 max-w-[var(--reader-measure,34em)]" style={prose} data-chapter-number={chapter.chapterNumber} lang={locale}
     aria-labelledby={`harness-reader-chapter-${chapter.chapterNumber}`}>
     {/* The word count is a testing aid while chapter length is being tuned. */}
-    <p className="font-mono text-[10px] font-normal uppercase tracking-[0.2em] text-neutral-500">Chapter {chapter.chapterNumber}
+    <p className="font-mono text-[10px] font-normal uppercase tracking-[0.2em] text-(--reader-text-faint)">Chapter {chapter.chapterNumber}
       <span data-testid="harness-reader-word-count"> · {chapter.metrics.wordCount.toLocaleString(locale)} words</span></p>
     <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" data-speaking={highlight === 'title' ? '' : undefined}
       style={{ fontFamily: text.titleFont.family }}
-      className={`mt-1 rounded text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-white transition-colors sm:text-[length:calc(1.875rem*var(--reader-scale,1))] ${highlight === 'title' ? 'bg-cyan-300/15' : ''}`}>{chapterTitleText(chapter.title) || chapter.title}</h1>
+      className={`mt-1 rounded text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-(--reader-light) transition-colors sm:text-[length:calc(1.875rem*var(--reader-scale,1))] ${highlight === 'title' ? 'bg-(--reader-accent-bright)/15' : ''}`}>{chapterTitleText(chapter.title) || chapter.title}</h1>
     <HighlightEngine blocks={blocks} onBlocksChange={keepProse} editable={false} locale={locale} overlay={overlay}
-      className="mt-6 text-neutral-200"
+      className="mt-6 text-(--reader-text-soft)"
       renderBlockText={block => {
         const cues = cuesByBlock.get(block.id);
         return cues?.length ? <InlineAudioText text={block.text} cues={cues} renderText={text => text} /> : block.text;

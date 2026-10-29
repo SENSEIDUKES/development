@@ -3,6 +3,7 @@ import { SEIOverlayScrollbar, SEIPopover, SEIPopoverContent, SEIPopoverTitle, SE
 import { BookOpen, Check, ChevronLeft, ChevronRight, Compass, ListOrdered, LocateFixed, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal, Zap } from 'lucide-react';
 import { READ_ALOUD_RATES, type ReadAloud, type ReadAloudRole } from '@seihouse/sen/reader-runtime';
 import { controlFeedback, pickerHeading, pickerList, pickerRow, pickerSelected, pickerSurface } from './readerPicker';
+import './reader-colors.css';
 
 /** A saved chapter to open, or the story's next step at the newest chapter. */
 export interface ReaderChapterStep {
@@ -33,21 +34,21 @@ export interface ReaderFateStep {
 const ROLE_LABELS: Record<ReadAloudRole, string> = { narrator: 'Narrator', protagonist: 'Protagonist', side: 'Side character' };
 const RATE_LABELS: Readonly<Record<number, string>> = { 0.5: '½', 0.75: '¾', 1: '1', 1.25: '1¼', 1.5: '1½', 1.75: '1¾', 2: '2' };
 
-const round = 'reader-glass-control inline-flex min-h-11 min-w-9 max-[380px]:min-w-7 shrink-0 items-center justify-center rounded-full border border-white/15 text-neutral-100 hover:border-white/35 disabled:cursor-not-allowed disabled:opacity-40 sm:min-w-11';
+const round = 'reader-glass-control inline-flex min-h-11 min-w-9 max-[380px]:min-w-7 shrink-0 items-center justify-center rounded-full border border-(--reader-light)/15 text-(--reader-text) hover:border-(--reader-light)/35 disabled:cursor-not-allowed disabled:opacity-40 sm:min-w-11';
 const mainAction = `inline-flex h-12 w-12 max-sm:flex-col max-sm:gap-1 shrink-0 items-center justify-center rounded-full border ${controlFeedback}`;
-const primary = `reader-glass-primary ${mainAction} border-cyan-200/25 bg-cyan-400 text-neutral-950 hover:bg-cyan-300 active:bg-cyan-500`;
-const secondary = `reader-glass-control ${mainAction} border-white/15 bg-white/10 text-neutral-100 hover:bg-white/15 active:bg-white/20`;
-const controlPill = 'reader-glass-control inline-flex shrink-0 items-center justify-self-center rounded-full border border-white/10 bg-white/[0.025]';
-const pillStep = `inline-flex h-11 min-w-11 items-center justify-center text-neutral-100 enabled:hover:bg-white/10 enabled:active:bg-white/15 disabled:opacity-35 ${controlFeedback}`;
-const pickerTrigger = `inline-flex h-11 w-11 items-center justify-center rounded-md font-mono tabular-nums hover:bg-white/10 active:bg-white/15 disabled:opacity-35 ${controlFeedback}`;
-const quietAction = `inline-flex h-12 w-12 flex-col items-center justify-center gap-1 justify-self-center rounded-xl text-neutral-300 hover:bg-white/5 hover:text-white aria-expanded:bg-white/5 ${controlFeedback}`;
-const compactSurface = 'reader-glass reader-glass-menu reader-glass-picker w-auto max-w-[calc(100vw-1rem)] rounded-full border border-white/10 bg-neutral-950/95 p-1 font-sans text-neutral-100 shadow-lg';
+const primary = `reader-glass-primary ${mainAction} border-(--reader-accent-soft)/25 bg-(--reader-accent) text-(--reader-on-accent) hover:bg-(--reader-accent-bright) active:bg-(--reader-accent-deep)`;
+const secondary = `reader-glass-control ${mainAction} border-(--reader-light)/15 bg-(--reader-light)/10 text-(--reader-text) hover:bg-(--reader-light)/15 active:bg-(--reader-light)/20`;
+const controlPill = 'reader-glass-control inline-flex shrink-0 items-center justify-self-center rounded-full border border-(--reader-light)/10 bg-(--reader-light)/[0.025]';
+const pillStep = `inline-flex h-11 min-w-11 items-center justify-center text-(--reader-text) enabled:hover:bg-(--reader-light)/10 enabled:active:bg-(--reader-light)/15 disabled:opacity-35 ${controlFeedback}`;
+const pickerTrigger = `inline-flex h-11 w-11 items-center justify-center rounded-md font-mono tabular-nums hover:bg-(--reader-light)/10 active:bg-(--reader-light)/15 disabled:opacity-35 ${controlFeedback}`;
+const quietAction = `inline-flex h-12 w-12 flex-col items-center justify-center gap-1 justify-self-center rounded-xl text-(--reader-text-muted) hover:bg-(--reader-light)/5 hover:text-(--reader-light) aria-expanded:bg-(--reader-light)/5 ${controlFeedback}`;
+const compactSurface = 'reader-glass reader-glass-menu reader-glass-picker w-auto max-w-[calc(100vw-1rem)] rounded-full border border-(--reader-light)/10 bg-(--reader-surface)/95 p-1 font-sans text-(--reader-text) shadow-lg';
 // Touch/mouse opens a small tool without moving focus (or the reading position).
 // Keyboard users still enter its controls and retain normal Escape/Tab behavior.
 const focusFromKeyboard = (interaction: string) => interaction === 'keyboard';
 // Fate (a compass) sits inside the chapter pill between its arrows, a plain step like them, so both pills match.
 // When the next chapter waits on it, only its icon takes the portal's cyan.
-const fateCalling = 'text-cyan-200';
+const fateCalling = 'text-(--reader-accent-soft)';
 
 const compactQuery = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function'
   ? window.matchMedia('(max-width: 639px)') : undefined;
@@ -119,21 +120,21 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
   const rateChoices = READ_ALOUD_RATES.map(rate => <button key={rate} type="button" ref={rate === readAloud.rate ? currentSpeedButton : undefined}
     aria-label={`Narration speed: ${rate}`} aria-pressed={rate === readAloud.rate}
     onClick={() => { setPicker(undefined); readAloud.setRate(rate); }}
-    className={`${compact ? `${pillStep} rounded-lg text-sm` : pickerRow} ${rate === readAloud.rate ? pickerSelected : 'text-neutral-300'}`}>
+    className={`${compact ? `${pillStep} rounded-lg text-sm` : pickerRow} ${rate === readAloud.rate ? pickerSelected : 'text-(--reader-text-muted)'}`}>
     <span className={`${compact ? '' : 'flex-1'} font-mono tabular-nums`}>{RATE_LABELS[rate]}</span>
-    {!compact && rate === readAloud.rate && <Check className="h-4 w-4 shrink-0 text-cyan-200" aria-hidden />}
+    {!compact && rate === readAloud.rate && <Check className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
   </button>);
   return <div ref={barRef} data-testid="reader-bottom-bar" role="region" aria-label="Reader controls"
-    className="reader-glass reader-glass-bar sticky bottom-0 z-20 -mx-4 mt-8 border-t border-white/10 bg-neutral-950/90 px-[max(0.5rem,env(safe-area-inset-left))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:px-[max(1rem,env(safe-area-inset-left))]">
+    className="reader-glass reader-glass-bar sticky bottom-0 z-20 -mx-4 mt-8 border-t border-(--reader-light)/10 bg-(--reader-surface)/90 px-[max(0.5rem,env(safe-area-inset-left))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:px-[max(1rem,env(safe-area-inset-left))]">
     {listening && offscreen && <div hidden={compact && Boolean(group)} className="absolute bottom-full start-4 mb-2" data-testid="back-to-narration-float">
       {/* A round glass button, like the story audio note floating on the other side. */}
       <button type="button" aria-label="Back to narration" title="Back to narration" onClick={onBackToNarration}
-        className="reader-glass-float inline-flex h-11 w-11 items-center justify-center rounded-full text-neutral-100">
+        className="reader-glass-float inline-flex h-11 w-11 items-center justify-center rounded-full text-(--reader-text)">
         <LocateFixed className="h-5 w-5" aria-hidden />
       </button>
     </div>}
     <div className="w-full" data-testid={player ? 'read-aloud-player' : undefined} data-status={player ? status : undefined}>
-      {notice && <p role="status" className="absolute bottom-full left-4 right-4 mb-2 rounded-lg bg-neutral-950/95 p-2 text-center text-xs text-amber-200">{notice}</p>}
+      {notice && <p role="status" className="absolute bottom-full left-4 right-4 mb-2 rounded-lg bg-(--reader-surface)/95 p-2 text-center text-xs text-(--reader-warning-soft)">{notice}</p>}
       {listening && <p className="sr-only" data-testid="read-aloud-speaker">{speaking}</p>}
       {/* Main actions anchor the edges and center; each pill centers in the space between them. */}
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_minmax(0,1fr)_auto] min-h-[calc(3rem+0.75rem)] items-center gap-2 pt-3 max-[480px]:gap-1.5 max-[380px]:gap-1" data-testid="reader-controls-row">
@@ -170,8 +171,8 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
               <SEIPopoverTrigger aria-label="Narration playback speed" title={`Narration playback speed: ${readAloud.rate}×`} disabled={!supported} className={pickerTrigger}>
                 {/* At normal speed a quiet divider; a changed speed shows itself. */}
                 {readAloud.rate === 1
-                  ? <span data-testid="reader-narration-speed" className="text-base font-semibold leading-none text-neutral-400">∶</span>
-                  : <span data-testid="reader-narration-speed" className="text-sm font-semibold text-cyan-100">{RATE_LABELS[readAloud.rate] ?? readAloud.rate}</span>}
+                  ? <span data-testid="reader-narration-speed" className="text-base font-semibold leading-none text-(--reader-text-dim)">∶</span>
+                  : <span data-testid="reader-narration-speed" className="text-sm font-semibold text-(--reader-accent-pale)">{RATE_LABELS[readAloud.rate] ?? readAloud.rate}</span>}
               </SEIPopoverTrigger>
               <SEIPopoverContent side="top" align="center" collisionPadding={8} variant="dark" initialFocus={currentSpeedButton}
                 className={pickerSurface} data-testid="reader-speed-picker">

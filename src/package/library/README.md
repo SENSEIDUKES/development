@@ -1,5 +1,10 @@
 # `@seihouse/library`
 
+**Unreleased (2026-10-29):** Reader blue's colors for what sits on its glass
+(control faces, ink, hover and press washes, focus, settings fields) are named
+`--reader-glass-*` custom properties on `:root` in `reader-glass.css`, beside the
+existing glass recipe, which stays literal for Palette & Materials. Values are unchanged.
+
 **0.35.0 (2026-10-26):** Presentation exports 12 individually named reusable icons
 and includes them in the 54-icon catalog. Requires SEN 0.40.0 for the shared artwork.
 

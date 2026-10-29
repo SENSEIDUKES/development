@@ -128,4 +128,30 @@ describe('Familiar helper surface', () => {
     await click('Stop');
     expect(playing.stop).toHaveBeenCalledWith('familiar-line:https://cdn.example/energy.mp3');
   });
+  it('stops a recorded line that never started before the device voice reads it instead', async () => {
+    vi.useFakeTimers();
+    try {
+      const t = setup();
+      let current: string | null = null;
+      const playback = {
+        autoplayBlocked: false, currentSource: null, currentTrackId: null, errorMessage: '', hasError: false, isBuffering: true, isMuted: false, isPlaying: false, volume: 1,
+        load: vi.fn(), pause: vi.fn(), play: vi.fn((request?: { id: string }) => { current = request?.id ?? current; }), replace: vi.fn(), restart: vi.fn(() => false), setVolume: vi.fn(),
+        stop: vi.fn((trackId?: string) => { if (trackId === current) current = null; }),
+        subscribe: vi.fn(() => () => {}), subscribeToTrackChange: vi.fn(() => () => {}), subscribeToQueueEnd: vi.fn(() => () => {}), toggleMute: vi.fn(),
+      } satisfies NarrativeAudioPlayback;
+      const topics = [{ id: 'energy', label: 'Energy', phrases: ['energy'], explanation: 'Energy powers creation.', audioUrl: 'https://cdn.example/energy.mp3' }];
+      act(() => root.render(<StrictMode><NarrativeAudioProvider value={playback}><FamiliarHelperProvider voice={t.voice}>
+        <Screen context={{ ...t.context, topics }} /><FamiliarHelperAction />
+      </FamiliarHelperProvider></NarrativeAudioProvider></StrictMode>));
+      await click('Talk to Familiar');
+      await click('Explain');
+      await click('Energy');
+      expect(current).toBe('familiar-line:https://cdn.example/energy.mp3');
+      // Still loading after eight seconds: the line is stopped, and the device voice reads the words.
+      act(() => { vi.advanceTimersByTime(8_000); });
+      expect(playback.stop).toHaveBeenCalledWith('familiar-line:https://cdn.example/energy.mp3');
+      expect(current).toBeNull();
+      expect(t.voice.speak).toHaveBeenLastCalledWith('Energy powers creation.', 'en-US', expect.any(Function), expect.any(Function));
+    } finally { vi.useRealTimers(); }
+  });
 });

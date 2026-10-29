@@ -1,9 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { FamiliarCompanion, FamiliarRecall, type FamiliarCompanionProps } from '@seihouse/library/familiar';
+import { FamiliarCompanion, FamiliarHelperProvider, FamiliarPlace, FamiliarRecall, type FamiliarCompanionProps } from '@seihouse/library/familiar';
 import { WorkspaceHeaderAccessoryProvider, useLibraryBottomClearance } from '@seihouse/library/shell';
 import { LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/library/manifestations';
 import { EnergyClientProvider, createHttpEnergyClient } from '@seihouse/library/energy';
 import { defaultFamiliar, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
+import { createFamiliarBrowserVoice } from '../../../host/familiar/voice';
 import { developmentIdentityToken } from '../../../server/identity/authentication';
 import { getPreviewScenario } from '../user-profile/previewData';
 import { DEFAULT_USER_PROFILE_PREVIEW_STATE, type UserProfilePreviewState } from '../user-profile/previewStates';
@@ -21,6 +22,7 @@ export const PREVIEW_FAMILIAR_ID = defaultFamiliar.definition.id;
 export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_PROFILE_PREVIEW_STATE, initialFamiliarId = PREVIEW_FAMILIAR_ID, initiallyMinimized = true }: { children: ReactNode; initialState?: UserProfilePreviewState; initialFamiliarId?: string; initiallyMinimized?: boolean }) {
   const parent = useContext(SelectionContext);
   const [minimized, setMinimized] = useState(initiallyMinimized);
+  const [voice] = useState(createFamiliarBrowserVoice);
   const [selection, reportProfile] = useState<Selection>(() => ({
     uid: getPreviewScenario(initialState).currentUser?.uid ?? null,
     familiarId: initialFamiliarId,
@@ -36,7 +38,11 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
   return <SelectionContext.Provider value={value}>
     <LoadingFamiliarProvider value={loadingFamiliar}>
       <EnergyClientProvider client={client}>
-        <WorkspaceHeaderAccessoryProvider accessory={<ProductFamiliarRecall />}>{children}</WorkspaceHeaderAccessoryProvider>
+        {/* The app's Familiar panel (Explain and Action), with Home's topics, as in the app. */}
+        <FamiliarHelperProvider voice={voice}>
+          <FamiliarPlace title="Home" help="library" />
+          <WorkspaceHeaderAccessoryProvider accessory={<ProductFamiliarRecall />}>{children}</WorkspaceHeaderAccessoryProvider>
+        </FamiliarHelperProvider>
       </EnergyClientProvider>
     </LoadingFamiliarProvider>
   </SelectionContext.Provider>;

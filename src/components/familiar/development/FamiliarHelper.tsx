@@ -28,7 +28,10 @@ function playLine(currentPlayback: () => NarrativeAudioPlayback | null, url: str
     finished = true;
     clearTimeout(timeout);
     unsubscribe();
-    if (ended) done(); else failure('The recorded line could not play.');
+    if (ended) { done(); return; }
+    // A line that never started (or failed) must not start later over the device voice reading it.
+    currentPlayback()?.stop(id);
+    failure('The recorded line could not play.');
   };
   const unsubscribe = playback.subscribe(event => {
     if (event.type === 'play' && event.trackId === id) started = true;

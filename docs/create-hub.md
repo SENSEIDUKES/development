@@ -134,7 +134,7 @@ and no phase starts on an undecided question.
 | C | The manuscript way in. *A manuscript world is an authored world; expansion is a later action, and the tagger discovers before it confirms.* | A second way to start a world beside the Seed: the author's chapters in (see decisions 1 to 3), a world with no Seed and no Blueprint, open to its reader, readable in the Reader, with Story Settings for its language, its main character and its sound words | Decisions 1 to 3 below | A novel of SENSEI's choosing in the app, untagged, opening in the Reader | waits on B |
 | D | The tagging loop, one kind at a time | For each kind: the teaching rewritten for that kind alone, re-tag, count against the sentences the prose offers (the agent lists them), fix, repeat. Order: soundscape and atmosphere (and the category vocabulary they choose from), Sound Cues (with the story's own words equipped), speakers for named characters, then holdings and appearances with the already-appeared list | Approve each kind's words; equip the packs for the test story | Each kind landing on a chapter SENSEI can hear and see: music that changes between chapters, cues on the bells, voices on the named cast | waits on B; C helps |
 | E | The Codex open in Create | The author's view of every card, ahead of the reader | When; what the author may edit | The whole world in Create, the reached part in the Reader | later |
-| G | Tag the whole story | Tag all chapters in order as one run: what happens when it stops halfway (resume from the first chapter without a record from this run, cancel, never re-tag what is done), clearing a bad run across chapters, and whether a run costs the reader Energy in the Library | The decisions under "later" below | A long novel tagged end to end | later, after D works on single chapters |
+| G | Tag the whole story | Tag all chapters of an imported manuscript in order as one run: what happens when it stops halfway (resume from the first chapter without a record from this run, cancel, never re-tag what is done) and clearing a bad run across chapters | Decisions 5 and 6 below | A long novel tagged end to end | later, after D works on single chapters |
 | F | The Studios hand-off | Nothing here: SPP export from the Studios (their repo), then Manga Studio, MP Studio and games reading the Codex | Separate missions | A pack made in a Studio equipped in Create; later, a manga drawn from the Codex | later |
 
 ## Decisions for SENSEI, not to be guessed
@@ -174,15 +174,18 @@ chapters first, until the tagging is right):
 6. **Clearing a bad run.** Re-tagging replaces a chapter's tags and nothing
    keeps the ones before; a Clear tags action per chapter and per story, no
    history of past taggings. Basic first.
-7. **Whether tagging costs the reader Energy in the Library.** This is the
-   Library's own accounting ("paid at the point of generation" is the rule for
-   a chapter *written*), not the model's bill. The model's bill is the small
-   number: on The Nine-Fold Furnace a Haiku tagging call was about 5,000
-   tokens in and 1,500 out, roughly a tenth of a cent a chapter, so a publisher
-   expanding hundreds of books is a couple of hundred dollars, as SENSEI
-   intended; a licensee on their own key pays their own provider. Recommendation:
-   tagging costs no Energy; the author tags their own chapters. Revisit when the
-   economy is real.
+7. **Cost: settled, not a decision.** Tagging is part of making a chapter: the
+   chapter is written and tagged in the same write, before it is saved, and
+   the Energy that pays for the chapter pays for both calls (SENSEI,
+   2026-10-29: paid at the point of generation means the money is made back by
+   the time the thing exists). Nothing tags again afterwards: a world uploaded
+   to the Immortal Hub carries every tag in its record, and readers make no
+   model call, ever. The only further tagging calls are creator actions in the
+   subscriber tier, which can bring its own key: tagging a chapter again while
+   fine-tuning, and tagging an imported manuscript once, because it was never
+   generated here. The model's bill for those is small: on The Nine-Fold
+   Furnace a Haiku tagging call was about 5,000 tokens in and 1,500 out,
+   roughly a tenth of a cent a chapter. No separate Energy charge for tagging.
 
 ## Hard constraints
 
@@ -216,6 +219,7 @@ chapters first, until the tagging is right):
   manuscript world is an authored world; expansion is a later action, and the
   tagger discovers before it confirms."
 - **2026-10-29 (SENSEI's cut):** Phase B is one chapter at a time, or a few by
-  hand. The whole-story run, with its resume, cancel, clearing and Energy
-  questions, is its own later phase (G). The model's cost per chapter is
-  recorded from the receipts so the Energy question is never mistaken for it.
+  hand. The whole-story run, with its resume, cancel and clearing questions, is
+  its own later phase (G). Cost is settled, not a decision: tagging is inside
+  the chapter's price, nothing tags after upload, and re-tagging and imports
+  are creator actions in the subscriber tier.

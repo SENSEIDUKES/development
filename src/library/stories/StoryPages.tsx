@@ -8,7 +8,8 @@ import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { LIBRARY_READ_ALOUD_VOICES } from './readAloudVoices';
 import { LIBRARY_READER_FONTS } from './readerFonts';
 import { StorySettings } from './settings/StorySettings';
-import { StoryChapters } from './ChapterTagging';
+import { StoryChapterList } from './ChapterTagging';
+import { StudioChapterPage } from './StudioChapter';
 import { storyTaggingSummary } from './chapterTagging';
 import { useStoryCoverManifest } from './StoryCoverManifest';
 import { codexPictureRequest, storyCoverRequest, type CodexPictureService, type StoryCoverService } from './storyCover';
@@ -26,8 +27,14 @@ const NO_ADAPTATIONS_YET = { expansions: [] } as const;
 export interface StoryPagesProps {
   stories: LibraryStories;
   storyId: string;
-  /** Which of the story's pages shows: its World Info page, the Reader, or its Blueprint. */
-  page: 'info' | 'read' | 'blueprint';
+  /** Which of the story's pages shows: its World Info page, the Reader, its Blueprint, or one chapter in the Studio. */
+  page: 'info' | 'read' | 'blueprint' | 'chapter';
+  /** The chapter the Studio page shows, when `page` is `chapter`. */
+  chapterNumber?: number;
+  /** World Info's Chapters list: open a chapter's Studio page. Without it the list only tells. */
+  onOpenChapter?: (chapterNumber: number) => void;
+  /** The Studio page's Back. */
+  onCloseChapter?: () => void;
   /**
    * World Info's Blueprint button: show the Blueprint page. Without it, World
    * Info has no Blueprint button.
@@ -75,13 +82,14 @@ const keepVeilOpen = () => undefined;
 
 /**
  * One story's own pages: its World Info page (Start Story, Start Reading,
- * Continue, its cover art, the story's Story Settings, and its Chapters with
- * their tagging) and the Reader, with the Generation Overlay while a chapter is written.
+ * Continue, its cover art, the story's Story Settings, and its Chapters), each
+ * chapter's Studio page (the prose with its tags lit, and Tag this chapter),
+ * and the Reader, with the Generation Overlay while a chapter is written.
  * The host decides which page shows and keeps this mounted, keyed by story,
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, onOpenBlueprint, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, chapterNumber, onOpenChapter, onCloseChapter, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, onOpenBlueprint, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(false);
@@ -148,9 +156,9 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
 
   // Story Settings live in World Info's Settings card.
   const settings = <StorySettings stories={stories} storyId={storyId} />;
-  // The creator's chapters and their tagging live in World Info's Chapters card, once there is a chapter.
+  // The creator's chapters live in World Info's Chapters card, once there is a chapter: each opens its Studio page.
   const written = state.chapters.filter(chapter => chapter.storyId === storyId);
-  const chapters = written.length ? { summary: storyTaggingSummary(written), panel: <StoryChapters stories={stories} storyId={storyId} /> } : undefined;
+  const chapters = written.length ? { summary: storyTaggingSummary(written), panel: <StoryChapterList stories={stories} storyId={storyId} onOpen={onOpenChapter} /> } : undefined;
   // Inside a host's frame, World Info is the frame's content, not a second <main>.
   const Page = frame ? 'div' : 'main';
   if (page === 'blueprint') {
@@ -162,6 +170,15 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       </Page>
     </>;
     return frame ? <>{frame(blueprint)}</> : blueprint;
+  }
+  if (page === 'chapter' && chapterNumber) {
+    const studio = <>
+      {writerAlert}
+      <Page className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-story-chapter">
+        <StudioChapterPage stories={stories} storyId={storyId} chapterNumber={chapterNumber} onBack={onCloseChapter ?? onBack} />
+      </Page>
+    </>;
+    return frame ? <>{frame(studio)}</> : studio;
   }
   const info = <>
     {writerAlert}

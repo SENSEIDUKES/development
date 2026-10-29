@@ -1,5 +1,6 @@
 import { soundVocabulary, soundtrackVocabulary } from '@seihouse/sen/audio';
-import type { CodexEntry, HarnessChapter, HarnessWarning } from '@seihouse/sen/harness-generation';
+import { harnessParagraphBlockId, type CodexEntry, type HarnessChapter, type HarnessWarning } from '@seihouse/sen/harness-generation';
+import { ATTACHMENT_COLORS, type OverlayMark, type TextHighlightBlock } from '@seihouse/sen/highlight-engine';
 
 /**
  * A chapter's tagging record, in words for the page (SENSEI, 2026-10-29,
@@ -128,6 +129,56 @@ export function describeChapterTagging(
       : undefined),
   ];
   return { status: 'tagged', headline: `Read${by} · ${when(record.at, locale)}${tokens}`, ...(notes ? { notes } : {}), kinds, problems };
+}
+
+/** The kinds in the order the tags read, each with the color its marks wear on the page. */
+export const CHAPTER_TAGGING_KINDS: ReadonlyArray<{ kind: ChapterTaggingKind; tone: string }> = [
+  { kind: 'Soundscape and atmosphere', tone: ATTACHMENT_COLORS['soundscape-change'].tone },
+  { kind: 'Sound Cues', tone: ATTACHMENT_COLORS['sound-cue'].tone },
+  { kind: 'Speakers', tone: ATTACHMENT_COLORS.speaker.tone },
+  { kind: 'Holdings', tone: ATTACHMENT_COLORS['holding-change'].tone },
+  { kind: 'Appearances', tone: ATTACHMENT_COLORS.appearance.tone },
+];
+
+/** The chapter's paragraphs as Highlight Engine blocks, under the ids its tags are anchored to. */
+export const chapterBlocks = (chapter: Pick<HarnessChapter, 'chapterNumber' | 'paragraphs'>): TextHighlightBlock[] =>
+  chapter.paragraphs.map((text, index) => ({ id: harnessParagraphBlockId(chapter.chapterNumber, index), text }));
+
+type Spanned = { id: string; anchor: { level: string; detached?: true; blockId?: string; startOffset?: number; endOffset?: number; selectedText?: string } };
+
+/**
+ * Where the chapter's tags landed, as tints behind the prose in each kind's
+ * color: every speaker line, Sound Cue, holding change and appearance on the
+ * exact words the tagger named, and the chapter's soundscape and atmosphere on
+ * its first word, where they begin. `shown` chooses the kinds to light.
+ */
+export function chapterTagMarks(
+  chapter: Pick<HarnessChapter, 'chapterNumber' | 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'scene'>,
+  shown: ReadonlySet<ChapterTaggingKind>,
+): OverlayMark[] {
+  const tone = (kind: ChapterTaggingKind) => CHAPTER_TAGGING_KINDS.find(entry => entry.kind === kind)!.tone;
+  const spans = (kind: ChapterTaggingKind, attachments: readonly Spanned[] | undefined): OverlayMark[] => (shown.has(kind) ? (attachments ?? []) : []).flatMap(attachment => {
+    const { anchor } = attachment;
+    if (anchor.level !== 'span' || anchor.detached || typeof anchor.blockId !== 'string' || typeof anchor.startOffset !== 'number' || typeof anchor.endOffset !== 'number') return [];
+    return [{ id: `mark:${attachment.id}`, selection: { blockId: anchor.blockId, startOffset: anchor.startOffset, endOffset: anchor.endOffset, selectedText: anchor.selectedText ?? '' }, tone: tone(kind) }];
+  });
+  const marks = [
+    ...spans('Sound Cues', chapter.soundCues),
+    ...spans('Speakers', chapter.speakers),
+    ...spans('Holdings', chapter.holdingChanges),
+    ...spans('Appearances', chapter.appearances),
+  ];
+  const scene = chapter.scene;
+  const first = chapter.paragraphs[0];
+  if (shown.has('Soundscape and atmosphere') && scene && (scene.music || scene.soundscape || scene.atmosphere) && first) {
+    const letter = first.search(/[\p{L}\p{N}]/u);
+    const end = letter < 0 ? -1 : first.slice(letter).search(/[^\p{L}\p{N}'’-]/u);
+    if (letter >= 0) {
+      const endOffset = end < 0 ? first.length : letter + end;
+      marks.unshift({ id: 'mark:scene', selection: { blockId: harnessParagraphBlockId(chapter.chapterNumber, 0), startOffset: letter, endOffset, selectedText: first.slice(letter, endOffset) }, tone: tone('Soundscape and atmosphere') });
+    }
+  }
+  return marks;
 }
 
 /** The Chapters card's line: how many chapters, and how many of them the tagger has read. */

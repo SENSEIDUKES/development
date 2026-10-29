@@ -47,6 +47,10 @@ export const ATTACHMENT_COLORS: Readonly<Record<string, { label: string; tone: s
   'soundscape-change': { label: 'Soundscape', tone: 'rgba(255, 65, 79, .6)' },
   // Yellow needs less opacity than blue/red to keep light prose readable on dark pages.
   'atmosphere-change': { label: 'Atmosphere', tone: 'rgba(255, 196, 0, .45)' },
+  // The information tags the Chapter Tagger places (the Studio's chapter page lights them).
+  speaker: { label: 'Speaker', tone: 'rgba(45, 212, 191, .4)' },
+  'holding-change': { label: 'Holding', tone: 'rgba(74, 222, 128, .4)' },
+  appearance: { label: 'Appearance', tone: 'rgba(167, 139, 250, .45)' },
 };
 
 /** The attachment kind each overlay shows. */

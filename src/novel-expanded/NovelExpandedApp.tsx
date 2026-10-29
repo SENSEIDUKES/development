@@ -102,6 +102,7 @@ function familiarPlace(page: ReturnType<typeof useAppRoute>[0]['page']): { title
     case 'profile': return { title: 'Profile', help: 'library' };
     case 'story':
     case 'blueprint': return { title: 'World Info', help: 'library' };
+    case 'chapter': return { title: 'Studio', help: 'library' };
     case 'home': return { title: 'Home', help: 'library' };
   }
 }
@@ -195,7 +196,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const caveStories = useMemo(() => state ? state.stories.map(story => ({
     id: story.id, title: story.title, userId: NOVEL_EXPANDED_READER_ID, sourceSeedId: storySourceSeedId(state, story),
   })) : [], [state]);
-  const storyId = route.page === 'story' || route.page === 'read' || route.page === 'blueprint' ? route.storyId : undefined;
+  const storyId = route.page === 'story' || route.page === 'read' || route.page === 'blueprint' || route.page === 'chapter' ? route.storyId : undefined;
   const missing = Boolean(state && storyId && !findStory(state, storyId));
   // A story that is not here (an old link, another browser) goes Home.
   useEffect(() => { if (missing) navigate(HOME_ROUTE, { replace: true }); }, [missing, navigate]);
@@ -262,12 +263,16 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     }} />);
 
   if (storyId) return withFamiliar(missing ? null : <StoryPages key={storyId} stories={stories} storyId={storyId}
-    page={route.page === 'read' ? 'read' : route.page === 'blueprint' ? 'blueprint' : 'info'} readerStateRepository={services.readerState}
+    page={route.page === 'read' ? 'read' : route.page === 'blueprint' ? 'blueprint' : route.page === 'chapter' ? 'chapter' : 'info'}
+    chapterNumber={route.page === 'chapter' ? route.chapterNumber : undefined} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
     writingAgent={AGENTS.VERSA} backLabel="Back to your stories" covers={covers} codexPictures={codexPictures}
     // World Info sits in the Library Shell; the Reader never does.
     frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds}
-      readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}
+      readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : route.page === 'chapter' ? 'Studio' : 'World Info'}>{info}</AppShell>}
+    // A chapter's Studio page, from World Info's Chapters; Back returns to World Info.
+    onOpenChapter={chapterNumber => navigate({ page: 'chapter', storyId, chapterNumber })}
+    onCloseChapter={() => navigate({ page: 'story', storyId })}
     // Every story on this device is the reader's own, so its Blueprint opens for its creator.
     onOpenBlueprint={() => navigate({ page: 'blueprint', storyId })}
     onCloseBlueprint={() => navigate({ page: 'story', storyId })}

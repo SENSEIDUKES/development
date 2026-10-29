@@ -15,6 +15,7 @@ import type { DiscoverMedium } from '@seihouse/library/discover';
  * - Story View (World Info): `/app/?story=<id>`
  * - Reader: `/app/?story=<id>&read=1`
  * - A story's Blueprint: `/app/?story=<id>&blueprint=1`
+ * - A chapter in the story's Studio: `/app/?story=<id>&chapter=<n>`
  * - Profile (the Cultivator Cave): `/app/?page=profile`, with the Cave's own
  *   page in `cave` (Settings: `&cave=/settings`). The Cave moves between its
  *   pages itself, through that one parameter.
@@ -26,6 +27,7 @@ export type NovelExpandedRoute =
   | { page: 'story'; storyId: string }
   | { page: 'read'; storyId: string }
   | { page: 'blueprint'; storyId: string }
+  | { page: 'chapter'; storyId: string; chapterNumber: number }
   | { page: 'profile'; cave?: string };
 
 export const HOME_ROUTE: NovelExpandedRoute = { page: 'home' };
@@ -33,8 +35,13 @@ export const HOME_ROUTE: NovelExpandedRoute = { page: 'home' };
 export function parseRoute(search: string): NovelExpandedRoute {
   const query = new URLSearchParams(search);
   const storyId = query.get('story')?.trim();
-  if (storyId) return query.get('read') === '1' ? { page: 'read', storyId }
-    : query.get('blueprint') === '1' ? { page: 'blueprint', storyId } : { page: 'story', storyId };
+  if (storyId) {
+    const chapterNumber = Number(query.get('chapter'));
+    return query.get('read') === '1' ? { page: 'read', storyId }
+      : query.get('blueprint') === '1' ? { page: 'blueprint', storyId }
+      : Number.isInteger(chapterNumber) && chapterNumber > 0 ? { page: 'chapter', storyId, chapterNumber }
+      : { page: 'story', storyId };
+  }
   if (query.get('page') === 'discover') {
     const lore = query.get('lore')?.trim();
     const section = query.get('section');
@@ -62,6 +69,7 @@ export function routeSearch(route: NovelExpandedRoute): string {
     case 'story': return `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;
     case 'blueprint': return `?story=${encodeURIComponent(route.storyId)}&blueprint=1`;
+    case 'chapter': return `?story=${encodeURIComponent(route.storyId)}&chapter=${route.chapterNumber}`;
     case 'profile': return `?${new URLSearchParams(route.cave ? { page: 'profile', cave: route.cave } : { page: 'profile' })}`;
   }
 }

@@ -56,7 +56,15 @@ existing Chapter Generation feature.
   and Tag this chapter on any of them. The Workshop's HARNESS workspace shows
   the same record and action (`ChapterTaggingRecord`, `TagChapterAction`). The
   plan's first draft had this wrong: the app's Story View had no chapter list,
-  and "Tag this chapter again" lived only in the Workshop.
+  and "Tag this chapter again" lived only in the Workshop. **SENSEI's cut, the
+  same day:** a record under the cards "reads like a log, not a tool". The
+  Chapters card is now a list of rows, and each chapter opens its own Studio
+  page (`StudioChapterPage`, `/app/?story=<id>&chapter=<n>`): the chapter's
+  prose on the Highlight Engine with every tag lit on the words it landed on,
+  one color per kind (`chapterTagMarks`; the information tags join
+  `ATTACHMENT_COLORS`), the tagger's findings beside it as switches that light
+  one kind alone, the record behind one line, and one action, Tag this chapter.
+  Apple-plain on purpose: a creator should know what to do at a glance.
 
 - **2026-10-29 (the Chapter Tagger's own model and reasoning):** SENSEI: "maybe
   cheap models with high reasoning are really good for tagging." The tagger

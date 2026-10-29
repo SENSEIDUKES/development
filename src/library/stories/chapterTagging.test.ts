@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { HarnessChapter } from '@seihouse/sen/harness-generation';
-import { describeChapterTagging, storyTaggingSummary } from './chapterTagging';
+import { chapterTagMarks, describeChapterTagging, storyTaggingSummary, type ChapterTaggingKind } from './chapterTagging';
 
 /**
  * The tagging record in words for the page (docs/create-hub.md, phase B,
@@ -88,6 +88,31 @@ describe('a chapter\'s tagging record, in words', () => {
       'Dropped 1 of the tagger\'s 6 notes: [[@MC]] on paragraph 9: the paragraph has no such words.',
       'Set aside 1 sound tag: no recording answers "bell toll".',
     ]);
+  });
+
+  it('lights each kind of tag on the words it was placed on, and the scene on the first word', () => {
+    const anchor = (blockId: string, start: number, end: number, text: string) => ({ level: 'span' as const, blockId, startOffset: start, endOffset: end, selectedText: text });
+    const chapter = {
+      chapterNumber: 2,
+      paragraphs: ['“Hold.” Ye Chen lifted the blade.', 'The beast roared.'],
+      scene: { atmosphere: 'bed-rain' },
+      speakers: [{ id: 'sp1', anchor: anchor('c2-p1', 0, 7, '“Hold.”') }],
+      soundCues: [{ id: 'sc1', anchor: anchor('c2-p2', 10, 16, 'roared') }],
+      holdingChanges: [{ id: 'hc1', anchor: anchor('c2-p1', 8, 33, 'Ye Chen lifted the blade.') }],
+      appearances: [{ id: 'ap1', anchor: { level: 'span' as const, detached: true as const, blockId: 'c2-p1', startOffset: 0, endOffset: 1, selectedText: '“' } }],
+    } as unknown as Parameters<typeof chapterTagMarks>[0];
+    const all = new Set<ChapterTaggingKind>(['Soundscape and atmosphere', 'Sound Cues', 'Speakers', 'Holdings', 'Appearances']);
+    const marks = chapterTagMarks(chapter, all);
+    // The scene first, on the first word (the quotation mark is skipped); a detached span has no place on the page.
+    expect(marks.map(mark => [mark.id, mark.selection.blockId, mark.selection.selectedText])).toEqual([
+      ['mark:scene', 'c2-p1', 'Hold'],
+      ['mark:sc1', 'c2-p2', 'roared'],
+      ['mark:sp1', 'c2-p1', '“Hold.”'],
+      ['mark:hc1', 'c2-p1', 'Ye Chen lifted the blade.'],
+    ]);
+    expect(new Set(marks.map(mark => mark.tone)).size).toBe(4);
+    expect(chapterTagMarks(chapter, new Set<ChapterTaggingKind>(['Speakers'])).map(mark => mark.id)).toEqual(['mark:sp1']);
+    expect(chapterTagMarks(chapter, new Set())).toEqual([]);
   });
 
   it('sums a story\'s chapters for the Chapters card', () => {

@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { findStory, type CodexEntry, type HarnessChapter } from '@seihouse/sen/harness-generation';
 import { NarrativeButton as LibraryButton } from '@seihouse/sen/presentation';
 import { describeChapterTagging } from './chapterTagging';
 import type { LibraryStories } from './useLibraryStories';
 
 /**
- * A chapter's tagging record on the page, and Tag this chapter on any
- * committed chapter (SENSEI, 2026-10-29, `docs/create-hub.md` phase B). One
- * record and one action, shared by World Info's Chapters card in the app and
- * the HARNESS workspace's chapter list in the Workshop, so the two never drift.
+ * A chapter's tagging record in words and Tag this chapter on any committed
+ * chapter (SENSEI, 2026-10-29, `docs/create-hub.md` phase B), for the Workshop's
+ * HARNESS workspace, and World Info's Chapters list, the way into each
+ * chapter's Studio page in the app. The page itself is `StudioChapterPage`.
  */
 
 /** What the tagger made of one chapter: read or not, by what, and one line per kind of tag. */
@@ -51,44 +51,38 @@ export function TagChapterAction({ chapter, gap, busy, onTag }: {
 
 /**
  * World Info's Chapters: every committed chapter of the story, in order, each
- * with its tagging record and Tag this chapter. One chapter at a time; a
- * tagging replaces the chapter's tags and never touches a word of its prose.
+ * a way into its Studio page (`StudioChapterPage`), with one line saying
+ * whether the tagger has read it and what it found.
  */
-export function StoryChapters({ stories, storyId }: { stories: LibraryStories; storyId: string }) {
-  const { state, controller, canGenerate } = stories;
-  const [tagging, setTagging] = useState<string>();
-  const [problem, setProblem] = useState<string>();
+export function StoryChapterList({ stories, storyId, onOpen }: {
+  stories: LibraryStories;
+  storyId: string;
+  /** Opens a chapter's Studio page. Without it the list only tells. */
+  onOpen?: (chapterNumber: number) => void;
+}) {
+  const { state } = stories;
   if (!state || !findStory(state, storyId)) return null;
   const chapters = state.chapters.filter(chapter => chapter.storyId === storyId).sort((left, right) => left.chapterNumber - right.chapterNumber);
-  const tag = async (chapterId: string) => {
-    setTagging(chapterId);
-    setProblem(undefined);
-    try {
-      await controller.retagChapter(storyId, chapterId);
-    } catch (error) {
-      setProblem(error instanceof Error ? error.message : 'The chapter could not be tagged.');
-    } finally {
-      setTagging(undefined);
-    }
-  };
-  return <section className="grid gap-3 text-left" data-testid="story-chapters" aria-label="Chapters">
-    <p className="text-xs text-neutral-400">
-      Every chapter and what the tagger made of it. Tagging a chapter again replaces its tags; its words never change.
-      {!canGenerate && ' The writer cannot be reached here, so no chapter can be tagged now.'}
-    </p>
-    <ol className="grid gap-3">
-      {chapters.map(chapter => <li key={chapter.id} className="rounded-2xl border border-white/10 bg-black/20 p-4"
-        data-testid="story-chapter" data-chapter-number={chapter.chapterNumber}>
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-200/55">Chapter {chapter.chapterNumber}</p>
-        <h3 className="mt-1 font-display text-lg text-white">{chapter.title}</h3>
-        <p className="mt-1 text-xs text-neutral-500">{chapter.metrics.wordCount.toLocaleString()} words · {chapter.metrics.paragraphCount.toLocaleString()} paragraphs</p>
-        <ChapterTaggingRecord chapter={chapter} entries={state.codexEntries} />
-        {canGenerate && <div className="mt-3">
-          <TagChapterAction chapter={chapter} gap={controller.retagChapterGap(storyId, chapter.id)} busy={Boolean(tagging)}
-            onTag={() => void tag(chapter.id)} />
-        </div>}
-      </li>)}
-    </ol>
-    {problem && <p role="alert" className="text-xs text-amber-200">{problem}</p>}
-  </section>;
+  return <ol className="grid gap-2 text-left" data-testid="story-chapters" aria-label="Chapters">
+    {chapters.map(chapter => {
+      const account = describeChapterTagging(chapter, { entries: state.codexEntries });
+      const found = account.kinds.filter(line => line.state === 'found').map(line => line.kind);
+      const line = account.status === 'tagged' ? (found.length ? `Tagged · ${found.join(', ')}` : 'Tagged · nothing found')
+        : account.status === 'failed' ? 'The tagger could not read it' : 'Not tagged yet';
+      const face = <>
+        <span className="min-w-0 flex-1">
+          <span className="block font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-200/55">Chapter {chapter.chapterNumber}</span>
+          <span className="mt-0.5 block truncate font-display text-lg text-white">{chapter.title}</span>
+          <span className="mt-0.5 block text-xs text-neutral-400" data-testid="story-chapter-line">{line}</span>
+        </span>
+        {onOpen && <ChevronRight size={20} aria-hidden="true" className="shrink-0 text-[#d4af37]" />}
+      </>;
+      return <li key={chapter.id} data-testid="story-chapter" data-chapter-number={chapter.chapterNumber}>
+        {onOpen
+          ? <button type="button" onClick={() => onOpen(chapter.chapterNumber)} aria-label={`Chapter ${chapter.chapterNumber}: ${chapter.title}`}
+              className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-left transition-colors hover:border-white/25">{face}</button>
+          : <div className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">{face}</div>}
+      </li>;
+    })}
+  </ol>;
 }

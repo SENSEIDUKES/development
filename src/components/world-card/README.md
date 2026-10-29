@@ -107,7 +107,7 @@ pieces rather than page-local cards or buttons:
 | Backdrop clip | `WorldCardBackdropVideo` (shared with the Feature card) |
 | Portal card | the world's connected media (`WorldExpressions`) below the cards |
 | Information card (format symbol) | `WorldCardInformationPanel`: everything about the world, Author's notes last |
-| Chapters card | the host's own panel (`chapters.panel`, in the Library `StoryChapters`: every chapter's tagging record and Tag this chapter), below the cards, with the host's line on the card |
+| Chapters card | the host's own panel (`chapters.panel`, in the Library `StoryChapterList`: every chapter in a row, each opening its Studio page), below the cards, with the host's line on the card |
 | Settings card | `WorldCardSettings`: Read it in, then the host's story settings, below the cards |
 | Synopsis More / Less | `LibraryButton` (`ghost`) |
 
@@ -377,8 +377,9 @@ Workshop sample data remains outside the host adapter.
   take `chapters?: { summary, panel }`: a fifth card between Information and
   Settings that opens the host's panel below the cards, one part of the page
   at a time with Portal and Settings. In the app the Library fills it with
-  every chapter's tagging record and Tag this chapter (`StoryChapters`), once
-  the story has a chapter; without it there is no card.
+  the story's chapters in rows (`StoryChapterList`), each opening the
+  chapter's Studio page, once the story has a chapter; without it there is no
+  card.
 - **2026-10-28** — With the owner's approval, removed the old copies in `reference/`
   (`WorldCardFull`, `WorldCardCompact` and their stylesheet) and the Original Reference
   and Compare panes, which also showed Home's old story detail. The workspace now shows

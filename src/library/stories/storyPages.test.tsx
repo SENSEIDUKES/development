@@ -66,11 +66,13 @@ function StoryHost({ repository, adapter, readerState, storyId, preferredModel, 
 }) {
   const stories = useLibraryStories({ repository, modelAdapter: adapter, preferredModel });
   onStories?.(stories);
-  const [page, setPage] = useState<'home' | 'info' | 'read'>('info');
+  const [page, setPage] = useState<'home' | 'info' | 'read' | 'chapter'>('info');
+  const [chapterNumber, setChapterNumber] = useState<number>();
   if (page === 'home') return <p data-testid="story-host-home">Your stories</p>;
-  return <StoryPages key={storyId} stories={stories} storyId={storyId} page={page} readerStateRepository={readerState}
+  return <StoryPages key={storyId} stories={stories} storyId={storyId} page={page} chapterNumber={chapterNumber} readerStateRepository={readerState}
     writingAgent={VERSA} backLabel="Back to your stories"
     frame={framed ? info => <div data-testid="host-frame"><main>{info}</main></div> : undefined}
+    onOpenChapter={number => { setChapterNumber(number); setPage('chapter'); }} onCloseChapter={() => setPage('info')}
     onOpenReader={() => setPage('read')} onCloseReader={() => setPage('info')} onBack={() => setPage('home')} />;
 }
 
@@ -144,7 +146,12 @@ describe('A story\'s own pages for any host', { timeout: 20_000 }, () => {
     expect(container.querySelector('[data-testid="story-host-home"]')).toBeTruthy();
   });
 
-  it('World Info lists the chapters with what the tagger made of each, and tags any one of them again on request', async () => {
+  it('World Info lists the chapters, each opening its Studio page: the prose with its tags lit, the findings per kind, and Tag this chapter again', async () => {
+    // The Studio page's overlay measures the prose; jsdom cannot, so one line stands in.
+    const rects = Range.prototype.getClientRects;
+    vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+    Range.prototype.getClientRects = () => [{ left: 100, top: 200, right: 170, bottom: 222, width: 70, height: 22 }] as unknown as DOMRectList;
+    try {
     const model = scriptedModel();
     const tagChapter = vi.fn<NonNullable<HarnessGenerationModelAdapter['tagChapter']>>(async (request: HarnessTagRequest) => {
       void request;
@@ -168,35 +175,58 @@ describe('A story\'s own pages for any host', { timeout: 20_000 }, () => {
     await click(buttonByText('Back'), 'Back');
     await flush();
 
-    // The Chapters card says how many were read; open, each chapter carries its record.
+    // The Chapters card says how many were read; open, each chapter is a row with one line on its tagging.
     const card = worldInfo()!.querySelector<HTMLButtonElement>('button.world-card-info-chapters-card');
     expect(card?.textContent).toContain('1 chapter · 1 tagged');
     await click(card, 'Chapters');
-    const chapter = () => container.querySelector<HTMLElement>('[data-testid="story-chapter"][data-chapter-number="1"]')!;
-    expect(chapter().textContent).toContain('Low Tide');
-    const record = () => chapter().querySelector<HTMLElement>('[data-testid="chapter-tagging"]')!;
-    const kind = (name: string) => record().querySelector<HTMLElement>(`[data-tagging-kind="${name}"]`)!;
-    expect(record().getAttribute('data-tagging-status')).toBe('tagged');
-    expect(record().textContent).toContain('Read by fixture');
-    expect(record().textContent).toContain('4,200 tokens in, 180 out');
-    expect(record().textContent).toContain('1 note written · 1 placed');
-    expect(kind('Appearances').textContent).toBe('1 appearance: Mara');
-    expect(kind('Appearances').getAttribute('data-tagging-state')).toBe('found');
-    // A kind the tagger was taught and found nothing for says so in those words; one it was never taught says why.
-    expect(kind('Speakers').textContent).toBe('The tagger found nothing here.');
-    expect(kind('Speakers').getAttribute('data-tagging-state')).toBe('nothing');
-    expect(kind('Sound Cues').getAttribute('data-tagging-state')).toBe('not-asked');
-    expect(kind('Soundscape and atmosphere').getAttribute('data-tagging-state')).toBe('not-asked');
+    const row = container.querySelector<HTMLElement>('[data-testid="story-chapter"][data-chapter-number="1"]')!;
+    expect(row.textContent).toContain('Low Tide');
+    expect(row.querySelector('[data-testid="story-chapter-line"]')!.textContent).toBe('Tagged · Appearances');
+    await click(row.querySelector('button'), 'Chapter 1');
 
-    // Tag this chapter again reads the same chapter once more, and the record follows the new answer.
+    // The Studio page: the prose with the appearance lit, the findings per kind, and the record behind one line.
+    const studio = () => container.querySelector<HTMLElement>('[data-testid="studio-chapter"]')!;
+    expect(studio().getAttribute('data-tagging-status')).toBe('tagged');
+    expect(studio().querySelector('h1')!.textContent).toBe('Low Tide');
+    expect(studio().querySelector('[data-testid="studio-chapter-status"]')!.textContent).toBe('1 mark on the page');
+    const prose = () => studio().querySelector<HTMLElement>('[data-testid="studio-chapter-prose"]')!;
+    expect(prose().textContent).toContain('Mara counted the bells that no longer rang.');
+    const kind = (name: string) => studio().querySelector<HTMLElement>(`[data-tagging-kind="${name}"]`)!;
+    expect(kind('Appearances').textContent).toContain('1 appearance: Mara');
+    expect(kind('Appearances').getAttribute('aria-pressed')).toBe('true');
+    // A kind the tagger was taught and found nothing for, and one it was never taught, are told apart and cannot be switched on.
+    expect(kind('Speakers').getAttribute('data-tagging-state')).toBe('nothing');
+    expect(kind('Speakers').textContent).toContain('Nothing found');
+    expect(kind('Sound Cues').getAttribute('data-tagging-state')).toBe('not-asked');
+    expect(kind('Sound Cues').textContent).toContain('Nothing equipped');
+    expect((kind('Speakers') as HTMLButtonElement).disabled).toBe(true);
+    const record = studio().querySelector<HTMLElement>('[data-testid="studio-chapter-record"]')!;
+    expect(record.textContent).toContain('Read by fixture');
+    expect(record.textContent).toContain('4,200 tokens in, 180 out');
+    expect(record.textContent).toContain('1 note written · 1 placed');
+    // Switching a kind off takes its marks off the page and nothing else.
+    await click(kind('Appearances'), 'Appearances');
+    expect(kind('Appearances').getAttribute('aria-pressed')).toBe('false');
+    expect(studio().querySelector('[data-testid="studio-chapter-status"]')!.textContent).toBe('0 marks on the page');
+    await click(kind('Appearances'), 'Appearances');
+
+    // Tag this chapter again reads the same chapter once more, and the page follows the new answer.
     tagChapter.mockResolvedValueOnce({ rawProviderResponse: JSON.stringify({ notes: [] }), providerReceipt: receipt });
-    await click([...chapter().querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'Tag this chapter again'), 'Tag this chapter again');
+    await click(buttonByText('Tag this chapter again'), 'Tag this chapter again');
     await flush();
     expect(tagChapter).toHaveBeenCalledTimes(2);
     expect(tagChapter.mock.calls[1][0]).toMatchObject({ chapterNumber: 1 });
-    expect(record().textContent).toContain('0 notes written · 0 placed');
-    expect(kind('Appearances').textContent).toBe('The tagger found nothing here.');
+    expect(kind('Appearances').getAttribute('data-tagging-state')).toBe('nothing');
+    expect(studio().querySelector('[data-testid="studio-chapter-record"]')!.textContent).toContain('0 notes written · 0 placed');
     expect(model.generate).toHaveBeenCalledTimes(1);
+
+    // Back returns to World Info.
+    await click(studio().querySelector<HTMLButtonElement>('button[aria-label="Back to World Info"]'), 'Back to World Info');
+    expect(worldInfo()).toBeTruthy();
+    } finally {
+      vi.unstubAllGlobals();
+      Range.prototype.getClientRects = rects;
+    }
   });
 
   it('World Info sits inside a host\'s frame, and Start Story still writes Chapter 1 once the Reader opens outside it', async () => {

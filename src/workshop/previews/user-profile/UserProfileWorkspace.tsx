@@ -30,6 +30,7 @@ import {
 import { createInProcessEconomyFetch, createWorkshopEconomy, createWorkshopEconomyClients } from '../rewards/workshopEconomy';
 import { EconomyClientProviders } from '../rewards/WorkshopEconomyProvider';
 import { DEVELOPED_CULTIVATOR_SEED, seedWorkshopAccount, type WorkshopAccountSeed } from '../rewards/rewardScenarios';
+import { LibraryLook } from '@seihouse/library/presentation';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'user-profile')!;
 
@@ -179,7 +180,8 @@ function UserProfileContent({ embedded, initialState }: { embedded: boolean; ini
   const renderDevelopment = () => economyReady ? (
     // The economy providers wrap the Familiar companion too, so it reads the same Energy the Cave shows.
     <EconomyClientProviders key={economyKey} clients={clients}>
-      <ProductFamiliarSurface headerRecall bottomInset={72}>{renderPane('development')}</ProductFamiliarSurface>
+      {/* The app's Profile wears the Library's look around the Cave; so does its preview. */}
+      <ProductFamiliarSurface headerRecall bottomInset={72}><LibraryLook>{renderPane('development')}</LibraryLook></ProductFamiliarSurface>
     </EconomyClientProviders>
   ) : <p role="status" className="mx-auto max-w-4xl px-4 py-10 text-sm text-neutral-400">Preparing this scenario’s development economy…</p>;
 

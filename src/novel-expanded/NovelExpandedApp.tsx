@@ -34,6 +34,7 @@ import { useStoryCovers } from '../host/media/storyCovers';
 import { useCodexPictures } from '../host/media/codexPictures';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
+import { CreateHubPage, creatorWorldsOf } from './CreateHubPage';
 import { DiscoverPage } from './DiscoverPage';
 import { HomePage } from './HomePage';
 import { useDaoSparks } from './daoSparks';
@@ -186,6 +187,8 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const sparks = useDaoSparks(services, profile, navigate);
   const worlds = useMemo(() => state ? storyHomeWorlds(state, covers) : [], [state, covers]);
   const seedIds = useMemo(() => state ? startedSeedIds(state) : [], [state]);
+  // The Creator Space's worlds: the same stories as Home's cards, with where each stands.
+  const creatorWorlds = useMemo(() => state ? creatorWorldsOf(state, worlds) : [], [state, worlds]);
   // The Cave's Stories page: each story, and the Story Seed it started from.
   const caveStories = useMemo(() => state ? state.stories.map(story => ({
     id: story.id, title: story.title, userId: NOVEL_EXPANDED_READER_ID, sourceSeedId: storySourceSeedId(state, story),
@@ -227,7 +230,10 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     </main>);
   }
 
-  if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} menuMusic={menuMusicSlot} />);
+  if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} menuMusic={menuMusicSlot} accentColor={profile.accentColor} />);
+
+  // Create: the Creator Space, unless a Story Seed (new or saved) is open.
+  if (route.page === 'create' && !route.seedId && !route.newSeed) return withFamiliar(<CreateHubPage worlds={creatorWorlds} stories={worlds} navigate={navigate} readerProfile={profile} />);
 
   if (route.page === 'create') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     seedId={route.seedId} accentColor={profile.accentColor}
@@ -238,7 +244,8 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
       originalLanguage={originalLanguage} chapterWritingStyle={seed.story.optional.chapterWritingStyle}
       fateMode={seed.story.optional.fateSurvival.enabled ? 'survival' : 'regular'}
       draft={settingsDraft} onDraftChange={setSettingsDraft} />}
-    onHome={() => navigate(HOME_ROUTE)}
+    // Back from Story Seed returns to the Creator Space.
+    onHome={() => navigate({ page: 'create' })}
     onStartStory={async payload => {
       const story = await startHarnessStoryFromSeed(stories.controller, payload, { draft: settingsDraft, installedSkills: stories.skills, soundWordPresets: stories.soundWordPresets });
       // The draft is the new story's now; the next story starts from its own defaults.

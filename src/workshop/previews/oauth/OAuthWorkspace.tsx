@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/library/story-seed';
+import { LibraryLook } from '@seihouse/library/presentation';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 
@@ -21,8 +22,9 @@ function OAuthPreview({ fail }: { fail: boolean }) {
     setLinked(true);
   };
 
+  // The sign-in screen wears the Library's look like every page around it.
   return (
-    <div className="relative min-h-[100dvh]">
+    <LibraryLook className="relative min-h-[100dvh]">
       {complete ? (
         <section className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 px-6 text-center">
           <h2 className="font-display text-2xl text-white">Sign-in preview complete</h2>
@@ -32,7 +34,7 @@ function OAuthPreview({ fail }: { fail: boolean }) {
           </button>
         </section>
       ) : <StoryAuthGate linked={linked} onAuthenticate={authenticate} />}
-    </div>
+    </LibraryLook>
   );
 }
 

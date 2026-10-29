@@ -38,7 +38,7 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
    await page.waitForFunction(() => document.querySelector('[data-cave-backdrop]')?.getAttribute('src')?.includes('immortal-land-5'));
    assert.equal(await choices.getByRole('radio', { name: /Blood Moon/ }).getAttribute('aria-checked'), 'true');
    assert.notEqual(await page.locator('#cave-display-name').inputValue(), 'Keep draft');
-   for (const route of ['/app/', '/app/?page=discover', '/app/?page=create']) {
+   for (const route of ['/app/', '/app/?page=discover', '/app/?page=create', '/app/?page=create&seed=new']) {
     await page.goto(`${base}${route}`);
     await page.locator('.workspace-shell').waitFor();
     // Every page wearing the look carries the shared image on its look wrapper.

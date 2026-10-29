@@ -19,3 +19,7 @@ workspace, so Compare is disabled and Original Reference explains that boundary.
 
 - **2026-10-18:** Added the dedicated OAuth workspace and Account card, reusing the
   existing sign-in surface without changing its consumers or authentication wiring.
+- **2026-10-29:** The sign-in screen wears the Library's look: the OAuth
+  workspace wraps `StoryAuthGate` in `LibraryLook`, and `look.css` paints the
+  gate's card as an outer panel with the gold rim. The gate's artwork, provider
+  buttons and dissolve are unchanged.

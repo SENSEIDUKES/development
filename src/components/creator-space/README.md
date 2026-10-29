@@ -13,8 +13,9 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
   Toolkit → Your worlds, CELESTIAL LIBRARY header, Home — Create — Discover — Profile strip)
 - **Workshop preview:** `?preview=creator-space` (Pages → Create), with Sample worlds or
   this browser's stories, at Mobile, Tablet and Laptop sizes
-- **In-app route:** the Library strip's **Create** tab, `{ screen: 'creator-space' }`;
-  direct: `/library-shell.html?variant=development&source=main-library&screen=creator-space`
+- **In-app route:** the NovelExpanded app's Create tab, `/app/?page=create` (since 2026-10-29);
+  in the Library shell preview, `{ screen: 'creator-space' }`:
+  `/library-shell.html?variant=development&source=main-library&screen=creator-space`
   (add `&worlds=sample` for the sample set)
 - **Created:** 2026-09-26
 - **Last recorded Workshop update:** 2026-09-26
@@ -88,7 +89,8 @@ client the shell already mounts. Continue opens
 `worlds=sample` swaps in six Workshop sample worlds (`previewData.ts`, existing local art,
 one finished, one without a cover). Sample worlds are not in the chapter workspace, so
 Continue/Studio report where they would go instead of navigating. The Workshop entry
-defaults to samples; the in-app tab defaults to this browser's stories.
+defaults to the app's own Create (`/app/?page=create`, this browser's stories); the
+sample composition is a layout aid behind the Worlds control.
 
 To support Continue and Studio, the Library chapter workspace gained two additive props,
 `initialStoryId` and `initialFocus: 'next-chapter'`, read from the `story`/`focus` URL
@@ -142,3 +144,13 @@ reduced motion. Evidence: `output/playwright/creator-space/`.
   bottom-strip Library tab with **Create**. Creator Space (Carve New Destiny, Energy, In
   progress), an honest Creator Toolkit preview, and the Your worlds row with Continue and
   Studio wired to the chapter workspace, which can now open a requested story.
+
+- **2026-10-29 (in the app):** From SENSEI, Create in NovelExpanded is this page,
+  not Story Seed directly. `CreateHubPage` (`src/novel-expanded/`) hosts it in the
+  app's shell with the reader's stories (`creatorWorldsOf`: Home's cards with each
+  story's status), the app's Energy account, its own Toolkit previews and the app's
+  destinations: Create → a new Story Seed (`?page=create&seed=new`), Continue → the
+  story's Reader, Studio and the card → World Info, Energy → the Cave's Energy page.
+  The Workshop's "This browser's stories" loads that app route; the sample set stays
+  on the Library shell capture. Inside the Library's look the stat tiles are nested
+  cards and Browse plugins a black control.

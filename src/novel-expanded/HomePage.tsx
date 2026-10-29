@@ -13,7 +13,7 @@ const EMPTY_LIST = {
 const FEATURED_STORIES = 5;
 
 /**
- * Home: the reader's stories, newest first, and the way to start a new one, inside the Library Shell.
+ * Home: the reader's stories, newest first, and the way to start a new one (Carve New Destiny plants a Story Seed at once), inside the Library Shell.
  * Featured cycles through the newest stories that have a cover. Dao Insights sits
  * in the header at every width: its sparks start a Story Seed.
  */
@@ -27,7 +27,7 @@ export function HomePage({ worlds, navigate, readerProfile }: {
       <LightNovelsHome worlds={worlds} emptyState={EMPTY_LIST}
         events={HOME_SAMPLE_EVENTS}
         featuredWorlds={worlds.filter(world => world.imageUrl.trim()).slice(0, FEATURED_STORIES)}
-        onCreateStory={() => navigate({ page: 'create' })}
+        onCreateStory={() => navigate({ page: 'create', newSeed: true })}
         onOpenWorld={storyId => navigate({ page: 'story', storyId })} />
     </div>
   </AppShell>;

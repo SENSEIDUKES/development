@@ -72,8 +72,9 @@
 .library-look :is([data-slot='navigation-item'], .library-global-navigation button):active { background-color: #000; }
 .library-look :is([data-slot='navigation-icon'], .library-global-navigation button > span[aria-hidden='true']) { color: #fff; }
 .library-look .workspace-header :is(button svg, .dao-insights-trigger svg) { color: #fff; }
-/* Put dock clearance inside the footer so its fill reaches the viewport edge. */
-.library-look .library-navigation-layout .workspace-shell-main { padding-bottom: 0; }
+/* Put dock clearance inside the footer so its fill reaches the viewport edge;
+   a shell without the Library footer (the Cave) keeps its clearance. */
+.library-look .library-navigation-layout .workspace-shell-main:has(.library-footer) { padding-bottom: 0; }
 .library-look .library-footer {
   border-top: 1px solid var(--reader-glass-edge);
   padding-bottom: calc(.75rem + var(--library-bottom-clearance, 0px));
@@ -189,6 +190,67 @@ body:has(.library-look) :is(.familiar-helper-place, .familiar-helper-quiet) { co
 }
 /* The creator already fills the page; its ambience would double the artwork's dimming. */
 .library-look .seed-workspace-ambience { background: none; }
+
+/* ── Create (Creator Space) ───────────────────────────────────────────────
+   The creator's tiles are nested cards, Browse plugins a black control; the
+   Toolkit cards keep their art and the worlds row is World Cards (media). */
+.library-look [data-creator-space] .creator-space-stat {
+  background: var(--library-material-shell-fill);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-shell-shadow);
+  -webkit-backdrop-filter: var(--library-look-blur);
+  backdrop-filter: var(--library-look-blur);
+}
+.library-look [data-creator-space] .creator-space-link {
+  background: var(--library-material-control-fill);
+  border-color: var(--reader-glass-edge);
+  -webkit-backdrop-filter: var(--library-material-control-blur);
+  backdrop-filter: var(--library-material-control-blur);
+}
+
+/* ── Sign-in (the OAuth screen) ────────────────────────────────────────────
+   The gate keeps its own artwork and provider buttons; its card is an outer
+   panel with the rim. */
+.library-look .story-auth-glass {
+  position: relative;
+  background: var(--library-material-card-fill);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-card-shadow);
+  -webkit-backdrop-filter: var(--library-material-card-blur);
+  backdrop-filter: var(--library-material-card-blur);
+}
+
+/* ── Profile (the Cave) ───────────────────────────────────────────────────
+   The Cave keeps its own backdrop and portrait; its identity panel is an
+   outer panel, its home controls and Dao Pillar nested cards, the aura picker
+   a black control and the Energy page's panels outer panels. */
+.library-look .cave-home-identity {
+  position: relative;
+  background: var(--library-material-card-fill);
+  border-color: var(--reader-glass-edge) !important;
+  box-shadow: var(--library-material-card-shadow);
+  -webkit-backdrop-filter: var(--library-material-card-blur);
+  backdrop-filter: var(--library-material-card-blur);
+}
+.library-look :is(.cave-home-control, .cave-home-pillar) {
+  position: relative;
+  background: var(--library-material-shell-fill);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-shell-shadow);
+  -webkit-backdrop-filter: var(--library-look-blur);
+  backdrop-filter: var(--library-look-blur);
+}
+.library-look .cave-aura-picker {
+  background: var(--library-material-control-fill);
+  border-color: var(--reader-glass-edge);
+}
+.library-look :is(.economy-summary-card, .economy-section) {
+  background: var(--library-material-card-fill);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-card-shadow);
+  -webkit-backdrop-filter: var(--library-material-card-blur);
+  backdrop-filter: var(--library-material-card-blur);
+}
 
 @media (forced-colors: active) { .library-look { background: Canvas; --library-look-blur: none; } }
 @media (prefers-reduced-transparency: reduce) { .library-look { --library-look-blur: none; } }

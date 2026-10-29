@@ -48,27 +48,32 @@ try {
       return { image: style.backgroundImage, color: style.backgroundColor };
     });
     assert.equal(chrome.color, 'rgba(11, 14, 30, 0.9)');
+    const panelImage = await page.locator('[data-home-panel]').nth(1).evaluate(element => getComputedStyle(element).backgroundImage);
     assert.equal(await page.getByRole('button', { name: 'Carve New Destiny', exact: true }).evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(0, 0, 0, 0.95)');
     await page.screenshot({ path: `${output}/home-${width}.png` });
-    await page.goto(`${base}/app/?page=create`);
+    await page.goto(`${base}/app/?page=create&seed=new`);
     const seed = page.locator('.seed-field-scope .glass-panel').first();
     await seed.waitFor();
     const rgbStops = value => value.replace(/rgba?\(([^)]+)\)/g, (_, channels) => `rgb(${channels.split(',').slice(0, 3).join(',')})`);
-    assert.equal(rgbStops(await seed.evaluate(element => getComputedStyle(element).backgroundImage)), rgbStops(chrome.image), 'V2 preserves the shared Story Seed gradient colors and stops');
-    assert.equal(await seed.evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(11, 14, 30, 0.46)', 'Story Seed keeps its original opacity');
+    // Story Seed's panels are the look's outer panels: the same gradient as Home's.
+    assert.equal(rgbStops(await seed.evaluate(element => getComputedStyle(element).backgroundImage)), rgbStops(panelImage), 'Story Seed panels share the look\'s outer-panel gradient colors and stops');
+    assert.equal(await seed.evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(11, 14, 30, 0.35)', 'Story Seed wears the look: its panels are outer panels');
     // The Profile Workshop shares the control, with its separate mock profile.
     await page.goto(`${base}/?preview=user-profile&cave=/settings`);
     await openAccent(page);
     await page.getByLabel('Accent color', { exact: true }).fill('#e68ba5');
-    assert.equal(await page.locator('.library-custom-accent').first().evaluate(element => getComputedStyle(element).getPropertyValue('--library-accent')), '#e68ba5');
+    // The Cave's own scope sits inside the look's (whose gold stays until a reader saves an accent).
+    assert.equal(await page.locator('.library-custom-accent').last().evaluate(element => getComputedStyle(element).getPropertyValue('--library-accent')), '#e68ba5');
     await page.goto(`${base}${settings}`);
     await openAccent(page);
     assert.equal(await picker.inputValue(), '#a78bfa', 'Workshop edits do not replace the app preference');
     await page.getByRole('button', { name: 'Use original colors', exact: true }).click();
-    assert.equal(await page.locator('.library-custom-accent').count(), 0);
+    const accents = () => page.locator('.library-custom-accent').evaluateAll(elements => elements.map(element => getComputedStyle(element).getPropertyValue('--library-accent')));
+    assert.deepEqual(await accents(), ['#c9a24a'], 'Only the look\'s own gold remains');
     assert.equal(await page.getByRole('button', { name: 'Use original colors', exact: true }).isDisabled(), true);
     await page.reload();
-    assert.equal(await page.locator('.library-custom-accent').count(), 0, 'Reset survives reload');
+    await page.locator('[data-cave-settings]').waitFor();
+    assert.deepEqual(await accents(), ['#c9a24a'], 'Reset survives reload');
     assert.deepEqual(errors, []);
     results.push({ width, saved: true, reset: true, draftPreserved: true, settingsStayOpen: true, blackButtons: true, sharedSeedMaterial: true, workshopIsolated: true });
     await context.close();

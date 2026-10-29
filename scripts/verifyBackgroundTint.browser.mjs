@@ -99,7 +99,7 @@ try {
       assert.equal(await page.locator('.workspace-header').evaluate(e => getComputedStyle(e).backgroundColor), 'rgb(255, 255, 255)');
       await cdp.send('Emulation.setEmulatedMedia', { features: [] });
     }
-    await page.goto(`${base}/app/?page=create`);
+    await page.goto(`${base}/app/?page=create&seed=new`);
     await page.locator('.seed-field-scope .glass-panel').first().waitFor();
     assert.equal(await page.locator('.seed-field-scope .glass-panel').first().evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(50, 21, 35, 0.35)', 'Create wears the look: its panels are outer panels and take the shared tint');
     await page.goto(`${base}/app/?page=discover`);

@@ -174,18 +174,22 @@ chapters first, until the tagging is right):
 6. **Clearing a bad run.** Re-tagging replaces a chapter's tags and nothing
    keeps the ones before; a Clear tags action per chapter and per story, no
    history of past taggings. Basic first.
-7. **Cost: settled, not a decision.** Tagging is part of making a chapter: the
-   chapter is written and tagged in the same write, before it is saved, and
-   the Energy that pays for the chapter pays for both calls (SENSEI,
-   2026-10-29: paid at the point of generation means the money is made back by
-   the time the thing exists). Nothing tags again afterwards: a world uploaded
-   to the Immortal Hub carries every tag in its record, and readers make no
-   model call, ever. The only further tagging calls are creator actions in the
-   subscriber tier, which can bring its own key: tagging a chapter again while
-   fine-tuning, and tagging an imported manuscript once, because it was never
-   generated here. The model's bill for those is small: on The Nine-Fold
-   Furnace a Haiku tagging call was about 5,000 tokens in and 1,500 out,
-   roughly a tenth of a cent a chapter. No separate Energy charge for tagging.
+7. **Energy for tagging: SENSEI sets it from the numbers; not decided yet.**
+   The rule is simple (SENSEI, 2026-10-29): nothing with generation in it is
+   free, and the user always sees what they spent and what it cost, even
+   through the Library's own Energy conversion. Writing a chapter is one
+   write that tags the chapter before it is saved, so its Energy covers both
+   calls, and the money is made back by the time the chapter exists. Nothing
+   tags again after a world is uploaded to the Immortal Hub: readers make no
+   model call, ever. Tagging a chapter again while fine-tuning, and tagging an
+   imported manuscript once, are creator actions in the subscriber tier and
+   will cost Energy too, at a split SENSEI sets (a third of a chapter, or
+   whatever the numbers say). What the plan gives him for that: every tagging
+   call keeps its receipt with the exact tokens in and out (on The Nine-Fold
+   Furnace, Haiku read a chapter for about 5,000 in and 1,500 out), so the
+   conversion is set from real numbers. This plan is for Expanded Novels; a
+   publisher licensing SEN gets the same engine at publisher prices, which is
+   not a second design.
 
 ## Hard constraints
 
@@ -220,6 +224,8 @@ chapters first, until the tagging is right):
   tagger discovers before it confirms."
 - **2026-10-29 (SENSEI's cut):** Phase B is one chapter at a time, or a few by
   hand. The whole-story run, with its resume, cancel and clearing questions, is
-  its own later phase (G). Cost is settled, not a decision: tagging is inside
-  the chapter's price, nothing tags after upload, and re-tagging and imports
-  are creator actions in the subscriber tier.
+  its own later phase (G). Energy for tagging is SENSEI's to set from the
+  receipts and is not decided: nothing with generation in it is free, the user
+  always sees the cost, nothing tags after upload, and re-tagging and imports
+  are creator actions in the subscriber tier. The plan speaks for Expanded
+  Novels; a publisher gets the same engine at publisher prices.

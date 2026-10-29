@@ -55,6 +55,8 @@ describe('NovelExpanded addresses', () => {
     expect(routeSearch(route)).toBe('?page=create&seed=seed-1');
     expect(parseRoute(routeSearch(route))).toEqual(route);
     expect(parseRoute('?page=create&seed=')).toEqual({ page: 'create' });
+    expect(parseRoute('?page=create&seed=new')).toEqual({ page: 'create', newSeed: true });
+    expect(routeSearch({ page: 'create', newSeed: true })).toBe('?page=create&seed=new');
   });
 
   it('keeps an id that needs escaping intact', () => {

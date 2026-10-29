@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useFamiliarStoreAccount } from '@seihouse/library/familiar';
 import { LibraryProfile, UserProfileServicesProvider, type AppUser, type Story, type UserProfileFeature } from '@seihouse/library/profile';
+import { LibraryLook } from '@seihouse/library/presentation';
 import { allFamiliarOptions } from '../host/familiar/catalogue';
 import { createDeviceProfileServices, type DevicePortraitMaker } from '../host/profile/deviceProfileServices';
 import { appRouteFor } from './appPlaces';
@@ -32,13 +33,15 @@ const FAMILIAR_STORE = { useStoreAccount: useFamiliarStoreAccount };
  * needs a server shows with "Not in the app yet." The Cave draws its own
  * Library header and navigation and moves between its pages itself.
  */
-export function ProfilePage({ services, stories, navigate, portraits, menuMusic }: {
+export function ProfilePage({ services, stories, navigate, portraits, menuMusic, accentColor }: {
   services: Pick<NovelExpandedServices, 'profile' | 'readerPreferences' | 'storySeeds'>;
   /** Makes the profile picture from the reader's photo. */
   portraits?: DevicePortraitMaker;
   menuMusic?: import('@seihouse/library/profile').UserProfileServices['menuMusic'];
   /** The reader's stories, for the Cave's Stories page. */
   stories: Story[];
+  /** The reader's saved accent, worn over the look's gold. */
+  accentColor?: string;
   navigate: Navigate;
 }) {
   const profileServices = useMemo(() => createDeviceProfileServices({
@@ -51,7 +54,8 @@ export function ProfilePage({ services, stories, navigate, portraits, menuMusic 
     notYetBuilt: { note: NOT_IN_THE_APP_YET, features: NOT_YET_BUILT },
     portraits,
   }), [portraits, services.profile, services.readerPreferences, services.storySeeds, menuMusic]);
-  return <div data-testid="novel-expanded-profile">
+  // The Cave wears the Library's look like every other page; it keeps its own backdrop behind the shell.
+  return <LibraryLook accentColor={accentColor} data-testid="novel-expanded-profile">
     <UserProfileServicesProvider services={profileServices}>
       <LibraryProfile currentUser={DEVICE_READER} stories={stories}
         homeHref={routeHref(HOME_ROUTE)} onNavigateHome={() => navigate(HOME_ROUTE)}
@@ -59,5 +63,5 @@ export function ProfilePage({ services, stories, navigate, portraits, menuMusic 
         // Sever Link is not in the app yet: there is no account to leave.
         onLogout={() => undefined} />
     </UserProfileServicesProvider>
-  </div>;
+  </LibraryLook>;
 }

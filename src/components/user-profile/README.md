@@ -972,3 +972,12 @@ valid; source locations remain host assets. The replaced Cave-only catalog (and 
 unused motto/stage helpers) is preserved in `docs/history/profile-cave-environment.md`.
 Historical reference files remain unchanged. Ambient spirit motes retain their
 existing Profile-only behavior.
+
+
+- **2026-10-29 — The Library's look:** The app's Profile and the Profile Workshop
+  preview wrap the Cave in `LibraryLook` (`library-presentation/look.css`): the
+  shared violet glass header, sidebar, dock and footer; the identity panel as an
+  outer panel and the home controls and Dao Pillar as nested cards, all with the
+  gold rim; the aura picker as a black control; the Energy page's summary cards
+  and sections as outer panels. The Cave keeps its own backdrop, portrait ring
+  and motes; the accent and tint preferences still apply through its own scope.

@@ -478,10 +478,37 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(document.querySelector('[data-testid="novel-expanded-home"]')).toBeTruthy();
   });
 
-  it('Create in the navigation opens Story Seed in the shell\'s workspace mode, with the music note', async () => {
+  it('the Creator Space lists the reader\'s worlds: Continue opens the Reader, Studio and the card open World Info, Energy opens the Cave', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    await render(services, '/app/?page=create');
+    const hub = () => document.querySelector<HTMLElement>('[data-testid="novel-expanded-create-hub"]')!;
+    expect(hub().textContent).toContain('1 world');
+    expect(hub().querySelector(`button[aria-label^="Open ${created.title}"]`)).toBeTruthy();
+    // The browser's Back returns to the Creator Space each time.
+    const back = async () => { await act(async () => { window.history.back(); window.dispatchEvent(new PopStateEvent('popstate')); }); await flush(20); };
+    await click(buttonByText('Continue', hub()), 'Continue', 20);
+    expect(address()).toBe(`/app/?story=${created.id}&read=1`);
+    await back();
+    await click(buttonByText('Studio', hub()), 'Studio', 20);
+    expect(address()).toBe(`/app/?story=${created.id}`);
+    expect(worldInfo()).toBeTruthy();
+    await back();
+    await click(hub().querySelector('button.creator-space-stat'), 'Energy', 20);
+    expect(address()).toBe('/app/?page=profile&cave=%2Fhome%2Fenergy');
+  });
+
+  it('Create in the navigation opens the Creator Space; its Create opens Story Seed in the shell\'s workspace mode, with the music note', async () => {
     await render(appServices(scriptedWriter().writer));
     await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
     expect(address()).toBe('/app/?page=create');
+    const hub = document.querySelector<HTMLElement>('[data-testid="novel-expanded-create-hub"]')!;
+    expect(hub).toBeTruthy();
+    expect(hub.textContent).toContain('Creator Space');
+    expect(hub.textContent).toContain('No worlds yet');
+    await click(buttonByText('Create', hub), 'Create on the Creator Space', 20);
+    expect(address()).toBe('/app/?page=create&seed=new');
     expect(document.querySelector('[data-testid="novel-expanded-create"]')).toBeTruthy();
     // Create, on the creator's last step, wears the Energy badge with the World Blueprint's price (a chapter's, for now).
     await click(document.querySelector('[data-seed-creator-strip] button[data-step="manifest"]'), 'the Manifest step', 20);
@@ -492,8 +519,10 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect([...bar.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Blueprint', 'Settings', 'Back']);
     expect(floatingNote()).toBeTruthy();
     expect(headerNote()).toBeNull();
+    // Back from Story Seed returns to the Creator Space.
     await click(buttonByText('Back', bar), 'Back on the task bar', 20);
-    expect(address()).toBe('/app/');
+    expect(address()).toBe('/app/?page=create');
+    expect(document.querySelector('[data-testid="novel-expanded-create-hub"]')).toBeTruthy();
   });
 
   it('Search opens the reader\'s stories; the footer opens Help and the draft legal pages', async () => {
@@ -595,11 +624,15 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     // Home
     assertHeaderOrder();
 
-    // Create: Story Seed title sits at the top of the page below the header.
+    // Create: the Creator Space title sits at the top of the page below the header; so does Story Seed's.
     await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
+    assertHeaderOrder();
+    expect(document.querySelector('[data-testid="novel-expanded-create-hub"] #creator-space-title')?.textContent).toBe('Creator Space');
+    await click(buttonByText('Create', document.querySelector<HTMLElement>('[data-testid="novel-expanded-create-hub"]')!), 'Create on the Creator Space', 20);
     assertHeaderOrder();
     expect(document.querySelector('[data-story-seed-page-heading] [data-page-title]')?.textContent).toBe('Story Seed');
     await click(buttonByText('Back', document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!), 'Back on Story Seed', 20);
+    expect(document.querySelector('[data-testid="novel-expanded-create-hub"]')).toBeTruthy();
 
     // Discover: Discover heading sits at the top of the page below the header.
     await click(buttonByText('Discover', strip()!), 'Discover in the navigation', 20);
@@ -639,7 +672,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     const writer = { ...scriptedWriter().writer, getServerInfo: async () => ({ provider: 'lmstudio', configured: true,
       models: [{ id: 'lmstudio/loaded', label: 'Currently loaded model' }], defaultModel: 'lmstudio/loaded' }) };
     const services = appServices(writer, { storySeeds: seeds, requestWorldBlueprint });
-    await render(services, '/app/?page=create');
+    await render(services, '/app/?page=create&seed=new');
     await click(buttonByText('Story Bank', container), 'Story Bank', 200);
     await click(buttonByText('Use Seed', container), 'Use Seed', 200);
     await click(buttonByText('Refine Details', container), 'Refine Details', 200);
@@ -701,7 +734,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await render(services, '/app/');
     // Home's Carve New Destiny opens Create.
     await click(buttonByText('Carve New Destiny', container), 'Carve New Destiny', 20);
-    expect(address()).toBe('/app/?page=create');
+    expect(address()).toBe('/app/?page=create&seed=new');
 
     // The banked seed goes back into Story Seed, then on to a World Blueprint.
     await click(buttonByText('Story Bank', container), 'Story Bank', 200);
@@ -797,7 +830,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     const writer = scriptedWriter();
     const services = appServices(writer.writer, { storySeeds: seeds, requestWorldBlueprint: (async () => blueprint!) as unknown as NovelExpandedServices['requestWorldBlueprint'] });
     services.accessToken.current = 'owner-token';
-    await render(services, '/app/?page=create');
+    await render(services, '/app/?page=create&seed=new');
 
     // Story Seed's Settings: the language and Reading Mode, then the skills and media the story starts with.
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
@@ -836,7 +869,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
 
   it('Create\'s Settings installs a skill package into a slot and keeps it on the device for the new story', async () => {
     const services = appServices(scriptedWriter().writer);
-    await render(services, '/app/?page=create');
+    await render(services, '/app/?page=create&seed=new');
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
     await click(buttonByText('Settings', bar), 'Settings on the task bar', 50);
     const settings = document.querySelector<HTMLElement>('[data-testid="create-story-settings"]')!;
@@ -1240,7 +1273,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
   it('a new Story Seed in Create starts from the profile\'s reading language and Reading Mode', async () => {
     const services = appServices(scriptedWriter().writer);
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
-    await render(services, '/app/?page=create');
+    await render(services, '/app/?page=create&seed=new');
     await click(buttonByText('Save Draft') ?? buttonByText('Saved'), 'Save Draft', 200);
     const saved = await services.storySeeds.list(NOVEL_EXPANDED_READER_ID);
     expect(saved.map(record => [record.originalLanguage, record.seed.story.optional.chapterWritingStyle])).toEqual([['ja', 'Easy Read']]);

@@ -1,5 +1,17 @@
 # NovelExpanded app
 
+- **2026-10-29** — Create is the Creator Space, and Profile wears the look. The
+  Create tab (`?page=create`) now opens the Library's Create page in the shell:
+  the reader's worlds with Continue (the Reader) and Studio (World Info), the live
+  Energy balance (the Cave's Energy page), the Creator Toolkit previews and, at
+  the end, Create, which plants a new Story Seed at `?page=create&seed=new`.
+  Home's Carve New Destiny goes straight to that new Story Seed; a Dao Insights
+  spark still opens its saved seed. Back from Story Seed returns to the Creator
+  Space. Profile (the Cave) wears the Library's look too: violet glass chrome,
+  rims on its identity panel and home cards, black aura picker and Energy
+  panels, over the Cave's own backdrop. The app may now import
+  `@seihouse/library/creator-space` and `@seihouse/library/energy`.
+
 - **2026-10-29** — The look is the app's: Discover, Story View, Blueprint and
   Create now wear Home's V2 look (`LibraryLook`, the Library's `look.css`): violet
   glass chrome, black controls, gold rims and the artwork (or the saved Background
@@ -82,13 +94,14 @@ rewrites and every page survives a reload.
 | --- | --- | --- |
 | Home | `/app/` | Events above Featured, the reader's stories, newest first, and Carve New Destiny |
 | Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); Novel / Manga / Game / Video (`medium`) above section navigation, left browsing rail, scoped All / My updates, genres and rankings outside Lore |
-| Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
+| Create | `/app/?page=create` | The Library's Creator Space: the reader's worlds (Continue, Studio), Energy, the Creator Toolkit previews and Create |
+| Story Seed | `/app/?page=create&seed=new` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story; `&seed=<id>` opens a saved seed |
 | Story View | `/app/?story=<id>` | The story's World Info page: Begin Story or Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
 | Blueprint | `/app/?story=<id>&blueprint=1` | The story's own World Blueprint, opened from World Info's Blueprint button. Every story on the device is the reader's own, so it opens for its creator: editable while the novel is private, saved as a new Foundation revision the next chapter uses |
 | Profile | `/app/?page=profile` | The Library's Cultivator Cave; its own pages in `cave` (Settings: `&cave=/settings`). |
 
-- Home and Story View sit in the Library Shell; Create is Story Seed in the shell's workspace mode; Profile is the Cave, which draws the same shell itself; the Reader is full-screen (below).
+- Home, Discover, the Creator Space and Story View sit in the Library Shell; Story Seed runs in the shell's workspace mode; Profile is the Cave, which draws the same shell itself; the Reader is full-screen (below).
 - Moving inside the app adds a browser history entry, so Back and Forward walk the same pages.
 - Manifest Story replaces Create with the new story, so Back from it goes Home.
 - `/app` without the slash redirects to `/app/` (the Vite dev and preview servers, and `vercel.json`).

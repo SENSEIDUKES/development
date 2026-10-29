@@ -170,3 +170,14 @@ The Background Image and tint preferences now reach every page wearing the look.
 Browser checks: `verifyHomePalette`, `verifyBackgroundImage` (every look page
 carries the shared image) and `verifyBackgroundTint` (Create and Discover take the
 tint). The Story Seed Workshop preview wears the look like the app's Create.
+
+**2026-10-29, later:** The look reaches the Creator Space (the app's Create tab)
+and the Cave (Profile). `look.css` maps the creator's stat tiles to nested cards
+and Browse plugins to a black control; the Cave's identity panel to an outer panel,
+its home controls and Dao Pillar to nested cards, its aura picker to a black control
+and the Energy page's panels to outer panels; the rim list in `reader-glass.css`
+names the Cave's cards. The Cave keeps its own backdrop behind the shell.
+The sign-in gate's card (`.story-auth-glass`, the OAuth workspace) is an outer
+panel with the rim; its artwork and provider buttons stay. A shell without the
+Library footer (the Cave) keeps its dock clearance; only a shell with the footer
+moves that clearance inside it.

@@ -13,14 +13,15 @@ type Viewport = keyof typeof viewports;
 
 const WORLD_SOURCES: Record<CreatorWorldsSource, { label: string; description: string }> = {
   sample: { label: 'Sample worlds', description: 'Six Workshop sample worlds with existing art, including a finished story and one without a cover. Continue and Studio say where they would go.' },
-  local: { label: 'This browser’s stories', description: 'The worlds written in this browser’s chapter workspace — the same data the real Create tab reads. Continue and Studio open them there.' },
+  local: { label: 'This browser’s stories', description: 'The app’s own Create at /app/?page=create, with the Library’s look: this browser’s stories, the live Energy account and the real destinations (Story Seed, the Reader, World Info and the Cave’s Energy page).' },
 };
 
 export function CreatorSpaceWorkspace() {
   const [viewport, setViewport] = useState<Viewport>('mobile');
   const [source, setSource] = useState<CreatorWorldsSource>('sample');
   const { label, width, height } = viewports[viewport];
-  const src = `/library-shell.html?variant=development&source=main-library&screen=creator-space${source === 'sample' ? '&worlds=sample' : ''}`;
+  // The app route itself for this browser's stories; the sample set stays on the Library shell capture.
+  const src = source === 'sample' ? '/library-shell.html?variant=development&source=main-library&screen=creator-space&worlds=sample' : '/app/?page=create';
   const title = `Creator Space ${viewport}`;
   const caption = `${label} · ${width} × ${height}`;
 
@@ -43,7 +44,7 @@ export function CreatorSpaceWorkspace() {
   return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'creator-space')!}
     renderDevelopment={render}
     workshopControls={{
-      description: 'Create runs inside the real Library shell: the same header, bottom strip, live Energy account and navigation as Home and Profile.',
+      description: 'Create runs inside the real Library shell: the same header, bottom strip, live Energy account and navigation as Home and Profile. This browser’s stories loads the app’s Create itself.',
       defaultSection: 'pages',
       sections: [{
         id: 'pages',

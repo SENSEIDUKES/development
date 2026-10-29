@@ -14,7 +14,8 @@ export function appLibraryLocation(route: NovelExpandedRoute): LibraryLocation {
     case 'home': return { screen: 'home', collection: 'featured' };
     // The Library's own Discover location, so re-selecting Discover on Discover is no move.
     case 'discover': return { screen: 'home', collection: 'challenges' };
-    case 'create': return { screen: 'creator' };
+    // The Creator Space is the Library's Create destination; Story Seed is its own workspace.
+    case 'create': return route.seedId || route.newSeed ? { screen: 'creator' } : { screen: 'creator-space' };
     case 'story':
     case 'blueprint': return { screen: 'detail' };
     case 'read': return { screen: 'reader' };

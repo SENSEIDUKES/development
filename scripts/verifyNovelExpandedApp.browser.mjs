@@ -390,7 +390,7 @@ async function walk(browser, viewport, sample) {
   // The app's theme songs start with the first tap, with no model.
   await musicOf('menu');
   check(pieces().every(path => piecesOf('menu').has(path)), `The app's menu music should use its theme songs, got ${JSON.stringify(pieces())}.`);
-  check(address() === '/app/?page=create', `Create should be /app/?page=create, got ${address()}`);
+  check(address() === '/app/?page=create&seed=new', `Carve New Destiny should open a new Story Seed, got ${address()}`);
   // Story Settings in Create: Story Seed's Settings holds the language and Reading Mode, then the CAPA skill
   // slots and media the story will start with.
   await visibleButton(/^Settings$/).click();
@@ -1011,10 +1011,10 @@ async function walk(browser, viewport, sample) {
   await page.getByTestId('novel-expanded-home').waitFor();
   check(address() === '/app/', `Browser Forward should return Home, got ${address()}`);
 
-  // 6b. Create from the navigation opens Story Seed; on laptops a minimized Pathways sidebar stays minimized.
+  // 6b. Create from the navigation opens the Creator Space; on laptops a minimized Pathways sidebar stays minimized.
   await navigation().getByRole('button', { name: 'Create' }).click();
-  await page.getByTestId('novel-expanded-create').waitFor();
-  check(address() === '/app/?page=create', `Create in the navigation should open Create, got ${address()}`);
+  await page.getByTestId('novel-expanded-create-hub').waitFor();
+  check(address() === '/app/?page=create', `Create in the navigation should open the Creator Space, got ${address()}`);
   await page.goBack();
   await page.getByTestId('novel-expanded-home').waitFor();
   if (laptop) {

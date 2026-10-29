@@ -99,7 +99,16 @@ describe('Harness Generation HTTP boundary', () => {
     expect(input.userPrompt).toContain('Ye Chen drew his sword.');
     // Nothing of the packet travels: a chapter an author wrote has none of it.
     expect(input.userPrompt).not.toContain('Destined Ending');
+    // The Router's Chapter Tagger level is sent when the model offers it; otherwise the tagger thinks as little as it allows.
+    expect(input.reasoningLevel).toBe('minimal');
+    await handleHarnessGenerationHttp({ method: 'POST', body: { ...tagRequest, reasoningLevel: 'high' } },
+      { environment, providerFactory: () => ({ provider: 'gemini', model: request().model, generate }) });
+    expect(generate.mock.calls[1][0].reasoningLevel).toBe('high');
+    await handleHarnessGenerationHttp({ method: 'POST', body: { ...tagRequest, reasoningLevel: 'xhigh' } },
+      { environment, providerFactory: () => ({ provider: 'gemini', model: request().model, generate }) });
+    expect(generate.mock.calls[2][0].reasoningLevel).toBe('minimal');
     for (const broken of [
+      { ...tagRequest, reasoningLevel: 7 },
       { ...tagRequest, paragraphs: [] },
       { ...tagRequest, paragraphs: ['A paragraph.', 7] },
       { ...tagRequest, subjects: [{ name: 'Ye Chen', kind: 'place' }] },
@@ -108,7 +117,7 @@ describe('Harness Generation HTTP boundary', () => {
     ]) {
       expect((await handleHarnessGenerationHttp({ method: 'POST', body: broken }, { environment })).status).toBe(400);
     }
-    expect(generate).toHaveBeenCalledTimes(1);
+    expect(generate).toHaveBeenCalledTimes(3);
   });
   it('rejects unknown operations and the retired memory operation before contacting the provider', async () => {
     for (const body of [{ ...request(), operation: 'unknown' }, {

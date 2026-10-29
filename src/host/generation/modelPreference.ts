@@ -15,9 +15,22 @@ export const isLocalDevelopmentModel = (model?: string): boolean =>
 const STORAGE_KEY = 'seihouse.model-router.selection.v1';
 const CHANGE_EVENT = 'seihouse:model-router-selection';
 
+/**
+ * The Router's Chapter Tagger choice: a model of its own for the tagging call
+ * (absent: the same model that wrote the chapter) and how hard it thinks
+ * (absent: as little as that model allows). Kept apart from the chapter
+ * model's reasoning so the same model can write at one level and tag at
+ * another.
+ */
+export interface TaggerPreference {
+  model?: string;
+  reasoningLevel?: string;
+}
+
 type Selection = Partial<Record<ModelPreferenceCapability, string>> & {
   /** Router Advanced settings: reasoning level per model id. */
   reasoning?: Record<string, string>;
+  tagger?: TaggerPreference;
 };
 
 const readAll = (): Selection => {
@@ -61,6 +74,24 @@ export const writeReasoningPreference = (model: string, level: string | undefine
   save({ ...current, reasoning }, { model, reasoning: level });
 };
 
+const readTagger = (selection: Selection): TaggerPreference => {
+  const tagger = selection.tagger;
+  if (!tagger || typeof tagger !== 'object') return {};
+  return {
+    ...(typeof tagger.model === 'string' && tagger.model ? { model: tagger.model } : {}),
+    ...(typeof tagger.reasoningLevel === 'string' && tagger.reasoningLevel ? { reasoningLevel: tagger.reasoningLevel } : {}),
+  };
+};
+
+/** The saved Chapter Tagger choice; `{}` means the chapter's own writer, thinking as little as it allows. */
+export const readTaggerPreference = (): TaggerPreference => readTagger(readAll());
+
+/** Save the Chapter Tagger choice; an absent model or level returns that part to its default. */
+export const writeTaggerPreference = (tagger: TaggerPreference): void => {
+  const next = readTagger({ tagger });
+  save({ ...readAll(), tagger: next }, { tagger: next });
+};
+
 /** The saved choice when the server still offers it, otherwise the server default. */
 export const preferredModel = (
   capability: ModelPreferenceCapability,
@@ -88,6 +119,13 @@ export function useModelPreference(capability: ModelPreferenceCapability): [stri
   useEffect(() => subscribeModelPreference(() => setValue(readModelPreference(capability))), [capability]);
   const update = useCallback((model: string) => writeModelPreference(capability, model), [capability]);
   return [value, update];
+}
+
+/** React binding: the saved Chapter Tagger choice, kept in step across surfaces. */
+export function useTaggerPreference(): [TaggerPreference, (tagger: TaggerPreference) => void] {
+  const [value, setValue] = useState(readTaggerPreference);
+  useEffect(() => subscribeModelPreference(() => setValue(readTaggerPreference())), []);
+  return [value, writeTaggerPreference];
 }
 
 /** React binding: the saved reasoning levels for every model. */

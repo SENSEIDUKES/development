@@ -37,6 +37,23 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-29 (the Chapter Tagger's own model and reasoning):** SENSEI: "maybe
+  cheap models with high reasoning are really good for tagging." The tagger
+  read every chapter with the model that wrote it, at that model's lowest
+  level. The host now chooses (`HarnessTaggerChoice`:
+  `HarnessGenerationControllerOptions.tagger`, `setTagger`): a model of its own
+  and a reasoning level, either absent meaning the old behaviour. The tag
+  request carries both (`HarnessTagRequest.model`, `reasoningLevel`); the
+  server sends the level when the model offers it and its lowest otherwise
+  (`taggerReasoningLevel`); the chapter's tagging record names the model that
+  read it. In the Library it is the Model Router's Chapter Tagger section
+  (`useTaggerPreference`, `LibraryStoriesOptions.preferredTagger`), on the app
+  and the Workshop's HARNESS preview alike; the HTTP client sends a tagging
+  request as it is, never the chapter model's saved level. No new model call:
+  the same one tagging call, with its own reader. "Tag this chapter again" is
+  the experiment bench: same chapter, another tagger, and the record says how
+  many notes landed.
+
 - **2026-10-29 (the tagger writes in the margin, not on the page):** SENSEI's
   reading of the tagging failure: "You're in school. You write a page. Your
   teacher looks over it, writes marks. That's the whole concept here." The

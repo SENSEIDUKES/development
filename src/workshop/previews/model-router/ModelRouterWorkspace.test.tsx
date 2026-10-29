@@ -3,7 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ModelRouterGear } from '../../ModelRouterSettings';
-import { readModelPreference, readReasoningPreference } from '../../../host/generation/modelPreference';
+import { readModelPreference, readReasoningPreference, readTaggerPreference } from '../../../host/generation/modelPreference';
 import { modelRouterStatus } from '../../../server/model-router/status';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -114,4 +114,34 @@ it('tunes the selected model\'s reasoning from Advanced settings', async () => {
   expect(document.querySelector('[data-model="google/gemini-3.8-flash"]')?.textContent).toContain('high');
   await click(levels()[0]);
   expect(readReasoningPreference('google/gemini-3.8-flash')).toBeUndefined();
+});
+
+it('chooses the Chapter Tagger\'s own model and reasoning level, apart from the chapter model\'s', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g' });
+  const select = () => document.querySelector<HTMLSelectElement>('[aria-label="Chapter Tagger model"]')!;
+  const levels = () => [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Chapter Tagger reasoning level"] button')];
+  // By default the chapter's own writer tags, thinking as little as it allows.
+  expect(select().value).toBe('');
+  expect(select().options[0].textContent).toContain('Same as chapters (Gemini 3.1 Flash Lite)');
+  expect(levels().map(button => button.textContent)).toEqual(['Default (minimal)', 'minimal', 'low', 'medium', 'high']);
+  expect(readTaggerPreference()).toEqual({});
+  // A cheap model with high reasoning, the owner's experiment.
+  await act(async () => {
+    select().value = 'google/gemini-3.5-flash-lite';
+    select().dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  expect(readTaggerPreference()).toEqual({ model: 'google/gemini-3.5-flash-lite' });
+  await click(levels().find(button => button.textContent === 'high')!);
+  expect(readTaggerPreference()).toEqual({ model: 'google/gemini-3.5-flash-lite', reasoningLevel: 'high' });
+  // The chapter model's own level is untouched by the tagger's.
+  expect(readReasoningPreference('google/gemini-3.5-flash-lite')).toBeUndefined();
+  expect(readModelPreference('chapters')).toBeUndefined();
+  // Back to the chapter's writer, keeping the level.
+  await act(async () => {
+    select().value = '';
+    select().dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  expect(readTaggerPreference()).toEqual({ reasoningLevel: 'high' });
+  // A model without a key is never offered to the tagger.
+  expect([...select().options].some(option => option.value.startsWith('openrouter/'))).toBe(false);
 });

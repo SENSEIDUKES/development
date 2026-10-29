@@ -14,7 +14,7 @@ import type {
   ModelRouterCapabilityStatus,
   ModelRouterStatus,
 } from '../server/model-router/status';
-import { useModelPreference, useReasoningPreferences } from '../host/generation/modelPreference';
+import { useModelPreference, useReasoningPreferences, useTaggerPreference } from '../host/generation/modelPreference';
 
 type Load =
   | { state: 'loading' }
@@ -161,6 +161,68 @@ function AdvancedSettings({ model, level, onChange }: {
   );
 }
 
+/**
+ * The Chapter Tagger's own choice: the model that reads each finished chapter
+ * for its tags, and how hard it thinks. By default it is the chapter's own
+ * writer, thinking as little as it allows; the owner's experiment (2026-10-29)
+ * is whether a cheap model with high reasoning tags better than an expensive
+ * one with none. Saved in this browser, apart from the chapter model's level,
+ * so one model can write at one level and tag at another.
+ */
+function TaggerSettings({ models, chapterModel }: { models: RouterModel[]; chapterModel?: RouterModel }) {
+  const [tagger, setTagger] = useTaggerPreference();
+  const offered = models.filter(model => model.available);
+  const chosen = tagger.model && offered.some(model => model.id === tagger.model) ? tagger.model : '';
+  const reads = chosen ? offered.find(model => model.id === chosen) : chapterModel;
+  const reasoning = reads?.reasoning;
+  const level = tagger.reasoningLevel && reasoning?.levels.some(value => value === tagger.reasoningLevel) ? tagger.reasoningLevel : undefined;
+  const lowest = reasoning?.levels[0];
+  const option = (value: string | undefined, label: string) => {
+    const active = level === value;
+    return (
+      <button key={label} type="button" role="radio" aria-checked={active} onClick={() => setTagger({ ...(chosen ? { model: chosen } : {}), ...(value ? { reasoningLevel: value } : {}) })}
+        className={`workshop-touch-target rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
+          ? 'border-violet-400/45 bg-violet-500/15 text-violet-50'
+          : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
+        {label}
+      </button>
+    );
+  };
+  const providers = [...new Set(offered.map(model => model.provider))];
+  const providerLabel: Record<RouterModel['provider'], string> = {
+    gemini: 'Google Gemini', openrouter: 'OpenRouter', minimax: 'MiniMax', anthropic: 'Anthropic', lmstudio: 'Local (LM Studio)', elevenlabs: 'ElevenLabs', tripo: 'Tripo AI',
+  };
+  return (
+    <section aria-label="Chapter Tagger" className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-2">
+      <h3 className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Chapter Tagger</h3>
+      <p className="mt-1 text-[10px] leading-snug text-white/40">Reads each finished chapter for its tags: who speaks, sounds, holdings, appearances. By default the chapter's own writer, thinking as little as it allows.</p>
+      <label className="mt-1.5 block">
+        <span className="sr-only">Chapter Tagger model</span>
+        <select aria-label="Chapter Tagger model" value={chosen}
+          onChange={event => setTagger({ ...(event.target.value ? { model: event.target.value } : {}), ...(tagger.reasoningLevel ? { reasoningLevel: tagger.reasoningLevel } : {}) })}
+          className="workshop-touch-target w-full rounded-md border border-white/10 bg-[#0b0e16] px-2 py-1.5 text-[12px] text-white/85">
+          <option value="">Same as chapters{chapterModel ? ` (${chapterModel.label.replace(/ · OpenRouter$/, '')})` : ''}</option>
+          {providers.map(provider => (
+            <optgroup key={provider} label={providerLabel[provider]}>
+              {offered.filter(model => model.provider === provider).map(model => (
+                <option key={model.id} value={model.id}>{model.label.replace(/ · OpenRouter$/, '')}</option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </label>
+      {reasoning ? (
+        <div className="mt-1.5 flex flex-wrap gap-1" role="radiogroup" aria-label="Chapter Tagger reasoning level">
+          {option(undefined, `Default (${lowest})`)}
+          {reasoning.levels.map(value => option(value, value))}
+        </div>
+      ) : (
+        <p className="mt-1.5 text-[11px] text-white/45">{reads ? 'This model has no reasoning controls.' : 'Choose a chapter model first.'}</p>
+      )}
+    </section>
+  );
+}
+
 function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStatus }) {
   const selectable = capability.id === 'chapters' || capability.id === 'images';
   const [saved, setSaved] = useModelPreference(capability.id === 'images' ? 'images' : 'chapters');
@@ -209,6 +271,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
         ))}
         {!models.length && <li className="px-2.5 py-1.5 text-xs text-white/40">No models from this provider.</li>}
       </ul>
+      {capability.id === 'chapters' && <TaggerSettings models={capability.models} chapterModel={selectedModel} />}
       <section aria-label="Used by" className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-2">
         <h3 className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Used by</h3>
         {capability.consumers.length ? (

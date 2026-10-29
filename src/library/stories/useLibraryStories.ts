@@ -7,6 +7,7 @@ import {
   type HarnessGenerationRepository,
   type HarnessHoldingsFixerPolicy,
   type HarnessGenerationServerInfo,
+  type HarnessTaggerChoice,
   type HarnessSkillManifest,
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
@@ -45,6 +46,12 @@ export interface LibraryStoriesOptions {
   importMediaPack?: (file: Blob) => Promise<{ pack: MediaPack; entitlement: MediaPackEntitlement }>;
   /** Host-remembered model choice (the Model Router); used whenever the server offers it. */
   preferredModel?: string;
+  /**
+   * Host-remembered Chapter Tagger choice (the Model Router): its model, used
+   * whenever the server offers it, and its reasoning level. Absent, the chapter's
+   * own writer tags it, thinking as little as it allows.
+   */
+  preferredTagger?: HarnessTaggerChoice;
   /**
    * How far SEN's Holdings fixer may go after each chapter: the Library's
    * control over it, where the Familiar will take over. Absent: records and,
@@ -120,6 +127,7 @@ export function useLibraryStories({
   installSkill: keepSkill,
   importMediaPack: installMediaPack,
   preferredModel,
+  preferredTagger,
   holdingsFixer = 'records-and-sentences',
 }: LibraryStoriesOptions): LibraryStories {
   const controller = useMemo(
@@ -176,6 +184,10 @@ export function useLibraryStories({
   useEffect(() => {
     if (preferredModel && serverInfo?.models.some(option => option.id === preferredModel)) setModel(preferredModel);
   }, [preferredModel, serverInfo]);
+  // The Chapter Tagger's own choice: a model the server no longer offers falls back to the chapter's writer.
+  const taggerModel = preferredTagger?.model && serverInfo?.models.some(option => option.id === preferredTagger.model) ? preferredTagger.model : undefined;
+  const taggerReasoningLevel = preferredTagger?.reasoningLevel;
+  useEffect(() => controller.setTagger({ ...(taggerModel ? { model: taggerModel } : {}), ...(taggerReasoningLevel ? { reasoningLevel: taggerReasoningLevel } : {}) }), [controller, taggerModel, taggerReasoningLevel]);
 
   const retry = useCallback(() => {
     if (storageError) setStorageAttempt(value => value + 1);

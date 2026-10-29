@@ -128,6 +128,7 @@ const parseTagRequest = (parsed: Record<string, unknown>): HarnessTagRequest => 
     && Number.isInteger(parsed.chapterNumber) && Number(parsed.chapterNumber) >= 1
     && Array.isArray(paragraphs) && paragraphs.length >= 1 && paragraphs.length <= TAG_PARAGRAPH_LIMIT
     && paragraphs.every(paragraph => within(paragraph, TAG_PARAGRAPH_CHARACTERS))
+    && (parsed.reasoningLevel === undefined || within(parsed.reasoningLevel, 16))
     && Array.isArray(subjects) && subjects.length <= TAG_SUBJECT_LIMIT
     && subjects.every(subject => isRecord(subject) && within(subject.name, TAG_NAME_CHARACTERS) && Boolean((subject.name as string).trim())
       && TAG_SUBJECT_KINDS.has(subject.kind as string)

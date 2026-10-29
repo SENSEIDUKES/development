@@ -181,10 +181,12 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
     </>
 
     : context?.actions.length ? <div className="familiar-helper-actions">
-      {context.actions.map(action => { const Icon = action.icon ?? Zap; return <button type="button" key={action.id} disabled={busy}
+      {context.actions.map(action => { const Icon = action.icon ?? Zap; const detail = `familiar-action-${action.id}-detail`;
+        // Named by its label; the short line under it describes it.
+        return <button type="button" key={action.id} disabled={busy} aria-label={action.label} aria-describedby={action.detail ? detail : undefined}
         onClick={() => { if (action.input) type(`${action.phrases[0]}: `); else { helper.useText(); helper.submit(action.phrases[0]); } }}>
         <Icon size={22} aria-hidden /><span className="familiar-helper-tile-text"><span>{action.label}</span>
-          {action.detail && <small>{action.detail}</small>}</span></button>; })}
+          {action.detail && <small id={detail}>{action.detail}</small>}</span></button>; })}
     </div> : null}
 
     <p role="status" aria-live="polite" className="familiar-helper-status">{message}</p>

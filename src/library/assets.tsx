@@ -9,6 +9,8 @@ export interface LibraryAssets {
   homeVideos?: readonly string[];
   caveImages?: Readonly<Record<string, string>>;
   helpAudio?: Readonly<Record<string, string>>;
+  /** Short silent clips showing a help topic, by its id; the Familiar plays them in Explain. */
+  helpVideos?: Readonly<Record<string, string>>;
   /** Decorative landscape for the Pathways sidebar on laptops. */
   navigationArtwork?: string;
 }

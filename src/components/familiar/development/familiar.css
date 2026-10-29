@@ -39,26 +39,56 @@
 .familiar-header-actions { max-width: none; }
 .familiar-actions:has([aria-label="Talk to Familiar"]) { width: 148px; flex-shrink: 0; }
 .familiar-dock:has([aria-label="Talk to Familiar"]) { width: 148px; }
-.familiar-helper { position: fixed; z-index: 320; inset-inline-end: max(16px, env(safe-area-inset-right)); bottom: max(88px, env(safe-area-inset-bottom)); width: min(360px, calc(100vw - 32px)); max-height: 55dvh; overflow: auto; padding: 12px 16px; border: 1px solid #668698; border-radius: 18px; background: #101c2cf5; color: #eef7ff; box-shadow: 0 12px 40px #0006; font: 14px/1.5 var(--font-sans, sans-serif); }
+.familiar-helper { position: fixed; z-index: 320; inset-inline-end: max(16px, env(safe-area-inset-right)); bottom: max(88px, env(safe-area-inset-bottom)); width: min(360px, calc(100vw - 32px)); max-height: 70dvh; overflow: auto; padding: 10px; border: 1px solid #ffffff14; border-radius: 24px; background: #101c2cf7; color: #eef7ff; box-shadow: 0 16px 48px #0008; font: 15px/1.4 var(--font-sans, sans-serif); }
 .familiar-helper:focus { outline: none; }
-.familiar-helper-context { display: block; font-size: 11px; font-weight: 400; color: #b9c7d6; }
-.familiar-helper-modes { display: flex; gap: 4px; margin-top: 6px; }
-.familiar-helper-modes button { flex: 1; border: 1px solid #668698; }
-.familiar-helper-modes button[aria-pressed="true"] { background: #8bdbff26; border-color: #96ddf9; font-weight: 600; }
-.familiar-helper-status { margin: 4px 0 8px; font-size: 12px; }
-.familiar-helper-proposal { margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.familiar-helper button { min-height: 44px; padding: 6px 10px; border-radius: 10px; }
-.familiar-helper button:disabled { opacity: .5; }
+/* Compact: filled tiles, no outlines; the icon carries the meaning. */
+.familiar-helper button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 44px; min-height: 44px; padding: 6px 10px; border: 0; border-radius: 16px; background: transparent; color: inherit; cursor: pointer; }
+.familiar-helper button:disabled { opacity: .45; cursor: default; }
 .familiar-helper button:focus-visible, .familiar-helper input:focus-visible { outline: 2px solid #96ddf9; outline-offset: 2px; }
-.familiar-helper button:hover:not(:disabled) { background: #8bdbff20; }
-.familiar-helper-choices, .familiar-helper-buttons { display: flex; flex-wrap: wrap; gap: 4px; }
-.familiar-helper-buttons button:first-child { background: #8bdbff26; }
-.familiar-helper form { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.familiar-helper label { flex-basis: 100%; font-size: 12px; }
-.familiar-helper input { flex: 1; min-width: 0; min-height: 44px; border: 1px solid #668698; border-radius: 8px; padding: 8px; background: #08101d; font-size: 16px; }
-.familiar-helper-input-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 8px; }
-.familiar-helper-mic { display: flex; align-items: center; gap: 6px; }
-.familiar-helper-footnote { margin-top: 8px; font-size: 10px; color: #b9c7d6; }
+.familiar-helper button:hover:not(:disabled) { background: #ffffff14; }
+.familiar-helper button[aria-pressed="true"] { background: #8bdbff2e; color: #fff; }
+/* One row: the two modes, where the reader is, close. */
+.familiar-helper-top { display: flex; align-items: center; gap: 8px; }
+.familiar-helper-modes { display: flex; gap: 2px; padding: 3px; border-radius: 18px; background: #ffffff0d; }
+.familiar-helper-modes button { min-height: 38px; padding: 4px 14px; border-radius: 14px; }
+.familiar-helper-place { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #b9c7d6; }
+.familiar-helper-icon { padding: 6px; }
+/* Tiles: icon, name, and one short line under it. */
+.familiar-helper-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.familiar-helper .familiar-helper-actions button { justify-content: flex-start; min-height: 64px; padding: 10px 12px; background: #ffffff0d; text-align: start; }
+.familiar-helper-tile-text { display: flex; flex-direction: column; min-width: 0; font-size: 14px; font-weight: 600; }
+.familiar-helper-tile-text small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: 11px; font-weight: 400; line-height: 1.3; color: #b9c7d6; }
+.familiar-helper-actions svg, .familiar-helper-topics svg { flex-shrink: 0; }
+/* Explain: a clip (only when the topic has one), its words, then the topics in one scrolling row. */
+.familiar-helper-topic { margin-top: 10px; padding: 10px; border-radius: 18px; background: #ffffff0d; }
+.familiar-helper-clip { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; margin-bottom: 8px; border-radius: 12px; background: #000; }
+.familiar-helper-topic-text { display: flex; align-items: flex-start; gap: 6px; }
+.familiar-helper-topic-text p { flex: 1; margin: 0; font-size: 14px; }
+.familiar-helper-topics { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; }
+.familiar-helper-topics::-webkit-scrollbar { display: none; }
+.familiar-helper .familiar-helper-topics button { flex-shrink: 0; padding: 6px 14px; border-radius: 999px; background: #ffffff0d; white-space: nowrap; font-size: 14px; }
+.familiar-helper .familiar-helper-topics button[aria-pressed="true"] { background: #8bdbff2e; }
+/* A proposal: what will happen, then four plain answers. */
+.familiar-helper-proposal { margin: 10px 4px 8px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.familiar-helper-answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.familiar-helper .familiar-helper-answers button { background: #ffffff0d; }
+.familiar-helper .familiar-helper-answers button:first-child { background: #8bdbff33; font-weight: 600; }
+.familiar-helper-info { margin-top: 10px; padding: 10px 12px; border-radius: 18px; background: #ffffff0d; font-size: 14px; }
+.familiar-helper-info p { margin: 0 0 8px; }
+.familiar-helper-info p:last-child { margin-bottom: 0; }
+.familiar-helper-info svg { display: inline; vertical-align: -3px; }
+.familiar-helper-quiet { color: #b9c7d6; font-size: 12px; }
+.familiar-helper-status { margin: 8px 4px 0; font-size: 13px; }
+.familiar-helper-status:empty { display: none; }
+.familiar-helper form { display: flex; gap: 6px; margin-top: 10px; }
+.familiar-helper input { flex: 1; min-width: 0; min-height: 44px; border: 0; border-radius: 14px; padding: 8px 12px; background: #ffffff12; color: inherit; font-size: 16px; }
+/* The icon row: info, the microphone, typing. The microphone shows what the Familiar is doing: a pulse while it listens, a glow while it speaks. */
+.familiar-helper-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding: 0 4px; }
+.familiar-helper .familiar-helper-mic { width: 54px; height: 54px; border-radius: 50%; background: #8bdbff2e; }
+.familiar-helper .familiar-helper-mic[data-phase="listening"] { opacity: 1; animation: familiar-listening 1.2s ease-in-out infinite; }
+.familiar-helper .familiar-helper-mic[data-phase="speaking"] { box-shadow: 0 0 18px #96ddf9aa; }
+@keyframes familiar-listening { 0%, 100% { box-shadow: 0 0 0 0 #96ddf966; } 50% { box-shadow: 0 0 0 10px #96ddf900; } }
+@media (prefers-reduced-motion: reduce) { .familiar-helper .familiar-helper-mic[data-phase="listening"] { animation: none; box-shadow: 0 0 0 3px #96ddf9; } }
 /* Focus follows the Familiar's silhouette, without the header's blue box. */
 .familiar-recall-container .familiar-recall:focus-visible { outline: none; box-shadow: none; }
 .familiar-recall:focus-visible > span { filter: drop-shadow(0 0 3px #d6bd87); }
@@ -68,6 +98,7 @@
 }
 .familiar-size-control { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin: 20px 0; padding: 16px; border: 1px solid #d6bd8744; border-radius: 12px; }
 .familiar-size-control label { color: #f0e2bf; font-weight: 600; }
+.familiar-header-switch { width: 44px; height: 44px; accent-color: #d6bd87; }
 .familiar-size-slider { display: flex; align-items: center; flex: 1 1 240px; gap: 12px; min-width: 0; }
 .familiar-size-slider input { flex: 1; min-width: 40px; min-height: 44px; accent-color: #d6bd87; }
 .familiar-size-slider output { min-width: 4ch; font-size: 13px; }

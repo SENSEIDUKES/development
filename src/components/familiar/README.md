@@ -345,6 +345,14 @@ Escape/outside dismissal, and reduced-motion handling.
 
 - 2026-10-29: Explain and Action modes. Sound Cues by voice in Create mode, with
   Hear it before Confirm; voice sessions also hear problems and the success.
+- 2026-10-29: Compact panel: icons for Explain and Action, tiles with an icon, a
+  name and one short line, an icon row (info, microphone, typing); how to talk
+  moved behind info. Explain shows each page's help topics, read in the System
+  voice where recorded (the device voice otherwise), with a clip only when one
+  exists (`helpVideos`). The Familiar floats by default; Settings → Familiar →
+  Keep in the header puts it back in the header.
+- 2026-10-29: Tap the microphone to start talking and tap again when done; a
+  pause no longer ends listening. It stops by itself after 30 seconds.
 
 - 2026-10-16: Added the optional global helper foundation and its first Reader
   action: review and save one of the four existing Fate choices using voice,

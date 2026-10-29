@@ -1,5 +1,5 @@
-import { useState, type ReactNode, type RefObject } from 'react';
-import { FamiliarCompanion, FamiliarRecall, FamiliarHelperProvider } from '@seihouse/library/familiar';
+import { useEffect, useState, type ReactNode, type RefObject } from 'react';
+import { FamiliarCompanion, FamiliarPlace, FamiliarRecall, FamiliarHelperProvider, type FamiliarHelpPlace } from '@seihouse/library/familiar';
 import type { UserProfile } from '@seihouse/library/profile';
 import { WorkspaceHeaderAccessoryProvider, useLibraryBottomClearance } from '@seihouse/library/shell';
 import { defaultFamiliar, familiarCatalogueEntry } from '../host/familiar/catalogue';
@@ -12,24 +12,29 @@ const READER_BOTTOM = 136;
 
 /**
  * The reader's equipped Familiar: one companion for the whole app, so it keeps
- * its place from page to page. It starts minimized, its recall in every
- * Library header (beside the music note on laptops); summoned, it floats over
- * the page, starting at the bottom right above the bottom bar and the music
+ * its place from page to page. It floats over the page unless the reader keeps
+ * it in the header (Settings → Familiar → Keep in the header): minimized, its
+ * recall in every Library header (beside the music note on laptops).
+ * Floating, it starts at the bottom right above the bottom bar and the music
  * note on phones and tablets, and above the page's corner on laptops. It
  * follows the profile: a Familiar or size chosen in the Cave changes it at
  * once. In the Reader (`reading`) its recall is in the Reader's top bar beside
  * Reader Settings (the Library hands it over), and summoned it floats above the Reader's
  * bottom bar. It sits under the economy's providers: its Energy panel reads
- * the reader's account.
+ * the reader's account. `place` is the page, for the Familiar's Explain.
  */
-export function AppFamiliar({ profile, present, reading = false, boundaryRef, children }: { profile: UserProfile; present: boolean; reading?: boolean; boundaryRef?: RefObject<HTMLElement | null>; children: ReactNode }) {
-  const [minimized, setMinimized] = useState(true);
+export function AppFamiliar({ profile, present, reading = false, place, boundaryRef, children }: { profile: UserProfile; present: boolean; reading?: boolean; place: { title: string; help: FamiliarHelpPlace }; boundaryRef?: RefObject<HTMLElement | null>; children: ReactNode }) {
+  const inHeader = profile.familiarInHeader ?? false;
+  const [minimized, setMinimized] = useState(inHeader);
+  // Changing the setting moves it at once.
+  useEffect(() => { setMinimized(inHeader); }, [inHeader]);
   const [voice] = useState(createFamiliarBrowserVoice);
   const familiar = (familiarCatalogueEntry(profile.familiarId) ?? defaultFamiliar).definition;
   const clearance = useLibraryBottomClearance();
   const bottomInset = reading ? READER_BOTTOM : clearance ? clearance + BOTTOM_GAP : 0;
   const recall = present && minimized ? <FamiliarRecall key={familiar.id} familiar={familiar} onRecall={() => setMinimized(false)} /> : null;
   return <FamiliarHelperProvider voice={voice} bottomInset={bottomInset}><WorkspaceHeaderAccessoryProvider accessory={recall}>
+    <FamiliarPlace title={place.title} help={place.help} />
     {children}
     {present && <FamiliarCompanion key={familiar.id} familiar={familiar} size={profile.familiarSize}
       boundaryRef={boundaryRef} minimized={minimized} onMinimize={() => setMinimized(true)} bottomInset={bottomInset} />}

@@ -1,16 +1,62 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { Mic, X } from 'lucide-react';
-import { FamiliarHelperController, type FamiliarHelperContext, type FamiliarVoice } from '../../../library/familiars/helper';
+import { Check, Info, Keyboard, Lightbulb, Mic, RotateCcw, Square, Volume2, X, Zap } from 'lucide-react';
+import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
+import { FamiliarHelperController, type FamiliarHelperContext, type FamiliarPlaceLevel, type FamiliarVoice } from '../../../library/familiars/helper';
 
 const Helper = createContext<FamiliarHelperController | null>(null);
 const FocusReturn = createContext<RefObject<HTMLElement | null> | null>(null);
 /** Hosts without the helper retain the Familiar's original two-action tray. */
 export const useFamiliarHelperAvailable = () => Boolean(useContext(Helper));
 
+/** A recorded line has this long to start before the device voice reads it instead. */
+const LINE_START_MS = 8_000;
+
+/**
+ * Plays one recorded line on the host's shared player (the one the help menu
+ * uses): done when it ends, a failure when it cannot start, so the device
+ * voice can read the words instead.
+ */
+function playLine(playback: NarrativeAudioPlayback | null, url: string, done: () => void, failure: (message: string) => void) {
+  if (!playback) { failure('No player for recorded lines here.'); return () => {}; }
+  const id = `familiar-line:${url}`;
+  let started = false;
+  let finished = false;
+  const finish = (ended: boolean) => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timeout);
+    unsubscribe();
+    if (ended) done(); else failure('The recorded line could not play.');
+  };
+  const unsubscribe = playback.subscribe(event => {
+    if (event.type === 'play' && event.trackId === id) started = true;
+    else if (event.type === 'error' && (event.trackId === id || event.trackId === null)) finish(false);
+    else if (started && (event.type === 'queue-end' || (event.type === 'track-change' && event.trackId !== id))) finish(true);
+  });
+  const timeout = setTimeout(() => { if (!started) finish(false); }, LINE_START_MS);
+  playback.play({ id, source: url, title: 'Familiar', artist: 'Familiar' });
+  return () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timeout);
+    unsubscribe();
+    playback.stop(id);
+  };
+}
+
 /** One app-wide owner, independent of whether the Familiar is minimized or on a Reader page. */
 export function FamiliarHelperProvider({ voice, language = 'en-US', bottomInset = 88, children }: { voice: FamiliarVoice; language?: string; bottomInset?: number; children: ReactNode }) {
-  const helper = useMemo(() => new FamiliarHelperController(voice, language), [voice, language]);
+  // Recorded lines play on the host's shared player, read when each line starts.
+  const narrative = useOptionalNarrativeAudio();
+  const narrativeRef = useRef(narrative);
+  narrativeRef.current = narrative;
+  const helper = useMemo(() => new FamiliarHelperController({
+    available: voice.available,
+    listen: (...args) => voice.listen(...args),
+    speak: (...args) => voice.speak(...args),
+    play: voice.play ?? ((url, done, failure) => playLine(narrativeRef.current, url, done, failure)),
+  }, language), [voice, language]);
   const returnFocus = useRef<HTMLElement | null>(null);
   useEffect(() => {
     const hide = () => { if (document.visibilityState === 'hidden') helper.suspend(); };
@@ -20,11 +66,15 @@ export function FamiliarHelperProvider({ voice, language = 'en-US', bottomInset 
   return <Helper.Provider value={helper}><FocusReturn.Provider value={returnFocus}>{children}<FamiliarHelperPanel helper={helper} bottomInset={Math.max(16, bottomInset)} /></FocusReturn.Provider></Helper.Provider>;
 }
 
-/** Register only the mounted screen; later screens can supply unrelated actions through the same port. */
-export function useFamiliarHelperContext(context: FamiliarHelperContext) {
+/**
+ * Register only the mounted screen; later screens can supply unrelated actions
+ * through the same port. The app registers its own place (`base`) under every
+ * page; a page that registers covers it while mounted.
+ */
+export function useFamiliarHelperContext(context: FamiliarHelperContext, level: FamiliarPlaceLevel = 'page') {
   const helper = useContext(Helper);
   const owner = useRef(Symbol('familiar-screen'));
-  useLayoutEffect(() => { helper?.setContext(owner.current, context); });
+  useLayoutEffect(() => { helper?.setContext(owner.current, context, level); });
   useLayoutEffect(() => {
     const token = owner.current;
     return () => helper?.clearContext(token);
@@ -43,13 +93,20 @@ export function FamiliarHelperAction({ onOpen, focusTarget }: { onOpen?: () => v
     }}><Mic aria-hidden size={20} /></button>;
 }
 
-/** A small nonmodal surface: no conversation history, backdrop, or persistent Reader toolbar. */
+/**
+ * A small nonmodal surface, mobile first: the two modes as icons, then what
+ * this place offers in that mode (Explain's topics, with a clip where one
+ * exists; Action's choices), then the microphone. How to talk to it is behind
+ * the info button, never on the panel itself.
+ */
 function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperController; bottomInset: number }) {
   const state = useSyncExternalStore(helper.subscribe, helper.getSnapshot, helper.getSnapshot);
   const [text, setText] = useState('');
   const [typing, setTyping] = useState(false);
+  const [info, setInfo] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
   const confirm = useRef<HTMLButtonElement>(null);
+  const input = useRef<HTMLInputElement>(null);
   const returnFocus = useContext(FocusReturn);
   useEffect(() => {
     if (!state.open) return;
@@ -58,58 +115,93 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   useEffect(() => {
     if (state.open) (confirm.current ?? panel.current)?.focus({ preventScroll: true });
   }, [state.open, state.proposal, state.context?.key]);
-  useEffect(() => { setText(''); setTyping(false); }, [state.open, state.context?.key]);
+  useEffect(() => { setText(''); setTyping(false); setInfo(false); }, [state.open, state.context?.key]);
   if (!state.open) return null;
   const busy = state.phase === 'saving';
+  const context = state.context;
   // The longest typed command any input action takes: its phrase, a separator and its text.
-  const typedLimit = state.context?.actions.reduce<number | undefined>((longest, action) => action.input
+  const typedLimit = context?.actions.reduce<number | undefined>((longest, action) => action.input
     ? Math.max(longest ?? 0, action.input.maxLength + action.phrases[0].length + 2) : longest, undefined);
-  const proposed = state.proposal && state.context?.actions.find(action => action.id === state.proposal!.actionId);
-  return createPortal(<div ref={panel} role="dialog" aria-modal="false" aria-label="Familiar helper" tabIndex={-1}
-    style={{ bottom: `max(${bottomInset}px, env(safe-area-inset-bottom))`, maxHeight: `min(55dvh, calc(100dvh - ${bottomInset + 16}px))` }}
+  const proposed = state.proposal && context?.actions.find(action => action.id === state.proposal!.actionId);
+  const topic = state.mode === 'explain' ? context?.topics.find(entry => entry.id === state.topicId) : undefined;
+  const type = (prefill = '') => { helper.useText(); setInfo(false); setTyping(true); setText(prefill); setTimeout(() => input.current?.focus(), 0); };
+  // Listening and speaking show on the microphone, not in words.
+  const message = state.phase === 'listening' ? '' : state.message;
+  const micLabel = state.phase === 'listening' ? 'Done talking' : state.phase === 'speaking' ? 'Speaking' : state.proposal ? 'Speak Confirm or Cancel' : 'Speak';
+
+  return createPortal(<div ref={panel} role="dialog" aria-modal="false" aria-label="Familiar" tabIndex={-1}
+    style={{ bottom: `max(${bottomInset}px, env(safe-area-inset-bottom))`, maxHeight: `min(70dvh, calc(100dvh - ${bottomInset + 16}px))` }}
     className="familiar-helper" onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); helper.close(); } }}>
-    <div className="familiar-panel-heading">
-      <span>Familiar <span className="familiar-helper-context">{state.context?.title}</span></span>
-      <button type="button" className="familiar-panel-button" aria-label="Close Familiar helper" disabled={busy} onClick={helper.close}><X size={18} aria-hidden /></button>
+    <div className="familiar-helper-top">
+      <div className="familiar-helper-modes" role="group" aria-label="Familiar mode">
+        {([['explain', 'Explain', Lightbulb], ['action', 'Action', Zap]] as const).map(([mode, label, Icon]) =>
+          <button type="button" key={mode} aria-pressed={state.mode === mode && !info} aria-label={label} title={label}
+            disabled={busy || Boolean(state.proposal)} onClick={() => { helper.useText(); setTyping(false); setInfo(false); helper.setMode(mode); }}>
+            <Icon size={20} aria-hidden /></button>)}
+      </div>
+      <span className="familiar-helper-place">{context?.title}</span>
+      <button type="button" className="familiar-helper-icon" aria-label="Close Familiar" title="Close" disabled={busy} onClick={helper.close}><X size={20} aria-hidden /></button>
     </div>
-    <div className="familiar-helper-modes" role="group" aria-label="Familiar mode">
-      {(['explain', 'action'] as const).map(mode => <button type="button" key={mode} aria-pressed={state.mode === mode}
-        disabled={busy || Boolean(state.proposal)} onClick={() => { helper.useText(); setTyping(false); helper.setMode(mode); }}>
-        {mode === 'explain' ? 'Explain' : 'Action'}</button>)}
+
+    {info ? <div className="familiar-helper-info">
+      <p><Lightbulb size={16} aria-hidden /> <strong>Explain</strong> shows and tells you how things work here.</p>
+      <p><Zap size={16} aria-hidden /> <strong>Action</strong> does things for you. It always asks before it changes anything.</p>
+      <p><Mic size={16} aria-hidden /> Tap the microphone and talk, or <Keyboard size={16} aria-hidden /> type. Say “Explain” or “Action” to switch.</p>
+      {context?.actions.length ? <p>{context.hint}</p> : null}
+      <p className="familiar-helper-quiet">Voice commands are in English for now.</p>
     </div>
-    <p role="status" aria-live="polite" className="familiar-helper-status">{state.message}</p>
-    {state.proposal ? <>
+
+    : state.proposal ? <div className="familiar-helper-review">
       <p id="familiar-proposal" className="familiar-helper-proposal">{state.proposal.summary}</p>
-      <div className="familiar-helper-buttons">
-        <button ref={confirm} type="button" aria-describedby="familiar-proposal" disabled={busy} onClick={() => void helper.confirm()}>Confirm</button>
-        <button type="button" disabled={busy} onClick={helper.close}>Cancel</button>
-        {proposed?.preview && <button type="button" disabled={busy} onClick={() => { helper.useText(); helper.hear(); }}>Hear it</button>}
-        <button type="button" disabled={busy} onClick={helper.change}>Change</button>
+      <div className="familiar-helper-answers">
+        <button ref={confirm} type="button" aria-describedby="familiar-proposal" disabled={busy} onClick={() => void helper.confirm()}><Check size={18} aria-hidden />Confirm</button>
+        {proposed?.preview && <button type="button" disabled={busy} onClick={() => { helper.useText(); helper.hear(); }}><Volume2 size={18} aria-hidden />Hear it</button>}
+        <button type="button" disabled={busy} onClick={helper.change}><RotateCcw size={18} aria-hidden />Change</button>
+        <button type="button" disabled={busy} onClick={helper.close}><X size={18} aria-hidden />Cancel</button>
       </div>
-    </> : state.context && <>
-      <div className="familiar-helper-choices">
-        {state.mode === 'explain' ? state.context.topics.map(topic =>
-          <button type="button" key={topic.id} disabled={busy} onClick={() => { helper.useText(); helper.submit(topic.phrases[0]); }}>{topic.label}</button>)
-        : state.context.actions.map(action =>
-          <button type="button" key={action.id} disabled={busy} onClick={() => {
-            helper.useText();
-            if (action.input) { setTyping(true); setText(`${action.phrases[0]}: `); }
-            else helper.submit(action.phrases[0]);
-          }}>{action.label}</button>)}
-      </div>
-      {typing ? <form onSubmit={event => { event.preventDefault(); helper.submit(text); }}>
-        <label htmlFor="familiar-command">Type a command</label>
-        <input autoFocus id="familiar-command" value={text} maxLength={typedLimit}
-          disabled={busy}
-          onFocus={helper.useText} onChange={event => setText(event.target.value)} />
-        <button type="submit" disabled={busy || !text.trim()}>Review</button>
-      </form> : null}
-    </>}
-    <div className="familiar-helper-input-actions">
-    {!state.proposal && !typing && Boolean(state.context) && <button type="button" onClick={() => { helper.useText(); setTyping(true); }}>Type instead</button>}
-    <button type="button" className="familiar-helper-mic" disabled={busy || state.phase === 'listening' || state.phase === 'speaking'}
-      onClick={helper.listen}><Mic size={16} aria-hidden />{state.proposal ? 'Speak Confirm or Cancel' : 'Speak'}</button>
     </div>
-    <p className="familiar-helper-footnote">Voice commands in English; say Explain or Action to switch. Touch and typing are also available.</p>
+
+    : state.mode === 'explain' ? <>
+      {topic && <div className="familiar-helper-topic">
+        {topic.videoUrl && <video className="familiar-helper-clip" src={topic.videoUrl} autoPlay muted loop playsInline
+          aria-label={`${topic.label}, shown`} onClick={event => { const clip = event.currentTarget; if (clip.paused) void clip.play(); else clip.pause(); }} />}
+        <div className="familiar-helper-topic-text">
+          <p>{topic.explanation}</p>
+          <button type="button" className="familiar-helper-icon" aria-label={state.phase === 'speaking' ? 'Stop' : 'Hear it again'}
+            onClick={() => state.phase === 'speaking' ? helper.quiet() : helper.explain(topic.id)}>
+            {state.phase === 'speaking' ? <Square size={16} aria-hidden /> : <Volume2 size={18} aria-hidden />}</button>
+        </div>
+      </div>}
+      {context?.topics.length ? <div className="familiar-helper-topics">
+        {context.topics.map(entry => { const Icon = entry.icon ?? Lightbulb; return <button type="button" key={entry.id} aria-pressed={entry.id === state.topicId}
+          onClick={() => { helper.useText(); helper.explain(entry.id); }}><Icon size={16} aria-hidden />{entry.label}</button>; })}
+      </div> : null}
+    </>
+
+    : context?.actions.length ? <div className="familiar-helper-actions">
+      {context.actions.map(action => { const Icon = action.icon ?? Zap; return <button type="button" key={action.id} disabled={busy}
+        onClick={() => { if (action.input) type(`${action.phrases[0]}: `); else { helper.useText(); helper.submit(action.phrases[0]); } }}>
+        <Icon size={22} aria-hidden /><span className="familiar-helper-tile-text"><span>{action.label}</span>
+          {action.detail && <small>{action.detail}</small>}</span></button>; })}
+    </div> : null}
+
+    <p role="status" aria-live="polite" className="familiar-helper-status">{message}</p>
+
+    {typing && !state.proposal && !info && <form onSubmit={event => { event.preventDefault(); helper.submit(text); }}>
+      <input ref={input} aria-label="Type to your Familiar" id="familiar-command" value={text} maxLength={typedLimit} disabled={busy}
+        onFocus={helper.useText} onChange={event => setText(event.target.value)} />
+      <button type="submit" className="familiar-helper-icon" aria-label="Send" disabled={busy || !text.trim()}><Check size={20} aria-hidden /></button>
+    </form>}
+
+    <div className="familiar-helper-bottom">
+      <button type="button" className="familiar-helper-icon" aria-label="How to talk to your Familiar" title="How to talk to your Familiar"
+        aria-pressed={info} onClick={() => setInfo(!info)}><Info size={20} aria-hidden /></button>
+      <button type="button" className="familiar-helper-mic" data-phase={state.phase} aria-label={micLabel} title={micLabel}
+        aria-pressed={state.phase === 'listening'} disabled={busy}
+        onClick={() => { setInfo(false); if (state.phase === 'listening') { helper.doneTalking(); return; } if (state.phase === 'speaking') helper.quiet(); helper.listen(); }}>
+        <Mic size={26} aria-hidden /></button>
+      <button type="button" className="familiar-helper-icon" aria-label="Type instead" title="Type instead" aria-pressed={typing}
+        disabled={Boolean(state.proposal)} onClick={() => { if (typing) setTyping(false); else type(); }}><Keyboard size={20} aria-hidden /></button>
+    </div>
   </div>, document.body);
 }

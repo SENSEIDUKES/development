@@ -96,7 +96,7 @@ export function AppReader({ run, skills, readerPreferences, page, audio }: AppRe
   }, [audio]);
 
   return <div ref={containerRef} data-testid="reader-chamber-development">
-    <AppFamiliar profile={profile} present reading={view === 'read'} boundaryRef={containerRef}>
+    <AppFamiliar profile={profile} present reading={view === 'read'} place={view === 'read' ? { title: 'Reader', help: 'reader' } : { title: 'World Info', help: 'library' }} boundaryRef={containerRef}>
     <StoryPages key={page?.request ?? 0} stories={stories} storyId={run.storyId} page={view}
       readerStateRepository={run.readerPlace} readerPreferences={readerPreferences} soundscapes={SOUNDSCAPES}
       writingAgent={AGENTS.VERSA} backLabel="Back to the Reader"

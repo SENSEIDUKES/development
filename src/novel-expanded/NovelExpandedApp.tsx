@@ -2,6 +2,7 @@ import { DEFAULT_BACKGROUND_IMAGE_ID } from '@seihouse/library/presentation';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderMixerProvider, useOptionalReaderMixer, type ReaderMixer } from '@seihouse/audio-player';
 import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seihouse/library/presentation';
+import type { FamiliarHelpPlace } from '@seihouse/library/familiar';
 import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
 import {
   HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, MainLibraryHomeInsights, WorkspaceHeaderCenterProvider, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
@@ -12,6 +13,7 @@ import { createOfficialCapaDefaultLoadout } from '../host/generation/capa/offici
 import { NarrativeButton } from '@seihouse/sen/presentation';
 import { EconomyClientProviders } from '../host/economy/EconomyClientProviders';
 import { useModelPreference } from '../host/generation/modelPreference';
+import { DevAudioPlaybackProvider } from '../audio/DevAudioPlayback';
 import { LIBRARY_ASSETS } from '../host/media/libraryAssets';
 import { LIBRARY_BASE_MEDIA } from '../host/media/libraryCatalog';
 import { useSoundWordsPresets } from '../host/media/useSoundWordsPresets';
@@ -51,7 +53,8 @@ import { NOVEL_EXPANDED_READER_ID, startedSeedIds, storySourceSeedId } from './s
  * app's own music plays through it on its menus (while the reader's Menu
  * music setting is on, with the music note in every Library header to mute
  * it or set its volume), and the Reader's own music and each chapter's scene
- * in the Reader. Home and World Info sit in the Library Shell (`AppShell`),
+ * in the Reader. Spoken lines (the help menu's and the Familiar's recorded
+ * System voice) play on the shared single-channel player beside it. Home and World Info sit in the Library Shell (`AppShell`),
  * Create in its workspace mode, and Profile is the Library's Cave; the Reader
  * stays outside, immersive.
  * The reader's profile (`services.profile`) is the one record of their name,
@@ -72,7 +75,7 @@ export function NovelExpandedApp({ services, readerMixer }: {
   const [menuMusic] = useMenuMusic(services.readerPreferences);
   // The laptop sidebar opens the way the reader last left it, on this device.
   const [sidebarMode, setSidebarMode] = useStoredLibrarySidebarMode(services.readerPreferences);
-  return <ReaderMixerProvider mixer={readerMixer}>
+  return <ReaderMixerProvider mixer={readerMixer}><DevAudioPlaybackProvider>
     <LibraryPresentationProvider backgroundImageId={profile.backgroundImageId ?? DEFAULT_BACKGROUND_IMAGE_ID} accentColor={profile.accentColor} backgroundTint={profile.backgroundTint} assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS} loadingFamiliar={loadingFamiliar}>
       <LibraryDesktopNavigationProvider value="sidebar" sidebarMode={sidebarMode} onSidebarModeChange={setSidebarMode}>
         {/* The app's places in every Library navigation, the Cave's included. */}
@@ -86,7 +89,20 @@ export function NovelExpandedApp({ services, readerMixer }: {
         </LibraryDestinationsProvider>
       </LibraryDesktopNavigationProvider>
     </LibraryPresentationProvider>
-  </ReaderMixerProvider>;
+  </DevAudioPlaybackProvider></ReaderMixerProvider>;
+}
+
+/** Each page, for the Familiar: its name, and which help topics it explains. */
+function familiarPlace(page: ReturnType<typeof useAppRoute>[0]['page']): { title: string; help: FamiliarHelpPlace } {
+  switch (page) {
+    case 'create': return { title: 'Create', help: 'story-seed' };
+    case 'read': return { title: 'Reader', help: 'reader' };
+    case 'discover': return { title: 'Discover', help: 'library' };
+    case 'profile': return { title: 'Profile', help: 'library' };
+    case 'story':
+    case 'blueprint': return { title: 'World Info', help: 'library' };
+    case 'home': return { title: 'Home', help: 'library' };
+  }
 }
 
 function NovelExpandedPages({ services }: { services: NovelExpandedServices }) {
@@ -197,7 +213,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     }),
     [profile.interfaceLanguage, services.profile, menuMusic, setMenuMusic],
   );
-  const withFamiliar = (page: ReactNode) => <WorkspaceHeaderCenterProvider center={headerCenter} centerBreakpoint="always"><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider></WorkspaceHeaderCenterProvider>;
+  const withFamiliar = (page: ReactNode) => <WorkspaceHeaderCenterProvider center={headerCenter} centerBreakpoint="always"><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'} place={familiarPlace(route.page)}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider></WorkspaceHeaderCenterProvider>;
 
   if (!state || !skills) {
     const error = skillsError ?? stories.loadError;

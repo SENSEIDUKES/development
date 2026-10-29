@@ -397,6 +397,13 @@ export function createMockUserProfileServices({
       onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize });
     }, [currentUser]);
 
+    const handleFamiliarInHeaderChange = useCallback((inHeader: boolean) => {
+      if (!profileRef.current) return;
+      const next = { ...profileRef.current, familiarInHeader: inHeader || undefined, updatedAt: new Date().toISOString() };
+      profileRef.current = next;
+      setProfile(next);
+    }, []);
+
     const handleLanguageChangeDirect = useCallback(
       (name: 'interfaceLanguage' | 'defaultReadingLanguage', value: SenLanguageCode) => {
         if (!profile) return;
@@ -861,6 +868,7 @@ export function createMockUserProfileServices({
       handleBackgroundImageChange,
       handleFamiliarChange,
       handleFamiliarSizeChange,
+      handleFamiliarInHeaderChange,
       isSavingFamiliar,
 
       showAdvanced,

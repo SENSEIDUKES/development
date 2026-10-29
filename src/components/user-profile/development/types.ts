@@ -51,6 +51,8 @@ export interface UserProfile {
   familiarId?: string;
   /** Familiar scale preference; 1 is the default size. */
   familiarSize?: number;
+  /** The Familiar waits in the header until called; off (the default), it floats over the page. */
+  familiarInHeader?: boolean;
   /** The account's UI language. Distinct from the reading language. */
   interfaceLanguage: SenLanguageCode;
   /** The language Reader Chamber displays by default; never story canon. */

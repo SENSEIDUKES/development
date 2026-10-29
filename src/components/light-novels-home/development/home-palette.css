@@ -102,5 +102,5 @@ body:has(.library-home-palette) :is(.familiar-helper, .familiar-energy-panel, .f
   -webkit-backdrop-filter: var(--library-material-control-blur);
   backdrop-filter: var(--library-material-control-blur);
 }
-body:has(.library-home-palette) :is(.familiar-helper-context, .familiar-helper-footnote) { color: var(--library-material-muted); }
+body:has(.library-home-palette) :is(.familiar-helper-place, .familiar-helper-quiet) { color: var(--library-material-muted); }
 @media (forced-colors: active) { .library-home-palette { background: Canvas; } }

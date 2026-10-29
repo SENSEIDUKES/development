@@ -47,7 +47,7 @@ describe('Reader actions for the Familiar', () => {
     const playCue = vi.fn();
     const context = createModeFamiliarContext({ chapterNumber: 8, soundWords: ['wind', 'blade clash'], resolve, place }, undefined, playCue);
     expect(context.actions.map(action => action.id)).toEqual(['sound']);
-    expect(context.title).toBe('Create mode · Chapter 8');
+    expect(context.title).toBe('Create mode');
     const said = matchFamiliarCommand(context.actions, 'Add a howling wind sound on whistling drafts.')!;
     const sound = context.actions.find(action => action.id === said.actionId)!;
     expect(sound.check!(said.input)).toBeUndefined();

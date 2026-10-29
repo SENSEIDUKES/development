@@ -1,7 +1,15 @@
+import type { ComponentType } from 'react';
+
+/** A choice's picture in the Familiar's panel, so it reads at a glance. */
+export type FamiliarIcon = ComponentType<{ size?: number; 'aria-hidden'?: boolean }>;
+
 /** A screen supplies actions; the Familiar never owns a second copy of its data. */
 export interface FamiliarHelperAction {
   id: string;
   label: string;
+  icon?: FamiliarIcon;
+  /** One short line under the label: what this choice would do. */
+  detail?: string;
   phrases: readonly string[];
   input?: { label: string; maxLength: number };
   describe(input: string): string;
@@ -17,8 +25,13 @@ export interface FamiliarHelperAction {
 export interface FamiliarTopic {
   id: string;
   label: string;
+  icon?: FamiliarIcon;
   phrases: readonly string[];
   explanation: string;
+  /** A recorded reading of the explanation (the System voice); the device voice reads it otherwise. */
+  audioUrl?: string;
+  /** A short silent clip showing the feature, played in the panel. */
+  videoUrl?: string;
 }
 
 /** The Familiar's two modes, everywhere: Explain never changes anything; Action confirms before it does. */
@@ -40,11 +53,19 @@ export interface FamiliarHelperContext {
   interrupt?(): (resume: boolean) => void;
 }
 
+export interface FamiliarListening { stop(): void; cancel(): void }
+
 /** Device speech is replaceable and independent of the screen's actions. */
 export interface FamiliarVoice {
   readonly available: boolean;
-  listen(language: string, result: (text: string) => void, failure: (message: string) => void): () => void;
+  /**
+   * Listens until `stop` (deliver what was heard) or `cancel`; a pause never
+   * ends it, so the reader finishes speaking before the Familiar answers.
+   */
+  listen(language: string, result: (text: string) => void, failure: (message: string) => void): FamiliarListening;
   speak(text: string, language: string, done: () => void, failure: (message: string) => void): () => void;
+  /** Plays a recorded line; a failure falls back to `speak`. */
+  play?(url: string, done: () => void, failure: (message: string) => void): () => void;
 }
 
 export interface FamiliarHelperState {
@@ -52,6 +73,8 @@ export interface FamiliarHelperState {
   mode: FamiliarMode;
   phase: 'ready' | 'listening' | 'speaking' | 'review' | 'saving';
   context?: FamiliarHelperContext;
+  /** The topic Explain is showing. */
+  topicId?: string;
   proposal?: { actionId: string; input: string; summary: string; contextKey: string };
   message: string;
 }
@@ -81,13 +104,19 @@ export function matchFamiliarCommand(actions: readonly FamiliarHelperAction[], t
   return undefined;
 }
 
+/** Where a place registers: a page, or the app's own place under every page that registers none. */
+export type FamiliarPlaceLevel = 'page' | 'base';
+interface FamiliarPlace { owner: symbol; context: FamiliarHelperContext }
+
 /** One short, cancellable interaction. Screens provide actions; adapters provide speech. */
 export class FamiliarHelperController {
   private state: FamiliarHelperState = { open: false, mode: 'action', phase: 'ready', message: '' };
   private listeners = new Set<() => void>();
-  private owner?: symbol;
-  private context?: FamiliarHelperContext;
+  private places: Partial<Record<FamiliarPlaceLevel, FamiliarPlace>> = {};
+  private get place() { return this.places.page ?? this.places.base; }
+  private get context() { return this.place?.context; }
   private cancelVoice?: () => void;
+  private listening?: FamiliarListening;
   private releasePlayback?: (resume: boolean) => void;
   private epoch = 0;
   private spoken = false;
@@ -101,6 +130,7 @@ export class FamiliarHelperController {
   }
   private silence() {
     this.epoch++;
+    this.listening = undefined;
     const cancel = this.cancelVoice;
     this.cancelVoice = undefined;
     cancel?.();
@@ -110,23 +140,29 @@ export class FamiliarHelperController {
     this.releasePlayback = undefined;
     release?.(resume);
   }
-  /** Registration is scoped to the mounted screen, including when no helper UI is open. */
-  setContext(owner: symbol, context: FamiliarHelperContext) {
-    const changed = this.owner !== owner || this.context?.key !== context.key;
-    this.owner = owner;
-    this.context = context;
-    if (!changed) return;
-    this.silence();
-    this.release(false);
-    this.update({ context, proposal: undefined, phase: 'ready', message: this.state.open ? `${context.title}. ${this.hint()}` : '' });
+  /** Registration is scoped to the mounted screen, including when no helper UI is open. A page's place covers the app's. */
+  setContext(owner: symbol, context: FamiliarHelperContext, level: FamiliarPlaceLevel = 'page') {
+    const before = this.place;
+    this.places[level] = { owner, context };
+    this.moved(before);
   }
   clearContext(owner: symbol) {
-    if (this.owner !== owner) return;
-    this.owner = undefined;
-    this.context = undefined;
+    const before = this.place;
+    for (const level of ['page', 'base'] as const) if (this.places[level]?.owner === owner) delete this.places[level];
+    this.moved(before);
+  }
+  /** Moving to another place, or its choices changing, ends whatever was under way in the old one. */
+  private moved(before?: FamiliarPlace) {
+    const after = this.place;
+    if (before?.owner === after?.owner && before?.context.key === after?.context.key) return;
     this.silence();
     this.release(false);
-    this.update({ context: undefined, proposal: undefined, phase: 'ready', message: this.hint() });
+    this.update({ context: after?.context, proposal: undefined, topicId: undefined, phase: 'ready', message: this.state.open ? this.empty() : '' });
+  }
+  /** What a mode shows where it has nothing yet; empty where it has choices, which speak for themselves. */
+  private empty(mode = this.state.mode) {
+    const has = mode === 'action' ? this.context?.actions.length : this.context?.topics.length;
+    return has ? '' : NOTHING[mode];
   }
   /** What to say in the current mode, here: the place's hint, its topics, or that it has none yet. */
   private hint(mode = this.state.mode) {
@@ -138,14 +174,47 @@ export class FamiliarHelperController {
   setMode = (mode: FamiliarMode) => {
     if (this.state.phase === 'saving') return;
     this.silence();
-    this.update({ mode, proposal: undefined });
-    this.respond(this.hint(mode), 'ready');
+    this.update({ mode, proposal: undefined, topicId: undefined });
+    // A voice session hears what it can say; on screen, the choices speak for themselves.
+    if (this.spoken) this.respond(this.hint(mode), 'ready');
+    else this.update({ phase: 'ready', message: this.empty(mode) });
+  };
+  /**
+   * Explains a topic: shown in the panel and read aloud, in its recorded
+   * voice where it has one (the device voice otherwise, or if the recording
+   * cannot play). Explaining changes nothing, so there is nothing to confirm.
+   */
+  explain = (topicId: string) => {
+    const topic = this.context?.topics.find(entry => entry.id === topicId);
+    if (!topic || this.state.phase === 'saving') return;
+    this.silence();
+    this.interrupt();
+    this.update({ topicId, phase: 'speaking', message: '' });
+    const epoch = this.epoch;
+    const done = () => {
+      if (epoch !== this.epoch) return;
+      this.update({ phase: 'ready' });
+      if (this.spoken) this.listen();
+    };
+    const speak = () => {
+      const cancel = this.voice.speak(topic.explanation, this.language, done, () => { if (epoch === this.epoch) this.update({ phase: 'ready' }); });
+      if (epoch === this.epoch) this.cancelVoice = cancel; else cancel();
+    };
+    if (!topic.audioUrl || !this.voice.play) { speak(); return; }
+    const cancel = this.voice.play(topic.audioUrl, done, () => { if (epoch === this.epoch) speak(); });
+    if (epoch === this.epoch) this.cancelVoice = cancel; else cancel();
+  };
+  /** Stops the Familiar mid-sentence; what it was showing stays. */
+  quiet = () => {
+    if (this.state.phase !== 'speaking') return;
+    this.silence();
+    this.update({ phase: this.state.proposal ? 'review' : 'ready' });
   };
   /** A user gesture opens a session; only voice sessions speak their confirmation. */
   open = (withVoice = false) => {
     if (this.state.open) { if (withVoice) this.listen(); return; }
     this.spoken = withVoice;
-    this.update({ open: true, phase: 'ready', proposal: undefined, message: this.hint() });
+    this.update({ open: true, phase: 'ready', proposal: undefined, topicId: undefined, message: this.empty() });
     if (withVoice) this.listen();
   };
   private interrupt() {
@@ -188,10 +257,17 @@ export class FamiliarHelperController {
     this.interrupt();
     this.update({ phase: 'listening', message: this.state.proposal ? 'Listening for Confirm or Cancel…' : 'Listening…' });
     const epoch = this.epoch;
-    const cancel = this.voice.listen(this.language,
+    const listening = this.voice.listen(this.language,
       text => { if (epoch === this.epoch) this.submit(text); },
       message => { if (epoch === this.epoch) this.update({ phase: this.state.proposal ? 'review' : 'ready', message }); });
-    if (epoch === this.epoch) this.cancelVoice = cancel; else cancel();
+    if (epoch !== this.epoch) { listening.cancel(); return; }
+    this.listening = listening;
+    this.cancelVoice = listening.cancel;
+  };
+  /** The reader's second tap: they have finished speaking, so the Familiar answers what it heard. */
+  doneTalking = () => {
+    if (this.state.phase !== 'listening') return;
+    this.listening?.stop();
   };
   submit = (text: string) => {
     if (!this.state.open || !this.context || this.state.phase === 'saving') return;
@@ -206,9 +282,9 @@ export class FamiliarHelperController {
     const mode = MODE_WORDS[normalize(text)];
     if (mode) { this.setMode(mode); return; }
     if (this.state.mode === 'explain') {
-      // Explaining changes nothing, so there is nothing to confirm.
       const topic = this.context.topics.find(entry => entry.phrases.some(phrase => normalize(phrase) === normalize(text)));
-      this.respond(topic ? topic.explanation : this.hint(), 'ready');
+      if (topic) this.explain(topic.id);
+      else this.respond(this.hint(), 'ready');
       return;
     }
     const match = matchFamiliarCommand(this.context.actions, text);
@@ -222,7 +298,7 @@ export class FamiliarHelperController {
     if (problem) { this.respond(problem, 'ready'); return; }
     this.interrupt();
     const proposal = { ...match, summary: action.describe(match.input), contextKey: this.context.key };
-    this.update({ proposal, phase: 'review', message: 'Confirm to apply, or Cancel.' });
+    this.update({ proposal, phase: 'review', message: '' });
     if (this.spoken) {
       this.update({ phase: 'speaking' });
       const epoch = this.epoch;
@@ -243,7 +319,7 @@ export class FamiliarHelperController {
     if (!action?.preview || this.state.phase === 'saving') return;
     this.silence();
     action.preview(this.state.proposal!.input);
-    this.update({ phase: 'review', message: 'Playing the sound. Confirm to keep it, or Cancel.' });
+    this.update({ phase: 'review', message: '' });
     if (!this.spoken) return;
     const epoch = this.epoch;
     const timer = setTimeout(() => { if (epoch === this.epoch) this.listen(); }, PREVIEW_MS);
@@ -252,7 +328,7 @@ export class FamiliarHelperController {
   change = () => {
     if (this.state.phase === 'saving') return;
     this.silence();
-    this.update({ proposal: undefined, phase: 'ready', message: this.hint() });
+    this.update({ proposal: undefined, phase: 'ready', message: '' });
   };
   /** Switching to touch/typing stops the microphone and opts out of spoken readback. */
   useText = () => {
@@ -268,7 +344,7 @@ export class FamiliarHelperController {
     if (!action) return;
     this.silence();
     const epoch = this.epoch;
-    this.update({ phase: 'saving', message: 'Applying…' });
+    this.update({ phase: 'saving', message: '' });
     try {
       await action.run(proposal.input);
       // A successful save may update the screen's context before this promise resolves.

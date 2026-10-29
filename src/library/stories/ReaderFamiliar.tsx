@@ -1,7 +1,9 @@
 import { useOptionalReaderMixer } from '@seihouse/audio-player';
 import { CHAPTER_DIRECTION_TEXT_LIMIT, CHAPTER_FUNCTION_LABELS, type HarnessGenerationController, type HarnessWorkspaceState, type ReaderHostTools, type ReaderSoundAuthoring, type ChapterDirectionChoice } from '@seihouse/sen/harness-generation';
+import { AudioLines, Globe, PenLine, Swords, TrendingUp } from 'lucide-react';
 import { useFamiliarHelperContext } from '../../components/familiar/development/FamiliarHelper';
-import type { FamiliarHelperAction, FamiliarHelperContext } from '../familiars/helper';
+import type { FamiliarHelperAction, FamiliarHelperContext, FamiliarIcon, FamiliarTopic } from '../familiars/helper';
+import { useFamiliarHelpTopics } from '../familiars/helpTopics';
 import { parseReaderSoundCommand } from './readerSoundCommand';
 
 /** The longest Sound Cue request the Familiar takes after "add". */
@@ -19,7 +21,7 @@ function soundAction(sounds: ReaderSoundAuthoring, playCue?: (url: string) => vo
     return command.ok ? sounds.resolve(command.sound, command.target) : command;
   };
   return {
-    id: 'sound', label: 'Add sound', phrases: ['add', 'put', 'place'],
+    id: 'sound', label: 'Add sound', icon: AudioLines, detail: 'On words you name, or right there', phrases: ['add', 'put', 'place'],
     input: { label: 'Sound and where it goes', maxLength: SOUND_REQUEST_LIMIT },
     check: input => { const result = resolve(input); return result.ok ? undefined : result.problem; },
     describe: input => {
@@ -44,7 +46,7 @@ export function createModeFamiliarContext(sounds: ReaderSoundAuthoring, interrup
   const example = sounds.soundWords[0] ?? 'wind';
   return {
     key: JSON.stringify(['create-mode', sounds.chapterNumber, sounds.soundWords]),
-    title: `Create mode · Chapter ${sounds.chapterNumber}`,
+    title: 'Create mode',
     topics: [],
     actions: [soundAction(sounds, playCue)],
     hint: `To add a sound, say “Add ${example} on” and its words, or “Add ${example} right there” while listening.`,
@@ -52,8 +54,10 @@ export function createModeFamiliarContext(sounds: ReaderSoundAuthoring, interrup
   };
 }
 
-/** The Reader: Fate actions to the global helper (saving still belongs to SEN). Nothing to explain yet. */
-export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: string, controller: HarnessGenerationController, tools: ReaderHostTools): FamiliarHelperContext {
+const FATE_ICONS: Record<'worldBuilding' | 'progression' | 'conflict', FamiliarIcon> = { worldBuilding: Globe, progression: TrendingUp, conflict: Swords };
+
+/** The Reader: what it explains, and Fate as its actions (saving still belongs to SEN). */
+export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: string, controller: HarnessGenerationController, tools: ReaderHostTools, topics: readonly FamiliarTopic[] = []): FamiliarHelperContext {
   const story = state.stories.find(entry => entry.id === storyId);
   const next = story?.head.nextChapterNumber;
   const chapters = state.chapters.filter(chapter => chapter.storyId === storyId).sort((a, b) => b.chapterNumber - a.chapterNumber);
@@ -75,20 +79,22 @@ export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: str
     ...(['worldBuilding', 'progression', 'conflict'] as const).map(chapterFunction => ({
       id: chapterFunction,
       label: CHAPTER_FUNCTION_LABELS[chapterFunction],
+      icon: FATE_ICONS[chapterFunction],
+      ...(ideas[chapterFunction] ? { detail: ideas[chapterFunction] } : {}),
       phrases: chapterFunction === 'worldBuilding' ? ['world building', 'world-building', 'worldbuilding'] : [chapterFunction],
       describe: () => `Chapter ${next}: ${CHAPTER_FUNCTION_LABELS[chapterFunction]}${ideas[chapterFunction] ? ` — ${ideas[chapterFunction]}` : '.'}`,
       success,
       run: () => save({ kind: 'chapter-function', chapterFunction, ...(ideas[chapterFunction] ? { suggestion: ideas[chapterFunction] } : {}) }),
     })),
     {
-      id: 'custom', label: 'Custom', phrases: ['custom'],
+      id: 'custom', label: 'Custom', icon: PenLine, detail: 'Your own direction', phrases: ['custom'],
       input: { label: 'Your direction', maxLength: CHAPTER_DIRECTION_TEXT_LIMIT },
       describe: text => `Chapter ${next}: ${text}`,
       success, run: text => save({ kind: 'reader', text }),
     },
   ];
   return {
-    key, title: story ? `Fate · Chapter ${next}` : 'Reader', topics: [], actions,
+    key, title: 'Reader', topics, actions,
     hint: blocked ? 'Fate is unavailable while writing or after the story ends.'
       : 'Say World Building, Progression, Conflict, or Custom followed by your direction.',
     interrupt: tools.interruptPlayback,
@@ -110,9 +116,10 @@ export function ReaderFamiliar({ state, storyId, controller, tools }: {
     duck?.setDuck(1);
     return (resume: boolean) => { duck?.release(); release(resume); };
   };
+  const topics = useFamiliarHelpTopics('reader');
   const create = tools.createMode;
   useFamiliarHelperContext(create
     ? createModeFamiliarContext(create.sounds, interrupt, mixer ? url => { mixer.playCue(url); } : undefined)
-    : { ...readerFamiliarContext(state, storyId, controller, tools), interrupt });
+    : { ...readerFamiliarContext(state, storyId, controller, tools, topics), interrupt });
   return null;
 }

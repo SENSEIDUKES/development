@@ -8,10 +8,11 @@ function setup() {
   let failed: (message: string) => void = () => {};
   let spoken: () => void = () => {};
   const cancelListen = vi.fn();
+  const stopListen = vi.fn();
   const cancelSpeak = vi.fn();
   const voice: FamiliarVoice = {
     available: true,
-    listen: vi.fn((_language, result, failure) => { heard = result; failed = failure; return cancelListen; }),
+    listen: vi.fn((_language, result, failure) => { heard = result; failed = failure; return { stop: stopListen, cancel: cancelListen }; }),
     speak: vi.fn((_text, _language, done) => { spoken = done; return cancelSpeak; }),
   };
   const actions: FamiliarHelperAction[] = [
@@ -22,7 +23,7 @@ function setup() {
   const helper = new FamiliarHelperController(voice);
   const owner = Symbol();
   helper.setContext(owner, context);
-  return { helper, voice, context, owner, run, release, cancelListen, cancelSpeak,
+  return { helper, voice, context, owner, run, release, cancelListen, stopListen, cancelSpeak,
     heard: (text: string) => heard(text), failed: (text: string) => failed(text), spoken: () => spoken(), lateResult: () => heard };
 }
 
@@ -187,5 +188,40 @@ describe('global Familiar interaction', () => {
     expect(t.helper.getSnapshot().message).toBe('Nothing to do here yet.');
     t.helper.setMode('explain');
     expect(t.helper.getSnapshot().message).toBe('Nothing to explain here yet.');
+  });
+  it('reads a topic in its recorded voice, falling back to the device voice when the recording cannot play', () => {
+    const t = setup();
+    let failPlay: (message: string) => void = () => {};
+    const play = vi.fn((_url: string, _done: () => void, failure: (message: string) => void) => { failPlay = failure; return () => {}; });
+    const helper = new FamiliarHelperController({ ...t.voice, play });
+    helper.setContext(t.owner, { ...t.context, topics: [{ id: 'energy', label: 'Energy', phrases: ['energy'], explanation: 'Energy powers creation.', audioUrl: 'https://cdn.example/energy.mp3' }] });
+    helper.open();
+    helper.setMode('explain');
+    helper.explain('energy');
+    expect(play).toHaveBeenCalledWith('https://cdn.example/energy.mp3', expect.any(Function), expect.any(Function));
+    expect(t.voice.speak).not.toHaveBeenCalled();
+    expect(helper.getSnapshot()).toMatchObject({ topicId: 'energy', phase: 'speaking' });
+    failPlay('blocked');
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Energy powers creation.', 'en-US', expect.any(Function), expect.any(Function));
+  });
+  it('returns to the app’s own place when a page leaves', () => {
+    const t = setup();
+    const app = Symbol();
+    t.helper.setContext(app, { key: 'place:Home', title: 'Home', hint: '', topics: [], actions: [] }, 'base');
+    expect(t.helper.getSnapshot().context?.title).toBe('Fate');
+    t.helper.clearContext(t.owner);
+    expect(t.helper.getSnapshot().context?.title).toBe('Home');
+    t.helper.setContext(t.owner, t.context);
+    expect(t.helper.getSnapshot().context?.title).toBe('Fate');
+  });
+  it('keeps listening until the reader taps that they are done talking', () => {
+    const t = setup();
+    t.helper.open(true);
+    expect(t.helper.getSnapshot().phase).toBe('listening');
+    t.helper.doneTalking();
+    expect(t.stopListen).toHaveBeenCalledOnce();
+    expect(t.cancelListen).not.toHaveBeenCalled();
+    t.heard('conflict');
+    expect(t.helper.getSnapshot().proposal?.actionId).toBe('conflict');
   });
 });

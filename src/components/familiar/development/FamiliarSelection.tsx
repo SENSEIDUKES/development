@@ -62,11 +62,15 @@ export interface FamiliarSelectionProps {
   onSelect: (id: string) => void;
   size?: number;
   onSizeChange?: (size: number) => void;
+  /** Whether the Familiar waits in the header until called, instead of floating over the page. */
+  inHeader?: boolean;
+  onInHeaderChange?: (inHeader: boolean) => void;
 }
 
 /** Present host-owned unlock options and optional live sizing without storing preferences. */
-export function FamiliarSelection({ options, selectedId, pending = false, disabled = false, onSelect, size, onSizeChange }: FamiliarSelectionProps) {
+export function FamiliarSelection({ options, selectedId, pending = false, disabled = false, onSelect, size, onSizeChange, inHeader = false, onInHeaderChange }: FamiliarSelectionProps) {
   const sizeId = useId();
+  const headerId = useId();
   const mobile = useFamiliarMobile();
   const currentSize = familiarDisplaySize(size, mobile);
   const percent = Math.round((currentSize - (mobile ? 0.5 : 0)) * 100);
@@ -84,6 +88,11 @@ export function FamiliarSelection({ options, selectedId, pending = false, disabl
         <button type="button" disabled={disabled || !selectedId || currentSize === defaultSize}
           onClick={() => onSizeChange(defaultSize)}>Reset</button>
       </div>
+    </div>}
+    {onInHeaderChange && <div className="familiar-size-control">
+      <div><label htmlFor={headerId}>Keep in the header</label><p>Your Familiar waits in the header until you call it, instead of floating over the page.</p></div>
+      <input id={headerId} type="checkbox" role="switch" className="familiar-header-switch" checked={inHeader} disabled={disabled}
+        onChange={event => onInHeaderChange(event.target.checked)} />
     </div>}
     {!options.length && <p>No Familiars are available yet.</p>}
     <div className="familiar-selection-options">

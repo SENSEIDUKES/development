@@ -74,7 +74,7 @@ export function HomeMaterialCanvas() {
           <WorkspaceHeaderPreferencesProvider preferences={{ language: 'en', onLanguageChange: () => report('Language'), menuMusic, onMenuMusicChange: setMenuMusic }}>
             <WorkspaceHeaderCenterProvider center={<MainLibraryHomeInsights everyWidth adapter={{ copyText: async () => report('Copy') }} />} centerBreakpoint="always">
               <WorkspaceHeaderAccessoryProvider accessory={<span className="pm-home-familiar" aria-label={defaultFamiliar.definition.displayName}><FamiliarSprite familiar={defaultFamiliar.definition} animation="neutral" paused /></span>}>
-                <HomePage worlds={[]} readerProfile={profile} navigate={route => report(route.page === 'create' ? 'Carve New Destiny' : route.page)} />
+                <HomePage worlds={[]} readerProfile={{ ...profile, accentColor: settings.colors.accent }} navigate={route => report(route.page === 'create' ? 'Carve New Destiny' : route.page)} />
               </WorkspaceHeaderAccessoryProvider>
             </WorkspaceHeaderCenterProvider>
           </WorkspaceHeaderPreferencesProvider>

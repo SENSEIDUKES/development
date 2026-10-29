@@ -1,4 +1,4 @@
-/* Home's first applied palette, from the owner's v1.json (2026-10-28).
+/* Home's applied palette, from the owner's v2.json (2026-10-29).
    Plain surface roles share violet; control faces remain black.
    Opt-in belongs to the Home host. Other pages keep their own presentation.
    The Reader stylesheet owns the shared rim; ManifestButton owns its rainbow.
@@ -6,6 +6,11 @@
    Artwork and video never receive the glass blur. */
 
 .library-home-palette {
+  /* V2 edits Midnight violet to 90% / 40px; preserve the Workshop's relative
+     alpha scaling for every gradient stop instead of changing only its base. */
+  --library-material-violet-opacity: .9;
+  --library-violet-alpha-scale: calc(.9 / .95);
+  --home-violet-blur: blur(40px);
   --reader-border-z: 25;
   color: var(--library-material-text);
   background: linear-gradient(#0009, #000b), var(--library-background-image, var(--home-palette-art, none)) center / cover;
@@ -13,22 +18,22 @@
 /* Keep Home artwork behind the content; the plain footer shares the chrome tint. */
 .library-home-palette .workspace-shell { background: transparent; }
 .library-home-palette :is([data-home-panel], .world-card-banner, [data-home-events], .workspace-preferences-panel) {
-  background: var(--library-material-panel-fill);
+  background: var(--library-material-card-fill);
   border: 1px solid var(--reader-glass-edge);
-  box-shadow: var(--library-material-panel-shadow);
-  -webkit-backdrop-filter: var(--library-material-panel-blur);
-  backdrop-filter: var(--library-material-panel-blur);
+  box-shadow: var(--library-material-card-shadow);
+  -webkit-backdrop-filter: var(--library-material-card-blur);
+  backdrop-filter: var(--library-material-card-blur);
 }
 .library-home-palette :is([data-home-events], .home-event, [data-slot='empty-state']) { position: relative; }
 .library-home-palette [data-home-events] { border-radius: 1.35rem; padding: .5rem 1rem; }
 .library-home-palette :is([data-home-panel], .world-card-base)::before { display: none; }
 .library-home-palette :is([data-slot='empty-state'], .world-card-base, .home-event) {
-  background: var(--library-material-card-fill);
+  background: var(--library-material-shell-fill);
   color: var(--library-material-text);
   border-color: var(--reader-glass-edge);
-  box-shadow: var(--library-material-card-shadow);
-  -webkit-backdrop-filter: var(--library-material-card-blur);
-  backdrop-filter: var(--library-material-card-blur);
+  box-shadow: var(--library-material-shell-shadow);
+  -webkit-backdrop-filter: var(--home-violet-blur);
+  backdrop-filter: var(--home-violet-blur);
 }
 /* Media keeps the original clear backing; tint applies to the surrounding glass. */
 .library-home-palette .home-featured [data-home-panel],
@@ -48,8 +53,8 @@
   color: var(--library-material-text);
   border-color: var(--reader-glass-edge);
   box-shadow: var(--library-material-shell-shadow);
-  -webkit-backdrop-filter: var(--library-material-control-blur);
-  backdrop-filter: var(--library-material-control-blur);
+  -webkit-backdrop-filter: var(--home-violet-blur);
+  backdrop-filter: var(--home-violet-blur);
 }
 /* Trial the Story Seed panel material on the frame, keeping controls black. */
 .library-home-palette :is(.workspace-header, [data-slot='app-shell-sidebar'], .library-global-navigation > div, .library-footer) { background: var(--library-material-shell-fill); }
@@ -103,4 +108,6 @@ body:has(.library-home-palette) :is(.familiar-helper, .familiar-energy-panel, .f
   backdrop-filter: var(--library-material-control-blur);
 }
 body:has(.library-home-palette) :is(.familiar-helper-place, .familiar-helper-quiet) { color: var(--library-material-muted); }
-@media (forced-colors: active) { .library-home-palette { background: Canvas; } }
+@media (forced-colors: active) { .library-home-palette { background: Canvas; --home-violet-blur: none; } }
+@media (prefers-reduced-transparency: reduce) { .library-home-palette { --home-violet-blur: none; } }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .library-home-palette { --home-violet-blur: none; } }

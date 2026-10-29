@@ -3,9 +3,10 @@
 /* Canonical Library materials. Home is a role adapter; Workshop uses the same recipes. */
 /* One app-owned blue-violet recipe for Story Seed and the Home chrome trial. */
 .seed-field-scope, .library-material-scope, .library-home-palette, body:has(.library-home-palette) {
+  --library-violet-alpha-scale: 1;
   --library-material-violet-fill:
-    radial-gradient(18rem 10rem at 88% -8%, rgba(var(--library-violet-warm-rgb, 205, 178, 113), 0.05), transparent 62%),
-    linear-gradient(160deg, rgba(var(--library-violet-light-rgb, 105, 130, 225), 0.06), rgba(var(--library-violet-soft-rgb, 70, 60, 160), 0.04) 50%, rgba(var(--library-violet-clear-rgb, 12, 15, 34), 0)),
+    radial-gradient(18rem 10rem at 88% -8%, rgba(var(--library-violet-warm-rgb, 205, 178, 113), calc(0.05 * var(--library-violet-alpha-scale))), transparent 62%),
+    linear-gradient(160deg, rgba(var(--library-violet-light-rgb, 105, 130, 225), calc(0.06 * var(--library-violet-alpha-scale))), rgba(var(--library-violet-soft-rgb, 70, 60, 160), calc(0.04 * var(--library-violet-alpha-scale))) 50%, rgba(var(--library-violet-clear-rgb, 12, 15, 34), 0)),
     rgba(var(--library-violet-base-rgb, 11, 14, 30), var(--library-material-violet-opacity, 0.46));
 }
 .library-material-scope, .library-home-palette, body:has(.library-home-palette) {

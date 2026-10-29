@@ -8,7 +8,6 @@ const selectors = {
   card: '[data-slot="empty-state"]',
   button: '.home-featured .library-glass-button',
 };
-const homeMaterials = { navigation: 'violet-shell', panel: 'violet-panel', card: 'violet-card', button: 'rainbow-action' } as const;
 // CSS stays in the private frame; no theme tokens or package APIs are changed.
 const declarations = (style: CSSProperties) => Object.entries(style).filter(([, value]) => value !== undefined)
   .map(([property, value]) => `${property.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}:${value} !important;`).join('');
@@ -18,9 +17,9 @@ export function homeMaterialStyles(settings: PaletteSettings, measured: Material
     const id = settings.roles[role as keyof typeof selectors];
     const base = measured[id];
     if (!base) return '';
-    // The default role already wears its canonical recipe. Leave untouched
-    // properties (including hover/press effects) with that source owner.
-    const assigned: CSSProperties = id === homeMaterials[role as keyof typeof selectors] ? {} : {
+    // Home may adopt a different combination from an individual original paint.
+    // Explicitly assign that paint here; keep the native spectrum action live.
+    const assigned: CSSProperties = role === 'button' && id === 'rainbow-action' ? {} : {
       backgroundColor: base.backgroundColor, backgroundImage: base.backgroundImage,
       borderColor: base.borderColor, borderWidth: base.borderWidth, borderStyle: 'solid',
       boxShadow: base.boxShadow, backdropFilter: base.backdropFilter, WebkitBackdropFilter: base.backdropFilter,

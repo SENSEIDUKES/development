@@ -32,8 +32,8 @@ try {
     const original = await page.locator('.workspace-header').evaluate(fill);
     const panel = await page.locator('[data-home-panel]').nth(1).evaluate(fill);
     const inset = await page.locator('[data-slot="empty-state"]').evaluate(fill);
-    assert.equal(panel[0], 'rgba(11, 14, 30, 0.12)', 'Outer panels use purple with the original 12% opacity');
-    assert.equal(inset[0], 'rgba(11, 14, 30, 0.35)', 'Nested cards use purple with the original 35% opacity');
+    assert.equal(panel[0], 'rgba(11, 14, 30, 0.35)', 'V2 outer panels use Violet inset at 35% opacity');
+    assert.equal(inset[0], 'rgba(11, 14, 30, 0.9)', 'V2 nested cards use Midnight violet at 90% opacity');
     const cta = page.getByRole('button', { name: 'Carve New Destiny', exact: true });
     const ring = await cta.evaluate(rainbow);
     await page.goto(`${base}${settings}`);
@@ -66,13 +66,13 @@ try {
     await page.getByTestId('novel-expanded-home').waitFor();
     for (const selector of ['.workspace-header', '.library-footer', width >= 1024 ? '[data-slot="app-shell-sidebar"]' : '.library-global-navigation > div']) {
       const actual = await page.locator(selector).evaluate(fill);
-      assert.equal(actual[0], pink[0], `${selector} consumes shared tint`);
-      assert.equal(actual[1], pink[1]);
+      assert.equal(actual[0], 'rgba(50, 21, 35, 0.9)', `${selector} consumes shared tint with V2 opacity`);
+      assert.equal(actual[2], 'blur(40px)', 'Tint preserves V2 blur');
     }
     const tintedPanel = await page.locator('[data-home-panel]').nth(1).evaluate(fill);
     const tintedInset = await page.locator('[data-slot="empty-state"]').evaluate(fill);
-    assert.equal(tintedPanel[0], 'rgba(50, 21, 35, 0.12)', 'Picker recolors panels without changing opacity');
-    assert.equal(tintedInset[0], 'rgba(50, 21, 35, 0.35)', 'Picker recolors cards without changing opacity');
+    assert.equal(tintedPanel[0], 'rgba(50, 21, 35, 0.35)', 'Picker recolors panels without changing opacity');
+    assert.equal(tintedInset[0], 'rgba(50, 21, 35, 0.9)', 'Picker recolors cards without changing opacity');
     assert.deepEqual(tintedPanel.slice(2), panel.slice(2), 'Panel blur and edge stay intact');
     assert.deepEqual(tintedInset.slice(2), inset.slice(2), 'Card blur and edge stay intact');
     assert.equal(await cta.evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(0, 0, 0, 0.95)');
@@ -113,9 +113,9 @@ try {
     await slider.focus(); await slider.press('Home');
     assert.equal(await slider.getAttribute('aria-valuetext'), 'Black');
     await page.goto(`${base}/app/`); await page.getByTestId('novel-expanded-home').waitFor();
-    assert.equal((await page.locator('.workspace-header').evaluate(fill))[0], 'rgba(0, 0, 0, 0.95)', 'Zero strength offers the black look');
-    assert.equal((await page.locator('[data-home-panel]').nth(1).evaluate(fill))[0], 'rgba(0, 0, 0, 0.12)');
-    assert.equal((await page.locator('[data-slot="empty-state"]').evaluate(fill))[0], 'rgba(0, 0, 0, 0.35)', 'Zero strength reaches nested cards too');
+    assert.equal((await page.locator('.workspace-header').evaluate(fill))[0], 'rgba(0, 0, 0, 0.9)', 'Zero strength offers the black look');
+    assert.equal((await page.locator('[data-home-panel]').nth(1).evaluate(fill))[0], 'rgba(0, 0, 0, 0.35)');
+    assert.equal((await page.locator('[data-slot="empty-state"]').evaluate(fill))[0], 'rgba(0, 0, 0, 0.9)', 'Zero strength reaches nested cards too');
     await page.goto(`${base}${settings}`); await open(page, 'Background tint');
     await page.getByRole('button', { name: 'Use default background', exact: true }).click();
     assert.equal(await page.getByRole('button', { name: 'Use default background', exact: true }).isDisabled(), true);
@@ -138,7 +138,7 @@ try {
     const codes = await page.locator('#pm-colors .pm-swatch code').allTextContents();
     const spectrum = await page.locator('#pm-material-catalog [data-pm-recipe="rainbow-action"]').evaluate(e => getComputedStyle(e, '::after').backgroundImage.match(/rgba?\([^)]+\)/g));
     assert.ok(spectrum.every(color => codes.includes(color)), 'Actual rainbow colors are in Colors');
-    assert.ok(codes.includes('rgba(11, 14, 30, 0.95)'), 'Actual unified purple and alpha are in Colors');
+    assert.ok(codes.includes('rgba(11, 14, 30, 0.95)'), 'Original Midnight violet and alpha are in Colors');
     assert.ok(codes.includes('rgb(255, 255, 255)'), 'Actual material white is in Colors');
     assert.ok(codes.includes('#ffffffb8'), 'Actual supporting white is in Colors');
     assert.ok(codes.includes('#49c9fa66'), 'Reader rim blue and alpha are in Colors');

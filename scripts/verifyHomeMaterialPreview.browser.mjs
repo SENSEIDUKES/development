@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { chromium, webkit } from 'playwright';
 
 const base = process.argv[2] ?? 'http://localhost:5173';
@@ -26,14 +26,20 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.locator('#pm-composition h2').waitFor({ state: 'attached' });
       const nav = page.getByRole('navigation', { name: 'Workspace sections' });
       if (await nav.isVisible()) await nav.getByRole('button', { name: /Saved/ }).click();
-      await page.getByRole('button', { name: 'App colors · Default preset' }).click();
+      // Source parity uses an explicit baseline, independent of the owner's
+      // changing default look. Imports append without replacing saved work.
+      const baseline = { ...JSON.parse(readFileSync('src/components/palette-materials/development/owner-looks.json', 'utf8')).looks.at(-1),
+        id: 'home-baseline', name: 'Home source baseline' };
+      await page.getByLabel('Import looks file').setInputFiles({ name: 'baseline.json', mimeType: 'application/json',
+        buffer: Buffer.from(JSON.stringify({ format: 'palette-materials', version: 3, looks: [baseline] })) });
+      await page.locator('.pm-saved-look').filter({ has: page.getByRole('heading', { name: 'Home source baseline', exact: true }) }).getByRole('button', { name: 'Load', exact: true }).click();
       await openPreview(page);
       const frame = page.frameLocator('iframe[title="Home material preview"]');
       await frame.getByTestId('novel-expanded-home').waitFor();
       await frame.locator('[data-home-events]').waitFor();
       await page.waitForFunction(() => {
         const doc = document.querySelector('.pm-home-frame').contentDocument;
-        return getComputedStyle(doc.querySelector('[data-home-events]')).backgroundColor === 'rgba(11, 14, 30, 0.12)';
+        return getComputedStyle(doc.querySelector('[data-home-events]')).backgroundColor === 'rgba(11, 14, 30, 0.35)';
       });
       const canvas = page.frames().find(child => child.url().includes('source=palette-materials'));
       const previewWidth = await canvas.evaluate(() => innerWidth);
@@ -58,6 +64,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.getByLabel('Accent', { exact: true }).fill('#ffaa88');
       await page.waitForFunction(() => getComputedStyle(document.querySelector('.pm-home-frame').contentDocument.querySelector('.home-filter-label')).color === 'rgb(255, 170, 136)');
       await page.getByLabel('Accent', { exact: true }).fill('#04acff');
+      await page.getByRole('combobox', { name: 'Panel', exact: true }).selectOption('violet-panel');
       const beforeHero = await frame.locator('.home-featured [data-home-panel]').evaluate(paint);
       await frame.locator('[data-home-events] summary').focus();
       await frame.locator('[data-home-events] summary').press('Enter');

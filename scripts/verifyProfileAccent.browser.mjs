@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Profile accent save/reset and Home's Story Seed chrome trial, on a running dev server. */
+/** Profile accent save/reset and Home's V2 appearance, on a running dev server. */
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
@@ -47,13 +47,14 @@ try {
       const style = getComputedStyle(element);
       return { image: style.backgroundImage, color: style.backgroundColor };
     });
-    assert.equal(chrome.color, 'rgba(11, 14, 30, 0.95)');
+    assert.equal(chrome.color, 'rgba(11, 14, 30, 0.9)');
     assert.equal(await page.getByRole('button', { name: 'Carve New Destiny', exact: true }).evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(0, 0, 0, 0.95)');
     await page.screenshot({ path: `${output}/home-${width}.png` });
     await page.goto(`${base}/app/?page=create`);
     const seed = page.locator('.seed-field-scope .glass-panel').first();
     await seed.waitFor();
-    assert.equal(await seed.evaluate(element => getComputedStyle(element).backgroundImage), chrome.image, 'Chrome reuses the actual Story Seed gradients');
+    const rgbStops = value => value.replace(/rgba?\(([^)]+)\)/g, (_, channels) => `rgb(${channels.split(',').slice(0, 3).join(',')})`);
+    assert.equal(rgbStops(await seed.evaluate(element => getComputedStyle(element).backgroundImage)), rgbStops(chrome.image), 'V2 preserves the shared Story Seed gradient colors and stops');
     assert.equal(await seed.evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(11, 14, 30, 0.46)', 'Story Seed keeps its original opacity');
     // The Profile Workshop shares the control, with its separate mock profile.
     await page.goto(`${base}/?preview=user-profile&cave=/settings`);

@@ -66,8 +66,8 @@ media queries; larger sizes scale to fit without widening the Workshop. Existing
 looks, export formats and app preferences are unchanged. Reduced-transparency
 experiments use an opaque fallback.
 
-The owner's latest `palette-materials.json` is bundled unchanged as `owner-looks.json`.
-Its final **V1** combination is the default on a fresh browser and the first visit
+The owner's latest `v2.json` is bundled unchanged as `owner-looks.json`.
+Its final **V2** combination is the default on a fresh browser and the first visit
 for this export revision. Earlier browser inclusion markers also receive this
 revision. Conflicting browser looks are retained as separate “(previous)” looks;
 other local work and identical imported looks remain available. After inclusion,
@@ -178,3 +178,15 @@ Browser validation compares original paints with `/app/`, checks material edits,
 clear media, frame resizing, tablet dock bounds, inert actions and saved-look
 reload in Chromium and WebKit. The previous generic scene and its styles were
 removed. The canonical Home Workshop entry still loads `/app/` unchanged.
+
+
+## 2026-10-29 — Supplied V2 default (local)
+
+Bundled the owner's `v2.json` verbatim, including its five looks. V2 is the initial
+combination and **V2 · Default preset** restores those exact settings: Midnight
+violet for navigation and the nested card, Violet inset for outer panels,
+Spectrum action for the button, a 40px blur / 90% opacity edit on Midnight violet,
+and the supplied gold accent. Inherited edits remain unchanged. These assignments now also define Home’s default appearance. Shared material
+ingredients keep their original recipes; Home applies the supplied edits through
+its existing role adapter, without changing other pages or saved preferences. Browser inclusion advances once to `owner-v2`, preserving existing work and
+conflicts; subsequent visits continue respecting local saves and deletions.

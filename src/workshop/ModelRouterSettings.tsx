@@ -200,7 +200,7 @@ function TaggerSettings({ models, chapterModel }: { models: RouterModel[]; chapt
         <span className="sr-only">Chapter Tagger model</span>
         <select aria-label="Chapter Tagger model" value={chosen}
           onChange={event => setTagger({ ...(event.target.value ? { model: event.target.value } : {}), ...(tagger.reasoningLevel ? { reasoningLevel: tagger.reasoningLevel } : {}) })}
-          className="workshop-touch-target w-full rounded-md border border-white/10 bg-[#0b0e16] px-2 py-1.5 text-[12px] text-white/85">
+          className="workshop-touch-target w-full rounded-md border border-white/10 bg-[#0b0e16] px-2 py-1.5 text-base text-white/85 sm:text-[12px]">
           <option value="">Same as chapters{chapterModel ? ` (${chapterModel.label.replace(/ · OpenRouter$/, '')})` : ''}</option>
           {providers.map(provider => (
             <optgroup key={provider} label={providerLabel[provider]}>

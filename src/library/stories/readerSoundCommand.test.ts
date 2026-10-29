@@ -9,6 +9,7 @@ describe('Sound Cue requests to the Familiar', () => {
     expect(parseReaderSoundCommand('a howling wind sound on “whistling drafts.”', sounds)).toEqual({ ok: true, sound: 'wind', target: { kind: 'words', words: 'whistling drafts' } });
     // The sound's words may themselves say "on": only the first join after a story sound splits them.
     expect(parseReaderSoundCommand('blade clash on met the lunge on the stair', sounds)).toEqual({ ok: true, sound: 'blade clash', target: { kind: 'words', words: 'met the lunge on the stair' } });
+    expect(parseReaderSoundCommand('wind on he stood there', sounds)).toEqual({ ok: true, sound: 'wind', target: { kind: 'words', words: 'he stood there' } });
     expect(parseReaderSoundCommand("the door to Wei's room", sounds)).toEqual({ ok: true, sound: 'door', target: { kind: 'words', words: 'weis room' } });
   });
 

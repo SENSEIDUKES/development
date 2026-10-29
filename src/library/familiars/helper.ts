@@ -202,13 +202,21 @@ export class FamiliarHelperController {
       this.update({ phase: 'ready' });
       if (this.spoken) this.listen();
     };
+    // One handle stops whichever voice is reading: the recording, or the device voice that took over from it.
+    let stop: () => void = () => {};
+    let readAloud = false;
+    this.cancelVoice = () => stop();
     const speak = () => {
-      const cancel = this.voice.speak(topic.explanation, this.language, done, () => { if (epoch === this.epoch) this.update({ phase: 'ready' }); });
-      if (epoch === this.epoch) this.cancelVoice = cancel; else cancel();
+      readAloud = true;
+      stop = this.voice.speak(topic.explanation, this.language, done, () => { if (epoch === this.epoch) this.update({ phase: 'ready' }); });
+      if (epoch !== this.epoch) stop();
     };
     if (!topic.audioUrl || !this.voice.play) { speak(); return; }
-    const cancel = this.voice.play(topic.audioUrl, done, () => { if (epoch === this.epoch) speak(); });
-    if (epoch === this.epoch) this.cancelVoice = cancel; else cancel();
+    const cancelLine = this.voice.play(topic.audioUrl, done, () => { if (epoch === this.epoch) speak(); });
+    // A recording that failed at once already handed over to the device voice; keep that one stoppable.
+    if (readAloud) return;
+    stop = cancelLine;
+    if (epoch !== this.epoch) cancelLine();
   };
   /** Stops the Familiar mid-sentence; what it was showing stays. */
   quiet = () => {

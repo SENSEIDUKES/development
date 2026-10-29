@@ -17,6 +17,8 @@ type SpeechWindow = Window & { SpeechRecognition?: new () => Recognition; webkit
 const LISTEN_LIMIT_MS = 30_000;
 /** How many times a browser that ends recognition by itself is started again in one session. */
 const MAX_RESTARTS = 20;
+/** After the reader taps to stop, a browser that never reports the end is answered anyway after this long. */
+const STOP_GRACE_MS = 3_000;
 
 /** Browser speech only: no account, provider key, recording storage or generated replies. */
 export function createFamiliarBrowserVoice(): FamiliarVoice {
@@ -34,10 +36,12 @@ export function createFamiliarBrowserVoice(): FamiliarVoice {
       let stopping = false;
       let finished = false;
       let restarts = 0;
+      let grace: ReturnType<typeof setTimeout> | undefined;
       const heard = () => `${heardBefore} ${heardNow}`.trim();
       const cleanup = () => {
         finished = true;
         clearTimeout(limit);
+        clearTimeout(grace);
         recognition.onresult = recognition.onerror = recognition.onend = null;
         try { recognition.abort(); } catch { /* Already stopped. */ }
       };
@@ -52,6 +56,7 @@ export function createFamiliarBrowserVoice(): FamiliarVoice {
       const stop = () => {
         if (finished || stopping) return;
         stopping = true;
+        grace = setTimeout(deliver, STOP_GRACE_MS);
         try { recognition.stop(); } catch { deliver(); }
       };
       const begin = () => {

@@ -66,6 +66,19 @@ describe('Familiar browser speech', () => {
     recognition.onend!();
     expect(result).toHaveBeenCalledExactlyOnceWith('Conflict');
   });
+  it('answers after a tap to stop even when the browser never reports the end', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('SpeechRecognition', Recognition);
+    const result = vi.fn();
+    const listening = createFamiliarBrowserVoice().listen('en-US', result, vi.fn());
+    Recognition.last.onresult!({ results: [{ isFinal: true, 0: { transcript: 'Conflict' } }] });
+    listening.stop();
+    expect(result).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(3_000);
+    expect(result).toHaveBeenCalledExactlyOnceWith('Conflict');
+    Recognition.last.onend?.();
+    expect(result).toHaveBeenCalledOnce();
+  });
   it('does not cancel resumed narration after readback ended, and releases a stalled readback', () => {
     vi.useFakeTimers();
     class Utterance {

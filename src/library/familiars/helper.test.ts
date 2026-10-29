@@ -236,4 +236,15 @@ describe('global Familiar interaction', () => {
     await t.helper.confirm();
     expect(run).toHaveBeenCalledExactlyOnceWith('wind right there', 'the words read then');
   });
+  it('keeps the device voice stoppable when a recording fails at once and it reads instead', () => {
+    const t = setup();
+    const play = vi.fn((_url: string, _done: () => void, failure: (message: string) => void) => { failure('No player.'); return () => {}; });
+    const helper = new FamiliarHelperController({ ...t.voice, play });
+    helper.setContext(t.owner, { ...t.context, topics: [{ id: 'energy', label: 'Energy', phrases: ['energy'], explanation: 'Energy powers creation.', audioUrl: 'https://cdn.example/energy.mp3' }] });
+    helper.open();
+    helper.explain('energy');
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Energy powers creation.', 'en-US', expect.any(Function), expect.any(Function));
+    helper.quiet();
+    expect(t.cancelSpeak).toHaveBeenCalledOnce();
+  });
 });

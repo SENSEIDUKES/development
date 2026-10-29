@@ -61,7 +61,9 @@
 .familiar-helper-actions svg, .familiar-helper-topics svg { flex-shrink: 0; }
 /* Explain: a clip (only when the topic has one), its words, then the topics in one scrolling row. */
 .familiar-helper-topic { margin-top: 10px; padding: 10px; border-radius: 18px; background: #ffffff0d; }
-.familiar-helper-clip { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; margin-bottom: 8px; border-radius: 12px; background: #000; }
+.familiar-helper-clip-frame { position: relative; margin-bottom: 8px; }
+.familiar-helper-clip { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; background: #000; }
+.familiar-helper .familiar-helper-clip-toggle { position: absolute; inset-inline-end: 6px; bottom: 6px; background: #000a; }
 .familiar-helper-topic-text { display: flex; align-items: flex-start; gap: 6px; }
 .familiar-helper-topic-text p { flex: 1; margin: 0; font-size: 14px; }
 .familiar-helper-topics { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; }

@@ -93,6 +93,8 @@ describe('Familiar helper surface', () => {
     expect(voice.speak).toHaveBeenLastCalledWith('Fate chooses the next chapter.', 'en-US', expect.any(Function), expect.any(Function));
     await click('Codex');
     expect(document.querySelector('video')!.getAttribute('src')).toBe('https://cdn.example/codex.mp4');
+    // The clip can be paused and played from the keyboard, not only by tapping it.
+    expect(button('Play the clip') ?? button('Pause the clip')).toBeTruthy();
     expect(play).toHaveBeenCalledWith('https://cdn.example/codex.mp3', expect.any(Function), expect.any(Function));
     expect(t.run).not.toHaveBeenCalled();
   });

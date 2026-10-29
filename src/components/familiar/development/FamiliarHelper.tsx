@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Info, Keyboard, Lightbulb, Mic, RotateCcw, Square, Volume2, X, Zap } from 'lucide-react';
+import { Check, Info, Keyboard, Lightbulb, Mic, Pause, Play, RotateCcw, Square, Volume2, X, Zap } from 'lucide-react';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FamiliarHelperController, type FamiliarHelperContext, type FamiliarPlaceLevel, type FamiliarVoice } from '../../../library/familiars/helper';
 
@@ -112,6 +112,10 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   const panel = useRef<HTMLDivElement>(null);
   const confirm = useRef<HTMLButtonElement>(null);
   const input = useRef<HTMLInputElement>(null);
+  const clip = useRef<HTMLVideoElement>(null);
+  // A clip waits for a tap where the reader asked for less motion, and can always be paused from the keyboard.
+  const [reducedMotion] = useState(() => typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches));
+  const [clipPlaying, setClipPlaying] = useState(false);
   const returnFocus = useContext(FocusReturn);
   useEffect(() => {
     if (!state.open) return;
@@ -168,8 +172,13 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
 
     : state.mode === 'explain' ? <>
       {topic && <div className="familiar-helper-topic">
-        {topic.videoUrl && <video className="familiar-helper-clip" src={topic.videoUrl} autoPlay muted loop playsInline
-          aria-label={`${topic.label}, shown`} onClick={event => { const clip = event.currentTarget; if (clip.paused) void clip.play(); else clip.pause(); }} />}
+        {topic.videoUrl && <div className="familiar-helper-clip-frame">
+          <video ref={clip} className="familiar-helper-clip" src={topic.videoUrl} autoPlay={!reducedMotion} muted loop playsInline
+            aria-label={`${topic.label}, shown`} onPlay={() => setClipPlaying(true)} onPause={() => setClipPlaying(false)} />
+          <button type="button" className="familiar-helper-icon familiar-helper-clip-toggle" aria-label={clipPlaying ? 'Pause the clip' : 'Play the clip'}
+            onClick={() => { const video = clip.current; if (!video) return; if (video.paused) void video.play(); else video.pause(); }}>
+            {clipPlaying ? <Pause size={18} aria-hidden /> : <Play size={18} aria-hidden />}</button>
+        </div>}
         <div className="familiar-helper-topic-text">
           <p>{topic.explanation}</p>
           <button type="button" className="familiar-helper-icon" aria-label={state.phase === 'speaking' ? 'Stop' : 'Hear it again'}

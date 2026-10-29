@@ -71,6 +71,11 @@ describe('Familiar live talk in the browser', () => {
     const handlers = events();
     live(respond(503, {})).start(brief, handlers);
     await vi.waitFor(() => expect(handlers.ended).toHaveBeenCalledWith(undefined, true));
+    // Any other failure before the conversation opens hands over too, so the reader is never left without a voice.
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const refused = events();
+    live(respond(502, { error: 'Your Familiar could not start talking. Try again.' })).start(brief, refused);
+    await vi.waitFor(() => expect(refused.ended).toHaveBeenCalledWith(undefined, true));
     const spent = events();
     live(respond(429, {})).start(brief, spent);
     await vi.waitFor(() => expect(spent.ended).toHaveBeenCalledWith(expect.stringContaining('talked enough for today'), true));

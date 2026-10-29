@@ -317,6 +317,16 @@ describe('Familiar live talk', () => {
     t.helper.close();
     expect(t.end).toHaveBeenCalledTimes(2);
   });
+  it('pauses story playback to talk, and keeps it paused while the device voice listens where live talk cannot start', () => {
+    const t = live();
+    const interrupt = vi.fn(() => t.release);
+    t.helper.setContext(t.owner, { ...t.context, interrupt });
+    t.helper.talk();
+    expect(interrupt).toHaveBeenCalledOnce();
+    t.events().ended(undefined, true);
+    expect(t.voice.listen).toHaveBeenCalledOnce();
+    expect(t.release).not.toHaveBeenCalled();
+  });
   it('listens with the device voice where live talk cannot start, and says why it ended otherwise', () => {
     const t = live();
     t.helper.talk();

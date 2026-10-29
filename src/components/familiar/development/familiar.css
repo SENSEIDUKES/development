@@ -45,7 +45,8 @@
 .familiar-helper button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 44px; min-height: 44px; padding: 6px 10px; border: 0; border-radius: 16px; background: transparent; color: inherit; cursor: pointer; }
 .familiar-helper button:disabled { opacity: .45; cursor: default; }
 .familiar-helper button:focus-visible, .familiar-helper input:focus-visible { outline: 2px solid #96ddf9; outline-offset: 2px; }
-.familiar-helper button:hover:not(:disabled) { background: #ffffff14; }
+/* Touch screens keep :hover after a tap, which would cover the microphone's state. */
+@media (hover: hover) { .familiar-helper button:hover:not(:disabled):not([data-phase="listening"]):not([data-phase="live"]) { background: #ffffff14; } }
 .familiar-helper button[aria-pressed="true"] { background: #8bdbff2e; color: #fff; }
 /* One row: the two modes, where the reader is, close. */
 .familiar-helper-top { display: flex; align-items: center; gap: 8px; }
@@ -85,12 +86,11 @@
 .familiar-helper form { display: flex; gap: 6px; margin-top: 10px; }
 .familiar-helper input { flex: 1; min-width: 0; min-height: 44px; border: 0; border-radius: 14px; padding: 8px 12px; background: #ffffff12; color: inherit; font-size: 16px; }
 /* The icon row: info, the microphone, typing. The microphone shows what the Familiar is doing: a pulse while it listens, a glow while it speaks. */
-.familiar-helper-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding: 0 4px; }
+.familiar-helper-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; padding: 8px 4px; }
 .familiar-helper .familiar-helper-mic { width: 54px; height: 54px; border-radius: 50%; background: #8bdbff2e; }
-.familiar-helper .familiar-helper-mic[data-phase="listening"] { opacity: 1; animation: familiar-listening 1.2s ease-in-out infinite; }
-.familiar-helper .familiar-helper-mic[data-phase="speaking"] { box-shadow: 0 0 18px #96ddf9aa; }
-@keyframes familiar-listening { 0%, 100% { box-shadow: 0 0 0 0 #96ddf966; } 50% { box-shadow: 0 0 0 10px #96ddf900; } }
-.familiar-helper .familiar-helper-mic[data-phase="live"] { opacity: 1; background: #8bdbff55; animation: familiar-listening 1.6s ease-in-out infinite; }
+/* Lit only while it hears the reader: a ring that ripples outward and fades. */
+.familiar-helper .familiar-helper-mic[data-phase="listening"], .familiar-helper .familiar-helper-mic[data-phase="live"] { opacity: 1; background: #8bdbff59; color: #fff; animation: familiar-listening 1.4s ease-out infinite; }
+@keyframes familiar-listening { 0% { box-shadow: 0 0 0 0 #96ddf999; } 100% { box-shadow: 0 0 0 9px #96ddf900; } }
 .familiar-helper .familiar-helper-mic[data-phase="connecting"] { opacity: .7; }
 @media (prefers-reduced-motion: reduce) { .familiar-helper .familiar-helper-mic[data-phase="listening"], .familiar-helper .familiar-helper-mic[data-phase="live"] { animation: none; box-shadow: 0 0 0 3px #96ddf9; } }
 .familiar-helper-live { margin: 8px 4px 0; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }

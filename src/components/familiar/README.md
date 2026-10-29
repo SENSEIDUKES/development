@@ -342,6 +342,10 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-10-29: Live talk fixes: the server locks the whole setup (Gemini refused
+  the SDK's field list), any failure before a conversation opens hands over to
+  the device voice with story playback still paused, and the microphone lights
+  only while it hears the reader, with a ring that ripples outward.
 - 2026-10-29: Live talk on Gemini Live: where the server has a Gemini key, the
   microphone starts a conversation with the equipped Familiar until tapped
   again (ten minutes at most). It answers from the page's help topics and the

@@ -195,8 +195,8 @@ export const handleFamiliarLiveHttp = async (
       uses: 1,
       expireTime: expiresAt,
       newSessionExpireTime: new Date(now + OPEN_WITHIN_MS).toISOString(),
+      // Locks the whole setup. Gemini refuses the field list the SDK writes for `lockAdditionalFields`.
       liveConnectConstraints: { model, config },
-      lockAdditionalFields: [],
       httpOptions: { apiVersion: 'v1alpha' },
     } });
     if (!token.name) throw new Error('Gemini returned no token.');

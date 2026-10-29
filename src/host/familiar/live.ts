@@ -134,13 +134,18 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
         if (socket && socket.readyState <= 1) socket.close(1000);
         void audio.close().catch(() => {});
       };
+      /** Live talk could not start: the device voice listens instead, so the reader is never left without a voice. */
+      const fallBack = (why: unknown) => {
+        console.warn('[familiar-live] could not start; the device voice listens instead.', why);
+        finish(undefined, true);
+      };
       const finish = (problem?: string, unavailable = false) => {
         if (over) return;
         cleanup();
         events.ended(problem, unavailable);
       };
       const limit = setTimeout(() => finish('Your Familiar talked for ten minutes. Tap to talk again.'), SESSION_MS);
-      const connecting = setTimeout(() => { if (!opened) finish('Your Familiar could not connect. Try again.'); }, CONNECT_MS);
+      const connecting = setTimeout(() => { if (!opened) fallBack('no answer from Gemini'); }, CONNECT_MS);
       const send = (message: unknown) => { if (!over && socket?.readyState === 1) socket.send(JSON.stringify(message)); };
       const play = (data: string) => {
         const samples = base64ToFloat32(data);
@@ -229,9 +234,9 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
           if (over) return;
           if (response.status === 429) { finish('Your Familiar has talked enough for today. It still listens the usual way.', true); return; }
           if (response.status === 503) { finish(undefined, true); return; }
-          if (!response.ok) { finish(errorText(body, 'Your Familiar could not start talking. Try again.')); return; }
+          if (!response.ok) { fallBack(errorText(body, `status ${response.status}`)); return; }
           const { token: liveToken, setup } = body as { token?: string; setup?: unknown };
-          if (!liveToken || !setup) { finish('Your Familiar could not start talking. Try again.'); return; }
+          if (!liveToken || !setup) { fallBack('no token'); return; }
           try {
             stream = await getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
           } catch {
@@ -251,10 +256,11 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
           };
           live.onclose = (event: CloseEvent) => {
             if (event.reason) console.warn('[familiar-live] closed:', event.code, event.reason);
-            finish(opened ? 'Your Familiar stopped talking.' : 'Your Familiar could not connect. Try again.');
+            if (opened) finish('Your Familiar stopped talking.');
+            else fallBack(`closed ${event.code} ${event.reason}`);
           };
-        } catch {
-          finish('Your Familiar could not start talking. Try again.');
+        } catch (error) {
+          fallBack(error);
         }
       })();
       return { end: cleanup };

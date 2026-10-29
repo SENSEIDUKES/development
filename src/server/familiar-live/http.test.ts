@@ -27,9 +27,10 @@ describe('Familiar live talk route', () => {
       uses: 1,
       expireTime: '2026-10-29T12:10:00.000Z',
       newSessionExpireTime: '2026-10-29T12:01:00.000Z',
-      lockAdditionalFields: [],
       liveConnectConstraints: { model: 'gemini-3.8-live', config: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } } } } },
     });
+    // Gemini refuses the field mask the SDK writes for it (2026-10-29), so the whole setup is locked instead.
+    expect(config).not.toHaveProperty('lockAdditionalFields');
     const instruction: string = config.liveConnectConstraints.config.systemInstruction.parts[0].text;
     expect(instruction).toContain('You are Celestial Guardian');
     expect(instruction).toContain('- Energy (energy): Energy is the currency used for manifesting.');

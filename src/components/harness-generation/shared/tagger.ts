@@ -84,7 +84,7 @@ export function tagSubjectsOfStory({ entries, world }: {
  * which is what makes re-tagging an existing chapter the same operation as
  * tagging a new one.
  */
-export function planChapterTagging({ chapter, entries, world, holdings, soundWords, soundtrack, language, model }: {
+export function planChapterTagging({ chapter, entries, world, holdings, soundWords, soundtrack, language, model, reasoningLevel }: {
   chapter: Pick<HarnessChapter, 'id' | 'storyId' | 'chapterNumber' | 'paragraphs'>;
   entries: readonly CodexEntry[];
   world?: WorldRecord;
@@ -93,7 +93,10 @@ export function planChapterTagging({ chapter, entries, world, holdings, soundWor
   soundWords?: readonly SoundWord[];
   soundtrack?: SoundtrackVocabulary;
   language: string;
+  /** The model that reads the chapter: the host's tagger choice, else the chapter's writer. */
   model: string;
+  /** How hard it thinks, when the host chose; otherwise as little as the model allows. */
+  reasoningLevel?: string;
 }): HarnessTagRequest {
   return {
     operation: 'tag-chapter',
@@ -101,6 +104,7 @@ export function planChapterTagging({ chapter, entries, world, holdings, soundWor
     chapterId: chapter.id,
     chapterNumber: chapter.chapterNumber,
     model,
+    ...(reasoningLevel ? { reasoningLevel } : {}),
     language,
     paragraphs: [...chapter.paragraphs],
     subjects: tagSubjectsOfStory({ entries, world }),

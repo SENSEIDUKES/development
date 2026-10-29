@@ -55,7 +55,7 @@ import {
   type HarnessGenerationRepository,
 } from './repository';
 import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
-import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessTaggerChoice, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export interface HarnessGenerationControllerOptions {
   repository: HarnessGenerationRepository;
@@ -71,6 +71,12 @@ export interface HarnessGenerationControllerOptions {
    * (the default). It runs only with an adapter that offers `fixHoldings`.
    */
   holdingsFixer?: HarnessHoldingsFixerPolicy;
+  /**
+   * The Chapter Tagger's model and reasoning level, when the host chose them
+   * (in the Library, the Model Router's Chapter Tagger choice). Absent: the
+   * chapter's own writer, thinking as little as it allows.
+   */
+  tagger?: HarnessTaggerChoice;
 }
 
 /**
@@ -147,6 +153,7 @@ export class HarnessGenerationController {
   private skillCatalog: ReadonlyMap<string, HarnessSkillManifest>;
   private media?: NarrativeMediaPort;
   private holdingsFixer: HarnessHoldingsFixerPolicy;
+  private tagger: HarnessTaggerChoice;
   private readonly listeners = new Set<WorkspaceListener>();
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
@@ -160,11 +167,22 @@ export class HarnessGenerationController {
     this.skillCatalog = createHarnessSkillCatalog(includeBundledHarnessSkills(options.installedSkills ?? []));
     this.media = options.media;
     this.holdingsFixer = options.holdingsFixer ?? 'records-and-sentences';
+    this.tagger = options.tagger ?? {};
   }
 
   /** The host's choice for chapters committed from now on (in the Library, the Familiar's). */
   setHoldingsFixer(policy: HarnessHoldingsFixerPolicy): void {
     this.holdingsFixer = policy;
+  }
+
+  /** The host's choice of who tags chapters from now on, and how hard it thinks (in the Library, the Model Router's). */
+  setTagger(choice: HarnessTaggerChoice): void {
+    this.tagger = { ...choice };
+  }
+
+  /** The model that reads a chapter written by `writer`: the host's tagger choice, else that writer. */
+  private taggerFor(writer: string): Pick<HarnessTaggerChoice, 'reasoningLevel'> & { model: string } {
+    return { model: this.tagger.model?.trim() || writer, ...(this.tagger.reasoningLevel ? { reasoningLevel: this.tagger.reasoningLevel } : {}) };
   }
 
   subscribe(listener: WorkspaceListener): () => void {
@@ -1361,7 +1379,7 @@ export class HarnessGenerationController {
       soundWords: soundVocabulary(chapter.mediaLoadout),
       soundtrack: soundtrackVocabulary(chapter.mediaLoadout),
       language: story.originalLanguage,
-      model: attempt.model,
+      ...this.taggerFor(attempt.model),
     });
     let response: HarnessGenerationResponse | undefined;
     let error: string | undefined;
@@ -1376,13 +1394,13 @@ export class HarnessGenerationController {
     }
     const at = this.runtime.now();
     const tagging = error
-      ? { record: { status: 'failed' as const, at, model: attempt.model, problem: error } }
+      ? { record: { status: 'failed' as const, at, model: request.model, problem: error } }
       : readChapterTagging({
         raw: response?.rawProviderResponse,
         sent: chapter.paragraphs,
         chapterNumber: chapter.chapterNumber,
         at,
-        model: attempt.model,
+        model: request.model,
         options: {
           soundVocabulary: soundVocabulary(chapter.mediaLoadout),
           locale: story.originalLanguage,
@@ -1476,7 +1494,8 @@ export class HarnessGenerationController {
       soundWords: soundVocabulary(attempt.mediaLoadout),
       soundtrack: soundtrackVocabulary(attempt.mediaLoadout),
       language: story.originalLanguage,
-      model: attempt.model,
+      // Who reads it: the host's tagger choice, else the writer that wrote it.
+      ...this.taggerFor(attempt.model),
     });
     let response: HarnessGenerationResponse | undefined;
     let error: string | undefined;
@@ -1491,13 +1510,13 @@ export class HarnessGenerationController {
     }
     const at = this.runtime.now();
     const tagging = error
-      ? { record: { status: 'failed' as const, at, model: attempt.model, problem: error } }
+      ? { record: { status: 'failed' as const, at, model: request.model, problem: error } }
       : readChapterTagging({
         raw: response?.rawProviderResponse,
         sent: paragraphs,
         chapterNumber: attempt.chapterNumber,
         at,
-        model: attempt.model,
+        model: request.model,
         options: {
           soundVocabulary: soundVocabulary(attempt.mediaLoadout),
           locale: story.originalLanguage,

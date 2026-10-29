@@ -1387,7 +1387,14 @@ export interface HarnessTagRequest {
   storyId: string;
   chapterId: string;
   chapterNumber: number;
+  /** The model that reads the chapter: the host's choice for the tagger, else the chapter's own writer. */
   model: string;
+  /**
+   * How hard the tagger thinks, when the host chose (`HarnessTaggerChoice`).
+   * The server checks it against the model's levels; absent or unknown, the
+   * tagger thinks as little as the model allows.
+   */
+  reasoningLevel?: string;
   /** The story's language: the tagger reads the chapter in it and writes no prose at all. */
   language: string;
   /** The chapter as it stands, one entry per paragraph, carrying no tag. */
@@ -1404,6 +1411,18 @@ export interface HarnessTagRequest {
   soundWords?: SoundWord[];
   /** The story's music and atmosphere categories. Without them no soundtrack is chosen. */
   soundtrack?: SoundtrackVocabulary;
+}
+
+/**
+ * The host's choice for the Chapter Tagger (SENSEI, 2026-10-29: "maybe cheap
+ * models with high reasoning are really good for tagging"): the model that
+ * reads each chapter, and how hard it thinks. Either absent means the old
+ * behaviour: the chapter's own writer, thinking as little as it allows. In the
+ * Library it is the Model Router's Chapter Tagger choice.
+ */
+export interface HarnessTaggerChoice {
+  model?: string;
+  reasoningLevel?: string;
 }
 
 /**

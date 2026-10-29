@@ -2,7 +2,9 @@ import { StoryFoundationEditor } from '@seihouse/sen/story-seed';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { FrozenNarrativeMedia, SoundWord, SoundWordsPreset, SoundtrackVocabulary } from '@seihouse/sen/audio';
 import { BookOpen, CheckCircle2, CircleAlert, Compass, Download, FileText, ListTree, LoaderCircle, Pause, Pin, Play, Plus, RefreshCcw } from 'lucide-react';
-import { CHAPTER_FUNCTIONS, CHAPTER_FUNCTION_LABELS, FATE_MODE_LABELS, FATE_PRESSURE_RHYTHM_CONFIG, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, HARD_PIN_LIMIT, arcPlanGap, arcReviewGap, chapterDirectionGap, describeChapterPath, harnessStoryMode, nextArcStep } from '@seihouse/sen/harness-generation';
+import { CHAPTER_FUNCTIONS, CHAPTER_FUNCTION_LABELS, FATE_MODE_LABELS, FATE_PRESSURE_RHYTHM_CONFIG, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, HARD_PIN_LIMIT, arcPlanGap, arcReviewGap, chapterDirectionGap, describeChapterPath, harnessStoryMode, nextArcStep,
+  type HarnessTaggerChoice,
+} from '@seihouse/sen/harness-generation';
 import type { ChapterDirectionChoice, HardPinInput, HarnessChapter, HarnessMissionReminder, StoryFoundationRevision } from '@seihouse/sen/harness-generation';
 import { type MediaPack, type MediaPackEntitlement, type MediaPackReference, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
@@ -98,6 +100,8 @@ export interface HarnessGenerationWorkspaceProps {
   onGrantDevelopmentMediaReward?: (reference: MediaPackReference) => void | Promise<void>;
   /** Host-remembered model choice (the Model Router); used whenever the server offers it. */
   preferredModel?: string;
+  /** Host-remembered Chapter Tagger choice (the Model Router): its model and reasoning level. */
+  preferredTagger?: HarnessTaggerChoice;
   /** Tells the host the author picked a different model here. */
   onModelChange?: (model: string) => void;
 }
@@ -647,6 +651,7 @@ export function HarnessGenerationWorkspace({
   mediaPackEntitlements = EMPTY_MEDIA_ENTITLEMENTS,
   onGrantDevelopmentMediaReward,
   preferredModel,
+  preferredTagger,
   onModelChange,
   readerStateRepository,
   readerPreferences,
@@ -665,7 +670,7 @@ export function HarnessGenerationWorkspace({
   // The stories, their controller and the writer: the same Library setup the app uses.
   const stories = useLibraryStories({
     repository: injectedRepository, modelAdapter: injectedAdapter, installedSkills,
-    registeredMediaPacks, mediaPackEntitlements, baseMedia, preferredModel, soundWordPresets, importSoundWords, importMediaPack,
+    registeredMediaPacks, mediaPackEntitlements, baseMedia, preferredModel, preferredTagger, soundWordPresets, importSoundWords, importMediaPack,
   });
   const { controller, state, serverInfo, model, setModel } = stories;
   const [selectedStoryId, setSelectedStoryId] = useState<string>();

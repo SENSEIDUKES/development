@@ -14,7 +14,7 @@ import {
 import { resolveConfiguredHarnessModel, type ResolvedHarnessGenerationConfig } from './config';
 import { createHarnessTextProvider } from './provider';
 import { HarnessGenerationExecutionError, type HarnessProviderFactory } from './execute';
-import { lowestReasoningLevel, requireTextModelKey } from '../model-router/catalog';
+import { CHAPTER_MODELS, lowestReasoningLevel, requireTextModelKey, type ReasoningLevel } from '../model-router/catalog';
 
 /**
  * The tagger (SENSEI, 2026-10-24): one call that reads a chapter already
@@ -137,6 +137,15 @@ export const TAG_NAME_CHARACTERS = 200;
 /** How long one tagging call may take, at most. */
 export const TAGGER_TIMEOUT_MS = 120_000;
 
+/**
+ * How hard the tagger thinks: the level the Router's Chapter Tagger choice
+ * asked for, when the model offers it; otherwise as little as the model
+ * allows, as before. A level the model does not offer is dropped, never a
+ * reason to refuse the tagging.
+ */
+export const taggerReasoningLevel = (model: string, requested: unknown): ReasoningLevel | undefined =>
+  CHAPTER_MODELS.find(option => option.id === model)?.reasoning?.levels.find(level => level === requested) ?? lowestReasoningLevel(model);
+
 export const buildHarnessTagPrompt = (request: HarnessTagRequest) => ({
   systemInstruction: [
     HEADINGS.role, HARNESS_TAGGER_ROLE,
@@ -167,7 +176,7 @@ export const executeHarnessTagging = async (
       systemInstruction: prompt.systemInstruction,
       userPrompt: prompt.userPrompt,
       responseJsonSchema: prompt.responseJsonSchema,
-      reasoningLevel: lowestReasoningLevel(model),
+      reasoningLevel: taggerReasoningLevel(model, request.reasoningLevel),
       temperature: 0,
       maxOutputTokens: config.maxOutputTokens,
       timeoutMs: Math.min(config.timeoutMs, TAGGER_TIMEOUT_MS),

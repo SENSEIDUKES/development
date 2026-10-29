@@ -103,6 +103,25 @@ describe('tagging a chapter as it is written', () => {
     expect(committed.paragraphs[0]).toBe(PROSE);
   });
 
+  it('reads the chapter with the host\'s tagger choice when there is one, and records who read it', async () => {
+    // The Model Router's Chapter Tagger choice (SENSEI, 2026-10-29): a model of
+    // its own and how hard it thinks. Without one, the chapter's writer tags it.
+    const tagChapter = tagging(paragraph => paragraph);
+    const { write, chapter, controller, storyId } = await setup({ tagChapter });
+    await write();
+    expect(tagChapter.mock.calls[0][0]).toMatchObject({ model: 'fixture' });
+    expect(tagChapter.mock.calls[0][0].reasoningLevel).toBeUndefined();
+    expect(chapter().tagging?.model).toBe('fixture');
+    controller.setTagger({ model: 'cheap-model', reasoningLevel: 'high' });
+    await controller.retagLatestChapter(storyId);
+    expect(tagChapter.mock.calls[1][0]).toMatchObject({ model: 'cheap-model', reasoningLevel: 'high' });
+    expect(chapter().tagging?.model).toBe('cheap-model');
+    // A level alone keeps the chapter's writer.
+    controller.setTagger({ reasoningLevel: 'low' });
+    await write(['He swung the rusted sword at the post.']);
+    expect(tagChapter.mock.calls[2][0]).toMatchObject({ model: 'fixture', reasoningLevel: 'low' });
+  });
+
   it('tells the tagger what each character had going into the chapter', async () => {
     const tagChapter = tagging(paragraph => paragraph === PROSE
       ? `[[gained: MC | Rusted Iron Sword]] ${paragraph}`

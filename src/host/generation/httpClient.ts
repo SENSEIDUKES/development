@@ -91,8 +91,9 @@ export class HarnessGenerationHttpClient implements HarnessGenerationModelAdapte
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       // The Model Router's Advanced reasoning level for this model rides along;
-      // the server checks it against the catalog.
-      body: JSON.stringify(withReasoningLevel(request)),
+      // the server checks it against the catalog. A tagging request carries the
+      // Router's Chapter Tagger level of its own, so nothing is added to it.
+      body: JSON.stringify('operation' in request && request.operation === 'tag-chapter' ? request : withReasoningLevel(request)),
     });
     if (!response.ok) throw new HarnessGenerationRequestError(await responseError(response), response.status);
     return parseGenerationResponse(await response.json());

@@ -930,10 +930,10 @@ async function walk(browser, viewport, sample) {
   await chaptersCard.click();
   const chapterRecord = page.locator('[data-testid="story-chapter"][data-chapter-number="1"] [data-testid="chapter-tagging"]');
   await chapterRecord.waitFor();
-  const recordText = await chapterRecord.innerText();
+  const recordText = await chapterRecord.textContent();
   check(recordText.includes('Read by') && /\d+ notes? written · \d+ placed/.test(recordText), `The chapter's record should say who read it and how many notes landed, got ${recordText}`);
   check((await chapterRecord.locator('[data-tagging-kind="Holdings"]').textContent()).includes('Bell Key'), `Holdings should name the key, got ${recordText}`);
-  check((await chapterRecord.locator('[data-tagging-kind="Speakers"]').textContent()).includes('Mara'), `Speakers should name Mara, got ${recordText}`);
+  check((await chapterRecord.locator('[data-tagging-kind="Speakers"]').textContent()).includes('Ye Chen'), `Speakers should name Ye Chen, got ${recordText}`);
   check(!(await page.evaluate(slidesSideways)), 'The chapter list must never scroll sideways.');
   await shot('4h-chapters');
   await visibleButton('Tag this chapter again').click();

@@ -89,7 +89,8 @@ client the shell already mounts. Continue opens
 `worlds=sample` swaps in six Workshop sample worlds (`previewData.ts`, existing local art,
 one finished, one without a cover). Sample worlds are not in the chapter workspace, so
 Continue/Studio report where they would go instead of navigating. The Workshop entry
-defaults to samples; the in-app tab defaults to this browser's stories.
+defaults to the app's own Create (`/app/?page=create`, this browser's stories); the
+sample composition is a layout aid behind the Worlds control.
 
 To support Continue and Studio, the Library chapter workspace gained two additive props,
 `initialStoryId` and `initialFocus: 'next-chapter'`, read from the `story`/`focus` URL

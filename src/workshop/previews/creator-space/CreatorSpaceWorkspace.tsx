@@ -12,13 +12,14 @@ const viewports = {
 type Viewport = keyof typeof viewports;
 
 const WORLD_SOURCES: Record<CreatorWorldsSource, { label: string; description: string }> = {
-  sample: { label: 'Sample worlds', description: 'Six Workshop sample worlds with existing art, including a finished story and one without a cover. Continue and Studio say where they would go.' },
+  sample: { label: 'Sample worlds', description: 'The Library shell composition with six Workshop sample worlds (existing art, a finished story, one without a cover), for judging the page’s own layout. Continue and Studio say where they would go; it does not wear the app’s look.' },
   local: { label: 'This browser’s stories', description: 'The app’s own Create at /app/?page=create, with the Library’s look: this browser’s stories, the live Energy account and the real destinations (Story Seed, the Reader, World Info and the Cave’s Energy page).' },
 };
 
 export function CreatorSpaceWorkspace() {
   const [viewport, setViewport] = useState<Viewport>('mobile');
-  const [source, setSource] = useState<CreatorWorldsSource>('sample');
+  // The app's own Create is the Development view; the sample composition is a layout aid.
+  const [source, setSource] = useState<CreatorWorldsSource>('local');
   const { label, width, height } = viewports[viewport];
   // The app route itself for this browser's stories; the sample set stays on the Library shell capture.
   const src = source === 'sample' ? '/library-shell.html?variant=development&source=main-library&screen=creator-space&worlds=sample' : '/app/?page=create';

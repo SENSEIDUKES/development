@@ -2,6 +2,7 @@
 import { act, StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { NarrativeAudioProvider, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FamiliarHelperAction, FamiliarHelperProvider, useFamiliarHelperContext } from './FamiliarHelper';
 import type { FamiliarHelperContext, FamiliarVoice } from '../../../library/familiars/helper';
 
@@ -101,5 +102,30 @@ describe('Familiar helper surface', () => {
     expect(document.body.textContent).not.toContain('Say Conflict.');
     await click('How to talk to your Familiar');
     expect(document.querySelector('.familiar-helper-info')!.textContent).toContain('Say Conflict.');
+  });
+  it('stops a recorded line through the player as it is now, so Stop silences it', async () => {
+    const t = setup();
+    // Like the app's player, stop only acts on the track its own snapshot knows is playing.
+    const player = (currentTrackId: string | null): NarrativeAudioPlayback => ({
+      autoplayBlocked: false, currentSource: null, currentTrackId, errorMessage: '', hasError: false, isBuffering: false, isMuted: false, isPlaying: Boolean(currentTrackId), volume: 1,
+      load: vi.fn(), pause: vi.fn(), play: vi.fn(), replace: vi.fn(), restart: vi.fn(() => false), setVolume: vi.fn(),
+      stop: vi.fn((trackId?: string) => { if (trackId && trackId !== currentTrackId) return; }),
+      subscribe: vi.fn(() => () => {}), subscribeToTrackChange: vi.fn(() => () => {}), subscribeToQueueEnd: vi.fn(() => () => {}), toggleMute: vi.fn(),
+    });
+    const topics = [{ id: 'energy', label: 'Energy', phrases: ['energy'], explanation: 'Energy powers creation.', audioUrl: 'https://cdn.example/energy.mp3' }];
+    const app = (playback: NarrativeAudioPlayback) => <StrictMode><NarrativeAudioProvider value={playback}><FamiliarHelperProvider voice={t.voice}>
+      <Screen context={{ ...t.context, topics }} /><FamiliarHelperAction />
+    </FamiliarHelperProvider></NarrativeAudioProvider></StrictMode>;
+    const before = player(null);
+    act(() => root.render(app(before)));
+    await click('Talk to Familiar');
+    await click('Explain');
+    await click('Energy');
+    expect(before.play).toHaveBeenCalledWith(expect.objectContaining({ source: 'https://cdn.example/energy.mp3' }));
+    // The player re-renders with the line now playing.
+    const playing = player('familiar-line:https://cdn.example/energy.mp3');
+    act(() => root.render(app(playing)));
+    await click('Stop');
+    expect(playing.stop).toHaveBeenCalledWith('familiar-line:https://cdn.example/energy.mp3');
   });
 });

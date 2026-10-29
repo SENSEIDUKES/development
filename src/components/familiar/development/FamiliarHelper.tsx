@@ -17,7 +17,8 @@ const LINE_START_MS = 8_000;
  * uses): done when it ends, a failure when it cannot start, so the device
  * voice can read the words instead.
  */
-function playLine(playback: NarrativeAudioPlayback | null, url: string, done: () => void, failure: (message: string) => void) {
+function playLine(currentPlayback: () => NarrativeAudioPlayback | null, url: string, done: () => void, failure: (message: string) => void) {
+  const playback = currentPlayback();
   if (!playback) { failure('No player for recorded lines here.'); return () => {}; }
   const id = `familiar-line:${url}`;
   let started = false;
@@ -41,7 +42,8 @@ function playLine(playback: NarrativeAudioPlayback | null, url: string, done: ()
     finished = true;
     clearTimeout(timeout);
     unsubscribe();
-    playback.stop(id);
+    // The player as it is now: the one captured at the start does not know its new track yet.
+    currentPlayback()?.stop(id);
   };
 }
 
@@ -55,7 +57,7 @@ export function FamiliarHelperProvider({ voice, language = 'en-US', bottomInset 
     available: voice.available,
     listen: (...args) => voice.listen(...args),
     speak: (...args) => voice.speak(...args),
-    play: voice.play ?? ((url, done, failure) => playLine(narrativeRef.current, url, done, failure)),
+    play: voice.play ?? ((url, done, failure) => playLine(() => narrativeRef.current, url, done, failure)),
   }, language), [voice, language]);
   const returnFocus = useRef<HTMLElement | null>(null);
   useEffect(() => {

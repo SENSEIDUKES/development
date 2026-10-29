@@ -52,6 +52,9 @@ and the fingerprint to record. To change the writer's instructions:
 
 ## Workshop history
 
+- **2026-10-29:** The Chapter tagger block loses its bridging sentence: the
+  tag teaching is written for the tagger now, which returns notes in the
+  margin and never the chapter. Same blocks, same order.
 - **2026-10-17:** The look step becomes the look writer: it runs on demand, for
   one Codex entry, never after a chapter. It stays listed under After a chapter.
 - **2026-10-14:** SEN Appearance joins the blocks read on every chapter (open

@@ -1,6 +1,7 @@
 import {
   HarnessGenerationController,
   findStory,
+  notesOfTaggedChapter,
   type HarnessGenerationModelAdapter,
   type HarnessSkillManifest,
   type HarnessWorkspaceState,
@@ -112,7 +113,7 @@ function rightToLeftWriter(): HarnessGenerationModelAdapter {
       };
     },
     tagChapter: async request => ({
-      rawProviderResponse: JSON.stringify({ paragraphs: request.paragraphs.map(paragraph => tagged.get(paragraph) ?? paragraph) }),
+      rawProviderResponse: JSON.stringify({ notes: notesOfTaggedChapter(request.paragraphs.map(paragraph => tagged.get(paragraph) ?? paragraph), request.language) }),
       providerReceipt: { provider: 'workshop-replay', model: REPLAY_MODEL, generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } },
     }),
     arcOperation: async () => {

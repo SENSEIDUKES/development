@@ -61,7 +61,7 @@ describe('Writer Instructions', () => {
     // writer's prompt. The history still names the retired heading, as it must.
     expect(markup).not.toContain('data-part="tagging"');
     expect(markup).not.toContain('writer-instructions__heading"># HOW TO TAG');
-    expect(markup).toContain('One speaker per paragraph. Speech goes in quotation marks.');
+    expect(markup).toContain('A paragraph with several lines gets a note for each.');
     expect(markup.replace(/<[^>]+>/g, '')).toMatch(/SEN Novel Author v1\.1\.0 · \d+ words · changed 2026-10-26/);
     expect(markup).toMatch(/<time datetime="2026-10-04">2026-10-04<\/time>/i);
   });

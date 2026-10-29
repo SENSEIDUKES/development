@@ -116,8 +116,10 @@ describe('HARNESS holdings through change tags', () => {
       ['thing', 'Jade Gourd', false, 'tag'], ['ability', 'Cloud Step', false, 'tag'], ['thing', 'Spirit Pill', false, 'tag'],
     ]);
     expect(state.codexEntries.every(entry => entry.id.startsWith('hcx-') && entry.storyId === story.id)).toBe(true);
-    expect(state.attempts[0].warnings.filter(warning => warning.code === 'holding_tags_incomplete').map(warning => warning.message))
-      .toEqual(['1 tag was unreadable and removed.']);
+    // The fixture's slipped `[[obtainedd: …]]` is no tag the reader can read, so
+    // no note replays it: the tagger's own slip of that kind is covered in
+    // `tagger.test.ts`, where it is still removed and reported.
+    expect(state.attempts[0].warnings.filter(warning => warning.code === 'holding_tags_incomplete')).toEqual([]);
 
     const holdings = holdingsOf(state, story.id);
     expect(holdings.characters.map(character => [character.name, character.things.map(thing => [thing.name, thing.count, thing.equipped]), character.abilities.map(ability => [ability.name, ability.stage])])).toEqual([

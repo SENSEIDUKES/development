@@ -26,12 +26,12 @@ const largestVocabulary = (): SoundWord[] => validateSoundWords(Array.from({ len
 
 describe('SEN Sound Cues skill', () => {
   it('teaches the sound tag with the same numbers placement enforces', () => {
-    // The owner's rules: a cue is earned by the prose, and a sentence is never bent to fit one.
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain('Never add or change a sentence to fit a sound.');
+    // The owner's rules: a cue is earned by the prose. A tagger cannot bend a
+    // sentence to fit a sound, so it is no longer told not to.
     expect(SEN_SOUND_CUES_INSTRUCTIONS).not.toContain('may have none');
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`wrap up to ${SOUND_CUE_RULES.maxWords} of its own words, where they stand`);
-    // Blade Chapter 17: a tag written between sentences, with words of its own, was dropped.
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain('never put a tag between sentences or write words only for it.');
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`tag up to ${SOUND_CUE_RULES.maxWords} of its own words, where they stand`);
+    // The words are the paragraph's own: a note with words of the tagger's own lands nowhere.
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain('copied exactly: never words of your own, and never a whole sentence.');
     expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`At most ${SOUND_CUE_RULES.maxPerChapter} a chapter.`);
     expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`${AUDIO_ENERGIES.slice(0, -1).join(', ')} or ${AUDIO_ENERGIES.at(-1)}`);
   });
@@ -44,20 +44,20 @@ describe('SEN Sound Cues skill', () => {
     for (const { word } of LIBRARY_SOUND_WORDS) expect(SEN_SOUND_CUES_INSTRUCTIONS).not.toContain(word);
   });
 
-  it('gives the writer exactly these instructions, so nothing changes what the model receives unnoticed', () => {
+  it('gives the tagger exactly these instructions, so nothing changes what the model receives unnoticed', () => {
     expect(SEN_SOUND_CUES_INSTRUCTIONS).toBe([
-      'When your sentence describes a sound below happening, wrap up to 8 of its own words, where they stand:',
-      '[[sound: Sound Word | the words | Energy]]  Energy: low, medium or high.',
-      'The words stay part of your sentence: never put a tag between sentences or write words only for it.',
-      'At most 10 a chapter. Never add or change a sentence to fit a sound.',
+      'When a sentence describes a sound below happening, tag up to 8 of its own words, where they stand:',
+      '[[sound: Sound Word | Energy]]  Energy: low, medium or high.',
+      'The words are the sentence\'s own, copied exactly: never words of your own, and never a whole sentence.',
+      'At most 10 a chapter.',
     ].join('\n'));
   });
 
-  it('shows one example made from the first word, the tag inside a sentence with no phrase to copy, then the words', () => {
+  it('shows one example note made from the first word, with a placeholder where the words go, then the words', () => {
     // The owner's Sundered Heavens test: given phrases ("iron scraped stone"), the writer copied them into the chapter.
     const list = presentSoundVocabulary([{ word: 'unsheathe', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }]);
     expect(list).toBe([
-      'Example: Far off, [[sound: unsheathe | the words of your own sentence | high]] and the yard fell still.',
+      'Example: {"paragraph": 7, "words": "the sentence\'s own words for the sound", "tag": "[[sound: unsheathe | high]]"}',
       'SOUND WORDS: unsheathe, chime',
     ].join('\n'));
     expect(list).not.toMatch(/drew his sword|a soft chime|small bright/);

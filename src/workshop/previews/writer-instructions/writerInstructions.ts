@@ -27,7 +27,7 @@ import {
 } from '../../../server/harness-generation/prompt';
 import { HOLDINGS_FIXER_INSTRUCTIONS } from '../../../server/harness-generation/holdingsFixer';
 import { WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS } from '../../../server/story-seed-blueprint/prompt';
-import { HARNESS_TAGGER_READING, HARNESS_TAGGER_RETURN, HARNESS_TAGGER_ROLE } from '../../../server/harness-generation/tagger';
+import { HARNESS_TAGGER_RETURN, HARNESS_TAGGER_ROLE } from '../../../server/harness-generation/tagger';
 import { LOOK_DESCRIBER_INSTRUCTIONS } from '../../../server/harness-generation/lookDescriber';
 
 /**
@@ -156,8 +156,8 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
   },
   {
     id: 'tagger', title: 'Chapter tagger', source: 'HARNESS',
-    when: 'After a chapter is written: one call that reads the finished chapter and writes the app\'s tags into it, then hands the paragraphs back. It reads these words, the same tag teaching the chapter writer reads, who and what the story already has, and what each character was carrying. It is told nothing about how the story got here: no Foundation, no arc, no Destined Ending, no Story Information Packet, so it tags a chapter an author wrote themselves exactly as well as a generated one (SENSEI, 2026-10-24).',
-    text: [HARNESS_TAGGER_ROLE, HARNESS_TAGGER_READING, HARNESS_TAGGER_RETURN].join('\n\n'),
+    when: 'After a chapter is written: one call that reads the finished chapter and writes the app\'s tags for it as notes in the margin (a paragraph, the exact words, the tag), never handing the chapter back. It reads these words, the tag teaching below, who and what the story already has, and what each character was carrying. It is told nothing about how the story got here: no Foundation, no arc, no Destined Ending, no Story Information Packet, so it tags a chapter an author wrote themselves exactly as well as a generated one (SENSEI, 2026-10-24).',
+    text: [HARNESS_TAGGER_ROLE, HARNESS_TAGGER_RETURN].join('\n\n'),
   },
   {
     id: 'tag-rules', title: 'Tag rules', source: 'HARNESS',

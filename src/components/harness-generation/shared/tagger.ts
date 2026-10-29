@@ -7,13 +7,16 @@ import { findStory } from './foundation';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import type { HarnessWarning } from '../../../narrative/generation';
-import { readMarks } from '../../../narrative/marks';
+import { SOUNDTRACK_TAG_WORDS, SOUND_TAG_WORDS, readMarks } from '../../../narrative/marks';
+import { findSpokenLines } from '../../../narrative/speech';
+import { splitSentences } from '../../highlight-engine/shared/manuscript';
 import { normalizeIdentityLabel } from './canonicalProjection';
+import { pointedSentence } from './holdings';
 import { acceptChapterTags, type HarnessResponseAcceptanceOptions } from './responseAcceptance';
 
 /**
  * The tagger in the HARNESS (SENSEI, 2026-10-24): the chapter is written
- * first, and one call afterwards reads it and writes the app's tags into it.
+ * first, and one call afterwards reads it and writes the app's tags for it.
  *
  * This side plans that call and reads its answer. Everything it sends is
  * something a chapter has on its own: the prose, who and what the story
@@ -22,10 +25,14 @@ import { acceptChapterTags, type HarnessResponseAcceptanceOptions } from './resp
  * Information Packet, because a chapter an author wrote themselves has none of
  * those and must tag exactly as well.
  *
- * The answer is the same paragraphs with tags written in. That is what lets
- * the HARNESS check the tagger rather than trust it: the tags are read and
- * removed the way they always are, and the prose that comes back out is
- * compared to the prose that went in. A tagger that changed a word is refused.
+ * The answer is a list of notes in the margin, never the chapter (SENSEI,
+ * 2026-10-29: "You write a page. Your teacher looks over it, writes marks. The
+ * page is never retyped."). Each note names a paragraph, the exact words the
+ * tag belongs to, and the tag. The HARNESS places every note on its own copy
+ * of the paragraph, so there is one copy of the novel and the tagger cannot
+ * change a word of it: not a rule it is held to, a fact of the shape. A note
+ * whose words are not in its paragraph is dropped by itself, and the rest
+ * stand.
  */
 
 /** The world card kinds that are also Codex kinds: the only ones a tag can name today. */
@@ -160,34 +167,223 @@ export interface ChapterTagging {
   tags?: ChapterTags;
 }
 
+// ─── Notes in the margin ────────────────────────────────────────────────────
+
+/**
+ * One note the tagger writes in the margin: which paragraph, the exact words
+ * the tag belongs to, and the tag itself in the tag language. The tagger never
+ * writes the prose, so it cannot change it.
+ */
+export interface TagNote {
+  /** The paragraph's number as the tagger was shown it: 1 for the first. */
+  paragraph: number;
+  /**
+   * The exact words in that paragraph the tag belongs to: the spoken line for
+   * a speaker, the sentence for a holding or an appearance, the words where a
+   * sound happens. Empty only for the chapter's music and atmosphere, which
+   * open their paragraph.
+   */
+  words: string;
+  /** The tag: `[[@MC]]`, `[[gained: MC | Iron Key]]`, `[[sound: growl | low]]`, `[[soundscape: Tense | dark | urgent | high]]`. */
+  tag: string;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
-/**
- * A paragraph as the tag reader leaves it with no tag in it: what the clean
- * text of a tagged answer is compared against, and the text every attachment's
- * offsets are measured from.
- */
-const cleanForm = (paragraph: string) => readMarks(paragraph).text;
+/** The tag as written, without the brackets a note may or may not have put around it. */
+const tagBody = (tag: string) => tag.trim().replace(/^[[［]{1,2}\s*/u, '').replace(/\s*[\]］]{1,2}$/u, '').trim();
+
+const escapeForPattern = (word: string) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/[ \t-]+/g, '[ \\t-]?');
+const openingWord = (words: readonly string[]) => new RegExp(`^(?:${words.map(escapeForPattern).join('|')})\\s*[:：]`, 'iu');
+/** A sound tag, by the language's own words for it: the one kind whose words sit inside the tag. */
+const SOUND_NOTE = openingWord(SOUND_TAG_WORDS);
+/** A soundtrack tag, by the language's own words for it: the one kind that needs no words, since it opens its paragraph. */
+const SOUNDTRACK_NOTE = openingWord(Object.values(SOUNDTRACK_TAG_WORDS).flat());
+/** A speaker tag: placed at the start of the spoken line its words are in. */
+const SPEAKER_NOTE = /^[@＠]/u;
+
+type NoteKind = 'sound' | 'soundtrack' | 'speaker' | 'point';
+const noteKind = (body: string): NoteKind =>
+  SOUNDTRACK_NOTE.test(body) ? 'soundtrack' : SOUND_NOTE.test(body) ? 'sound' : SPEAKER_NOTE.test(body) ? 'speaker' : 'point';
 
 /**
- * The paragraph the tagger changed, when it changed one.
- *
- * The comparison is exact, not trimmed. Trimming either side would accept an
- * answer whose attachments no longer line up with the chapter: a paragraph sent
- * as `  "Run!"` comes back from the tag reader as `"Run!"`, so a speaker
- * anchored at offset 0 would point two characters before the speech it names,
- * and the Reader would voice or highlight the wrong span. A tag that leaves a
- * space behind is still no change, because the tag reader trims what it returns
- * and the paragraph it is compared to is read the same way.
+ * Quotation marks and apostrophes as a model often writes them back: straight
+ * for curly. Each stands in for one character, so an offset found in the
+ * folded text is the same offset in the real one.
  */
-const changedParagraph = (sent: readonly string[], back: readonly string[]) => {
-  if (sent.length !== back.length) {
-    return `the chapter has ${sent.length} paragraph${sent.length === 1 ? '' : 's'} and ${back.length} came back`;
+const foldQuotes = (text: string) => text.replace(/[“”„]/g, '"').replace(/[‘’‚]/g, "'");
+
+/** Where `words` sit in a paragraph, when they sit there exactly once. */
+type WordsFound = { start: number; end: number } | 'missing' | 'ambiguous';
+
+const findOnce = (haystack: string, needle: string): { at: number; count: number } => {
+  let at = haystack.indexOf(needle);
+  const first = at;
+  let count = 0;
+  while (at !== -1 && count < 2) {
+    count += 1;
+    at = haystack.indexOf(needle, at + 1);
   }
-  const at = sent.findIndex((paragraph, index) => cleanForm(paragraph) !== back[index]);
-  return at === -1 ? undefined : `paragraph ${at + 1} came back with different words`;
+  return { at: first, count };
 };
+
+/** The note's words in its paragraph: as written first, then with straight quotes read as the paragraph's curly ones. */
+const findWords = (paragraph: string, words: string): WordsFound => {
+  for (const [text, needle] of [[paragraph, words], [foldQuotes(paragraph), foldQuotes(words)]] as const) {
+    const { at, count } = findOnce(text, needle);
+    if (count === 1) return { start: at, end: at + needle.length };
+    if (count > 1) return 'ambiguous';
+  }
+  return 'missing';
+};
+
+/** The words a note names, as it names them, for a warning. */
+const quoted = (words: string) => {
+  const trimmed = words.trim();
+  return trimmed.length > 60 ? `“${trimmed.slice(0, 57)}…”` : `“${trimmed}”`;
+};
+
+/** One place in a paragraph where tag text goes: a closing before a point tag before an opening, at the same offset. */
+interface Insertion { at: number; rank: 0 | 1 | 2; text: string }
+
+/**
+ * Where one note's tag text goes in its paragraph, in the inline form the tag
+ * reader reads: a speaker, holding, appearance or soundtrack tag is written
+ * just before its words, and a sound tag is written around them.
+ */
+const insertionsOf = (paragraph: string, note: TagNote, kind: NoteKind): Insertion[] | string => {
+  const body = tagBody(note.tag);
+  if (!body) return 'it names no tag';
+  const words = note.words.trim();
+  if (!words) {
+    if (kind !== 'soundtrack') return 'it names no words';
+    return [{ at: 0, rank: 1, text: `[[${body}]]` }];
+  }
+  const found = findWords(paragraph, words);
+  if (found === 'missing') return `its words ${quoted(words)} are not in that paragraph`;
+  if (found === 'ambiguous') return `its words ${quoted(words)} are in that paragraph more than once`;
+  if (kind === 'sound') {
+    // The words sit inside a sound tag. One written the old way, with the words
+    // in it, is read as the note it is: the paragraph's own characters are
+    // wrapped, never the note's copy of them.
+    const [head, ...parts] = body.split(/[|｜]/).map(part => part.trim());
+    const own = foldQuotes(words);
+    const rest = parts.filter(part => part && foldQuotes(part) !== own);
+    return [
+      { at: found.start, rank: 2, text: `[[${[head, ...rest].join(' | ')} | ` },
+      { at: found.end, rank: 0, text: ']]' },
+    ];
+  }
+  let at = found.start;
+  if (kind === 'speaker') {
+    // A speaker names a spoken line, and the line takes the nearest tag at or
+    // before its opening mark: words quoted from inside the line move the tag
+    // to where the line begins.
+    const line = findSpokenLines(paragraph).find(spoken => spoken.start < at && at < spoken.end);
+    if (line) at = line.start;
+  }
+  return [{ at, rank: 1, text: `[[${body}]]` }];
+};
+
+/** The paragraph with its tag text written in at every insertion. */
+const written = (paragraph: string, insertions: readonly Insertion[]) => {
+  const ordered = insertions.map((insertion, index) => ({ ...insertion, index }))
+    .sort((left, right) => left.at - right.at || left.rank - right.rank || left.index - right.index);
+  let text = '';
+  let cursor = 0;
+  for (const insertion of ordered) {
+    text += paragraph.slice(cursor, insertion.at) + insertion.text;
+    cursor = insertion.at;
+  }
+  return text + paragraph.slice(cursor);
+};
+
+export interface PlacedTagNotes {
+  /** The chapter's own paragraphs with every placed note's tag written in, for the tag reader. */
+  paragraphs: string[];
+  /** Why each note that was not placed was dropped, in the order the notes came. */
+  dropped: string[];
+  /** How many notes were placed. */
+  placed: number;
+}
+
+/**
+ * Places the tagger's notes on the chapter's own paragraphs, one note at a
+ * time. A note is kept only while the paragraph still reads, with every tag
+ * taken back out, exactly as the chapter has it; one that would change a
+ * character of the prose (a tag the reader would read as standing in for a
+ * name, say) is dropped on its own, named, and the rest stand. The inline form
+ * is the tag reader's and never the model's: it exists here only so every tag
+ * is placed through the one path a writer's tags went through.
+ */
+export function placeTagNotes(paragraphs: readonly string[], notes: readonly TagNote[], { soundWords }: { soundWords?: readonly string[] } = {}): PlacedTagNotes {
+  const dropped: string[] = [];
+  let placed = 0;
+  const kept = paragraphs.map(() => [] as Insertion[]);
+  const reading = soundWords?.length ? { soundWords } : {};
+  const label = (note: TagNote) => `${tagBody(note.tag) ? `[[${tagBody(note.tag)}]]` : 'a note'} on paragraph ${note.paragraph}`;
+  for (const note of notes) {
+    const index = note.paragraph - 1;
+    if (!Number.isInteger(index) || index < 0 || index >= paragraphs.length) {
+      dropped.push(`${label(note)}: the chapter has ${paragraphs.length} paragraph${paragraphs.length === 1 ? '' : 's'}`);
+      continue;
+    }
+    const paragraph = paragraphs[index];
+    const insertions = insertionsOf(paragraph, note, noteKind(tagBody(note.tag)));
+    if (typeof insertions === 'string') { dropped.push(`${label(note)}: ${insertions}`); continue; }
+    const candidate = [...kept[index], ...insertions];
+    if (readMarks(written(paragraph, candidate), reading).text !== paragraph) {
+      dropped.push(`${label(note)}: it could not be placed without changing the paragraph`);
+      continue;
+    }
+    kept[index] = candidate;
+    placed += 1;
+  }
+  return { paragraphs: paragraphs.map((paragraph, index) => written(paragraph, kept[index])), dropped, placed };
+}
+
+/**
+ * The notes that put a tagged chapter's tags back where they are: the inverse
+ * of `placeTagNotes`, for a saved chapter replayed through the tagger (the
+ * Workshop's replaying writer, and tests built from tagged fixtures). Each tag
+ * read out of the inline form becomes a note on the words it marks: a sound's
+ * own words, a speaker's spoken line, a holding's or an appearance's sentence,
+ * and no words for the soundtrack. A tag the reader could not read is no note.
+ */
+export function notesOfTaggedChapter(tagged: readonly string[], locale?: string): TagNote[] {
+  const notes: Array<TagNote & { offset: number }> = [];
+  tagged.forEach((source, index) => {
+    const reading = readMarks(source);
+    const text = reading.text;
+    const paragraph = index + 1;
+    const lines = findSpokenLines(text);
+    const sentences = splitSentences(text, locale);
+    for (const tag of reading.soundtracks) notes.push({ paragraph, words: '', tag: `[[${tag.kind}: ${tag.parts.join(' | ')}]]`, offset: tag.offset });
+    for (const tag of reading.sounds) {
+      notes.push({ paragraph, words: text.slice(tag.start, tag.end), tag: `[[sound: ${tag.sound}${tag.energy ? ` | ${tag.energy}` : ''}]]`, offset: tag.start });
+    }
+    for (const tag of reading.speakers) {
+      const line = lines.find(spoken => spoken.end > tag.offset) ?? lines.at(-1);
+      const words = line ? text.slice(line.start, line.end) : text.slice(tag.offset);
+      if (words) notes.push({ paragraph, words, tag: `[[@${tag.name}]]`, offset: tag.offset });
+    }
+    for (const tag of reading.wordTags) {
+      const sentence = pointedSentence(sentences, tag.offset);
+      const words = sentence ? text.slice(sentence.start, sentence.end) : text;
+      if (words) notes.push({ paragraph, words, tag: `[[${tag.word}: ${tag.parts.join(' | ')}]]`, offset: tag.offset });
+    }
+  });
+  return notes
+    .sort((left, right) => left.paragraph - right.paragraph || left.offset - right.offset)
+    .map(({ offset: _offset, ...note }) => note);
+}
+
+/**
+ * A paragraph as the tag reader leaves it with no tag in it: the text every
+ * attachment's offsets are measured from.
+ */
+const cleanForm = (paragraph: string) => readMarks(paragraph).text;
 
 /**
  * A paragraph the chapter cannot be tagged from: one the tag reader would not
@@ -204,21 +400,37 @@ const untaggableParagraph = (sent: readonly string[]) => {
   return at === -1 ? undefined : `paragraph ${at + 1} is not the prose the reader has (space around it, or nothing but space), and a tag on it would land on the wrong words`;
 };
 
+/** The notes in one answer, as far as it can be read as a list of them; an entry that is no note is dropped and named. */
+const readNotes = (raw: string | undefined): { notes: TagNote[]; dropped: string[]; count: number } | string => {
+  let parsed: unknown;
+  try { parsed = JSON.parse(raw ?? ''); } catch { return 'The answer was not readable JSON.'; }
+  if (!isRecord(parsed) || !Array.isArray(parsed.notes)) return 'The answer held no list of notes.';
+  const notes: TagNote[] = [];
+  const dropped: string[] = [];
+  parsed.notes.forEach((entry, index) => {
+    if (!isRecord(entry) || typeof entry.tag !== 'string') { dropped.push(`note ${index + 1}: it is not a note with a tag`); return; }
+    const paragraph = typeof entry.paragraph === 'number' ? entry.paragraph : typeof entry.paragraph === 'string' ? Number(entry.paragraph) : Number.NaN;
+    notes.push({ paragraph, words: typeof entry.words === 'string' ? entry.words : '', tag: entry.tag });
+  });
+  return { notes, dropped, count: parsed.notes.length };
+};
+
 /**
- * Reads one tagging answer. The tags are read and placed through the same path
- * the writer's own reply goes through; then the prose that falls out of it is
- * checked against the prose that was sent, and an answer that changed a word
- * of the chapter is refused whole.
+ * Reads one tagging answer: the tagger's notes, placed on the chapter's own
+ * paragraphs and then read and placed through the same path the writer's own
+ * reply goes through.
  *
- * Refused whole, and not paragraph by paragraph, on purpose: a tagger that
- * rewrote a paragraph did not understand the one thing it was told, so its
- * other paragraphs' tags are not worth keeping either. The chapter is already
- * committed and keeps every word; only the tagging is lost, and it can be run
- * again.
+ * The prose cannot change, because the tagger never wrote any: the chapter's
+ * paragraphs are the ones that are tagged. The check that the prose that comes
+ * back out of the tag reader is the prose that went in is kept all the same,
+ * paragraph by paragraph, as the HARNESS's own guarantee: a paragraph that
+ * failed it would be a HARNESS fault, not the tagger's, and loses only its own
+ * notes. Failure is a note's, never the chapter's: a note that cannot be placed
+ * is dropped and named, and every other note lands.
  */
 export function readChapterTagging({ raw, sent, chapterNumber, at, model, options }: {
   raw: string | undefined;
-  /** The paragraphs the tagger was given, to check its answer against. */
+  /** The paragraphs the tagger was given: the ones its notes are placed on. */
   sent: readonly string[];
   chapterNumber: number;
   at: string;
@@ -227,25 +439,43 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
 }): ChapterTagging {
   const failed = (problem: string, warnings: HarnessWarning[] = []): ChapterTagging =>
     ({ record: { status: 'failed', at, ...(model ? { model } : {}), problem, ...(warnings.length ? { warnings } : {}) } });
-  let parsed: unknown;
-  try { parsed = JSON.parse(raw ?? ''); } catch { return failed('The answer was not readable JSON.'); }
-  if (!isRecord(parsed) || !Array.isArray(parsed.paragraphs)) return failed('The answer held no paragraphs.');
-  const tagged = parsed.paragraphs.filter((paragraph): paragraph is string => typeof paragraph === 'string');
-  if (tagged.length !== parsed.paragraphs.length) return failed('The answer held a paragraph that was not text.');
+  const answer = readNotes(raw);
+  if (typeof answer === 'string') return failed(answer);
   const untaggable = untaggableParagraph(sent);
   if (untaggable) return failed(`This chapter cannot be tagged as it stands: ${untaggable}.`);
-  const warnings: HarnessWarning[] = [];
-  const read = acceptChapterTags(tagged, chapterNumber, warnings, options);
-  const changed = changedParagraph(sent, read.paragraphs);
-  if (changed) return failed(`The chapter is not the tagger's to change: ${changed}, so every tag it wrote was dropped.`, warnings);
-  return {
-    record: { status: 'tagged', at, ...(model ? { model } : {}), ...(warnings.length ? { warnings } : {}) },
-    tags: {
-      soundCues: read.soundCues,
-      speakers: read.speakers,
-      holdingChanges: read.holdingChanges,
-      appearances: read.appearances,
-      scene: read.scene,
-    },
-  };
+  const soundWords = options?.soundVocabulary?.map(sound => sound.word);
+  let remaining = answer.notes;
+  const dropped = [...answer.dropped];
+  for (;;) {
+    const placement = placeTagNotes(sent, remaining, { soundWords });
+    dropped.push(...placement.dropped);
+    const warnings: HarnessWarning[] = [];
+    const read = acceptChapterTags(placement.paragraphs, chapterNumber, warnings, options);
+    // The HARNESS's own guarantee, checked: the prose that falls out of the tag
+    // reader is the prose the chapter has. A paragraph that fails it loses its
+    // notes and the chapter is read again without them.
+    const changed = new Set(sent.map((paragraph, index) => (read.paragraphs[index] === paragraph ? -1 : index + 1)).filter(index => index > 0));
+    if (read.paragraphs.length === sent.length && !changed.size) {
+      if (dropped.length) {
+        warnings.unshift({
+          code: 'tag_note_dropped',
+          message: `Dropped ${dropped.length} of the tagger's ${answer.count} note${answer.count === 1 ? '' : 's'}: ${dropped.join('; ')}.`,
+        });
+      }
+      return {
+        record: { status: 'tagged', at, ...(model ? { model } : {}), ...(warnings.length ? { warnings } : {}) },
+        tags: {
+          soundCues: read.soundCues,
+          speakers: read.speakers,
+          holdingChanges: read.holdingChanges,
+          appearances: read.appearances,
+          scene: read.scene,
+        },
+      };
+    }
+    const lost = remaining.filter(note => changed.has(note.paragraph) || read.paragraphs.length !== sent.length);
+    if (!lost.length) return failed('The HARNESS could not read the chapter back as it stands after placing the notes, so no tag was kept.', warnings);
+    dropped.push(...lost.map(note => `[[${tagBody(note.tag)}]] on paragraph ${note.paragraph}: the paragraph did not read back as it stands with it placed`));
+    remaining = remaining.filter(note => !lost.includes(note));
+  }
 }

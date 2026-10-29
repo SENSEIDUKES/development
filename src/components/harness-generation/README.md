@@ -37,6 +37,48 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-29 (the tagger writes in the margin, not on the page):** SENSEI's
+  reading of the tagging failure: "You're in school. You write a page. Your
+  teacher looks over it, writes marks. That's the whole concept here." The
+  tagger used to hand the whole chapter back with tags written into it, and
+  `readChapterTagging` compared that retyped copy to the real chapter to prove
+  no word changed; when one had, every tag of the chapter was dropped. On The
+  Nine-Fold Furnace (gpt-6-luna, three chapters) six paragraphs of 110 came
+  back changed, for two reasons the tag teaching itself caused (it was written
+  for an author composing a sentence: a sound's words copied back out of the
+  tag to keep the paragraph "complete without it", and narration deleted to
+  "start the paragraph with its speaker"), so all three chapters recorded
+  `tagging.status: 'failed'`, the Reader was silent and the Codex empty (its
+  cards unlock only from tags: `storyCodex.ts`, `reached()`). **The tagger now
+  returns notes, never prose.** `TAGGER_RESPONSE_SCHEMA` is `{ notes: [{
+  paragraph, words, tag }] }`: the paragraph's number, the exact words the tag
+  belongs to, and the tag. `placeTagNotes` (`shared/tagger.ts`) finds each
+  note's words in the chapter's own paragraph (as written, else with straight
+  quotes read as the chapter's curly ones; found once, or the note is dropped
+  as ambiguous), writes the tag in the inline form the tag reader reads (a
+  speaker, holding, appearance or soundtrack tag before its words, a speaker
+  moved to the start of the spoken line its words are in, a sound tag around
+  them), keeps the note only while the paragraph still reads back exactly as
+  the chapter has it, and feeds the result through `acceptChapterTags`, the
+  one placement path, unchanged. So there is one copy of the novel and the
+  tagger cannot change a word of it; the prose round-trip check stays as the
+  HARNESS's own guarantee and no longer refuses a chapter. Failure moves from
+  the chapter to the note: `tag_note_dropped` names each note that could not
+  be placed and why, and every other note lands. `notesOfTaggedChapter` is the
+  inverse, for the Workshop's replaying writer and the test fixtures, which
+  replay a saved chapter's tags as the notes that put them back.
+  `HARNESS_TAGGER_READING` is retired with the author-era teaching it bridged;
+  the tag teaching is rewritten for the tagger (the exact words are on the
+  Writer Instructions page, with the dated entry). Every tag form is
+  unchanged except the sound tag, whose words leave the tag for the note
+  (`[[sound: Sound Word | Energy]]`). Speakers now asks for a note on every
+  spoken line, which ends "one speaker per paragraph" for the tagger. The
+  stored shape is unchanged (schema 40): `HarnessChapterTagging` is the same
+  record, and a chapter whose tagging failed under the old shape is recovered
+  by tagging it again. Still open, for SENSEI: whole-book tagging
+  (`retagChapterGap` still re-tags only the newest chapter) and whether the
+  Codex no-spoiler gate stands.
+
 - **2026-10-29 (a save from another tab no longer overwrites):** The stories
   are one saved workspace, and each tab kept its own copy, so the later save
   of two tabs replaced the other's work, Create mode edits and Sound Cues

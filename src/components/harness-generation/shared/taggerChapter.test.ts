@@ -2,18 +2,21 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   HarnessGenerationController,
   type HarnessGenerationModelAdapter,
+  deriveStoryCodex,
+  notesOfTaggedChapter,
   retagChapterGap,
   type HarnessTagRequest,
 } from '@seihouse/sen/harness-generation';
+import type { WorldRecord } from '../../../narrative/worldRecord';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 
 /**
  * The tagger in the chapter flow (SENSEI, 2026-10-24): the writer writes the
  * prose, and one call afterwards reads the finished chapter and writes the
- * app's tags into it. It runs before the commit, so the tags travel in the one
- * write that already saves the chapter and the Codex entries its names resolve
- * to — and a chapter is never refused for its tagging.
+ * app's tags for it, as notes in the margin. It runs before the commit, so the
+ * tags travel in the one write that already saves the chapter and the Codex
+ * entries its names resolve to — and a chapter is never refused for its tagging.
  */
 
 const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-armory', text: 'Survive the armory trial.', chapters: 30 }] };
@@ -44,13 +47,13 @@ class LosesOneWrite extends InMemoryHarnessGenerationRepository {
 }
 
 /**
- * A tagger that answers from the chapter it was given, so its paragraph count
- * always matches however long the test chapter is. `tag` rewrites the one
- * paragraph it recognises; `spoil` stands for a tagger that changed the prose.
+ * A tagger that answers from the chapter it was given: `tag` writes the tags
+ * of the one paragraph it recognises in the inline form, and the answer is
+ * the notes that put those tags on those words, as a real tagger writes them.
  */
 const tagging = (tag: (paragraph: string) => string) =>
   vi.fn(async (request: HarnessTagRequest) => ({
-    rawProviderResponse: JSON.stringify({ paragraphs: request.paragraphs.map(tag) }),
+    rawProviderResponse: JSON.stringify({ notes: notesOfTaggedChapter(request.paragraphs.map(tag)) }),
     providerReceipt: receipt,
   }));
 
@@ -129,6 +132,27 @@ describe('tagging a chapter as it is written', () => {
     expect(speaker?.payload.protagonist).toBe(true);
   });
 
+  it('unlocks a Codex card the moment a tag reaches it, and leaves it locked when the tagging failed', async () => {
+    // The Codex shows a card the story has reached (SENSEI, 2026-10-22), and
+    // reaching is read from tags alone: on The Nine-Fold Furnace a failed
+    // tagging left 22 intact world cards locked and the Codex blank.
+    const world: WorldRecord = { cards: [{ key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, enteredInChapter: 0, slots: {} }] };
+    const spoken = `\u201cHold the gate,\u201d ${PROSE}`;
+    const codexOf = (controller: HarnessGenerationController) => {
+      const state = controller.snapshot();
+      return deriveStoryCodex({ entries: state.codexEntries, chapters: state.chapters, world, mainCharacterName: 'Ye Chen' });
+    };
+    const failing = await setup({ tagChapter: vi.fn(async () => { throw new Error('the tagger is unreachable'); }) });
+    await failing.write([spoken]);
+    expect(failing.chapter().tagging?.status).toBe('failed');
+    expect(codexOf(failing.controller).characters.map(character => character.name)).toEqual([]);
+
+    const tagged = await setup({ tagChapter: tagging(paragraph => paragraph === spoken ? `[[@MC]] ${paragraph}` : paragraph) });
+    await tagged.write([spoken]);
+    expect(tagged.chapter().tagging?.status).toBe('tagged');
+    expect(codexOf(tagged.controller).characters.map(character => character.name)).toEqual(['Ye Chen']);
+  });
+
   it('keeps the appearances list of a tagged chapter even when it is empty', async () => {
     // An empty list and no list mean different things: no list means the
     // chapter was never asked, which is what turns off the check for someone
@@ -157,17 +181,25 @@ describe('tagging a chapter as it is written', () => {
     expect(chapter().holdingChanges).toBeUndefined();
   });
 
-  it('commits the chapter untagged when the tagger changed a word of it', async () => {
-    const tagChapter = tagging(paragraph => paragraph === PROSE
-      ? '[[@MC]] Ye Chen snatched the old blade from the rack.'
-      : paragraph);
+  it('commits the chapter with the notes that land, and the prose as written, when a note names words the chapter does not have', async () => {
+    // The tagger never holds the prose, so it cannot change it: a note that
+    // points at words not in its paragraph is dropped on its own, and the
+    // chapter still commits as tagged with every other note.
+    const tagChapter = vi.fn(async (request: HarnessTagRequest) => ({
+      rawProviderResponse: JSON.stringify({ notes: [
+        { paragraph: 1, words: 'Ye Chen snatched the old blade', tag: '[[gained: MC | Old Blade]]' },
+        { paragraph: 1, words: request.paragraphs[0], tag: '[[appears: MC | character]]' },
+      ] }),
+      providerReceipt: receipt,
+    }));
     const { write, chapter } = await setup({ tagChapter });
     await write();
-    expect(chapter().tagging?.status).toBe('failed');
-    expect(chapter().tagging?.problem).toContain('not the tagger\'s to change');
+    expect(chapter().tagging?.status).toBe('tagged');
+    expect(chapter().tagging?.warnings?.some(warning => warning.code === 'tag_note_dropped' && warning.message.includes('snatched'))).toBe(true);
     // The chapter keeps every word the writer wrote.
     expect(chapter().paragraphs[0]).toBe(PROSE);
-    expect(chapter().speakers).toBeUndefined();
+    expect(chapter().holdingChanges).toBeUndefined();
+    expect(chapter().appearances).toHaveLength(1);
   });
 
   it('reads the newest chapter again and replaces the tags it had', async () => {
@@ -195,7 +227,7 @@ describe('tagging a chapter as it is written', () => {
     let fail = true;
     const tagChapter = vi.fn(async (request: HarnessTagRequest) => {
       if (fail) throw new Error('the tagger is unreachable');
-      return { rawProviderResponse: JSON.stringify({ paragraphs: request.paragraphs.map(paragraph => paragraph === PROSE ? `[[@MC]] ${paragraph}` : paragraph) }), providerReceipt: receipt };
+      return { rawProviderResponse: JSON.stringify({ notes: notesOfTaggedChapter(request.paragraphs.map(paragraph => paragraph === PROSE ? `[[@MC]] ${paragraph}` : paragraph)) }), providerReceipt: receipt };
     });
     const { write, chapter, controller, storyId } = await setup({ tagChapter });
     await write([`\u201cHold.\u201d ${PROSE}`]);

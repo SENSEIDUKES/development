@@ -667,7 +667,9 @@ export interface HarnessWarning {
     | 'speaker_tags_incomplete'
     | 'soundtrack_incomplete'
     | 'holding_tags_incomplete'
-    | 'appearance_tags_incomplete';
+    | 'appearance_tags_incomplete'
+    /** A note the tagger wrote could not be placed on its paragraph (its words are not there, or not there once) and was dropped on its own. */
+    | 'tag_note_dropped';
   message: string;
 }
 

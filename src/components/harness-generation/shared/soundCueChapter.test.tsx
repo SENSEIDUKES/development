@@ -102,8 +102,8 @@ describe('HARNESS Sound Cues through sound tags', () => {
     const tagRequest = provider.tagChapter.mock.calls[0][0];
     expect(tagRequest.soundWords).toEqual(LIBRARY_SOUND_WORDS.map(({ word }) => ({ word })));
     const taught = buildHarnessTagPrompt(tagRequest).systemInstruction;
-    expect(taught).toContain('[[sound: Sound Word | the words | Energy]]');
-    expect(taught).toContain(`Example: Far off, [[sound: ${LIBRARY_SOUND_WORDS[0].word} | the words of your own sentence | high]] and the yard fell still.`);
+    expect(taught).toContain('[[sound: Sound Word | Energy]]');
+    expect(taught).toContain(`Example: {"paragraph": 7, "words": "the sentence's own words for the sound", "tag": "[[sound: ${LIBRARY_SOUND_WORDS[0].word} | high]]"}`);
     expect(taught).toMatch(/SOUND WORDS: .*\bunsheathe\b/);
     // The list names sounds; it hands no phrases to copy into the chapter.
     expect(taught).not.toContain('drew his sword');

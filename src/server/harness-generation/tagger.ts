@@ -18,45 +18,33 @@ import { lowestReasoningLevel, requireTextModelKey } from '../model-router/catal
 
 /**
  * The tagger (SENSEI, 2026-10-24): one call that reads a chapter already
- * written and writes the app's tags into it. "If you take the AI generation of
+ * written and writes the app's tags for it. "If you take the AI generation of
  * the novel out, this tagger needs to be able to still tag the story with
  * sound cues, etc." — so it is told nothing about how the story got here. The
  * chapter, who and what already exists, what each character was carrying, and
  * the words it may name; no Foundation, no arc, no packet.
  *
- * It teaches the tags from the same skills the writer reads
- * (`SEN_*_INSTRUCTIONS`), so the tag language has one owner and the writer's
- * own words do not change. Those skills were written for an author writing the
- * chapter, and one HARNESS sentence re-points them at finished prose
- * (`HARNESS_TAGGER_READING`, approved 2026-10-25).
- *
- * The chapter comes back as the same paragraphs with tags written in, which is
- * what lets the HARNESS prove the prose was not touched: it strips every tag
- * the way it always has and checks each paragraph against the one it sent.
+ * It writes in the margin, never on the page (SENSEI, 2026-10-29: "You write
+ * a page. Your teacher looks over it, writes marks. The page is never
+ * retyped."). Its answer is a list of notes, each naming a paragraph, the exact
+ * words the tag belongs to, and the tag; the HARNESS places every note on the
+ * chapter's own paragraphs (`placeTagNotes`), so the tagger never holds a copy
+ * of the prose and cannot change a word of it. The tag teaching below is
+ * written for that reader: a tagger with the finished chapter in front of it.
  */
 
-/** Who the tagger is and what its job is, said first (SENSEI approved, 2026-10-25). */
+/** Who the tagger is and what its job is, said first. */
 export const HARNESS_TAGGER_ROLE = [
-  'You tag a finished chapter of a novel. The chapter is already written and is not yours to change: you add the app\'s tags to it, and nothing else. A tag marks where something happens in the prose — a sound, who speaks, a change to what someone has, someone stepping onto the page — so the app can play it, voice it and record it.',
+  'You tag a finished chapter of a novel. The chapter is already written and is not yours to change: you write the app\'s tags beside it, as notes in the margin, and nothing else. A tag marks where something happens in the prose — a sound, who speaks, a change to what someone has, someone stepping onto the page — so the app can play it, voice it and record it.',
 ].join('\n\n');
 
-/**
- * The one sentence that re-points the tag skills at finished prose (SENSEI
- * approved, 2026-10-25). The skills say "your sentence", "wrap its own words"
- * and "describe them there", because an author writing the chapter reads them;
- * a tagger cannot describe anything. Rather than rewrite five sets of approved
- * words, and change what the writer reads in the process, this says it once.
- */
-export const HARNESS_TAGGER_READING = 'The tag teaching below was written for the author writing the chapter. Where it tells you to write, wrap or describe something, tag what the finished prose already says, where it says it; where it points at Story Information, the names it means are the ones listed below.';
-
-/** What the tagger hands back (SENSEI approved, 2026-10-25). */
-export const HARNESS_TAGGER_RETURN = 'Return every paragraph, in order, with its tags written in: the same count, and each one\'s words exactly as they arrived, to the letter and the space. Never reword, correct, shorten, join or split a paragraph, and never write a paragraph of your own. A paragraph with nothing to tag comes back unchanged. The app removes every tag before anyone reads, and checks each paragraph against the one it sent: a paragraph whose words changed has its tags dropped.';
+/** What the tagger hands back: notes, never the chapter. */
+export const HARNESS_TAGGER_RETURN = 'Return a list of notes, in reading order, and nothing else. Each note has three parts: "paragraph", the number of the paragraph as it is given below; "words", the exact words the tag belongs to, copied from that paragraph to the letter, enough of them to be found once in it; and "tag", the tag itself. Never return the chapter or any paragraph of it, and never write prose of your own. A paragraph with nothing to tag gets no note. The app places each note on the words it names: a note whose words are not in its paragraph, or are in it more than once, is dropped on its own, and every other note stands.';
 
 const HEADINGS = {
   role: '# WHAT YOU DO',
-  reading: '# HOW TO READ THE TAG TEACHING',
   tagging: '# THE TAGS',
-  returning: '# HOW TO RETURN THE CHAPTER',
+  returning: '# HOW TO RETURN YOUR NOTES',
 } as const;
 
 /**
@@ -111,23 +99,31 @@ export const presentTagHoldings = (holdings: HarnessTagRequest['holdings']) => {
 };
 
 /**
- * The chapter as the tagger reads it: one numbered paragraph per line, so the
- * answer can be lined up against it paragraph for paragraph.
+ * The chapter as the tagger reads it: one numbered paragraph per line. The
+ * number is what a note names.
  */
 export const presentTagChapter = (paragraphs: readonly string[]) =>
   paragraphs.map((paragraph, index) => `${index + 1}. ${paragraph}`).join('\n\n');
 
-/** One entry per paragraph, in reading order. Non-strict, like every HARNESS schema. */
+/** A list of notes, each on one paragraph. Non-strict, like every HARNESS schema. */
 export const TAGGER_RESPONSE_SCHEMA = {
   type: 'object',
   properties: {
-    paragraphs: {
+    notes: {
       type: 'array',
-      items: { type: 'string' },
-      description: 'Every paragraph of the chapter, in order, with its tags written in and its words otherwise unchanged.',
+      description: 'One note per tag, in reading order. Empty when the chapter has nothing to tag.',
+      items: {
+        type: 'object',
+        properties: {
+          paragraph: { type: 'integer', description: 'The number of the paragraph, as given.' },
+          words: { type: 'string', description: 'The exact words in that paragraph the tag belongs to, copied to the letter. Empty only for a soundscape or atmosphere tag.' },
+          tag: { type: 'string', description: 'The tag, such as [[@MC]], [[gained: MC | Iron Key]] or [[sound: growl | low]].' },
+        },
+        required: ['paragraph', 'words', 'tag'],
+      },
     },
   },
-  required: ['paragraphs'],
+  required: ['notes'],
 } as const;
 
 /** The most paragraphs one chapter may send to be tagged. */
@@ -144,7 +140,6 @@ export const TAGGER_TIMEOUT_MS = 120_000;
 export const buildHarnessTagPrompt = (request: HarnessTagRequest) => ({
   systemInstruction: [
     HEADINGS.role, HARNESS_TAGGER_ROLE,
-    HEADINGS.reading, HARNESS_TAGGER_READING,
     HEADINGS.tagging, presentTaggerTagTeaching(request),
     HEADINGS.returning, HARNESS_TAGGER_RETURN,
   ].join('\n\n'),
@@ -153,7 +148,7 @@ export const buildHarnessTagPrompt = (request: HarnessTagRequest) => ({
     ['WHO AND WHAT THE STORY ALREADY HAS (tag by these names, never a new one for someone already here)', presentTagSubjects(request.subjects)].join('\n'),
     ['WHAT EACH CHARACTER HAD GOING INTO THIS CHAPTER', presentTagHoldings(request.holdings)].join('\n'),
     ['THE CHAPTER', presentTagChapter(request.paragraphs)].join('\n'),
-    `Return the ${request.paragraphs.length} paragraphs with their tags written in, and nothing else. Do not return the numbers.`,
+    `Return your notes on these ${request.paragraphs.length} paragraphs, and nothing else.`,
   ].join('\n\n'),
   responseJsonSchema: TAGGER_RESPONSE_SCHEMA,
 });

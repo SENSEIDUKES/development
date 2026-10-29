@@ -192,12 +192,16 @@ export {
   readDescribedLooks,
 } from '../../components/harness-generation/shared/lookDescriber';
 export {
+  notesOfTaggedChapter,
+  placeTagNotes,
   planChapterTagging,
   readChapterTagging,
   retagChapterGap,
   tagSubjectsOfStory,
   type ChapterTagging,
   type ChapterTags,
+  type PlacedTagNotes,
+  type TagNote,
 } from '../../components/harness-generation/shared/tagger';
 export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';

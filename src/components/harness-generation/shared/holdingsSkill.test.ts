@@ -23,7 +23,9 @@ describe('The holding tags', () => {
     // Things and abilities only, each with one clean name, and only what happens in the story's present.
     expect(SEN_HOLDINGS_INSTRUCTIONS).toContain('Thing: an object. Ability: a technique, skill or power. One short name each, used every time.');
     expect(SEN_HOLDINGS_INSTRUCTIONS).toContain('Only the story\'s present: no plans, memories or lies.');
-    expect(SEN_HOLDINGS_INSTRUCTIONS).toContain('Example: [[gained: MC | Iron Key]] He pocketed the iron key.');
+    // The example is one note as the tagger returns it: the sentence, then the tag.
+    expect(SEN_HOLDINGS_INSTRUCTIONS).toContain('Example: {"paragraph": 3, "words": "He pocketed the iron key.", "tag": "[[gained: MC | Iron Key]]"}');
+    expect(SEN_HOLDINGS_INSTRUCTIONS).not.toMatch(/Story Information/);
     // The closing list is asked for by the reply's own schema, never repeated here.
     expect(SEN_HOLDINGS_INSTRUCTIONS).not.toContain('mainCharacterHoldings');
   });

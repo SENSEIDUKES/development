@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { HarnessProviderReceipt, HarnessTagRequest } from '@seihouse/sen/harness-generation';
+import { notesOfTaggedChapter, type HarnessProviderReceipt, type HarnessTagRequest } from '@seihouse/sen/harness-generation';
 import { readMarks } from '../narrative/marks';
 
 /**
@@ -8,9 +8,11 @@ import { readMarks } from '../narrative/marks';
  * the Codex and the Holdings fixer only through the tagging call. Each fixture
  * reply is written as the tagged chapter: `teach` remembers each paragraph by
  * the prose it strips down to, which is exactly what the writer's reply is
- * accepted as, and the tagging call puts those same tags back on those same
- * words. A paragraph no fixture taught comes back untouched, which is what a
- * tagger with nothing to mark does.
+ * accepted as, and the tagging call answers with the notes that put those
+ * same tags back on those same words (`notesOfTaggedChapter`): the tagger
+ * writes in the margin and never returns the chapter (SENSEI, 2026-10-29). A
+ * paragraph no fixture taught gets no note, which is what a tagger with
+ * nothing to mark writes.
  *
  * `teach` hands back the writer's version of that reply: the same JSON with
  * every tag taken out of its paragraphs, which is what a writer taught no tags
@@ -30,7 +32,7 @@ export const createReplayTagger = (providerReceipt: HarnessProviderReceipt) => {
     return JSON.stringify({ ...parsed, paragraphs: written });
   };
   const tagChapter = vi.fn(async (request: HarnessTagRequest) => ({
-    rawProviderResponse: JSON.stringify({ paragraphs: request.paragraphs.map(paragraph => tagged.get(paragraph) ?? paragraph) }),
+    rawProviderResponse: JSON.stringify({ notes: notesOfTaggedChapter(request.paragraphs.map(paragraph => tagged.get(paragraph) ?? paragraph), request.language) }),
     providerReceipt,
   }));
   return { tagChapter, teach };

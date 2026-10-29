@@ -31,11 +31,15 @@ describe('HARNESS tag rules', () => {
   it('hold only what every tag shares, said once, so no kind repeats them', () => {
     expect(HARNESS_TAG_RULES.split('\n')).toEqual([
       'HARNESS TAG RULES',
-      'Tags are notes the app removes before anyone reads, so each paragraph must read complete without them. Tag only what your prose shows, where it happens.',
-      'In every tag, Name is MC for the main character; anyone else goes by the name Story Information uses.',
+      'A tag is a note in the margin, never a mark on the page: it names a paragraph, the exact words it belongs to, and the tag. The chapter is not retyped and not changed; the app places each note on the words it names.',
+      'Tag only what the prose shows, where it shows it.',
+      'In every tag, Name is MC for the main character; anyone else goes by the name the story already has, listed below.',
+      'Each example below is one note, written as you return it.',
     ]);
     for (const instructions of EVERY_KIND) {
-      expect(instructions).not.toMatch(/removes before anyone reads|Name is MC for the main character/i);
+      expect(instructions).not.toMatch(/note in the margin|Name is MC for the main character/i);
+      // Written for a tagger reading finished prose, never for an author composing it (SENSEI, 2026-10-29).
+      expect(instructions).not.toMatch(/your sentence|your prose|describe them there|Start each paragraph|One speaker per paragraph|Story Information|Appeared/);
       // SENSEI, 2026-10-17: short, with no FORMAT / REQUIRED / FORBIDDEN / CHECK wall.
       expect(instructions).not.toMatch(/^(JOB|FORMAT|REQUIRED|FORBIDDEN|CHECK BEFORE YOU RETURN)\b/m);
     }

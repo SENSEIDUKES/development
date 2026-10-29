@@ -3,6 +3,7 @@ import {
   findStory,
   latestStoryChapter,
   nextHarnessWorkspaceRevision,
+  notesOfTaggedChapter,
   readHarnessWorkspaceState,
   withoutLatestChapter,
   type HarnessGenerationModelAdapter,
@@ -124,8 +125,9 @@ export const REPLAY_WRITING_MS = 5_000;
  * It replays the tagging too. Tags reach a chapter through the tagging call
  * now, never through the writer (SENSEI, 2026-10-24), so a saved reply's tags
  * are stripped out of its prose like any other writer's. Asked to tag, this
- * writer answers each paragraph with the saved paragraph that strips down to
- * it, which puts the story's own tags back exactly where they were.
+ * writer answers with the notes that put the saved paragraphs' tags back on
+ * the same words (`notesOfTaggedChapter`): the tagger writes in the margin and
+ * never returns the chapter (SENSEI, 2026-10-29).
  */
 export function createReplayWriter(saved: HarnessWorkspaceState, writingMs = REPLAY_WRITING_MS): HarnessGenerationModelAdapter {
   const replies = new Map<number, HarnessGenerationResponse>();
@@ -157,7 +159,7 @@ export function createReplayWriter(saved: HarnessWorkspaceState, writingMs = REP
       };
     },
     tagChapter: async request => ({
-      rawProviderResponse: JSON.stringify({ paragraphs: request.paragraphs.map(paragraph => tagged.get(paragraph) ?? paragraph) }),
+      rawProviderResponse: JSON.stringify({ notes: notesOfTaggedChapter(request.paragraphs.map(paragraph => tagged.get(paragraph) ?? paragraph), request.language) }),
       providerReceipt: { provider: 'workshop-replay', model: REPLAY_MODEL, generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } },
     }),
     arcOperation: async () => {

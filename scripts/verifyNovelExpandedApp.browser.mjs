@@ -86,23 +86,20 @@ const SILENCE = (() => {
   return wav;
 })();
 /**
- * The chapter as the tagger hands it back: the prose the writer wrote with the
- * app's tags written into it. The writer itself is taught no tags (SENSEI,
- * 2026-10-24), and the stand-in below answers the writer's call with these same
- * paragraphs, whose tags acceptance strips out: what reaches the Reader, the
- * Codex and the Holdings fixer is the tagger's work, from the one call below.
+ * The chapter as the writer hands it back, and the notes the tagger writes for
+ * it. The writer is taught no tags (SENSEI, 2026-10-24), and the tagger writes
+ * in the margin and never returns the chapter (SENSEI, 2026-10-29): each note
+ * names a paragraph, the exact words, and the tag, and the HARNESS places it
+ * on the chapter's own words. What reaches the Reader, the Codex and the
+ * Holdings fixer is the tagger's work, from the one call below.
  */
 const chapter = {
   title: 'Low Tide',
   paragraphs: [
-    // The chapter's music and atmosphere, once, at its start; a sound tag on the
-    // words where a sound happens, naming one of the Library's sound words.
-    '[[soundtrack: fighting | ancient battlefield]] The tide pulled back from the drowned gate, and [[sound: beast roar | the beast roared | high]] across the causeway.',
-    // Who and what first steps onto the page, and what changes in what a character has, where it happens.
-    '[[appears: MC | character]] [[gained: MC | Bell Key]] Mara counted the bells that no longer rang. [[appears: Bell Key | thing]] [[equipped: MC | Bell Key]] She turned the old key in her palm.',
-    // Who speaks: the main character with their own tag, then someone else by name.
-    '[[@MC]] “Ring the bells,” Ye Chen said.',
-    '[[appears: Junior Sister Han | character]] [[@Junior Sister Han]] “They are drowned,” she whispered.',
+    'The tide pulled back from the drowned gate, and the beast roared across the causeway.',
+    'Mara counted the bells that no longer rang. She turned the old key in her palm.',
+    '“Ring the bells,” Ye Chen said.',
+    '“They are drowned,” she whispered.',
     // The rest of the chapter: a reply under a quarter of the 1,800-word minimum is a failed write and is never saved.
     Array.from({ length: 35 }, () => 'The night went on, and the town kept its quiet watch until dawn.').join(' '),
   ],
@@ -116,21 +113,42 @@ const chapter = {
   nextWorldBuilding: 'The keeper explains the drowned law.',
   nextConflict: 'The tide wardens seize the causeway.',
 };
+const notes = [
+  // The chapter's music and atmosphere, once, on its first paragraph with no
+  // words; a sound on the words where it happens, naming one of the Library's sound words.
+  { paragraph: 1, words: '', tag: '[[soundtrack: fighting | ancient battlefield]]' },
+  { paragraph: 1, words: 'the beast roared', tag: '[[sound: beast roar | high]]' },
+  // Who and what first steps onto the page, and what changes in what a character has, on the sentence that shows it.
+  { paragraph: 2, words: 'Mara counted the bells that no longer rang.', tag: '[[appears: MC | character]]' },
+  { paragraph: 2, words: 'Mara counted the bells that no longer rang.', tag: '[[gained: MC | Bell Key]]' },
+  { paragraph: 2, words: 'She turned the old key in her palm.', tag: '[[appears: Bell Key | thing]]' },
+  { paragraph: 2, words: 'She turned the old key in her palm.', tag: '[[equipped: MC | Bell Key]]' },
+  // Who speaks: the main character with their own tag, then someone else by name.
+  { paragraph: 3, words: '“Ring the bells,”', tag: '[[@MC]]' },
+  { paragraph: 4, words: '“They are drowned,” she whispered.', tag: '[[appears: Junior Sister Han | character]]' },
+  { paragraph: 4, words: '“They are drowned,”', tag: '[[@Junior Sister Han]]' },
+];
 
 /** Chapter 1 written again at the reader's request: the key is gained twice, which the Holdings fixer settles. */
 const rewritten = {
   ...chapter,
   title: 'The Hidden Key',
   paragraphs: [
-    'The tide pulled back from the drowned gate, and [[sound: beast roar | the beast roared | high]] across the causeway.',
-    '[[gained: MC | Bell Key]] Mara found the bell key under the gate. She hid it in her sleeve.',
-    '[[gained: MC | Bell Key]] Later she touched the bell key again to be sure.',
-    '[[@MC]] “Ring the bells,” Ye Chen said.',
+    'The tide pulled back from the drowned gate, and the beast roared across the causeway.',
+    'Mara found the bell key under the gate. She hid it in her sleeve.',
+    'Later she touched the bell key again to be sure.',
+    '“Ring the bells,” Ye Chen said.',
     chapter.paragraphs.at(-1),
   ],
   mainCharacterHoldings: ['Bell Key'],
   recap: 'Mara hides the bell key.',
 };
+const rewrittenNotes = [
+  { paragraph: 1, words: 'the beast roared', tag: '[[sound: beast roar | high]]' },
+  { paragraph: 2, words: 'Mara found the bell key under the gate.', tag: '[[gained: MC | Bell Key]]' },
+  { paragraph: 3, words: 'Later she touched the bell key again to be sure.', tag: '[[gained: MC | Bell Key]]' },
+  { paragraph: 4, words: '“Ring the bells,”', tag: '[[@MC]]' },
+];
 const REWRITE_NOTE = 'Let Mara keep the key hidden.';
 
 const check = (condition, message) => { if (!condition) throw new Error(message); };
@@ -312,13 +330,13 @@ async function walk(browser, viewport, sample) {
       return;
     }
     // The tagger's one call per chapter, after the chapter is written: it reads the finished prose
-    // and writes the app's tags into it. This stand-in tags it the way a good tagger would, putting
-    // every tag back on the words it belongs to, so the Reader, the Codex and the Holdings fixer
-    // downstream are reading the tagger's work and nothing else.
+    // and writes the app's tags for it as notes in the margin. This stand-in answers the way a good
+    // tagger would, a note on the words each tag belongs to, so the Reader, the Codex and the
+    // Holdings fixer downstream are reading the tagger's work and nothing else.
     if (body.operation === 'tag-chapter') {
       counts.tags.push({ chapterNumber: body.chapterNumber, subjects: body.subjects, token: request.headers().authorization === `Bearer ${TOKEN}` });
-      const written = body.paragraphs.some(paragraph => paragraph.startsWith('Mara found the bell key')) ? rewritten : chapter;
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ paragraphs: written.paragraphs }), providerReceipt: receipt }) });
+      const written = body.paragraphs.some(paragraph => paragraph.startsWith('Mara found the bell key')) ? rewrittenNotes : notes;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ notes: written }), providerReceipt: receipt }) });
       return;
     }
     if (!body.immediateChapterRequest) {

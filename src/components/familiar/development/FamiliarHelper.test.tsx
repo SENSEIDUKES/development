@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NarrativeAudioProvider, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FamiliarHelperAction, FamiliarHelperProvider, useFamiliarHelperContext } from './FamiliarHelper';
-import type { FamiliarHelperContext, FamiliarVoice } from '../../../library/familiars/helper';
+import type { FamiliarHelperContext, FamiliarLive, FamiliarLiveEvents, FamiliarVoice } from '../../../library/familiars/helper';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root;
@@ -156,4 +156,26 @@ describe('Familiar helper surface', () => {
       expect(t.voice.speak).toHaveBeenLastCalledWith('Energy powers creation.', 'en-US', expect.any(Function), expect.any(Function));
     } finally { vi.useRealTimers(); }
   });
+  it('talks live with the equipped Familiar from its microphone, with captions, and hangs up on a second tap', async () => {
+    const t = setup();
+    let events: FamiliarLiveEvents | undefined;
+    const end = vi.fn();
+    const live: FamiliarLive = { start: vi.fn((_brief, handlers) => { events = handlers; return { end }; }) };
+    act(() => root.render(<StrictMode><FamiliarHelperProvider voice={t.voice} live={live} familiar={{ name: 'Celestial Guardian', description: 'A fox.' }}>
+      <Screen context={t.context} /><FamiliarHelperAction />
+    </FamiliarHelperProvider></StrictMode>));
+    await click('Talk to Familiar');
+    expect(live.start).toHaveBeenCalledWith(expect.objectContaining({ familiar: { name: 'Celestial Guardian', description: 'A fox.' }, place: 'Fate' }), expect.anything());
+    expect(t.voice.listen).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain('Connecting…');
+    act(() => events!.connected());
+    expect(document.body.textContent).toContain('Listening. Talk any time.');
+    act(() => { events!.caption('reader', 'What can I do here?'); events!.caption('familiar', 'You can choose Conflict.'); });
+    expect(document.querySelector('.familiar-helper-live')!.textContent).toBe('YouWhat can I do here?FamiliarYou can choose Conflict.');
+    expect(button('Hang up').getAttribute('data-phase')).toBe('live');
+    await click('Hang up');
+    expect(end).toHaveBeenCalledOnce();
+    expect(button('Talk with your Familiar')).toBeTruthy();
+  });
 });
+

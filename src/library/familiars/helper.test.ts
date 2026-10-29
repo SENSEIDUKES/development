@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { FamiliarHelperController, matchFamiliarCommand, type FamiliarHelperAction, type FamiliarHelperContext, type FamiliarVoice } from './helper';
+import { FamiliarHelperController, matchFamiliarCommand, type FamiliarHelperAction, type FamiliarHelperContext, type FamiliarLive, type FamiliarLiveBrief, type FamiliarLiveEvents, type FamiliarVoice } from './helper';
 
 function setup() {
   const run = vi.fn(async (_text: string) => {});
@@ -248,3 +248,85 @@ describe('global Familiar interaction', () => {
     expect(t.cancelSpeak).toHaveBeenCalledOnce();
   });
 });
+
+describe('Familiar live talk', () => {
+  function live() {
+    const t = setup();
+    let events: FamiliarLiveEvents | undefined;
+    let brief: FamiliarLiveBrief | undefined;
+    const end = vi.fn();
+    const adapter: FamiliarLive = { start: vi.fn((given, handlers) => { brief = given; events = handlers; return { end }; }) };
+    const helper = new FamiliarHelperController(t.voice, 'en-US', adapter);
+    helper.setIdentity({ name: 'Celestial Guardian', description: 'A loyal fox spirit.' });
+    const topics = [{ id: 'energy', label: 'Energy', phrases: ['energy'], explanation: 'Energy pays for manifesting.' }];
+    const context = { ...t.context, topics };
+    helper.setContext(t.owner, context);
+    helper.open();
+    return { ...t, helper, adapter, end, context, events: () => events!, brief: () => brief! };
+  }
+  it('starts with who the Familiar is and what this place explains and does, then shows captions', () => {
+    const t = live();
+    t.helper.talk();
+    expect(t.brief()).toEqual({
+      familiar: { name: 'Celestial Guardian', description: 'A loyal fox spirit.' }, place: 'Fate', language: 'en-US',
+      topics: [{ id: 'energy', label: 'Energy', explanation: 'Energy pays for manifesting.' }],
+      actions: [{ id: 'conflict', label: 'Conflict' }, { id: 'custom', label: 'Custom', input: { label: 'Direction', maxLength: 1200 } }],
+    });
+    expect(t.helper.getSnapshot().live?.status).toBe('connecting');
+    t.events().connected();
+    t.events().caption('reader', 'What is energy?');
+    t.events().caption('familiar', 'It pays for manifesting.');
+    expect(t.helper.getSnapshot().live).toEqual({ status: 'on', reader: 'What is energy?', familiar: 'It pays for manifesting.' });
+    // The device voice never listens over it.
+    expect(t.voice.listen).not.toHaveBeenCalled();
+  });
+  it('shows topics and proposes changes for the reader to confirm, and confirms only when asked', async () => {
+    const t = live();
+    t.helper.talk();
+    t.events().connected();
+    await expect(t.events().call({ name: 'show_topic', topicId: 'energy' })).resolves.toBe('Showing Energy on their screen.');
+    expect(t.helper.getSnapshot()).toMatchObject({ mode: 'explain', topicId: 'energy' });
+    // A topic shown in conversation is never read in the recorded voice over it.
+    t.helper.explain('energy');
+    expect(t.voice.speak).not.toHaveBeenCalled();
+    await expect(t.events().call({ name: 'propose_action', actionId: 'custom', input: '' })).resolves.toBe('Direction: enter 1–1200 characters.');
+    await expect(t.events().call({ name: 'propose_action', actionId: 'custom', input: 'Leave the sect.' })).resolves.toBe('On their screen to confirm: Leave the sect.');
+    expect(t.helper.getSnapshot()).toMatchObject({ mode: 'action', phase: 'review', proposal: { actionId: 'custom', input: 'Leave the sect.' } });
+    expect(t.run).not.toHaveBeenCalled();
+    await expect(t.events().call({ name: 'answer_proposal', answer: 'confirm' })).resolves.toBe('Done. Saved.');
+    expect(t.run).toHaveBeenCalledExactlyOnceWith('Leave the sect.');
+    // Story playback waits for the conversation to end.
+    expect(t.release).not.toHaveBeenCalled();
+    await expect(t.events().call({ name: 'answer_proposal', answer: 'confirm' })).resolves.toBe('Nothing is waiting to be confirmed.');
+    t.helper.talk();
+    expect(t.end).toHaveBeenCalledOnce();
+    expect(t.helper.getSnapshot().live).toBeUndefined();
+    expect(t.release).toHaveBeenCalledWith(true);
+  });
+  it('hangs up when the page changes or the panel closes, and ignores the old conversation after', async () => {
+    const t = live();
+    t.helper.talk();
+    const old = t.events();
+    t.helper.setContext(Symbol(), { ...t.context, key: 'home' });
+    expect(t.end).toHaveBeenCalledOnce();
+    expect(t.helper.getSnapshot().live).toBeUndefined();
+    old.caption('familiar', 'late words');
+    expect(t.helper.getSnapshot().live).toBeUndefined();
+    await expect(old.call({ name: 'show_topic', topicId: 'energy' })).resolves.toBe('The conversation has ended.');
+    t.helper.talk();
+    t.helper.close();
+    expect(t.end).toHaveBeenCalledTimes(2);
+  });
+  it('listens with the device voice where live talk cannot start, and says why it ended otherwise', () => {
+    const t = live();
+    t.helper.talk();
+    t.events().ended(undefined, true);
+    expect(t.voice.listen).toHaveBeenCalledOnce();
+    t.helper.useText();
+    t.helper.talk();
+    t.events().ended('Your Familiar stopped talking.');
+    expect(t.helper.getSnapshot()).toMatchObject({ live: undefined, message: 'Your Familiar stopped talking.' });
+    expect(t.voice.listen).toHaveBeenCalledOnce();
+  });
+});
+

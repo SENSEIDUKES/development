@@ -90,7 +90,12 @@
 .familiar-helper .familiar-helper-mic[data-phase="listening"] { opacity: 1; animation: familiar-listening 1.2s ease-in-out infinite; }
 .familiar-helper .familiar-helper-mic[data-phase="speaking"] { box-shadow: 0 0 18px #96ddf9aa; }
 @keyframes familiar-listening { 0%, 100% { box-shadow: 0 0 0 0 #96ddf966; } 50% { box-shadow: 0 0 0 10px #96ddf900; } }
-@media (prefers-reduced-motion: reduce) { .familiar-helper .familiar-helper-mic[data-phase="listening"] { animation: none; box-shadow: 0 0 0 3px #96ddf9; } }
+.familiar-helper .familiar-helper-mic[data-phase="live"] { opacity: 1; background: #8bdbff55; animation: familiar-listening 1.6s ease-in-out infinite; }
+.familiar-helper .familiar-helper-mic[data-phase="connecting"] { opacity: .7; }
+@media (prefers-reduced-motion: reduce) { .familiar-helper .familiar-helper-mic[data-phase="listening"], .familiar-helper .familiar-helper-mic[data-phase="live"] { animation: none; box-shadow: 0 0 0 3px #96ddf9; } }
+.familiar-helper-live { margin: 8px 4px 0; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
+.familiar-helper-live p { margin: 0; }
+.familiar-helper-live span { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; opacity: .6; }
 /* Focus follows the Familiar's silhouette, without the header's blue box. */
 .familiar-recall-container .familiar-recall:focus-visible { outline: none; box-shadow: none; }
 .familiar-recall:focus-visible > span { filter: drop-shadow(0 0 3px #d6bd87); }

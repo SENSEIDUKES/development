@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpenText, Box, Check, Image as ImageIcon, Music2, Settings, SlidersHorizontal, Video, Volume2, X } from 'lucide-react';
+import { AudioLines, BookOpenText, Box, Check, Image as ImageIcon, Music2, Settings, SlidersHorizontal, Video, Volume2, X } from 'lucide-react';
 import type {
   ModelRouterCapabilityStatus,
   ModelRouterStatus,
@@ -25,6 +25,7 @@ const CAPABILITY_ICONS = {
   chapters: BookOpenText,
   images: ImageIcon,
   tts: Volume2,
+  live: AudioLines,
   audio: Music2,
   video: Video,
   '3d': Box,
@@ -33,6 +34,7 @@ const CAPABILITY_LABELS = {
   chapters: 'Chapters',
   images: 'Images',
   tts: 'TTS',
+  live: 'Live voice',
   audio: 'Audio',
   video: 'Video',
   '3d': '3D',
@@ -41,6 +43,7 @@ const CAPABILITY_LABELS = {
 /** Why a capability's model is not chosen here. */
 const SERVER_OWNED_NOTE: Partial<Record<ModelRouterCapabilityStatus['id'], string>> = {
   tts: 'The voice model is set on the server (ELEVENLABS_MODEL_ID). Codex voice requests never accept a model from the browser.',
+  live: 'The live voice model is set on the server (FAMILIAR_LIVE_MODEL). The Familiar\'s live talk never takes a model from the browser.',
   audio: 'Gemini Lyria models are listed for reference; audio generation is not connected to a Workshop feature yet.',
   video: 'MiniMax video models have a server adapter; Veo is catalog only. No Workshop feature generates video yet. MiniMax model access depends on your subscription tier.',
   '3d': 'Tripo models are listed for reference; 3D generation is not connected to a Workshop feature yet.',

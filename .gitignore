@@ -9,6 +9,7 @@ generated/profile-picture-api
 generated/codex-voice-api
 generated/reader-translation-api
 generated/story-spark-api
+generated/familiar-live-api
 generated/model-router-api
 generated/energy-api
 generated/dao-pillar-api

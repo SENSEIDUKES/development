@@ -5,6 +5,8 @@ import {
   CHAPTER_MODELS,
   DEFAULT_IMAGE_MODEL,
   DEFAULT_TTS_MODEL,
+  DEFAULT_LIVE_MODEL,
+  LIVE_MODELS,
   GENERATION_CONSUMERS,
   type GenerationConsumer,
   IMAGE_MODELS,
@@ -77,6 +79,12 @@ const modelStatus = (
   isDefault: model.id === defaultModel,
 }));
 
+/** The live voice model: the server's choice (`FAMILIAR_LIVE_MODEL`) when the Router lists it. */
+export const liveModel = (environment: ModelEnvironment): string => {
+  const configured = environment.FAMILIAR_LIVE_MODEL?.trim();
+  return LIVE_MODELS.some(model => model.id === configured) ? configured! : DEFAULT_LIVE_MODEL;
+};
+
 /** Read-only view of the Model Router for the Workshop. Never includes a key value. */
 export function modelRouterStatus(environment: ModelEnvironment): ModelRouterStatus {
   const chapters = resolveChapterModelRoute(environment, 'HARNESS_GENERATION_MODELS', 'HARNESS_GENERATION_DEFAULT_MODEL');
@@ -127,6 +135,15 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         defaultModel: ttsDefault,
         providers: providerStatus(environment, ['elevenlabs']),
         models: modelStatus(environment, ttsModels, ttsDefault, true),
+      },
+      {
+        id: 'live',
+        label: 'Live voice',
+        description: 'Models that hear and answer in one stream, for the Familiar\'s live conversations.',
+        consumers: consumersFor('live'),
+        defaultModel: liveModel(environment),
+        providers: providerStatus(environment, ['gemini']),
+        models: modelStatus(environment, LIVE_MODELS, liveModel(environment), true),
       },
       {
         id: 'audio',

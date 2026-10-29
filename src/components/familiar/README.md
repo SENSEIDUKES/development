@@ -342,6 +342,12 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-10-29: Live talk on Gemini Live: where the server has a Gemini key, the
+  microphone starts a conversation with the equipped Familiar until tapped
+  again (ten minutes at most). It answers from the page's help topics and the
+  NovelExpanded Docs, can show a topic or propose an action, and the screen
+  still confirms every change. The server mints a single-use token for each
+  conversation (`/api/familiar-live`); the device voice remains the fallback.
 - 2026-10-29: Explain and Action modes. Sound Cues by voice in Create mode, with
   Hear it before Confirm; voice sessions also hear problems and the success.
 - 2026-10-29: Compact panel: icons for Explain and Action, tiles with an icon, a

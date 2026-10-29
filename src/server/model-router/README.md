@@ -14,7 +14,7 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 
 | Capability | Providers | Consumers |
 | --- | --- | --- |
-| Chapters | Gemini, OpenRouter, MiniMax, Anthropic, local LM Studio | Harness Generation, Holdings Fixer, Story Seed Blueprint, Story Spark, Reader Translation |
+| Chapters | Gemini, OpenRouter, MiniMax, Anthropic, local LM Studio | Harness Generation, Holdings Fixer, Look Describer, Chapter Tagger (its own choice, else the chapter model), Story Seed Blueprint, Story Spark, Reader Translation |
 | Images | Gemini, OpenRouter, MiniMax | Story Cover, Image Lab, Profile Picture |
 | TTS | ElevenLabs | Codex Voice Quote |
 | Live voice | Gemini | Familiar Live Talk |
@@ -131,8 +131,27 @@ Supported levels follow Google's [thinking documentation](https://ai.google.dev/
 Prompts, response schemas, token limits, timeouts, model choices, and saved work
 are unchanged.
 
+## The Chapter Tagger's own choice
+
+The Chapters tab carries a **Chapter Tagger** section: the model that reads
+each finished chapter for its tags, and how hard it thinks. By default it is
+the chapter's own writer, thinking as little as the model allows. The owner's
+experiment (2026-10-29): a cheap model with high reasoning may tag better than
+an expensive one with none. The choice is saved in this browser
+(`modelPreference.ts`, `tagger`), apart from the chapter model's reasoning
+level, so one model can write at one level and tag at another. It reaches the
+HARNESS as `HarnessTaggerChoice` (`HarnessGenerationController.setTagger`),
+travels on the tag request (`model`, `reasoningLevel`), and the server checks
+the level against the model's catalog levels, dropping one the model does not
+offer back to its lowest. A tagger model the server no longer offers falls back
+to the chapter's writer. The chapter's tagging record names the model that
+read it.
+
 ## Workshop history
 
+- 2026-10-29 — The Chapter Tagger gets its own model and reasoning choice in
+  the Chapters tab (above). Until now it read every chapter with the model
+  that wrote it, at that model's lowest level.
 - 2026-10-29 — Live voice: Gemini 3.8 Live for the Familiar's live talk.
 - 2026-10-19 — Connected Claude directly through the official Anthropic SDK:
   Claude Opus 5.5, Sonnet 5.5, Haiku 5.5 and Fable 5.1 in Chapters →

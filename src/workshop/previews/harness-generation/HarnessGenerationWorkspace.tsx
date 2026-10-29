@@ -11,7 +11,7 @@ import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/i
 import { IndexedDbReaderStateRepository } from '../../../host/reader/readerStateStorage';
 import { createLocalReaderPreferenceStorage } from '../../../host/reader/readerPreferenceStorage';
 import { PreservedWorkspaceNotice } from './PreservedWorkspaceNotice';
-import { useModelPreference } from '../../../host/generation/modelPreference';
+import { useModelPreference, useTaggerPreference } from '../../../host/generation/modelPreference';
 import type { HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { mediaPackKey, type MediaPackEntitlement, type MediaPackReference } from '@seihouse/library/media';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
@@ -66,6 +66,7 @@ export function HarnessGenerationWorkspace() {
     return new HarnessGenerationHttpClient(undefined, () => accessToken.current);
   });
   const [chapterModel, setChapterModel] = useModelPreference('chapters');
+  const [taggerChoice] = useTaggerPreference();
   // The Workshop's own Sound Words presets, apart from the app's.
   const soundWords = useSoundWordsPresets('seihouse.harness.sound-words.v1');
   // Packs installed in the Workshop from .spp files, beside its test packs, always unlocked.
@@ -129,7 +130,7 @@ export function HarnessGenerationWorkspace() {
         importMediaPack={devicePacks.importPack}
         baseMedia={LIBRARY_BASE_MEDIA}
         soundWordPresets={soundWords.presets} importSoundWords={soundWords.importPack}
-        preferredModel={chapterModel} onModelChange={setChapterModel}
+        preferredModel={chapterModel} preferredTagger={taggerChoice} onModelChange={setChapterModel}
         onGrantDevelopmentMediaReward={(reference: MediaPackReference) => {
           const unlockedAt = new Date();
           const entitlement: MediaPackEntitlement = {

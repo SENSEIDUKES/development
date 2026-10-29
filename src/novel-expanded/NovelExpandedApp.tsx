@@ -12,7 +12,7 @@ import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '
 import { createOfficialCapaDefaultLoadout } from '../host/generation/capa/officialCapaSkills';
 import { NarrativeButton } from '@seihouse/sen/presentation';
 import { EconomyClientProviders } from '../host/economy/EconomyClientProviders';
-import { useModelPreference } from '../host/generation/modelPreference';
+import { useModelPreference, useTaggerPreference } from '../host/generation/modelPreference';
 import { DevAudioPlaybackProvider } from '../audio/DevAudioPlayback';
 import { LIBRARY_ASSETS } from '../host/media/libraryAssets';
 import { LIBRARY_BASE_MEDIA } from '../host/media/libraryCatalog';
@@ -139,6 +139,8 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const [route, navigate] = useAppRoute();
   const profile = useDeviceProfile(services.profile);
   const [chapterModel] = useModelPreference('chapters');
+  // The Chapter Tagger reads each chapter with the Router's own choice for it, when there is one.
+  const [taggerChoice] = useTaggerPreference();
   // Covers are made with the Model Router's image choice, read when each is asked for.
   const [imageModel] = useModelPreference('images');
   const makeCovers = useMemo(() => coverMakerWithAccessToken(services.requestStoryCover, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
@@ -176,7 +178,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   }, [services]);
   const stories = useLibraryStories({
     repository: services.stories, modelAdapter: writer, installedSkills: skills,
-    baseMedia: LIBRARY_BASE_MEDIA, preferredModel: chapterModel,
+    baseMedia: LIBRARY_BASE_MEDIA, preferredModel: chapterModel, preferredTagger: taggerChoice,
     soundWordPresets: soundWords.presets, importSoundWords: soundWords.importPack,
     registeredMediaPacks: mediaPacks.packs, mediaPackEntitlements: mediaPacks.entitlements, importMediaPack: mediaPacks.importPack,
     skillIntake: inspectHarnessSkillPackage, installSkill,

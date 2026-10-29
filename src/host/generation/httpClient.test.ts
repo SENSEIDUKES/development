@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { HarnessGenerationRequest } from '@seihouse/sen/harness-generation';
 import { createSavedAccessToken } from './accessToken';
 import { HarnessGenerationHttpClient, HarnessGenerationRequestError } from './httpClient';
-import { writeReasoningPreference } from './modelPreference';
+import { writeReasoningPreference, writeTaggerPreference, readTaggerPreference } from './modelPreference';
 
 beforeEach(() => localStorage.clear());
 afterEach(() => vi.unstubAllGlobals());
@@ -77,4 +77,27 @@ it('sends the look step to the same route with the token', async () => {
   expect(JSON.parse(init.body as string)).toMatchObject({ operation: 'describe-looks', chapterNumber: 3 });
   expect((init.headers as Record<string, string>).Authorization).toBe('Bearer owner-token');
   token.current = undefined;
+});
+
+it('sends a tagging request with its own reasoning level, never the chapter model\'s saved one', async () => {
+  writeReasoningPreference('google/gemini-3.8-flash', 'high');
+  const fetchMock = vi.fn(async () => new Response(JSON.stringify(receipt), { status: 200 }));
+  vi.stubGlobal('fetch', fetchMock);
+  const client = new HarnessGenerationHttpClient();
+  const request = { operation: 'tag-chapter' as const, storyId: 's', chapterId: 'c', chapterNumber: 2, model: 'google/gemini-3.8-flash', language: 'en', paragraphs: ['A.'], subjects: [] };
+  await client.tagChapter(request);
+  expect(JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string).reasoningLevel).toBeUndefined();
+  await client.tagChapter({ ...request, reasoningLevel: 'minimal' });
+  expect(JSON.parse((fetchMock.mock.calls[1] as unknown as [string, RequestInit])[1].body as string).reasoningLevel).toBe('minimal');
+  writeReasoningPreference('google/gemini-3.8-flash', undefined);
+});
+
+it('keeps the Chapter Tagger choice apart from the chapter model, and reads back only what was saved', () => {
+  expect(readTaggerPreference()).toEqual({});
+  writeTaggerPreference({ model: 'google/gemini-3.5-flash-lite', reasoningLevel: 'high' });
+  expect(readTaggerPreference()).toEqual({ model: 'google/gemini-3.5-flash-lite', reasoningLevel: 'high' });
+  writeTaggerPreference({ reasoningLevel: 'high' });
+  expect(readTaggerPreference()).toEqual({ reasoningLevel: 'high' });
+  writeTaggerPreference({});
+  expect(readTaggerPreference()).toEqual({});
 });

@@ -191,6 +191,21 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(container.textContent).not.toContain('Curated worlds');
   });
 
+  it('Create uses the app worlds and opens their World Info and Reader', async () => {
+    const writer = scriptedWriter();
+    const services = appServices(writer.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, writer.writer);
+    await render(services, '/app/?page=create');
+    const creator = () => container.querySelector<HTMLElement>('[data-creator-space]')!;
+    expect(creator().textContent).toContain(created.title);
+    expect(creator().textContent).toContain('1 world');
+    await click(buttonByText('Studio', creator()), 'Studio');
+    expect(address()).toBe(`/app/?story=${created.id}`);
+    await click(buttonByText('Create', strip()!), 'Create navigation', 20);
+    await click(buttonByText('Continue', creator()), 'Continue');
+    expect(address()).toBe(`/app/?story=${created.id}&read=1`);
+  });
+
   it.each([undefined, 'phoenix'])('opens a story under the equipped Familiar (%s) and walks back with the app and browser', async equippedFamiliarId => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
@@ -478,10 +493,14 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(document.querySelector('[data-testid="novel-expanded-home"]')).toBeTruthy();
   });
 
-  it('Create in the navigation opens Story Seed in the shell\'s workspace mode, with the music note', async () => {
+  it('Create opens Creator Space, whose Create action opens Story Seed with the music note', async () => {
     await render(appServices(scriptedWriter().writer));
     await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
     expect(address()).toBe('/app/?page=create');
+    expect(document.querySelector('[data-creator-space]')).toBeTruthy();
+    expect(document.querySelector('[data-story-seed-page-heading]')).toBeNull();
+    await click(buttonByText('Create', document.querySelector<HTMLElement>('[data-creator-space]')!), 'Create a new seed', 20);
+    expect(address()).toBe('/app/?page=story-seed');
     expect(document.querySelector('[data-testid="novel-expanded-create"]')).toBeTruthy();
     // Create, on the creator's last step, wears the Energy badge with the World Blueprint's price (a chapter's, for now).
     await click(document.querySelector('[data-seed-creator-strip] button[data-step="manifest"]'), 'the Manifest step', 20);
@@ -533,6 +552,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(floatingNote()).toBeNull();
     await click(buttonByText('Create', document.querySelector<HTMLElement>('nav[aria-label="Library pathways"]')!), 'Create in the sidebar', 20);
     expect(address()).toBe('/app/?page=create');
+    expect(document.querySelector('[data-creator-space]')).toBeTruthy();
     expect(headerNote()).toBeTruthy();
     expect(floatingNote()).toBeNull();
   });
@@ -597,6 +617,10 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
 
     // Create: Story Seed title sits at the top of the page below the header.
     await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
+    expect(address()).toBe('/app/?page=create');
+    expect(document.querySelector('[data-creator-space]')).toBeTruthy();
+    expect(document.querySelector('[data-story-seed-page-heading]')).toBeNull();
+    await click(buttonByText('Create', document.querySelector<HTMLElement>('[data-creator-space]')!), 'Create a new seed', 20);
     assertHeaderOrder();
     expect(document.querySelector('[data-story-seed-page-heading] [data-page-title]')?.textContent).toBe('Story Seed');
     await click(buttonByText('Back', document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!), 'Back on Story Seed', 20);
@@ -639,7 +663,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     const writer = { ...scriptedWriter().writer, getServerInfo: async () => ({ provider: 'lmstudio', configured: true,
       models: [{ id: 'lmstudio/loaded', label: 'Currently loaded model' }], defaultModel: 'lmstudio/loaded' }) };
     const services = appServices(writer, { storySeeds: seeds, requestWorldBlueprint });
-    await render(services, '/app/?page=create');
+    await render(services, '/app/?page=story-seed');
     await click(buttonByText('Story Bank', container), 'Story Bank', 200);
     await click(buttonByText('Use Seed', container), 'Use Seed', 200);
     await click(buttonByText('Refine Details', container), 'Refine Details', 200);
@@ -701,7 +725,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await render(services, '/app/');
     // Home's Carve New Destiny opens Create.
     await click(buttonByText('Carve New Destiny', container), 'Carve New Destiny', 20);
-    expect(address()).toBe('/app/?page=create');
+    expect(address()).toBe('/app/?page=story-seed');
 
     // The banked seed goes back into Story Seed, then on to a World Blueprint.
     await click(buttonByText('Story Bank', container), 'Story Bank', 200);
@@ -797,7 +821,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     const writer = scriptedWriter();
     const services = appServices(writer.writer, { storySeeds: seeds, requestWorldBlueprint: (async () => blueprint!) as unknown as NovelExpandedServices['requestWorldBlueprint'] });
     services.accessToken.current = 'owner-token';
-    await render(services, '/app/?page=create');
+    await render(services, '/app/?page=story-seed');
 
     // Story Seed's Settings: the language and Reading Mode, then the skills and media the story starts with.
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
@@ -836,7 +860,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
 
   it('Create\'s Settings installs a skill package into a slot and keeps it on the device for the new story', async () => {
     const services = appServices(scriptedWriter().writer);
-    await render(services, '/app/?page=create');
+    await render(services, '/app/?page=story-seed');
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
     await click(buttonByText('Settings', bar), 'Settings on the task bar', 50);
     const settings = document.querySelector<HTMLElement>('[data-testid="create-story-settings"]')!;
@@ -1228,7 +1252,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(buttonByText('Begin this story', panel()), 'Begin this story', 200);
     const saved = await services.storySeeds.list(NOVEL_EXPANDED_READER_ID);
     expect(saved).toHaveLength(2);
-    expect(address()).toBe(`/app/?page=create&seed=${saved[0].id}`);
+    expect(address()).toBe(`/app/?page=story-seed&seed=${saved[0].id}`);
     expect(document.querySelector('[data-testid="novel-expanded-create"]')).not.toBeNull();
     expect(document.querySelector<HTMLTextAreaElement>('#core-premise-input')?.value).toBe('A sword writes letters to its first owner.');
     expect(document.querySelector<HTMLInputElement>('#origin-story-title-input')?.value).toBe('Letters From the Blade');
@@ -1240,7 +1264,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
   it('a new Story Seed in Create starts from the profile\'s reading language and Reading Mode', async () => {
     const services = appServices(scriptedWriter().writer);
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
-    await render(services, '/app/?page=create');
+    await render(services, '/app/?page=story-seed');
     await click(buttonByText('Save Draft') ?? buttonByText('Saved'), 'Save Draft', 200);
     const saved = await services.storySeeds.list(NOVEL_EXPANDED_READER_ID);
     expect(saved.map(record => [record.originalLanguage, record.seed.story.optional.chapterWritingStyle])).toEqual([['ja', 'Easy Read']]);

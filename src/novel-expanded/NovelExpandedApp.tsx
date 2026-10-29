@@ -33,6 +33,7 @@ import { codexPictureMakerWithAccessToken, coverMakerWithAccessToken, portraitMa
 import { useStoryCovers } from '../host/media/storyCovers';
 import { useCodexPictures } from '../host/media/codexPictures';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
+import { CreatorSpacePage } from './CreatorSpacePage';
 import { CreatePage } from './CreatePage';
 import { DiscoverPage } from './DiscoverPage';
 import { HomePage } from './HomePage';
@@ -43,7 +44,7 @@ import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
 import { NOVEL_EXPANDED_READER_ID, startedSeedIds, storySourceSeedId } from './storyCreationRuntime';
 
 /**
- * NovelExpanded: Home → Create (Story Seed and World Blueprint) → Story View
+ * NovelExpanded: Home → Create → Story Seed and World Blueprint → Story View
  * (World Info) → Reader, with the reader's Profile beside them. Its chapters
  * are written the same way as the Workshop's: the official CAPA skills, the
  * Library's sound words and Sound Cues, memory read only on request, and the
@@ -55,7 +56,7 @@ import { NOVEL_EXPANDED_READER_ID, startedSeedIds, storySourceSeedId } from './s
  * it or set its volume), and the Reader's own music and each chapter's scene
  * in the Reader. Spoken lines (the help menu's and the Familiar's recorded
  * System voice) play on the shared single-channel player beside it. Home and World Info sit in the Library Shell (`AppShell`),
- * Create in its workspace mode, and Profile is the Library's Cave; the Reader
+ * Story Seed in its workspace mode, and Profile is the Library's Cave; the Reader
  * stays outside, immersive.
  * The reader's profile (`services.profile`) is the one record of their name,
  * languages, Reading Mode and Familiar: the Cave edits it, the floating
@@ -95,7 +96,8 @@ export function NovelExpandedApp({ services, readerMixer }: {
 /** Each page, for the Familiar: its name, and which help topics it explains. */
 function familiarPlace(page: ReturnType<typeof useAppRoute>[0]['page']): { title: string; help: FamiliarHelpPlace } {
   switch (page) {
-    case 'create': return { title: 'Create', help: 'story-seed' };
+    case 'create': return { title: 'Create', help: 'library' };
+    case 'story-seed': return { title: 'Story Seed', help: 'story-seed' };
     case 'read': return { title: 'Reader', help: 'reader' };
     case 'discover': return { title: 'Discover', help: 'library' };
     case 'profile': return { title: 'Profile', help: 'library' };
@@ -229,7 +231,12 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
 
   if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} menuMusic={menuMusicSlot} />);
 
-  if (route.page === 'create') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
+  if (route.page === 'create') return withFamiliar(<CreatorSpacePage worlds={worlds.map(world => {
+    const story = state.stories.find(item => item.id === world.id)!;
+    return { ...world, updatedAt: story.updatedAt, status: story.conclusion ? 'complete' : story.visibility === 'public' ? 'public' : story.visibility === 'shared' ? 'shared' : 'draft' };
+  })} navigate={navigate} readerProfile={profile} />);
+
+  if (route.page === 'story-seed') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     seedId={route.seedId}
     // A new Story Seed starts from the profile's languages and Reading Mode.
     accountDefaultLanguage={profile.defaultReadingLanguage} accountDefaultChapterWritingStyle={profile.defaultChapterWritingStyle}
@@ -248,7 +255,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
       // (Fate Survival's first direction) waits; a failed start is simply tried again by
       // Start Story, which shows any reason.
       if (!nextChapterWaitsOnReader(stories.controller.snapshot(), story.id)) void stories.generateNextChapter(story.id).catch(() => undefined);
-      // The new story replaces Create, so Back from it goes Home.
+      // The new story replaces Story Seed; Back returns to its entry page.
       navigate({ page: 'story', storyId: story.id }, { replace: true });
     }} />);
 

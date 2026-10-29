@@ -142,3 +142,5 @@ reduced motion. Evidence: `output/playwright/creator-space/`.
   bottom-strip Library tab with **Create**. Creator Space (Carve New Destiny, Energy, In
   progress), an honest Creator Toolkit preview, and the Your worlds row with Continue and
   Studio wired to the chapter workspace, which can now open a requested story.
+
+- **2026-10-29:** NovelExpanded now hosts this page at `/app/?page=create`, with its own persisted stories, covers and Energy. Create opens `/app/?page=story-seed`; Continue opens the Reader, Info and Studio open World Info. The Workshop Development preview loads this app route with real browser data and actions. The older Library shell adapter remains isolated to its shell preview.

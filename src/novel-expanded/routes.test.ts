@@ -51,10 +51,10 @@ describe('NovelExpanded addresses', () => {
   });
 
   it('opens a saved Story Seed in Create by its id', () => {
-    const route: NovelExpandedRoute = { page: 'create', seedId: 'seed-1' };
-    expect(routeSearch(route)).toBe('?page=create&seed=seed-1');
+    const route: NovelExpandedRoute = { page: 'story-seed', seedId: 'seed-1' };
+    expect(routeSearch(route)).toBe('?page=story-seed&seed=seed-1');
     expect(parseRoute(routeSearch(route))).toEqual(route);
-    expect(parseRoute('?page=create&seed=')).toEqual({ page: 'create' });
+    expect(parseRoute('?page=story-seed&seed=')).toEqual({ page: 'story-seed' });
   });
 
   it('keeps an id that needs escaping intact', () => {

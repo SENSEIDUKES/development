@@ -1,6 +1,5 @@
-import { STORY_STYLE_OPTIONS } from '@seihouse/sen/story-seed';
-import type { CreatorToolkitItem, CreatorWorld } from '@seihouse/library/creator-space';
-import { TRACK_LIBRARY } from '../../../host/media/soundscapeCatalog';
+import type { CreatorWorld } from '@seihouse/library/creator-space';
+export { CREATOR_TOOLKIT } from '../../../host/media/creatorToolkit';
 import { featuredNovel } from '../light-novels-home/previewData';
 
 /**
@@ -24,16 +23,4 @@ export const SAMPLE_CREATOR_WORLDS: readonly CreatorWorld[] = [
   // No cover yet: shows the Library's own celestial art in its place.
   { ...sampleCreator, id: 'sample-forgetting-rivers', title: 'Where the Rivers Forget', chapterCount: 3, status: 'draft', genre: 'Mystery', branchingEnabled: false,
     updatedAt: '2026-09-10T07:20:00Z' },
-];
-
-const styles = STORY_STYLE_OPTIONS.map(option => option.label);
-
-/** Previews of real first-party systems; the pack browser itself is not built. */
-export const CREATOR_TOOLKIT: readonly CreatorToolkitItem[] = [
-  { id: 'style-packs', kind: 'style', title: 'Style Packs',
-    description: `${styles.slice(0, -1).join(', ')} and ${styles.at(-1)} writing styles.`,
-    imageUrl: '/manifest-backdrops/immortal-land-2.jpg' },
-  { id: 'soundscapes', kind: 'soundscape', title: 'Soundscapes',
-    description: `${TRACK_LIBRARY.length} ambient scores for your scenes.`,
-    imageUrl: '/manifest-backdrops/immortal-land-4.jpg' },
 ];

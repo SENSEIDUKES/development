@@ -31,7 +31,7 @@ export function useDaoSparks(
       keepSpark: async spark => { await plant(spark); },
       beginSpark: async spark => {
         const record = await plant(spark);
-        navigate({ page: 'create', seedId: record.id });
+        navigate({ page: 'story-seed', seedId: record.id });
       },
     };
   }, [services, defaultReadingLanguage, defaultChapterWritingStyle, navigate]);

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
-import type { CreatorWorldsSource } from './CreatorSpaceHost';
 
 /** The sizes Create is judged at. Mobile leads because creators start on a phone. */
 const viewports = {
@@ -11,16 +10,10 @@ const viewports = {
 } as const;
 type Viewport = keyof typeof viewports;
 
-const WORLD_SOURCES: Record<CreatorWorldsSource, { label: string; description: string }> = {
-  sample: { label: 'Sample worlds', description: 'Six Workshop sample worlds with existing art, including a finished story and one without a cover. Continue and Studio say where they would go.' },
-  local: { label: 'This browser’s stories', description: 'The worlds written in this browser’s chapter workspace — the same data the real Create tab reads. Continue and Studio open them there.' },
-};
-
 export function CreatorSpaceWorkspace() {
   const [viewport, setViewport] = useState<Viewport>('mobile');
-  const [source, setSource] = useState<CreatorWorldsSource>('sample');
   const { label, width, height } = viewports[viewport];
-  const src = `/library-shell.html?variant=development&source=main-library&screen=creator-space${source === 'sample' ? '&worlds=sample' : ''}`;
+  const src = '/app/?page=create';
   const title = `Creator Space ${viewport}`;
   const caption = `${label} · ${width} × ${height}`;
 
@@ -43,18 +36,12 @@ export function CreatorSpaceWorkspace() {
   return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'creator-space')!}
     renderDevelopment={render}
     workshopControls={{
-      description: 'Create runs inside the real Library shell: the same header, bottom strip, live Energy account and navigation as Home and Profile.',
+      description: 'The real NovelExpanded Create page. Uses this browser’s app stories and Energy account; actions and saved changes are real.',
       defaultSection: 'pages',
       sections: [{
         id: 'pages',
-        description: WORLD_SOURCES[source].description,
+        description: 'Preview the app at mobile, tablet and laptop sizes.',
         content: <div className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-xs">Worlds
-            <select className="min-h-11 rounded-lg border border-white/20 bg-black/30 p-2 text-sm text-white"
-              value={source} onChange={event => setSource(event.target.value as CreatorWorldsSource)}>
-              {Object.entries(WORLD_SOURCES).map(([value, option]) => <option key={value} value={value}>{option.label}</option>)}
-            </select>
-          </label>
           <label className="flex flex-col gap-1 text-xs">Viewport
             <select className="min-h-11 rounded-lg border border-white/20 bg-black/30 p-2 text-sm text-white"
               value={viewport} onChange={event => setViewport(event.target.value as Viewport)}>

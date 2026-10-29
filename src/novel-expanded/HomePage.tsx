@@ -27,7 +27,7 @@ export function HomePage({ worlds, navigate, readerProfile }: {
       <LightNovelsHome worlds={worlds} emptyState={EMPTY_LIST}
         events={HOME_SAMPLE_EVENTS}
         featuredWorlds={worlds.filter(world => world.imageUrl.trim()).slice(0, FEATURED_STORIES)}
-        onCreateStory={() => navigate({ page: 'create' })}
+        onCreateStory={() => navigate({ page: 'story-seed' })}
         onOpenWorld={storyId => navigate({ page: 'story', storyId })} />
     </div>
   </AppShell>;

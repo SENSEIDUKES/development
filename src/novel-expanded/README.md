@@ -37,7 +37,7 @@ The NovelExpanded app as its own place, at **`/app/`** on every preview and
 deployment. It holds the core application spine from [`NOVEL_EXPANDED.md`](../../NOVEL_EXPANDED.md),
 the minimum path through the product:
 
-**Home → Create (Story Seed and World Blueprint) → Story View (World Info) → Reader**
+**Home → Create → Story Seed and World Blueprint → Story View (World Info) → Reader**
 
 and, beside it, the reader's **Profile** (the Library's Cultivator Cave) with
 everything it connects to: Settings, the Familiar, and the economy the Cave shows.
@@ -76,15 +76,16 @@ rewrites and every page survives a reload.
 | --- | --- | --- |
 | Home | `/app/` | Events above Featured, the reader's stories, newest first, and Carve New Destiny |
 | Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); Novel / Manga / Game / Video (`medium`) above section navigation, left browsing rail, scoped All / My updates, genres and rankings outside Lore |
-| Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
+| Create | `/app/?page=create` | Creator Space: toolkit, Energy, and the reader’s worlds |
+| Story Seed | `/app/?page=story-seed` | The seed, its World Blueprint, Manifest Story |
 | Story View | `/app/?story=<id>` | The story's World Info page: Begin Story or Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
 | Blueprint | `/app/?story=<id>&blueprint=1` | The story's own World Blueprint, opened from World Info's Blueprint button. Every story on the device is the reader's own, so it opens for its creator: editable while the novel is private, saved as a new Foundation revision the next chapter uses |
 | Profile | `/app/?page=profile` | The Library's Cultivator Cave; its own pages in `cave` (Settings: `&cave=/settings`). |
 
-- Home and Story View sit in the Library Shell; Create is Story Seed in the shell's workspace mode; Profile is the Cave, which draws the same shell itself; the Reader is full-screen (below).
+- Home, Create and Story View sit in the Library Shell; Story Seed uses the shell's workspace mode; Profile is the Cave, which draws the same shell itself; the Reader is full-screen (below).
 - Moving inside the app adds a browser history entry, so Back and Forward walk the same pages.
-- Manifest Story replaces Create with the new story, so Back from it goes Home.
+- Manifest Story replaces Story Seed with the new story, so Back returns to the entry page.
 - `/app` without the slash redirects to `/app/` (the Vite dev and preview servers, and `vercel.json`).
 - A story id the app does not have goes Home.
 
@@ -96,7 +97,7 @@ rewrites and every page survives a reload.
   visitor, lifted by the owner's saved token). Keep plants the spark's premise
   and genre in a new Story Seed in the app's Story Bank, in the profile's
   reading language and Reading Mode; Begin does the same and opens it at
-  `?page=create&seed=<id>`.
+  `?page=story-seed&seed=<id>`.
 - **2026-10-12** — Home and World Info pass the device reader's saved name and
   portrait into the Pathways profile header, with rank from the shared DAO XP
   account; selecting it opens Profile. The sidebar keeps its landscape in the
@@ -137,7 +138,8 @@ built:
   - **The footer** has Explore (Your stories, Create a story, Discover worlds, Your profile),
     Support (Help, Settings) and the legal row. Terms, Privacy and Cookies open the Library's draft documents,
     marked as drafts. Social channels wait for published addresses.
-- **Create** is Story Seed in the shell's workspace mode: its task bar (Sections,
+- **Create** hosts the Library Creator Space, with the app’s worlds, covers and Energy. Its Create action opens Story Seed.
+- **Story Seed** uses the shell's workspace mode: its task bar (Sections,
   Story Bank, Settings, Back) stands where the strip was, with the same music note
   (`WorkspaceHeaderSoundProvider`), floating above the task bar on phones and
   tablets and in Story Seed's header on laptops.
@@ -477,3 +479,5 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - **2026-10-01** — The Reader reads aloud in three voices: Listen, the spoken sentence lit, Reader Settings → Narration, with the voices and speed kept on this device and SEIHouse's voices from the Library. `check:app` also refuses the older Reader's narration.
 - **2026-10-01** — The World Blueprint plans Arc 1 only and fills every blank Story Seed slot; each later arc is planned and reviewed when it begins, in the Reader. Add Arcs is gone.
 - **2026-10-01** — Piece 1: the four pages at `/app/`, on separate storage, with the same chapters as the Workshop and the `check:app` guard.
+
+- **2026-10-29:** Create navigation opens the existing Library Creator Space. Its Create action opens Story Seed; Home’s Carve New Destiny and Dao sparks still start seeds directly. The Creator Space Workshop preview loads the real app route and storage.

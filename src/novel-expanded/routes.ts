@@ -8,7 +8,8 @@ import type { DiscoverMedium } from '@seihouse/library/discover';
  *
  * - Home: `/app/`
  * - Discover: `/app/?page=discover`
- * - Create (Story Seed and World Blueprint): `/app/?page=create`, opening a
+ * - Create (Creator Space): `/app/?page=create`
+ * - Story Seed and World Blueprint: `/app/?page=story-seed`, opening a
  *   saved Story Seed with `&seed=<id>` (a Dao Insights spark begun from Home)
  * - Story View (World Info): `/app/?story=<id>`
  * - Reader: `/app/?story=<id>&read=1`
@@ -20,7 +21,8 @@ import type { DiscoverMedium } from '@seihouse/library/discover';
 export type NovelExpandedRoute =
   | { page: 'home' }
   | { page: 'discover'; section?: 'creators' | 'codex'; medium?: DiscoverMedium; lore?: string; query?: string; category?: string }
-  | { page: 'create'; seedId?: string }
+  | { page: 'create' }
+  | { page: 'story-seed'; seedId?: string }
   | { page: 'story'; storyId: string }
   | { page: 'read'; storyId: string }
   | { page: 'blueprint'; storyId: string }
@@ -41,9 +43,10 @@ export function parseRoute(search: string): NovelExpandedRoute {
     return lore ? { ...base, lore, ...(query.get('q') ? { query: query.get('q')! } : {}), ...(query.get('category') ? { category: query.get('category')! } : {}) }
       : section === 'creators' || section === 'codex' ? { ...base, section } : base;
   }
-  if (query.get('page') === 'create') {
+  if (query.get('page') === 'create') return { page: 'create' };
+  if (query.get('page') === 'story-seed') {
     const seedId = query.get('seed')?.trim();
-    return seedId ? { page: 'create', seedId } : { page: 'create' };
+    return seedId ? { page: 'story-seed', seedId } : { page: 'story-seed' };
   }
   if (query.get('page') === 'profile') {
     const cave = query.get('cave')?.trim();
@@ -56,7 +59,8 @@ export function routeSearch(route: NovelExpandedRoute): string {
   switch (route.page) {
     case 'home': return '';
     case 'discover': return `?${new URLSearchParams({ page: 'discover', ...(route.lore ? { lore: route.lore, ...(route.query ? { q: route.query } : {}), ...(route.category ? { category: route.category } : {}) } : route.section ? { section: route.section } : {}), ...(route.medium ? { medium: route.medium } : {}) })}`;
-    case 'create': return route.seedId ? `?${new URLSearchParams({ page: 'create', seed: route.seedId })}` : '?page=create';
+    case 'create': return '?page=create';
+    case 'story-seed': return route.seedId ? `?${new URLSearchParams({ page: 'story-seed', seed: route.seedId })}` : '?page=story-seed';
     case 'story': return `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;
     case 'blueprint': return `?story=${encodeURIComponent(route.storyId)}&blueprint=1`;
@@ -74,7 +78,7 @@ export type Navigate = (route: NovelExpandedRoute, options?: { replace?: boolean
 /**
  * The page in the address bar. Moving inside the app adds a history entry, so
  * the browser's Back and Forward walk the same pages; `replace` swaps the
- * current entry instead (a started story replaces Create, so Back goes Home).
+ * current entry instead (a started story replaces Story Seed, preserving its entry page).
  */
 export function useAppRoute(): [NovelExpandedRoute, Navigate] {
   const [route, setRoute] = useState(() => parseRoute(window.location.search));

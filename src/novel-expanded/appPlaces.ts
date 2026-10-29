@@ -14,7 +14,8 @@ export function appLibraryLocation(route: NovelExpandedRoute): LibraryLocation {
     case 'home': return { screen: 'home', collection: 'featured' };
     // The Library's own Discover location, so re-selecting Discover on Discover is no move.
     case 'discover': return { screen: 'home', collection: 'challenges' };
-    case 'create': return { screen: 'creator' };
+    case 'create': return { screen: 'creator-space' };
+    case 'story-seed': return { screen: 'creator' };
     case 'story':
     case 'blueprint': return { screen: 'detail' };
     case 'read': return { screen: 'reader' };
@@ -27,7 +28,8 @@ export function appRouteFor(location: LibraryLocation): NovelExpandedRoute | und
   // The Library's Discover destination still names Fate Survival's old collection.
   if (location.screen === 'home' && location.collection === 'challenges') return { page: 'discover' };
   if (location.screen === 'home') return HOME_ROUTE;
-  if (location.screen === 'creator-space' || location.screen === 'creator') return { page: 'create' };
+  if (location.screen === 'creator-space') return { page: 'create' };
+  if (location.screen === 'creator') return { page: 'story-seed' };
   if (location.screen === 'profile') return location.cave ? { page: 'profile', cave: location.cave } : { page: 'profile' };
   return undefined;
 }

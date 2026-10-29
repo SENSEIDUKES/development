@@ -12,8 +12,11 @@ export {
 } from '../../components/harness-generation/shared/controller';
 export {
   createEmptyHarnessWorkspaceState,
+  HARNESS_WORKSPACE_CONFLICT_MESSAGE,
+  HarnessWorkspaceConflictError,
   isCurrentHarnessWorkspaceState,
   migrateHarnessWorkspaceState,
+  nextHarnessWorkspaceRevision,
   readHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from '../../components/harness-generation/shared/repository';

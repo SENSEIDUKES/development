@@ -5,6 +5,7 @@ import { WORLD_CARD_KINDS, worldCardKey } from '../../../narrative/worldRecord';
 
 export const createEmptyHarnessWorkspaceState = (): HarnessWorkspaceState => ({
   schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION,
+  revision: 0,
   stories: [],
   foundations: [],
   attempts: [],
@@ -19,13 +20,43 @@ export const createEmptyHarnessWorkspaceState = (): HarnessWorkspaceState => ({
 
 export interface HarnessGenerationRepository {
   load(): Promise<HarnessWorkspaceState>;
+  /**
+   * Saves `state` as the next revision, atomically, only while the stored
+   * workspace is still at `state.revision` (the revision it was read at).
+   * Otherwise it writes nothing and throws a `HarnessWorkspaceConflictError`:
+   * another page saved since, and saving would overwrite what it wrote.
+   */
   save(state: HarnessWorkspaceState): Promise<void>;
 }
+
+/** What a page is told when it saves from a workspace another page has saved since. */
+export const HARNESS_WORKSPACE_CONFLICT_MESSAGE = 'Your stories changed in another tab. Reload to see them.';
+
+/** A save refused because the stored workspace moved on from the revision it was read at. */
+export class HarnessWorkspaceConflictError extends Error {
+  constructor(message: string = HARNESS_WORKSPACE_CONFLICT_MESSAGE) {
+    super(message);
+    this.name = 'HarnessWorkspaceConflictError';
+  }
+}
+
+/**
+ * The compare-and-set every repository makes inside its one write: what to
+ * store for `state`, given what is stored now (undefined when nothing is). It
+ * is `state` as the next revision when the stored workspace is still at the
+ * revision `state` was read at; anything else throws, and nothing is written.
+ */
+export const nextHarnessWorkspaceRevision = (stored: unknown, state: HarnessWorkspaceState): HarnessWorkspaceState => {
+  const storedRevision = stored === undefined ? 0 : isCurrentHarnessWorkspaceState(stored) ? stored.revision : undefined;
+  if (storedRevision !== state.revision) throw new HarnessWorkspaceConflictError();
+  return { ...cloneHarnessValue(state), revision: state.revision + 1 };
+};
 
 export const isCurrentHarnessWorkspaceState = (value: unknown): value is HarnessWorkspaceState => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const candidate = value as Partial<HarnessWorkspaceState> & { schemaVersion?: number };
   return candidate.schemaVersion === HARNESS_GENERATION_SCHEMA_VERSION
+    && Number.isInteger(candidate.revision)
     && Array.isArray(candidate.stories)
     && Array.isArray(candidate.foundations)
     && Array.isArray(candidate.attempts)
@@ -134,6 +165,10 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
     }),
     schemaVersion: 39,
   }),
+  // 40 numbers the workspace with its revision, so a save from a page that
+  // read an older one is refused. No saved workspace was numbered before, so
+  // each starts at 0; its stories, chapters and plans read as they are.
+  39: stored => ({ ...stored, revision: 0, schemaVersion: 40 }),
 };
 
 /** The CAPA slots that left the schema when the tagger took the tags (schema 39). */

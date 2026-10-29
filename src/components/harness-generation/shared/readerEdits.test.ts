@@ -44,10 +44,11 @@ describe('canonical Reader/Codex edit journal', () => {
     const controller = new HarnessGenerationController({ repository, modelAdapter: noGeneration });
     await controller.hydrate();
     const before = controller.snapshot();
+    const stored = repository.snapshot();
     repository.failNextSave();
     await expect(controller.updateReaderStory(story.id, 1, { lastReadChapter: 1 })).rejects.toThrow('persistence failure');
     expect(controller.snapshot()).toEqual(before);
-    expect(repository.snapshot()).toEqual(before);
+    expect(repository.snapshot()).toEqual(stored);
     await controller.updateReaderStory(story.id, 1, { lastReadChapter: 1 });
     expect(createHarnessSenStory(controller.snapshot(), story.id).lastReadChapter).toBe(1);
   });

@@ -35,6 +35,13 @@ skeleton has eight parts: `# HOW TO TAG` is retired. SEN Novel Author is 1.1.0,
 carrying the three craft rules that left the HARNESS writing rules. Workspace
 schema 39.
 
+**Unreleased (2026-10-29):** `./harness-generation` numbers the workspace with
+its `revision` (workspace schema 40). `HarnessGenerationRepository.save` is a
+compare-and-set: it saves a state only while storage is still at the revision it
+was read at, and otherwise throws `HarnessWorkspaceConflictError` and writes
+nothing. `nextHarnessWorkspaceRevision` is that check for a host's own
+repository; `HARNESS_WORKSPACE_CONFLICT_MESSAGE` is what a stale tab is told.
+
 **0.40.0 (2026-10-26):** The root entry exports the shared `HighlightActionIcon`
 artwork and its names and props without importing Highlight Engine styles, so Library
 can reuse the same SVGs in its individually named icons.

@@ -35,8 +35,10 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * packet it froze; 36 gives every world card the chapter it entered in, and
  * every card saved before it is the world the story opened with; 37 gives the
  * world record a home of its own on the workspace, so a chapter can add a card
- * to it, seeded from each story's active Foundation. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 39 as const;
+ * to it, seeded from each story's active Foundation; 40 numbers every saved
+ * workspace with its revision, so a save made from an older one (another tab)
+ * is refused instead of overwriting it. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 40 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -1222,6 +1224,13 @@ export interface HarnessChapterTagging {
 
 export interface HarnessWorkspaceState {
   schemaVersion: typeof HARNESS_GENERATION_SCHEMA_VERSION;
+  /**
+   * How many times this workspace has been saved. A state carries the revision
+   * it was read at; the repository saves it only while the stored workspace is
+   * still at that revision, as the next one, so a page that opened the
+   * workspace before another one saved it cannot overwrite what that one wrote.
+   */
+  revision: number;
   stories: HarnessStory[];
   foundations: StoryFoundationRevision[];
   attempts: HarnessGenerationAttempt[];

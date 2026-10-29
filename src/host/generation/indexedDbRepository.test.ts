@@ -42,11 +42,12 @@ describe('planHarnessWorkspaceLoad', () => {
     // 38 drops the semantic-event memory system nothing had written to since the tags took over.
     // 39 takes tagging off the writer: the five tag slots leave the CAPA Schema
     // and the Author skill reaches 1.1.0. A story equipping neither is untouched.
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(39);
-    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35, 36, 37, 38]) {
+    // 40 numbers the workspace with its revision, from 0: no saved one had one.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(40);
+    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35, 36, 37, 38, 39]) {
       const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }], attempts: [{ id: 'a1', capaPrompt: { soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }] } }], chapters: [{ id: 'c1', soundCues: [{ id: 'sc1' }] }] };
       const plan = planHarnessWorkspaceLoad(stored, now);
-      expect(plan.state).toEqual({ ...stored, schemaVersion: 39, worldCards: [] });
+      expect(plan.state).toEqual({ ...stored, schemaVersion: 40, revision: 0, worldCards: [] });
       expect(plan.preserve).toEqual({
         key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:2026-09-24T12:00:00.000Z`,
         record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },
@@ -72,7 +73,8 @@ describe('planHarnessWorkspaceLoad', () => {
     const upgraded = { cards: [{ ...world.cards[0], key: 'world:character:ye-chen', enteredInChapter: 0 }] };
     expect(plan.state).toEqual({
       ...stored,
-      schemaVersion: 39,
+      schemaVersion: 40,
+      revision: 0,
       foundations: [{ id: 'f1', input: { premise: 'A quarry laborer rises.', worldAtChapterZero: upgraded } }],
       attempts: [{ id: 'a1', storyInformation: { worldAtChapterZero: upgraded } }],
       // No story names that Foundation as its active one, so the living record opens empty.

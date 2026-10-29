@@ -1134,4 +1134,26 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     // Once saved, the same cue again is an overlap.
     await act(async () => { await expect(tools!.createMode!.sounds.place(placed.cue)).rejects.toThrow('already has a Sound Cue'); });
   });
+  it('says so in Create mode when the chapter changed in another tab, and keeps that tab\'s change', async () => {
+    const { harness, controller, storyId } = await story({ written: 2 });
+    let tools: ReaderHostTools | undefined;
+    await mount(<Host controller={controller} storyId={storyId} renderHostTools={current => { tools = current; return null; }} />);
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    await click(byLabel('Create mode'), 'Create mode');
+    // Another tab on the same stories changes the chapter and saves it first.
+    const otherTab = new HarnessGenerationController({ repository: harness, modelAdapter: scriptedProvider().adapter, media });
+    await otherTab.hydrate();
+    const chapter = otherTab.snapshot().chapters.find(entry => entry.chapterNumber === 2)!;
+    const reworded = chapter.paragraphs.map((paragraph, index) => index === chapter.paragraphs.length - 1 ? `${paragraph} The tide turned.` : paragraph);
+    await otherTab.authorChapter(chapter.id, { paragraphs: reworded, soundCues: chapter.soundCues, speakers: chapter.speakers, holdingChanges: chapter.holdingChanges, appearances: chapter.appearances });
+    // This tab places a Sound Cue by voice on the chapter as it opened it.
+    const placed = tools!.createMode!.sounds.resolve(tools!.createMode!.sounds.soundWords[0], { kind: 'words', words: 'with a lantern' });
+    if (!placed.ok) throw new Error(placed.problem);
+    await act(async () => { await expect(tools!.createMode!.sounds.place(placed.cue)).rejects.toThrow('This chapter changed in another tab. Reload to see it.'); });
+    await flush();
+    const authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
+    expect(authoring.querySelector('[data-testid="create-mode-saving"]')!.textContent).toBe('Not saved');
+    expect(authoring.querySelector('[role="alert"]')!.textContent).toBe('This chapter changed in another tab. Reload to see it.');
+    expect(harness.snapshot().chapters.find(entry => entry.id === chapter.id)!.paragraphs).toEqual(reworded);
+  });
 });

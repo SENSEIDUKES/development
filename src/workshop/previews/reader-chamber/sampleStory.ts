@@ -2,6 +2,7 @@ import {
   buildRhythmRecommendation,
   findStory,
   latestStoryChapter,
+  nextHarnessWorkspaceRevision,
   readHarnessWorkspaceState,
   withoutLatestChapter,
   type HarnessGenerationModelAdapter,
@@ -43,6 +44,8 @@ export function storyExportToWorkspace(value: unknown): HarnessWorkspaceState {
   }));
   const state = readHarnessWorkspaceState({
     schemaVersion: exported.schemaVersion,
+    // A story file holds one story, not a saved workspace: the one it opens into is new.
+    revision: 0,
     stories: exported.story ? [exported.story] : [],
     foundations,
     attempts,
@@ -168,7 +171,7 @@ export function createMemoryStories(initial: HarnessWorkspaceState): HarnessGene
   let state = structuredClone(initial);
   return {
     load: async () => structuredClone(state),
-    save: async next => { state = structuredClone(next); },
+    save: async next => { state = nextHarnessWorkspaceRevision(state, next); },
   };
 }
 

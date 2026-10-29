@@ -1,4 +1,4 @@
-import { createEmptyHarnessWorkspaceState, isCurrentHarnessWorkspaceState, migrateHarnessWorkspaceState, readHarnessWorkspaceState, HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState, type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
+import { createEmptyHarnessWorkspaceState, isCurrentHarnessWorkspaceState, migrateHarnessWorkspaceState, nextHarnessWorkspaceRevision, readHarnessWorkspaceState, HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState, type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
 const cloneHarnessValue = <T,>(value: T): T => structuredClone(value);
 export const HARNESS_GENERATION_INDEXED_DB_NAME = 'seihouse-harness-generation-v1';
 /**
@@ -144,11 +144,32 @@ export class IndexedDbHarnessGenerationRepository implements HarnessGenerationRe
     return plan.state;
   }
 
+  /**
+   * The read, the revision check and the write share one readwrite
+   * transaction, which IndexedDB runs one at a time across every tab of the
+   * site: no other page's save can land between the check and the write.
+   */
   async save(state: HarnessWorkspaceState): Promise<void> {
     const database = await this.open();
     const transaction = database.transaction(STORE_NAME, 'readwrite');
-    transaction.objectStore(STORE_NAME).put(cloneHarnessValue(state), WORKSPACE_KEY);
-    await transactionDone(transaction);
+    const done = transactionDone(transaction);
+    const store = transaction.objectStore(STORE_NAME);
+    let refused: unknown;
+    const read = store.get(WORKSPACE_KEY);
+    // The write is queued from the read's own success event, while the transaction is still active.
+    read.onsuccess = () => {
+      try {
+        store.put(nextHarnessWorkspaceRevision(read.result, state), WORKSPACE_KEY);
+      } catch (error) {
+        refused = error;
+        transaction.abort();
+      }
+    };
+    try {
+      await done;
+    } catch (error) {
+      throw refused ?? error;
+    }
   }
 
   async listPreservedWorkspaces(): Promise<PreservedHarnessWorkspaceSummary[]> {

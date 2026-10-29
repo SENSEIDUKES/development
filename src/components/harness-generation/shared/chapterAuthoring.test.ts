@@ -140,3 +140,66 @@ describe('Create mode: authoring the newest chapter', () => {
     expect(run.chapters()[1].paragraphs[0]).toBe('Lin crossed the swaying bridge.');
   });
 });
+
+describe('Create mode open in two tabs', () => {
+  // Two controllers on one repository are two tabs on one browser's stories.
+  const openSecondTab = async (run: Awaited<ReturnType<typeof setup>>) => {
+    const tab = new HarnessGenerationController({ repository: run.repository, modelAdapter: { getServerInfo: async () => ({ configured: false, provider: 'fixture', defaultModel: '', models: [] }), generate: async () => { throw new Error('Not asked.'); } }, runtime });
+    await tab.hydrate();
+    return tab;
+  };
+  const cueOn = (chapterNumber: number, id: string) => ({ id, kind: 'sound-cue', anchor: { level: 'span', blockId: harnessParagraphBlockId(chapterNumber, 0), startOffset: 0, endOffset: 3, selectedText: 'Lin' },
+    payload: { origin: 'manual', sound: 'rope', cue: { publicUrl: 'https://example.test/rope.ogg', provenance: { packageId: 'p', version: '1.0.0' }, category: 'foley' } } }) as never;
+
+  it('refuses the save of a tab that opened the chapter before the other tab saved it, keeping the other tab\'s Sound Cue', async () => {
+    const run = await setup();
+    await run.write(reply('The Flood', ['Lin tied the rope to the rail.', 'The water rose.']));
+    const second = await openSecondTab(run);
+    const [chapter] = run.chapters();
+
+    // The first tab adds a Sound Cue (by hand or by voice through the Familiar: both save through authorChapter).
+    await run.controller.authorChapter(chapter.id, { paragraphs: chapter.paragraphs, soundCues: [cueOn(1, 'cue-first-tab')] });
+    // The second tab still shows the chapter as it opened it, and saves a change of words from there.
+    const stale = second.snapshot().chapters.find(entry => entry.id === chapter.id)!;
+    const reworded = stale.paragraphs.map((paragraph, index) => index === 1 ? 'The black water rose.' : paragraph);
+    await expect(second.authorChapter(chapter.id, { paragraphs: reworded, soundCues: stale.soundCues }))
+      .rejects.toThrow('This chapter changed in another tab. Reload to see it.');
+
+    const saved = run.repository.snapshot().chapters.find(entry => entry.id === chapter.id)!;
+    expect(saved.soundCues?.map(cue => cue.id)).toEqual(['cue-first-tab']);
+    expect(saved.paragraphs).toEqual(chapter.paragraphs);
+    // Nothing the second tab holds changed either: it keeps showing what it last saw until it reloads.
+    expect(second.snapshot().chapters.find(entry => entry.id === chapter.id)).toEqual(stale);
+  });
+
+  it('keeps refusing the stale tab until it reloads, then saves on top of the other tab\'s change', async () => {
+    const run = await setup();
+    await run.write(reply('The Flood', ['Lin tied the rope to the rail.', 'The water rose.']));
+    const second = await openSecondTab(run);
+    const [chapter] = run.chapters();
+    await run.controller.authorChapter(chapter.id, { paragraphs: chapter.paragraphs, soundCues: [cueOn(1, 'cue-first-tab')] });
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await expect(second.authorChapter(chapter.id, { paragraphs: chapter.paragraphs })).rejects.toThrow('changed in another tab');
+    }
+
+    const reloaded = await openSecondTab(run);
+    const current = reloaded.snapshot().chapters.find(entry => entry.id === chapter.id)!;
+    await reloaded.authorChapter(chapter.id, { paragraphs: current.paragraphs, soundCues: [...current.soundCues ?? [], cueOn(1, 'cue-second-tab')] });
+    expect(run.repository.snapshot().chapters.find(entry => entry.id === chapter.id)!.soundCues?.map(cue => cue.id))
+      .toEqual(['cue-first-tab', 'cue-second-tab']);
+    // Now the first tab is the one behind.
+    await expect(run.controller.authorChapter(chapter.id, { paragraphs: chapter.paragraphs })).rejects.toThrow('changed in another tab');
+  });
+
+  it('never refuses a tab\'s own saves, however quickly they follow each other', async () => {
+    const run = await setup();
+    await run.write(reply('The Flood', ['Lin tied the rope to the rail.', 'The water rose.']));
+    const [chapter] = run.chapters();
+    // Not awaited one by one: each starts before the one before it has landed.
+    await Promise.all(['cue-a', 'cue-b', 'cue-c'].map((id, index, all) => run.controller.authorChapter(chapter.id, {
+      paragraphs: chapter.paragraphs, soundCues: all.slice(0, index + 1).map(cue => cueOn(1, cue)),
+    })));
+    expect(run.repository.snapshot().chapters.find(entry => entry.id === chapter.id)!.soundCues?.map(cue => cue.id)).toEqual(['cue-a', 'cue-b', 'cue-c']);
+    expect(run.controller.snapshot().revision).toBe(run.repository.snapshot().revision);
+  });
+});

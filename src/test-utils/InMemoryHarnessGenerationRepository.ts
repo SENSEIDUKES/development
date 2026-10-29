@@ -1,4 +1,4 @@
-import { createEmptyHarnessWorkspaceState, readHarnessWorkspaceState, type HarnessWorkspaceState, type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
+import { createEmptyHarnessWorkspaceState, nextHarnessWorkspaceRevision, readHarnessWorkspaceState, type HarnessWorkspaceState, type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
 const cloneHarnessValue = <T,>(value: T): T => structuredClone(value);
 /** Test-only repository port; it models reload by retaining one durable snapshot. */
 export class InMemoryHarnessGenerationRepository implements HarnessGenerationRepository {
@@ -20,7 +20,7 @@ export class InMemoryHarnessGenerationRepository implements HarnessGenerationRep
   async save(state: HarnessWorkspaceState): Promise<void> {
     const failure = this.pendingFailures.shift();
     if (failure) throw failure;
-    this.state = cloneHarnessValue(state);
+    this.state = nextHarnessWorkspaceRevision(this.state, state);
   }
 
   snapshot(): HarnessWorkspaceState {

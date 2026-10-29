@@ -37,6 +37,23 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-29 (a save from another tab no longer overwrites):** The stories
+  are one saved workspace, and each tab kept its own copy, so the later save
+  of two tabs replaced the other's work, Create mode edits and Sound Cues
+  placed by voice included. The workspace now carries a `revision` (schema 40;
+  every saved workspace upgrades to revision 0, stories untouched). Every save
+  is a compare-and-set: the repository writes a state only while storage is
+  still at the revision it was read at, in one IndexedDB transaction, and
+  otherwise refuses it with `HarnessWorkspaceConflictError` and writes
+  nothing. Create mode shows "This chapter changed in another tab. Reload to
+  see it." in its notice; any other save from a stale tab says "Your stories
+  changed in another tab. Reload to see them." A tab's own saves run one after
+  another, so it never refuses itself, and within one tab the newest save
+  still wins, as PR #401 left it. Opening the stories no longer saves the
+  recovery it reads (an interrupted request marked as unknown): it reads the
+  same on every open, and saving it would refuse the chapter another tab was
+  still writing.
+
 - **2026-10-28 (Original Reference removed):** With the owner's approval, the
   old `reference/` baseline message (`HarnessGenerationReference.tsx`) and its
   Original Reference pane were removed. The workspace now shows Development alone.
@@ -735,6 +752,11 @@ path uses, though the Reader no longer edits. SEN stays provider-neutral.
    chapter exactly as it was.
 
 Only a committed chapter enters the next context snapshot.
+
+**A stale tab never overwrites.** Every save carries the workspace revision it
+was read at and lands, atomically, only while storage is still there; another
+tab's save since makes it refuse with `HarnessWorkspaceConflictError`, writing
+nothing, until the tab reloads.
 
 **Storage resets preserve data.** A saved workspace this build cannot read (an
 older schema version or an unreadable shape; schema 22 deliberately upgrades

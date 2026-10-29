@@ -51,6 +51,7 @@ import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
 import { planCodexLook, readDescribedLooks } from './lookDescriber';
 import {
   createEmptyHarnessWorkspaceState,
+  HarnessWorkspaceConflictError,
   type HarnessGenerationRepository,
 } from './repository';
 import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
@@ -231,8 +232,20 @@ export class HarnessGenerationController {
   /** The save under way, if any: an on-demand write waits for it before it reads the state it saves. */
   private saving: Promise<unknown> = Promise.resolve();
 
+  /** The revision of the workspace as this page last read or saved it. */
+  private savedRevision = 0;
+
+  /**
+   * Saves one after another, each as the successor of this page's last save,
+   * so the repository refuses a save only when another page (another tab)
+   * saved since. Within the page the newest save wins, as it always has.
+   */
   private async persist(candidate: HarnessWorkspaceState) {
-    const save = this.repository.save(candidate);
+    const save = this.saving.then(async () => {
+      candidate.revision = this.savedRevision;
+      await this.repository.save(candidate);
+      this.savedRevision = candidate.revision += 1;
+    });
     this.saving = save.catch(() => undefined);
     await save;
     this.state = candidate;
@@ -277,8 +290,8 @@ export class HarnessGenerationController {
 
   async hydrate(): Promise<HarnessWorkspaceState> {
     const loaded = await this.repository.load();
+    this.savedRevision = loaded.revision;
     const recovered = cloneHarnessValue(loaded);
-    let changed = false;
     for (const attempt of recovered.attempts) {
       if (attempt.stage !== 'request_started') continue;
       // A rewrite never holds the story: the chapter it was replacing is still
@@ -289,7 +302,6 @@ export class HarnessGenerationController {
           stage: 'provider',
           message: `The browser closed while Chapter ${attempt.chapterNumber} was being rewritten, so it was kept as it was.`,
         };
-        changed = true;
         continue;
       }
       attempt.stage = 'provider_outcome_unknown';
@@ -301,13 +313,11 @@ export class HarnessGenerationController {
         code: 'provider_outcome_unknown',
         message: 'This request may have reached the provider before the browser closed. It was not retried automatically.',
       }]);
-      changed = true;
     }
     for (const operation of recovered.arcPlanOperations) {
       if (operation.status !== 'request_started') continue;
       operation.status = 'provider_outcome_unknown';
       operation.failure = 'The browser closed after Arc planning started. The provider outcome is unknown; explicitly retry planning before generating a chapter.';
-      changed = true;
     }
     for (const batch of recovered.batches) {
       if (batch.status !== 'running' && batch.status !== 'pause_requested') continue;
@@ -321,7 +331,6 @@ export class HarnessGenerationController {
         ? 'The active provider outcome is unknown. An explicit retry is required.'
         : 'The browser reloaded while this batch was active. Resume explicitly from the next uncommitted chapter.';
       batch.updatedAt = this.runtime.now();
-      changed = true;
     }
     for (const story of recovered.stories) {
       if (story.skillLoadout?.author) continue;
@@ -332,9 +341,10 @@ export class HarnessGenerationController {
           version: SEN_NOVEL_AUTHOR_SKILL.version,
         },
       };
-      changed = true;
     }
-    if (changed) await this.repository.save(recovered);
+    // The recovery is kept in memory, not saved: it reads the same from storage
+    // on every open, and saving it here would refuse the next save of a page
+    // still writing a chapter in another tab. The page's next save keeps it.
     this.state = recovered;
     this.hydrated = true;
     this.notify();
@@ -504,7 +514,13 @@ export class HarnessGenerationController {
     chapter.authoring = { editedAt: now, ...(changes.waiting?.length ? { waiting: cloneHarnessValue(changes.waiting) } : {}) };
     const story = findStory(candidate, chapter.storyId);
     if (story) story.updatedAt = now;
-    await this.persist(candidate);
+    try {
+      await this.persist(candidate);
+    } catch (error) {
+      // Another tab saved since this one opened the chapter: its edits are kept, and this one is told.
+      if (error instanceof HarnessWorkspaceConflictError) throw new HarnessWorkspaceConflictError('This chapter changed in another tab. Reload to see it.');
+      throw error;
+    }
   }
 
   /** The Mission Reminder the next attempt would freeze, for inspection. Never persisted here and never sent. */

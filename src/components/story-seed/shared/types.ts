@@ -1,9 +1,6 @@
 /**
- * Types genuinely shared by both Story Seed forks.
- *
- * The Story Seed contract itself is **not** here — it lives in
- * `storySeedSchema.ts`. The frozen Phase-1 flat intake contract that the
- * locked `reference/` replica still speaks lives in `referenceIntake.ts`.
+ * Shared Story Seed types. The Story Seed contract itself is **not** here —
+ * it lives in `storySeedSchema.ts`.
  */
 
 /** The creator-authored Origin values captured with a generated Blueprint. */

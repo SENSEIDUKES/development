@@ -1,118 +1,14 @@
-import type {
-  IntakeData,
-  StorySeed,
-  WorldBlueprint,
-} from '../../reference-support/story-seed/referenceIntake';
 import {
   STORY_SEED_SCHEMA_VERSION,
   createEmptyStorySeedInput,
   normalizeWorldBlueprint,
   type StorySeedInput,
+  type WorldBlueprint,
   type StorySeedRecord,
 } from '@seihouse/sen/story-seed';
 import type { ArcLookaheadEntry, ArcPlan } from '@seihouse/sen/arc-goals';
 
 export const MOCK_USER_ID = 'mock-user-workshop';
-
-// ─── Locked reference fork fixtures (Phase-1 flat intake) ────────────────────
-// Only the `reference/` replica reads these. The development fork's fixtures
-// are the canonical Story Seed shapes further below.
-
-export const createEmptyIntake = (): IntakeData => ({
-  novelTitle: '',
-  mcName: 'Lin Fan',
-  genrePath: 'Xianxia',
-  corePremise: '',
-  proseStyle: '',
-  desiredPlotDirection: '',
-  storyTags: [],
-  worldType: '',
-  startingLocation: '',
-  societyStructure: '',
-  dangerLevel: '',
-  generalAtmosphere: '',
-  startingIdentity: '',
-  personality: '',
-  mainFlaw: '',
-  secretAdvantage: '',
-  startingWeakness: '',
-  moralAlignment: '',
-  mcBio: '',
-  customCharacters: [],
-  customFactions: [],
-  startingPowerConcept: '',
-  powerFlavor: '',
-  powerPace: '',
-  knownRanks: '',
-  uniquePath: '',
-  firstMajorConflict: '',
-  mainAntagonistPressure: '',
-  romanceLevel: '',
-  faceSlappingLevel: '',
-  comedyLevel: '',
-  tournamentArcPreference: '',
-  haremPreference: '',
-  betrayalLevel: '',
-  thingsToAvoid: '',
-  mustIncludeElements: '',
-  fatePressure: 'Balanced',
-  makeItWorkInstruction: '',
-});
-
-export const createFilledIntake = (): IntakeData => ({
-  ...createEmptyIntake(),
-  novelTitle: 'Ashes of the Ninth Meridian',
-  mcName: 'Ye Chen',
-  genrePath: 'Xianxia',
-  proseStyle: 'chinese',
-  corePremise: 'In seven chapters, the prince will be assassinated. Every timeline says he dies. Can you change fate before it happens?',
-  desiredPlotDirection: 'Slow sect building with escalating court intrigue.',
-  storyTags: ['death flags', 'foreknowledge', 'sect politics', 'fate bonds'],
-  worldType: 'Ancient sect world with a collapsing celestial court',
-  startingLocation: 'A sprawling outer sect labor quarry built inside a cavernous volcanic rift.',
-  societyStructure: 'Sect-led feudal hierarchy',
-  dangerLevel: 'Cutthroat, grimdark, mystical',
-  startingIdentity: 'Crippled young master, secretly the reincarnated Ninth Prince',
-  personality: 'Ruthless but protective, chaotic neutral',
-  secretAdvantage: 'Foreknowledge of seven doomed timelines',
-  startingWeakness: 'Destroyed meridians',
-  mcBio: 'Born as the son of a fallen patriarch, carrying the blood of a Primordial dragon, extremely lazy but protective of the few he trusts.',
-  customCharacters: [
-    {
-      id: 'preview-character-1',
-      name: 'Elder Qin',
-      aliases: ['The Iron Brush'],
-      age: 'Ancient',
-      powerType: 'Frost Dao',
-      rankLevel: 'Nascent Soul',
-      role: 'Sect Elder',
-      connectionToMC: 'Secret protector',
-      bio: 'A retired enforcer who owes the MC\'s father a life debt.',
-    },
-  ],
-  customFactions: [
-    {
-      id: 'preview-faction-1',
-      name: 'Heavenly Sword Sect',
-      aliases: ['Azure Hall'],
-      role: 'Ruling Power',
-      powerLevel: 'Mid Tier',
-      alignment: 'Righteous (in name only)',
-      connectionToMC: "MC's starting sect",
-      description: 'A once-glorious sect now riddled with internal corruption.',
-    },
-  ],
-  startingPowerConcept: 'Qi Condensation Tier 1',
-  powerFlavor: 'Martial arts, Daoist',
-  firstMajorConflict: 'Sect tournament that reveals the first assassination attempt',
-  romanceLevel: 'Single Heroine',
-  faceSlappingLevel: 'High',
-  fatePressure: 'Hardcore',
-  hardcoreFateMode: true,
-  destinedEnding: 'The prince survives and shatters the celestial court\'s grip on fate.',
-  estimatedArcs: 12,
-  makeItWorkInstruction: '',
-});
 
 const MOCK_ROUTE = [
   ['Survive the outer sect tournament', 'Expose the first assassin', 'Earn the prince\'s trust'],
@@ -232,43 +128,12 @@ export const createMockBlueprint = (): WorldBlueprint => ({
     'Ye Chen, outwardly a crippled young master, carries foreknowledge of seven timelines in which the Ninth Prince is assassinated.',
   majorFactions: ['Heavenly Sword Sect', 'Deep Sea Alliance', 'Abyssal Cult'],
   initialCharacters: ['Elder Qin (Protector)', 'Junior Sister Han (Ally)', 'Young Master Ye (Rival)'],
-  majorMysteries: ['True origin of the Sovereign Ring', 'Why was the Sect Leader poisoned?'],
   firstArcPromise: 'The sect tournament exposes the first assassination attempt on the prince.',
   tropeRules: 'Face-slapping tied to fate corrections, not petty insults.',
   styleBible: 'Close third-person narration with restrained exposition, concrete sensory detail, and sharp reversals at scene endings.',
   destinedEnding: "The prince survives and shatters the celestial court's grip on fate.",
   estimatedArcs: 10,
-  unresolvedPlotThreads: ['Sever the engagement with Chu family', 'Win the Inner Sect tournament'],
 });
-
-export const createMockSeed = (overrides: Partial<StorySeed> = {}): StorySeed => {
-  const now = new Date().toISOString();
-  return {
-    schemaVersion: 1,
-    id: 'preview-seed-1',
-    userId: MOCK_USER_ID,
-    title: 'Ashes of the Ninth Meridian',
-    intake: createFilledIntake(),
-    blueprint: createMockBlueprint(),
-    createdAt: now,
-    updatedAt: now,
-    ...overrides,
-  };
-};
-
-export const createReferenceSavedSeeds = (): StorySeed[] => [
-  createMockSeed(),
-  createMockSeed({
-    id: 'preview-seed-2',
-    title: 'The Grimoire That Talks Back',
-    blueprint: {
-      ...createMockBlueprint(),
-      title: 'The Grimoire That Talks Back',
-      logline: 'A quiet apprentice librarian finds a forgotten manual that talks back and demands snacks.',
-    },
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-  }),
-];
 
 // ─── Development fork fixtures (canonical Creator / Story / World) ───────────
 

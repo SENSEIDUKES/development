@@ -90,16 +90,6 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
   );
 }
 
-function FamiliarTrainingReference() {
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-10 text-sm leading-relaxed text-neutral-400 sm:px-8">
-      Familiar bonds have no production original. They replace Relic attunement and status effects:
-      name effects are now cosmetic, lent by Familiars, and cultivated with QI — never a boost,
-      multiplier, discount or other advantage.
-    </div>
-  );
-}
-
 export function FamiliarTrainingWorkspace() {
   const [state, setState] = useState<BondState>('rare');
   const current = STATES.find(option => option.id === state)!;
@@ -108,7 +98,6 @@ export function FamiliarTrainingWorkspace() {
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={false}
       workshopControls={{
         description: 'Bonds, mastery and every QI spend run on the development economy in this tab. The QI grant, Familiar ownership grants and the Active Familiar are Workshop simulations.',
         defaultSection: 'states',
@@ -127,7 +116,6 @@ export function FamiliarTrainingWorkspace() {
           ),
         }],
       }}
-      renderReference={() => <FamiliarTrainingReference />}
       renderDevelopment={() => (
         <WorkshopEconomyProvider key={`${state}-${session}`} seed={current.seed}>
           <BondScene activeId={active} onActivate={setActive} />

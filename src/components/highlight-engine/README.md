@@ -324,10 +324,12 @@ double-click, keyboard selection, Copy, native-range absence, and editing. CI ru
 Consumers import the package entry and SEN stylesheet. For a source transfer,
 carry `development/` and `shared/` (excluding tests), the public barrel and its
 export/ownership registration. React, React DOM and `@seihouse/ui` are existing
-package peers. Keep Workshop hosting, dummy prose, reference documentation and
+package peers. Keep Workshop hosting, dummy prose and
 browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
+
+- **2026-10-28:** With the owner's approval, removed the placeholder `reference/README.md` and the Original Reference note pane (this primitive never had a production copy). The workspace now shows Development alone.
 
 - **2026-10-25:** Extended both endpoint stems through the measured height of their selected line, keeping the dots, outside touch targets, and drag anchors unchanged.
 

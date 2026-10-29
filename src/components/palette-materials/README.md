@@ -45,12 +45,26 @@ Reader panels share the same rounded rim; stationary Reader bars retain their st
 validated field in existing version-1 looks, so existing exports still load. Layer tiles separate the border, outer neutral
 shadow, and colored/inset highlights. They are not complete component replicas.
 
-The composition intentionally puts measured material layers on simple geometry;
-the Reader edge is shared with the samples, while other component-specific
-pseudo-elements and animation remain in the originals.
-Its controls and actions are visual fixtures. Text and accent choices apply only
-to this composition. The initial composition represents existing roles, not an
-approved palette. Reduced-transparency experiments use an opaque fallback.
+The composition renders the app's current `HomePage` / `AppShell` in a private
+Workshop capture document, reached only inside the existing Palette & Materials
+workspace. It reuses the canonical Home, events, filter controls, empty state,
+header, navigation, logo and footer instead of simulating their geometry. A
+local profile fixture and inert navigation replace app services. Home's existing
+backdrop is used in Artwork mode; black and gray remain available. The hero uses
+one existing Home still with no video or image rotation so material comparisons
+stay steady. The Familiar is a paused canonical sprite; music and settings actions
+are local fixtures, without audio playback, accounts or generation calls.
+
+Existing navigation, panel, card and button assignments paint their respective
+Home surfaces through measured recipes and the same editor overrides. Navigation
+includes the header, sidebar/dock and footer. Media retains its original backing
+and contrast layers without glass blur; the Manifest button keeps its spectrum.
+Text/accent choices stay local. The frame measures materials at its own viewport
+and responds to edits through origin/source-checked messages validated with the
+saved-look validator. Fit this screen, Phone, Tablet and Desktop exercise actual
+media queries; larger sizes scale to fit without widening the Workshop. Existing
+looks, export formats and app preferences are unchanged. Reduced-transparency
+experiments use an opaque fallback.
 
 The owner's latest `palette-materials.json` is bundled unchanged as `owner-looks.json`.
 Its final **V1** combination is the default on a fresh browser and the first visit
@@ -147,3 +161,20 @@ through the same shared fill.
   are unchanged. Custom tint/strength supplies RGB channels to each recipe, rather
   than replacing it with the header fill. Browser verification compares all
   non-color properties and gradient alpha/stops against the archived originals.
+
+
+## 2026-10-29 — Home material preview
+
+Replaced the generic composition with the actual Home composition using isolated
+Workshop fixtures, preserving the existing material editor and named looks. The
+preview includes responsive header/navigation, expandable image events, a still
+Featured banner, filters, nested empty state and the branded footer. Editing a
+plain material cannot blur media; rainbow actions retain their canonical rings.
+Source owners are `src/novel-expanded/HomePage.tsx` (`HomePage`) and
+`src/novel-expanded/AppShell.tsx` (`AppShell`), consumed directly from this
+repository. This is a visual mock, not the app's real storage/actions preview.
+
+Browser validation compares original paints with `/app/`, checks material edits,
+clear media, frame resizing, tablet dock bounds, inert actions and saved-look
+reload in Chromium and WebKit. The previous generic scene and its styles were
+removed. The canonical Home Workshop entry still loads `/app/` unchanged.

@@ -44,11 +44,14 @@ actual future verifier result.
 - **2026-09-27:** Added required asset-version and actor/action fields, optional
   parent-version references, explicit mock status, safer compact disclosure,
   and a UI presentation mode that does not trust status strings in record data.
+- **2026-10-28:** With the owner's approval, removed the supplied visual
+  reference copy (`reference/SENSEIHOUSEProvenance.svg`); the badge keeps using
+  the public R2 artwork through the Library skin.
 
 ## Ownership and structure
 
-- `reference/SENSEIHOUSEProvenance.svg` is the untouched visual reference
-  supplied for this task. There is no production component to replicate yet.
+- There is no production component to replicate yet. The supplied mark is served
+  as public R2 artwork (see the source reference above).
 - `shared/` owns the provider-neutral record types and the non-persisting local
   constructor.
 - `development/` owns the reusable badge, details UI, and component-only CSS.
@@ -94,7 +97,7 @@ production integration in this feature.
 
 The packages and NovelExpanded app built here are the destination. Keep Workshop
 controls, fixtures and adapters outside reusable package entries; another repository
-changes only when the owner asks. Historical references stay untouched.
+changes only when the owner asks.
 
 ## Evidence and package boundary
 

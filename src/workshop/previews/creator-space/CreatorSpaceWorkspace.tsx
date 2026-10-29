@@ -16,12 +16,6 @@ const WORLD_SOURCES: Record<CreatorWorldsSource, { label: string; description: s
   local: { label: 'This browser’s stories', description: 'The worlds written in this browser’s chapter workspace — the same data the real Create tab reads. Continue and Studio open them there.' },
 };
 
-function CreatorSpaceReference() {
-  return <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-neutral-400 sm:px-8">
-    Create has no production original. It is built here first as the Library’s Create tab, replacing the bottom-strip Library tab that reopened Home’s My Library collection.
-  </div>;
-}
-
 export function CreatorSpaceWorkspace() {
   const [viewport, setViewport] = useState<Viewport>('mobile');
   const [source, setSource] = useState<CreatorWorldsSource>('sample');
@@ -47,8 +41,7 @@ export function CreatorSpaceWorkspace() {
       </div>;
 
   return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'creator-space')!}
-    allowCompare={false}
-    renderReference={() => <CreatorSpaceReference />} renderDevelopment={render}
+    renderDevelopment={render}
     workshopControls={{
       description: 'Create runs inside the real Library shell: the same header, bottom strip, live Energy account and navigation as Home and Profile.',
       defaultSection: 'pages',

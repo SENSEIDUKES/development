@@ -2,7 +2,7 @@ import { startWorkshopHarnessStory } from '../harness-generation/storySeedHandof
 import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
 import { LIBRARY_DESTINATIONS } from '@seihouse/library/shell';
-import { lazy, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CreationModal as DevelopmentCreationModal } from '@seihouse/library/story-seed';
 import { requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
 import { createSavedAccessToken } from '../../../host/generation/accessToken';
@@ -10,7 +10,6 @@ import { readModelPreference } from '../../../host/generation/modelPreference';
 import { resetStorySeedRepository, setStorySeedRepository } from './storySeedStorage';
 import { finalizeGeneratedWorldBlueprint, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
 import {
-  resetMockSeeds,
   resetMockState,
   setMockLocalOnlyMode,
   useAppStore,
@@ -26,7 +25,6 @@ import {
   createMockArcOne,
   createMockSeedSlotAnswer,
   createMockBlueprint,
-  createReferenceSavedSeeds,
   createStoryBankRecords,
   MOCK_USER_ID,
 } from './previewData';
@@ -38,26 +36,6 @@ import {
   scenariosInCategory,
 } from './previewStates';
 import { createStoryBankPreviewRepository } from './previewStorySeedRepository';
-import { DeferredWorkspace } from '../../DeferredWorkspace';
-
-type ReferenceCreationModalModule = typeof import('../../../components/story-seed/reference/CreationModal');
-
-let referenceCreationModalPromise: Promise<ReferenceCreationModalModule> | null = null;
-
-const loadReferenceCreationModal = (): Promise<ReferenceCreationModalModule> => {
-  referenceCreationModalPromise ??= import('../../../components/story-seed/reference/CreationModal')
-    .catch(error => {
-      referenceCreationModalPromise = null;
-      throw error;
-    });
-  return referenceCreationModalPromise;
-};
-
-const preloadReferenceCreationModal = () => {
-  void loadReferenceCreationModal().catch(() => undefined);
-};
-
-const ReferenceCreationModal = lazy(loadReferenceCreationModal);
 
 // ─── DOM-driven scenario scripting ───────────────────────────────────────────
 // CreationModal owns `intake`, `stage`, and `showImportPanel` as internal
@@ -67,15 +45,13 @@ const ReferenceCreationModal = lazy(loadReferenceCreationModal);
 // inputs and clicking the actual buttons, the same way reader-chamber's
 // `clickInChamber` drove its preview states.
 //
-// The two panes are structurally different UIs: the locked
-// reference fork is the old numbered accordion, the development fork is the
-// two-panel creation workspace. Pane wrappers carry `data-story-seed-pane`
-// so each scenario script can drive each fork through its own real controls.
+// The pane wrapper carries `data-story-seed-pane` so each scenario script can
+// drive the creation workspace through its own real controls.
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const SCENARIO_ACTION_TIMEOUT_MS = 10_000;
 
-type PaneKind = 'reference' | 'development';
+type PaneKind = 'development';
 
 // Each rendered pane, once its Story Seed has mounted. The whole pane is the
 // scope, so a script reaches the shell's own controls (the bar, the rail) as
@@ -116,20 +92,6 @@ function mutateRoots(
   return true;
 }
 
-async function waitForRoots(
-  pane: PaneKind,
-  timeoutMs = SCENARIO_ACTION_TIMEOUT_MS,
-  isCancelled: () => boolean = () => false,
-) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (isCancelled()) return false;
-    if (getRoots(pane).length > 0) return true;
-    await wait(50);
-  }
-  return false;
-}
-
 async function clickWhenAvailable(
   pane: PaneKind,
   selector: string,
@@ -144,84 +106,6 @@ async function clickWhenAvailable(
     if (clicked.some(Boolean)) return;
     await wait(50);
   }
-}
-
-/** Reference pane: fills the locked Phase 1 accordion replica (unchanged steps). */
-async function runReferenceFillScenario(isCancelled: () => boolean) {
-  if (!await waitForRoots('reference', SCENARIO_ACTION_TIMEOUT_MS, isCancelled)) return;
-
-  if (!mutateRoots('reference', isCancelled, root => {
-    setFieldValue(root, 'a11y-control-v2xlbs8', 'Ashes of the Ninth Meridian');
-    setFieldValue(root, 'a11y-control-7b2mqtu', 'Ye Chen');
-    setFieldValue(
-      root,
-      'core-premise-input',
-      'In seven chapters, the prince will be assassinated. Every timeline says he dies. Can you change fate before it happens?',
-    );
-  })) return;
-  if (!await waitUnlessCancelled(80, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => {
-    clickByText(root, 'button', /^\+ death flags$/);
-    clickByText(root, 'button', /^\+ sect politics$/);
-  })) return;
-
-  if (!await waitUnlessCancelled(80, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => clickByText(root, 'button', /2\. World Setting/))) return;
-  if (!await waitUnlessCancelled(120, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => {
-    setFieldValue(root, 'world-type-input', 'Ancient sect world with a collapsing celestial court');
-    setFieldValue(root, 'society-structure-input', 'Sect-led feudal hierarchy');
-    setFieldValue(root, 'danger-level-input', 'Cutthroat, grimdark, mystical');
-    setFieldValue(root, 'starting-location-input', 'Outer sect labor quarry inside a volcanic rift.');
-  })) return;
-
-  if (!await waitUnlessCancelled(80, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => clickByText(root, 'button', /3\. Main Character Setup/))) return;
-  if (!await waitUnlessCancelled(120, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => {
-    setFieldValue(root, 'mc-starting-identity-input', 'Crippled young master');
-    setFieldValue(root, 'mc-personality-input', 'Ruthless but protective, chaotic neutral');
-    setFieldValue(root, 'mc-secret-advantage-input', 'Foreknowledge of seven doomed timelines');
-    setFieldValue(root, 'mc-starting-weakness-input', 'Destroyed meridians');
-    setFieldValue(
-      root,
-      'mc-bio-input',
-      'Born as the son of a fallen patriarch, carrying the blood of a Primordial dragon, extremely lazy but protective.',
-    );
-  })) return;
-
-  if (!await waitUnlessCancelled(80, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => clickByText(root, 'button', /3\.5\. Character Intake/))) return;
-  if (!await waitUnlessCancelled(120, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => clickByText(root, 'button', /\+ Add Character/))) return;
-  if (!await waitUnlessCancelled(80, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => setFieldValue(root, 'a11y-control-boqy7nd', 'Elder Qin'))) return;
-
-  if (!await waitUnlessCancelled(80, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => clickByText(root, 'button', /3\.8\. Faction\/Sect Intake/))) return;
-  if (!await waitUnlessCancelled(120, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => clickByText(root, 'button', /\+ Add Faction/))) return;
-  if (!await waitUnlessCancelled(80, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => setFieldValue(root, 'a11y-control-xhc59yh', 'Heavenly Sword Sect'))) return;
-
-  if (!await waitUnlessCancelled(80, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => clickByText(root, 'button', /4\. Power System Seed/))) return;
-  if (!await waitUnlessCancelled(120, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => {
-    setFieldValue(root, 'a11y-control-itgsjgw', 'Qi Condensation Tier 1');
-    setFieldValue(root, 'a11y-control-kytc0oh', 'Martial arts, Daoist');
-  })) return;
-
-  if (!await waitUnlessCancelled(80, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => clickByText(root, 'button', /5\. Plot & Trope Control/))) return;
-  if (!await waitUnlessCancelled(120, isCancelled)) return;
-  if (!mutateRoots('reference', isCancelled, root => {
-    setFieldValue(root, 'a11y-control-jolpc3b', 'Shatter the fated assassination timeline');
-    setFieldValue(root, 'a11y-control-6a6tmbf', 'Sect tournament that reveals the first assassination attempt');
-  })) return;
-
-  if (!await waitUnlessCancelled(80, isCancelled)) return;
-  mutateRoots('reference', isCancelled, root => clickByText(root, 'button', /1\. Core Seed/));
 }
 
 /** Development pane: fills the compact Origin flow through its real controls
@@ -345,7 +229,6 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
       stories: scenario.stories ?? [],
     });
     const storyBankRecords = scenario.storyBank === 'populated' ? createStoryBankRecords() : [];
-    resetMockSeeds(scenario.storyBank === 'populated' ? createReferenceSavedSeeds() : []);
     if (!options.preserveLocalSeeds) {
       if (scenario.storyBank === 'loading' || scenario.storyBank === 'error') {
         setStorySeedRepository(createStoryBankPreviewRepository(scenario.storyBank));
@@ -379,42 +262,18 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
     (async () => {
       if (!await waitUnlessCancelled(220, isCancelled)) return;
       if (scenario.uiAction === 'open-import-panel') {
-        const referenceAction = embedded ? Promise.resolve() : clickWhenAvailable(
-          'reference',
-          'button',
-          /Import (?:World Seed \/ Blueprint|Story Seed)/,
-          SCENARIO_ACTION_TIMEOUT_MS,
-          isCancelled,
-        );
         // Development keeps import inside the Story Bank: open the bank
         // through its real navigation control, then its Import button.
         if (!mutateRoots('development', isCancelled, root => clickByText(root, 'button', /^Story Bank$/))) return;
-        await Promise.all([
-          referenceAction,
-          clickWhenAvailable('development', 'button', /^Import$/, SCENARIO_ACTION_TIMEOUT_MS, isCancelled),
-        ]);
+        await clickWhenAvailable('development', 'button', /^Import$/, SCENARIO_ACTION_TIMEOUT_MS, isCancelled);
       } else if (scenario.uiAction === 'open-story-bank') {
         mutateRoots('development', isCancelled, root => clickByText(root, 'button', /^Story Bank$/));
       } else if (scenario.uiAction === 'use-first-seed') {
-        // Development reaches a banked seed through the Story Bank; the
-        // locked reference fork still renders its own always-visible panel.
-        const referenceAction = embedded ? Promise.resolve() : clickWhenAvailable(
-          'reference',
-          'button',
-          /^Use Seed$/,
-          SCENARIO_ACTION_TIMEOUT_MS,
-          isCancelled,
-        );
+        // Development reaches a banked seed through the Story Bank.
         if (!mutateRoots('development', isCancelled, root => clickByText(root, 'button', /^Story Bank$/))) return;
-        await Promise.all([
-          referenceAction,
-          clickWhenAvailable('development', 'button', /^Use Seed$/, SCENARIO_ACTION_TIMEOUT_MS, isCancelled),
-        ]);
+        await clickWhenAvailable('development', 'button', /^Use Seed$/, SCENARIO_ACTION_TIMEOUT_MS, isCancelled);
       } else if (scenario.uiAction === 'fill-intake') {
-        await Promise.all([
-          embedded ? Promise.resolve() : runReferenceFillScenario(isCancelled),
-          runDevelopmentFillScenario(isCancelled),
-        ]);
+        await runDevelopmentFillScenario(isCancelled);
       }
     })();
     return () => {
@@ -423,16 +282,6 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
   }, [activeState, workspaceView]);
 
   const activeScenario = scenarios.find(s => s.id === activeState);
-
-  const referenceChamberProps = {
-    isGenerating: Boolean(activeScenario?.isGenerating),
-    error: activeScenario?.error ?? null,
-    onGenerateBlueprint: async (payload: unknown) => {
-      await wait(300);
-      return createMockBlueprint();
-    },
-    onStartStory: async () => undefined,
-  };
 
   const developmentChamberProps = {
     onNavigateHome: () => navigateLibraryPreview(LIBRARY_DESTINATIONS[0].location),
@@ -580,19 +429,7 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
     <FeatureWorkspace
       entry={entry}
       workshopControls={workshopControls}
-      allowCompare
-      onReferenceIntent={preloadReferenceCreationModal}
       onViewChange={setWorkspaceView}
-      renderReference={() => (
-        <DeferredWorkspace
-          loadingLabel="Loading Original Reference"
-          className="min-h-screen bg-void"
-        >
-          <div key={`reference-${activeState}`} data-story-seed-pane="reference" className="min-h-screen bg-void py-10 px-4">
-            <ReferenceCreationModal {...referenceChamberProps} />
-          </div>
-        </DeferredWorkspace>
-      )}
       renderDevelopment={() => (
         <div key={`development-${activeState}`} data-story-seed-pane="development" className="min-h-screen bg-void py-10 px-4">
           <DevelopmentCreationModal {...developmentChamberProps} />

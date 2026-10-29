@@ -18,9 +18,6 @@
  * never appears inside `creator` / `story` / `world` — the temporary Workshop
  * record envelope lives in `storySeedRepository.ts`, and the story spine lives
  * in `storyAdministrativeMetadata.ts`.
- *
- * The frozen Phase-1 flat intake contract is not part of this file; it now
- * belongs to the locked `reference/` replica (see `referenceIntake.ts`).
  */
 
 import { ARC_LENGTH, MAX_ROADMAP_ARCS, STORY_LENGTH_ARCS, arcLookaheadFromPlans, createInitialArcPlan, normalizeArcLookahead, validateArcPlan, type ArcGoal, type ArcLookaheadEntry, type ArcPlan } from '../../arc-goals/shared/arcGoals';

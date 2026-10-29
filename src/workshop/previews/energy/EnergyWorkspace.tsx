@@ -90,21 +90,12 @@ function EnergyPieces({ client }: { client: EnergyClient }) {
   );
 }
 
-function EnergyReference() {
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-neutral-400 sm:px-8">
-      Energy has no production original. It is built here first as the Library economy page — live Energy, spendable QI, and permanent DAO XP — while SEN remains unaware of Library balances and prices.
-    </div>
-  );
-}
-
 export function EnergyWorkspace() {
   const [previewState, setPreviewState] = useState<EnergyPreviewState>('development-account');
   const client = useMemo(() => clientFor(previewState), [previewState]);
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={false}
       workshopControls={{
         description: 'Every piece reads an in-process ledger with the same rules as the server. Nothing here spends Energy on a real generation.',
         defaultSection: 'states',
@@ -125,7 +116,6 @@ export function EnergyWorkspace() {
           ),
         }],
       }}
-      renderReference={() => <EnergyReference />}
       renderDevelopment={() => (
         <SEIToastProvider key={previewState}>
           <EnergyPieces client={client} />

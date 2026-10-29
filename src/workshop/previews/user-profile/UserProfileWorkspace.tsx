@@ -12,8 +12,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { LibraryProfile as DevelopmentUserProfile, UserProfileServicesProvider, type AppUser } from '@seihouse/library/profile';
-import ReferenceUserProfile from '../../../components/user-profile/reference/UserProfile';
-import { UserProfileServicesProvider as ReferenceUserProfileServicesProvider } from '../../../components/user-profile/shared/userProfileServices';
 import { resolvePermanentDaoXp } from '@seihouse/library/cultivation';
 import { useFamiliarStoreAccount } from '@seihouse/library/familiar';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
@@ -88,16 +86,6 @@ function UserProfileContent({ embedded, initialState }: { embedded: boolean; ini
     setExcludedActions([]);
   }, []);
 
-  const services = useMemo(
-    () =>
-      createMockUserProfileServices({
-        state: previewState,
-        logExcludedAction,
-        onSignIn: setLinkedAccount,
-      }),
-    [logExcludedAction, previewState],
-  );
-
   const mediaPacks = useDeviceMediaPacks(WORKSHOP_MEDIA_PACK_STORE, WORKSHOP_DEVICE_MEDIA);
   const { slot: menuMusic } = useMenuMusicSlot(WORKSHOP_SOUND_PREFERENCES, mediaPacks);
   const developmentServices = useMemo(() => ({ ...createMockUserProfileServices({
@@ -139,43 +127,28 @@ function UserProfileContent({ embedded, initialState }: { embedded: boolean; ini
   }, [economy, currentUid, previewState, economyKey]);
   const economyReady = seededKey === economyKey;
 
-  const renderPane = (pane: 'reference' | 'development') => (
+  const renderPane = (pane: 'development') => (
     // Remounting on scenario change throws away the mock's in-memory account
     // state, so each scenario starts from its own snapshot rather than
     // inheriting edits made in the previous one.
     <div key={`${pane}-${previewState}-${currentUser?.uid ?? 'anonymous'}`} className="pb-16">
-      {pane === 'development' ? (
-        <UserProfileServicesProvider services={developmentServices}>
-          {seedError ? <p role="alert" className="mx-auto max-w-4xl px-4 pt-4 text-sm text-red-300">The development economy could not be prepared: {seedError}</p> : null}
-          <DevelopmentUserProfile
-            currentUser={currentUser}
-            stories={scenario.stories}
-            publicCreators={previewPublicCreators(scenario.profile)}
-            accountControls={{ inboxUnreadCount: currentUser ? 2 : 0 }}
-            onLogout={() => {
-              logExcludedAction('Sign out — mock account unlinked locally instead');
-              setLinkedAccount(null);
-              reportProfile?.({ uid: null });
-              if (scenario.currentUser) setPreviewState('signed-out');
-            }}
-            onNavigateHome={() => logExcludedAction('Navigate to Library home (production router)')}
-            onNavigateLibrary={navigateLibraryPreview}
-          />
-        </UserProfileServicesProvider>
-      ) : (
-        <ReferenceUserProfileServicesProvider services={services}>
-          <ReferenceUserProfile
-            currentUser={currentUser}
-            stories={scenario.stories}
-            onLogout={() => {
-              logExcludedAction('Sign out — mock account unlinked locally instead');
-              setLinkedAccount(null);
-              if (scenario.currentUser) setPreviewState('signed-out');
-            }}
-            onNavigateHome={() => logExcludedAction('Navigate to Library home (production router)')}
-          />
-        </ReferenceUserProfileServicesProvider>
-      )}
+      <UserProfileServicesProvider services={developmentServices}>
+        {seedError ? <p role="alert" className="mx-auto max-w-4xl px-4 pt-4 text-sm text-red-300">The development economy could not be prepared: {seedError}</p> : null}
+        <DevelopmentUserProfile
+          currentUser={currentUser}
+          stories={scenario.stories}
+          publicCreators={previewPublicCreators(scenario.profile)}
+          accountControls={{ inboxUnreadCount: currentUser ? 2 : 0 }}
+          onLogout={() => {
+            logExcludedAction('Sign out — mock account unlinked locally instead');
+            setLinkedAccount(null);
+            reportProfile?.({ uid: null });
+            if (scenario.currentUser) setPreviewState('signed-out');
+          }}
+          onNavigateHome={() => logExcludedAction('Navigate to Library home (production router)')}
+          onNavigateLibrary={navigateLibraryPreview}
+        />
+      </UserProfileServicesProvider>
 
       <section className="mx-auto mt-8 max-w-4xl px-4 sm:px-8">
         <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] p-4">
@@ -246,7 +219,6 @@ function UserProfileContent({ embedded, initialState }: { embedded: boolean; ini
           },
         ],
       }}
-      renderReference={() => renderPane('reference')}
       renderDevelopment={renderDevelopment}
     />
   );

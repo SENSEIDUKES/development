@@ -43,8 +43,6 @@ export function OAuthWorkspace() {
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={false}
-      renderReference={() => <p className="p-6 text-sm text-white/60">This workspace uses the existing Library sign-in screen. There is no separate historical reference.</p>}
       renderDevelopment={() => <OAuthPreview key={revision} fail={fail} />}
       workshopControls={{
         description: 'Preview only. Google, Apple and email are simulated; nothing is sent or saved.',

@@ -1,7 +1,6 @@
 /**
  * Workshop preview for Fate Survival Relics.
  *
- * Reference: production's locked Relic Reveal for the retired inventory Relic.
  * Development: the rebuilt Relic — a lightweight Fate Survival reward read
  * from the Relics ledger on an in-browser development economy, with a
  * simulator standing in for the unbuilt Fate Survival judge, and a reveal lab
@@ -11,14 +10,11 @@ import { useRef, useState } from 'react';
 import { RotateCcw, Sparkles } from 'lucide-react';
 import { FateSurvivalRelicsPanel, RelicReveal, type FateSurvivalOutcome, type FateSurvivalRelicView } from '@seihouse/library/relics';
 import { REWARD_RARITIES, type RewardRarity } from '@seihouse/library/rewards';
-import { RelicReveal as ReferenceRelicReveal } from '../../../components/relics/reference/RelicReveal';
-import type { CosmicArtifact } from '../../../components/relics/shared/types';
 import { FATE_SURVIVAL_RELICS } from '../../../server/relics/catalog';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { BalanceStrip, LedgerFeed, SimulatedBadge, WorkshopActionButton, WorkshopCard } from '../rewards/RewardWorkshopKit';
 import { useRewardAccount, WorkshopEconomyProvider } from '../rewards/WorkshopEconomyProvider';
-import { mockRelics } from './mockData';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'relics-gallery')!;
 
@@ -110,26 +106,6 @@ function RevealLab({ rarity }: { rarity: RewardRarity }) {
   );
 }
 
-function RelicsReference() {
-  const [artifact, setArtifact] = useState<CosmicArtifact | null>(null);
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-8 text-neutral-300 sm:px-8">
-      <p className="text-sm leading-relaxed text-neutral-400">
-        Production’s locked reveal for the retired inventory Relic: earned from story milestones, offered weekly for QI and Sect Merit, and attuned for status effects. Development retires all of that — Relics come only from Fate Survival.
-      </p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {mockRelics.map(relic => (
-          <button key={relic.id} type="button" onClick={() => setArtifact(relic)}
-            className="workshop-touch-target min-h-11 rounded-lg border border-white/10 px-3 py-2 text-xs text-white/70 hover:border-white/25 hover:text-white">
-            {relic.rarity} · {relic.name}
-          </button>
-        ))}
-      </div>
-      {artifact ? <ReferenceRelicReveal key={artifact.id} artifact={artifact} onClaim={() => setArtifact(null)} onDismiss={() => setArtifact(null)} /> : null}
-    </div>
-  );
-}
-
 export function RelicsWorkspace() {
   const [scene, setScene] = useState<Scene>('relics');
   const [rarity, setRarity] = useState<RewardRarity>('Legendary');
@@ -137,7 +113,6 @@ export function RelicsWorkspace() {
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={false}
       workshopControls={{
         description: 'The Relics scene runs the development economy in this tab: every Relic, DAO XP and Energy credit comes from real server code. Only the Fate Survival outcome is simulated.',
         defaultSection: 'scenes',
@@ -166,7 +141,6 @@ export function RelicsWorkspace() {
           }] : []),
         ],
       }}
-      renderReference={() => <RelicsReference />}
       renderDevelopment={() => scene === 'reveal'
         ? <RevealLab key={rarity} rarity={rarity} />
         : <WorkshopEconomyProvider key={session}><FateSurvivalScene /></WorkshopEconomyProvider>}

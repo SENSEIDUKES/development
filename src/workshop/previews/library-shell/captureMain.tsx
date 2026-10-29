@@ -2,7 +2,6 @@ import { createRoot } from 'react-dom/client';
 import type { ReactNode } from 'react';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { LIBRARY_ASSETS } from '../../../host/media/libraryAssets';
-import { shellStates, type ShellSource } from './previewData';
 
 /**
  * This capture is its own document (`library-shell.html`), not a route inside
@@ -42,9 +41,8 @@ function CaptureExitToWorkshop({ children }: { children: ReactNode }) {
 }
 
 const query = new URLSearchParams(window.location.search);
-const source: ShellSource = query.get('source') === 'story-seed' ? 'story-seed' : 'main-library';
+const source = query.get('source') === 'story-seed' ? 'story-seed' : 'main-library';
 const requested = query.get('state') ?? '';
-const state = (shellStates[source] as readonly string[]).includes(requested) ? requested : shellStates[source][0];
 // Workshop-only environment flags. They set attributes the preview stylesheet
 // keys off, so the shell can be inspected under safe-area insets and reduced
 // motion inside this frame.
@@ -53,35 +51,31 @@ if (safeArea === 'on' || safeArea === 'landscape') document.documentElement.data
 if (query.get('motion') === 'reduced') document.documentElement.dataset.previewMotion = 'reduced';
 // The Workshop host is a Library app: dialogs, sheets and menus portal to the
 // body, so the body opts them into the Library's gold overlay scrollbar too.
-if (query.get('variant') === 'development') document.body.classList.add('library-scrollbars');
+document.body.classList.add('library-scrollbars');
 
 async function mount() {
   // Separate documents preserve each source's CSS, portal target and media queries.
   const root = createRoot(document.getElementById('root')!);
-  if (query.get('variant') === 'development') {
-    await import('../../../styles.css');
-    if (source === 'main-library' && query.get('source') !== 'cultivator-cave') await import('@seihouse/library/styles.css');
-    else await import('../../../styles.css');
-    await import('./preview-environment.css');
-    const { DevelopmentHeaderPreview } = await import('./DevelopmentHeaderPreview');
-    const { DevAudioPlaybackProvider } = await import('../../../audio/DevAudioPlayback');
-    const { StoryCreationPreviewRuntime } = await import('../../StoryCreationPreviewRuntime');
-    const { headerStates } = await import('./headerPreviewData');
-    const configuration = query.get('source') === 'header-states' ? 'header-states' : query.get('source') === 'cultivator-cave' ? 'cultivator-cave' : source;
-    const headerState = (headerStates[configuration] as readonly string[]).includes(requested) ? requested : headerStates[configuration][0];
-    document.title = 'Library Shell — Development headers';
-    const { StoredLibraryDesktopNavigation } = await import('./StoredLibraryDesktopNavigation');
-    // Workshop comparison: `laptopNav=strip` shows the laptop layout from before the Pathways sidebar.
-    const laptopNavigation = query.get('laptopNav') === 'strip' ? 'strip' : 'sidebar';
-    root.render(<CaptureExitToWorkshop><DevAudioPlaybackProvider><StoryCreationPreviewRuntime><LibraryPresentationProvider assets={LIBRARY_ASSETS}><StoredLibraryDesktopNavigation value={laptopNavigation}><DevelopmentHeaderPreview source={configuration} state={headerState} /></StoredLibraryDesktopNavigation></LibraryPresentationProvider></StoryCreationPreviewRuntime></DevAudioPlaybackProvider></CaptureExitToWorkshop>);
-  } else if (source === 'main-library') {
-    await import('../../../components/library-shell/reference/main-library/source-theme.css');
-    const { MainLibraryPreview } = await import('./MainLibraryPreview');
-    root.render(<CaptureExitToWorkshop><MainLibraryPreview state={state} /></CaptureExitToWorkshop>);
-  } else {
-    await import('../../../styles.css');
-    const { StorySeedPreview } = await import('./StorySeedPreview');
-    root.render(<CaptureExitToWorkshop><LibraryPresentationProvider><StorySeedPreview state={state} /></LibraryPresentationProvider></CaptureExitToWorkshop>);
+  await import('../../../styles.css');
+  if (source === 'main-library' && query.get('source') !== 'cultivator-cave') await import('@seihouse/library/styles.css');
+  else await import('../../../styles.css');
+  await import('./preview-environment.css');
+  if (query.get('source') === 'palette-materials') {
+    const { HomeMaterialCanvas } = await import('../palette-materials/HomeMaterialCanvas');
+    document.title = 'Palette & Materials — Home mock';
+    root.render(<LibraryPresentationProvider assets={LIBRARY_ASSETS}><HomeMaterialCanvas /></LibraryPresentationProvider>);
+    return;
   }
+  const { DevelopmentHeaderPreview } = await import('./DevelopmentHeaderPreview');
+  const { DevAudioPlaybackProvider } = await import('../../../audio/DevAudioPlayback');
+  const { StoryCreationPreviewRuntime } = await import('../../StoryCreationPreviewRuntime');
+  const { headerStates } = await import('./headerPreviewData');
+  const configuration = query.get('source') === 'header-states' ? 'header-states' : query.get('source') === 'cultivator-cave' ? 'cultivator-cave' : source;
+  const headerState = (headerStates[configuration] as readonly string[]).includes(requested) ? requested : headerStates[configuration][0];
+  document.title = 'Library Shell — Development headers';
+  const { StoredLibraryDesktopNavigation } = await import('./StoredLibraryDesktopNavigation');
+  // Workshop comparison: `laptopNav=strip` shows the laptop layout from before the Pathways sidebar.
+  const laptopNavigation = query.get('laptopNav') === 'strip' ? 'strip' : 'sidebar';
+  root.render(<CaptureExitToWorkshop><DevAudioPlaybackProvider><StoryCreationPreviewRuntime><LibraryPresentationProvider assets={LIBRARY_ASSETS}><StoredLibraryDesktopNavigation value={laptopNavigation}><DevelopmentHeaderPreview source={configuration} state={headerState} /></StoredLibraryDesktopNavigation></LibraryPresentationProvider></StoryCreationPreviewRuntime></DevAudioPlaybackProvider></CaptureExitToWorkshop>);
 }
 void mount();

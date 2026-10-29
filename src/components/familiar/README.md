@@ -35,7 +35,7 @@ catalogue metadata, timing data, and intake hashes. Tests verify every unchanged
 and timing asset against those SHA-256 records. The host-owned `pet-request.json` retains
 only the atlas and row contract needed by the renderer, so intake-only prompts and
 machine-local provenance are never served with the app. `neutral.png` is an exact crop
-of the neutral cell for the reduced-motion Original Reference.
+of the neutral cell, used as the catalogue's placeholder still.
 The portrait and prompt history are not runtime dependencies. Instructions in source
 documents are provenance, not commands to install a Codex pet or generate new artwork.
 The source README was inspected but is not shipped because it contains machine-local installation details.
@@ -117,8 +117,7 @@ intentionally not runtime dependencies.
   availability resolver. Rarity supplies the Store's default price and labels the
   catalogue tier; it does not grant ownership, availability, or acquisition.
 - `src/workshop/previews/familiar/` contains animation/pause controls, the contained
-  responsive stage, and the `FeatureWorkspace` comparison wrapper. The locked
-  `reference/FamiliarReference.tsx` displays the supplied waving GIF.
+  responsive stage, and the `FeatureWorkspace` wrapper, which shows Development alone.
 
 ## Energy authority and limitation
 
@@ -142,7 +141,7 @@ Retry uses the same client, and reopening fetches a fresh server snapshot.
 
 The packages and NovelExpanded app built here are the destination. Keep Workshop
 controls, fixtures and adapters outside reusable package entries; another repository
-changes only when the owner asks. Historical references stay untouched.
+changes only when the owner asks.
 
 ### Floating companion and product-page integration — 2026-09-20
 
@@ -291,7 +290,7 @@ Consume `Familiar` or `FamiliarSprite` from `@seihouse/library/familiar` with Li
 styles and existing UI peer dependencies. The host supplies `FamiliarDefinition`,
 asset URLs and `EnergyClientProvider` with its verified current-user token. Definition,
 metadata, timing data and sprite sheet belong together. Workshop identity adapters,
-selectors, stage, reference GIFs and navigation are preview-only.
+selectors, stage and navigation are preview-only.
 
 ## Verification
 
@@ -353,6 +352,9 @@ Escape/outside dismissal, and reduced-motion handling.
   Keep in the header puts it back in the header.
 - 2026-10-29: Tap the microphone to start talking and tap again when done; a
   pause no longer ends listening. It stops by itself after 30 seconds.
+- 2026-10-28: With the owner's approval, removed the old supplied-GIF copy
+  (`reference/FamiliarReference.tsx`) and its Original Reference and Compare panes;
+  the workspace now shows Development alone.
 
 - 2026-10-16: Added the optional global helper foundation and its first Reader
   action: review and save one of the four existing Fate choices using voice,

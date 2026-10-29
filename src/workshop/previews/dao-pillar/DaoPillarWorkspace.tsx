@@ -70,21 +70,12 @@ function DaoPillarPreview({ client }: { client: DaoPillarClient }) {
   );
 }
 
-function DaoPillarReference() {
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-neutral-400 sm:px-8">
-      The Daily Dao Pillar calendar has no production original. It replaces the profile's daily refinement check-in with a server-owned 30-day reward calendar, built here first against the approved Beta Test design, and transfers to Light-Novels as a whole system.
-    </div>
-  );
-}
-
 export function DaoPillarWorkspace() {
   const [previewState, setPreviewState] = useState<DaoPillarPreviewState>('mid-cycle');
   const client = useMemo(() => clientFor(previewState), [previewState]);
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={false}
       workshopControls={{
         description: 'The calendar reads an in-process service with the same rules as the server: it decides the day, the reward, and the deposit. Claims here award nothing real.',
         defaultSection: 'states',
@@ -105,7 +96,6 @@ export function DaoPillarWorkspace() {
           ),
         }],
       }}
-      renderReference={() => <DaoPillarReference />}
       renderDevelopment={() => <DaoPillarPreview key={previewState} client={client} />}
     />
   );

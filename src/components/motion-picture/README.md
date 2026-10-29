@@ -11,7 +11,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - First Workshop record: 2026-09-22.
 - Last recorded Workshop update: 2026-09-22.
 - Historical source inspection: 2026-09-22.
-- Lifecycle: production behavior captured in `reference/`; a reusable, item-neutral rebuild under development.
+- Lifecycle: production behavior described below; a reusable, item-neutral rebuild under development.
 - Owner: SEN-shaped presentation. The component reaches no Library surface, no store, and no catalogue, so it can move into `@seihouse/sen` when an entry is wanted.
 
 ## What production does today
@@ -38,15 +38,10 @@ populated at all. The behavior is real and complete; the way to supply it a clip
 ## Naming
 
 Production labels this ability with a third party's trademark. The rebuilt component,
-its entry, and every Workshop surface are called **Motion Picture** instead. The locked
-`reference/` replica keeps production's own label because it documents what that screen
-renders today; nothing new carries the old name.
+its entry, and every Workshop surface are called **Motion Picture** instead; nothing new
+carries the old name.
 
 ## What Development changes
-
-`reference/MotionCoverReference.tsx` is the locked replica of the above, with the store
-write replaced by a host callback. It exists so the rebuild can be compared against the
-real thing, and is not edited during normal Workshop tweaking.
 
 `development/MotionPicture.tsx` is the rebuild. It is deliberately **not** a cover
 component: it takes a still, an optional clip, and an accessible name, so a novel cover,
@@ -116,23 +111,27 @@ The Development pane carries three things, in the order they are useful:
 
 The packages and NovelExpanded app built here are the destination. Keep Workshop
 controls, fixtures and adapters outside reusable package entries; another repository
-changes only when the owner asks. Historical references stay untouched.
+changes only when the owner asks.
 
 The existing local files named by this inventory are:
 
 - `development/MotionPicture.tsx`
 - `development/useDominantColor.ts`
 - `development/motion-picture.css`
-- `reference/`
 
 ## Host boundary
 
 `lucide-react` is the component's only dependency. The host supplies `stillUrl`,
 optional `videoUrl`, and optional `playing`/`onPlayingChange`; producing or storing a
-video is outside this component. `reference/`, Workshop previews and mock clip URLs
-are inspection-only.
+video is outside this component. Workshop previews and mock clip URLs are
+inspection-only.
 
 ## Workshop history
+
+- **2026-10-28** — With the owner's approval, the old production copy
+  (`reference/MotionCoverReference.tsx`), its Workshop wrapper
+  `MotionCoverReferencePreview.tsx` and its Original Reference and Compare panes were
+  removed. The workspace now shows Development alone.
 
 - **2026-09-22** — Production's motion cover inspected at commit `647165a` and captured
   in `reference/`. Built `MotionPicture` as the item-neutral rebuild: overlay control on

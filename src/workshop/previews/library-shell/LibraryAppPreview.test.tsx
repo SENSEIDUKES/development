@@ -61,9 +61,8 @@ it('opens standalone Home by default and preserves filters across Create, Discov
   expect(companion.parentElement!.style.left).toBe(companionLeft);
 });
 
-it.each(['guest', 'reference'])('does not place a companion on the %s surface', async state => {
-  if (state === 'reference') window.history.replaceState(null, '', '/library-shell.html?homeReference=1');
-  await render(state === 'guest' ? 'guest' : 'linked');
+it('does not place a companion on the guest surface', async () => {
+  await render('guest');
   expect(document.querySelector('.familiar-companion')).toBeNull();
 });
 

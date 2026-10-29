@@ -46,9 +46,11 @@ composition, or loading the app route in the existing preview iframe, over copyi
 the page into a separate simulation. Home follows this rule at
 `?preview=light-novels-home`: Development loads `/app/` directly.
 
-Keep one existing manifest entry, workspace and preview route per feature. Keep
-historical `reference/` files and Original Reference unchanged; use Compare to
-inspect old and current versions. Clearly identify previews that use the app's
+Keep one existing manifest entry, workspace and preview route per feature. Only
+the Reader Chamber family (Reader Chamber, Reader Codex, Card Workshop) keeps a
+historical `reference/` folder and Original Reference, unchanged, while it is
+brought over; use Compare there to inspect old and current versions. The owner
+removed every other old production copy on 2026-10-28. Clearly identify previews that use the app's
 real browser storage and actions instead of isolated fixtures. Verify the app and
 its Workshop preview at mobile and desktop sizes before claiming completion.
 
@@ -150,11 +152,11 @@ have no `reference/` folder.
 ## Organization
 
 - `src/workshop/manifest.ts` lists every workshop entry shown on the home screen — **one entry per feature, never one per version.**
-- `src/workshop/FeatureWorkspace.tsx` is the shared shell every feature preview opens into: an Original Reference / Development / Compare switch over one shared preview canvas. Original Reference is the old production version, where one exists.
+- `src/workshop/FeatureWorkspace.tsx` is the shared shell every feature preview opens into: Development over one shared preview canvas, plus an Original Reference / Compare switch for a feature that still keeps its old production version (only the Reader Chamber family).
 - `src/workshop/previews/<feature>/` contains the workspace preview wrapper (built on `FeatureWorkspace`), mock data, and preview-state simulators for that feature.
 - `src/App.tsx` resolves `?preview=<id>` through a `previewRegistry` map — add one line per feature, never a new `if` block.
 - Reusable component logic lives in `src/components/<feature-name>/`, split into:
-  - `reference/` — the old production version, kept as historical reference for its remake. Never edited or refreshed.
+  - `reference/` — the old production version, kept as historical reference for its remake. Never edited or refreshed. Only the Reader Chamber family (`reader-chamber`, `reader-codex`, `card-workshop`) still has one.
   - `development/` — the active implementation, built here. Package entries import from this folder; keep its name. Reconstruction may also change the relevant shared, server, and integration owners.
   - `shared/` (when it applies) — logic genuinely shared by implementations or consumers, such as shared utilities.
 - `src/package/` holds the entry barrels for the two published packages —

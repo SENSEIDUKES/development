@@ -375,7 +375,7 @@ const acceptedScene = (
 ): HarnessChapterScene | undefined => {
   const reading = chapterSoundtrack(tags, options.media, chapterNumber);
   const problems = [
-    ...(!tags.length && options.soundtrackExpected ? ['the writer chose no soundtrack, so the Reader goes on with the one before'] : []),
+    ...(!tags.length && options.soundtrackExpected ? ['the tagger chose no soundtrack, so the Reader goes on with the one before'] : []),
     ...(reading.unknown.length ? [`${reading.unknown.map(word => `“${word}”`).join(' and ')} ${reading.unknown.length === 1 ? 'is' : 'are'} not in the story's soundtrack words and ${reading.unknown.length === 1 ? 'was' : 'were'} not used`] : []),
     ...(tags.length && options.soundtrackExpected && !tags.some(tag => tag.kind !== 'atmosphere') ? ['the writer chose no soundscape, so the music goes on from the chapter before'] : []),
     ...(tags.length && options.soundtrackExpected && !tags.some(tag => tag.kind !== 'soundscape') ? ['the writer chose no atmosphere, so the one before goes on'] : []),

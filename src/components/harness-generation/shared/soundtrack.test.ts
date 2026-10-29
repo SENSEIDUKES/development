@@ -83,7 +83,7 @@ describe('The chapter\'s soundtrack', () => {
     const none = acceptHarnessModelResponse(reply(['Rain fell on the drowned gate.']), 3, { media: LIBRARY_BASE_MEDIA, soundtrackExpected: true });
     expect(none.accepted && none.draft.scene).toBeUndefined();
     expect(none.warnings.find(warning => warning.code === 'soundtrack_incomplete')?.message)
-      .toBe('The writer chose no soundtrack, so the Reader goes on with the one before.');
+      .toBe('The tagger chose no soundtrack, so the Reader goes on with the one before.');
     // Not asked: nothing to flag.
     expect(acceptHarnessModelResponse(reply(['Rain fell.']), 3, { media: LIBRARY_BASE_MEDIA }).warnings.some(warning => warning.code === 'soundtrack_incomplete')).toBe(false);
   });

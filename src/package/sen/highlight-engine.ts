@@ -11,6 +11,10 @@ export type { PassageAction } from '../../components/highlight-engine/shared/act
 export {
   createManualSoundCue, snapSoundCueSelection, type ManualCueResult, type SoundCueSelection,
 } from '../../components/highlight-engine/shared/manualCue';
+export {
+  findSpokenWords, wordsJustRead, resolveSpokenSoundCue, WORDS_JUST_READ,
+  type ChapterPlace, type SpokenWordsMatch, type SpokenCueTarget, type SpokenSoundCueResult,
+} from '../../components/highlight-engine/shared/spokenCue';
 export { ManualCuePicker, type ManualCuePickerProps } from '../../components/highlight-engine/development/ManualCuePicker';
 export {
   MANUSCRIPT_PROTOTYPE_WORD_LIMIT, createManuscript, createManuscriptId, insertParagraph, splitSentences, countManuscriptWords,

@@ -61,7 +61,10 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   useEffect(() => { setText(''); setTyping(false); }, [state.open, state.context?.key]);
   if (!state.open) return null;
   const busy = state.phase === 'saving';
-  const custom = state.context?.actions.find(action => action.input);
+  // The longest typed command any input action takes: its phrase, a separator and its text.
+  const typedLimit = state.context?.actions.reduce<number | undefined>((longest, action) => action.input
+    ? Math.max(longest ?? 0, action.input.maxLength + action.phrases[0].length + 2) : longest, undefined);
+  const proposed = state.proposal && state.context?.actions.find(action => action.id === state.proposal!.actionId);
   return createPortal(<div ref={panel} role="dialog" aria-modal="false" aria-label="Familiar helper" tabIndex={-1}
     style={{ bottom: `max(${bottomInset}px, env(safe-area-inset-bottom))`, maxHeight: `min(55dvh, calc(100dvh - ${bottomInset + 16}px))` }}
     className="familiar-helper" onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); helper.close(); } }}>
@@ -75,6 +78,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
       <div className="familiar-helper-buttons">
         <button ref={confirm} type="button" aria-describedby="familiar-proposal" disabled={busy} onClick={() => void helper.confirm()}>Confirm</button>
         <button type="button" disabled={busy} onClick={helper.close}>Cancel</button>
+        {proposed?.preview && <button type="button" disabled={busy} onClick={() => { helper.useText(); helper.hear(); }}>Hear it</button>}
         <button type="button" disabled={busy} onClick={helper.change}>Change</button>
       </div>
     </> : state.context && <>
@@ -88,7 +92,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
       </div>
       {typing ? <form onSubmit={event => { event.preventDefault(); helper.submit(text); }}>
         <label htmlFor="familiar-command">Type a command</label>
-        <input autoFocus id="familiar-command" value={text} maxLength={custom?.input ? custom.input.maxLength + custom.phrases[0].length + 2 : undefined}
+        <input autoFocus id="familiar-command" value={text} maxLength={typedLimit}
           disabled={busy}
           onFocus={helper.useText} onChange={event => setText(event.target.value)} />
         <button type="submit" disabled={busy || !text.trim()}>Review</button>

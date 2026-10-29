@@ -46,7 +46,45 @@ describe('global Familiar interaction', () => {
     t.heard('confirm');
     await vi.waitFor(() => expect(t.helper.getSnapshot().message).toBe('Saved.'));
     expect(t.run).toHaveBeenCalledExactlyOnceWith('');
+    // Heard before playback resumes over it.
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Saved.', 'en-US', expect.any(Function), expect.any(Function));
+    expect(t.release).not.toHaveBeenCalled();
+    t.spoken();
     expect(t.release).toHaveBeenCalledExactlyOnceWith(true);
+  });
+  it('speaks why a request cannot apply, then listens again, and never proposes it', () => {
+    const t = setup();
+    const check = vi.fn((input: string) => input === 'nowhere' ? 'I can\'t find “nowhere” in this chapter.' : undefined);
+    t.helper.setContext(t.owner, { ...t.context, actions: [...t.context.actions,
+      { id: 'sound', label: 'Add sound', phrases: ['add'], input: { label: 'Sound', maxLength: 200 }, check, describe: text => text, success: 'Placed.', run: t.run }] });
+    t.helper.open(true);
+    t.heard('add nowhere');
+    expect(t.helper.getSnapshot().proposal).toBeUndefined();
+    expect(t.voice.speak).toHaveBeenLastCalledWith('I can\'t find “nowhere” in this chapter.', 'en-US', expect.any(Function), expect.any(Function));
+    t.spoken();
+    expect(t.helper.getSnapshot()).toMatchObject({ phase: 'listening', message: 'Listening…' });
+    t.heard('something unrelated');
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Choose a path.', 'en-US', expect.any(Function), expect.any(Function));
+    expect(t.run).not.toHaveBeenCalled();
+  });
+  it('plays a proposal’s preview on request, then listens for Confirm or Cancel', () => {
+    vi.useFakeTimers();
+    try {
+      const t = setup();
+      const preview = vi.fn();
+      t.helper.setContext(t.owner, { ...t.context, actions: [...t.context.actions,
+        { id: 'sound', label: 'Add sound', phrases: ['add'], input: { label: 'Sound', maxLength: 200 }, preview, describe: text => `Wind on ${text}.`, success: 'Placed.', run: t.run }] });
+      t.helper.open(true);
+      t.heard('add whistling drafts');
+      expect(t.voice.speak).toHaveBeenLastCalledWith('Wind on whistling drafts. Say Confirm, Hear it, or Cancel.', 'en-US', expect.any(Function), expect.any(Function));
+      t.spoken();
+      t.heard('hear it');
+      expect(preview).toHaveBeenCalledExactlyOnceWith('whistling drafts');
+      expect(t.helper.getSnapshot().phase).toBe('review');
+      vi.advanceTimersByTime(2_500);
+      expect(t.helper.getSnapshot().phase).toBe('listening');
+      expect(t.helper.getSnapshot().proposal?.input).toBe('whistling drafts');
+    } finally { vi.useRealTimers(); }
   });
   it('uses the same confirmation for typed input without speaking', async () => {
     const t = setup();

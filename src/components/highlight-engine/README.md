@@ -347,6 +347,11 @@ browser evidence out of the consuming surface. No integration was performed.
 
 - **2026-10-25:** Refined selection end caps to 10px dots with short 8px stems and no outer ring, retaining the 44px touch targets and keyboard adjustment.
 
+- **2026-10-29:** Sound Cues asked for in words (`shared/spokenCue.ts`): the
+  Library's Familiar places a cue by voice ("Add wind on whistling drafts", or
+  "right there" while listening) through `resolveSpokenSoundCue`, which finds the
+  words and checks them with `createManualSoundCue`'s rules, so the record is
+  the same one a highlight places.
 - **2026-10-24:** Fixed highlights disappearing on release after a click outside
   the prose. Starting an engine selection now retires any previous browser caret,
   including one outside the engine. Added repeated mouse, touch and keyboard

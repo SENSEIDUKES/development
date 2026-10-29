@@ -628,6 +628,11 @@ Update it whenever it changes.
       typing equivalents and a separate confirmation. One global interaction
       owner accepts screen-supplied actions and a replaceable voice adapter.
       General conversation, translation and hands-free activation come later.
+      **Second experiment (2026-10-29), Sound Cues by voice:** on the newest
+      chapter, "Add wind on whistling drafts" or, while listening, "Add wind
+      right there" places the same Sound Cue a highlight would, from the story's
+      Sound Words only, heard (Hear it) and confirmed before it is kept; the
+      Familiar speaks problems and success, so it works with eyes closed.
   - **Story Settings are in the app, off the developer page** (piece 4). The
     story's own settings, the only place a reader meets the HARNESS:
     - **On Story View**, closed until opened: the Story Language (fixed when the

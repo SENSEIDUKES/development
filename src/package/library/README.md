@@ -1,5 +1,11 @@
 # `@seihouse/library`
 
+**Unreleased (2026-10-29, later):** `./presentation` exports `LibraryLook` and
+`LIBRARY_LOOK_ACCENT`: the Library's applied look (`look.css`, class `.library-look`,
+formerly Home's `.library-home-palette`) around a page's shell, with the gold
+accent under any saved accent and the Home artwork behind the shared Background
+Image. `./styles.css` imports `look.css` from `library-presentation`.
+
 **Unreleased (2026-10-29):** Reader blue's colors for what sits on its glass
 (control faces, ink, hover and press washes, focus, settings fields) are named
 `--reader-glass-*` custom properties on `:root` in `reader-glass.css`, beside the

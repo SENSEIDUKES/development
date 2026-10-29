@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, type ComponentProps } from 'react';
 import { CreationModal, StoryCreationProvider } from '@seihouse/library/story-seed';
+import { LibraryLook } from '@seihouse/library/presentation';
 import { BlueprintEnergyCost } from '@seihouse/library/stories';
 import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
@@ -25,6 +26,8 @@ export interface CreatePageProps {
   accountDefaultChapterWritingStyle?: CreationModalProps['accountDefaultChapterWritingStyle'];
   /** Story Settings in Create: the skills and media the new story starts with. */
   renderStorySettings?: CreationModalProps['renderStorySettings'];
+  /** The reader's saved accent color, worn over the look's gold. */
+  accentColor?: string;
   /** A saved Story Seed to open, such as a spark begun from Home. */
   seedId?: string;
   onHome: () => void;
@@ -33,7 +36,7 @@ export interface CreatePageProps {
 }
 
 /** Create: the Story Seed and its World Blueprint, the same journey the Library ships. */
-export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, seedId, onHome, onStartStory }: CreatePageProps) {
+export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, accentColor, seedId, onHome, onStartStory }: CreatePageProps) {
   const runtime = useNovelExpandedStoryCreation(services.storySeeds, startedSeedIds);
   const activeRequest = useRef<AbortController | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -73,7 +76,7 @@ export function CreatePage({ services, askForToken, startedSeedIds, chapterModel
   }, [askForToken, services.accessToken, track]);
 
   return <StoryCreationProvider value={runtime}>
-    <div className="min-h-screen bg-void" data-testid="novel-expanded-create">
+    <LibraryLook accentColor={accentColor} className="min-h-screen bg-void" data-testid="novel-expanded-create">
       <CreationModal onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
         accountDefaultLanguage={accountDefaultLanguage} accountDefaultChapterWritingStyle={accountDefaultChapterWritingStyle}
         renderStorySettings={renderStorySettings} manifestAside={<BlueprintEnergyCost />} initialSeedId={seedId}
@@ -81,6 +84,6 @@ export function CreatePage({ services, askForToken, startedSeedIds, chapterModel
           ? track(signal => services.requestWorldBlueprint(payload, '', signal, chapterModel))
           : withToken('The World Blueprint needs the development access token. Nothing was changed.',
             (accessToken, signal) => services.requestWorldBlueprint(payload, accessToken, signal, chapterModel))} />
-    </div>
+    </LibraryLook>
   </StoryCreationProvider>;
 }

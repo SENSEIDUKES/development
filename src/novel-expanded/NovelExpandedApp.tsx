@@ -230,7 +230,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} menuMusic={menuMusicSlot} />);
 
   if (route.page === 'create') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
-    seedId={route.seedId}
+    seedId={route.seedId} accentColor={profile.accentColor}
     // A new Story Seed starts from the profile's languages and Reading Mode.
     accountDefaultLanguage={profile.defaultReadingLanguage} accountDefaultChapterWritingStyle={profile.defaultChapterWritingStyle}
     renderStorySettings={({ seed, originalLanguage }) => <CreateStorySettings stories={stories}

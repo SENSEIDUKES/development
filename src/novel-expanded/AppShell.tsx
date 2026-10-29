@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { NovelExpandedLogo } from '@library-studios/brand';
 import '@library-studios/brand/styles.css';
@@ -13,7 +13,7 @@ import type { UserProfile } from '@seihouse/library/profile';
 import { useDeviceProfileRank } from '../host/profile/deviceProfile';
 import { APP_DESTINATIONS, appLibraryLocation, appRouteFor } from './appPlaces';
 import { HOME_ROUTE, routeHref, type Navigate, type NovelExpandedRoute } from './routes';
-import { LibraryAppearanceScope, useLibraryAssets } from '@seihouse/library/presentation';
+import { LibraryLook } from '@seihouse/library/presentation';
 import './app-header.css';
 
 export interface AppShellProps {
@@ -40,8 +40,6 @@ export interface AppShellProps {
  * which draws the same shell itself; the Reader stays outside, immersive.
  */
 export function AppShell({ route, navigate, stories, readerProfile, mainLabel, children, headerCenter }: AppShellProps) {
-  const { homeImages } = useLibraryAssets();
-  const palette = route.page === 'home';
   const pathwaysSidebar = useLibraryDesktopNavigation() === 'sidebar';
   const rank = useDeviceProfileRank();
   const { legal, sheet: legalSheet } = useLibraryLegalDocuments();
@@ -79,9 +77,8 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
       { id: 'settings', label: 'Settings', onSelect: settings },
     ] },
   ];
-  return <LibraryAppearanceScope color={palette ? readerProfile.accentColor ?? '#c9a24a' : undefined}>
-  <div className={`novel-expanded-shell bg-[#050505] text-[#dfd8cf] font-serif selection:bg-human/30 ${palette ? 'library-home-palette' : ''}`} data-testid="novel-expanded-shell"
-    style={palette && homeImages?.[0] ? { '--home-palette-art': `url(${JSON.stringify(homeImages[0])})` } as CSSProperties : undefined}>
+  // Every page in the shell wears the Library's look; the saved accent, when there is one, over its gold.
+  return <LibraryLook accentColor={readerProfile.accentColor} className="novel-expanded-shell bg-[#050505] text-[#dfd8cf] font-serif selection:bg-human/30" data-testid="novel-expanded-shell">
     <LibraryNavigation location={appLibraryLocation(route)} destinations={APP_DESTINATIONS}
       profile={{ name: readerProfile.displayName.trim() || 'Cultivator',
         detail: rank,
@@ -113,5 +110,5 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
     </LibraryNavigation>
     {legalSheet}
     {helpOpen && createPortal(<LibraryHelpMenu open onClose={() => setHelpOpen(false)} />, document.body)}
-  </div></LibraryAppearanceScope>;
+  </LibraryLook>;
 }

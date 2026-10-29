@@ -4,6 +4,7 @@ import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigatio
 import { LIBRARY_DESTINATIONS } from '@seihouse/library/shell';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CreationModal as DevelopmentCreationModal } from '@seihouse/library/story-seed';
+import { LibraryLook } from '@seihouse/library/presentation';
 import { requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
 import { createSavedAccessToken } from '../../../host/generation/accessToken';
 import { readModelPreference } from '../../../host/generation/modelPreference';
@@ -421,9 +422,10 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
 
   // Full-bleed: the shell owns its own gutters, so preview padding here would
   // hide the sticky header's top edge and the rail's flush left border.
-  if (embedded) return <div key={`development-${activeState}`} data-story-seed-pane="development" className="min-h-screen bg-void">
+  // The app's Create wears the Library's look around Story Seed; so does its preview.
+  if (embedded) return <LibraryLook key={`development-${activeState}`} data-story-seed-pane="development" className="min-h-screen bg-void">
     <DevelopmentCreationModal {...developmentChamberProps} />
-  </div>;
+  </LibraryLook>;
 
   return (
     <FeatureWorkspace
@@ -431,9 +433,9 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
       workshopControls={workshopControls}
       onViewChange={setWorkspaceView}
       renderDevelopment={() => (
-        <div key={`development-${activeState}`} data-story-seed-pane="development" className="min-h-screen bg-void py-10 px-4">
+        <LibraryLook key={`development-${activeState}`} data-story-seed-pane="development" className="min-h-screen bg-void py-10 px-4">
           <DevelopmentCreationModal {...developmentChamberProps} />
-        </div>
+        </LibraryLook>
       )}
     />
   );

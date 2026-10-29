@@ -4,7 +4,7 @@
   background: linear-gradient(#0009, #000b), var(--library-background-image) center / cover;
 }
 /* Home's established artwork placement and dimming belong to its outer frame. */
-.library-background-scope[data-library-background] .library-home-palette .workspace-shell { background: transparent; }
+.library-background-scope[data-library-background] .library-look .workspace-shell { background: transparent; }
 @media (forced-colors: active) {
   .library-background-scope[data-library-background] .workspace-shell:not(.cave-shell) { background: Canvas; }
 }

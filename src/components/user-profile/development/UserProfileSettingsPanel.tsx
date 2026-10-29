@@ -502,6 +502,7 @@ export function UserProfileSettingsPanel({
               <FamiliarSelection options={familiarOptions ?? familiars} selectedId={profile?.familiarId}
                 size={profile?.familiarSize} onSizeChange={controller.handleFamiliarSizeChange}
                 inHeader={profile?.familiarInHeader ?? false} onInHeaderChange={controller.handleFamiliarInHeaderChange}
+                liveTalk={profile?.familiarLiveTalk ?? false} onLiveTalkChange={controller.handleFamiliarLiveTalkChange}
                 pending={controller.isSavingFamiliar} disabled={!profile || !controller.handleFamiliarChange}
                 onSelect={id => void controller.handleFamiliarChange?.(id)} />
             </SEITabsPanel>

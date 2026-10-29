@@ -283,7 +283,7 @@ describe('Familiar live talk', () => {
     t.events().caption('reader', '');
     t.events().caption('familiar', '');
     t.events().caption('reader', 'Thanks.');
-    expect(t.helper.getSnapshot().live).toEqual({ status: 'on' });
+    expect(t.helper.getSnapshot().live).toEqual({ status: 'on', listening: true });
     expect(t.helper.getSnapshot().chat).toEqual([
       { speaker: 'note', text: 'Talking on Fate' },
       { speaker: 'reader', text: 'What is energy?' },
@@ -325,14 +325,33 @@ describe('Familiar live talk', () => {
   it('sends typed messages into the conversation, starting it if needed and holding them until it connects', () => {
     const t = live();
     t.helper.say('What is energy?');
-    expect(t.adapter.start).toHaveBeenCalledOnce();
+    // Typing never asks for the microphone.
+    expect(t.adapter.start).toHaveBeenCalledExactlyOnceWith(expect.anything(), expect.anything(), { microphone: false });
+    expect(t.helper.getSnapshot().live).toEqual({ status: 'connecting', listening: false });
     expect(t.send).not.toHaveBeenCalled();
     t.events().connected();
     expect(t.send).toHaveBeenCalledExactlyOnceWith('What is energy?');
     t.helper.say('  And manifesting?  ');
     expect(t.send).toHaveBeenLastCalledWith('And manifesting?');
     expect(t.adapter.start).toHaveBeenCalledOnce();
-    expect(t.helper.getSnapshot().chat.filter(line => line.speaker === 'reader').map(line => line.text)).toEqual(['What is energy?', 'And manifesting?']);
+    expect(t.helper.getSnapshot().chat).toEqual([
+      { speaker: 'note', text: 'Talking on Fate' },
+      { speaker: 'reader', text: 'What is energy?' },
+      { speaker: 'reader', text: 'And manifesting?' },
+    ]);
+    // The microphone in a typed conversation starts listening, in a new conversation.
+    t.helper.talk();
+    expect(t.end).toHaveBeenCalledOnce();
+    expect(t.adapter.start).toHaveBeenLastCalledWith(expect.anything(), expect.anything(), { microphone: true });
+    expect(t.helper.getSnapshot().live).toEqual({ status: 'connecting', listening: true });
+  });
+  it('notes a conversation only once it connects, and never the same note twice in a row', () => {
+    const t = live();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      t.helper.talk();
+      t.events().ended('Live talk could not start: server 502');
+    }
+    expect(t.helper.getSnapshot().chat).toEqual([{ speaker: 'note', text: 'Live talk could not start: server 502' }]);
   });
   it('hands back a typed message that never reached the conversation, and keeps the microphone off', () => {
     const t = live();

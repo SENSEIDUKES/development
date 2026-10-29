@@ -342,6 +342,12 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-10-29: Live talk is a setting, off by default: Settings → Familiar →
+  Live talk (beta); off, the microphone listens with the device voice. On, the
+  microphone is asked for during the tap, typing opens a conversation without
+  the microphone (its microphone then starts listening), a conversation is
+  noted only once it connects, and a failure notes exactly why, in the phone's,
+  the server's or Gemini's words.
 - 2026-10-29: Live talk fixes: the server locks the whole setup (Gemini refused
   the SDK's field list), any failure before a conversation opens hands over to
   the device voice with story playback still paused, and the microphone lights

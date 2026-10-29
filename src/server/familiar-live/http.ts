@@ -203,6 +203,8 @@ export const handleFamiliarLiveHttp = async (
     return reply(200, { token: token.name, setup, expiresAt });
   } catch (error) {
     dependencies.onError?.(error);
-    return reply(502, { error: 'Your Familiar could not start talking. Try again.' });
+    // Gemini's own words, so the reader's note says exactly why (this is the Development server).
+    const detail = (error instanceof Error ? error.message : String(error)).replaceAll(apiKey, '[key]').slice(0, 300);
+    return reply(502, { error: 'Your Familiar could not start talking. Try again.', detail });
   }
 };

@@ -17,8 +17,8 @@ import { LibraryLook } from '@seihouse/library/presentation';
 import './app-header.css';
 
 export interface AppShellProps {
-  /** The page inside the shell: Home, Discover or a story's World Info. */
-  route: Extract<NovelExpandedRoute, { page: 'home' | 'discover' | 'story' }>;
+  /** The page inside the shell: Home, Discover, the Creator Space or a story's World Info. */
+  route: Extract<NovelExpandedRoute, { page: 'home' | 'discover' | 'create' | 'story' }>;
   navigate: Navigate;
   /** The reader's stories, which Search can open. */
   stories: readonly { id: string; title: string }[];
@@ -31,12 +31,12 @@ export interface AppShellProps {
 }
 
 /**
- * The Library Shell around the app's browsing pages, Home, Discover and a
- * story's World Info: the Library header (the app's identity, the Familiar's recall, the
+ * The Library Shell around the app's browsing pages, Home, Discover, the
+ * Creator Space and a story's World Info: the Library header (the app's identity, the Familiar's recall, the
  * music note while Menu music is on, Help and Search), the Library's
  * navigation (the bottom strip on phones and tablets, the Pathways sidebar on
- * laptops) with the app's places, and the platform footer. Create runs in the
- * shell's workspace mode through Story Seed itself, and Profile is the Cave,
+ * laptops) with the app's places, and the platform footer. Story Seed runs in the
+ * shell's workspace mode itself, and Profile is the Cave,
  * which draws the same shell itself; the Reader stays outside, immersive.
  */
 export function AppShell({ route, navigate, stories, readerProfile, mainLabel, children, headerCenter }: AppShellProps) {

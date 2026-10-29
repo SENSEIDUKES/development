@@ -832,6 +832,10 @@ Update it whenever it changes.
     survives a reload, and the account and server pieces wait.
   - Creator Space is a Library package entry the Workshop previews; the
     NovelExpanded app does not use it yet.
+  - Create as the creator's hub, with the manuscript way in and the tagging
+    loop on a story that already exists, is planned in
+    [docs/create-hub.md](./docs/create-hub.md) (owner's direction, 2026-10-29).
+    Not built yet.
   - Discover's world shelves use samples only: no public worlds,
     releases, Tracker, signals, Rankings or Events are real yet.
 - **Not rebuilt yet:**

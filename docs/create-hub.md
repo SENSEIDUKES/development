@@ -130,10 +130,11 @@ and no phase starts on an undecided question.
 | # | Phase | Agents build | SENSEI decides | SENSEI sees | Where it stands |
 |---|---|---|---|---|---|
 | A | This design | This document | Approve or cut | This doc | awaiting approval |
-| B | Tag any chapter, tag the whole story | In the world's Studio (today Create's Studio button opens Story View, where "Tag this chapter again" already lives): every chapter with its tagging state (read or not, by which model, notes placed, notes dropped and why, tags set aside and why, and "the tagger found nothing here" said plainly), Tag this chapter and Tag all chapters, in order, with the same guards re-tagging has today (a chapter with a hand-placed Sound Cue or a Holdings fixer merge is skipped and named, never silently re-tagged) | Decisions 4 to 7 below | The Nine-Fold Furnace with chapters 1 to 3 tagged, and a chapter's record on the page | next |
+| B | Tag any chapter, one at a time | In the world's Studio (today Create's Studio button opens Story View, where "Tag this chapter again" already lives): every chapter with its tagging state (read or not, by which model, notes placed, notes dropped and why, tags set aside and why, and "the tagger found nothing here" said plainly, per kind), and Tag this chapter on any of them, with the same guards re-tagging has today. One chapter, or a few in order by hand: no whole-story run yet (SENSEI, 2026-10-29: "one chapter at a time, a couple chapters at a time, until we get this right") | Decision 4 below | The Nine-Fold Furnace with chapters 1 to 3 tagged by hand, and a chapter's record on the page | next |
 | C | The manuscript way in. *A manuscript world is an authored world; expansion is a later action, and the tagger discovers before it confirms.* | A second way to start a world beside the Seed: the author's chapters in (see decisions 1 to 3), a world with no Seed and no Blueprint, open to its reader, readable in the Reader, with Story Settings for its language, its main character and its sound words | Decisions 1 to 3 below | A novel of SENSEI's choosing in the app, untagged, opening in the Reader | waits on B |
 | D | The tagging loop, one kind at a time | For each kind: the teaching rewritten for that kind alone, re-tag, count against the sentences the prose offers (the agent lists them), fix, repeat. Order: soundscape and atmosphere (and the category vocabulary they choose from), Sound Cues (with the story's own words equipped), speakers for named characters, then holdings and appearances with the already-appeared list | Approve each kind's words; equip the packs for the test story | Each kind landing on a chapter SENSEI can hear and see: music that changes between chapters, cues on the bells, voices on the named cast | waits on B; C helps |
 | E | The Codex open in Create | The author's view of every card, ahead of the reader | When; what the author may edit | The whole world in Create, the reached part in the Reader | later |
+| G | Tag the whole story | Tag all chapters in order as one run: what happens when it stops halfway (resume from the first chapter without a record from this run, cancel, never re-tag what is done), clearing a bad run across chapters, and whether a run costs the reader Energy in the Library | The decisions under "later" below | A long novel tagged end to end | later, after D works on single chapters |
 | F | The Studios hand-off | Nothing here: SPP export from the Studios (their repo), then Manga Studio, MP Studio and games reading the Codex | Separate missions | A pack made in a Studio equipped in Create; later, a manga drawn from the Codex | later |
 
 ## Decisions for SENSEI, not to be guessed
@@ -152,19 +153,9 @@ and no phase starts on an undecided question.
    sections have nothing to show. Recommendation: hide them for a manuscript
    world rather than show them empty.
 
-**Phase B** (a long run over a whole story is not one call; these were missed
-in the first draft and named by review, 2026-10-29):
+**Phase B:**
 
-4. **A run that stops halfway.** Tag all chapters on a long novel is hundreds
-   of calls. Recommendation: it runs in order, saves each chapter's record as
-   it lands, can be cancelled, and resumes from the first chapter without a
-   record from this run; it never re-tags a chapter already done in the same
-   run, and a chapter that fails is named and skipped, not the end of the run.
-5. **Clearing a bad run.** Re-tagging replaces a chapter's tags; nothing keeps
-   the ones before. Recommendation: a Clear tags action per chapter and per
-   story (the chapter keeps every word and its record says it was cleared), and
-   no history of past taggings for now. Basic first.
-6. **What the record says when nothing landed.** Today the record names every
+4. **What the record says when nothing landed.** Today the record names every
    dropped note and its reason (the words are not in that paragraph, are in it
    twice, name a paragraph the chapter lacks, or could not be placed without
    changing the prose) and every placed tag the HARNESS set aside (no recording
@@ -172,13 +163,26 @@ in the first draft and named by review, 2026-10-29):
    cannot say "the tagger found nothing here", because silence is not a note.
    Recommendation: the chapter view says it in those words, per kind, so a
    quiet chapter and a failed one never look alike.
-7. **What Tag all chapters costs.** The product rule is paid at the point of
-   generation, in Energy. A tag call is small beside a chapter write (about a
-   third of the input, far less output) but five hundred of them are not
-   nothing. Recommendation: metered in Energy per chapter at a fraction of a
-   write's cost, with the owner's access token lifting it in Development as it
-   does for writes today; capped per world or free to a creator who imported
-   the novel are the alternatives. Undecided until SENSEI says.
+
+**Later (phase G, the whole-story run), not now** (SENSEI, 2026-10-29: single
+chapters first, until the tagging is right):
+
+5. **A run that stops halfway.** Hundreds of calls, in order, each chapter's
+   record saved as it lands, cancel, resume from the first chapter without a
+   record from this run, never re-tag what is done, a failed chapter named and
+   skipped.
+6. **Clearing a bad run.** Re-tagging replaces a chapter's tags and nothing
+   keeps the ones before; a Clear tags action per chapter and per story, no
+   history of past taggings. Basic first.
+7. **Whether tagging costs the reader Energy in the Library.** This is the
+   Library's own accounting ("paid at the point of generation" is the rule for
+   a chapter *written*), not the model's bill. The model's bill is the small
+   number: on The Nine-Fold Furnace a Haiku tagging call was about 5,000
+   tokens in and 1,500 out, roughly a tenth of a cent a chapter, so a publisher
+   expanding hundreds of books is a couple of hundred dollars, as SENSEI
+   intended; a licensee on their own key pays their own provider. Recommendation:
+   tagging costs no Energy; the author tags their own chapters. Revisit when the
+   economy is real.
 
 ## Hard constraints
 
@@ -210,4 +214,8 @@ in the first draft and named by review, 2026-10-29):
   named by the prose, not gated by the list, and the Nine-Fold Furnace failure
   is named as the teaching defect phase D fixes; phase C opens with "a
   manuscript world is an authored world; expansion is a later action, and the
-  tagger discovers before it confirms.
+  tagger discovers before it confirms."
+- **2026-10-29 (SENSEI's cut):** Phase B is one chapter at a time, or a few by
+  hand. The whole-story run, with its resume, cancel, clearing and Energy
+  questions, is its own later phase (G). The model's cost per chapter is
+  recorded from the receipts so the Energy question is never mistaken for it.

@@ -334,6 +334,21 @@ describe('Familiar live talk', () => {
     expect(t.adapter.start).toHaveBeenCalledOnce();
     expect(t.helper.getSnapshot().chat.filter(line => line.speaker === 'reader').map(line => line.text)).toEqual(['What is energy?', 'And manifesting?']);
   });
+  it('hands back a typed message that never reached the conversation, and keeps the microphone off', () => {
+    const t = live();
+    t.helper.say('What is energy?');
+    t.events().ended(undefined, true);
+    expect(t.send).not.toHaveBeenCalled();
+    expect(t.voice.listen).not.toHaveBeenCalled();
+    expect(t.helper.getSnapshot().unsent).toBe('What is energy?');
+    expect(t.helper.getSnapshot().chat.at(-1)).toEqual({ speaker: 'note', text: 'Not sent: your Familiar could not connect.' });
+    expect(t.helper.takeUnsent()).toBe('What is energy?');
+    expect(t.helper.getSnapshot().unsent).toBeUndefined();
+    // The next conversation does not resend it by itself.
+    t.helper.talk();
+    t.events().connected();
+    expect(t.send).not.toHaveBeenCalled();
+  });
   it('hangs up when the page changes or the panel closes, and ignores the old conversation after', async () => {
     const t = live();
     t.helper.talk();

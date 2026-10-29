@@ -197,5 +197,23 @@ describe('Familiar helper surface', () => {
     expect(end).toHaveBeenCalledOnce();
     expect(button('Talk with your Familiar')).toBeTruthy();
   });
+  it('puts a typed message that could not be sent back in the box', async () => {
+    const t = setup();
+    let events: FamiliarLiveEvents | undefined;
+    const live: FamiliarLive = { start: vi.fn((_brief, handlers) => { events = handlers; return { end: vi.fn(), send: vi.fn() }; }) };
+    act(() => root.render(<StrictMode><FamiliarHelperProvider voice={t.voice} live={live} familiar={{ name: 'Quill', description: '' }}>
+      <Screen context={t.context} /><FamiliarHelperAction />
+    </FamiliarHelperProvider></StrictMode>));
+    await click('Talk to Familiar');
+    await click('Connecting… tap to stop');
+    await click('Conversation');
+    const input = () => document.querySelector<HTMLInputElement>('input[aria-label="Message Quill"]')!;
+    act(() => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input(), 'What is energy?'); input().dispatchEvent(new Event('input', { bubbles: true })); });
+    await click('Send');
+    expect(input().value).toBe('');
+    act(() => events!.ended(undefined, true));
+    expect(input().value).toBe('What is energy?');
+    expect(document.querySelector('[role="log"]')!.textContent).toContain('Not sent: your Familiar could not connect.');
+    expect(t.voice.listen).not.toHaveBeenCalled();
+  });
 });
-

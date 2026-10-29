@@ -225,6 +225,11 @@ async function sampleSeed(browser) {
 async function walk(browser, viewport, sample) {
   const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
   await context.addInitScript(installSpeechStandIn);
+  // The Familiar floats by default; this walk keeps it in the header (Settings → Familiar), where its recall is checked.
+  // Settings turns the choice off and on again below.
+  await context.addInitScript(() => {
+    if (!localStorage.getItem('novelexpanded-reader-profile')) localStorage.setItem('novelexpanded-reader-profile', JSON.stringify({ familiarInHeader: true }));
+  });
   const page = await context.newPage();
   const problems = [];
   const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [], looks: [], tags: [], covers: [], pictures: [] };
@@ -716,7 +721,7 @@ async function walk(browser, viewport, sample) {
   const recallHelper = page.getByTestId('reader-top-bar').getByRole('button', { name: /actions$/ });
   await recallHelper.click();
   await page.getByRole('button', { name: 'Talk to Familiar', exact: true }).click();
-  const helper = page.getByRole('dialog', { name: 'Familiar helper', exact: true });
+  const helper = page.getByRole('dialog', { name: 'Familiar', exact: true });
   check(await helper.getAttribute('aria-modal') === 'false', 'The helper should leave the reading surface available.');
   const helperBox = await helper.boundingBox();
   const controlsBox = await page.getByTestId('reader-controls-row').boundingBox();
@@ -727,8 +732,8 @@ async function walk(browser, viewport, sample) {
   await helper.getByRole('status').filter({ hasText: 'Path saved for Chapter 2.' }).waitFor();
   await shot('6c-familiar-saved');
   await helper.getByRole('button', { name: 'Custom', exact: true }).click();
-  await helper.getByRole('textbox', { name: 'Type a command' }).fill('Custom: This cancelled direction must not replace Conflict.');
-  await helper.getByRole('button', { name: 'Review', exact: true }).click();
+  await helper.getByRole('textbox', { name: 'Type to your Familiar' }).fill('Custom: This cancelled direction must not replace Conflict.');
+  await helper.getByRole('button', { name: 'Send', exact: true }).click();
   await helper.getByRole('button', { name: 'Cancel', exact: true }).click();
   await helper.waitFor({ state: 'hidden' });
   check(await recallHelper.evaluate(element => document.activeElement === element), 'Closing the helper should return focus to the Familiar.');
@@ -1086,6 +1091,15 @@ async function walk(browser, viewport, sample) {
   // The app's one Familiar becomes the one just chosen, and a new visit keeps it.
   await page.locator('.workspace-header [aria-label="Show Phoenix actions"]').filter({ visible: true }).waitFor({ timeout: 5_000 });
   await shot('8d-settings-familiar');
+  // Keep in the header: off, the Familiar floats over the page; on, it waits in the header again.
+  const keepInHeader = page.locator('.familiar-header-switch').filter({ visible: true });
+  check(await keepInHeader.isChecked(), 'Keep in the header should show the reader\'s choice.');
+  await keepInHeader.click();
+  await page.locator('.familiar-companion').waitFor({ timeout: 5_000 });
+  check(await page.locator('.workspace-header [aria-label="Show Phoenix actions"]').filter({ visible: true }).count() === 0,
+    'With Keep in the header off, the Familiar should float instead of sitting in the header.');
+  await keepInHeader.click();
+  await page.locator('.workspace-header [aria-label="Show Phoenix actions"]').filter({ visible: true }).waitFor({ timeout: 5_000 });
   await page.reload();
   await page.locator('[data-cave-settings]').waitFor();
   check(await page.locator('.workspace-header [aria-label="Show Phoenix actions"]').filter({ visible: true }).count() === 1,

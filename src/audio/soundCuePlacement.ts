@@ -102,19 +102,14 @@ export function placeSoundCues(input: {
       setAside.push({ ...tag, reason: 'over-limit' });
       continue;
     }
-    const recordings = input.recordings
-      .filter(({ cue, provenance }) => cue.metadata.sound === tag.sound
-        && isPlayableMediaUrl(cue.public_url) && isMediaResourceProvenance(provenance))
-      .sort((left, right) => left.cue.public_url.localeCompare(right.cue.public_url));
-    const matching = tag.energy ? recordings.filter(({ cue }) => cue.metadata.studio_tags?.energy === tag.energy) : [];
-    const pool = matching.length ? matching : recordings;
-    if (!pool.length) {
+    const used = uses.get(tag.sound) ?? 0;
+    const recording = soundWordRecording(input.recordings, tag.sound, input.chapterNumber + used, tag.energy);
+    if (!recording) {
       setAside.push({ ...tag, reason: 'no-recording' });
       continue;
     }
-    const used = uses.get(tag.sound) ?? 0;
     uses.set(tag.sound, used + 1);
-    const { cue, provenance } = pool[(input.chapterNumber + used) % pool.length];
+    const { cue, provenance } = recording;
     placed.push(candidate);
     soundCues.push({
       id: `sound-cue:${tag.blockId}:${tag.start}-${tag.end}`,
@@ -136,7 +131,21 @@ export function placeSoundCues(input: {
   return { soundCues, setAside };
 }
 
-const SET_ASIDE_MESSAGES: Record<SoundCueSetAsideReason, string> = {
+/**
+ * The recording one sound word plays: its playable recordings in a stable
+ * order, preferring the Energy asked for, at a turn of the rotation (the
+ * chapter number plus the sound's earlier uses in it), so repeated sounds vary.
+ */
+export function soundWordRecording(recordings: FrozenNarrativeMedia['soundCues'], sound: string, turn: number, energy?: AudioEnergy) {
+  const playable = recordings
+    .filter(({ cue, provenance }) => cue.metadata.sound === sound && isPlayableMediaUrl(cue.public_url) && isMediaResourceProvenance(provenance))
+    .sort((left, right) => left.cue.public_url.localeCompare(right.cue.public_url));
+  const matching = energy ? playable.filter(({ cue }) => cue.metadata.studio_tags?.energy === energy) : [];
+  const pool = matching.length ? matching : playable;
+  return pool.length ? pool[turn % pool.length] : undefined;
+}
+
+const SET_ASIDE_MESSAGES:Record<SoundCueSetAsideReason, string> = {
   'unknown-sound': 'is not one of this story\'s sound words',
   'not-prose': 'is in a line the Reader shows as a system line',
   'no-words': 'wraps no words',

@@ -578,6 +578,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
 
   it('keeps Logo | Insights | Familiar | Preferences | Search invariant across tabs, moves page titles below the header, and updates Preferred Language immediately', async () => {
     const services = appServices(scriptedWriter().writer);
+    // The reader keeps the Familiar in the header (Settings → Familiar).
+    services.profile.save({ familiarInHeader: true });
     await render(services);
     const assertHeaderOrder = () => {
       const header = document.querySelector<HTMLElement>('.workspace-header')!;
@@ -1053,9 +1055,10 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Profile');
     // The practice account opens with the most QI a tester could want.
     expect(cave()!.querySelector('[data-cave-qi]')?.textContent).toBe('1,000,000 to spend');
-    // The music note floats above the Cave's bar on a phone, and the Familiar's recall sits in its header.
+    // The music note floats above the Cave's bar on a phone, and the Familiar floats over the Cave.
     expect(floatingNote()).toBeTruthy();
-    expect(recall()).toBeTruthy();
+    expect(companion()).toBeTruthy();
+    expect(recall()).toBeNull();
     // The Cave's logo goes Home, and so does Home in the navigation.
     expect(document.querySelector<HTMLAnchorElement>('.workspace-header a[aria-label="Return to Library"]')?.getAttribute('href')).toBe('/app/');
     await click(buttonByText('Home', strip()!), 'Home in the navigation');
@@ -1078,6 +1081,14 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     // Every Familiar is unlocked on the practice account; choosing one equips it everywhere at once.
     await click(buttonByText('Select Phoenix', cave()!), 'Select Phoenix', 20);
     expect(services.profile.read().familiarId).toBe('phoenix');
+    expect(companion()!.querySelector('[aria-label="Phoenix: show actions"]')).toBeTruthy();
+    // Keep in the header: off by default, the Familiar floats; on, it waits in the header until called.
+    const keepInHeader = () => cave()!.querySelector<HTMLInputElement>('.familiar-header-switch')!;
+    expect(keepInHeader().checked).toBe(false);
+    await act(async () => { keepInHeader().click(); });
+    await flush(10);
+    expect(services.profile.read().familiarInHeader).toBe(true);
+    expect(companion()).toBeNull();
     expect(recall('Phoenix')).toBeTruthy();
     expect(recall('Quill')).toBeNull();
   });
@@ -1239,8 +1250,9 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    services.profile.save({ familiarInHeader: true });
     await render(services);
-    // It starts minimized, its recall in the header.
+    // Kept in the header, it starts minimized, its recall in the header.
     expect(companion()).toBeNull();
     await summon();
     expect(companion()).toBeTruthy();

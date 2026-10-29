@@ -57,6 +57,7 @@ function restore(raw: string | null, fresh: UserProfile): UserProfile {
     interfaceLanguage: normalizeSenLanguageCode(record.interfaceLanguage),
     defaultReadingLanguage: normalizeSenLanguageCode(record.defaultReadingLanguage),
     familiarSize: typeof saved.familiarSize === 'number' && Number.isFinite(saved.familiarSize) ? saved.familiarSize : undefined,
+    familiarInHeader: saved.familiarInHeader === true ? true : undefined,
     activeStories: Array.isArray(saved.activeStories) ? record.activeStories : [],
     inactiveStories: Array.isArray(saved.inactiveStories) ? record.inactiveStories : [],
     joinedDate: text(saved.joinedDate, fresh.joinedDate),

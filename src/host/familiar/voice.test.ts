@@ -15,19 +15,28 @@ class Recognition {
 }
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 describe('Familiar browser speech', () => {
-  it('waits for recognition to stop before delivering text, and cancels late events', () => {
+  it('keeps listening through pauses until stopped, then delivers everything heard, and cancels late events', () => {
     vi.stubGlobal('webkitSpeechRecognition', Recognition);
     const result = vi.fn();
     const failure = vi.fn();
-    const cancel = createFamiliarBrowserVoice().listen('en-US', result, failure);
-    const recognition = Recognition.last;
-    expect(recognition.lang).toBe('en-US');
-    recognition.onresult!({ results: [{ isFinal: true, 0: { transcript: 'Custom: Leave the sect.' } }] });
+    const listening = createFamiliarBrowserVoice().listen('en-US', result, failure);
+    const first = Recognition.last;
+    expect(first.lang).toBe('en-US');
+    expect(first.continuous).toBe(true);
+    first.onresult!({ results: [{ isFinal: true, 0: { transcript: 'Custom: Leave the sect' } }] });
+    // The browser ends on a pause by itself: the Familiar listens on, keeping what it heard.
+    first.onend!();
     expect(result).not.toHaveBeenCalled();
-    recognition.onend!();
-    expect(result).toHaveBeenCalledExactlyOnceWith('Custom: Leave the sect.');
-    cancel();
-    expect(recognition.onresult).toBeNull();
+    const second = Recognition.last;
+    expect(second).not.toBe(first);
+    expect(second.start).toHaveBeenCalled();
+    second.onresult!({ results: [{ isFinal: true, 0: { transcript: 'before the war.' } }] });
+    listening.stop();
+    expect(second.stop).toHaveBeenCalled();
+    second.onend!();
+    expect(result).toHaveBeenCalledExactlyOnceWith('Custom: Leave the sect before the war.');
+    listening.cancel();
+    expect(second.onresult).toBeNull();
     expect(failure).not.toHaveBeenCalled();
   });
   it('reports permission denial and bounds an unanswered microphone session', () => {
@@ -42,6 +51,33 @@ describe('Familiar browser speech', () => {
     vi.advanceTimersByTime(30_000);
     expect(fail).toHaveBeenCalledOnce();
     expect(Recognition.last.abort).toHaveBeenCalled();
+  });
+  it('stops by itself after 30 seconds and answers what it heard', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('SpeechRecognition', Recognition);
+    const result = vi.fn();
+    createFamiliarBrowserVoice().listen('en-US', result, vi.fn());
+    const recognition = Recognition.last;
+    recognition.onresult!({ results: [{ isFinal: true, 0: { transcript: 'Conflict' } }] });
+    vi.advanceTimersByTime(29_000);
+    expect(recognition.stop).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1_000);
+    expect(recognition.stop).toHaveBeenCalled();
+    recognition.onend!();
+    expect(result).toHaveBeenCalledExactlyOnceWith('Conflict');
+  });
+  it('answers after a tap to stop even when the browser never reports the end', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('SpeechRecognition', Recognition);
+    const result = vi.fn();
+    const listening = createFamiliarBrowserVoice().listen('en-US', result, vi.fn());
+    Recognition.last.onresult!({ results: [{ isFinal: true, 0: { transcript: 'Conflict' } }] });
+    listening.stop();
+    expect(result).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(3_000);
+    expect(result).toHaveBeenCalledExactlyOnceWith('Conflict');
+    Recognition.last.onend?.();
+    expect(result).toHaveBeenCalledOnce();
   });
   it('does not cancel resumed narration after readback ended, and releases a stalled readback', () => {
     vi.useFakeTimers();

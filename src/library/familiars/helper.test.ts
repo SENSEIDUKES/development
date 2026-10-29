@@ -8,21 +8,22 @@ function setup() {
   let failed: (message: string) => void = () => {};
   let spoken: () => void = () => {};
   const cancelListen = vi.fn();
+  const stopListen = vi.fn();
   const cancelSpeak = vi.fn();
   const voice: FamiliarVoice = {
     available: true,
-    listen: vi.fn((_language, result, failure) => { heard = result; failed = failure; return cancelListen; }),
+    listen: vi.fn((_language, result, failure) => { heard = result; failed = failure; return { stop: stopListen, cancel: cancelListen }; }),
     speak: vi.fn((_text, _language, done) => { spoken = done; return cancelSpeak; }),
   };
   const actions: FamiliarHelperAction[] = [
     { id: 'conflict', label: 'Conflict', phrases: ['conflict'], describe: () => 'A rival arrives.', success: 'Saved.', run },
     { id: 'custom', label: 'Custom', phrases: ['custom'], input: { label: 'Direction', maxLength: 1200 }, describe: text => text, success: 'Saved.', run },
   ];
-  const context: FamiliarHelperContext = { key: 'story:next-2', title: 'Fate', hint: 'Choose a path.', actions, interrupt: () => release };
+  const context: FamiliarHelperContext = { key: 'story:next-2', title: 'Fate', hint: 'Choose a path.', topics: [], actions, interrupt: () => release };
   const helper = new FamiliarHelperController(voice);
   const owner = Symbol();
   helper.setContext(owner, context);
-  return { helper, voice, context, owner, run, release, cancelListen, cancelSpeak,
+  return { helper, voice, context, owner, run, release, cancelListen, stopListen, cancelSpeak,
     heard: (text: string) => heard(text), failed: (text: string) => failed(text), spoken: () => spoken(), lateResult: () => heard };
 }
 
@@ -46,7 +47,45 @@ describe('global Familiar interaction', () => {
     t.heard('confirm');
     await vi.waitFor(() => expect(t.helper.getSnapshot().message).toBe('Saved.'));
     expect(t.run).toHaveBeenCalledExactlyOnceWith('');
+    // Heard before playback resumes over it.
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Saved.', 'en-US', expect.any(Function), expect.any(Function));
+    expect(t.release).not.toHaveBeenCalled();
+    t.spoken();
     expect(t.release).toHaveBeenCalledExactlyOnceWith(true);
+  });
+  it('speaks why a request cannot apply, then listens again, and never proposes it', () => {
+    const t = setup();
+    const check = vi.fn((input: string) => input === 'nowhere' ? 'I can\'t find “nowhere” in this chapter.' : undefined);
+    t.helper.setContext(t.owner, { ...t.context, actions: [...t.context.actions,
+      { id: 'sound', label: 'Add sound', phrases: ['add'], input: { label: 'Sound', maxLength: 200 }, check, describe: text => text, success: 'Placed.', run: t.run }] });
+    t.helper.open(true);
+    t.heard('add nowhere');
+    expect(t.helper.getSnapshot().proposal).toBeUndefined();
+    expect(t.voice.speak).toHaveBeenLastCalledWith('I can\'t find “nowhere” in this chapter.', 'en-US', expect.any(Function), expect.any(Function));
+    t.spoken();
+    expect(t.helper.getSnapshot()).toMatchObject({ phase: 'listening', message: 'Listening…' });
+    t.heard('something unrelated');
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Choose a path.', 'en-US', expect.any(Function), expect.any(Function));
+    expect(t.run).not.toHaveBeenCalled();
+  });
+  it('plays a proposal’s preview on request, then listens for Confirm or Cancel', () => {
+    vi.useFakeTimers();
+    try {
+      const t = setup();
+      const preview = vi.fn();
+      t.helper.setContext(t.owner, { ...t.context, actions: [...t.context.actions,
+        { id: 'sound', label: 'Add sound', phrases: ['add'], input: { label: 'Sound', maxLength: 200 }, preview, describe: text => `Wind on ${text}.`, success: 'Placed.', run: t.run }] });
+      t.helper.open(true);
+      t.heard('add whistling drafts');
+      expect(t.voice.speak).toHaveBeenLastCalledWith('Wind on whistling drafts. Say Confirm, Hear it, or Cancel.', 'en-US', expect.any(Function), expect.any(Function));
+      t.spoken();
+      t.heard('hear it');
+      expect(preview).toHaveBeenCalledExactlyOnceWith('whistling drafts');
+      expect(t.helper.getSnapshot().phase).toBe('review');
+      vi.advanceTimersByTime(2_500);
+      expect(t.helper.getSnapshot().phase).toBe('listening');
+      expect(t.helper.getSnapshot().proposal?.input).toBe('whistling drafts');
+    } finally { vi.useRealTimers(); }
   });
   it('uses the same confirmation for typed input without speaking', async () => {
     const t = setup();
@@ -83,7 +122,7 @@ describe('global Familiar interaction', () => {
     const t = setup();
     const settings = Symbol();
     const run = vi.fn(async () => {});
-    t.helper.setContext(settings, { key: 'settings', title: 'Settings', hint: 'Say Larger text.', actions: [
+    t.helper.setContext(settings, { key: 'settings', title: 'Settings', hint: 'Say Larger text.', topics: [], actions: [
       { id: 'larger', label: 'Larger text', phrases: ['larger text'], describe: () => 'Increase text size.', success: 'Text enlarged.', run },
     ] });
     t.helper.clearContext(t.owner);
@@ -121,5 +160,91 @@ describe('global Familiar interaction', () => {
     t.helper.suspend();
     expect(t.release).toHaveBeenCalledWith(false);
     expect(t.helper.getSnapshot().open).toBe(false);
+  });
+  it('explains in Explain mode without proposing anything, and switches modes by voice', () => {
+    const t = setup();
+    t.helper.setContext(t.owner, { ...t.context, topics: [{ id: 'fate', label: 'Fate', phrases: ['fate', 'what is fate'], explanation: 'Fate decides the next chapter.' }] });
+    t.helper.open(true);
+    expect(t.helper.getSnapshot().mode).toBe('action');
+    t.heard('explain');
+    expect(t.helper.getSnapshot().mode).toBe('explain');
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Say Fate.', 'en-US', expect.any(Function), expect.any(Function));
+    t.spoken();
+    t.heard('What is Fate?');
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Fate decides the next chapter.', 'en-US', expect.any(Function), expect.any(Function));
+    t.spoken();
+    // An action's name explains nothing in Explain mode, and never runs.
+    t.heard('conflict');
+    expect(t.helper.getSnapshot().proposal).toBeUndefined();
+    expect(t.run).not.toHaveBeenCalled();
+    t.spoken();
+    t.heard('action');
+    expect(t.helper.getSnapshot()).toMatchObject({ mode: 'action', message: 'Choose a path.' });
+  });
+  it('says when a place has nothing to explain or do yet', () => {
+    const t = setup();
+    t.helper.setContext(t.owner, { ...t.context, actions: [] });
+    t.helper.open();
+    expect(t.helper.getSnapshot().message).toBe('Nothing to do here yet.');
+    t.helper.setMode('explain');
+    expect(t.helper.getSnapshot().message).toBe('Nothing to explain here yet.');
+  });
+  it('reads a topic in its recorded voice, falling back to the device voice when the recording cannot play', () => {
+    const t = setup();
+    let failPlay: (message: string) => void = () => {};
+    const play = vi.fn((_url: string, _done: () => void, failure: (message: string) => void) => { failPlay = failure; return () => {}; });
+    const helper = new FamiliarHelperController({ ...t.voice, play });
+    helper.setContext(t.owner, { ...t.context, topics: [{ id: 'energy', label: 'Energy', phrases: ['energy'], explanation: 'Energy powers creation.', audioUrl: 'https://cdn.example/energy.mp3' }] });
+    helper.open();
+    helper.setMode('explain');
+    helper.explain('energy');
+    expect(play).toHaveBeenCalledWith('https://cdn.example/energy.mp3', expect.any(Function), expect.any(Function));
+    expect(t.voice.speak).not.toHaveBeenCalled();
+    expect(helper.getSnapshot()).toMatchObject({ topicId: 'energy', phase: 'speaking' });
+    failPlay('blocked');
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Energy powers creation.', 'en-US', expect.any(Function), expect.any(Function));
+  });
+  it('returns to the app’s own place when a page leaves', () => {
+    const t = setup();
+    const app = Symbol();
+    t.helper.setContext(app, { key: 'place:Home', title: 'Home', hint: '', topics: [], actions: [] }, 'base');
+    expect(t.helper.getSnapshot().context?.title).toBe('Fate');
+    t.helper.clearContext(t.owner);
+    expect(t.helper.getSnapshot().context?.title).toBe('Home');
+    t.helper.setContext(t.owner, t.context);
+    expect(t.helper.getSnapshot().context?.title).toBe('Fate');
+  });
+  it('keeps listening until the reader taps that they are done talking', () => {
+    const t = setup();
+    t.helper.open(true);
+    expect(t.helper.getSnapshot().phase).toBe('listening');
+    t.helper.doneTalking();
+    expect(t.stopListen).toHaveBeenCalledOnce();
+    expect(t.cancelListen).not.toHaveBeenCalled();
+    t.heard('conflict');
+    expect(t.helper.getSnapshot().proposal?.actionId).toBe('conflict');
+  });
+  it('applies what was reviewed, even when the screen changes before Confirm', async () => {
+    const t = setup();
+    let target = 'the words read then';
+    const run = vi.fn(async (_input: string, _prepared?: unknown) => {});
+    t.helper.setContext(t.owner, { ...t.context, actions: [...t.context.actions,
+      { id: 'sound', label: 'Add sound', phrases: ['add'], input: { label: 'Sound', maxLength: 200 }, prepare: () => target, describe: () => target, success: 'Placed.', run }] });
+    t.helper.open();
+    t.helper.submit('add wind right there');
+    target = 'a later sentence';
+    await t.helper.confirm();
+    expect(run).toHaveBeenCalledExactlyOnceWith('wind right there', 'the words read then');
+  });
+  it('keeps the device voice stoppable when a recording fails at once and it reads instead', () => {
+    const t = setup();
+    const play = vi.fn((_url: string, _done: () => void, failure: (message: string) => void) => { failure('No player.'); return () => {}; });
+    const helper = new FamiliarHelperController({ ...t.voice, play });
+    helper.setContext(t.owner, { ...t.context, topics: [{ id: 'energy', label: 'Energy', phrases: ['energy'], explanation: 'Energy powers creation.', audioUrl: 'https://cdn.example/energy.mp3' }] });
+    helper.open();
+    helper.explain('energy');
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Energy powers creation.', 'en-US', expect.any(Function), expect.any(Function));
+    helper.quiet();
+    expect(t.cancelSpeak).toHaveBeenCalledOnce();
   });
 });

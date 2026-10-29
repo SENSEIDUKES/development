@@ -57,6 +57,7 @@ export interface UserProfileController {
   handleFamiliarChange?: (id: string) => Promise<void> | void;
   isSavingFamiliar?: boolean;
   handleFamiliarSizeChange?: (size: number) => void;
+  handleFamiliarInHeaderChange?: (inHeader: boolean) => void;
   // Library / app-shell state (production: `useAppStore`)
   syncStatus: string;
   lastSavedTime: Date | null;

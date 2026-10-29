@@ -206,6 +206,15 @@ replies, a second story store or a new generation endpoint.
   interpret general questions or translate text. Speech language is an explicit
   provider setting; localized phrases and UI remain future work.
 
+### Explain and Action — 2026-10-29
+
+The Familiar has two modes everywhere: **Explain** (never changes anything) and
+**Action** (confirmed before it applies). Each place fills them in: the Reader's
+Action is Fate; Create mode's Action is its Highlight Engine commands, only while
+Create mode is open (Sound Cues: "Add wind on whistling drafts", or "Add wind right
+there" while listening, with Hear it before Confirm). Explain is empty until each
+place's explanations are written. Say "Explain" or "Action" to switch.
+
 Tap the microphone once to begin. Recognition stops before the fixed readback,
 then listens once for Confirm or Cancel. Touch and typing follow the same review
 step without speaking. Unsupported speech, denied permission, silence and lost
@@ -333,6 +342,16 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-10-29: Explain and Action modes. Sound Cues by voice in Create mode, with
+  Hear it before Confirm; voice sessions also hear problems and the success.
+- 2026-10-29: Compact panel: icons for Explain and Action, tiles with an icon, a
+  name and one short line, an icon row (info, microphone, typing); how to talk
+  moved behind info. Explain shows each page's help topics, read in the System
+  voice where recorded (the device voice otherwise), with a clip only when one
+  exists (`helpVideos`). The Familiar floats by default; Settings → Familiar →
+  Keep in the header puts it back in the header.
+- 2026-10-29: Tap the microphone to start talking and tap again when done; a
+  pause no longer ends listening. It stops by itself after 30 seconds.
 - 2026-10-28: With the owner's approval, removed the old supplied-GIF copy
   (`reference/FamiliarReference.tsx`) and its Original Reference and Compare panes;
   the workspace now shows Development alone.

@@ -9,7 +9,7 @@ import { createRoot } from '../../../test-utils/createReaderRoot';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { STOPPED_WRITE_REPLY, writtenChapter } from '../../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
-import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessReaderWriting, type ReaderChapterBody } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessReaderWriting, type ReaderChapterBody, type ReaderHostTools } from '@seihouse/sen/harness-generation';
 import type { ReadAloudVoicePicks, ReaderFonts, ReaderPreferenceStorage, ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { installFakeSpeechSynthesis, type FakeSpeechSynthesis } from '../../../test-utils/fakeSpeechSynthesis';
 import { ReaderMixerProvider, type ReaderMixer, type ReaderMixerSleepEvent } from '@seihouse/audio-player';
@@ -81,18 +81,18 @@ const story = async ({ written = 0, replies, language }: { written?: number; rep
 };
 
 /** A host like the Library workspace: it follows the controller and writes chapters with its model. */
-function Host({ controller, storyId, readerState, renderWriting, renderWriteAside, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices, readerFonts, chapterBody }: {
+function Host({ controller, storyId, readerState, renderWriting, renderWriteAside, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices, readerFonts, chapterBody, renderHostTools }: {
   controller: HarnessGenerationController; storyId: string; readerState?: ReaderStateRepository;
   renderWriting?: (writing: HarnessReaderWriting) => React.ReactNode; renderWriteAside?: (written: number) => React.ReactNode;
   startOnOpen?: boolean; canWrite?: boolean; canRewrite?: boolean;
   readerPreferences?: ReaderPreferenceStorage; readAloudVoices?: ReadAloudVoicePicks;
-  readerFonts?: ReaderFonts; chapterBody?: ReaderChapterBody;
+  readerFonts?: ReaderFonts; chapterBody?: ReaderChapterBody; renderHostTools?: (tools: ReaderHostTools) => React.ReactNode;
 }) {
   const [state, setState] = useState(controller.snapshot());
   useEffect(() => { const stop = controller.subscribe(setState); return () => { stop(); }; }, [controller]);
   return <HarnessReaderSession state={state} storyId={storyId} controller={controller} onClose={() => undefined}
     readerStateRepository={readerState} renderWriting={renderWriting} renderWriteAside={renderWriteAside} startOnOpen={startOnOpen}
-    readerPreferences={readerPreferences} readAloudVoices={readAloudVoices} readerFonts={readerFonts} chapterBody={chapterBody}
+    readerPreferences={readerPreferences} readAloudVoices={readAloudVoices} readerFonts={readerFonts} chapterBody={chapterBody} renderHostTools={renderHostTools}
     onGenerateNextChapter={canWrite ? async () => { await controller.generateNextChapter(storyId, 'test-model'); } : undefined}
     onRewriteChapter={canRewrite ? async note => { await controller.rewriteLatestChapter(storyId, 'test-model', note); } : undefined} />;
 }
@@ -488,6 +488,44 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     await flush(400);
     expect(document.querySelector('[data-testid="reader-panel-fate"]')).toBeTruthy();
     expect(buttonBy(byLabel('Chapter controls'))!.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('places a Sound Cue asked for in words in Create mode: on what Listen just read, or on named words', async () => {
+    // Create mode's overlay measures the page as it changes size.
+    vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+    const { controller, storyId } = await story({ written: 2 });
+    let tools: ReaderHostTools | undefined;
+    await mount(<Host controller={controller} storyId={storyId} readerPreferences={memory().storage} readAloudVoices={PICKS}
+      renderHostTools={current => { tools = current; return null; }} />);
+    // Chapter 1 is sealed, and Create mode is closed: no Create mode commands.
+    expect(tools?.createMode).toBeUndefined();
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    expect(tools?.createMode).toBeUndefined();
+    await click(byLabel('Create mode'), 'Create mode');
+    const sounds = tools!.createMode!.sounds;
+    expect(sounds.chapterNumber).toBe(2);
+    const sound = sounds.soundWords[0];
+    // Before Listen, "right there" has nowhere to go.
+    expect(sounds.resolve(sound, { kind: 'just-read' })).toMatchObject({ ok: false, problem: expect.stringContaining('Start Listen first') });
+    await click(button => button.textContent?.trim() === 'Listen', 'Listen');
+    await next();
+    expect(lastSpoken().text).toBe('A keeper waited on the causeway with a lantern.');
+    const heard = tools!.createMode!.sounds.resolve(sound, { kind: 'just-read' });
+    expect(heard).toMatchObject({ ok: true, paragraph: 0, cue: { anchor: { blockId: 'c2-p1', selectedText: 'with a lantern' }, payload: { origin: 'manual', sound } } });
+    if (!heard.ok) return;
+    await act(async () => { await tools!.createMode!.sounds.place(heard.cue); });
+    const named = tools!.createMode!.sounds.resolve(sound, { kind: 'words', words: 'the name the city' });
+    expect(named).toMatchObject({ ok: true, paragraph: 1, cue: { anchor: { blockId: 'c2-p2', selectedText: 'the name the city' } } });
+    if (!named.ok) return;
+    await act(async () => { await tools!.createMode!.sounds.place(named.cue); });
+    const saved = controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 2)!;
+    expect(saved.soundCues?.map(cue => cue.anchor.selectedText)).toEqual(['with a lantern', 'the name the city']);
+    expect(saved.paragraphs).toEqual(controller.snapshot().chapters[1].paragraphs);
+    // The same words cannot hold a second cue.
+    expect(tools!.createMode!.sounds.resolve(sound, { kind: 'words', words: 'a lantern' })).toMatchObject({ ok: false, problem: expect.stringContaining('already has a Sound Cue') });
+    // Leaving Create mode takes its commands away.
+    await click(byLabel('Create mode'), 'Back to reading');
+    expect(tools?.createMode).toBeUndefined();
   });
 
   it('reads the chapter from its title in the host\'s voices, lighting the sentence being spoken', async () => {
@@ -1058,5 +1096,42 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     await click(byLabel('Previous Chapter'), 'Previous Chapter');
     expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
     expect(create().getAttribute('aria-pressed')).toBe('false');
+  });
+  it('adds a Sound Cue placed in words to the open Create mode page and its saves', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    let tools: ReaderHostTools | undefined;
+    await mount(<Host controller={controller} storyId={storyId} renderHostTools={current => { tools = current; return null; }} />);
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    await click(byLabel('Create mode'), 'Create mode');
+    expect(container.querySelector('[data-testid="create-mode-no-cues"]')).toBeTruthy();
+    const placed = tools!.createMode!.sounds.resolve(tools!.createMode!.sounds.soundWords[0], { kind: 'words', words: 'with a lantern' });
+    if (!placed.ok) throw new Error(placed.problem);
+    await act(async () => { await tools!.createMode!.sounds.place(placed.cue); });
+    await flush();
+    expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="create-mode-no-cues"]')).toBeNull();
+    // The cue joined the page itself, through its saves: a second on the same words is refused, and it is saved once.
+    await act(async () => { await expect(tools!.createMode!.sounds.place(placed.cue)).rejects.toThrow('already has a Sound Cue'); });
+    // A cue whose words moved or changed since it was reviewed is refused, never saved where it cannot play.
+    const moved = { ...placed.cue, anchor: { ...placed.cue.anchor, startOffset: placed.cue.anchor.startOffset + 1, endOffset: placed.cue.anchor.endOffset + 1 } };
+    await act(async () => { await expect(tools!.createMode!.sounds.place(moved)).rejects.toThrow('changed after you reviewed it'); });
+    expect(controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 2)!.soundCues?.map(cue => cue.anchor.selectedText)).toEqual(['with a lantern']);
+  });
+  it('saves a voice Sound Cue again when its first save failed, instead of refusing it as an overlap', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    let tools: ReaderHostTools | undefined;
+    await mount(<Host controller={controller} storyId={storyId} renderHostTools={current => { tools = current; return null; }} />);
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    await click(byLabel('Create mode'), 'Create mode');
+    const placed = tools!.createMode!.sounds.resolve(tools!.createMode!.sounds.soundWords[0], { kind: 'words', words: 'with a lantern' });
+    if (!placed.ok) throw new Error(placed.problem);
+    const authorChapter = vi.spyOn(controller, 'authorChapter').mockRejectedValueOnce(new Error('Storage is full.'));
+    await act(async () => { await expect(tools!.createMode!.sounds.place(placed.cue)).rejects.toThrow('Storage is full.'); });
+    await flush();
+    await act(async () => { await tools!.createMode!.sounds.place(placed.cue); });
+    expect(authorChapter).toHaveBeenCalledTimes(2);
+    expect(controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 2)!.soundCues?.map(cue => cue.anchor.selectedText)).toEqual(['with a lantern']);
+    // Once saved, the same cue again is an overlap.
+    await act(async () => { await expect(tools!.createMode!.sounds.place(placed.cue)).rejects.toThrow('already has a Sound Cue'); });
   });
 });

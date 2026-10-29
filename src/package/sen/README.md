@@ -1,5 +1,17 @@
 # `@seihouse/sen`
 
+**Unreleased (2026-10-29):** Sound Cues asked for in words. `./highlight-engine`
+adds `findSpokenWords` (words a person said, found in the chapter whatever their
+case or punctuation, the next from where the reader is first), `wordsJustRead`
+(the last few words of what Listen was reading) and `resolveSpokenSoundCue`,
+which turns a story sound word and a place into the same manual Sound Cue a
+highlight places, or a plain sentence saying why not. `./audio` exports
+`soundWordRecording`, the recording rotation `placeSoundCues` already used.
+`ReaderHostTools` gains an optional `createMode.sounds` (`ReaderSoundAuthoring`),
+present only while Create mode is open: its sound words, `resolve` (with what
+Listen is reading) and `place`, which adds the cue to Create mode's page and its
+own saves, so an edit and a cue never overwrite each other.
+
 **Unreleased (2026-10-28, breaking):** `./reader-codex` no longer exports the
 older Codex page: `ReaderCodex` (and its `extraPages`), `CodexSheetOverlay`,
 `CodexSheetOverlayProps` and `ReaderCodexBestiary` are gone. The Codex is

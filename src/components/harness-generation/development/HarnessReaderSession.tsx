@@ -2,8 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { ReaderAudioNote } from './ReaderAudioNote';
 import { useSoundtrackChanges } from './useSoundtrackChanges';
 import { useReaderDocumentScrollbar } from './useReaderDocumentScrollbar';
-import type { TextHighlightBlock } from '@seihouse/sen/highlight-engine';
-import type { SceneAudioTrack } from '@seihouse/sen/audio';
+import { resolveSpokenSoundCue, type SpokenCueTarget, type SpokenSoundCueResult, type TextHighlightBlock } from '@seihouse/sen/highlight-engine';
+import { soundVocabulary, type SceneAudioTrack, type SoundCueAttachment } from '@seihouse/sen/audio';
 import { getSenTextDirection } from '@seihouse/sen/contracts';
 import {
   DEFAULT_READER_FONTS,
@@ -37,7 +37,7 @@ import { declaredCharacters } from '../shared/holdings';
 import { storyWorldRecord } from '../shared/foundation';
 import { deriveStoryCodex, type CodexPictureMaker, type CodexPictures } from '../shared/storyCodex';
 import { BlueprintArcPage } from './BlueprintArcPage';
-import { ChapterAuthoring } from './ChapterAuthoring';
+import { ChapterAuthoring, type ChapterAuthoringHandle } from './ChapterAuthoring';
 import { ChapterRewrite } from './ChapterRewrite';
 import { FatePage } from './FatePage';
 import { ProseChapterBody } from './ProseChapterBody';
@@ -68,6 +68,22 @@ export interface ReaderHostTools {
   chapterId: string;
   busy: boolean;
   interruptPlayback(): (resume: boolean) => void;
+  /** Create mode's tools, only while Create mode is open on the newest chapter. */
+  createMode?: { sounds: ReaderSoundAuthoring };
+}
+
+/**
+ * Sound Cues asked for in words (a voice or a typed request) rather than by
+ * highlighting: the same record Create mode places, on the same chapter.
+ */
+export interface ReaderSoundAuthoring {
+  chapterNumber: number;
+  /** The story's sound words, the only sounds a cue may name. */
+  soundWords: readonly string[];
+  /** The cue a request makes on the chapter as it is now, with what Listen is reading. */
+  resolve(sound: string, target: SpokenCueTarget): SpokenSoundCueResult;
+  /** Saves a resolved cue on the chapter, with everything else on it unchanged. */
+  place(cue: SoundCueAttachment): Promise<void>;
 }
 
 /**
@@ -300,6 +316,8 @@ export function HarnessReaderSession({
   const pageOpen = layer?.kind === 'page';
   // Create mode: the reader authors the chapter on screen in place. It closes when another chapter opens.
   const [creating, setCreating] = useState(false);
+  // Create mode's page, for Sound Cues asked for in words: they read and join it, never a separate save.
+  const authoringHandle = useRef<ChapterAuthoringHandle>(null);
   useLayoutEffect(() => {
     if (!pageOpen) return undefined;
     window.scrollTo?.({ top: 0 });
@@ -424,6 +442,35 @@ export function HarnessReaderSession({
     return () => window.clearTimeout(dim);
   }, [passageTarget, pageOpen, chapter?.id]);
 
+  const chapterWriting = writer.writing;
+  // A cue placed in words: from the chapter as saved and what Listen is reading now, never a stale render.
+  const listenedLine = useRef(readAloud.line);
+  listenedLine.current = reading ? readAloud.line : undefined;
+  const sounds = useMemo((): ReaderSoundAuthoring | undefined => {
+    // Only in Create mode, on the newest chapter before anything is built on it.
+    if (!creating || !chapter || chapterWriting || latestStoryChapter(state, storyId)?.id !== chapter.id || chapterRewriteGap(state, storyId)) return undefined;
+    const media = chapter.mediaLoadout.soundCues.length ? chapter.mediaLoadout : controller.describeStoryMedia(chapter.storyId) ?? chapter.mediaLoadout;
+    const page = () => authoringHandle.current;
+    return {
+      chapterNumber: chapter.chapterNumber,
+      soundWords: soundVocabulary(media).map(sound => sound.word),
+      resolve: (sound, target) => {
+        const authoring = page();
+        if (!authoring) return { ok: false, problem: 'Open Create mode to add sounds.' };
+        const line = listenedLine.current;
+        return resolveSpokenSoundCue({
+          blocks: authoring.blocks(), soundCues: authoring.soundCues(), media, chapterNumber: chapter.chapterNumber, sound, target,
+          listening: line?.blockId ? { blockId: line.blockId, start: line.start, end: line.end } : undefined, locale: language,
+        });
+      },
+      place: async cue => {
+        const authoring = page();
+        if (!authoring) throw new Error('Open Create mode to add sounds.');
+        await authoring.addSoundCue(cue);
+      },
+    };
+  }, [chapter, chapterWriting, controller, creating, language, state, storyId]);
+
   if (!story) return <p role="alert" className="p-4 text-sm text-amber-200">This story is no longer available.</p>;
   if (!readerState) return <main className="mx-auto w-full max-w-3xl px-4 py-6"><p role="status" className="text-sm text-neutral-400">Opening your place in the story…</p></main>;
 
@@ -447,7 +494,7 @@ export function HarnessReaderSession({
 
   const panel = layer?.kind === 'panel' ? layer.id : undefined;
   return <>
-    {renderHostTools?.({ chapterId: chapter?.id ?? 'no-chapter', busy: covered, interruptPlayback: readAloud.interrupt })}
+    {renderHostTools?.({ chapterId: chapter?.id ?? 'no-chapter', busy: covered, interruptPlayback: readAloud.interrupt, createMode: sounds && { sounds } })}
     {/* The frame fills the screen; on laptops a panel sits at the right and the frame shrinks beside it.
         A right-to-left story mirrors the frame: its text, the chapter arrows and the bars' ends. */}
     <div dir={direction} className={`reader-frame transition-[padding] duration-200 motion-reduce:transition-none ${panel ? 'lg:pr-[28rem]' : ''}`} data-panel={panel}>
@@ -461,7 +508,7 @@ export function HarnessReaderSession({
       {storageError && <p role="alert" className="mt-3 text-sm text-amber-300">{storageError}</p>}
 
       {authoring
-        ? <ChapterAuthoring key={chapter.id} chapter={chapter} controller={controller} locale={story.originalLanguage} text={text} articleRef={articleRef} />
+        ? <ChapterAuthoring key={chapter.id} handle={authoringHandle} chapter={chapter} controller={controller} locale={story.originalLanguage} text={text} articleRef={articleRef} />
         : chapter
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
             highlight={highlight} reading={reading} text={text} />

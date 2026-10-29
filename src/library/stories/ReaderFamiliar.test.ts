@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
-import { readerFamiliarContext } from './ReaderFamiliar';
+import type { SoundCueAttachment } from '@seihouse/sen/audio';
+import { matchFamiliarCommand } from '../familiars/helper';
+import { createModeFamiliarContext, readerFamiliarContext } from './ReaderFamiliar';
 
 const tools = { chapterId: 'no-chapter', busy: false, interruptPlayback: () => () => {} };
 async function setup() {
@@ -34,5 +36,32 @@ describe('Reader actions for the Familiar', () => {
     const stale = readerFamiliarContext(snapshot, story.id, controller, tools);
     await expect(stale.actions[0].run('')).rejects.toThrow('next chapter changed');
     expect(readerFamiliarContext(controller.snapshot(), story.id, controller, { ...tools, busy: true }).actions).toHaveLength(0);
+  });
+  it('keeps Fate in the Reader and Sound Cues in Create mode, never guessing a sound', async () => {
+    const { controller, story } = await setup();
+    expect(readerFamiliarContext(controller.snapshot(), story.id, controller, tools).actions.map(action => action.id))
+      .toEqual(['worldBuilding', 'progression', 'conflict', 'custom']);
+    const cue = { anchor: { selectedText: 'whistling drafts' }, payload: { sound: 'wind', cue: { publicUrl: 'https://cdn.example/wind.mp3' } } } as SoundCueAttachment;
+    const resolve = vi.fn(() => ({ ok: true as const, cue, paragraph: 0, occurrences: 2 }));
+    const place = vi.fn(async () => {});
+    const playCue = vi.fn();
+    const context = createModeFamiliarContext({ chapterNumber: 8, soundWords: ['wind', 'blade clash'], resolve, place }, undefined, playCue);
+    expect(context.actions.map(action => action.id)).toEqual(['sound']);
+    expect(context.title).toBe('Create mode');
+    const said = matchFamiliarCommand(context.actions, 'Add a howling wind sound on whistling drafts.')!;
+    const sound = context.actions.find(action => action.id === said.actionId)!;
+    expect(sound.check!(said.input)).toBeUndefined();
+    expect(resolve).toHaveBeenLastCalledWith('wind', { kind: 'words', words: 'whistling drafts' });
+    expect(sound.describe(said.input)).toBe('Chapter 8: “wind” on “whistling drafts”, paragraph 1. Those words appear 2 times in this chapter.');
+    sound.preview!(said.input);
+    expect(playCue).toHaveBeenCalledExactlyOnceWith('https://cdn.example/wind.mp3');
+    // What was reviewed is placed, even if the request would now resolve elsewhere.
+    const prepared = sound.prepare!(said.input);
+    const later = { ...cue, anchor: { ...cue.anchor, selectedText: 'a later sentence' } } as SoundCueAttachment;
+    resolve.mockReturnValue({ ok: true as const, cue: later, paragraph: 3, occurrences: 1 });
+    await sound.run(said.input, prepared);
+    expect(place).toHaveBeenCalledExactlyOnceWith(cue);
+    expect(sound.check!('thunder on the sky')).toBe('Which sound? This story\'s sounds are: wind, blade clash.');
+    expect(context.hint).toContain('“Add wind right there” while listening');
   });
 });

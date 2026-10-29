@@ -53,6 +53,8 @@ export interface UserProfile {
   familiarSize?: number;
   /** The Familiar waits in the header until called; off (the default), it floats over the page. */
   familiarInHeader?: boolean;
+  /** Live talk with the Familiar (beta); off (the default), it listens with the device voice. */
+  familiarLiveTalk?: boolean;
   /** The account's UI language. Distinct from the reading language. */
   interfaceLanguage: SenLanguageCode;
   /** The language Reader Chamber displays by default; never story canon. */

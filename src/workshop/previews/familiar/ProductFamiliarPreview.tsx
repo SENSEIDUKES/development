@@ -11,7 +11,7 @@ import { getPreviewScenario } from '../user-profile/previewData';
 import { DEFAULT_USER_PROFILE_PREVIEW_STATE, type UserProfilePreviewState } from '../user-profile/previewStates';
 import './productFamiliarPreview.css';
 
-type Selection = { uid: string | null; familiarId?: string; familiarSize?: number; familiarInHeader?: boolean };
+type Selection = { uid: string | null; familiarId?: string; familiarSize?: number; familiarInHeader?: boolean; familiarLiveTalk?: boolean };
 const SelectionContext = createContext<{ selection: Selection; reportProfile: (selection: Selection) => void; minimized: boolean; setMinimized: (minimized: boolean) => void } | null>(null);
 const SurfaceContext = createContext(false);
 export const PREVIEW_FAMILIAR_ID = defaultFamiliar.definition.id;
@@ -24,7 +24,7 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
   const parent = useContext(SelectionContext);
   const [minimized, setMinimized] = useState(initiallyMinimized);
   const [voice] = useState(createFamiliarBrowserVoice);
-  // As in the app: live talk where the server offers it (real provider credit), the device voice otherwise.
+  // As in the app: live talk when the profile turns it on and the server offers it (real provider credit), the device voice otherwise.
   const live = useFamiliarGeminiLive();
   const [selection, reportProfile] = useState<Selection>(() => ({
     uid: getPreviewScenario(initialState).currentUser?.uid ?? null,
@@ -44,7 +44,7 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
     <LoadingFamiliarProvider value={loadingFamiliar}>
       <EnergyClientProvider client={client}>
         {/* The app's Familiar panel (Explain and Action), with Home's topics, as in the app. */}
-        <FamiliarHelperProvider voice={voice} live={live} familiar={{ name: loadingFamiliar.familiar.displayName, description: loadingFamiliar.familiar.description }}>
+        <FamiliarHelperProvider voice={voice} live={selection.familiarLiveTalk ? live : undefined} familiar={{ name: loadingFamiliar.familiar.displayName, description: loadingFamiliar.familiar.description }}>
           <FamiliarPlace title="Home" help="library" />
           <WorkspaceHeaderAccessoryProvider accessory={<ProductFamiliarRecall />}>{children}</WorkspaceHeaderAccessoryProvider>
         </FamiliarHelperProvider>

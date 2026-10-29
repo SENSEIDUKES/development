@@ -75,10 +75,44 @@ describe('Familiar live talk in the browser', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const refused = events();
     live(respond(502, { error: 'Your Familiar could not start talking. Try again.' })).start(brief, refused);
-    await vi.waitFor(() => expect(refused.ended).toHaveBeenCalledWith(undefined, true));
+    await vi.waitFor(() => expect(refused.ended).toHaveBeenCalledWith('Live talk could not start: server 502, Your Familiar could not start talking. Try again.', true));
     const spent = events();
     live(respond(429, {})).start(brief, spent);
     await vi.waitFor(() => expect(spent.ended).toHaveBeenCalledWith(expect.stringContaining('talked enough for today'), true));
+  });
+
+  it('asks for the microphone during the tap itself, before the server answers', () => {
+    const asked = vi.fn(async () => ({ getTracks: () => [track] }) as unknown as MediaStream);
+    const fetch = vi.fn(() => new Promise<Response>(() => {}));
+    createFamiliarGeminiLive({ fetch, WebSocket: Socket as unknown as typeof WebSocket, AudioContext: Audio as unknown as typeof AudioContext, getUserMedia: asked })
+      .start(brief, events());
+    expect(asked).toHaveBeenCalledOnce();
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
+  it('opens a typed conversation without ever asking for the microphone', async () => {
+    const asked = vi.fn();
+    const handlers = events();
+    const session = createFamiliarGeminiLive({ fetch: respond(200, { token: 't', setup: {} }), WebSocket: Socket as unknown as typeof WebSocket,
+      AudioContext: Audio as unknown as typeof AudioContext, getUserMedia: asked }).start(brief, handlers, { microphone: false });
+    await vi.waitFor(() => expect(Socket.last?.url).toContain('access_token=t'));
+    const socket = Socket.last;
+    socket.open();
+    socket.message({ setupComplete: {} });
+    expect(handlers.connected).toHaveBeenCalled();
+    session.send('What is energy?');
+    expect(socket.sent).toContainEqual({ realtimeInput: { text: 'What is energy?' } });
+    expect(socket.sent.some(message => JSON.stringify(message).includes('"audio"'))).toBe(false);
+    expect(asked).not.toHaveBeenCalled();
+    session.end();
+  });
+
+  it('says exactly why live talk could not start, in the server\'s and Gemini\'s words', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const handlers = events();
+    live(respond(502, { error: 'Your Familiar could not start talking. Try again.', detail: 'field_mask is invalid' })).start(brief, handlers);
+    await vi.waitFor(() => expect(handlers.ended).toHaveBeenCalledWith(
+      'Live talk could not start: server 502, Your Familiar could not start talking. Try again. (field_mask is invalid)', true));
   });
 
   it('opens Gemini with the server\'s token and setup, streams the microphone, plays and captions the Familiar, and answers its requests', async () => {
@@ -126,7 +160,7 @@ describe('Familiar live talk in the browser', () => {
     const handlers = events();
     createFamiliarGeminiLive({ fetch: respond(200, { token: 't', setup: {} }), WebSocket: Socket as unknown as typeof WebSocket,
       AudioContext: Audio as unknown as typeof AudioContext, getUserMedia: async () => { throw new Error('denied'); } }).start(brief, handlers);
-    await vi.waitFor(() => expect(handlers.ended).toHaveBeenCalledWith('Allow the microphone to talk with your Familiar.', false));
+    await vi.waitFor(() => expect(handlers.ended).toHaveBeenCalledWith('Allow the microphone to talk with your Familiar. (denied)', false));
     vi.stubGlobal('AudioWorkletNode', WorkletNode);
     vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:capture') }));
     const dropped = events();
@@ -136,6 +170,6 @@ describe('Familiar live talk in the browser', () => {
     Socket.last.open();
     Socket.last.message({ setupComplete: {} });
     Socket.last.onclose!({ code: 1011, reason: '' });
-    expect(dropped.ended).toHaveBeenCalledWith('Your Familiar stopped talking.', false);
+    expect(dropped.ended).toHaveBeenCalledWith('Your Familiar stopped talking. (1011)', false);
   });
 });

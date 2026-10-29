@@ -1124,6 +1124,13 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(companion()).toBeNull();
     expect(recall('Phoenix')).toBeTruthy();
     expect(recall('Quill')).toBeNull();
+    // Live talk (beta): off by default, so the Familiar listens the usual way; on, it is kept on the device.
+    const liveTalk = () => cave()!.querySelectorAll<HTMLInputElement>('.familiar-header-switch')[1];
+    expect(liveTalk().closest('.familiar-size-control')!.textContent).toContain('Live talk (beta)');
+    expect(liveTalk().checked).toBe(false);
+    await act(async () => { liveTalk().click(); });
+    await flush(10);
+    expect(services.profile.read().familiarLiveTalk).toBe(true);
   });
 
   it('translates the interface across all 30 languages in Settings, previews during confirmation, reverts on cancel, and persists when kept', async () => {

@@ -112,7 +112,8 @@ export interface FamiliarLiveSession {
 
 /** Live talk: the Familiar hears and answers in its own voice until the reader hangs up. Replaceable, like `FamiliarVoice`. */
 export interface FamiliarLive {
-  start(brief: FamiliarLiveBrief, events: FamiliarLiveEvents): FamiliarLiveSession;
+  /** `microphone: false` opens a typed conversation: the Familiar answers aloud but never listens. */
+  start(brief: FamiliarLiveBrief, events: FamiliarLiveEvents, options?: { microphone?: boolean }): FamiliarLiveSession;
 }
 
 export interface FamiliarHelperState {
@@ -124,8 +125,8 @@ export interface FamiliarHelperState {
   topicId?: string;
   proposal?: { actionId: string; input: string; summary: string; contextKey: string; prepared?: unknown };
   message: string;
-  /** A live conversation under way: connecting, then on. */
-  live?: { status: 'connecting' | 'on' };
+  /** A live conversation under way: connecting, then on; `listening` when it hears the microphone, not only typing. */
+  live?: { status: 'connecting' | 'on'; listening: boolean };
   /** What was said with the Familiar this visit, oldest first, so the reader can read it back. Never saved. */
   chat: readonly FamiliarChatLine[];
   /** Typed while a conversation was connecting that never reached it: handed back to the reader to send again. */
@@ -194,6 +195,9 @@ export class FamiliarHelperController {
   /** The equipped Familiar's name, for the conversation. */
   get name() { return this.identity.name; }
   private addLine(line: FamiliarChatLine) {
+    // The same note twice in a row says nothing new.
+    const last = this.state.chat.at(-1);
+    if (line.speaker === 'note' && last?.speaker === 'note' && last.text === line.text) return this.state.chat.length - 1;
     const chat = [...this.state.chat, line];
     const dropped = Math.max(0, chat.length - CHAT_LINES);
     for (const speaker of ['reader', 'familiar'] as const) {
@@ -474,9 +478,18 @@ export class FamiliarHelperController {
    * the device voice listens instead.
    */
   talk = () => {
-    if (this.liveRun) { this.hangUp(); return; }
+    // A typed conversation hears the microphone from here on; one that already does hangs up.
+    if (this.liveRun) {
+      const listening = this.state.live?.listening;
+      this.hangUp();
+      if (listening) return;
+    }
+    this.startLive(true);
+  };
+  /** Opens a live conversation: with the microphone, or typed only. */
+  private startLive(listening: boolean) {
     const context = this.context;
-    if (!this.live || !context || this.state.phase === 'saving') { this.listen(); return; }
+    if (!this.live || !context || this.state.phase === 'saving') { if (listening) this.listen(); return; }
     this.silence();
     this.spoken = false;
     this.interrupt();
@@ -485,8 +498,9 @@ export class FamiliarHelperController {
     const current = () => this.liveRun === run;
     this.openTurn = {};
     this.typedAhead = [];
-    this.addLine({ speaker: 'note', text: `Talking on ${context.title}` });
-    this.update({ live: { status: 'connecting' }, phase: this.state.proposal ? 'review' : 'ready', message: '' });
+    // Where this conversation's lines begin, so its note comes before anything typed while it connected.
+    const begins = this.state.chat.length;
+    this.update({ live: { status: 'connecting', listening }, phase: this.state.proposal ? 'review' : 'ready', message: '' });
     const brief: FamiliarLiveBrief = {
       familiar: this.identity,
       place: context.title,
@@ -498,6 +512,10 @@ export class FamiliarHelperController {
       connected: () => {
         if (!current() || !this.state.live) return;
         this.update({ live: { ...this.state.live, status: 'on' } });
+        const note: FamiliarChatLine = { speaker: 'note', text: `Talking on ${context.title}` };
+        const at = Math.min(begins, this.state.chat.length);
+        const before = this.state.chat[at - 1];
+        if (before?.speaker !== 'note' || before.text !== note.text) this.update({ chat: [...this.state.chat.slice(0, at), note, ...this.state.chat.slice(at)] });
         const typed = this.typedAhead;
         this.typedAhead = [];
         for (const text of typed) this.liveSession?.send(text);
@@ -517,12 +535,12 @@ export class FamiliarHelperController {
           this.addLine({ speaker: 'note', text: 'Not sent: your Familiar could not connect.' });
           this.update({ unsent: unsent.join('\n') });
           this.release(true);
-        } else if (unavailable) this.listen();
+        } else if (unavailable && listening) this.listen();
         else this.release(true);
       },
-    });
+    }, { microphone: listening });
     if (current()) this.liveSession = session; else session.end();
-  };
+  }
   /**
    * A typed message to the Familiar, from the conversation view: sent into the
    * live conversation, which starts if none is under way.
@@ -531,7 +549,7 @@ export class FamiliarHelperController {
     const message = text.trim();
     if (!message || !this.live) return;
     this.openTurn = {};
-    if (!this.liveRun) this.talk();
+    if (!this.liveRun) this.startLive(false);
     if (!this.liveRun) return;
     this.addLine({ speaker: 'reader', text: message });
     if (this.state.live?.status === 'on') this.liveSession?.send(message);

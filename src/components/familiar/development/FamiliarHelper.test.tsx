@@ -166,7 +166,7 @@ describe('Familiar helper surface', () => {
       <Screen context={t.context} /><FamiliarHelperAction />
     </FamiliarHelperProvider></StrictMode>));
     await click('Talk to Familiar');
-    expect(live.start).toHaveBeenCalledWith(expect.objectContaining({ familiar: { name: 'Celestial Guardian', description: 'A fox.' }, place: 'Fate' }), expect.anything());
+    expect(live.start).toHaveBeenCalledWith(expect.objectContaining({ familiar: { name: 'Celestial Guardian', description: 'A fox.' }, place: 'Fate' }), expect.anything(), { microphone: true });
     expect(t.voice.listen).not.toHaveBeenCalled();
     expect(document.body.textContent).toContain('Connecting…');
     act(() => events!.connected());

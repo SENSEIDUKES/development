@@ -23,8 +23,8 @@ const READER_BOTTOM = 136;
  * Reader Settings (the Library hands it over), and summoned it floats above the Reader's
  * bottom bar. It sits under the economy's providers: its Energy panel reads
  * the reader's account. `place` is the page, for the Familiar's Explain.
- * Where the server offers live talk, its microphone starts a live
- * conversation with the equipped Familiar.
+ * With Settings → Familiar → Live talk (beta) on, and where the server offers
+ * it, its microphone starts a live conversation with the equipped Familiar.
  */
 export function AppFamiliar({ profile, present, reading = false, place, boundaryRef, children }: { profile: UserProfile; present: boolean; reading?: boolean; place: { title: string; help: FamiliarHelpPlace }; boundaryRef?: RefObject<HTMLElement | null>; children: ReactNode }) {
   const inHeader = profile.familiarInHeader ?? false;
@@ -37,7 +37,7 @@ export function AppFamiliar({ profile, present, reading = false, place, boundary
   const clearance = useLibraryBottomClearance();
   const bottomInset = reading ? READER_BOTTOM : clearance ? clearance + BOTTOM_GAP : 0;
   const recall = present && minimized ? <FamiliarRecall key={familiar.id} familiar={familiar} onRecall={() => setMinimized(false)} /> : null;
-  return <FamiliarHelperProvider voice={voice} live={live} familiar={{ name: familiar.displayName, description: familiar.description }} bottomInset={bottomInset}><WorkspaceHeaderAccessoryProvider accessory={recall}>
+  return <FamiliarHelperProvider voice={voice} live={profile.familiarLiveTalk ? live : undefined} familiar={{ name: familiar.displayName, description: familiar.description }} bottomInset={bottomInset}><WorkspaceHeaderAccessoryProvider accessory={recall}>
     <FamiliarPlace title={place.title} help={place.help} />
     {children}
     {present && <FamiliarCompanion key={familiar.id} familiar={familiar} size={profile.familiarSize}

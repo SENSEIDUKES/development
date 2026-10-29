@@ -18,7 +18,7 @@ function setup() {
     { id: 'conflict', label: 'Conflict', phrases: ['conflict'], describe: () => 'A rival arrives.', success: 'Saved.', run },
     { id: 'custom', label: 'Custom', phrases: ['custom'], input: { label: 'Direction', maxLength: 1200 }, describe: text => text, success: 'Saved.', run },
   ];
-  const context: FamiliarHelperContext = { key: 'story:next-2', title: 'Fate', hint: 'Choose a path.', actions, interrupt: () => release };
+  const context: FamiliarHelperContext = { key: 'story:next-2', title: 'Fate', hint: 'Choose a path.', topics: [], actions, interrupt: () => release };
   const helper = new FamiliarHelperController(voice);
   const owner = Symbol();
   helper.setContext(owner, context);
@@ -121,7 +121,7 @@ describe('global Familiar interaction', () => {
     const t = setup();
     const settings = Symbol();
     const run = vi.fn(async () => {});
-    t.helper.setContext(settings, { key: 'settings', title: 'Settings', hint: 'Say Larger text.', actions: [
+    t.helper.setContext(settings, { key: 'settings', title: 'Settings', hint: 'Say Larger text.', topics: [], actions: [
       { id: 'larger', label: 'Larger text', phrases: ['larger text'], describe: () => 'Increase text size.', success: 'Text enlarged.', run },
     ] });
     t.helper.clearContext(t.owner);
@@ -159,5 +159,33 @@ describe('global Familiar interaction', () => {
     t.helper.suspend();
     expect(t.release).toHaveBeenCalledWith(false);
     expect(t.helper.getSnapshot().open).toBe(false);
+  });
+  it('explains in Explain mode without proposing anything, and switches modes by voice', () => {
+    const t = setup();
+    t.helper.setContext(t.owner, { ...t.context, topics: [{ id: 'fate', label: 'Fate', phrases: ['fate', 'what is fate'], explanation: 'Fate decides the next chapter.' }] });
+    t.helper.open(true);
+    expect(t.helper.getSnapshot().mode).toBe('action');
+    t.heard('explain');
+    expect(t.helper.getSnapshot().mode).toBe('explain');
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Say Fate.', 'en-US', expect.any(Function), expect.any(Function));
+    t.spoken();
+    t.heard('What is Fate?');
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Fate decides the next chapter.', 'en-US', expect.any(Function), expect.any(Function));
+    t.spoken();
+    // An action's name explains nothing in Explain mode, and never runs.
+    t.heard('conflict');
+    expect(t.helper.getSnapshot().proposal).toBeUndefined();
+    expect(t.run).not.toHaveBeenCalled();
+    t.spoken();
+    t.heard('action');
+    expect(t.helper.getSnapshot()).toMatchObject({ mode: 'action', message: 'Choose a path.' });
+  });
+  it('says when a place has nothing to explain or do yet', () => {
+    const t = setup();
+    t.helper.setContext(t.owner, { ...t.context, actions: [] });
+    t.helper.open();
+    expect(t.helper.getSnapshot().message).toBe('Nothing to do here yet.');
+    t.helper.setMode('explain');
+    expect(t.helper.getSnapshot().message).toBe('Nothing to explain here yet.');
   });
 });

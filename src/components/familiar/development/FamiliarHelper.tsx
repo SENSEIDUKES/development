@@ -72,6 +72,11 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
       <span>Familiar <span className="familiar-helper-context">{state.context?.title}</span></span>
       <button type="button" className="familiar-panel-button" aria-label="Close Familiar helper" disabled={busy} onClick={helper.close}><X size={18} aria-hidden /></button>
     </div>
+    <div className="familiar-helper-modes" role="group" aria-label="Familiar mode">
+      {(['explain', 'action'] as const).map(mode => <button type="button" key={mode} aria-pressed={state.mode === mode}
+        disabled={busy || Boolean(state.proposal)} onClick={() => { helper.useText(); setTyping(false); helper.setMode(mode); }}>
+        {mode === 'explain' ? 'Explain' : 'Action'}</button>)}
+    </div>
     <p role="status" aria-live="polite" className="familiar-helper-status">{state.message}</p>
     {state.proposal ? <>
       <p id="familiar-proposal" className="familiar-helper-proposal">{state.proposal.summary}</p>
@@ -83,7 +88,9 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
       </div>
     </> : state.context && <>
       <div className="familiar-helper-choices">
-        {state.context.actions.map(action =>
+        {state.mode === 'explain' ? state.context.topics.map(topic =>
+          <button type="button" key={topic.id} disabled={busy} onClick={() => { helper.useText(); helper.submit(topic.phrases[0]); }}>{topic.label}</button>)
+        : state.context.actions.map(action =>
           <button type="button" key={action.id} disabled={busy} onClick={() => {
             helper.useText();
             if (action.input) { setTyping(true); setText(`${action.phrases[0]}: `); }
@@ -99,10 +106,10 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
       </form> : null}
     </>}
     <div className="familiar-helper-input-actions">
-    {!state.proposal && !typing && Boolean(state.context?.actions.length) && <button type="button" onClick={() => { helper.useText(); setTyping(true); }}>Type instead</button>}
-    {Boolean(state.context?.actions.length) && <button type="button" className="familiar-helper-mic" disabled={busy || state.phase === 'listening' || state.phase === 'speaking'}
-      onClick={helper.listen}><Mic size={16} aria-hidden />{state.proposal ? 'Speak Confirm or Cancel' : 'Speak a command'}</button>}
+    {!state.proposal && !typing && Boolean(state.context) && <button type="button" onClick={() => { helper.useText(); setTyping(true); }}>Type instead</button>}
+    <button type="button" className="familiar-helper-mic" disabled={busy || state.phase === 'listening' || state.phase === 'speaking'}
+      onClick={helper.listen}><Mic size={16} aria-hidden />{state.proposal ? 'Speak Confirm or Cancel' : 'Speak'}</button>
     </div>
-    <p className="familiar-helper-footnote">Voice commands in English. Touch and typing are also available.</p>
+    <p className="familiar-helper-footnote">Voice commands in English; say Explain or Action to switch. Touch and typing are also available.</p>
   </div>, document.body);
 }

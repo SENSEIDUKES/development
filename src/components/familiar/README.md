@@ -207,27 +207,14 @@ replies, a second story store or a new generation endpoint.
   interpret general questions or translate text. Speech language is an explicit
   provider setting; localized phrases and UI remain future work.
 
-### Sound Cues by voice — 2026-10-29
+### Explain and Action — 2026-10-29
 
-The second Reader action, toward the Familiar as the accessibility guide: a
-reader who cannot hold or touch the phone adds Sound Cues to the newest chapter
-by speaking (typing and touch still work).
-
-- **"Add wind on whistling drafts."** The sound must be one of the story's Sound
-  Words; "a howling wind sound" finds "wind" inside it, and a sound the story does
-  not have is never guessed: the Familiar lists the story's sounds instead. SEN
-  finds the words in the chapter (the next appearance from where Listen is) and
-  makes the same manual Sound Cue a highlight would.
-- **"Add blade clash right there"** while listening: the cue sits on the last
-  three words of the part of the sentence Listen was reading when the Familiar
-  was opened. Listen knows the part being read, not the exact word.
-- The readback names the sound, the words and the paragraph; **Hear it** plays the
-  recording before Confirm. Problems ("I can't find…", "already has a Sound Cue")
-  and the success are spoken in a voice session, which listens again after a
-  problem, so the whole exchange works with eyes closed.
-- `parseReaderSoundCommand` (`src/library/stories/readerSoundCommand.ts`) reads the
-  request; `FamiliarHelperAction` gains optional `check` and `preview`. Nothing
-  calls a model.
+The Familiar has two modes everywhere: **Explain** (never changes anything) and
+**Action** (confirmed before it applies). Each place fills them in: the Reader's
+Action is Fate; Create mode's Action is its Highlight Engine commands, only while
+Create mode is open (Sound Cues: "Add wind on whistling drafts", or "Add wind right
+there" while listening, with Hear it before Confirm). Explain is empty until each
+place's explanations are written. Say "Explain" or "Action" to switch.
 
 Tap the microphone once to begin. Recognition stops before the fixed readback,
 then listens once for Confirm or Cancel. Touch and typing follow the same review
@@ -356,10 +343,8 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
-- 2026-10-29: Sound Cues by voice on the newest chapter ("Add wind on whistling
-  drafts", "Add wind right there" while listening), with Hear it before Confirm.
-  Voice sessions now also hear problems and the success. App and Workshop Reader
-  share it through the same `ReaderFamiliar`.
+- 2026-10-29: Explain and Action modes. Sound Cues by voice in Create mode, with
+  Hear it before Confirm; voice sessions also hear problems and the success.
 
 - 2026-10-16: Added the optional global helper foundation and its first Reader
   action: review and save one of the four existing Fate choices using voice,

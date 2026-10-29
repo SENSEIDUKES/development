@@ -490,15 +490,19 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(buttonBy(byLabel('Chapter controls'))!.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('places a Sound Cue asked for in words on the newest chapter: on what Listen just read, or on named words', async () => {
+  it('places a Sound Cue asked for in words in Create mode: on what Listen just read, or on named words', async () => {
+    // Create mode's overlay measures the page as it changes size.
+    vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
     const { controller, storyId } = await story({ written: 2 });
     let tools: ReaderHostTools | undefined;
     await mount(<Host controller={controller} storyId={storyId} readerPreferences={memory().storage} readAloudVoices={PICKS}
       renderHostTools={current => { tools = current; return null; }} />);
-    // Chapter 1 is sealed: nothing can be placed on it.
-    expect(tools?.sounds).toBeUndefined();
+    // Chapter 1 is sealed, and Create mode is closed: no Create mode commands.
+    expect(tools?.createMode).toBeUndefined();
     await click(byLabel('Next Chapter'), 'Next Chapter');
-    const sounds = tools!.sounds!;
+    expect(tools?.createMode).toBeUndefined();
+    await click(byLabel('Create mode'), 'Create mode');
+    const sounds = tools!.createMode!.sounds;
     expect(sounds.chapterNumber).toBe(2);
     const sound = sounds.soundWords[0];
     // Before Listen, "right there" has nowhere to go.
@@ -506,19 +510,22 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     await click(button => button.textContent?.trim() === 'Listen', 'Listen');
     await next();
     expect(lastSpoken().text).toBe('A keeper waited on the causeway with a lantern.');
-    const heard = tools!.sounds!.resolve(sound, { kind: 'just-read' });
+    const heard = tools!.createMode!.sounds.resolve(sound, { kind: 'just-read' });
     expect(heard).toMatchObject({ ok: true, paragraph: 0, cue: { anchor: { blockId: 'c2-p1', selectedText: 'with a lantern' }, payload: { origin: 'manual', sound } } });
     if (!heard.ok) return;
-    await act(async () => { await tools!.sounds!.place(heard.cue); });
-    const named = tools!.sounds!.resolve(sound, { kind: 'words', words: 'the name the city' });
+    await act(async () => { await tools!.createMode!.sounds.place(heard.cue); });
+    const named = tools!.createMode!.sounds.resolve(sound, { kind: 'words', words: 'the name the city' });
     expect(named).toMatchObject({ ok: true, paragraph: 1, cue: { anchor: { blockId: 'c2-p2', selectedText: 'the name the city' } } });
     if (!named.ok) return;
-    await act(async () => { await tools!.sounds!.place(named.cue); });
+    await act(async () => { await tools!.createMode!.sounds.place(named.cue); });
     const saved = controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 2)!;
     expect(saved.soundCues?.map(cue => cue.anchor.selectedText)).toEqual(['with a lantern', 'the name the city']);
     expect(saved.paragraphs).toEqual(controller.snapshot().chapters[1].paragraphs);
     // The same words cannot hold a second cue.
-    expect(tools!.sounds!.resolve(sound, { kind: 'words', words: 'a lantern' })).toMatchObject({ ok: false, problem: expect.stringContaining('already has a Sound Cue') });
+    expect(tools!.createMode!.sounds.resolve(sound, { kind: 'words', words: 'a lantern' })).toMatchObject({ ok: false, problem: expect.stringContaining('already has a Sound Cue') });
+    // Leaving Create mode takes its commands away.
+    await click(byLabel('Create mode'), 'Back to reading');
+    expect(tools?.createMode).toBeUndefined();
   });
 
   it('reads the chapter from its title in the host\'s voices, lighting the sentence being spoken', async () => {
@@ -1097,9 +1104,9 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     await click(byLabel('Next Chapter'), 'Next Chapter');
     await click(byLabel('Create mode'), 'Create mode');
     expect(container.querySelector('[data-testid="create-mode-no-cues"]')).toBeTruthy();
-    const placed = tools!.sounds!.resolve(tools!.sounds!.soundWords[0], { kind: 'words', words: 'with a lantern' });
+    const placed = tools!.createMode!.sounds.resolve(tools!.createMode!.sounds.soundWords[0], { kind: 'words', words: 'with a lantern' });
     if (!placed.ok) throw new Error(placed.problem);
-    await act(async () => { await tools!.sounds!.place(placed.cue); });
+    await act(async () => { await tools!.createMode!.sounds.place(placed.cue); });
     await flush();
     expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="create-mode-no-cues"]')).toBeNull();

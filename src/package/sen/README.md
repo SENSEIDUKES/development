@@ -7,10 +7,10 @@ case or punctuation, the next from where the reader is first), `wordsJustRead`
 which turns a story sound word and a place into the same manual Sound Cue a
 highlight places, or a plain sentence saying why not. `./audio` exports
 `soundWordRecording`, the recording rotation `placeSoundCues` already used.
-`ReaderHostTools` gains an optional `sounds` (`ReaderSoundAuthoring`) on the
-newest chapter while it can be changed: its sound words, `resolve` (with what
+`ReaderHostTools` gains an optional `createMode.sounds` (`ReaderSoundAuthoring`),
+present only while Create mode is open: its sound words, `resolve` (with what
 Listen is reading) and `place`, which saves through `authorChapter` and reopens
-an open Create mode with the cue.
+Create mode with the cue.
 
 **Unreleased (2026-10-28, breaking):** `./reader-codex` no longer exports the
 older Codex page: `ReaderCodex` (and its `extraPages`), `CodexSheetOverlay`,

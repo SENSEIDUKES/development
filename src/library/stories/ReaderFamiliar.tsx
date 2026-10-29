@@ -39,15 +39,27 @@ function soundAction(sounds: ReaderSoundAuthoring, playCue?: (url: string) => vo
   };
 }
 
-/** The Reader supplies Fate actions to the global helper; saving still belongs to SEN. */
-export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: string, controller: HarnessGenerationController, tools: ReaderHostTools, playCue?: (url: string) => void): FamiliarHelperContext {
+/** Create mode: the Highlight Engine's commands (Sound Cues so far), only while it is open. Nothing to explain yet. */
+export function createModeFamiliarContext(sounds: ReaderSoundAuthoring, interrupt: FamiliarHelperContext['interrupt'], playCue?: (url: string) => void): FamiliarHelperContext {
+  const example = sounds.soundWords[0] ?? 'wind';
+  return {
+    key: JSON.stringify(['create-mode', sounds.chapterNumber, sounds.soundWords]),
+    title: `Create mode · Chapter ${sounds.chapterNumber}`,
+    topics: [],
+    actions: [soundAction(sounds, playCue)],
+    hint: `To add a sound, say “Add ${example} on” and its words, or “Add ${example} right there” while listening.`,
+    interrupt,
+  };
+}
+
+/** The Reader: Fate actions to the global helper (saving still belongs to SEN). Nothing to explain yet. */
+export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: string, controller: HarnessGenerationController, tools: ReaderHostTools): FamiliarHelperContext {
   const story = state.stories.find(entry => entry.id === storyId);
   const next = story?.head.nextChapterNumber;
   const chapters = state.chapters.filter(chapter => chapter.storyId === storyId).sort((a, b) => b.chapterNumber - a.chapterNumber);
   const ideas = chapters.find(chapter => chapter.rhythm?.nextChapterSuggestions)?.rhythm?.nextChapterSuggestions ?? {};
   const blocked = tools.busy || !story || Boolean(story.conclusion);
-  const sounds = tools.sounds;
-  const key = JSON.stringify([storyId, tools.chapterId, next, blocked, ideas, sounds?.soundWords ?? null]);
+  const key = JSON.stringify([storyId, tools.chapterId, next, blocked, ideas]);
   const save = async (choice: ChapterDirectionChoice) => {
     const current = controller.snapshot();
     const currentStory = current.stories.find(entry => entry.id === storyId);
@@ -59,7 +71,7 @@ export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: str
     await controller.chooseChapterDirection(storyId, choice);
   };
   const success = `Path saved for Chapter ${next}.`;
-  const fate: FamiliarHelperAction[] = blocked ? [] : [
+  const actions: FamiliarHelperAction[] = blocked ? [] : [
     ...(['worldBuilding', 'progression', 'conflict'] as const).map(chapterFunction => ({
       id: chapterFunction,
       label: CHAPTER_FUNCTION_LABELS[chapterFunction],
@@ -75,33 +87,32 @@ export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: str
       success, run: text => save({ kind: 'reader', text }),
     },
   ];
-  const actions = sounds ? [...fate, soundAction(sounds, playCue)] : fate;
-  const example = sounds?.soundWords[0] ?? 'wind';
-  const soundHint = sounds ? ` To add a sound, say “Add ${example} on” and its words, or “Add ${example} right there” while listening.` : '';
   return {
-    key, actions,
-    title: !story ? 'Reader' : !sounds ? `Fate · Chapter ${next}`
-      : blocked ? `Sounds · Chapter ${sounds.chapterNumber}` : `Sounds · Chapter ${sounds.chapterNumber} · Fate · Chapter ${next}`,
-    hint: (blocked ? 'Fate is unavailable while writing or after the story ends.'
-      : 'Say World Building, Progression, Conflict, or Custom followed by your direction.') + soundHint,
+    key, title: story ? `Fate · Chapter ${next}` : 'Reader', topics: [], actions,
+    hint: blocked ? 'Fate is unavailable while writing or after the story ends.'
+      : 'Say World Building, Progression, Conflict, or Custom followed by your direction.',
     interrupt: tools.interruptPlayback,
   };
 }
 
-/** Mounted through SEN's host slot, so the same bridge serves the app and Workshop Reader. */
+/**
+ * Mounted through SEN's host slot, so the same bridge serves the app and
+ * Workshop Reader. Where the reader is decides what the Familiar offers: the
+ * Reader's Fate, or Create mode's commands while Create mode is open.
+ */
 export function ReaderFamiliar({ state, storyId, controller, tools }: {
   state: HarnessWorkspaceState; storyId: string; controller: HarnessGenerationController; tools: ReaderHostTools;
 }) {
   const mixer = useOptionalReaderMixer();
-  const context = readerFamiliarContext(state, storyId, controller, tools, mixer ? url => { mixer.playCue(url); } : undefined);
-  useFamiliarHelperContext({
-    ...context,
-    interrupt: () => {
-      const release = tools.interruptPlayback();
-      const duck = mixer?.retainDuck();
-      duck?.setDuck(1);
-      return resume => { duck?.release(); release(resume); };
-    },
-  });
+  const interrupt = () => {
+    const release = tools.interruptPlayback();
+    const duck = mixer?.retainDuck();
+    duck?.setDuck(1);
+    return (resume: boolean) => { duck?.release(); release(resume); };
+  };
+  const create = tools.createMode;
+  useFamiliarHelperContext(create
+    ? createModeFamiliarContext(create.sounds, interrupt, mixer ? url => { mixer.playCue(url); } : undefined)
+    : { ...readerFamiliarContext(state, storyId, controller, tools), interrupt });
   return null;
 }

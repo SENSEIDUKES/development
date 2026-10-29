@@ -13,12 +13,29 @@ export interface FamiliarHelperAction {
   run(input: string): Promise<void>;
 }
 
-/** Change key when the target or available choices change, invalidating any proposal. */
+/** Something the Familiar explains where the reader is: choose or say its name to hear it. */
+export interface FamiliarTopic {
+  id: string;
+  label: string;
+  phrases: readonly string[];
+  explanation: string;
+}
+
+/** The Familiar's two modes, everywhere: Explain never changes anything; Action confirms before it does. */
+export type FamiliarMode = 'explain' | 'action';
+
+/**
+ * Where the reader is, and what the Familiar can explain and do there.
+ * Change key when the place or its choices change, invalidating any proposal.
+ */
 export interface FamiliarHelperContext {
   key: string;
   title: string;
-  hint: string;
+  /** Explain mode: what this place explains. */
+  topics: readonly FamiliarTopic[];
+  /** Action mode: what this place does, and how to ask for it. */
   actions: readonly FamiliarHelperAction[];
+  hint: string;
   /** Release only the playback this interaction interrupted. False means do not resume. */
   interrupt?(): (resume: boolean) => void;
 }
@@ -32,6 +49,7 @@ export interface FamiliarVoice {
 
 export interface FamiliarHelperState {
   open: boolean;
+  mode: FamiliarMode;
   phase: 'ready' | 'listening' | 'speaking' | 'review' | 'saving';
   context?: FamiliarHelperContext;
   proposal?: { actionId: string; input: string; summary: string; contextKey: string };
@@ -40,6 +58,8 @@ export interface FamiliarHelperState {
 
 const normalize = (text: string) => text.trim().toLocaleLowerCase('en-US').replace(/[.!?]+$/, '').trim();
 const HEAR = new Set(['hear it', 'hear', 'play it', 'play', 'preview']);
+const MODE_WORDS: Record<string, FamiliarMode> = { explain: 'explain', action: 'action', actions: 'action' };
+const NOTHING: Record<FamiliarMode, string> = { explain: 'Nothing to explain here yet.', action: 'Nothing to do here yet.' };
 /** How long a previewed sound plays before the microphone opens again. */
 const PREVIEW_MS = 2_500;
 
@@ -63,7 +83,7 @@ export function matchFamiliarCommand(actions: readonly FamiliarHelperAction[], t
 
 /** One short, cancellable interaction. Screens provide actions; adapters provide speech. */
 export class FamiliarHelperController {
-  private state: FamiliarHelperState = { open: false, phase: 'ready', message: '' };
+  private state: FamiliarHelperState = { open: false, mode: 'action', phase: 'ready', message: '' };
   private listeners = new Set<() => void>();
   private owner?: symbol;
   private context?: FamiliarHelperContext;
@@ -98,7 +118,7 @@ export class FamiliarHelperController {
     if (!changed) return;
     this.silence();
     this.release(false);
-    this.update({ context, proposal: undefined, phase: 'ready', message: this.state.open ? 'The available actions changed. Choose again.' : '' });
+    this.update({ context, proposal: undefined, phase: 'ready', message: this.state.open ? `${context.title}. ${this.hint()}` : '' });
   }
   clearContext(owner: symbol) {
     if (this.owner !== owner) return;
@@ -106,13 +126,26 @@ export class FamiliarHelperController {
     this.context = undefined;
     this.silence();
     this.release(false);
-    this.update({ context: undefined, proposal: undefined, phase: 'ready', message: 'No actions on this page yet.' });
+    this.update({ context: undefined, proposal: undefined, phase: 'ready', message: this.hint() });
   }
+  /** What to say in the current mode, here: the place's hint, its topics, or that it has none yet. */
+  private hint(mode = this.state.mode) {
+    if (mode === 'action') return this.context?.actions.length ? this.context.hint : NOTHING.action;
+    const topics = this.context?.topics ?? [];
+    return topics.length ? `Say ${topics.map(topic => topic.label).join(', ')}.` : NOTHING.explain;
+  }
+  /** Switches between Explain and Action, by touch or by saying the mode's name. */
+  setMode = (mode: FamiliarMode) => {
+    if (this.state.phase === 'saving') return;
+    this.silence();
+    this.update({ mode, proposal: undefined });
+    this.respond(this.hint(mode), 'ready');
+  };
   /** A user gesture opens a session; only voice sessions speak their confirmation. */
   open = (withVoice = false) => {
     if (this.state.open) { if (withVoice) this.listen(); return; }
     this.spoken = withVoice;
-    this.update({ open: true, phase: 'ready', proposal: undefined, message: this.context ? this.context.hint : 'No actions on this page yet.' });
+    this.update({ open: true, phase: 'ready', proposal: undefined, message: this.hint() });
     if (withVoice) this.listen();
   };
   private interrupt() {
@@ -145,7 +178,7 @@ export class FamiliarHelperController {
     this.update({ open: false, proposal: undefined, phase: 'ready', message: '' });
   };
   listen = () => {
-    if (!this.context?.actions.length || this.state.phase === 'saving') return;
+    if (this.state.phase === 'saving') return;
     this.silence();
     if (!this.voice.available) {
       this.update({ phase: this.state.proposal ? 'review' : 'ready', message: 'Voice input is unavailable here. You can type or choose an action.' });
@@ -170,9 +203,17 @@ export class FamiliarHelperController {
       else this.respond('Say Confirm or Cancel, or choose Change.', 'review');
       return;
     }
+    const mode = MODE_WORDS[normalize(text)];
+    if (mode) { this.setMode(mode); return; }
+    if (this.state.mode === 'explain') {
+      // Explaining changes nothing, so there is nothing to confirm.
+      const topic = this.context.topics.find(entry => entry.phrases.some(phrase => normalize(phrase) === normalize(text)));
+      this.respond(topic ? topic.explanation : this.hint(), 'ready');
+      return;
+    }
     const match = matchFamiliarCommand(this.context.actions, text);
     const action = this.context.actions.find(entry => entry.id === match?.actionId);
-    if (!match || !action) { this.respond(this.context.hint, 'ready'); return; }
+    if (!match || !action) { this.respond(this.hint(), 'ready'); return; }
     if (action.input && (!match.input || match.input.length > action.input.maxLength)) {
       this.respond(`${action.input.label}: enter 1–${action.input.maxLength} characters.`, 'ready');
       return;
@@ -211,7 +252,7 @@ export class FamiliarHelperController {
   change = () => {
     if (this.state.phase === 'saving') return;
     this.silence();
-    this.update({ proposal: undefined, phase: 'ready', message: this.context?.hint ?? '' });
+    this.update({ proposal: undefined, phase: 'ready', message: this.hint() });
   };
   /** Switching to touch/typing stops the microphone and opts out of spoken readback. */
   useText = () => {

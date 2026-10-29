@@ -22,7 +22,7 @@ function setup() {
     listen: vi.fn((_language, result) => { heard = result; return abort; }),
     speak: vi.fn(() => () => {}),
   };
-  const context: FamiliarHelperContext = { key: 'reader:2', title: 'Fate', hint: 'Say Conflict.', interrupt: () => release,
+  const context: FamiliarHelperContext = { key: 'reader:2', title: 'Fate', hint: 'Say Conflict.', topics: [], interrupt: () => release,
     actions: [{ id: 'conflict', label: 'Conflict', phrases: ['conflict'], describe: () => 'Chapter 2: A rival arrives.', success: 'Saved.', run }],
   };
   const render = (screen: FamiliarHelperContext | undefined = context) => act(() => root.render(<StrictMode><FamiliarHelperProvider voice={voice}>
@@ -56,7 +56,7 @@ describe('Familiar helper surface', () => {
     // Explicitly render no screen under the same global provider.
     act(() => root.render(<StrictMode><FamiliarHelperProvider voice={t.voice}><FamiliarHelperAction /></FamiliarHelperProvider></StrictMode>));
     act(() => t.heard('confirm'));
-    expect(document.body.textContent).toContain('No actions on this page yet.');
+    expect(document.body.textContent).toContain('Nothing to do here yet.');
     expect(button('Confirm')).toBeUndefined();
     expect(t.run).not.toHaveBeenCalled();
     expect(t.release).toHaveBeenCalledExactlyOnceWith(false);

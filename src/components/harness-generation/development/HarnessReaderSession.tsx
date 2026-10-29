@@ -68,8 +68,8 @@ export interface ReaderHostTools {
   chapterId: string;
   busy: boolean;
   interruptPlayback(): (resume: boolean) => void;
-  /** Sound Cues on the chapter open, while it is the newest and can still be changed. */
-  sounds?: ReaderSoundAuthoring;
+  /** Create mode's tools, only while Create mode is open on the newest chapter. */
+  createMode?: { sounds: ReaderSoundAuthoring };
 }
 
 /**
@@ -447,8 +447,8 @@ export function HarnessReaderSession({
   const listenedLine = useRef(readAloud.line);
   listenedLine.current = reading ? readAloud.line : undefined;
   const sounds = useMemo((): ReaderSoundAuthoring | undefined => {
-    // Only the newest chapter, before anything is built on it, can be changed (as Create mode).
-    if (!chapter || chapterWriting || latestStoryChapter(state, storyId)?.id !== chapter.id || chapterRewriteGap(state, storyId)) return undefined;
+    // Only in Create mode, on the newest chapter before anything is built on it.
+    if (!creating || !chapter || chapterWriting || latestStoryChapter(state, storyId)?.id !== chapter.id || chapterRewriteGap(state, storyId)) return undefined;
     const media = chapter.mediaLoadout.soundCues.length ? chapter.mediaLoadout : controller.describeStoryMedia(chapter.storyId) ?? chapter.mediaLoadout;
     const saved = () => controller.snapshot().chapters.find(entry => entry.id === chapter.id);
     return {
@@ -475,7 +475,7 @@ export function HarnessReaderSession({
         setPlacedInWords(count => count + 1);
       },
     };
-  }, [chapter, chapterWriting, controller, language, state, storyId]);
+  }, [chapter, chapterWriting, controller, creating, language, state, storyId]);
 
   if (!story) return <p role="alert" className="p-4 text-sm text-amber-200">This story is no longer available.</p>;
   if (!readerState) return <main className="mx-auto w-full max-w-3xl px-4 py-6"><p role="status" className="text-sm text-neutral-400">Opening your place in the story…</p></main>;
@@ -500,7 +500,7 @@ export function HarnessReaderSession({
 
   const panel = layer?.kind === 'panel' ? layer.id : undefined;
   return <>
-    {renderHostTools?.({ chapterId: chapter?.id ?? 'no-chapter', busy: covered, interruptPlayback: readAloud.interrupt, sounds })}
+    {renderHostTools?.({ chapterId: chapter?.id ?? 'no-chapter', busy: covered, interruptPlayback: readAloud.interrupt, createMode: sounds && { sounds } })}
     {/* The frame fills the screen; on laptops a panel sits at the right and the frame shrinks beside it.
         A right-to-left story mirrors the frame: its text, the chapter arrows and the bars' ends. */}
     <div dir={direction} className={`reader-frame transition-[padding] duration-200 motion-reduce:transition-none ${panel ? 'lg:pr-[28rem]' : ''}`} data-panel={panel}>

@@ -10,7 +10,7 @@ import { getPreviewScenario } from '../user-profile/previewData';
 import { DEFAULT_USER_PROFILE_PREVIEW_STATE, type UserProfilePreviewState } from '../user-profile/previewStates';
 import './productFamiliarPreview.css';
 
-type Selection = { uid: string | null; familiarId?: string; familiarSize?: number };
+type Selection = { uid: string | null; familiarId?: string; familiarSize?: number; familiarInHeader?: boolean };
 const SelectionContext = createContext<{ selection: Selection; reportProfile: (selection: Selection) => void; minimized: boolean; setMinimized: (minimized: boolean) => void } | null>(null);
 const SurfaceContext = createContext(false);
 export const PREVIEW_FAMILIAR_ID = defaultFamiliar.definition.id;
@@ -28,6 +28,8 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
     familiarId: initialFamiliarId,
   }));
   useEffect(() => setMinimized(initiallyMinimized), [selection.uid, initiallyMinimized]);
+  // As in the app: a profile's Keep in the header puts the Familiar there, or lets it float, at once.
+  useEffect(() => { if (selection.familiarInHeader !== undefined) setMinimized(selection.familiarInHeader); }, [selection.uid, selection.familiarInHeader]);
   const value = useMemo(() => ({ selection, reportProfile, minimized, setMinimized }), [selection, minimized]);
   const client = useMemo(() => createHttpEnergyClient({ token: () => selection.uid ? developmentIdentityToken(selection.uid) : null }), [selection.uid]);
   const loadingFamiliar = useMemo(() => {

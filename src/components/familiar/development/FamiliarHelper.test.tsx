@@ -156,11 +156,12 @@ describe('Familiar helper surface', () => {
       expect(t.voice.speak).toHaveBeenLastCalledWith('Energy powers creation.', 'en-US', expect.any(Function), expect.any(Function));
     } finally { vi.useRealTimers(); }
   });
-  it('talks live with the equipped Familiar from its microphone, with captions, and hangs up on a second tap', async () => {
+  it('talks live with the equipped Familiar from its microphone, keeps the conversation behind its own button, and hangs up on a second tap', async () => {
     const t = setup();
     let events: FamiliarLiveEvents | undefined;
     const end = vi.fn();
-    const live: FamiliarLive = { start: vi.fn((_brief, handlers) => { events = handlers; return { end }; }) };
+    const send = vi.fn();
+    const live: FamiliarLive = { start: vi.fn((_brief, handlers) => { events = handlers; return { end, send }; }) };
     act(() => root.render(<StrictMode><FamiliarHelperProvider voice={t.voice} live={live} familiar={{ name: 'Celestial Guardian', description: 'A fox.' }}>
       <Screen context={t.context} /><FamiliarHelperAction />
     </FamiliarHelperProvider></StrictMode>));
@@ -169,9 +170,28 @@ describe('Familiar helper surface', () => {
     expect(t.voice.listen).not.toHaveBeenCalled();
     expect(document.body.textContent).toContain('Connecting…');
     act(() => events!.connected());
-    expect(document.body.textContent).toContain('Listening. Talk any time.');
     act(() => { events!.caption('reader', 'What can I do here?'); events!.caption('familiar', 'You can choose Conflict.'); });
-    expect(document.querySelector('.familiar-helper-live')!.textContent).toBe('YouWhat can I do here?FamiliarYou can choose Conflict.');
+    // The panel itself stays as it is: the conversation is behind its button.
+    expect(document.querySelector('[role="log"]')).toBeNull();
+    expect(document.body.textContent).not.toContain('You can choose Conflict.');
+    expect(button('Conflict')).toBeTruthy();
+    await click('Conversation');
+    const chat = document.querySelector('[role="log"]')!;
+    expect(chat.getAttribute('aria-label')).toBe('Conversation with Celestial Guardian');
+    expect(chat.textContent).toBe('Talking on FateYou: What can I do here?Celestial Guardian: You can choose Conflict.');
+    const input = document.querySelector<HTMLInputElement>('input[aria-label="Message Celestial Guardian"]')!;
+    act(() => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Pick Conflict'); input.dispatchEvent(new Event('input', { bubbles: true })); });
+    await click('Send');
+    expect(send).toHaveBeenCalledExactlyOnceWith('Pick Conflict');
+    expect(document.querySelector('[role="log"]')!.textContent).toContain('You: Pick Conflict');
+    // In Explain too, the conversation covers the panel while open.
+    await click('Conversation');
+    await click('Explain');
+    await click('Conversation');
+    expect(document.querySelector('[role="log"]')).toBeTruthy();
+    // Back to the panel: the choices, not the chat.
+    await click('Conversation');
+    expect(document.querySelector('[role="log"]')).toBeNull();
     expect(button('Hang up').getAttribute('data-phase')).toBe('live');
     await click('Hang up');
     expect(end).toHaveBeenCalledOnce();

@@ -103,9 +103,16 @@ export interface FamiliarLiveEvents {
   ended(problem?: string, unavailable?: boolean): void;
 }
 
+/** One live conversation: ended by the reader, or sent a typed message. */
+export interface FamiliarLiveSession {
+  end(): void;
+  /** A typed message, answered like speech. Only once the conversation is connected. */
+  send(text: string): void;
+}
+
 /** Live talk: the Familiar hears and answers in its own voice until the reader hangs up. Replaceable, like `FamiliarVoice`. */
 export interface FamiliarLive {
-  start(brief: FamiliarLiveBrief, events: FamiliarLiveEvents): { end(): void };
+  start(brief: FamiliarLiveBrief, events: FamiliarLiveEvents): FamiliarLiveSession;
 }
 
 export interface FamiliarHelperState {
@@ -117,9 +124,17 @@ export interface FamiliarHelperState {
   topicId?: string;
   proposal?: { actionId: string; input: string; summary: string; contextKey: string; prepared?: unknown };
   message: string;
-  /** A live conversation: connecting, then on, with the latest words of each side as captions. */
-  live?: { status: 'connecting' | 'on'; reader: string; familiar: string };
+  /** A live conversation under way: connecting, then on. */
+  live?: { status: 'connecting' | 'on' };
+  /** What was said with the Familiar this visit, oldest first, so the reader can read it back. Never saved. */
+  chat: readonly FamiliarChatLine[];
 }
+
+/** One line of the conversation: what the reader said, what the Familiar said, or what it did on screen. */
+export interface FamiliarChatLine { speaker: 'reader' | 'familiar' | 'note'; text: string }
+
+/** The conversation keeps this many lines; older ones drop off. */
+const CHAT_LINES = 200;
 
 const normalize = (text: string) => text.trim().toLocaleLowerCase('en-US').replace(/[.!?]+$/, '').trim();
 const HEAR = new Set(['hear it', 'hear', 'play it', 'play', 'preview']);
@@ -152,7 +167,7 @@ interface FamiliarPlace { owner: symbol; context: FamiliarHelperContext }
 
 /** One short, cancellable interaction. Screens provide actions; adapters provide speech. */
 export class FamiliarHelperController {
-  private state: FamiliarHelperState = { open: false, mode: 'action', phase: 'ready', message: '' };
+  private state: FamiliarHelperState = { open: false, mode: 'action', phase: 'ready', message: '', chat: [] };
   private listeners = new Set<() => void>();
   private places: Partial<Record<FamiliarPlaceLevel, FamiliarPlace>> = {};
   private get place() { return this.places.page ?? this.places.base; }
@@ -164,12 +179,35 @@ export class FamiliarHelperController {
   private spoken = false;
   /** The live conversation under way, if any; its events count only while it is the current one. */
   private liveRun?: object;
-  private liveSession?: { end(): void };
+  private liveSession?: FamiliarLiveSession;
+  /** Typed while the conversation connects; sent once it is on. */
+  private typedAhead: string[] = [];
   private identity = { name: 'Familiar', description: '' };
+  /** The chat line each side is still saying in this turn. */
+  private openTurn: Partial<Record<'reader' | 'familiar', number>> = {};
 
   constructor(readonly voice: FamiliarVoice, readonly language = 'en-US', readonly live?: FamiliarLive) {}
   /** Who the Familiar is, for live talk: the reader's equipped Familiar. */
   setIdentity(identity: { name: string; description: string }) { this.identity = identity; }
+  /** The equipped Familiar's name, for the conversation. */
+  get name() { return this.identity.name; }
+  private addLine(line: FamiliarChatLine) {
+    const chat = [...this.state.chat, line];
+    const dropped = Math.max(0, chat.length - CHAT_LINES);
+    for (const speaker of ['reader', 'familiar'] as const) {
+      const index = this.openTurn[speaker];
+      if (index !== undefined) this.openTurn[speaker] = index - dropped >= 0 ? index - dropped : undefined;
+    }
+    this.update({ chat: dropped ? chat.slice(dropped) : chat });
+    return chat.length - 1 - dropped;
+  }
+  /** A side's words so far this turn; empty when its turn is over, so the next words start a new line. */
+  private caption(speaker: 'reader' | 'familiar', text: string) {
+    const index = this.openTurn[speaker];
+    if (!text) { delete this.openTurn[speaker]; return; }
+    if (index === undefined) { this.openTurn[speaker] = this.addLine({ speaker, text }); return; }
+    this.update({ chat: this.state.chat.map((line, at) => at === index ? { speaker, text } : line) });
+  }
   getSnapshot = () => this.state;
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   private update(patch: Partial<FamiliarHelperState>) {
@@ -443,7 +481,10 @@ export class FamiliarHelperController {
     const run = {};
     this.liveRun = run;
     const current = () => this.liveRun === run;
-    this.update({ live: { status: 'connecting', reader: '', familiar: '' }, phase: this.state.proposal ? 'review' : 'ready', message: '' });
+    this.openTurn = {};
+    this.typedAhead = [];
+    this.addLine({ speaker: 'note', text: `Talking on ${context.title}` });
+    this.update({ live: { status: 'connecting' }, phase: this.state.proposal ? 'review' : 'ready', message: '' });
     const brief: FamiliarLiveBrief = {
       familiar: this.identity,
       place: context.title,
@@ -452,19 +493,40 @@ export class FamiliarHelperController {
       actions: context.actions.map(({ id, label, detail, input }) => ({ id, label, ...(detail ? { detail } : {}), ...(input ? { input } : {}) })),
     };
     const session = this.live.start(brief, {
-      connected: () => { if (current() && this.state.live) this.update({ live: { ...this.state.live, status: 'on' } }); },
-      caption: (speaker, text) => { if (current() && this.state.live) this.update({ live: { ...this.state.live, [speaker]: text } }); },
+      connected: () => {
+        if (!current() || !this.state.live) return;
+        this.update({ live: { ...this.state.live, status: 'on' } });
+        const typed = this.typedAhead;
+        this.typedAhead = [];
+        for (const text of typed) this.liveSession?.send(text);
+      },
+      caption: (speaker, text) => { if (current()) this.caption(speaker, text); },
       call: call => current() ? this.answerLive(call) : Promise.resolve('The conversation has ended.'),
       ended: (problem, unavailable) => {
         if (!current()) return;
         this.liveRun = undefined;
         this.liveSession = undefined;
         this.update({ live: undefined, message: problem ?? '' });
+        if (problem) this.addLine({ speaker: 'note', text: problem });
         if (unavailable) this.listen();
         else this.release(true);
       },
     });
     if (current()) this.liveSession = session; else session.end();
+  };
+  /**
+   * A typed message to the Familiar, from the conversation view: sent into the
+   * live conversation, which starts if none is under way.
+   */
+  say = (text: string) => {
+    const message = text.trim();
+    if (!message || !this.live) return;
+    this.openTurn = {};
+    if (!this.liveRun) this.talk();
+    if (!this.liveRun) return;
+    this.addLine({ speaker: 'reader', text: message });
+    if (this.state.live?.status === 'on') this.liveSession?.send(message);
+    else this.typedAhead.push(message);
   };
   /** Ends the live conversation, if one is under way. */
   hangUp = () => {
@@ -484,6 +546,7 @@ export class FamiliarHelperController {
       const topic = context.topics.find(entry => entry.id === call.topicId);
       if (!topic) return 'That topic is not on this page.';
       if (!this.state.proposal) this.update({ mode: 'explain', topicId: topic.id, message: '' });
+      this.addLine({ speaker: 'note', text: `Showed ${topic.label}` });
       return `Showing ${topic.label} on their screen.`;
     }
     if (call.name === 'propose_action') {
@@ -493,12 +556,15 @@ export class FamiliarHelperController {
       const problem = this.propose(action, action.input ? call.input.trim() : '');
       if (problem) return problem;
       this.update({ mode: 'action', topicId: undefined });
+      this.addLine({ speaker: 'note', text: `To confirm: ${this.state.proposal!.summary}` });
       return `On their screen to confirm: ${this.state.proposal!.summary}${action.preview ? ' They can hear it first.' : ''}`;
     }
     if (!this.state.proposal) return 'Nothing is waiting to be confirmed.';
-    if (call.answer === 'cancel') { this.change(); return 'Cancelled. Nothing changed.'; }
+    if (call.answer === 'cancel') { this.change(); this.addLine({ speaker: 'note', text: 'Cancelled' }); return 'Cancelled. Nothing changed.'; }
     if (call.answer === 'hear') { this.hear(); return 'Playing it for them now.'; }
     await this.confirm();
-    return this.state.proposal ? `It could not be saved: ${this.state.message}` : `Done. ${this.state.message}`.trim();
+    const saved = !this.state.proposal;
+    this.addLine({ speaker: 'note', text: saved ? this.state.message || 'Saved' : `Not saved: ${this.state.message}` });
+    return saved ? `Done. ${this.state.message}`.trim() : `It could not be saved: ${this.state.message}`;
   }
 }

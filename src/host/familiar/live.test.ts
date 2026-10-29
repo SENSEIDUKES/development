@@ -71,6 +71,11 @@ describe('Familiar live talk in the browser', () => {
     const handlers = events();
     live(respond(503, {})).start(brief, handlers);
     await vi.waitFor(() => expect(handlers.ended).toHaveBeenCalledWith(undefined, true));
+    // Any other failure before the conversation opens hands over too, so the reader is never left without a voice.
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const refused = events();
+    live(respond(502, { error: 'Your Familiar could not start talking. Try again.' })).start(brief, refused);
+    await vi.waitFor(() => expect(refused.ended).toHaveBeenCalledWith(undefined, true));
     const spent = events();
     live(respond(429, {})).start(brief, spent);
     await vi.waitFor(() => expect(spent.ended).toHaveBeenCalledWith(expect.stringContaining('talked enough for today'), true));
@@ -106,6 +111,9 @@ describe('Familiar live talk in the browser', () => {
     socket.message({ toolCall: { functionCalls: [{ id: 'c1', name: 'show_topic', args: { topic_id: 'energy' } }] } });
     await vi.waitFor(() => expect(socket.sent).toContainEqual({ toolResponse: { functionResponses: [{ id: 'c1', name: 'show_topic', response: { result: 'Shown.' } }] } }));
     expect(handlers.call).toHaveBeenCalledWith({ name: 'show_topic', topicId: 'energy' });
+    // A typed message joins the conversation.
+    session.send('And manifesting?');
+    expect(socket.sent).toContainEqual({ realtimeInput: { text: 'And manifesting?' } });
     // Hanging up releases the microphone and ends quietly.
     session.end();
     expect(track.stop).toHaveBeenCalled();

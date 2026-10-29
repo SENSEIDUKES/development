@@ -255,16 +255,17 @@ describe('Familiar live talk', () => {
     let events: FamiliarLiveEvents | undefined;
     let brief: FamiliarLiveBrief | undefined;
     const end = vi.fn();
-    const adapter: FamiliarLive = { start: vi.fn((given, handlers) => { brief = given; events = handlers; return { end }; }) };
+    const send = vi.fn();
+    const adapter: FamiliarLive = { start: vi.fn((given, handlers) => { brief = given; events = handlers; return { end, send }; }) };
     const helper = new FamiliarHelperController(t.voice, 'en-US', adapter);
     helper.setIdentity({ name: 'Celestial Guardian', description: 'A loyal fox spirit.' });
     const topics = [{ id: 'energy', label: 'Energy', phrases: ['energy'], explanation: 'Energy pays for manifesting.' }];
     const context = { ...t.context, topics };
     helper.setContext(t.owner, context);
     helper.open();
-    return { ...t, helper, adapter, end, context, events: () => events!, brief: () => brief! };
+    return { ...t, helper, adapter, end, send, context, events: () => events!, brief: () => brief! };
   }
-  it('starts with who the Familiar is and what this place explains and does, then shows captions', () => {
+  it('starts with who the Familiar is and what this place explains and does, and keeps the conversation to read back', () => {
     const t = live();
     t.helper.talk();
     expect(t.brief()).toEqual({
@@ -274,9 +275,24 @@ describe('Familiar live talk', () => {
     });
     expect(t.helper.getSnapshot().live?.status).toBe('connecting');
     t.events().connected();
+    t.events().caption('reader', 'What is');
     t.events().caption('reader', 'What is energy?');
+    t.events().caption('familiar', 'It pays');
     t.events().caption('familiar', 'It pays for manifesting.');
-    expect(t.helper.getSnapshot().live).toEqual({ status: 'on', reader: 'What is energy?', familiar: 'It pays for manifesting.' });
+    // A turn over: the next words start new lines.
+    t.events().caption('reader', '');
+    t.events().caption('familiar', '');
+    t.events().caption('reader', 'Thanks.');
+    expect(t.helper.getSnapshot().live).toEqual({ status: 'on' });
+    expect(t.helper.getSnapshot().chat).toEqual([
+      { speaker: 'note', text: 'Talking on Fate' },
+      { speaker: 'reader', text: 'What is energy?' },
+      { speaker: 'familiar', text: 'It pays for manifesting.' },
+      { speaker: 'reader', text: 'Thanks.' },
+    ]);
+    // Hanging up keeps the conversation to read.
+    t.helper.talk();
+    expect(t.helper.getSnapshot().chat).toHaveLength(4);
     // The device voice never listens over it.
     expect(t.voice.listen).not.toHaveBeenCalled();
   });
@@ -302,6 +318,21 @@ describe('Familiar live talk', () => {
     expect(t.end).toHaveBeenCalledOnce();
     expect(t.helper.getSnapshot().live).toBeUndefined();
     expect(t.release).toHaveBeenCalledWith(true);
+    // What it did on screen is in the conversation too.
+    expect(t.helper.getSnapshot().chat.filter(line => line.speaker === 'note').map(line => line.text))
+      .toEqual(['Talking on Fate', 'Showed Energy', 'To confirm: Leave the sect.', 'Saved.']);
+  });
+  it('sends typed messages into the conversation, starting it if needed and holding them until it connects', () => {
+    const t = live();
+    t.helper.say('What is energy?');
+    expect(t.adapter.start).toHaveBeenCalledOnce();
+    expect(t.send).not.toHaveBeenCalled();
+    t.events().connected();
+    expect(t.send).toHaveBeenCalledExactlyOnceWith('What is energy?');
+    t.helper.say('  And manifesting?  ');
+    expect(t.send).toHaveBeenLastCalledWith('And manifesting?');
+    expect(t.adapter.start).toHaveBeenCalledOnce();
+    expect(t.helper.getSnapshot().chat.filter(line => line.speaker === 'reader').map(line => line.text)).toEqual(['What is energy?', 'And manifesting?']);
   });
   it('hangs up when the page changes or the panel closes, and ignores the old conversation after', async () => {
     const t = live();
@@ -316,6 +347,16 @@ describe('Familiar live talk', () => {
     t.helper.talk();
     t.helper.close();
     expect(t.end).toHaveBeenCalledTimes(2);
+  });
+  it('pauses story playback to talk, and keeps it paused while the device voice listens where live talk cannot start', () => {
+    const t = live();
+    const interrupt = vi.fn(() => t.release);
+    t.helper.setContext(t.owner, { ...t.context, interrupt });
+    t.helper.talk();
+    expect(interrupt).toHaveBeenCalledOnce();
+    t.events().ended(undefined, true);
+    expect(t.voice.listen).toHaveBeenCalledOnce();
+    expect(t.release).not.toHaveBeenCalled();
   });
   it('listens with the device voice where live talk cannot start, and says why it ended otherwise', () => {
     const t = live();

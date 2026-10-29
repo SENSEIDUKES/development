@@ -16,7 +16,7 @@
  */
 
 export type ModelEnvironment = Record<string, string | undefined>;
-export type ModelCapability = 'chapters' | 'images' | 'tts' | 'audio' | 'video' | '3d';
+export type ModelCapability = 'chapters' | 'images' | 'tts' | 'live' | 'audio' | 'video' | '3d';
 export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo' | 'lmstudio' | 'minimax' | 'anthropic';
 /** Providers that serve chapter-capable text models. */
 export type TextProviderId = 'gemini' | 'openrouter' | 'lmstudio' | 'minimax' | 'anthropic';
@@ -158,6 +158,14 @@ export const TTS_MODELS: readonly RoutedModel[] = [
   { id: 'eleven_multilingual_v2', label: 'Eleven Multilingual v2', provider: 'elevenlabs', stage: 'current' },
   { id: 'eleven_flash_v2_5', label: 'Eleven Flash v2.5', provider: 'elevenlabs', stage: 'current' },
 ];
+
+/** Live voice: models that hear and answer in one stream, for conversation (the Familiar's live talk). */
+export const LIVE_MODELS: readonly RoutedModel[] = [
+  { id: 'google/gemini-3.8-live', label: 'Gemini 3.8 Live', provider: 'gemini', stage: 'current' },
+];
+
+/** The live voice model used when the server names none (`FAMILIAR_LIVE_MODEL`). */
+export const DEFAULT_LIVE_MODEL = 'google/gemini-3.8-live';
 
 /** Gemini music-generation models. Catalogued for the Router; no DEV surface calls them yet. */
 export const AUDIO_MODELS: readonly RoutedModel[] = [

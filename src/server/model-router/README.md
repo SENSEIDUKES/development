@@ -17,6 +17,7 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 | Chapters | Gemini, OpenRouter, MiniMax, Anthropic, local LM Studio | Harness Generation, Holdings Fixer, Story Seed Blueprint, Story Spark, Reader Translation |
 | Images | Gemini, OpenRouter, MiniMax | Story Cover, Image Lab, Profile Picture |
 | TTS | ElevenLabs | Codex Voice Quote |
+| Live voice | Gemini | Familiar Live Talk |
 | Audio | Gemini | none yet (catalog only) |
 | Video | Gemini, MiniMax | No feature yet; MiniMax task adapter implemented, Veo catalog only |
 | 3D | Tripo AI | none yet (catalog only) |
@@ -49,6 +50,7 @@ any model call that is not registered. See AGENTS.md.
 | `HARNESS_GENERATION_MODELS` | Models pinned ahead of the catalog |
 | `*_DEFAULT_MODEL` | Default model per surface (otherwise Gemini 3.1 Flash Lite) |
 | `ELEVENLABS_API_KEY`, `ELEVENLABS_MODEL_ID` | TTS |
+| `FAMILIAR_LIVE_MODEL`, `FAMILIAR_LIVE_VOICE` | Live voice (default Gemini 3.8 Live, voice Puck); uses `GEMINI_API_KEY` |
 | `TRIPO_API_KEY` | Tripo 3D model provider status |
 
 `GET /api/model-router` returns the read-only status (never key values).
@@ -131,6 +133,7 @@ are unchanged.
 
 ## Workshop history
 
+- 2026-10-29 — Live voice: Gemini 3.8 Live for the Familiar's live talk.
 - 2026-10-19 — Connected Claude directly through the official Anthropic SDK:
   Claude Opus 5.5, Sonnet 5.5, Haiku 5.5 and Fable 5.1 in Chapters →
   Anthropic, once `claude_sen` (or `ANTHROPIC_API_KEY`) is set. Chapters, arc

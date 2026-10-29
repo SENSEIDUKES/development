@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef,
 import { createPortal } from 'react-dom';
 import { Check, Info, Keyboard, Lightbulb, Mic, Pause, Play, RotateCcw, Square, Volume2, X, Zap } from 'lucide-react';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
-import { FamiliarHelperController, type FamiliarHelperContext, type FamiliarPlaceLevel, type FamiliarVoice } from '../../../library/familiars/helper';
+import { FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice } from '../../../library/familiars/helper';
 
 const Helper = createContext<FamiliarHelperController | null>(null);
 const FocusReturn = createContext<RefObject<HTMLElement | null> | null>(null);
@@ -50,8 +50,14 @@ function playLine(currentPlayback: () => NarrativeAudioPlayback | null, url: str
   };
 }
 
-/** One app-wide owner, independent of whether the Familiar is minimized or on a Reader page. */
-export function FamiliarHelperProvider({ voice, language = 'en-US', bottomInset = 88, children }: { voice: FamiliarVoice; language?: string; bottomInset?: number; children: ReactNode }) {
+/**
+ * One app-wide owner, independent of whether the Familiar is minimized or on a
+ * Reader page. With `live`, the microphone starts a live conversation with the
+ * equipped `familiar` instead of the device voice.
+ */
+export function FamiliarHelperProvider({ voice, live, familiar, language = 'en-US', bottomInset = 88, children }: {
+  voice: FamiliarVoice; live?: FamiliarLive; familiar?: { name: string; description: string }; language?: string; bottomInset?: number; children: ReactNode;
+}) {
   // Recorded lines play on the host's shared player, read when each line starts.
   const narrative = useOptionalNarrativeAudio();
   const narrativeRef = useRef(narrative);
@@ -61,7 +67,8 @@ export function FamiliarHelperProvider({ voice, language = 'en-US', bottomInset 
     listen: (...args) => voice.listen(...args),
     speak: (...args) => voice.speak(...args),
     play: voice.play ?? ((url, done, failure) => playLine(() => narrativeRef.current, url, done, failure)),
-  }, language), [voice, language]);
+  }, language, live), [voice, language, live]);
+  useEffect(() => { if (familiar) helper.setIdentity({ name: familiar.name, description: familiar.description }); }, [helper, familiar?.name, familiar?.description]);
   const returnFocus = useRef<HTMLElement | null>(null);
   useEffect(() => {
     const hide = () => { if (document.visibilityState === 'hidden') helper.suspend(); };
@@ -136,7 +143,9 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   const type = (prefill = '') => { helper.useText(); setInfo(false); setTyping(true); setText(prefill); setTimeout(() => input.current?.focus(), 0); };
   // Listening and speaking show on the microphone, not in words.
   const message = state.phase === 'listening' ? '' : state.message;
-  const micLabel = state.phase === 'listening' ? 'Done talking' : state.phase === 'speaking' ? 'Speaking' : state.proposal ? 'Speak Confirm or Cancel' : 'Speak';
+  const micLabel = state.live ? (state.live.status === 'connecting' ? 'Connecting… tap to stop' : 'Hang up')
+    : helper.live ? 'Talk with your Familiar'
+    : state.phase === 'listening' ? 'Done talking' : state.phase === 'speaking' ? 'Speaking' : state.proposal ? 'Speak Confirm or Cancel' : 'Speak';
 
   return createPortal(<div ref={panel} role="dialog" aria-modal="false" aria-label="Familiar" tabIndex={-1}
     style={{ bottom: `max(${bottomInset}px, env(safe-area-inset-bottom))`, maxHeight: `min(70dvh, calc(100dvh - ${bottomInset + 16}px))` }}
@@ -155,7 +164,9 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
     {info ? <div className="familiar-helper-info">
       <p><Lightbulb size={16} aria-hidden /> <strong>Explain</strong> shows and tells you how things work here.</p>
       <p><Zap size={16} aria-hidden /> <strong>Action</strong> does things for you. It always asks before it changes anything.</p>
-      <p><Mic size={16} aria-hidden /> Tap the microphone and talk, or <Keyboard size={16} aria-hidden /> type. Say “Explain” or “Action” to switch.</p>
+      {helper.live
+        ? <p><Mic size={16} aria-hidden /> Tap the microphone and talk with your Familiar like a friend; tap it again to hang up. Or <Keyboard size={16} aria-hidden /> type.</p>
+        : <p><Mic size={16} aria-hidden /> Tap the microphone and talk, or <Keyboard size={16} aria-hidden /> type. Say “Explain” or “Action” to switch.</p>}
       {context?.actions.length ? <p>{context.hint}</p> : null}
       <p className="familiar-helper-quiet">Voice commands are in English for now.</p>
     </div>
@@ -201,7 +212,14 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
           {action.detail && <small id={detail}>{action.detail}</small>}</span></button>; })}
     </div> : null}
 
-    <p role="status" aria-live="polite" className="familiar-helper-status">{message}</p>
+    {state.live ? <div className="familiar-helper-live" role="status" aria-live="polite">
+      {state.live.status === 'connecting' ? <p className="familiar-helper-quiet">Connecting…</p>
+        : !state.live.reader && !state.live.familiar ? <p className="familiar-helper-quiet">Listening. Talk any time.</p>
+        : <>
+          {state.live.reader && <p><span>You</span>{state.live.reader}</p>}
+          {state.live.familiar && <p><span>Familiar</span>{state.live.familiar}</p>}
+        </>}
+    </div> : <p role="status" aria-live="polite" className="familiar-helper-status">{message}</p>}
 
     {typing && !state.proposal && !info && <form onSubmit={event => { event.preventDefault(); helper.submit(text); }}>
       <input ref={input} aria-label="Type to your Familiar" id="familiar-command" value={text} maxLength={typedLimit} disabled={busy}
@@ -212,10 +230,14 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
     <div className="familiar-helper-bottom">
       <button type="button" className="familiar-helper-icon" aria-label="How to talk to your Familiar" title="How to talk to your Familiar"
         aria-pressed={info} onClick={() => setInfo(!info)}><Info size={20} aria-hidden /></button>
-      <button type="button" className="familiar-helper-mic" data-phase={state.phase} aria-label={micLabel} title={micLabel}
-        aria-pressed={state.phase === 'listening'} disabled={busy}
-        onClick={() => { setInfo(false); if (state.phase === 'listening') { helper.doneTalking(); return; } if (state.phase === 'speaking') helper.quiet(); helper.listen(); }}>
-        <Mic size={26} aria-hidden /></button>
+      <button type="button" className="familiar-helper-mic" data-phase={state.live ? (state.live.status === 'on' ? 'live' : 'connecting') : state.phase}
+        aria-label={micLabel} title={micLabel} aria-pressed={Boolean(state.live) || state.phase === 'listening'} disabled={busy && !state.live}
+        onClick={() => {
+          setInfo(false);
+          if (helper.live) { if (state.phase === 'speaking') helper.quiet(); helper.talk(); return; }
+          if (state.phase === 'listening') { helper.doneTalking(); return; } if (state.phase === 'speaking') helper.quiet(); helper.listen();
+        }}>
+        {state.live?.status === 'on' ? <Square size={22} aria-hidden /> : <Mic size={26} aria-hidden />}</button>
       <button type="button" className="familiar-helper-icon" aria-label="Type instead" title="Type instead" aria-pressed={typing}
         disabled={Boolean(state.proposal)} onClick={() => { if (typing) setTyping(false); else type(); }}><Keyboard size={20} aria-hidden /></button>
     </div>

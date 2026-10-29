@@ -6,7 +6,7 @@ import {
   type ModelCapability,
 } from '@seihouse/library/model-router-server';
 
-export { LOCAL_LM_STUDIO_MODEL, isLocalModelDevelopment, CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, lowestReasoningLevel, providerModelName, resolveReasoningLevel, textModelProvider, textModelLabel } from '@seihouse/library/model-router-server';
+export { LOCAL_LM_STUDIO_MODEL, isLocalModelDevelopment, CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, LIVE_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, DEFAULT_LIVE_MODEL, lowestReasoningLevel, providerModelName, resolveReasoningLevel, textModelProvider, textModelLabel } from '@seihouse/library/model-router-server';
 export const isMissingKeyMessage = (message: string) => /(?:GEMINI_API_KEY|OPENROUTER_API_KEY|OpenRouter-Dev|MINIMAX_API_KEY|Minimax|ANTHROPIC_API_KEY|claude_sen) is not configured/.test(message);
 import { MODEL_PROVIDERS as sharedProviders } from '@seihouse/library/model-router-server';
 export const MODEL_PROVIDERS = {
@@ -61,6 +61,7 @@ export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   { name: 'Story Spark', capability: 'chapters', entry: 'src/server/story-spark/http.ts', modelChoice: 'server-default' },
   { name: 'Reader Translation', capability: 'chapters', entry: 'src/server/reader-translation/http.ts', modelChoice: 'server-default' },
   { name: 'Codex Voice Quote', capability: 'tts', entry: 'src/server/audio/codexVoiceQuote.ts', modelChoice: 'server-default' },
+  { name: 'Familiar Live Talk', capability: 'live', entry: 'src/server/familiar-live/http.ts', modelChoice: 'server-default' },
   { name: 'Story Cover', capability: 'images', entry: 'src/server/story-cover/http.ts', modelChoice: 'router' },
   { name: 'Codex Picture', capability: 'images', entry: 'src/server/story-cover/codexPicture.ts', modelChoice: 'router' },
   { name: 'Image Lab', capability: 'images', entry: 'src/server/image-lab/http.ts', modelChoice: 'router' },
@@ -77,4 +78,6 @@ export const PROVIDER_ADAPTERS: readonly string[] = [
   'src/server/harness-generation/provider.ts',
   'src/server/story-seed-blueprint/generate.ts',
   'src/server/audio/codexVoiceQuote.ts',
+  // The browser end of Familiar Live Talk: it opens the conversation the server's token allows.
+  'src/host/familiar/live.ts',
 ];

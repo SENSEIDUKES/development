@@ -5,6 +5,7 @@ import { LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/
 import { EnergyClientProvider, createHttpEnergyClient } from '@seihouse/library/energy';
 import { defaultFamiliar, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
 import { createFamiliarBrowserVoice } from '../../../host/familiar/voice';
+import { useFamiliarGeminiLive } from '../../../host/familiar/live';
 import { developmentIdentityToken } from '../../../server/identity/authentication';
 import { getPreviewScenario } from '../user-profile/previewData';
 import { DEFAULT_USER_PROFILE_PREVIEW_STATE, type UserProfilePreviewState } from '../user-profile/previewStates';
@@ -23,6 +24,8 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
   const parent = useContext(SelectionContext);
   const [minimized, setMinimized] = useState(initiallyMinimized);
   const [voice] = useState(createFamiliarBrowserVoice);
+  // As in the app: live talk where the server offers it (real provider credit), the device voice otherwise.
+  const live = useFamiliarGeminiLive();
   const [selection, reportProfile] = useState<Selection>(() => ({
     uid: getPreviewScenario(initialState).currentUser?.uid ?? null,
     familiarId: initialFamiliarId,
@@ -41,7 +44,7 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
     <LoadingFamiliarProvider value={loadingFamiliar}>
       <EnergyClientProvider client={client}>
         {/* The app's Familiar panel (Explain and Action), with Home's topics, as in the app. */}
-        <FamiliarHelperProvider voice={voice}>
+        <FamiliarHelperProvider voice={voice} live={live} familiar={{ name: loadingFamiliar.familiar.displayName, description: loadingFamiliar.familiar.description }}>
           <FamiliarPlace title="Home" help="library" />
           <WorkspaceHeaderAccessoryProvider accessory={<ProductFamiliarRecall />}>{children}</WorkspaceHeaderAccessoryProvider>
         </FamiliarHelperProvider>

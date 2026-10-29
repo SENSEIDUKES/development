@@ -74,6 +74,40 @@ export interface FamiliarVoice {
   play?(url: string, done: () => void, failure: (message: string) => void): () => void;
 }
 
+/**
+ * What a live conversation is told when it starts: who the Familiar is, where
+ * the reader is, and what it can explain and do there. Its facts are the
+ * place's own topics, so it never says what the help menu would not.
+ */
+export interface FamiliarLiveBrief {
+  familiar: { name: string; description: string };
+  place: string;
+  language: string;
+  topics: { id: string; label: string; explanation: string }[];
+  actions: { id: string; label: string; detail?: string; input?: { label: string; maxLength: number } }[];
+}
+
+/** What the Familiar asks the screen for mid-conversation; the screen still confirms every change. */
+export type FamiliarLiveCall =
+  | { name: 'show_topic'; topicId: string }
+  | { name: 'propose_action'; actionId: string; input: string }
+  | { name: 'answer_proposal'; answer: 'confirm' | 'cancel' | 'hear' };
+
+export interface FamiliarLiveEvents {
+  connected(): void;
+  /** The words of the current turn so far, as captions. */
+  caption(speaker: 'reader' | 'familiar', text: string): void;
+  /** Answered with a sentence the Familiar hears back. */
+  call(call: FamiliarLiveCall): Promise<string>;
+  /** `unavailable`: live talk cannot start here, so the device voice listens instead. */
+  ended(problem?: string, unavailable?: boolean): void;
+}
+
+/** Live talk: the Familiar hears and answers in its own voice until the reader hangs up. Replaceable, like `FamiliarVoice`. */
+export interface FamiliarLive {
+  start(brief: FamiliarLiveBrief, events: FamiliarLiveEvents): { end(): void };
+}
+
 export interface FamiliarHelperState {
   open: boolean;
   mode: FamiliarMode;
@@ -83,6 +117,8 @@ export interface FamiliarHelperState {
   topicId?: string;
   proposal?: { actionId: string; input: string; summary: string; contextKey: string; prepared?: unknown };
   message: string;
+  /** A live conversation: connecting, then on, with the latest words of each side as captions. */
+  live?: { status: 'connecting' | 'on'; reader: string; familiar: string };
 }
 
 const normalize = (text: string) => text.trim().toLocaleLowerCase('en-US').replace(/[.!?]+$/, '').trim();
@@ -126,8 +162,14 @@ export class FamiliarHelperController {
   private releasePlayback?: (resume: boolean) => void;
   private epoch = 0;
   private spoken = false;
+  /** The live conversation under way, if any; its events count only while it is the current one. */
+  private liveRun?: object;
+  private liveSession?: { end(): void };
+  private identity = { name: 'Familiar', description: '' };
 
-  constructor(readonly voice: FamiliarVoice, readonly language = 'en-US') {}
+  constructor(readonly voice: FamiliarVoice, readonly language = 'en-US', readonly live?: FamiliarLive) {}
+  /** Who the Familiar is, for live talk: the reader's equipped Familiar. */
+  setIdentity(identity: { name: string; description: string }) { this.identity = identity; }
   getSnapshot = () => this.state;
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   private update(patch: Partial<FamiliarHelperState>) {
@@ -161,6 +203,8 @@ export class FamiliarHelperController {
   private moved(before?: FamiliarPlace) {
     const after = this.place;
     if (before?.owner === after?.owner && before?.context.key === after?.context.key) return;
+    // A conversation knows the page it began on; the same page with new choices keeps it going.
+    if (before?.owner !== after?.owner) this.hangUp();
     this.silence();
     this.release(false);
     this.update({ context: after?.context, proposal: undefined, topicId: undefined, phase: 'ready', message: this.state.open ? this.empty() : '' });
@@ -193,6 +237,8 @@ export class FamiliarHelperController {
   explain = (topicId: string) => {
     const topic = this.context?.topics.find(entry => entry.id === topicId);
     if (!topic || this.state.phase === 'saving') return;
+    // In a live conversation the Familiar speaks for itself: the topic is only shown.
+    if (this.liveRun) { this.update({ topicId, message: '' }); return; }
     this.silence();
     this.interrupt();
     this.update({ topicId, phase: 'speaking', message: '' });
@@ -226,10 +272,12 @@ export class FamiliarHelperController {
   };
   /** A user gesture opens a session; only voice sessions speak their confirmation. */
   open = (withVoice = false) => {
-    if (this.state.open) { if (withVoice) this.listen(); return; }
-    this.spoken = withVoice;
+    // With live talk, a voice session is a conversation.
+    const talk = () => { if (this.live) { if (!this.liveRun) this.talk(); } else this.listen(); };
+    if (this.state.open) { if (withVoice) talk(); return; }
+    this.spoken = withVoice && !this.live;
     this.update({ open: true, phase: 'ready', proposal: undefined, topicId: undefined, message: this.empty() });
-    if (withVoice) this.listen();
+    if (withVoice) talk();
   };
   private interrupt() {
     if (!this.releasePlayback) this.releasePlayback = this.context?.interrupt?.();
@@ -250,12 +298,14 @@ export class FamiliarHelperController {
   }
   close = () => {
     if (this.state.phase === 'saving') return;
+    this.hangUp();
     this.silence();
     this.release(true);
     this.update({ open: false, proposal: undefined, phase: 'ready', message: '' });
   };
   /** Leaving the foreground ends microphone capture and never restarts hidden playback. */
   suspend = () => {
+    this.hangUp();
     this.silence();
     this.release(false);
     this.update({ open: false, proposal: undefined, phase: 'ready', message: '' });
@@ -304,16 +354,9 @@ export class FamiliarHelperController {
     const match = matchFamiliarCommand(this.context.actions, text);
     const action = this.context.actions.find(entry => entry.id === match?.actionId);
     if (!match || !action) { this.respond(this.hint(), 'ready'); return; }
-    if (action.input && (!match.input || match.input.length > action.input.maxLength)) {
-      this.respond(`${action.input.label}: enter 1–${action.input.maxLength} characters.`, 'ready');
-      return;
-    }
-    const problem = action.check?.(match.input);
+    const problem = this.propose(action, match.input);
     if (problem) { this.respond(problem, 'ready'); return; }
-    this.interrupt();
-    const proposal = { ...match, summary: action.describe(match.input), contextKey: this.context.key,
-      ...(action.prepare ? { prepared: action.prepare(match.input) } : {}) };
-    this.update({ proposal, phase: 'review', message: '' });
+    const proposal = this.state.proposal!;
     if (this.spoken) {
       this.update({ phase: 'speaking' });
       const epoch = this.epoch;
@@ -324,6 +367,17 @@ export class FamiliarHelperController {
       if (epoch === this.epoch) this.cancelVoice = cancel; else cancel();
     }
   };
+  /** Shows an action's change for review, or says why it cannot be applied as asked. */
+  private propose(action: FamiliarHelperAction, input: string): string | undefined {
+    if (action.input && (!input || input.length > action.input.maxLength)) return `${action.input.label}: enter 1–${action.input.maxLength} characters.`;
+    const problem = action.check?.(input);
+    if (problem) return problem;
+    this.interrupt();
+    const proposal = { actionId: action.id, input, summary: action.describe(input), contextKey: this.context!.key,
+      ...(action.prepare ? { prepared: action.prepare(input) } : {}) };
+    this.update({ proposal, phase: 'review', message: '' });
+    return undefined;
+  }
   private proposedAction() {
     const proposal = this.state.proposal;
     return proposal && proposal.contextKey === this.context?.key ? this.context.actions.find(entry => entry.id === proposal.actionId) : undefined;
@@ -368,9 +422,83 @@ export class FamiliarHelperController {
       this.update({ proposal: undefined });
       // A voice session hears that it was applied before playback resumes over it.
       this.respond(action.success, 'ready', () => this.release(true), () => this.release(true));
-      if (!this.spoken) this.release(true);
+      // Story playback waits until a live conversation ends.
+      if (!this.spoken && !this.liveRun) this.release(true);
     } catch (error) {
       if (epoch === this.epoch) this.update({ phase: 'review', message: error instanceof Error ? error.message : 'The action could not be applied. Try again.' });
     }
   };
+  /**
+   * Live talk: the Familiar hears and answers in its own voice until the
+   * reader taps again (or it ends on its own). Where live talk cannot start,
+   * the device voice listens instead.
+   */
+  talk = () => {
+    if (this.liveRun) { this.hangUp(); return; }
+    const context = this.context;
+    if (!this.live || !context || this.state.phase === 'saving') { this.listen(); return; }
+    this.silence();
+    this.spoken = false;
+    this.interrupt();
+    const run = {};
+    this.liveRun = run;
+    const current = () => this.liveRun === run;
+    this.update({ live: { status: 'connecting', reader: '', familiar: '' }, phase: this.state.proposal ? 'review' : 'ready', message: '' });
+    const brief: FamiliarLiveBrief = {
+      familiar: this.identity,
+      place: context.title,
+      language: this.language,
+      topics: context.topics.map(({ id, label, explanation }) => ({ id, label, explanation })),
+      actions: context.actions.map(({ id, label, detail, input }) => ({ id, label, ...(detail ? { detail } : {}), ...(input ? { input } : {}) })),
+    };
+    const session = this.live.start(brief, {
+      connected: () => { if (current() && this.state.live) this.update({ live: { ...this.state.live, status: 'on' } }); },
+      caption: (speaker, text) => { if (current() && this.state.live) this.update({ live: { ...this.state.live, [speaker]: text } }); },
+      call: call => current() ? this.answerLive(call) : Promise.resolve('The conversation has ended.'),
+      ended: (problem, unavailable) => {
+        if (!current()) return;
+        this.liveRun = undefined;
+        this.liveSession = undefined;
+        this.update({ live: undefined, message: problem ?? '' });
+        if (unavailable) this.listen();
+        else this.release(true);
+      },
+    });
+    if (current()) this.liveSession = session; else session.end();
+  };
+  /** Ends the live conversation, if one is under way. */
+  hangUp = () => {
+    if (!this.liveRun) return;
+    const session = this.liveSession;
+    this.liveRun = undefined;
+    this.liveSession = undefined;
+    session?.end();
+    this.update({ live: undefined });
+    this.release(true);
+  };
+  /** What the Familiar asked of the screen mid-conversation, answered with what happened. */
+  private async answerLive(call: FamiliarLiveCall): Promise<string> {
+    const context = this.context;
+    if (!context) return 'Nothing is open here.';
+    if (call.name === 'show_topic') {
+      const topic = context.topics.find(entry => entry.id === call.topicId);
+      if (!topic) return 'That topic is not on this page.';
+      if (!this.state.proposal) this.update({ mode: 'explain', topicId: topic.id, message: '' });
+      return `Showing ${topic.label} on their screen.`;
+    }
+    if (call.name === 'propose_action') {
+      if (this.state.phase === 'saving') return 'A change is still being saved.';
+      const action = context.actions.find(entry => entry.id === call.actionId);
+      if (!action) return 'That choice is not on this page.';
+      const problem = this.propose(action, action.input ? call.input.trim() : '');
+      if (problem) return problem;
+      this.update({ mode: 'action', topicId: undefined });
+      return `On their screen to confirm: ${this.state.proposal!.summary}${action.preview ? ' They can hear it first.' : ''}`;
+    }
+    if (!this.state.proposal) return 'Nothing is waiting to be confirmed.';
+    if (call.answer === 'cancel') { this.change(); return 'Cancelled. Nothing changed.'; }
+    if (call.answer === 'hear') { this.hear(); return 'Playing it for them now.'; }
+    await this.confirm();
+    return this.state.proposal ? `It could not be saved: ${this.state.message}` : `Done. ${this.state.message}`.trim();
+  }
 }

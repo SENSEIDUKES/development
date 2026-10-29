@@ -9,6 +9,8 @@ import { handleProfilePictureHttp, PROFILE_PICTURE_VISITOR_LIMIT } from '../serv
 import { handleReaderTranslationHttp } from '../server/reader-translation/http';
 import { handleStorySparkHttp } from '../server/story-spark/http';
 import { STORY_SPARK_VISITOR_LIMIT } from '../server/story-spark/limits';
+import { handleFamiliarLiveHttp } from '../server/familiar-live/http';
+import { FAMILIAR_LIVE_VISITOR_LIMIT } from '../server/familiar-live/limits';
 import { handleCodexVoiceQuoteHttp } from '../server/audio/codexVoiceQuoteHttp';
 import { createConfiguredCodexVoiceQuoteService } from '../server/audio/codexVoiceQuote';
 import { modelRouterStatus } from '../server/model-router/status';
@@ -58,6 +60,7 @@ export const generationApis = (
   const guardStoryCover = createPublicGenerationGuard(STORY_COVER_VISITOR_LIMIT);
   const guardProfilePicture = createPublicGenerationGuard(PROFILE_PICTURE_VISITOR_LIMIT);
   const guardStorySpark = createPublicGenerationGuard(STORY_SPARK_VISITOR_LIMIT);
+  const guardFamiliarLive = createPublicGenerationGuard(FAMILIAR_LIVE_VISITOR_LIMIT);
   const guardCodexVoiceQuote = createPublicGenerationGuard({
     key: 'codex-voice-quote',
     limit: 8,
@@ -112,6 +115,7 @@ export const generationApis = (
         && pathname !== '/api/codex-voice-quote'
         && pathname !== '/api/reader-translation'
         && pathname !== '/api/story-spark'
+        && pathname !== '/api/familiar-live'
       ) {
         next();
         return;
@@ -132,6 +136,8 @@ export const generationApis = (
               ? guardReaderTranslation(request)
             : pathname === '/api/story-spark'
               ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardStorySpark(request)
+            : pathname === '/api/familiar-live'
+              ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardFamiliarLive(request)
               : { allowed: true };
         if (!admission.allowed) {
           writeJson(response, admission.status ?? 403, {
@@ -210,6 +216,14 @@ export const generationApis = (
           const result = await handleStorySparkHttp(
             { method: request.method, body, headers: request.headers },
             { environment, onError: error => console.error('[story-spark]', error) },
+          );
+          writeJson(response, result.status, result.body, result.headers);
+          return;
+        }
+        if (pathname === '/api/familiar-live') {
+          const result = await handleFamiliarLiveHttp(
+            { method: request.method, body, headers: request.headers },
+            { environment, onError: error => console.error('[familiar-live]', error) },
           );
           writeJson(response, result.status, result.body, result.headers);
           return;

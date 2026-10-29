@@ -128,6 +128,8 @@ export interface FamiliarHelperState {
   live?: { status: 'connecting' | 'on' };
   /** What was said with the Familiar this visit, oldest first, so the reader can read it back. Never saved. */
   chat: readonly FamiliarChatLine[];
+  /** Typed while a conversation was connecting that never reached it: handed back to the reader to send again. */
+  unsent?: string;
 }
 
 /** One line of the conversation: what the reader said, what the Familiar said, or what it did on screen. */
@@ -506,9 +508,16 @@ export class FamiliarHelperController {
         if (!current()) return;
         this.liveRun = undefined;
         this.liveSession = undefined;
+        const unsent = this.typedAhead;
+        this.typedAhead = [];
         this.update({ live: undefined, message: problem ?? '' });
         if (problem) this.addLine({ speaker: 'note', text: problem });
-        if (unavailable) this.listen();
+        // A typed message is never dropped: it comes back to send again, and the microphone stays off.
+        if (unsent.length) {
+          this.addLine({ speaker: 'note', text: 'Not sent: your Familiar could not connect.' });
+          this.update({ unsent: unsent.join('\n') });
+          this.release(true);
+        } else if (unavailable) this.listen();
         else this.release(true);
       },
     });
@@ -527,6 +536,12 @@ export class FamiliarHelperController {
     this.addLine({ speaker: 'reader', text: message });
     if (this.state.live?.status === 'on') this.liveSession?.send(message);
     else this.typedAhead.push(message);
+  };
+  /** The typed message that never reached the conversation, once, for the reader to send again. */
+  takeUnsent = () => {
+    const unsent = this.state.unsent;
+    if (unsent !== undefined) this.update({ unsent: undefined });
+    return unsent;
   };
   /** Ends the live conversation, if one is under way. */
   hangUp = () => {

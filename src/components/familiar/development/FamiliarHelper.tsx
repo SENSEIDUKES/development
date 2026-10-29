@@ -137,6 +137,8 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   }, [state.open, state.proposal, state.context?.key]);
   useEffect(() => { setText(''); setTyping(false); setInfo(false); }, [state.open, state.context?.key]);
   useEffect(() => { setChat(false); setSaid(''); }, [state.open]);
+  // A message that never reached the conversation comes back to the box, to send again.
+  useEffect(() => { if (state.unsent !== undefined) { const unsent = helper.takeUnsent(); if (unsent) { setSaid(unsent); setChat(true); } } }, [helper, state.unsent]);
   // The newest line stays in view as the conversation goes on.
   useLayoutEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [chat, state.chat]);
   if (!state.open) return null;

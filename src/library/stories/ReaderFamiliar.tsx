@@ -20,6 +20,8 @@ function soundAction(sounds: ReaderSoundAuthoring, playCue?: (url: string) => vo
     const command = parseReaderSoundCommand(input, sounds.soundWords);
     return command.ok ? sounds.resolve(command.sound, command.target) : command;
   };
+  // The cue as shown for review, so "right there" never follows Listen to a later sentence before Confirm.
+  const reviewed = (input: string, prepared: unknown) => (prepared as ReturnType<typeof resolve> | undefined) ?? resolve(input);
   return {
     id: 'sound', label: 'Add sound', icon: AudioLines, detail: 'On words you name, or right there', phrases: ['add', 'put', 'place'],
     input: { label: 'Sound and where it goes', maxLength: SOUND_REQUEST_LIMIT },
@@ -31,10 +33,12 @@ function soundAction(sounds: ReaderSoundAuthoring, playCue?: (url: string) => vo
       const again = occurrences > 1 ? ` Those words appear ${occurrences} times in this chapter.` : '';
       return `Chapter ${sounds.chapterNumber}: “${cue.payload.sound}” on “${cue.anchor.selectedText}”, paragraph ${paragraph + 1}.${again}`;
     },
-    ...(playCue ? { preview: (input: string) => { const result = resolve(input); if (result.ok) playCue(result.cue.payload.cue.publicUrl); } } : {}),
+    prepare: resolve,
+    ...(playCue ? { preview: (input: string, prepared?: unknown) => { const result = reviewed(input, prepared); if (result.ok) playCue(result.cue.payload.cue.publicUrl); } } : {}),
     success: `Sound placed in Chapter ${sounds.chapterNumber}. Listen plays it when the voice reaches those words.`,
-    run: async input => {
-      const result = resolve(input);
+    // The page checks the reviewed cue's words are still free as it adds it.
+    run: async (input, prepared) => {
+      const result = reviewed(input, prepared);
       if (!result.ok) throw new Error(result.problem);
       await sounds.place(result.cue);
     },

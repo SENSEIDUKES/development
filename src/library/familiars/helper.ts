@@ -15,10 +15,16 @@ export interface FamiliarHelperAction {
   describe(input: string): string;
   /** Why the input cannot be applied as it stands, as a sentence to show or speak; nothing when it can. */
   check?(input: string): string | undefined;
+  /**
+   * Fixes what the proposal will apply when it is shown (the words a cue goes
+   * on, say), so a change on screen during review cannot move it. Handed to
+   * `preview` and `run` with the input.
+   */
+  prepare?(input: string): unknown;
   /** Plays what the proposal would add, so it can be heard before it is kept. */
-  preview?(input: string): void;
+  preview?(input: string, prepared?: unknown): void;
   success: string;
-  run(input: string): Promise<void>;
+  run(input: string, prepared?: unknown): Promise<void>;
 }
 
 /** Something the Familiar explains where the reader is: choose or say its name to hear it. */
@@ -75,7 +81,7 @@ export interface FamiliarHelperState {
   context?: FamiliarHelperContext;
   /** The topic Explain is showing. */
   topicId?: string;
-  proposal?: { actionId: string; input: string; summary: string; contextKey: string };
+  proposal?: { actionId: string; input: string; summary: string; contextKey: string; prepared?: unknown };
   message: string;
 }
 
@@ -297,7 +303,8 @@ export class FamiliarHelperController {
     const problem = action.check?.(match.input);
     if (problem) { this.respond(problem, 'ready'); return; }
     this.interrupt();
-    const proposal = { ...match, summary: action.describe(match.input), contextKey: this.context.key };
+    const proposal = { ...match, summary: action.describe(match.input), contextKey: this.context.key,
+      ...(action.prepare ? { prepared: action.prepare(match.input) } : {}) };
     this.update({ proposal, phase: 'review', message: '' });
     if (this.spoken) {
       this.update({ phase: 'speaking' });
@@ -318,7 +325,8 @@ export class FamiliarHelperController {
     const action = this.proposedAction();
     if (!action?.preview || this.state.phase === 'saving') return;
     this.silence();
-    action.preview(this.state.proposal!.input);
+    const { input, prepared } = this.state.proposal!;
+    if (action.prepare) action.preview(input, prepared); else action.preview(input);
     this.update({ phase: 'review', message: '' });
     if (!this.spoken) return;
     const epoch = this.epoch;
@@ -346,7 +354,7 @@ export class FamiliarHelperController {
     const epoch = this.epoch;
     this.update({ phase: 'saving', message: '' });
     try {
-      await action.run(proposal.input);
+      await (action.prepare ? action.run(proposal.input, proposal.prepared) : action.run(proposal.input));
       // A successful save may update the screen's context before this promise resolves.
       if (epoch !== this.epoch) return;
       this.update({ proposal: undefined });

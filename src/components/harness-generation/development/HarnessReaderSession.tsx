@@ -37,7 +37,7 @@ import { declaredCharacters } from '../shared/holdings';
 import { storyWorldRecord } from '../shared/foundation';
 import { deriveStoryCodex, type CodexPictureMaker, type CodexPictures } from '../shared/storyCodex';
 import { BlueprintArcPage } from './BlueprintArcPage';
-import { ChapterAuthoring } from './ChapterAuthoring';
+import { ChapterAuthoring, type ChapterAuthoringHandle } from './ChapterAuthoring';
 import { ChapterRewrite } from './ChapterRewrite';
 import { FatePage } from './FatePage';
 import { ProseChapterBody } from './ProseChapterBody';
@@ -316,8 +316,8 @@ export function HarnessReaderSession({
   const pageOpen = layer?.kind === 'page';
   // Create mode: the reader authors the chapter on screen in place. It closes when another chapter opens.
   const [creating, setCreating] = useState(false);
-  // Counts Sound Cues placed in words (ReaderSoundAuthoring), so an open Create mode reloads with them.
-  const [placedInWords, setPlacedInWords] = useState(0);
+  // Create mode's page, for Sound Cues asked for in words: they read and join it, never a separate save.
+  const authoringHandle = useRef<ChapterAuthoringHandle>(null);
   useLayoutEffect(() => {
     if (!pageOpen) return undefined;
     window.scrollTo?.({ top: 0 });
@@ -450,29 +450,23 @@ export function HarnessReaderSession({
     // Only in Create mode, on the newest chapter before anything is built on it.
     if (!creating || !chapter || chapterWriting || latestStoryChapter(state, storyId)?.id !== chapter.id || chapterRewriteGap(state, storyId)) return undefined;
     const media = chapter.mediaLoadout.soundCues.length ? chapter.mediaLoadout : controller.describeStoryMedia(chapter.storyId) ?? chapter.mediaLoadout;
-    const saved = () => controller.snapshot().chapters.find(entry => entry.id === chapter.id);
+    const page = () => authoringHandle.current;
     return {
       chapterNumber: chapter.chapterNumber,
       soundWords: soundVocabulary(media).map(sound => sound.word),
       resolve: (sound, target) => {
-        const current = saved();
-        if (!current) return { ok: false, problem: 'This chapter is no longer available.' };
+        const authoring = page();
+        if (!authoring) return { ok: false, problem: 'Open Create mode to add sounds.' };
         const line = listenedLine.current;
         return resolveSpokenSoundCue({
-          blocks: chapterBlocks(current), soundCues: current.soundCues ?? [], media, chapterNumber: current.chapterNumber, sound, target,
+          blocks: authoring.blocks(), soundCues: authoring.soundCues(), media, chapterNumber: chapter.chapterNumber, sound, target,
           listening: line?.blockId ? { blockId: line.blockId, start: line.start, end: line.end } : undefined, locale: language,
         });
       },
       place: async cue => {
-        const current = saved();
-        if (!current) throw new Error('This chapter is no longer available.');
-        await controller.authorChapter(current.id, {
-          paragraphs: current.paragraphs, soundCues: [...current.soundCues ?? [], cue], speakers: current.speakers,
-          holdingChanges: current.holdingChanges, appearances: current.appearances, soundtrackChanges: current.soundtrackChanges,
-          openingSound: current.openingSound, waiting: current.authoring?.waiting,
-        });
-        // Create mode reopens from the saved chapter, so its next save keeps this cue.
-        setPlacedInWords(count => count + 1);
+        const authoring = page();
+        if (!authoring) throw new Error('Open Create mode to add sounds.');
+        await authoring.addSoundCue(cue);
       },
     };
   }, [chapter, chapterWriting, controller, creating, language, state, storyId]);
@@ -514,7 +508,7 @@ export function HarnessReaderSession({
       {storageError && <p role="alert" className="mt-3 text-sm text-amber-300">{storageError}</p>}
 
       {authoring
-        ? <ChapterAuthoring key={`${chapter.id}:${placedInWords}`} chapter={chapter} controller={controller} locale={story.originalLanguage} text={text} articleRef={articleRef} />
+        ? <ChapterAuthoring key={chapter.id} handle={authoringHandle} chapter={chapter} controller={controller} locale={story.originalLanguage} text={text} articleRef={articleRef} />
         : chapter
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
             highlight={highlight} reading={reading} text={text} />

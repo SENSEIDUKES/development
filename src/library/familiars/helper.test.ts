@@ -224,4 +224,16 @@ describe('global Familiar interaction', () => {
     t.heard('conflict');
     expect(t.helper.getSnapshot().proposal?.actionId).toBe('conflict');
   });
+  it('applies what was reviewed, even when the screen changes before Confirm', async () => {
+    const t = setup();
+    let target = 'the words read then';
+    const run = vi.fn(async (_input: string, _prepared?: unknown) => {});
+    t.helper.setContext(t.owner, { ...t.context, actions: [...t.context.actions,
+      { id: 'sound', label: 'Add sound', phrases: ['add'], input: { label: 'Sound', maxLength: 200 }, prepare: () => target, describe: () => target, success: 'Placed.', run }] });
+    t.helper.open();
+    t.helper.submit('add wind right there');
+    target = 'a later sentence';
+    await t.helper.confirm();
+    expect(run).toHaveBeenCalledExactlyOnceWith('wind right there', 'the words read then');
+  });
 });

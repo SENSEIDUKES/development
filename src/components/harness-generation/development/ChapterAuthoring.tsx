@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState, type CSSProperties, type Ref } from 'react';
+import { useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type Ref } from 'react';
 import { useOptionalReaderMixer } from '@seihouse/audio-player';
 import {
-  ATMOSPHERE_CHANGE_KIND, SOUNDSCAPE_CHANGE_KIND, SOUND_CUE_KIND, createMediaCatalog, isSoundtrackChange,
+  ATMOSPHERE_CHANGE_KIND, SOUNDSCAPE_CHANGE_KIND, SOUND_CUE_KIND, SOUND_CUE_RULES, createMediaCatalog, isSoundtrackChange,
   type ChapterOpeningSound, type SoundCueAttachment, type SoundtrackChangeAttachment, type SoundtrackChangeKind,
 } from '@seihouse/sen/audio';
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
@@ -9,7 +9,7 @@ import {
   ManuscriptOverlaySwitch, OVERLAY_KINDS, OVERLAY_SOUNDTRACK_KIND, HighlightEngine, SOUNDTRACK_KIND_WORDS, WRITER_OPENING,
   applyPassageEdit, attachmentMarks, createManuscript, openingSoundMark, createManuscriptId, flaggedAttachments, placedSoundCues, removeAttachment, resolveAnchor,
   audioActions, soundtrackOptionLabel, structurePins,
-  type ManuscriptAttachment, type ManuscriptOverlayMode, type ManuscriptState, type PassageEdit, type SoundtrackChoices,
+  type ManuscriptAttachment, type ManuscriptOverlayMode, type ManuscriptState, type PassageEdit, type SoundtrackChoices, type TextHighlightBlock,
 } from '@seihouse/sen/highlight-engine';
 import { storySoundtrack, type ResolvedReaderText } from '@seihouse/sen/reader-runtime';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
@@ -21,6 +21,18 @@ import type { HarnessGenerationController } from '../shared/controller';
 import type { ReaderChapter } from './readerChapterBody';
 
 type ChapterState = ManuscriptState<unknown>;
+
+/**
+ * Create mode's chapter as it stands on screen (edits not yet saved
+ * included), for Sound Cues asked for in words. A cue added here joins the
+ * page and its saves, in order, so neither can overwrite the other.
+ */
+export interface ChapterAuthoringHandle {
+  blocks(): TextHighlightBlock[];
+  soundCues(): SoundCueAttachment[];
+  /** Saved with the page; rejects when its words now hold a cue, the chapter is full, or the save fails. */
+  addSoundCue(cue: SoundCueAttachment): Promise<void>;
+}
 
 /** A chapter is longer than the lab's 500-word page; Create mode never limits its length. */
 const NO_WORD_LIMIT = Number.POSITIVE_INFINITY;
@@ -79,14 +91,18 @@ const KIND_NAMES: Record<string, [string, string]> = {
  * again or removes it, or the chapter is sealed. A changed chapter is marked
  * as changed, so it is read again at its seal.
  */
-export function ChapterAuthoring({ chapter, controller, locale, text, articleRef }: {
+export function ChapterAuthoring({ chapter, controller, locale, text, articleRef, handle }: {
   chapter: ReaderChapter;
   controller: HarnessGenerationController;
   locale: string;
   text: ResolvedReaderText;
   articleRef?: Ref<HTMLElement>;
+  handle?: Ref<ChapterAuthoringHandle>;
 }) {
   const [state, setState] = useState<ChapterState>(() => chapterState(chapter, locale));
+  // The page as last set, for a cue added in words between renders.
+  const latest = useRef(state);
+  latest.current = state;
   const [opening, setOpening] = useState<ChapterOpeningSound | undefined>(chapter.openingSound);
   const [overlayMode, setOverlayMode] = useState<ManuscriptOverlayMode>('cues');
   const [notice, setNotice] = useState<string | null>(null);
@@ -149,7 +165,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       setNotice(`Your change replaced the words ${list} sat on. ${newlyWaiting.length === 1 ? 'It waits' : 'They wait'} under Needs a new spot.`);
     }
     setSaving('saving');
-    saves.current = saves.current.then(() => controller.authorChapter(chapter.id, {
+    const saved = saves.current.then(() => controller.authorChapter(chapter.id, {
       paragraphs: next.manuscript.paragraphs.map(paragraph => paragraph.text),
       soundCues: kept.filter(attachment => attachment.kind === SOUND_CUE_KIND) as SoundCueAttachment[],
       speakers: kept.filter(attachment => attachment.kind === SPEAKER_KIND) as SpeakerAttachment[],
@@ -158,11 +174,30 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       soundtrackChanges: kept.filter(isSoundtrackChange) as SoundtrackChangeAttachment[],
       openingSound: nextOpening,
       waiting: waiting as Waiting[],
-    })).then(() => setSaving('saved'), error => {
+    }));
+    saves.current = saved.then(() => setSaving('saved'), error => {
       setSaving('failed');
       setNotice(error instanceof Error ? error.message : 'Your change could not be saved.');
     });
+    return saved;
   };
+  useImperativeHandle(handle, () => ({
+    blocks: () => latest.current.manuscript.paragraphs.map(paragraph => ({ id: paragraph.id, text: paragraph.text })),
+    soundCues: () => placedSoundCues(latest.current),
+    addSoundCue: cue => {
+      const current = latest.current;
+      const cues = placedSoundCues(current);
+      if (cues.length >= SOUND_CUE_RULES.maxPerChapter) return Promise.reject(new Error(`This chapter already has ${SOUND_CUE_RULES.maxPerChapter} Sound Cues, the most a chapter holds.`));
+      const { blockId, startOffset, endOffset } = cue.anchor;
+      if (cues.some(other => other.anchor.blockId === blockId && startOffset < other.anchor.endOffset && endOffset > other.anchor.startOffset)) {
+        return Promise.reject(new Error(`“${cue.anchor.selectedText}” already has a Sound Cue on some of its words.`));
+      }
+      const next = { ...current, attachments: [...current.attachments, cue] };
+      latest.current = next;
+      setState(next);
+      return save(next);
+    },
+  }));
   const update = (change: (current: ChapterState) => ChapterState) => {
     const next = change(state);
     if (next === state) return;

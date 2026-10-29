@@ -1097,7 +1097,7 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
     expect(create().getAttribute('aria-pressed')).toBe('false');
   });
-  it('reopens an open Create mode with a Sound Cue placed in words, so its next save keeps it', async () => {
+  it('adds a Sound Cue placed in words to the open Create mode page and its saves', async () => {
     const { controller, storyId } = await story({ written: 2 });
     let tools: ReaderHostTools | undefined;
     await mount(<Host controller={controller} storyId={storyId} renderHostTools={current => { tools = current; return null; }} />);
@@ -1110,5 +1110,8 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     await flush();
     expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="create-mode-no-cues"]')).toBeNull();
+    // The cue joined the page itself, through its saves: a second on the same words is refused, and it is saved once.
+    await act(async () => { await expect(tools!.createMode!.sounds.place(placed.cue)).rejects.toThrow('already has a Sound Cue'); });
+    expect(controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 2)!.soundCues?.map(cue => cue.anchor.selectedText)).toEqual(['with a lantern']);
   });
 });

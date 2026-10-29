@@ -9,8 +9,8 @@ highlight places, or a plain sentence saying why not. `./audio` exports
 `soundWordRecording`, the recording rotation `placeSoundCues` already used.
 `ReaderHostTools` gains an optional `createMode.sounds` (`ReaderSoundAuthoring`),
 present only while Create mode is open: its sound words, `resolve` (with what
-Listen is reading) and `place`, which saves through `authorChapter` and reopens
-Create mode with the cue.
+Listen is reading) and `place`, which adds the cue to Create mode's page and its
+own saves, so an edit and a cue never overwrite each other.
 
 **Unreleased (2026-10-28, breaking):** `./reader-codex` no longer exports the
 older Codex page: `ReaderCodex` (and its `extraPages`), `CodexSheetOverlay`,

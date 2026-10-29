@@ -55,7 +55,11 @@ describe('Reader actions for the Familiar', () => {
     expect(sound.describe(said.input)).toBe('Chapter 8: “wind” on “whistling drafts”, paragraph 1. Those words appear 2 times in this chapter.');
     sound.preview!(said.input);
     expect(playCue).toHaveBeenCalledExactlyOnceWith('https://cdn.example/wind.mp3');
-    await sound.run(said.input);
+    // What was reviewed is placed, even if the request would now resolve elsewhere.
+    const prepared = sound.prepare!(said.input);
+    const later = { ...cue, anchor: { ...cue.anchor, selectedText: 'a later sentence' } } as SoundCueAttachment;
+    resolve.mockReturnValue({ ok: true as const, cue: later, paragraph: 3, occurrences: 1 });
+    await sound.run(said.input, prepared);
     expect(place).toHaveBeenCalledExactlyOnceWith(cue);
     expect(sound.check!('thunder on the sky')).toBe('Which sound? This story\'s sounds are: wind, blade clash.');
     expect(context.hint).toContain('“Add wind right there” while listening');

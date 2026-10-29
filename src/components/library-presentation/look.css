@@ -1,0 +1,195 @@
+/* The Library's applied look, from the owner's v2.json (2026-10-29): first
+   Home's, now every page in the Library Shell and Create. `LibraryLook` puts the
+   class on a page's shell; Profile's Cave and the Reader keep their own.
+   Plain surface roles share violet; control faces remain black.
+   The Reader stylesheet owns the shared rim; ManifestButton owns its rainbow.
+   Keep original text colors and navigation effects; only navigation icons turn white.
+   Artwork and video never receive the glass blur. */
+
+.library-look {
+  /* V2 edits Midnight violet to 90% / 40px; preserve the Workshop's relative
+     alpha scaling for every gradient stop instead of changing only its base. */
+  --library-material-violet-opacity: .9;
+  --library-violet-alpha-scale: calc(.9 / .95);
+  --library-look-blur: blur(40px);
+  --reader-border-z: 25;
+  color: var(--library-material-text);
+  background: linear-gradient(#0009, #000b), var(--library-background-image, var(--library-look-art, none)) center / cover;
+}
+/* Keep the artwork behind the content; the plain footer shares the chrome tint. */
+.library-look .workspace-shell { background: transparent; }
+.library-look :is([data-home-panel], .world-card-banner, [data-home-events], .workspace-preferences-panel) {
+  background: var(--library-material-card-fill);
+  border: 1px solid var(--reader-glass-edge);
+  box-shadow: var(--library-material-card-shadow);
+  -webkit-backdrop-filter: var(--library-material-card-blur);
+  backdrop-filter: var(--library-material-card-blur);
+}
+.library-look :is([data-home-events], .home-event, [data-slot='empty-state']) { position: relative; }
+.library-look [data-home-events] { border-radius: 1.35rem; padding: .5rem 1rem; }
+.library-look :is([data-home-panel], .world-card-base)::before { display: none; }
+.library-look :is([data-slot='empty-state'], .world-card-base, .home-event) {
+  background: var(--library-material-shell-fill);
+  color: var(--library-material-text);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-shell-shadow);
+  -webkit-backdrop-filter: var(--library-look-blur);
+  backdrop-filter: var(--library-look-blur);
+}
+/* Media keeps the original clear backing; tint applies to the surrounding glass. */
+.library-look .home-featured [data-home-panel],
+.library-look .world-card-banner { background: var(--library-material-archived-blue-fill); }
+.library-look :is(.world-card-base:has(img, video), .home-event:has(.home-event-art)) {
+  background: var(--library-material-archived-smoked-fill);
+}
+/* Media cards keep their artwork clear, including still images. Text uses
+   the original contrast gradients, with no glass sheet over the media. */
+.library-look .home-featured [data-home-panel],
+.library-look :is(.home-event, .world-card-base, .world-card-banner) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.library-look :is(.workspace-header, [data-slot='app-shell-sidebar'], .library-global-navigation > div, .library-footer) {
+  background: var(--library-material-control-fill);
+  color: var(--library-material-text);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-shell-shadow);
+  -webkit-backdrop-filter: var(--library-look-blur);
+  backdrop-filter: var(--library-look-blur);
+}
+/* Trial the Story Seed panel material on the frame, keeping controls black. */
+.library-look :is(.workspace-header, [data-slot='app-shell-sidebar'], .library-global-navigation > div, .library-footer) { background: var(--library-material-shell-fill); }
+.library-look .library-global-navigation > div { position: relative; }
+/* Keep the package's hover/press transitions, icon rings, label colors and
+   glow around the black controls. Only the navigation glyphs are white. */
+.library-look .library-navigation {
+  --sh-nav-selected: var(--library-material-control-fill);
+  --sh-nav-hover: #101018;
+  background: transparent;
+}
+.library-look :is([data-slot='navigation-item'], .library-global-navigation button) { background-color: var(--library-material-control-fill); }
+.library-look :is([data-slot='navigation-item'], .library-global-navigation button):hover { background-color: #101018; }
+.library-look :is([data-slot='navigation-item'], .library-global-navigation button):active { background-color: #000; }
+.library-look :is([data-slot='navigation-icon'], .library-global-navigation button > span[aria-hidden='true']) { color: #fff; }
+.library-look .workspace-header :is(button svg, .dao-insights-trigger svg) { color: #fff; }
+/* Put dock clearance inside the footer so its fill reaches the viewport edge. */
+.library-look .library-navigation-layout .workspace-shell-main { padding-bottom: 0; }
+.library-look .library-footer {
+  border-top: 1px solid var(--reader-glass-edge);
+  padding-bottom: calc(.75rem + var(--library-bottom-clearance, 0px));
+}
+.library-look .library-footer::before { display: none; }
+.library-look .world-card-banner-backdrop { filter: none; }
+.library-look .world-card-cover-fallback { background: var(--library-material-card-fill); }
+.library-look :is(.world-card-base-format, .world-card-base-motion .motion-picture-control) { background: var(--library-material-control-fill); border-color: var(--reader-glass-edge); }
+/* Only the face changes. Never replace Manifest's ::before/::after spectrum. */
+.library-look .library-glass-button {
+  --glass-fill: var(--library-material-control-fill);
+  --glass-edge: var(--reader-glass-edge);
+  --glass-backdrop: var(--library-material-control-blur);
+  --glass-backdrop-dim: none;
+  background-image: none;
+}
+.library-look :is(select, .home-featured-step, .library-footer-language) {
+  background: var(--library-material-control-fill);
+  color: var(--library-material-text);
+  border-color: var(--reader-glass-edge);
+  -webkit-backdrop-filter: var(--library-material-control-blur);
+  backdrop-filter: var(--library-material-control-blur);
+}
+.library-look option { background: #000; color: #fff; }
+/* Familiar sheets are portaled outside the page's shell, but only opt in while
+   a page wearing the look is present. Route changes remove the skin without persisting a theme. */
+body:has(.library-look) :is(.familiar-helper, .familiar-energy-panel, .familiar-actions) {
+  background: var(--library-material-control-fill);
+  color: var(--library-material-text);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-control-shadow);
+  -webkit-backdrop-filter: var(--library-material-control-blur);
+  backdrop-filter: var(--library-material-control-blur);
+}
+body:has(.library-look) :is(.familiar-helper-place, .familiar-helper-quiet) { color: var(--library-material-muted); }
+
+/* ── Discover ─────────────────────────────────────────────────────────────
+   The catalogue's own containers take the outer-panel glass, its controls the
+   black control face; world cards are media and stay clear, as on Home. */
+.library-look [data-discover] {
+  --discover-hairline: var(--reader-glass-edge);
+  --discover-glass: var(--library-material-card-fill);
+}
+.library-look :is(.discover-navigation, .discover-medium-switcher, .discover-fate, .discover-sample-notice p) {
+  background: var(--library-material-card-fill);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-card-shadow);
+  -webkit-backdrop-filter: var(--library-material-card-blur);
+  backdrop-filter: var(--library-material-card-blur);
+}
+.library-look :is(.discover-medium-switcher, .discover-fate) { position: relative; }
+.library-look .discover-medium-switcher { border-radius: 1.35rem; }
+.library-look .discover-fate { border: 1px solid var(--reader-glass-edge); border-radius: 1.35rem; }
+.library-look :is(.discover-search, .discover-segmented, .discover-genre-select select) {
+  background: var(--library-material-control-fill);
+  border: 1px solid var(--reader-glass-edge);
+  color: var(--library-material-text);
+  -webkit-backdrop-filter: var(--library-material-control-blur);
+  backdrop-filter: var(--library-material-control-blur);
+}
+.library-look .discover-view-rail button[aria-pressed='true'] { border-color: var(--reader-glass-edge); }
+/* The catalogue's covers are the public shelf: they keep the World Card's own
+   edge and shadow, with no gold rim. The story's own cover on World Info keeps its rim. */
+.library-look [data-discover] .world-card-base {
+  border-color: rgba(235, 243, 255, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 3px 9px rgba(0, 0, 0, 0.32), 0 18px 38px rgba(0, 0, 0, 0.42);
+}
+.library-look [data-discover] .world-card-base::after { display: none; }
+
+/* ── World Info ───────────────────────────────────────────────────────────
+   The story's page is a media panel (its own cover stands behind the hero), so
+   it keeps the clear featured backing; its tool rows are black controls. */
+.library-look .world-card-info {
+  --world-info-line: var(--reader-glass-edge);
+  --world-info-line-strong: var(--reader-glass-edge);
+  position: relative;
+  background: var(--library-material-archived-blue-fill);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.library-look .world-card-info-tool {
+  background: var(--library-material-control-fill);
+  -webkit-backdrop-filter: var(--library-material-control-blur);
+  backdrop-filter: var(--library-material-control-blur);
+}
+
+/* ── Story Seed ───────────────────────────────────────────────────────────
+   The step strip and footer are chrome like the header; the form's panels are
+   outer panels; the live story card is a nested card. Fields, choice tiles and
+   the creator's own glows keep their recipes. */
+.library-look :is(.seed-creator-strip, .seed-creator-footer) {
+  background: var(--library-material-shell-fill);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-shell-shadow);
+  -webkit-backdrop-filter: var(--library-look-blur);
+  backdrop-filter: var(--library-look-blur);
+}
+.library-look .seed-field-scope .glass-panel {
+  position: relative;
+  background: var(--library-material-card-fill);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-card-shadow);
+  -webkit-backdrop-filter: var(--library-material-card-blur);
+  backdrop-filter: var(--library-material-card-blur);
+}
+.library-look .seed-live-card {
+  position: relative;
+  background: var(--library-material-shell-fill);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-shell-shadow);
+  -webkit-backdrop-filter: var(--library-look-blur);
+  backdrop-filter: var(--library-look-blur);
+}
+/* The creator already fills the page; its ambience would double the artwork's dimming. */
+.library-look .seed-workspace-ambience { background: none; }
+
+@media (forced-colors: active) { .library-look { background: Canvas; --library-look-blur: none; } }
+@media (prefers-reduced-transparency: reduce) { .library-look { --library-look-blur: none; } }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .library-look { --library-look-blur: none; } }

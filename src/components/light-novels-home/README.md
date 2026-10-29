@@ -214,3 +214,9 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
   are unchanged. Custom tint/strength supplies RGB channels to each recipe, rather
   than replacing it with the header fill. Browser verification compares all
   non-color properties and gradient alpha/stops against the archived originals.
+
+
+- **2026-10-29, the look leaves Home:** Home's palette stylesheet is now the
+  Library's `look.css` (`src/components/library-presentation/`), class
+  `.library-look`, worn by every page in the shell through `LibraryLook`. Home's
+  own rules (clear media, navigation states, footer clearance) are unchanged there.

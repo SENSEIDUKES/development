@@ -145,3 +145,28 @@ Home supplies V2's #c9a24a accent through the existing appearance scope only whe
 the reader has no saved accent. A saved accent continues to override it; other
 pages keep their defaults. The Palette & Materials Home mock uses this same
 composition with its selected experiment colors and measured ingredient recipes.
+
+
+## 2026-10-29 — The look on every page
+
+From SENSEI: Home's look is the app's look. The stylesheet moved from Home
+(`light-novels-home/development/home-palette.css`) to `look.css` here, its class
+is `.library-look` (was `.library-home-palette`), and `LibraryLook`
+(`@seihouse/library/presentation`) puts it on a page: the appearance scope with
+the look's gold accent under any saved accent, the `library-look` class and the
+Home artwork as the fallback behind the shared Background Image. The app's
+`AppShell` wears it on Home, Discover, Story View and Blueprint, and Create wears it
+around Story Seed; Profile's Cave and the Reader keep their own presentation.
+
+Each page's surfaces map onto the same roles Home uses, in `look.css`: Discover's
+tab strip, medium switcher, Fate section and sample notice are outer panels and its
+search, segmented control and selects are black controls, while its cover cards
+keep the World Card's own edge with no rim (the public shelf, not the reader's);
+World Info is a media panel (its own cover behind the hero, clear) with black tool
+rows and the rim; Story Seed's step strip and footer are chrome, its form panels
+outer panels and its live story card a nested card, with its fields, choice tiles
+and ambience untouched. The shared rim (reader-glass.css) names those hosts.
+The Background Image and tint preferences now reach every page wearing the look.
+Browser checks: `verifyHomePalette`, `verifyBackgroundImage` (every look page
+carries the shared image) and `verifyBackgroundTint` (Create and Discover take the
+tint). The Story Seed Workshop preview wears the look like the app's Create.

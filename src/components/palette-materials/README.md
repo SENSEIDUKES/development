@@ -190,3 +190,10 @@ and the supplied gold accent. Inherited edits remain unchanged. These assignment
 ingredients keep their original recipes; Home applies the supplied edits through
 its existing role adapter, without changing other pages or saved preferences. Browser inclusion advances once to `owner-v2`, preserving existing work and
 conflicts; subsequent visits continue respecting local saves and deletions.
+
+
+## 2026-10-29 — The look on every page
+
+The V2 combination Home adopted is now the Library's look (`library-presentation/look.css`,
+class `.library-look`), worn by Discover, Story View, Blueprint and Create as well.
+The Home composition here is unchanged; the look it previews is the app's.

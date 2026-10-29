@@ -68,9 +68,9 @@ try {
         return [style.backgroundImage, style.backgroundColor];
       }), chrome, `${selector} shares the purple-blue chrome finish`);
     }
-    assert.ok(await page.locator('.library-home-palette').evaluate(element => {
+    assert.ok(await page.locator('.library-look').evaluate(element => {
       const style = getComputedStyle(element);
-      return style.getPropertyValue('--home-palette-art').includes('url(') && style.backgroundImage.includes('url(');
+      return style.getPropertyValue('--library-look-art').includes('url(') && style.backgroundImage.includes('url(');
     }), 'Home retains its artwork backdrop behind the content');
     const assertFooterBottom = async () => {
       const bounds = await page.locator('.workspace-shell-main').evaluate(main => {
@@ -98,13 +98,13 @@ try {
     assert.notDeepEqual(hovered, resting, 'Navigation must react to hover');
     assert.notEqual(hovered[6], '0s', 'Navigation keeps its transition');
     // Compare with the same canonical components without the palette opt-in.
-    await page.getByTestId('novel-expanded-shell').evaluate(element => element.classList.remove('library-home-palette'));
+    await page.getByTestId('novel-expanded-shell').evaluate(element => element.classList.remove('library-look'));
     await page.waitForTimeout(350);
     assert.deepEqual(await cta.evaluate(rainbowState), rainbow, 'Manifest keeps its animated rainbow');
     assert.deepEqual((await activeNav.evaluate(navState)).slice(2), selected.slice(2), 'Selected glow/text/transitions stay native around the black fill');
     assert.deepEqual((await inactiveNav.evaluate(navState)).slice(2), hovered.slice(2), 'Hover glow/text/transitions stay native around the black fill');
     assert.deepEqual(await page.locator(nativeColors).evaluateAll(elements => elements.map(element => getComputedStyle(element).color)), colors, 'Labels retain their own colors');
-    await page.getByTestId('novel-expanded-shell').evaluate(element => element.classList.add('library-home-palette'));
+    await page.getByTestId('novel-expanded-shell').evaluate(element => element.classList.add('library-look'));
     const icons = page.locator(width >= 1024 ? '[data-slot="navigation-icon"]' : '.library-global-navigation button > span[aria-hidden="true"]');
     assert.ok((await icons.evaluateAll(elements => elements.map(element => getComputedStyle(element).color))).every(color => color === 'rgb(255, 255, 255)'));
     await page.mouse.move(0, 0);

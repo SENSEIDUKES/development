@@ -226,6 +226,11 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-29 (the Library's look):** The app's Create and the Story Seed
+  preview wrap the journey in `LibraryLook` (`look.css`): the step strip and
+  footer are chrome, the form's glass panels outer panels and the live story card a
+  nested card, all with the gold rim; fields, choice tiles and the creator's own
+  glows keep their recipes, and the ambience layer yields to the shared artwork.
 - **2026-10-28 (Original Reference removed):** With the owner's approval, the
   old production copy (`reference/`, the CreationModal replica) and its Original
   Reference and Compare panes were removed. The old intake contract went with it

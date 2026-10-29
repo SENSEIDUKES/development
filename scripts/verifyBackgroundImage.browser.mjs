@@ -22,7 +22,7 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
    await page.goto(`${base}/app/`); await page.getByTestId('novel-expanded-home').waitFor();
    await dockBounds(page);
    const layers = await page.locator('[data-home-panel]').nth(1).evaluate(e => [getComputedStyle(e).backgroundColor, getComputedStyle(e).backdropFilter, getComputedStyle(e).boxShadow]);
-   const original = await page.locator('.library-home-palette').evaluate(e => getComputedStyle(e).backgroundImage);
+   const original = await page.locator('.library-look').evaluate(e => getComputedStyle(e).backgroundImage);
    assert.match(original, /LIBRARY_THUNDER/);
    await page.goto(`${base}${settings}`);
    await page.locator('#cave-display-name').fill('Keep draft');
@@ -41,8 +41,8 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
    for (const route of ['/app/', '/app/?page=discover', '/app/?page=create']) {
     await page.goto(`${base}${route}`);
     await page.locator('.workspace-shell').waitFor();
-    const target = route === '/app/' ? '.library-home-palette' : '.workspace-shell';
-    assert.match(await page.locator(target).evaluate(e => getComputedStyle(e).backgroundImage), /immortal-land-5/, `${route}: shared image follows the profile`);
+    // Every page wearing the look carries the shared image on its look wrapper.
+    assert.match(await page.locator('.library-look').evaluate(e => getComputedStyle(e).backgroundImage), /immortal-land-5/, `${route}: shared image follows the profile`);
     if (route === '/app/') {
       assert.deepEqual(await page.locator('[data-home-panel]').nth(1).evaluate(e => [getComputedStyle(e).backgroundColor, getComputedStyle(e).backdropFilter, getComputedStyle(e).boxShadow]), layers, 'Image selection does not change material settings');
       await dockBounds(page);
@@ -54,7 +54,7 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
    await moonlit.focus(); await moonlit.press('Home'); await page.keyboard.press(' ');
    assert.equal(await choices.getByRole('radio', { name: /Home background/ }).getAttribute('aria-checked'), 'true', 'Keyboard can restore Home artwork');
    await page.goto(`${base}/app/`); await page.getByTestId('novel-expanded-home').waitFor();
-   assert.equal(await page.locator('.library-home-palette').evaluate(e => getComputedStyle(e).backgroundImage), original);
+   assert.equal(await page.locator('.library-look').evaluate(e => getComputedStyle(e).backgroundImage), original);
    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
    assert.deepEqual(errors, []);
    await page.close(); console.log(`${engineName} ${width}px: dock encloses all buttons, image selection/reload/shared pages/restoration passed.`);

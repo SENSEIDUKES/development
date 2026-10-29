@@ -617,3 +617,5 @@ Workshop sample data remains outside the host adapter.
 - **2026-09-27** — Created. The Full, Info and Compact cards were extracted unchanged from Home, the world detail and Create, and those pages now render them. Added the new Mini size, sized like an audio track. Added the Workshop tab with views for All sizes, Info page, Full card, Compact and Mini, plus Library status, long title and missing cover states.
 
 - **2026-10-25:** Feature cards now reserve text room relative to their own width, and Discover gives each phone feature its full shelf width. Added the reusable WorldCardMenu for chapter and ranking rows, exported through the Library package and shown in the existing workspace.
+
+- **2026-10-29:** Inside the Library's look (`library-presentation/look.css`), World Info takes the look's gold edge and rim and black tool rows, and the catalogue's cards on Discover keep this card's own edge. The card's own stylesheet is unchanged.

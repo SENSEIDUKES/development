@@ -78,7 +78,7 @@ try {
     assert.equal(await cta.evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(0, 0, 0, 0.95)');
     assert.deepEqual(await cta.evaluate(rainbow), ring, 'Rainbow effects are unchanged');
     assert.equal(await page.locator('.home-filter-label').evaluate(e => getComputedStyle(e).color), 'rgb(167, 139, 250)', 'Background tint preserves the independent accent');
-    assert.match(await page.locator('.library-home-palette').evaluate(e => getComputedStyle(e).backgroundImage), /url\(/, 'Artwork remains visible');
+    assert.match(await page.locator('.library-look').evaluate(e => getComputedStyle(e).backgroundImage), /url\(/, 'Artwork remains visible');
     await page.locator('[data-home-events] summary').click();
     const media = await page.locator('.home-event-art, .home-event-body, .world-card-banner-backdrop, .world-card-banner-video').evaluateAll(elements => elements.map(e => [getComputedStyle(e).filter, getComputedStyle(e).backdropFilter]));
     assert.ok(media.length > 0);
@@ -101,7 +101,11 @@ try {
     }
     await page.goto(`${base}/app/?page=create`);
     await page.locator('.seed-field-scope .glass-panel').first().waitFor();
-    assert.equal(await page.locator('.seed-field-scope .glass-panel').first().evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(11, 14, 30, 0.46)', 'Create does not opt into Home tint');
+    assert.equal(await page.locator('.seed-field-scope .glass-panel').first().evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(50, 21, 35, 0.35)', 'Create wears the look: its panels are outer panels and take the shared tint');
+    await page.goto(`${base}/app/?page=discover`);
+    await page.locator('.discover-medium-switcher').waitFor();
+    assert.equal(await page.locator('.workspace-header').evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(50, 21, 35, 0.9)', 'Discover wears the look: its header takes the shared tint');
+    assert.equal(await page.locator('.discover-medium-switcher').evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(50, 21, 35, 0.35)', 'Discover containers are outer panels');
     // The standalone Profile Workshop uses the same controls with its mock profile.
     await page.goto(`${base}/?preview=user-profile&cave=/settings`);
     await open(page, 'Background tint');

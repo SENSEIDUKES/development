@@ -78,3 +78,7 @@ mode behavior and translation-review limits.
   to it, a chapter-by-chapter narrative whose choices carry consequences.
 
 - **2026-10-25:** Chapter and ranking rows now use WorldCardMenu from the World Card family; featured cards use a full phone shelf slot and the shared responsive cover sizing.
+- **2026-10-29** — Discover wears the Library's look (`look.css`): violet glass
+  chrome and outer panels, black controls, the shared artwork and the gold rims on
+  its medium switcher and Fate section. Cover cards keep the World Card's own edge,
+  with no rim: the catalogue is the public shelf.

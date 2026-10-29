@@ -1,5 +1,11 @@
 # NovelExpanded app
 
+- **2026-10-29** — The look is the app's: Discover, Story View, Blueprint and
+  Create now wear Home's V2 look (`LibraryLook`, the Library's `look.css`): violet
+  glass chrome, black controls, gold rims and the artwork (or the saved Background
+  Image) behind every page. Profile's Cave and the Reader keep their own
+  presentation. Discover's cover cards keep the World Card's own edge, with no rim.
+
 - **2026-10-29** — Home adopts the owner's V2 default: edited Midnight violet
   (90% opacity, 40px blur) for chrome and nested cards, Violet inset for outer
   panels, the supplied gold accent, and black spectrum buttons. Home and its

@@ -113,16 +113,6 @@ function ScrollRevealLab({ presentation, rarity, outcome }: { presentation: Myst
   );
 }
 
-function AchievementsReference() {
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-10 text-sm leading-relaxed text-neutral-400 sm:px-8">
-      Achievements and Mystery Scrolls have no production original. They replace the story-scoped
-      achievements that earned Relics: goals are now Library-defined, recognize natural reading,
-      creation and exploration, and each earning is a Mystery Scroll whose reward the server decides.
-    </div>
-  );
-}
-
 export function AchievementsWorkspace() {
   const [scene, setScene] = useState<Scene>('achievements');
   const [accountState, setAccountState] = useState<AccountState>('fresh');
@@ -137,7 +127,6 @@ export function AchievementsWorkspace() {
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={false}
       workshopControls={{
         description: 'The Achievements scene runs the development economy in this tab: goals, scrolls and every credit come from real server code. Only the activity is simulated.',
         defaultSection: 'scenes',
@@ -209,7 +198,6 @@ export function AchievementsWorkspace() {
           },
         ],
       }}
-      renderReference={() => <AchievementsReference />}
       renderDevelopment={() => scene === 'reveal'
         ? <ScrollRevealLab key={`${presentation}-${rarity}-${outcome}`} presentation={presentation} rarity={rarity} outcome={outcome} />
         : (

@@ -14,7 +14,6 @@ import { PreservedWorkspaceNotice } from './PreservedWorkspaceNotice';
 import { useModelPreference } from '../../../host/generation/modelPreference';
 import type { HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { mediaPackKey, type MediaPackEntitlement, type MediaPackReference } from '@seihouse/library/media';
-import { HarnessGenerationReference } from '../../../components/harness-generation/reference/HarnessGenerationReference';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { createWorkshopStorySeedSource } from './storySeedHandoff';
@@ -110,8 +109,6 @@ export function HarnessGenerationWorkspace() {
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={false}
-      renderReference={() => <HarnessGenerationReference />}
       renderDevelopment={() => !officialInventoryReady
         ? <p role="status">Validating official CAPA defaults…</p>
         : storageError.startsWith('Official CAPA defaults could not be installed')

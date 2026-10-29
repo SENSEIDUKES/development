@@ -3,9 +3,6 @@ import { useLibraryAssets } from '@seihouse/library/presentation';
 import { WorldCard, WorldCardFeature, WorldCardMenu, languageName } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
-import { WorldCardFullReference } from '../../../components/world-card/reference/WorldCardFull';
-import { WorldCardCompactReference } from '../../../components/world-card/reference/WorldCardCompact';
-import { StoryDetailScreen as ReferenceStoryDetail } from '../../../components/light-novels-home/reference/StoryDetailScreen';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { featuredExpansions } from '../light-novels-home/previewData';
@@ -79,22 +76,19 @@ function Stage({ title, note, children }: { title: string; note?: string; childr
   </section>;
 }
 
-function CompactRow({ worlds, reference, senSash, onOpen }: { worlds: readonly CreatorWorld[]; reference: boolean; senSash: boolean; onOpen: (world: CreatorWorld) => void }) {
+function CompactRow({ worlds, senSash, onOpen }: { worlds: readonly CreatorWorld[]; senSash: boolean; onOpen: (world: CreatorWorld) => void }) {
   const { homeImages = [] } = useLibraryAssets();
   const [selectedId, setSelectedId] = useState(worlds[0]?.id);
   return <ul className="flex gap-3 overflow-x-auto pb-4" aria-label="Your worlds">
     {worlds.slice(0, 3).map(world => <li key={world.id} className="w-[min(46%,13.5rem)] flex-none sm:w-[13.5rem]">
-      {reference
-        ? <WorldCardCompactReference world={world} cover={world.imageUrl ?? fallbackCover(world.id, homeImages)} fallbackCover={!world.imageUrl}
-            selected={world.id === selectedId} onSelect={() => setSelectedId(world.id)} />
-        : <WorldCard face="compact" senSash={senSash} world={world} cover={world.imageUrl ?? fallbackCover(world.id, homeImages)} fallbackCover={!world.imageUrl}
-            selected={world.id === selectedId} onOpen={() => { setSelectedId(world.id); const cover = world.imageUrl ?? fallbackCover(world.id, homeImages); onOpen(cover ? { ...world, imageUrl: cover } : world); }} />}
+      <WorldCard face="compact" senSash={senSash} world={world} cover={world.imageUrl ?? fallbackCover(world.id, homeImages)} fallbackCover={!world.imageUrl}
+            selected={world.id === selectedId} onOpen={() => { setSelectedId(world.id); const cover = world.imageUrl ?? fallbackCover(world.id, homeImages); onOpen(cover ? { ...world, imageUrl: cover } : world); }} />
     </li>)}
   </ul>;
 }
 
-export function WorldCardStage({ view, state, reference, onAction }: {
-  view: View; state: WorldCardPreviewState; reference: boolean; onAction: (message: string) => void;
+export function WorldCardStage({ view, state, onAction }: {
+  view: View; state: WorldCardPreviewState; onAction: (message: string) => void;
 }) {
   const story = previewStory(state);
   const worlds = previewCreatorWorlds(state);
@@ -105,7 +99,7 @@ export function WorldCardStage({ view, state, reference, onAction }: {
   const infoWorld = openedWorld?.id === story.id ? story : openedWorld ?? story;
   const show = (candidate: View) => view === 'all' || view === candidate;
 
-  if (blueprintOpen && !reference && state.blueprint !== 'reader-off') return <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8" data-world-card-stage="development">
+  if (blueprintOpen && state.blueprint !== 'reader-off') return <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8" data-world-card-stage="development">
     <StoryBlueprintView title={infoWorld.title} snapshot={blueprintSnapshot} destinedEnding="Ye Chen restores the last lotus and ends the empire's oath."
       access={BLUEPRINT_ACCESS[state.blueprint]} isPrivate={state.blueprint !== 'creator-shared'}
       onBack={() => setBlueprintOpen(false)}
@@ -113,11 +107,9 @@ export function WorldCardStage({ view, state, reference, onAction }: {
       onCopy={async () => onAction(`Blueprint copied from ${infoWorld.title} to your Story Seeds`)} />
   </div>;
 
-  return <div className="mx-auto max-w-5xl space-y-12 px-4 py-6 sm:px-8" data-world-card-stage={reference ? 'reference' : 'development'}>
+  return <div className="mx-auto max-w-5xl space-y-12 px-4 py-6 sm:px-8" data-world-card-stage="development">
     {(openedWorld || show('info')) && <Stage title="Info page">
-      {reference
-        ? <ReferenceStoryDetail story={story} onBack={() => onAction('Back to novels')} />
-        : <StoryDetailScreen story={infoWorld}
+      <StoryDetailScreen story={infoWorld}
             backLabel={openedWorld ? 'Back to cards' : 'Back to novels'}
             onBack={openedWorld ? () => setOpenedWorld(null) : () => onAction('Back to novels')}
             readingPosition={state.reading === 'chapter-7' ? { chapterNumber: 7 } : undefined}
@@ -129,26 +121,24 @@ export function WorldCardStage({ view, state, reference, onAction }: {
             readingLanguage={{ onChange: language => onAction(`Read ${infoWorld.title} in ${languageName(language)}`) }}
             // The Portal: the sample novel's manga and game, or the novel alone with every destination off.
             portal={{ expansions: state.destinations === 'all' ? featuredExpansions : [] }}
-            />}
+            />
     </Stage>}
-    {!openedWorld && !reference && show('feature') && <Stage title="Feature card" note="Home's spotlight row. The cover stands on the right; the band is that cover, blurred, in its own color.">
+    {!openedWorld && show('feature') && <Stage title="Feature card" note="Home's spotlight row. The cover stands on the right; the band is that cover, blurred, in its own color.">
       <WorldCardFeature world={story} senSash={state.sash === 'shown'} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]} onOpen={() => setOpenedWorld(story)} />
     </Stage>}
     {!openedWorld && show('full') && <Stage title="World Card" note="Home grid width.">
       <div className="w-[min(100%,13rem)]">
-        {reference
-          ? <WorldCardFullReference world={story} onOpen={() => onAction(`Open ${story.title}`)} />
-          : <WorldCard world={story} senSash={state.sash === 'shown'} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]}
-              onOpen={() => setOpenedWorld(story)} />}
+        <WorldCard world={story} senSash={state.sash === 'shown'} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]}
+              onOpen={() => setOpenedWorld(story)} />
       </div>
     </Stage>}
-    {!openedWorld && !reference && show('grid') && <Stage title="Home grid" note="Two across on a phone, more on wider screens.">
+    {!openedWorld && show('grid') && <Stage title="Home grid" note="Two across on a phone, more on wider screens.">
       <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5">
         {previewHomeGrid(state).map(world => <WorldCard key={world.id} world={world} senSash={state.sash === 'shown'}
           displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]} onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />)}
       </div>
     </Stage>}
-    {!openedWorld && !reference && show('menu') && <Stage title="Menu card" note="Discover's New Chapters and Heavenly Rankings. Tap a row to open World Info.">
+    {!openedWorld && show('menu') && <Stage title="Menu card" note="Discover's New Chapters and Heavenly Rankings. Tap a row to open World Info.">
       <div className="max-w-md divide-y divide-white/10">
         <WorldCardMenu world={story} chapter={{ number: story.chapterCount, title: 'The Silent Lotus' }}
           age={{ label: '4m ago', dateTime: '2026-10-25T12:00:00Z' }} tracked onOpen={() => setOpenedWorld(story)} />
@@ -156,16 +146,15 @@ export function WorldCardStage({ view, state, reference, onAction }: {
       </div>
     </Stage>}
     {!openedWorld && show('compact') && <Stage title="Compact" note="Create · Your worlds.">
-      <CompactRow key={`${reference}-${state.titleLength}-${state.cover}`} worlds={worlds} reference={reference} senSash={state.sash === 'shown'} onOpen={setOpenedWorld} />
+      <CompactRow key={`${state.titleLength}-${state.cover}`} worlds={worlds} senSash={state.sash === 'shown'} onOpen={setOpenedWorld} />
     </Stage>}
   </div>;
 }
 
 const selectClass = 'min-h-11 rounded-lg border border-white/20 bg-black/30 p-2 text-sm text-white';
 
-function canvasUrl(view: View, state: WorldCardPreviewState, reference: boolean) {
-  const params = new URLSearchParams({ preview: 'world-card', canvas: '1', view,
-    reference: reference ? '1' : '0', ...state });
+function canvasUrl(view: View, state: WorldCardPreviewState) {
+  const params = new URLSearchParams({ preview: 'world-card', canvas: '1', view, ...state });
   return `/?${params.toString()}`;
 }
 
@@ -191,7 +180,7 @@ function WorldCardCanvas() {
   const view = pickView(params.get('view'));
   const [action, setAction] = useState('');
   return <div className="min-h-screen bg-[#04060d] text-slate-300">
-    <WorldCardStage view={view} state={readCanvasState(params)} reference={params.get('reference') === '1'}
+    <WorldCardStage view={view} state={readCanvasState(params)}
       onAction={message => setAction(`${message} · mock preview`)} />
     <p className="px-4 pb-6 font-sans text-xs text-neutral-400 sm:px-8" role="status">{action}</p>
   </div>;
@@ -209,25 +198,25 @@ function WorldCardWorkspaceShell() {
   const [action, setAction] = useState('');
   const update = (patch: Partial<WorldCardPreviewState>) => setState(current => ({ ...current, ...patch }));
 
-  const render = (reference: boolean) => {
+  const render = () => {
     if (viewport !== 'current') {
       const { label, width, height } = VIEWPORTS[viewport];
       return <div className="overflow-x-auto py-4 sm:px-4" data-world-card-viewport={viewport}>
         <p className="mb-3 px-4 text-xs text-white/65 sm:px-0">{label} · {width} × {height}</p>
-        <iframe title={`World Card ${reference ? 'reference' : 'development'} at ${label} width`}
-          src={canvasUrl(view, state, reference)} width={width} height={height}
+        <iframe title={`World Card at ${label} width`}
+          src={canvasUrl(view, state)} width={width} height={height}
           className="mx-auto block max-w-none border-0 bg-[#04060d] sm:rounded-xl sm:border sm:border-white/20"
           style={{ width, height, boxSizing: 'content-box' }} />
       </div>;
     }
     return <>
-      <WorldCardStage view={view} state={state} reference={reference} onAction={message => setAction(`${message} · mock preview`)} />
+      <WorldCardStage view={view} state={state} onAction={message => setAction(`${message} · mock preview`)} />
       <p className="px-4 pb-6 font-sans text-xs text-neutral-400 sm:px-8" role="status">{action}</p>
     </>;
   };
 
   return <FeatureWorkspace entry={entry}
-    renderReference={() => render(true)} renderDevelopment={() => render(false)}
+    renderDevelopment={render}
     workshopControls={{
       description: 'The same world at every size. Home, Discover, the world detail and Create render these cards directly, so Development changes here show up on those pages.',
       defaultSection: 'pages',

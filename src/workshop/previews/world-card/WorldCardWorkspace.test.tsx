@@ -18,7 +18,7 @@ it('shows chapter and ranking menu cards in the existing workspace and opens Wor
   document.body.append(container);
   const root = createRoot(container);
   act(() => root.render(<LibraryPresentationProvider>
-    <WorldCardStage view="menu" state={{ ...state, cover: 'missing', titleLength: 'long' }} reference={false} onAction={vi.fn()} />
+    <WorldCardStage view="menu" state={{ ...state, cover: 'missing', titleLength: 'long' }} onAction={vi.fn()} />
   </LibraryPresentationProvider>));
   const cards = container.querySelectorAll<HTMLButtonElement>('[data-world-card="menu"]');
   expect(cards).toHaveLength(2);
@@ -38,7 +38,7 @@ it('opens either Compact world in the existing Info stage and returns to the car
   document.body.append(container);
   const root = createRoot(container);
   act(() => root.render(<LibraryPresentationProvider>
-    <WorldCardStage view="compact" state={state} reference={false} onAction={vi.fn()} />
+    <WorldCardStage view="compact" state={state} onAction={vi.fn()} />
   </LibraryPresentationProvider>));
 
   act(() => container.querySelector<HTMLElement>('[data-world-card="compact"] .world-card-base-open')!.click());
@@ -68,7 +68,7 @@ it('keeps connected media closed in the Portal until opened and reports each sup
   const root = createRoot(container);
   const onAction = vi.fn();
   act(() => root.render(<LibraryPresentationProvider>
-    <WorldCardStage view="info" state={state} reference={false} onAction={onAction} />
+    <WorldCardStage view="info" state={state} onAction={onAction} />
   </LibraryPresentationProvider>));
 
   expect(container.querySelector('[aria-label^="Connected media for"]')).toBeNull();
@@ -82,7 +82,7 @@ it('keeps connected media closed in the Portal until opened and reports each sup
   expect(container.querySelectorAll('.world-expression-card')).toHaveLength(3);
 
   act(() => root.render(<LibraryPresentationProvider>
-    <WorldCardStage view="info" state={{ ...state, destinations: 'none', reading: 'chapter-7' }} reference={false} onAction={onAction} />
+    <WorldCardStage view="info" state={{ ...state, destinations: 'none', reading: 'chapter-7' }} onAction={onAction} />
   </LibraryPresentationProvider>));
   expect(container.querySelector('[data-world-info-chapters="static"]')).not.toBeNull();
   expect(container.querySelector('[role="button"][data-world-info-chapters]')).toBeNull();
@@ -91,7 +91,7 @@ it('keeps connected media closed in the Portal until opened and reports each sup
 
   // A new story with no chapters: the reading pill starts it.
   act(() => root.render(<LibraryPresentationProvider>
-    <WorldCardStage view="info" state={{ ...state, reading: 'new-story' }} reference={false} onAction={onAction} />
+    <WorldCardStage view="info" state={{ ...state, reading: 'new-story' }} onAction={onAction} />
   </LibraryPresentationProvider>));
   const start = container.querySelector<HTMLElement>('[data-world-info-chapters="action"]')!;
   expect(container.querySelector('[data-world-info-meta]')?.textContent).toContain('No chapters yet');
@@ -109,7 +109,7 @@ it('opens the Blueprint from World Info in each view: creator edits, a reader vi
   const root = createRoot(container);
   const onAction = vi.fn();
   const render = (blueprint: WorldCardPreviewState['blueprint']) => act(() => root.render(<LibraryPresentationProvider>
-    <WorldCardStage key={blueprint} view="info" state={{ ...state, blueprint }} reference={false} onAction={onAction} />
+    <WorldCardStage key={blueprint} view="info" state={{ ...state, blueprint }} onAction={onAction} />
   </LibraryPresentationProvider>));
   const openBlueprint = () => act(() => container.querySelector<HTMLButtonElement>('.world-card-info-blueprint')!.click());
 

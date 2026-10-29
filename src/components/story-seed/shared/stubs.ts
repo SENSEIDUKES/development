@@ -1,40 +1,18 @@
 /**
- * Workshop stubs for the Story Seed (`CreationModal`) replica.
- *
- * Every production dependency the copied presentation components import is
- * replaced here with a lightweight, fully local stand-in — same approach as
- * `reader-chamber/shared/stubs.ts`:
+ * Workshop stand-ins for the Story Seed preview runtime.
  *
  * - `useAppStore` — a tiny external store on `useSyncExternalStore` (no
  *   zustand), exposing `currentUser`, `activeAgentId`, `stories`,
- *   `routingConfig`, and `activeStoryId` with the same call signatures
- *   (`useAppStore(selector)` + `.getState()`).
- * - `selectIsGenerating` — matches `store/useGenerationStore`'s selector
- *   signature.
- * - `LOCAL_ONLY_MODE` — always `true` (no Firebase in the Workshop), so
- *   `CreationModal`'s auth-gated screen is reachable only via the
- *   `auth-gated` preview state, which forces it with a local override.
- * - `AGENTS` — just the `VERSA` profile object CreationModal/BlueprintReview
- *   render beside the "Manifesting…" generating state.
- * - `mockLogin` — stands in for `signInWithPopup(auth, new
- *   GoogleAuthProvider())`; flips the mock `currentUser` instead of opening
- *   real Google auth.
- * - `storySeedStorage` — in-memory replacements for
- *   `createStorySeed`/`updateStorySeed`/`listStorySeeds`/`importStorySeeds`
- *   (production talks to Postgres through `lib/persistence`). Genuinely
- *   mutates local state so Save/Import/Library-panel interactions work.
- * - `getApiHeaders` — inert stand-in for
- *   `hooks/storyEngineHelpers.getApiHeaders` (production reads API keys out
- *   of secure device storage); returns a plain JSON content-type header.
- * - `suggestTagsStub` — replaces the real `fetch('/api/suggest-tags', …)`
- *   call inside `CoreSeedForm` with a canned, genre-aware suggestion list
- *   after a short simulated delay. No network call is ever made.
+ *   `routingConfig`, and `activeStoryId` (`useAppStore(selector)` +
+ *   `.getState()`).
+ * - `selectIsGenerating` — the generation-store selector signature.
+ * - `LOCAL_ONLY_MODE` — `true` unless the `auth-gated` preview state turns it
+ *   off with a local override.
+ * - `AGENTS` — the `VERSA` profile shown beside the generating state.
+ * - `mockLogin` — flips the mock `currentUser` instead of opening real auth.
  */
 
 import { useCallback, useRef, useSyncExternalStore } from 'react';
-import { generateUUID } from '@seihouse/sen/story-seed';
-import { normalizeStorySeedPayload } from '../../../workshop/reference-support/story-seed/referenceIntake';
-import type { IntakeData, StorySeed, StorySeedPayload } from '../../../workshop/reference-support/story-seed/referenceIntake';
 
 /**
  * Production reads this from `localStorage` once at module load and never
@@ -203,97 +181,3 @@ export async function mockLogin(): Promise<void> {
   setMockState({ currentUser: { uid: 'mock-user-workshop', displayName: 'Workshop Creator' } });
 }
 
-// ─── Inert API headers (stands in for hooks/storyEngineHelpers.getApiHeaders) ──
-
-export async function getApiHeaders(): Promise<Record<string, string>> {
-  return { 'Content-Type': 'application/json' };
-}
-
-// ─── Tag suggestion stub (stands in for fetch('/api/suggest-tags', …)) ──────
-
-const GENRE_TAG_HINTS: Record<string, string[]> = {
-  Xianxia: ['cultivation realms', 'sect politics', 'dao comprehension'],
-  Xuanhuan: ['bloodline awakening', 'martial techniques', 'heavenly tribulation'],
-  'LitRPG / System': ['game systems', 'level progression', 'system rewards'],
-  'Academy Cultivation': ['academy cultivation', 'exams', 'rival schools'],
-  'Kingdom Building': ['kingdom building', 'territory control', 'resource management'],
-};
-
-/** Genre-aware canned response — never calls `/api/suggest-tags`. */
-export async function suggestTagsStub(
-  intake: Pick<IntakeData, 'corePremise' | 'genrePath'>,
-): Promise<{ suggestedTags: string[]; reasoning: string }> {
-  await new Promise(resolve => setTimeout(resolve, 400));
-  const genreHints = GENRE_TAG_HINTS[intake.genrePath || ''] || ['fate bonds', 'sect politics', 'cultivation realms'];
-  return {
-    suggestedTags: genreHints,
-    reasoning: `Workshop mock recommendation based on the "${intake.genrePath || 'Xianxia'}" genre path. No live model call was made.`,
-  };
-}
-
-// ─── Story seed storage (in-memory; stands in for lib/storySeedStorage) ─────
-
-let mockSeeds: StorySeed[] = [];
-
-const buildMockSeed = (
-  userId: string,
-  id: string,
-  payload: StorySeedPayload,
-  createdAt = new Date().toISOString(),
-): StorySeed => {
-  const normalized = normalizeStorySeedPayload(payload);
-  return {
-    schemaVersion: 1,
-    id,
-    userId,
-    title: normalized.blueprint.title || normalized.intake.novelTitle || 'Untitled Seed',
-    intake: normalized.intake,
-    blueprint: normalized.blueprint,
-    createdAt,
-    updatedAt: new Date().toISOString(),
-  };
-};
-
-const requireMockUid = (): string => {
-  const uid = state.currentUser?.uid;
-  if (!uid) throw new Error('Sign in to save story seeds to your account.');
-  return uid;
-};
-
-export async function createStorySeed(payload: StorySeedPayload): Promise<StorySeed> {
-  const userId = requireMockUid();
-  const seed = buildMockSeed(userId, `seed-${generateUUID()}`, payload);
-  mockSeeds = [seed, ...mockSeeds];
-  return seed;
-}
-
-export async function updateStorySeed(existingSeed: StorySeed, payload: StorySeedPayload): Promise<StorySeed> {
-  const userId = requireMockUid();
-  if (existingSeed.userId !== userId) {
-    throw new Error('Cannot update a story seed owned by another account.');
-  }
-  const updated = buildMockSeed(userId, existingSeed.id, payload, existingSeed.createdAt);
-  mockSeeds = mockSeeds.map(seed => (seed.id === updated.id ? updated : seed));
-  return updated;
-}
-
-export async function listStorySeeds(): Promise<StorySeed[]> {
-  const userId = state.currentUser?.uid;
-  if (!userId) return [];
-  return mockSeeds
-    .filter(seed => seed.userId === userId)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-}
-
-export async function importStorySeeds(payloads: StorySeedPayload[]): Promise<StorySeed[]> {
-  if (payloads.length === 0) return [];
-  const userId = requireMockUid();
-  const saved = payloads.map(payload => buildMockSeed(userId, `seed-${generateUUID()}`, payload));
-  mockSeeds = [...saved, ...mockSeeds];
-  return saved;
-}
-
-/** Workshop-only reset hook so the preview can clear the seed library between scenarios. */
-export function resetMockSeeds(seeds: StorySeed[] = []) {
-  mockSeeds = seeds;
-}

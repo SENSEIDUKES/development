@@ -53,17 +53,14 @@ export function LibraryShellWorkspace() {
   const controls = 'min-h-11 rounded-lg border border-white/20 bg-black/30 p-2 text-sm text-white';
   const environment = `${safeArea === 'off' ? '' : `&safeArea=${safeArea}`}${reducedMotion ? '&motion=reduced' : ''}${source === 'cultivator-cave' && publicView ? '&cave=/public/home' : ''}`;
   const withLaptopNav = (value: 'sidebar' | 'strip' | 'compare') => value === 'strip' ? '&laptopNav=strip' : '';
-  const render = (variant: 'reference' | 'development') => {
-    if (variant === 'reference' && (source === 'cultivator-cave' || source === 'header-states')) return <p className="p-8 text-sm text-white/70">This configuration has no locked capture. Select Main Library or Story Seed for the original header reference.</p>;
-    const frameState = variant === 'reference' && source === 'story-seed' ? (state === 'empty-intake' ? 'empty' : state === 'generating-blueprint' ? 'generating' : 'filled') : state;
-    const base = `/library-shell.html?source=${source}&state=${frameState}&variant=${variant}${variant === 'development' ? environment : ''}`;
+  const render = () => {
+    const base = `/library-shell.html?source=${source}&state=${state}&variant=development${environment}`;
     const frame = (src: string, caption: string, key: string) => <div key={key} className="overflow-x-auto p-4">
       <p className="mb-3 text-xs text-white/65">{caption} · {width} × {height}</p>
-      <iframe title={`${source} ${device} ${variant} ${key}`} src={src} width={width} height={height}
+      <iframe title={`${source} ${device} development ${key}`} src={src} width={width} height={height}
         className="block max-w-none rounded-xl border border-white/20 bg-black" style={{ width, boxSizing: 'content-box' }} />
       <a className="mt-3 inline-block text-sm text-cyan-200 underline" href={src} target="_blank" rel="noreferrer">Open responsive {caption.toLowerCase()} at browser width</a>
     </div>;
-    if (variant === 'reference') return frame(base, 'Locked shell capture', 'reference');
     if (laptopNav === 'compare') return <>
       {frame(base, 'Development · Pathways sidebar', 'sidebar')}
       {frame(base + withLaptopNav('strip'), 'Development · bottom strip (before)', 'strip')}
@@ -71,7 +68,7 @@ export function LibraryShellWorkspace() {
     return frame(base + withLaptopNav(laptopNav), laptopNav === 'strip' ? 'Development · bottom strip (before)' : 'Development workspace', laptopNav);
   };
   return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'library-shell')!}
-    renderReference={() => render('reference')} renderDevelopment={() => render('development')}
+    renderDevelopment={render}
     workshopControls={{ description: 'One Library navigation system in two modes: main mode (the bottom strip on phones and the Pathways sidebar on laptops, on Home, Create, My Library and the Cave) and workspace mode (Story Seed\'s task bar, Sections drawer and rail), under one shared header. The Reader stays immersive.', sections: [{ id: 'pages', content: <div className="flex flex-wrap gap-4">
       <label className="flex flex-col gap-1 text-xs">Page<select className={controls} value={source} onChange={event => { const value = event.target.value as HeaderConfiguration; setSource(value); setState(headerStates[value][0]); }}>{modes.map(mode => <optgroup key={mode.label} label={mode.label}>{mode.sources.map(value => <option key={value} value={value}>{configurations[value]}</option>)}</optgroup>)}</select></label>
       <p className="flex min-h-11 items-center self-end text-xs text-white/75" data-library-shell-mode>Navigation: {modeOf(source)}</p>

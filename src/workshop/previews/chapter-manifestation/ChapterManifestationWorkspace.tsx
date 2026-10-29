@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { AGENTS } from '../../../lib/agents';
-import ReferenceAILoadingVeil from '../../../components/chapter-manifestation/reference/AILoadingVeil';
 import { GenerationOverlay as GenerationOverlay, LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/library/manifestations';
 import { defaultFamiliar, familiarCatalogue, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
 import { defaultDestinationFor } from '@seihouse/library-ui';
@@ -37,8 +36,7 @@ const MANIFESTATIONS: { id: Exclude<GenerationPhase, null>; label: string }[] = 
 
 /**
  * The two top-level workshop areas inside this feature. The Generation Overlay
- * segment is the existing full-shell simulation (Reference / Development /
- * Compare); the Manifestation Reveal segment is the focused standalone
+ * segment is the existing full-shell simulation; the Manifestation Reveal segment is the focused standalone
  * preview for the agnostic mechanic.
  */
 type WorkshopArea = 'generation-overlay' | 'manifestation-reveal';
@@ -153,12 +151,7 @@ function useMediaPreview() {
   return { reveal, setReveal, unsealScroll, revealedContent, setRevealedContent, asset };
 }
 
-/**
- * One simulated generation run, shared by whichever veil implementation
- * (reference or development, or both in Compare) is currently mounted — so
- * comparisons are judged against identical live state, not two independent
- * simulations.
- */
+/** One simulated generation run, driving the veil. */
 function useGenerationSimulation() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [phase, setPhase] = useState<GenerationPhase>(null);
@@ -458,27 +451,6 @@ function GenerationOverlaySimulationControls({
   );
 }
 
-function ReferenceOverlayCanvas({ Veil, sim }: { Veil: typeof ReferenceAILoadingVeil; sim: ReturnType<typeof useGenerationSimulation> }) {
-  return (
-    <div className="relative min-h-[calc(100vh-11rem)] bg-neutral-950 p-4 sm:p-8 font-sans text-neutral-200">
-      <div className="p-6 border border-neutral-800/50 rounded-lg text-neutral-400 text-sm">
-        Background app content... (Testing minimize state visibility)
-      </div>
-      <Veil
-        isGenerating={sim.isGenerating}
-        generationPhase={sim.phase}
-        generationProgressMessage={sim.progressMessage}
-        estimatedSecondsRemaining={sim.estimatedSecondsRemaining}
-        activeAgentId={sim.activeAgentId}
-        streamingBlocksCount={sim.streamingBlocksCount}
-        isVeilMinimized={sim.isVeilMinimized}
-        setIsVeilMinimized={sim.setIsVeilMinimized}
-        generatingChapterNum={sim.generatingChapterNum}
-      />
-    </div>
-  );
-}
-
 /**
  * Development-only canvas: identical simulation state, plus the scrubber
  * cosmetics and media reveal overrides from the Workshop controls forwarded
@@ -645,15 +617,7 @@ export function ChapterManifestationWorkspace() {
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={area === 'generation-overlay'}
       workshopControls={workshopControls}
-      renderReference={() => area === 'generation-overlay' ? (
-        <ReferenceOverlayCanvas Veil={ReferenceAILoadingVeil} sim={sim} />
-      ) : (
-        <div className="flex min-h-[50vh] items-center justify-center bg-neutral-950 p-6 text-center text-sm text-white/45">
-          Manifestation Reveal is a Development-only mechanic and has no locked Original Reference pane.
-        </div>
-      )}
       renderDevelopment={() => area === 'generation-overlay' ? (
         <LoadingFamiliarProvider value={loadingFamiliarPresentation(familiarCatalogueEntry(familiarId)!.definition)}>
           <DevelopmentOverlayCanvas sim={sim} cosmetics={cosmetics} media={media} />

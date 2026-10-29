@@ -82,9 +82,11 @@ owner-approved cleanup, delete what the owner lists.
 What stays:
 
 - **The feature's one workspace, preview route and manifest entry.** A remake updates
-  them in place; they are how the Workshop reaches it and its Compare view.
+  them in place; they are how the Workshop reaches it.
 - **`reference/` folders and the Original Reference.** They are never edited, refreshed
-  or deleted unless the owner explicitly asks.
+  or deleted unless the owner explicitly asks. Only the Reader Chamber family
+  (Reader Chamber, Reader Codex, Card Workshop) still has them; the owner removed
+  the rest on 2026-10-28.
 - **Systems the new path does not use yet.** They may still be waiting for their
   remake or for import from production.
 

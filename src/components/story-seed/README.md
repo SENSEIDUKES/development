@@ -100,15 +100,9 @@ shared/
   storyTagInference.ts            premise-ranked suggestions and empty-tag inference
   types.ts                        Blueprint and shared domain types
   stubs.ts                        Workshop-only app/store boundary
-
-reference/
-  historical old production version; not edited or refreshed
 ```
 
-`reference/SeedLibraryPanel.tsx` and the old flat intake vocabulary remain
-only inside the historical reference replica. They are comparison evidence, not
-active development code. `legacySeedImport.ts` is also intentional: it is the
-single compatibility boundary that lets previously exported seed files open
+`legacySeedImport.ts` is intentional: it is the single compatibility boundary that lets previously exported seed files open
 without leaking old field names into current state or UI.
 
 Shared Library primitives live in `src/components/library/`. Story Seed uses
@@ -133,15 +127,14 @@ infrastructure.
   Light-Novels-informed prompt, Gemini structured output, creator-authority
   merge, completeness validation, and final Chapter Generation adapter check.
 - Preview fixtures are under `src/workshop/previews/story-seed/`.
-- The Workshop loads preview routes and the locked Story Seed reference on
-  demand. Those `App`, `DeferredWorkspace`, and `FeatureWorkspace` boundaries
+- The Workshop loads preview routes on demand. Those `App`, `DeferredWorkspace`, and `FeatureWorkspace` boundaries
   are Workshop shell concerns, not production feature code.
 - Help audio requests the finalized Library Lines endpoint; written guidance
   remains available when a topic intentionally has no audio.
 - The auth backdrop uses the local optimized poster under
   `public/story-seed/`; its video is deferred and is skipped for reduced
   motion, data saver, and slow connections.
-- The historical Reference pane and named preview scenarios remain deterministic.
+- Named preview scenarios remain deterministic.
   Manual manifestation in Development calls Gemini; starting a story remains
   a no-op because Chapter Generation owns that separate test flow.
 
@@ -181,7 +174,7 @@ reach into React internals or bypass form state.
 
 The packages and NovelExpanded app built here are the destination. Keep Workshop
 controls, fixtures and adapters outside reusable package entries; another repository
-changes only when the owner asks. Historical references stay untouched.
+changes only when the owner asks.
 
 The existing local files named by this inventory are:
 
@@ -192,7 +185,6 @@ The existing local files named by this inventory are:
 - `src/server/shared/bearerToken.ts`
 - `scripts/buildStorySeedBlueprintApi.mjs`
 - `shared/stubs.ts`
-- `reference/`
 
 ## Validation
 
@@ -233,6 +225,13 @@ harness:
   render without loading-boundary, console, or page errors.
 
 ## Concise Workshop history
+
+- **2026-10-28 (Original Reference removed):** With the owner's approval, the
+  old production copy (`reference/`, the CreationModal replica) and its Original
+  Reference and Compare panes were removed. The old intake contract went with it
+  (`src/workshop/reference-support/story-seed/`, `shared/referenceIntake.ts`,
+  `shared/dialect.ts`), and `shared/stubs.ts` lost its in-memory seed API
+  (`createStorySeed` and the rest, `suggestTagsStub`, `getApiHeaders`).
 
 - **2026-10-27 (actually mobile):** From SENSEI, on an iPhone: the character
   creator changed the navigation but not the pages, so every page was the

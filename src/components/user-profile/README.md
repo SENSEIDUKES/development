@@ -74,6 +74,7 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-10-28:** With the owner's approval, removed the old production copy of the page (`reference/`, imported 2026-09-08), its Original Reference and Compare panes, and the test that rendered it. The workspace now shows Development alone.
 - **2026-10-25:** Interface language selection in Settings › Accessibility › Language now translates the Cultivator Cave and host application across all 30 `SEN_LANGUAGES` (`src/library/language/interfaceTranslation.ts`, `src/library/language/localeLoader.ts`, and the 29 per-language packs in `src/library/language/locales/`). Each non-English language pack loads on demand when chosen, previews live during the 30-second confirmation dialog, resets the 30-second countdown if another language is selected while the dialog is open, reverts immediately on cancel or timeout, and persists when confirmed.
 - **2026-10-10:** Added the User Shop workspace at `?preview=user-shop` under Pages → Commerce. It opens the existing creator storefront through the embedded Profile host with either the Workshop Cultivator or Moon Scribe fixture. Creator identity and return navigation stay Profile-owned; no new commerce implementation, inventory or purchasing behavior is introduced.
 
@@ -337,12 +338,10 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 ## Folder layout
 
 ```text
-reference/    — old production version, historical and not edited
 development/  — the Cultivator Cave redesign
 shared/       — the services port, domain types, and the unforked offering-week helper
 ```
 
-`reference/` still contains the ten production files listed under *The historical reference*.
 `development/` now contains:
 
 | File | Role in the Cave |
@@ -369,7 +368,7 @@ shared/       — the services port, domain types, and the unforked offering-wee
 `shared/` retains Profile types, the offering-week helper, and the host service
 port. Cultivation, permanent DAO XP, and spendable-QI contracts live under
 `src/library/cultivation/`.
-Legacy daily-claim members remain only for the historical reference; the active Cave
+Legacy daily-claim members served only the historical reference, removed on 2026-10-28; the active Cave
 refreshes its Qi projection after a Dao Pillar reward.
 
 ## The Cultivator Cave
@@ -503,7 +502,7 @@ production void callback swallows persistence failures and cannot provide that g
 Two controller members the Cave no longer reads — `isQiMenuOpen` / `setIsQiMenuOpen` and
 `currentPowerStage` — remain in the contract for production compatibility.
 
-Nothing in `reference/`, `development/`, or `shared/` imports Firebase, PostgreSQL, R2, an API
+Nothing in `development/` or `shared/` imports Firebase, PostgreSQL, R2, an API
 route, a secret, or an environment variable.
 
 ## What was mocked
@@ -557,8 +556,8 @@ and unlocked reserves, active-effect expiration, claim outcomes and duplicate gu
 OAuth / loading / error states,
 each destination and its return path, relic inspection with attunement and a full Offering Hall
 submission, the daily refinement and pillar repair, the status-effect cards and empty state, the
-Settings sections, identity editing, the language confirmation, the owner's Switchboard, the stage
-helper, and a check that the historical reference still renders the original page.
+Settings sections, identity editing, the language confirmation, the owner's Switchboard, and the
+stage helper.
 
 The public view has its own block: entering it from the header, the preserved identity against the
 four swapped areas, the Public View indicator, the name centred with the badge outside the heading,
@@ -576,7 +575,7 @@ Settings rank list, and the 50,000 DAO XP gate on the custom spectrum.
 
 ## Reusable Workshop dependencies
 
-- `src/workshop/FeatureWorkspace.tsx` — the shared Original Reference / Development / Compare shell
+- `src/workshop/FeatureWorkspace.tsx` — the shared feature shell (Development alone for this feature)
   and the Workshop Controls menu.
 - `src/workshop/manifest.ts` and the `previewRegistry` in `src/App.tsx`.
 - `public/manifest-backdrops/` (the Immortal Land pool) and `public/icons/sacred-tree.svg`.
@@ -610,17 +609,15 @@ issues no external network request beyond the Workshop shell's own Google Fonts 
 
 ## The historical reference
 
-`reference/` is the production page exactly as imported on 2026-09-08 and must not be edited during
-Workshop work. It contains `UserProfile.tsx`, `UserProfileAdminPanel.tsx`,
-`UserProfileInventoryPanel.tsx`, `UserProfilePortraitModal.tsx`, `UserProfileSettingsPanel.tsx`,
-`UserProfileStoriesPanel.tsx`, `qi.ts`, `chapterWritingStyle.ts`, and `userProfile.css`, with the
-five import-wiring edits described in the first history entry.
+The production page imported on 2026-09-08 (`reference/`) was removed on 2026-10-28 with the
+owner's approval, together with its Original Reference and Compare panes and the test that
+rendered it.
 
 ## Implementation inventory
 
 The packages and NovelExpanded app built here are the destination. Keep Workshop
 controls, fixtures and adapters outside reusable package entries; another repository
-changes only when the owner asks. Historical references stay untouched.
+changes only when the owner asks.
 
 The existing local files named by this inventory are:
 

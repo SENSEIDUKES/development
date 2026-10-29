@@ -34,13 +34,17 @@ export interface WorkshopControlsConfig {
 
 export interface FeatureWorkspaceProps {
   entry: WorkshopEntry;
-  /** Renders the old production version, where one exists. Historical references are never edited or refreshed. */
-  renderReference: () => React.ReactNode;
+  /**
+   * Renders the old production version. Only the Reader Chamber family keeps one
+   * (Reader Chamber, Reader Codex, Card Workshop); without it the feature shows
+   * Development alone, with no Original Reference or Compare.
+   */
+  renderReference?: () => React.ReactNode;
   /** Renders the active implementation built here; shared, server and host owners may also change within scope. */
   renderDevelopment: () => React.ReactNode;
   /** Preview-only options rendered by the shared Workshop Controls menu. */
   workshopControls?: WorkshopControlsConfig;
-  /** Disable the Compare viewing mode for features where it doesn't make sense. Defaults to true. */
+  /** Disable the Compare viewing mode for features where it doesn't make sense. Defaults to true when there is a reference. */
   allowCompare?: boolean;
   /** Optional preload used by deferred reference panes before Reference or Compare is selected. */
   onReferenceIntent?: () => void;
@@ -198,9 +202,9 @@ function WorkshopControls({ config }: { config?: WorkshopControlsConfig }) {
 }
 
 /**
- * The one shared shell every Workshop feature opens into: Original Reference,
- * Development (the active implementation), and optional Compare over the same preview
- * canvas. This is the structural guarantee that no feature can quietly grow
+ * The one shared shell every Workshop feature opens into: Development (the
+ * active implementation) and, for a feature that keeps its old production
+ * version, Original Reference and optional Compare over the same preview canvas. This is the structural guarantee that no feature can quietly grow
  * a second homepage card — a "V2" is just a Development version inside this
  * shell, never a new entry point.
  */
@@ -209,14 +213,16 @@ export function FeatureWorkspace({
   renderReference: originalReference,
   renderDevelopment,
   workshopControls,
-  allowCompare = true,
+  allowCompare: compareAllowed = true,
   onReferenceIntent,
   onViewChange,
 }: FeatureWorkspaceProps) {
+  const hasReference = originalReference !== undefined;
+  const allowCompare = hasReference && compareAllowed;
   const [view, setView] = useState<WorkspaceView>('development');
   const [mobilePane, setMobilePane] = useState<'reference' | 'development'>('development');
   // Host artwork overrides apply only to the active implementation.
-  const renderReference = () => <div data-workshop-reference style={{ display: 'contents' }}>{originalReference()}</div>;
+  const renderReference = () => <div data-workshop-reference style={{ display: 'contents' }}>{originalReference?.()}</div>;
 
   useEffect(() => {
     if (!allowCompare && view === 'compare') {
@@ -236,7 +242,7 @@ export function FeatureWorkspace({
           {entry.source?.lastCompared ? ` · Source checked ${entry.source.lastCompared}` : ''}
         </p>
 
-        <div className="mt-2.5 sm:mt-4 inline-flex max-w-full flex-wrap rounded-xl sm:rounded-full border border-white/10 bg-white/5 p-0.5 sm:p-1 gap-0.5 sm:gap-1">
+        {hasReference && <div className="mt-2.5 sm:mt-4 inline-flex max-w-full flex-wrap rounded-xl sm:rounded-full border border-white/10 bg-white/5 p-0.5 sm:p-1 gap-0.5 sm:gap-1">
           <button
             type="button"
             onPointerEnter={onReferenceIntent}
@@ -283,14 +289,14 @@ export function FeatureWorkspace({
               <Columns2 size={11} className="sm:w-3 sm:h-3" /> Compare
             </button>
           )}
-        </div>
+        </div>}
       </header>
 
       <WorkshopControls config={workshopControls} />
 
       {view !== 'compare' ? (
         <div className="relative flex-1">
-          {view === 'reference' ? renderReference() : renderDevelopment()}
+          {view === 'reference' && hasReference ? renderReference() : renderDevelopment()}
         </div>
       ) : (
         <div className="relative flex-1">

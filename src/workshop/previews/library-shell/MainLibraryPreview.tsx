@@ -1,7 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { GlobalHeader } from '../../../components/library-shell/reference/main-library/GlobalHeader';
-import { LibraryCollectionStrip } from '../../../components/library-shell/reference/main-library/LibraryCollectionStrip';
+import { LibraryCollectionStrip } from './LibraryCollectionStrip';
 import { MainLibraryAdapterContext, type DaoSparkHost, type MainLibraryAdapter } from '@seihouse/library/shell';
 import { storyStyleForGenre } from '@seihouse/sen/story-seed';
 import { MainLibraryNavigation } from '@seihouse/library/shell';
@@ -9,9 +8,7 @@ import { MainLibraryFooter } from '@seihouse/library/shell';
 import { WorkspaceShell, LibrarySectionSidebar, useLibraryDesktopNavigation } from '@seihouse/library/shell';
 import { type LibraryLocation } from '@seihouse/library/shell';
 import { LightNovelsHome } from '@seihouse/library/home';
-import { LightNovelsHome as ReferenceHome } from '../../../components/light-novels-home/reference/LightNovelsHome';
 import { StoryDetailScreen } from '@seihouse/library/home';
-import { StoryDetailScreen as ReferenceStoryDetail } from '../../../components/light-novels-home/reference/StoryDetailScreen';
 import { featuredNovel, homePreviewWorlds } from '../light-novels-home/previewData';
 import { libraryPreviewUrl, navigateLibraryPreview, readLibraryPreviewLocation } from './libraryPreviewNavigation';
 import { CreatorSpaceHost } from '../creator-space/CreatorSpaceHost';
@@ -28,7 +25,7 @@ const LibraryHelpMenu = lazy(() => import('@seihouse/library/story-seed')
 // inventing links. Legal pages use the footer's own placeholder documents.
 const PREVIEW_SOCIAL_NETWORKS = ['discord', 'tiktok', 'instagram', 'youtube', 'x'] as const;
 
-export function MainLibraryPreview({ state, developmentHeader, developmentHomeContent, extraFeedback, developmentNavigation = false, homeReference = false, active = true }: { state: string; developmentHeader?: (adapter: MainLibraryAdapter) => React.ReactNode; developmentHomeContent?: (adapter: MainLibraryAdapter) => React.ReactNode; extraFeedback?: string; developmentNavigation?: boolean; homeReference?: boolean; active?: boolean }) {
+export function MainLibraryPreview({ state, developmentHeader, developmentHomeContent, extraFeedback, developmentNavigation = false, active = true }: { state: string; developmentHeader?: (adapter: MainLibraryAdapter) => React.ReactNode; developmentHomeContent?: (adapter: MainLibraryAdapter) => React.ReactNode; extraFeedback?: string; developmentNavigation?: boolean; active?: boolean }) {
   const initialLocation = readLibraryPreviewLocation(state);
   const restoredCreatorWorld = developmentNavigation && initialLocation.screen === 'detail'
     ? (window.history.state?.creatorWorld as CreatorWorld | StoryDetailDisplay | undefined) ?? null : null;
@@ -129,8 +126,6 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
     stories: [{ id: 'mock-story', mcName: 'Ye Chen', genre: 'Xianxia' }, ...(developmentNavigation ? [featuredNovel] : [])],
     setIsSettingsOpen: () => setDestination('Settings'), setIsCodexSheetOpen: () => setDestination('Living Codex'), setIsShortcutsOpen: () => setDestination('Shortcut Spells'), requestDao, daoSparks,
   };
-  const Home = homeReference ? ReferenceHome : LightNovelsHome;
-  const Detail = homeReference ? ReferenceStoryDetail : StoryDetailScreen;
   // Laptops show the Pathways sidebar unless the host keeps the bottom strip.
   const pathwaysSidebar = useLibraryDesktopNavigation() === 'sidebar';
   const isHome = active && developmentNavigation && currentScreen === 'home' && activeTab === 'featured';
@@ -141,7 +136,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
   const body = <>
     <div className="px-4 py-8 max-w-7xl mx-auto w-full">
       {developmentNavigation && <div hidden={!isHome}>
-        <Home active={isHome} worlds={homePreviewWorlds} featuredWorlds={homePreviewWorlds}
+        <LightNovelsHome active={isHome} worlds={homePreviewWorlds} featuredWorlds={homePreviewWorlds}
           onCreateStory={() => navigate({ screen: 'creator' })} onOpenWorld={id => {
             worldOpenerRef.current = document.getElementById(`home-world-${id}`);
             setActiveCreatorWorld(null);
@@ -149,7 +144,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
           }}>
           {developmentHomeContent?.(adapter)}
           {isHome && collections}
-        </Home>
+        </LightNovelsHome>
       </div>}
       {developmentNavigation && createVisited && <div hidden={!isCreate}>
         <CreatorSpaceHost onNavigate={navigate} onOpenWorld={world => {
@@ -161,7 +156,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
           window.history.replaceState({ ...window.history.state, creatorWorld: infoWorld }, '', window.location.href);
         }} />
       </div>}
-      {isFeaturedDetail && <Detail story={featuredNovel} onBack={() => navigate({ screen: 'home', collection: 'featured' })} />}
+      {isFeaturedDetail && <StoryDetailScreen story={featuredNovel} onBack={() => navigate({ screen: 'home', collection: 'featured' })} />}
       {isCreatorDetail && <StoryDetailScreen story={activeCreatorWorld} onBack={() => navigate({ screen: 'creator-space' })} />}
       <div hidden={isHome || isFeaturedDetail || isCreatorDetail || isCreate}>
       <div className="mb-8 min-h-52 border border-dashed border-neutral-800 rounded-xl p-6 text-neutral-400 text-sm font-sans">
@@ -189,7 +184,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
   </Suspense>, document.body);
   // Development: the Library's browsing frame is the canonical App Shell via
   // WorkspaceShell — a fixed header and rail with the content scrolling in
-  // <main>. The locked reference keeps its original page-scrolling markup.
+  // <main>.
   const content = <MainLibraryAdapterContext.Provider value={adapter}>
     {developmentNavigation && developmentHeader
       ? <div className="bg-[#050505] text-[#dfd8cf] font-serif selection:bg-human/30">
@@ -199,7 +194,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
         {help}
       </div>
       : <div className="min-h-dvh bg-[#050505] text-[#dfd8cf] font-serif overflow-x-hidden selection:bg-human/30 pb-safe">
-        {developmentHeader ? developmentHeader(adapter) : <GlobalHeader />}
+        {developmentHeader?.(adapter)}
         <main ref={mainRef} tabIndex={developmentNavigation ? -1 : undefined} className="relative z-10 w-full outline-none min-h-[calc(100dvh-140px)]">{body}</main>
         {help}
       </div>}

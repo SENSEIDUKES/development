@@ -3,12 +3,6 @@ import { ParticleEffect } from '@seihouse/library-ui';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 
-/**
- * No Development fork has diverged from the Original Reference yet - both
- * views render the same ParticleEffect. This is the expected starting state
- * for a feature workspace: Development begins as an exact copy of Reference
- * until a redesign task actually changes it.
- */
 interface BackdropDemoProps {
   accent: string;
   speedScale: number;
@@ -99,7 +93,6 @@ export function CelestialBackdropWorkspace() {
           },
         ],
       }}
-      renderReference={() => <BackdropDemo {...demoProps} />}
       renderDevelopment={() => <BackdropDemo {...demoProps} />}
     />
   );

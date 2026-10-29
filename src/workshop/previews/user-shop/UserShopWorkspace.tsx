@@ -14,8 +14,6 @@ export function UserShopWorkspace() {
   const src = `/library-shell.html?variant=development&source=cultivator-cave&state=developed-cultivator&screen=profile&cave=${encodeURIComponent(cave)}`;
 
   return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'user-shop')!}
-    allowCompare={false}
-    renderReference={() => <p className="p-6 text-sm text-neutral-400">User Shop has no historical reference. Development uses the existing creator shop in User Profile.</p>}
     renderDevelopment={() => <div>
       <iframe key={src} title={`${creator.profile.displayName} User Shop`} src={src}
         className="block h-[100dvh] w-full border-0 bg-black" />

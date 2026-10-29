@@ -4,15 +4,12 @@
  * Development renders the panel the app's Home uses, with a local stand-in for
  * the Story Spark server so every state is reachable without a model: nothing
  * leaves the preview, and Begin / Keep only report what the app would do.
- * Original Reference is the old comforting-quote oracle, unchanged.
  */
 import { useMemo, useState } from 'react';
-import { MotionConfig } from 'motion/react';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
-import { MainLibraryAdapterContext, MainLibraryHomeInsights, type DaoSparkHost, type MainLibraryAdapter } from '@seihouse/library/shell';
+import { MainLibraryHomeInsights, type DaoSparkHost } from '@seihouse/library/shell';
 import { storyStyleForGenre } from '@seihouse/sen/story-seed';
-import { DaoInsights as ReferenceDaoInsights } from '../../../components/library-shell/reference/main-library/DaoInsights';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'dao-insights')!;
 
@@ -70,39 +67,11 @@ function DaoInsightsDevelopment({ state }: { state: SparkState }) {
   </Stage>;
 }
 
-const REFERENCE_QUOTES = {
-  inspirational: { quote: 'The highest, cloud-shrouded peaks are climbed not by the fastest feet, but by the quietest hearts that refuse to look back.', author: 'Hermit of the Whispering Pines' },
-  comedic: { quote: 'If you cannot master the celestial flying sword, try walking with a really long, polished bamboo pole. The mortals will still think you are incredibly profound.', author: 'Fairy Chef of the Red Lotus Valley' },
-  comforting: { quote: 'Close your dusty scrolls. Light a single stick of cedar incense. The Great Dao is not found in old papers, but in the warmth of the tea steam rising to meet your face.', author: 'Old Auntie of the Peach Blossom Orchard' },
-};
-
-/** The fields the old oracle reads; the rest of the Main Library adapter is inert here. */
-const referenceAdapter: MainLibraryAdapter = {
-  currentScreen: 'home', setCurrentScreen: () => {}, activeStoryId: null, setActiveStoryId: () => {},
-  syncStatus: 'idle', lastSavedTime: null, currentUser: null, userProfile: null, stories: [],
-  setIsSettingsOpen: () => {}, setIsCodexSheetOpen: () => {}, setIsShortcutsOpen: () => {},
-  requestDao: (async (kind: string) => ({
-    ok: true,
-    json: async () => kind === 'status'
-      ? { hasServerGemini: true }
-      : { ...REFERENCE_QUOTES[kind as keyof typeof REFERENCE_QUOTES], category: kind },
-  })) as MainLibraryAdapter['requestDao'],
-};
-
-function DaoInsightsReference() {
-  return <Stage note="The old oracle: comedic, inspirational and comforting quotes, answered here from local fixtures.">
-    <MainLibraryAdapterContext.Provider value={referenceAdapter}>
-      <ReferenceDaoInsights />
-    </MainLibraryAdapterContext.Provider>
-  </Stage>;
-}
-
 export function DaoInsightsWorkspace() {
   const [state, setState] = useState<SparkState>('model');
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={false}
       workshopControls={{
         description: 'A local stand-in answers for the Story Spark server. No model is called and nothing is saved.',
         defaultSection: 'states',
@@ -123,7 +92,6 @@ export function DaoInsightsWorkspace() {
           ),
         }],
       }}
-      renderReference={() => <MotionConfig reducedMotion="user"><DaoInsightsReference /></MotionConfig>}
       renderDevelopment={() => <DaoInsightsDevelopment state={state} />}
     />
   );

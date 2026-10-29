@@ -12,7 +12,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **First Workshop record:** 2026-07-29
 - **Last recorded Workshop update:** 2026-09-23
 - **Historical source inspection:** 2026-07-29
-- **Implementation status:** approved reconstruction — development rebuilds Relics as Fate Survival rewards; `reference/` keeps production's retired inventory Relic reveal
+- **Implementation status:** approved reconstruction — development rebuilds Relics as Fate Survival rewards
 
 ## What a Relic is now
 
@@ -25,8 +25,7 @@ The server rules live in [`src/server/relics/README.md`](../../server/relics/REA
 ## Folder layout
 
 ```text
-reference/RelicReveal.tsx               — historical production inventory Relic reveal
-shared/types.ts                         — CosmicArtifact types kept only for the historical references
+shared/types.ts                         — old CosmicArtifact types, still re-exported by User Profile's types
 development/RelicReveal.tsx             — the Relic Reveal for a Fate Survival Relic
 development/FateSurvivalRelicsPanel.tsx — the cultivator's Relics, each opening its reveal
 development/index.ts                    — package entry (`@seihouse/library/relics`)
@@ -43,7 +42,6 @@ haptics that the Mystery Scroll reveal uses — so both rewards reveal the same 
   Relic"), the sealed Relic, its reveal, the credited DAO XP and Energy on the balance strip, and
   the ledger feed. Everything but the outcome runs on the development economy.
 - **Reveal lab:** the Relic Reveal at any rarity with a sample Relic, and Replay effects.
-- **Original Reference:** production's locked reveal with the old inventory mock data.
 
 ## Decisions still open
 
@@ -54,7 +52,7 @@ public profile shows Relic names (it does today, under the "Relic names" visibil
 
 The packages and NovelExpanded app built here are the destination. Keep Workshop
 controls, fixtures and adapters outside reusable package entries; another repository
-changes only when the owner asks. Historical references stay untouched.
+changes only when the owner asks.
 
 The existing local files named by this inventory are:
 
@@ -62,17 +60,19 @@ The existing local files named by this inventory are:
 - `src/components/rewards/development/`
 - `src/library/relics/`
 - `src/server/relics/`
-- `reference/`
 - `shared/types.ts`
 
 ## Host boundary
 
 `RelicsClientProvider` talks to `/api/library-economy?capability=relics`.
-The reward reveal uses `src/components/rewards/development/`; historical CosmicArtifact
-contracts in `shared/types.ts` and the reference reveal remain for the old system.
+The reward reveal uses `src/components/rewards/development/`; the historical CosmicArtifact
+contracts in `shared/types.ts` remain for the old system.
 
 ## Workshop history
 
+- **2026-10-28:** With the owner's approval, removed the old production inventory Relic reveal
+  (`reference/RelicReveal.tsx`) and its Original Reference pane. The workspace now shows
+  Development alone.
 - **2026-09-23:** Rebuilt as Fate Survival Relics. Retired the relic card and inspection modal
   (`shared/RelicCard.tsx`, `shared/RelicModal.tsx`), the weekly offering, attunement and status
   effects, and the story-milestone Relic achievements. The reveal's rarity ladder and effects

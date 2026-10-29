@@ -14,7 +14,7 @@ const payload: BlueprintGenerationPayload = {
       },
       optional: {
         intendedForMatureAudiences: false,
-        fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' },
+        fateSurvival: { enabled: false, pressure: 'immortal' },
         funSettings: {},
       },
     },

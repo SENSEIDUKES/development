@@ -216,7 +216,7 @@ export function createMockUserProfileServices({
           return;
         }
         profileRef.current = scenario.profile ? { ...scenario.profile, ...profileOverride } : null;
-        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: profileRef.current?.familiarId, familiarSize: profileRef.current?.familiarSize, familiarInHeader: profileRef.current?.familiarInHeader ?? false });
+        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: profileRef.current?.familiarId, familiarSize: profileRef.current?.familiarSize, familiarInHeader: profileRef.current?.familiarInHeader });
         setProfile(profileRef.current);
         setFormData(profileRef.current ?? {});
         setIsLoading(false);
@@ -376,7 +376,7 @@ export function createMockUserProfileServices({
         setProfile(next);
         // Preserve unrelated identity/language drafts while committing this field.
         setFormData(previous => ({ ...previous, familiarId: id }));
-        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: id, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader ?? false });
+        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: id, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader });
       } catch (failure) {
         if (mounted.current && epoch === accountEpoch.current) setError(failure instanceof Error ? failure.message : 'Familiar selection failed.');
       } finally {
@@ -394,7 +394,7 @@ export function createMockUserProfileServices({
       profileRef.current = next;
       setProfile(next);
       setFormData(previous => ({ ...previous, familiarSize }));
-      onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize, familiarInHeader: next.familiarInHeader ?? false });
+      onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize, familiarInHeader: next.familiarInHeader });
     }, [currentUser]);
 
     const handleFamiliarInHeaderChange = useCallback((inHeader: boolean) => {

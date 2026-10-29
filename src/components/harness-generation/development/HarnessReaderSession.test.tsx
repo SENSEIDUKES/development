@@ -1117,4 +1117,21 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     await act(async () => { await expect(tools!.createMode!.sounds.place(moved)).rejects.toThrow('changed after you reviewed it'); });
     expect(controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 2)!.soundCues?.map(cue => cue.anchor.selectedText)).toEqual(['with a lantern']);
   });
+  it('saves a voice Sound Cue again when its first save failed, instead of refusing it as an overlap', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    let tools: ReaderHostTools | undefined;
+    await mount(<Host controller={controller} storyId={storyId} renderHostTools={current => { tools = current; return null; }} />);
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    await click(byLabel('Create mode'), 'Create mode');
+    const placed = tools!.createMode!.sounds.resolve(tools!.createMode!.sounds.soundWords[0], { kind: 'words', words: 'with a lantern' });
+    if (!placed.ok) throw new Error(placed.problem);
+    const authorChapter = vi.spyOn(controller, 'authorChapter').mockRejectedValueOnce(new Error('Storage is full.'));
+    await act(async () => { await expect(tools!.createMode!.sounds.place(placed.cue)).rejects.toThrow('Storage is full.'); });
+    await flush();
+    await act(async () => { await tools!.createMode!.sounds.place(placed.cue); });
+    expect(authorChapter).toHaveBeenCalledTimes(2);
+    expect(controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 2)!.soundCues?.map(cue => cue.anchor.selectedText)).toEqual(['with a lantern']);
+    // Once saved, the same cue again is an overlap.
+    await act(async () => { await expect(tools!.createMode!.sounds.place(placed.cue)).rejects.toThrow('already has a Sound Cue'); });
+  });
 });

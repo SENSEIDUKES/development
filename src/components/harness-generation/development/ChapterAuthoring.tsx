@@ -108,6 +108,8 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState<'saved' | 'saving' | 'failed'>('saved');
   const saves = useRef<Promise<void>>(Promise.resolve());
+  // Cues added in words whose save failed: asking again saves the page rather than refusing them as overlaps.
+  const unsaved = useRef(new Set<string>());
   // The recordings the chapter was written with; where its frozen catalog holds none, the story's media now.
   const catalog = useMemo(() => createMediaCatalog(chapter.mediaLoadout.soundCues.length
     ? chapter.mediaLoadout : controller.describeStoryMedia(chapter.storyId) ?? chapter.mediaLoadout), [chapter.mediaLoadout, chapter.storyId, controller]);
@@ -175,7 +177,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       openingSound: nextOpening,
       waiting: waiting as Waiting[],
     }));
-    saves.current = saved.then(() => setSaving('saved'), error => {
+    saves.current = saved.then(() => { unsaved.current.clear(); setSaving('saved'); }, error => {
       setSaving('failed');
       setNotice(error instanceof Error ? error.message : 'Your change could not be saved.');
     });
@@ -191,6 +193,8 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       if (paragraph?.text.slice(cue.anchor.startOffset, cue.anchor.endOffset) !== cue.anchor.selectedText) {
         return Promise.reject(new Error(`“${cue.anchor.selectedText}” changed after you reviewed it. Ask for the sound again.`));
       }
+      const keep = (saved: Promise<void>) => { saved.catch(() => unsaved.current.add(cue.id)); return saved; };
+      if (unsaved.current.has(cue.id) && current.attachments.some(attachment => attachment.id === cue.id)) return keep(save(current));
       const cues = placedSoundCues(current);
       if (cues.length >= SOUND_CUE_RULES.maxPerChapter) return Promise.reject(new Error(`This chapter already has ${SOUND_CUE_RULES.maxPerChapter} Sound Cues, the most a chapter holds.`));
       const { blockId, startOffset, endOffset } = cue.anchor;
@@ -200,7 +204,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       const next = { ...current, attachments: [...current.attachments, cue] };
       latest.current = next;
       setState(next);
-      return save(next);
+      return keep(save(next));
     },
   }));
   const update = (change: (current: ChapterState) => ChapterState) => {

@@ -946,6 +946,7 @@ async function walk(browser, viewport, sample) {
   const litBefore = await page.locator('[data-testid="studio-chapter-prose"] .sen-overlay-mark').count();
   check(litBefore >= 3, `The prose should be lit where the tags landed, saw ${litBefore} marks.`);
   check(!(await page.evaluate(slidesSideways)), 'The Studio page must never scroll sideways.');
+  await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: 0 }));
   await shot('4i-studio-chapter');
   // A finding is a switch: off takes its kind's marks off the page.
   await findings.locator('[data-tagging-kind="Speakers"]').click();

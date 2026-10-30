@@ -12,6 +12,26 @@ const provider = (reply: unknown) => {
 };
 
 describe('Story Spark route', () => {
+  it.each([{ genre: 'Xianxia', idea: 'a flower that can cultivate' }, { inventGenre: true }])('asks for a short Eastern fantasy premise, never scene prose (%j)', async request => {
+    const { generate, providerFactory } = provider({ premise: 'A flower awakens.', genre: 'Flower Cultivation' });
+    await handleStorySparkHttp({ method: 'POST', body: request }, { environment, providerFactory });
+    const sent = generate.mock.calls[0][0];
+    expect(sent.systemInstruction).toContain('Eastern fantasy serialized fiction');
+    expect(sent.systemInstruction).toContain('present tense');
+    expect(sent.systemInstruction).toContain('25–45 words');
+    expect(sent.systemInstruction).toContain('Do not write an opening scene');
+    expect(sent.responseJsonSchema).toMatchObject({ properties: { premise: { maxLength: 600 } } });
+  });
+
+  it('uses the server default writing model, not a model supplied by the client', async () => {
+    const { generate } = provider({ premise: 'A flower awakens.' });
+    const providerFactory = vi.fn(() => ({ provider: 'gemini' as const, model: 'm', generate }));
+    await handleStorySparkHttp({ method: 'POST', body: { genre: 'Xianxia', model: 'google/gemini-3.8-flash' } }, {
+      environment: { ...environment, HARNESS_GENERATION_DEFAULT_MODEL: 'google/gemini-3.1-flash-lite' }, providerFactory,
+    });
+    expect(providerFactory).toHaveBeenCalledWith({ apiKey: 'test-key', model: 'google/gemini-3.1-flash-lite' });
+  });
+
   it.each(['male', 'female'] as const)('passes the %s protagonist preference through to the model for both genre modes', async protagonistGender => {
     for (const genre of [{ genre: 'Xianxia' }, { inventGenre: true }]) {
       const { generate, providerFactory } = provider({ premise: 'A flower awakens.', genre: 'Flower Cultivation' });

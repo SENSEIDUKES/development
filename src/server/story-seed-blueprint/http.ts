@@ -35,7 +35,7 @@ export interface StorySeedBlueprintHttpResponse {
 export interface StorySeedBlueprintHttpDependencies {
   environment: StorySeedBlueprintEnvironment;
   providerFactory?: (apiKey: string, model: string) => WorldBlueprintModelProvider;
-  onError?: (error: unknown) => void;
+  onError?: (error: unknown, context?: { model: string }) => void;
   /** Called once per Blueprint written: which model wrote it and how long it took. Never the Seed. */
   onAnswer?: (answer: { model: string; durationMs: number }) => void;
 }
@@ -166,7 +166,7 @@ export async function handleStorySeedBlueprintHttp(
       headers: { "Cache-Control": "no-store" },
     };
   } catch (error) {
-    dependencies.onError?.(error);
+    dependencies.onError?.(error, { model });
     const message = error instanceof Error ? error.message : "Unknown Blueprint generation failure";
     if (error instanceof BlueprintRequestError
       || ["Style is required", "Genre is required", "Premise is required", "Story Tags are required"]
@@ -181,6 +181,9 @@ export async function handleStorySeedBlueprintHttp(
     // The one model failure a creator can act on: the model was still writing at the deadline.
     if (error instanceof ModelRouterError && error.code === "timeout") {
       return errorResponse(502, `The model was still writing after ${Math.ceil(chosen.timeoutMs / 1000)} seconds, so it was stopped. Choose a lower reasoning level or a faster model in the Model Router. No Story Seed data was changed.`);
+    }
+    if (error instanceof ModelRouterError && error.code === "provider-error") {
+      return errorResponse(502, `The model provider failed the Blueprint request for ${model}. Try again or choose another writing model in the Model Router. No Story Seed data was changed.`);
     }
     if (message.includes("output token limit")) {
       return errorResponse(502, new BlueprintOutputLimitError(config?.maxOutputTokens ?? 0).message);

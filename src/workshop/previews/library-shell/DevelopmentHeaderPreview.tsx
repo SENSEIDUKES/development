@@ -31,7 +31,7 @@ export function DevelopmentHeaderPreview({ source, state }: { source: HeaderConf
     detail: 'Reader',
     avatarUrl: fixtureReader?.avatarUrl || undefined,
     onOpenProfile: () => navigateLibraryPreview({ screen: 'profile' }),
-    onOpenStore: () => navigateLibraryPreview({ screen: 'profile', cave: '/store' }),
+    onOpenStore: () => navigateLibraryPreview({ screen: 'profile', cave: '/home/store' }),
     signIn: { onSignIn: () => setSignInOpen(true), note: 'Not connected yet' },
   }), []);
   return <WorkspaceHeaderProfileProvider profile={profile}>

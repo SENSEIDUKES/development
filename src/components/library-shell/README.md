@@ -1,5 +1,7 @@
 # Library Shell
 
+- **2026-10-30 (night)** — From SENSEI: the header is back to its original box (straight edges, bottom hairline); the page still scrolls beneath it. The Portrait menu's Store opens the official Celestial Store at `/home/store` (it had pointed at `/store`, which landed on the creator's empty User Shop).
+
 - **2026-10-30 (late)** — From SENSEI: the header sits flush with the top of the screen again (straight top edge, reaching under the notch) and keeps the bottom navigation's pill curve on its bottom corners. The Portrait menu's Settings entry is replaced by the host's Store (`WorkspaceHeaderProfile.onOpenStore`; NovelExpanded opens the Celestial Store). Settings stays in the sidebar and the Profile page.
 
 - **2026-10-30 (evening)** — From SENSEI's phone review. The header floats over the page: `WorkspaceShell` takes it out of the frame's grid, measures it into `--workspace-header-height`, and the page and rail leave that space at their top and scroll beneath it, so nothing is cut off at a band under the header. The Portrait's menu is a single glass sheet of plain rows (icon, label, value) in the interface's sans type: the reader, Sign in, Your profile, Settings; Language and Menu music as setting rows; Help. The laptop sidebar no longer carries the reader card (`LibraryNavigation` has no `profile`); the Portrait is the reader's one place.

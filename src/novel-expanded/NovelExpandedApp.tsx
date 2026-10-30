@@ -211,7 +211,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     detail: rank,
     avatarUrl: profile.avatarUrl || undefined,
     onOpenProfile: () => navigate({ page: 'profile' }),
-    onOpenStore: () => navigate({ page: 'profile', cave: '/store' }),
+    onOpenStore: () => navigate({ page: 'profile', cave: '/home/store' }),
     signIn: { onSignIn: () => setSignInOpen(true), note: 'Not connected yet' },
   }), [profile.displayName, profile.avatarUrl, rank, navigate]);
   const headerPreferences = useMemo(

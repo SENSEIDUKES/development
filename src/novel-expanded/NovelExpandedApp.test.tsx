@@ -1310,6 +1310,19 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(await services.storySeeds.list(NOVEL_EXPANDED_READER_ID)).toHaveLength(0);
   });
 
+  it('Store in the Profile Portrait menu opens the official Celestial Store, not a creator shop', async () => {
+    await render(appServices(scriptedWriter().writer));
+    await click(shell()!.querySelector('header button[aria-label="Profile and preferences"]'), 'the Profile Portrait', 20);
+    const menu = document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"]')!;
+    await click([...menu.querySelectorAll('button')].find(button => button.textContent === 'Store'), 'Store', 100);
+    expect(address()).toBe(`/app/?page=profile&cave=${encodeURIComponent('/home/store')}`);
+    const store = document.querySelector<HTMLElement>('[data-cave-destination="store"]')!;
+    expect(store).toBeTruthy();
+    expect(store.querySelector('#cave-destination-store-title')?.textContent).toContain('Celestial Store');
+    expect(store.querySelector('[data-store-shelf="familiars"]')).toBeTruthy();
+    expect(document.querySelector('[data-cave-destination="storefront"]')).toBeNull();
+  });
+
   it('Sign in in the Profile Portrait menu shows the sign-in screen, marked not connected, with nothing to send', async () => {
     await render(appServices(scriptedWriter().writer));
     await click(shell()!.querySelector('header button[aria-label="Profile and preferences"]'), 'the Profile Portrait', 20);

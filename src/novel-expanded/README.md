@@ -1,5 +1,9 @@
 # NovelExpanded app
 
+- **2026-10-30 (night)** — The header is back to its original box shape, and
+  the Portrait menu's Store opens the Celestial Store (`/home/store`), not the
+  creator's User Shop.
+
 - **2026-10-30 (late)** — The header is flush with the top again, with rounded
   bottom corners, and the Portrait menu's Settings became the Store (the Cave's
   Celestial Store).

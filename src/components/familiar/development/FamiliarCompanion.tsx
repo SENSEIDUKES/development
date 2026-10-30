@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState, type RefObject, type PointerEvent } from 'react';
 import { createPortal, flushSync } from 'react-dom';
 import { Familiar, type FamiliarProps } from './Familiar';
-import { familiarDisplaySize, type FamiliarActivity } from '../shared/familiar';
+import { familiarDisplaySize } from '../shared/familiar';
+import { useFamiliarLook } from './useFamiliarLook';
 import { useFamiliarMobile } from './useFamiliarMobile';
 import { useFamiliarHelperAvailable } from './FamiliarHelper';
 
@@ -48,6 +49,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
   const suppressClick = useRef(false);
   const instructions = useId();
   const element = useRef<HTMLDivElement>(null);
+  const lookAnimation = useFamiliarLook(element, boundaryRef, minimized || dragging || !!movementAnimation || !!props.animation || !!props.paused);
   const wasMinimized = useRef(false);
   const pendingPosition = useRef<Point | null>(null);
   const dragFrame = useRef<number | null>(null);
@@ -147,7 +149,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
   return createPortal(<div ref={element} className="familiar-companion" data-dragging={dragging || undefined}
     style={{ left: 0, top: 0, transform: `translate(${position.x}px, ${position.y}px)`, width }}>
     <span id={instructions} className="familiar-sr-only">Drag to move. Use arrow keys to move when focused. Press Enter for Familiar actions.</span>
-    <Familiar {...props} animation={movementAnimation ?? props.animation} open={open} onOpenChange={setOpen} onMinimize={onMinimize} dragging={dragging} triggerProps={{
+    <Familiar {...props} playback="companion" lookAnimation={lookAnimation} animation={movementAnimation ?? props.animation} open={open} onOpenChange={setOpen} onMinimize={onMinimize} dragging={dragging} triggerProps={{
       'aria-describedby': instructions,
       onPointerDown: event => {
         if (event.button !== 0 || event.isPrimary === false || gesture.current) return;

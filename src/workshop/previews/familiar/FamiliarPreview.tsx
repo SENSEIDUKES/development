@@ -49,6 +49,6 @@ export function FamiliarPreview() {
       </select>
       <button type="button" aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? 'Play animation' : 'Pause animation'}</button>
     </div>
-    <p className="familiar-preview-note">Codex activity drives the matching supplied running, waiting, review, or blocked clip. An atlas inspection choice deliberately overrides it. Energy uses the current Workshop profile account ({account?.displayName ?? 'signed out'}). Reduced motion displays a still frame.</p>
+    <p className="familiar-preview-note">Automatic uses calm idle holds, three-cycle reactions, and mouse-directed looks inside the preview. Touch keeps the calm idle. Codex activity selects its supplied reaction; atlas inspection loops the original clip instead. Energy uses the current Workshop profile account ({account?.displayName ?? 'signed out'}). Reduced motion displays a still frame.</p>
   </section>;
 }

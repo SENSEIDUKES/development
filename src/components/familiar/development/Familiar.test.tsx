@@ -4,7 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnergyClientProvider, type EnergyClient, type EnergyAccountSnapshot } from '@seihouse/library/energy';
 import { celestialGuardian, celestialGuardianOption } from '../../../host/familiar/celestialGuardian';
-import { allFamiliarOptions } from '../../../host/familiar/catalogue';
+import { allFamiliarOptions, familiarCatalogue } from '../../../host/familiar/catalogue';
+import { familiarLookAnimation } from './useFamiliarLook';
 import { Familiar } from './Familiar';
 import { FamiliarSprite } from './FamiliarSprite';
 import { FamiliarSelection } from './FamiliarSelection';
@@ -65,6 +66,151 @@ const open = async () => {
 const snapshot = (balance: number): EnergyAccountSnapshot => ({ uid: 'test-account', balance, held: 3, available: balance - 3, prices: [], activity: [], developmentControls: { initialGrant: 500, defaultGrant: 100, maxGrant: 10000 }, updatedAt: '2026-09-20T00:00:00Z' });
 
 describe('Familiar sprite playback', () => {
+  it.each(familiarCatalogue.map(entry => entry.definition))('holds every $displayName idle frame six times longer in companion mode', familiar => {
+    vi.useFakeTimers();
+    act(() => root.render(<FamiliarSprite familiar={familiar} playback="companion" />));
+    imageLoaded();
+    const idle = familiar.animations.idle;
+    for (let index = 0; index < idle.columns.length; index++) {
+      expect(frame()).toBe(String(index));
+      act(() => vi.advanceTimersByTime(idle.durations[index] * 6 - 1));
+      expect(frame()).toBe(String(index));
+      act(() => vi.advanceTimersByTime(1));
+    }
+    expect(frame()).toBe('0');
+    act(() => root.render(null));
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('finishes three reaction cycles before looking, without restarts from mouse targets or rerenders', () => {
+    vi.useFakeTimers();
+    const render = (lookAnimation?: string) => act(() => root.render(<FamiliarSprite familiar={celestialGuardian} playback="companion" animation="waving" lookAnimation={lookAnimation} />));
+    const pose = () => container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose');
+    render(); imageLoaded();
+    const loadedAtlas = atlas();
+    act(() => vi.advanceTimersByTime(140));
+    expect(frame()).toBe('1');
+    render('look-270');
+    expect(frame()).toBe('1');
+    expect(pose()).toBe('reacting');
+    act(() => vi.advanceTimersByTime(1960 - 1));
+    expect(pose()).toBe('reacting');
+    act(() => vi.advanceTimersByTime(1));
+    expect(pose()).toBe('looking');
+    expect(atlas().style.transform).toBe('translate(-50%, -90.9090909090909%)');
+    expect(vi.getTimerCount()).toBe(0);
+    render('look-270');
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(pose()).toBe('looking');
+    expect(atlas()).toBe(loadedAtlas);
+    render();
+    expect(pose()).toBe('idle');
+    act(() => vi.advanceTimersByTime(1680));
+    expect(frame()).toBe('1');
+  });
+
+  it('finishes an engagement while the action tray stays open, and reacts again on a new engagement', () => {
+    vi.useFakeTimers();
+    const render = () => act(() => root.render(<Familiar familiar={celestialGuardian} playback="companion" />));
+    render(); imageLoaded();
+    hover(container.querySelector('.familiar-interaction')!, true);
+    expect(container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose')).toBe('reacting');
+    act(() => vi.advanceTimersByTime(2100));
+    expect(container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose')).toBe('idle');
+    expect(container.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(false);
+    render();
+    act(() => vi.advanceTimersByTime(1680));
+    expect(frame()).toBe('1');
+    hover(container.querySelector('.familiar-interaction')!, false);
+    hover(container.querySelector('.familiar-interaction')!, true);
+    expect(container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose')).toBe('reacting');
+  });
+
+  it('resets a held gaze when inspecting the same idle clip without reloading the image', () => {
+    vi.useFakeTimers();
+    act(() => root.render(<Familiar familiar={celestialGuardian} playback="companion" lookAnimation="look-270" />));
+    imageLoaded();
+    const loadedAtlas = atlas();
+    expect(container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose')).toBe('looking');
+    act(() => root.render(<Familiar familiar={celestialGuardian} playback="companion" animation="idle" lookAnimation="look-270" />));
+    expect(atlas()).toBe(loadedAtlas);
+    expect(atlas().style.transform).toBe('translate(0%, 0%)');
+    expect(container.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('Celestial Guardian, Idle');
+    expect(container.querySelector('.familiar-sprite')?.hasAttribute('data-familiar-pose')).toBe(false);
+    act(() => vi.advanceTimersByTime(280));
+    expect(frame()).toBe('1');
+    act(() => root.render(<Familiar familiar={celestialGuardian} playback="companion" />));
+    act(() => vi.advanceTimersByTime(2340));
+    expect(frame()).toBe('2');
+    act(() => root.render(<Familiar familiar={celestialGuardian} playback="companion" animation="idle" />));
+    expect(frame()).toBe('0');
+    expect(atlas().style.transform).toBe('translate(0%, 0%)');
+  });
+
+  it('replaces changed activity, suppresses paused reactions, and preserves raw inspection and one-shots', () => {
+    vi.useFakeTimers();
+    act(() => root.render(<FamiliarSprite familiar={celestialGuardian} playback="companion" activity="running" />));
+    imageLoaded();
+    act(() => vi.advanceTimersByTime(300));
+    act(() => root.render(<FamiliarSprite familiar={celestialGuardian} playback="companion" activity="blocked" />));
+    expect(frame()).toBe('0');
+    expect(atlas().style.transform).toBe('translate(0%, -45.45454545454545%)');
+    act(() => root.render(<FamiliarSprite familiar={celestialGuardian} playback="companion" activity="blocked" paused />));
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => root.render(<FamiliarSprite familiar={celestialGuardian} playback="companion" activity="blocked" />));
+    expect(container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose')).toBe('idle');
+    act(() => root.render(<Familiar familiar={celestialGuardian} playback="companion" animation="idle" />));
+    imageLoaded();
+    act(() => vi.advanceTimersByTime(280));
+    expect(frame()).toBe('1');
+    act(() => root.render(<FamiliarSprite familiar={celestialGuardian} playback="companion" animation="waving" playOnce={0} />));
+    imageLoaded();
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => root.render(<FamiliarSprite familiar={celestialGuardian} playback="companion" animation="waving" playOnce={1} />));
+    act(() => vi.advanceTimersByTime(700));
+    expect(container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose')).toBe('resting');
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('stops companion reactions offscreen, hidden, reduced, failed or unmounted and resumes calmly', () => {
+    vi.useFakeTimers();
+    let intersect!: IntersectionObserverCallback;
+    vi.stubGlobal('IntersectionObserver', class { constructor(callback: IntersectionObserverCallback) { intersect = callback; } observe() {} disconnect() {} });
+    const visibility = (isIntersecting: boolean) => act(() => intersect([{ isIntersecting }] as IntersectionObserverEntry[], {} as IntersectionObserver));
+    const render = (animation = 'idle') => act(() => root.render(<FamiliarSprite familiar={celestialGuardian} playback="companion" animation={animation} lookAnimation="look-090" />));
+    render(); imageLoaded(); visibility(true);
+    render('waving');
+    expect(vi.getTimerCount()).toBe(1);
+    visibility(false);
+    expect(vi.getTimerCount()).toBe(0);
+    visibility(true);
+    expect(container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose')).toBe('looking');
+    reduced = true;
+    act(() => mediaListeners.forEach(listener => listener()));
+    expect(container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose')).toBe('resting');
+    expect(vi.getTimerCount()).toBe(0);
+    reduced = false;
+    act(() => mediaListeners.forEach(listener => listener()));
+    render('running');
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(vi.getTimerCount()).toBe(0);
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose')).toBe('looking');
+    render('failed');
+    act(() => atlas().dispatchEvent(new Event('error')));
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => root.render(null));
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each(['000', '022.5', '045', '067.5', '090', '112.5', '135', '157.5', '180', '202.5', '225', '247.5', '270', '292.5', '315', '337.5'])('selects the supplied %s degree look sector', direction => {
+    const angle = Number(direction) * Math.PI / 180;
+    expect(familiarLookAnimation({ left: 0, top: 0, width: 100, height: 100 }, 50 + 100 * Math.sin(angle), 50 - 100 * Math.cos(angle))).toBe(`look-${direction}`);
+    expect(familiarLookAnimation({ left: 0, top: 0, width: 100, height: 100 }, 50, 50)).toBeUndefined();
+  });
+
   it('stays neutral until requested, plays one complete wave, and does not restart or repeat it', () => {
     vi.useFakeTimers();
     const render = (request = 0) => act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="waving" playOnce={request} />));
@@ -371,6 +517,59 @@ describe('Floating companion', () => {
     const [x, y] = style.transform.match(/-?[\d.]+/g)!.map(Number);
     return { x, y };
   };
+
+  it('tracks the mouse only inside the preview, holds a sector, and clears touch, blur, reduction and minimize', () => {
+    vi.useFakeTimers();
+    const boundary = document.createElement('div');
+    const boundaryRef = { current: boundary };
+    vi.spyOn(boundary, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, right: 800, bottom: 700, width: 800, height: 700 } as DOMRect);
+    const render = (minimized = false, animation?: string) => act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} boundaryRef={boundaryRef} minimized={minimized} animation={animation} />));
+    render();
+    const sprite = document.querySelector<HTMLElement>('.familiar-companion .familiar-sprite')!;
+    const spriteAtlas = document.querySelector<HTMLImageElement>('.familiar-companion .familiar-sprite-atlas')!;
+    vi.spyOn(sprite, 'getBoundingClientRect').mockReturnValue({ left: 500, top: 400, right: 600, bottom: 500, width: 100, height: 100 } as DOMRect);
+    act(() => spriteAtlas.dispatchEvent(new Event('load')));
+    const move = (x: number, y: number, pointerType = 'mouse', type = 'pointermove') => {
+      const event = new Event(type, { bubbles: true });
+      Object.assign(event, { clientX: x, clientY: y, pointerType });
+      act(() => document.dispatchEvent(event));
+    };
+    move(400, 450);
+    expect(sprite.dataset.familiarPose).toBe('looking');
+    expect(sprite.getAttribute('aria-label')).toBe('Celestial Guardian, Look 270°');
+    const held = spriteAtlas.style.transform;
+    move(401, 450);
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(spriteAtlas.style.transform).toBe(held);
+    expect(vi.getTimerCount()).toBe(0);
+    move(900, 450);
+    expect(sprite.dataset.familiarPose).toBe('idle');
+    move(400, 450); move(400, 450, 'touch', 'pointerdown');
+    expect(sprite.dataset.familiarPose).toBe('idle');
+    move(400, 450);
+    act(() => window.dispatchEvent(new Event('blur')));
+    expect(sprite.dataset.familiarPose).toBe('idle');
+    move(400, 450);
+    act(() => document.dispatchEvent(new Event('pointerout')));
+    expect(sprite.dataset.familiarPose).toBe('idle');
+    reduced = true;
+    act(() => mediaListeners.forEach(listener => listener()));
+    move(400, 450);
+    expect(sprite.dataset.familiarPose).toBe('resting');
+    expect(vi.getTimerCount()).toBe(0);
+    reduced = false;
+    act(() => mediaListeners.forEach(listener => listener()));
+    render(false, 'running-right');
+    move(400, 450);
+    expect(sprite.getAttribute('aria-label')).toBe('Celestial Guardian, Moving right');
+    act(() => vi.advanceTimersByTime(120));
+    expect(sprite.dataset.familiarFrame).toBe('1');
+    render(true);
+    expect(document.querySelector('.familiar-companion')).toBeNull();
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => root.render(null));
+    expect(mediaListeners.size).toBe(0);
+  });
 
   it.each(['mouse', 'touch'])('distinguishes %s drag from tap and only reads Energy after choosing the action', async pointerType => {
     const client: EnergyClient = { getSnapshot: vi.fn().mockResolvedValue(snapshot(81)), grantDevelopment: vi.fn(), resetDevelopment: vi.fn() };

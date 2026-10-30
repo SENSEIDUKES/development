@@ -179,9 +179,9 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(storySeed).toEqual(before);
   });
 
-  it('reports provider failures separately from incomplete Blueprints, with the chosen model in server diagnostics', async () => {
+  it.each(['Provider returned error', 'Story Tags are required', 'Premise is required'])('sanitizes provider failures even when they include validation text: %s', async upstreamText => {
     const model = 'openrouter/openai/gpt-6-luna';
-    const failure = new ModelRouterError('provider-error', 'OpenRouter 400: Provider returned error: private upstream details');
+    const failure = new ModelRouterError('provider-error', `OpenRouter 400: ${upstreamText}: private upstream details`);
     const onError = vi.fn();
     const storySeed = storySeedInputFromSpark(HAND_SPARKS.find(item => item.title === 'The Swallowed Star')!);
     const before = structuredClone(storySeed);

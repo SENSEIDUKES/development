@@ -1,5 +1,10 @@
 # `@seihouse/sen`
 
+**Unreleased (2026-10-30):** `./story-seed` exports `applyStorySparkToSeed`: a
+Story Spark's whole Origin (premise, genre, tradition, Story Tags, Survival and a
+title when it has one) into an existing seed, keeping every other choice and where
+the seed started. `storySeedInputFromSpark` is built on it.
+
 **Unreleased (2026-10-29):** Sound Cues asked for in words. `./highlight-engine`
 adds `findSpokenWords` (words a person said, found in the chapter whatever their
 case or punctuation, the next from where the reader is first), `wordsJustRead`

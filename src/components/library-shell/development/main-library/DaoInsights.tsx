@@ -15,7 +15,7 @@ import type { DaoSparkHost } from '../../shared/MainLibraryAdapter';
 import { DAO_GENRES, handSpark } from './daoSparks';
 
 /**
- * Dao Insights: a wandering elder's lost ramblings that are really story
+ * Sparks (code: Dao Insights): a wandering elder's lost ramblings that are really story
  * sparks — a whole Origin for a Story Seed: premise, genre, title, novel
  * tradition and the Story Tags its premise calls for, written for Fate
  * Survival when the writer turns it on. The panel fits one phone screen. The spark leads the panel; below it the writer shapes the
@@ -23,7 +23,11 @@ import { DAO_GENRES, handSpark } from './daoSparks';
  * rough beginning into a real premise. The genre is chosen with Story Seed's
  * own path picker: no path lets the Dao wander, a path or the writer's own
  * genre steers it, and Conjure asks it for a genre no list holds. A spark is
- * begun as a new Story Seed or kept in the Story Bank.
+ * begun as a new Story Seed or kept in the Story Bank. Inside a Story Seed
+ * (`purpose="fill-seed"`) it is used to fill that seed's Origin instead.
+ *
+ * It opens from a spark icon button where writers create: the Creator Space
+ * and Story Seed's Origin.
  *
  * The writing comes from the host (`DaoSparkHost`, a model behind the Story
  * Spark route). Without one the Dao offers its own hand-written sparks, and a
@@ -33,7 +37,6 @@ import { DAO_GENRES, handSpark } from './daoSparks';
 type SparkMode = 'random' | 'custom';
 
 const RECENT_LIMIT = 6;
-const TICKER_MS = 14_000;
 /** The muttering beat before a spark lands, so even a hand-written one arrives. */
 const SETTLE_MS = 900;
 
@@ -42,7 +45,11 @@ const genreName = (genre: string) => DAO_GENRES.find(preset => preset.id === gen
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
+export const DaoInsights: React.FC<{
+  host?: DaoSparkHost;
+  /** `new-seed`: Begin plants a new Story Seed. `fill-seed`: the spark fills the open seed's Origin. */
+  purpose?: 'new-seed' | 'fill-seed';
+}> = ({ host, purpose = 'new-seed' }) => {
   const copyText = useHeaderClipboard();
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -56,8 +63,6 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
   const [survival, setSurvival] = useState(false);
   const [idea, setIdea] = useState('');
   const [spark, setSpark] = useState<StorySpark>(() => handSpark({}));
-  /** The writer has sought a spark: the header stops turning over its own. */
-  const [sought, setSought] = useState(false);
   const [seeking, setSeeking] = useState(false);
   const [connected, setConnected] = useState(false);
   const [message, setMessage] = useState<{ tone: 'error' | 'note'; text: string } | null>(null);
@@ -88,13 +93,6 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
     check.then(value => { if (!cancelled) setConnected(value); }, () => { if (!cancelled) setConnected(false); });
     return () => { cancelled = true; };
   }, [host]);
-
-  // While closed and before the writer seeks, the header turns over the Dao's own sparks.
-  useEffect(() => {
-    if (isOpen || sought) return;
-    const interval = setInterval(() => setSpark(current => handSpark({}, current)), TICKER_MS);
-    return () => clearInterval(interval);
-  }, [isOpen, sought]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -172,7 +170,6 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
       next = { ...next, survival };
       remember(next);
       setSpark(next);
-      setSought(true);
       scrollRef.current?.scrollTo?.({ top: 0, behavior: 'smooth' });
       if (note) setMessage({ tone: 'note', text: note });
     } finally {
@@ -231,34 +228,13 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
 
   return (
     <>
-      {/* 1. The compact trigger: a spark turning over in the header or Home. */}
-      <div
-        id="dao-insights-header-center"
-        onClick={() => setIsOpen(true)}
-        className="dao-insights-trigger flex flex-col flex-1 min-w-0 items-center justify-center max-w-[220px] sm:max-w-[360px] xl:max-w-md mx-2 sm:mx-4 px-3 py-1 bg-[rgba(11,14,30,0.55)] border border-[rgba(196,182,148,0.14)] hover:border-[rgba(205,178,113,0.4)] hover:bg-[rgba(11,14,30,0.8)] rounded-xl transition-all duration-300 cursor-pointer select-none group text-center overflow-hidden h-10 sm:h-12"
-        role="button" aria-haspopup="dialog" aria-expanded={isOpen} aria-label="Insights from the Dao: story sparks"
-        title="Insights from the Dao — seek a spark for your next story" tabIndex={0}
-        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setIsOpen(true); } }}
-      >
-        {/* One line at every width: phones read the short "Dao Insights". */}
-        <div className="flex max-w-full min-w-0 items-center gap-1 mb-0.5 shrink-0 whitespace-nowrap">
-          <LibraryDaoInsightIcon size={14} className="text-[#CDB271] shrink-0 group-hover:rotate-12 transition-transform" />
-          <span className="truncate font-sc font-bold text-[8px] tracking-[0.18em] text-[#CDB271]/80 uppercase leading-none group-hover:text-[#E3C878] transition-colors">
-            <span className="hidden min-[480px]:inline">Insights from the Dao</span>
-            <span className="min-[480px]:hidden">Dao Insights</span>
-          </span>
-        </div>
-        <div className="w-full relative h-[18px] overflow-hidden flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            <motion.p key={sparkKey} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
-              className="flex w-full items-center justify-center gap-1 text-[11px] font-serif font-medium text-signal italic px-1">
-              <SparkSigil size={11} aria-hidden="true" className="shrink-0 text-[#A78BFA]" />
-              <span className="truncate">{spark.premise}</span>
-            </motion.p>
-          </AnimatePresence>
-        </div>
-      </div>
+      {/* 1. The trigger: a spark icon where writers create. */}
+      <button type="button" onClick={() => setIsOpen(true)}
+        className="dao-sparks-trigger group inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full border border-[rgba(205,178,113,0.4)] bg-[rgba(11,14,30,0.6)] px-3 text-[#E3C878] shadow-[0_0_14px_rgba(205,178,113,0.15)] transition-colors hover:border-[#E3C878] hover:text-[#F3E3B5]"
+        aria-haspopup="dialog" aria-expanded={isOpen} aria-label="Sparks: story ideas" title="Sparks: seek a story idea">
+        <Sparkles size={20} aria-hidden="true" className="shrink-0 transition-transform group-hover:rotate-12" />
+        <span className="hidden font-sc text-[12px] font-bold uppercase tracking-[0.14em] sm:inline">Sparks</span>
+      </button>
 
       {/* 2. The spark panel: a bottom sheet on phones, a centered card above. It
           fits one phone screen: the spark, the few choices that shape the next
@@ -270,7 +246,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
               className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 selection:bg-portal/20">
               <div className="absolute inset-0 bg-[rgba(2,3,10,0.86)] backdrop-blur-md" onClick={() => setIsOpen(false)} aria-hidden="true" />
               <FocusLock returnFocus className="contents">
-                <motion.div role="dialog" aria-modal="true" aria-label="Dao Insights"
+                <motion.div role="dialog" aria-modal="true" aria-label="Sparks"
                   initial={{ y: 32, opacity: 0.6 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 32, opacity: 0 }}
                   transition={{ type: 'spring', damping: 26, stiffness: 320 }}
                   className="library-header-dialog dao-spark-panel seed-field-scope relative z-10 flex w-full max-w-xl flex-col overflow-hidden rounded-t-[1.75rem] sm:rounded-3xl border border-[rgba(196,182,148,0.16)] text-start font-sans max-h-[94dvh] sm:max-h-[90vh]">
@@ -282,14 +258,14 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                     <div className="flex items-center gap-3">
                       <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[rgba(205,178,113,0.4)] bg-[rgba(205,178,113,0.08)] text-[#CDB271] shadow-[0_0_14px_rgba(205,178,113,0.18)]">
                         <motion.div animate={{ rotate: seeking ? 720 : 0 }} transition={{ duration: seeking ? 1.2 : 0.4, ease: 'easeInOut', repeat: seeking ? Infinity : 0 }}>
-                          <LibraryDaoInsightIcon size={22} />
+                          <Sparkles size={20} aria-hidden="true" />
                         </motion.div>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h2 className="font-display text-lg font-bold uppercase tracking-[0.12em] text-signal leading-tight sm:text-xl">Dao Insights</h2>
+                        <h2 className="font-display text-lg font-bold uppercase tracking-[0.12em] text-signal leading-tight sm:text-xl">Sparks</h2>
                         <p className="dao-spark-subtitle hidden truncate text-xs text-neutral-400 sm:block">Lost ramblings of the Dao, each a story waiting to be told.</p>
                       </div>
-                      <button type="button" onClick={() => setIsOpen(false)} aria-label="Close Dao Insights"
+                      <button type="button" onClick={() => setIsOpen(false)} aria-label="Close Sparks"
                         className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[rgba(196,182,148,0.18)] bg-[rgba(11,14,30,0.6)] text-neutral-300 hover:border-[rgba(205,178,113,0.45)] hover:text-signal transition-colors">
                         <X size={18} />
                       </button>
@@ -402,6 +378,10 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                     </>}
                   </div>
 
+                  {purpose === 'fill-seed' && host?.beginSpark && <p data-spark-fill-note
+                    className="shrink-0 border-t border-[rgba(196,182,148,0.12)] bg-[rgba(5,7,16,0.92)] px-4 pt-2 text-[11px] leading-snug text-neutral-400 sm:px-6">
+                    Using a spark replaces this seed's premise, genre, tradition, Story Tags and Fate Survival, and its title when the spark has one.
+                  </p>}
                   {/* Seek and what to do with the spark, in one row within the thumb's reach. */}
                   <div className="flex shrink-0 items-center gap-2 border-t border-[rgba(196,182,148,0.12)] bg-[rgba(5,7,16,0.92)] px-4 pt-2.5 sm:px-6 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md">
                     <button type="button" onClick={seek} disabled={seeking}
@@ -417,7 +397,9 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                       <button type="button" onClick={() => act('begin')} disabled={seeking || acting !== null}
                         className="flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-portal px-3 text-sm font-bold text-black shadow-[0_0_18px_rgba(4,172,255,0.25)] transition-opacity hover:opacity-90 disabled:opacity-50">
                         <LibraryManifestingIcon size={18} aria-hidden="true" className="shrink-0" />
-                        <span className="truncate">{acting === 'begin' ? 'Planting…' : <>Begin<span className="sr-only min-[420px]:not-sr-only"> this story</span></>}</span>
+                        <span className="truncate">{purpose === 'fill-seed'
+                          ? acting === 'begin' ? 'Filling…' : <>Use<span className="sr-only min-[420px]:not-sr-only"> this spark</span></>
+                          : acting === 'begin' ? 'Planting…' : <>Begin<span className="sr-only min-[420px]:not-sr-only"> this story</span></>}</span>
                       </button>
                     )}
                     {host?.keepSpark && (

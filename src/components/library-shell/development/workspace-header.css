@@ -46,12 +46,12 @@
   }
 }
 
-/* One row, shared fairly. When no center slot is present, identity flexes so
-   actions stay pinned right; when Dao Insights occupies the center, identity
-   keeps its compact logo width so the center gets the space between logo and actions. */
-.workspace-header [data-slot="app-header-identity"] { flex: 1 1 auto; min-width: 0; }
-.workspace-header:has([data-header-center]) .workspace-header-identity { flex: none; min-width: 0; }
-.workspace-header [data-slot="app-header-actions"] { flex: none; }
+/* One row: Logo | Search | Familiar | Sound | Profile Portrait. The logo and the
+   Portrait keep their width; the actions take the rest, and inside them Search
+   grows to fill whatever the Familiar and the music note leave. */
+.workspace-header [data-slot="app-header-identity"] { flex: none; min-width: 0; }
+.workspace-header [data-slot="app-header-actions"] { flex: 1 1 0; min-width: 0; }
+.workspace-header [data-slot="app-header-profile"] { flex: none; }
 .workspace-action-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .workspace-header-status {
@@ -72,82 +72,112 @@
 .workspace-header-status[data-tone="busy"] { color: var(--color-sen-gold-accent); }
 .workspace-header-status[data-tone="error"] { color: var(--color-sen-human); }
 
-.workspace-header-actions, .workspace-header-command-area, .workspace-secondary-actions,
-.workspace-header-utilities {
+.workspace-header-actions, .workspace-header-command-area, .workspace-secondary-actions {
   display: flex; align-items: center; gap: 8px; min-width: 0;
 }
-/* Preferences and Search are separate controls at every width — never an overflow
-   menu — so the pair always keeps its intrinsic width and its touch targets. */
-.workspace-header-utilities { flex: none; }
-.workspace-header-utilities > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }
-.workspace-preferences { position: relative; flex: none; display: inline-flex; align-items: center; }
-.workspace-preferences > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }
-.workspace-preferences-panel {
-  position: absolute; z-index: 60; top: calc(100% + 12px); inset-inline-end: 0;
-  width: 248px; max-width: calc(100vw - 32px);
+
+/* Search: a field-style trigger that fills the row after the logo, with a thin
+   glowing underline. Below 6rem of room the words step aside for the glass alone. */
+.workspace-search { flex: 1 1 auto; min-width: 44px; container-type: inline-size; }
+.workspace-search-field {
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; height: 44px; padding-inline: 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-sen-void) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-sen-portal) 16%, transparent);
+  color: var(--color-neutral-400);
+  font-family: var(--font-sans); font-size: 15px; text-align: start;
+  cursor: text;
+  transition: border-color 200ms ease, background-color 200ms ease;
+}
+.workspace-search-field::after {
+  content: ""; position: absolute; inset-inline: 14px; bottom: -1px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-sen-portal), var(--color-sen-gold-accent), transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-sen-portal) 55%, transparent);
+  opacity: 0.7; transition: opacity 200ms ease;
+}
+.workspace-search-field:is(:hover, :focus-visible) {
+  background: color-mix(in srgb, var(--color-sen-void) 85%, transparent);
+  border-color: color-mix(in srgb, var(--color-sen-portal) 34%, transparent);
+}
+.workspace-search-field:is(:hover, :focus-visible)::after { opacity: 1; }
+.workspace-search-field:focus-visible { outline-offset: 2px !important; }
+.workspace-search-emblem { flex: none; width: 20px; height: 20px; color: var(--color-sen-signal); }
+.workspace-search-placeholder { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 6rem) {
+  .workspace-search-field { justify-content: center; padding-inline: 0; }
+  .workspace-search-placeholder {
+    position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+}
+
+/* The Profile Portrait and its menu. The menu is drawn over the page (beside
+   whatever opened it: the Portrait, or the laptop sidebar's profile card). */
+.workspace-profile { position: relative; flex: none; display: inline-flex; align-items: center; }
+.workspace-profile-portrait {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; padding: 0; border-radius: 9999px;
+  background: transparent; border: 0; color: var(--color-sen-signal); cursor: pointer;
+}
+.workspace-profile-portrait > [data-slot="avatar"] {
+  border-color: color-mix(in srgb, var(--color-sen-gold-accent) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-sen-void) 80%, transparent), 0 0 14px color-mix(in srgb, var(--color-sen-portal) 28%, transparent);
+  transition: box-shadow 200ms ease;
+}
+.workspace-profile-portrait:is(:hover, [aria-expanded="true"]) > [data-slot="avatar"] {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-sen-void) 80%, transparent), 0 0 18px color-mix(in srgb, var(--color-sen-portal) 55%, transparent);
+}
+.workspace-profile-panel {
+  position: fixed; z-index: 160;
+  width: 272px; max-width: calc(100vw - 32px); overflow-y: auto;
   border-radius: 0.85rem;
   background: var(--color-sen-void);
   border: 1px solid color-mix(in srgb, var(--color-sen-portal) 24%, transparent);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72);
+  color: var(--color-sen-signal);
+  font-family: var(--font-sans);
 }
-.workspace-preferences-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 4px 4px 8px;
+.workspace-profile-panel :focus-visible { outline: 2px solid var(--color-sen-portal); outline-offset: 2px; }
+.workspace-profile-identity { display: flex; align-items: center; gap: 12px; padding: 6px 4px 10px; }
+.workspace-profile-identity-text { display: flex; flex-direction: column; min-width: 0; }
+.workspace-profile-name { font-family: var(--font-display, var(--font-serif)); font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-profile-detail { font-size: 12px; color: var(--color-neutral-400); }
+.workspace-profile-actions,
+.workspace-profile-footer {
+  display: flex; flex-direction: column;
+  padding-block: 6px; border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
-.workspace-preferences-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-neutral-400);
+.workspace-profile-actions button,
+.workspace-profile-footer button {
+  width: 100%; min-height: 44px; justify-content: flex-start; text-align: start; gap: 10px; font-size: 13px;
 }
-.workspace-preferences-select {
-  width: 100%;
-  min-height: 44px;
-  padding: 0 10px;
-  border-radius: 0.65rem;
+.workspace-profile-note {
+  margin-inline-start: auto; padding: 2px 8px; border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--color-sen-gold-accent) 40%, transparent);
+  color: var(--color-sen-gold-accent); font-size: 10px; letter-spacing: 0.04em; white-space: nowrap;
+}
+.workspace-profile-section {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 4px 8px; border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.workspace-profile-identity + .workspace-profile-section { border-top: 0; }
+.workspace-profile-panel > :first-child > .workspace-profile-section:first-child { border-top: 0; }
+.workspace-profile-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-neutral-400);
+}
+.workspace-profile-select {
+  width: 100%; min-height: 44px; padding: 0 10px; border-radius: 0.65rem;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid color-mix(in srgb, var(--color-sen-portal) 28%, transparent);
-  color: var(--color-sen-signal);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  cursor: pointer;
+  color: var(--color-sen-signal); font-family: var(--font-sans); font-size: 13px; cursor: pointer;
 }
-.workspace-preferences-select:focus-visible {
-  outline: 2px solid var(--color-sen-portal);
-  outline-offset: 2px;
+.workspace-profile-select option { background: #0b0e14; color: var(--color-sen-signal); }
+.workspace-profile-music { margin-top: 4px; padding: 6px 4px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.workspace-profile-music-switch {
+  width: 100%; min-height: 44px !important; color: var(--color-sen-signal); font-family: var(--font-sans); font-size: 13px;
 }
-.workspace-preferences-select option {
-  background: #0b0e14;
-  color: var(--color-sen-signal);
-}
-.workspace-preferences-music {
-  margin-top: 4px;
-  padding: 6px 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-.workspace-preferences-music-switch {
-  width: 100%;
-  min-height: 44px !important;
-  color: var(--color-sen-signal);
-  font-family: var(--font-sans);
-  font-size: 13px;
-}
-.workspace-preferences-footer {
-  margin-top: 4px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-.workspace-preferences-footer button {
-  width: 100%;
-  min-height: 44px;
-  justify-content: flex-start;
-  text-align: start;
-  gap: 10px;
-  font-size: 13px;
-}
+.workspace-profile-panel .workspace-header-utility-icon { flex: none; width: 18px; height: 18px; }
 
 .workspace-header-command-area, .workspace-secondary-actions { flex: none; }
 .workspace-primary-action { flex: none; }
@@ -187,7 +217,7 @@
   .workspace-header * { animation: none !important; transition: none !important; }
 }
 
-/* The canonical row always ends in context (when supplied), Familiar, Preferences, Search.
+/* The canonical row: Search, context (when supplied), Familiar, Sound, then the Portrait.
    Page commands keep their existing controls in the shared toolbar below. */
 .workspace-header-inner { gap: 8px; }
 .workspace-header-context { display: flex; align-items: center; min-width: 0; max-width: min(30vw, 340px); }
@@ -196,7 +226,6 @@
 }
 .workspace-header-public-view { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--color-sen-signal); font-size: 12px; white-space: nowrap; }
 .workspace-header-utility-icon { width: 24px; height: 24px; }
-.workspace-preferences-footer .workspace-header-utility-icon { width: 18px; height: 18px; }
 .workspace-header-toolbar {
   padding-block: 4px !important;
   padding-inline: max(16px, var(--sh-safe-left, env(safe-area-inset-left))) max(16px, var(--sh-safe-right, env(safe-area-inset-right))) !important;
@@ -210,48 +239,11 @@
 .workspace-search-results button { width: 100%; min-height: 44px; justify-content: flex-start; text-align: left; white-space: normal; }
 .workspace-search-results small { display: block; margin-top: 4px; font-weight: 400; }
 @media (max-width: 639px) {
-  .workspace-header-actions, .workspace-header-utilities { gap: 4px; }
+  .workspace-header-actions { gap: 4px; }
+  .workspace-search-field { padding-inline: 12px; gap: 8px; font-size: 14px; }
   .workspace-header-context { max-width: 44px; flex: none; }
   .workspace-header-public-view { width: 44px; justify-content: center; }
-  .workspace-search-trigger { width: 44px; padding-inline: 0 !important; }
-  .workspace-search-label, .workspace-header-public-view > span {
+  .workspace-header-public-view > span {
     position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-  }
-}
-
-/* Header center: Dao Insights sits between the logo and actions on every width. */
-@media (min-width: 1024px) {
-  .workspace-header-inner:has(> [data-slot="app-header-center"]) > .workspace-header-identity { flex: 0 1 auto; }
-}
-.workspace-header-center {
-  display: flex; align-items: center; justify-content: center; gap: 0;
-  width: 100%; min-width: 0; overflow: hidden;
-}
-.workspace-header-center .main-library-home-insights { width: 100%; min-width: 0; margin: 0; }
-.workspace-header-center .dao-insights-trigger {
-  flex: 0 1 44rem; width: 100%; min-width: 0; max-width: 44rem !important;
-  min-height: 44px; height: auto !important; margin-inline: 0 !important;
-  padding-block: 0.35rem; padding-inline: 0.25rem;
-  background: transparent !important; border-color: transparent !important;
-}
-.workspace-header-center .dao-insights-trigger:hover { border-color: color-mix(in srgb, var(--color-sen-portal) 30%, transparent) !important; }
-
-@media (width < 641px) {
-  /* The WorkspaceHeader utility override also clears the desktop translation
-     variable: a CSS `translate: none` reset is lost during production lowering. */
-  .workspace-header [data-slot="app-header-center"] {
-    position: static; transform: none; flex: 1 1 0; min-width: 0;
-    width: auto !important; max-width: none !important; overflow: hidden;
-  }
-}
-
-@media (max-width: 479px) {
-  .workspace-header-center .dao-insights-trigger > div:first-child > span {
-    font-size: 0.6875rem; letter-spacing: 0.08em; line-height: 1.2;
-  }
-}
-@media (max-width: 359px) {
-  .workspace-header-center .dao-insights-trigger > div:first-child > span {
-    font-size: 0.625rem; letter-spacing: 0.03em;
   }
 }

@@ -226,6 +226,15 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-30 (Sparks in the Origin; sign-in when asked):** From SENSEI's header
+  redesign. `CreationModal` takes `originSparks`: the host's Sparks button (formerly
+  Dao Insights) sits at the end of the Origin heading (`SeedSectionFrame`
+  `headerAction`, through `OriginSparksContext`), and a chosen spark fills this
+  seed's Origin (`fillOriginFromSpark`, SEN's `applyStorySparkToSeed`) instead of
+  planting a new one; where the seed started is kept. The Story Bank's spark shelf
+  is now **Sparks**. `StoryAuthGate` takes `onClose`/`closeLabel` (a close button,
+  Escape, focus kept inside) and `unavailableNote`, which shows the note and switches
+  the provider buttons off while a host has no sign-in to connect.
 - **2026-10-29 (the Library's look):** The app's Create and the Story Seed
   preview wrap the journey in `LibraryLook` (`look.css`): the step strip and
   footer are chrome, the form's glass panels outer panels and the live story card a

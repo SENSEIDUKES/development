@@ -4,16 +4,11 @@
   outline-offset: 4px;
 }
 .library-header-dialog :is(button, [role="button"]) { min-height: 44px; }
-/* Home placement: the same trigger, centered in the content column between the
-   featured area and the collection tabs. It keeps its own presentation; only
-   the row it sits in is new, so nothing here restates the trigger's design. */
-.main-library-home-insights { display: flex; justify-content: center; margin-block: 1.5rem; }
-.main-library-home-insights .dao-insights-trigger { margin-inline: 0; }
 @media (prefers-reduced-motion: reduce) {
   .library-header-dialog * { animation: none !important; transition: none !important; }
 }
 
-/* Dao Insights panel: Story Seed's celestial glass, so its path picker sits at
+/* Sparks panel: Story Seed's celestial glass, so its path picker sits at
    home. Deep navy with gold starlight above and violet below. */
 .dao-spark-panel {
   background:

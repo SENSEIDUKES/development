@@ -41,7 +41,7 @@ Development did not contain the homepage body before this task: MainLibraryPrevi
 
 The extraction retains the source hero JSX, video sequence, six-second backdrop rotation, particles, typography, colors, text, genre/sort controls, empty state, and world-card presentation. The source published catalog inspected for the initial extraction was empty. The multimedia trial now supplies one explicitly requested mock novel from `src/workshop/previews/light-novels-home/previewData.ts`, using existing local artwork. The source video and backdrop URLs remain public media dependencies, with the original video-failure fallback. There are no production data or generation requests.
 
-`development/LightNovelsHome.tsx` holds the extracted presentation with host callbacks in place of production store/auth writes, and pauses media and particles when inactive while retaining filter/video state. `shared/homeContracts.ts` describes display data only. `shared/home.css` scopes the existing source gradient and gold color. Existing Dao Insights and collection controls are supplied through the content slot, preserving their Development placement between the hero and filters.
+`development/LightNovelsHome.tsx` holds the extracted presentation with host callbacks in place of production store/auth writes, and pauses media and particles when inactive while retaining filter/video state. `shared/homeContracts.ts` describes display data only. `shared/home.css` scopes the existing source gradient and gold color. Existing collection controls are supplied through the content slot, preserving their Development placement between the hero and filters. (Dao Insights, now Sparks, moved to Create on 2026-10-30.)
 
 ## Navigation and preview behavior
 

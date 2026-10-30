@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 import { LibraryStoryIcon as SENStoryIcon } from '@seihouse/library-ui';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { normalizeStoryStyle } from '@seihouse/sen/story-seed';
@@ -17,6 +17,7 @@ import { OriginGenrePicker } from './origin/OriginGenrePicker';
 import { OriginPremiseAndTags } from './origin/OriginPremiseAndTags';
 import { OriginFateControls } from './origin/OriginFateControls';
 import { OriginStyleSelector } from './origin/OriginStyleSelector';
+import { OriginSparksContext } from './origin/OriginSparksContext';
 import { SeedPart } from '../creator/SeedPart';
 
 interface OriginWorkspaceProps {
@@ -32,6 +33,7 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
   const identity = worldIdentity(seed);
   const selectedStyle = normalizeStoryStyle(style);
   const originComplete = ORIGIN_SECTION.isFilled(seed);
+  const sparks = useContext(OriginSparksContext);
   const updateTitle = useCallback(
     (title: string) => updateSeed(patchWorldIdentity({ title })),
     [updateSeed],
@@ -67,7 +69,7 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
   ), [genre, updateGenre]);
 
   return (
-    <SeedSectionFrame section={ORIGIN_SECTION} complete={originComplete}>
+    <SeedSectionFrame section={ORIGIN_SECTION} complete={originComplete} headerAction={sparks}>
       <SeedPart id="style">
         <div className="space-y-4 sm:space-y-6">
           {styleSelector}

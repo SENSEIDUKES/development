@@ -10,7 +10,7 @@ import type { DiscoverMedium } from '@seihouse/library/discover';
  * - Discover: `/app/?page=discover`
  * - Create: `/app/?page=create` is the Creator Space, the reader's worlds and
  *   the way to start a new one; `&seed=new` opens Story Seed (and its World
- *   Blueprint) for a new story, `&seed=<id>` a saved Story Seed (a Dao Insights
+ *   Blueprint) for a new story, `&seed=<id>` a saved Story Seed (a Sparks
  *   spark begun from Home)
  * - Story View (World Info): `/app/?story=<id>`
  * - Reader: `/app/?story=<id>&read=1`

@@ -43,24 +43,42 @@ export function HeaderActionButton({ action, primary = false }: { action: Header
   </Button>;
 }
 
-/** Non-modal disclosure: normal Tab order; Escape returns focus, outside focus dismisses. */
-export function useHeaderDisclosure() {
-  const [open, setOpen] = useState(false);
+/**
+ * Non-modal disclosure: normal Tab order; Escape returns focus, outside focus dismisses.
+ * A host may hold the open state itself (`open`, `onOpenChange`), so something
+ * outside the trigger can open it, and say where focus returns (`returnFocusTo`).
+ * A panel drawn elsewhere (a portal) still counts as inside.
+ */
+export function useHeaderDisclosure(control?: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  returnFocusTo?: () => HTMLElement | null;
+}) {
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = control ? control.open : localOpen;
+  const setOpen = control ? control.onOpenChange : setLocalOpen;
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const id = useId();
+  const latest = useRef({ setOpen, returnFocusTo: control?.returnFocusTo });
+  latest.current = { setOpen, returnFocusTo: control?.returnFocusTo };
   useEffect(() => {
     if (!open) return;
+    const close = (restoreFocus: boolean) => {
+      const target = latest.current.returnFocusTo?.() ?? triggerRef.current;
+      latest.current.setOpen(false);
+      if (restoreFocus) target?.focus();
+    };
     panelRef.current?.querySelector<HTMLElement>('select:not(:disabled), button:not(:disabled), a[href]')?.focus();
+    const inside = (target: Node) => Boolean(rootRef.current?.contains(target) || panelRef.current?.contains(target));
     const dismiss = (event: Event) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      if (!inside(event.target as Node)) close(false);
     };
     const escape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        setOpen(false);
-        triggerRef.current?.focus();
+        close(true);
       }
     };
     // Phones fire resize when the address bar collapses or the keyboard opens;
@@ -70,8 +88,7 @@ export function useHeaderDisclosure() {
     const resize = () => {
       if (window.innerWidth === width) return;
       width = window.innerWidth;
-      setOpen(false);
-      triggerRef.current?.focus();
+      close(true);
     };
     window.addEventListener('resize', resize);
     document.addEventListener('pointerdown', dismiss);

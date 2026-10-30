@@ -3,6 +3,7 @@ import { useLibraryAssets } from '../../../library/assets';
 import { UserProfileHome } from './UserProfileHome';
 import type { CaveAccountControls } from './caveAccountControls';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
+import { useWorkspaceHeaderProfileMenu } from '../../library-shell/development/WorkspaceHeaderProfile';
 import { HeaderSoundControl } from '../../library-shell/development/HeaderSoundControl';
 import { useMenuMusic } from '../../../library/sound/menuMusic';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -268,6 +269,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
 
   const assets = useLibraryAssets();
   const desktopNavigation = useLibraryDesktopNavigation();
+  const profileMenu = useWorkspaceHeaderProfileMenu();
   const environment = getBackgroundImage(backgroundImageId);
   const environmentImage = backgroundImageUrl(backgroundImageId, assets);
   const isSignedOut = !currentUser && !localOnlyMode;
@@ -550,12 +552,14 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const pathwaysSidebar = desktopNavigation === 'sidebar';
   // The signed-in reader heads the sidebar (never a viewed public profile).
   const ownProfile = hostController.profile;
+  // With a host's Profile Portrait, the sidebar card opens its menu; otherwise the Cave's home.
+  const openProfile = () => { if (profileMenu) profileMenu.open(); else navigate('/home'); };
   const sidebarProfile = isSignedOut
-    ? { name: 'Guest reader', detail: 'Sign in to cultivate', onSelect: () => navigate('/home') }
+    ? { name: 'Guest reader', detail: 'Sign in to cultivate', onSelect: openProfile }
     : { name: ownProfile?.displayName?.trim() || 'Cultivator',
       detail: daoXp === null ? undefined : getDaoRankData(daoXp).rank,
       emblem: ownProfile?.avatarUrl ? <img src={ownProfile.avatarUrl} alt="" /> : undefined,
-      onSelect: () => navigate('/home') };
+      onSelect: openProfile };
   return (
     <LibraryAppearanceScope color={hostController.profile?.accentColor} backgroundTint={hostController.profile?.backgroundTint}>
     <LibraryNavigation location={{ screen: 'profile', cave: route.path }} onNavigate={target => {

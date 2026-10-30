@@ -10,7 +10,7 @@
  * ```
  */
 
-import { type StorySeedAbilities, type StorySeedAbilityCard, type StorySeedCharacter, type StorySeedFaction, type StorySeedFateSurvivalSettings, type StorySeedInput, type StorySeedMainCharacter, type FunSettings, type StorySeedPlace, type StorySeedPowerSystem, type StorySeedSpecies, type StorySeedStoryRequired, type StorySeedThing, type StorySeedWorldFoundations, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
+import { applyStorySparkToSeed, type StorySpark, type StorySeedAbilities, type StorySeedAbilityCard, type StorySeedCharacter, type StorySeedFaction, type StorySeedFateSurvivalSettings, type StorySeedInput, type StorySeedMainCharacter, type FunSettings, type StorySeedPlace, type StorySeedPowerSystem, type StorySeedSpecies, type StorySeedStoryRequired, type StorySeedThing, type StorySeedWorldFoundations, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
 
 import type { ChapterWritingStyle } from '@seihouse/sen/contracts';
 
@@ -63,6 +63,9 @@ export const setChapterWritingStyle = (value: ChapterWritingStyle): SeedUpdate =
       optional: { ...seed.story.optional, chapterWritingStyle: value },
     },
   });
+
+/** The spark's whole Origin into this seed; every other choice stays (`applyStorySparkToSeed`). */
+export const fillOriginFromSpark = (spark: StorySpark): SeedUpdate => seed => applyStorySparkToSeed(seed, spark);
 
 export const patchFateSurvival = (patch: Partial<StorySeedFateSurvivalSettings>): SeedUpdate =>
   seed => ({

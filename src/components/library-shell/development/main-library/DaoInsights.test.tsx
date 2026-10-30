@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import type { StorySpark, StorySparkRequest } from '@seihouse/sen/story-seed';
 import type { DaoSparkHost } from '../../shared/MainLibraryAdapter';
-import { MainLibraryHomeInsights } from '../MainLibraryHomeInsights';
+import { DaoSparksButton } from '../DaoSparksButton';
 import { HAND_SPARKS, handSpark } from './daoSparks';
 
 vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
@@ -30,19 +30,20 @@ const click = async (element: Element | null | undefined) => {
   expect(element).toBeTruthy();
   await act(async () => { (element as HTMLElement).click(); });
 };
-const dialog = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Dao Insights"]')!;
+const dialog = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Sparks"]')!;
 const button = (pattern: RegExp) => Array.from(dialog().querySelectorAll('button')).find(item => pattern.test(item.textContent ?? '') || pattern.test(item.getAttribute('aria-label') ?? ''));
 const type = async (element: HTMLTextAreaElement, value: string) => {
   const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!;
   await act(async () => { setter.call(element, value); element.dispatchEvent(new Event('input', { bubbles: true })); });
 };
 
-const open = async (host?: DaoSparkHost) => {
+const trigger = () => document.querySelector<HTMLButtonElement>('button[aria-label="Sparks: story ideas"]');
+const open = async (host?: DaoSparkHost, purpose?: 'new-seed' | 'fill-seed') => {
   await act(async () => root.render(<LibraryPresentationProvider>
-    <MainLibraryHomeInsights everyWidth adapter={{ copyText: vi.fn(async () => {}), daoSparks: host }} />
+    <DaoSparksButton copyText={vi.fn(async () => {})} host={host} purpose={purpose} />
   </LibraryPresentationProvider>));
   await settle();
-  await click(document.getElementById('dao-insights-header-center'));
+  await click(trigger());
   await settle();
 };
 
@@ -230,5 +231,32 @@ it('keeps a spark in the Story Bank once, and Begin hands it to the host and clo
   await settle();
   // The spark kept is the one begun: the same premise and genre.
   expect(beginSpark).toHaveBeenCalledWith(keepSpark.mock.calls[0][0]);
-  expect(document.querySelector('[role="dialog"][aria-label="Dao Insights"]')).toBeNull();
+  expect(document.querySelector('[role="dialog"][aria-label="Sparks"]')).toBeNull();
+});
+
+it('opens from a spark icon button and never turns sparks over on its own', async () => {
+  const intervals = vi.spyOn(window, 'setInterval');
+  await act(async () => root.render(<LibraryPresentationProvider>
+    <DaoSparksButton copyText={vi.fn(async () => {})} />
+  </LibraryPresentationProvider>));
+  await settle();
+  expect(trigger()?.textContent).toBe('Sparks');
+  expect(trigger()?.getAttribute('aria-haspopup')).toBe('dialog');
+  expect(intervals).not.toHaveBeenCalled();
+  await click(trigger());
+  await settle();
+  expect(dialog().querySelector('h2')?.textContent).toBe('Sparks');
+  expect(trigger()?.getAttribute('aria-expanded')).toBe('true');
+});
+
+it('inside a Story Seed, Use this spark hands the spark to the host to fill the Origin, without Keep', async () => {
+  const beginSpark = vi.fn(async (_spark: StorySpark) => {});
+  await open({ beginSpark }, 'fill-seed');
+  expect(dialog().querySelector('[data-spark-fill-note]')?.textContent).toContain('replaces this seed');
+  expect(button(/Keep in Story Bank/)).toBeUndefined();
+  expect(button(/Begin this story/)).toBeUndefined();
+  await click(button(/Use this spark/));
+  await settle();
+  expect(beginSpark).toHaveBeenCalledTimes(1);
+  expect(document.querySelector('[role="dialog"][aria-label="Sparks"]')).toBeNull();
 });

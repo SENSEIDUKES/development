@@ -37,7 +37,7 @@ import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-
  *
  * The bank keeps three kinds of things on separate shelves, each card wearing
  * its kind: World Blueprints (a seed whose world was manifested), Seeds in
- * Progress (a seed the writer is building), and Dao Sparks (a seed a Story
+ * Progress (a seed the writer is building), and Sparks (a seed a Story
  * Spark planted that has no Blueprint yet). A spark moves to the Blueprints
  * shelf once its world is manifested.
  */
@@ -61,8 +61,8 @@ const SHELVES: ReadonlyArray<{
     hint: 'Seeds whose world is manifested, ready to become novels.' },
   { id: 'draft', title: 'Seeds in Progress', badge: 'Seed in Progress', icon: SquarePen, accent: '#A78BFA',
     hint: 'Story Seeds you are building. Manifest a World Blueprint when the Origin is ready.' },
-  { id: 'spark', title: 'Dao Sparks', badge: 'Dao Spark', icon: Sparkles, accent: '#CDB271',
-    hint: 'Sparks kept from Dao Insights. Grow one in Story Seed to make it yours.' },
+  { id: 'spark', title: 'Sparks', badge: 'Spark', icon: Sparkles, accent: '#CDB271',
+    hint: 'Ideas you kept from Sparks. Grow one in Story Seed to make it yours.' },
 ];
 
 interface StoryBankCardProps {

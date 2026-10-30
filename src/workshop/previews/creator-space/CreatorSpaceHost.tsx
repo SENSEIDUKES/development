@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CreatorSpace, type CreatorWorld, type CreatorWorldsState } from '@seihouse/library/creator-space';
 import { useEnergyAccount } from '@seihouse/library/energy';
-import type { LibraryLocation } from '@seihouse/library/shell';
+import { DaoSparksButton, type DaoSparkHost, type LibraryLocation } from '@seihouse/library/shell';
 import type { HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
 import { CREATOR_TOOLKIT, SAMPLE_CREATOR_WORLDS } from './previewData';
@@ -51,9 +51,11 @@ function openChapterWorkspace(storyId: string, focusNextChapter: boolean) {
  * sample set), the live Energy account the shell already mounts, the Toolkit
  * previews, and the existing destinations. Production supplies its own.
  */
-export function CreatorSpaceHost({ onNavigate, onOpenWorld, source = readCreatorWorldsSource() }: {
+export function CreatorSpaceHost({ onNavigate, onOpenWorld, sparks, source = readCreatorWorldsSource() }: {
   onNavigate: (location: LibraryLocation) => void;
   onOpenWorld: (world: CreatorWorld) => void;
+  /** Sparks for the title row; without a host it offers the Dao's own hand-written sparks. */
+  sparks?: DaoSparkHost;
   source?: CreatorWorldsSource;
 }) {
   const [worlds, setWorlds] = useState<CreatorWorldsState>(() => source === 'sample'
@@ -82,14 +84,19 @@ export function CreatorSpaceHost({ onNavigate, onOpenWorld, source = readCreator
     setSampleNotice(`Sample world: with a real story, ${focusNextChapter ? 'Continue' : 'Studio'} opens “${world?.title}” in its chapter workspace${focusNextChapter ? `, ready for Chapter ${(world?.chapterCount ?? 0) + 1}` : ''}.`);
   };
 
+  // A spark begun here would open a new Story Seed; the preview says so instead.
+  const sparkHost: DaoSparkHost = sparks ?? {
+    beginSpark: async spark => { setSampleNotice(`Spark: with the app, “${spark.title || spark.genre}” opens as a new Story Seed in Create.`); },
+  };
   return <>
     <CreatorSpace worlds={worlds} energy={energy} toolkit={CREATOR_TOOLKIT}
+      sparks={<DaoSparksButton host={sparkHost} copyText={async text => { await navigator.clipboard?.writeText(text); }} />}
       onCreate={() => onNavigate({ screen: 'creator' })}
       onOpenEnergy={() => onNavigate({ screen: 'profile', cave: '/home/energy' })}
       onContinueWorld={id => act(id, true)}
       onOpenWorld={onOpenWorld}
       onOpenStudio={id => act(id, false)}
       onRetryWorlds={() => setAttempt(value => value + 1)} />
-    {source === 'sample' && <p role="status" className="mt-3 font-sans text-xs text-neutral-400 empty:hidden">{sampleNotice}</p>}
+    <p role="status" className="mt-3 font-sans text-xs text-neutral-400 empty:hidden">{sampleNotice}</p>
   </>;
 }

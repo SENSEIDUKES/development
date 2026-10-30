@@ -82,14 +82,14 @@ it('keeps the source hero action and directs header Library search separately fr
   await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Carve New Destiny"]')!.click());
   expect((listener.mock.calls[0][0] as CustomEvent).detail).toEqual({ screen: 'creator' });
   window.removeEventListener('library-preview-navigate', listener);
-  await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Search"]')!.click());
+  await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Search for stories"]')!.click());
   const search = document.querySelector<HTMLInputElement>('input[type="search"]')!;
   expect(search).not.toBeNull();
   const libraryResult = [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(b => b.textContent?.includes('Browse your accumulated scroll logs'))!;
   await act(async () => { libraryResult.click(); await new Promise(resolve => setTimeout(resolve, 100)); });
   expect(current()).toBe('Home'); expect(homeVisible()).toBe(false);
   expect(new URLSearchParams(location.search).get('collection')).toBe('my-library');
-  await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Search"]')!.click());
+  await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Search for stories"]')!.click());
   const createResult = [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(b => b.textContent?.includes('Your worlds, Energy and creator toolkit'))!;
   await act(async () => { createResult.click(); await new Promise(resolve => setTimeout(resolve, 100)); });
   expect(current()).toBe('Create'); expect(createVisible()).toBe(true);

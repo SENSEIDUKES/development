@@ -134,6 +134,12 @@ reduced motion. Evidence: `output/playwright/creator-space/`.
 
 ## Workshop history
 
+- **2026-10-30 (Sparks):** From SENSEI's header redesign, Sparks (formerly Dao
+  Insights) moves here from the header: `CreatorSpace` takes `sparks`, shown beside the
+  title. The app passes `DaoSparksButton` with its spark host (a spark begun opens as a
+  new Story Seed, or is kept in the Story Bank); the Workshop host does the same with
+  the Dao's own hand-written sparks.
+
 - **2026-09-26 (review):** At SENSEI's direction the creation action moved from beside the
   title to its own closing band at the end of the page, after Your worlds and its actions,
   and is labelled simply **Create** (full width on phones; still opens Story Seed). The

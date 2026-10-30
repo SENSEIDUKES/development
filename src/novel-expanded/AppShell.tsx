@@ -5,7 +5,7 @@ import '@library-studios/brand/styles.css';
 import { LibraryStoriesIcon, LibraryBookIcon, LibraryDiscoveryIcon, LibraryStoryIcon, LibrarySettingsIcon, LibraryProfileIcon } from '@seihouse/library-ui';
 import {
   LibraryFooter, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader, WorkspaceShell,
-  useLibraryDesktopNavigation, useLibraryLegalDocuments,
+  useLibraryDesktopNavigation, useLibraryLegalDocuments, useWorkspaceHeaderProfileMenu,
   type HeaderSearchItem, type LibraryFooterGroup,
 } from '@seihouse/library/shell';
 import { LibraryHelpMenu } from '@seihouse/library/story-seed';
@@ -27,19 +27,19 @@ export interface AppShellProps {
   /** Names the page's main region for assistive technology. */
   mainLabel: string;
   children: ReactNode;
-  headerCenter?: ReactNode;
 }
 
 /**
  * The Library Shell around the app's browsing pages, Home, Discover, the
- * Creator Space and a story's World Info: the Library header (the app's identity, the Familiar's recall, the
- * music note while Menu music is on, Help and Search), the Library's
+ * Creator Space and a story's World Info: the Library header (the app's
+ * identity, Search, the Familiar's recall, the music note while Menu music is
+ * on, and the Profile Portrait with Sign in, the Preferences and Help), the Library's
  * navigation (the bottom strip on phones and tablets, the Pathways sidebar on
  * laptops) with the app's places, and the platform footer. Story Seed runs in the
  * shell's workspace mode itself, and Profile is the Cave,
  * which draws the same shell itself; the Reader stays outside, immersive.
  */
-export function AppShell({ route, navigate, stories, readerProfile, mainLabel, children, headerCenter }: AppShellProps) {
+export function AppShell({ route, navigate, stories, readerProfile, mainLabel, children }: AppShellProps) {
   const pathwaysSidebar = useLibraryDesktopNavigation() === 'sidebar';
   const rank = useDeviceProfileRank();
   const { legal, sheet: legalSheet } = useLibraryLegalDocuments();
@@ -55,6 +55,9 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
   const discover = () => navigate({ page: 'discover' });
   const profile = () => navigate({ page: 'profile' });
   const settings = () => navigate({ page: 'profile', cave: '/settings' });
+  // The sidebar's profile card opens the Profile Portrait's menu beside itself.
+  const profileMenu = useWorkspaceHeaderProfileMenu();
+  const openProfileMenu = () => { if (profileMenu) profileMenu.open(); else profile(); };
   const searchItems: HeaderSearchItem[] = [
     { id: 'home', label: 'Your stories', description: 'Home: every story you have started', icon: LibraryStoriesIcon, onAction: home },
     { id: 'create', label: 'Create a story', description: 'Plant a Story Seed and shape its World Blueprint', icon: LibraryBookIcon, onAction: create },
@@ -83,11 +86,11 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
       profile={{ name: readerProfile.displayName.trim() || 'Cultivator',
         detail: rank,
         emblem: readerProfile.avatarUrl ? <img src={readerProfile.avatarUrl} alt="" /> : undefined,
-        onSelect: profile }}
+        onSelect: openProfileMenu }}
       onNavigate={location => { const next = appRouteFor(location); if (next) navigate(next); }}>
       <WorkspaceShell mainRef={mainRef} mainId="novel-expanded-main" mainAriaLabel={mainLabel} mainClassName="relative z-10 outline-none"
         sidebar={pathwaysSidebar ? <LibrarySectionSidebar /> : undefined} sidebarLabel="Library pathways"
-        header={<WorkspaceHeader landmark="none" title="NovelExpanded" center={headerCenter} centerBreakpoint="always"
+        header={<WorkspaceHeader landmark="none" title="NovelExpanded"
           identity={<div className="novel-expanded-header-identity">
             <a className="novel-expanded-emblem group/emblem" href={routeHref(HOME_ROUTE)}
               aria-label="Return to your stories" onClick={event => {

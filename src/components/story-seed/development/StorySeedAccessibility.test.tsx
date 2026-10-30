@@ -537,7 +537,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(container.querySelector('[role="status"]')?.textContent).toContain('Blueprint copied.');
   });
 
-  it('keeps World Blueprints, Seeds in Progress and Dao Sparks on separate shelves, each card wearing its kind', () => {
+  it('keeps World Blueprints, Seeds in Progress and Sparks on separate shelves, each card wearing its kind', () => {
     const draft = sampleRecord('draft');
     const built = { ...sampleRecord('built'), title: 'Built World' };
     built.blueprint = createBlueprintDraftFromSeed(built.seed);
@@ -563,7 +563,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(shelf('blueprint').textContent).toContain('Grown Spark');
     expect(shelf('draft').textContent).toContain('Fallen Sect');
     expect(shelf('spark').textContent).toContain('The Very Rude Dragon');
-    expect(shelf('spark').textContent).toContain('Dao Spark');
+    expect(shelf('spark').textContent).toContain('Spark');
     expect(shelf('spark').textContent).toContain('Beast Taming');
     // A spark offers growing it, never Blueprint or Manifest actions.
     const sparkButtons = Array.from(shelf('spark').querySelectorAll('button')).map(item => item.textContent);

@@ -8,8 +8,8 @@ export type DaoQuotePayload = { quote: string; author: string; category: DaoQuot
 export type DaoResponse<T> = { ok: boolean; json: () => Promise<T> };
 
 /**
- * Dao Insights' host: where its Story Sparks come from and where a planted one
- * goes. Every part is optional; without a writer, Dao Insights offers its own
+ * Sparks' host (code: Dao Insights): where its Story Sparks come from and where a planted one
+ * goes. Every part is optional; without a writer, Sparks offers its own
  * hand-written sparks, and without a Story Bank it offers only to copy.
  */
 export interface DaoSparkHost {
@@ -18,7 +18,7 @@ export interface DaoSparkHost {
   requestSpark?: (request: StorySparkRequest, signal?: AbortSignal) => Promise<StorySpark>;
   /** Keeps the spark in the Story Bank as a new Story Seed. */
   keepSpark?: (spark: StorySpark) => Promise<void>;
-  /** Plants the spark in a new Story Seed and opens it. */
+  /** Plants the spark: a new Story Seed it opens, or (inside a Story Seed) the open seed's Origin. */
   beginSpark?: (spark: StorySpark) => Promise<void>;
 }
 
@@ -38,7 +38,7 @@ export interface MainLibraryAdapter {
   setIsSettingsOpen: (open: boolean) => void;
   setIsCodexSheetOpen: (open: boolean) => void;
   setIsShortcutsOpen: (open: boolean) => void;
-  /** Dao Insights' Story Sparks. The `requestDao` quote oracle serves only the historical reference. */
+  /** Sparks: Story Sparks. The `requestDao` quote oracle serves only the historical reference. */
   daoSparks?: DaoSparkHost;
   requestDao: {
     (kind: 'status'): Promise<DaoResponse<DaoStatusPayload>>;

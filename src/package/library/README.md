@@ -1,5 +1,19 @@
 # `@seihouse/library`
 
+**Unreleased (2026-10-30, breaking):** The header reads `Logo | Search | Familiar |
+Sound | Profile Portrait`. `./shell` exports `WorkspaceHeaderSearch` (the wide
+field-style Search trigger, replacing `WorkspaceHeaderUtilities`),
+`WorkspaceHeaderProfileMenu`, `WorkspaceHeaderProfileProvider`,
+`useWorkspaceHeaderProfileMenu` and `WorkspaceHeaderProfile` (the Profile Portrait
+and its menu: the host's reader, Sign in, profile and Settings, the Preferences and
+Help), and `DaoSparksButton` (Sparks, formerly Dao Insights, as a spark icon
+button), replacing `MainLibraryHomeInsights`. `WorkspaceHeader` no longer takes
+`center` or `centerBreakpoint`, and `WorkspaceHeaderCenterProvider` is removed.
+`useHeaderDisclosure` takes an optional controlled state. `./creator-space`:
+`CreatorSpace` takes `sparks`. `./story-seed`: `CreationModal` takes
+`originSparks`, whose spark fills the open seed's Origin; `StoryAuthGate` takes
+`onClose`, `closeLabel` and `unavailableNote`.
+
 **Unreleased (2026-10-29, later):** `./presentation` exports `LibraryLook` and
 `LIBRARY_LOOK_ACCENT`: the Library's applied look (`look.css`, class `.library-look`,
 formerly Home's `.library-home-palette`) around a page's shell, with the gold

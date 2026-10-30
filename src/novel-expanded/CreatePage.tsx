@@ -28,15 +28,17 @@ export interface CreatePageProps {
   renderStorySettings?: CreationModalProps['renderStorySettings'];
   /** The reader's saved accent color, worn over the look's gold. */
   accentColor?: string;
-  /** A saved Story Seed to open, such as a spark begun from Home. */
+  /** A saved Story Seed to open, such as a spark begun from the Creator Space. */
   seedId?: string;
+  /** The Sparks button in the Origin heading: a chosen spark fills this seed's Origin. */
+  originSparks?: CreationModalProps['originSparks'];
   onHome: () => void;
   /** Create Story: the host starts the story and shows it. */
   onStartStory: (payload: InitialStoryGenerationPayload) => Promise<void>;
 }
 
 /** Create: the Story Seed and its World Blueprint, the same journey the Library ships. */
-export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, accentColor, seedId, onHome, onStartStory }: CreatePageProps) {
+export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, accentColor, seedId, originSparks, onHome, onStartStory }: CreatePageProps) {
   const runtime = useNovelExpandedStoryCreation(services.storySeeds, startedSeedIds);
   const activeRequest = useRef<AbortController | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -79,7 +81,7 @@ export function CreatePage({ services, askForToken, startedSeedIds, chapterModel
     <LibraryLook accentColor={accentColor} className="min-h-screen bg-void" data-testid="novel-expanded-create">
       <CreationModal onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
         accountDefaultLanguage={accountDefaultLanguage} accountDefaultChapterWritingStyle={accountDefaultChapterWritingStyle}
-        renderStorySettings={renderStorySettings} manifestAside={<BlueprintEnergyCost />} initialSeedId={seedId}
+        renderStorySettings={renderStorySettings} manifestAside={<BlueprintEnergyCost />} initialSeedId={seedId} originSparks={originSparks}
         onGenerateBlueprint={payload => isLocalDevelopmentModel(chapterModel)
           ? track(signal => services.requestWorldBlueprint(payload, '', signal, chapterModel))
           : withToken('The World Blueprint needs the development access token. Nothing was changed.',

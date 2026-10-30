@@ -5,7 +5,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
-import { WorkspaceHeader, WorkspaceHeaderSoundProvider } from '@seihouse/library/shell';
+import { WorkspaceHeader, WorkspaceHeaderProfileProvider, WorkspaceHeaderSoundProvider, useWorkspaceHeaderProfileMenu } from '@seihouse/library/shell';
 import { MainLibraryHeader } from './MainLibraryHeader';
 import { STORY_SEED_HELP_ITEMS } from '@seihouse/library/story-seed';
 
@@ -34,41 +34,47 @@ it('puts the host\'s sound control on every header beneath it, unless a header s
   const controls = () => Array.from(container.querySelector('header')!.querySelectorAll('button'))
     .map(element => element.getAttribute('aria-label') ?? element.textContent);
   const host = (header: React.ReactNode) => <WorkspaceHeaderSoundProvider sound={<button aria-label="Mute music">Note</button>}>{header}</WorkspaceHeaderSoundProvider>;
-  // Just before Preferences and Search, like a header's own sound.
+  // After Search and before the Profile Portrait, like a header's own sound.
   await render(host(<WorkspaceHeader title="Story Seed" />));
-  expect(controls()).toEqual(['Mute music', 'Preferences', 'Search']);
+  expect(controls()).toEqual(['Search for stories', 'Mute music', 'Profile and preferences']);
   await render(host(<WorkspaceHeader title="Story Seed" sound={<button aria-label="Page sound">Page</button>} />));
-  expect(controls()).toEqual(['Page sound', 'Preferences', 'Search']);
+  expect(controls()).toEqual(['Search for stories', 'Page sound', 'Profile and preferences']);
   await render(host(<WorkspaceHeader title="Story Seed" sound={null} />));
-  expect(controls()).toEqual(['Preferences', 'Search']);
+  expect(controls()).toEqual(['Search for stories', 'Profile and preferences']);
   await render(<WorkspaceHeader title="Story Seed" />);
-  expect(controls()).toEqual(['Preferences', 'Search']);
+  expect(controls()).toEqual(['Search for stories', 'Profile and preferences']);
 });
 
-it('keeps logo, optional context, Preferences and Search in document order without a header badge', async () => {
+it('keeps logo, Search, optional context and the Profile Portrait in document order without a header badge', async () => {
   await render(<WorkspaceHeader title="Long Library workspace title" emblem={{ src: '/favicon.jpg', alt: 'Library' }}
     home={{ href: '/', label: 'Home' }} contextualItem={<button>Page context</button>} />);
   const header = container.querySelector('header')!;
-  expect(Array.from(header.querySelectorAll('a, button')).map(element => element.getAttribute('aria-label') ?? element.textContent)).toEqual(['Home', 'Page context', 'Preferences', 'Search']);
+  expect(Array.from(header.querySelectorAll('a, button')).map(element => element.getAttribute('aria-label') ?? element.textContent)).toEqual(['Home', 'Search for stories', 'Page context', 'Profile and preferences']);
   expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
   expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
   expect(header.querySelector('.workspace-header-context')).not.toBeNull();
   expect(header.querySelector('input')).toBeNull();
+  // Search reads as a field, and the Portrait sits in the header's profile slot at the end.
+  expect(button('Search for stories').querySelector('.workspace-search-placeholder')?.textContent).toBe('Search for stories');
+  expect(button('Profile and preferences').closest('[data-slot="app-header-profile"]')).not.toBeNull();
   await render(<WorkspaceHeader title="Quiet page" contextualItem={false} />);
   expect(container.querySelector('.workspace-header-context')).toBeNull();
-  expect(Array.from(container.querySelectorAll('button')).map(element => element.getAttribute('aria-label'))).toEqual(['Preferences', 'Search']);
+  expect(Array.from(container.querySelectorAll('button')).map(element => element.getAttribute('aria-label'))).toEqual(['Search for stories', 'Profile and preferences']);
 });
 
-it('opens the Preferences card, updates Preferred Language immediately, and calls the page Help owner', async () => {
+it('opens the Profile Portrait menu with the Preferences, updates Preferred Language immediately, and calls the page Help owner', async () => {
   const onAction = vi.fn(); const onIntent = vi.fn(); const onLanguageChange = vi.fn();
   await render(<WorkspaceHeader title="Story Seed"
     preferences={{ language: 'en', onLanguageChange }}
     help={{ id: 'help', label: 'Help', onAction, onIntent, expanded: true }} />);
-  await click(button('Preferences'));
+  await click(button('Profile and preferences'));
   expect(onIntent).toHaveBeenCalled();
-  expect(button('Preferences').getAttribute('aria-expanded')).toBe('true');
-  const card = container.querySelector('[data-testid="workspace-preferences-card"]')!;
+  expect(button('Profile and preferences').getAttribute('aria-expanded')).toBe('true');
+  const card = document.querySelector('[data-testid="workspace-profile-menu"]')!;
   expect(card).not.toBeNull();
+  // Without a host profile: no identity, Sign in or profile, only the Preferences and Help.
+  expect(card.querySelector('.workspace-profile-identity')).toBeNull();
+  expect(card.textContent).not.toContain('Sign in');
   const select = card.querySelector<HTMLSelectElement>('#header-preferred-language')!;
   expect(select).not.toBeNull();
   expect(document.activeElement).toBe(select);
@@ -80,8 +86,48 @@ it('opens the Preferences card, updates Preferred Language immediately, and call
   expect(onLanguageChange).toHaveBeenCalledWith('ja');
   await click(button('Help'));
   expect(onAction).toHaveBeenCalledTimes(1);
-  expect(container.querySelector('[data-testid="workspace-preferences-card"]')).toBeNull();
+  expect(document.querySelector('[data-testid="workspace-profile-menu"]')).toBeNull();
   expect(document.querySelector('[role="dialog"]')).toBeNull();
+});
+
+function SidebarCard() {
+  const menu = useWorkspaceHeaderProfileMenu();
+  return <button type="button" data-slot="navigation-account" onClick={() => menu?.open()}>Sidebar card</button>;
+}
+
+it('shows the host reader, Sign in, profile and Settings, and opens the same menu from the sidebar card', async () => {
+  const onSignIn = vi.fn(); const onOpenProfile = vi.fn(); const onOpenSettings = vi.fn();
+  await render(<WorkspaceHeaderProfileProvider profile={{ name: 'Ye Chen', detail: 'Mortal', onOpenProfile, onOpenSettings,
+    signIn: { onSignIn, note: 'Not connected yet' } }}>
+    <SidebarCard />
+    <WorkspaceHeader title="Home" />
+  </WorkspaceHeaderProfileProvider>);
+  // The Portrait wears the reader's initial without a picture.
+  expect(button('Profile and preferences').querySelector('[data-slot="avatar"]')?.textContent).toContain('YC');
+  await click(button('Profile and preferences'));
+  const menu = () => document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"]');
+  expect(menu()!.querySelector('.workspace-profile-name')?.textContent).toBe('Ye Chen');
+  expect(menu()!.textContent).toContain('Mortal');
+  expect(menu()!.textContent).toContain('Not connected yet');
+  const entry = (label: string) => Array.from(menu()!.querySelectorAll('button')).find(element => element.textContent?.startsWith(label))!;
+  await click(entry('Sign in'));
+  expect(onSignIn).toHaveBeenCalledTimes(1);
+  expect(menu()).toBeNull();
+  expect(document.activeElement).toBe(button('Profile and preferences'));
+  // The sidebar card opens the same menu, and Escape returns focus to the card.
+  const card = container.querySelector<HTMLButtonElement>('[data-slot="navigation-account"]')!;
+  await click(card);
+  expect(menu()).not.toBeNull();
+  expect(button('Profile and preferences').getAttribute('aria-expanded')).toBe('true');
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  expect(menu()).toBeNull();
+  expect(document.activeElement).toBe(card);
+  await click(card);
+  await click(entry('Your profile'));
+  expect(onOpenProfile).toHaveBeenCalledTimes(1);
+  await click(button('Profile and preferences'));
+  await click(entry('Settings'));
+  expect(onOpenSettings).toHaveBeenCalledTimes(1);
 });
 
 const TEST_WIDTHS = [320, 375, 390, 430, 1440];
@@ -92,7 +138,7 @@ const stubViewport = (width: number) => vi.stubGlobal('matchMedia', (query: stri
     addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() };
 });
 
-it.each(TEST_WIDTHS)('regression: keeps Preferences and Search separate at %ipx with the NovelExpanded logo', async width => {
+it.each(TEST_WIDTHS)('regression: keeps Search and the Profile Portrait separate at %ipx with the NovelExpanded logo', async width => {
   stubViewport(width);
   const onAction = vi.fn();
   await render(<WorkspaceHeader title="Celestial Library" emblem={{ src: '/favicon.jpg', alt: 'Library' }}
@@ -101,44 +147,41 @@ it.each(TEST_WIDTHS)('regression: keeps Preferences and Search separate at %ipx 
   // Never a "…" consolidation: both utilities are their own visible control.
   expect(button('Header options')).toBeNull();
   expect(header.querySelector('.header-overflow')).toBeNull();
-  const utilities = header.querySelector('.workspace-header-utilities')!;
-  expect(Array.from(utilities.querySelectorAll('button')).map(element => element.getAttribute('aria-label')))
-    .toEqual(['Preferences', 'Search']);
-  expect(button('Preferences')).not.toBe(button('Search'));
-  expect(button('Preferences').querySelector('.workspace-preferences-emblem')).not.toBeNull();
-  expect(button('Search').querySelector('.workspace-search-emblem')).not.toBeNull();
-  expect(button('Preferences').querySelector('[data-sen-icon="header-settings"]')).not.toBeNull();
-  expect(button('Search').querySelector('[data-sen-icon="header-search"]')).not.toBeNull();
-  // Each keeps its own touch target rather than sharing one trigger.
-  for (const control of [button('Preferences'), button('Search')]) expect(control.className).toContain('min-h-11');
+  expect(Array.from(header.querySelectorAll('button')).map(element => element.getAttribute('aria-label')))
+    .toEqual(['Search for stories', 'Profile and preferences']);
+  expect(button('Search for stories').querySelector('.workspace-search-emblem')).not.toBeNull();
+  expect(button('Search for stories').querySelector('[data-sen-icon="header-search"]')).not.toBeNull();
+  expect(button('Profile and preferences').className).toContain('workspace-profile-portrait');
   // The header carries the logo without a page badge.
   expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
   expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
   expect(header.getAttribute('data-slot')).toBe('app-header');
 
-  await click(button('Preferences'));
+  await click(button('Profile and preferences'));
   await click(button('Help'));
   expect(onAction).toHaveBeenCalledTimes(1);
-  await click(button('Search'));
+  await click(button('Search for stories'));
   expect(document.activeElement?.getAttribute('type')).toBe('search');
   await click(button('Close Search')); await settle();
   // Focus returns to Search itself, not to a shared overflow trigger.
-  expect(document.activeElement).toBe(button('Search'));
+  expect(document.activeElement).toBe(button('Search for stories'));
 });
 
-it('regression: keeps utility touch targets and Preferences card styling in workspace-header.css', () => {
+it('regression: keeps the Search field, Portrait touch target and menu styling in workspace-header.css', () => {
   const css = readFileSync(join(process.cwd(), 'src/components/library-shell/development/workspace-header.css'), 'utf8');
-  expect(css).toContain('.workspace-header-utilities > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }');
-  expect(css).toContain('.workspace-preferences > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }');
-  expect(css).toContain('.workspace-preferences-panel');
-  expect(css).toContain('.workspace-preferences-select');
-  expect(css).not.toContain('workspace-header-utilities .header-overflow');
+  expect(css).toContain('.workspace-search { flex: 1 1 auto; min-width: 44px; container-type: inline-size; }');
+  expect(css).toMatch(/\.workspace-search-field \{[^}]*height: 44px;/);
+  expect(css).toMatch(/\.workspace-profile-portrait \{[^}]*width: 44px; height: 44px;/);
+  expect(css).toContain('.workspace-profile-panel');
+  expect(css).toContain('.workspace-profile-select');
+  expect(css).not.toContain('workspace-preferences');
+  expect(css).not.toContain('app-header-center');
   expect(css).not.toContain("/icons/header/");
 });
 
-it('reuses Library Help topics and original guidance from inside Preferences, closes with Escape and returns focus', async () => {
+it('reuses Library Help topics and original guidance from inside the Profile Portrait menu, closes with Escape and returns focus', async () => {
   await render(<WorkspaceHeader title="Cultivator Cave" />);
-  await click(button('Preferences'));
+  await click(button('Profile and preferences'));
   await click(button('Help'));
   await act(async () => { await import('@seihouse/library/story-seed'); });
   await settle();
@@ -150,7 +193,7 @@ it('reuses Library Help topics and original guidance from inside Preferences, cl
   expect(dialog.textContent).toContain(STORY_SEED_HELP_ITEMS.find(item => item.label === 'Relics')!.translations.en!.line);
   await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   expect(document.querySelector('[role="dialog"]')).toBeNull();
-  expect(document.activeElement).toBe(button('Preferences'));
+  expect(document.activeElement).toBe(button('Profile and preferences'));
 });
 
 it('searches labels and descriptions, announces no results, resets on reopen, and dispatches once', async () => {
@@ -159,7 +202,7 @@ it('searches labels and descriptions, announces no results, resets on reopen, an
     { id: 'profile', label: 'Celestial Profile', description: 'Manage spirit link settings', onAction: navigate },
     { id: 'blocked', label: 'Unavailable', disabled: true, onAction: blocked },
   ]} />);
-  await click(button('Search'));
+  await click(button('Search for stories'));
   const input = document.querySelector<HTMLInputElement>('input[type="search"]')!;
   expect(document.activeElement).toBe(input);
   expect(button('Unavailable').disabled).toBe(true);
@@ -171,8 +214,8 @@ it('searches labels and descriptions, announces no results, resets on reopen, an
   await fill(input, 'no such result');
   expect(document.querySelector('[role="dialog"] [role="status"]')?.textContent).toBe('No results');
   await click(button('Close Search')); await settle();
-  expect(document.activeElement).toBe(button('Search'));
-  await click(button('Search'));
+  expect(document.activeElement).toBe(button('Search for stories'));
+  await click(button('Search for stories'));
   expect(document.querySelector<HTMLInputElement>('input[type="search"]')!.value).toBe('');
   await click(button('Celestial Profile')); await settle();
   expect(navigate).toHaveBeenCalledTimes(1);
@@ -189,7 +232,7 @@ it('retains Home commands, active story destinations and host effects in Search'
     requestDao: vi.fn(),
   }} />);
   expect(container.querySelector('.workspace-header-context')).toBeNull();
-  await click(button('Search'));
+  await click(button('Search for stories'));
   expect(button('Celestial Profile').title).toBe('Open Celestial Tools');
   expect(button('Tome Chambers').textContent).toContain("Explore Ye Chen's world logs");
   expect(button('Chamber Reader')).not.toBeNull();

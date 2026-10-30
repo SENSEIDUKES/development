@@ -12,7 +12,7 @@ const output = 'output/playwright/home-palette-regression';
 mkdirSync(output, { recursive: true });
 const results = [];
 const media = '.home-event, .home-event-art, .home-event-body, .world-card-base, .world-card-base-media, .world-card-banner, .world-card-banner-backdrop, .world-card-banner-video, .world-card-banner-wash';
-const nativeColors = '[data-slot="navigation-label"], [data-slot="navigation-account-name"], .home-featured-label, .home-events-label, .home-filter-label, .dao-insights-trigger > div:first-child > span';
+const nativeColors = '[data-slot="navigation-label"], [data-slot="navigation-account-name"], .home-featured-label, .home-events-label, .home-filter-label';
 const assertClear = async page => {
   const surfaces = await page.locator(media).evaluateAll(elements => elements.map(element => {
     const style = getComputedStyle(element);

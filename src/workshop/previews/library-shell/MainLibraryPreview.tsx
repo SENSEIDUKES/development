@@ -91,7 +91,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
       json: async () => ({ hasServerGemini: state !== 'dao-local', ...quotes[category], category }),
     };
   }, [state]);
-  // Dao Insights' Story Sparks, local to the Workshop: no server, no Story Bank.
+  // Sparks' Story Sparks, local to the Workshop: no server, no Story Bank.
   const daoSparks = useMemo<DaoSparkHost>(() => ({
     checkSparks: async () => state !== 'dao-local',
     requestSpark: async request => {
@@ -147,7 +147,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
         </LightNovelsHome>
       </div>}
       {developmentNavigation && createVisited && <div hidden={!isCreate}>
-        <CreatorSpaceHost onNavigate={navigate} onOpenWorld={world => {
+        <CreatorSpaceHost onNavigate={navigate} sparks={daoSparks} onOpenWorld={world => {
           worldOpenerRef.current = document.getElementById(`creator-world-${world.id}`);
           const infoWorld = world.id === featuredNovel.id ? featuredNovel : world;
           setActiveCreatorWorld(infoWorld);
@@ -165,8 +165,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
         {(currentScreen === 'reader' || currentScreen === 'codex') && <button className="mt-4 underline" onClick={() => developmentNavigation ? navigate({ screen: 'home', collection: 'featured' }) : setCurrentScreen('home')}>Return to header capture</button>}
       </div>
       {extraFeedback && <p role="status" className="mb-4 text-sm text-portal">{extraFeedback}</p>}
-      {/* Home content between the featured area and the collection tabs —
-          where Dao Insights now lives, out of the top header. */}
+      {/* Home content between the featured area and the collection tabs. */}
       {!developmentNavigation && currentScreen === 'home' && developmentHomeContent?.(adapter)}
       {!isHome && collections}
       <p className="font-sans text-xs text-neutral-400">Workshop collection destination: {activeTab}</p>

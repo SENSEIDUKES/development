@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { EnergyAccountState } from '../../energy/shared/useEnergyAccount';
 import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/ui';
 
@@ -65,4 +66,6 @@ export interface CreatorSpaceProps {
   onBrowseToolkit?: () => void;
   /** Re-reads the worlds after an error. */
   onRetryWorlds?: () => void;
+  /** The host's Sparks button (Library: `DaoSparksButton`), beside the page title. */
+  sparks?: ReactNode;
 }

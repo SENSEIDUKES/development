@@ -384,8 +384,8 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     await act(async () => { note()!.click(); });
 
     // The native header toggle uses the same setting as Profile Settings › Sound.
-    await click(document.querySelector('header button[aria-label="Preferences"]'), 'Preferences', 5);
-    const musicSwitch = () => document.querySelector<HTMLElement>('[data-testid="workspace-preferences-card"] input[role="switch"]')!;
+    await click(document.querySelector('header button[aria-label="Profile and preferences"]'), 'Preferences', 5);
+    const musicSwitch = () => document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"] input[role="switch"]')!;
     expect(musicSwitch()).toBeTruthy();
     await act(async () => { musicSwitch().click(); });
     await flush(5);
@@ -432,8 +432,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(header.querySelector('.novel-expanded-emblem [data-slot="novel-expanded-logo"]')).not.toBeNull();
     expect(header.querySelector('.novel-expanded-wordmark')).toBeNull();
     expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
-    expect(header.querySelector('button[aria-label="Preferences"]')).toBeTruthy();
-    expect(header.querySelector('button[aria-label="Search"]')).toBeTruthy();
+    expect(header.querySelector('button[aria-label="Profile and preferences"]')).toBeTruthy();
+    expect(header.querySelector('button[aria-label="Search for stories"]')).toBeTruthy();
     // On a phone the music note floats above the bar, not in the header.
     expect(floatingNote()).toBeTruthy();
     expect(headerNote()).toBeNull();
@@ -531,7 +531,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
     await render(services);
 
-    await click(shell()!.querySelector('header button[aria-label="Search"]'), 'Search', 20);
+    await click(shell()!.querySelector('header button[aria-label="Search for stories"]'), 'Search', 20);
     const results = document.querySelector<HTMLElement>('[role="dialog"]')!;
     for (const label of ['Your stories', 'Create a story', created.title]) expect(results.querySelector(`button[aria-label="${label}"]`)).toBeTruthy();
     await click(results.querySelector(`button[aria-label="${created.title}"]`), 'the story in Search', 60);
@@ -585,7 +585,14 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(worldInfo()).toBeTruthy();
     expect(reader().getAttribute('aria-label')).toContain('Renamed Reader');
     expect(shell()!.querySelector('[data-slot="navigation-artwork"] img')).toBeTruthy();
+    // The sidebar reader opens the Profile Portrait's menu, not the Cave; Your profile opens the Cave.
     await click(reader(), 'the sidebar reader', 20);
+    const menu = document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"]')!;
+    expect(menu).toBeTruthy();
+    expect(menu.querySelector('.workspace-profile-name')?.textContent).toBe('Renamed Reader');
+    expect(menu.querySelector('[data-slot="avatar"] img')?.getAttribute('src')).toBe('/new-portrait.png');
+    expect(address()).not.toBe('/app/?page=profile');
+    await click(buttonByText('Your profile', menu), 'Your profile in the menu', 20);
     expect(address()).toBe('/app/?page=profile');
     expect(document.querySelector('[data-testid="novel-expanded-profile"]')).toBeTruthy();
   });
@@ -605,7 +612,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(window.localStorage.getItem(`${NOVEL_EXPANDED_STORAGE.readerPreferences}${LIBRARY_SIDEBAR_MODE_KEY}`)).toBe('compact');
   });
 
-  it('keeps Logo | Insights | Familiar | Preferences | Search invariant across tabs, moves page titles below the header, and updates Preferred Language immediately', async () => {
+  it('keeps Logo | Search | Familiar | Profile Portrait invariant across tabs, moves page titles below the header, and updates Preferred Language immediately', async () => {
     const services = appServices(scriptedWriter().writer);
     // The reader keeps the Familiar in the header (Settings → Familiar).
     services.profile.save({ familiarInHeader: true });
@@ -615,10 +622,11 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
       expect(header).toBeTruthy();
       expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
       expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
-      expect(header.querySelector('#dao-insights-header-center')).not.toBeNull();
+      // Sparks lives in Create, never in the header.
+      expect(header.querySelector('.dao-sparks-trigger')).toBeNull();
       expect(
-        Array.from(header.querySelectorAll('.workspace-header-actions button')).map(button => button.getAttribute('aria-label')),
-      ).toEqual(['Show Quill actions', 'Preferences', 'Search']);
+        Array.from(header.querySelectorAll('button')).map(button => button.getAttribute('aria-label')),
+      ).toEqual(['Search for stories', 'Show Quill actions', 'Profile and preferences']);
     };
 
     // Home
@@ -645,8 +653,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(document.querySelector('[data-cave-page-heading] [data-page-title]')?.textContent).toBe('Profile');
 
     // Preferences compact card changes both interfaceLanguage and defaultReadingLanguage immediately.
-    await click(document.querySelector('header button[aria-label="Preferences"]'), 'Preferences in the header', 20);
-    const card = document.querySelector<HTMLElement>('[data-testid="workspace-preferences-card"]')!;
+    await click(document.querySelector('header button[aria-label="Profile and preferences"]'), 'Preferences in the header', 20);
+    const card = document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"]')!;
     expect(card).toBeTruthy();
     const select = card.querySelector<HTMLSelectElement>('#header-preferred-language')!;
     expect(select.value).toBe('en');
@@ -1166,13 +1174,13 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(confirmDialog()).toBeNull();
     expect(document.documentElement.dataset.interfaceLanguage).toBe('en');
     expect(cave()!.textContent).toContain('Interface Language');
-    expect(document.querySelector('.workspace-header button[title="Search"]')?.getAttribute('aria-label')).toBe('Search');
+    expect(document.querySelector('.workspace-header .workspace-search-field')?.getAttribute('aria-label')).toBe('Search for stories');
 
     await chooseInterfaceLanguage('zh-CN');
     expect(confirmDialog()!.textContent).toContain('确认更改语言');
     expect(cave()!.textContent).toContain('界面语言');
     expect(cave()!.querySelector('[data-cave-aura-preview]')?.textContent).toBe('Home');
-    expect(document.querySelector('.workspace-header button[title="搜索"]')?.getAttribute('aria-label')).toBe('搜索');
+    expect(document.querySelector('.workspace-header .workspace-search-field')?.getAttribute('aria-label')).toBe('搜索故事');
     const keepButton = confirmDialog()!.querySelectorAll<HTMLButtonElement>('button')[0]!;
     await click(keepButton, 'Yes, Keep Changes (zh-CN)', 20);
     expect(confirmDialog()).toBeNull();
@@ -1180,7 +1188,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(document.documentElement.lang).toBe('zh-CN');
     expect(cave()!.textContent).toContain('界面语言');
     expect(cave()!.querySelector('[data-cave-aura-preview]')?.textContent).toBe('Home');
-    expect(document.querySelector('.workspace-header button[title="搜索"]')?.getAttribute('aria-label')).toBe('搜索');
+    expect(document.querySelector('.workspace-header .workspace-search-field')?.getAttribute('aria-label')).toBe('搜索故事');
 
     await click(strip()!.querySelectorAll<HTMLButtonElement>('button')[0], 'Home in the navigation', 20);
     expect(address()).toBe('/app/');
@@ -1245,7 +1253,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(worldInfo()).toBeTruthy();
   });
 
-  it('Dao Insights on Home: a spark kept goes to the Story Bank, and one begun opens in Create with its whole Origin', async () => {
+  it('Sparks in the Creator Space: a spark kept goes to the Story Bank, and one begun opens in Create with its whole Origin', async () => {
     const requestStorySpark = vi.fn(async () => ({ premise: 'A sword writes letters to its first owner.', genre: 'Xianxia', title: 'Letters From the Blade', style: 'chinese' as const, survival: false, inventedGenre: false, aside: 'Hm.', voice: 'Elder' }));
     const services = appServices(scriptedWriter().writer, { requestStorySpark, storySparksConfigured: vi.fn(async () => true) });
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
@@ -1253,10 +1261,14 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     MotionGlobalConfig.skipAnimations = true;
     onTestFinished(() => { MotionGlobalConfig.skipAnimations = false; });
     await render(services);
-    expect(document.getElementById('dao-insights-header-center')?.closest('header')).not.toBeNull();
-    expect(document.querySelectorAll('#dao-insights-header-center')).toHaveLength(1);
-    await click(document.getElementById('dao-insights-header-center'), 'Dao Insights', 20);
-    const panel = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Dao Insights"]')!;
+    // Not on Home and not in the header: Sparks lives in Create.
+    expect(document.querySelector('.dao-sparks-trigger')).toBeNull();
+    await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
+    const hub = document.querySelector<HTMLElement>('[data-testid="novel-expanded-create-hub"]')!;
+    expect(hub.querySelectorAll('.dao-sparks-trigger')).toHaveLength(1);
+    expect(document.querySelector('header .dao-sparks-trigger')).toBeNull();
+    await click(hub.querySelector('button[aria-label="Sparks: story ideas"]'), 'Sparks', 20);
+    const panel = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Sparks"]')!;
     await click(panel().querySelector('[role="switch"][aria-label="Fate Survival"]'), 'Fate Survival', 20);
     await click([...panel().querySelectorAll('button')].find(button => /Seek a spark/.test(button.textContent ?? '')), 'Seek a spark', 1100);
     expect(requestStorySpark).toHaveBeenCalledTimes(1);
@@ -1275,6 +1287,43 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(saved[0].seed.story.required.style).toBe('chinese');
     expect(saved[0].seed.story.required.storyTags.length).toBeGreaterThan(0);
     expect(saved[0].seed.story.optional).toMatchObject({ fateSurvival: { enabled: true, pressure: 'immortal' }, startedFrom: 'story-spark' });
+  });
+
+  it('Sparks inside an open Story Seed fills that seed\'s Origin instead of starting a new one', async () => {
+    const requestStorySpark = vi.fn(async () => ({ premise: 'A lantern keeper hears the dead bargain.', genre: 'Xianxia', title: 'The Lantern Debt', style: 'chinese' as const, survival: false, inventedGenre: false }));
+    const services = appServices(scriptedWriter().writer, { requestStorySpark, storySparksConfigured: vi.fn(async () => true) });
+    MotionGlobalConfig.skipAnimations = true;
+    onTestFinished(() => { MotionGlobalConfig.skipAnimations = false; });
+    await render(services, '/app/?page=create&seed=new');
+    const origin = document.querySelector('#seed-workspace-origin-title')!.parentElement!;
+    await click(origin.querySelector('button[aria-label="Sparks: story ideas"]'), 'Sparks in the Origin', 20);
+    const panel = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Sparks"]');
+    // No Keep here: the spark is for this seed.
+    expect(panel()!.querySelector('[aria-label="Keep in Story Bank"]')).toBeNull();
+    await click([...panel()!.querySelectorAll('button')].find(button => /Seek a spark/.test(button.textContent ?? '')), 'Seek a spark', 1100);
+    await click([...panel()!.querySelectorAll('button')].find(button => /Use this spark/.test(button.textContent ?? '')), 'Use this spark', 50);
+    expect(panel()).toBeNull();
+    expect(address()).toBe('/app/?page=create&seed=new');
+    expect(document.querySelector<HTMLTextAreaElement>('#core-premise-input')?.value).toBe('A lantern keeper hears the dead bargain.');
+    expect(document.querySelector<HTMLInputElement>('#origin-story-title-input')?.value).toBe('The Lantern Debt');
+    expect(await services.storySeeds.list(NOVEL_EXPANDED_READER_ID)).toHaveLength(0);
+  });
+
+  it('Sign in in the Profile Portrait menu shows the sign-in screen, marked not connected, with nothing to send', async () => {
+    await render(appServices(scriptedWriter().writer));
+    await click(shell()!.querySelector('header button[aria-label="Profile and preferences"]'), 'the Profile Portrait', 20);
+    const menu = document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"]')!;
+    expect(menu.querySelector('.workspace-profile-name')?.textContent).toBe('Cultivator');
+    expect(menu.textContent).toContain('Not connected yet');
+    await click([...menu.querySelectorAll('button')].find(button => button.textContent?.startsWith('Sign in')), 'Sign in', 20);
+    const signIn = document.querySelector<HTMLElement>('[data-testid="novel-expanded-sign-in"]')!;
+    expect(signIn).toBeTruthy();
+    expect(signIn.querySelector('[data-sign-in-unavailable]')?.textContent).toContain('not connected yet');
+    for (const label of ['Continue with Google', 'Continue with Apple', 'Continue with Email']) {
+      expect(buttonByText(label, signIn)?.disabled).toBe(true);
+    }
+    await click(signIn.querySelector('button[aria-label="Close sign in"]'), 'Close sign in', 20);
+    expect(document.querySelector('[data-testid="novel-expanded-sign-in"]')).toBeNull();
   });
 
   it('a new Story Seed in Create starts from the profile\'s reading language and Reading Mode', async () => {

@@ -23,3 +23,7 @@ workspace, so Compare is disabled and Original Reference explains that boundary.
   workspace wraps `StoryAuthGate` in `LibraryLook`, and `look.css` paints the
   gate's card as an outer panel with the gold rim. The gate's artwork, provider
   buttons and dissolve are unchanged.
+- **2026-10-30:** The app opens the same `StoryAuthGate` from the Profile Portrait's
+  Sign in (`src/novel-expanded/AppSignIn.tsx`) with `unavailableNote`, so its
+  provider buttons are off and it says sign-in is not connected yet, and `onClose`.
+  This workspace still shows the gate's own Success and Error outcomes.

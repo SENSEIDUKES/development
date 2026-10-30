@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { LibraryPresentationProvider, useLibraryAssets } from '@seihouse/library/presentation';
 import {
-  LibraryDesktopNavigationProvider, MainLibraryHomeInsights, WorkspaceHeaderAccessoryProvider,
-  WorkspaceHeaderCenterProvider, WorkspaceHeaderPreferencesProvider,
+  LibraryDesktopNavigationProvider, WorkspaceHeaderAccessoryProvider, WorkspaceHeaderPreferencesProvider,
 } from '@seihouse/library/shell';
 import { FamiliarSprite } from '@seihouse/library/familiar';
 import { HomePage } from '../../../novel-expanded/HomePage';
@@ -72,11 +71,9 @@ export function HomeMaterialCanvas() {
       <LibraryPresentationProvider assets={stillAssets} accentColor={settings.colors.accent}>
         <LibraryDesktopNavigationProvider value="sidebar">
           <WorkspaceHeaderPreferencesProvider preferences={{ language: 'en', onLanguageChange: () => report('Language'), menuMusic, onMenuMusicChange: setMenuMusic }}>
-            <WorkspaceHeaderCenterProvider center={<MainLibraryHomeInsights everyWidth adapter={{ copyText: async () => report('Copy') }} />} centerBreakpoint="always">
               <WorkspaceHeaderAccessoryProvider accessory={<span className="pm-home-familiar" aria-label={defaultFamiliar.definition.displayName}><FamiliarSprite familiar={defaultFamiliar.definition} animation="neutral" paused /></span>}>
                 <HomePage worlds={[]} readerProfile={{ ...profile, accentColor: settings.colors.accent }} navigate={route => report(route.page === 'create' ? 'Carve New Destiny' : route.page)} />
               </WorkspaceHeaderAccessoryProvider>
-            </WorkspaceHeaderCenterProvider>
           </WorkspaceHeaderPreferencesProvider>
         </LibraryDesktopNavigationProvider>
       </LibraryPresentationProvider>

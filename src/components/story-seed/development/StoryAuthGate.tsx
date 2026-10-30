@@ -1,7 +1,8 @@
 import { useLibraryAssets } from '../../../library/assets';
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Mail } from 'lucide-react';
+import FocusLock from 'react-focus-lock';
+import { Mail, X } from 'lucide-react';
 import './materials.css';
 
 /**
@@ -54,6 +55,14 @@ export interface StoryAuthGateProps {
   description?: string;
   reassurance?: string;
   context?: 'story-seed' | 'spirit-link';
+  /** A host that opens the gate on request closes it here: a close button and Escape. */
+  onClose?: () => void;
+  closeLabel?: string;
+  /**
+   * While the host has no sign-in to connect, this note is shown and the
+   * provider buttons stay disabled, so nothing is typed into a form that goes nowhere.
+   */
+  unavailableNote?: string;
 }
 
 /** Map host authentication error codes to calm copy. */
@@ -124,6 +133,9 @@ export default function StoryAuthGate({
   description = 'Sign in to preserve this world, begin its first chapter, and return to it from any device.',
   reassurance = 'Your Story Seed will not be lost.',
   context = 'story-seed',
+  onClose,
+  closeLabel = 'Close sign in',
+  unavailableNote,
 }: StoryAuthGateProps = {}) {
   const { authImage: BACKDROP_IMAGE_URL, authVideo: BACKDROP_VIDEO_URL, emblem: CELESTIAL_LIBRARY_EMBLEM_URL } = useLibraryAssets();
   const isLinked = linked ?? false;
@@ -210,7 +222,15 @@ export default function StoryAuthGate({
     });
   };
 
+  useEffect(() => {
+    if (!onClose) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [onClose]);
+
   const isBusy = pendingProvider !== null;
+  const unavailable = Boolean(unavailableNote);
 
   const shellInitial = prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 16 };
   const shellAnimate = dissolving
@@ -225,6 +245,7 @@ export default function StoryAuthGate({
     : { duration: 0.5, ease: 'easeOut' as const };
 
   return (
+    <FocusLock disabled={!onClose} returnFocus>
     <div
       id="creation-portal-root"
       role="dialog"
@@ -277,6 +298,18 @@ export default function StoryAuthGate({
         }}
       />
 
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={closeLabel}
+          title={closeLabel}
+          className="absolute z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/55 text-signal transition-colors hover:bg-black/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70 [top:max(1rem,env(safe-area-inset-top))] [right:max(1rem,env(safe-area-inset-right))]"
+        >
+          <X size={20} aria-hidden="true" />
+        </button>
+      )}
+
       {/* Content */}
       <div className="relative z-10 flex min-h-full flex-col items-center justify-center [padding-top:env(safe-area-inset-top)] [padding-bottom:env(safe-area-inset-bottom)] [padding-left:max(1.25rem,env(safe-area-inset-left))] [padding-right:max(1.25rem,env(safe-area-inset-right))]">
         <motion.div
@@ -309,11 +342,17 @@ export default function StoryAuthGate({
               <span className="h-px w-16 bg-gradient-to-l from-transparent to-[#D4AF37]/50" />
             </div>
 
+            {unavailableNote && (
+              <p role="status" data-sign-in-unavailable className="w-full rounded-xl border border-[#D4AF37]/35 bg-black/45 px-4 py-3 font-sans text-sm leading-relaxed text-neutral-200">
+                {unavailableNote}
+              </p>
+            )}
+
             <div className="w-full space-y-3">
               <button
                 type="button"
                 onClick={() => handleProviderSignIn('google')}
-                disabled={isBusy}
+                disabled={isBusy || unavailable}
                 className={`${PROVIDER_BUTTON_BASE} bg-white/85 hover:bg-white/95 text-neutral-900 border border-white/40`}
               >
                 {pendingProvider === 'google' ? <Spinner /> : <GoogleMark />}
@@ -323,7 +362,7 @@ export default function StoryAuthGate({
               <button
                 type="button"
                 onClick={() => handleProviderSignIn('apple')}
-                disabled={isBusy}
+                disabled={isBusy || unavailable}
                 className={`${PROVIDER_BUTTON_BASE} bg-black/85 hover:bg-black text-white border border-white/25`}
               >
                 {pendingProvider === 'apple' ? <Spinner /> : <AppleMark />}
@@ -333,7 +372,7 @@ export default function StoryAuthGate({
               <button
                 type="button"
                 onClick={() => setEmailOpen(open => !open)}
-                disabled={isBusy}
+                disabled={isBusy || unavailable}
                 aria-expanded={emailOpen}
                 className={`${PROVIDER_BUTTON_BASE} bg-white/10 hover:bg-white/15 text-signal border border-white/25`}
               >
@@ -420,5 +459,6 @@ export default function StoryAuthGate({
         </motion.div>
       </div>
     </div>
+    </FocusLock>
   );
 }

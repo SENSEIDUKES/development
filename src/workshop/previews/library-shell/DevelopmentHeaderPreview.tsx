@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MainLibraryHeader, MainLibraryHomeInsights, WorkspaceHeaderCenterProvider, WorkspaceHeaderPreferencesProvider, useMenuMusic, type LibraryLocation } from '@seihouse/library/shell';
+import { MainLibraryHeader, WorkspaceHeaderPreferencesProvider, useMenuMusic, type LibraryLocation } from '@seihouse/library/shell';
 import { WORKSHOP_SOUND_PREFERENCES } from '../user-profile/mockUserProfileServices';
 import { MainLibraryPreview } from './MainLibraryPreview';
 import { StorySeedWorkspace } from '../story-seed/StorySeedWorkspace';
@@ -21,24 +21,18 @@ export function DevelopmentHeaderPreview({ source, state }: { source: HeaderConf
 
 function DevelopmentHeaderContent({ source, state }: { source: HeaderConfiguration; state: string }) {
   const [message, setMessage] = useState('Local preview ready.');
-  const copyText = async (text: string) => { setMessage(`Local preview clipboard: ${text}`); };
-  const headerCenter = <MainLibraryHomeInsights everyWidth adapter={{ copyText }} />;
   if (source === 'header-states') return <HeaderSlotPreview state={state} />;
   if (source === 'main-library' || source === 'cultivator-cave') {
-    const app = <WorkspaceHeaderCenterProvider center={headerCenter} centerBreakpoint="always">
-      <LibraryAppPreview source={source} state={state} message={message} setMessage={setMessage} />
-    </WorkspaceHeaderCenterProvider>;
+    const app = <LibraryAppPreview source={source} state={state} message={message} setMessage={setMessage} />;
     return <ProductFamiliarSession initialState={source === 'cultivator-cave' ? state as UserProfilePreviewState : state === 'guest' ? 'signed-out' : 'developed-cultivator'}>
       <ProductFamiliarSurface viewport headerRecall bottomInset={72}>{app}</ProductFamiliarSurface>
     </ProductFamiliarSession>;
   }
-  if (source === 'story-seed') return <WorkspaceHeaderCenterProvider center={headerCenter} centerBreakpoint="always">
-    <ProductFamiliarSession>
-      <ProductFamiliarSurface viewport headerRecall bottomInset={72}>
-        <StorySeedWorkspace embedded localGeneration initialState={state as PreviewState} />
-      </ProductFamiliarSurface>
-    </ProductFamiliarSession>
-  </WorkspaceHeaderCenterProvider>;
+  if (source === 'story-seed') return <ProductFamiliarSession>
+    <ProductFamiliarSurface viewport headerRecall bottomInset={72}>
+      <StorySeedWorkspace embedded localGeneration initialState={state as PreviewState} />
+    </ProductFamiliarSurface>
+  </ProductFamiliarSession>;
   return null;
 }
 

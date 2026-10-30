@@ -7,7 +7,7 @@ import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { LibraryDesktopNavigationProvider, LibraryFooter, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader, WorkspaceShell } from '@seihouse/library/shell';
 import { MainLibraryFooter } from './MainLibraryFooter';
 import { MainLibraryNavigation } from './MainLibraryNavigation';
-import { MainLibraryHomeInsights } from './MainLibraryHomeInsights';
+import { DaoSparksButton } from './DaoSparksButton';
 import type { MainLibraryHeaderAdapter } from './MainLibraryHeader';
 
 vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
@@ -42,9 +42,9 @@ const adapter = (requestDao?: MainLibraryHeaderAdapter['requestDao']): MainLibra
   requestDao: requestDao ?? (async () => ({ ok: true, json: async () => ({ hasServerGemini: false }) })) as unknown as MainLibraryHeaderAdapter['requestDao'],
 });
 
-it('opens Help from the Preferences card as text guidance when the host supplies no audio provider', async () => {
+it('opens Help from the Profile Portrait menu as text guidance when the host supplies no audio provider', async () => {
   await render(<WorkspaceHeader title="Host page" />);
-  await click(byLabel('Preferences'));
+  await click(byLabel('Profile and preferences'));
   await click(byLabel('Help'));
   await settle(300);
   const dialog = document.querySelector('[role="dialog"]');
@@ -129,7 +129,7 @@ it('nests a page\'s own sub-pages under the active pathway and moves Dao Insight
     ] }],
   }}>
     <LibrarySectionSidebar />
-    <WorkspaceHeader title="Celestial Library" center={<p data-center-probe>Dao</p>} />
+    <WorkspaceHeader title="Celestial Library" />
   </LibraryNavigation>);
   const pathways = document.querySelector('nav[aria-label="Library pathways"]')!;
   expect(pathways).not.toBeNull();
@@ -145,9 +145,9 @@ it('nests a page\'s own sub-pages under the active pathway and moves Dao Insight
   expect(reader.getAttribute('aria-label')).toBe('Kept Reading, Leader');
   await click(reader);
   expect(openProfile).toHaveBeenCalled();
-  // The laptop strip steps aside for the sidebar (CSS), and the header centers its content beside the badge.
+  // The laptop strip steps aside for the sidebar (CSS); the header has no center slot.
   expect(document.querySelector('[data-library-desktop-navigation="sidebar"]')).not.toBeNull();
-  expect(document.querySelector('[data-slot="app-header-center"] [data-header-center] [data-center-probe]')).not.toBeNull();
+  expect(document.querySelector('[data-slot="app-header-center"]')).toBeNull();
   expect(document.querySelector('.workspace-header-badge')).not.toBeNull();
   await click(byText('Create', pathways));
   expect(navigate).toHaveBeenCalledWith({ screen: 'creator-space' });
@@ -221,9 +221,9 @@ it('keeps a model-written spark after it settles', async () => {
   MotionGlobalConfig.skipAnimations = true;
   try {
     const requestSpark = vi.fn(async () => ({ premise: 'A divined premise from the oracle.', genre: 'Xianxia', title: 'The Oracle', style: 'chinese' as const, survival: false, inventedGenre: false, voice: 'Test Oracle' }));
-    await render(<MainLibraryHomeInsights adapter={{ ...adapter(), daoSparks: { checkSparks: async () => true, requestSpark } }} />);
+    await render(<DaoSparksButton copyText={adapter().copyText} host={{ checkSparks: async () => true, requestSpark }} />);
     await settle();
-    await click(document.getElementById('dao-insights-header-center'));
+    await click(byLabel('Sparks: story ideas'));
     await settle();
     await click(Array.from(document.querySelectorAll('button')).find(button => /Seek a spark/.test(button.textContent ?? '')));
     await settle(1300);
@@ -237,9 +237,9 @@ it('stops every Dao timer and request when the panel unmounts mid-seek', async (
   const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
   let signal: AbortSignal | undefined;
   const requestSpark = vi.fn((_request: unknown, abort?: AbortSignal) => { signal = abort; return new Promise<never>(() => {}); });
-  await render(<MainLibraryHomeInsights adapter={{ ...adapter(), daoSparks: { checkSparks: async () => true, requestSpark } }} />);
+  await render(<DaoSparksButton copyText={adapter().copyText} host={{ checkSparks: async () => true, requestSpark }} />);
   await settle();
-  await click(document.getElementById('dao-insights-header-center'));
+  await click(byLabel('Sparks: story ideas'));
   await settle();
   await click(Array.from(document.querySelectorAll('button')).find(button => /Seek a spark/.test(button.textContent ?? '')));
   await act(async () => root.render(<LibraryPresentationProvider>{null}</LibraryPresentationProvider>));

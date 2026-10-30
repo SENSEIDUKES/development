@@ -16,7 +16,7 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
   const heading = name => tab.playwright.getByRole('heading', { name, exact: true });
   const searchDestination = async (name, keyboard = false) => {
     const before = await tab.url();
-    await button('Search').click();
+    await button('Search for stories').click();
     const item = tab.playwright.getByRole('dialog').getByRole('button', { name, exact: true });
     if (keyboard) await item.press('Enter'); else await item.click();
     await tab.playwright.getByRole('dialog').waitFor({ state: 'hidden' });
@@ -89,7 +89,7 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
         else await searchDestination(destination);
         if (destination !== 'Home') assert.equal(await heading(destination).innerText(), destination);
         assert.equal((new URL(await tab.url()).searchParams.get('cave') || '/home'), '/' + destination.toLowerCase());
-        await button('Search').click();
+        await button('Search for stories').click();
         const selected = await tab.playwright.evaluate(() => [...document.querySelectorAll('.workspace-search-results [aria-pressed="true"]')]
           .filter(el => el.getBoundingClientRect().width > 0).map(el => el.textContent.trim()));
         assert.equal(selected.join(','), destination === 'Settings' ? '' : destination);

@@ -5,7 +5,7 @@ import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seiho
 import type { FamiliarHelpPlace } from '@seihouse/library/familiar';
 import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
 import {
-  HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, MainLibraryHomeInsights, WorkspaceHeaderCenterProvider, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
+  HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, DaoSparksButton, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderProfileProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
 } from '@seihouse/library/shell';
 import { CreateStorySettings, StoryPages, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
@@ -24,9 +24,10 @@ import { MANIFEST_BACKDROPS } from '../host/reader/manifestBackdrops';
 import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory';
 import { AGENTS } from '../lib/agents';
 import { defaultFamiliar, familiarCatalogueEntry } from '../host/familiar/catalogue';
-import { useDeviceProfile } from '../host/profile/deviceProfile';
+import { useDeviceProfile, useDeviceProfileRank } from '../host/profile/deviceProfile';
 import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
 import { AppFamiliar } from './AppFamiliar';
+import { AppSignIn } from './AppSignIn';
 import { APP_DESTINATIONS } from './appPlaces';
 import { AppShell } from './AppShell';
 import { codexPictureMakerWithAccessToken, coverMakerWithAccessToken, portraitMakerWithAccessToken, writerWithAccessToken, type AskForAccessToken } from './accessToken';
@@ -201,13 +202,18 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   // A story that is not here (an old link, another browser) goes Home.
   useEffect(() => { if (missing) navigate(HOME_ROUTE, { replace: true }); }, [missing, navigate]);
 
-  // One Familiar around every page, at the same place in the tree, so it keeps its
-  // place as the reader moves; in the Reader its recall sits in the top bar beside Reader Settings.
-  // place as the reader moves; in the Reader its recall sits in the top bar beside Reader Settings.
-  const headerCenter = useMemo(
-    () => <MainLibraryHomeInsights everyWidth adapter={{ copyText: text => navigator.clipboard.writeText(text), daoSparks: sparks }} />,
-    [sparks],
-  );
+  // The Profile Portrait in every Library header: the reader, Sign in (not
+  // connected yet), their profile and Settings, beside the Preferences.
+  const rank = useDeviceProfileRank();
+  const [signInOpen, setSignInOpen] = useState(false);
+  const headerProfile = useMemo(() => ({
+    name: profile.displayName.trim() || 'Cultivator',
+    detail: rank,
+    avatarUrl: profile.avatarUrl || undefined,
+    onOpenProfile: () => navigate({ page: 'profile' }),
+    onOpenSettings: () => navigate({ page: 'profile', cave: '/settings' }),
+    signIn: { onSignIn: () => setSignInOpen(true), note: 'Not connected yet' },
+  }), [profile.displayName, profile.avatarUrl, rank, navigate]);
   const headerPreferences = useMemo(
     () => ({
       menuMusic,
@@ -219,7 +225,11 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     }),
     [profile.interfaceLanguage, services.profile, menuMusic, setMenuMusic],
   );
-  const withFamiliar = (page: ReactNode) => <WorkspaceHeaderCenterProvider center={headerCenter} centerBreakpoint="always"><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'} place={familiarPlace(route.page)}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider></WorkspaceHeaderCenterProvider>;
+  // One Familiar around every page, at the same place in the tree, so it keeps its
+  // place as the reader moves; in the Reader its recall sits in the top bar beside Reader Settings.
+  const withFamiliar = (page: ReactNode) => <WorkspaceHeaderProfileProvider profile={headerProfile}><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'} place={familiarPlace(route.page)}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider>
+    {signInOpen && <AppSignIn accentColor={profile.accentColor} onClose={() => setSignInOpen(false)} />}
+  </WorkspaceHeaderProfileProvider>;
 
   if (!state || !skills) {
     const error = skillsError ?? stories.loadError;
@@ -236,10 +246,13 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} menuMusic={menuMusicSlot} accentColor={profile.accentColor} />);
 
   // Create: the Creator Space, unless a Story Seed (new or saved) is open.
-  if (route.page === 'create' && !route.seedId && !route.newSeed) return withFamiliar(<CreateHubPage worlds={creatorWorlds} stories={worlds} navigate={navigate} readerProfile={profile} />);
+  if (route.page === 'create' && !route.seedId && !route.newSeed) return withFamiliar(<CreateHubPage worlds={creatorWorlds} stories={worlds} navigate={navigate} readerProfile={profile} sparks={sparks} />);
 
   if (route.page === 'create') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     seedId={route.seedId} accentColor={profile.accentColor}
+    // Sparks inside the open Story Seed: a chosen spark fills its Origin.
+    originSparks={fillOrigin => <DaoSparksButton purpose="fill-seed" copyText={text => navigator.clipboard.writeText(text)}
+      host={{ checkSparks: sparks.checkSparks, requestSpark: sparks.requestSpark, beginSpark: async spark => fillOrigin(spark) }} />}
     // A new Story Seed starts from the profile's languages and Reading Mode.
     accountDefaultLanguage={profile.defaultReadingLanguage} accountDefaultChapterWritingStyle={profile.defaultChapterWritingStyle}
     renderStorySettings={({ seed, originalLanguage }) => <CreateStorySettings stories={stories}

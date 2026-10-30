@@ -1,12 +1,29 @@
 # NovelExpanded app
 
+- **2026-10-30** — Header redesign, from SENSEI. Every Library header now reads
+  `Logo | Search | Familiar | Sound | Profile Portrait`. Search is a wide
+  field ("Search for stories", a thin glowing underline) filling the row after the
+  logo; it opens the same Search sheet on a tap. The Preferences gear is gone: the
+  **Profile Portrait** (the reader's picture or initial) opens one menu with their
+  name and rank, **Sign in**, Your profile, Settings, Preferred Language, Menu music
+  and Help. The app has no accounts yet, so Sign in opens the Library's sign-in
+  screen marked "not connected yet" with its buttons switched off (`AppSignIn`);
+  accounts plug in there. The laptop sidebar's reader card opens the same menu
+  beside itself instead of the Profile page. The music note stays in the laptop
+  header between the Familiar and the Portrait; phones keep it floating above the
+  bottom bar. **Dao Insights is renamed Sparks** and leaves the header: a spark
+  button beside the Creator Space title begins a spark as a new Story Seed (or
+  keeps it in the Story Bank), and the same button in Story Seed's Origin heading
+  fills the open seed's Origin (premise, genre, tradition, Story Tags, Fate
+  Survival and title) instead of starting a new one.
+
 - **2026-10-29** — Create is the Creator Space, and Profile wears the look. The
   Create tab (`?page=create`) now opens the Library's Create page in the shell:
   the reader's worlds with Continue (the Reader) and Studio (World Info), the live
   Energy balance (the Cave's Energy page), the Creator Toolkit previews and, at
   the end, Create, which plants a new Story Seed at `?page=create&seed=new`.
   Home's Carve New Destiny goes straight to that new Story Seed; a Dao Insights
-  spark still opens its saved seed. Back from Story Seed returns to the Creator
+  spark still opens its saved seed (Sparks, since 2026-10-30, in Create). Back from Story Seed returns to the Creator
   Space. Profile (the Cave) wears the Library's look too: violet glass chrome,
   rims on its identity panel and home cards, black aura picker and Energy
   panels, over the Cave's own backdrop. The app may now import

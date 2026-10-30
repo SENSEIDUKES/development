@@ -18,7 +18,7 @@
 }
 /* Keep the artwork behind the content; the plain footer shares the chrome tint. */
 .library-look .workspace-shell { background: transparent; }
-.library-look :is([data-home-panel], .world-card-banner, [data-home-events], .workspace-preferences-panel) {
+.library-look :is([data-home-panel], .world-card-banner, [data-home-events], .workspace-profile-panel) {
   background: var(--library-material-card-fill);
   border: 1px solid var(--reader-glass-edge);
   box-shadow: var(--library-material-card-shadow);
@@ -71,7 +71,7 @@
 .library-look :is([data-slot='navigation-item'], .library-global-navigation button):hover { background-color: #101018; }
 .library-look :is([data-slot='navigation-item'], .library-global-navigation button):active { background-color: #000; }
 .library-look :is([data-slot='navigation-icon'], .library-global-navigation button > span[aria-hidden='true']) { color: #fff; }
-.library-look .workspace-header :is(button svg, .dao-insights-trigger svg) { color: #fff; }
+.library-look .workspace-header button svg { color: #fff; }
 /* Put dock clearance inside the footer so its fill reaches the viewport edge;
    a shell without the Library footer (the Cave) keeps its clearance. */
 .library-look .library-navigation-layout .workspace-shell-main:has(.library-footer) { padding-bottom: 0; }

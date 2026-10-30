@@ -1,4 +1,5 @@
 import { CreatorSpace, type CreatorWorld } from '@seihouse/library/creator-space';
+import { DaoSparksButton, type DaoSparkHost } from '@seihouse/library/shell';
 import { useEnergyAccount } from '@seihouse/library/energy';
 import type { HomeWorld } from '@seihouse/library/home';
 import type { UserProfile } from '@seihouse/library/profile';
@@ -37,21 +38,25 @@ export function creatorWorldsOf(state: HarnessWorkspaceState, worlds: readonly H
 /**
  * Create: the Library's Creator Space inside the Library Shell. The reader's
  * worlds, the live Energy balance and the Toolkit previews, and the way into
- * each thing a creator does next: Create plants a new Story Seed, Continue
+ * each thing a creator does next: Create plants a new Story Seed, Sparks
+ * offers a story idea and begins it as a new Story Seed, Continue
  * opens a world's Reader (where its next chapter is written), Studio and the
  * card itself open its World Info, and Energy opens the Cave's Energy page.
  */
-export function CreateHubPage({ worlds, stories, navigate, readerProfile }: {
+export function CreateHubPage({ worlds, stories, navigate, readerProfile, sparks }: {
   worlds: readonly CreatorWorld[];
   /** The same stories, as Search in the shell lists them. */
   stories: readonly { id: string; title: string }[];
   navigate: Navigate;
   readerProfile: UserProfile;
+  /** Sparks: a chosen spark is planted as a new Story Seed and opened. */
+  sparks: DaoSparkHost;
 }) {
   const energy = useEnergyAccount();
   return <AppShell route={{ page: 'create' }} navigate={navigate} stories={stories} readerProfile={readerProfile} mainLabel="Create">
     <div className="mx-auto w-full max-w-7xl px-4 py-6" data-testid="novel-expanded-create-hub">
       <CreatorSpace worlds={{ status: 'ready', items: worlds }} energy={energy} toolkit={CREATOR_TOOLKIT}
+        sparks={<DaoSparksButton host={sparks} copyText={text => navigator.clipboard.writeText(text)} />}
         onCreate={() => navigate({ page: 'create', newSeed: true })}
         onOpenEnergy={() => navigate({ page: 'profile', cave: '/home/energy' })}
         onContinueWorld={storyId => navigate({ page: 'read', storyId })}

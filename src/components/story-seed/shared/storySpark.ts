@@ -11,7 +11,7 @@
  * with the writer.
  *
  * How a spark is written (a model, a hand-written list) and how it is dressed
- * (the Library's Dao Insights) belong to the host.
+ * (the Library's Sparks) belong to the host.
  */
 import { createEmptyStorySeedInput, type StorySeedInput } from './storySeedSchema';
 import { normalizeStoryStyle, type StoryStyle } from './storyStyle';
@@ -138,9 +138,13 @@ export const parseStorySpark = (value: unknown, request: StorySparkRequest): Sto
 export const storySparkTags = (spark: Pick<StorySpark, 'premise' | 'genre' | 'style'>): string[] =>
   inferStoryTags({ premise: spark.premise, genre: spark.genre, style: spark.style });
 
-/** A new Story Seed whose whole Origin is the spark, marked as started from one. */
-export const storySeedInputFromSpark = (spark: StorySpark): StorySeedInput => {
-  const seed = createEmptyStorySeedInput();
+/**
+ * A Story Seed with its Origin replaced by the spark: the premise, genre, novel
+ * tradition and Story Tags, Survival on only for a Survival spark, and the
+ * world's title when the spark has one. Every other choice the writer made,
+ * where the seed started from included, is kept.
+ */
+export const applyStorySparkToSeed = (seed: StorySeedInput, spark: StorySpark): StorySeedInput => {
   const title = spark.title.trim();
   return {
     ...seed,
@@ -155,11 +159,16 @@ export const storySeedInputFromSpark = (spark: StorySpark): StorySeedInput => {
       optional: {
         ...seed.story.optional,
         fateSurvival: { ...seed.story.optional.fateSurvival, enabled: spark.survival },
-        startedFrom: 'story-spark',
       },
     },
     world: title
       ? { ...seed.world, optional: { ...seed.world.optional, worldIdentity: { ...seed.world.optional.worldIdentity, title } } }
       : seed.world,
   };
+};
+
+/** A new Story Seed whose whole Origin is the spark, marked as started from one. */
+export const storySeedInputFromSpark = (spark: StorySpark): StorySeedInput => {
+  const seed = applyStorySparkToSeed(createEmptyStorySeedInput(), spark);
+  return { ...seed, story: { ...seed.story, optional: { ...seed.story.optional, startedFrom: 'story-spark' } } };
 };

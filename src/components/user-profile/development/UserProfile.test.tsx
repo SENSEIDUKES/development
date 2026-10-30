@@ -285,7 +285,7 @@ const daoTileStates = () => Array.from(container.querySelectorAll<HTMLButtonElem
 const settle = async () => { await act(async () => { await vi.advanceTimersByTimeAsync(50); }); };
 const openSearch = async () => {
   if (!document.querySelector('.workspace-search-results')) {
-    await click(document.querySelector('[aria-label="Search"]')!);
+    await click(document.querySelector('[aria-label="Search for stories"]')!);
     await act(async () => { await vi.advanceTimersByTimeAsync(500); });
   }
 };
@@ -1025,8 +1025,8 @@ describe('Cultivator Cave settings', () => {
     expect((menuMusic() as HTMLInputElement).checked ?? menuMusic().getAttribute('aria-checked') === 'true').toBe(true);
     await click(menuMusic());
     expect(localStorage.getItem('workshop.reader.menu-music')).toBe('off');
-    await click(document.querySelector<HTMLElement>('header button[aria-label="Preferences"]')!);
-    const headerSwitch = document.querySelector<HTMLInputElement>('[data-testid="workspace-preferences-card"] input[role="switch"]')!;
+    await click(document.querySelector<HTMLElement>('header button[aria-label="Profile and preferences"]')!);
+    const headerSwitch = document.querySelector<HTMLInputElement>('[data-testid="workspace-profile-menu"] input[role="switch"]')!;
     expect(headerSwitch.checked).toBe(false);
     await click(headerSwitch);
     expect(localStorage.getItem('workshop.reader.menu-music')).toBe('on');

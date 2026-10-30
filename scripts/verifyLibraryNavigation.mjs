@@ -13,7 +13,7 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
     assert.fail(label);
   };
   const openSearch = async () => {
-    await button('Search').click();
+    await button('Search for stories').click();
     await menu().waitFor({ state: 'visible' });
     await waitFor(() => tab.playwright.evaluate(() => document.activeElement?.matches('input[type="search"]')), 'Search field receives initial focus');
   };
@@ -52,7 +52,7 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
       ['cultivator-cave', 'developed-cultivator', 'Profile'],
     ]) {
       await tab.goto(`${baseUrl}/library-shell.html?variant=development&source=${source}&state=${state}`);
-      await button('Search').waitFor({ state: 'visible' });
+      await button('Search for stories').waitFor({ state: 'visible' });
       if (source === 'cultivator-cave') await button('Settings').waitFor({ state: 'visible' });
       const size = await geometry();
       assert.equal(size.buttons.map(button => button.label).join(','), 'Home,Create,Discover,Profile');
@@ -68,7 +68,7 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
       await openSearch();
       assert.equal(await tab.playwright.evaluate(() => Boolean(document.querySelector('.library-section-menu'))), false);
       await closeSearch();
-      assert.equal(await tab.playwright.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'Search');
+      assert.equal(await tab.playwright.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'Search for stories');
       report.push({ width, active });
     }
   }
@@ -107,7 +107,7 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
 
   // All global entries use real existing route/collection values in the preview adapter.
   await button('Home').click();
-  await tab.playwright.getByRole('button', { name: 'Insights from the Dao', exact: true }).waitFor({ state: 'visible' });
+  await tab.playwright.getByRole('button', { name: 'Search for stories', exact: true }).waitFor({ state: 'visible' });
   assert.equal((await geometry()).selected, 'Home');
   await button('Create').click(); assert.equal((await geometry()).selected, 'Create');
   await button('Discover').click(); assert.equal((await geometry()).selected, 'Discover');
@@ -121,7 +121,7 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
   for (const [safeArea, width, height] of [['on', 390, 740], ['landscape', 844, 390]]) {
     await viewport.set({ width, height });
     await tab.goto(`${baseUrl}/library-shell.html?variant=development&source=main-library&state=linked&safeArea=${safeArea}&motion=reduced`);
-    await button('Search').waitFor({ state: 'visible' });
+    await button('Search for stories').waitFor({ state: 'visible' });
     const size = await geometry();
     assert(size.paddingBottom >= (safeArea === 'on' ? 34 : 21));
     assert(size.clearance >= size.navHeight);
@@ -152,12 +152,12 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
     await button('Return to header capture').waitFor({ state: 'visible' });
     assert.equal(await tab.playwright.evaluate(() => Boolean(document.querySelector('.library-global-navigation'))), false);
     await button('Return to header capture').click();
-    await button('Search').waitFor({ state: 'visible' });
+    await button('Search for stories').waitFor({ state: 'visible' });
     const location = new URL(await tab.url());
     assert.equal(location.searchParams.get('screen'), 'home');
     assert.equal(location.searchParams.get('collection'), 'featured');
     await tab.reload();
-    await button('Search').waitFor({ state: 'visible' });
+    await button('Search for stories').waitFor({ state: 'visible' });
     assert.equal((await geometry()).selected, 'Home');
   }
   report.push({ storySeed: 'original controls preserved', immersiveRoute: 'global strip excluded; return URL and reload passed' });

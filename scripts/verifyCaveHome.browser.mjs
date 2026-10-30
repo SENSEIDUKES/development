@@ -7,13 +7,13 @@ export async function verifyCaveHome(page) {
   const card = name => page.locator(`[data-cave-card="${name}"]`);
   const searchDestination = async name => {
     const before = page.url();
-    await button('Search').click();
+    await button('Search for stories').click();
     await page.getByRole('dialog').getByRole('button', { name, exact: true }).click();
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     if (page.url() !== before) await page.waitForFunction(() => document.activeElement?.matches('h2'));
   };
   const destinationLabels = async () => {
-    await button('Search').click();
+    await button('Search for stories').click();
     const labels = (await page.locator('.workspace-search-results button').allInnerTexts()).map(label => label.trim().toLowerCase()).filter(label => ['home', 'stories', 'rewards', 'relics', 'exit'].includes(label)).join();
     await button('Close Search').press('Escape');
     await page.getByRole('dialog').waitFor({ state: 'hidden' });

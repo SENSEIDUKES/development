@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyStorySeedInput, normalizeStorySeedInput } from './storySeedSchema';
-import { parseStorySpark, parseStorySparkRequest, storySeedInputFromSpark, storySparkTags, STORY_SPARK_AVOID_LIMIT, STORY_SPARK_PREMISE_MAX_LENGTH } from './storySpark';
+import { applyStorySparkToSeed, parseStorySpark, parseStorySparkRequest, storySeedInputFromSpark, storySparkTags, STORY_SPARK_AVOID_LIMIT, STORY_SPARK_PREMISE_MAX_LENGTH } from './storySpark';
 
 describe('Story Sparks', () => {
   it('reads a request for a genre, an idea and recent premises, and refuses one with no genre', () => {
@@ -41,5 +41,26 @@ describe('Story Sparks', () => {
     expect(storySeedInputFromSpark({ ...spark, title: ' ' }).world).toEqual(empty.world);
     // The mark survives saving and reloading.
     expect(normalizeStorySeedInput(seed).story.optional.startedFrom).toBe('story-spark');
+  });
+
+  it('fills an open seed\'s Origin from a spark and keeps the writer\'s other choices', () => {
+    const spark = { premise: 'A porter climbs the tower alone.', genre: 'Tower Climb', title: 'The Porter', style: 'korean' as const, survival: true, inventedGenre: false };
+    const empty = createEmptyStorySeedInput();
+    const mine = {
+      ...empty,
+      story: {
+        required: { ...empty.story.required, premise: 'Old premise', genre: 'Xianxia', storyTags: ['Old Tag'] },
+        optional: { ...empty.story.optional, fateSurvival: { enabled: false, pressure: 'heaven' as const } },
+      },
+      world: { ...empty.world, optional: { ...empty.world.optional, worldIdentity: { ...empty.world.optional.worldIdentity, title: 'Old Title' } } },
+    };
+    const filled = applyStorySparkToSeed(mine, spark);
+    expect(filled.story.required).toEqual({ ...mine.story.required, premise: spark.premise, genre: 'Tower Climb', style: 'korean', storyTags: storySparkTags(spark) });
+    // Survival follows the spark; the writer's Pressure and where the seed started stay.
+    expect(filled.story.optional).toEqual({ ...mine.story.optional, fateSurvival: { enabled: true, pressure: 'heaven' } });
+    expect(filled.story.optional.startedFrom).toBe(mine.story.optional.startedFrom);
+    expect(filled.world.optional.worldIdentity.title).toBe('The Porter');
+    // An untitled spark keeps the writer's title.
+    expect(applyStorySparkToSeed(mine, { ...spark, title: '' }).world).toEqual(mine.world);
   });
 });

@@ -1,5 +1,9 @@
 # NovelExpanded app
 
+- **2026-10-30 (later)** — The header floats as a rounded dock like the bottom
+  navigation; Search is a black pill; the Profile Portrait is a black circle with
+  the Profile figure, filled edge to edge by the reader's picture once they set one.
+
 - **2026-10-30** — Header redesign, from SENSEI. Every Library header now reads
   `Logo | Search | Familiar | Sound | Profile Portrait`. Search is a wide
   field ("Search for stories", a thin glowing underline) filling the row after the

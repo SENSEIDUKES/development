@@ -590,7 +590,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     const menu = document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"]')!;
     expect(menu).toBeTruthy();
     expect(menu.querySelector('.workspace-profile-name')?.textContent).toBe('Renamed Reader');
-    expect(menu.querySelector('[data-slot="avatar"] img')?.getAttribute('src')).toBe('/new-portrait.png');
+    expect(menu.querySelector('.workspace-profile-badge img')?.getAttribute('src')).toBe('/new-portrait.png');
+    expect(shell()!.querySelector('header .workspace-profile-portrait img')?.getAttribute('src')).toBe('/new-portrait.png');
     expect(address()).not.toBe('/app/?page=profile');
     await click(buttonByText('Your profile', menu), 'Your profile in the menu', 20);
     expect(address()).toBe('/app/?page=profile');

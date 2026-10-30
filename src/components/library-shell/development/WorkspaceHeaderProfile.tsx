@@ -1,6 +1,6 @@
 import { Component, createContext, lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { SEIAvatar, SEISwitch } from '@seihouse/ui';
+import { SEISwitch } from '@seihouse/ui';
 import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { NarrativeButton, NarrativePanel } from '@seihouse/sen/presentation';
 import { LibraryHelpIcon, LibraryProfileIcon, LibrarySettingsIcon } from '@seihouse/library-ui';
@@ -82,6 +82,18 @@ export function useWorkspaceHeaderProfileMenu(): { open: (opener?: HTMLElement |
   return useMemo(() => setOpen ? { open } : null, [setOpen, open]);
 }
 
+/**
+ * The reader's picture filling the circle, or, without one (or when it cannot
+ * load), the Profile figure the bottom navigation uses.
+ */
+function ProfilePicture({ src, size }: { src?: string; size: number }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => { setFailed(false); }, [src]);
+  return src && !failed
+    ? <img className="workspace-profile-photo" src={src} alt="" decoding="async" onError={() => setFailed(true)} />
+    : <LibraryProfileIcon aria-hidden="true" size={size} className="workspace-profile-figure" />;
+}
+
 const MENU_GAP = 12;
 const MENU_EDGE = 16;
 
@@ -96,7 +108,7 @@ function menuPosition(anchor: HTMLElement): CSSProperties {
 }
 
 /**
- * The Profile Portrait: the reader's picture (or initial) at the end of every
+ * The Profile Portrait: the reader's picture (or the Profile figure) at the end of every
  * Library header, opening one menu for the reader. With a host profile it
  * holds their name and rank, Sign in, their profile and Settings; at every
  * header it holds the Preferences (language and menu music) and Help.
@@ -168,15 +180,13 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
       aria-label={label} title={label} aria-expanded={disclosure.open} aria-controls={disclosure.id}
       onPointerEnter={help?.onIntent} onFocus={help?.onIntent}
       onClick={() => disclosure.setOpen(!disclosure.open)}>
-      {profile
-        ? <SEIAvatar src={profile.avatarUrl} name={profile.name} size="md" tone="accent" decorative data-no-interface-translate="" />
-        : <LibraryProfileIcon aria-hidden="true" size={24} className="workspace-header-utility-icon" />}
+      <ProfilePicture src={profile?.avatarUrl} size={22} />
     </button>
     {disclosure.open && layer && createPortal(<div id={disclosure.id} ref={disclosure.panelRef}
       className="workspace-profile-panel" data-testid="workspace-profile-menu" style={position}>
       <NarrativePanel padding="sm" aria-label={label}>
         {profile && <div className="workspace-profile-identity">
-          <SEIAvatar src={profile.avatarUrl} name={profile.name} size="lg" tone="accent" decorative />
+          <span className="workspace-profile-badge" aria-hidden="true"><ProfilePicture src={profile.avatarUrl} size={24} /></span>
           <span className="workspace-profile-identity-text">
             <span className="workspace-profile-name" data-no-interface-translate="">{profile.name}</span>
             {profile.detail && <span className="workspace-profile-detail">{profile.detail}</span>}

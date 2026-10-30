@@ -1,5 +1,9 @@
-import { useEffect, useState } from 'react';
-import { MainLibraryHeader, WorkspaceHeaderPreferencesProvider, useMenuMusic, type LibraryLocation } from '@seihouse/library/shell';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { MainLibraryHeader, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderProfileProvider, useMenuMusic, type LibraryLocation, type WorkspaceHeaderProfile } from '@seihouse/library/shell';
+import { LibraryLook } from '@seihouse/library/presentation';
+import { StoryAuthGate } from '@seihouse/library/story-seed';
+import { getPreviewScenario } from '../user-profile/previewData';
 import { WORKSHOP_SOUND_PREFERENCES } from '../user-profile/mockUserProfileServices';
 import { MainLibraryPreview } from './MainLibraryPreview';
 import { StorySeedWorkspace } from '../story-seed/StorySeedWorkspace';
@@ -7,16 +11,40 @@ import { UserProfileWorkspace } from '../user-profile/UserProfileWorkspace';
 import type { PreviewState } from '../story-seed/previewStates';
 import type { UserProfilePreviewState } from '../user-profile/previewStates';
 import type { HeaderConfiguration } from './headerPreviewData';
-import { libraryPreviewUrl, readLibraryPreviewLocation } from './libraryPreviewNavigation';
+import { libraryPreviewUrl, navigateLibraryPreview, readLibraryPreviewLocation } from './libraryPreviewNavigation';
 import { HeaderSlotPreview } from './HeaderSlotPreview';
 import { ProductFamiliarSession, ProductFamiliarSurface } from '../familiar/ProductFamiliarPreview';
 
-/** Exercise the real Development consumers with their existing Workshop adapters. */
+const fixtureReader = getPreviewScenario('developed-cultivator').profile;
+
+/**
+ * Exercise the real Development consumers with their existing Workshop adapters.
+ * The Profile Portrait wears a fixture reader, as the app supplies its own:
+ * Your profile and Settings open the preview's Cave, and Sign in opens the
+ * Library's sign-in screen marked not connected, as in the app.
+ */
 export function DevelopmentHeaderPreview({ source, state }: { source: HeaderConfiguration; state: string }) {
   const [menuMusic, onMenuMusicChange] = useMenuMusic(WORKSHOP_SOUND_PREFERENCES);
-  return <WorkspaceHeaderPreferencesProvider preferences={{ menuMusic, onMenuMusicChange }}>
-    <DevelopmentHeaderContent source={source} state={state} />
-  </WorkspaceHeaderPreferencesProvider>;
+  const [signInOpen, setSignInOpen] = useState(false);
+  const profile = useMemo<WorkspaceHeaderProfile>(() => ({
+    name: fixtureReader?.displayName?.trim() || 'Cultivator',
+    detail: 'Reader',
+    avatarUrl: fixtureReader?.avatarUrl || undefined,
+    onOpenProfile: () => navigateLibraryPreview({ screen: 'profile' }),
+    onOpenSettings: () => navigateLibraryPreview({ screen: 'profile', cave: '/settings' }),
+    signIn: { onSignIn: () => setSignInOpen(true), note: 'Not connected yet' },
+  }), []);
+  return <WorkspaceHeaderProfileProvider profile={profile}>
+    <WorkspaceHeaderPreferencesProvider preferences={{ menuMusic, onMenuMusicChange }}>
+      <DevelopmentHeaderContent source={source} state={state} />
+    </WorkspaceHeaderPreferencesProvider>
+    {signInOpen && createPortal(<LibraryLook className="fixed inset-0 z-[120]" data-testid="library-shell-sign-in">
+      <StoryAuthGate context="spirit-link" onClose={() => setSignInOpen(false)}
+        description="Sign in to keep your stories, Familiars and progress, and return to them from any device."
+        unavailableNote="Accounts are coming. Sign-in is not connected yet, so nothing is sent."
+        reassurance="Your stories stay saved on this device." />
+    </LibraryLook>, document.body)}
+  </WorkspaceHeaderProfileProvider>;
 }
 
 function DevelopmentHeaderContent({ source, state }: { source: HeaderConfiguration; state: string }) {

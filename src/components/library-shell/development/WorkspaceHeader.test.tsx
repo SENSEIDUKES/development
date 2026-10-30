@@ -102,8 +102,9 @@ it('shows the host reader, Sign in, profile and Settings, and opens the same men
     <SidebarCard />
     <WorkspaceHeader title="Home" />
   </WorkspaceHeaderProfileProvider>);
-  // The Portrait wears the reader's initial without a picture.
-  expect(button('Profile and preferences').querySelector('[data-slot="avatar"]')?.textContent).toContain('YC');
+  // Without a picture the Portrait shows the Profile figure, never initials.
+  expect(button('Profile and preferences').querySelector('[data-sen-icon="header-profile"]')).not.toBeNull();
+  expect(button('Profile and preferences').textContent).not.toContain('YC');
   await click(button('Profile and preferences'));
   const menu = () => document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"]');
   expect(menu()!.querySelector('.workspace-profile-name')?.textContent).toBe('Ye Chen');
@@ -128,6 +129,10 @@ it('shows the host reader, Sign in, profile and Settings, and opens the same men
   await click(button('Profile and preferences'));
   await click(entry('Settings'));
   expect(onOpenSettings).toHaveBeenCalledTimes(1);
+  // A picture fills the circle in place of the figure.
+  await render(<WorkspaceHeaderProfileProvider profile={{ name: 'Ye Chen', avatarUrl: '/ye-chen.png' }}><WorkspaceHeader title="Home" /></WorkspaceHeaderProfileProvider>);
+  expect(button('Profile and preferences').querySelector('img.workspace-profile-photo')?.getAttribute('src')).toBe('/ye-chen.png');
+  expect(button('Profile and preferences').querySelector('[data-sen-icon="header-profile"]')).toBeNull();
 });
 
 const TEST_WIDTHS = [320, 375, 390, 430, 1440];

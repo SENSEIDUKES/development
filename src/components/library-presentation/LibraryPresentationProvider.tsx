@@ -1,3 +1,5 @@
+import { LibraryDaoInsightIcon } from '../sen-icons/LibraryDaoInsightIcon';
+import { LibrarySaveIcon } from '../sen-icons/LibraryIcons';
 import { LibraryBackgroundScope } from './LibraryBackgroundScope';
 import type { ReactNode } from 'react';
 import type { BackgroundTint } from './backgroundTint';
@@ -14,7 +16,7 @@ import {
 import { LibraryCharactersIcon as SENCharactersIcon, LibrarySettingsIcon as SENSettingsIcon, LibrarySearchIcon as SENSearchIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 
 function LibraryNarrativeIcon({ name, ...props }: NarrativeIconProps) {
-  const icons = { characters: SENCharactersIcon, settings: SENSettingsIcon, search: SENSearchIcon, generating: SENManifestingIcon };
+  const icons = { characters: SENCharactersIcon, settings: SENSettingsIcon, search: SENSearchIcon, generating: SENManifestingIcon, spark: LibraryDaoInsightIcon, save: LibrarySaveIcon };
   const Icon = icons[name];
   return <Icon {...props} />;
 }

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { createEmptyStorySeedInput, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { MainLibraryHeader, type MainLibraryHeaderAdapter } from '../MainLibraryHeader';
-import { DaoSparksButton } from '../DaoSparksButton';
+import { SparksButton } from '@seihouse/sen/story-seed';
 import { CreatorSpace } from '../../../creator-space/development/CreatorSpace';
 import { OriginWorkspace } from '../../../story-seed/development/workspaces/OriginWorkspace';
 import { OriginSparksContext } from '../../../story-seed/development/workspaces/origin/OriginSparksContext';
@@ -64,24 +64,22 @@ it('regression: Sparks is no longer in the header: Logo, Search and the Profile 
   }
 });
 
-it('sits beside the Creator Space title, and its panel keeps the host\'s clipboard writer', async () => {
+it('sits beside the Creator Space title without a Copy action', async () => {
   await render(<CreatorSpace worlds={{ status: 'ready', items: [] }} energy={{ status: 'loading', snapshot: null }} toolkit={[]}
     onCreate={vi.fn()} onContinueWorld={vi.fn()} onOpenWorld={vi.fn()} onOpenStudio={vi.fn()}
-    sparks={<DaoSparksButton copyText={copyText} />} />);
+    sparks={<SparksButton />} />);
   const title = container.querySelector('#creator-space-title')!;
   expect(title.parentElement!.contains(trigger())).toBe(true);
   await click(trigger());
   await settle();
-  await click(dialog()!.querySelector('[aria-label="Copy spark"]'));
-  expect(copyText).toHaveBeenCalledTimes(1);
-  expect(copyText.mock.calls[0][0]).toContain('Genre:');
+  expect(dialog()!.querySelector('[aria-label="Copy spark"]')).toBeNull();
 });
 
 let current: StorySeedInput;
 function Origin({ initial }: { initial: StorySeedInput }) {
   const [seed, setSeed] = useState(initial);
   current = seed;
-  const sparks = <DaoSparksButton purpose="fill-seed" copyText={copyText}
+  const sparks = <SparksButton purpose="fill-seed"
     host={{ beginSpark: async spark => setSeed(fillOriginFromSpark(spark)) }} />;
   return <OriginSparksContext.Provider value={sparks}><OriginWorkspace seed={seed} updateSeed={setSeed} /></OriginSparksContext.Provider>;
 }

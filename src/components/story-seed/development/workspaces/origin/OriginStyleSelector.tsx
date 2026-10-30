@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import { Check, Sparkle } from 'lucide-react';
 import { STORY_STYLE_OPTIONS, type StoryStyle } from '@seihouse/sen/story-seed';
 import { workspaceCompactLabelClass } from '../SeedSectionFrame';
-import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../../radioGroupKeyboard';
+import { handleRadioGroupKeyDown, radioGroupTabIndex } from '@seihouse/sen/story-seed';
 import { SENStorySeedIcon, type StorySeedIconName } from '../../SENStorySeedIcon';
 
 const TRADITION_TABLET_ACCENT = '#A78BFA';

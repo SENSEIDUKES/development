@@ -8,7 +8,7 @@ import { handleImageLabHttp } from '../server/image-lab/http';
 import { handleProfilePictureHttp, PROFILE_PICTURE_VISITOR_LIMIT } from '../server/profile-picture/http';
 import { handleReaderTranslationHttp } from '../server/reader-translation/http';
 import { handleStorySparkHttp } from '../server/story-spark/http';
-import { STORY_SPARK_VISITOR_LIMIT } from '../server/story-spark/limits';
+import { STORY_SPARK_VISITOR_LIMIT, storySparkUsageHeaders } from '../server/story-spark/limits';
 import { handleFamiliarLiveHttp } from '../server/familiar-live/http';
 import { FAMILIAR_LIVE_VISITOR_LIMIT } from '../server/familiar-live/limits';
 import { handleCodexVoiceQuoteHttp } from '../server/audio/codexVoiceQuoteHttp';
@@ -144,6 +144,7 @@ export const generationApis = (
             error: admission.error ?? 'This Development action is unavailable.',
           }, {
             'Cache-Control': 'no-store',
+            ...(pathname === '/api/story-spark' ? storySparkUsageHeaders(request, guardStorySpark, developmentAccessToken(environment)) : {}),
             ...(admission.retryAfterSeconds ? { 'Retry-After': String(admission.retryAfterSeconds) } : {}),
           });
           return;
@@ -217,7 +218,10 @@ export const generationApis = (
             { method: request.method, body, headers: request.headers },
             { environment, onError: error => console.error('[story-spark]', error) },
           );
-          writeJson(response, result.status, result.body, result.headers);
+          writeJson(response, result.status, result.body, {
+            ...result.headers,
+            ...storySparkUsageHeaders(request, guardStorySpark, developmentAccessToken(environment)),
+          });
           return;
         }
         if (pathname === '/api/familiar-live') {

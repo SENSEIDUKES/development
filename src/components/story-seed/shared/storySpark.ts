@@ -32,6 +32,8 @@ export const STORY_SPARK_IDEA_MAX_LENGTH = 1_000;
 export const STORY_SPARK_AVOID_LIMIT = 6;
 
 interface StorySparkRequestBase {
+  /** Omitted when the writer has no preference for the protagonist's gender. */
+  protagonistGender?: 'male' | 'female';
   /**
    * The writer's own beginning of a premise, not yet worded into one. When
    * present the spark shapes it into a real premise in the genre and keeps its
@@ -96,7 +98,12 @@ export const parseStorySparkRequest = (value: unknown): StorySparkRequest => {
     ? value.avoid.map(item => clean(item, STORY_SPARK_PREMISE_MAX_LENGTH)).filter(Boolean).slice(0, STORY_SPARK_AVOID_LIMIT)
     : [];
   const idea = clean(value.idea, STORY_SPARK_IDEA_MAX_LENGTH);
-  const extra = {
+  const protagonistGender = value.protagonistGender;
+  if (protagonistGender !== undefined && protagonistGender !== 'male' && protagonistGender !== 'female') {
+    throw new Error('Choose Male, Female, or Any for the protagonist.');
+  }
+  const extra: StorySparkRequestBase = {
+    ...(protagonistGender ? { protagonistGender } : {}),
     ...(idea ? { idea } : {}),
     ...(avoid.length ? { avoid } : {}),
     ...(value.fateSurvival === true ? { fateSurvival: true as const } : {}),

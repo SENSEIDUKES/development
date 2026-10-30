@@ -5,9 +5,10 @@ import { MotionGlobalConfig } from 'motion/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { LibraryDesktopNavigationProvider, LibraryFooter, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader, WorkspaceShell } from '@seihouse/library/shell';
+
 import { MainLibraryFooter } from './MainLibraryFooter';
 import { MainLibraryNavigation } from './MainLibraryNavigation';
-import { DaoSparksButton } from './DaoSparksButton';
+import { SparksButton } from '@seihouse/sen/story-seed';
 import type { MainLibraryHeaderAdapter } from './MainLibraryHeader';
 
 vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
@@ -217,7 +218,7 @@ it('keeps a model-written spark after it settles', async () => {
   MotionGlobalConfig.skipAnimations = true;
   try {
     const requestSpark = vi.fn(async () => ({ premise: 'A divined premise from the oracle.', genre: 'Xianxia', title: 'The Oracle', style: 'chinese' as const, survival: false, inventedGenre: false, voice: 'Test Oracle' }));
-    await render(<DaoSparksButton copyText={adapter().copyText} host={{ checkSparks: async () => true, requestSpark }} />);
+    await render(<SparksButton host={{ checkSparks: async () => true, requestSpark }} />);
     await settle();
     await click(byLabel('Sparks: story ideas'));
     await settle();
@@ -225,7 +226,7 @@ it('keeps a model-written spark after it settles', async () => {
     await settle(1300);
     const dialog = document.querySelector('[role="dialog"]')!;
     expect(dialog.textContent).toContain('A divined premise from the oracle.');
-    expect(dialog.textContent).toContain('Test Oracle');
+    expect(dialog.textContent).not.toContain('Test Oracle');
   } finally { MotionGlobalConfig.skipAnimations = false; }
 });
 
@@ -233,7 +234,7 @@ it('stops every Dao timer and request when the panel unmounts mid-seek', async (
   const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
   let signal: AbortSignal | undefined;
   const requestSpark = vi.fn((_request: unknown, abort?: AbortSignal) => { signal = abort; return new Promise<never>(() => {}); });
-  await render(<DaoSparksButton copyText={adapter().copyText} host={{ checkSparks: async () => true, requestSpark }} />);
+  await render(<SparksButton host={{ checkSparks: async () => true, requestSpark }} />);
   await settle();
   await click(byLabel('Sparks: story ideas'));
   await settle();

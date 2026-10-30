@@ -1,5 +1,6 @@
-import type { StoryStyle, StorySpark } from '@seihouse/sen/story-seed';
-import { GENRE_PRESETS } from '../../../story-seed/development/constants';
+import type { StoryStyle } from '../../story-seed/shared/storyStyle';
+import type { StorySpark } from '../../story-seed/shared/storySpark';
+import { GENRE_PRESETS } from '../../story-seed/shared/storyGenres';
 
 /**
  * Sparks' own sparks: what the elder mutters when no model is connected,

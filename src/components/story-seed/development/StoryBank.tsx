@@ -1,5 +1,5 @@
 import { FateSurvivalIcon, type FateSurvivalIconProps } from './FateSurvivalIcon';
-import { GenreIcon } from './GenreIcon';
+import { GenreIcon } from '@seihouse/sen/story-seed';
 import type { ComponentType, ReactNode } from 'react';
 import {
   AlertTriangle,

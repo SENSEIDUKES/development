@@ -1,7 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { LibraryCollectionStrip } from './LibraryCollectionStrip';
-import { MainLibraryAdapterContext, type DaoSparkHost, type MainLibraryAdapter } from '@seihouse/library/shell';
+import { MainLibraryAdapterContext, type MainLibraryAdapter } from '@seihouse/library/shell';
+import { type SparkHost } from '@seihouse/sen/story-seed';
 import { storyStyleForGenre } from '@seihouse/sen/story-seed';
 import { MainLibraryNavigation } from '@seihouse/library/shell';
 import { MainLibraryFooter } from '@seihouse/library/shell';
@@ -90,7 +91,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
     };
   }, [state]);
   // Sparks' Story Sparks, local to the Workshop: no server, no Story Bank.
-  const daoSparks = useMemo<DaoSparkHost>(() => ({
+  const daoSparks = useMemo<SparkHost>(() => ({
     checkSparks: async () => state !== 'dao-local',
     requestSpark: async request => {
       if (state === 'dao-error') throw new Error('The Workshop oracle is silent in this state.');

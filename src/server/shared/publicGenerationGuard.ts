@@ -101,7 +101,7 @@ export const createPublicGenerationGuard = (
     if (oldestKey !== undefined) windows.delete(oldestKey);
   };
 
-  return (request: RequestWithHeaders): PublicGenerationGuardResult => {
+  const admit = (request: RequestWithHeaders): PublicGenerationGuardResult => {
     if (!isSameOriginBrowserRequest(request)) {
       return {
         allowed: false,
@@ -137,4 +137,16 @@ export const createPublicGenerationGuard = (
     windows.set(key, active);
     return { allowed: true };
   };
+  /** Read the same window without consuming a request or creating a new window. */
+  const usage = (request: RequestWithHeaders) => {
+    const current = now();
+    reapExpired(current);
+    const active = windows.get(`${limit.key}:${visitorKey(request)}`);
+    return {
+      limit: limit.limit,
+      remaining: Math.max(0, limit.limit - (active?.count ?? 0)),
+      resetsAt: active ? active.startsAt + limit.windowMs : null,
+    };
+  };
+  return Object.assign(admit, { usage });
 };

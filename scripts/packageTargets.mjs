@@ -30,7 +30,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/sen/manifestations': ['ManifestationReveal'],
       '@seihouse/sen/motion-picture': ['MotionPicture'],
       '@seihouse/sen/audio': ['parseAudioCues', 'createMediaCatalog', 'placeSoundCues', 'NarrativeAudioProvider', 'soundtrackVocabulary'],
-      '@seihouse/sen/story-seed': ['StoryFoundationEditor', 'createEmptyStorySeedInput', 'parseStorySeedJson', 'describeStoryLengthProblem'],
+      '@seihouse/sen/story-seed': ['SparksButton', 'Sparks', 'OriginGenrePicker', 'StoryFoundationEditor', 'createEmptyStorySeedInput', 'parseStorySeedJson', 'describeStoryLengthProblem'],
       '@seihouse/sen/generation': ['readMarks', 'TAG_WORDS'],
       '@seihouse/sen/harness-generation': ['HarnessGenerationController', 'createHarnessSenStory', 'HarnessReaderSession', 'SEN_SPEAKERS_INSTRUCTIONS', 'SEN_HOLDINGS_INSTRUCTIONS', 'SEN_SOUND_CUES_INSTRUCTIONS', 'SEN_SOUNDTRACK_INSTRUCTIONS', 'chapterSoundtrack', 'HARNESS_TAG_RULES', 'deriveHoldings', 'holdingsSection', 'deriveStoryCodex', 'StoryCodex', 'harnessFailedWrite', 'chapterTitleText', 'chapterRewriteGap', 'withoutLatestChapter', 'planHoldingsFix', 'applyHoldingsFixes', 'CHAPTER_REWRITE_NOTE_LIMIT'],
       '@seihouse/sen/arc-goals': ['ARC_LENGTH', 'STORY_LENGTH_ARCS'],
@@ -47,7 +47,7 @@ export const PACKAGE_TARGETS = {
       const script: ReadAloudScript = { version: 1, lines: [] };
       declare const speaker: SpeakerAttachment;
       void picks; void script; void speaker.payload.protagonist;
-      import type { StorySeedInput, StorySeedRepository } from '@seihouse/sen/story-seed';
+      import type { SparkHost, StorySparkUsage, StorySeedInput, StorySeedRepository } from '@seihouse/sen/story-seed';
       import type { HarnessStory, HarnessGenerationModelAdapter, CodexEntry, HoldingChangeAttachment, HoldingsSection, HarnessHoldingsFixRecord, HarnessHoldingsFixerPolicy, HarnessChapterRewrite } from '@seihouse/sen/harness-generation';
       declare const change: HoldingChangeAttachment;
       const fixerPolicy: HarnessHoldingsFixerPolicy = 'records-only';
@@ -63,6 +63,9 @@ export const PACKAGE_TARGETS = {
       declare const account: PublisherAccount;
       declare const repository: StorySeedRepository;
       declare const customSeed: StorySeedInput;
+      const sparkHost: SparkHost = { checkSparks: async () => ({ configured: true, usage: { unlimited: true } }), requestSpark: async (request, signal, onUsage) => { onUsage?.({ unlimited: true }); void signal; return { premise: 'A flower awakens.', genre: request.genre ?? 'Flower Cultivation', title: 'Flower', style: 'chinese', survival: false, inventedGenre: false }; } };
+      const sparkUsage: StorySparkUsage = { unlimited: false, limit: 20, remaining: 19, resetsAt: null };
+      void sparkHost; void sparkUsage;
       void repository.create(account.publisherUserId, customSeed, undefined, 'en');
       declare const block: NonNullable<ChapterContent['blocks']>[number];
       const readerBlock: NonNullable<ReaderChapter['blocks']>[number] = block;

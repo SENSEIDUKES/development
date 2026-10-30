@@ -5,7 +5,7 @@ import {
   ownerTokenAdmission,
   type PublicGenerationGuardResult,
 } from '../shared/publicGenerationGuard';
-import { STORY_SPARK_VISITOR_LIMIT } from './limits';
+import { STORY_SPARK_VISITOR_LIMIT, storySparkUsageHeaders } from './limits';
 
 export const maxDuration = 60;
 
@@ -41,5 +41,6 @@ export default async function storySparkHandler(request: RequestLike, response: 
       },
     };
   for (const [name, value] of Object.entries(result.headers ?? {})) response.setHeader(name, value);
+  for (const [name, value] of Object.entries(storySparkUsageHeaders(request, guardStorySpark, developmentAccessToken(process.env)))) response.setHeader(name, value);
   response.status(result.status).json(result.body);
 }

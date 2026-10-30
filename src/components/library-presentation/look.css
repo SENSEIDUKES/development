@@ -18,7 +18,7 @@
 }
 /* Keep the artwork behind the content; the plain footer shares the chrome tint. */
 .library-look .workspace-shell { background: transparent; }
-.library-look :is([data-home-panel], .world-card-banner, [data-home-events], .workspace-profile-panel) {
+.library-look :is([data-home-panel], .world-card-banner, [data-home-events]) {
   background: var(--library-material-card-fill);
   border: 1px solid var(--reader-glass-edge);
   box-shadow: var(--library-material-card-shadow);

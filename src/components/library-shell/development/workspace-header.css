@@ -148,61 +148,62 @@
    Profile figure the bottom navigation uses. */
 .workspace-profile-photo { display: block; width: 100%; height: 100%; object-fit: cover; }
 .workspace-profile-figure { color: #fff; }
-.workspace-profile-identity .workspace-profile-badge {
-  display: inline-flex; align-items: center; justify-content: center; flex: none;
-  width: 48px; height: 48px; border-radius: 9999px; overflow: hidden;
-  background: rgba(0, 0, 0, 0.95); border: 1px solid rgba(214, 189, 135, 0.4);
-}
+/* The Portrait's menu: one quiet glass sheet of plain rows (icon, label,
+   value), grouped by hairlines, in the interface's own sans type. */
 .workspace-profile-panel {
   position: fixed; z-index: 160;
-  width: 272px; max-width: calc(100vw - 32px); overflow-y: auto;
-  border-radius: 0.85rem;
-  background: var(--color-sen-void);
-  border: 1px solid color-mix(in srgb, var(--color-sen-portal) 24%, transparent);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72);
+  width: 296px; max-width: calc(100vw - 32px); overflow-y: auto;
+  border-radius: 20px;
+  background: rgba(10, 12, 22, 0.97);
+  border: 1px solid rgba(214, 189, 135, 0.28);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 32px rgba(4, 172, 255, 0.12);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  backdrop-filter: blur(28px) saturate(140%);
   color: var(--color-sen-signal);
   font-family: var(--font-sans);
 }
-.workspace-profile-panel :focus-visible { outline: 2px solid var(--color-sen-portal); outline-offset: 2px; }
-.workspace-profile-identity { display: flex; align-items: center; gap: 12px; padding: 6px 4px 10px; }
-.workspace-profile-identity-text { display: flex; flex-direction: column; min-width: 0; }
-.workspace-profile-name { font-family: var(--font-display, var(--font-serif)); font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.workspace-profile-detail { font-size: 12px; color: var(--color-neutral-400); }
-.workspace-profile-actions,
-.workspace-profile-footer {
+.workspace-profile-sheet { display: flex; flex-direction: column; padding: 6px; }
+.workspace-profile-panel :focus-visible { outline: 2px solid var(--color-sen-portal); outline-offset: -2px; }
+.workspace-profile-identity { display: flex; align-items: center; gap: 12px; padding: 10px 10px 12px; }
+.workspace-profile-identity .workspace-profile-badge {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 44px; height: 44px; border-radius: 9999px; overflow: hidden;
+  background: #000; border: 1px solid rgba(214, 189, 135, 0.4); color: #fff;
+}
+.workspace-profile-identity-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.workspace-profile-name { font-size: 16px; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-profile-detail { font-size: 13px; line-height: 1.25; color: var(--color-neutral-400); }
+.workspace-profile-group {
   display: flex; flex-direction: column;
-  padding-block: 6px; border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-block: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
-.workspace-profile-actions button,
-.workspace-profile-footer button {
-  width: 100%; min-height: 44px; justify-content: flex-start; text-align: start; gap: 10px; font-size: 13px;
+.workspace-profile-row {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; min-height: 44px; padding: 0 10px;
+  border: 0; border-radius: 12px; background: transparent;
+  color: inherit; font: inherit; font-size: 15px; font-weight: 450; letter-spacing: normal; text-transform: none; text-align: start;
 }
-.workspace-profile-note {
-  margin-inline-start: auto; padding: 2px 8px; border-radius: 9999px;
-  border: 1px solid color-mix(in srgb, var(--color-sen-gold-accent) 40%, transparent);
-  color: var(--color-sen-gold-accent); font-size: 10px; letter-spacing: 0.04em; white-space: nowrap;
-}
-.workspace-profile-section {
-  display: flex; flex-direction: column; gap: 6px;
-  padding: 10px 4px 8px; border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-.workspace-profile-identity + .workspace-profile-section { border-top: 0; }
-.workspace-profile-panel > :first-child > .workspace-profile-section:first-child { border-top: 0; }
-.workspace-profile-label {
-  font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-neutral-400);
-}
-.workspace-profile-select {
-  width: 100%; min-height: 44px; padding: 0 10px; border-radius: 0.65rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid color-mix(in srgb, var(--color-sen-portal) 28%, transparent);
-  color: var(--color-sen-signal); font-family: var(--font-sans); font-size: 13px; cursor: pointer;
+button.workspace-profile-row { cursor: pointer; transition: background-color 150ms ease; }
+button.workspace-profile-row:hover { background: rgba(255, 255, 255, 0.06); }
+button.workspace-profile-row:active { background: rgba(255, 255, 255, 0.1); }
+button.workspace-profile-row:disabled { opacity: 0.5; cursor: default; }
+.workspace-profile-row-icon { flex: none; width: 18px; height: 18px; color: var(--color-neutral-400); }
+.workspace-profile-row-label { flex: 1 1 auto; min-width: 4.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-profile-note { flex: none; font-size: 12px; color: var(--color-neutral-500, #8a8f9c); }
+.workspace-profile-panel .workspace-profile-select {
+  flex: 0 1 auto; width: auto; max-width: 8.5rem; min-height: 32px; padding: 0 26px 0 10px;
+  border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23aab' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 9px center;
+  -webkit-appearance: none; appearance: none;
+  color: var(--color-sen-signal); font: inherit; font-size: 13px; cursor: pointer;
+  text-overflow: ellipsis;
 }
 .workspace-profile-select option { background: #0b0e14; color: var(--color-sen-signal); }
-.workspace-profile-music { margin-top: 4px; padding: 6px 4px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
 .workspace-profile-music-switch {
-  width: 100%; min-height: 44px !important; color: var(--color-sen-signal); font-family: var(--font-sans); font-size: 13px;
+  flex: 1 1 auto; min-height: 44px !important; flex-direction: row-reverse; justify-content: space-between;
+  color: var(--color-sen-signal); font-size: 15px;
 }
-.workspace-profile-panel .workspace-header-utility-icon { flex: none; width: 18px; height: 18px; }
 
 .workspace-header-command-area, .workspace-secondary-actions { flex: none; }
 .workspace-primary-action { flex: none; }

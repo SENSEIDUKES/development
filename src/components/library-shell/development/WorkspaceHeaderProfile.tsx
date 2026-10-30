@@ -2,9 +2,8 @@ import { Component, createContext, lazy, Suspense, useContext, useEffect, useLay
 import { createPortal } from 'react-dom';
 import { SEISwitch } from '@seihouse/ui';
 import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
-import { NarrativeButton, NarrativePanel } from '@seihouse/sen/presentation';
 import { LibraryHelpIcon, LibraryProfileIcon, LibrarySettingsIcon } from '@seihouse/library-ui';
-import { LogIn } from 'lucide-react';
+import { Languages, LogIn, Music } from 'lucide-react';
 import { getActiveInterfaceLanguage, setFallbackInterfaceLanguage } from '../../../library/language/interfaceTranslation';
 import { WorkspaceSheet } from './WorkspaceSheet';
 import { useHeaderDisclosure, type HeaderAction } from './WorkspaceHeaderActions';
@@ -134,53 +133,55 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
     </button>
     {disclosure.open && layer && createPortal(<div id={disclosure.id} ref={disclosure.panelRef}
       className="workspace-profile-panel" data-testid="workspace-profile-menu" style={position}>
-      <NarrativePanel padding="sm" aria-label={label}>
+      <div role="group" aria-label={label} className="workspace-profile-sheet">
         {profile && <div className="workspace-profile-identity">
-          <span className="workspace-profile-badge" aria-hidden="true"><ProfilePicture src={profile.avatarUrl} size={24} /></span>
+          <span className="workspace-profile-badge" aria-hidden="true"><ProfilePicture src={profile.avatarUrl} size={22} /></span>
           <span className="workspace-profile-identity-text">
             <span className="workspace-profile-name" data-no-interface-translate="">{profile.name}</span>
             {profile.detail && <span className="workspace-profile-detail">{profile.detail}</span>}
           </span>
         </div>}
-        {profile && (profile.signIn || profile.onOpenProfile || profile.onOpenSettings) && <div className="workspace-profile-actions">
-          {profile.signIn && <NarrativeButton variant="ghost" onClick={choose(profile.signIn.onSignIn)}>
-            <LogIn aria-hidden="true" size={18} className="workspace-header-utility-icon" />
-            <span>Sign in</span>
+        {profile && (profile.signIn || profile.onOpenProfile || profile.onOpenSettings) && <div className="workspace-profile-group">
+          {profile.signIn && <button type="button" className="workspace-profile-row" onClick={choose(profile.signIn.onSignIn)}>
+            <LogIn aria-hidden="true" size={18} className="workspace-profile-row-icon" />
+            <span className="workspace-profile-row-label">Sign in</span>
             {profile.signIn.note && <small className="workspace-profile-note">{profile.signIn.note}</small>}
-          </NarrativeButton>}
-          {profile.onOpenProfile && <NarrativeButton variant="ghost" onClick={choose(profile.onOpenProfile)}>
-            <LibraryProfileIcon aria-hidden="true" size={18} className="workspace-header-utility-icon" />
-            <span>Your profile</span>
-          </NarrativeButton>}
-          {profile.onOpenSettings && <NarrativeButton variant="ghost" onClick={choose(profile.onOpenSettings)}>
-            <LibrarySettingsIcon aria-hidden="true" size={18} className="workspace-header-utility-icon" />
-            <span>Settings</span>
-          </NarrativeButton>}
+          </button>}
+          {profile.onOpenProfile && <button type="button" className="workspace-profile-row" onClick={choose(profile.onOpenProfile)}>
+            <LibraryProfileIcon aria-hidden="true" size={18} className="workspace-profile-row-icon" />
+            <span className="workspace-profile-row-label">Your profile</span>
+          </button>}
+          {profile.onOpenSettings && <button type="button" className="workspace-profile-row" onClick={choose(profile.onOpenSettings)}>
+            <LibrarySettingsIcon aria-hidden="true" size={18} className="workspace-profile-row-icon" />
+            <span className="workspace-profile-row-label">Settings</span>
+          </button>}
         </div>}
-        <div className="workspace-profile-section">
-          <label htmlFor="header-preferred-language" className="workspace-profile-label">
-            Preferred Language
-          </label>
-          <select id="header-preferred-language" name="interfaceLanguage" className="workspace-profile-select"
-            value={selectedLanguage} onChange={event => handleLanguageChange(event.target.value as SenLanguageCode)}>
-            {SEN_LANGUAGES.map(option => <option key={option.code} value={option.code}>{option.label}</option>)}
-          </select>
+        <div className="workspace-profile-group">
+          <div className="workspace-profile-row workspace-profile-setting">
+            <Languages aria-hidden="true" size={18} className="workspace-profile-row-icon" />
+            <label htmlFor="header-preferred-language" className="workspace-profile-row-label">Language</label>
+            <select id="header-preferred-language" name="interfaceLanguage" className="workspace-profile-select"
+              value={selectedLanguage} onChange={event => handleLanguageChange(event.target.value as SenLanguageCode)}>
+              {SEN_LANGUAGES.map(option => <option key={option.code} value={option.code}>{option.label}</option>)}
+            </select>
+          </div>
+          {preferences?.onMenuMusicChange && <div className="workspace-profile-row workspace-profile-setting">
+            <Music aria-hidden="true" size={18} className="workspace-profile-row-icon" />
+            <SEISwitch isSelected={preferences.menuMusic ?? true} onChange={preferences.onMenuMusicChange}
+              size="compact" className="workspace-profile-music-switch">
+              Menu music
+            </SEISwitch>
+          </div>}
         </div>
-        {preferences?.onMenuMusicChange && <div className="workspace-profile-music">
-          <SEISwitch isSelected={preferences.menuMusic ?? true} onChange={preferences.onMenuMusicChange}
-            size="compact" className="workspace-profile-music-switch">
-            Menu music
-          </SEISwitch>
-        </div>}
-        <div className="workspace-profile-footer">
-          <NarrativeButton variant="ghost" aria-label="Help" title="Help" aria-haspopup="dialog"
+        <div className="workspace-profile-group">
+          <button type="button" className="workspace-profile-row" aria-label="Help" title="Help" aria-haspopup="dialog"
             aria-expanded={help ? help.expanded : experience === 'help' || experience === 'help-error'}
             disabled={help?.disabled} onPointerEnter={help?.onIntent} onFocus={help?.onIntent} onClick={openHelp}>
-            <LibraryHelpIcon aria-hidden="true" size={18} className="workspace-header-utility-icon" />
-            <span>Help</span>
-          </NarrativeButton>
+            <LibraryHelpIcon aria-hidden="true" size={18} className="workspace-profile-row-icon" />
+            <span className="workspace-profile-row-label">Help</span>
+          </button>
         </div>
-      </NarrativePanel>
+      </div>
     </div>, layer)}
     {experience === 'help' && createPortal(<HelpBoundary onError={() => { setLibraryHelpMenu(() => lazy(loadHelpMenu)); setExperience('help-error'); }}>
       <Suspense fallback={<span role="status">Loading Help…</span>}>

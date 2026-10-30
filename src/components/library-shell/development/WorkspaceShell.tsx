@@ -1,4 +1,4 @@
-import { type ReactNode, type Ref } from 'react';
+import { useLayoutEffect, useRef, type ReactNode, type Ref } from 'react';
 import { SEIAppShell } from '@seihouse/ui';
 import { useLibraryPathwaysRail } from './LibraryNavigation';
 import './workspace-shell.css';
@@ -48,6 +48,22 @@ export function WorkspaceShell({
   mainClassName = '', mainId, mainAriaLabel, mainRef,
 }: WorkspaceShellProps) {
   const rail = useLibraryPathwaysRail();
+  // The header floats over the page (as the bottom navigation does), so the
+  // page scrolls beneath it. Its height, kept current, is the space the page
+  // and the rail leave at their top and where pinned page bars stick
+  // (`--workspace-header-height` on the shell).
+  const headerProbe = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const probe = headerProbe.current;
+    const shell = probe?.closest<HTMLElement>('[data-slot="app-shell"]');
+    const slot = probe?.closest<HTMLElement>('[data-slot="app-shell-header"]');
+    if (!shell || !slot) return;
+    const measure = () => shell.style.setProperty('--workspace-header-height', `${Math.ceil(slot.getBoundingClientRect().height)}px`);
+    measure();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    observer?.observe(slot);
+    return () => observer?.disconnect();
+  }, []);
   // The canonical package owns the gesture; the Library owns its preference.
   const pathways = rail && sidebar ? {
     sidebarBehavior: 'double-tap' as const, sidebarMode: rail.mode, onSidebarModeChange: rail.setMode,
@@ -55,7 +71,7 @@ export function WorkspaceShell({
   } : {};
   return <SEIAppShell
     {...pathways}
-    header={header}
+    header={<div ref={headerProbe} className="workspace-shell-header">{header}</div>}
     sidebar={sidebar}
     sidebarWidth={WORKSPACE_SIDEBAR_WIDTH}
     sidebarBreakpoint="lg"

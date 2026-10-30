@@ -255,3 +255,27 @@ body:has(.library-look) :is(.familiar-helper-place, .familiar-helper-quiet) { co
 @media (forced-colors: active) { .library-look { background: Canvas; --library-look-blur: none; } }
 @media (prefers-reduced-transparency: reduce) { .library-look { --library-look-blur: none; } }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .library-look { --library-look-blur: none; } }
+
+/* Sparks opens inside its page's appearance scope. Its frame is an outer panel,
+   the premise a nested card, and actions use the existing Obsidian/Spectrum faces. */
+.library-look .dao-spark-panel {
+  --library-material-violet-opacity: inherit;
+  --library-violet-alpha-scale: inherit;
+}
+.library-look .dao-spark-scroll {
+  -webkit-backdrop-filter: var(--library-look-blur);
+  backdrop-filter: var(--library-look-blur);
+}
+
+/* Library skin for SEN Sparks. Behavior and its default face ship in SEN. */
+.library-look {
+  --spark-text: var(--library-material-text);
+  --spark-muted: var(--library-material-muted);
+  --spark-accent: var(--library-accent, var(--color-gold-accent));
+  --spark-edge: var(--reader-glass-edge);
+  --spark-control: var(--library-material-control-fill);
+  --spark-control-shadow: var(--library-material-control-shadow);
+  --spark-panel: var(--library-material-card-fill);
+  --spark-premise: var(--library-material-shell-fill);
+  --spark-shell: var(--library-material-shell-fill);
+}

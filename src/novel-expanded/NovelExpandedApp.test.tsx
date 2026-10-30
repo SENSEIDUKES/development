@@ -28,6 +28,7 @@ import { createPack } from 'seihouse-productions-package';
 import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
 import { MENU_MUSIC_PIECES } from '../host/media/menuMusicCatalog';
 import { LIBRARY_SIDEBAR_MODE_KEY, writeMenuMusic } from '@seihouse/library/shell';
+
 import { READER_MUSIC_MOOD } from '../components/harness-generation/development/useReaderSoundtrack';
 import { installFakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 import { NovelExpandedApp } from './NovelExpandedApp';
@@ -91,7 +92,7 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
     deviceMedia: new DeviceMediaUrls(),
     requestWorldBlueprint: vi.fn(),
     requestStorySpark: vi.fn(),
-    storySparksConfigured: vi.fn(async () => false),
+    getStorySparkStatus: vi.fn(async () => ({ configured: false })),
     accessToken: { current: undefined },
     profile: createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID }),
     economy: createPracticeEconomy({ uid: NOVEL_EXPANDED_READER_ID }).clients,
@@ -1256,7 +1257,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
 
   it('Sparks in the Creator Space: a spark kept goes to the Story Bank, and one begun opens in Create with its whole Origin', async () => {
     const requestStorySpark = vi.fn(async () => ({ premise: 'A sword writes letters to its first owner.', genre: 'Xianxia', title: 'Letters From the Blade', style: 'chinese' as const, survival: false, inventedGenre: false, aside: 'Hm.', voice: 'Elder' }));
-    const services = appServices(scriptedWriter().writer, { requestStorySpark, storySparksConfigured: vi.fn(async () => true) });
+    const services = appServices(scriptedWriter().writer, { requestStorySpark, getStorySparkStatus: vi.fn(async () => ({ configured: true })) });
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
     // jsdom never finishes exit animations, which would hold the previous spark.
     MotionGlobalConfig.skipAnimations = true;
@@ -1270,15 +1271,15 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(document.querySelector('header .dao-sparks-trigger')).toBeNull();
     await click(hub.querySelector('button[aria-label="Sparks: story ideas"]'), 'Sparks', 20);
     const panel = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Sparks"]')!;
-    await click(panel().querySelector('[role="switch"][aria-label="Fate Survival"]'), 'Fate Survival', 20);
+    expect(panel().querySelector('[role="switch"][aria-label="Fate Survival"]')).toBeNull();
     await click([...panel().querySelectorAll('button')].find(button => /Seek a spark/.test(button.textContent ?? '')), 'Seek a spark', 1100);
     expect(requestStorySpark).toHaveBeenCalledTimes(1);
-    expect(requestStorySpark).toHaveBeenCalledWith(expect.objectContaining({ fateSurvival: true }), undefined, expect.any(AbortSignal));
+    expect(requestStorySpark).toHaveBeenCalledWith(expect.not.objectContaining({ fateSurvival: true }), undefined, expect.any(AbortSignal), expect.any(Function));
     expect(panel().textContent).toContain('A sword writes letters to its first owner.');
     await click(panel().querySelector('[aria-label="Keep in Story Bank"]'), 'Keep', 20);
     expect((await services.storySeeds.list(NOVEL_EXPANDED_READER_ID)).map(record => [record.seed.story.required.premise, record.seed.story.required.genre, record.originalLanguage]))
       .toEqual([['A sword writes letters to its first owner.', 'Xianxia', 'ja']]);
-    await click(buttonByText('Begin this story', panel()), 'Begin this story', 200);
+    await click(buttonByText('Use this spark', panel()), 'Use this spark', 200);
     const saved = await services.storySeeds.list(NOVEL_EXPANDED_READER_ID);
     expect(saved).toHaveLength(2);
     expect(address()).toBe(`/app/?page=create&seed=${saved[0].id}`);
@@ -1287,12 +1288,12 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(document.querySelector<HTMLInputElement>('#origin-story-title-input')?.value).toBe('Letters From the Blade');
     expect(saved[0].seed.story.required.style).toBe('chinese');
     expect(saved[0].seed.story.required.storyTags.length).toBeGreaterThan(0);
-    expect(saved[0].seed.story.optional).toMatchObject({ fateSurvival: { enabled: true, pressure: 'immortal' }, startedFrom: 'story-spark' });
+    expect(saved[0].seed.story.optional).toMatchObject({ fateSurvival: { enabled: false, pressure: 'immortal' }, startedFrom: 'story-spark' });
   });
 
   it('Sparks inside an open Story Seed fills that seed\'s Origin instead of starting a new one', async () => {
     const requestStorySpark = vi.fn(async () => ({ premise: 'A lantern keeper hears the dead bargain.', genre: 'Xianxia', title: 'The Lantern Debt', style: 'chinese' as const, survival: false, inventedGenre: false }));
-    const services = appServices(scriptedWriter().writer, { requestStorySpark, storySparksConfigured: vi.fn(async () => true) });
+    const services = appServices(scriptedWriter().writer, { requestStorySpark, getStorySparkStatus: vi.fn(async () => ({ configured: true })) });
     MotionGlobalConfig.skipAnimations = true;
     onTestFinished(() => { MotionGlobalConfig.skipAnimations = false; });
     await render(services, '/app/?page=create&seed=new');

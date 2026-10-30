@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { DaoSparkHost } from '@seihouse/library/shell';
+import type { SparkHost } from '@seihouse/sen/story-seed';
 import type { UserProfile } from '@seihouse/library/profile';
 import { storySeedInputFromSpark, type StorySpark } from '@seihouse/sen/story-seed';
 import type { Navigate } from './routes';
@@ -15,10 +15,10 @@ import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
  * the app hands Sparks the same writer, and a chosen spark fills that seed's Origin.
  */
 export function useDaoSparks(
-  services: Pick<NovelExpandedServices, 'requestStorySpark' | 'storySparksConfigured' | 'storySeeds' | 'accessToken'>,
+  services: Pick<NovelExpandedServices, 'requestStorySpark' | 'getStorySparkStatus' | 'storySeeds' | 'accessToken'>,
   profile: Pick<UserProfile, 'defaultReadingLanguage' | 'defaultChapterWritingStyle'>,
   navigate: Navigate,
-): DaoSparkHost {
+): SparkHost {
   const { defaultReadingLanguage, defaultChapterWritingStyle } = profile;
   return useMemo(() => {
     const plant = (spark: StorySpark) => {
@@ -27,8 +27,8 @@ export function useDaoSparks(
       return services.storySeeds.create(NOVEL_EXPANDED_READER_ID, seed, undefined, defaultReadingLanguage);
     };
     return {
-      checkSparks: () => services.storySparksConfigured(),
-      requestSpark: (request, signal) => services.requestStorySpark(request, services.accessToken.current, signal),
+      checkSparks: () => services.getStorySparkStatus(services.accessToken.current),
+      requestSpark: (request, signal, onUsage) => services.requestStorySpark(request, services.accessToken.current, signal, onUsage),
       keepSpark: async spark => { await plant(spark); },
       beginSpark: async spark => {
         const record = await plant(spark);

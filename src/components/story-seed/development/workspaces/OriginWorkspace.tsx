@@ -13,7 +13,7 @@ import {
 } from '../seedState';
 import { NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { SeedSectionFrame } from './SeedSectionFrame';
-import { OriginGenrePicker } from './origin/OriginGenrePicker';
+import { OriginGenrePicker } from '@seihouse/sen/story-seed';
 import { OriginPremiseAndTags } from './origin/OriginPremiseAndTags';
 import { OriginFateControls } from './origin/OriginFateControls';
 import { OriginStyleSelector } from './origin/OriginStyleSelector';

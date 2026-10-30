@@ -3,6 +3,16 @@ import { createEmptyStorySeedInput, normalizeStorySeedInput } from './storySeedS
 import { applyStorySparkToSeed, parseStorySpark, parseStorySparkRequest, storySeedInputFromSpark, storySparkTags, STORY_SPARK_AVOID_LIMIT, STORY_SPARK_PREMISE_MAX_LENGTH } from './storySpark';
 
 describe('Story Sparks', () => {
+  it('accepts a protagonist preference in either genre mode and rejects invalid values', () => {
+    expect(parseStorySparkRequest({ genre: 'Xianxia', protagonistGender: 'female' }))
+      .toEqual({ genre: 'Xianxia', protagonistGender: 'female' });
+    expect(parseStorySparkRequest({ inventGenre: true, protagonistGender: 'male' }))
+      .toEqual({ inventGenre: true, protagonistGender: 'male' });
+    expect(parseStorySparkRequest({ genre: 'Xianxia' })).not.toHaveProperty('protagonistGender');
+    for (const protagonistGender of ['anything', '', null, {}, 1]) {
+      expect(() => parseStorySparkRequest({ genre: 'Xianxia', protagonistGender })).toThrow(/protagonist/);
+    }
+  });
   it('reads a request for a genre, an idea and recent premises, and refuses one with no genre', () => {
     expect(parseStorySparkRequest({ genre: '  Xianxia ', idea: ' a sword  that writes ', avoid: Array(9).fill('old') }))
       .toEqual({ genre: 'Xianxia', idea: 'a sword that writes', avoid: Array(STORY_SPARK_AVOID_LIMIT).fill('old') });

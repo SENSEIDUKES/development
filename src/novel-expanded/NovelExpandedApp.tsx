@@ -4,9 +4,8 @@ import { ReaderMixerProvider, useOptionalReaderMixer, type ReaderMixer } from '@
 import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seihouse/library/presentation';
 import type { FamiliarHelpPlace } from '@seihouse/library/familiar';
 import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
-import {
-  HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, DaoSparksButton, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderProfileProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
-} from '@seihouse/library/shell';
+import { HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderProfileProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode } from '@seihouse/library/shell';
+import { SparksButton } from '@seihouse/sen/story-seed';
 import { CreateStorySettings, StoryPages, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { createOfficialCapaDefaultLoadout } from '../host/generation/capa/officialCapaSkills';
@@ -251,7 +250,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   if (route.page === 'create') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     seedId={route.seedId} accentColor={profile.accentColor}
     // Sparks inside the open Story Seed: a chosen spark fills its Origin.
-    originSparks={fillOrigin => <DaoSparksButton purpose="fill-seed" copyText={text => navigator.clipboard.writeText(text)}
+    originSparks={fillOrigin => <SparksButton purpose="fill-seed"
       host={{ checkSparks: sparks.checkSparks, requestSpark: sparks.requestSpark, beginSpark: async spark => fillOrigin(spark) }} />}
     // A new Story Seed starts from the profile's languages and Reading Mode.
     accountDefaultLanguage={profile.defaultReadingLanguage} accountDefaultChapterWritingStyle={profile.defaultChapterWritingStyle}

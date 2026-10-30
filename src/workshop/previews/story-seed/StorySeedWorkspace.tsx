@@ -1,7 +1,8 @@
 import { startWorkshopHarnessStory } from '../harness-generation/storySeedHandoff';
 import type { InitialStoryGenerationPayload, StorySpark } from '@seihouse/sen/story-seed';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
-import { DaoSparksButton, LIBRARY_DESTINATIONS } from '@seihouse/library/shell';
+import { LIBRARY_DESTINATIONS } from '@seihouse/library/shell';
+import { SparksButton } from '@seihouse/sen/story-seed';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CreationModal as DevelopmentCreationModal } from '@seihouse/library/story-seed';
 import { LibraryLook } from '@seihouse/library/presentation';
@@ -288,8 +289,7 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
     onNavigateHome: () => navigateLibraryPreview(LIBRARY_DESTINATIONS[0].location),
     // Sparks in the Origin heading, as in the app: the Dao's own hand-written
     // sparks (no server), and a chosen one fills this seed's Origin.
-    originSparks: (fillOrigin: (spark: StorySpark) => void) => <DaoSparksButton purpose="fill-seed"
-      copyText={async text => { await navigator.clipboard?.writeText(text); }}
+    originSparks: (fillOrigin: (spark: StorySpark) => void) => <SparksButton purpose="fill-seed"
       host={{ beginSpark: async spark => fillOrigin(spark) }} />,
     isGenerating: Boolean(activeScenario?.isGenerating) || blueprintGenerating,
     error: activeScenario?.error ?? null,

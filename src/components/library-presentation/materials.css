@@ -39,7 +39,7 @@
   border-radius: 1.5rem;
   color: var(--library-material-text);
 }
-[data-library-material='violet-shell'] {
+[data-library-material='violet-shell'], .library-look [data-sen-spark='premise'] {
   background: var(--library-material-shell-fill);
   box-shadow: var(--library-material-shell-shadow);
   -webkit-backdrop-filter: var(--library-material-control-blur);
@@ -51,7 +51,7 @@
   -webkit-backdrop-filter: var(--library-material-panel-blur);
   backdrop-filter: var(--library-material-panel-blur);
 }
-[data-library-material='violet-card'], [data-library-material='smoked-glass'] {
+[data-library-material='violet-card'], .library-look [data-sen-spark='panel'], [data-library-material='smoked-glass'] {
   background: var(--library-material-card-fill);
   box-shadow: var(--library-material-card-shadow);
   -webkit-backdrop-filter: var(--library-material-card-blur);
@@ -65,7 +65,7 @@
   -webkit-backdrop-filter: var(--library-material-control-blur);
   backdrop-filter: var(--library-material-control-blur);
 }
-[data-library-material='rainbow-action'] {
+[data-library-material='rainbow-action'], .library-look [data-sen-spark='use'] {
   --glass-fill: var(--library-material-control-fill);
   --glass-edge: var(--reader-glass-edge);
   --glass-backdrop: var(--library-material-control-blur);

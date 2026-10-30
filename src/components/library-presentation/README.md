@@ -147,6 +147,15 @@ pages keep their defaults. The Palette & Materials Home mock uses this same
 composition with its selected experiment colors and measured ingredient recipes.
 
 
+## 2026-10-30 — Sparks shares the app materials
+
+The Sparks overlay uses the canonical material attributes and reusable rim, with
+Violet inset on the frame and Midnight violet on the premise. Its nested card
+inherits the look's 90% opacity and 40px blur; controls use Obsidian and the existing
+Spectrum action. The portal remains within the invoking page's `LibraryLook`, so
+saved tint and accent are inherited instead of being lost at the document body.
+The standalone Sparks Workshop wraps the shared surface in that same look.
+
 ## 2026-10-29 — The look on every page
 
 From SENSEI: Home's look is the app's look. The stylesheet moved from Home

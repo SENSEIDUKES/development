@@ -22,11 +22,11 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { GenreIcon } from '../../GenreIcon';
-import { GENRE_PRESETS } from '../../constants';
+import { GenreIcon } from './GenreIcon';
+import { GENRE_PRESETS } from '../../story-seed/shared/storyGenres';
 import { NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
-import { workspaceCompactLabelClass } from '../SeedSectionFrame';
-import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../../radioGroupKeyboard';
+const workspaceCompactLabelClass = 'block font-sc text-[10px] text-neutral-400 uppercase tracking-widest mb-1';
+import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../../story-seed/shared/radioGroupKeyboard';
 
 /** One sigil per Story Seed genre path, shared with every surface that names a path. */
 export const GENRE_PATH_SIGILS: Record<string, LucideIcon> = {
@@ -130,7 +130,7 @@ export const OriginGenrePicker = ({
   };
 
   return (
-    <section className={compact ? '' : 'glass-panel p-4 sm:p-5'} aria-labelledby={compact ? undefined : titleId} aria-label={compact ? 'Genre' : undefined}>
+    <section className={compact ? 'sen-genre-picker' : 'sen-genre-picker glass-panel p-4 sm:p-5'} aria-labelledby={compact ? undefined : titleId} aria-label={compact ? 'Genre' : undefined}>
       {!compact && <div className="mb-3 flex items-center justify-between gap-3">
         <p id={titleId} className={workspaceCompactLabelClass}>Genre{required && <> <span className="text-[#D9B36C]">*</span></>}</p>
         <button type="button" aria-expanded={isGenrePickerOpen} aria-controls={presetsId} onClick={() => setIsGenrePickerOpen(open => !open)}

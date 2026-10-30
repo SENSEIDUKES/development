@@ -471,3 +471,5 @@ only through the server-only Model Router entry.
 `LibrarySurvivalIcon`, and `LibraryGenreIcon`. The 54-entry catalog includes the local
 Help, Search, Settings, Manifest, Origin, and Information SVGs. These assets are bundled
 with the Library; existing remote artwork remains available in the same catalog.
+
+**2026-10-30 (breaking):** Sparks moves to SEN. Replace `DaoSparksButton` / `DaoSparkHost` imports from `@seihouse/library/shell` with `SparksButton` / `SparkHost` from `@seihouse/sen/story-seed`. Library presentation still supplies the app skin.

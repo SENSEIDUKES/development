@@ -1,9 +1,23 @@
 import { parseStorySpark, type StorySpark, type StorySparkRequest } from '@seihouse/sen/story-seed';
+import type { StorySparkStatus, StorySparkUsage } from '@seihouse/sen/story-seed';
 
 const ENDPOINT = '/api/story-spark';
 const REQUEST_TIMEOUT_MS = 50_000;
 /** Sparks are free but limited to twenty a day per visitor (`src/server/story-spark/limits.ts`). */
 const DAILY_LIMIT_MESSAGE = 'The Dao has spoken its twenty sparks for today. Seek again tomorrow, or plant one you already have.';
+
+const readUsage = (headers: Headers): StorySparkUsage | undefined => {
+  if (headers.get('X-Sparks-Unlimited') === 'true') return { unlimited: true };
+  const limitHeader = headers.get('X-Sparks-Limit');
+  const remainingHeader = headers.get('X-Sparks-Remaining');
+  if (limitHeader === null || remainingHeader === null) return undefined;
+  const limit = Number(limitHeader), remaining = Number(remainingHeader);
+  const resetHeader = headers.get('X-Sparks-Reset');
+  const resetsAt = resetHeader === null ? null : Number(resetHeader);
+  if (!Number.isInteger(limit) || limit <= 0 || !Number.isInteger(remaining) || remaining < 0 || remaining > limit
+    || (resetsAt !== null && (!Number.isFinite(resetsAt) || resetsAt <= 0))) return undefined;
+  return { unlimited: false, limit, remaining, resetsAt };
+};
 
 const errorMessage = (body: unknown, fallback: string): string =>
   body && typeof body === 'object' && 'error' in body && typeof body.error === 'string' && body.error.trim()
@@ -11,14 +25,15 @@ const errorMessage = (body: unknown, fallback: string): string =>
     : fallback;
 
 /** Whether the server has a model to write sparks with. Any failure reads as no. */
-export async function storySparksConfigured(signal?: AbortSignal): Promise<boolean> {
+export async function getStorySparkStatus(accessToken?: string, signal?: AbortSignal): Promise<StorySparkStatus> {
   try {
-    const response = await fetch(ENDPOINT, { headers: { Accept: 'application/json' }, signal });
-    if (!response.ok) return false;
+    const token = accessToken?.trim();
+    const response = await fetch(ENDPOINT, { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, signal });
+    if (!response.ok) return { configured: false };
     const body = await response.json() as { configured?: unknown };
-    return body.configured === true;
+    return { configured: body.configured === true, usage: readUsage(response.headers) };
   } catch {
-    return false;
+    return { configured: false };
   }
 }
 
@@ -27,6 +42,7 @@ export async function requestStorySpark(
   request: StorySparkRequest,
   accessToken?: string,
   signal?: AbortSignal,
+  onUsage?: (usage: StorySparkUsage) => void,
 ): Promise<StorySpark> {
   const controller = new AbortController();
   const abort = () => controller.abort(signal?.reason);
@@ -45,6 +61,8 @@ export async function requestStorySpark(
       body: JSON.stringify(request),
       signal: controller.signal,
     });
+    const usage = readUsage(response.headers);
+    if (usage) onUsage?.(usage);
     const body: unknown = await response.json().catch(() => ({}));
     if (response.status === 429) throw new Error(DAILY_LIMIT_MESSAGE);
     if (!response.ok) throw new Error(errorMessage(body, 'The Dao was silent. Seek again.'));

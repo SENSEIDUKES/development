@@ -1,0 +1,37 @@
+/* SEN defaults; host presentation supplies colors and materials through tokens. */
+.sen-spark-dialog :is(button, a):focus-visible { outline: 2px solid var(--spark-accent, #a5b4fc); outline-offset: 3px; }
+.sen-spark-dialog button { min-height: 44px; }
+.dao-spark-panel { background: var(--spark-panel, #181820); }
+.dao-spark-scroll { background: var(--spark-premise, #242430); }
+.sen-genre-picker .glass-choice { border: 1px solid var(--spark-edge, #ffffff30); border-radius: .75rem; background: var(--spark-control, #17171f); }
+.sen-genre-picker .glass-choice[data-selected='true'] { border-color: var(--spark-accent, #a5b4fc); }
+@media (prefers-reduced-motion: reduce) { .sen-spark-dialog * { animation: none !important; transition: none !important; } }
+/* Sparks uses the existing material recipes, including in standalone hosts. */
+.dao-spark-panel { color: var(--spark-text, #fff); }
+.dao-spark-control {
+  background: var(--spark-control, #17171f);
+  color: var(--spark-text, #fff);
+  border-color: var(--spark-edge, #ffffff30);
+  box-shadow: var(--spark-control-shadow, none);
+}
+.dao-spark-control:hover { border-color: var(--spark-accent, #a5b4fc); }
+.dao-spark-control[aria-pressed='true'] {
+  color: var(--spark-accent, #a5b4fc);
+  border-color: currentColor;
+}
+.dao-spark-control[aria-pressed='false'] { border-color: transparent; color: var(--spark-muted, #b8b8c2); }
+.dao-spark-actions { background: var(--spark-shell, #20202b); }
+.dao-spark-use { --glass-fill: var(--spark-control, #17171f); color: var(--spark-text, #fff); }
+/* While the Dao mutters, light sweeps across the scroll. */
+.dao-spark-scroll[data-seeking]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--spark-accent, #a5b4fc) 12%, transparent) 50%, transparent 70%);
+  animation: dao-spark-shimmer 1.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes dao-spark-shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}

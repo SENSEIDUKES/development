@@ -131,7 +131,7 @@ describe('WorkshopHome', () => {
       'reward-loop': 'workshop', achievements: 'library', 'familiar-training': 'library',
       familiar: 'library', 'relics-gallery': 'library', 'idle-cultivation': 'library',
       'harness-generation': 'sen', 'chapter-generation-manifestation': 'library', 'character-voice': 'sen', provenance: 'deferred', energy: 'library', 'model-router': 'deferred',
-      'highlight-engine': 'sen', 'motion-picture': 'sen', 'world-card': 'library', 'dao-insights': 'library', 'celestial-backdrop': 'library-ui', 'card-workshop': 'workshop',
+      'highlight-engine': 'sen', 'motion-picture': 'sen', 'world-card': 'library', 'dao-insights': 'sen', 'celestial-backdrop': 'library-ui', 'card-workshop': 'workshop',
       'palette-materials': 'workshop', 'library-components': 'library-ui', icons: 'library-ui', 'novel-expanded-docs': 'workshop', 'library-help': 'library',
       'chapter-generation-flow': 'workshop', 'writer-instructions': 'workshop', 'image-prompts': 'workshop',
     });

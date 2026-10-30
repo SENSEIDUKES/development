@@ -23,7 +23,7 @@ import { useStoryBankRecords } from './useStoryBankRecords';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
 import { FactionsWorkspace } from './workspaces/FactionsWorkspace';
 import { OriginWorkspace } from './workspaces/OriginWorkspace';
-import { OriginGenrePicker } from './workspaces/origin/OriginGenrePicker';
+import { OriginGenrePicker } from '@seihouse/sen/story-seed';
 import { OriginPremiseAndTags } from './workspaces/origin/OriginPremiseAndTags';
 import { OriginStyleSelector } from './workspaces/origin/OriginStyleSelector';
 

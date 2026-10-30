@@ -1,6 +1,6 @@
 import { FatePressureIcon } from '../story-seed/development/FatePressureIcon';
 import { FateSurvivalIcon } from '../story-seed/development/FateSurvivalIcon';
-import { GenreIcon } from '../story-seed/development/GenreIcon';
+import { GenreIcon } from '@seihouse/sen/presentation';
 import { LibraryDaoInsightIcon } from './LibraryDaoInsightIcon';
 import { HighlightActionIcon, type HighlightActionIconProps } from '@seihouse/sen';
 import remoteIcons from './r2-icons.json';

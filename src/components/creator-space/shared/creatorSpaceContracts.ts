@@ -66,6 +66,6 @@ export interface CreatorSpaceProps {
   onBrowseToolkit?: () => void;
   /** Re-reads the worlds after an error. */
   onRetryWorlds?: () => void;
-  /** The host's Sparks button (Library: `DaoSparksButton`), beside the page title. */
+  /** The host's Sparks button (SEN: `SparksButton`), beside the page title. */
   sparks?: ReactNode;
 }

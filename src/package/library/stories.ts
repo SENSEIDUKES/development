@@ -22,7 +22,7 @@ export { harnessStoryDisplay, storyHomeWorlds } from '../../library/stories/stor
 export { LIBRARY_READ_ALOUD_VOICES } from '../../library/stories/readAloudVoices';
 export { LIBRARY_READER_FONTS } from '../../library/stories/readerFonts';
 export { StorySettings } from '../../library/stories/settings/StorySettings';
-export { ChapterTaggingRecord, StoryChapterList, TagChapterAction } from '../../library/stories/ChapterTagging';
+export { ChapterTaggingRecord, StoryChapterList, TagChapterAction } from '../../library/stories/ChapterTaggingControls';
 export { StudioChapterPage } from '../../library/stories/StudioChapter';
 export { CHAPTER_TAGGING_KINDS, chapterBlocks, chapterTagMarks, describeChapterTagging, storyTaggingSummary, type ChapterTaggingAccount, type ChapterTaggingKind, type ChapterTaggingKindLine } from '../../library/stories/chapterTagging';
 export { CreateStorySettings, type CreateStorySettingsProps } from '../../library/stories/settings/CreateStorySettings';

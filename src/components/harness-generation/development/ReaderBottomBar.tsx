@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode, type Ref } from 'react';
 import { SEIOverlayScrollbar, SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
-import { BookOpen, Check, ChevronLeft, ChevronRight, Compass, ListOrdered, LocateFixed, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal, Zap } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, ChevronLeft, ChevronRight, Compass, ListOrdered, LocateFixed, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal, Zap } from 'lucide-react';
 import { READ_ALOUD_RATES, type ReadAloud, type ReadAloudRole } from '@seihouse/sen/reader-runtime';
 import { controlFeedback, pickerHeading, pickerList, pickerRow, pickerSelected, pickerSurface } from './readerPicker';
 import './reader-colors.css';
@@ -22,13 +22,20 @@ export interface ReaderCreateStep {
   unavailable?: string;
 }
 
-/** Fate, between the chapter arrows. */
+/** Fate, in the shared Fate/Create chooser. */
 export interface ReaderFateStep {
   run: () => void;
   /** Fate Survival: closed until the reader reaches the chapter's last paragraph. */
   disabled?: boolean;
   /** Fate Survival: the next chapter waits on Fate, so it calls for the reader. */
   attention?: boolean;
+}
+
+/** The saved chapters selected between the bottom bar's chapter arrows. */
+export interface ReaderChapterSelection {
+  current: number;
+  entries: readonly { number: number; title: string }[];
+  onSelect: (number: number) => void;
 }
 
 const ROLE_LABELS: Record<ReadAloudRole, string> = { narrator: 'Narrator', protagonist: 'Protagonist', side: 'Side character' };
@@ -46,8 +53,7 @@ const compactSurface = 'reader-glass reader-glass-menu reader-glass-picker w-aut
 // Touch/mouse opens a small tool without moving focus (or the reading position).
 // Keyboard users still enter its controls and retain normal Escape/Tab behavior.
 const focusFromKeyboard = (interaction: string) => interaction === 'keyboard';
-// Fate (a compass) sits inside the chapter pill between its arrows, a plain step like them, so both pills match.
-// When the next chapter waits on it, only its icon takes the portal's cyan.
+// The shared action calls for Fate when the next chapter is waiting on it.
 const fateCalling = 'text-(--reader-accent-soft)';
 
 const compactQuery = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -72,8 +78,8 @@ function IconButton({ label, icon: Icon, onClick, disabled, className = round }:
 /**
  * The Reader frame's bottom bar, across the bottom of the screen, holds what
  * the reader acts with: Listen and sentence navigation on the left, Codex in
- * the middle, the chapter arrows with Fate (a compass) between them, and Create
- * mode (a lightning bolt) at the far right. Below 640px, Playback and Chapters
+ * the middle, the chapter picker between its arrows, and a shared Fate/Create
+ * chooser at the far right. Below 640px, Playback and Chapters
  * open compact popovers instead of squeezing their individual controls into the bar.
  * Wider screens expose both groups inline, with 44px targets. Back to narration floats above the left end
  * only when needed; the story audio note floats above the right. A
@@ -81,9 +87,9 @@ function IconButton({ label, icon: Icon, onClick, disabled, className = round }:
  * pointing the way its pages turn. The sentence controls keep their
  * left-to-right order, as media controls do in every language. Where the
  * browser can't read aloud, Codex stays available and the skip controls are
- * disabled. The chapter list opens from the story and chapter in the top bar.
+ * disabled. The chapter list opens upward from the chapter pill.
  */
-export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarration, barRef, note, onOpenCodex, fate, create, previous, next, direction = 'ltr' }: {
+export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarration, barRef, note, onOpenCodex, fate, create, chapterSelection, previous, next, direction = 'ltr' }: {
   readAloud: ReadAloud;
   /** Starts reading where the reader is on the page. Absent before the story has a chapter. */
   onListen?: () => void;
@@ -96,17 +102,20 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
   fate: ReaderFateStep;
   /** Absent before the story has a chapter, or where the host cannot save one. */
   create?: ReaderCreateStep;
+  chapterSelection?: ReaderChapterSelection;
   previous?: ReaderChapterStep;
   next?: ReaderChapterStep;
   /** The chapter popover is portaled outside the frame and needs its reading direction. */
   direction?: 'ltr' | 'rtl';
 }) {
-  const [picker, setPicker] = useState<'speed'>();
+  const [picker, setPicker] = useState<'speed' | 'chapters'>();
   const compact = useSyncExternalStore(subscribeCompact, compactSnapshot, fullLayout);
-  const [group, setGroup] = useState<'playback' | 'chapters'>();
+  const [group, setGroup] = useState<'playback' | 'chapters' | 'actions'>();
   const chapterTrigger = useRef<HTMLButtonElement>(null);
+  const actionTrigger = useRef<HTMLButtonElement>(null);
   useEffect(() => { setPicker(undefined); setGroup(undefined); }, [compact]);
   const currentSpeedButton = useRef<HTMLButtonElement>(null);
+  const currentChapterButton = useRef<HTMLButtonElement>(null);
   const { supported, status, line, notice } = readAloud;
   const listening = supported && status !== 'idle';
   const player = supported && (Boolean(onListen) || listening);
@@ -124,9 +133,31 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
     <span className={`${compact ? '' : 'flex-1'} font-mono tabular-nums`}>{RATE_LABELS[rate]}</span>
     {!compact && rate === readAloud.rate && <Check className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
   </button>);
+  const chapterPicker = <SEIPopover modal={false} open={picker === 'chapters'} onOpenChange={open => setPicker(open ? 'chapters' : undefined)}>
+    <SEIPopoverTrigger aria-label={chapterSelection ? `Select chapter: Chapter ${chapterSelection.current}` : 'Select chapter'} title="Chapters"
+      data-testid="reader-chapter-menu" disabled={!chapterSelection}
+      className={compact ? `${pillStep} gap-1.5 rounded-full px-3 text-xs` : `${pickerTrigger} w-auto gap-1 px-3`}>
+      {chapterSelection ? compact ? `Chapter ${chapterSelection.current}` : chapterSelection.current : 'Chapters'}
+      <ChevronDown className="h-3 w-3 shrink-0" aria-hidden />
+    </SEIPopoverTrigger>
+    <SEIPopoverContent side="top" align="center" collisionPadding={8} variant="dark" initialFocus={currentChapterButton}
+      className={pickerSurface} data-testid="reader-chapter-picker" dir={direction}>
+      <SEIPopoverTitle className={pickerHeading}>Chapters</SEIPopoverTitle>
+      <SEIOverlayScrollbar fades={false} className={`reader-scroll-region ${pickerList}`}>
+        {chapterSelection?.entries.map(entry => <button key={entry.number} type="button" ref={entry.number === chapterSelection.current ? currentChapterButton : undefined}
+          aria-label={`Chapter ${entry.number}: ${entry.title}`} aria-current={entry.number === chapterSelection.current ? 'page' : undefined}
+          onClick={() => { setPicker(undefined); setGroup(undefined); chapterTrigger.current?.focus({ preventScroll: true }); chapterSelection.onSelect(entry.number); }}
+          className={`${pickerRow} ${entry.number === chapterSelection.current ? pickerSelected : 'text-(--reader-text-muted)'}`}>
+          <span className="min-w-6 font-mono text-xs tabular-nums text-(--reader-text-dim)">{entry.number}</span>
+          <span className="min-w-0 flex-1 break-words">{entry.title}</span>
+          {entry.number === chapterSelection.current && <Check className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
+        </button>)}
+      </SEIOverlayScrollbar>
+    </SEIPopoverContent>
+  </SEIPopover>;
   return <div ref={barRef} data-testid="reader-bottom-bar" role="region" aria-label="Reader controls"
     className="reader-glass reader-glass-bar sticky bottom-0 z-20 -mx-4 mt-8 border-t border-(--reader-light)/10 bg-(--reader-surface)/90 px-[max(0.5rem,env(safe-area-inset-left))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:px-[max(1rem,env(safe-area-inset-left))]">
-    {listening && offscreen && <div hidden={compact && Boolean(group)} className="absolute bottom-full start-4 mb-2" data-testid="back-to-narration-float">
+    {listening && offscreen && <div hidden={Boolean(group)} className="absolute bottom-full start-4 mb-2" data-testid="back-to-narration-float">
       {/* A round glass button, like the story audio note floating on the other side. */}
       <button type="button" aria-label="Back to narration" title="Back to narration" onClick={onBackToNarration}
         className="reader-glass-float inline-flex h-11 w-11 items-center justify-center rounded-full text-(--reader-text)">
@@ -192,8 +223,8 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
           </button>
         </div>
         <div className="contents">
-        {compact ? <SEIPopover modal={false} open={group === 'chapters'} onOpenChange={open => setGroup(open ? 'chapters' : undefined)}>
-          <SEIPopoverTrigger render={<button type="button" ref={chapterTrigger} />} aria-label="Chapter controls" className={`${quietAction} w-14 ${fate.attention ? fateCalling : ''}`}>
+        {compact ? <SEIPopover modal={false} open={group === 'chapters'} onOpenChange={open => { setGroup(open ? 'chapters' : undefined); if (!open) setPicker(undefined); }}>
+          <SEIPopoverTrigger render={<button type="button" ref={chapterTrigger} />} aria-label="Chapter controls" className={`${quietAction} w-14`}>
             <ListOrdered className="h-[18px] w-[18px]" aria-hidden /><span className={actionLabel}>Chapters</span>
           </SEIPopoverTrigger>
           <SEIPopoverContent side="top" align="center" collisionPadding={8} variant="dark" dir={direction} initialFocus={focusFromKeyboard} className={compactSurface}>
@@ -203,10 +234,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
                 onClick={() => { setGroup(undefined); previous?.run(); }} className={`${pillStep} rounded-full`}>
                 <ChevronLeft className="h-4 w-4 shrink-0 rtl:-scale-x-100" aria-hidden />
               </button>
-              <button type="button" aria-label="Open Fate" data-testid="reader-fate-button" data-attention={fate.attention || undefined}
-                disabled={fate.disabled} onClick={() => { setGroup(undefined); chapterTrigger.current?.focus({ preventScroll: true }); fate.run(); }} className={`${pillStep} gap-1.5 rounded-full px-3 text-xs ${fate.attention ? fateCalling : ''}`}>
-                <Compass className="h-4 w-4 shrink-0" aria-hidden />Fate
-              </button>
+              {chapterPicker}
               <button type="button" aria-label={next?.label ?? 'Next Chapter'} title={next?.label ?? 'Next Chapter'} disabled={!next || next.busy || next.disabled} aria-busy={next?.busy || undefined}
                 onClick={() => { setGroup(undefined); next?.run(); }} className={`${pillStep} rounded-full`}>
                 <ChevronRight className="h-4 w-4 shrink-0 rtl:-scale-x-100" aria-hidden />
@@ -218,26 +246,43 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
             onClick={previous?.run} className={`${pillStep} rounded-s-full`}>
             <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
           </button>
-          <button type="button" aria-label="Open Fate" data-testid="reader-fate-button" data-attention={fate.attention || undefined}
-            title={fate.disabled ? 'Fate opens when you reach the end of the chapter' : fate.attention ? 'Fate: direct the next chapter' : 'Fate: decide what happens next'}
-            onClick={fate.run} disabled={fate.disabled} className={`${pickerTrigger} ${fate.attention ? fateCalling : ''}`}>
-            <Compass className="h-4 w-4" aria-hidden />
-          </button>
+          {chapterPicker}
           <button type="button" aria-label={next?.label ?? 'Next Chapter'} title={next?.label ?? 'Next Chapter'} disabled={!next || next.busy || next.disabled}
             aria-busy={next?.busy || undefined} onClick={next?.run}
             className={`${pillStep} rounded-e-full`}>
             <ChevronRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
           </button>
         </nav>}
-          {/* Create mode at the far right, balancing Listen; the story audio note floats above it. */}
+          {/* Fate and Create share the rightmost action; the story audio note floats above it. */}
           <div className="relative h-12 w-12 shrink-0" data-testid="reader-create-slot">
-          {note && <div hidden={compact && Boolean(group)} className="pointer-events-none absolute bottom-full left-1/2 mb-4 -translate-x-1/2 [&>*]:pointer-events-auto" data-testid="story-audio-note">{note}</div>}
-          {create && <button type="button" aria-label="Create mode" aria-pressed={create.active} data-testid="reader-create-button"
-            title={create.unavailable ?? (create.active ? 'Back to reading' : 'Create mode: change this chapter\'s words and Sound Cues')}
-            disabled={Boolean(create.unavailable) && !create.active} onClick={create.onToggle}
-            className={`${create.active ? primary : compact ? quietAction : secondary} disabled:cursor-not-allowed disabled:opacity-35`}>
-            <Zap className="h-6 w-6 max-sm:h-5 max-sm:w-5" aria-hidden /><span className={actionLabel}>Create</span>
-          </button>}
+          {note && <div hidden={Boolean(group)} className="pointer-events-none absolute bottom-full left-1/2 mb-4 -translate-x-1/2 [&>*]:pointer-events-auto" data-testid="story-audio-note">{note}</div>}
+          <SEIPopover modal={false} open={group === 'actions'} onOpenChange={open => setGroup(open ? 'actions' : undefined)}>
+            <SEIPopoverTrigger render={<button type="button" ref={actionTrigger} />} aria-label="Fate and Create" title="Fate and Create"
+              aria-pressed={create?.active ?? false} data-testid="reader-actions-button" data-attention={fate.attention || undefined}
+              className={`${create?.active ? primary : secondary} ${fate.attention ? fateCalling : ''}`}>
+              <Zap className="h-6 w-6" aria-hidden /><span className={actionLabel}>Create</span>
+            </SEIPopoverTrigger>
+            <SEIPopoverContent side="top" align="end" sideOffset={20} collisionPadding={12} variant="dark" dir={direction} initialFocus={focusFromKeyboard}
+              className={`${pickerSurface} w-52`} data-testid="reader-actions-picker">
+              <SEIPopoverTitle className="sr-only">Fate and Create</SEIPopoverTitle>
+              <div className="grid gap-1">
+                <button type="button" aria-label="Open Fate" data-testid="reader-fate-button" data-attention={fate.attention || undefined}
+                  title={fate.disabled ? 'Fate opens when you reach the end of the chapter' : 'Fate'}
+                  disabled={fate.disabled} onClick={() => { setGroup(undefined); actionTrigger.current?.focus({ preventScroll: true }); fate.run(); }}
+                  className={`${pickerRow} disabled:opacity-35 ${fate.attention ? fateCalling : ''}`}>
+                  <Compass className="h-5 w-5 shrink-0" aria-hidden /><span className="flex-1">Fate</span>
+                </button>
+                {create && <button type="button" aria-label="Create mode" aria-pressed={create.active} data-testid="reader-create-button"
+                  title={create.unavailable ?? (create.active ? 'Back to reading' : 'Create')}
+                  disabled={Boolean(create.unavailable) && !create.active}
+                  onClick={() => { setGroup(undefined); actionTrigger.current?.focus({ preventScroll: true }); create.onToggle(); }}
+                  className={`${pickerRow} disabled:opacity-35 ${create.active ? pickerSelected : ''}`}>
+                  <Zap className="h-5 w-5 shrink-0" aria-hidden /><span className="flex-1">Create</span>
+                  {create.active && <Check className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
+                </button>}
+              </div>
+            </SEIPopoverContent>
+          </SEIPopover>
           </div>
         </div>
       </div>

@@ -381,10 +381,15 @@ Update it whenever it changes.
     at the top while reading, and a **bottom bar** stays at the
     bottom with what the reader acts with: **Listen** and its skip controls
     on the left, **Codex** as the large button in the middle, then the
-    **chapter switcher** — previous, "5/10", next — and Fate on the right.
-    Play and Fate anchor the outer edges; Codex sits in the middle. Each pill
+    **chapter switcher** — previous, chapter picker, next — and a shared
+    **Fate/Create** button on the right. The chapter list opens upward from
+    the picker; the header identifies the current chapter. On phones,
+    Playback and Chapters open compact rows above their buttons. The shared
+    action offers just **Fate** and **Create**.
+    Play and the shared action anchor the outer edges; Codex sits in the middle. Each pill
     centers in the space between its neighboring main actions at every screen
-    size. Play and Fate are gray; Codex is cyan.
+    size. Play and the shared action are gray; Codex is cyan. The shared action
+    shows when Create is active or Fate is waiting for the reader.
     Both control pills are smaller than the main actions. During Listen,
     sentence navigation sits to the right of that same play/pause button,
     with Back to narration floating above the bar on the left only when the

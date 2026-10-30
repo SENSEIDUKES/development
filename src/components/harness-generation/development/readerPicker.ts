@@ -1,4 +1,4 @@
-/** The Reader's small glass pickers (the chapter list in the top bar, narration speed in the bottom bar), one look for both. */
+/** The Reader's small glass pickers for chapters and narration speed in the bottom bar. */
 export const controlFeedback = 'motion-safe:transition-colors motion-safe:duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--reader-accent-soft)';
 export const pickerSurface = 'reader-glass reader-glass-menu reader-glass-picker w-72 max-w-[calc(100vw-1rem)] overflow-hidden rounded-2xl border border-(--reader-light)/10 bg-(--reader-surface)/95 p-1.5 font-sans text-(--reader-text) shadow-lg backdrop-blur-xl';
 export const pickerHeading = 'mx-1.5 mb-1 border-b border-(--reader-light)/10 px-1.5 pb-2.5 pt-2 text-xs font-medium text-(--reader-text-dim)';

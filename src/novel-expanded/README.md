@@ -416,6 +416,10 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-30** — The internal chapter-tagging UI module is named `ChapterTaggingControls.tsx` so Windows can distinguish it from the `chapterTagging.ts` helper. Package exports and tagging behavior are unchanged.
+
+- **2026-10-29** — The Reader's chapter list moves from the header to the bottom chapter control, between Previous and Next. The rightmost action opens Fate or Create with just their labels. The Workshop uses the same controls and keeps its Fate shortcut working.
+
 - **2026-10-28 (every language)** — From SENSEI's language testing. On a
   right-to-left page each piece of text keeps its own direction (English keeps
   its full stop at its end and its ellipsis after the words it shows), arrows

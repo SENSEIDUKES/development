@@ -909,8 +909,8 @@ async function walk(browser, viewport, sample) {
   check((await page.locator('[data-world-info-chapters="action"]').getAttribute('aria-label')).startsWith('Continue at Chapter 1'), 'Story View should continue at Chapter 1.');
   // World Info's four cards, then Settings: closed until opened, it holds the story's language, Reading Mode, CAPA skills and media.
   const cardTitles = await page.locator('.world-card-info-tools .world-card-info-tool-title').allTextContents();
-  check(JSON.stringify(cardTitles) === JSON.stringify(['Portal', 'Information', 'Settings']),
-    `World Info should show Portal, Information and Settings, got ${cardTitles.join(', ')}`);
+  check(JSON.stringify(cardTitles) === JSON.stringify(['Portal', 'Information', 'Chapters', 'Settings']),
+    `World Info should show Portal, Information, Chapters and Settings, got ${cardTitles.join(', ')}`);
   const settingsCard = page.locator('button.world-card-info-settings-card');
   await settingsCard.scrollIntoViewIfNeeded();
   check(await page.getByTestId('story-settings').count() === 0, 'Story Settings should stay closed until the reader opens Settings.');
@@ -923,6 +923,46 @@ async function walk(browser, viewport, sample) {
   check(!(await page.evaluate(slidesSideways)), 'Settings must never scroll sideways.');
   await shot('4c-story-settings');
   await settingsCard.click();
+  // World Info's Chapters card: every chapter in a row, each opening its Studio page.
+  const chaptersCard = page.locator('button.world-card-info-chapters-card');
+  check((await chaptersCard.locator('.world-card-info-tool-description').textContent()).trim() === '1 chapter · 1 tagged',
+    `The Chapters card should count the chapters the tagger read, got ${await chaptersCard.textContent()}`);
+  await chaptersCard.click();
+  const chapterRow = page.locator('[data-testid="story-chapter"][data-chapter-number="1"] button');
+  await chapterRow.waitFor();
+  const chapterLine = await page.getByTestId('story-chapter-line').textContent();
+  check(chapterLine.startsWith('Tagged · ') && chapterLine.includes('Holdings'), `The chapter's row should say what the tagger found, got ${chapterLine}`);
+  await shot('4h-chapters');
+  // The Studio page: the prose with its tags lit, the findings per kind beside it, and Tag this chapter again.
+  await chapterRow.click();
+  const studio = page.getByTestId('studio-chapter');
+  await studio.waitFor();
+  check(address() === `${storyAddress}&chapter=1`, `A chapter should open at its own address, got ${address()}`);
+  check((await studio.locator('h1').textContent()) === 'The Hidden Key', 'The Studio page should carry the chapter\'s title.');
+  const findings = studio.getByTestId('studio-chapter-findings');
+  check((await findings.locator('[data-tagging-kind="Holdings"]').textContent()).includes('Bell Key'), `Holdings should name the key, got ${await findings.textContent()}`);
+  check((await findings.locator('[data-tagging-kind="Speakers"]').textContent()).includes('Ye Chen'), `Speakers should name Ye Chen, got ${await findings.textContent()}`);
+  await page.locator('[data-testid="studio-chapter-prose"] .sen-overlay-mark').first().waitFor();
+  const litBefore = await page.locator('[data-testid="studio-chapter-prose"] .sen-overlay-mark').count();
+  check(litBefore >= 3, `The prose should be lit where the tags landed, saw ${litBefore} marks.`);
+  check(!(await page.evaluate(slidesSideways)), 'The Studio page must never scroll sideways.');
+  await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: 0 }));
+  await shot('4i-studio-chapter');
+  // A finding is a switch: off takes its kind's marks off the page.
+  await findings.locator('[data-tagging-kind="Speakers"]').click();
+  check((await findings.locator('[data-tagging-kind="Speakers"]').getAttribute('aria-pressed')) === 'false', 'A finding switched off should say so.');
+  await page.waitForTimeout(200);
+  check(await page.locator('[data-testid="studio-chapter-prose"] .sen-overlay-mark').count() < litBefore, 'Switching Speakers off should take its marks off the page.');
+  await findings.locator('[data-tagging-kind="Speakers"]').click();
+  await visibleButton('Tag this chapter again').click();
+  for (let waited = 0; waited < 100 && counts.tags.length < 3; waited += 1) await page.waitForTimeout(100);
+  check(counts.tags.length === 3 && counts.tags[2].chapterNumber === 1 && counts.tags[2].token,
+    `Tag this chapter again should read Chapter 1 once more, with the token, got ${counts.tags.length} taggings.`);
+  await page.locator('[data-testid="studio-chapter"][data-tagging-status="tagged"]').waitFor();
+  check(await page.locator('[role="alert"]').count() === 0, 'A tagging that worked shows no message.');
+  await studio.getByRole('button', { name: 'Back to World Info' }).click();
+  await page.getByTestId('harness-world-info').waitFor();
+  check(address() === storyAddress, `Back from the Studio page should open World Info, got ${address()}`);
   // Manifest on the cover: one cover or three; three unseal behind the veil, then the picker, then World Info and Home wear the one kept.
   const coverManifest = page.locator('[data-world-card="info"] [aria-label="Manifest cover art"]');
   await coverManifest.scrollIntoViewIfNeeded();

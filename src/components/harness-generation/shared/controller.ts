@@ -1336,33 +1336,38 @@ export class HarnessGenerationController {
     return this.tagAttempt(attemptId);
   }
 
-  /** Why this story's newest chapter cannot be tagged again, when it cannot. */
-  retagChapterGap(storyId: string): string | undefined {
-    return retagChapterGap(this.state, storyId);
+  /** Why one of this story's committed chapters cannot be tagged, when it cannot. */
+  retagChapterGap(storyId: string, chapterId: string): string | undefined {
+    return retagChapterGap(this.state, storyId, chapterId);
   }
 
   /**
-   * Tags the story's newest chapter again, replacing the tags it has. The path
-   * that recovers a chapter whose tagging failed, and the one a changed chapter
-   * needs: the reader edits the prose in Create mode, then has it read again.
+   * Tags one committed chapter of the story (again), replacing the tags it
+   * has: any chapter, one at a time (SENSEI, 2026-10-29, phase B of
+   * `docs/create-hub.md`). The path that recovers a chapter whose tagging
+   * failed, the one a changed chapter needs (the reader edits the prose in
+   * Create mode, then has it read again), and the experiment bench for the
+   * tagging itself: same chapter, another tagger, and the record says what
+   * landed.
    *
    * It replaces, so the Codex entries the old tags brought in come out before
-   * the new ones go in, through the same helper the rewrite uses. Everything it
-   * sends is read from the chapter itself (its own paragraphs and its frozen
-   * media), except what only an attempt can give: who the main character is, and
-   * the sound words the chapter was written with. Without that attempt it
-   * refuses rather than guess, as the Holdings fixer and the look writer do.
+   * the new ones go in, through the same helper the rewrite uses, which keeps
+   * every entry a later chapter still names. Everything it sends is read from
+   * the chapter itself (its own paragraphs and its frozen media) and the
+   * chapters before it (what each character had), except what only an attempt
+   * can give: who the main character is, and the sound words the chapter was
+   * written with. Without that attempt the gap refuses rather than guess, as
+   * the Holdings fixer and the look writer do.
    */
-  async retagLatestChapter(storyId: string): Promise<void> {
+  async retagChapter(storyId: string, chapterId: string): Promise<void> {
     this.assertHydrated();
-    if (this.generating) throw new Error('Wait for the active Harness operation before tagging a chapter again.');
-    const gap = retagChapterGap(this.state, storyId);
+    if (this.generating) throw new Error('Wait for the active Harness operation before tagging a chapter.');
+    const gap = retagChapterGap(this.state, storyId, chapterId);
     if (gap) throw new Error(gap);
     if (!this.modelAdapter.tagChapter) throw new Error('This host cannot tag a chapter yet.');
     const story = findStory(this.state, storyId)!;
-    const chapter = latestStoryChapter(this.state, storyId)!;
-    const attempt = this.state.attempts.find(entry => entry.id === chapter.attemptId);
-    if (!attempt) throw new Error(`Chapter ${chapter.chapterNumber} no longer has the record of how it was written, so it cannot be tagged again.`);
+    const chapter = this.state.chapters.find(entry => entry.storyId === storyId && entry.id === chapterId)!;
+    const attempt = this.state.attempts.find(entry => entry.id === chapter.attemptId)!;
     const mainCharacterName = attempt.storyInformation.currentStory.cast?.find(member => member.isMainCharacter)?.name;
     const world = storyWorldRecord(this.state, storyId);
     const others = this.state.chapters.filter(entry => entry.storyId === storyId && entry.id !== chapter.id);
@@ -1439,9 +1444,13 @@ export class HarnessGenerationController {
         ? resolveHoldingChanges({ ...resolving, changes: tagging.tags.holdingChanges, resolver })
         : undefined;
       if (holdings?.changes.length) {
+        // A thing is "already on the page" by what came before this chapter in
+        // reading order, not by a later chapter: tagged in order (1, 2, 3) the
+        // two agree, and tagged out of order the appearance checks name the
+        // later chapter's duplicate, for that chapter to be read again.
         appearances.push(...thingAppearancesFromHoldings({
           chapter: { ...saved, holdingChanges: holdings.changes, appearances },
-          chapters: others, entries: candidate.codexEntries,
+          chapters: others.filter(entry => entry.chapterNumber < chapter.chapterNumber), entries: candidate.codexEntries,
         }));
       }
       saved.soundCues = tagging.tags.soundCues;
@@ -1468,7 +1477,7 @@ export class HarnessGenerationController {
    * provider that throws, an answer that cannot be read, or one that changed a
    * word of the prose all end the same way: the chapter commits with its prose
    * intact, carrying a record that says what happened, and it can be tagged
-   * again (`retagChapter`).
+   * again (`retagChapter`, any committed chapter).
    */
   private async tagAttempt(attemptId: string): Promise<HarnessWorkspaceState> {
     const attempt = attemptById(this.state, attemptId);

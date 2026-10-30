@@ -37,6 +37,35 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-29 (any chapter tagged, one at a time, and the record on the
+  page):** Phase B of `docs/create-hub.md`, approved by SENSEI's merge of the
+  plan. `retagChapter(storyId, chapterId)` replaces `retagLatestChapter`: any
+  committed chapter can be read again, with the same refusals (a hand-placed
+  Sound Cue, a Holdings fixer merge, a chapter being written) and one more
+  said in words, a chapter whose attempt is gone. What made newest-only safe
+  now holds for every chapter: `codexEntriesWithoutChapter` keeps any entry a
+  later chapter still names, whichever chapter first made it, and a thing is
+  "already on the page" by the chapters before this one in reading order. The
+  record counts its notes (`HarnessChapterTagging.notes`, written and placed;
+  schema 41, a no-op upgrade). In the app, World Info gains a **Chapters**
+  card (`WorldCardInfoProps.chapters`, filled by the Library's `StoryChapterList`):
+  every chapter with its record in words (`describeChapterTagging`: read or
+  not, by which model and when, tokens in and out, notes written, placed and
+  dropped, then one line per kind, "the tagger found nothing here" said in
+  those words and a kind the story equipped nothing for said as never asked),
+  and Tag this chapter on any of them. The Workshop's HARNESS workspace shows
+  the same record and action (`ChapterTaggingRecord`, `TagChapterAction`). The
+  plan's first draft had this wrong: the app's Story View had no chapter list,
+  and "Tag this chapter again" lived only in the Workshop. **SENSEI's cut, the
+  same day:** a record under the cards "reads like a log, not a tool". The
+  Chapters card is now a list of rows, and each chapter opens its own Studio
+  page (`StudioChapterPage`, `/app/?story=<id>&chapter=<n>`): the chapter's
+  prose on the Highlight Engine with every tag lit on the words it landed on,
+  one color per kind (`chapterTagMarks`; the information tags join
+  `ATTACHMENT_COLORS`), the tagger's findings beside it as switches that light
+  one kind alone, the record behind one line, and one action, Tag this chapter.
+  Apple-plain on purpose: a creator should know what to do at a glance.
+
 - **2026-10-29 (the Chapter Tagger's own model and reasoning):** SENSEI: "maybe
   cheap models with high reasoning are really good for tagging." The tagger
   read every chapter with the model that wrote it, at that model's lowest
@@ -92,9 +121,9 @@ existing Chapter Generation feature.
   spoken line, which ends "one speaker per paragraph" for the tagger. The
   stored shape is unchanged (schema 40): `HarnessChapterTagging` is the same
   record, and a chapter whose tagging failed under the old shape is recovered
-  by tagging it again. Still open, for SENSEI: whole-book tagging
-  (`retagChapterGap` still re-tags only the newest chapter) and whether the
-  Codex no-spoiler gate stands.
+  by tagging it again. Still open, for SENSEI: whole-book tagging (one
+  chapter at a time since the 2026-10-29 phase B entry; the whole-story run is
+  `docs/create-hub.md` phase G) and whether the Codex no-spoiler gate stands.
 
 - **2026-10-29 (a save from another tab no longer overwrites):** The stories
   are one saved workspace, and each tab kept its own copy, so the later save

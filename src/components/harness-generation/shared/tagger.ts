@@ -2,7 +2,6 @@ import { worldCardsOfKind, type WorldRecord } from '../../../narrative/worldReco
 import type { CodexEntry, CodexEntryKind, HoldingsSection } from '../../../narrative/holdings';
 import type { HarnessChapter, HarnessChapterTagging, HarnessTagRequest, HarnessTagSubject, HarnessWorkspaceState } from '../../../narrative/generation';
 import { activeAttemptForStory } from './attempts';
-import { latestStoryChapter } from './chapterRewrite';
 import { findStory } from './foundation';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
@@ -115,36 +114,44 @@ export function planChapterTagging({ chapter, entries, world, holdings, soundWor
 }
 
 /**
- * Why this story's newest chapter cannot be tagged again, when it cannot, in
- * words a reader can act on. `undefined` means it can.
+ * Why one of this story's committed chapters cannot be tagged (again), when it
+ * cannot, in words a reader can act on. `undefined` means it can.
  *
- * Only the newest chapter, before anything is built on it, is tagged again
- * (SENSEI, 2026-10-25: "Match create mode and rewrite for now"). An imported
- * novel needs every chapter taggable and gets its own reworking for that.
+ * Any committed chapter (SENSEI, 2026-10-29, `docs/create-hub.md` phase B:
+ * "one chapter at a time, a couple chapters at a time, until we get this
+ * right"). Until then only the newest was read again, as Create mode and the
+ * rewrite work on the newest; what made that safe, taking the chapter's own
+ * Codex entries back out before the new tags go in, now keeps every entry a
+ * later chapter still names (`codexEntriesWithoutChapter`).
  *
  * A prose edit is no obstacle: a reader who changed the words wants the chapter
  * read again. What is refused is work a machine cannot give back.
  */
-export function retagChapterGap(state: HarnessWorkspaceState, storyId: string): string | undefined {
+export function retagChapterGap(state: HarnessWorkspaceState, storyId: string, chapterId: string): string | undefined {
   const story = findStory(state, storyId);
-  if (!story) return 'Open a story before tagging a chapter again.';
-  const latest = latestStoryChapter(state, storyId);
-  if (!latest) return 'This story has no saved chapter to tag yet.';
-  const chapter = `Chapter ${latest.chapterNumber}`;
-  if (activeAttemptForStory(state, storyId)) return `Wait for the chapter being written before tagging ${chapter} again.`;
+  if (!story) return 'Open a story before tagging a chapter.';
+  const target = state.chapters.find(chapter => chapter.storyId === storyId && chapter.id === chapterId);
+  if (!target) return 'This chapter is not saved in this story, so it cannot be tagged.';
+  const chapter = `Chapter ${target.chapterNumber}`;
+  // Who the main character is, and the words the chapter was written with, come
+  // from the attempt that wrote it; without that record the tagger would guess.
+  if (!state.attempts.some(attempt => attempt.id === target.attemptId)) {
+    return `${chapter} no longer has the record of how it was written, so it cannot be tagged.`;
+  }
+  if (activeAttemptForStory(state, storyId)) return `Wait for the chapter being written before tagging ${chapter}.`;
   if (state.batches.some(batch => batch.storyId === storyId && ['running', 'pause_requested'].includes(batch.status))) {
-    return `Pause the batch writing this story before tagging ${chapter} again.`;
+    return `Pause the batch writing this story before tagging ${chapter}.`;
   }
   // A Sound Cue the reader placed on exact words by hand. It is the one kind a
   // person can place (`createManualSoundCue`), and tagging again would replace
   // the chapter's cues with the tagger's, taking theirs with them.
-  if ((latest.soundCues ?? []).some(cue => cue.payload.origin === 'manual')) {
+  if ((target.soundCues ?? []).some(cue => cue.payload.origin === 'manual')) {
     return `${chapter} has a Sound Cue you placed yourself, so tagging it again would remove it.`;
   }
   // The Holdings fixer taught an older entry one of this chapter's names. That
   // alias lives on the other entry, and only a rewrite of this chapter takes it
   // back, so replacing these tags would leave it with nothing behind it.
-  if ((latest.fixer?.fixes ?? []).some(fix => fix.merged?.alias)) {
+  if ((target.fixer?.fixes ?? []).some(fix => fix.merged?.alias)) {
     return `${chapter} had two names joined into one by the Holdings fixer, so it cannot be tagged again.`;
   }
   return undefined;
@@ -441,18 +448,20 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
   model?: string;
   options?: HarnessResponseAcceptanceOptions;
 }): ChapterTagging {
-  const failed = (problem: string, warnings: HarnessWarning[] = []): ChapterTagging =>
-    ({ record: { status: 'failed', at, ...(model ? { model } : {}), problem, ...(warnings.length ? { warnings } : {}) } });
+  const failed = (problem: string, warnings: HarnessWarning[] = [], notes?: HarnessChapterTagging['notes']): ChapterTagging =>
+    ({ record: { status: 'failed', at, ...(model ? { model } : {}), problem, ...(notes ? { notes } : {}), ...(warnings.length ? { warnings } : {}) } });
   const answer = readNotes(raw);
   if (typeof answer === 'string') return failed(answer);
   const untaggable = untaggableParagraph(sent);
   if (untaggable) return failed(`This chapter cannot be tagged as it stands: ${untaggable}.`);
   const soundWords = options?.soundVocabulary?.map(sound => sound.word);
   let remaining = answer.notes;
-  const dropped = [...answer.dropped];
+  // Notes a pass lost because their paragraph did not read back: kept apart
+  // from what the final placement drops, so no note is counted twice.
+  const lost: string[] = [];
   for (;;) {
     const placement = placeTagNotes(sent, remaining, { soundWords });
-    dropped.push(...placement.dropped);
+    const dropped = [...answer.dropped, ...lost, ...placement.dropped];
     const warnings: HarnessWarning[] = [];
     const read = acceptChapterTags(placement.paragraphs, chapterNumber, warnings, options);
     // The HARNESS's own guarantee, checked: the prose that falls out of the tag
@@ -467,7 +476,11 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
         });
       }
       return {
-        record: { status: 'tagged', at, ...(model ? { model } : {}), ...(warnings.length ? { warnings } : {}) },
+        record: {
+          status: 'tagged', at, ...(model ? { model } : {}),
+          notes: { written: answer.count, placed: placement.placed },
+          ...(warnings.length ? { warnings } : {}),
+        },
         tags: {
           soundCues: read.soundCues,
           speakers: read.speakers,
@@ -477,9 +490,9 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
         },
       };
     }
-    const lost = remaining.filter(note => changed.has(note.paragraph) || read.paragraphs.length !== sent.length);
-    if (!lost.length) return failed('The HARNESS could not read the chapter back as it stands after placing the notes, so no tag was kept.', warnings);
-    dropped.push(...lost.map(note => `[[${tagBody(note.tag)}]] on paragraph ${note.paragraph}: the paragraph did not read back as it stands with it placed`));
-    remaining = remaining.filter(note => !lost.includes(note));
+    const losing = remaining.filter(note => changed.has(note.paragraph) || read.paragraphs.length !== sent.length);
+    if (!losing.length) return failed('The HARNESS could not read the chapter back as it stands after placing the notes, so no tag was kept.', warnings, { written: answer.count, placed: 0 });
+    lost.push(...losing.map(note => `[[${tagBody(note.tag)}]] on paragraph ${note.paragraph}: the paragraph did not read back as it stands with it placed`));
+    remaining = remaining.filter(note => !losing.includes(note));
   }
 }

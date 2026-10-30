@@ -17,7 +17,8 @@ word a model reads, and judges results by seeing and hearing them in the app,
 never by reading code. Every phase below ends with something SENSEI can open,
 and no phase starts on an undecided question.
 
-**To hand this to a new chat:** "Read docs/create-hub.md. We are at phase B."
+**To hand this to a new chat:** "Read docs/create-hub.md. Phase B is built and
+waiting on SENSEI's run; phase C is next."
 
 ## The problem, in SENSEI's words (2026-10-29)
 
@@ -74,10 +75,13 @@ and no phase starts on an undecided question.
   View today), and Create at the end, which starts a world from a Story Seed.
   Much of it still shows sample data.
 - **The tagger is a stage of its own.** It runs once after a chapter is
-  written and again on demand ("Tag this chapter again"), returns notes, and
-  the HARNESS places them on the chapter's own paragraphs. It has its own
-  model and reasoning choice in the Model Router. **It can only re-tag the
-  newest chapter.**
+  written and again on demand, returns notes, and the HARNESS places them on
+  the chapter's own paragraphs. It has its own model and reasoning choice in
+  the Model Router. Since phase B (2026-10-29) it reads **any committed
+  chapter, one at a time**, from World Info's Chapters card in the app and
+  the HARNESS workspace in the Workshop; before that only the newest chapter
+  could be read again, and only from the Workshop (the app's Story View had
+  no chapter list at all, which this plan's first draft got wrong).
 - **The intake exists.** Sound Words packages (a story's own words, at most 30),
   Sound Cue packs, Soundscape and atmosphere packs, and CAPA skill packages
   all install from SPP and reach the tagger and the writer. The Studios do not
@@ -129,8 +133,8 @@ and no phase starts on an undecided question.
 
 | # | Phase | Agents build | SENSEI decides | SENSEI sees | Where it stands |
 |---|---|---|---|---|---|
-| A | This design | This document | Approve or cut | This doc | awaiting approval |
-| B | Tag any chapter, one at a time | In the world's Studio (today Create's Studio button opens Story View, where "Tag this chapter again" already lives): every chapter with its tagging state (read or not, by which model, notes placed, notes dropped and why, tags set aside and why, and "the tagger found nothing here" said plainly, per kind), and Tag this chapter on any of them, with the same guards re-tagging has today. One chapter, or a few in order by hand: no whole-story run yet (SENSEI, 2026-10-29: "one chapter at a time, a couple chapters at a time, until we get this right") | Decision 4 below | The Nine-Fold Furnace with chapters 1 to 3 tagged by hand, and a chapter's record on the page | next |
+| A | This design | This document | Approve or cut | This doc | approved 2026-10-29 (merged) |
+| B | Tag any chapter, one at a time | In the world's Studio (Create's Studio button opens Story View, whose World Info now has a **Chapters** card listing every chapter; each opens its **Studio page**): the chapter's prose with every tag lit on the words it landed on, one color per kind; the tagger's findings beside it, one line per kind, each a switch that lights that kind alone, "nothing found" and "nothing equipped" told apart; the record (read or not, by which model and when, tokens in and out, notes written, placed and dropped, what was set aside and why) behind one line; and Tag this chapter, with the same guards re-tagging had. One chapter, or a few in order by hand: no whole-story run yet (SENSEI, 2026-10-29: "one chapter at a time, a couple chapters at a time, until we get this right") | Decision 4 below | The Nine-Fold Furnace with chapters 1 to 3 tagged by hand, each on its Studio page | built 2026-10-29; waits on SENSEI's run |
 | C | The manuscript way in. *A manuscript world is an authored world; expansion is a later action, and the tagger discovers before it confirms.* | A second way to start a world beside the Seed: the author's chapters in (see decisions 1 to 3), a world with no Seed and no Blueprint, open to its reader, readable in the Reader, with Story Settings for its language, its main character and its sound words | Decisions 1 to 3 below | A novel of SENSEI's choosing in the app, untagged, opening in the Reader | waits on B |
 | D | The tagging loop, one kind at a time | For each kind: the teaching rewritten for that kind alone, re-tag, count against the sentences the prose offers (the agent lists them), fix, repeat. Order: soundscape and atmosphere (and the category vocabulary they choose from), Sound Cues (with the story's own words equipped), speakers for named characters, then holdings and appearances with the already-appeared list | Approve each kind's words; equip the packs for the test story | Each kind landing on a chapter SENSEI can hear and see: music that changes between chapters, cues on the bells, voices on the named cast | waits on B; C helps |
 | E | The Codex open in Create | The author's view of every card, ahead of the reader | When; what the author may edit | The whole world in Create, the reached part in the Reader | later |
@@ -162,7 +166,10 @@ and no phase starts on an undecided question.
    for that sound, more than eight words, a name that reads as a note). It
    cannot say "the tagger found nothing here", because silence is not a note.
    Recommendation: the chapter view says it in those words, per kind, so a
-   quiet chapter and a failed one never look alike.
+   quiet chapter and a failed one never look alike. **Built as recommended
+   (2026-10-29), open to SENSEI's cut:** the Chapters card says it per kind,
+   and a kind the story equipped nothing for (no Sound Words, no soundscapes)
+   says it was never asked for instead.
 
 **Later (phase G, the whole-story run), not now** (SENSEI, 2026-10-29: single
 chapters first, until the tagging is right):
@@ -229,3 +236,20 @@ chapters first, until the tagging is right):
   always sees the cost, nothing tags after upload, and re-tagging and imports
   are creator actions in the subscriber tier. The plan speaks for Expanded
   Novels; a publisher gets the same engine at publisher prices.
+- **2026-10-29 (phase A approved, phase B built):** SENSEI merged the plan.
+  Phase B: any committed chapter can be tagged, one at a time
+  (`retagChapter`, `retagChapterGap`), and World Info has a Chapters card
+  (`StoryChapterList`): every chapter with its record (`describeChapterTagging`),
+  per kind, and Tag this chapter. The record counts its notes (schema 41). The
+  Workshop's HARNESS workspace shows the same record and action. Correction to
+  the first draft: the app's Story View had no chapter list; "Tag this chapter
+  again" lived only in the Workshop. Phase B is done when SENSEI has tagged The
+  Nine-Fold Furnace's chapters 1 to 3 against a real model and the records
+  read true; phase C (the manuscript way in) waits on decisions 1 to 3.
+- **2026-10-29 (SENSEI's cut of the first phase B surface):** "This is not, I
+  don't even know what I'm looking at." The record under World Info's cards
+  read like a log. Rebuilt as a page: the Chapters card lists the chapters,
+  and each opens its Studio page, the prose with its tags lit where they
+  landed, the findings per kind as switches beside it, one action. SENSEI's
+  bar for every surface from here: Apple-plain, you know what you're doing at
+  once, with an artistic first impression, and customizable.

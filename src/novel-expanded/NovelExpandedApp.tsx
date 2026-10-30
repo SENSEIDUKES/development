@@ -203,7 +203,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   useEffect(() => { if (missing) navigate(HOME_ROUTE, { replace: true }); }, [missing, navigate]);
 
   // The Profile Portrait in every Library header: the reader, Sign in (not
-  // connected yet), their profile and Settings, beside the Preferences.
+  // connected yet), their profile and the Celestial Store, beside the Preferences.
   const rank = useDeviceProfileRank();
   const [signInOpen, setSignInOpen] = useState(false);
   const headerProfile = useMemo(() => ({
@@ -211,7 +211,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     detail: rank,
     avatarUrl: profile.avatarUrl || undefined,
     onOpenProfile: () => navigate({ page: 'profile' }),
-    onOpenSettings: () => navigate({ page: 'profile', cave: '/settings' }),
+    onOpenStore: () => navigate({ page: 'profile', cave: '/store' }),
     signIn: { onSignIn: () => setSignInOpen(true), note: 'Not connected yet' },
   }), [profile.displayName, profile.avatarUrl, rank, navigate]);
   const headerPreferences = useMemo(

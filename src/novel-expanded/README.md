@@ -1,5 +1,9 @@
 # NovelExpanded app
 
+- **2026-10-30 (late)** — The header is flush with the top again, with rounded
+  bottom corners, and the Portrait menu's Settings became the Store (the Cave's
+  Celestial Store).
+
 - **2026-10-30 (evening)** — The page scrolls under the floating header (no
   more cut-off band), the Portrait's menu is a modern sheet of plain rows, and
   the laptop sidebar starts at its pathways without the reader card.

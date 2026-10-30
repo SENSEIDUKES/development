@@ -20,7 +20,7 @@ const fixtureReader = getPreviewScenario('developed-cultivator').profile;
 /**
  * Exercise the real Development consumers with their existing Workshop adapters.
  * The Profile Portrait wears a fixture reader, as the app supplies its own:
- * Your profile and Settings open the preview's Cave, and Sign in opens the
+ * Your profile and the Store open the preview's Cave, and Sign in opens the
  * Library's sign-in screen marked not connected, as in the app.
  */
 export function DevelopmentHeaderPreview({ source, state }: { source: HeaderConfiguration; state: string }) {
@@ -31,7 +31,7 @@ export function DevelopmentHeaderPreview({ source, state }: { source: HeaderConf
     detail: 'Reader',
     avatarUrl: fixtureReader?.avatarUrl || undefined,
     onOpenProfile: () => navigateLibraryPreview({ screen: 'profile' }),
-    onOpenSettings: () => navigateLibraryPreview({ screen: 'profile', cave: '/settings' }),
+    onOpenStore: () => navigateLibraryPreview({ screen: 'profile', cave: '/store' }),
     signIn: { onSignIn: () => setSignInOpen(true), note: 'Not connected yet' },
   }), []);
   return <WorkspaceHeaderProfileProvider profile={profile}>

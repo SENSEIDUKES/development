@@ -90,9 +90,9 @@ it('opens the Profile Portrait menu with the Preferences, updates Preferred Lang
   expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
 
-it('shows the host reader, Sign in, profile and Settings in the Portrait menu', async () => {
-  const onSignIn = vi.fn(); const onOpenProfile = vi.fn(); const onOpenSettings = vi.fn();
-  await render(<WorkspaceHeaderProfileProvider profile={{ name: 'Ye Chen', detail: 'Mortal', onOpenProfile, onOpenSettings,
+it('shows the host reader, Sign in, profile and the Store in the Portrait menu', async () => {
+  const onSignIn = vi.fn(); const onOpenProfile = vi.fn(); const onOpenStore = vi.fn();
+  await render(<WorkspaceHeaderProfileProvider profile={{ name: 'Ye Chen', detail: 'Mortal', onOpenProfile, onOpenStore,
     signIn: { onSignIn, note: 'Not connected yet' } }}>
     <WorkspaceHeader title="Home" />
   </WorkspaceHeaderProfileProvider>);
@@ -119,8 +119,9 @@ it('shows the host reader, Sign in, profile and Settings in the Portrait menu', 
   await click(entry('Your profile'));
   expect(onOpenProfile).toHaveBeenCalledTimes(1);
   await click(button('Profile and preferences'));
-  await click(entry('Settings'));
-  expect(onOpenSettings).toHaveBeenCalledTimes(1);
+  await click(entry('Store'));
+  expect(onOpenStore).toHaveBeenCalledTimes(1);
+  expect(Array.from(document.querySelectorAll('.workspace-profile-row-label')).map(label => label.textContent)).not.toContain('Settings');
   // A picture fills the circle in place of the figure.
   await render(<WorkspaceHeaderProfileProvider profile={{ name: 'Ye Chen', avatarUrl: '/ye-chen.png' }}><WorkspaceHeader title="Home" /></WorkspaceHeaderProfileProvider>);
   expect(button('Profile and preferences').querySelector('img.workspace-profile-photo')?.getAttribute('src')).toBe('/ye-chen.png');

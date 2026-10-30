@@ -2,7 +2,7 @@ import { Component, createContext, lazy, Suspense, useContext, useEffect, useLay
 import { createPortal } from 'react-dom';
 import { SEISwitch } from '@seihouse/ui';
 import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
-import { LibraryHelpIcon, LibraryProfileIcon, LibrarySettingsIcon } from '@seihouse/library-ui';
+import { LibraryHelpIcon, LibraryNavigationIcon, LibraryProfileIcon } from '@seihouse/library-ui';
 import { Languages, LogIn, Music } from 'lucide-react';
 import { getActiveInterfaceLanguage, setFallbackInterfaceLanguage } from '../../../library/language/interfaceTranslation';
 import { WorkspaceSheet } from './WorkspaceSheet';
@@ -31,7 +31,8 @@ export interface WorkspaceHeaderProfile {
   detail?: string;
   avatarUrl?: string;
   onOpenProfile?: () => void;
-  onOpenSettings?: () => void;
+  /** The host's store, such as NovelExpanded's Celestial Store. */
+  onOpenStore?: () => void;
   /** Sign in. `note` says when it is not connected yet. */
   signIn?: { onSignIn: () => void; note?: string };
 }
@@ -68,7 +69,7 @@ function menuPosition(anchor: HTMLElement): CSSProperties {
 /**
  * The Profile Portrait: the reader's picture (or the Profile figure) at the end of every
  * Library header, opening one menu for the reader. With a host profile it
- * holds their name and rank, Sign in, their profile and Settings; at every
+ * holds their name and rank, Sign in, their profile and the Store; at every
  * header it holds the Preferences (language and menu music) and Help.
  * It is a disclosure, not a link: the profile page is one entry inside it.
  */
@@ -141,7 +142,7 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
             {profile.detail && <span className="workspace-profile-detail">{profile.detail}</span>}
           </span>
         </div>}
-        {profile && (profile.signIn || profile.onOpenProfile || profile.onOpenSettings) && <div className="workspace-profile-group">
+        {profile && (profile.signIn || profile.onOpenProfile || profile.onOpenStore) && <div className="workspace-profile-group">
           {profile.signIn && <button type="button" className="workspace-profile-row" onClick={choose(profile.signIn.onSignIn)}>
             <LogIn aria-hidden="true" size={18} className="workspace-profile-row-icon" />
             <span className="workspace-profile-row-label">Sign in</span>
@@ -151,9 +152,9 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
             <LibraryProfileIcon aria-hidden="true" size={18} className="workspace-profile-row-icon" />
             <span className="workspace-profile-row-label">Your profile</span>
           </button>}
-          {profile.onOpenSettings && <button type="button" className="workspace-profile-row" onClick={choose(profile.onOpenSettings)}>
-            <LibrarySettingsIcon aria-hidden="true" size={18} className="workspace-profile-row-icon" />
-            <span className="workspace-profile-row-label">Settings</span>
+          {profile.onOpenStore && <button type="button" className="workspace-profile-row" onClick={choose(profile.onOpenStore)}>
+            <LibraryNavigationIcon name="store" aria-hidden="true" size={18} className="workspace-profile-row-icon" />
+            <span className="workspace-profile-row-label">Store</span>
           </button>}
         </div>}
         <div className="workspace-profile-group">

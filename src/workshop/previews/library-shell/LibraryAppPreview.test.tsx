@@ -143,7 +143,7 @@ it('opens the clicked Full and Compact worlds on their Info pages', async () => 
   expect(createVisible()).toBe(true);
 });
 
-it('gives the Development header the app\'s Profile Portrait menu: the reader, Sign in not connected, Your profile and Settings', async () => {
+it('gives the Development header the app\'s Profile Portrait menu: the reader, Sign in not connected, Your profile and the Store', async () => {
   await render();
   await act(async () => container.querySelector<HTMLButtonElement>('header button[aria-label="Profile and preferences"]')!.click());
   const menu = () => document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"]');
@@ -151,7 +151,7 @@ it('gives the Development header the app\'s Profile Portrait menu: the reader, S
   expect(menu()!.querySelector('.workspace-profile-name')?.textContent).toBe(getPreviewScenario('developed-cultivator').profile!.displayName);
   expect(menu()!.textContent).toContain('Not connected yet');
   expect(entry('Your profile')).toBeTruthy();
-  expect(entry('Settings')).toBeTruthy();
+  expect(entry('Store')).toBeTruthy();
   await act(async () => entry('Sign in').click());
   const signIn = document.querySelector<HTMLElement>('[data-testid="library-shell-sign-in"]')!;
   expect(signIn.querySelector('[data-sign-in-unavailable]')).not.toBeNull();

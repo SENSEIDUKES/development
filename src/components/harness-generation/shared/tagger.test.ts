@@ -68,7 +68,7 @@ describe('the record counts its notes', () => {
       { paragraph: 2, words: 'roared', tag: '[[sound: beast roar | high]]' },
     ] });
     const tagging = readChapterTagging({ raw, sent, chapterNumber: 1, at: '2026-10-30T00:00:00.000Z', model: 'fixture',
-      options: { soundVocabulary: [{ word: 'beast roar' }], protagonistNames: ['Ye Chen'], speakersExpected: true, appearancesExpected: true } });
+      options: { soundVocabulary: [{ word: 'beast roar' }], speakersExpected: true, appearancesExpected: true } });
     expect(tagging.record.status).toBe('tagged');
     expect(tagging.record.notes).toEqual({ written: 3, placed: 2 });
     const dropped = tagging.record.warnings?.find(warning => warning.code === 'tag_note_dropped');

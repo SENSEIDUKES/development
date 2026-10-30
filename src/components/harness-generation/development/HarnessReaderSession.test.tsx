@@ -110,6 +110,10 @@ const click = async (predicate: (button: HTMLButtonElement) => boolean, label: s
   await act(async () => { target!.click(); });
   await flush();
 };
+const chooseAction = async (label: 'Open Fate' | 'Create mode') => {
+  await click(byLabel('Fate and Create'), 'Fate and Create');
+  await click(byLabel(label), label);
+};
 const mount = async (element: React.ReactElement) => {
   await act(async () => { root.render(renderWithDevAudio(element)); });
   await flush();
@@ -356,13 +360,13 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     expect(buttonBy(byLabel('Next Chapter: Write Chapter 2'))).toBeTruthy();
   });
 
-  it('says when the first chapter cannot be written here, and opens the Fate panel from its header', async () => {
+  it('says when the first chapter cannot be written here, and opens Fate from the shared action', async () => {
     const { controller, storyId } = await story();
     await mount(<Host controller={controller} storyId={storyId} canWrite={false} startOnOpen />);
     expect(container.querySelector('[aria-label="Story start"]')!.textContent).toContain('The first chapter can’t be written here yet.');
     expect(buttonBy(button => button.getAttribute('aria-label')?.startsWith('Next Chapter:') ?? false)).toBeUndefined();
 
-    await click(byLabel('Open Fate'), 'Open Fate');
+    await chooseAction('Open Fate');
     const panel = document.querySelector<HTMLElement>('[data-testid="reader-panel-fate"]')!;
     expect(panel.getAttribute('role')).toBe('dialog');
     expect(panel.getAttribute('aria-labelledby')).toBe('fate-page-title');
@@ -395,8 +399,8 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     expect(panel.getAttribute('data-stop')).toBe('full');
 
     // Opening another closes the first, and focus stays with the one just opened.
-    buttonBy(byLabel('Open Fate'))!.focus();
-    await click(byLabel('Open Fate'), 'Open Fate');
+    buttonBy(byLabel('Fate and Create'))!.focus();
+    await chooseAction('Open Fate');
     await flush(20);
     expect(document.querySelector('[data-testid="reader-settings"]')).toBeNull();
     expect(document.querySelector('[data-testid="reader-panel-fate"]')).toBeTruthy();
@@ -405,7 +409,7 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
     await flush(20);
     expect(chapterOnScreen(1)).toBe(chapter);
-    expect(document.activeElement?.getAttribute('aria-label')).toBe('Open Fate');
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Fate and Create');
   });
 
   it('opens the Codex as a panel over the chapter, which stays on the page', async () => {
@@ -466,7 +470,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     await mount(<Host controller={controller} storyId={storyId} readerPreferences={storage} readAloudVoices={PICKS} />);
     const controls = container.querySelector('[data-testid="reader-controls-row"]')!;
     expect([...controls.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Listen', 'Playback controls', 'Open Codex', 'Chapter controls', 'Create mode']);
+      .toEqual(['Listen', 'Playback controls', 'Open Codex', 'Chapter controls', 'Fate and Create']);
     await click(byLabel('Listen'), 'Listen');
     await click(byLabel('Playback controls'), 'Playback controls');
     expect(buttonBy(byLabel('Narration speed: 1.5'))).toBeUndefined();
@@ -484,7 +488,11 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(chapterOnScreen(2)).toBeTruthy();
     expect(buttonBy(byLabel('Chapter controls'))!.getAttribute('aria-expanded')).toBe('false');
     await click(byLabel('Chapter controls'), 'Chapter controls');
-    await click(byLabel('Open Fate'), 'Fate inside chapter controls');
+    expect(buttonBy(byLabel('Open Fate'))).toBeUndefined();
+    await click(byLabel('Select chapter: Chapter 2'), 'chapter list between the arrows');
+    await click(byLabel('Chapter 1: Low Tide'), 'Chapter 1');
+    expect(chapterOnScreen(1)).toBeTruthy();
+    await chooseAction('Open Fate');
     await flush(400);
     expect(document.querySelector('[data-testid="reader-panel-fate"]')).toBeTruthy();
     expect(buttonBy(byLabel('Chapter controls'))!.getAttribute('aria-expanded')).toBe('false');
@@ -501,7 +509,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(tools?.createMode).toBeUndefined();
     await click(byLabel('Next Chapter'), 'Next Chapter');
     expect(tools?.createMode).toBeUndefined();
-    await click(byLabel('Create mode'), 'Create mode');
+    await chooseAction('Create mode');
     const sounds = tools!.createMode!.sounds;
     expect(sounds.chapterNumber).toBe(2);
     const sound = sounds.soundWords[0];
@@ -524,7 +532,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     // The same words cannot hold a second cue.
     expect(tools!.createMode!.sounds.resolve(sound, { kind: 'words', words: 'a lantern' })).toMatchObject({ ok: false, problem: expect.stringContaining('already has a Sound Cue') });
     // Leaving Create mode takes its commands away.
-    await click(byLabel('Create mode'), 'Back to reading');
+    await chooseAction('Create mode');
     expect(tools?.createMode).toBeUndefined();
   });
 
@@ -544,7 +552,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     const controls = container.querySelector('[data-testid="reader-controls-row"]')!;
     expect(container.querySelector('[data-testid="read-aloud-strip"]')).toBeNull();
     expect([...controls.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Pause', 'Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Open Fate', 'Next Chapter', 'Create mode']);
+      .toEqual(['Pause', 'Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Select chapter: Chapter 1', 'Next Chapter', 'Fate and Create']);
 
     await next();
     expect(lastSpoken().text).toBe('The tide pulled back from the drowned gate.');
@@ -627,7 +635,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     const cancels = speech.cancels;
 
     // A panel leaves the chapter on the page, so the voice is never cut off.
-    await click(byLabel('Open Fate'), 'Open Fate');
+    await chooseAction('Open Fate');
     expect(speech.cancels).toBe(cancels);
     expect(container.querySelector('[data-testid="read-aloud-player"]')!.getAttribute('data-status')).toBe('playing');
 
@@ -709,7 +717,7 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
 
     // What opens over the chapter never quiets it: the atmosphere plays on under Fate and the Codex.
     const stopAtmosphere = vi.spyOn(mixer, 'stopAtmosphere');
-    await click(byLabel('Open Fate'), 'Open Fate');
+    await chooseAction('Open Fate');
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
     await click(byLabel('Open Codex'), 'Open Codex');
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
@@ -962,15 +970,15 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     expect(article.className).toContain('max-w-[var(--reader-measure,34em)]');
     expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Soft", serif');
 
-    // The top bar's story and chapter open the chapter list; the bottom bar mirrors playback and the chapter arrows, Fate between them, around Codex.
+    // The header identifies the chapter; chapter selection and Fate/Create stay in the bottom bar.
     const bar = container.querySelector<HTMLElement>('[data-testid="reader-top-bar"]')!;
     expect(bar.querySelector('[data-testid="reader-place"]')!.textContent).toBe('Chapter 1 · Low Tide');
     expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Back', 'Select chapter: Chapter 1', 'Reader Settings']);
+      .toEqual(['Back', 'Reader Settings']);
     const bottom = container.querySelector<HTMLElement>('[data-testid="reader-bottom-bar"]')!;
     expect([...bottom.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Open Fate', 'Next Chapter: Write Chapter 2', 'Create mode']);
-    // The far right keeps the coming Create mode's place.
+      .toEqual(['Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Select chapter: Chapter 1', 'Next Chapter: Write Chapter 2', 'Fate and Create']);
+    // The far right opens the shared Fate/Create chooser.
     expect(bottom.querySelector('[data-testid="reader-create-slot"]')).toBeTruthy();
     // An English story reads left to right.
     expect(container.querySelector('.reader-frame')!.getAttribute('dir')).toBe('ltr');
@@ -1070,14 +1078,20 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
   it('opens the newest chapter on the Highlight Engine with its overlays; an earlier chapter is sealed', async () => {
     const { controller, storyId } = await story({ written: 2 });
     await mount(<Host controller={controller} storyId={storyId} />);
-    const create = () => buttonBy(byLabel('Create mode'))!;
+    const create = () => buttonBy(byLabel('Fate and Create'))!;
     // Chapter 1: the story has moved on from it, so it is sealed.
     expect(chapterOnScreen(1)).toBeTruthy();
-    expect(create().disabled).toBe(true);
-    expect(create().title).toBe('Only the newest chapter can be changed');
+    expect(create().disabled).toBe(false);
+    await click(byLabel('Fate and Create'), 'Fate and Create');
+    const choice = buttonBy(byLabel('Create mode'))!;
+    expect(choice.disabled).toBe(true);
+    expect(choice.title).toBe('Only the newest chapter can be changed');
+    expect(buttonBy(byLabel('Open Fate'))!.disabled).toBe(false);
+    expect([...choice.closest('[role="dialog"]')!.querySelectorAll('button')].map(button => button.textContent?.trim())).toEqual(['Fate', 'Create']);
+    await click(byLabel('Fate and Create'), 'close chooser');
     await click(byLabel('Next Chapter'), 'Next Chapter');
     expect(create().disabled).toBe(false);
-    await click(byLabel('Create mode'), 'Create mode');
+    await chooseAction('Create mode');
     expect(create().getAttribute('aria-pressed')).toBe('true');
     const authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
     expect(authoring.getAttribute('data-chapter-number')).toBe('2');
@@ -1088,11 +1102,11 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(authoring.querySelector('[data-testid="overlay-legend"]')).toBeNull();
     expect(authoring.textContent).toContain('Mara');
     // Back to reading: the chapter is prose again.
-    await click(byLabel('Create mode'), 'Back to reading');
+    await chooseAction('Create mode');
     expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
     expect(chapterOnScreen(2)).toBeTruthy();
     // Another chapter closes Create mode.
-    await click(byLabel('Create mode'), 'Create mode');
+    await chooseAction('Create mode');
     await click(byLabel('Previous Chapter'), 'Previous Chapter');
     expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
     expect(create().getAttribute('aria-pressed')).toBe('false');
@@ -1102,7 +1116,7 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     let tools: ReaderHostTools | undefined;
     await mount(<Host controller={controller} storyId={storyId} renderHostTools={current => { tools = current; return null; }} />);
     await click(byLabel('Next Chapter'), 'Next Chapter');
-    await click(byLabel('Create mode'), 'Create mode');
+    await chooseAction('Create mode');
     expect(container.querySelector('[data-testid="create-mode-no-cues"]')).toBeTruthy();
     const placed = tools!.createMode!.sounds.resolve(tools!.createMode!.sounds.soundWords[0], { kind: 'words', words: 'with a lantern' });
     if (!placed.ok) throw new Error(placed.problem);
@@ -1122,7 +1136,7 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     let tools: ReaderHostTools | undefined;
     await mount(<Host controller={controller} storyId={storyId} renderHostTools={current => { tools = current; return null; }} />);
     await click(byLabel('Next Chapter'), 'Next Chapter');
-    await click(byLabel('Create mode'), 'Create mode');
+    await chooseAction('Create mode');
     const placed = tools!.createMode!.sounds.resolve(tools!.createMode!.sounds.soundWords[0], { kind: 'words', words: 'with a lantern' });
     if (!placed.ok) throw new Error(placed.problem);
     const authorChapter = vi.spyOn(controller, 'authorChapter').mockRejectedValueOnce(new Error('Storage is full.'));
@@ -1139,7 +1153,7 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     let tools: ReaderHostTools | undefined;
     await mount(<Host controller={controller} storyId={storyId} renderHostTools={current => { tools = current; return null; }} />);
     await click(byLabel('Next Chapter'), 'Next Chapter');
-    await click(byLabel('Create mode'), 'Create mode');
+    await chooseAction('Create mode');
     // Another tab on the same stories changes the chapter and saves it first.
     const otherTab = new HarnessGenerationController({ repository: harness, modelAdapter: scriptedProvider().adapter, media });
     await otherTab.hydrate();

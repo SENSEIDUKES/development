@@ -503,8 +503,7 @@ export function HarnessReaderSession({
       {/* A new chapter returns here and reveals its top bar. */}
       <div ref={topRef} aria-hidden />
       <ReaderTopBar barRef={barRef} storyTitle={story.title} place={chapter ? `Chapter ${chapter.chapterNumber} · ${chapterTitleText(chapter.title) || chapter.title}` : 'Story start'}
-        chapterSelection={chapter ? { current: chapter.chapterNumber, entries: chapters.map(entry => ({ number: entry.chapterNumber, title: entry.title })), onSelect: openChapter } : undefined}
-        onBack={onClose} onOpenSettings={() => openSettings()} companion={companion} pinned={Boolean(panel) || pageOpen} direction={direction} />
+        onBack={onClose} onOpenSettings={() => openSettings()} companion={companion} pinned={Boolean(panel) || pageOpen} />
       <div className="reader-column">
       {storageError && <p role="alert" className="mt-3 text-sm text-(--reader-warning-bright)">{storageError}</p>}
 
@@ -535,6 +534,7 @@ export function HarnessReaderSession({
         onBackToNarration={follow.backToNarration} barRef={playerRef}
         note={mixer && <ReaderAudioNote mixer={mixer} />}
         onOpenCodex={openCodex} fate={{ run: () => openFate(fateCalls), disabled: fateLocked, attention: fateCalls }}
+        chapterSelection={chapter ? { current: chapter.chapterNumber, entries: chapters.map(entry => ({ number: entry.chapterNumber, title: entry.title })), onSelect: openChapter } : undefined}
         create={chapter ? {
           active: Boolean(authoring), onToggle: () => setCreating(!authoring),
           unavailable: authorable ? undefined : later ? 'Only the newest chapter can be changed' : 'This chapter is sealed: the story has moved on from it',

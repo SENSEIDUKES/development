@@ -25,7 +25,7 @@ import { NovelBlueprintTab } from './NovelBlueprintTab';
 import { useLibraryStories, type LibraryStoriesOptions } from '../stories/useLibraryStories';
 import { StoryPages } from '../stories/StoryPages';
 import { downloadHarnessStory } from '../stories/storyExport';
-import { ChapterTaggingRecord, TagChapterAction } from '../stories/ChapterTagging';
+import { ChapterTaggingRecord, TagChapterAction } from '../stories/ChapterTaggingControls';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessCorrectionKind, type HarnessStory, type HarnessStoryMode, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 

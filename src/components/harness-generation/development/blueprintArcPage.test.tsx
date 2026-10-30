@@ -137,6 +137,7 @@ describe('The World Blueprint reappears when a new arc begins', { timeout: 20_00
     run.arcOperation.mockRejectedValueOnce(new Error('The planner is resting.'));
     await act(async () => { root.render(renderWithDevAudio(<Host controller={run.controller} storyId={run.storyId} />)); });
     await flush();
+    await click('Fate and Create');
     await click('Open Fate');
     expect(document.querySelector('[data-testid="fate-arc-goal"]')!.textContent).toContain("Arc 2's goals are planned when it begins");
     await click('Begin Arc 2');

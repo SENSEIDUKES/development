@@ -37,6 +37,8 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-29:** Chapter selection moves from the header to the bottom chapter pill, between Previous and Next. The rightmost action opens a compact chooser labeled only Fate and Create. Chapter navigation, Create restrictions and Fate Survival gates keep their existing owners; the app and Workshop share the controls.
+
 - **2026-10-29 (any chapter tagged, one at a time, and the record on the
   page):** Phase B of `docs/create-hub.md`, approved by SENSEI's merge of the
   plan. `retagChapter(storyId, chapterId)` replaces `retagLatestChapter`: any
@@ -811,9 +813,10 @@ Story Seed-to-Foundation adapter. HARNESS reuses Chapter Generation's public
 SEN block normalization and accepted-media contracts, but not its legacy
 generation cycle, prompts, planning, processing, or persistence.
 `development/HarnessReaderSession.tsx` is the Reader's frame, filling the
-screen: the top bar (`ReaderTopBar.tsx`, whose story and chapter open the chapter
-list), the bottom bar (`ReaderBottomBar.tsx`: Listen, Codex, the chapter arrows
-with Fate between them), Reader Settings and the Fate, Holdings and arc pages. The chapter on screen is its body (`readerChapterBody.ts`),
+screen: the top bar (`ReaderTopBar.tsx`, identifying the story and chapter),
+the bottom bar (`ReaderBottomBar.tsx`: Listen, Codex, the chapter picker between
+its arrows, and the shared Fate/Create chooser), Reader Settings and the Fate,
+Holdings and arc pages. The chapter on screen is its body (`readerChapterBody.ts`),
 prose by default (`ProseChapterBody.tsx`: the read-only Highlight Engine with
 the Sound Cues, in the reader's text settings). It owns no second persistence
 path; the reading place is host Reader state and the text settings are a device

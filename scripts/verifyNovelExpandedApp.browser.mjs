@@ -729,7 +729,7 @@ async function walk(browser, viewport, sample) {
   check(frame.title >= 80, `The story title should keep room in the top bar (${JSON.stringify(frame)}).`);
   // About 60 characters a line, up to about 66 on a wide screen.
   check(frame.measure <= 39, `The prose should keep a reading measure of 60 to 66 characters (${JSON.stringify(frame)}).`);
-  check(await visibleButton(viewport.width < 640 ? 'Chapter controls' : 'Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible() && await visibleButton('Open Codex').isVisible(),
+  check(await visibleButton('Fate and Create').isVisible() && await visibleButton('Reader Settings').isVisible() && await visibleButton('Open Codex').isVisible(),
     'Fate, the Codex and Reader Settings should be reachable at the chapter\'s end.');
   check(await page.getByTestId('reader-top-bar').getByTestId('reader-companion').getByRole('button', { name: /actions$/ }).isVisible(),
     'The Familiar\'s recall should sit in the Reader\'s top bar beside Reader Settings.');
@@ -779,6 +779,20 @@ async function walk(browser, viewport, sample) {
     await visibleButton('Chapter controls').click();
     check((await page.getByRole('dialog', { name: 'Chapters', exact: true }).boundingBox()).height <= 60, 'Chapter controls should occupy only one compact row.');
   }
+  check(await page.getByTestId('reader-top-bar').getByTestId('reader-chapter-menu').count() === 0, 'Chapter selection belongs in the bottom controls.');
+  await visibleButton('Select chapter: Chapter 1').click();
+  const chapterPicker = page.getByTestId('reader-chapter-picker');
+  await chapterPicker.waitFor();
+  check(await chapterPicker.getByRole('button', { name: 'Chapter 1: Low Tide', exact: true }).getAttribute('aria-current') === 'page', 'The bottom chapter picker should mark the current chapter.');
+  await page.keyboard.press('Escape');
+  await chapterPicker.waitFor({ state: 'hidden' });
+  if (viewport.width < 640) {
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog', { name: 'Chapters', exact: true }).waitFor({ state: 'hidden' });
+  }
+  await visibleButton('Fate and Create').click();
+  const actions = page.getByRole('dialog', { name: 'Fate and Create', exact: true });
+  check(JSON.stringify(await actions.getByRole('button').allTextContents()) === JSON.stringify(['Fate', 'Create']), 'The shared chooser should contain only Fate and Create labels.');
   await visibleButton('Open Fate').click();
   await page.getByTestId('reader-panel-fate').waitFor();
   check((await page.getByTestId('fate-path-current').textContent()).includes(chapter.nextConflict), 'Fate must retain the confirmed Familiar choice after cancelling a later custom proposal.');

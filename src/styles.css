@@ -542,9 +542,10 @@
   }
 }
 
-/* A preview's open modal (Reader Settings, a dialog) covers the Workshop
-   Controls, as it covers everything in the app; closing it brings them back. */
-body:has([aria-modal='true']) [data-workshop-controls] {
+/* Preview dialogs and Reader pickers cover Workshop Controls; closing them
+   restores the tooling above the preview. */
+body:has([aria-modal='true']) [data-workshop-controls],
+body:has(.reader-glass-picker[role='dialog']) [data-workshop-controls] {
   z-index: 0;
 }
 

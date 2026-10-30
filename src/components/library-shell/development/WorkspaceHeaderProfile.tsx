@@ -1,4 +1,4 @@
-import { Component, createContext, lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { Component, createContext, lazy, Suspense, useContext, useEffect, useLayoutEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { SEISwitch } from '@seihouse/ui';
 import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
@@ -37,49 +37,11 @@ export interface WorkspaceHeaderProfile {
   signIn?: { onSignIn: () => void; note?: string };
 }
 
-interface ProfileMenuState {
-  profile: WorkspaceHeaderProfile;
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  /** What opened the menu (the Portrait, or the sidebar's profile card): the menu sits beside it and focus returns to it. */
-  openerRef: RefObject<HTMLElement | null>;
-}
+const ProfileMenuContext = createContext<WorkspaceHeaderProfile | null>(null);
 
-const ProfileMenuContext = createContext<ProfileMenuState | null>(null);
-
-/**
- * The reader behind every Library header's Profile Portrait, with one menu
- * state shared by every header beneath it and the laptop sidebar's profile card.
- */
+/** The reader behind every Library header's Profile Portrait beneath it. */
 export function WorkspaceHeaderProfileProvider({ profile, children }: { profile: WorkspaceHeaderProfile; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const openerRef = useRef<HTMLElement | null>(null);
-  const value = useMemo(() => ({ profile, open, setOpen, openerRef }), [profile, open]);
-  return <ProfileMenuContext.Provider value={value}>{children}</ProfileMenuContext.Provider>;
-}
-
-/** The Library navigation's profile card (the laptop sidebar's), which opens the menu beside itself. */
-const NAVIGATION_ACCOUNT = '[data-slot="navigation-account-top"], [data-slot="navigation-account"]';
-const visibleCard = () => Array.from(document.querySelectorAll<HTMLElement>(NAVIGATION_ACCOUNT))
-  .find(card => card.getClientRects().length > 0) ?? null;
-
-/**
- * Opens the Profile Portrait's menu from elsewhere: by default from the Library
- * navigation's profile card, beside it. Null without a `WorkspaceHeaderProfileProvider`.
- */
-export function useWorkspaceHeaderProfileMenu(): { open: (opener?: HTMLElement | null) => void } | null {
-  const state = useContext(ProfileMenuContext);
-  const setOpen = state?.setOpen;
-  const openerRef = state?.openerRef;
-  const open = useCallback((opener?: HTMLElement | null) => {
-    if (!setOpen || !openerRef) return;
-    const active = document.activeElement;
-    openerRef.current = opener !== undefined ? opener
-      : active instanceof HTMLElement && active.matches(NAVIGATION_ACCOUNT) ? active
-        : visibleCard();
-    setOpen(true);
-  }, [setOpen, openerRef]);
-  return useMemo(() => setOpen ? { open } : null, [setOpen, open]);
+  return <ProfileMenuContext.Provider value={profile}>{children}</ProfileMenuContext.Provider>;
 }
 
 /**
@@ -97,14 +59,11 @@ function ProfilePicture({ src, size }: { src?: string; size: number }) {
 const MENU_GAP = 12;
 const MENU_EDGE = 16;
 
-/** The menu sits under what opened it, on the side of the screen it was opened from. */
+/** The menu sits under the Portrait, aligned to its right edge. */
 function menuPosition(anchor: HTMLElement): CSSProperties {
   const rect = anchor.getBoundingClientRect();
   const top = rect.bottom + MENU_GAP;
-  const position: CSSProperties = { top, maxHeight: `calc(100dvh - ${top + MENU_EDGE}px)` };
-  if (rect.left + rect.width / 2 > window.innerWidth / 2) position.right = Math.max(MENU_EDGE, window.innerWidth - rect.right);
-  else position.left = Math.max(MENU_EDGE, rect.left);
-  return position;
+  return { top, maxHeight: `calc(100dvh - ${top + MENU_EDGE}px)`, right: Math.max(MENU_EDGE, window.innerWidth - rect.right) };
 }
 
 /**
@@ -118,16 +77,8 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
   preferences?: WorkspaceHeaderPreferences;
   help?: HeaderAction;
 }) {
-  const shared = useContext(ProfileMenuContext);
-  const profile = shared?.profile;
-  const disclosure = useHeaderDisclosure(shared ? {
-    open: shared.open,
-    onOpenChange: open => {
-      if (open) shared.openerRef.current = null;
-      shared.setOpen(open);
-    },
-    returnFocusTo: () => shared.openerRef.current,
-  } : undefined);
+  const profile = useContext(ProfileMenuContext);
+  const disclosure = useHeaderDisclosure();
   const [experience, setExperience] = useState<'help' | 'help-error' | null>(null);
   const [localLanguage, setLocalLanguage] = useState<SenLanguageCode>(() =>
     normalizeSenLanguageCode(preferences?.language ?? getActiveInterfaceLanguage()),
@@ -145,9 +96,8 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
   }, [preferences?.language, disclosure.open]);
   useLayoutEffect(() => {
     if (!disclosure.open) return;
-    const anchor = shared?.openerRef.current ?? disclosure.triggerRef.current;
-    if (anchor) setPosition(menuPosition(anchor));
-  }, [disclosure.open, shared?.openerRef, disclosure.triggerRef]);
+    if (disclosure.triggerRef.current) setPosition(menuPosition(disclosure.triggerRef.current));
+  }, [disclosure.open, disclosure.triggerRef]);
 
   const selectedLanguage = normalizeSenLanguageCode(preferences?.language ?? localLanguage);
   const handleLanguageChange = (next: SenLanguageCode) => {
@@ -156,8 +106,8 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
     if (preferences?.onLanguageChange) preferences.onLanguageChange(code);
     else setFallbackInterfaceLanguage(code);
   };
-  const returnFocus = () => (shared?.openerRef.current ?? disclosure.triggerRef.current)?.focus();
-  // Each entry closes the menu first, so a page or dialog it opens takes focus from the opener.
+  const returnFocus = () => disclosure.triggerRef.current?.focus();
+  // Each entry closes the menu first, so a page or dialog it opens takes focus from the Portrait.
   const choose = (action: () => void) => () => {
     disclosure.setOpen(false);
     returnFocus();

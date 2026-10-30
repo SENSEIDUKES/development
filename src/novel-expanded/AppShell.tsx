@@ -5,12 +5,11 @@ import '@library-studios/brand/styles.css';
 import { LibraryStoriesIcon, LibraryBookIcon, LibraryDiscoveryIcon, LibraryStoryIcon, LibrarySettingsIcon, LibraryProfileIcon } from '@seihouse/library-ui';
 import {
   LibraryFooter, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader, WorkspaceShell,
-  useLibraryDesktopNavigation, useLibraryLegalDocuments, useWorkspaceHeaderProfileMenu,
+  useLibraryDesktopNavigation, useLibraryLegalDocuments,
   type HeaderSearchItem, type LibraryFooterGroup,
 } from '@seihouse/library/shell';
 import { LibraryHelpMenu } from '@seihouse/library/story-seed';
 import type { UserProfile } from '@seihouse/library/profile';
-import { useDeviceProfileRank } from '../host/profile/deviceProfile';
 import { APP_DESTINATIONS, appLibraryLocation, appRouteFor } from './appPlaces';
 import { HOME_ROUTE, routeHref, type Navigate, type NovelExpandedRoute } from './routes';
 import { LibraryLook } from '@seihouse/library/presentation';
@@ -41,7 +40,6 @@ export interface AppShellProps {
  */
 export function AppShell({ route, navigate, stories, readerProfile, mainLabel, children }: AppShellProps) {
   const pathwaysSidebar = useLibraryDesktopNavigation() === 'sidebar';
-  const rank = useDeviceProfileRank();
   const { legal, sheet: legalSheet } = useLibraryLegalDocuments();
   const [helpOpen, setHelpOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
@@ -55,9 +53,6 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
   const discover = () => navigate({ page: 'discover' });
   const profile = () => navigate({ page: 'profile' });
   const settings = () => navigate({ page: 'profile', cave: '/settings' });
-  // The sidebar's profile card opens the Profile Portrait's menu beside itself.
-  const profileMenu = useWorkspaceHeaderProfileMenu();
-  const openProfileMenu = () => { if (profileMenu) profileMenu.open(); else profile(); };
   const searchItems: HeaderSearchItem[] = [
     { id: 'home', label: 'Your stories', description: 'Home: every story you have started', icon: LibraryStoriesIcon, onAction: home },
     { id: 'create', label: 'Create a story', description: 'Plant a Story Seed and shape its World Blueprint', icon: LibraryBookIcon, onAction: create },
@@ -83,10 +78,6 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
   // Every page in the shell wears the Library's look; the saved accent, when there is one, over its gold.
   return <LibraryLook accentColor={readerProfile.accentColor} className="novel-expanded-shell bg-[#050505] text-[#dfd8cf] font-serif selection:bg-human/30" data-testid="novel-expanded-shell">
     <LibraryNavigation location={appLibraryLocation(route)} destinations={APP_DESTINATIONS}
-      profile={{ name: readerProfile.displayName.trim() || 'Cultivator',
-        detail: rank,
-        emblem: readerProfile.avatarUrl ? <img src={readerProfile.avatarUrl} alt="" /> : undefined,
-        onSelect: openProfileMenu }}
       onNavigate={location => { const next = appRouteFor(location); if (next) navigate(next); }}>
       <WorkspaceShell mainRef={mainRef} mainId="novel-expanded-main" mainAriaLabel={mainLabel} mainClassName="relative z-10 outline-none"
         sidebar={pathwaysSidebar ? <LibrarySectionSidebar /> : undefined} sidebarLabel="Library pathways"

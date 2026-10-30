@@ -1,15 +1,12 @@
 import type { ReactNode } from 'react';
-import type { LibraryNavigationDrawerProfile } from '@seihouse/library-ui';
 import { LibraryNavigation, useLibraryDesktopNavigation } from './LibraryNavigation';
 import { activeLibraryDestination, libraryLocationKey, librarySectionItems, type LibraryLocation, type LibrarySectionActions } from './libraryRoutes';
 
 /** Existing LibraryScreen tabs and host screens, with optional existing section actions. */
-export function MainLibraryNavigation({ location, onNavigate, sectionActions, profile, children }: {
+export function MainLibraryNavigation({ location, onNavigate, sectionActions, children }: {
   location: LibraryLocation;
   onNavigate: (location: LibraryLocation) => void;
   sectionActions?: LibrarySectionActions;
-  /** The reader at the top of the laptop Pathways sidebar. */
-  profile?: LibraryNavigationDrawerProfile;
   children: ReactNode;
 }) {
   const destination = activeLibraryDestination(location) ?? 'home';
@@ -38,7 +35,7 @@ export function MainLibraryNavigation({ location, onNavigate, sectionActions, pr
     : location.screen === 'home' && location.collection === 'my-library' ? 'my-library'
     : destination === 'home' ? 'immortal-hub' : destination === 'create' ? 'creator-space'
     : destination === 'discover' ? 'fate-survival' : 'cultivator-cave';
-  return <LibraryNavigation location={location} onNavigate={onNavigate} profile={profile} sectionMenu={pathwaysSidebar ? undefined : {
+  return <LibraryNavigation location={location} onNavigate={onNavigate} sectionMenu={pathwaysSidebar ? undefined : {
     label: `${destination === 'home' ? 'Home' : destination === 'create' ? 'Create' : destination === 'discover' ? 'Discover' : 'Profile'} sections`,
     sections: [{ id: destination, items: librarySectionItems(destination, actions).map(item => ({ ...item, active: item.id === activeId })) }],
   }}>{children}</LibraryNavigation>;

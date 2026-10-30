@@ -5,7 +5,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
-import { WorkspaceHeader, WorkspaceHeaderProfileProvider, WorkspaceHeaderSoundProvider, useWorkspaceHeaderProfileMenu } from '@seihouse/library/shell';
+import { WorkspaceHeader, WorkspaceHeaderProfileProvider, WorkspaceHeaderSoundProvider } from '@seihouse/library/shell';
 import { MainLibraryHeader } from './MainLibraryHeader';
 import { STORY_SEED_HELP_ITEMS } from '@seihouse/library/story-seed';
 
@@ -90,16 +90,10 @@ it('opens the Profile Portrait menu with the Preferences, updates Preferred Lang
   expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
 
-function SidebarCard() {
-  const menu = useWorkspaceHeaderProfileMenu();
-  return <button type="button" data-slot="navigation-account" onClick={() => menu?.open()}>Sidebar card</button>;
-}
-
-it('shows the host reader, Sign in, profile and Settings, and opens the same menu from the sidebar card', async () => {
+it('shows the host reader, Sign in, profile and Settings in the Portrait menu', async () => {
   const onSignIn = vi.fn(); const onOpenProfile = vi.fn(); const onOpenSettings = vi.fn();
   await render(<WorkspaceHeaderProfileProvider profile={{ name: 'Ye Chen', detail: 'Mortal', onOpenProfile, onOpenSettings,
     signIn: { onSignIn, note: 'Not connected yet' } }}>
-    <SidebarCard />
     <WorkspaceHeader title="Home" />
   </WorkspaceHeaderProfileProvider>);
   // Without a picture the Portrait shows the Profile figure, never initials.
@@ -115,15 +109,13 @@ it('shows the host reader, Sign in, profile and Settings, and opens the same men
   expect(onSignIn).toHaveBeenCalledTimes(1);
   expect(menu()).toBeNull();
   expect(document.activeElement).toBe(button('Profile and preferences'));
-  // The sidebar card opens the same menu, and Escape returns focus to the card.
-  const card = container.querySelector<HTMLButtonElement>('[data-slot="navigation-account"]')!;
-  await click(card);
-  expect(menu()).not.toBeNull();
+  // Escape closes the menu and returns focus to the Portrait.
+  await click(button('Profile and preferences'));
   expect(button('Profile and preferences').getAttribute('aria-expanded')).toBe('true');
   await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   expect(menu()).toBeNull();
-  expect(document.activeElement).toBe(card);
-  await click(card);
+  expect(document.activeElement).toBe(button('Profile and preferences'));
+  await click(button('Profile and preferences'));
   await click(entry('Your profile'));
   expect(onOpenProfile).toHaveBeenCalledTimes(1);
   await click(button('Profile and preferences'));

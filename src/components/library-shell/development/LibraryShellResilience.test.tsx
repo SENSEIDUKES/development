@@ -118,10 +118,9 @@ it('nests a page\'s own sub-pages under the active pathway and moves Dao Insight
     addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() }));
   const navigate = vi.fn();
   const openRewards = vi.fn();
-  const openProfile = vi.fn();
   // The Cave supplies its pages the same way.
   await render(<LibraryNavigation location={{ screen: 'profile', cave: '/stories' }} onNavigate={navigate}
-    profile={{ name: 'Kept Reading', detail: 'Leader', onSelect: openProfile }} sectionMenu={{
+    sectionMenu={{
     label: 'Cultivator Cave navigation',
     sections: [{ id: 'cave', items: [
       { id: 'stories', label: 'Stories', active: true, onSelect: vi.fn() },
@@ -138,13 +137,11 @@ it('nests a page\'s own sub-pages under the active pathway and moves Dao Insight
   expect(byText('Settings', pathways.closest('[data-slot="navigation-panel"]')!)).toBeTruthy();
   await click(byText('Rewards', pathways));
   expect(openRewards).toHaveBeenCalled();
-  // The reader, not the Library emblem, heads the sidebar; the logo and badge stay in the header.
+  // Neither the Library emblem nor a reader card heads the sidebar: the reader is
+  // the header's Profile Portrait, and the sidebar starts at its pathways.
   const panel = pathways.closest('[data-slot="navigation-panel"]')!;
   expect(panel.querySelector('[data-slot="navigation-identity"]')).toBeNull();
-  const reader = panel.querySelector<HTMLButtonElement>('[data-slot="navigation-account-top"]')!;
-  expect(reader.getAttribute('aria-label')).toBe('Kept Reading, Leader');
-  await click(reader);
-  expect(openProfile).toHaveBeenCalled();
+  expect(panel.querySelector('[data-slot="navigation-account-top"], [data-slot="navigation-account"]')).toBeNull();
   // The laptop strip steps aside for the sidebar (CSS); the header has no center slot.
   expect(document.querySelector('[data-library-desktop-navigation="sidebar"]')).not.toBeNull();
   expect(document.querySelector('[data-slot="app-header-center"]')).toBeNull();
@@ -159,8 +156,7 @@ it('opens Pathways by default and remembers two-way double-tap width changes acr
   // The host remembers the choice; here, a stand-in for its settings.
   let remembered: 'pinned' | 'compact' = 'pinned';
   const remember = vi.fn((mode: string) => { remembered = mode as typeof remembered; });
-  const page = (key: string) => <LibraryDesktopNavigationProvider key={key} value="sidebar" sidebarMode={remembered} onSidebarModeChange={remember}><LibraryNavigation key={key} location={{ screen: 'home', collection: 'featured' }} onNavigate={vi.fn()}
-    profile={{ name: 'Sensei', detail: 'Leader' }}>
+  const page = (key: string) => <LibraryDesktopNavigationProvider key={key} value="sidebar" sidebarMode={remembered} onSidebarModeChange={remember}><LibraryNavigation key={key} location={{ screen: 'home', collection: 'featured' }} onNavigate={vi.fn()}>
     <WorkspaceShell header={<p>Header</p>} sidebar={<LibrarySectionSidebar />} sidebarLabel="Library pathways">Page</WorkspaceShell>
   </LibraryNavigation></LibraryDesktopNavigationProvider>;
   await render(page('first'));

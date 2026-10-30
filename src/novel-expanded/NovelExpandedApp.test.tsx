@@ -566,43 +566,43 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(floatingNote()).toBeNull();
   });
 
-  it('shows the saved reader and landscape on Home and World Info, and opens the Cave from the reader', async () => {
+  it('shows the saved reader in the header Portrait and the landscape in the sidebar, with no reader card in the sidebar', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
     services.profile.save({ displayName: 'Saved Reader', avatarUrl: '/saved-portrait.png' });
     await render(services);
-    const reader = () => shell()!.querySelector<HTMLButtonElement>('[data-slot="navigation-account-top"]')!;
-    expect(reader().getAttribute('aria-label')).toContain('Saved Reader');
-    expect(reader().querySelector('img')?.getAttribute('src')).toBe('/saved-portrait.png');
+    const portrait = () => shell()!.querySelector<HTMLButtonElement>('header button[aria-label="Profile and preferences"]')!;
+    // The reader is the header's Profile Portrait; the sidebar starts at its pathways.
+    expect(shell()!.querySelector('[data-slot="navigation-account-top"], [data-slot="navigation-account"]')).toBeNull();
+    expect(portrait().querySelector('img')?.getAttribute('src')).toBe('/saved-portrait.png');
     expect(shell()!.querySelector('[data-slot="navigation-artwork"] img')?.getAttribute('src')).toBe('/manifest-backdrops/immortal-land-4.jpg');
 
     // Profile changes are read from the same subscribed record, without a reload.
     await act(async () => { services.profile.save({ displayName: 'Renamed Reader', avatarUrl: '/new-portrait.png' }); });
-    expect(reader().getAttribute('aria-label')).toContain('Renamed Reader');
-    expect(reader().querySelector('img')?.getAttribute('src')).toBe('/new-portrait.png');
+    expect(portrait().querySelector('img')?.getAttribute('src')).toBe('/new-portrait.png');
     await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
     expect(worldInfo()).toBeTruthy();
-    expect(reader().getAttribute('aria-label')).toContain('Renamed Reader');
     expect(shell()!.querySelector('[data-slot="navigation-artwork"] img')).toBeTruthy();
-    // The sidebar reader opens the Profile Portrait's menu, not the Cave; Your profile opens the Cave.
-    await click(reader(), 'the sidebar reader', 20);
+    // The Portrait opens its menu, not the Cave; Your profile opens the Cave.
+    await click(portrait(), 'the Profile Portrait', 20);
     const menu = document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"]')!;
-    expect(menu).toBeTruthy();
     expect(menu.querySelector('.workspace-profile-name')?.textContent).toBe('Renamed Reader');
     expect(menu.querySelector('.workspace-profile-badge img')?.getAttribute('src')).toBe('/new-portrait.png');
-    expect(shell()!.querySelector('header .workspace-profile-portrait img')?.getAttribute('src')).toBe('/new-portrait.png');
     expect(address()).not.toBe('/app/?page=profile');
     await click(buttonByText('Your profile', menu), 'Your profile in the menu', 20);
     expect(address()).toBe('/app/?page=profile');
     expect(document.querySelector('[data-testid="novel-expanded-profile"]')).toBeTruthy();
   });
 
-  it('gives a new reader the shared profile emblem and cultivation rank', async () => {
+  it('gives a new reader the Profile figure, their name and cultivation rank in the Portrait', async () => {
     await render(appServices(scriptedWriter().writer));
-    const reader = shell()!.querySelector('[data-slot="navigation-account-top"]')!;
-    expect(reader.getAttribute('aria-label')).toBe('Cultivator, Reader');
-    expect(reader.querySelector('[data-slot="navigation-account-avatar"]')).toBeTruthy();
+    const portrait = shell()!.querySelector<HTMLButtonElement>('header button[aria-label="Profile and preferences"]')!;
+    expect(portrait.querySelector('[data-sen-icon="header-profile"]')).toBeTruthy();
+    await click(portrait, 'the Profile Portrait', 20);
+    const menu = document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"]')!;
+    expect(menu.querySelector('.workspace-profile-name')?.textContent).toBe('Cultivator');
+    expect(menu.querySelector('.workspace-profile-detail')?.textContent).toBe('Reader');
   });
 
   it('opens the laptop sidebar the way the reader left it on this device', async () => {

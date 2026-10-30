@@ -259,24 +259,25 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
           <SEIPopover modal={false} open={group === 'actions'} onOpenChange={open => setGroup(open ? 'actions' : undefined)}>
             <SEIPopoverTrigger render={<button type="button" ref={actionTrigger} />} aria-label="Fate and Create" title="Fate and Create"
               aria-pressed={create?.active ?? false} data-testid="reader-actions-button" data-attention={fate.attention || undefined}
-              className={`${create?.active ? primary : compact ? quietAction : secondary} ${fate.attention ? fateCalling : ''}`}>
-              <Zap className="h-6 w-6 max-sm:h-5 max-sm:w-5" aria-hidden /><span className={actionLabel}>Create</span>
+              className={`${create?.active ? primary : secondary} ${fate.attention ? fateCalling : ''}`}>
+              <Zap className="h-6 w-6" aria-hidden /><span className={actionLabel}>Create</span>
             </SEIPopoverTrigger>
-            <SEIPopoverContent side="top" align="end" collisionPadding={8} variant="dark" dir={direction} initialFocus={focusFromKeyboard} className={compactSurface}>
+            <SEIPopoverContent side="top" align="end" sideOffset={20} collisionPadding={12} variant="dark" dir={direction} initialFocus={focusFromKeyboard}
+              className={`${pickerSurface} w-52`} data-testid="reader-actions-picker">
               <SEIPopoverTitle className="sr-only">Fate and Create</SEIPopoverTitle>
-              <div className="flex items-center">
+              <div className="grid gap-1">
                 <button type="button" aria-label="Open Fate" data-testid="reader-fate-button" data-attention={fate.attention || undefined}
                   title={fate.disabled ? 'Fate opens when you reach the end of the chapter' : 'Fate'}
                   disabled={fate.disabled} onClick={() => { setGroup(undefined); actionTrigger.current?.focus({ preventScroll: true }); fate.run(); }}
-                  className={`${pillStep} gap-2 rounded-full px-4 text-sm ${fate.attention ? fateCalling : ''}`}>
-                  <Compass className="h-4 w-4 shrink-0" aria-hidden />Fate
+                  className={`${pickerRow} disabled:opacity-35 ${fate.attention ? fateCalling : ''}`}>
+                  <Compass className="h-5 w-5 shrink-0" aria-hidden /><span className="flex-1">Fate</span>
                 </button>
                 {create && <button type="button" aria-label="Create mode" aria-pressed={create.active} data-testid="reader-create-button"
                   title={create.unavailable ?? (create.active ? 'Back to reading' : 'Create')}
                   disabled={Boolean(create.unavailable) && !create.active}
                   onClick={() => { setGroup(undefined); actionTrigger.current?.focus({ preventScroll: true }); create.onToggle(); }}
-                  className={`${pillStep} gap-2 rounded-full px-4 text-sm ${create.active ? pickerSelected : ''}`}>
-                  <Zap className="h-4 w-4 shrink-0" aria-hidden />Create
+                  className={`${pickerRow} disabled:opacity-35 ${create.active ? pickerSelected : ''}`}>
+                  <Zap className="h-5 w-5 shrink-0" aria-hidden /><span className="flex-1">Create</span>
                   {create.active && <Check className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
                 </button>}
               </div>

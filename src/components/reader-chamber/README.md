@@ -12,11 +12,13 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Workshop preview:** `?preview=reader-chamber`. Original Reference is production's Reader; Development is the NovelExpanded app's own Reader (since 2026-10-09)
 - **Development view:** the app's Reader, `HarnessReaderSession` (SEN, `src/components/harness-generation/development/`), hosted exactly as the app hosts it by Library's `StoryPages` on its read page. The older development Reader in `development/` is no longer on this card; its code stays for the Card Workshop, Reader Codex and Character Voice previews that use parts of it
 - **First Workshop record:** 2026-07-31
-- **Last recorded Workshop update:** 2026-10-29
+- **Last recorded Workshop update:** 2026-10-30
 - **Historical source inspection:** 2026-08-22 (the older copy), 2026-10-07 (the current Original Reference)
 - **Implementation status:** under refinement
 
 ## Workshop history
+
+- **2026-10-30:** Fate/Create uses the same vertical glass menu rows as the bottom pickers, with a compact inset panel above Create on phones and laptops. Create keeps the same circular button dimensions and icon size as Listen and Codex. The app and Development preview share this presentation.
 
 - **2026-10-29:** The app and Development preview share the bottom chapter picker and the rightmost Fate/Create chooser, with only Fate and Create labels. The Pages → Fate shortcut opens the shared chooser first. The header keeps the story and current chapter as context. Open Reader pickers cover Workshop Controls so their rows stay reachable on tablets.
 

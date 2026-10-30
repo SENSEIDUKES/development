@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { SEIAppHeader, SEIToolbar } from '@seihouse/ui';
 import { NarrativeButton as LibraryButton } from '@seihouse/sen/presentation';
@@ -7,8 +7,9 @@ import '@library-studios/brand/styles.css';
 import { ArrowLeft } from 'lucide-react';
 import { HeaderActionButton, HeaderOverflow, type HeaderAction } from './WorkspaceHeaderActions';
 import { useCompactHeader } from './workspaceMedia';
-import { useLibraryPathways, useLibrarySoundSlot } from './LibraryNavigation';
-import { WorkspaceHeaderUtilities, type HeaderSearchItem, type WorkspaceHeaderPreferences } from './WorkspaceHeaderUtilities';
+import { useLibrarySoundSlot } from './LibraryNavigation';
+import { WorkspaceHeaderSearch, type HeaderSearchItem, type WorkspaceHeaderPreferences } from './WorkspaceHeaderUtilities';
+import { WorkspaceHeaderProfileMenu } from './WorkspaceHeaderProfile';
 import './workspace-header.css';
 
 const HeaderAccessoryContext = createContext<ReactNode>(null);
@@ -35,20 +36,6 @@ const HeaderSoundContext = createContext<ReactNode>(null);
  */
 export function WorkspaceHeaderSoundProvider({ sound, children }: { sound: ReactNode; children: ReactNode }) {
   return <HeaderSoundContext.Provider value={sound}>{children}</HeaderSoundContext.Provider>;
-}
-
-const HeaderCenterContext = createContext<{ center: ReactNode; centerBreakpoint?: 'lg' | 'always' } | null>(null);
-/**
- * Host-owned centered header content (Library: `MainLibraryHomeInsights` / `DaoInsights`)
- * shared across the product's page headers so switching tabs never changes the header.
- */
-export function WorkspaceHeaderCenterProvider({ center, centerBreakpoint = 'always', children }: {
-  center: ReactNode;
-  centerBreakpoint?: 'lg' | 'always';
-  children: ReactNode;
-}) {
-  const value = useMemo(() => ({ center, centerBreakpoint }), [center, centerBreakpoint]);
-  return <HeaderCenterContext.Provider value={value}>{children}</HeaderCenterContext.Provider>;
 }
 
 const HeaderPreferencesContext = createContext<WorkspaceHeaderPreferences | null>(null);
@@ -79,7 +66,7 @@ export interface WorkspaceHeaderProps {
   primaryAction?: HeaderAction;
   secondaryActions?: readonly HeaderAction[];
   overflowActions?: readonly HeaderAction[];
-  /** Optional page-owned content before the Familiar and header utilities. */
+  /** Optional page-owned content after Search, before the Familiar. */
   contextualItem?: ReactNode;
   help?: HeaderAction;
   preferences?: WorkspaceHeaderPreferences;
@@ -88,16 +75,9 @@ export interface WorkspaceHeaderProps {
   /** `'none'` when a host — `WorkspaceShell` — already provides the banner landmark. */
   landmark?: 'banner' | 'none';
   /**
-   * Centered header content between the logo on the left and Familiar,
-   * Preferences and Search on the right.
-   */
-  center?: ReactNode;
-  /** Show host center content on phones too, independently of the Pathways sidebar. */
-  centerBreakpoint?: "lg" | "always";
-  /**
    * The host's sound control (Library: `HeaderSoundControl`), so the reader
-   * can always mute. Where there is room (laptops) it sits just before
-   * Preferences and Search. While a Library bottom bar is on screen (phones
+   * can always mute. Where there is room (laptops) it sits between the
+   * Familiar and the Profile Portrait. While a Library bottom bar is on screen (phones
    * and tablets) it floats just above the bar's right end instead, as the
    * Reader's note floats above its Listen bar. Without it the host's
    * `WorkspaceHeaderSoundProvider` supplies one.
@@ -109,18 +89,15 @@ export interface WorkspaceHeaderProps {
  * Library-branded workspace chrome. A thin adapter over the canonical
  * `SEIAppHeader`: it owns no layout, height, stickiness, safe areas or focus
  * behavior of its own, only the Library logo identity and the action composition
- * (`Logo | Insights | Familiar | Preferences | Search`) that goes into the
- * canonical slots. Page titles live on the page itself below the header.
+ * (`Logo | Search | Familiar | Sound | Profile Portrait`) that goes into the
+ * canonical slots. Search fills the row between the logo and the icons; the
+ * Portrait's menu holds the reader, Sign in, the Preferences and Help.
+ * Page titles live on the page itself below the header.
  */
 export function WorkspaceHeader({ title, emblem, home, back, primaryAction,
   secondaryActions = [], overflowActions = [], contextualItem, help, preferences, searchItems = [],
-  status, landmark = 'banner', center, centerBreakpoint = 'lg', sound, identity }: WorkspaceHeaderProps) {
+  status, landmark = 'banner', sound, identity }: WorkspaceHeaderProps) {
   const compact = useCompactHeader();
-  const pathways = useLibraryPathways();
-  const hostCenter = useContext(HeaderCenterContext);
-  const resolvedCenter = center === undefined ? hostCenter?.center : center;
-  const resolvedCenterBreakpoint = center === undefined && hostCenter?.centerBreakpoint ? hostCenter.centerBreakpoint : centerBreakpoint;
-  const showCenter = (resolvedCenterBreakpoint === 'always' || pathways) && resolvedCenter != null && resolvedCenter !== false;
   const accessory = useContext(HeaderAccessoryContext);
   const hostSound = useContext(HeaderSoundContext);
   const soundControl = sound === undefined ? hostSound : sound;
@@ -140,12 +117,6 @@ export function WorkspaceHeader({ title, emblem, home, back, primaryAction,
     actionsClassName="workspace-header-actions"
     branding={back && <LibraryButton variant="ghost" size="icon" icon={ArrowLeft}
       aria-label={back.label} onClick={back.onNavigate} />}
-    center={showCenter ? <div className="workspace-header-center" data-header-center>{resolvedCenter}</div> : undefined}
-    centerBreakpoint={resolvedCenterBreakpoint}
-    // Clear the utility's translation variable as well as its visual transform.
-    // Production CSS lowers `translate: none` to `transform: translate(0, 0)`,
-    // which leaves the separate desktop -50% translate active on phones.
-    centerClassName={resolvedCenterBreakpoint === 'always' ? 'max-[641px]:translate-x-0' : undefined}
     appName={identity ?? <div className="workspace-header-badge novel-expanded-header-identity">
       {home ? <a className="workspace-header-logo novel-expanded-emblem group/emblem" href={home.href} aria-label={home.label}
         onClick={event => {
@@ -160,11 +131,13 @@ export function WorkspaceHeader({ title, emblem, home, back, primaryAction,
       </span>}
     </div>}
     actions={<>
+      <WorkspaceHeaderSearch items={searchCommands} />
       {contextualItem != null && contextualItem !== false && contextualItem !== '' && <div className="workspace-header-context">{contextualItem}</div>}
       {accessory}
       {!soundPlace.floating && soundControl}
-      <WorkspaceHeaderUtilities items={searchCommands} help={help} preferences={resolvedPreferences} />
     </>}
+    profileClassName="workspace-header-profile"
+    profile={<WorkspaceHeaderProfileMenu preferences={resolvedPreferences} help={help} />}
   />
   {soundPlace.slot && soundControl != null && soundControl !== false && createPortal(soundControl, soundPlace.slot)}
   {(status || commands.length > 0) && <SEIToolbar aria-label={`${title} actions`} rovingFocus={false}

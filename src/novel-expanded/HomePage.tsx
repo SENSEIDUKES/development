@@ -14,8 +14,8 @@ const FEATURED_STORIES = 5;
 
 /**
  * Home: the reader's stories, newest first, and the way to start a new one (Carve New Destiny plants a Story Seed at once), inside the Library Shell.
- * Featured cycles through the newest stories that have a cover. Dao Insights sits
- * in the header at every width: its sparks start a Story Seed.
+ * Featured cycles through the newest stories that have a cover. Sparks lives in
+ * Create (the Creator Space and Story Seed's Origin), not here.
  */
 export function HomePage({ worlds, navigate, readerProfile }: {
   worlds: readonly HomeWorld[];

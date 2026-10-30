@@ -548,20 +548,12 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   // On laptops the Pathways sidebar is the Library's navigation, so it is always
   // present; the Cave's own pages nest under Profile only once the Cave is open.
   const pathwaysSidebar = desktopNavigation === 'sidebar';
-  // The signed-in reader heads the sidebar (never a viewed public profile).
-  const ownProfile = hostController.profile;
-  const sidebarProfile = isSignedOut
-    ? { name: 'Guest reader', detail: 'Sign in to cultivate', onSelect: () => navigate('/home') }
-    : { name: ownProfile?.displayName?.trim() || 'Cultivator',
-      detail: daoXp === null ? undefined : getDaoRankData(daoXp).rank,
-      emblem: ownProfile?.avatarUrl ? <img src={ownProfile.avatarUrl} alt="" /> : undefined,
-      onSelect: () => navigate('/home') };
   return (
     <LibraryAppearanceScope color={hostController.profile?.accentColor} backgroundTint={hostController.profile?.backgroundTint}>
     <LibraryNavigation location={{ screen: 'profile', cave: route.path }} onNavigate={target => {
       if (target.screen === 'profile') navigate(target.cave ?? '/home');
       else onNavigateLibrary(target);
-    }} sectionMenu={caveSidebarMounted ? navigationDefinition : undefined} profile={sidebarProfile}>
+    }} sectionMenu={caveSidebarMounted ? navigationDefinition : undefined}>
     <div className="cave-workspace relative min-h-[100dvh] bg-[#03060c] text-neutral-200" data-cave-environment={environment.id} data-cave-audience={route.audience}>
       {environmentImage && <LibraryCaveBackdrop src={environmentImage} ambientMotes={ambientMotes} />}
 

@@ -7,11 +7,12 @@ import type { NovelExpandedServices } from './services';
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
 
 /**
- * Dao Insights on Home: sparks from the Story Spark server (free, twenty a day
+ * Sparks in the Creator Space: sparks from the Story Spark server (free, twenty a day
  * for a visitor; the owner's saved token lifts that), kept in the app's own
  * Story Bank. A spark is planted as a new Story Seed holding only its premise
  * and genre, in the profile's reading language and Reading Mode, the way a new
- * seed in Create starts. Beginning one opens it in Create.
+ * seed in Create starts. Beginning one opens it in Create. Inside an open Story Seed
+ * the app hands Sparks the same writer, and a chosen spark fills that seed's Origin.
  */
 export function useDaoSparks(
   services: Pick<NovelExpandedServices, 'requestStorySpark' | 'storySparksConfigured' | 'storySeeds' | 'accessToken'>,

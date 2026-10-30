@@ -61,9 +61,9 @@ export interface NovelExpandedServices {
   deviceMedia: DeviceMediaUrls;
   /** The World Blueprint server, behind the development access token. */
   requestWorldBlueprint: typeof requestWorldBlueprint;
-  /** Dao Insights' Story Spark server: free, twenty a day for a visitor; the owner's token lifts that. */
+  /** Sparks' Story Spark server: free, twenty a day for a visitor; the owner's token lifts that. */
   requestStorySpark: typeof requestStorySpark;
-  /** Whether the Story Spark server has a model; without one Dao Insights uses its own sparks. */
+  /** Whether the Story Spark server has a model; without one Sparks uses its own sparks. */
   storySparksConfigured: typeof storySparksConfigured;
   /** The owner's development access token, saved on this device: it unlocks Blueprints and lifts the chapter limit. */
   accessToken: AccessTokenStore;

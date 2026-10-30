@@ -48,7 +48,7 @@ for (const engine of [chromium, webkit]) {
       }
       // Search shares the same sheet, including the content visible in the report.
       await page.goto(origin + '/library-shell.html?variant=development&source=main-library&state=linked');
-      await page.getByRole('button', { name: 'Search', exact: true }).click();
+      await page.getByRole('button', { name: 'Search for stories', exact: true }).click();
       const search = page.getByRole('dialog', { name: 'Search', exact: true });
       await search.waitFor();
       await page.waitForTimeout(350);

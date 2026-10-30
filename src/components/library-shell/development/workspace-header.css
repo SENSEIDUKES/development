@@ -46,12 +46,12 @@
   }
 }
 
-/* One row, shared fairly. When no center slot is present, identity flexes so
-   actions stay pinned right; when Dao Insights occupies the center, identity
-   keeps its compact logo width so the center gets the space between logo and actions. */
-.workspace-header [data-slot="app-header-identity"] { flex: 1 1 auto; min-width: 0; }
-.workspace-header:has([data-header-center]) .workspace-header-identity { flex: none; min-width: 0; }
-.workspace-header [data-slot="app-header-actions"] { flex: none; }
+/* One row: Logo | Search | Familiar | Sound | Profile Portrait. The logo and the
+   Portrait keep their width; the actions take the rest, and inside them Search
+   grows to fill whatever the Familiar and the music note leave. */
+.workspace-header [data-slot="app-header-identity"] { flex: none; min-width: 0; }
+.workspace-header [data-slot="app-header-actions"] { flex: 1 1 0; min-width: 0; }
+.workspace-header [data-slot="app-header-profile"] { flex: none; }
 .workspace-action-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .workspace-header-status {
@@ -72,81 +72,120 @@
 .workspace-header-status[data-tone="busy"] { color: var(--color-sen-gold-accent); }
 .workspace-header-status[data-tone="error"] { color: var(--color-sen-human); }
 
-.workspace-header-actions, .workspace-header-command-area, .workspace-secondary-actions,
-.workspace-header-utilities {
+.workspace-header-actions, .workspace-header-command-area, .workspace-secondary-actions {
   display: flex; align-items: center; gap: 8px; min-width: 0;
 }
-/* Preferences and Search are separate controls at every width — never an overflow
-   menu — so the pair always keeps its intrinsic width and its touch targets. */
-.workspace-header-utilities { flex: none; }
-.workspace-header-utilities > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }
-.workspace-preferences { position: relative; flex: none; display: inline-flex; align-items: center; }
-.workspace-preferences > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }
-.workspace-preferences-panel {
-  position: absolute; z-index: 60; top: calc(100% + 12px); inset-inline-end: 0;
-  width: 248px; max-width: calc(100vw - 32px);
-  border-radius: 0.85rem;
-  background: var(--color-sen-void);
-  border: 1px solid color-mix(in srgb, var(--color-sen-portal) 24%, transparent);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72);
-}
-.workspace-preferences-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 4px 4px 8px;
-}
-.workspace-preferences-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+
+/* Search: a field-style trigger that fills the row after the logo, with a thin
+   glowing underline. Below 6rem of room the words step aside for the glass alone. */
+.workspace-search { flex: 1 1 auto; min-width: 44px; container-type: inline-size; }
+.workspace-search-field {
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; height: 44px; padding-inline: 16px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(214, 189, 135, 0.22);
   color: var(--color-neutral-400);
+  font-family: var(--font-sans); font-size: 15px; text-align: start;
+  cursor: text;
+  transition: border-color 200ms ease, background-color 200ms ease;
 }
-.workspace-preferences-select {
-  width: 100%;
-  min-height: 44px;
-  padding: 0 10px;
-  border-radius: 0.65rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid color-mix(in srgb, var(--color-sen-portal) 28%, transparent);
+.workspace-search-field::after {
+  content: ""; position: absolute; inset-inline: 22px; bottom: -1px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-sen-portal), var(--color-sen-gold-accent), transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-sen-portal) 55%, transparent);
+  opacity: 0.7; transition: opacity 200ms ease;
+}
+.workspace-search-field:is(:hover, :focus-visible) {
+  background: #101018;
+  border-color: rgba(214, 189, 135, 0.45);
+}
+.workspace-search-field:is(:hover, :focus-visible)::after { opacity: 1; }
+.workspace-search-field:focus-visible { outline-offset: 2px !important; }
+.workspace-search-emblem { flex: none; width: 20px; height: 20px; color: var(--color-sen-signal); }
+.workspace-search-placeholder { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 6rem) {
+  .workspace-search-field { justify-content: center; padding-inline: 0; }
+  .workspace-search-placeholder {
+    position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+}
+
+/* The Profile Portrait and its menu. The menu is drawn over the page (beside
+   whatever opened it: the Portrait, or the laptop sidebar's profile card). */
+.workspace-profile { position: relative; flex: none; display: inline-flex; align-items: center; }
+.workspace-profile-portrait {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; padding: 0; border-radius: 9999px; overflow: hidden;
+  background: rgba(0, 0, 0, 0.95); border: 1px solid rgba(214, 189, 135, 0.4);
+  color: #fff; cursor: pointer;
+  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+.workspace-profile-portrait:is(:hover, [aria-expanded="true"]) {
+  background: #101018;
+  border-color: rgba(214, 189, 135, 0.7);
+  box-shadow: 0 0 16px rgba(4, 172, 255, 0.3);
+}
+/* The reader's own picture fills the whole circle; without one, the
+   Profile figure the bottom navigation uses. */
+.workspace-profile-photo { display: block; width: 100%; height: 100%; object-fit: cover; }
+.workspace-profile-figure { color: #fff; }
+/* The Portrait's menu: one quiet glass sheet of plain rows (icon, label,
+   value), grouped by hairlines, in the interface's own sans type. */
+.workspace-profile-panel {
+  position: fixed; z-index: 160;
+  width: 296px; max-width: calc(100vw - 32px); overflow-y: auto;
+  border-radius: 20px;
+  background: rgba(10, 12, 22, 0.97);
+  border: 1px solid rgba(214, 189, 135, 0.28);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 32px rgba(4, 172, 255, 0.12);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  backdrop-filter: blur(28px) saturate(140%);
   color: var(--color-sen-signal);
   font-family: var(--font-sans);
-  font-size: 13px;
-  cursor: pointer;
 }
-.workspace-preferences-select:focus-visible {
-  outline: 2px solid var(--color-sen-portal);
-  outline-offset: 2px;
+.workspace-profile-sheet { display: flex; flex-direction: column; padding: 6px; }
+.workspace-profile-panel :focus-visible { outline: 2px solid var(--color-sen-portal); outline-offset: -2px; }
+.workspace-profile-identity { display: flex; align-items: center; gap: 12px; padding: 10px 10px 12px; }
+.workspace-profile-identity .workspace-profile-badge {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 44px; height: 44px; border-radius: 9999px; overflow: hidden;
+  background: #000; border: 1px solid rgba(214, 189, 135, 0.4); color: #fff;
 }
-.workspace-preferences-select option {
-  background: #0b0e14;
-  color: var(--color-sen-signal);
+.workspace-profile-identity-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.workspace-profile-name { font-size: 16px; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-profile-detail { font-size: 13px; line-height: 1.25; color: var(--color-neutral-400); }
+.workspace-profile-group {
+  display: flex; flex-direction: column;
+  padding-block: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
-.workspace-preferences-music {
-  margin-top: 4px;
-  padding: 6px 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+.workspace-profile-row {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; min-height: 44px; padding: 0 10px;
+  border: 0; border-radius: 12px; background: transparent;
+  color: inherit; font: inherit; font-size: 15px; font-weight: 450; letter-spacing: normal; text-transform: none; text-align: start;
 }
-.workspace-preferences-music-switch {
-  width: 100%;
-  min-height: 44px !important;
-  color: var(--color-sen-signal);
-  font-family: var(--font-sans);
-  font-size: 13px;
+button.workspace-profile-row { cursor: pointer; transition: background-color 150ms ease; }
+button.workspace-profile-row:hover { background: rgba(255, 255, 255, 0.06); }
+button.workspace-profile-row:active { background: rgba(255, 255, 255, 0.1); }
+button.workspace-profile-row:disabled { opacity: 0.5; cursor: default; }
+.workspace-profile-row-icon { flex: none; width: 18px; height: 18px; color: var(--color-neutral-400); }
+.workspace-profile-row-label { flex: 1 1 auto; min-width: 4.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-profile-note { flex: none; font-size: 12px; color: var(--color-neutral-500, #8a8f9c); }
+.workspace-profile-panel .workspace-profile-select {
+  flex: 0 1 auto; width: auto; max-width: 8.5rem; min-height: 32px; padding: 0 26px 0 10px;
+  border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23aab' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 9px center;
+  -webkit-appearance: none; appearance: none;
+  color: var(--color-sen-signal); font: inherit; font-size: 13px; cursor: pointer;
+  text-overflow: ellipsis;
 }
-.workspace-preferences-footer {
-  margin-top: 4px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-.workspace-preferences-footer button {
-  width: 100%;
-  min-height: 44px;
-  justify-content: flex-start;
-  text-align: start;
-  gap: 10px;
-  font-size: 13px;
+.workspace-profile-select option { background: #0b0e14; color: var(--color-sen-signal); }
+.workspace-profile-music-switch {
+  flex: 1 1 auto; min-height: 44px !important; flex-direction: row-reverse; justify-content: space-between;
+  color: var(--color-sen-signal); font-size: 15px;
 }
 
 .workspace-header-command-area, .workspace-secondary-actions { flex: none; }
@@ -187,16 +226,15 @@
   .workspace-header * { animation: none !important; transition: none !important; }
 }
 
-/* The canonical row always ends in context (when supplied), Familiar, Preferences, Search.
+/* The canonical row: Search, context (when supplied), Familiar, Sound, then the Portrait.
    Page commands keep their existing controls in the shared toolbar below. */
-.workspace-header-inner { gap: 8px; }
+.workspace-header-inner { gap: 6px; }
 .workspace-header-context { display: flex; align-items: center; min-width: 0; max-width: min(30vw, 340px); }
 @media (min-width: 640px) {
   .workspace-header-context { max-width: min(30vw, max(44px, calc(100vw - 500px)), 340px); }
 }
 .workspace-header-public-view { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--color-sen-signal); font-size: 12px; white-space: nowrap; }
 .workspace-header-utility-icon { width: 24px; height: 24px; }
-.workspace-preferences-footer .workspace-header-utility-icon { width: 18px; height: 18px; }
 .workspace-header-toolbar {
   padding-block: 4px !important;
   padding-inline: max(16px, var(--sh-safe-left, env(safe-area-inset-left))) max(16px, var(--sh-safe-right, env(safe-area-inset-right))) !important;
@@ -210,48 +248,11 @@
 .workspace-search-results button { width: 100%; min-height: 44px; justify-content: flex-start; text-align: left; white-space: normal; }
 .workspace-search-results small { display: block; margin-top: 4px; font-weight: 400; }
 @media (max-width: 639px) {
-  .workspace-header-actions, .workspace-header-utilities { gap: 4px; }
+  .workspace-header-actions { gap: 4px; }
+  .workspace-search-field { padding-inline: 12px; gap: 8px; font-size: 14px; }
   .workspace-header-context { max-width: 44px; flex: none; }
   .workspace-header-public-view { width: 44px; justify-content: center; }
-  .workspace-search-trigger { width: 44px; padding-inline: 0 !important; }
-  .workspace-search-label, .workspace-header-public-view > span {
+  .workspace-header-public-view > span {
     position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-  }
-}
-
-/* Header center: Dao Insights sits between the logo and actions on every width. */
-@media (min-width: 1024px) {
-  .workspace-header-inner:has(> [data-slot="app-header-center"]) > .workspace-header-identity { flex: 0 1 auto; }
-}
-.workspace-header-center {
-  display: flex; align-items: center; justify-content: center; gap: 0;
-  width: 100%; min-width: 0; overflow: hidden;
-}
-.workspace-header-center .main-library-home-insights { width: 100%; min-width: 0; margin: 0; }
-.workspace-header-center .dao-insights-trigger {
-  flex: 0 1 44rem; width: 100%; min-width: 0; max-width: 44rem !important;
-  min-height: 44px; height: auto !important; margin-inline: 0 !important;
-  padding-block: 0.35rem; padding-inline: 0.25rem;
-  background: transparent !important; border-color: transparent !important;
-}
-.workspace-header-center .dao-insights-trigger:hover { border-color: color-mix(in srgb, var(--color-sen-portal) 30%, transparent) !important; }
-
-@media (width < 641px) {
-  /* The WorkspaceHeader utility override also clears the desktop translation
-     variable: a CSS `translate: none` reset is lost during production lowering. */
-  .workspace-header [data-slot="app-header-center"] {
-    position: static; transform: none; flex: 1 1 0; min-width: 0;
-    width: auto !important; max-width: none !important; overflow: hidden;
-  }
-}
-
-@media (max-width: 479px) {
-  .workspace-header-center .dao-insights-trigger > div:first-child > span {
-    font-size: 0.6875rem; letter-spacing: 0.08em; line-height: 1.2;
-  }
-}
-@media (max-width: 359px) {
-  .workspace-header-center .dao-insights-trigger > div:first-child > span {
-    font-size: 0.625rem; letter-spacing: 0.03em;
   }
 }

@@ -1,11 +1,16 @@
 // @vitest-environment jsdom
-import { act } from 'react';
+import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { MotionGlobalConfig } from 'motion/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
+import { createEmptyStorySeedInput, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { MainLibraryHeader, type MainLibraryHeaderAdapter } from '../MainLibraryHeader';
-import { MainLibraryHomeInsights } from '../MainLibraryHomeInsights';
-import { MainLibraryPreview } from '../../../../workshop/previews/library-shell/MainLibraryPreview';
+import { DaoSparksButton } from '../DaoSparksButton';
+import { CreatorSpace } from '../../../creator-space/development/CreatorSpace';
+import { OriginWorkspace } from '../../../story-seed/development/workspaces/OriginWorkspace';
+import { OriginSparksContext } from '../../../story-seed/development/workspaces/origin/OriginSparksContext';
+import { fillOriginFromSpark } from '../../../story-seed/development/seedState';
 
 vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
 vi.mock('../../../../audio/playback', () => ({ useNarrativeAudio: () => ({
@@ -17,19 +22,27 @@ let container: HTMLDivElement;
 let root: Root;
 const copyText = vi.fn(async (_text: string) => {});
 beforeEach(() => {
+  MotionGlobalConfig.skipAnimations = true;
   container = document.createElement('div'); document.body.append(container); root = createRoot(container);
   copyText.mockClear();
-  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
-  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
   vi.stubGlobal('matchMedia', (query: string) => ({ media: query, matches: false,
     addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() }));
 });
-afterEach(() => { act(() => root.unmount()); container.remove(); document.body.innerHTML = ''; vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  act(() => root.unmount()); container.remove(); document.body.innerHTML = '';
+  MotionGlobalConfig.skipAnimations = false; vi.restoreAllMocks(); vi.unstubAllGlobals();
+});
 
 const render = async (node: React.ReactNode) => {
   await act(async () => root.render(<LibraryPresentationProvider>{node}</LibraryPresentationProvider>));
 };
-const click = async (element: Element) => { await act(async () => { (element as HTMLElement).click(); }); };
+const settle = async () => { await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)); }); };
+const click = async (element: Element | null | undefined) => {
+  expect(element).toBeTruthy();
+  await act(async () => { (element as HTMLElement).click(); });
+};
+const trigger = () => document.querySelector<HTMLButtonElement>('button[aria-label="Sparks: story ideas"]');
+const dialog = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Sparks"]');
 
 const adapter = (screen = 'home'): MainLibraryHeaderAdapter => ({
   currentScreen: screen, setCurrentScreen: vi.fn(), activeStoryId: null, setActiveStoryId: vi.fn(),
@@ -39,55 +52,54 @@ const adapter = (screen = 'home'): MainLibraryHeaderAdapter => ({
   requestDao: (async () => ({ ok: true, json: async () => ({ hasServerGemini: false }) })) as unknown as MainLibraryHeaderAdapter['requestDao'],
 });
 
-it('regression: keeps Dao Insights in the header center across screens with Logo, Preferences and Search', async () => {
+it('regression: Sparks is no longer in the header: Logo, Search and the Profile Portrait on every screen', async () => {
   for (const screen of ['home', 'detail', 'profile']) {
     await render(<MainLibraryHeader adapter={adapter(screen)} />);
     const header = container.querySelector('header')!;
-    expect(header.querySelector('.dao-insights-trigger')).not.toBeNull();
-    expect(header.querySelector('[aria-label="Insights from the Dao: story sparks"]')).not.toBeNull();
-    expect(container.querySelector('.workspace-header-context')).toBeNull();
-    expect(Array.from(header.querySelectorAll('.workspace-header-utilities button'))
-      .map(element => element.getAttribute('aria-label'))).toEqual(['Preferences', 'Search']);
-    expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
+    expect(header.querySelector('.dao-sparks-trigger')).toBeNull();
+    expect(header.querySelector('[data-slot="app-header-center"]')).toBeNull();
+    expect(Array.from(header.querySelectorAll('button'))
+      .map(element => element.getAttribute('aria-label'))).toEqual(['Search for stories', 'Profile and preferences']);
     expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
   }
 });
 
-it('regression: renders Dao Insights in Home content, between the featured area and the collection tabs', async () => {
-  await render(<MainLibraryPreview state="linked" developmentNavigation
-    developmentHeader={value => <MainLibraryHeader adapter={{ ...value, copyText }} />}
-    developmentHomeContent={value => <MainLibraryHomeInsights adapter={{ ...value, copyText }} />} />);
-  const insights = container.querySelector('[data-home-dao-insights]')!;
-  expect(insights).not.toBeNull();
-  // Home content, not chrome.
-  expect(insights.closest('header')).toBeNull();
-  expect(insights.closest('main')).not.toBeNull();
-  const featured = container.querySelector('[data-light-novels-home] h2')!;
-  const tabs = container.querySelector('main nav, main [role="tablist"]')
-    ?? Array.from(container.querySelectorAll('main *')).find(element => element.textContent?.includes('My Library'))!;
-  expect(featured.compareDocumentPosition(insights) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(tabs.compareDocumentPosition(insights) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+it('sits beside the Creator Space title, and its panel keeps the host\'s clipboard writer', async () => {
+  await render(<CreatorSpace worlds={{ status: 'ready', items: [] }} energy={{ status: 'loading', snapshot: null }} toolkit={[]}
+    onCreate={vi.fn()} onContinueWorld={vi.fn()} onOpenWorld={vi.fn()} onOpenStudio={vi.fn()}
+    sparks={<DaoSparksButton copyText={copyText} />} />);
+  const title = container.querySelector('#creator-space-title')!;
+  expect(title.parentElement!.contains(trigger())).toBe(true);
+  await click(trigger());
+  await settle();
+  await click(dialog()!.querySelector('[aria-label="Copy spark"]'));
+  expect(copyText).toHaveBeenCalledTimes(1);
+  expect(copyText.mock.calls[0][0]).toContain('Genre:');
 });
 
-it('regression: keeps the trigger, its rotation, the panel and the clipboard writer after the move', async () => {
-  vi.useFakeTimers();
-  try {
-    await render(<MainLibraryHomeInsights adapter={adapter()} />);
-    const trigger = container.querySelector('.dao-insights-trigger')!;
-    expect(trigger.textContent).toContain('Insights from the Dao');
-    expect(container.querySelector('.dao-insights-trigger p')?.textContent).toBeTruthy();
-    // The same 14-second rotation loop, now turning over the Dao's own sparks.
-    await act(async () => { await vi.advanceTimersByTimeAsync(14_000); });
-    expect(container.querySelector('.dao-insights-trigger p')?.textContent).toBeTruthy();
+let current: StorySeedInput;
+function Origin({ initial }: { initial: StorySeedInput }) {
+  const [seed, setSeed] = useState(initial);
+  current = seed;
+  const sparks = <DaoSparksButton purpose="fill-seed" copyText={copyText}
+    host={{ beginSpark: async spark => setSeed(fillOriginFromSpark(spark)) }} />;
+  return <OriginSparksContext.Provider value={sparks}><OriginWorkspace seed={seed} updateSeed={setSeed} /></OriginSparksContext.Provider>;
+}
 
-    await click(trigger);
-    const dialog = document.querySelector('[role="dialog"][aria-label="Dao Insights"]')!;
-    expect(dialog).not.toBeNull();
-    // The same clipboard writer the host supplied to the header.
-    await click(dialog.querySelector('[aria-label="Copy spark"]')!);
-    expect(copyText).toHaveBeenCalledTimes(1);
-    expect(copyText.mock.calls[0][0]).toContain('Genre:');
-  } finally {
-    vi.useRealTimers();
-  }
+it('sits in Story Seed\'s Origin heading, and a chosen spark fills the open seed\'s Origin', async () => {
+  const empty = createEmptyStorySeedInput();
+  const initial = { ...empty, story: { ...empty.story, required: { ...empty.story.required, premise: 'My own premise.' } } };
+  await render(<Origin initial={initial} />);
+  const heading = container.querySelector('#seed-workspace-origin-title')!;
+  expect(heading.parentElement!.contains(trigger())).toBe(true);
+  await click(trigger());
+  await settle();
+  await click(Array.from(dialog()!.querySelectorAll('button')).find(button => /Use this spark/.test(button.textContent ?? '')));
+  await settle();
+  expect(dialog()).toBeNull();
+  expect(current.story.required.premise).not.toBe('My own premise.');
+  expect(current.story.required.premise.length).toBeGreaterThan(0);
+  expect(current.story.required.genre).not.toBe('');
+  // A writer's own seed stays theirs: it is not marked as started from a spark.
+  expect(current.story.optional.startedFrom).toBe(initial.story.optional.startedFrom);
 });

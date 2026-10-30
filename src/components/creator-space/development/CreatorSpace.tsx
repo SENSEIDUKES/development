@@ -32,7 +32,7 @@ function fallbackCover(id: string, images: readonly string[]) {
  * presents them and reports which world the creator wants to work on.
  */
 export function CreatorSpace({
-  worlds, energy, toolkit, onCreate, onOpenEnergy, onContinueWorld, onOpenWorld, onOpenStudio, onBrowseToolkit, onRetryWorlds,
+  worlds, energy, toolkit, onCreate, onOpenEnergy, onContinueWorld, onOpenWorld, onOpenStudio, onBrowseToolkit, onRetryWorlds, sparks,
 }: CreatorSpaceProps) {
   const items = useMemo(() => worlds.status === 'ready'
     ? [...worlds.items].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
@@ -44,7 +44,10 @@ export function CreatorSpace({
 
   return <div data-creator-space className="creator-space space-y-6 pb-4 text-signal sm:space-y-9">
     <section aria-labelledby="creator-space-title" className="space-y-4 md:max-w-3xl">
-      <h1 id="creator-space-title" className="creator-space-title font-display font-bold leading-none tracking-tight text-signal">Creator Space</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 id="creator-space-title" className="creator-space-title font-display font-bold leading-none tracking-tight text-signal">Creator Space</h1>
+        {sparks}
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <CreatorStat label="Energy" value={energyValue} note={energyNote} onSelect={onOpenEnergy}
           icon={<SENNavigationIcon name="energy" size={26} className="text-portal" aria-hidden="true" />} />

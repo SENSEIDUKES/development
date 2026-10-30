@@ -50,11 +50,11 @@ it('regression: renders exactly one header and no toolbar row beneath it', async
   expect(container.querySelector('.workspace-primary-action')).toBeNull();
   expect(container.querySelector('.workspace-secondary-actions')).toBeNull();
   expect(container.querySelector('.workspace-header-status')).toBeNull();
-  // The header keeps only the Library identity, Preferences and Search.
+  // The header keeps only the Library identity, Search and the Profile Portrait.
   const header = container.querySelector('header')!;
   expect(header.querySelector('[data-story-seed-action-row]')).toBeNull();
-  expect(Array.from(header.querySelectorAll('.workspace-header-utilities button'))
-    .map(element => element.getAttribute('aria-label'))).toEqual(['Preferences', 'Search']);
+  expect(Array.from(header.querySelectorAll('button'))
+    .map(element => element.getAttribute('aria-label'))).toEqual(['Search for stories', 'Profile and preferences']);
   expect(header.textContent).not.toContain('Save Draft');
   expect(header.textContent).not.toContain('Manifest');
   // The Story Seed page title lives at the top of the page below the header.
@@ -127,8 +127,8 @@ it('keeps ordered navigation and Help in the top header', async () => {
   expect(drawer.textContent).toContain('Settings');
   await click(Array.from(bottom.querySelectorAll('button')).find(element => element.textContent?.trim() === 'Story Bank')!);
   expect(onToggleStoryBank).toHaveBeenCalledTimes(1);
-  await click(container.querySelector('header button[aria-label="Preferences"]')!);
-  await click(container.querySelector('header button[aria-label="Help"]')!);
+  await click(container.querySelector('header button[aria-label="Profile and preferences"]')!);
+  await click(document.querySelector('[data-testid="workspace-profile-menu"] button[aria-label="Help"]')!);
   expect(onOpenHelp).toHaveBeenCalledTimes(1);
 });
 
@@ -152,7 +152,7 @@ it('returns through the host Home callback with the official SEN Exit icon', asy
   expect(back.querySelector('[data-sen-icon="header-exit"]')).not.toBeNull();
   expect(back.querySelector('img')).toBeNull();
   expect(nav.querySelector('.lucide-circle-help')).toBeNull();
-  expect(container.querySelector('header .workspace-preferences-emblem')).not.toBeNull();
+  expect(container.querySelector('header .workspace-profile-portrait')).not.toBeNull();
   await click(back);
   expect(onNavigateHome).toHaveBeenCalledTimes(1);
   expect(historyBack).not.toHaveBeenCalled();

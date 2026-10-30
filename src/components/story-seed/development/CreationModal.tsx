@@ -11,7 +11,7 @@ import {
 } from 'react';
 import './story-seed.css';
 import { motion } from 'motion/react';
-import { type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { type StorySpark, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { generateUUID } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore, type StoryCreationSnapshot } from '../../../library/story-seed/runtime';
 import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
@@ -26,7 +26,8 @@ import {
   REQUIRED_STORY_SECTIONS,
   type SeedSectionId,
 } from './seedSections';
-import { setChapterWritingStyle, type SeedUpdate } from './seedState';
+import { fillOriginFromSpark, setChapterWritingStyle, type SeedUpdate } from './seedState';
+import { OriginSparksContext } from './workspaces/origin/OriginSparksContext';
 import { OriginWorkspace } from './workspaces/OriginWorkspace';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
 import { WorldIdentityWorkspace } from './workspaces/WorldIdentityWorkspace';
@@ -85,6 +86,11 @@ export interface CreationModalProps {
    * leaves a new seed.
    */
   initialSeedId?: string;
+  /**
+   * The host's Sparks button for the Origin heading. It is handed `fillOrigin`,
+   * which replaces this seed's Origin with a chosen spark.
+   */
+  originSparks?: (fillOrigin: (spark: StorySpark) => void) => ReactNode;
 }
 
 /** Existing one-story generation default; Chapter Generation Pass 1 does not use it. */
@@ -156,7 +162,7 @@ const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalSt
   libraryStories: state.stories,
 });
 
-export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, manifestAside, initialSeedId }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, manifestAside, initialSeedId, originSparks }: CreationModalProps) {
   const runtime = useStoryCreationRuntime();
   const guestWorkspace = Boolean(runtime.guestOwnerId);
   const storeIsGenerating = useStoryCreationStore(state => state.isGenerating);
@@ -284,6 +290,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   // Always a functional update, so rapid successive edits (e.g. toggling two
   // tags in one task) can never lose a write to a stale render closure.
   const updateSeed = useCallback((update: SeedUpdate) => setSeed(update), []);
+  const fillOrigin = useCallback((spark: StorySpark) => updateSeed(fillOriginFromSpark(spark)), [updateSeed]);
+  const originSparksNode = useMemo(() => originSparks?.(fillOrigin) ?? null, [originSparks, fillOrigin]);
   const storyLanguageSetting = useMemo(
     () => ({ value: originalLanguage, onChange: resolveOriginalLanguage }),
     [originalLanguage, resolveOriginalLanguage],
@@ -896,7 +904,9 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
               {ActiveWorkspace
-                ? <SeedPartContext.Provider value={shownPart ?? null}><ActiveWorkspace seed={seed} updateSeed={updateSeed} /></SeedPartContext.Provider>
+                ? <SeedPartContext.Provider value={shownPart ?? null}><OriginSparksContext.Provider value={originSparksNode}>
+                    <ActiveWorkspace seed={seed} updateSeed={updateSeed} />
+                  </OriginSparksContext.Provider></SeedPartContext.Provider>
                 : <ManifestStep seed={seed} hasBlueprint={Boolean(blueprint)}
                     onGoToOrigin={() => selectWorkspaceSection('origin')} onOpenBlueprint={openBlueprint} />}
             </motion.div>

@@ -10,7 +10,7 @@
 /* ── Tabs: pinned like the creator's step strip ───────────────────────── */
 .bp-tabs-strip {
   position: sticky;
-  top: 0;
+  top: var(--workspace-header-height, 0px);
   z-index: 25;
   margin-inline: -16px;
   padding: 8px 16px;

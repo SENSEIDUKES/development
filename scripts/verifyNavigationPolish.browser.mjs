@@ -20,7 +20,7 @@ try {
         assert.deepEqual(await nav.locator('button').allTextContents(),
           [...(width < 640 ? [] : ['Sections']), 'Story Bank', 'Blueprint', 'Settings', 'Back']);
         assert.equal(await nav.getByRole('button', { name: 'Help', exact: true }).count(), 0);
-        assert(await page.locator('header .workspace-preferences-emblem').count() > 0);
+        assert(await page.locator('header .workspace-profile-portrait').count() > 0);
         assert.equal(await nav.locator('img[alt="Celestial Library"]').getAttribute('src'), '/favicon.jpg');
         if (width >= 1024) { assert.equal(await nav.isVisible(), false); continue; }
         const padding = await nav.evaluate(element => Number.parseFloat(getComputedStyle(element).paddingBottom));

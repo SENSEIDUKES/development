@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, u
 import { List } from 'lucide-react';
 import {
   LibraryBottomNavigation, LibraryNavigationDrawer, LibraryNavigationDrawerPanel,
-  type LibraryNavigationDrawerProfile, type LibraryNavigationDrawerSection, type LibraryNavigationDrawerPanelProps,
+  type LibraryNavigationDrawerSection, type LibraryNavigationDrawerPanelProps,
 } from '@seihouse/library-ui';
 import { activeLibraryDestination, LIBRARY_DESTINATIONS, libraryLocationKey, libraryNavigationMode, type LibraryDestination, type LibraryLocation, type LibraryNavigationMode } from './libraryRoutes';
 import { DESKTOP_NAVIGATION_QUERY, useDesktopNavigation, usePhone } from './workspaceMedia';
@@ -42,7 +42,6 @@ export interface LibraryWorkspaceDefinition {
   closeLabel: string;
   /** Names the bottom task bar. */
   barLabel: string;
-  profile?: LibraryNavigationDrawerProfile;
   /** Grouped destinations for the drawer and the rail. */
   sections: Section[];
   /** Workspace utilities beneath the shared landscape and ornamental divider. */
@@ -73,11 +72,6 @@ export interface LibraryMainNavigationProps {
   /** The page's own destinations for its optional desktop rail. */
   sectionMenu?: LibrarySectionMenu;
   /**
-   * The reader shown at the top of the laptop Pathways sidebar: picture, name
-   * and cultivation rank (`detail`). Selecting it opens their profile.
-   */
-  profile?: LibraryNavigationDrawerProfile;
-  /**
    * The route decides the mode. A workspace or immersive route renders its
    * children untouched here: a workspace brings its own definition through
    * workspace mode, and the Reader stays outside the shell.
@@ -94,7 +88,6 @@ export type LibraryNavigationProps = LibraryMainNavigationProps | LibraryWorkspa
 
 interface WorkspaceState {
   label: string;
-  profile?: LibraryNavigationDrawerProfile;
   sections: Section[];
   footer?: LibraryNavigationDrawerPanelProps['footer'];
   artwork?: LibraryNavigationDrawerPanelProps['artwork'];
@@ -109,7 +102,6 @@ interface MainState {
   selected: LibraryDestination | undefined;
   /** The host's places, in the Library's order. */
   places: readonly LibraryPlace[];
-  profile?: LibraryNavigationDrawerProfile;
 }
 const libraryPlaces = (destinations?: readonly LibraryDestination[]): readonly LibraryPlace[] =>
   destinations ? LIBRARY_DESTINATIONS.filter(place => destinations.includes(place.id)) : LIBRARY_DESTINATIONS;
@@ -244,7 +236,7 @@ const icons = { home: 'home', create: 'book', discover: 'discovery' } as const s
 export function LibrarySectionSidebar() {
   const { menu, workspace, main } = useContext(Context);
   const desktopNavigation = useLibraryDesktopNavigation();
-  if (workspace) return <LibraryNavigationDrawerPanel variant="pathways" aria-label={workspace.label} profile={workspace.profile}
+  if (workspace) return <LibraryNavigationDrawerPanel variant="pathways" aria-label={workspace.label}
     sections={workspace.sections} footer={workspace.footer} artwork={workspace.artwork} />;
   if (main && desktopNavigation === 'sidebar') return <PathwaysSidebar main={main} menu={menu} />;
   return menu ? <LibraryNavigationDrawerPanel aria-label={menu.label} sections={menu.sections} /> : null;
@@ -252,7 +244,7 @@ export function LibrarySectionSidebar() {
 
 function PathwaysSidebar({ main, menu }: { main: MainState; menu: LibrarySectionMenu | null }) {
   const { navigationArtwork } = useLibraryAssets();
-  const { location, onNavigate, selected, places, profile } = main;
+  const { location, onNavigate, selected, places } = main;
   const go = (target: LibraryLocation) => { if (libraryLocationKey(location) !== libraryLocationKey(target)) onNavigate(target); };
   // The page's own sections nest under the pathway you are on (e.g. Profile → Home, Stories, Rewards).
   const nested = menu?.sections.flatMap(section => section.items) ?? [];
@@ -261,7 +253,7 @@ function PathwaysSidebar({ main, menu }: { main: MainState; menu: LibrarySection
   const withSettings = places.some(place => place.id === 'profile');
   // The Celestial Library logo stays in the header; the top of the sidebar is the reader's.
   return <LibraryNavigationDrawerPanel variant="pathways"
-    aria-label="Library pathways" profile={profile}
+    aria-label="Library pathways"
     sections={[{ id: 'pathways', label: 'Pathways', items: places.map(({ id, label, location: target }) => ({
       id, label, active: selected === id,
       icon: id === 'profile' ? <SENProfileIcon size={20} /> : <SENNavigationIcon name={icons[id]} size={20} />,
@@ -297,12 +289,12 @@ export function LibraryNavigation(props: LibraryNavigationProps) {
   const [soundSlot, setSoundSlot] = useState<HTMLElement | null>(null);
   const hostDestinations = useContext(DestinationsContext);
   if ('workspace' in props) return <WorkspaceNavigation workspace={props.workspace}>{props.children}</WorkspaceNavigation>;
-  const { location, onNavigate, destinations = hostDestinations, sectionMenu, profile, mode, children } = props;
+  const { location, onNavigate, destinations = hostDestinations, sectionMenu, mode, children } = props;
   // Immersive and workspace routes cannot be overridden by the standard default.
   const routeMode = libraryNavigationMode(location.screen);
   const resolvedMode = routeMode !== 'standard' ? routeMode : mode ?? 'standard';
   const places = libraryPlaces(destinations);
-  const main = resolvedMode === 'standard' ? { location, onNavigate, selected: activeLibraryDestination(location), places, profile } : null;
+  const main = resolvedMode === 'standard' ? { location, onNavigate, selected: activeLibraryDestination(location), places } : null;
   return <Context.Provider value={{ menu: sectionMenu ?? null, workspace: null, main, soundSlot: main ? soundSlot : null }}>
     {main ? <MainNavigation location={location} onNavigate={onNavigate} places={places} onSoundSlot={setSoundSlot}>{children}</MainNavigation> : children}
   </Context.Provider>;
@@ -385,8 +377,8 @@ function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorksp
   } : undefined, [workspace.footer]);
   const artwork = useMemo(() => navigationArtwork ? { type: 'image' as const, src: navigationArtwork } : undefined, [navigationArtwork]);
   const state = useMemo<WorkspaceState>(() => ({
-    label: workspace.label, profile: workspace.profile, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer,
-  }), [workspace.label, workspace.profile, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer]);
+    label: workspace.label, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer,
+  }), [workspace.label, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer]);
   const { back, tools = [], sectionsOnPhoneBar = true } = workspace;
   const phone = usePhone();
   const items = [
@@ -405,6 +397,6 @@ function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorksp
         showLabels items={items} />
     </div>
     <LibraryNavigationDrawer variant="pathways" open={drawerOpen} onClose={closeDrawer} aria-label={workspace.label}
-      closeLabel={workspace.closeLabel} profile={workspace.profile} sections={sections} footer={footer} artwork={artwork} />
+      closeLabel={workspace.closeLabel} sections={sections} footer={footer} artwork={artwork} />
   </Context.Provider>;
 }

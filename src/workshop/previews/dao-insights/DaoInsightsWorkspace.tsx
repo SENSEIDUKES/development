@@ -1,14 +1,15 @@
 /**
- * Workshop preview for Dao Insights (Story Sparks).
+ * Workshop preview for Sparks (code: Dao Insights; Story Sparks).
  *
- * Development renders the panel the app's Home uses, with a local stand-in for
- * the Story Spark server so every state is reachable without a model: nothing
- * leaves the preview, and Begin / Keep only report what the app would do.
+ * Development renders the Sparks button the app's Creator Space and Story
+ * Seed's Origin use, with a local stand-in for the Story Spark server so every
+ * state is reachable without a model: nothing leaves the preview, and Begin,
+ * Keep and Use this spark only report what the app would do.
  */
 import { useMemo, useState } from 'react';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
-import { MainLibraryHomeInsights, type DaoSparkHost } from '@seihouse/library/shell';
+import { DaoSparksButton, type DaoSparkHost } from '@seihouse/library/shell';
 import { storyStyleForGenre } from '@seihouse/sen/story-seed';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'dao-insights')!;
@@ -24,7 +25,9 @@ const STATES: { id: SparkState; label: string; description: string }[] = [
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const hostFor = (state: SparkState, report: (message: string) => void): DaoSparkHost => ({
+type SparkPurpose = 'new-seed' | 'fill-seed';
+
+const hostFor = (state: SparkState, purpose: SparkPurpose, report: (message: string) => void): DaoSparkHost => ({
   checkSparks: async () => state !== 'no-model',
   requestSpark: async request => {
     await wait(700);
@@ -45,8 +48,11 @@ const hostFor = (state: SparkState, report: (message: string) => void): DaoSpark
       voice: 'Workshop Oracle of the Local Fixtures',
     };
   },
-  keepSpark: async spark => report(`Kept in the Story Bank: ${spark.genre}. (Preview: the app saves a new Story Seed.)`),
-  beginSpark: async spark => report(`Begun: ${spark.genre}. (Preview: the app opens the new Story Seed in Create.)`),
+  // Inside a Story Seed there is no Keep: the spark fills the open seed.
+  ...(purpose === 'new-seed' ? { keepSpark: async spark => report(`Kept in the Story Bank: ${spark.genre}. (Preview: the app saves a new Story Seed.)`) } : {}),
+  beginSpark: async spark => report(purpose === 'fill-seed'
+    ? `Used: ${spark.genre}. (Preview: the app fills the open Story Seed's Origin.)`
+    : `Begun: ${spark.genre}. (Preview: the app opens the new Story Seed in Create.)`),
 });
 
 const copyText = async (text: string) => { await navigator.clipboard?.writeText(text); };
@@ -58,17 +64,23 @@ function Stage({ children, note }: { children: React.ReactNode; note: React.Reac
   </div>;
 }
 
-function DaoInsightsDevelopment({ state }: { state: SparkState }) {
+function DaoInsightsDevelopment({ state, purpose }: { state: SparkState; purpose: SparkPurpose }) {
   const [report, setReport] = useState<string | null>(null);
-  const host = useMemo(() => hostFor(state, setReport), [state]);
-  return <Stage note={<>Tap the Dao Insights trigger to open the panel.{report && <span role="status" className="mt-2 block text-cyan-200/80">{report}</span>}</>}>
+  const host = useMemo(() => hostFor(state, purpose, setReport), [state, purpose]);
+  return <Stage note={<>Tap Sparks to open the panel. {purpose === 'fill-seed' ? 'As in Story Seed\'s Origin: a chosen spark fills the open seed.' : 'As in the Creator Space: a chosen spark begins a new Story Seed.'}{report && <span role="status" className="mt-2 block text-cyan-200/80">{report}</span>}</>}>
     {/* `key` gives each state a fresh panel, so its model check runs again. */}
-    <MainLibraryHomeInsights key={state} everyWidth adapter={{ copyText, daoSparks: host }} />
+    <DaoSparksButton key={`${state}-${purpose}`} purpose={purpose} copyText={copyText} host={host} />
   </Stage>;
 }
 
+const PURPOSES: { id: SparkPurpose; label: string }[] = [
+  { id: 'new-seed', label: 'Creator Space (new seed)' },
+  { id: 'fill-seed', label: 'Story Seed (fill Origin)' },
+];
+
 export function DaoInsightsWorkspace() {
   const [state, setState] = useState<SparkState>('model');
+  const [purpose, setPurpose] = useState<SparkPurpose>('new-seed');
   return (
     <FeatureWorkspace
       entry={entry}
@@ -76,6 +88,21 @@ export function DaoInsightsWorkspace() {
         description: 'A local stand-in answers for the Story Spark server. No model is called and nothing is saved.',
         defaultSection: 'states',
         sections: [{
+          id: 'pages',
+          description: 'Where the Sparks button sits, and what a chosen spark does there.',
+          content: (
+            <div className="flex flex-wrap gap-2">
+              {PURPOSES.map(option => (
+                <button key={option.id} type="button" aria-pressed={purpose === option.id} onClick={() => setPurpose(option.id)}
+                  className={`workshop-touch-target rounded-lg border px-3 py-2 text-xs transition-colors ${purpose === option.id
+                    ? 'border-cyan-400/35 bg-cyan-500/15 text-cyan-100'
+                    : 'border-white/10 text-white/55 hover:border-white/20 hover:bg-white/5 hover:text-white/85'}`}>
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          ),
+        }, {
           id: 'states',
           description: STATES.find(option => option.id === state)?.description,
           content: (
@@ -92,7 +119,7 @@ export function DaoInsightsWorkspace() {
           ),
         }],
       }}
-      renderDevelopment={() => <DaoInsightsDevelopment state={state} />}
+      renderDevelopment={() => <DaoInsightsDevelopment state={state} purpose={purpose} />}
     />
   );
 }

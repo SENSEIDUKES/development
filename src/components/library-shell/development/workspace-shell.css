@@ -28,11 +28,35 @@
   backdrop-filter: blur(18px);
 }
 
-/* The canonical shell already frames the header row; the Library surface and
-   its hairline come from the workspace header itself, so this wrapper adds
-   neither a second border nor a second background. */
+/* The header floats over the page like the bottom navigation: it leaves the
+   frame's grid, the page and the rail fill the whole frame and scroll beneath
+   it, and only the header itself takes presses. The space they leave at their
+   top is the header's measured height (`--workspace-header-height`). The
+   wrapper adds no border or background of its own; `flow-root` keeps the
+   floating header's top margin inside the measured height. */
+.workspace-shell[data-slot="app-shell"] {
+  position: relative;
+  grid-template-rows: minmax(0, 1fr);
+}
 .workspace-shell [data-slot="app-shell-header"] {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 40;
+  display: flow-root;
   border-bottom: 0;
   background: transparent;
   backdrop-filter: none;
+  pointer-events: none;
 }
+.workspace-shell-header > * { pointer-events: auto; }
+/* The space is a spacer, not padding: browsers disagree on whether a pinned
+   (sticky) bar's offset counts from a scroller's padding, so pinned page bars
+   name the header's height themselves (`top: var(--workspace-header-height)`). */
+.workspace-shell-main { scroll-padding-top: var(--workspace-header-height, 0px); }
+.workspace-shell-main::before {
+  content: '';
+  display: block;
+  height: var(--workspace-header-height, 0px);
+}
+.workspace-shell [data-slot="app-shell-sidebar"] { padding-top: var(--workspace-header-height, 0px); }

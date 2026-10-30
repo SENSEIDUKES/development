@@ -70,7 +70,7 @@ interface OriginGenrePickerProps {
   emptyHint?: string;
   conjure?: ConjurePath;
   /**
-   * A host with little room (Dao Insights) shows only the one-line chosen
+   * A host with little room (Sparks) shows only the one-line chosen
    * path, without the Genre row, and opens the paths where it likes through
    * `open` / `onOpenChange`.
    */

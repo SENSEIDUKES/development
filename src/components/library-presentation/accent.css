@@ -18,7 +18,7 @@
 }
 .library-custom-accent [data-light-novels-home] :is(.home-featured-label, .home-filter-label, .text-gold-accent),
 .library-custom-accent [data-home-events] .home-events-label,
-.library-custom-accent .dao-insights-trigger > div:first-child > span {
+.library-custom-accent .dao-sparks-trigger {
   color: var(--library-accent);
 }
 .library-custom-accent [data-light-novels-home] .home-featured-dot[aria-current='true']::after {

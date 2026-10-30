@@ -23,7 +23,7 @@
 
 /* The four destinations stay in reach inside the Library's scrolling main panel. */
 [data-discover] .discover-navigation {
-  position: sticky; top: 0; z-index: 4;
+  position: sticky; top: var(--workspace-header-height, 0px); z-index: 4;
   display: grid; grid-template-columns: repeat(4,minmax(0,1fr));
   border-bottom: 1px solid var(--discover-hairline);
   background: rgba(8,11,17,.96); backdrop-filter: blur(12px);
@@ -60,7 +60,7 @@
 [data-discover] .discover-genre-select { display: flex; min-width: 0; }
 [data-discover] .discover-genre-select select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--discover-hairline); border-radius: .625rem; padding: .5rem; background: #171a22; color: var(--discover-ink); font-size: .75rem; color-scheme: dark; }
 [data-discover] .discover-browser { display: grid; grid-template-columns: 4.25rem minmax(0,1fr); gap: .75rem; align-items: start; }
-[data-discover] .discover-view-rail { position: sticky; top: 4rem; display: grid; gap: .5rem; padding-block: .125rem; }
+[data-discover] .discover-view-rail { position: sticky; top: calc(var(--workspace-header-height, 0px) + 4rem); display: grid; gap: .5rem; padding-block: .125rem; }
 [data-discover] .discover-view-rail button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; min-height: 4.25rem; padding: .5rem .125rem; border: 1px solid transparent; border-radius: .75rem; color: var(--discover-muted); font-size: .625rem; font-weight: 600; overflow-wrap: anywhere; transition: background-color 160ms ease, color 160ms ease; }
 [data-discover] .discover-view-rail button:hover { color: var(--discover-ink); background: rgba(255,255,255,.03); }
 [data-discover] .discover-view-rail button[aria-pressed='true'] { color: var(--discover-gold); border-color: rgba(233,211,139,.22); background: linear-gradient(145deg,rgba(233,211,139,.1),rgba(233,211,139,.025)); }

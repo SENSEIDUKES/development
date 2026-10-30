@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { DevelopmentHeaderPreview } from './DevelopmentHeaderPreview';
 import { libraryPreviewUrl, navigateLibraryPreview } from './libraryPreviewNavigation';
+import { getPreviewScenario } from '../user-profile/previewData';
 
 vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
 vi.mock('../user-profile/UserProfileWorkspace', () => ({ UserProfileWorkspace: () => <section data-profile><button onClick={() => navigateLibraryPreview({ screen: 'home', collection: 'featured' })}>Return from Profile</button></section> }));
@@ -82,14 +83,14 @@ it('keeps the source hero action and directs header Library search separately fr
   await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Carve New Destiny"]')!.click());
   expect((listener.mock.calls[0][0] as CustomEvent).detail).toEqual({ screen: 'creator' });
   window.removeEventListener('library-preview-navigate', listener);
-  await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Search"]')!.click());
+  await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Search for stories"]')!.click());
   const search = document.querySelector<HTMLInputElement>('input[type="search"]')!;
   expect(search).not.toBeNull();
   const libraryResult = [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(b => b.textContent?.includes('Browse your accumulated scroll logs'))!;
   await act(async () => { libraryResult.click(); await new Promise(resolve => setTimeout(resolve, 100)); });
   expect(current()).toBe('Home'); expect(homeVisible()).toBe(false);
   expect(new URLSearchParams(location.search).get('collection')).toBe('my-library');
-  await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Search"]')!.click());
+  await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Search for stories"]')!.click());
   const createResult = [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(b => b.textContent?.includes('Your worlds, Energy and creator toolkit'))!;
   await act(async () => { createResult.click(); await new Promise(resolve => setTimeout(resolve, 100)); });
   expect(current()).toBe('Create'); expect(createVisible()).toBe(true);
@@ -140,4 +141,26 @@ it('opens the clicked Full and Compact worlds on their Info pages', async () => 
   expect(container.querySelector('[data-story-detail] [data-world-info-meta]')?.textContent).toContain('12 Chapters');
   await click('Back to novels');
   expect(createVisible()).toBe(true);
+});
+
+it('gives the Development header the app\'s Profile Portrait menu: the reader, Sign in not connected, Your profile and the Store', async () => {
+  await render();
+  await act(async () => container.querySelector<HTMLButtonElement>('header button[aria-label="Profile and preferences"]')!.click());
+  const menu = () => document.querySelector<HTMLElement>('[data-testid="workspace-profile-menu"]');
+  const entry = (label: string) => [...menu()!.querySelectorAll<HTMLButtonElement>('button')].find(item => item.textContent?.startsWith(label))!;
+  expect(menu()!.querySelector('.workspace-profile-name')?.textContent).toBe(getPreviewScenario('developed-cultivator').profile!.displayName);
+  expect(menu()!.textContent).toContain('Not connected yet');
+  expect(entry('Your profile')).toBeTruthy();
+  expect(entry('Store')).toBeTruthy();
+  await act(async () => entry('Sign in').click());
+  const signIn = document.querySelector<HTMLElement>('[data-testid="library-shell-sign-in"]')!;
+  expect(signIn.querySelector('[data-sign-in-unavailable]')).not.toBeNull();
+  expect([...signIn.querySelectorAll<HTMLButtonElement>('button')].filter(item => /^Continue with/.test(item.textContent ?? '')).every(item => item.disabled)).toBe(true);
+  await act(async () => signIn.querySelector<HTMLButtonElement>('button[aria-label="Close sign in"]')!.click());
+  expect(document.querySelector('[data-testid="library-shell-sign-in"]')).toBeNull();
+  // Your profile opens the preview's Cave, as the app opens its Profile page.
+  await act(async () => container.querySelector<HTMLButtonElement>('header button[aria-label="Profile and preferences"]')!.click());
+  await act(async () => entry('Your profile').click());
+  expect(new URLSearchParams(window.location.search).get('screen') ?? window.location.search).toMatch(/profile/);
+  expect(container.querySelector('[data-profile]')?.closest('[hidden]')).toBeNull();
 });

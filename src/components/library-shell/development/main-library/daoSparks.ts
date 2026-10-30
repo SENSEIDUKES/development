@@ -2,7 +2,7 @@ import type { StoryStyle, StorySpark } from '@seihouse/sen/story-seed';
 import { GENRE_PRESETS } from '../../../story-seed/development/constants';
 
 /**
- * Dao Insights' own sparks: what the elder mutters when no model is connected,
+ * Sparks' own sparks: what the elder mutters when no model is connected,
  * and what the header turns over while the panel is closed. Two for every
  * Story Seed genre, plus genres no list holds. Each is a whole Origin — premise,
  * title and novel tradition — usable as written; the aside and the

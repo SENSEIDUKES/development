@@ -43,7 +43,10 @@ export function HeaderActionButton({ action, primary = false }: { action: Header
   </Button>;
 }
 
-/** Non-modal disclosure: normal Tab order; Escape returns focus, outside focus dismisses. */
+/**
+ * Non-modal disclosure: normal Tab order; Escape returns focus, outside focus dismisses.
+ * A panel drawn elsewhere (a portal) still counts as inside.
+ */
 export function useHeaderDisclosure() {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -52,15 +55,19 @@ export function useHeaderDisclosure() {
   const id = useId();
   useEffect(() => {
     if (!open) return;
+    const close = (restoreFocus: boolean) => {
+      setOpen(false);
+      if (restoreFocus) triggerRef.current?.focus();
+    };
     panelRef.current?.querySelector<HTMLElement>('select:not(:disabled), button:not(:disabled), a[href]')?.focus();
+    const inside = (target: Node) => Boolean(rootRef.current?.contains(target) || panelRef.current?.contains(target));
     const dismiss = (event: Event) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      if (!inside(event.target as Node)) close(false);
     };
     const escape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        setOpen(false);
-        triggerRef.current?.focus();
+        close(true);
       }
     };
     // Phones fire resize when the address bar collapses or the keyboard opens;
@@ -70,8 +77,7 @@ export function useHeaderDisclosure() {
     const resize = () => {
       if (window.innerWidth === width) return;
       width = window.innerWidth;
-      setOpen(false);
-      triggerRef.current?.focus();
+      close(true);
     };
     window.addEventListener('resize', resize);
     document.addEventListener('pointerdown', dismiss);

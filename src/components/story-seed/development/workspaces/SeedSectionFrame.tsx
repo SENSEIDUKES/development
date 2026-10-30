@@ -34,12 +34,15 @@ export const SeedSectionFrame = ({
   section,
   complete,
   optionalNote,
+  headerAction,
   children,
 }: {
   section: SeedSection;
   complete: boolean;
   /** Replaces the plain "Optional" chip on optional sections (e.g. Story Tags). */
   optionalNote?: string;
+  /** A host control at the end of the heading row, such as Origin's Sparks. */
+  headerAction?: React.ReactNode;
   children: React.ReactNode;
 }) => {
   const family = SEED_FAMILIES[section.family];
@@ -100,6 +103,7 @@ export const SeedSectionFrame = ({
             )}
           </span>
         )}
+        {headerAction != null && headerAction !== false && <div className="ms-auto flex shrink-0 items-center">{headerAction}</div>}
       </div>
       <p hidden={!showTagline} className="mt-1.5 max-w-xl font-serif text-[13px] leading-snug text-[#B0A99B] sm:mt-2 sm:text-[15px] sm:leading-relaxed">
         {section.tagline}

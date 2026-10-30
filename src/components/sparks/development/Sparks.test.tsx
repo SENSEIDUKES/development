@@ -317,6 +317,33 @@ it('shows owner access without a numeric cap', async () => {
   expect(dialog().querySelector('[aria-label="Daily sparks"]')?.textContent).toBe('No daily limit');
 });
 
+it('does not refetch for a new host wrapper, but refreshes when its status capability changes', async () => {
+  const checkSparks = vi.fn(async () => ({ configured: true, usage: { unlimited: true as const } }));
+  const requestSpark = async (request: StorySparkRequest) => modelSpark(request);
+  await open({ checkSparks, requestSpark });
+  expect(checkSparks).toHaveBeenCalledTimes(1);
+  await act(async () => root.render(<LibraryPresentationProvider>
+    <SparksButton host={{ checkSparks, requestSpark, beginSpark: async () => {} }} />
+  </LibraryPresentationProvider>));
+  expect(checkSparks).toHaveBeenCalledTimes(1);
+  const replacement = vi.fn(async () => ({ configured: false }));
+  await act(async () => root.render(<LibraryPresentationProvider>
+    <SparksButton host={{ checkSparks: replacement, requestSpark }} />
+  </LibraryPresentationProvider>));
+  expect(replacement).toHaveBeenCalledTimes(1);
+});
+
+it('does not immediately poll expired reset metadata and still refreshes on focus', async () => {
+  const checkSparks = vi.fn(async () => ({ configured: true, usage: {
+    unlimited: false as const, limit: 20, remaining: 0, resetsAt: Date.now() - 1000,
+  } }));
+  await open({ checkSparks, requestSpark: async request => modelSpark(request) });
+  await settle(250);
+  expect(checkSparks).toHaveBeenCalledTimes(1);
+  await act(async () => { window.dispatchEvent(new Event('focus')); });
+  expect(checkSparks).toHaveBeenCalledTimes(2);
+});
+
 it('defaults to Any and sends the selected protagonist for Random, Custom and invented genres', async () => {
   const requestSpark = vi.fn(async (request: StorySparkRequest) => modelSpark(request));
   await open({ checkSparks: async () => true, requestSpark });

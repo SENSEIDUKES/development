@@ -79,25 +79,29 @@ export const Sparks: React.FC<{
   }, []);
 
   // Reopening (or refocusing) refreshes the existing server budget without spending it.
+  const checkSparks = host?.checkSparks;
+  const requestSpark = host?.requestSpark;
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
     const revision = usageRevision.current;
-    const check = host?.requestSpark ? host.checkSparks?.() ?? Promise.resolve(true) : Promise.resolve(false);
+    const check = requestSpark ? checkSparks?.() ?? Promise.resolve(true) : Promise.resolve(false);
     check.then(value => {
       if (cancelled) return;
       setConnected(typeof value === 'boolean' ? value : value.configured);
       if (usageRevision.current === revision) setUsage(typeof value === 'boolean' ? undefined : value.usage);
     }, () => { if (!cancelled) { setConnected(false); setUsage(undefined); } });
     return () => { cancelled = true; };
-  }, [host, isOpen, statusRefresh]);
+  }, [checkSparks, requestSpark, isOpen, statusRefresh]);
 
   const resetsAt = usage && !usage.unlimited ? usage.resetsAt : null;
   useEffect(() => {
     if (!isOpen) return;
     const refresh = () => setStatusRefresh(value => value + 1);
     window.addEventListener('focus', refresh);
-    const timer = resetsAt === null ? undefined : setTimeout(refresh, Math.max(0, resetsAt - Date.now()) + 100);
+    const remaining = resetsAt === null ? null : resetsAt - Date.now();
+    // Expired metadata waits for focus/reopen instead of immediately polling again.
+    const timer = remaining === null || remaining <= 0 ? undefined : setTimeout(refresh, Math.min(remaining + 100, 2 ** 31 - 1));
     return () => { window.removeEventListener('focus', refresh); clearTimeout(timer); };
   }, [isOpen, resetsAt]);
 

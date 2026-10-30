@@ -29,7 +29,7 @@ export async function getStorySparkStatus(accessToken?: string, signal?: AbortSi
   try {
     const token = accessToken?.trim();
     const response = await fetch(ENDPOINT, { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, signal });
-    if (!response.ok) return { configured: false };
+    if (!response.ok) return { configured: false, usage: readUsage(response.headers) };
     const body = await response.json() as { configured?: unknown };
     return { configured: body.configured === true, usage: readUsage(response.headers) };
   } catch {

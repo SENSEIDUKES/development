@@ -3,6 +3,15 @@ import { getStorySparkStatus, requestStorySpark } from './storySparkClient';
 
 afterEach(() => vi.unstubAllGlobals());
 
+it('retains server usage when the model status endpoint is unavailable', async () => {
+  vi.stubGlobal('fetch', async () => new Response('{"error":"Invalid model configuration"}', {
+    status: 503, headers: { 'X-Sparks-Limit': '20', 'X-Sparks-Remaining': '17' },
+  }));
+  expect(await getStorySparkStatus()).toEqual({ configured: false, usage: {
+    unlimited: false, limit: 20, remaining: 17, resetsAt: null,
+  } });
+});
+
 it('reads the server allowance on status and includes the saved owner token', async () => {
   const fetch = vi.fn(async () => new Response(JSON.stringify({ configured: true }), {
     headers: { 'X-Sparks-Limit': '20', 'X-Sparks-Remaining': '13', 'X-Sparks-Reset': '123456789' },

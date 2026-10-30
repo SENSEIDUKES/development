@@ -17,8 +17,9 @@ word a model reads, and judges results by seeing and hearing them in the app,
 never by reading code. Every phase below ends with something SENSEI can open,
 and no phase starts on an undecided question.
 
-**To hand this to a new chat:** "Read docs/create-hub.md. Phase B is built and
-waiting on SENSEI's run; phase C is next."
+**To hand this to a new chat:** "Read docs/create-hub.md. The author's world
+view is designed and waiting on SENSEI's approval; once approved it is built,
+and phase B closes on SENSEI's run in it."
 
 ## The problem, in SENSEI's words (2026-10-29)
 
@@ -71,17 +72,20 @@ waiting on SENSEI's run; phase C is next."
 ## Where this stands (verified 2026-10-29)
 
 - **Create is the Creator Space** (#480): Energy, the Creator Toolkit rail,
-  "Your worlds" with Open and Studio per world (Studio opens the world's Story
-  View today), and Create at the end, which starts a world from a Story Seed.
-  Much of it still shows sample data.
+  "Your worlds" with Open and Studio per world, and Create at the end, which
+  starts a world from a Story Seed. Much of it still shows sample data. Today a
+  world's card and its Studio button both open its Story View. **The Studio
+  button belongs to NovelExpanded Studios** (the Library Studios repo), not to
+  anything in this plan.
 - **The tagger is a stage of its own.** It runs once after a chapter is
   written and again on demand, returns notes, and the HARNESS places them on
   the chapter's own paragraphs. It has its own model and reasoning choice in
-  the Model Router. Since phase B (2026-10-29) it reads **any committed
-  chapter, one at a time**, from World Info's Chapters card in the app and
-  the HARNESS workspace in the Workshop; before that only the newest chapter
-  could be read again, and only from the Workshop (the app's Story View had
-  no chapter list at all, which this plan's first draft got wrong).
+  the Model Router. Since #487 (2026-10-29) the engine reads **any committed
+  chapter, one at a time**, and the record counts its notes. #487 also put a
+  Chapters card and a chapter page on World Info. **That was the wrong place**
+  (SENSEI, 2026-10-30): World Info is the regular novel page every reader
+  opens, and nobody there wants tagging. They come off when the author's world
+  view (below) is built, and the regular novel page goes back to what it was.
 - **The intake exists.** Sound Words packages (a story's own words, at most 30),
   Sound Cue packs, Soundscape and atmosphere packs, and CAPA skill packages
   all install from SPP and reach the tagger and the writer. The Studios do not
@@ -101,9 +105,13 @@ waiting on SENSEI's run; phase C is next."
 
 ## Decided
 
-- **Create is the hub.** The manuscript way in, the per-world Studio with its
-  chapters and their tagging, and the Toolkit are one page family, not a
-  developer surface.
+- **Create is the hub.** The manuscript way in, the author's world view (its
+  own section below) with its chapters and their tagging, and the Toolkit are
+  one page family, not a developer surface.
+- **Tagging is an author's tool, seen only in the author's world view.** Never
+  on World Info, the Reader or Story Settings. (SENSEI, 2026-10-30: "99% of all
+  the users could give less of a fuck about this... nobody wants to see that
+  on the regular.")
 - **One tagging path.** Nothing is forked for imported novels. A generated
   chapter and an imported one go through the same stage and show the same
   record.
@@ -129,15 +137,70 @@ waiting on SENSEI's run; phase C is next."
   Cues, then speakers, then the information tags (holdings, appearances) with
   the "already on the page" list the tagger is missing today.
 
+## The author's world view (designed with SENSEI, 2026-10-30)
+
+Not built yet. It has no name of its own: it is what a world opens to in Create.
+
+> "This page is going to be essentially the author's tool, where the real
+> authors can go into these novels and tag multiple chapters at a time, or see
+> exactly what novels they got... almost like the old iTunes setup, where it's
+> extremely simple." (SENSEI, 2026-10-30)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│            [ Novel ]  Sequential Art      ← medium switcher  │
+├───────────────┬──────────────────────────────────────────────┤
+│  WORLDS       │  Blueprint | Chapters | Codex | Assets       │
+│ ┌───┐ Nine-   │──────────────────────────────────────────────│
+│ │img│ Fold    │  ☐  1  The Furnace Wakes     2,140   Tagged  │
+│ └───┘ Furnace │  ☑  2  Ash on the Steps      1,980   Not yet │
+│ ┌───┐ Ashes   │  ☑  3  Ninth Meridian        2,305   Not yet │
+│ │img│ of the… │                                              │
+│ └───┘         │  [ Tag 2 chapters ]   · cost shown first     │
+│               │  42 chapters · 30 tagged · 12 not yet        │
+└───────────────┴──────────────────────────────────────────────┘
+```
+
+- **The way in:** tapping a world under Your worlds in Create opens this view,
+  that world chosen. No second entrance. ("That should just be the default
+  view when you click one of these your worlds inside of the create page.")
+- **Who sees it:** the world's author, only here.
+- **Medium switcher:** Novel, active; Sequential Art shown but inactive until it
+  exists. The worlds stay the same; the medium decides what the tabs show.
+- **Worlds:** every world the author has, as a mini world card with its cover
+  (the app's own compact world card, not a new one). A column on the left on a
+  laptop, as in iTunes; on a phone, a row of cards across the top, as Your
+  worlds is today.
+- **Tabs, for the chosen world:** Blueprint, Chapters, Codex, Assets. No Seed
+  tab: the Blueprint already is that ("We don't really need a seed category.
+  Blueprint is already that.").
+  - **Blueprint:** the world's existing Blueprint. An imported novel shows it
+    empty, with a short note that an imported novel has none.
+  - **Chapters:** the iTunes list. One row per chapter: a checkbox, its number
+    and title, then quiet columns for its words and its tagging (Tagged, Not
+    yet, Not read). Click to check, shift-click for a run, a header box for all.
+    **Tag** reads the checked chapters in order, one call each, with its cost
+    shown before it runs and Stop while it runs; each row changes as its
+    chapter lands. A footer line counts them ("42 chapters · 30 tagged · 12 not
+    yet"). Opening a chapter shows it with its tags lit and the findings per
+    kind (the view #487 built, moved here and nowhere else).
+  - **Codex:** where the world's pictures and every card live, the author's
+    Codex that shows every card ahead of the reader (phase E). Marked as coming
+    until that is built.
+  - **Assets:** every skill pack on the world, CAPA skills and media skills
+    alike, so the author can keep track of what they have customized.
+- **What comes off:** the Chapters card and the chapter page #487 put on
+  World Info.
+
 ## Phases, in order
 
 | # | Phase | Agents build | SENSEI decides | SENSEI sees | Where it stands |
 |---|---|---|---|---|---|
 | A | This design | This document | Approve or cut | This doc | approved 2026-10-29 (merged) |
-| B | Tag any chapter, one at a time | In the world's Studio (Create's Studio button opens Story View, whose World Info now has a **Chapters** card listing every chapter; each opens its **Studio page**): the chapter's prose with every tag lit on the words it landed on, one color per kind; the tagger's findings beside it, one line per kind, each a switch that lights that kind alone, "nothing found" and "nothing equipped" told apart; the record (read or not, by which model and when, tokens in and out, notes written, placed and dropped, what was set aside and why) behind one line; and Tag this chapter, with the same guards re-tagging had. One chapter, or a few in order by hand: no whole-story run yet (SENSEI, 2026-10-29: "one chapter at a time, a couple chapters at a time, until we get this right") | Decision 4 below | The Nine-Fold Furnace with chapters 1 to 3 tagged by hand, each on its Studio page | built 2026-10-29; waits on SENSEI's run |
+| B | Tag any chapter, a few at a time | The author's world view (its section above): the Worlds column, the Novel medium, the four tabs, with Chapters working (check chapters, Tag them in order, cost shown first, each row updating, open a chapter to see its tags lit and the findings per kind) and Blueprint and Assets showing what already exists; Codex marked as coming. The World Info additions from #487 come off in the same change. The engine underneath (any chapter, the counted record) is already built. No whole-story run yet (SENSEI, 2026-10-29: "one chapter at a time, a couple chapters at a time, until we get this right") | Approve this design; decision 4 below | The Nine-Fold Furnace's chapters 1 to 3 tagged from the Chapters tab | designed 2026-10-30; waits on SENSEI's approval |
 | C | The manuscript way in. *A manuscript world is an authored world; expansion is a later action, and the tagger discovers before it confirms.* | A second way to start a world beside the Seed: the author's chapters in (see decisions 1 to 3), a world with no Seed and no Blueprint, open to its reader, readable in the Reader, with Story Settings for its language, its main character and its sound words | Decisions 1 to 3 below | A novel of SENSEI's choosing in the app, untagged, opening in the Reader | waits on B |
 | D | The tagging loop, one kind at a time | For each kind: the teaching rewritten for that kind alone, re-tag, count against the sentences the prose offers (the agent lists them), fix, repeat. Order: soundscape and atmosphere (and the category vocabulary they choose from), Sound Cues (with the story's own words equipped), speakers for named characters, then holdings and appearances with the already-appeared list | Approve each kind's words; equip the packs for the test story | Each kind landing on a chapter SENSEI can hear and see: music that changes between chapters, cues on the bells, voices on the named cast | waits on B; C helps |
-| E | The Codex open in Create | The author's view of every card, ahead of the reader | When; what the author may edit | The whole world in Create, the reached part in the Reader | later |
+| E | The Codex open in Create | The Codex tab of the author's world view: every card and every picture, ahead of the reader | When; what the author may edit | The whole world in Create, the reached part in the Reader | later |
 | G | Tag the whole story | Tag all chapters of an imported manuscript in order as one run: what happens when it stops halfway (resume from the first chapter without a record from this run, cancel, never re-tag what is done) and clearing a bad run across chapters | Decisions 5 and 6 below | A long novel tagged end to end | later, after D works on single chapters |
 | F | The Studios hand-off | Nothing here: SPP export from the Studios (their repo), then Manga Studio, MP Studio and games reading the Codex | Separate missions | A pack made in a Studio equipped in Create; later, a manga drawn from the Codex | later |
 
@@ -167,9 +230,10 @@ waiting on SENSEI's run; phase C is next."
    cannot say "the tagger found nothing here", because silence is not a note.
    Recommendation: the chapter view says it in those words, per kind, so a
    quiet chapter and a failed one never look alike. **Built as recommended
-   (2026-10-29), open to SENSEI's cut:** the Chapters card says it per kind,
+   (2026-10-29), open to SENSEI's cut:** the chapter view says it per kind,
    and a kind the story equipped nothing for (no Sound Words, no soundscapes)
-   says it was never asked for instead.
+   says it was never asked for instead. It moves into the author's world view
+   with the rest.
 
 **Later (phase G, the whole-story run), not now** (SENSEI, 2026-10-29: single
 chapters first, until the tagging is right):
@@ -253,3 +317,13 @@ chapters first, until the tagging is right):
   landed, the findings per kind as switches beside it, one action. SENSEI's
   bar for every surface from here: Apple-plain, you know what you're doing at
   once, with an artistic first impression, and customizable.
+- **2026-10-30 (the author's world view, and #487's wrong place):** On
+  examining #487, SENSEI: tagging was put on World Info, the regular novel page
+  every reader opens, when the place for it had not been designed yet, and that
+  design was the first step. The plan's own words "in the world's Studio" were
+  wrong twice over: Create's Studio button is NovelExpanded Studios, and there
+  was no such place. Designed with SENSEI: the author's world view, what a world
+  opens to in Create, iTunes-plain (Worlds on the left as mini world cards, a
+  Novel | Sequential Art switcher, Blueprint | Chapters | Codex | Assets),
+  authors only. Phase B is rewritten to build it; #487's World Info additions
+  come off in the same change. The engine work from #487 stands.

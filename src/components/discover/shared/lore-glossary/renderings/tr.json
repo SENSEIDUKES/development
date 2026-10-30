@@ -1,0 +1,1206 @@
+{
+ "qi": [
+  "Qi (Çi)",
+  "Yaşam enerjisi."
+ ],
+ "cultivation": [
+  "Gelişim",
+  "Ruhani gelişim."
+ ],
+ "dantian": [
+  "Dantian",
+  "Enerji merkezi."
+ ],
+ "immortal-qi": [
+  "Ölümsüz Qi"
+ ],
+ "cultivation-realm": [
+  "Gelişim Alemi",
+  "Seviye."
+ ],
+ "heavenly-tribulation": [
+  "Cennetsel Musibet",
+  "Göksel felaket."
+ ],
+ "nascent-soul": [
+  "Doğan Ruh"
+ ],
+ "golden-core": [
+  "Altın Çekirdek"
+ ],
+ "foundation-establishment": [
+  "Temel Kurma"
+ ],
+ "qi-refining": [
+  "Qi Yoğunlaştırma"
+ ],
+ "core-formation": [
+  "Çekirdek Oluşturma"
+ ],
+ "spirit-severing": [
+  "Ruh Koparma"
+ ],
+ "dao-seeking": [
+  "Dao Arayışı"
+ ],
+ "domain": [
+  "Alan",
+  "Domain (Bölge)."
+ ],
+ "ascension": [
+  "Yükseliş"
+ ],
+ "meridians": [
+  "Meridyen",
+  "Meridian (Enerji yolu)."
+ ],
+ "spiritual-root": [
+  "Ruhani Kök"
+ ],
+ "jing-qi-shen": [
+  "Jing, Qi, Shen",
+  "Üç Hazine."
+ ],
+ "body-tempering": [
+  "Beden Geliştirme"
+ ],
+ "fiendgod-body-refining": [
+  "İblis-Tanrı Beden Gelişimi"
+ ],
+ "heartforce-cultivation": [
+  "Kalp Gücü Gelişimi"
+ ],
+ "dual-cultivation": [
+  "Çift Gelişim"
+ ],
+ "alchemy": [
+  "Hap Yapımı",
+  "Pill Concocting (Simya)."
+ ],
+ "spirit-stone": [
+  "Ruh Taşı"
+ ],
+ "spiritual-treasure": [
+  "Eser",
+  "Artifact (Büyülü eşya)."
+ ],
+ "storage-ring": [
+  "Depolama Yüzüğü"
+ ],
+ "talisman": [
+  "Tılsım"
+ ],
+ "formation": [
+  "Düzen / Formasyon"
+ ],
+ "sect": [
+  "Tarikat"
+ ],
+ "clan": [
+  "Klan"
+ ],
+ "patriarch": [
+  "Patrik",
+  "Patriarch (Klan lideri)."
+ ],
+ "elder": [
+  "Kıdemli"
+ ],
+ "disciple-hierarchy": [
+  "Mürit Hiyerarşisi"
+ ],
+ "spirit-beast": [
+  "Ruh Canavarı"
+ ],
+ "beast-taming": [
+  "Canavar Terbiyesi"
+ ],
+ "heavenly-dao": [
+  "Cennetsel Dao"
+ ],
+ "dao": [
+  "Dao"
+ ],
+ "karma": [
+  "Karma"
+ ],
+ "reincarnation": [
+  "Reenkarnasyon"
+ ],
+ "regression": [
+  "Regresyon (Zamanda Geri Dönüş)"
+ ],
+ "transmigration": [
+  "Ruh Göçü"
+ ],
+ "isekai": [
+  "İsekai"
+ ],
+ "otome-isekai": [
+  "Otome İsekai"
+ ],
+ "hunter-system": [
+  "Avcı Sistemi"
+ ],
+ "constellation": [
+  "Takımyıldız"
+ ],
+ "dungeon": [
+  "Zindan"
+ ],
+ "tower": [
+  "Kule"
+ ],
+ "system": [
+  "Sistem"
+ ],
+ "status-window": [
+  "Durum Penceresi"
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "Yetenek"
+ ],
+ "level-up": [
+  "Seviye Atlama"
+ ],
+ "quest": [
+  "Görev"
+ ],
+ "guild": [
+  "Lonca"
+ ],
+ "rarity": [
+  "Nadirlik"
+ ],
+ "loot": [
+  "Ganimet"
+ ],
+ "wuxia": [
+  "Wuxia"
+ ],
+ "xianxia": [
+  "Xianxia"
+ ],
+ "xuanhuan": [
+  "Xuanhuan"
+ ],
+ "murim": [
+  "Murim"
+ ],
+ "litrpg": [
+  "LitRPG"
+ ],
+ "progression-fantasy": [
+  "Gelişim Fantezisi"
+ ],
+ "academy-arc": [
+  "Akademi Arkı"
+ ],
+ "guide": [
+  "Rehber"
+ ],
+ "esper": [
+  "Esper"
+ ],
+ "arrogant-young-master": [
+  "Kibirli Genç Efendi"
+ ],
+ "face": [
+  "İtibar / Yüz",
+  "Face (Reputation)."
+ ],
+ "face-slapping": [
+  "Yüze Tokat Atma",
+  "Face-Slapping (Utandırma)."
+ ],
+ "tournament-arc": [
+  "Turnuva Arkı"
+ ],
+ "secret-realm": [
+  "Gizli Alem"
+ ],
+ "auction": [
+  "Müzayede"
+ ],
+ "bloodline": [
+  "Kan Bağı"
+ ],
+ "physique": [
+  "Bünye"
+ ],
+ "dao-companion": [
+  "Dao Yoldaşı"
+ ],
+ "harem": [
+  "Harem"
+ ],
+ "cannon-fodder": [
+  "Top Yemi"
+ ],
+ "villainess": [
+  "Kötü Kadın"
+ ],
+ "protagonist-halo": [
+  "Ana Karakter Halesi",
+  "Protagonist Halo (Plot armor)."
+ ],
+ "system-shop": [
+  "Sistem Dükkanı"
+ ],
+ "inventory": [
+  "Envanter"
+ ],
+ "class": [
+  "Sınıf",
+  "Class (RPG)."
+ ],
+ "stat": [
+  "İstatistik"
+ ],
+ "skill-tree": [
+  "Yetenek Ağacı"
+ ],
+ "party": [
+  "Grup"
+ ],
+ "raid": [
+  "Baskın"
+ ],
+ "pvp": [
+  "PvP",
+  "Player vs Player."
+ ],
+ "pve": [
+  "PvE",
+  "Player vs Environment."
+ ],
+ "npc": [
+  "NPC"
+ ],
+ "sentient-system": [
+  "Bilinçli Sistem"
+ ],
+ "regression-novel": [
+  "Regresyon Romanı"
+ ],
+ "transmigration-novel": [
+  "Ruh Göçü Romanı"
+ ],
+ "cultivation-technique": [
+  "Gelişim Tekniği"
+ ],
+ "forbidden-technique": [
+  "Yasak Teknik"
+ ],
+ "sword-intent": [
+  "Kılıç Niyeti"
+ ],
+ "domain-expansion": [
+  "Alan Genişletme"
+ ],
+ "heavenly-tribulation-lightning": [
+  "Cennetsel Musibet Yıldırımı"
+ ],
+ "soul": [
+  "Ruh"
+ ],
+ "spiritual-sense": [
+  "Ruhani His"
+ ],
+ "qi-deviation": [
+  "Qi Sapması"
+ ],
+ "heart-devil": [
+  "Kalp Şeytanı"
+ ],
+ "merit": [
+  "Liyakat / Erdem",
+  "Merit (Karmic)."
+ ],
+ "karmic-fire": [
+  "Karmik Ateş"
+ ],
+ "ascension-platform": [
+  "Yükseliş Platformu"
+ ],
+ "lower-realm": [
+  "Aşağı Alem"
+ ],
+ "immortal-realm": [
+  "Ölümsüzler Alemi"
+ ],
+ "spirit-realm": [
+  "Ruhlar Alemi"
+ ],
+ "great-thousand-world": [
+  "Büyük Bin Dünya"
+ ],
+ "plane": [
+  "Düzlem",
+  "Plane (Boyut)."
+ ],
+ "world-tree": [
+  "Dünya Ağacı"
+ ],
+ "celestial-empire": [
+  "Göksel İmparatorluk"
+ ],
+ "demon": [
+  "İblis"
+ ],
+ "orthodox-vs-unorthodox": [
+  "Ortodoks ve Gayri Ortodoks",
+  "Righteous vs Demonic."
+ ],
+ "sect-war": [
+  "Tarikat Savaşı"
+ ],
+ "resource-war": [
+  "Kaynak Savaşı"
+ ],
+ "talent": [
+  "Yetenek / İstidat"
+ ],
+ "cheat": [
+  "Hile"
+ ],
+ "time-dilation": [
+  "Zaman Genişlemesi"
+ ],
+ "appraisal": [
+  "Değerlendirme"
+ ],
+ "loot-box": [
+  "Ganimet Kutusu"
+ ],
+ "pay-to-win": [
+  "Kazanmak İçin Öde"
+ ],
+ "player": [
+  "Oyuncu"
+ ],
+ "administrator": [
+  "Yönetici"
+ ],
+ "tutorial": [
+  "Eğitim"
+ ],
+ "hidden-quest": [
+  "Gizli Görev"
+ ],
+ "repair": [
+  "Onarım"
+ ],
+ "death-penalty": [
+  "Ölüm Cezası"
+ ],
+ "respawn": [
+  "Yeniden Doğuş"
+ ],
+ "fast-travel": [
+  "Hızlı Seyahat"
+ ],
+ "mount": [
+  "Binek"
+ ],
+ "pet": [
+  "Evcil Hayvan"
+ ],
+ "crafting": [
+  "Üretim"
+ ],
+ "enchanting": [
+  "Efsunlama"
+ ],
+ "socket": [
+  "Yuva",
+  "Socket (Mücevher için)."
+ ],
+ "set-item": [
+  "Set Eşyası"
+ ],
+ "unique-item": [
+  "Eşsiz Eşya"
+ ],
+ "courting-death": [
+  "Ölüme Kur Yapmak"
+ ],
+ "mount-tai": [
+  "Tai Dağı"
+ ],
+ "kowtow": [
+  "Secde Etmek",
+  "Kowtow (Yere kapanmak)."
+ ],
+ "jade-slip": [
+  "Yeşim Taşı",
+  "Jade Slip (Kayıt taşı)."
+ ],
+ "romance-fantasy": [
+  "Romantik Fantezi"
+ ],
+ "returner": [
+  "Geri Dönen"
+ ],
+ "sword-cultivator": [
+  "Kılıç Gelişimcisi"
+ ],
+ "foundation-establishment-pill": [
+  "Temel Kurma Hapı"
+ ],
+ "marrow-cleansing-pill": [
+  "İlik Temizleme Hapı"
+ ],
+ "fasting-pill": [
+  "Oruç Hapı"
+ ],
+ "blood-burning-pill": [
+  "Kan Yakan Hap"
+ ],
+ "shim-gong": [
+  "Shim Gong"
+ ],
+ "shin-bup": [
+  "Shin Bup"
+ ],
+ "jeom-hyeol": [
+  "Jeom Hyeol",
+  "Jeom Hyeol (Baskı noktası)."
+ ],
+ "ho-shin-gang-qi": [
+  "Ho Shin Gang Qi"
+ ],
+ "geom-gi": [
+  "Geom Gi",
+  "Geom Gi (Kılıç aurası)."
+ ],
+ "sama": [
+  "-sama"
+ ],
+ "senpai-kouhai": [
+  "Senpai / Kouhai"
+ ],
+ "ojou-sama": [
+  "Ojou-sama"
+ ],
+ "maou-gun": [
+  "İblis Kralın Ordusu"
+ ],
+ "dao-child": [
+  "Dao Çocuğu"
+ ],
+ "peak-master": [
+  "Zirve Ustası"
+ ],
+ "sect-leader": [
+  "Tarikat Lideri"
+ ],
+ "handyman-disciple": [
+  "Hizmetçi Mürit"
+ ],
+ "guest-elder": [
+  "Misafir Kıdemli"
+ ],
+ "sweeping-monk": [
+  "Süpüren Keşiş",
+  "Sweeping Monk (Gizli usta)."
+ ],
+ "hidden-class": [
+  "Gizli Sınıf"
+ ],
+ "necromancer": [
+  "Nekromanser (Ölü Çağıran)"
+ ],
+ "job-advancement": [
+  "Meslek İlerlemesi"
+ ],
+ "berserker": [
+  "Vahşi Savaşçı"
+ ],
+ "paladin": [
+  "Şövalye"
+ ],
+ "beast-core": [
+  "Canavar Çekirdeği"
+ ],
+ "soul-contract": [
+  "Ruh Sözleşmesi"
+ ],
+ "beast-pouch": [
+  "Canavar Kesesi"
+ ],
+ "bloodline-evolution": [
+  "Kan Bağı Evrimi"
+ ],
+ "familiar": [
+  "Aşina (Ruhani Yoldaş)"
+ ],
+ "equality-contract": [
+  "Eşitlik Sözleşmesi"
+ ],
+ "heavenly-flame": [
+  "Cennetsel Alev"
+ ],
+ "spirit-herb": [
+  "Ruhani Bitki"
+ ],
+ "spirit-spring-water": [
+  "Ruhani Kaynak Suyu"
+ ],
+ "array-eye": [
+  "Diziliş Gözü"
+ ],
+ "formation-flag": [
+  "Diziliş Bayrağı"
+ ],
+ "spirit-gathering-array": [
+  "Ruh Toplama Dizilişi"
+ ],
+ "red-gate": [
+  "Kırmızı Kapı"
+ ],
+ "clear-condition": [
+  "Tamamlama Koşulu"
+ ],
+ "magic-stone": [
+  "Büyülü Taş"
+ ],
+ "penalty-quest": [
+  "Ceza Görevi"
+ ],
+ "floor-master": [
+  "Kat Ustası"
+ ],
+ "porter": [
+  "Taşıyıcı"
+ ],
+ "scenario": [
+  "Senaryo"
+ ],
+ "probability": [
+  "Olasılık"
+ ],
+ "stigma": [
+  "Stigma (Damga)"
+ ],
+ "murim-alliance": [
+  "Murim İttifakı"
+ ],
+ "demonic-cult": [
+  "Şeytani Tarikat"
+ ],
+ "northern-duke": [
+  "Kuzey Dükü"
+ ],
+ "tea-party": [
+  "Çay Partisi"
+ ],
+ "munchkin": [
+  "Munchkin (Çok güçlü)"
+ ],
+ "cider": [
+  "Elma Şarabı (Ferahlatıcı an)",
+  "Cider (Tatmin edici intikam)."
+ ],
+ "black-mastermind": [
+  "Siyah Beyin"
+ ],
+ "dokkaebi": [
+  "Dokkaebi"
+ ],
+ "internal-energy": [
+  "Naegong"
+ ],
+ "jade-beauty": [
+  "Yeşim Güzeli"
+ ],
+ "white-lotus": [
+  "Beyaz Nilüfer"
+ ],
+ "eating-tofu": [
+  "Tofu Yemek (Taciz)"
+ ],
+ "coughing-up-blood": [
+  "Kan Kusmak"
+ ],
+ "frog-in-well": [
+  "Kuyudaki Kurbağa"
+ ],
+ "heaven-defying": [
+  "Cennete Karşı Gelen"
+ ],
+ "green-hat": [
+  "Yeşil Şapka (Boynuzlu)"
+ ],
+ "shuang-wen": [
+  "Shuang Wen"
+ ],
+ "giving-face": [
+  "Yüz Vermek (Saygı)"
+ ],
+ "dungeon-core": [
+  "Zindan Çekirdeği"
+ ],
+ "fiefdom": [
+  "Tımar / Derebeylik"
+ ],
+ "node": [
+  "Düğüm"
+ ],
+ "contribution-points": [
+  "Katkı Puanı"
+ ],
+ "sect-mission-hall": [
+  "Tarikat Görev Salonu"
+ ],
+ "spirit-garden": [
+  "Ruh Bahçesi"
+ ],
+ "city-lord": [
+  "Şehir Lordu"
+ ],
+ "edict": [
+  "Ferman"
+ ],
+ "vassal": [
+  "Vasal / Teba"
+ ],
+ "primordial-chaos": [
+  "İlkel Kaos"
+ ],
+ "the-void": [
+  "Hiçlik"
+ ],
+ "life-forbidden-zone": [
+  "Yaşam Yasaklı Bölge"
+ ],
+ "ancient-desolate-beast": [
+  "Kadim Issız Canavar"
+ ],
+ "star-field": [
+  "Yıldız Tarlası"
+ ],
+ "spatial-storm": [
+  "Uzaysal Fırtına"
+ ],
+ "nine-heavens": [
+  "Dokuz Cennet"
+ ],
+ "river-of-time": [
+  "Zaman Nehri"
+ ],
+ "epoch": [
+  "Çağ"
+ ],
+ "karmic-thread": [
+  "Karmik İplik"
+ ],
+ "origin-source": [
+  "Köken Kaynağı"
+ ],
+ "heaven-and-earth": [
+  "Cennet ve Dünya"
+ ],
+ "wuji": [
+  "Wuji (Sınırsız)"
+ ],
+ "dao-source": [
+  "Dao Kaynağı"
+ ],
+ "engagement-annulment": [
+  "Nişan İptali"
+ ],
+ "toad-lusting-after-swan-meat": [
+  "Kuğu Etine Göz Diken Kurbağa",
+  "Toad Lusting..."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "Gençlerin Yoksulluğuyla Alay Etme",
+  "Don't Bully..."
+ ],
+ "concubine": [
+  "Cariye"
+ ],
+ "sect-rules": [
+  "Tarikat Kuralları"
+ ],
+ "filial-piety": [
+  "Evlat Saygısı"
+ ],
+ "pill-tribulation": [
+  "Hap Musibeti"
+ ],
+ "monster-genius": [
+  "Canavar (Dahi)"
+ ],
+ "gu-venom-witchcraft": [
+  "Gu (Zehir / Büyü)"
+ ],
+ "corpse-refining": [
+  "Ceset Geliştirme"
+ ],
+ "fairy-sister": [
+  "Peri Abla"
+ ],
+ "young-miss": [
+  "Genç Hanım"
+ ],
+ "mount-kunlun": [
+  "Kunlun Dağı"
+ ],
+ "aggro": [
+  "Aggro"
+ ],
+ "crowd-control": [
+  "Kitle Kontrolü (CC)"
+ ],
+ "kiting": [
+  "Vur Kaç (Kiting)"
+ ],
+ "aoe": [
+  "Alan Etkisi (AoE)"
+ ],
+ "proc": [
+  "Tetiklenme (Proc)"
+ ],
+ "kill-steal": [
+  "Leş Çalma"
+ ],
+ "tank": [
+  "Tank"
+ ],
+ "dps": [
+  "Saniye Başına Hasar (DPS)"
+ ],
+ "gold-sink": [
+  "Altın Gideri"
+ ],
+ "auction-sniping": [
+  "Müzayede Avcılığı"
+ ],
+ "griefing": [
+  "Oyun Bozma (Griefing)"
+ ],
+ "dot": [
+  "Zamanla Hasar (DoT)",
+  "Damage over Time."
+ ],
+ "contract-marriage": [
+  "Sözleşmeli Evlilik"
+ ],
+ "reawakening": [
+  "Yeniden Uyanış"
+ ],
+ "tyrant": [
+  "Tiran"
+ ],
+ "obsessive-male-lead": [
+  "Takıntılı Erkek Başrol"
+ ],
+ "original-heroine": [
+  "Orijinal Kadın Başrol"
+ ],
+ "regression-trauma": [
+  "Regresyon Travması"
+ ],
+ "hunter-association": [
+  "Avcı Birliği"
+ ],
+ "sudden-death": [
+  "Ani Ölüm"
+ ],
+ "guild-master": [
+  "Lonca Ustası"
+ ],
+ "adventurer-ranks": [
+  "Avcı Rütbeleri"
+ ],
+ "beastkin": [
+  "Canavar İnsan"
+ ],
+ "demon-god": [
+  "İblis Tanrısı"
+ ],
+ "unique-skill": [
+  "Eşsiz Yetenek"
+ ],
+ "demon-realm": [
+  "İblis Alemi"
+ ],
+ "slave-crest": [
+  "Köle Damgası"
+ ],
+ "subjugation": [
+  "Boyun Eğdirme (Baskın)"
+ ],
+ "otherworlder": [
+  "Diğer Dünyalı"
+ ],
+ "heros-party": [
+  "Kahraman Grubu"
+ ],
+ "dao-heart": [
+  "Dao Kalbi"
+ ],
+ "severing-mortal-ties": [
+  "Ölümlü Bağları Koparma"
+ ],
+ "five-elements": [
+  "Beş Element"
+ ],
+ "yin-and-yang": [
+  "Yin ve Yang"
+ ],
+ "enlightenment": [
+  "Aydınlanma"
+ ],
+ "mortal-tribulation": [
+  "Ölümlü Musibeti"
+ ],
+ "soul-dissipation": [
+  "Ruh Dağılması"
+ ],
+ "dao-marks": [
+  "Dao İşaretleri"
+ ],
+ "nirvana": [
+  "Nirvana"
+ ],
+ "fellow-daoist": [
+  "Dao Yoldaşı (Hitap)"
+ ],
+ "sect-familial-address": [
+  "Kıdemli Kardeş / Küçük Kardeş"
+ ],
+ "cold-snort": [
+  "Soğuk Homurtu"
+ ],
+ "dog-leg-lackey": [
+  "Dalkavuk",
+  "Lackey."
+ ],
+ "jianghu": [
+  "Jianghu"
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "Dağda Oturup Kaplanların Dövüşmesini İzlemek",
+  "Sitting on the Mountain..."
+ ],
+ "chaebol": [
+  "Chaebol (Holding)"
+ ],
+ "heavenly-oath": [
+  "Cennetsel Yemin"
+ ],
+ "title-achievement": [
+  "Unvan / Başarı"
+ ],
+ "system-erasure": [
+  "Sistem Tarafından Silinme"
+ ],
+ "sweet-potato": [
+  "Tatlı Patates (Boğucu durum)",
+  "Sweet Potato (Goguma)."
+ ],
+ "white-moonlight": [
+  "Beyaz Ay Işığı"
+ ],
+ "cinnabar-mole": [
+  "Zencefil Beni"
+ ],
+ "holy-mother": [
+  "Kutsal Anne (Aşırı saf ve iyi)"
+ ],
+ "dog-blood": [
+  "Köpek Kanı (Melodramatik)"
+ ],
+ "angst": [
+  "Angst (Yoğun ızdırap)"
+ ],
+ "scum": [
+  "Pislik"
+ ],
+ "brain-dead": [
+  "Beyin Ölümü (Aşırı aptal)"
+ ],
+ "meat": [
+  "Et (Yetişkin içerik)",
+  "Meat (Smut)."
+ ],
+ "green-tea": [
+  "Yeşil Çay (Sinsi kız)",
+  "Green Tea (Manipulative)."
+ ],
+ "territory": [
+  "Bölge / Arazi"
+ ],
+ "rebirth": [
+  "Yeniden Doğuş (Geçmişe)"
+ ],
+ "devil-mara": [
+  "Şeytan / Mara"
+ ],
+ "demonic-beast": [
+  "Şeytani Canavar"
+ ],
+ "truck-kun": [
+  "Kamyon-kun"
+ ],
+ "cheat-skill": [
+  "Hile Yeteneği"
+ ],
+ "divine-protection": [
+  "İlahi Koruma"
+ ],
+ "genkai-toppa": [
+  "Sınır Aşımı",
+  "Limit Break."
+ ],
+ "chuunibyou": [
+  "Chuunibyou (Ergenlik sendromu)"
+ ],
+ "tsundere": [
+  "Tsundere"
+ ],
+ "yandere": [
+  "Yandere"
+ ],
+ "san": [
+  "-san"
+ ],
+ "chan": [
+  "-chan"
+ ],
+ "kun": [
+  "-kun"
+ ],
+ "dono": [
+  "-dono"
+ ],
+ "sensei": [
+  "-sensei (Öğretmen)"
+ ],
+ "adventurer-guild": [
+  "Avcı Loncası"
+ ],
+ "vrmmo": [
+  "VRMMO"
+ ],
+ "goddess": [
+  "Tanrıça"
+ ],
+ "gate": [
+  "Kapı / Geçit"
+ ],
+ "awakening": [
+  "Uyanış"
+ ],
+ "regressor": [
+  "Regresör (Zamanda Geri Dönen)"
+ ],
+ "national-level-hunter": [
+  "Ulusal Seviye Avcı"
+ ],
+ "hunter-rank": [
+  "Avcı Rütbesi"
+ ],
+ "grade": [
+  "Derece / Kademe"
+ ],
+ "mana": [
+  "Mana"
+ ],
+ "shadow-soldier": [
+  "Gölge Askeri"
+ ],
+ "monarch": [
+  "Hükümdar / Monark"
+ ],
+ "hyung": [
+  "Hyung (Abi)"
+ ],
+ "noona": [
+  "Noona (Abla)"
+ ],
+ "oppa": [
+  "Oppa (Abi - kızlar için)"
+ ],
+ "sunbae": [
+  "Sunbae (Kıdemli)"
+ ],
+ "ahjussi": [
+  "Ahjussi (Amca)"
+ ],
+ "ahjumma": [
+  "Ahjumma (Teyze)"
+ ],
+ "dungeon-break": [
+  "Zindan Kırılması"
+ ],
+ "boss-monster": [
+  "Patron Canavar"
+ ],
+ "first-clear": [
+  "İlk Tamamlama"
+ ],
+ "clear": [
+  "Tamamlama"
+ ],
+ "penalty": [
+  "Ceza"
+ ],
+ "compensation": [
+  "Tazminat / Ödül"
+ ],
+ "ranker": [
+  "Sıralama Oyuncusu (Ranker)"
+ ],
+ "player-kill": [
+  "Oyuncu Katli (PK)"
+ ],
+ "broadcast": [
+  "Yayın"
+ ],
+ "mutant-monster": [
+  "Mutant Canavar"
+ ],
+ "growth-type-ability": [
+  "Büyüme Tipi Yetenek"
+ ],
+ "evolution": [
+  "Evrim"
+ ],
+ "floor": [
+  "Kat"
+ ],
+ "test": [
+  "Test"
+ ],
+ "test-administrator": [
+  "Test Yöneticisi"
+ ],
+ "floor-guardian": [
+  "Kat Muhafızı"
+ ],
+ "irregular": [
+  "Kuralsız / Düzensiz"
+ ],
+ "regular": [
+  "Düzenli / Seçilmiş"
+ ],
+ "hidden-floor": [
+  "Gizli Kat"
+ ],
+ "wall": [
+  "Duvar"
+ ],
+ "family": [
+  "Aile"
+ ],
+ "observer": [
+  "Gözlemci"
+ ],
+ "onii-chan": [
+  "Onii-chan (Abi)"
+ ],
+ "onee-chan": [
+  "Onee-chan (Abla)"
+ ],
+ "ossan": [
+  "Ossan (Amca)"
+ ],
+ "osananajimi": [
+  "Çocukluk Arkadaşı"
+ ],
+ "kokuhaku": [
+  "Aşk İtirafı (Kokuhaku)"
+ ],
+ "bunkasai": [
+  "Kültür Festivali"
+ ],
+ "guild-card": [
+  "Lonca Kartı"
+ ],
+ "job-change": [
+  "Meslek Değişimi"
+ ],
+ "labyrinth": [
+  "Labirent"
+ ],
+ "blacksmith": [
+  "Demirci"
+ ],
+ "slow-life": [
+  "Yavaş Yaşam"
+ ],
+ "skill-book": [
+  "Yetenek Kitabı"
+ ],
+ "great-sage": [
+  "Büyük Bilge"
+ ],
+ "sacred-sword": [
+  "Kutsal Kılıç"
+ ],
+ "entrance-exam": [
+  "Giriş Sınavı"
+ ],
+ "class-ranking": [
+  "Sınıf Sıralaması"
+ ],
+ "mob-class": [
+  "Figüran Sınıfı"
+ ],
+ "late-bloomer": [
+  "Geç Açan (Geç Gelişen)"
+ ],
+ "graduation-trial": [
+  "Mezuniyet Sınavı"
+ ],
+ "novel-knowledge": [
+  "Roman Bilgisi"
+ ],
+ "fourth-wall": [
+  "Dördüncü Duvar"
+ ],
+ "system-voice": [
+  "Sistem Sesi"
+ ],
+ "authors-note": [
+  "Yazarın Notu"
+ ],
+ "ancient-ruins": [
+  "Kadim Harabeler"
+ ],
+ "spirit-vein": [
+  "Ruh Damarı"
+ ],
+ "middle-realm": [
+  "Orta Alem"
+ ],
+ "void": [
+  "Boşluk"
+ ],
+ "chaos": [
+  "Kaos"
+ ],
+ "tribute": [
+  "Haraç / Vergi"
+ ],
+ "garrison": [
+  "Garnizon"
+ ],
+ "liege": [
+  "Hükümdar / Lord"
+ ],
+ "totem-beast": [
+  "Totem Canavarı"
+ ],
+ "beast-master": [
+  "Canavar Ustası"
+ ]
+}

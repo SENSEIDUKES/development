@@ -167,11 +167,43 @@ lists, credits pages, branch lineage, curated reviews.
 ## Eastern Fantasy Encyclopedia (2026-10-26)
 
 The Lore navigation link opens a quiet, text-first directory in the
-same Library shell. It starts with **36 entries** across **Cultivation Realms,
-Qi & Anatomy, Alchemy & Crafts, Mythology & Beasts, Idioms & Cultural Terms,
-and Weapons & Relics**. Each article includes its canonical English term,
-original script and pronunciation, explanation, fan-translated aliases,
-related entries and further reading.
+same Library shell. It holds **398 entries** across **Cultivation, Crafts &
+Treasures, Beasts & Myths, Worlds & Cosmos, Sects & Kingdoms, Game Systems,
+Korean Web Novels, Japanese Light Novels, Tropes & Sayings, Character Types and
+Genres**: a curated core of 36 terms plus SENSEI's master glossary (2026-10-30).
+Each article includes its canonical English term, original script and
+pronunciation where known, explanation, fan-translated aliases, how to write
+it, related entries and, for the curated core, further reading.
+
+### Lore as a translator's reference (2026-10-30)
+
+Every reader is also a writer, so Lore is one simple layer, not a reader view
+and a translator view. Each term shows **Write it as**: how the term is written
+in the selected reading language, with a **Copy** button. The copied line is
+ready to paste into a translation skill: `Qi → Khí — Giữ nguyên Hán Việt.`
+(English term, how to write it, and why when the glossary says). In English,
+the line is the term and its translation guidance. The directory heading has
+**Copy all**, which copies every term currently shown (the category and search
+apply). The clipboard is the pipeline until translation skills can take Lore
+terms directly.
+
+The master glossary is the first official edition. It is not reviewed term by
+term and makes no "verified" claim; corrections arrive as user versions.
+Every term has a **permanent id** (`qi`, `status-window`). User versions of a
+term will attach to that id later, beside the official entry, and anyone can
+view them; the official entry is never overwritten. Never rename a published
+id. Its source is `docs/lore/master-glossary.json`;
+`node scripts/buildLoreGlossary.mjs` regenerates the app data in
+`src/components/discover/shared/lore-glossary/`. The glossary's SEN Platform
+terms (Fate Scar, World Card and others) are product vocabulary, not genre
+lore, and are left out. Its 30 languages that SEN does not offer stay in the
+source file.
+
+Renderings come from the glossary's language columns. Chinese, Japanese and
+Korean use its original-script fields, so they cover only the terms that have
+one. Hebrew has no glossary column yet. Where a curated term has no glossary
+rendering, its localized title is used. Glossary terms read in English except
+for their rendering; only the curated core has localized definitions.
 
 The directory is `/app/?page=discover&lore=index`; articles use stable addresses
 such as `/app/?page=discover&lore=nascent-soul`. Search and category are kept in
@@ -190,13 +222,13 @@ Interface language follows the existing profile choice, with right-to-left
 layout where appropriate. Localized term packs load on demand; no model,
 generation credit or translation API is involved.
 
-- **Standard:** the definition and genre context.
+- **Standard:** the definition as written.
 - **Clear Reading:** direct prose split into separate sentences.
 - **Easy Read:** the direct explanation, with larger text and short paragraphs.
 - **Literal Reading:** direct prose, with a reminder to read dramatic
   expressions by their meaning rather than their literal wording.
 
-Every mode preserves the full explanation, context and aliases. English has a
+Every mode preserves the full explanation and aliases. English has a
 separate direct-prose edition shared by the accessibility modes. Localized
 entries already use concise, literal definitions and retain their complete
 text in each mode. These are authored reference entries, not generated chapters.

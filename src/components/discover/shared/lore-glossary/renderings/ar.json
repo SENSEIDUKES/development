@@ -1,0 +1,1189 @@
+{
+ "qi": [
+  "تشي (Qi)",
+  "طاقة."
+ ],
+ "cultivation": [
+  "تنمية",
+  "أو زراعة الروح."
+ ],
+ "dantian": [
+  "دانتيان",
+  "مركز الطاقة."
+ ],
+ "immortal-qi": [
+  "تشي الخالدة"
+ ],
+ "cultivation-realm": [
+  "مستوى التنمية",
+  "عالم الزراعة."
+ ],
+ "heavenly-tribulation": [
+  "المحنة السماوية"
+ ],
+ "nascent-soul": [
+  "الروح الناشئة"
+ ],
+ "golden-core": [
+  "النواة الذهبية"
+ ],
+ "foundation-establishment": [
+  "تأسيس القاعدة"
+ ],
+ "qi-refining": [
+  "تكثيف التشي"
+ ],
+ "core-formation": [
+  "تشكيل النواة"
+ ],
+ "spirit-severing": [
+  "فصل الروح"
+ ],
+ "dao-seeking": [
+  "البحث عن الداو"
+ ],
+ "domain": [
+  "نطاق",
+  "أو مجال."
+ ],
+ "ascension": [
+  "الصعود"
+ ],
+ "meridians": [
+  "مسار الطاقة"
+ ],
+ "spiritual-root": [
+  "الجذر الروحي"
+ ],
+ "jing-qi-shen": [
+  "جينغ، تشي، شين",
+  "الكنوز الثلاثة."
+ ],
+ "body-tempering": [
+  "صقل الجسد"
+ ],
+ "fiendgod-body-refining": [
+  "صقل جسد الشيطان الإلهي"
+ ],
+ "heartforce-cultivation": [
+  "تنمية قوة القلب"
+ ],
+ "dual-cultivation": [
+  "التنمية المزدوجة"
+ ],
+ "alchemy": [
+  "تحضير الحبوب",
+  "Alchemy."
+ ],
+ "spirit-stone": [
+  "حجر الروح"
+ ],
+ "spiritual-treasure": [
+  "قطعة أثرية"
+ ],
+ "storage-ring": [
+  "خاتم التخزين"
+ ],
+ "talisman": [
+  "تعويذة"
+ ],
+ "formation": [
+  "تشكيل",
+  "Formation/Array."
+ ],
+ "sect": [
+  "طائفة"
+ ],
+ "clan": [
+  "عشيرة"
+ ],
+ "patriarch": [
+  "البطريرك"
+ ],
+ "elder": [
+  "شيخ"
+ ],
+ "disciple-hierarchy": [
+  "التسلسل الهرمي للتلاميذ"
+ ],
+ "spirit-beast": [
+  "وحش روحي"
+ ],
+ "beast-taming": [
+  "ترويض الوحوش"
+ ],
+ "heavenly-dao": [
+  "الداو السماوي"
+ ],
+ "dao": [
+  "الداو"
+ ],
+ "karma": [
+  "الكارما"
+ ],
+ "reincarnation": [
+  "التناسخ"
+ ],
+ "regression": [
+  "التراجع الزمني"
+ ],
+ "transmigration": [
+  "انتقال الروح"
+ ],
+ "isekai": [
+  "إيسيكاي"
+ ],
+ "otome-isekai": [
+  "أوتومي إيسيكاي"
+ ],
+ "hunter-system": [
+  "نظام الصيادين"
+ ],
+ "constellation": [
+  "كوكبة"
+ ],
+ "dungeon": [
+  "زنزانة"
+ ],
+ "tower": [
+  "البرج"
+ ],
+ "system": [
+  "النظام"
+ ],
+ "status-window": [
+  "نافذة الحالة"
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "مهارة"
+ ],
+ "level-up": [
+  "رفع المستوى"
+ ],
+ "quest": [
+  "مهمة"
+ ],
+ "guild": [
+  "نقابة"
+ ],
+ "rarity": [
+  "الندرة"
+ ],
+ "loot": [
+  "غنائم"
+ ],
+ "wuxia": [
+  "ووشيا"
+ ],
+ "xianxia": [
+  "شيانشيا"
+ ],
+ "xuanhuan": [
+  "شوانهوان"
+ ],
+ "murim": [
+  "موريم"
+ ],
+ "litrpg": [
+  "ليت أر بي جي"
+ ],
+ "progression-fantasy": [
+  "خيال التقدم"
+ ],
+ "academy-arc": [
+  "فصل الأكاديمية"
+ ],
+ "guide": [
+  "مرشد"
+ ],
+ "esper": [
+  "إسبر"
+ ],
+ "arrogant-young-master": [
+  "السيد الشاب المتعجرف"
+ ],
+ "face": [
+  "ماء الوجه (الكرامة)",
+  "Face (Reputation)."
+ ],
+ "face-slapping": [
+  "الصفع على الوجه"
+ ],
+ "tournament-arc": [
+  "فصل البطولة"
+ ],
+ "secret-realm": [
+  "عالم سري"
+ ],
+ "auction": [
+  "مزاد"
+ ],
+ "bloodline": [
+  "سلالة الدم"
+ ],
+ "physique": [
+  "البنية الجسدية"
+ ],
+ "dao-companion": [
+  "رفيق الداو"
+ ],
+ "harem": [
+  "حريم"
+ ],
+ "cannon-fodder": [
+  "وقود المدافع"
+ ],
+ "villainess": [
+  "الشريرة"
+ ],
+ "protagonist-halo": [
+  "هالة البطل"
+ ],
+ "system-shop": [
+  "متجر النظام"
+ ],
+ "inventory": [
+  "المخزون"
+ ],
+ "class": [
+  "فئة / تخصص"
+ ],
+ "stat": [
+  "إحصائية"
+ ],
+ "skill-tree": [
+  "شجرة المهارات"
+ ],
+ "party": [
+  "فريق"
+ ],
+ "raid": [
+  "غارة"
+ ],
+ "pvp": [
+  "لاعب ضد لاعب (PvP)"
+ ],
+ "pve": [
+  "لاعب ضد البيئة (PvE)"
+ ],
+ "npc": [
+  "شخصية غير قابلة للعب (NPC)"
+ ],
+ "sentient-system": [
+  "نظام واعي"
+ ],
+ "regression-novel": [
+  "رواية التراجع الزمني"
+ ],
+ "transmigration-novel": [
+  "رواية انتقال الروح"
+ ],
+ "cultivation-technique": [
+  "تقنية التنمية"
+ ],
+ "forbidden-technique": [
+  "تقنية محرمة"
+ ],
+ "sword-intent": [
+  "نية السيف"
+ ],
+ "domain-expansion": [
+  "توسيع النطاق"
+ ],
+ "heavenly-tribulation-lightning": [
+  "برق المحنة السماوية"
+ ],
+ "soul": [
+  "الروح"
+ ],
+ "spiritual-sense": [
+  "الحس الروحي"
+ ],
+ "qi-deviation": [
+  "انحراف التشي (الجنون)"
+ ],
+ "heart-devil": [
+  "شيطان القلب"
+ ],
+ "merit": [
+  "الجدارة (الثواب)"
+ ],
+ "karmic-fire": [
+  "نار الكارما"
+ ],
+ "ascension-platform": [
+  "منصة الصعود"
+ ],
+ "lower-realm": [
+  "العالم السفلي"
+ ],
+ "immortal-realm": [
+  "عالم الخالدين"
+ ],
+ "spirit-realm": [
+  "عالم الأرواح"
+ ],
+ "great-thousand-world": [
+  "عالم الألف العظيم"
+ ],
+ "plane": [
+  "مستوى (بُعد)",
+  "Plane of existence."
+ ],
+ "world-tree": [
+  "شجرة العالم"
+ ],
+ "celestial-empire": [
+  "الإمبراطورية السماوية"
+ ],
+ "demon": [
+  "شيطان"
+ ],
+ "orthodox-vs-unorthodox": [
+  "الأرثوذكسية ضد غير الأرثوذكسية"
+ ],
+ "sect-war": [
+  "حرب الطوائف"
+ ],
+ "resource-war": [
+  "حرب الموارد"
+ ],
+ "talent": [
+  "موهبة"
+ ],
+ "cheat": [
+  "غش"
+ ],
+ "time-dilation": [
+  "تمدد الزمن"
+ ],
+ "appraisal": [
+  "تقييم"
+ ],
+ "loot-box": [
+  "صندوق الغنائم"
+ ],
+ "pay-to-win": [
+  "الدفع للفوز"
+ ],
+ "player": [
+  "لاعب"
+ ],
+ "administrator": [
+  "مسؤول (أدمن)"
+ ],
+ "tutorial": [
+  "المرحلة التعليمية"
+ ],
+ "hidden-quest": [
+  "مهمة خفية"
+ ],
+ "repair": [
+  "إصلاح"
+ ],
+ "death-penalty": [
+  "عقوبة الموت"
+ ],
+ "respawn": [
+  "إعادة الظهور (الإنعاش)"
+ ],
+ "fast-travel": [
+  "السفر السريع"
+ ],
+ "mount": [
+  "مَطِيَّة (حيوان ركوب)"
+ ],
+ "pet": [
+  "حيوان أليف"
+ ],
+ "crafting": [
+  "صياغة / حرفة"
+ ],
+ "enchanting": [
+  "سحر (تطوير الأدوات)"
+ ],
+ "socket": [
+  "مقبس (لتضمين الجواهر)"
+ ],
+ "set-item": [
+  "عنصر طقم"
+ ],
+ "unique-item": [
+  "عنصر فريد"
+ ],
+ "courting-death": [
+  "تغازل الموت"
+ ],
+ "mount-tai": [
+  "جبل تاي"
+ ],
+ "kowtow": [
+  "كوتو (سجود الطاعة)"
+ ],
+ "jade-slip": [
+  "شريحة اليشم"
+ ],
+ "romance-fantasy": [
+  "رومانسية خيالية"
+ ],
+ "returner": [
+  "العائد"
+ ],
+ "sword-cultivator": [
+  "مزارع السيف"
+ ],
+ "foundation-establishment-pill": [
+  "حبة تأسيس القاعدة"
+ ],
+ "marrow-cleansing-pill": [
+  "حبة تطهير النخاع"
+ ],
+ "fasting-pill": [
+  "حبة الصيام"
+ ],
+ "blood-burning-pill": [
+  "حبة حرق الدم"
+ ],
+ "shim-gong": [
+  "شيم غونغ"
+ ],
+ "shin-bup": [
+  "شين بوب"
+ ],
+ "jeom-hyeol": [
+  "جيوم هيول"
+ ],
+ "ho-shin-gang-qi": [
+  "هو شين غانغ تشي"
+ ],
+ "geom-gi": [
+  "جيوم جي"
+ ],
+ "sama": [
+  "-ساما"
+ ],
+ "senpai-kouhai": [
+  "سينباي / كوهاي"
+ ],
+ "ojou-sama": [
+  "أوجو-ساما"
+ ],
+ "maou-gun": [
+  "جيش ماو"
+ ],
+ "dao-child": [
+  "طفل الداو"
+ ],
+ "peak-master": [
+  "سيد القمة"
+ ],
+ "sect-leader": [
+  "زعيم الطائفة"
+ ],
+ "handyman-disciple": [
+  "تلميذ الحرف اليدوية"
+ ],
+ "guest-elder": [
+  "شيخ ضيف"
+ ],
+ "sweeping-monk": [
+  "الراهب الكناس"
+ ],
+ "hidden-class": [
+  "فئة خفية"
+ ],
+ "necromancer": [
+  "مستحضر الأرواح"
+ ],
+ "job-advancement": [
+  "ترقية الوظيفة"
+ ],
+ "berserker": [
+  "الهائج (برزيركر)"
+ ],
+ "paladin": [
+  "فارس مقدّس"
+ ],
+ "beast-core": [
+  "نواة الوحش"
+ ],
+ "soul-contract": [
+  "عقد الروح"
+ ],
+ "beast-pouch": [
+  "كيس الوحوش"
+ ],
+ "bloodline-evolution": [
+  "تطور سلالة الدم"
+ ],
+ "familiar": [
+  "مألوف (روح تابعة)"
+ ],
+ "equality-contract": [
+  "عقد المساواة"
+ ],
+ "heavenly-flame": [
+  "شعلة سماوية"
+ ],
+ "spirit-herb": [
+  "عشبة روحية"
+ ],
+ "spirit-spring-water": [
+  "مياه نبع الروح"
+ ],
+ "array-eye": [
+  "عين التشكيل"
+ ],
+ "formation-flag": [
+  "علم التشكيل"
+ ],
+ "spirit-gathering-array": [
+  "تشكيل جمع الروح"
+ ],
+ "red-gate": [
+  "البوابة الحمراء"
+ ],
+ "clear-condition": [
+  "شرط التخطي"
+ ],
+ "magic-stone": [
+  "حجر سحري"
+ ],
+ "penalty-quest": [
+  "مهمة العقاب"
+ ],
+ "floor-master": [
+  "سيد الطابق"
+ ],
+ "porter": [
+  "حمال"
+ ],
+ "scenario": [
+  "سيناريو"
+ ],
+ "probability": [
+  "احتمالية"
+ ],
+ "stigma": [
+  "وصمة / ستيجما"
+ ],
+ "murim-alliance": [
+  "تحالف موريم"
+ ],
+ "demonic-cult": [
+  "طائفة شيطانية"
+ ],
+ "northern-duke": [
+  "دوق الشمال"
+ ],
+ "tea-party": [
+  "حفلة شاي"
+ ],
+ "munchkin": [
+  "مانشكين (شخصية قوية جداً)"
+ ],
+ "cider": [
+  "عصير التفاح (سايدر - مُنعش)"
+ ],
+ "black-mastermind": [
+  "العقل المدبر الأسود"
+ ],
+ "dokkaebi": [
+  "دوكايبي"
+ ],
+ "internal-energy": [
+  "نايغونغ"
+ ],
+ "jade-beauty": [
+  "جمال اليشم"
+ ],
+ "white-lotus": [
+  "اللوتس الأبيض"
+ ],
+ "eating-tofu": [
+  "أكل التوفو (التحرش)"
+ ],
+ "coughing-up-blood": [
+  "سعال الدم"
+ ],
+ "frog-in-well": [
+  "ضفدع في البئر"
+ ],
+ "heaven-defying": [
+  "متحدي السماء"
+ ],
+ "green-hat": [
+  "قبعة خضراء (مغفل / خيانة)"
+ ],
+ "shuang-wen": [
+  "شوانغ وين (رواية منعشة)"
+ ],
+ "giving-face": [
+  "حفظ ماء الوجه"
+ ],
+ "dungeon-core": [
+  "نواة الزنزانة"
+ ],
+ "fiefdom": [
+  "إقطاعية"
+ ],
+ "node": [
+  "عقدة"
+ ],
+ "contribution-points": [
+  "نقاط المساهمة"
+ ],
+ "sect-mission-hall": [
+  "قاعة مهام الطائفة"
+ ],
+ "spirit-garden": [
+  "حديقة الروح"
+ ],
+ "city-lord": [
+  "سيد المدينة"
+ ],
+ "edict": [
+  "مرسوم"
+ ],
+ "vassal": [
+  "تابع"
+ ],
+ "primordial-chaos": [
+  "الفوضى البدائية"
+ ],
+ "the-void": [
+  "الفراغ"
+ ],
+ "life-forbidden-zone": [
+  "منطقة الحياة المحرمة"
+ ],
+ "ancient-desolate-beast": [
+  "الوحش المقفر القديم"
+ ],
+ "star-field": [
+  "حقل النجوم"
+ ],
+ "spatial-storm": [
+  "عاصفة مكانية"
+ ],
+ "nine-heavens": [
+  "السموات التسع"
+ ],
+ "river-of-time": [
+  "نهر الزمن"
+ ],
+ "epoch": [
+  "حقبة"
+ ],
+ "karmic-thread": [
+  "خيط الكارما"
+ ],
+ "origin-source": [
+  "مصدر الأصل"
+ ],
+ "heaven-and-earth": [
+  "السماء والأرض"
+ ],
+ "wuji": [
+  "ووجي (اللامحدود)"
+ ],
+ "dao-source": [
+  "مصدر الداو"
+ ],
+ "engagement-annulment": [
+  "فسخ الخطوبة"
+ ],
+ "toad-lusting-after-swan-meat": [
+  "ضفدع يشتهي لحم البجع",
+  "Toad Lusting..."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "لا تتنمر على الشباب للفقر",
+  "Don't Bully..."
+ ],
+ "concubine": [
+  "محظية"
+ ],
+ "sect-rules": [
+  "قواعد الطائفة"
+ ],
+ "filial-piety": [
+  "بر الوالدين"
+ ],
+ "pill-tribulation": [
+  "محنة الحبوب"
+ ],
+ "monster-genius": [
+  "وحش (عبقري)"
+ ],
+ "gu-venom-witchcraft": [
+  "غو (سم / سحر)"
+ ],
+ "corpse-refining": [
+  "صقل الجثث"
+ ],
+ "fairy-sister": [
+  "الأخت الجنية"
+ ],
+ "young-miss": [
+  "الآنسة الشابة"
+ ],
+ "mount-kunlun": [
+  "جبل كونلون"
+ ],
+ "aggro": [
+  "أغرو (جذب الانتباه المهاجم)"
+ ],
+ "crowd-control": [
+  "التحكم بالحشود"
+ ],
+ "kiting": [
+  "ضرب وهروب (كايتينغ)"
+ ],
+ "aoe": [
+  "مساحة التأثير (AoE)"
+ ],
+ "proc": [
+  "تفعيل (Proc)"
+ ],
+ "kill-steal": [
+  "سرقة القتل"
+ ],
+ "tank": [
+  "مُتلقي الضرر (تانك)"
+ ],
+ "dps": [
+  "ضرر بالثانية (DPS)"
+ ],
+ "gold-sink": [
+  "بالوعة الذهب (استنزاف)"
+ ],
+ "auction-sniping": [
+  "قنص المزاد"
+ ],
+ "griefing": [
+  "تخريب اللعب (غريفينغ)"
+ ],
+ "dot": [
+  "ضرر مستمر (DoT)",
+  "Damage over Time."
+ ],
+ "contract-marriage": [
+  "زواج مصلحة / عقد"
+ ],
+ "reawakening": [
+  "إعادة الصحوة"
+ ],
+ "tyrant": [
+  "طاغية"
+ ],
+ "obsessive-male-lead": [
+  "البطل المهووس"
+ ],
+ "original-heroine": [
+  "البطلة الأصلية"
+ ],
+ "regression-trauma": [
+  "صدمة التراجع الزمني"
+ ],
+ "hunter-association": [
+  "جمعية الصيادين"
+ ],
+ "sudden-death": [
+  "موت مفاجئ"
+ ],
+ "guild-master": [
+  "سيد النقابة"
+ ],
+ "adventurer-ranks": [
+  "رتب المغامرين"
+ ],
+ "beastkin": [
+  "بشري وحش"
+ ],
+ "demon-god": [
+  "الإله الشيطاني"
+ ],
+ "unique-skill": [
+  "مهارة فريدة"
+ ],
+ "demon-realm": [
+  "عالم الشياطين"
+ ],
+ "slave-crest": [
+  "ختم العبودية"
+ ],
+ "subjugation": [
+  "إخضاع"
+ ],
+ "otherworlder": [
+  "شخص من عالم آخر"
+ ],
+ "heros-party": [
+  "فريق البطل"
+ ],
+ "dao-heart": [
+  "قلب الداو"
+ ],
+ "severing-mortal-ties": [
+  "قطع العلاقات الفانية"
+ ],
+ "five-elements": [
+  "العناصر الخمسة"
+ ],
+ "yin-and-yang": [
+  "الين واليانغ"
+ ],
+ "enlightenment": [
+  "التنوير"
+ ],
+ "mortal-tribulation": [
+  "المحنة الفانية"
+ ],
+ "soul-dissipation": [
+  "تبدد الروح"
+ ],
+ "dao-marks": [
+  "علامات الداو"
+ ],
+ "nirvana": [
+  "النيرفانا"
+ ],
+ "fellow-daoist": [
+  "الزميل الداويست"
+ ],
+ "sect-familial-address": [
+  "عنوان عائلة الطائفة (أخ/أخت)"
+ ],
+ "cold-snort": [
+  "شخير بارد (سخرية)"
+ ],
+ "dog-leg-lackey": [
+  "تابع / خادم مطيع",
+  "Lackey."
+ ],
+ "jianghu": [
+  "جيانغهو (عالم فنون الدفاع عن النفس)"
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "الجلوس على الجبل ومشاهدة النمور تتقاتل",
+  "Sitting on the Mountain..."
+ ],
+ "chaebol": [
+  "تشايبول"
+ ],
+ "heavenly-oath": [
+  "القسم السماوي"
+ ],
+ "title-achievement": [
+  "لقب / إنجاز"
+ ],
+ "system-erasure": [
+  "محو النظام"
+ ],
+ "sweet-potato": [
+  "بطاطا حلوة (موقف محبط)",
+  "Sweet Potato (Goguma)."
+ ],
+ "white-moonlight": [
+  "ضوء القمر الأبيض"
+ ],
+ "cinnabar-mole": [
+  "شامة الزنجفر"
+ ],
+ "holy-mother": [
+  "الأم المقدسة (الساذجة)"
+ ],
+ "dog-blood": [
+  "دم كلب (ميلودراما)"
+ ],
+ "angst": [
+  "قلق / معاناة"
+ ],
+ "scum": [
+  "حثالة"
+ ],
+ "brain-dead": [
+  "ميت الدماغ"
+ ],
+ "meat": [
+  "لحم (محتوى للبالغين)",
+  "Meat (Smut)."
+ ],
+ "green-tea": [
+  "شاي أخضر (فتاة متصنعة)",
+  "Green Tea (Manipulative)."
+ ],
+ "territory": [
+  "إقليم"
+ ],
+ "rebirth": [
+  "ولادة جديدة"
+ ],
+ "devil-mara": [
+  "شيطان / مارا"
+ ],
+ "demonic-beast": [
+  "وحش شيطاني"
+ ],
+ "truck-kun": [
+  "شاحنة-كون"
+ ],
+ "cheat-skill": [
+  "مهارة الغش"
+ ],
+ "divine-protection": [
+  "حماية إلهية"
+ ],
+ "genkai-toppa": [
+  "تجاوز الحد",
+  "Limit Break."
+ ],
+ "chuunibyou": [
+  "تشونيبو (متلازمة الصف الثامن)"
+ ],
+ "tsundere": [
+  "تسونديري"
+ ],
+ "yandere": [
+  "يانديري"
+ ],
+ "san": [
+  "-سان"
+ ],
+ "chan": [
+  "-تشان"
+ ],
+ "kun": [
+  "-كون"
+ ],
+ "dono": [
+  "-دونو"
+ ],
+ "sensei": [
+  "-سينسي"
+ ],
+ "adventurer-guild": [
+  "نقابة المغامرين"
+ ],
+ "vrmmo": [
+  "VRMMO"
+ ],
+ "goddess": [
+  "آلهة"
+ ],
+ "gate": [
+  "بوابة"
+ ],
+ "awakening": [
+  "صحوة"
+ ],
+ "regressor": [
+  "المتراجع (في الزمن)"
+ ],
+ "national-level-hunter": [
+  "صياد على المستوى الوطني"
+ ],
+ "hunter-rank": [
+  "رتبة الصياد"
+ ],
+ "grade": [
+  "درجة"
+ ],
+ "mana": [
+  "مانا"
+ ],
+ "shadow-soldier": [
+  "جندي الظل"
+ ],
+ "monarch": [
+  "عاهل / ملك"
+ ],
+ "hyung": [
+  "هيونغ (أخ كبير للذكر)"
+ ],
+ "noona": [
+  "نونا (أخت كبيرة للذكر)"
+ ],
+ "oppa": [
+  "أوبا (أخ كبير للأنثى)"
+ ],
+ "sunbae": [
+  "سونباي (أقدم)"
+ ],
+ "ahjussi": [
+  "أجاشي (عم)"
+ ],
+ "ahjumma": [
+  "أجوما (عمة)"
+ ],
+ "dungeon-break": [
+  "اختراق الزنزانة"
+ ],
+ "boss-monster": [
+  "الوحش الزعيم"
+ ],
+ "first-clear": [
+  "التخطي الأول"
+ ],
+ "clear": [
+  "تخطي"
+ ],
+ "penalty": [
+  "عقوبة"
+ ],
+ "compensation": [
+  "تعويض"
+ ],
+ "ranker": [
+  "مصنف"
+ ],
+ "player-kill": [
+  "قتل اللاعبين (PK)"
+ ],
+ "broadcast": [
+  "بث مباشر"
+ ],
+ "mutant-monster": [
+  "وحش متحول"
+ ],
+ "growth-type-ability": [
+  "قدرة من نوع النمو"
+ ],
+ "evolution": [
+  "تطور"
+ ],
+ "floor": [
+  "طابق"
+ ],
+ "test": [
+  "اختبار"
+ ],
+ "test-administrator": [
+  "مشرف الاختبار"
+ ],
+ "floor-guardian": [
+  "حارس الطابق"
+ ],
+ "irregular": [
+  "شاذ / غير منتظم"
+ ],
+ "regular": [
+  "منتظم"
+ ],
+ "hidden-floor": [
+  "الطابق المخفي"
+ ],
+ "wall": [
+  "جدار"
+ ],
+ "family": [
+  "عائلة (في سياق برج الآلهة)"
+ ],
+ "observer": [
+  "مراقب"
+ ],
+ "onii-chan": [
+  "أوني-تشان (أخ كبير)"
+ ],
+ "onee-chan": [
+  "أوني-تشان (أخت كبيرة)"
+ ],
+ "ossan": [
+  "أوسان (عم / رجل عجوز)"
+ ],
+ "osananajimi": [
+  "أوساناناجيمي (صديق الطفولة)"
+ ],
+ "kokuhaku": [
+  "كوكوهاكو (اعتراف بالحب)"
+ ],
+ "bunkasai": [
+  "بونكاساي (مهرجان ثقافي)"
+ ],
+ "guild-card": [
+  "بطاقة النقابة"
+ ],
+ "job-change": [
+  "تغيير الوظيفة"
+ ],
+ "labyrinth": [
+  "متاهة"
+ ],
+ "blacksmith": [
+  "حداد"
+ ],
+ "slow-life": [
+  "حياة بطيئة"
+ ],
+ "skill-book": [
+  "كتاب مهارات"
+ ],
+ "great-sage": [
+  "الحكيم العظيم"
+ ],
+ "sacred-sword": [
+  "السيف المقدس"
+ ],
+ "entrance-exam": [
+  "امتحان الدخول"
+ ],
+ "class-ranking": [
+  "ترتيب الفئة"
+ ],
+ "mob-class": [
+  "شخصية خلفية (موب)"
+ ],
+ "late-bloomer": [
+  "مزهر متأخر"
+ ],
+ "graduation-trial": [
+  "محاكمة التخرج"
+ ],
+ "novel-knowledge": [
+  "معرفة الرواية"
+ ],
+ "fourth-wall": [
+  "الجدار الرابع"
+ ],
+ "system-voice": [
+  "صوت النظام"
+ ],
+ "authors-note": [
+  "ملاحظة المؤلف"
+ ],
+ "ancient-ruins": [
+  "أنقاض قديمة"
+ ],
+ "spirit-vein": [
+  "وريد الروح"
+ ],
+ "middle-realm": [
+  "العالم الأوسط"
+ ],
+ "void": [
+  "الفراغ المطلق"
+ ],
+ "chaos": [
+  "الفوضى"
+ ],
+ "tribute": [
+  "جزية"
+ ],
+ "garrison": [
+  "حامية"
+ ],
+ "liege": [
+  "السيد / الحاكم"
+ ],
+ "totem-beast": [
+  "وحش الطوطم"
+ ],
+ "beast-master": [
+  "سيد الوحوش"
+ ]
+}

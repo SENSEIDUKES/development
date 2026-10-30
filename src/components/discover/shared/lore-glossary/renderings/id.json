@@ -1,0 +1,1554 @@
+{
+ "qi": [
+  "Qi",
+  "Pertahankan Qi."
+ ],
+ "cultivation": [
+  "Kultivasi",
+  "Baku untuk xiulian."
+ ],
+ "dantian": [
+  "Dantian",
+  "Pusat energi."
+ ],
+ "immortal-qi": [
+  "Qi Abadi",
+  "Bedakan dari Qi biasa."
+ ],
+ "cultivation-realm": [
+  "Ranah Kultivasi",
+  "Jangan gunakan level."
+ ],
+ "heavenly-tribulation": [
+  "Kesengsaraan Surgawi",
+  "Penderitaan langit."
+ ],
+ "nascent-soul": [
+  "Nascent Soul",
+  "Jiwa yang baru lahir (sering dipinjam)."
+ ],
+ "golden-core": [
+  "Golden Core",
+  "Inti Emas."
+ ],
+ "foundation-establishment": [
+  "Foundation Establishment",
+  "Pembentukan Fondasi."
+ ],
+ "qi-refining": [
+  "Kondensasi Qi",
+  "Tahap awal."
+ ],
+ "core-formation": [
+  "Pembentukan Inti",
+  "Tahap formasi inti."
+ ],
+ "spirit-severing": [
+  "Pemutusan Roh",
+  "Pemisahan spiritual."
+ ],
+ "dao-seeking": [
+  "Pencarian Dao",
+  "Mencari Dao."
+ ],
+ "domain": [
+  "Domain",
+  "Ruang metafisik."
+ ],
+ "ascension": [
+  "Kenaikan",
+  "Ascension / naik ke alam atas."
+ ],
+ "meridians": [
+  "Meridian",
+  "Jalur energi."
+ ],
+ "spiritual-root": [
+  "Akar Spiritual",
+  "Bakat bawaan."
+ ],
+ "jing-qi-shen": [
+  "Jing, Qi, Shen",
+  "Tiga Harta Karun."
+ ],
+ "body-tempering": [
+  "Penempaan Tubuh",
+  "Pemurnian tubuh."
+ ],
+ "fiendgod-body-refining": [
+  "Pemurnian Tubuh Dewa Iblis",
+  "Konteks mitis."
+ ],
+ "heartforce-cultivation": [
+  "Kultivasi Kekuatan Hati",
+  "Kekuatan mental."
+ ],
+ "dual-cultivation": [
+  "Kultivasi Ganda",
+  "Praktik berpasangan."
+ ],
+ "alchemy": [
+  "Meracik Pil",
+  "Alkimia."
+ ],
+ "spirit-stone": [
+  "Batu Spiritual",
+  "Mata uang/energi."
+ ],
+ "spiritual-treasure": [
+  "Artefak",
+  "Objek ajaib."
+ ],
+ "storage-ring": [
+  "Cincin Penyimpanan",
+  "Cincin spasial."
+ ],
+ "talisman": [
+  "Jimat",
+  "Kertas sihir / Talisman."
+ ],
+ "formation": [
+  "Formasi",
+  "Array sihir."
+ ],
+ "sect": [
+  "Sekte",
+  "Organisasi bela diri."
+ ],
+ "clan": [
+  "Klan",
+  "Keluarga besar."
+ ],
+ "patriarch": [
+  "Patriark",
+  "Pemimpin keluarga."
+ ],
+ "elder": [
+  "Tetua",
+  "Pangkat di sekte."
+ ],
+ "disciple-hierarchy": [
+  "Hierarki Murid",
+  "Peringkat murid."
+ ],
+ "spirit-beast": [
+  "Binatang Spiritual",
+  "Hewan sihir."
+ ],
+ "beast-taming": [
+  "Penjinak Binatang",
+  "Kontrol hewan."
+ ],
+ "heavenly-dao": [
+  "Dao Surgawi",
+  "Kehendak dunia."
+ ],
+ "dao": [
+  "Dao",
+  "Jalan / Kebenaran."
+ ],
+ "karma": [
+  "Karma",
+  "Sebab dan akibat."
+ ],
+ "reincarnation": [
+  "Reinkarnasi",
+  "Lahir kembali."
+ ],
+ "regression": [
+  "Regresi",
+  "Kembali ke masa lalu."
+ ],
+ "transmigration": [
+  "Transmigrasi",
+  "Berpindah ke tubuh lain."
+ ],
+ "isekai": [
+  "Isekai",
+  "Dunia lain (sering dipinjam)."
+ ],
+ "otome-isekai": [
+  "Otome Isekai",
+  "Reinkarnasi di game."
+ ],
+ "hunter-system": [
+  "Sistem Hunter",
+  "LitRPG Korea."
+ ],
+ "constellation": [
+  "Konstelasi",
+  "Dewa pengamat."
+ ],
+ "dungeon": [
+  "Dungeon",
+  "Baku (sering tidak diterjemahkan)."
+ ],
+ "tower": [
+  "Menara",
+  "Struktur panjat."
+ ],
+ "system": [
+  "Sistem",
+  "Antarmuka RPG."
+ ],
+ "status-window": [
+  "Jendela Status",
+  "Atribut pemain."
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "Skill",
+  "Atau Keterampilan."
+ ],
+ "level-up": [
+  "Naik Level",
+  "Mekanik RPG."
+ ],
+ "quest": [
+  "Quest",
+  "Misi."
+ ],
+ "guild": [
+  "Guild",
+  "Organisasi hunter."
+ ],
+ "rarity": [
+  "Kelangkaan",
+  "Grade item."
+ ],
+ "loot": [
+  "Loot",
+  "Atau Rampasan."
+ ],
+ "wuxia": [
+  "Wuxia",
+  "Fantasi bela diri."
+ ],
+ "xianxia": [
+  "Xianxia",
+  "Fantasi dewa/abadi."
+ ],
+ "xuanhuan": [
+  "Xuanhuan",
+  "Fantasi timur magis."
+ ],
+ "murim": [
+  "Murim",
+  "Dunia bela diri (Korea)."
+ ],
+ "litrpg": [
+  "LitRPG",
+  "RPG literatur."
+ ],
+ "progression-fantasy": [
+  "Progression Fantasy",
+  "Subgenre."
+ ],
+ "academy-arc": [
+  "Arc Akademi",
+  "Bagian cerita."
+ ],
+ "guide": [
+  "Guide",
+  "Peran pendukung (Korea)."
+ ],
+ "esper": [
+  "Esper",
+  "Manusia berkekuatan (Korea)."
+ ],
+ "arrogant-young-master": [
+  "Tuan Muda Sombong",
+  "Kiasan Tiongkok."
+ ],
+ "face": [
+  "Wajah",
+  "Harga diri / Kehormatan."
+ ],
+ "face-slapping": [
+  "Tampar Wajah",
+  "Mempermalukan rival."
+ ],
+ "tournament-arc": [
+  "Arc Turnamen",
+  "Kompetisi."
+ ],
+ "secret-realm": [
+  "Alam Rahasia",
+  "Dimensi tersembunyi."
+ ],
+ "auction": [
+  "Lelang",
+  "Acara pembelian."
+ ],
+ "bloodline": [
+  "Garis Huyết",
+  "Warisan genetik."
+ ],
+ "physique": [
+  "Fisik",
+  "Konstitusi tubuh."
+ ],
+ "dao-companion": [
+  "Rekan Dao",
+  "Pasangan kultivasi."
+ ],
+ "harem": [
+  "Harem",
+  "Banyak pasangan."
+ ],
+ "cannon-fodder": [
+  "Umpan Meriam",
+  "Karakter sekali pakai."
+ ],
+ "villainess": [
+  "Villainess",
+  "Atau Wanita Jahat."
+ ],
+ "protagonist-halo": [
+  "Halo Protagonis",
+  "Keberuntungan dewa."
+ ],
+ "system-shop": [
+  "Toko Sistem",
+  "Toko virtual."
+ ],
+ "inventory": [
+  "Inventaris",
+  "Penyimpanan."
+ ],
+ "class": [
+  "Kelas",
+  "Peran game."
+ ],
+ "stat": [
+  "Stat",
+  "Statistik."
+ ],
+ "skill-tree": [
+  "Pohon Keahlian"
+ ],
+ "party": [
+  "Party",
+  "Kelompok."
+ ],
+ "raid": [
+  "Raid",
+  "Inkursi."
+ ],
+ "pvp": [
+  "PvP",
+  "Pemain vs Pemain."
+ ],
+ "pve": [
+  "PvE",
+  "Pemain vs Lingkungan."
+ ],
+ "npc": [
+  "NPC",
+  "Karakter Non-Pemain."
+ ],
+ "sentient-system": [
+  "Sistem Berkesadaran",
+  "Sistem ber-AI."
+ ],
+ "regression-novel": [
+  "Novel Regresi",
+  "Genre."
+ ],
+ "transmigration-novel": [
+  "Novel Transmigrasi",
+  "Genre."
+ ],
+ "cultivation-technique": [
+  "Teknik Kultivasi",
+  "Metode."
+ ],
+ "forbidden-technique": [
+  "Teknik Terlarang",
+  "Teknik tabu."
+ ],
+ "sword-intent": [
+  "Niat Pedang",
+  "Atau Kehendak Pedang."
+ ],
+ "domain-expansion": [
+  "Perluasan Domain",
+  "Keahlian pamungkas."
+ ],
+ "heavenly-tribulation-lightning": [
+  "Petir Kesengsaraan Surgawi",
+  "Hukuman ilahi."
+ ],
+ "soul": [
+  "Jiwa"
+ ],
+ "spiritual-sense": [
+  "Indera Spiritual",
+  "Persepsi spiritual."
+ ],
+ "qi-deviation": [
+  "Penyimpangan Qi",
+  "Kegilaan kultivasi."
+ ],
+ "heart-devil": [
+  "Iblis Hati",
+  "Korupsi mental."
+ ],
+ "merit": [
+  "Pahala",
+  "Atau Merit / Karma baik."
+ ],
+ "karmic-fire": [
+  "Api Karma",
+  "Api retributif."
+ ],
+ "ascension-platform": [
+  "Platform Kenaikan",
+  "Tempat loncat."
+ ],
+ "lower-realm": [
+  "Alam Bawah",
+  "Dunia fana."
+ ],
+ "immortal-realm": [
+  "Alam Abadi",
+  "Dunia surgawi."
+ ],
+ "spirit-realm": [
+  "Alam Spiritual",
+  "Dunia menengah."
+ ],
+ "great-thousand-world": [
+  "Dunia Seribu Besar",
+  "Multisemesta."
+ ],
+ "plane": [
+  "Bidang",
+  "Dimensi / Plane."
+ ],
+ "world-tree": [
+  "Pohon Dunia",
+  "Yggdrasil."
+ ],
+ "celestial-empire": [
+  "Kekaisaran Surgawi",
+  "Kerajaan dewa."
+ ],
+ "demon": [
+  "Iblis",
+  "Setan / Siluman."
+ ],
+ "orthodox-vs-unorthodox": [
+  "Ortodoks vs Non-Ortodoks",
+  "Fraksi bela diri."
+ ],
+ "sect-war": [
+  "Perang Sekte",
+  "Konflik."
+ ],
+ "resource-war": [
+  "Perang Sumber Daya",
+  "Konflik material."
+ ],
+ "talent": [
+  "Bakat",
+  "Kemampuan alami."
+ ],
+ "cheat": [
+  "Cheat",
+  "Kemampuan curang."
+ ],
+ "time-dilation": [
+  "Pelebaran Waktu",
+  "Akselerasi waktu."
+ ],
+ "appraisal": [
+  "Penilaian",
+  "Identifikasi objek / Appraisal."
+ ],
+ "loot-box": [
+  "Loot Box",
+  "Gacha."
+ ],
+ "pay-to-win": [
+  "Pay to Win",
+  "Bayar untuk menang."
+ ],
+ "player": [
+  "Pemain",
+  "Atau Player."
+ ],
+ "administrator": [
+  "Administrator",
+  "Dewa sistem."
+ ],
+ "tutorial": [
+  "Tutorial",
+  "Fase awal."
+ ],
+ "hidden-quest": [
+  "Quest Tersembunyi",
+  "Misi rahasia."
+ ],
+ "repair": [
+  "Perbaikan",
+  "Memperbaiki item."
+ ],
+ "death-penalty": [
+  "Penalti Kematian",
+  "Hukuman."
+ ],
+ "respawn": [
+  "Respawn",
+  "Atau Bangkit Kembali."
+ ],
+ "fast-travel": [
+  "Perjalanan Cepat",
+  "Teleportasi."
+ ],
+ "mount": [
+  "Tunggangan",
+  "Hewan perjalanan / Mount."
+ ],
+ "pet": [
+  "Hewan Peliharaan"
+ ],
+ "crafting": [
+  "Merakit",
+  "Atau Crafting."
+ ],
+ "enchanting": [
+  "Enchanting",
+  "Sihir terapan."
+ ],
+ "socket": [
+  "Soket",
+  "Slot permata."
+ ],
+ "set-item": [
+  "Item Set",
+  "Set perlengkapan."
+ ],
+ "unique-item": [
+  "Item Unik",
+  "Barang langka."
+ ],
+ "courting-death": [
+  "Mencari Mati",
+  "Frasa klasik Tiongkok."
+ ],
+ "mount-tai": [
+  "Gunung Tai",
+  "Kiasan kebutaan figuratif."
+ ],
+ "kowtow": [
+  "Kowtow",
+  "Bersujud."
+ ],
+ "jade-slip": [
+  "Slip Giok",
+  "Penyimpanan data."
+ ],
+ "romance-fantasy": [
+  "Fantasi Romantis",
+  "RoFan."
+ ],
+ "returner": [
+  "Returner",
+  "Orang yang kembali."
+ ],
+ "sword-cultivator": [
+  "Kultivator Pedang",
+  "Jalur pedang."
+ ],
+ "foundation-establishment-pill": [
+  "Pil Pembentukan Fondasi",
+  "Obat."
+ ],
+ "marrow-cleansing-pill": [
+  "Pil Pembersih Sumsum",
+  "Obat."
+ ],
+ "fasting-pill": [
+  "Pil Puasa",
+  "Bigu."
+ ],
+ "blood-burning-pill": [
+  "Pil Pembakar Darah",
+  "Obat."
+ ],
+ "shim-gong": [
+  "Shim Gong",
+  "Seni internal Korea."
+ ],
+ "shin-bup": [
+  "Shin Bup",
+  "Gerakan ringan."
+ ],
+ "jeom-hyeol": [
+  "Jeom Hyeol",
+  "Teknik titik tekanan."
+ ],
+ "ho-shin-gang-qi": [
+  "Ho Shin Gang Qi",
+  "Aura perlindungan."
+ ],
+ "geom-gi": [
+  "Geom Gi",
+  "Aura pedang."
+ ],
+ "sama": [
+  "-sama",
+  "Akhiran kehormatan."
+ ],
+ "senpai-kouhai": [
+  "Senpai / Kouhai",
+  "Senior/Junior."
+ ],
+ "ojou-sama": [
+  "Ojou-sama",
+  "Nona muda."
+ ],
+ "maou-gun": [
+  "Pasukan Raja Iblis",
+  "Pasukan gelap."
+ ],
+ "dao-child": [
+  "Anak Dao",
+  "Jenius."
+ ],
+ "peak-master": [
+  "Master Puncak",
+  "Pemimpin faksi."
+ ],
+ "sect-leader": [
+  "Pemimpin Sekte",
+  "Ketua."
+ ],
+ "handyman-disciple": [
+  "Murid Serabutan",
+  "Pekerja kasar."
+ ],
+ "guest-elder": [
+  "Tetua Tamu",
+  "Penasihat luar."
+ ],
+ "sweeping-monk": [
+  "Biksu Penyapu",
+  "Master tersembunyi."
+ ],
+ "hidden-class": [
+  "Kelas Tersembunyi",
+  "Peran rahasia."
+ ],
+ "necromancer": [
+  "Necromancer",
+  "Penyihir kematian."
+ ],
+ "job-advancement": [
+  "Promosi Pekerjaan",
+  "Ganti kelas."
+ ],
+ "berserker": [
+  "Berserker",
+  "Prajurit gila."
+ ],
+ "paladin": [
+  "Paladin",
+  "Ksatria suci."
+ ],
+ "beast-core": [
+  "Inti Binatang",
+  "Sumber energi hewan."
+ ],
+ "soul-contract": [
+  "Kontrak Jiwa",
+  "Ikatan sihir."
+ ],
+ "beast-pouch": [
+  "Kantong Binatang",
+  "Tas penyimpanan hidup."
+ ],
+ "bloodline-evolution": [
+  "Evolusi Garis Huyết",
+  "Peningkatan genetik."
+ ],
+ "familiar": [
+  "Familiar",
+  "Roh hewan."
+ ],
+ "equality-contract": [
+  "Kontrak Kesetaraan",
+  "Ikatan setara."
+ ],
+ "heavenly-flame": [
+  "Api Surgawi",
+  "Api langka."
+ ],
+ "spirit-herb": [
+  "Ramuan Spiritual",
+  "Tanaman magis."
+ ],
+ "spirit-spring-water": [
+  "Air Mata Air Spiritual",
+  "Cairan penyembuh."
+ ],
+ "array-eye": [
+  "Mata Array",
+  "Pusat array."
+ ],
+ "formation-flag": [
+  "Bendera Formasi",
+  "Item."
+ ],
+ "spirit-gathering-array": [
+  "Array Pengumpul Roh",
+  "Konsentrasi Qi."
+ ],
+ "red-gate": [
+  "Gerbang Merah",
+  "Portal berbahaya."
+ ],
+ "clear-condition": [
+  "Kondisi Selesai",
+  "Syarat menang."
+ ],
+ "magic-stone": [
+  "Batu Sihir",
+  "Kristal monster."
+ ],
+ "penalty-quest": [
+  "Quest Penalti",
+  "Hukuman sistem."
+ ],
+ "floor-master": [
+  "Tuan Lantai",
+  "Bos lantai."
+ ],
+ "porter": [
+  "Porter",
+  "Kuli pengangkut."
+ ],
+ "scenario": [
+  "Skenario",
+  "Quest global."
+ ],
+ "probability": [
+  "Probabilitas",
+  "Aturan dewa (ORV)."
+ ],
+ "stigma": [
+  "Stigma",
+  "Tanda ilahi."
+ ],
+ "murim-alliance": [
+  "Aliansi Murim",
+  "Fraksi ortodoks."
+ ],
+ "demonic-cult": [
+  "Sekte Iblis",
+  "Fraksi jahat."
+ ],
+ "northern-duke": [
+  "Duke Utara",
+  "Kiasan romansa."
+ ],
+ "tea-party": [
+  "Pesta Teh",
+  "Pertemuan bangsawan."
+ ],
+ "munchkin": [
+  "Munchkin",
+  "Karakter OP."
+ ],
+ "cider": [
+  "Cider",
+  "Penyelesaian melegakan."
+ ],
+ "black-mastermind": [
+  "Dalang Hitam",
+  "Antagonis tersembunyi."
+ ],
+ "dokkaebi": [
+  "Dokkaebi",
+  "Goblin Korea."
+ ],
+ "internal-energy": [
+  "Naegong",
+  "Energi internal."
+ ],
+ "jade-beauty": [
+  "Kecantikan Giok",
+  "Wanita cantik."
+ ],
+ "white-lotus": [
+  "Teratai Putih",
+  "Berpura-pura polos."
+ ],
+ "eating-tofu": [
+  "Makan Tahu",
+  "Pelecehan ringan / rayuan."
+ ],
+ "coughing-up-blood": [
+  "Batuk Darah",
+  "Kiasan dramatis."
+ ],
+ "frog-in-well": [
+  "Katak dalam Sumur",
+  "Ketidaktahuan."
+ ],
+ "heaven-defying": [
+  "Menentang Surga",
+  "Sangat OP."
+ ],
+ "green-hat": [
+  "Topi Hijau",
+  "Perselingkuhan."
+ ],
+ "shuang-wen": [
+  "Shuang Wen",
+  "Cerita memuaskan."
+ ],
+ "giving-face": [
+  "Memberi Wajah",
+  "Menghormati."
+ ],
+ "dungeon-core": [
+  "Inti Dungeon",
+  "Jantung dungeon."
+ ],
+ "fiefdom": [
+  "Wilayah Kekuasaan",
+  "Tanah yang diberikan."
+ ],
+ "node": [
+  "Node",
+  "Titik fokus."
+ ],
+ "contribution-points": [
+  "Poin Kontribusi",
+  "Mata uang sekte."
+ ],
+ "sect-mission-hall": [
+  "Aula Misi Sekte",
+  "Bangunan."
+ ],
+ "spirit-garden": [
+  "Kebun Spiritual",
+  "Untuk ramuan."
+ ],
+ "city-lord": [
+  "Penguasa Kota",
+  "Pemimpin."
+ ],
+ "edict": [
+  "Maklumat",
+  "Dekrit."
+ ],
+ "vassal": [
+  "Vasal",
+  "Bawahan."
+ ],
+ "primordial-chaos": [
+  "Kekacauan Primordial",
+  "Asal mula."
+ ],
+ "the-void": [
+  "Kekosongan",
+  "Ruang dimensional."
+ ],
+ "life-forbidden-zone": [
+  "Zona Terlarang Kehidupan",
+  "Tempat mematikan."
+ ],
+ "ancient-desolate-beast": [
+  "Binatang Buas Kuno",
+  "Monster kuno."
+ ],
+ "star-field": [
+  "Medan Bintang",
+  "Wilayah luar angkasa."
+ ],
+ "spatial-storm": [
+  "Badai Spasial",
+  "Bahaya dimensi."
+ ],
+ "nine-heavens": [
+  "Sembilan Langit",
+  "Konsep mitologis."
+ ],
+ "river-of-time": [
+  "Sungai Waktu",
+  "Aliran waktu."
+ ],
+ "epoch": [
+  "Epok",
+  "Era kosmik."
+ ],
+ "karmic-thread": [
+  "Benang Karma",
+  "Koneksi."
+ ],
+ "origin-source": [
+  "Sumber Asal",
+  "Kekuatan murni."
+ ],
+ "heaven-and-earth": [
+  "Langit dan Bumi",
+  "Alam semesta."
+ ],
+ "wuji": [
+  "Wuji",
+  "Tanpa batas."
+ ],
+ "dao-source": [
+  "Sumber Dao",
+  "Asal muasal."
+ ],
+ "engagement-annulment": [
+  "Pembatalan Pertunangan",
+  "Kiasan umum."
+ ],
+ "toad-lusting-after-swan-meat": [
+  "Katak Mendambakan Daging Angsa",
+  "Menginginkan yang tak tergapai."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "Jangan Menindas Pemuda Miskin",
+  "Frasa epik."
+ ],
+ "concubine": [
+  "Selir",
+  "Istri muda."
+ ],
+ "sect-rules": [
+  "Aturan Sekte",
+  "Hukum."
+ ],
+ "filial-piety": [
+  "Bakti",
+  "Rasa hormat."
+ ],
+ "pill-tribulation": [
+  "Kesengsaraan Pil",
+  "Alkimia."
+ ],
+ "monster-genius": [
+  "Monster",
+  "Jenius tak masuk akal."
+ ],
+ "gu-venom-witchcraft": [
+  "Gu",
+  "Racun/Serangga."
+ ],
+ "corpse-refining": [
+  "Pemurnian Mayat",
+  "Nekromansi Tiongkok."
+ ],
+ "fairy-sister": [
+  "Saudari Peri",
+  "Panggilan sayang."
+ ],
+ "young-miss": [
+  "Nona Muda",
+  "Putri bangsawan."
+ ],
+ "mount-kunlun": [
+  "Gunung Kunlun",
+  "Mitologi Tiongkok."
+ ],
+ "aggro": [
+  "Aggro",
+  "Agresi mob."
+ ],
+ "crowd-control": [
+  "Crowd Control",
+  "Atau CC."
+ ],
+ "kiting": [
+  "Kiting",
+  "Serang dan lari."
+ ],
+ "aoe": [
+  "AoE",
+  "Area efek."
+ ],
+ "proc": [
+  "Proc",
+  "Aktivasi efek."
+ ],
+ "kill-steal": [
+  "Kill Steal",
+  "Mencuri kill."
+ ],
+ "tank": [
+  "Tank",
+  "Menyerap serangan."
+ ],
+ "dps": [
+  "DPS",
+  "Damage per detik."
+ ],
+ "gold-sink": [
+  "Gold Sink",
+  "Mekanik pengurang uang."
+ ],
+ "auction-sniping": [
+  "Sniping Lelang",
+  "Membeli di detik terakhir."
+ ],
+ "griefing": [
+  "Griefing",
+  "Merusak permainan."
+ ],
+ "dot": [
+  "DoT",
+  "Damage seiring waktu."
+ ],
+ "contract-marriage": [
+  "Kawin Kontrak",
+  "Kiasan romansa."
+ ],
+ "reawakening": [
+  "Kebangkitan Kedua",
+  "Kiasan hunter."
+ ],
+ "tyrant": [
+  "Tiran",
+  "Pemimpin kejam."
+ ],
+ "obsessive-male-lead": [
+  "Pemeran Pria Obsesif",
+  "Yandere ringan."
+ ],
+ "original-heroine": [
+  "Heroine Asli",
+  "Dalam Otome Isekai."
+ ],
+ "regression-trauma": [
+  "Trauma Regresi",
+  "Stres kehidupan masa lalu."
+ ],
+ "hunter-association": [
+  "Asosiasi Hunter",
+  "Pemerintah."
+ ],
+ "sudden-death": [
+  "Kematian Mendadak",
+  "Kematian instan."
+ ],
+ "guild-master": [
+  "Ketua Guild",
+  "Pemimpin."
+ ],
+ "adventurer-ranks": [
+  "Peringkat Petualang",
+  "F-SSS."
+ ],
+ "beastkin": [
+  "Manusia Binatang"
+ ],
+ "demon-god": [
+  "Dewa Iblis",
+  "Dewa kegelapan."
+ ],
+ "unique-skill": [
+  "Skill Unik",
+  "Sangat langka."
+ ],
+ "demon-realm": [
+  "Alam Iblis",
+  "Dimensi iblis."
+ ],
+ "slave-crest": [
+  "Segel Budak",
+  "Tanda budak."
+ ],
+ "subjugation": [
+  "Penaklukan",
+  "Perburuan."
+ ],
+ "otherworlder": [
+  "Orang Dunia Lain",
+  "Pendatang dimensi."
+ ],
+ "heros-party": [
+  "Kelompok Pahlawan",
+  "Party pahlawan."
+ ],
+ "dao-heart": [
+  "Hati Dao",
+  "Keyakinan."
+ ],
+ "severing-mortal-ties": [
+  "Memutuskan Ikatan Fana",
+  "Meninggalkan keluarga."
+ ],
+ "five-elements": [
+  "Lima Elemen",
+  "Wu Xing."
+ ],
+ "yin-and-yang": [
+  "Yin dan Yang",
+  "Dualitas."
+ ],
+ "enlightenment": [
+  "Pencerahan",
+  "Epifani."
+ ],
+ "mortal-tribulation": [
+  "Kesengsaraan Fana",
+  "Ujian fana."
+ ],
+ "soul-dissipation": [
+  "Disipasi Jiwa",
+  "Kematian sejati."
+ ],
+ "dao-marks": [
+  "Tanda Dao",
+  "Tato kosmis."
+ ],
+ "nirvana": [
+  "Nirwana",
+  "Kelahiran kembali."
+ ],
+ "fellow-daoist": [
+  "Rekan Daois",
+  "Sapaan antar kultivator."
+ ],
+ "sect-familial-address": [
+  "Saudara Seperguruan",
+  "Kakak/Adik seperguruan."
+ ],
+ "cold-snort": [
+  "Mendengus Dingin",
+  "Meremehkan."
+ ],
+ "dog-leg-lackey": [
+  "Antek",
+  "Bawahan rendahan."
+ ],
+ "jianghu": [
+  "Jianghu",
+  "Dunia persilatan."
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "Duduk di Gunung Menonton Harimau Bertarung",
+  "Mengamati konflik."
+ ],
+ "chaebol": [
+  "Chaebol",
+  "Konglomerat bisnis Korea."
+ ],
+ "heavenly-oath": [
+  "Sumpah Surgawi",
+  "Janji yang mengikat."
+ ],
+ "title-achievement": [
+  "Gelar / Pencapaian",
+  "Hadiah sistem."
+ ],
+ "system-erasure": [
+  "Penghapusan Sistem",
+  "Kematian paksa."
+ ],
+ "sweet-potato": [
+  "Ubi Jalar",
+  "Frustasi ceritanya mandek."
+ ],
+ "white-moonlight": [
+  "Cahaya Bulan Putih",
+  "Cinta pertama tak terlupakan."
+ ],
+ "cinnabar-mole": [
+  "Tahi Lalat Cinnabar",
+  "Gairah terpendam."
+ ],
+ "holy-mother": [
+  "Bunda Suci",
+  "Karakter terlalu baik naif."
+ ],
+ "dog-blood": [
+  "Darah Anjing",
+  "Melodrama berlebihan."
+ ],
+ "angst": [
+  "Angst / Penderitaan",
+  "Konflik emosional."
+ ],
+ "scum": [
+  "Bajingan",
+  "Karakter ampas."
+ ],
+ "brain-dead": [
+  "Mati Otak",
+  "Karakter bodoh tak masuk akal."
+ ],
+ "meat": [
+  "Daging",
+  "Adegan intim (Smut)."
+ ],
+ "green-tea": [
+  "Teh Hijau",
+  "Gadis manipulatif."
+ ],
+ "territory": [
+  "Wilayah",
+  "Tanah / Teritori."
+ ],
+ "rebirth": [
+  "Kelahiran Kembali",
+  "Kembali hidup."
+ ],
+ "devil-mara": [
+  "Iblis / Mara",
+  "Kejahatan absolut."
+ ],
+ "demonic-beast": [
+  "Binatang Iblis",
+  "Monster bengis."
+ ],
+ "truck-kun": [
+  "Truk-kun",
+  "Penyebab Isekai."
+ ],
+ "cheat-skill": [
+  "Skill Cheat",
+  "Keahlian OP."
+ ],
+ "divine-protection": [
+  "Perlindungan Ilahi",
+  "Berkat dewa."
+ ],
+ "genkai-toppa": [
+  "Penerobosan Batas",
+  "Limit Break."
+ ],
+ "chuunibyou": [
+  "Chuunibyou",
+  "Sindrom kelas delapan."
+ ],
+ "tsundere": [
+  "Tsundere",
+  "Dingin di luar hangat di dalam."
+ ],
+ "yandere": [
+  "Yandere",
+  "Cinta obsesif gila."
+ ],
+ "san": [
+  "-san",
+  "Akhiran formal."
+ ],
+ "chan": [
+  "-chan",
+  "Akhiran imut."
+ ],
+ "kun": [
+  "-kun",
+  "Akhiran pria muda."
+ ],
+ "dono": [
+  "-dono",
+  "Tuan/Lord."
+ ],
+ "sensei": [
+  "-sensei",
+  "Guru/Master."
+ ],
+ "adventurer-guild": [
+  "Guild Petualang",
+  "Organisasi hunter fantasi."
+ ],
+ "vrmmo": [
+  "VRMMO",
+  "Game realitas virtual."
+ ],
+ "goddess": [
+  "Dewi",
+  "Tuhan wanita."
+ ],
+ "gate": [
+  "Gerbang",
+  "Portal monster."
+ ],
+ "awakening": [
+  "Kebangkitan",
+  "Mendapat kekuatan."
+ ],
+ "regressor": [
+  "Regressor",
+  "Orang yang regresi."
+ ],
+ "national-level-hunter": [
+  "Hunter Tingkat Nasional",
+  "Rank tertinggi."
+ ],
+ "hunter-rank": [
+  "Peringkat Hunter",
+  "Klasifikasi."
+ ],
+ "grade": [
+  "Grade",
+  "Level item/kekuatan."
+ ],
+ "mana": [
+  "Mana",
+  "Energi sihir."
+ ],
+ "shadow-soldier": [
+  "Prajurit Bayangan",
+  "Nekromansi."
+ ],
+ "monarch": [
+  "Monarki / Raja",
+  "Pemimpin dimensi."
+ ],
+ "hyung": [
+  "Hyung",
+  "Kakak laki-laki (panggilan laki)."
+ ],
+ "noona": [
+  "Noona",
+  "Kakak perempuan (panggilan laki)."
+ ],
+ "oppa": [
+  "Oppa",
+  "Kakak laki-laki (panggilan perempuan)."
+ ],
+ "sunbae": [
+  "Sunbae",
+  "Senior."
+ ],
+ "ahjussi": [
+  "Ahjussi",
+  "Paman / Bapak."
+ ],
+ "ahjumma": [
+  "Ahjumma",
+  "Bibi / Ibu-ibu."
+ ],
+ "dungeon-break": [
+  "Dungeon Break",
+  "Monster lepas dari gate."
+ ],
+ "boss-monster": [
+  "Monster Bos",
+  "Musuh utama gate."
+ ],
+ "first-clear": [
+  "Penyelesaian Pertama",
+  "Pencapaian."
+ ],
+ "clear": [
+  "Clear / Selesai",
+  "Menyelesaikan dungeon."
+ ],
+ "penalty": [
+  "Penalti",
+  "Hukuman."
+ ],
+ "compensation": [
+  "Kompensasi",
+  "Hadiah ganti rugi."
+ ],
+ "ranker": [
+  "Ranker",
+  "Pemain ranking tinggi."
+ ],
+ "player-kill": [
+  "Player Kill / PK",
+  "Pembunuhan pemain."
+ ],
+ "broadcast": [
+  "Siaran",
+  "Streaming game."
+ ],
+ "mutant-monster": [
+  "Monster Mutan",
+  "Varian monster."
+ ],
+ "growth-type-ability": [
+  "Kemampuan Tipe Pertumbuhan",
+  "Bisa berevolusi."
+ ],
+ "evolution": [
+  "Evolusi",
+  "Perkembangan spesies."
+ ],
+ "floor": [
+  "Lantai",
+  "Tingkat menara."
+ ],
+ "test": [
+  "Ujian / Tes",
+  "Tantangan menara."
+ ],
+ "test-administrator": [
+  "Administrator Tes",
+  "Pengawas ujian."
+ ],
+ "floor-guardian": [
+  "Penjaga Lantai",
+  "Bos lantai menara."
+ ],
+ "irregular": [
+  "Irregular",
+  "Anomali menara."
+ ],
+ "regular": [
+  "Regular",
+  "Peserta ujian normal."
+ ],
+ "hidden-floor": [
+  "Lantai Tersembunyi",
+  "Level rahasia."
+ ],
+ "wall": [
+  "Dinding",
+  "Batas dimensi."
+ ],
+ "family": [
+  "Keluarga (Tower)",
+  "Klan agung."
+ ],
+ "observer": [
+  "Pengamat",
+  "Penonton sistem."
+ ],
+ "onii-chan": [
+  "Onii-chan",
+  "Kakak laki (JP)."
+ ],
+ "onee-chan": [
+  "Onee-chan",
+  "Kakak perempuan (JP)."
+ ],
+ "ossan": [
+  "Ossan",
+  "Paman (JP)."
+ ],
+ "osananajimi": [
+  "Osananajimi",
+  "Teman masa kecil."
+ ],
+ "kokuhaku": [
+  "Kokuhaku",
+  "Pengakuan cinta."
+ ],
+ "bunkasai": [
+  "Bunkasai",
+  "Festival budaya sekolah."
+ ],
+ "guild-card": [
+  "Kartu Guild",
+  "Kartu identitas petualang."
+ ],
+ "job-change": [
+  "Ganti Kelas",
+  "Pergantian job."
+ ],
+ "labyrinth": [
+  "Labirin",
+  "Dungeon raksasa."
+ ],
+ "blacksmith": [
+  "Pandai Besi",
+  "Perajin senjata."
+ ],
+ "slow-life": [
+  "Slow Life",
+  "Genre hidup santai."
+ ],
+ "skill-book": [
+  "Buku Keahlian",
+  "Item untuk belajar skill."
+ ],
+ "great-sage": [
+  "Great Sage",
+  "Gelar/Sistem (Slime)."
+ ],
+ "sacred-sword": [
+  "Pedang Suci",
+  "Senjata pahlawan."
+ ],
+ "entrance-exam": [
+  "Ujian Masuk",
+  "Ujian akademi."
+ ],
+ "class-ranking": [
+  "Peringkat Kelas",
+  "Sistem ranking akademi."
+ ],
+ "mob-class": [
+  "Karakter Latar",
+  "Karakter figuran (Mob)."
+ ],
+ "late-bloomer": [
+  "Late Bloomer",
+  "Mekar terlambat."
+ ],
+ "graduation-trial": [
+  "Ujian Kelulusan",
+  "Tes akhir akademi."
+ ],
+ "novel-knowledge": [
+  "Pengetahuan Novel",
+  "Keuntungan pembaca isekai."
+ ],
+ "fourth-wall": [
+  "Dinding Keempat",
+  "Meta-penghalang psikologis."
+ ],
+ "system-voice": [
+  "Suara Sistem",
+  "Suara pemberitahuan otomatis."
+ ],
+ "authors-note": [
+  "Catatan Penulis",
+  "Pesan dari creator."
+ ],
+ "ancient-ruins": [
+  "Reruntuhan Kuno",
+  "Peninggalan peradaban masa lalu."
+ ],
+ "spirit-vein": [
+  "Vena Spiritual",
+  "Sumber energi sekte."
+ ],
+ "middle-realm": [
+  "Alam Menengah",
+  "Dunia transisi."
+ ],
+ "void": [
+  "Kehampaan",
+  "Ruang hampa dimensional."
+ ],
+ "chaos": [
+  "Kekacauan",
+  "Chaos primordial."
+ ],
+ "tribute": [
+  "Upeti",
+  "Persembahan klan."
+ ],
+ "garrison": [
+  "Garnisun",
+  "Pasukan penjaga kota."
+ ],
+ "liege": [
+  "Lord / Tuan",
+  "Tuan tanah/Pemimpin."
+ ],
+ "totem-beast": [
+  "Binatang Totem",
+  "Hewan pelindung suku."
+ ],
+ "beast-master": [
+  "Beast Master",
+  "Kelas penjinak hewan."
+ ]
+}

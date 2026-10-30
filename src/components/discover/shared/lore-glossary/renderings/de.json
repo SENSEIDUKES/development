@@ -1,0 +1,1553 @@
+{
+ "qi": [
+  "Qi",
+  "Als 'Qi' beibehalten."
+ ],
+ "cultivation": [
+  "Kultivierung",
+  "Standard für xiulian."
+ ],
+ "dantian": [
+  "Dantian",
+  "Begriff beibehalten."
+ ],
+ "immortal-qi": [
+  "Unsterbliches Qi",
+  "Von normalem Qi unterscheiden."
+ ],
+ "cultivation-realm": [
+  "Kultivierungsreich",
+  "Vermeide 'Level'."
+ ],
+ "heavenly-tribulation": [
+  "Himmlische Trübsal",
+  "Standard xianxia."
+ ],
+ "nascent-soul": [
+  "Entstehende Seele",
+  "Stufe und Entität."
+ ],
+ "golden-core": [
+  "Goldener Kern",
+  "Ergebnis der Kernbildung."
+ ],
+ "foundation-establishment": [
+  "Fundamenterrichtung",
+  "Kritische Stufe."
+ ],
+ "qi-refining": [
+  "Qi-Kondensation",
+  "Anfangsstufe."
+ ],
+ "core-formation": [
+  "Kernbildung",
+  "Xianxia-Stufe."
+ ],
+ "spirit-severing": [
+  "Geisttrennung",
+  "Geistige Trennung."
+ ],
+ "dao-seeking": [
+  "Dao-Suche",
+  "Dao nicht übersetzen."
+ ],
+ "domain": [
+  "Domäne",
+  "Metaphysischer Raum."
+ ],
+ "ascension": [
+  "Aufstieg",
+  "Übergang in höhere Welt."
+ ],
+ "meridians": [
+  "Meridian",
+  "Energiebahn."
+ ],
+ "spiritual-root": [
+  "Geistige Wurzel",
+  "Angeborene Begabung."
+ ],
+ "jing-qi-shen": [
+  "Jing, Qi, Shen",
+  "Die drei Schätze."
+ ],
+ "body-tempering": [
+  "Körperabhärtung",
+  "Körperverfeinerung."
+ ],
+ "fiendgod-body-refining": [
+  "Dämonengott-Körperverfeinerung",
+  "Mythisches Konzept."
+ ],
+ "heartforce-cultivation": [
+  "Herzkraft-Kultivierung",
+  "Mentale Kraft."
+ ],
+ "dual-cultivation": [
+  "Duale Kultivierung",
+  "Paar-Kultivierung."
+ ],
+ "alchemy": [
+  "Pillenherstellung",
+  "Alchemie."
+ ],
+ "spirit-stone": [
+  "Geiststein",
+  "Währung/Energie."
+ ],
+ "spiritual-treasure": [
+  "Artefakt",
+  "Magisches Objekt."
+ ],
+ "storage-ring": [
+  "Raumring",
+  "Oder Lagerring."
+ ],
+ "talisman": [
+  "Talisman",
+  "Magisches Papier."
+ ],
+ "formation": [
+  "Formation",
+  "Magische Matrix."
+ ],
+ "sect": [
+  "Sekte",
+  "Kampfkunst-Organisation."
+ ],
+ "clan": [
+  "Clan",
+  "Erweiterte Familie."
+ ],
+ "patriarch": [
+  "Patriarch",
+  "Familienoberhaupt."
+ ],
+ "elder": [
+  "Ältester",
+  "Sektenrang."
+ ],
+ "disciple-hierarchy": [
+  "Jünger-Hierarchie",
+  "Jüngerränge."
+ ],
+ "spirit-beast": [
+  "Geistbestie",
+  "Magisches Tier."
+ ],
+ "beast-taming": [
+  "Bestienzähmung",
+  "Tierkontrolle."
+ ],
+ "heavenly-dao": [
+  "Himmlisches Dao",
+  "Wille der Welt."
+ ],
+ "dao": [
+  "Dao",
+  "Der Weg."
+ ],
+ "karma": [
+  "Karma",
+  "Ursache und Wirkung."
+ ],
+ "reincarnation": [
+  "Reinkarnation",
+  "Wiedergeburt."
+ ],
+ "regression": [
+  "Regression",
+  "Rückkehr in die Vergangenheit."
+ ],
+ "transmigration": [
+  "Transmigration",
+  "Körperbesessenheit."
+ ],
+ "isekai": [
+  "Isekai",
+  "Gängiger japanischer Begriff."
+ ],
+ "otome-isekai": [
+  "Otome Isekai",
+  "Reinkarnation im Spiel."
+ ],
+ "hunter-system": [
+  "Jäger-System",
+  "Koreanisches LitRPG."
+ ],
+ "constellation": [
+  "Sternbild",
+  "Oder Konstellation, beobachtende Götter."
+ ],
+ "dungeon": [
+  "Dungeon",
+  "Oder Verlies."
+ ],
+ "tower": [
+  "Turm",
+  "Struktur zum Erklimmen."
+ ],
+ "system": [
+  "System",
+  "RPG-Interface."
+ ],
+ "status-window": [
+  "Statusfenster",
+  "Spielerattribute."
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "Fähigkeit",
+  "Oder Skill."
+ ],
+ "level-up": [
+  "Level Up",
+  "Oder Stufenaufstieg."
+ ],
+ "quest": [
+  "Quest",
+  "Oder Mission."
+ ],
+ "guild": [
+  "Gilde",
+  "Organisation."
+ ],
+ "rarity": [
+  "Seltenheit",
+  "Gegenstandsgrad."
+ ],
+ "loot": [
+  "Loot",
+  "Oder Beute."
+ ],
+ "wuxia": [
+  "Wuxia",
+  "Kampfkunst-Fantasy."
+ ],
+ "xianxia": [
+  "Xianxia",
+  "Unsterblichen-Fantasy."
+ ],
+ "xuanhuan": [
+  "Xuanhuan",
+  "Östliche Magie-Fantasy."
+ ],
+ "murim": [
+  "Murim",
+  "Kampfkunst-Welt (Korea)."
+ ],
+ "litrpg": [
+  "LitRPG",
+  "Literarisches RPG."
+ ],
+ "progression-fantasy": [
+  "Progression Fantasy",
+  "Subgenre."
+ ],
+ "academy-arc": [
+  "Akademie-Arc",
+  "Geschichtsabschnitt."
+ ],
+ "guide": [
+  "Guide",
+  "Unterstützer (Korea)."
+ ],
+ "esper": [
+  "Esper",
+  "Mensch mit Kräften (Korea)."
+ ],
+ "arrogant-young-master": [
+  "Arroganter Junger Meister",
+  "Chinesischer Tropus."
+ ],
+ "face": [
+  "Gesicht",
+  "Prestige/Ehre (z.B. Gesicht wahren)."
+ ],
+ "face-slapping": [
+  "Ohrfeige",
+  "Demütigung des Rivalen."
+ ],
+ "tournament-arc": [
+  "Turnier-Arc",
+  "Wettbewerb."
+ ],
+ "secret-realm": [
+  "Geheimes Reich",
+  "Versteckte Dimension."
+ ],
+ "auction": [
+  "Auktion",
+  "Kaufereignis."
+ ],
+ "bloodline": [
+  "Blutlinie",
+  "Erbe."
+ ],
+ "physique": [
+  "Physis",
+  "Körperliche Beschaffenheit."
+ ],
+ "dao-companion": [
+  "Dao-Gefährte",
+  "Kultivierungspartner."
+ ],
+ "harem": [
+  "Harem",
+  "Mehrere Partner."
+ ],
+ "cannon-fodder": [
+  "Kanonenfutter",
+  "Entbehrlicher Charakter."
+ ],
+ "villainess": [
+  "Schurkin",
+  "Otome-Tropus."
+ ],
+ "protagonist-halo": [
+  "Protagonisten-Aura",
+  "Göttliches Glück."
+ ],
+ "system-shop": [
+  "System-Shop",
+  "Virtueller Laden."
+ ],
+ "inventory": [
+  "Inventar",
+  "Lagerplatz."
+ ],
+ "class": [
+  "Klasse",
+  "RPG-Rolle."
+ ],
+ "stat": [
+  "Stat",
+  "Oder Attribut."
+ ],
+ "skill-tree": [
+  "Fähigkeitsbaum",
+  "Oder Skilltree."
+ ],
+ "party": [
+  "Party",
+  "Oder Gruppe."
+ ],
+ "raid": [
+  "Raid",
+  "Inkursion."
+ ],
+ "pvp": [
+  "PvP",
+  "Spieler gegen Spieler."
+ ],
+ "pve": [
+  "PvE",
+  "Spieler gegen Umgebung."
+ ],
+ "npc": [
+  "NPC",
+  "Oder Nicht-Spieler-Charakter."
+ ],
+ "sentient-system": [
+  "Bewusstes System",
+  "System mit KI."
+ ],
+ "regression-novel": [
+  "Regressions-Roman",
+  "Genre."
+ ],
+ "transmigration-novel": [
+  "Transmigrations-Roman",
+  "Genre."
+ ],
+ "cultivation-technique": [
+  "Kultivierungstechnik",
+  "Methode."
+ ],
+ "forbidden-technique": [
+  "Verbotene Technik",
+  "Tabutechnik."
+ ],
+ "sword-intent": [
+  "Schwertintention",
+  "Kampfkunst-Wille."
+ ],
+ "domain-expansion": [
+  "Domänenerweiterung",
+  "Ultimative Fähigkeit."
+ ],
+ "heavenly-tribulation-lightning": [
+  "Trübsalsblitz",
+  "Göttliche Strafe."
+ ],
+ "soul": [
+  "Seele",
+  "Geist."
+ ],
+ "spiritual-sense": [
+  "Geistiger Sinn",
+  "Wahrnehmung."
+ ],
+ "qi-deviation": [
+  "Qi-Abweichung",
+  "Kultivierungswahnsinn."
+ ],
+ "heart-devil": [
+  "Herz-Dämon",
+  "Mentale Korruption."
+ ],
+ "merit": [
+  "Verdienst",
+  "Positives Karma."
+ ],
+ "karmic-fire": [
+  "Karmisches Feuer",
+  "Vergeltungsfeuer."
+ ],
+ "ascension-platform": [
+  "Aufstiegsplattform",
+  "Ort des Übergangs."
+ ],
+ "lower-realm": [
+  "Unteres Reich",
+  "Sterbliche Welt."
+ ],
+ "immortal-realm": [
+  "Unsterbliches Reich",
+  "Himmlische Welt."
+ ],
+ "spirit-realm": [
+  "Geistiges Reich",
+  "Zwischenwelt."
+ ],
+ "great-thousand-world": [
+  "Große Tausend-Welt",
+  "Multiversum."
+ ],
+ "plane": [
+  "Ebene",
+  "Dimension."
+ ],
+ "world-tree": [
+  "Weltenbaum",
+  "Yggdrasil."
+ ],
+ "celestial-empire": [
+  "Himmlisches Imperium",
+  "Reich der Götter."
+ ],
+ "demon": [
+  "Dämon",
+  "Yao oder böser Geist."
+ ],
+ "orthodox-vs-unorthodox": [
+  "Orthodox vs Unorthodox",
+  "Kampfkunst-Fraktionen."
+ ],
+ "sect-war": [
+  "Sektenkrieg",
+  "Konflikt."
+ ],
+ "resource-war": [
+  "Ressourcenkrieg",
+  "Materieller Konflikt."
+ ],
+ "talent": [
+  "Talent",
+  "Natürliche Begabung."
+ ],
+ "cheat": [
+  "Cheat",
+  "Übermächtige Fähigkeit."
+ ],
+ "time-dilation": [
+  "Zeitdilatation",
+  "Zeitbeschleunigung."
+ ],
+ "appraisal": [
+  "Bewertung",
+  "Identifikation von Objekten."
+ ],
+ "loot-box": [
+  "Lootbox",
+  "Gacha."
+ ],
+ "pay-to-win": [
+  "Pay to Win",
+  "Zahlen um zu gewinnen."
+ ],
+ "player": [
+  "Spieler",
+  "Systemteilnehmer."
+ ],
+ "administrator": [
+  "Administrator",
+  "Systemgott."
+ ],
+ "tutorial": [
+  "Tutorial",
+  "Anfangsphase."
+ ],
+ "hidden-quest": [
+  "Geheime Quest",
+  "Versteckte Quest."
+ ],
+ "repair": [
+  "Reparieren",
+  "Ausrüstung reparieren."
+ ],
+ "death-penalty": [
+  "Todesstrafe",
+  "Bestrafung."
+ ],
+ "respawn": [
+  "Respawn",
+  "Wiederbelebung."
+ ],
+ "fast-travel": [
+  "Schnellreise",
+  "Teleportation."
+ ],
+ "mount": [
+  "Reittier"
+ ],
+ "pet": [
+  "Pet",
+  "Oder Begleiter."
+ ],
+ "crafting": [
+  "Crafting",
+  "Oder Handwerk."
+ ],
+ "enchanting": [
+  "Verzauberung",
+  "Angewandte Magie."
+ ],
+ "socket": [
+  "Sockel",
+  "Oder Platz für Edelstein."
+ ],
+ "set-item": [
+  "Set-Item",
+  "Ausrüstungsset."
+ ],
+ "unique-item": [
+  "Einzigartiger Gegenstand",
+  "Seltenes Item."
+ ],
+ "courting-death": [
+  "Den Tod umwerben",
+  "Chinesische Phrase."
+ ],
+ "mount-tai": [
+  "Berg Tai",
+  "Metapher für Ignoranz."
+ ],
+ "kowtow": [
+  "Kowtow",
+  "Sich niederwerfen."
+ ],
+ "jade-slip": [
+  "Jadestreifen",
+  "Speichermedium."
+ ],
+ "romance-fantasy": [
+  "Romantische Fantasy",
+  "RoFan."
+ ],
+ "returner": [
+  "Rückkehrer",
+  "Regressor."
+ ],
+ "sword-cultivator": [
+  "Schwertkultivator",
+  "Kampfkunstweg."
+ ],
+ "foundation-establishment-pill": [
+  "Pille der Fundamenterrichtung",
+  "Medizin."
+ ],
+ "marrow-cleansing-pill": [
+  "Pille der Markreinigung",
+  "Medizin."
+ ],
+ "fasting-pill": [
+  "Fastenpille",
+  "Bigu."
+ ],
+ "blood-burning-pill": [
+  "Blutverbrennungspille",
+  "Medizin."
+ ],
+ "shim-gong": [
+  "Shim Gong",
+  "Koreanische innere Kunst."
+ ],
+ "shin-bup": [
+  "Shin Bup",
+  "Leichte Bewegung."
+ ],
+ "jeom-hyeol": [
+  "Jeom Hyeol",
+  "Druckpunktangriff."
+ ],
+ "ho-shin-gang-qi": [
+  "Ho Shin Gang Qi",
+  "Schutzaura."
+ ],
+ "geom-gi": [
+  "Geom Gi",
+  "Schwert-Aura."
+ ],
+ "sama": [
+  "-sama",
+  "Honorifisches Suffix."
+ ],
+ "senpai-kouhai": [
+  "Senpai / Kouhai",
+  "Senior/Junior."
+ ],
+ "ojou-sama": [
+  "Ojou-sama",
+  "Fräulein."
+ ],
+ "maou-gun": [
+  "Armee des Dämonenkönigs",
+  "Dunkle Streitmacht."
+ ],
+ "dao-child": [
+  "Kind des Dao",
+  "Wunderkind."
+ ],
+ "peak-master": [
+  "Gipfelmeister",
+  "Fraktionsführer."
+ ],
+ "sect-leader": [
+  "Sektenführer",
+  "Anführer."
+ ],
+ "handyman-disciple": [
+  "Handlanger-Jünger",
+  "Arbeiter."
+ ],
+ "guest-elder": [
+  "Gastältester",
+  "Externer Berater."
+ ],
+ "sweeping-monk": [
+  "Fegender Mönch",
+  "Versteckter Meister."
+ ],
+ "hidden-class": [
+  "Geheime Klasse",
+  "Geheime Rolle."
+ ],
+ "necromancer": [
+  "Nekromant",
+  "Totenneschwörer."
+ ],
+ "job-advancement": [
+  "Klassenaufstieg",
+  "Klassenwechsel."
+ ],
+ "berserker": [
+  "Berserker",
+  "Rasender Krieger."
+ ],
+ "paladin": [
+  "Paladin",
+  "Heiliger Ritter."
+ ],
+ "beast-core": [
+  "Bestienkern",
+  "Energiequelle."
+ ],
+ "soul-contract": [
+  "Seelenvertrag",
+  "Magische Bindung."
+ ],
+ "beast-pouch": [
+  "Bestienbeutel",
+  "Aufbewahrungstasche."
+ ],
+ "bloodline-evolution": [
+  "Blutlinien-Evolution",
+  "Genetische Verbesserung."
+ ],
+ "familiar": [
+  "Vertrauter",
+  "Tierischer Geist."
+ ],
+ "equality-contract": [
+  "Gleichheitsvertrag",
+  "Gleichwertige Bindung."
+ ],
+ "heavenly-flame": [
+  "Himmlische Flamme",
+  "Seltenes Feuer."
+ ],
+ "spirit-herb": [
+  "Geistkraut",
+  "Magische Pflanze."
+ ],
+ "spirit-spring-water": [
+  "Geistiges Quellwasser",
+  "Heilflüssigkeit."
+ ],
+ "array-eye": [
+  "Auge der Formation",
+  "Zentrum."
+ ],
+ "formation-flag": [
+  "Formationsflagge",
+  "Item."
+ ],
+ "spirit-gathering-array": [
+  "Geistsammel-Formation",
+  "Konzentriert Qi."
+ ],
+ "red-gate": [
+  "Rotes Tor",
+  "Gefährliches Portal."
+ ],
+ "clear-condition": [
+  "Abschlussbedingung",
+  "Anforderung."
+ ],
+ "magic-stone": [
+  "Magischer Stein",
+  "Kristall."
+ ],
+ "penalty-quest": [
+  "Straf-Quest",
+  "Bestrafung."
+ ],
+ "floor-master": [
+  "Ebenenmeister",
+  "Levelboss."
+ ],
+ "porter": [
+  "Träger",
+  "Oder Porter."
+ ],
+ "scenario": [
+  "Szenario",
+  "Globale Quest."
+ ],
+ "probability": [
+  "Wahrscheinlichkeit",
+  "Göttliche Regel."
+ ],
+ "stigma": [
+  "Stigma",
+  "Göttliches Mal."
+ ],
+ "murim-alliance": [
+  "Murim-Allianz",
+  "Orthodoxe Fraktion."
+ ],
+ "demonic-cult": [
+  "Dämonenkult",
+  "Böse Fraktion."
+ ],
+ "northern-duke": [
+  "Herzog des Nordens",
+  "Tropus."
+ ],
+ "tea-party": [
+  "Teeparty",
+  "Adliges Treffen."
+ ],
+ "munchkin": [
+  "Munchkin",
+  "OP Charakter."
+ ],
+ "cider": [
+  "Cider",
+  "Befriedigung (Saida)."
+ ],
+ "black-mastermind": [
+  "Drahtzieher",
+  "Antagonist (Heungmak)."
+ ],
+ "dokkaebi": [
+  "Dokkaebi",
+  "Koreanischer Kobold."
+ ],
+ "internal-energy": [
+  "Naegong",
+  "Innere Energie."
+ ],
+ "jade-beauty": [
+  "Jade-Schönheit",
+  "Schöne Frau."
+ ],
+ "white-lotus": [
+  "Weißer Lotus",
+  "Falsche Unschuld."
+ ],
+ "eating-tofu": [
+  "Tofu essen",
+  "Flirt/Belästigung."
+ ],
+ "coughing-up-blood": [
+  "Blut spucken",
+  "Dramatischer Tropus."
+ ],
+ "frog-in-well": [
+  "Frosch im Brunnen",
+  "Ignoranz."
+ ],
+ "heaven-defying": [
+  "Himmels-Trotzend",
+  "Übermächtig."
+ ],
+ "green-hat": [
+  "Grüner Hut",
+  "Untreue."
+ ],
+ "shuang-wen": [
+  "Shuang Wen",
+  "Befriedigende Geschichte."
+ ],
+ "giving-face": [
+  "Gesicht geben",
+  "Respekt zeigen."
+ ],
+ "dungeon-core": [
+  "Dungeon-Kern",
+  "Herz des Dungeons."
+ ],
+ "fiefdom": [
+  "Lehen",
+  "Zugewiesenes Land."
+ ],
+ "node": [
+  "Knotenpunkt",
+  "Fokuspunkt."
+ ],
+ "contribution-points": [
+  "Beitragspunkte",
+  "Sektenwährung."
+ ],
+ "sect-mission-hall": [
+  "Sektenmissionshalle",
+  "Gebäude."
+ ],
+ "spirit-garden": [
+  "Geistergarten",
+  "Für Kräuter."
+ ],
+ "city-lord": [
+  "Stadtlord",
+  "Herrscher."
+ ],
+ "edict": [
+  "Edikt",
+  "Dekret."
+ ],
+ "vassal": [
+  "Vasall",
+  "Untergeordneter."
+ ],
+ "primordial-chaos": [
+  "Urchaos",
+  "Ursprung."
+ ],
+ "the-void": [
+  "Die Leere",
+  "Dimensionsraum."
+ ],
+ "life-forbidden-zone": [
+  "Lebensverbotene Zone",
+  "Tödlicher Ort."
+ ],
+ "ancient-desolate-beast": [
+  "Uralte Verwüstungsbestie",
+  "Archaisches Monster."
+ ],
+ "star-field": [
+  "Sternenfeld",
+  "Weltraumregion."
+ ],
+ "spatial-storm": [
+  "Raumsturm",
+  "Dimensionsgefahr."
+ ],
+ "nine-heavens": [
+  "Neun Himmel",
+  "Mythisches Konzept."
+ ],
+ "river-of-time": [
+  "Fluss der Zeit",
+  "Zeitstrom."
+ ],
+ "epoch": [
+  "Epoche",
+  "Kosmische Ära."
+ ],
+ "karmic-thread": [
+  "Karmischer Faden",
+  "Verbindung."
+ ],
+ "origin-source": [
+  "Ursprungsquelle",
+  "Reine Macht."
+ ],
+ "heaven-and-earth": [
+  "Himmel und Erde",
+  "Das Universum."
+ ],
+ "wuji": [
+  "Wuji",
+  "Ohne Limit."
+ ],
+ "dao-source": [
+  "Dao-Quelle",
+  "Ursprung."
+ ],
+ "engagement-annulment": [
+  "Verlobungsauflösung",
+  "Tropus."
+ ],
+ "toad-lusting-after-swan-meat": [
+  "Kröte die nach Schwanenfleisch lüstert",
+  "Ausdruck."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "Mobbe den Jungen nicht in die Armut",
+  "Epischer Satz."
+ ],
+ "concubine": [
+  "Konkubine",
+  "Nebenfrau."
+ ],
+ "sect-rules": [
+  "Sektenregeln",
+  "Gesetze."
+ ],
+ "filial-piety": [
+  "Kindliche Pietät",
+  "Respekt."
+ ],
+ "pill-tribulation": [
+  "Pillen-Trübsal",
+  "Alchemie."
+ ],
+ "monster-genius": [
+  "Monster",
+  "Absurdes Genie."
+ ],
+ "gu-venom-witchcraft": [
+  "Gu",
+  "Gift/Insekt."
+ ],
+ "corpse-refining": [
+  "Leichenverfeinerung",
+  "Nekromantie."
+ ],
+ "fairy-sister": [
+  "Feen-Schwester",
+  "Spitzname."
+ ],
+ "young-miss": [
+  "Junge Herrin",
+  "Adlige Tochter."
+ ],
+ "mount-kunlun": [
+  "Berg Kunlun",
+  "Chinesische Mythologie."
+ ],
+ "aggro": [
+  "Aggro",
+  "Aggression."
+ ],
+ "crowd-control": [
+  "Crowd Control",
+  "Oder CC."
+ ],
+ "kiting": [
+  "Kiting",
+  "Angreifen und rennen."
+ ],
+ "aoe": [
+  "AoE",
+  "Flächenwirkung."
+ ],
+ "proc": [
+  "Proc",
+  "Effektauslösung."
+ ],
+ "kill-steal": [
+  "Kill Steal",
+  "Oder KS."
+ ],
+ "tank": [
+  "Tank",
+  "Schaden einstecken."
+ ],
+ "dps": [
+  "DPS",
+  "Schaden pro Sekunde."
+ ],
+ "gold-sink": [
+  "Gold Sink",
+  "Mechanik."
+ ],
+ "auction-sniping": [
+  "Auktions-Sniping",
+  "Letzte-Sekunde-Kauf."
+ ],
+ "griefing": [
+  "Griefing",
+  "Spiel verderben."
+ ],
+ "dot": [
+  "DoT",
+  "Schaden über Zeit."
+ ],
+ "contract-marriage": [
+  "Vertragsehe",
+  "Tropus."
+ ],
+ "reawakening": [
+  "Zweites Erwachen",
+  "Tropus."
+ ],
+ "tyrant": [
+  "Tyrann",
+  "Grausamer Anführer."
+ ],
+ "obsessive-male-lead": [
+  "Obsessiver männlicher Protagonist",
+  "Yandere light."
+ ],
+ "original-heroine": [
+  "Original-Heldin",
+  "Otome isekai."
+ ],
+ "regression-trauma": [
+  "Regressions-Trauma",
+  "Stress."
+ ],
+ "hunter-association": [
+  "Jäger-Vereinigung",
+  "Regierung."
+ ],
+ "sudden-death": [
+  "Plötzlicher Tod",
+  "Sofort."
+ ],
+ "guild-master": [
+  "Gildenmeister",
+  "Anführer."
+ ],
+ "adventurer-ranks": [
+  "Abenteurer-Ränge",
+  "F-SSS."
+ ],
+ "beastkin": [
+  "Tiermensch",
+  "Rasse."
+ ],
+ "demon-god": [
+  "Dämonengott",
+  "Dunkle Gottheit."
+ ],
+ "unique-skill": [
+  "Einzigartige Fähigkeit",
+  "Selten."
+ ],
+ "demon-realm": [
+  "Dämonenreich",
+  "Dimension."
+ ],
+ "slave-crest": [
+  "Sklavenmal",
+  "Zeichen."
+ ],
+ "subjugation": [
+  "Unterwerfung",
+  "Jagd."
+ ],
+ "otherworlder": [
+  "Andersweltler",
+  "Person."
+ ],
+ "heros-party": [
+  "Heldenparty",
+  "Team."
+ ],
+ "dao-heart": [
+  "Dao-Herz",
+  "Überzeugung."
+ ],
+ "severing-mortal-ties": [
+  "Sterbliche Bande durchtrennen",
+  "Familie aufgeben."
+ ],
+ "five-elements": [
+  "Fünf Elemente",
+  "Wu Xing."
+ ],
+ "yin-and-yang": [
+  "Yin und Yang",
+  "Dualität."
+ ],
+ "enlightenment": [
+  "Erleuchtung",
+  "Epiphanie."
+ ],
+ "mortal-tribulation": [
+  "Sterbliche Trübsal",
+  "Prüfung."
+ ],
+ "soul-dissipation": [
+  "Seelenauflösung",
+  "Wahrer Tod."
+ ],
+ "dao-marks": [
+  "Dao-Markierungen",
+  "Tätowierungen."
+ ],
+ "nirvana": [
+  "Nirvana",
+  "Wiedergeburt."
+ ],
+ "fellow-daoist": [
+  "Dao-Gefährte",
+  "Oder Dao-Bruder/Schwester."
+ ],
+ "sect-familial-address": [
+  "Kampfkunst-Bruder",
+  "Oder Schwester."
+ ],
+ "cold-snort": [
+  "Kaltes Schnauben",
+  "Verachtung."
+ ],
+ "dog-leg-lackey": [
+  "Lakai",
+  "Handlanger."
+ ],
+ "jianghu": [
+  "Jianghu",
+  "Kampfkunstwelt."
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "Auf dem Berg sitzen und den Tigern beim Kämpfen zusehen",
+  "Beobachten."
+ ],
+ "chaebol": [
+  "Chaebol",
+  "Konglomerat."
+ ],
+ "heavenly-oath": [
+  "Himmlischer Schwur",
+  "Versprechen."
+ ],
+ "title-achievement": [
+  "Titel / Erfolg",
+  "Belohnung."
+ ],
+ "system-erasure": [
+  "Systemlöschung"
+ ],
+ "sweet-potato": [
+  "Süßkartoffel",
+  "Frustration."
+ ],
+ "white-moonlight": [
+  "Weißes Mondlicht",
+  "Erste Liebe."
+ ],
+ "cinnabar-mole": [
+  "Zinnober-Muttermal",
+  "Leidenschaft."
+ ],
+ "holy-mother": [
+  "Heilige Mutter",
+  "Übermäßig gut."
+ ],
+ "dog-blood": [
+  "Hundeblut",
+  "Melodrama."
+ ],
+ "angst": [
+  "Angst",
+  "Schmerz."
+ ],
+ "scum": [
+  "Abschaum",
+  "Schlechte Person."
+ ],
+ "brain-dead": [
+  "Hirntot",
+  "Dumm."
+ ],
+ "meat": [
+  "Fleisch",
+  "Smut/NSFW."
+ ],
+ "green-tea": [
+  "Grüner Tee",
+  "Manipulativ."
+ ],
+ "territory": [
+  "Territorium",
+  "Land."
+ ],
+ "rebirth": [
+  "Wiedergeburt",
+  "Rückkehr."
+ ],
+ "devil-mara": [
+  "Teufel / Mara",
+  "Böse."
+ ],
+ "demonic-beast": [
+  "Dämonische Bestie",
+  "Monster."
+ ],
+ "truck-kun": [
+  "Truck-kun",
+  "Isekai-Auslöser."
+ ],
+ "cheat-skill": [
+  "Cheat-Skill"
+ ],
+ "divine-protection": [
+  "Göttlicher Schutz",
+  "Segen."
+ ],
+ "genkai-toppa": [
+  "Limitbruch",
+  "Übertreffen."
+ ],
+ "chuunibyou": [
+  "Chuunibyou",
+  "Achtklässler-Syndrom."
+ ],
+ "tsundere": [
+  "Tsundere",
+  "Feindselig dann süß."
+ ],
+ "yandere": [
+  "Yandere",
+  "Verrückt verliebt."
+ ],
+ "san": [
+  "-san",
+  "Herr/Frau."
+ ],
+ "chan": [
+  "-chan",
+  "Diminutiv."
+ ],
+ "kun": [
+  "-kun",
+  "Junger Mann."
+ ],
+ "dono": [
+  "-dono",
+  "Lord."
+ ],
+ "sensei": [
+  "-sensei",
+  "Meister."
+ ],
+ "adventurer-guild": [
+  "Abenteurergilde",
+  "Organisation."
+ ],
+ "vrmmo": [
+  "VRMMO",
+  "Virtuelles Spiel."
+ ],
+ "goddess": [
+  "Göttin",
+  "Gottheit."
+ ],
+ "gate": [
+  "Tor",
+  "Oder Gate."
+ ],
+ "awakening": [
+  "Erwachen",
+  "Kräfte."
+ ],
+ "regressor": [
+  "Regressor",
+  "Zeitreisender."
+ ],
+ "national-level-hunter": [
+  "Jäger auf Nationaler Ebene",
+  "Hoher Rang."
+ ],
+ "hunter-rank": [
+  "Jägerrang",
+  "Level."
+ ],
+ "grade": [
+  "Grad",
+  "Oder Rang."
+ ],
+ "mana": [
+  "Mana",
+  "Energie."
+ ],
+ "shadow-soldier": [
+  "Schattensoldat",
+  "Nekromantie."
+ ],
+ "monarch": [
+  "Monarch",
+  "König."
+ ],
+ "hyung": [
+  "Hyung",
+  "Großer Bruder (M)."
+ ],
+ "noona": [
+  "Noona",
+  "Große Schwester (M)."
+ ],
+ "oppa": [
+  "Oppa",
+  "Großer Bruder (F)."
+ ],
+ "sunbae": [
+  "Sunbae",
+  "Senior."
+ ],
+ "ahjussi": [
+  "Ahjussi",
+  "Herr."
+ ],
+ "ahjumma": [
+  "Ahjumma",
+  "Frau."
+ ],
+ "dungeon-break": [
+  "Dungeon-Ausbruch",
+  "Monsterflucht."
+ ],
+ "boss-monster": [
+  "Boss-Monster",
+  "Endgegner."
+ ],
+ "first-clear": [
+  "First Clear",
+  "Erster Abschluss."
+ ],
+ "clear": [
+  "Abschließen",
+  "Level schaffen."
+ ],
+ "penalty": [
+  "Strafe",
+  "Bestrafung."
+ ],
+ "compensation": [
+  "Kompensation",
+  "Belohnung."
+ ],
+ "ranker": [
+  "Ranker",
+  "Hochrangiger Spieler."
+ ],
+ "player-kill": [
+  "Spielermord"
+ ],
+ "broadcast": [
+  "Übertragung",
+  "Streaming."
+ ],
+ "mutant-monster": [
+  "Mutiertes Monster",
+  "Variante."
+ ],
+ "growth-type-ability": [
+  "Wachstumsfähigkeit",
+  "Entwickelt sich."
+ ],
+ "evolution": [
+  "Evolution",
+  "Entwicklung."
+ ],
+ "floor": [
+  "Ebene",
+  "Turmebene."
+ ],
+ "test": [
+  "Prüfung",
+  "Herausforderung."
+ ],
+ "test-administrator": [
+  "Prüfungsadministrator",
+  "Schiedsrichter."
+ ],
+ "floor-guardian": [
+  "Ebenenwächter",
+  "Boss."
+ ],
+ "irregular": [
+  "Irregulärer",
+  "Anomalie."
+ ],
+ "regular": [
+  "Regulärer",
+  "Normal."
+ ],
+ "hidden-floor": [
+  "Geheime Ebene",
+  "Geheim."
+ ],
+ "wall": [
+  "Wand",
+  "Barriere."
+ ],
+ "family": [
+  "Familie",
+  "Clan."
+ ],
+ "observer": [
+  "Beobachter",
+  "Zuschauer."
+ ],
+ "onii-chan": [
+  "Onii-chan",
+  "Bruder."
+ ],
+ "onee-chan": [
+  "Onee-chan",
+  "Schwester."
+ ],
+ "ossan": [
+  "Ossan",
+  "Alter."
+ ],
+ "osananajimi": [
+  "Osananajimi",
+  "Kindheitsfreund."
+ ],
+ "kokuhaku": [
+  "Kokuhaku",
+  "Geständnis."
+ ],
+ "bunkasai": [
+  "Bunkasai",
+  "Festival."
+ ],
+ "guild-card": [
+  "Gildenkarte"
+ ],
+ "job-change": [
+  "Klassenwechsel",
+  "Klasse."
+ ],
+ "labyrinth": [
+  "Labyrinth",
+  "Dungeon."
+ ],
+ "blacksmith": [
+  "Schmied",
+  "Handwerker."
+ ],
+ "slow-life": [
+  "Slow Life",
+  "Ruhiges Leben."
+ ],
+ "skill-book": [
+  "Fähigkeitsbuch",
+  "Item."
+ ],
+ "great-sage": [
+  "Großer Weiser",
+  "Titel."
+ ],
+ "sacred-sword": [
+  "Heiliges Schwert",
+  "Göttliche Waffe."
+ ],
+ "entrance-exam": [
+  "Aufnahmeprüfung",
+  "Test."
+ ],
+ "class-ranking": [
+  "Klassenranking",
+  "Noten."
+ ],
+ "mob-class": [
+  "Mob-Klasse",
+  "Hintergrundcharakter."
+ ],
+ "late-bloomer": [
+  "Spätzünder",
+  "Spätes Talent."
+ ],
+ "graduation-trial": [
+  "Abschlussprüfung",
+  "Endtest."
+ ],
+ "novel-knowledge": [
+  "Romanwissen",
+  "Isekai-Vorteil."
+ ],
+ "fourth-wall": [
+  "Vierte Wand",
+  "Meta."
+ ],
+ "system-voice": [
+  "Systemstimme",
+  "Ansager."
+ ],
+ "authors-note": [
+  "Anmerkung des Autors",
+  "Nachricht."
+ ],
+ "ancient-ruins": [
+  "Uralte Ruinen",
+  "Erkundung."
+ ],
+ "spirit-vein": [
+  "Geistader",
+  "Energiequelle."
+ ],
+ "middle-realm": [
+  "Mittleres Reich",
+  "Dimension."
+ ],
+ "void": [
+  "Leere",
+  "Nichts."
+ ],
+ "chaos": [
+  "Chaos",
+  "Unordnung."
+ ],
+ "tribute": [
+  "Tribut",
+  "Opfergabe."
+ ],
+ "garrison": [
+  "Garnison",
+  "Truppe."
+ ],
+ "liege": [
+  "Lehnsherr",
+  "Herrscher."
+ ],
+ "totem-beast": [
+  "Totembestie",
+  "Wächter."
+ ],
+ "beast-master": [
+  "Bestienmeister",
+  "Klasse."
+ ]
+}

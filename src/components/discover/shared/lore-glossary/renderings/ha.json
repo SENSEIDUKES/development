@@ -1,0 +1,1185 @@
+{
+ "qi": [
+  "Ikon Ruhu (Qi)"
+ ],
+ "cultivation": [
+  "Koyon Ruhu"
+ ],
+ "dantian": [
+  "Cibiyar Kuzari (Dantian)"
+ ],
+ "immortal-qi": [
+  "Ikon Ruhu na Har Abada"
+ ],
+ "cultivation-realm": [
+  "Matsayin Ruhu",
+  "Cultivation Level."
+ ],
+ "heavenly-tribulation": [
+  "Jarabawar Sama"
+ ],
+ "nascent-soul": [
+  "Sabon Ruhu"
+ ],
+ "golden-core": [
+  "Zuciyar Zinariya"
+ ],
+ "foundation-establishment": [
+  "Kafa Harsashi"
+ ],
+ "qi-refining": [
+  "Tattara Ikon Ruhu"
+ ],
+ "core-formation": [
+  "Samar da Zuciya"
+ ],
+ "spirit-severing": [
+  "Yanke Ruhu"
+ ],
+ "dao-seeking": [
+  "Neman Hanyar Dao"
+ ],
+ "domain": [
+  "Yanki"
+ ],
+ "ascension": [
+  "Tashi zuwa Sama"
+ ],
+ "meridians": [
+  "Hanyar Kuzari"
+ ],
+ "spiritual-root": [
+  "Tushen Ruhu"
+ ],
+ "jing-qi-shen": [
+  "Jing, Qi, Shen"
+ ],
+ "body-tempering": [
+  "Karfafa Jiki"
+ ],
+ "fiendgod-body-refining": [
+  "Karfafa Jikin Aljan-Abin Bauta",
+  "Fiendgod Refining."
+ ],
+ "heartforce-cultivation": [
+  "Koyon Ƙarfin Zuciya",
+  "Heartforce."
+ ],
+ "dual-cultivation": [
+  "Koyo Biyu"
+ ],
+ "alchemy": [
+  "Hada Magani",
+  "Alchemy."
+ ],
+ "spirit-stone": [
+  "Dutsen Ruhu"
+ ],
+ "spiritual-treasure": [
+  "Abin Al'ajabi"
+ ],
+ "storage-ring": [
+  "Zoben Ajiya"
+ ],
+ "talisman": [
+  "Laya"
+ ],
+ "formation": [
+  "Tsari",
+  "Formation/Array."
+ ],
+ "sect": [
+  "Darikar"
+ ],
+ "clan": [
+  "Kabila"
+ ],
+ "patriarch": [
+  "Uban Kabila"
+ ],
+ "elder": [
+  "Dattijo"
+ ],
+ "disciple-hierarchy": [
+  "Matsayin Dalibi"
+ ],
+ "spirit-beast": [
+  "Dabban Ruhu"
+ ],
+ "beast-taming": [
+  "Hore Dabba"
+ ],
+ "heavenly-dao": [
+  "Hanyar Sama (Dao)"
+ ],
+ "dao": [
+  "Hanya (Dao)"
+ ],
+ "karma": [
+  "Sakamakon Aiki (Karma)"
+ ],
+ "reincarnation": [
+  "Sake Haihuwa"
+ ],
+ "regression": [
+  "Komawa Baya (Zamani)"
+ ],
+ "transmigration": [
+  "Kaura zuwa Wata Duniya"
+ ],
+ "isekai": [
+  "Duniya Daban (Isekai)"
+ ],
+ "otome-isekai": [
+  "Otome Isekai"
+ ],
+ "hunter-system": [
+  "Tsarin Mafarauci"
+ ],
+ "constellation": [
+  "Taurari (Constellation)"
+ ],
+ "dungeon": [
+  "Kogon Duhu"
+ ],
+ "tower": [
+  "Hasumiya"
+ ],
+ "system": [
+  "Tsari (System)"
+ ],
+ "status-window": [
+  "Taga Matsayi"
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "Kwarewa"
+ ],
+ "level-up": [
+  "Tashi Matsayi"
+ ],
+ "quest": [
+  "Aiki (Quest)"
+ ],
+ "guild": [
+  "Kungiya"
+ ],
+ "rarity": [
+  "Abu Mai Wuyan Samu"
+ ],
+ "loot": [
+  "Ganimar Yaƙi"
+ ],
+ "wuxia": [
+  "Wuxia"
+ ],
+ "xianxia": [
+  "Xianxia"
+ ],
+ "xuanhuan": [
+  "Xuanhuan"
+ ],
+ "murim": [
+  "Murim"
+ ],
+ "litrpg": [
+  "LitRPG"
+ ],
+ "progression-fantasy": [
+  "Labarin Cigaba"
+ ],
+ "academy-arc": [
+  "Kashin Makaranta"
+ ],
+ "guide": [
+  "Jagora"
+ ],
+ "esper": [
+  "Mai Ikon Hankali"
+ ],
+ "arrogant-young-master": [
+  "Matashi Mai Girman Kai"
+ ],
+ "face": [
+  "Mutunci (Face)"
+ ],
+ "face-slapping": [
+  "Mari a Fuska (Tozartawa)"
+ ],
+ "tournament-arc": [
+  "Kashin Gasar"
+ ],
+ "secret-realm": [
+  "Yanki na Sirri"
+ ],
+ "auction": [
+  "Gwanjo"
+ ],
+ "bloodline": [
+  "Jinin Gado"
+ ],
+ "physique": [
+  "Kamar Jiki"
+ ],
+ "dao-companion": [
+  "Abokin Tafiya a Hanyar Dao"
+ ],
+ "harem": [
+  "Harem (Mata da yawa)"
+ ],
+ "cannon-fodder": [
+  "Abincin Wuta"
+ ],
+ "villainess": [
+  "Muguwar Mace"
+ ],
+ "protagonist-halo": [
+  "Hasken Jarumi"
+ ],
+ "system-shop": [
+  "Shagon Tsari"
+ ],
+ "inventory": [
+  "Rumbun Ajiya"
+ ],
+ "class": [
+  "Rukuni (Class)"
+ ],
+ "stat": [
+  "Matsayi (Stat)"
+ ],
+ "skill-tree": [
+  "Bishiyar Kwarewa"
+ ],
+ "party": [
+  "Karamar Kungiya"
+ ],
+ "raid": [
+  "Hari (Raid)"
+ ],
+ "pvp": [
+  "PvP (Dan Wasa da Dan Wasa)"
+ ],
+ "pve": [
+  "PvE (Dan Wasa da Yanayi)"
+ ],
+ "npc": [
+  "Dan Wasan Baya (NPC)"
+ ],
+ "sentient-system": [
+  "Tsari Mai Hankali"
+ ],
+ "regression-novel": [
+  "Labarin Komawa Baya"
+ ],
+ "transmigration-novel": [
+  "Labarin Kaura zuwa Wata Duniya"
+ ],
+ "cultivation-technique": [
+  "Dabarun Koyon Ruhu"
+ ],
+ "forbidden-technique": [
+  "Dabara da aka Hana"
+ ],
+ "sword-intent": [
+  "Nufin Takobi"
+ ],
+ "domain-expansion": [
+  "Fadada Yanki"
+ ],
+ "heavenly-tribulation-lightning": [
+  "Tsawar Jarabawar Sama",
+  "Tribulation Lightning."
+ ],
+ "soul": [
+  "Ruhu"
+ ],
+ "spiritual-sense": [
+  "Hankalin Ruhu"
+ ],
+ "qi-deviation": [
+  "Kauccen Hanyar Qi"
+ ],
+ "heart-devil": [
+  "Iblisin Zuciya"
+ ],
+ "merit": [
+  "Ladabi / Daraja"
+ ],
+ "karmic-fire": [
+  "Wutar Karma"
+ ],
+ "ascension-platform": [
+  "Dandalin Tashi zuwa Sama"
+ ],
+ "lower-realm": [
+  "Yanki na Kasa"
+ ],
+ "immortal-realm": [
+  "Yanki na Har Abada"
+ ],
+ "spirit-realm": [
+  "Yankin Ruhu"
+ ],
+ "great-thousand-world": [
+  "Babbar Duniyar Dubu"
+ ],
+ "plane": [
+  "Kashin Duniya (Plane)"
+ ],
+ "world-tree": [
+  "Bishiyar Duniya"
+ ],
+ "celestial-empire": [
+  "Daular Sama"
+ ],
+ "demon": [
+  "Aljani / Iblis"
+ ],
+ "orthodox-vs-unorthodox": [
+  "Tsadar vs Rashin Tsari"
+ ],
+ "sect-war": [
+  "Yakin Darikoki"
+ ],
+ "resource-war": [
+  "Yakin Samun Arziki"
+ ],
+ "talent": [
+  "Baiwa"
+ ],
+ "cheat": [
+  "Babu Doka (Cheat)"
+ ],
+ "time-dilation": [
+  "Sauyin Lokaci"
+ ],
+ "appraisal": [
+  "Gwaji / Bincike"
+ ],
+ "loot-box": [
+  "Akwatin Ganimar"
+ ],
+ "pay-to-win": [
+  "Biyan Kudi don Samun Nasara"
+ ],
+ "player": [
+  "Dan Wasa"
+ ],
+ "administrator": [
+  "Mai Gudanarwa"
+ ],
+ "tutorial": [
+  "Koyarwa"
+ ],
+ "hidden-quest": [
+  "Aikin Sirri"
+ ],
+ "repair": [
+  "Gyara"
+ ],
+ "death-penalty": [
+  "Hukuncin Mutuwa"
+ ],
+ "respawn": [
+  "Dawowa Bayan Mutuwa"
+ ],
+ "fast-travel": [
+  "Tafiya Mai Sauri"
+ ],
+ "mount": [
+  "Dabba Mai Hawa"
+ ],
+ "pet": [
+  "Dabba Mai Kula"
+ ],
+ "crafting": [
+  "Kera"
+ ],
+ "enchanting": [
+  "Sa Sihiri"
+ ],
+ "socket": [
+  "Wurin Sa Kayan Ado (Socket)"
+ ],
+ "set-item": [
+  "Kayan Daban (Set Item)"
+ ],
+ "unique-item": [
+  "Kayan Musamman"
+ ],
+ "courting-death": [
+  "Neman Mutuwa"
+ ],
+ "mount-tai": [
+  "Dutsen Tai"
+ ],
+ "kowtow": [
+  "Tsugunawa Hada Kai da Kasa"
+ ],
+ "jade-slip": [
+  "Katin Jade (Kayan Rikodi)"
+ ],
+ "romance-fantasy": [
+  "Labarin Soyayya da Tatsuniya"
+ ],
+ "returner": [
+  "Wanda Ya Dawo"
+ ],
+ "sword-cultivator": [
+  "Mai Koyon Takobi"
+ ],
+ "foundation-establishment-pill": [
+  "Magani na Kafa Harsashi",
+  "Foundation Pill."
+ ],
+ "marrow-cleansing-pill": [
+  "Magani na Tsaftace Bargo"
+ ],
+ "fasting-pill": [
+  "Magani na Azumi"
+ ],
+ "blood-burning-pill": [
+  "Magani na Kona Jini"
+ ],
+ "shim-gong": [
+  "Shim Gong"
+ ],
+ "shin-bup": [
+  "Shin Bup"
+ ],
+ "jeom-hyeol": [
+  "Jeom Hyeol"
+ ],
+ "ho-shin-gang-qi": [
+  "Ho Shin Gang Qi"
+ ],
+ "geom-gi": [
+  "Geom Gi"
+ ],
+ "sama": [
+  "-sama"
+ ],
+ "senpai-kouhai": [
+  "Senpai / Kouhai"
+ ],
+ "ojou-sama": [
+  "Ojou-sama"
+ ],
+ "maou-gun": [
+  "Sojojin Maou (Sarkin Aljanu)"
+ ],
+ "dao-child": [
+  "Yaron Dao"
+ ],
+ "peak-master": [
+  "Uban Kololuwa"
+ ],
+ "sect-leader": [
+  "Shugaban Darikar"
+ ],
+ "handyman-disciple": [
+  "Dalibin Aikin Hannu"
+ ],
+ "guest-elder": [
+  "Bakon Dattijo"
+ ],
+ "sweeping-monk": [
+  "Sufi Mai Share-Share"
+ ],
+ "hidden-class": [
+  "Rukuni na Sirri"
+ ],
+ "necromancer": [
+  "Mai Tada Matattu"
+ ],
+ "job-advancement": [
+  "Ci Gaba a Aiki"
+ ],
+ "berserker": [
+  "Mayaƙi Mai Fushi"
+ ],
+ "paladin": [
+  "Jarumin Allah"
+ ],
+ "beast-core": [
+  "Zuciyar Dabba"
+ ],
+ "soul-contract": [
+  "Yarjejeniyar Ruhu"
+ ],
+ "beast-pouch": [
+  "Jakar Dabba"
+ ],
+ "bloodline-evolution": [
+  "Sauyin Jinin Gado"
+ ],
+ "familiar": [
+  "Abokin Tafiya (Dabba)"
+ ],
+ "equality-contract": [
+  "Yarjejeniyar Daidaito"
+ ],
+ "heavenly-flame": [
+  "Wutar Sama"
+ ],
+ "spirit-herb": [
+  "Ciyawan Ruhu"
+ ],
+ "spirit-spring-water": [
+  "Ruwan Maɓuɓɓugar Ruhu"
+ ],
+ "array-eye": [
+  "Idon Tsari"
+ ],
+ "formation-flag": [
+  "Tutar Tsari"
+ ],
+ "spirit-gathering-array": [
+  "Tsari na Tattara Ruhu"
+ ],
+ "red-gate": [
+  "Jajayen Kofa"
+ ],
+ "clear-condition": [
+  "Sharadin Cin Nasara"
+ ],
+ "magic-stone": [
+  "Dutsen Sihiri"
+ ],
+ "penalty-quest": [
+  "Aikin Hukunci"
+ ],
+ "floor-master": [
+  "Shugaban Hawa"
+ ],
+ "porter": [
+  "Dan Dako"
+ ],
+ "scenario": [
+  "Waki'a"
+ ],
+ "probability": [
+  "Yiwuwar Abu"
+ ],
+ "stigma": [
+  "Tabo (Stigma)"
+ ],
+ "murim-alliance": [
+  "Kungiyar Murim"
+ ],
+ "demonic-cult": [
+  "Darikar Aljanu"
+ ],
+ "northern-duke": [
+  "Sarkin Arewa (Duke)"
+ ],
+ "tea-party": [
+  "Taron Shayi"
+ ],
+ "munchkin": [
+  "Munchkin (Mai Matukar Karfi)"
+ ],
+ "cider": [
+  "Cider (Abin Dadi Bayan Wuyah)"
+ ],
+ "black-mastermind": [
+  "Muguwar Zuciya a Boye"
+ ],
+ "dokkaebi": [
+  "Dokkaebi (Aljani na Korea)"
+ ],
+ "internal-energy": [
+  "Naegong"
+ ],
+ "jade-beauty": [
+  "Kyakkyawan Kamar Jade"
+ ],
+ "white-lotus": [
+  "Farin Lotus (Muguwar Mace da ke Nunawa Kirki)"
+ ],
+ "eating-tofu": [
+  "Cin Tofu (Satar Jiki)"
+ ],
+ "coughing-up-blood": [
+  "Tari da Jini"
+ ],
+ "frog-in-well": [
+  "Kwado a Rijiya (Rashin Sanin Duniya)"
+ ],
+ "heaven-defying": [
+  "Saba wa Sama"
+ ],
+ "green-hat": [
+  "Koren Hul (Cin Amana)"
+ ],
+ "shuang-wen": [
+  "Labarin Jin Dadi (Shuang Wen)"
+ ],
+ "giving-face": [
+  "Ba da Girma"
+ ],
+ "dungeon-core": [
+  "Zuciyar Kogon Duhu"
+ ],
+ "fiefdom": [
+  "Masarauta (Fiefdom)"
+ ],
+ "node": [
+  "Mahada (Node)"
+ ],
+ "contribution-points": [
+  "Makin Taimako"
+ ],
+ "sect-mission-hall": [
+  "Dakin Aikin Darikar"
+ ],
+ "spirit-garden": [
+  "Bambun Ruhu"
+ ],
+ "city-lord": [
+  "Sarkin Gari"
+ ],
+ "edict": [
+  "Dokar Sarki"
+ ],
+ "vassal": [
+  "Bawan Sarki"
+ ],
+ "primordial-chaos": [
+  "Hargitsin Farko"
+ ],
+ "the-void": [
+  "Babu (The Void)"
+ ],
+ "life-forbidden-zone": [
+  "Wurin da Aka Hana Rayuwa"
+ ],
+ "ancient-desolate-beast": [
+  "Tsohon Dabban Cikin Hamada"
+ ],
+ "star-field": [
+  "Filin Taurari"
+ ],
+ "spatial-storm": [
+  "Guguwar Wuri"
+ ],
+ "nine-heavens": [
+  "Sammai Tara"
+ ],
+ "river-of-time": [
+  "Kogin Lokaci"
+ ],
+ "epoch": [
+  "Zamani"
+ ],
+ "karmic-thread": [
+  "Zaren Karma"
+ ],
+ "origin-source": [
+  "Asalin Farkon"
+ ],
+ "heaven-and-earth": [
+  "Sama da Kasa"
+ ],
+ "wuji": [
+  "Wuji (Babu Iyaka)"
+ ],
+ "dao-source": [
+  "Asalin Dao"
+ ],
+ "engagement-annulment": [
+  "Rushe Auren Farko"
+ ],
+ "toad-lusting-after-swan-meat": [
+  "Kwado da ke Neman Naman Zabi",
+  "Toad Lusting..."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "Kada ku Ci Mutuncin Yaro",
+  "Don't Bully..."
+ ],
+ "concubine": [
+  "Kwarƙwara"
+ ],
+ "sect-rules": [
+  "Dokokin Darikar"
+ ],
+ "filial-piety": [
+  "Biyayya ga Iyaye"
+ ],
+ "pill-tribulation": [
+  "Jarabawar Magani"
+ ],
+ "monster-genius": [
+  "Dodo (Mai Yawan Basira)"
+ ],
+ "gu-venom-witchcraft": [
+  "Guba ta Gu (Sihiri)"
+ ],
+ "corpse-refining": [
+  "Gyara Gawa"
+ ],
+ "fairy-sister": [
+  "Yar Uwa Aljana (Mace Kyakkyawa)"
+ ],
+ "young-miss": [
+  "Gimbiya (Yar Uwar Kowa)"
+ ],
+ "mount-kunlun": [
+  "Dutsen Kunlun"
+ ],
+ "aggro": [
+  "Jan Hankalin Maƙiyi (Aggro)"
+ ],
+ "crowd-control": [
+  "Sarrafa Jama'a"
+ ],
+ "kiting": [
+  "Dabara (Gudu Ana Duka)"
+ ],
+ "aoe": [
+  "Hari a Wuri Mafi Girma (AoE)"
+ ],
+ "proc": [
+  "Tashi (Sakamako a Wasa)"
+ ],
+ "kill-steal": [
+  "Satar Kisa"
+ ],
+ "tank": [
+  "Mai Karbar Duka (Tank)"
+ ],
+ "dps": [
+  "Barna a Kowane Dakika (DPS)"
+ ],
+ "gold-sink": [
+  "Ramin Kudi (Zubar da Kudi)"
+ ],
+ "auction-sniping": [
+  "Kwace Gwanjo a Karshen Minti"
+ ],
+ "griefing": [
+  "Batawa Wani Wasa"
+ ],
+ "dot": [
+  "Barna a Hankali (DoT)",
+  "Damage over Time."
+ ],
+ "contract-marriage": [
+  "Auren Kwangila"
+ ],
+ "reawakening": [
+  "Sake Farkawa"
+ ],
+ "tyrant": [
+  "Muguwar Shugaba (Tyrant)"
+ ],
+ "obsessive-male-lead": [
+  "Jarumi Mai Tsananin Kauna",
+  "Obsessive Male..."
+ ],
+ "original-heroine": [
+  "Asalin Jaruma"
+ ],
+ "regression-trauma": [
+  "Zafin Komawa Baya"
+ ],
+ "hunter-association": [
+  "Kungiyar Mafarauta"
+ ],
+ "sudden-death": [
+  "Mutuwar Farat Daya"
+ ],
+ "guild-master": [
+  "Shugaban Kungiya"
+ ],
+ "adventurer-ranks": [
+  "Matsayin Masu Yawon Duniya"
+ ],
+ "beastkin": [
+  "Mutum Mai Siffar Dabba"
+ ],
+ "demon-god": [
+  "Abin Bautar Aljanu"
+ ],
+ "unique-skill": [
+  "Kwarewa ta Musamman"
+ ],
+ "demon-realm": [
+  "Duniya Aljanu"
+ ],
+ "slave-crest": [
+  "Shaidar Bawa"
+ ],
+ "subjugation": [
+  "Nasarar Dakushewa"
+ ],
+ "otherworlder": [
+  "Dan Wata Duniya"
+ ],
+ "heros-party": [
+  "Ƙungiyar Jarumi"
+ ],
+ "dao-heart": [
+  "Zuciyar Dao"
+ ],
+ "severing-mortal-ties": [
+  "Yanke Alaka da Duniya"
+ ],
+ "five-elements": [
+  "Abubuwa Biyar (Elements)"
+ ],
+ "yin-and-yang": [
+  "Yin da Yang"
+ ],
+ "enlightenment": [
+  "Hasken Ilmi"
+ ],
+ "mortal-tribulation": [
+  "Jarabawar Duniya"
+ ],
+ "soul-dissipation": [
+  "Batar Ruhu"
+ ],
+ "dao-marks": [
+  "Tabon Dao"
+ ],
+ "nirvana": [
+  "Nirvana (Kololuwar Hutu)"
+ ],
+ "fellow-daoist": [
+  "Dan Uwa a Hanyar Dao"
+ ],
+ "sect-familial-address": [
+  "Kiran Dan Uwa (A Darika)"
+ ],
+ "cold-snort": [
+  "Fushin Fuska da Numfashi"
+ ],
+ "dog-leg-lackey": [
+  "Bawan Wani (Lackey)",
+  "Lackey."
+ ],
+ "jianghu": [
+  "Jianghu (Duniya Ta Mayaka)"
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "Zama a Kan Dutse Ana Kallon Faɗan Damisa",
+  "Watching Tigers Fight."
+ ],
+ "chaebol": [
+  "Chaebol (Mai Kudi)"
+ ],
+ "heavenly-oath": [
+  "Rantsuwar Sama"
+ ],
+ "title-achievement": [
+  "Lakabi / Nasara"
+ ],
+ "system-erasure": [
+  "Shafewar Tsari"
+ ],
+ "sweet-potato": [
+  "Dankali (Matsala marar dadi)"
+ ],
+ "white-moonlight": [
+  "Farin Wata (Mace wanda ba za a iya manta da ita ba)"
+ ],
+ "cinnabar-mole": [
+  "Ja a Fuska (Cinnabar)"
+ ],
+ "holy-mother": [
+  "Uwa Mai Tsarki (Mai Yafe Komai)"
+ ],
+ "dog-blood": [
+  "Jinin Kare (Wasa mai zafi da wuyah)"
+ ],
+ "angst": [
+  "Takaici"
+ ],
+ "scum": [
+  "Datti (Mugu)"
+ ],
+ "brain-dead": [
+  "Ba shi da Hankali"
+ ],
+ "meat": [
+  "Nama (Ilimin Mata da Miji)",
+  "Meat (Smut)."
+ ],
+ "green-tea": [
+  "Koren Shayi (Mai Fuska Biyu)"
+ ],
+ "territory": [
+  "Ƙasa (Territory)"
+ ],
+ "rebirth": [
+  "Sake Rayuwa"
+ ],
+ "devil-mara": [
+  "Iblis / Mara"
+ ],
+ "demonic-beast": [
+  "Dabban Iblis"
+ ],
+ "truck-kun": [
+  "Babbar Mota (Truck-kun)"
+ ],
+ "cheat-skill": [
+  "Ilimin Babu Doka"
+ ],
+ "divine-protection": [
+  "Tsari Daga Allah"
+ ],
+ "genkai-toppa": [
+  "Fasa Iyaka",
+  "Limit Break."
+ ],
+ "chuunibyou": [
+  "Chuunibyou"
+ ],
+ "tsundere": [
+  "Tsundere"
+ ],
+ "yandere": [
+  "Yandere"
+ ],
+ "san": [
+  "-san"
+ ],
+ "chan": [
+  "-chan"
+ ],
+ "kun": [
+  "-kun"
+ ],
+ "dono": [
+  "-dono"
+ ],
+ "sensei": [
+  "-sensei"
+ ],
+ "adventurer-guild": [
+  "Kungiyar Mafarauta Masu Yawon Duniya"
+ ],
+ "vrmmo": [
+  "VRMMO"
+ ],
+ "goddess": [
+  "Abin Bauta Mace"
+ ],
+ "gate": [
+  "Kofa"
+ ],
+ "awakening": [
+  "Farkawa (Samun Iko)"
+ ],
+ "regressor": [
+  "Mai Komawa Baya"
+ ],
+ "national-level-hunter": [
+  "Mafaraucin Kasa"
+ ],
+ "hunter-rank": [
+  "Matsayin Mafarauci"
+ ],
+ "grade": [
+  "Aji / Maki"
+ ],
+ "mana": [
+  "Mana (Kuzari)"
+ ],
+ "shadow-soldier": [
+  "Sojan Inuwa"
+ ],
+ "monarch": [
+  "Sarki"
+ ],
+ "hyung": [
+  "Hyung (Babban Wa)"
+ ],
+ "noona": [
+  "Noona (Babban Ya)"
+ ],
+ "oppa": [
+  "Oppa (Babban Wa Ga Mace)"
+ ],
+ "sunbae": [
+  "Sunbae (Babba a Makaranta/Wuri)"
+ ],
+ "ahjussi": [
+  "Ahjussi (Kawu)"
+ ],
+ "ahjumma": [
+  "Ahjumma (Inna)"
+ ],
+ "dungeon-break": [
+  "Fashewar Kogon Duhu"
+ ],
+ "boss-monster": [
+  "Shugaban Dodo"
+ ],
+ "first-clear": [
+  "Nasarar Farko"
+ ],
+ "clear": [
+  "Cin Nasara"
+ ],
+ "penalty": [
+  "Hukunci"
+ ],
+ "compensation": [
+  "Biyan Diyya"
+ ],
+ "ranker": [
+  "Mai Matsayi"
+ ],
+ "player-kill": [
+  "Kashe Dan Wasa"
+ ],
+ "broadcast": [
+  "Watsa Labarai"
+ ],
+ "mutant-monster": [
+  "Dodar Da Ya Canja Siffa"
+ ],
+ "growth-type-ability": [
+  "Ikon Mai Ci Gaba"
+ ],
+ "evolution": [
+  "Sauyin Siffa Zuwa Gaba"
+ ],
+ "floor": [
+  "Falo / Hawa"
+ ],
+ "test": [
+  "Jarabawa"
+ ],
+ "test-administrator": [
+  "Mai Gudanar Da Jarabawa"
+ ],
+ "floor-guardian": [
+  "Mai Tsaron Hawa"
+ ],
+ "irregular": [
+  "Bakon Tsari (Wanda Ba A Sani Ba)"
+ ],
+ "regular": [
+  "Mai Tsari (Wanda Aka Sani)"
+ ],
+ "hidden-floor": [
+  "Hawan Sirri"
+ ],
+ "wall": [
+  "Ganuwa"
+ ],
+ "family": [
+  "Iyali"
+ ],
+ "observer": [
+  "Mai Lura"
+ ],
+ "onii-chan": [
+  "Onii-chan"
+ ],
+ "onee-chan": [
+  "Onee-chan"
+ ],
+ "ossan": [
+  "Ossan"
+ ],
+ "osananajimi": [
+  "Osananajimi"
+ ],
+ "kokuhaku": [
+  "Kokuhaku"
+ ],
+ "bunkasai": [
+  "Bunkasai"
+ ],
+ "guild-card": [
+  "Katin Kungiya"
+ ],
+ "job-change": [
+  "Canjin Aiki"
+ ],
+ "labyrinth": [
+  "Labyrinth"
+ ],
+ "blacksmith": [
+  "Masanin Karfe"
+ ],
+ "slow-life": [
+  "Rayuwa Mai Sauri-A-Hankali"
+ ],
+ "skill-book": [
+  "Littafin Kwarewa"
+ ],
+ "great-sage": [
+  "Babban Malam"
+ ],
+ "sacred-sword": [
+  "Takobin Tsarki"
+ ],
+ "entrance-exam": [
+  "Jarabawar Shiga"
+ ],
+ "class-ranking": [
+  "Matsayin Aji"
+ ],
+ "mob-class": [
+  "Aji Mai Rahusa"
+ ],
+ "late-bloomer": [
+  "Wanda Ya Makara Amma Ya Yi Nasara"
+ ],
+ "graduation-trial": [
+  "Jarabawar Kamala"
+ ],
+ "novel-knowledge": [
+  "Ilimin Labari"
+ ],
+ "fourth-wall": [
+  "Katangar Hudu"
+ ],
+ "system-voice": [
+  "Muryar Tsari"
+ ],
+ "authors-note": [
+  "Bayanin Marubuci"
+ ],
+ "ancient-ruins": [
+  "Tsoffin Rugujewar"
+ ],
+ "spirit-vein": [
+  "Jijiya na Ruhu"
+ ],
+ "middle-realm": [
+  "Yanki na Tsakiya"
+ ],
+ "void": [
+  "Wuri Mara Komai"
+ ],
+ "chaos": [
+  "Hargitsi"
+ ],
+ "tribute": [
+  "Gaisuwa / Kudi"
+ ],
+ "garrison": [
+  "Sansani"
+ ],
+ "liege": [
+  "Sarki / Uba"
+ ],
+ "totem-beast": [
+  "Dabba na Alama"
+ ],
+ "beast-master": [
+  "Kwararre a Kan Dabbobi"
+ ]
+}

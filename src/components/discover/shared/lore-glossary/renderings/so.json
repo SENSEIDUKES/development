@@ -1,0 +1,1185 @@
+{
+ "qi": [
+  "Awoodda Ruuxa (Qi)"
+ ],
+ "cultivation": [
+  "Korinta Ruuxa (Cultivation)"
+ ],
+ "dantian": [
+  "Xarunta Awoodda (Dantian)"
+ ],
+ "immortal-qi": [
+  "Awoodda Ruuxa ee aan Dhiman"
+ ],
+ "cultivation-realm": [
+  "Heerka Korinta",
+  "Cultivation Level."
+ ],
+ "heavenly-tribulation": [
+  "Imtixaanka Cirka"
+ ],
+ "nascent-soul": [
+  "Ruux Cusub"
+ ],
+ "golden-core": [
+  "Buxda Dahabka"
+ ],
+ "foundation-establishment": [
+  "Aasaasidda Aasaaska"
+ ],
+ "qi-refining": [
+  "Uruurinta Awoodda Ruuxa"
+ ],
+ "core-formation": [
+  "Samaynta Buxda"
+ ],
+ "spirit-severing": [
+  "Goynta Ruuxa"
+ ],
+ "dao-seeking": [
+  "Raadinta Waddada (Dao)"
+ ],
+ "domain": [
+  "Deegaan"
+ ],
+ "ascension": [
+  "Kicitaanka Cirka"
+ ],
+ "meridians": [
+  "Waddada Awoodda (Meridian)"
+ ],
+ "spiritual-root": [
+  "Xididka Ruuxa"
+ ],
+ "jing-qi-shen": [
+  "Jing, Qi, Shen"
+ ],
+ "body-tempering": [
+  "Adkaynta Jirka"
+ ],
+ "fiendgod-body-refining": [
+  "Adkaynta Jirka Shaydaanka iyo Ilaahyada",
+  "Fiendgod Refining."
+ ],
+ "heartforce-cultivation": [
+  "Korinta Awoodda Qalbiga",
+  "Heartforce."
+ ],
+ "dual-cultivation": [
+  "Korinta Labanlaabka"
+ ],
+ "alchemy": [
+  "Samaynta Kiniinka",
+  "Alchemy."
+ ],
+ "spirit-stone": [
+  "Dhagaxa Ruuxa"
+ ],
+ "spiritual-treasure": [
+  "Shayga Awoodda Leh (Artifact)"
+ ],
+ "storage-ring": [
+  "Faraantiga Kaydinta"
+ ],
+ "talisman": [
+  "Qardhaas"
+ ],
+ "formation": [
+  "Samaynta",
+  "Formation/Array."
+ ],
+ "sect": [
+  "Qolada"
+ ],
+ "clan": [
+  "Qabiilka"
+ ],
+ "patriarch": [
+  "Hogaamiyaha Qabiilka"
+ ],
+ "elder": [
+  "Odayga"
+ ],
+ "disciple-hierarchy": [
+  "Heerarka Ardayda"
+ ],
+ "spirit-beast": [
+  "Bahalka Ruuxa"
+ ],
+ "beast-taming": [
+  "Xakamaynta Bahalka"
+ ],
+ "heavenly-dao": [
+  "Waddada Cirka (Dao)"
+ ],
+ "dao": [
+  "Waddada (Dao)"
+ ],
+ "karma": [
+  "Xisaabta Camalka (Karma)"
+ ],
+ "reincarnation": [
+  "Dib-u-dhalasho"
+ ],
+ "regression": [
+  "Dib-u-noqosho (Waqtiga)"
+ ],
+ "transmigration": [
+  "U-guurista Adduun Kale"
+ ],
+ "isekai": [
+  "Adduun Kale (Isekai)"
+ ],
+ "otome-isekai": [
+  "Otome Isekai"
+ ],
+ "hunter-system": [
+  "Nidaamka Ugaadhsiga"
+ ],
+ "constellation": [
+  "Xiddigaha (Constellation)"
+ ],
+ "dungeon": [
+  "Xabsiga Dhulka Hoostiisa"
+ ],
+ "tower": [
+  "Daar Dheer (Munaarad)"
+ ],
+ "system": [
+  "Nidaam (System)"
+ ],
+ "status-window": [
+  "Daaqadda Xaaladda"
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "Xirfad"
+ ],
+ "level-up": [
+  "Kordhinta Heerka"
+ ],
+ "quest": [
+  "Hawsal (Quest)"
+ ],
+ "guild": [
+  "Ururka"
+ ],
+ "rarity": [
+  "Nadir / Dhif"
+ ],
+ "loot": [
+  "Biliq (Loot)"
+ ],
+ "wuxia": [
+  "Wuxia"
+ ],
+ "xianxia": [
+  "Xianxia"
+ ],
+ "xuanhuan": [
+  "Xuanhuan"
+ ],
+ "murim": [
+  "Murim"
+ ],
+ "litrpg": [
+  "LitRPG"
+ ],
+ "progression-fantasy": [
+  "Sheekada Koriinka"
+ ],
+ "academy-arc": [
+  "Qaybta Akadeemiyadda"
+ ],
+ "guide": [
+  "Hagaha"
+ ],
+ "esper": [
+  "Qofka Awoodda Maskaxda"
+ ],
+ "arrogant-young-master": [
+  "Master Yar oo Kibir Badan"
+ ],
+ "face": [
+  "Waji / Sharaf"
+ ],
+ "face-slapping": [
+  "Dharbaaxada Wajiga (Aflagaado)"
+ ],
+ "tournament-arc": [
+  "Qaybta Tartanka"
+ ],
+ "secret-realm": [
+  "Deegaan Sir Ah"
+ ],
+ "auction": [
+  "Xaraash"
+ ],
+ "bloodline": [
+  "Dhiigga Sinjiga"
+ ],
+ "physique": [
+  "Qaabdhismeedka Jirka"
+ ],
+ "dao-companion": [
+  "Wehelka Dao"
+ ],
+ "harem": [
+  "Haarem"
+ ],
+ "cannon-fodder": [
+  "Cuntada Madfaca"
+ ],
+ "villainess": [
+  "Naagta Xumaanta"
+ ],
+ "protagonist-halo": [
+  "Awoodda Jilaaga Koowaad"
+ ],
+ "system-shop": [
+  "Dukaanka Nidaamka"
+ ],
+ "inventory": [
+  "Kaydka Alaabta"
+ ],
+ "class": [
+  "Nooca (Class)"
+ ],
+ "stat": [
+  "Xaaladda (Stat)"
+ ],
+ "skill-tree": [
+  "Geedka Xirfadda"
+ ],
+ "party": [
+  "Koox"
+ ],
+ "raid": [
+  "Weerar (Raid)"
+ ],
+ "pvp": [
+  "PvP (Ciyaaryahan vs Ciyaaryahan)"
+ ],
+ "pve": [
+  "PvE (Ciyaaryahan vs Deegaan)"
+ ],
+ "npc": [
+  "NPC (Qof Aan Ciyaareyn)"
+ ],
+ "sentient-system": [
+  "Nidaam Dareen Leh"
+ ],
+ "regression-novel": [
+  "Sheekada Dib-u-noqoshada"
+ ],
+ "transmigration-novel": [
+  "Sheekada U-guurista Adduunka"
+ ],
+ "cultivation-technique": [
+  "Farsamada Korinta"
+ ],
+ "forbidden-technique": [
+  "Farsamo Mamnuuc ah"
+ ],
+ "sword-intent": [
+  "Niyadda Seefta"
+ ],
+ "domain-expansion": [
+  "Balaarinta Deegaanka"
+ ],
+ "heavenly-tribulation-lightning": [
+  "Hillaaca Imtixaanka Cirka",
+  "Tribulation Lightning."
+ ],
+ "soul": [
+  "Ruuxa"
+ ],
+ "spiritual-sense": [
+  "Dareenka Ruuxa"
+ ],
+ "qi-deviation": [
+  "Dabaqadda Qi"
+ ],
+ "heart-devil": [
+  "Shaydaanka Qalbiga"
+ ],
+ "merit": [
+  "Tixgelin / Mudnaan"
+ ],
+ "karmic-fire": [
+  "Dabka Karma"
+ ],
+ "ascension-platform": [
+  "Masraxa Kicitaanka"
+ ],
+ "lower-realm": [
+  "Deegaanka Hoose"
+ ],
+ "immortal-realm": [
+  "Deegaanka Aan Dhiman"
+ ],
+ "spirit-realm": [
+  "Deegaanka Ruuxa"
+ ],
+ "great-thousand-world": [
+  "Adduunyada Kun ee Weyn"
+ ],
+ "plane": [
+  "Heer (Plane)"
+ ],
+ "world-tree": [
+  "Geedka Adduunka"
+ ],
+ "celestial-empire": [
+  "Boqortooyada Cirka"
+ ],
+ "demon": [
+  "Jinni / Shaydaan"
+ ],
+ "orthodox-vs-unorthodox": [
+  "Suxaal vs Aan Suxaal ahayn"
+ ],
+ "sect-war": [
+  "Dagaalka Qolooyinka"
+ ],
+ "resource-war": [
+  "Dagaalka Khayraadka"
+ ],
+ "talent": [
+  "Kartida"
+ ],
+ "cheat": [
+  "Qiyaano (Cheat)"
+ ],
+ "time-dilation": [
+  "Isbeddelka Waqtiga"
+ ],
+ "appraisal": [
+  "Qiimeyn"
+ ],
+ "loot-box": [
+  "Sanduuqa Biliq"
+ ],
+ "pay-to-win": [
+  "Bixi si Aad u Guulaysato"
+ ],
+ "player": [
+  "Ciyaaryahan"
+ ],
+ "administrator": [
+  "Maamulaha"
+ ],
+ "tutorial": [
+  "Cashar Barasho"
+ ],
+ "hidden-quest": [
+  "Hawl Sir Ah"
+ ],
+ "repair": [
+  "Dayactir"
+ ],
+ "death-penalty": [
+  "Ciqaabta Dhimashada"
+ ],
+ "respawn": [
+  "Dib-u-soo-noolayn"
+ ],
+ "fast-travel": [
+  "Safar Degdeg Ah"
+ ],
+ "mount": [
+  "Gaadiidka Xoolaha"
+ ],
+ "pet": [
+  "Xayawaan Gurijoog ah"
+ ],
+ "crafting": [
+  "Farsamaynta"
+ ],
+ "enchanting": [
+  "Sixrid"
+ ],
+ "socket": [
+  "Dalool (Socket)"
+ ],
+ "set-item": [
+  "Qalab Xidhmo ah"
+ ],
+ "unique-item": [
+  "Qalab Gaar Ah"
+ ],
+ "courting-death": [
+  "Baryida Dhimashada"
+ ],
+ "mount-tai": [
+  "Buurta Tai"
+ ],
+ "kowtow": [
+  "Sujuudid"
+ ],
+ "jade-slip": [
+  "Qoraal Jade (Jade Slip)"
+ ],
+ "romance-fantasy": [
+  "Sheeko Jaceyl iyo Khiyaali"
+ ],
+ "returner": [
+  "Kii Soo Noqday"
+ ],
+ "sword-cultivator": [
+  "Koriyaasha Seefta"
+ ],
+ "foundation-establishment-pill": [
+  "Kiniinka Aasaaska",
+  "Foundation Pill."
+ ],
+ "marrow-cleansing-pill": [
+  "Kiniinka Nadiifinta Dhuuxa"
+ ],
+ "fasting-pill": [
+  "Kiniinka Soonta"
+ ],
+ "blood-burning-pill": [
+  "Kiniinka Gubida Dhiiga"
+ ],
+ "shim-gong": [
+  "Shim Gong"
+ ],
+ "shin-bup": [
+  "Shin Bup"
+ ],
+ "jeom-hyeol": [
+  "Jeom Hyeol"
+ ],
+ "ho-shin-gang-qi": [
+  "Ho Shin Gang Qi"
+ ],
+ "geom-gi": [
+  "Geom Gi"
+ ],
+ "sama": [
+  "-sama"
+ ],
+ "senpai-kouhai": [
+  "Senpai / Kouhai"
+ ],
+ "ojou-sama": [
+  "Ojou-sama"
+ ],
+ "maou-gun": [
+  "Ciidanka Maou (Ciidanka Shaydaanka)"
+ ],
+ "dao-child": [
+  "Ilmaha Dao"
+ ],
+ "peak-master": [
+  "Hogaamiyaha Buurta"
+ ],
+ "sect-leader": [
+  "Hogaamiyaha Qolada"
+ ],
+ "handyman-disciple": [
+  "Ardayga Adeegaha ah"
+ ],
+ "guest-elder": [
+  "Oday Marti ah"
+ ],
+ "sweeping-monk": [
+  "Raahibka Xaaqaya"
+ ],
+ "hidden-class": [
+  "Nooc Sir Ah (Hidden Class)"
+ ],
+ "necromancer": [
+  "Saaxirka Dhimashada"
+ ],
+ "job-advancement": [
+  "Kordhinta Shaqada"
+ ],
+ "berserker": [
+  "Dagaalyahan Xanaaqsan (Berserker)"
+ ],
+ "paladin": [
+  "Dagaalyahanka Quduuska Ah"
+ ],
+ "beast-core": [
+  "Buxda Bahalka"
+ ],
+ "soul-contract": [
+  "Heshiiska Ruuxa"
+ ],
+ "beast-pouch": [
+  "Shandad Xayawaan"
+ ],
+ "bloodline-evolution": [
+  "Isbedelka Dhiigga"
+ ],
+ "familiar": [
+  "Xayawaanka Wehelka (Familiar)"
+ ],
+ "equality-contract": [
+  "Heshiis Sinnaan ah"
+ ],
+ "heavenly-flame": [
+  "Holaca Cirka"
+ ],
+ "spirit-herb": [
+  "Cawska Ruuxa"
+ ],
+ "spirit-spring-water": [
+  "Biyaha Isha Ruuxa"
+ ],
+ "array-eye": [
+  "Isha Nidaamka"
+ ],
+ "formation-flag": [
+  "Calanka Samaynta"
+ ],
+ "spirit-gathering-array": [
+  "Nidaamka Uruurinta Ruuxa"
+ ],
+ "red-gate": [
+  "Albaabka Cas"
+ ],
+ "clear-condition": [
+  "Shuruuda Guusha"
+ ],
+ "magic-stone": [
+  "Dhagaxa Sixirka"
+ ],
+ "penalty-quest": [
+  "Hawsha Ciqaabta"
+ ],
+ "floor-master": [
+  "Maamulaha Dabaqa"
+ ],
+ "porter": [
+  "Xamaali"
+ ],
+ "scenario": [
+  "Dhacdo (Scenario)"
+ ],
+ "probability": [
+  "Isu-imaatin (Probability)"
+ ],
+ "stigma": [
+  "Astaanta"
+ ],
+ "murim-alliance": [
+  "Isbahaysiga Murim"
+ ],
+ "demonic-cult": [
+  "Qolada Shaydaanka"
+ ],
+ "northern-duke": [
+  "Duqa Waqooyiga"
+ ],
+ "tea-party": [
+  "Xaflada Shaaha"
+ ],
+ "munchkin": [
+  "Munchkin (Ciyaaryahan Awood Badan)"
+ ],
+ "cider": [
+  "Khafiifiye (Qaboojiyaha Walaaca)"
+ ],
+ "black-mastermind": [
+  "Maskaxda Madow (Ka Dambeeya)"
+ ],
+ "dokkaebi": [
+  "Dokkaebi"
+ ],
+ "internal-energy": [
+  "Naegong"
+ ],
+ "jade-beauty": [
+  "Quruxda Jade"
+ ],
+ "white-lotus": [
+  "Lotus Cad (Labawajiile)"
+ ],
+ "eating-tofu": [
+  "Cunista Tofu (Ka-faa'iidaysi)"
+ ],
+ "coughing-up-blood": [
+  "Dhiig-Tufrid"
+ ],
+ "frog-in-well": [
+  "Raha Ceelka Kujira"
+ ],
+ "heaven-defying": [
+  "Ka Horyimid Cirka"
+ ],
+ "green-hat": [
+  "Koofiyadda Cagaaran (Khiyaano)"
+ ],
+ "shuang-wen": [
+  "Shuang Wen"
+ ],
+ "giving-face": [
+  "Siinta Sharaf"
+ ],
+ "dungeon-core": [
+  "Buxda Xabsiga"
+ ],
+ "fiefdom": [
+  "Dhulka Boqortooyada"
+ ],
+ "node": [
+  "Dhibic (Node)"
+ ],
+ "contribution-points": [
+  "Dhibcaha Tabaruca"
+ ],
+ "sect-mission-hall": [
+  "Hoolka Howlgalka Qolada"
+ ],
+ "spirit-garden": [
+  "Beerta Ruuxa"
+ ],
+ "city-lord": [
+  "Maamulaha Magaalada"
+ ],
+ "edict": [
+  "Wareegto"
+ ],
+ "vassal": [
+  "Kabadhihii (Vassal)"
+ ],
+ "primordial-chaos": [
+  "Rabshadihii Asalka (Primordial)"
+ ],
+ "the-void": [
+  "Faaruqnimada (The Void)"
+ ],
+ "life-forbidden-zone": [
+  "Aaga Nolosha Laga Mamnuucay"
+ ],
+ "ancient-desolate-beast": [
+  "Bahalka Qadiimiga Ee Cidlada"
+ ],
+ "star-field": [
+  "Beerta Xiddigaha"
+ ],
+ "spatial-storm": [
+  "Duufaanta Meesha"
+ ],
+ "nine-heavens": [
+  "Sagaal Samo"
+ ],
+ "river-of-time": [
+  "Wabiga Waqtiga"
+ ],
+ "epoch": [
+  "Xilli / Waayaha"
+ ],
+ "karmic-thread": [
+  "Dunida Karma"
+ ],
+ "origin-source": [
+  "Isha Asalka ah"
+ ],
+ "heaven-and-earth": [
+  "Cirka Iyo Dhulka"
+ ],
+ "wuji": [
+  "Wuji (Xadka La'aan)"
+ ],
+ "dao-source": [
+  "Isha Dao"
+ ],
+ "engagement-annulment": [
+  "Burburinta Ballanta"
+ ],
+ "toad-lusting-after-swan-meat": [
+  "Rah Niyeynaya Hilib Shimbir (Qof ka sareeya is-moodsiin)",
+  "Toad Lusting..."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "Ha U Caga Jugleynin Dhallinta Faqriga Darteed",
+  "Don't Bully..."
+ ],
+ "concubine": [
+  "Sariir-wadaag / Naag Labaad"
+ ],
+ "sect-rules": [
+  "Xeerarka Qolada"
+ ],
+ "filial-piety": [
+  "Adeecida Waalidka"
+ ],
+ "pill-tribulation": [
+  "Imtixaanka Kiniinka"
+ ],
+ "monster-genius": [
+  "Bahal (Garaad Badan)"
+ ],
+ "gu-venom-witchcraft": [
+  "Gu (Sun / Sixir)"
+ ],
+ "corpse-refining": [
+  "Sifeeynta Meydka"
+ ],
+ "fairy-sister": [
+  "Walaasha Cirfiidka ah"
+ ],
+ "young-miss": [
+  "Gabadha Da'da Yar"
+ ],
+ "mount-kunlun": [
+  "Buurta Kunlun"
+ ],
+ "aggro": [
+  "Soo Jiidid Cadow (Aggro)"
+ ],
+ "crowd-control": [
+  "Xakamaynta Kooxda (CC)"
+ ],
+ "kiting": [
+  "Kiting (Dib u gurasho dagaal)"
+ ],
+ "aoe": [
+  "Waxyeelada Aaga (AoE)"
+ ],
+ "proc": [
+  "Bilaabid (Proc)"
+ ],
+ "kill-steal": [
+  "Xatooyada Dilka"
+ ],
+ "tank": [
+  "Gaashaanka (Tank)"
+ ],
+ "dps": [
+  "Burburka Ilbiriqsi Kasta (DPS)"
+ ],
+ "gold-sink": [
+  "Liqaha Dahabka"
+ ],
+ "auction-sniping": [
+  "Xatooyada Xaraashka daqiiqada dambe"
+ ],
+ "griefing": [
+  "Caddibaad Ula Kac ah"
+ ],
+ "dot": [
+  "Burburka Waqtiga (DoT)",
+  "Damage over Time."
+ ],
+ "contract-marriage": [
+  "Guurka Heshiiska ah"
+ ],
+ "reawakening": [
+  "Dib u baraarujinta"
+ ],
+ "tyrant": [
+  "Daalimka"
+ ],
+ "obsessive-male-lead": [
+  "Hogaamiyaha Labka ee Waalan",
+  "Obsessive Male..."
+ ],
+ "original-heroine": [
+  "Geesiyadda Asalka ah"
+ ],
+ "regression-trauma": [
+  "Dhaawaca Maskaxda ee Dib u noqoshada"
+ ],
+ "hunter-association": [
+  "Ururka Ugaadhsadaha"
+ ],
+ "sudden-death": [
+  "Dhimasho Kedis ah"
+ ],
+ "guild-master": [
+  "Hogaamiyaha Ururka"
+ ],
+ "adventurer-ranks": [
+  "Heerarka Hal-abuureyaasha"
+ ],
+ "beastkin": [
+  "Beastkin (Bini'aadam-Xayawaan)"
+ ],
+ "demon-god": [
+  "Ilaaha Jiniga"
+ ],
+ "unique-skill": [
+  "Xirfad Gaar ah"
+ ],
+ "demon-realm": [
+  "Deegaanka Shaydaanka"
+ ],
+ "slave-crest": [
+  "Calaamadda Adoonsiga"
+ ],
+ "subjugation": [
+  "Dullayn / Addeecid"
+ ],
+ "otherworlder": [
+  "Dadka Adduunka Kale"
+ ],
+ "heros-party": [
+  "Kooxda Geesiga"
+ ],
+ "dao-heart": [
+  "Qalbiga Dao"
+ ],
+ "severing-mortal-ties": [
+  "Goynta Xiriirada Dadka"
+ ],
+ "five-elements": [
+  "Shanta Cunsur"
+ ],
+ "yin-and-yang": [
+  "Yin iyo Yang"
+ ],
+ "enlightenment": [
+  "Iftiiminta Ruuxa (Garaadka)"
+ ],
+ "mortal-tribulation": [
+  "Imtixaanka Bini'aadamka"
+ ],
+ "soul-dissipation": [
+  "Kala-Firdhinta Ruuxa"
+ ],
+ "dao-marks": [
+  "Astaamaha Dao"
+ ],
+ "nirvana": [
+  "Nirvana (Degenaanshaha)"
+ ],
+ "fellow-daoist": [
+  "Wehelka Dao (Saxiib)"
+ ],
+ "sect-familial-address": [
+  "Aqoonsiga Qoyska Qolada"
+ ],
+ "cold-snort": [
+  "Hinraag Qabow"
+ ],
+ "dog-leg-lackey": [
+  "Lug Eey / Kabadhihii (Raace)",
+  "Lackey."
+ ],
+ "jianghu": [
+  "Jianghu (Duniya Dagaal-Yahan)"
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "Fadhiga Buurta Iyadoo La Daawanayo Dagaalka Shabeellada",
+  "Watching Tigers Fight."
+ ],
+ "chaebol": [
+  "Chaebol"
+ ],
+ "heavenly-oath": [
+  "Dhaarta Cirka"
+ ],
+ "title-achievement": [
+  "Magac / Guul"
+ ],
+ "system-erasure": [
+  "Tirtiridda Nidaamka"
+ ],
+ "sweet-potato": [
+  "Baradho Macaan (Goguma/Dhib)"
+ ],
+ "white-moonlight": [
+  "Dayaxa Cad (Jaceylka Hore)"
+ ],
+ "cinnabar-mole": [
+  "Calaamadda Cinnabar (Jaceyl Gudaha ah)"
+ ],
+ "holy-mother": [
+  "Hooyo Quduus ah (Caqabad wacan)"
+ ],
+ "dog-blood": [
+  "Dhiigga Eyga (Riwaayad Dheeraad ah)"
+ ],
+ "angst": [
+  "Walaac iyo Cabsi"
+ ],
+ "scum": [
+  "Wasakh (Dadka Xun)"
+ ],
+ "brain-dead": [
+  "Maskax-dhimatay (Doqon)"
+ ],
+ "meat": [
+  "Hilib (Qoraal galmo)",
+  "Meat (Smut)."
+ ],
+ "green-tea": [
+  "Shaah Cagaaran (Qof Laba Wajiile ah)"
+ ],
+ "territory": [
+  "Dhulka"
+ ],
+ "rebirth": [
+  "Dib u dhalashada nolol kale"
+ ],
+ "devil-mara": [
+  "Shaydaanka / Mara"
+ ],
+ "demonic-beast": [
+  "Bahalka Shaydaanka ah"
+ ],
+ "truck-kun": [
+  "Gaariga Xamuulka (Truck-kun)"
+ ],
+ "cheat-skill": [
+  "Xirfadda Qiyaanada (Cheat)"
+ ],
+ "divine-protection": [
+  "Ilaalinta Rabbaani ah"
+ ],
+ "genkai-toppa": [
+  "Burburinta Xadka",
+  "Limit Break."
+ ],
+ "chuunibyou": [
+  "Chuunibyou"
+ ],
+ "tsundere": [
+  "Tsundere"
+ ],
+ "yandere": [
+  "Yandere"
+ ],
+ "san": [
+  "-san"
+ ],
+ "chan": [
+  "-chan"
+ ],
+ "kun": [
+  "-kun"
+ ],
+ "dono": [
+  "-dono"
+ ],
+ "sensei": [
+  "-sensei"
+ ],
+ "adventurer-guild": [
+  "Ururka Hal-abuureyaasha"
+ ],
+ "vrmmo": [
+  "VRMMO"
+ ],
+ "goddess": [
+  "Ilaahad (Mace)"
+ ],
+ "gate": [
+  "Albaab"
+ ],
+ "awakening": [
+  "Baraarujinta"
+ ],
+ "regressor": [
+  "Ka Dib u Noqday (Waqtiga)"
+ ],
+ "national-level-hunter": [
+  "Ugaadhsade Heer Qaran ah"
+ ],
+ "hunter-rank": [
+  "Darajada Ugaadhsadaha"
+ ],
+ "grade": [
+  "Darajada / Fasalka"
+ ],
+ "mana": [
+  "Mana (Awoodda Sixirka)"
+ ],
+ "shadow-soldier": [
+  "Askariga Hooska"
+ ],
+ "monarch": [
+  "Boqor"
+ ],
+ "hyung": [
+  "Hyung"
+ ],
+ "noona": [
+  "Noona"
+ ],
+ "oppa": [
+  "Oppa"
+ ],
+ "sunbae": [
+  "Sunbae"
+ ],
+ "ahjussi": [
+  "Ahjussi"
+ ],
+ "ahjumma": [
+  "Ahjumma"
+ ],
+ "dungeon-break": [
+  "Jebinta Xabsiga (Bahalka Baxsada)"
+ ],
+ "boss-monster": [
+  "Bahalka Hogaamiyaha (Boss)"
+ ],
+ "first-clear": [
+  "Burburintii Ugu Horaysay"
+ ],
+ "clear": [
+  "Nadiifin / Gudbid"
+ ],
+ "penalty": [
+  "Ganaax"
+ ],
+ "compensation": [
+  "Magdhaw"
+ ],
+ "ranker": [
+  "Ciyaaryahanka Sarreeya (Ranker)"
+ ],
+ "player-kill": [
+  "Dilida Ciyaartoyda Kale (PK)"
+ ],
+ "broadcast": [
+  "Baahin / Warin"
+ ],
+ "mutant-monster": [
+  "Bahal Is-bedelay"
+ ],
+ "growth-type-ability": [
+  "Awood Kobcaysa"
+ ],
+ "evolution": [
+  "Horumarin / Isbeddel"
+ ],
+ "floor": [
+  "Dabaq"
+ ],
+ "test": [
+  "Tijaabo / Imtixaan"
+ ],
+ "test-administrator": [
+  "Maamulaha Imtixaanka"
+ ],
+ "floor-guardian": [
+  "Ilaaliyaha Dabaqa"
+ ],
+ "irregular": [
+  "Mid Aan Caadi Ahayn"
+ ],
+ "regular": [
+  "Mid Caadi Ah"
+ ],
+ "hidden-floor": [
+  "Dabaqa Qarsoon"
+ ],
+ "wall": [
+  "Gidaarka"
+ ],
+ "family": [
+  "Qoyska / Beesha"
+ ],
+ "observer": [
+  "Kormeere"
+ ],
+ "onii-chan": [
+  "Onii-chan"
+ ],
+ "onee-chan": [
+  "Onee-chan"
+ ],
+ "ossan": [
+  "Ossan"
+ ],
+ "osananajimi": [
+  "Osananajimi"
+ ],
+ "kokuhaku": [
+  "Kokuhaku"
+ ],
+ "bunkasai": [
+  "Bunkasai"
+ ],
+ "guild-card": [
+  "Kaarka Ururka"
+ ],
+ "job-change": [
+  "Bedelaadda Shaqada (Job Change)"
+ ],
+ "labyrinth": [
+  "Dhisme Wareersan (Labyrinth)"
+ ],
+ "blacksmith": [
+  "Tume / Bir-Tume"
+ ],
+ "slow-life": [
+  "Nolol Deggan / Yarayn"
+ ],
+ "skill-book": [
+  "Buugga Xirfadda"
+ ],
+ "great-sage": [
+  "Xakiimka Weyn"
+ ],
+ "sacred-sword": [
+  "Seefta Quduuska Ah"
+ ],
+ "entrance-exam": [
+  "Imtixaanka Gelitaanka"
+ ],
+ "class-ranking": [
+  "Qiimeynta Nooca/Fasalka"
+ ],
+ "mob-class": [
+  "Fasalka Dadka Caadiga Ah"
+ ],
+ "late-bloomer": [
+  "Guulayste Soo Daahay"
+ ],
+ "graduation-trial": [
+  "Imtixaanka Qalinjabinta"
+ ],
+ "novel-knowledge": [
+  "Aqoonta Sheekada"
+ ],
+ "fourth-wall": [
+  "Gidaarka Afraad"
+ ],
+ "system-voice": [
+  "Codka Nidaamka"
+ ],
+ "authors-note": [
+  "Qoraalka Qoraaga"
+ ],
+ "ancient-ruins": [
+  "Dhismayaashii Qadiimiga"
+ ],
+ "spirit-vein": [
+  "Xididka Ruuxa (Ee Dhulka)"
+ ],
+ "middle-realm": [
+  "Deegaanka Dhexe"
+ ],
+ "void": [
+  "Madhan / Waxba Kama Jiraan"
+ ],
+ "chaos": [
+  "Qas iyo Fowdo"
+ ],
+ "tribute": [
+  "Canshuur / Hadyad"
+ ],
+ "garrison": [
+  "Xeryaha Ciidanka"
+ ],
+ "liege": [
+  "Sayid / Hogaamiye"
+ ],
+ "totem-beast": [
+  "Bahalka Astaanta U Ah (Totem)"
+ ],
+ "beast-master": [
+  "Sayidka Xayawaanka"
+ ]
+}

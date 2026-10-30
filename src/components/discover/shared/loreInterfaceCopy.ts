@@ -13,7 +13,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Idioma de lectura",
       "mode": "Modo de lectura",
       "meaning": "Significado",
-      "context": "En el género",
       "aliases": "También llamado",
       "original": "Original y pronunciación",
       "related": "Véase también",
@@ -28,33 +27,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Lectura fácil",
       "literalMode": "Lectura literal",
       "results": "Términos encontrados",
-      "browse": "Explorar la enciclopedia"
+      "browse": "Explorar la enciclopedia",
+      "writeAs": "Escríbelo así",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "copyAll": "Copiar todo",
+      "copyFailed": "No se pudo copiar"
     },
     "categories": {
-      "realms": [
-        "Reinos de cultivo",
-        "Referencia del género, independiente del Códice de cada historia. Los nombres y las reglas varían según el autor."
-      ],
-      "qi": [
-        "Qi y anatomía",
-        "Referencia del género, independiente del Códice de cada historia. Los nombres y las reglas varían según el autor."
-      ],
-      "crafts": [
-        "Alquimia y oficios",
-        "Referencia del género, independiente del Códice de cada historia. Los nombres y las reglas varían según el autor."
-      ],
-      "beasts": [
-        "Mitología y bestias",
-        "Referencia del género, independiente del Códice de cada historia. Los nombres y las reglas varían según el autor."
-      ],
-      "culture": [
-        "Modismos y términos culturales",
-        "Referencia del género, independiente del Códice de cada historia. Los nombres y las reglas varían según el autor."
-      ],
-      "weapons": [
-        "Armas y reliquias",
-        "Referencia del género, independiente del Códice de cada historia. Los nombres y las reglas varían según el autor."
-      ]
+      "cultivation": "Cultivo",
+      "treasures": "Oficios y tesoros",
+      "beasts": "Bestias y mitos",
+      "worlds": "Mundos y cosmos",
+      "sects": "Sectas y reinos",
+      "systems": "Sistemas de juego",
+      "korean": "Novelas web coreanas",
+      "japanese": "Novelas ligeras japonesas",
+      "tropes": "Tropos y dichos",
+      "characters": "Tipos de personaje",
+      "genres": "Géneros"
     }
   },
   "fr": {
@@ -68,7 +59,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Langue de lecture",
       "mode": "Mode de lecture",
       "meaning": "Signification",
-      "context": "Dans le genre",
       "aliases": "Autres noms",
       "original": "Original et prononciation",
       "related": "Voir aussi",
@@ -83,33 +73,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Lecture facile",
       "literalMode": "Lecture littérale",
       "results": "Termes trouvés",
-      "browse": "Parcourir l’encyclopédie"
+      "browse": "Parcourir l’encyclopédie",
+      "writeAs": "S’écrit",
+      "copy": "Copier",
+      "copied": "Copié",
+      "copyAll": "Tout copier",
+      "copyFailed": "Échec de la copie"
     },
     "categories": {
-      "realms": [
-        "Royaumes de cultivation",
-        "Une référence du genre, distincte du Codex de chaque histoire. Les noms et les règles varient selon les auteurs."
-      ],
-      "qi": [
-        "Qi et anatomie",
-        "Une référence du genre, distincte du Codex de chaque histoire. Les noms et les règles varient selon les auteurs."
-      ],
-      "crafts": [
-        "Alchimie et artisanat",
-        "Une référence du genre, distincte du Codex de chaque histoire. Les noms et les règles varient selon les auteurs."
-      ],
-      "beasts": [
-        "Mythologie et créatures",
-        "Une référence du genre, distincte du Codex de chaque histoire. Les noms et les règles varient selon les auteurs."
-      ],
-      "culture": [
-        "Expressions et culture",
-        "Une référence du genre, distincte du Codex de chaque histoire. Les noms et les règles varient selon les auteurs."
-      ],
-      "weapons": [
-        "Armes et reliques",
-        "Une référence du genre, distincte du Codex de chaque histoire. Les noms et les règles varient selon les auteurs."
-      ]
+      "cultivation": "Cultivation",
+      "treasures": "Artisanat et trésors",
+      "beasts": "Bêtes et mythes",
+      "worlds": "Mondes et cosmos",
+      "sects": "Sectes et royaumes",
+      "systems": "Systèmes de jeu",
+      "korean": "Romans web coréens",
+      "japanese": "Light novels japonais",
+      "tropes": "Clichés et expressions",
+      "characters": "Types de personnages",
+      "genres": "Genres"
     }
   },
   "de": {
@@ -123,7 +105,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Lesesprache",
       "mode": "Lesemodus",
       "meaning": "Bedeutung",
-      "context": "Im Genre",
       "aliases": "Auch genannt",
       "original": "Original und Aussprache",
       "related": "Siehe auch",
@@ -138,33 +119,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Einfaches Lesen",
       "literalMode": "Wörtliches Lesen",
       "results": "Gefundene Begriffe",
-      "browse": "Enzyklopädie durchsuchen"
+      "browse": "Enzyklopädie durchsuchen",
+      "writeAs": "So schreiben",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "copyAll": "Alle kopieren",
+      "copyFailed": "Kopieren fehlgeschlagen"
     },
     "categories": {
-      "realms": [
-        "Kultivierungsstufen",
-        "Ein Nachschlagewerk des Genres, getrennt vom Codex jeder Geschichte. Namen und Regeln unterscheiden sich je nach Autor."
-      ],
-      "qi": [
-        "Qi und Anatomie",
-        "Ein Nachschlagewerk des Genres, getrennt vom Codex jeder Geschichte. Namen und Regeln unterscheiden sich je nach Autor."
-      ],
-      "crafts": [
-        "Alchemie und Handwerk",
-        "Ein Nachschlagewerk des Genres, getrennt vom Codex jeder Geschichte. Namen und Regeln unterscheiden sich je nach Autor."
-      ],
-      "beasts": [
-        "Mythologie und Wesen",
-        "Ein Nachschlagewerk des Genres, getrennt vom Codex jeder Geschichte. Namen und Regeln unterscheiden sich je nach Autor."
-      ],
-      "culture": [
-        "Redewendungen und Kultur",
-        "Ein Nachschlagewerk des Genres, getrennt vom Codex jeder Geschichte. Namen und Regeln unterscheiden sich je nach Autor."
-      ],
-      "weapons": [
-        "Waffen und Relikte",
-        "Ein Nachschlagewerk des Genres, getrennt vom Codex jeder Geschichte. Namen und Regeln unterscheiden sich je nach Autor."
-      ]
+      "cultivation": "Kultivierung",
+      "treasures": "Handwerk & Schätze",
+      "beasts": "Bestien & Mythen",
+      "worlds": "Welten & Kosmos",
+      "sects": "Sekten & Königreiche",
+      "systems": "Spielsysteme",
+      "korean": "Koreanische Webromane",
+      "japanese": "Japanische Light Novels",
+      "tropes": "Tropen & Redewendungen",
+      "characters": "Figurentypen",
+      "genres": "Genres"
     }
   },
   "pt": {
@@ -178,7 +151,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Idioma de leitura",
       "mode": "Modo de leitura",
       "meaning": "Significado",
-      "context": "No género",
       "aliases": "Outros nomes",
       "original": "Original e pronúncia",
       "related": "Ver também",
@@ -193,33 +165,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Leitura fácil",
       "literalMode": "Leitura literal",
       "results": "Termos encontrados",
-      "browse": "Explorar a enciclopédia"
+      "browse": "Explorar a enciclopédia",
+      "writeAs": "Escreva assim",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "copyAll": "Copiar tudo",
+      "copyFailed": "Não foi possível copiar"
     },
     "categories": {
-      "realms": [
-        "Reinos de cultivo",
-        "Uma referência do género, separada do Códice de cada história. Os nomes e as regras variam entre autores."
-      ],
-      "qi": [
-        "Qi e anatomia",
-        "Uma referência do género, separada do Códice de cada história. Os nomes e as regras variam entre autores."
-      ],
-      "crafts": [
-        "Alquimia e ofícios",
-        "Uma referência do género, separada do Códice de cada história. Os nomes e as regras variam entre autores."
-      ],
-      "beasts": [
-        "Mitologia e criaturas",
-        "Uma referência do género, separada do Códice de cada história. Os nomes e as regras variam entre autores."
-      ],
-      "culture": [
-        "Expressões e cultura",
-        "Uma referência do género, separada do Códice de cada história. Os nomes e as regras variam entre autores."
-      ],
-      "weapons": [
-        "Armas e relíquias",
-        "Uma referência do género, separada do Códice de cada história. Os nomes e as regras variam entre autores."
-      ]
+      "cultivation": "Cultivo",
+      "treasures": "Ofícios e tesouros",
+      "beasts": "Feras e mitos",
+      "worlds": "Mundos e cosmos",
+      "sects": "Seitas e reinos",
+      "systems": "Sistemas de jogo",
+      "korean": "Web novels coreanas",
+      "japanese": "Light novels japonesas",
+      "tropes": "Clichês e ditados",
+      "characters": "Tipos de personagem",
+      "genres": "Gêneros"
     }
   },
   "ru": {
@@ -233,7 +197,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Язык чтения",
       "mode": "Режим чтения",
       "meaning": "Значение",
-      "context": "В жанре",
       "aliases": "Другие названия",
       "original": "Оригинал и произношение",
       "related": "См. также",
@@ -248,33 +211,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Лёгкое чтение",
       "literalMode": "Буквальное чтение",
       "results": "Найдено терминов",
-      "browse": "Открыть энциклопедию"
+      "browse": "Открыть энциклопедию",
+      "writeAs": "Пишется так",
+      "copy": "Копировать",
+      "copied": "Скопировано",
+      "copyAll": "Копировать всё",
+      "copyFailed": "Не удалось скопировать"
     },
     "categories": {
-      "realms": [
-        "Ступени совершенствования",
-        "Справочник жанра, отдельный от Кодекса каждой истории. Названия и правила зависят от автора."
-      ],
-      "qi": [
-        "Ци и анатомия",
-        "Справочник жанра, отдельный от Кодекса каждой истории. Названия и правила зависят от автора."
-      ],
-      "crafts": [
-        "Алхимия и ремёсла",
-        "Справочник жанра, отдельный от Кодекса каждой истории. Названия и правила зависят от автора."
-      ],
-      "beasts": [
-        "Мифология и существа",
-        "Справочник жанра, отдельный от Кодекса каждой истории. Названия и правила зависят от автора."
-      ],
-      "culture": [
-        "Выражения и культура",
-        "Справочник жанра, отдельный от Кодекса каждой истории. Названия и правила зависят от автора."
-      ],
-      "weapons": [
-        "Оружие и реликвии",
-        "Справочник жанра, отдельный от Кодекса каждой истории. Названия и правила зависят от автора."
-      ]
+      "cultivation": "Культивация",
+      "treasures": "Ремёсла и сокровища",
+      "beasts": "Звери и мифы",
+      "worlds": "Миры и космос",
+      "sects": "Секты и королевства",
+      "systems": "Игровые системы",
+      "korean": "Корейские веб-романы",
+      "japanese": "Японские ранобэ",
+      "tropes": "Тропы и выражения",
+      "characters": "Типы персонажей",
+      "genres": "Жанры"
     }
   },
   "pl": {
@@ -288,7 +243,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Język czytania",
       "mode": "Tryb czytania",
       "meaning": "Znaczenie",
-      "context": "W gatunku",
       "aliases": "Inne nazwy",
       "original": "Oryginał i wymowa",
       "related": "Zobacz też",
@@ -303,33 +257,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Łatwe czytanie",
       "literalMode": "Dosłowne czytanie",
       "results": "Znalezione terminy",
-      "browse": "Przeglądaj encyklopedię"
+      "browse": "Przeglądaj encyklopedię",
+      "writeAs": "Zapisz jako",
+      "copy": "Kopiuj",
+      "copied": "Skopiowano",
+      "copyAll": "Kopiuj wszystko",
+      "copyFailed": "Nie udało się skopiować"
     },
     "categories": {
-      "realms": [
-        "Poziomy kultywacji",
-        "Przewodnik po gatunku, oddzielny od Kodeksu każdej historii. Nazwy i zasady zależą od autora."
-      ],
-      "qi": [
-        "Qi i anatomia",
-        "Przewodnik po gatunku, oddzielny od Kodeksu każdej historii. Nazwy i zasady zależą od autora."
-      ],
-      "crafts": [
-        "Alchemia i rzemiosło",
-        "Przewodnik po gatunku, oddzielny od Kodeksu każdej historii. Nazwy i zasady zależą od autora."
-      ],
-      "beasts": [
-        "Mitologia i stworzenia",
-        "Przewodnik po gatunku, oddzielny od Kodeksu każdej historii. Nazwy i zasady zależą od autora."
-      ],
-      "culture": [
-        "Wyrażenia i kultura",
-        "Przewodnik po gatunku, oddzielny od Kodeksu każdej historii. Nazwy i zasady zależą od autora."
-      ],
-      "weapons": [
-        "Broń i relikwie",
-        "Przewodnik po gatunku, oddzielny od Kodeksu każdej historii. Nazwy i zasady zależą od autora."
-      ]
+      "cultivation": "Kultywacja",
+      "treasures": "Rzemiosła i skarby",
+      "beasts": "Bestie i mity",
+      "worlds": "Światy i kosmos",
+      "sects": "Sekty i królestwa",
+      "systems": "Systemy gier",
+      "korean": "Koreańskie powieści internetowe",
+      "japanese": "Japońskie light novel",
+      "tropes": "Klisze i powiedzenia",
+      "characters": "Typy postaci",
+      "genres": "Gatunki"
     }
   },
   "tr": {
@@ -343,7 +289,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Okuma dili",
       "mode": "Okuma modu",
       "meaning": "Anlam",
-      "context": "Tür içindeki kullanımı",
       "aliases": "Diğer adlar",
       "original": "Özgün yazım ve telaffuz",
       "related": "Ayrıca bakınız",
@@ -358,33 +303,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Kolay okuma",
       "literalMode": "Doğrudan okuma",
       "results": "Bulunan terimler",
-      "browse": "Ansiklopediyi keşfet"
+      "browse": "Ansiklopediyi keşfet",
+      "writeAs": "Böyle yaz",
+      "copy": "Kopyala",
+      "copied": "Kopyalandı",
+      "copyAll": "Tümünü kopyala",
+      "copyFailed": "Kopyalanamadı"
     },
     "categories": {
-      "realms": [
-        "Gelişim aşamaları",
-        "Her hikâyenin Kodeksinden ayrı bir tür kaynağı. Adlar ve kurallar yazara göre değişir."
-      ],
-      "qi": [
-        "Qi ve anatomi",
-        "Her hikâyenin Kodeksinden ayrı bir tür kaynağı. Adlar ve kurallar yazara göre değişir."
-      ],
-      "crafts": [
-        "Simya ve zanaat",
-        "Her hikâyenin Kodeksinden ayrı bir tür kaynağı. Adlar ve kurallar yazara göre değişir."
-      ],
-      "beasts": [
-        "Mitoloji ve yaratıklar",
-        "Her hikâyenin Kodeksinden ayrı bir tür kaynağı. Adlar ve kurallar yazara göre değişir."
-      ],
-      "culture": [
-        "Deyimler ve kültür",
-        "Her hikâyenin Kodeksinden ayrı bir tür kaynağı. Adlar ve kurallar yazara göre değişir."
-      ],
-      "weapons": [
-        "Silahlar ve kutsal nesneler",
-        "Her hikâyenin Kodeksinden ayrı bir tür kaynağı. Adlar ve kurallar yazara göre değişir."
-      ]
+      "cultivation": "Yetiştirme",
+      "treasures": "Zanaatlar ve hazineler",
+      "beasts": "Canavarlar ve mitler",
+      "worlds": "Dünyalar ve evren",
+      "sects": "Tarikatlar ve krallıklar",
+      "systems": "Oyun sistemleri",
+      "korean": "Kore web romanları",
+      "japanese": "Japon hafif romanları",
+      "tropes": "Klişeler ve deyimler",
+      "characters": "Karakter tipleri",
+      "genres": "Türler"
     }
   },
   "zh-CN": {
@@ -398,7 +335,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "阅读语言",
       "mode": "阅读模式",
       "meaning": "含义",
-      "context": "类型背景",
       "aliases": "其他名称",
       "original": "原文与读音",
       "related": "相关词条",
@@ -413,33 +349,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "轻松阅读",
       "literalMode": "直白阅读",
       "results": "找到的词条",
-      "browse": "浏览百科"
+      "browse": "浏览百科",
+      "writeAs": "写法",
+      "copy": "复制",
+      "copied": "已复制",
+      "copyAll": "全部复制",
+      "copyFailed": "复制失败"
     },
     "categories": {
-      "realms": [
-        "修炼境界",
-        "这是类型参考，与各故事的 Codex 独立。名称与规则因作者而异。"
-      ],
-      "qi": [
-        "气与身体",
-        "这是类型参考，与各故事的 Codex 独立。名称与规则因作者而异。"
-      ],
-      "crafts": [
-        "炼丹与技艺",
-        "这是类型参考，与各故事的 Codex 独立。名称与规则因作者而异。"
-      ],
-      "beasts": [
-        "神话与异兽",
-        "这是类型参考，与各故事的 Codex 独立。名称与规则因作者而异。"
-      ],
-      "culture": [
-        "成语与文化",
-        "这是类型参考，与各故事的 Codex 独立。名称与规则因作者而异。"
-      ],
-      "weapons": [
-        "兵器与法宝",
-        "这是类型参考，与各故事的 Codex 独立。名称与规则因作者而异。"
-      ]
+      "cultivation": "修炼",
+      "treasures": "技艺与宝物",
+      "beasts": "灵兽与神话",
+      "worlds": "世界与宇宙",
+      "sects": "宗门与王国",
+      "systems": "游戏系统",
+      "korean": "韩国网络小说",
+      "japanese": "日本轻小说",
+      "tropes": "套路与俗语",
+      "characters": "角色类型",
+      "genres": "类型"
     }
   },
   "zh-TW": {
@@ -453,7 +381,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "閱讀語言",
       "mode": "閱讀模式",
       "meaning": "含義",
-      "context": "類型背景",
       "aliases": "其他名稱",
       "original": "原文與讀音",
       "related": "相關詞條",
@@ -468,33 +395,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "輕鬆閱讀",
       "literalMode": "直白閱讀",
       "results": "找到的詞條",
-      "browse": "瀏覽百科"
+      "browse": "瀏覽百科",
+      "writeAs": "寫法",
+      "copy": "複製",
+      "copied": "已複製",
+      "copyAll": "全部複製",
+      "copyFailed": "複製失敗"
     },
     "categories": {
-      "realms": [
-        "修煉境界",
-        "這是類型參考，與各故事的 Codex 獨立。名稱與規則因作者而異。"
-      ],
-      "qi": [
-        "氣與身體",
-        "這是類型參考，與各故事的 Codex 獨立。名稱與規則因作者而異。"
-      ],
-      "crafts": [
-        "煉丹與技藝",
-        "這是類型參考，與各故事的 Codex 獨立。名稱與規則因作者而異。"
-      ],
-      "beasts": [
-        "神話與異獸",
-        "這是類型參考，與各故事的 Codex 獨立。名稱與規則因作者而異。"
-      ],
-      "culture": [
-        "成語與文化",
-        "這是類型參考，與各故事的 Codex 獨立。名稱與規則因作者而異。"
-      ],
-      "weapons": [
-        "兵器與法寶",
-        "這是類型參考，與各故事的 Codex 獨立。名稱與規則因作者而異。"
-      ]
+      "cultivation": "修煉",
+      "treasures": "技藝與寶物",
+      "beasts": "靈獸與神話",
+      "worlds": "世界與宇宙",
+      "sects": "宗門與王國",
+      "systems": "遊戲系統",
+      "korean": "韓國網路小說",
+      "japanese": "日本輕小說",
+      "tropes": "套路與俗語",
+      "characters": "角色類型",
+      "genres": "類型"
     }
   },
   "ja": {
@@ -508,7 +427,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "読む言語",
       "mode": "読書モード",
       "meaning": "意味",
-      "context": "ジャンルでの使われ方",
       "aliases": "別名",
       "original": "原文と発音",
       "related": "関連項目",
@@ -523,33 +441,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "やさしい読み方",
       "literalMode": "字義に配慮した読み方",
       "results": "見つかった用語",
-      "browse": "百科を見る"
+      "browse": "百科を見る",
+      "writeAs": "表記",
+      "copy": "コピー",
+      "copied": "コピーしました",
+      "copyAll": "すべてコピー",
+      "copyFailed": "コピーできませんでした"
     },
     "categories": {
-      "realms": [
-        "修行の境界",
-        "ジャンル全体の参考資料で、各物語の Codex とは別です。名称や規則は作者によって異なります。"
-      ],
-      "qi": [
-        "気と身体",
-        "ジャンル全体の参考資料で、各物語の Codex とは別です。名称や規則は作者によって異なります。"
-      ],
-      "crafts": [
-        "煉丹と技術",
-        "ジャンル全体の参考資料で、各物語の Codex とは別です。名称や規則は作者によって異なります。"
-      ],
-      "beasts": [
-        "神話と霊獣",
-        "ジャンル全体の参考資料で、各物語の Codex とは別です。名称や規則は作者によって異なります。"
-      ],
-      "culture": [
-        "慣用句と文化",
-        "ジャンル全体の参考資料で、各物語の Codex とは別です。名称や規則は作者によって異なります。"
-      ],
-      "weapons": [
-        "武器と法宝",
-        "ジャンル全体の参考資料で、各物語の Codex とは別です。名称や規則は作者によって異なります。"
-      ]
+      "cultivation": "修練",
+      "treasures": "技術と宝物",
+      "beasts": "霊獣と神話",
+      "worlds": "世界と宇宙",
+      "sects": "宗門と王国",
+      "systems": "ゲームシステム",
+      "korean": "韓国ウェブ小説",
+      "japanese": "日本のライトノベル",
+      "tropes": "お約束と言い回し",
+      "characters": "キャラクタータイプ",
+      "genres": "ジャンル"
     }
   },
   "ko": {
@@ -563,7 +473,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "읽기 언어",
       "mode": "읽기 모드",
       "meaning": "뜻",
-      "context": "장르에서의 쓰임",
       "aliases": "다른 이름",
       "original": "원문과 발음",
       "related": "관련 항목",
@@ -578,33 +487,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "쉬운 읽기",
       "literalMode": "직접적인 읽기",
       "results": "찾은 용어",
-      "browse": "백과사전 둘러보기"
+      "browse": "백과사전 둘러보기",
+      "writeAs": "이렇게 쓰기",
+      "copy": "복사",
+      "copied": "복사됨",
+      "copyAll": "모두 복사",
+      "copyFailed": "복사하지 못했습니다"
     },
     "categories": {
-      "realms": [
-        "수련 경지",
-        "장르 전체의 참고 자료이며 각 이야기의 Codex와 별개입니다. 이름과 규칙은 작가마다 다릅니다."
-      ],
-      "qi": [
-        "기와 신체",
-        "장르 전체의 참고 자료이며 각 이야기의 Codex와 별개입니다. 이름과 규칙은 작가마다 다릅니다."
-      ],
-      "crafts": [
-        "연단과 기술",
-        "장르 전체의 참고 자료이며 각 이야기의 Codex와 별개입니다. 이름과 규칙은 작가마다 다릅니다."
-      ],
-      "beasts": [
-        "신화와 영물",
-        "장르 전체의 참고 자료이며 각 이야기의 Codex와 별개입니다. 이름과 규칙은 작가마다 다릅니다."
-      ],
-      "culture": [
-        "관용구와 문화",
-        "장르 전체의 참고 자료이며 각 이야기의 Codex와 별개입니다. 이름과 규칙은 작가마다 다릅니다."
-      ],
-      "weapons": [
-        "무기와 법보",
-        "장르 전체의 참고 자료이며 각 이야기의 Codex와 별개입니다. 이름과 규칙은 작가마다 다릅니다."
-      ]
+      "cultivation": "수련",
+      "treasures": "기예와 보물",
+      "beasts": "영수와 신화",
+      "worlds": "세계와 우주",
+      "sects": "문파와 왕국",
+      "systems": "게임 시스템",
+      "korean": "한국 웹소설",
+      "japanese": "일본 라이트 노벨",
+      "tropes": "클리셰와 표현",
+      "characters": "캐릭터 유형",
+      "genres": "장르"
     }
   },
   "vi": {
@@ -618,7 +519,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Ngôn ngữ đọc",
       "mode": "Chế độ đọc",
       "meaning": "Ý nghĩa",
-      "context": "Trong thể loại",
       "aliases": "Tên gọi khác",
       "original": "Nguyên văn và cách đọc",
       "related": "Xem thêm",
@@ -633,33 +533,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Đọc dễ hiểu",
       "literalMode": "Đọc trực nghĩa",
       "results": "Thuật ngữ tìm thấy",
-      "browse": "Duyệt bách khoa"
+      "browse": "Duyệt bách khoa",
+      "writeAs": "Viết là",
+      "copy": "Sao chép",
+      "copied": "Đã sao chép",
+      "copyAll": "Sao chép tất cả",
+      "copyFailed": "Không sao chép được"
     },
     "categories": {
-      "realms": [
-        "Cảnh giới tu luyện",
-        "Tài liệu chung cho thể loại, độc lập với Codex của từng truyện. Tên gọi và quy tắc tùy tác giả."
-      ],
-      "qi": [
-        "Khí và cơ thể",
-        "Tài liệu chung cho thể loại, độc lập với Codex của từng truyện. Tên gọi và quy tắc tùy tác giả."
-      ],
-      "crafts": [
-        "Luyện đan và kỹ nghệ",
-        "Tài liệu chung cho thể loại, độc lập với Codex của từng truyện. Tên gọi và quy tắc tùy tác giả."
-      ],
-      "beasts": [
-        "Thần thoại và linh thú",
-        "Tài liệu chung cho thể loại, độc lập với Codex của từng truyện. Tên gọi và quy tắc tùy tác giả."
-      ],
-      "culture": [
-        "Thành ngữ và văn hóa",
-        "Tài liệu chung cho thể loại, độc lập với Codex của từng truyện. Tên gọi và quy tắc tùy tác giả."
-      ],
-      "weapons": [
-        "Binh khí và pháp bảo",
-        "Tài liệu chung cho thể loại, độc lập với Codex của từng truyện. Tên gọi và quy tắc tùy tác giả."
-      ]
+      "cultivation": "Tu luyện",
+      "treasures": "Kỹ nghệ và bảo vật",
+      "beasts": "Linh thú và thần thoại",
+      "worlds": "Thế giới và vũ trụ",
+      "sects": "Tông môn và vương quốc",
+      "systems": "Hệ thống trò chơi",
+      "korean": "Tiểu thuyết mạng Hàn Quốc",
+      "japanese": "Light novel Nhật Bản",
+      "tropes": "Mô típ và thành ngữ",
+      "characters": "Kiểu nhân vật",
+      "genres": "Thể loại"
     }
   },
   "id": {
@@ -673,7 +565,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Bahasa bacaan",
       "mode": "Mode membaca",
       "meaning": "Makna",
-      "context": "Dalam genre",
       "aliases": "Nama lain",
       "original": "Tulisan asli dan pelafalan",
       "related": "Lihat juga",
@@ -688,33 +579,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Bacaan mudah",
       "literalMode": "Bacaan harfiah",
       "results": "Istilah ditemukan",
-      "browse": "Jelajahi ensiklopedia"
+      "browse": "Jelajahi ensiklopedia",
+      "writeAs": "Tulis sebagai",
+      "copy": "Salin",
+      "copied": "Disalin",
+      "copyAll": "Salin semua",
+      "copyFailed": "Gagal menyalin"
     },
     "categories": {
-      "realms": [
-        "Tingkat kultivasi",
-        "Rujukan genre yang terpisah dari Codex setiap cerita. Nama dan aturan berbeda menurut pengarang."
-      ],
-      "qi": [
-        "Qi dan anatomi",
-        "Rujukan genre yang terpisah dari Codex setiap cerita. Nama dan aturan berbeda menurut pengarang."
-      ],
-      "crafts": [
-        "Alkimia dan kerajinan",
-        "Rujukan genre yang terpisah dari Codex setiap cerita. Nama dan aturan berbeda menurut pengarang."
-      ],
-      "beasts": [
-        "Mitologi dan makhluk",
-        "Rujukan genre yang terpisah dari Codex setiap cerita. Nama dan aturan berbeda menurut pengarang."
-      ],
-      "culture": [
-        "Ungkapan dan budaya",
-        "Rujukan genre yang terpisah dari Codex setiap cerita. Nama dan aturan berbeda menurut pengarang."
-      ],
-      "weapons": [
-        "Senjata dan pusaka",
-        "Rujukan genre yang terpisah dari Codex setiap cerita. Nama dan aturan berbeda menurut pengarang."
-      ]
+      "cultivation": "Kultivasi",
+      "treasures": "Kerajinan dan harta",
+      "beasts": "Binatang dan mitos",
+      "worlds": "Dunia dan kosmos",
+      "sects": "Sekte dan kerajaan",
+      "systems": "Sistem permainan",
+      "korean": "Novel web Korea",
+      "japanese": "Light novel Jepang",
+      "tropes": "Klise dan ungkapan",
+      "characters": "Tipe karakter",
+      "genres": "Genre"
     }
   },
   "ms": {
@@ -728,7 +611,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Bahasa bacaan",
       "mode": "Mod bacaan",
       "meaning": "Maksud",
-      "context": "Dalam genre",
       "aliases": "Nama lain",
       "original": "Tulisan asal dan sebutan",
       "related": "Lihat juga",
@@ -743,33 +625,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Bacaan mudah",
       "literalMode": "Bacaan harfiah",
       "results": "Istilah ditemui",
-      "browse": "Terokai ensiklopedia"
+      "browse": "Terokai ensiklopedia",
+      "writeAs": "Tulis sebagai",
+      "copy": "Salin",
+      "copied": "Disalin",
+      "copyAll": "Salin semua",
+      "copyFailed": "Gagal menyalin"
     },
     "categories": {
-      "realms": [
-        "Tahap kultivasi",
-        "Rujukan genre yang berasingan daripada Codex setiap cerita. Nama dan aturan berbeza mengikut pengarang."
-      ],
-      "qi": [
-        "Qi dan anatomi",
-        "Rujukan genre yang berasingan daripada Codex setiap cerita. Nama dan aturan berbeza mengikut pengarang."
-      ],
-      "crafts": [
-        "Alkimia dan pertukangan",
-        "Rujukan genre yang berasingan daripada Codex setiap cerita. Nama dan aturan berbeza mengikut pengarang."
-      ],
-      "beasts": [
-        "Mitologi dan makhluk",
-        "Rujukan genre yang berasingan daripada Codex setiap cerita. Nama dan aturan berbeza mengikut pengarang."
-      ],
-      "culture": [
-        "Ungkapan dan budaya",
-        "Rujukan genre yang berasingan daripada Codex setiap cerita. Nama dan aturan berbeza mengikut pengarang."
-      ],
-      "weapons": [
-        "Senjata dan pusaka",
-        "Rujukan genre yang berasingan daripada Codex setiap cerita. Nama dan aturan berbeza mengikut pengarang."
-      ]
+      "cultivation": "Kultivasi",
+      "treasures": "Kraf dan harta",
+      "beasts": "Makhluk dan mitos",
+      "worlds": "Dunia dan kosmos",
+      "sects": "Sekte dan kerajaan",
+      "systems": "Sistem permainan",
+      "korean": "Novel web Korea",
+      "japanese": "Novel ringan Jepun",
+      "tropes": "Klise dan ungkapan",
+      "characters": "Jenis watak",
+      "genres": "Genre"
     }
   },
   "tl": {
@@ -783,7 +657,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Wika ng babasahin",
       "mode": "Paraan ng pagbasa",
       "meaning": "Kahulugan",
-      "context": "Sa uri ng kuwento",
       "aliases": "Ibang tawag",
       "original": "Orihinal at pagbigkas",
       "related": "Tingnan din",
@@ -798,33 +671,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Madaling pagbasa",
       "literalMode": "Literal na pagbasa",
       "results": "Mga terminong nakita",
-      "browse": "Tuklasin ang ensiklopedya"
+      "browse": "Tuklasin ang ensiklopedya",
+      "writeAs": "Isulat bilang",
+      "copy": "Kopyahin",
+      "copied": "Nakopya",
+      "copyAll": "Kopyahin lahat",
+      "copyFailed": "Hindi nakopya"
     },
     "categories": {
-      "realms": [
-        "Mga antas ng paglinang",
-        "Sanggunian ng uri ng kuwento, hiwalay sa Codex ng bawat kuwento. Nag-iiba ang pangalan at tuntunin ayon sa may-akda."
-      ],
-      "qi": [
-        "Qi at katawan",
-        "Sanggunian ng uri ng kuwento, hiwalay sa Codex ng bawat kuwento. Nag-iiba ang pangalan at tuntunin ayon sa may-akda."
-      ],
-      "crafts": [
-        "Alkimiya at mga likha",
-        "Sanggunian ng uri ng kuwento, hiwalay sa Codex ng bawat kuwento. Nag-iiba ang pangalan at tuntunin ayon sa may-akda."
-      ],
-      "beasts": [
-        "Mitolohiya at mga nilalang",
-        "Sanggunian ng uri ng kuwento, hiwalay sa Codex ng bawat kuwento. Nag-iiba ang pangalan at tuntunin ayon sa may-akda."
-      ],
-      "culture": [
-        "Mga idyoma at kultura",
-        "Sanggunian ng uri ng kuwento, hiwalay sa Codex ng bawat kuwento. Nag-iiba ang pangalan at tuntunin ayon sa may-akda."
-      ],
-      "weapons": [
-        "Mga sandata at relikya",
-        "Sanggunian ng uri ng kuwento, hiwalay sa Codex ng bawat kuwento. Nag-iiba ang pangalan at tuntunin ayon sa may-akda."
-      ]
+      "cultivation": "Kultibasyon",
+      "treasures": "Mga sining at kayamanan",
+      "beasts": "Mga halimaw at mito",
+      "worlds": "Mga mundo at kosmos",
+      "sects": "Mga sekta at kaharian",
+      "systems": "Mga sistema ng laro",
+      "korean": "Mga Korean web novel",
+      "japanese": "Mga Japanese light novel",
+      "tropes": "Mga trope at kasabihan",
+      "characters": "Mga uri ng karakter",
+      "genres": "Mga genre"
     }
   },
   "th": {
@@ -838,7 +703,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "ภาษาอ่าน",
       "mode": "โหมดการอ่าน",
       "meaning": "ความหมาย",
-      "context": "ในแนวเรื่อง",
       "aliases": "ชื่ออื่น",
       "original": "ต้นฉบับและการออกเสียง",
       "related": "ดูเพิ่มเติม",
@@ -853,33 +717,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "อ่านง่าย",
       "literalMode": "อ่านความหมายตรง",
       "results": "คำศัพท์ที่พบ",
-      "browse": "เปิดสารานุกรม"
+      "browse": "เปิดสารานุกรม",
+      "writeAs": "เขียนว่า",
+      "copy": "คัดลอก",
+      "copied": "คัดลอกแล้ว",
+      "copyAll": "คัดลอกทั้งหมด",
+      "copyFailed": "คัดลอกไม่สำเร็จ"
     },
     "categories": {
-      "realms": [
-        "ขั้นการบำเพ็ญ",
-        "ข้อมูลอ้างอิงของแนวเรื่อง แยกจาก Codex ของแต่ละเรื่อง ชื่อและกฎอาจต่างกันตามผู้เขียน"
-      ],
-      "qi": [
-        "ปราณและร่างกาย",
-        "ข้อมูลอ้างอิงของแนวเรื่อง แยกจาก Codex ของแต่ละเรื่อง ชื่อและกฎอาจต่างกันตามผู้เขียน"
-      ],
-      "crafts": [
-        "โอสถและงานช่าง",
-        "ข้อมูลอ้างอิงของแนวเรื่อง แยกจาก Codex ของแต่ละเรื่อง ชื่อและกฎอาจต่างกันตามผู้เขียน"
-      ],
-      "beasts": [
-        "ตำนานและอสูร",
-        "ข้อมูลอ้างอิงของแนวเรื่อง แยกจาก Codex ของแต่ละเรื่อง ชื่อและกฎอาจต่างกันตามผู้เขียน"
-      ],
-      "culture": [
-        "สำนวนและวัฒนธรรม",
-        "ข้อมูลอ้างอิงของแนวเรื่อง แยกจาก Codex ของแต่ละเรื่อง ชื่อและกฎอาจต่างกันตามผู้เขียน"
-      ],
-      "weapons": [
-        "อาวุธและสมบัติวิเศษ",
-        "ข้อมูลอ้างอิงของแนวเรื่อง แยกจาก Codex ของแต่ละเรื่อง ชื่อและกฎอาจต่างกันตามผู้เขียน"
-      ]
+      "cultivation": "การบำเพ็ญเพียร",
+      "treasures": "งานฝีมือและสมบัติ",
+      "beasts": "สัตว์วิเศษและตำนาน",
+      "worlds": "โลกและจักรวาล",
+      "sects": "สำนักและอาณาจักร",
+      "systems": "ระบบเกม",
+      "korean": "นิยายเว็บเกาหลี",
+      "japanese": "ไลต์โนเวลญี่ปุ่น",
+      "tropes": "พล็อตและสำนวน",
+      "characters": "ประเภทตัวละคร",
+      "genres": "แนวเรื่อง"
     }
   },
   "hi": {
@@ -893,7 +749,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "पढ़ने की भाषा",
       "mode": "पठन मोड",
       "meaning": "अर्थ",
-      "context": "विधा में प्रयोग",
       "aliases": "अन्य नाम",
       "original": "मूल लिपि और उच्चारण",
       "related": "यह भी देखें",
@@ -908,33 +763,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "आसान पठन",
       "literalMode": "सीधा पठन",
       "results": "मिले हुए शब्द",
-      "browse": "विश्वकोश देखें"
+      "browse": "विश्वकोश देखें",
+      "writeAs": "ऐसे लिखें",
+      "copy": "कॉपी करें",
+      "copied": "कॉपी हो गया",
+      "copyAll": "सब कॉपी करें",
+      "copyFailed": "कॉपी नहीं हो सका"
     },
     "categories": {
-      "realms": [
-        "साधना के स्तर",
-        "विधा का संदर्भ, हर कहानी के Codex से अलग। नाम और नियम लेखक के अनुसार बदलते हैं।"
-      ],
-      "qi": [
-        "ची और शरीर",
-        "विधा का संदर्भ, हर कहानी के Codex से अलग। नाम और नियम लेखक के अनुसार बदलते हैं।"
-      ],
-      "crafts": [
-        "रसायन और शिल्प",
-        "विधा का संदर्भ, हर कहानी के Codex से अलग। नाम और नियम लेखक के अनुसार बदलते हैं।"
-      ],
-      "beasts": [
-        "पौराणिक जीव",
-        "विधा का संदर्भ, हर कहानी के Codex से अलग। नाम और नियम लेखक के अनुसार बदलते हैं।"
-      ],
-      "culture": [
-        "मुहावरे और संस्कृति",
-        "विधा का संदर्भ, हर कहानी के Codex से अलग। नाम और नियम लेखक के अनुसार बदलते हैं।"
-      ],
-      "weapons": [
-        "हथियार और अवशेष",
-        "विधा का संदर्भ, हर कहानी के Codex से अलग। नाम और नियम लेखक के अनुसार बदलते हैं।"
-      ]
+      "cultivation": "साधना",
+      "treasures": "शिल्प और ख़ज़ाने",
+      "beasts": "जीव और मिथक",
+      "worlds": "लोक और ब्रह्मांड",
+      "sects": "संप्रदाय और राज्य",
+      "systems": "गेम सिस्टम",
+      "korean": "कोरियाई वेब उपन्यास",
+      "japanese": "जापानी लाइट नॉवेल",
+      "tropes": "ट्रोप और कहावतें",
+      "characters": "किरदारों के प्रकार",
+      "genres": "शैलियाँ"
     }
   },
   "ar": {
@@ -948,7 +795,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "لغة القراءة",
       "mode": "وضع القراءة",
       "meaning": "المعنى",
-      "context": "في هذا النوع الأدبي",
       "aliases": "أسماء أخرى",
       "original": "النص الأصلي والنطق",
       "related": "انظر أيضًا",
@@ -963,33 +809,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "قراءة سهلة",
       "literalMode": "قراءة حرفية",
       "results": "المصطلحات الموجودة",
-      "browse": "تصفح الموسوعة"
+      "browse": "تصفح الموسوعة",
+      "writeAs": "اكتبها هكذا",
+      "copy": "نسخ",
+      "copied": "تم النسخ",
+      "copyAll": "نسخ الكل",
+      "copyFailed": "تعذّر النسخ"
     },
     "categories": {
-      "realms": [
-        "مراتب التدريب",
-        "مرجع للنوع الأدبي منفصل عن Codex كل قصة. تختلف الأسماء والقواعد بحسب المؤلف."
-      ],
-      "qi": [
-        "التشي والجسد",
-        "مرجع للنوع الأدبي منفصل عن Codex كل قصة. تختلف الأسماء والقواعد بحسب المؤلف."
-      ],
-      "crafts": [
-        "الخيمياء والحرف",
-        "مرجع للنوع الأدبي منفصل عن Codex كل قصة. تختلف الأسماء والقواعد بحسب المؤلف."
-      ],
-      "beasts": [
-        "الأساطير والمخلوقات",
-        "مرجع للنوع الأدبي منفصل عن Codex كل قصة. تختلف الأسماء والقواعد بحسب المؤلف."
-      ],
-      "culture": [
-        "التعابير والثقافة",
-        "مرجع للنوع الأدبي منفصل عن Codex كل قصة. تختلف الأسماء والقواعد بحسب المؤلف."
-      ],
-      "weapons": [
-        "الأسلحة والآثار",
-        "مرجع للنوع الأدبي منفصل عن Codex كل قصة. تختلف الأسماء والقواعد بحسب المؤلف."
-      ]
+      "cultivation": "التهذيب الروحي",
+      "treasures": "الحِرف والكنوز",
+      "beasts": "الوحوش والأساطير",
+      "worlds": "العوالم والكون",
+      "sects": "الطوائف والممالك",
+      "systems": "أنظمة الألعاب",
+      "korean": "الروايات الكورية على الويب",
+      "japanese": "الروايات اليابانية الخفيفة",
+      "tropes": "الكليشيهات والأقوال",
+      "characters": "أنواع الشخصيات",
+      "genres": "الأنواع الأدبية"
     }
   },
   "he": {
@@ -1003,7 +841,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "שפת הקריאה",
       "mode": "מצב קריאה",
       "meaning": "משמעות",
-      "context": "בתוך הסוגה",
       "aliases": "שמות נוספים",
       "original": "מקור והגייה",
       "related": "ראו גם",
@@ -1018,33 +855,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "קריאה קלה",
       "literalMode": "קריאה מילולית",
       "results": "מונחים שנמצאו",
-      "browse": "עיון באנציקלופדיה"
+      "browse": "עיון באנציקלופדיה",
+      "writeAs": "כתבו כך",
+      "copy": "העתקה",
+      "copied": "הועתק",
+      "copyAll": "העתקת הכול",
+      "copyFailed": "ההעתקה נכשלה"
     },
     "categories": {
-      "realms": [
-        "שלבי התפתחות",
-        "מדריך לסוגה, בנפרד מהקודקס של כל סיפור. שמות וכללים משתנים בין מחברים."
-      ],
-      "qi": [
-        "צ׳י ואנטומיה",
-        "מדריך לסוגה, בנפרד מהקודקס של כל סיפור. שמות וכללים משתנים בין מחברים."
-      ],
-      "crafts": [
-        "אלכימיה ומלאכות",
-        "מדריך לסוגה, בנפרד מהקודקס של כל סיפור. שמות וכללים משתנים בין מחברים."
-      ],
-      "beasts": [
-        "מיתולוגיה ויצורים",
-        "מדריך לסוגה, בנפרד מהקודקס של כל סיפור. שמות וכללים משתנים בין מחברים."
-      ],
-      "culture": [
-        "ביטויים ותרבות",
-        "מדריך לסוגה, בנפרד מהקודקס של כל סיפור. שמות וכללים משתנים בין מחברים."
-      ],
-      "weapons": [
-        "נשק וחפצי קסם",
-        "מדריך לסוגה, בנפרד מהקודקס של כל סיפור. שמות וכללים משתנים בין מחברים."
-      ]
+      "cultivation": "טיפוח",
+      "treasures": "מלאכות ואוצרות",
+      "beasts": "חיות ומיתוסים",
+      "worlds": "עולמות וקוסמוס",
+      "sects": "כתות וממלכות",
+      "systems": "מערכות משחק",
+      "korean": "רומני רשת קוריאניים",
+      "japanese": "לייט נובלים יפניים",
+      "tropes": "קלישאות וביטויים",
+      "characters": "סוגי דמויות",
+      "genres": "ז׳אנרים"
     }
   },
   "fa": {
@@ -1058,7 +887,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "زبان خواندن",
       "mode": "حالت خواندن",
       "meaning": "معنی",
-      "context": "در این گونه",
       "aliases": "نام‌های دیگر",
       "original": "نوشتار اصلی و تلفظ",
       "related": "همچنین ببینید",
@@ -1073,33 +901,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "خواندن آسان",
       "literalMode": "خواندن مستقیم",
       "results": "اصطلاحات یافت‌شده",
-      "browse": "مرور دانشنامه"
+      "browse": "مرور دانشنامه",
+      "writeAs": "این‌طور بنویسید",
+      "copy": "کپی",
+      "copied": "کپی شد",
+      "copyAll": "کپی همه",
+      "copyFailed": "کپی نشد"
     },
     "categories": {
-      "realms": [
-        "مراتب پرورش نیرو",
-        "مرجع این گونه، جدا از Codex هر داستان. نام‌ها و قواعد به نویسنده بستگی دارند."
-      ],
-      "qi": [
-        "چی و بدن",
-        "مرجع این گونه، جدا از Codex هر داستان. نام‌ها و قواعد به نویسنده بستگی دارند."
-      ],
-      "crafts": [
-        "کیمیاگری و صنایع",
-        "مرجع این گونه، جدا از Codex هر داستان. نام‌ها و قواعد به نویسنده بستگی دارند."
-      ],
-      "beasts": [
-        "اسطوره‌ها و موجودات",
-        "مرجع این گونه، جدا از Codex هر داستان. نام‌ها و قواعد به نویسنده بستگی دارند."
-      ],
-      "culture": [
-        "اصطلاحات و فرهنگ",
-        "مرجع این گونه، جدا از Codex هر داستان. نام‌ها و قواعد به نویسنده بستگی دارند."
-      ],
-      "weapons": [
-        "سلاح‌ها و آثار",
-        "مرجع این گونه، جدا از Codex هر داستان. نام‌ها و قواعد به نویسنده بستگی دارند."
-      ]
+      "cultivation": "پرورش معنوی",
+      "treasures": "صنایع و گنجینه‌ها",
+      "beasts": "جانوران و اسطوره‌ها",
+      "worlds": "جهان‌ها و کیهان",
+      "sects": "فرقه‌ها و پادشاهی‌ها",
+      "systems": "سیستم‌های بازی",
+      "korean": "رمان‌های اینترنتی کره‌ای",
+      "japanese": "لایت ناول‌های ژاپنی",
+      "tropes": "کلیشه‌ها و اصطلاحات",
+      "characters": "انواع شخصیت",
+      "genres": "ژانرها"
     }
   },
   "ur": {
@@ -1113,7 +933,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "مطالعے کی زبان",
       "mode": "مطالعے کا انداز",
       "meaning": "معنی",
-      "context": "صنف میں استعمال",
       "aliases": "دوسرے نام",
       "original": "اصل رسم الخط اور تلفظ",
       "related": "یہ بھی دیکھیں",
@@ -1128,33 +947,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "آسان مطالعہ",
       "literalMode": "براہ راست مطالعہ",
       "results": "ملنے والی اصطلاحات",
-      "browse": "دائرۃ المعارف دیکھیں"
+      "browse": "دائرۃ المعارف دیکھیں",
+      "writeAs": "یوں لکھیں",
+      "copy": "کاپی",
+      "copied": "کاپی ہو گیا",
+      "copyAll": "سب کاپی کریں",
+      "copyFailed": "کاپی نہیں ہو سکا"
     },
     "categories": {
-      "realms": [
-        "تربیت کے درجے",
-        "صنف کا حوالہ، ہر کہانی کے Codex سے الگ۔ نام اور اصول مصنف کے لحاظ سے بدلتے ہیں۔"
-      ],
-      "qi": [
-        "چی اور جسم",
-        "صنف کا حوالہ، ہر کہانی کے Codex سے الگ۔ نام اور اصول مصنف کے لحاظ سے بدلتے ہیں۔"
-      ],
-      "crafts": [
-        "کیمیا اور ہنر",
-        "صنف کا حوالہ، ہر کہانی کے Codex سے الگ۔ نام اور اصول مصنف کے لحاظ سے بدلتے ہیں۔"
-      ],
-      "beasts": [
-        "اساطیر اور مخلوقات",
-        "صنف کا حوالہ، ہر کہانی کے Codex سے الگ۔ نام اور اصول مصنف کے لحاظ سے بدلتے ہیں۔"
-      ],
-      "culture": [
-        "محاورے اور ثقافت",
-        "صنف کا حوالہ، ہر کہانی کے Codex سے الگ۔ نام اور اصول مصنف کے لحاظ سے بدلتے ہیں۔"
-      ],
-      "weapons": [
-        "ہتھیار اور نوادرات",
-        "صنف کا حوالہ، ہر کہانی کے Codex سے الگ۔ نام اور اصول مصنف کے لحاظ سے بدلتے ہیں۔"
-      ]
+      "cultivation": "روحانی تربیت",
+      "treasures": "ہنر اور خزانے",
+      "beasts": "درندے اور اساطیر",
+      "worlds": "دنیائیں اور کائنات",
+      "sects": "فرقے اور سلطنتیں",
+      "systems": "گیم سسٹم",
+      "korean": "کوریائی ویب ناول",
+      "japanese": "جاپانی لائٹ ناول",
+      "tropes": "روایتی انداز اور محاورے",
+      "characters": "کرداروں کی اقسام",
+      "genres": "اصناف"
     }
   },
   "sw": {
@@ -1168,7 +979,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Lugha ya kusoma",
       "mode": "Hali ya kusoma",
       "meaning": "Maana",
-      "context": "Katika aina hii",
       "aliases": "Majina mengine",
       "original": "Maandishi asili na matamshi",
       "related": "Tazama pia",
@@ -1183,33 +993,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Usomaji rahisi",
       "literalMode": "Usomaji wa moja kwa moja",
       "results": "Maneno yaliyopatikana",
-      "browse": "Vinjari ensaiklopidia"
+      "browse": "Vinjari ensaiklopidia",
+      "writeAs": "Andika hivi",
+      "copy": "Nakili",
+      "copied": "Imenakiliwa",
+      "copyAll": "Nakili zote",
+      "copyFailed": "Imeshindwa kunakili"
     },
     "categories": {
-      "realms": [
-        "Ngazi za mafunzo",
-        "Rejea ya aina ya hadithi, tofauti na Codex ya kila hadithi. Majina na kanuni hutofautiana kwa mwandishi."
-      ],
-      "qi": [
-        "Qi na mwili",
-        "Rejea ya aina ya hadithi, tofauti na Codex ya kila hadithi. Majina na kanuni hutofautiana kwa mwandishi."
-      ],
-      "crafts": [
-        "Alkemia na ufundi",
-        "Rejea ya aina ya hadithi, tofauti na Codex ya kila hadithi. Majina na kanuni hutofautiana kwa mwandishi."
-      ],
-      "beasts": [
-        "Hadithi za kale na viumbe",
-        "Rejea ya aina ya hadithi, tofauti na Codex ya kila hadithi. Majina na kanuni hutofautiana kwa mwandishi."
-      ],
-      "culture": [
-        "Nahau na utamaduni",
-        "Rejea ya aina ya hadithi, tofauti na Codex ya kila hadithi. Majina na kanuni hutofautiana kwa mwandishi."
-      ],
-      "weapons": [
-        "Silaha na masalia",
-        "Rejea ya aina ya hadithi, tofauti na Codex ya kila hadithi. Majina na kanuni hutofautiana kwa mwandishi."
-      ]
+      "cultivation": "Ukuzaji wa kiroho",
+      "treasures": "Ufundi na hazina",
+      "beasts": "Wanyama na hekaya",
+      "worlds": "Ulimwengu na anga",
+      "sects": "Madhehebu na falme",
+      "systems": "Mifumo ya mchezo",
+      "korean": "Riwaya za mtandaoni za Kikorea",
+      "japanese": "Riwaya nyepesi za Kijapani",
+      "tropes": "Mitindo na misemo",
+      "characters": "Aina za wahusika",
+      "genres": "Aina za hadithi"
     }
   },
   "ha": {
@@ -1223,7 +1025,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Harshen karatu",
       "mode": "Yanayin karatu",
       "meaning": "Ma’ana",
-      "context": "A irin labarin",
       "aliases": "Wasu sunaye",
       "original": "Rubutun asali da furuci",
       "related": "Duba kuma",
@@ -1238,33 +1039,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Karatu mai sauƙi",
       "literalMode": "Karatu kai tsaye",
       "results": "Kalmomin da aka samu",
-      "browse": "Bincika kundin"
+      "browse": "Bincika kundin",
+      "writeAs": "Rubuta haka",
+      "copy": "Kwafa",
+      "copied": "An kwafa",
+      "copyAll": "Kwafa duka",
+      "copyFailed": "Ba a iya kwafa ba"
     },
     "categories": {
-      "realms": [
-        "Matakan horo",
-        "Jagorar irin labari, dabam da Codex na kowane labari. Sunaye da dokoki sun bambanta bisa marubuci."
-      ],
-      "qi": [
-        "Qi da jiki",
-        "Jagorar irin labari, dabam da Codex na kowane labari. Sunaye da dokoki sun bambanta bisa marubuci."
-      ],
-      "crafts": [
-        "Kimiyyar sihiri da sana’a",
-        "Jagorar irin labari, dabam da Codex na kowane labari. Sunaye da dokoki sun bambanta bisa marubuci."
-      ],
-      "beasts": [
-        "Tatsuniyoyi da halittu",
-        "Jagorar irin labari, dabam da Codex na kowane labari. Sunaye da dokoki sun bambanta bisa marubuci."
-      ],
-      "culture": [
-        "Karin magana da al’ada",
-        "Jagorar irin labari, dabam da Codex na kowane labari. Sunaye da dokoki sun bambanta bisa marubuci."
-      ],
-      "weapons": [
-        "Makamai da kayayyakin tarihi",
-        "Jagorar irin labari, dabam da Codex na kowane labari. Sunaye da dokoki sun bambanta bisa marubuci."
-      ]
+      "cultivation": "Horar da ruhi",
+      "treasures": "Sana’o’i da dukiya",
+      "beasts": "Dabbobi da tatsuniyoyi",
+      "worlds": "Duniyoyi da sararin samaniya",
+      "sects": "Ƙungiyoyi da masarautu",
+      "systems": "Tsarin wasanni",
+      "korean": "Littattafan intanet na Koriya",
+      "japanese": "Gajerun littattafan Japan",
+      "tropes": "Salon labari da karin magana",
+      "characters": "Nau’in jarumai",
+      "genres": "Nau’o’in labari"
     }
   },
   "so": {
@@ -1278,7 +1071,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Luqadda akhriska",
       "mode": "Habka akhriska",
       "meaning": "Macnaha",
-      "context": "Nooca sheekadan",
       "aliases": "Magacyo kale",
       "original": "Qoraalka asalka iyo dhawaaqa",
       "related": "Sidoo kale eeg",
@@ -1293,33 +1085,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Akhris fudud",
       "literalMode": "Akhris toos ah",
       "results": "Erayada la helay",
-      "browse": "Baadh buugga aqoonta"
+      "browse": "Baadh buugga aqoonta",
+      "writeAs": "Sidan u qor",
+      "copy": "Koobi",
+      "copied": "Waa la koobiyey",
+      "copyAll": "Koobi dhammaan",
+      "copyFailed": "Lama koobiyi karin"
     },
     "categories": {
-      "realms": [
-        "Heerarka tababarka",
-        "Tixraaca nooca sheekada, oo ka gooni ah Codex sheeko kasta. Magacyada iyo xeerarku qoraaga ayay ku kala duwan yihiin."
-      ],
-      "qi": [
-        "Qi iyo jirka",
-        "Tixraaca nooca sheekada, oo ka gooni ah Codex sheeko kasta. Magacyada iyo xeerarku qoraaga ayay ku kala duwan yihiin."
-      ],
-      "crafts": [
-        "Alkimiya iyo farsamo",
-        "Tixraaca nooca sheekada, oo ka gooni ah Codex sheeko kasta. Magacyada iyo xeerarku qoraaga ayay ku kala duwan yihiin."
-      ],
-      "beasts": [
-        "Khuraafaad iyo makhluuqaad",
-        "Tixraaca nooca sheekada, oo ka gooni ah Codex sheeko kasta. Magacyada iyo xeerarku qoraaga ayay ku kala duwan yihiin."
-      ],
-      "culture": [
-        "Oraahyo iyo dhaqan",
-        "Tixraaca nooca sheekada, oo ka gooni ah Codex sheeko kasta. Magacyada iyo xeerarku qoraaga ayay ku kala duwan yihiin."
-      ],
-      "weapons": [
-        "Hub iyo agab qadiimi ah",
-        "Tixraaca nooca sheekada, oo ka gooni ah Codex sheeko kasta. Magacyada iyo xeerarku qoraaga ayay ku kala duwan yihiin."
-      ]
+      "cultivation": "Koritaanka ruuxa",
+      "treasures": "Farsamooyin iyo khasnado",
+      "beasts": "Bahallo iyo khuraafaad",
+      "worlds": "Adduunyo iyo koon",
+      "sects": "Kooxo iyo boqortooyooyin",
+      "systems": "Nidaamyada ciyaarta",
+      "korean": "Sheekooyinka shabakadda Kuuriya",
+      "japanese": "Sheekooyinka fudud ee Jabaan",
+      "tropes": "Qaababka sheekada iyo maahmaahyo",
+      "characters": "Noocyada jilayaasha",
+      "genres": "Noocyada sheekooyinka"
     }
   },
   "ig": {
@@ -1333,7 +1117,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Asụsụ ọgụgụ",
       "mode": "Ụdị ọgụgụ",
       "meaning": "Ihe ọ pụtara",
-      "context": "N’ụdị akụkọ a",
       "aliases": "Aha ndị ọzọ",
       "original": "Ederede mbụ na ịkpọ okwu",
       "related": "Leekwa",
@@ -1348,33 +1131,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Ọgụgụ dị mfe",
       "literalMode": "Ọgụgụ kpọmkwem",
       "results": "Okwu achọtara",
-      "browse": "Chọgharịa akwụkwọ ihe ọmụma"
+      "browse": "Chọgharịa akwụkwọ ihe ọmụma",
+      "writeAs": "Dee ya otu a",
+      "copy": "Detuo",
+      "copied": "E detuola",
+      "copyAll": "Detuo ha niile",
+      "copyFailed": "Enweghị ike idetuo"
     },
     "categories": {
-      "realms": [
-        "Ọkwa ọzụzụ",
-        "Ntuziaka ụdị akụkọ, dị iche na Codex nke akụkọ ọ bụla. Aha na iwu dabere n’onye dere ya."
-      ],
-      "qi": [
-        "Qi na ahụ",
-        "Ntuziaka ụdị akụkọ, dị iche na Codex nke akụkọ ọ bụla. Aha na iwu dabere n’onye dere ya."
-      ],
-      "crafts": [
-        "Nka ọgwụ na ọrụ aka",
-        "Ntuziaka ụdị akụkọ, dị iche na Codex nke akụkọ ọ bụla. Aha na iwu dabere n’onye dere ya."
-      ],
-      "beasts": [
-        "Akụkọ ifo na anụ",
-        "Ntuziaka ụdị akụkọ, dị iche na Codex nke akụkọ ọ bụla. Aha na iwu dabere n’onye dere ya."
-      ],
-      "culture": [
-        "Akpaalaokwu na omenala",
-        "Ntuziaka ụdị akụkọ, dị iche na Codex nke akụkọ ọ bụla. Aha na iwu dabere n’onye dere ya."
-      ],
-      "weapons": [
-        "Ngwa ọgụ na ihe ochie",
-        "Ntuziaka ụdị akụkọ, dị iche na Codex nke akụkọ ọ bụla. Aha na iwu dabere n’onye dere ya."
-      ]
+      "cultivation": "Ọzụzụ mmụọ",
+      "treasures": "Nka na akụ",
+      "beasts": "Anụ ọhịa na akụkọ ifo",
+      "worlds": "Ụwa na eluigwe",
+      "sects": "Otu na alaeze",
+      "systems": "Usoro egwuregwu",
+      "korean": "Akwụkwọ akụkọ ịntanetị Korea",
+      "japanese": "Akwụkwọ akụkọ Japan",
+      "tropes": "Ụkpụrụ akụkọ na ilu",
+      "characters": "Ụdị agwa",
+      "genres": "Ụdị akụkọ"
     }
   },
   "yo": {
@@ -1388,7 +1163,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "Èdè kíkà",
       "mode": "Ọ̀nà kíkà",
       "meaning": "Ìtumọ̀",
-      "context": "Nínú irú ìtàn yìí",
       "aliases": "Orúkọ mìíràn",
       "original": "Ìkọ̀wé ìpilẹ̀ àti bí a ṣe ń pè é",
       "related": "Wo pẹ̀lú",
@@ -1403,33 +1177,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "Kíkà tó rọrùn",
       "literalMode": "Kíkà tààrà",
       "results": "Àwọn ọ̀rọ̀ tí a rí",
-      "browse": "Ṣàwárí ìwé ìmọ̀"
+      "browse": "Ṣàwárí ìwé ìmọ̀",
+      "writeAs": "Kọ ọ́ báyìí",
+      "copy": "Daakọ",
+      "copied": "A ti daakọ",
+      "copyAll": "Daakọ gbogbo",
+      "copyFailed": "Kò ṣeé daakọ"
     },
     "categories": {
-      "realms": [
-        "Ìpele ìdánilẹ́kọ̀ọ́",
-        "Ìtọ́kasí irú ìtàn, yàtọ̀ sí Codex ìtàn kọ̀ọ̀kan. Orúkọ àti òfin dá lórí òǹkọ̀wé."
-      ],
-      "qi": [
-        "Qi àti ara",
-        "Ìtọ́kasí irú ìtàn, yàtọ̀ sí Codex ìtàn kọ̀ọ̀kan. Orúkọ àti òfin dá lórí òǹkọ̀wé."
-      ],
-      "crafts": [
-        "Oògùn àrà àti iṣẹ́ ọwọ́",
-        "Ìtọ́kasí irú ìtàn, yàtọ̀ sí Codex ìtàn kọ̀ọ̀kan. Orúkọ àti òfin dá lórí òǹkọ̀wé."
-      ],
-      "beasts": [
-        "Àròsọ àti ẹ̀dá",
-        "Ìtọ́kasí irú ìtàn, yàtọ̀ sí Codex ìtàn kọ̀ọ̀kan. Orúkọ àti òfin dá lórí òǹkọ̀wé."
-      ],
-      "culture": [
-        "Àkànlò èdè àti àṣà",
-        "Ìtọ́kasí irú ìtàn, yàtọ̀ sí Codex ìtàn kọ̀ọ̀kan. Orúkọ àti òfin dá lórí òǹkọ̀wé."
-      ],
-      "weapons": [
-        "Ohun ìjà àti ohun ìṣúra",
-        "Ìtọ́kasí irú ìtàn, yàtọ̀ sí Codex ìtàn kọ̀ọ̀kan. Orúkọ àti òfin dá lórí òǹkọ̀wé."
-      ]
+      "cultivation": "Ìdàgbàsókè ẹ̀mí",
+      "treasures": "Iṣẹ́ ọwọ́ àti ìṣúra",
+      "beasts": "Ẹranko àti ìtàn àròsọ",
+      "worlds": "Àwọn ayé àti àgbáyé",
+      "sects": "Ẹ̀ya ìsìn àti ìjọba",
+      "systems": "Ètò eré",
+      "korean": "Àwọn ìtàn orí ayélujára ti Korea",
+      "japanese": "Àwọn ìtàn kúkúrú ti Japan",
+      "tropes": "Àṣà ìtàn àti òwe",
+      "characters": "Irú ẹ̀dá ìtàn",
+      "genres": "Irú ìtàn"
     }
   },
   "am": {
@@ -1443,7 +1209,6 @@ export const LORE_INTERFACE_COPY = {
       "language": "የንባብ ቋንቋ",
       "mode": "የንባብ ሁኔታ",
       "meaning": "ትርጉም",
-      "context": "በዚህ ዘውግ",
       "aliases": "ሌሎች ስሞች",
       "original": "ዋና ጽሑፍና አጠራር",
       "related": "ይህንም ይመልከቱ",
@@ -1458,33 +1223,25 @@ export const LORE_INTERFACE_COPY = {
       "easy": "ቀላል ንባብ",
       "literalMode": "ቀጥተኛ ንባብ",
       "results": "የተገኙ ቃላት",
-      "browse": "ኢንሳይክሎፒዲያውን አስስ"
+      "browse": "ኢንሳይክሎፒዲያውን አስስ",
+      "writeAs": "እንዲህ ይጻፉ",
+      "copy": "ቅዳ",
+      "copied": "ተቀድቷል",
+      "copyAll": "ሁሉንም ቅዳ",
+      "copyFailed": "መቅዳት አልተቻለም"
     },
     "categories": {
-      "realms": [
-        "የልምምድ ደረጃዎች",
-        "የዘውጉ ማጣቀሻ፣ ከእያንዳንዱ ታሪክ Codex የተለየ። ስሞችና ሕጎች እንደ ደራሲው ይለያያሉ።"
-      ],
-      "qi": [
-        "ቺና ሰውነት",
-        "የዘውጉ ማጣቀሻ፣ ከእያንዳንዱ ታሪክ Codex የተለየ። ስሞችና ሕጎች እንደ ደራሲው ይለያያሉ።"
-      ],
-      "crafts": [
-        "አልኬሚና ዕደ ጥበብ",
-        "የዘውጉ ማጣቀሻ፣ ከእያንዳንዱ ታሪክ Codex የተለየ። ስሞችና ሕጎች እንደ ደራሲው ይለያያሉ።"
-      ],
-      "beasts": [
-        "አፈ ታሪክና ፍጡራን",
-        "የዘውጉ ማጣቀሻ፣ ከእያንዳንዱ ታሪክ Codex የተለየ። ስሞችና ሕጎች እንደ ደራሲው ይለያያሉ።"
-      ],
-      "culture": [
-        "ፈሊጦችና ባሕል",
-        "የዘውጉ ማጣቀሻ፣ ከእያንዳንዱ ታሪክ Codex የተለየ። ስሞችና ሕጎች እንደ ደራሲው ይለያያሉ።"
-      ],
-      "weapons": [
-        "መሣሪያዎችና ቅርሶች",
-        "የዘውጉ ማጣቀሻ፣ ከእያንዳንዱ ታሪክ Codex የተለየ። ስሞችና ሕጎች እንደ ደራሲው ይለያያሉ።"
-      ]
+      "cultivation": "መንፈሳዊ ልምምድ",
+      "treasures": "ጥበቦችና ሀብቶች",
+      "beasts": "አውሬዎችና አፈ ታሪኮች",
+      "worlds": "ዓለማትና ኮስሞስ",
+      "sects": "ኑፋቄዎችና መንግሥታት",
+      "systems": "የጨዋታ ሥርዓቶች",
+      "korean": "የኮሪያ የድር ልብወለዶች",
+      "japanese": "የጃፓን ቀላል ልብወለዶች",
+      "tropes": "የተለመዱ ጭብጦችና አባባሎች",
+      "characters": "የገጸ ባሕርይ ዓይነቶች",
+      "genres": "ዘውጎች"
     }
   }
 } satisfies Record<string, { labels: LoreLabels; categories: LoreLocale['categories'] }>;

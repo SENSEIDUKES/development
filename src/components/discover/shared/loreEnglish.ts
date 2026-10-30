@@ -86,7 +86,7 @@ export const LORE_LABELS = {
   title: 'Eastern Fantasy Encyclopedia',
   intro: 'One reference for the words behind the worlds. Find a term by any of its names.',
   search: 'Search terms or aliases', all: 'All terms', directory: 'Encyclopedia', back: 'Back to Discover',
-  language: 'Reading language', mode: 'Reading Mode', meaning: 'Meaning', context: 'In the genre',
+  language: 'Reading language', mode: 'Reading Mode', meaning: 'Meaning',
   aliases: 'Also called', original: 'Original & pronunciation', related: 'See also', sources: 'Further reading',
   empty: 'No matching terms. Try another name or clear the category.', reset: 'Clear filters',
   missing: 'This term is not in the encyclopedia.',
@@ -94,21 +94,20 @@ export const LORE_LABELS = {
   literal: 'The meaning below explains the expression directly, including any figurative language.',
   standard: 'Standard', clear: 'Clear Reading', easy: 'Easy Read', literalMode: 'Literal Reading',
   results: 'Terms found', browse: 'Browse the encyclopedia',
+  writeAs: 'Write it as', copy: 'Copy', copied: 'Copied', copyAll: 'Copy all', copyFailed: 'Could not copy',
 } as const;
 export type LoreLabels = { readonly [K in keyof typeof LORE_LABELS]: string };
 
-export const LORE_CATEGORY_COPY: Record<LoreCategory, readonly [string, string]> = {
-  realms: ['Cultivation Realms', 'Realm order, sub-stages and powers belong to each story. Matching names do not guarantee matching strength.'],
-  qi: ['Qi & Anatomy', 'These terms describe traditional concepts as adapted by fiction. A story can give its energy and body systems their own rules.'],
-  crafts: ['Alchemy & Crafts', 'Recipes, grades and costs depend on the setting. The same translated name does not guarantee the same effect.'],
-  beasts: ['Mythology & Beasts', 'Myths change across periods and regions. Related creatures from different traditions are not automatically the same being.'],
-  culture: ['Idioms & Cultural Terms', 'An expression’s literal words may differ from its intended meaning. Read it in context; genre labels can overlap.'],
-  weapons: ['Weapons & Relics', 'An object’s name describes its type or role. Its power, rank and restrictions are set by the author.'],
+export const LORE_CATEGORY_COPY: Record<LoreCategory, string> = {
+  cultivation: 'Cultivation', treasures: 'Crafts & Treasures', beasts: 'Beasts & Myths', worlds: 'Worlds & Cosmos',
+  sects: 'Sects & Kingdoms', systems: 'Game Systems', korean: 'Korean Web Novels', japanese: 'Japanese Light Novels',
+  tropes: 'Tropes & Sayings', characters: 'Character Types', genres: 'Genres',
 };
 
 export interface LoreLocale {
   labels: LoreLabels;
-  categories: Record<LoreCategory, readonly [string, string]>;
+  categories: Record<LoreCategory, string>;
+  /** Localized titles and definitions for the curated core; glossary terms read in English. */
   terms: LoreTermCopy;
 }
 

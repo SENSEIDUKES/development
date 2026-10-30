@@ -133,7 +133,7 @@ waiting on SENSEI's run; phase C is next."
 
 | # | Phase | Agents build | SENSEI decides | SENSEI sees | Where it stands |
 |---|---|---|---|---|---|
-| A | This design | This document | Approve or cut | This doc | awaiting approval |
+| A | This design | This document | Approve or cut | This doc | approved 2026-10-29 (merged) |
 | B | Tag any chapter, one at a time | In the world's Studio (Create's Studio button opens Story View, whose World Info now has a **Chapters** card listing every chapter; each opens its **Studio page**): the chapter's prose with every tag lit on the words it landed on, one color per kind; the tagger's findings beside it, one line per kind, each a switch that lights that kind alone, "nothing found" and "nothing equipped" told apart; the record (read or not, by which model and when, tokens in and out, notes written, placed and dropped, what was set aside and why) behind one line; and Tag this chapter, with the same guards re-tagging had. One chapter, or a few in order by hand: no whole-story run yet (SENSEI, 2026-10-29: "one chapter at a time, a couple chapters at a time, until we get this right") | Decision 4 below | The Nine-Fold Furnace with chapters 1 to 3 tagged by hand, each on its Studio page | built 2026-10-29; waits on SENSEI's run |
 | C | The manuscript way in. *A manuscript world is an authored world; expansion is a later action, and the tagger discovers before it confirms.* | A second way to start a world beside the Seed: the author's chapters in (see decisions 1 to 3), a world with no Seed and no Blueprint, open to its reader, readable in the Reader, with Story Settings for its language, its main character and its sound words | Decisions 1 to 3 below | A novel of SENSEI's choosing in the app, untagged, opening in the Reader | waits on B |
 | D | The tagging loop, one kind at a time | For each kind: the teaching rewritten for that kind alone, re-tag, count against the sentences the prose offers (the agent lists them), fix, repeat. Order: soundscape and atmosphere (and the category vocabulary they choose from), Sound Cues (with the story's own words equipped), speakers for named characters, then holdings and appearances with the already-appeared list | Approve each kind's words; equip the packs for the test story | Each kind landing on a chapter SENSEI can hear and see: music that changes between chapters, cues on the bells, voices on the named cast | waits on B; C helps |
@@ -239,7 +239,7 @@ chapters first, until the tagging is right):
 - **2026-10-29 (phase A approved, phase B built):** SENSEI merged the plan.
   Phase B: any committed chapter can be tagged, one at a time
   (`retagChapter`, `retagChapterGap`), and World Info has a Chapters card
-  (`StoryChapters`): every chapter with its record (`describeChapterTagging`),
+  (`StoryChapterList`): every chapter with its record (`describeChapterTagging`),
   per kind, and Tag this chapter. The record counts its notes (schema 41). The
   Workshop's HARNESS workspace shows the same record and action. Correction to
   the first draft: the app's Story View had no chapter list; "Tag this chapter

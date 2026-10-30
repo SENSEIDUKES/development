@@ -72,7 +72,7 @@ describe('The chapter\'s soundtrack', () => {
     expect(combined.accepted && combined.draft.scene).toEqual({ soundscape: 'sad', atmosphere: forest(2) });
     // A chapter that chose only its music says so.
     const musicOnly = acceptHarnessModelResponse(reply(['[[soundscape: sad]] Rain fell.']), 2, { media: LIBRARY_BASE_MEDIA, soundtrackExpected: true });
-    expect(musicOnly.warnings.find(warning => warning.code === 'soundtrack_incomplete')?.message).toBe('The writer chose no atmosphere, so the one before goes on.');
+    expect(musicOnly.warnings.find(warning => warning.code === 'soundtrack_incomplete')?.message).toBe('The tagger chose no atmosphere, so the one before goes on.');
   });
 
   it('reads a tag the writer gave a paragraph of its own, and flags a chapter that chose none', () => {

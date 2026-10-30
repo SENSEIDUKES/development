@@ -59,6 +59,24 @@ const GOOD: TagNote[] = [
   { paragraph: 3, words: 'A gaunt figure in ash-grey robes stepped out of the dust.', tag: '[[appears: Old Wen | character]]' },
 ];
 
+describe('the record counts its notes', () => {
+  it('counts what the final placement placed, and a dropped note once', () => {
+    const sent = ['Ye Chen lifted the old blade from the rack.', 'The beast roared.'];
+    const raw = JSON.stringify({ notes: [
+      { paragraph: 1, words: 'lifted the old blade', tag: '[[gained: MC | Old Blade]]' },
+      { paragraph: 2, words: 'no such words', tag: '[[@MC]]' },
+      { paragraph: 2, words: 'roared', tag: '[[sound: beast roar | high]]' },
+    ] });
+    const tagging = readChapterTagging({ raw, sent, chapterNumber: 1, at: '2026-10-30T00:00:00.000Z', model: 'fixture',
+      options: { soundVocabulary: [{ word: 'beast roar' }], protagonistNames: ['Ye Chen'], speakersExpected: true, appearancesExpected: true } });
+    expect(tagging.record.status).toBe('tagged');
+    expect(tagging.record.notes).toEqual({ written: 3, placed: 2 });
+    const dropped = tagging.record.warnings?.find(warning => warning.code === 'tag_note_dropped');
+    expect(dropped?.message).toMatch(/^Dropped 1 of the tagger's 3 notes: /);
+    expect(dropped?.message.match(/no such words/g)).toHaveLength(1);
+  });
+});
+
 describe('the tagger writes in the margin', () => {
   it('places every note on the chapter\'s own words and leaves the prose exactly as it is', () => {
     const tagging = read(GOOD, SOUND);

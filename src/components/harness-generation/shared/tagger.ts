@@ -456,10 +456,12 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
   if (untaggable) return failed(`This chapter cannot be tagged as it stands: ${untaggable}.`);
   const soundWords = options?.soundVocabulary?.map(sound => sound.word);
   let remaining = answer.notes;
-  const dropped = [...answer.dropped];
+  // Notes a pass lost because their paragraph did not read back: kept apart
+  // from what the final placement drops, so no note is counted twice.
+  const lost: string[] = [];
   for (;;) {
     const placement = placeTagNotes(sent, remaining, { soundWords });
-    dropped.push(...placement.dropped);
+    const dropped = [...answer.dropped, ...lost, ...placement.dropped];
     const warnings: HarnessWarning[] = [];
     const read = acceptChapterTags(placement.paragraphs, chapterNumber, warnings, options);
     // The HARNESS's own guarantee, checked: the prose that falls out of the tag
@@ -476,7 +478,7 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
       return {
         record: {
           status: 'tagged', at, ...(model ? { model } : {}),
-          notes: { written: answer.count, placed: answer.count - dropped.length },
+          notes: { written: answer.count, placed: placement.placed },
           ...(warnings.length ? { warnings } : {}),
         },
         tags: {
@@ -488,9 +490,9 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
         },
       };
     }
-    const lost = remaining.filter(note => changed.has(note.paragraph) || read.paragraphs.length !== sent.length);
-    if (!lost.length) return failed('The HARNESS could not read the chapter back as it stands after placing the notes, so no tag was kept.', warnings, { written: answer.count, placed: 0 });
-    dropped.push(...lost.map(note => `[[${tagBody(note.tag)}]] on paragraph ${note.paragraph}: the paragraph did not read back as it stands with it placed`));
-    remaining = remaining.filter(note => !lost.includes(note));
+    const losing = remaining.filter(note => changed.has(note.paragraph) || read.paragraphs.length !== sent.length);
+    if (!losing.length) return failed('The HARNESS could not read the chapter back as it stands after placing the notes, so no tag was kept.', warnings, { written: answer.count, placed: 0 });
+    lost.push(...losing.map(note => `[[${tagBody(note.tag)}]] on paragraph ${note.paragraph}: the paragraph did not read back as it stands with it placed`));
+    remaining = remaining.filter(note => !losing.includes(note));
   }
 }

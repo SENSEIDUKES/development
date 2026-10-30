@@ -48,7 +48,7 @@ existing Chapter Generation feature.
   "already on the page" by the chapters before this one in reading order. The
   record counts its notes (`HarnessChapterTagging.notes`, written and placed;
   schema 41, a no-op upgrade). In the app, World Info gains a **Chapters**
-  card (`WorldCardInfoProps.chapters`, filled by the Library's `StoryChapters`):
+  card (`WorldCardInfoProps.chapters`, filled by the Library's `StoryChapterList`):
   every chapter with its record in words (`describeChapterTagging`: read or
   not, by which model and when, tokens in and out, notes written, placed and
   dropped, then one line per kind, "the tagger found nothing here" said in

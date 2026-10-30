@@ -50,8 +50,13 @@
   pointer-events: none;
 }
 .workspace-shell-header > * { pointer-events: auto; }
-.workspace-shell-main {
-  padding-top: var(--workspace-header-height, 0px);
-  scroll-padding-top: var(--workspace-header-height, 0px);
+/* The space is a spacer, not padding: browsers disagree on whether a pinned
+   (sticky) bar's offset counts from a scroller's padding, so pinned page bars
+   name the header's height themselves (`top: var(--workspace-header-height)`). */
+.workspace-shell-main { scroll-padding-top: var(--workspace-header-height, 0px); }
+.workspace-shell-main::before {
+  content: '';
+  display: block;
+  height: var(--workspace-header-height, 0px);
 }
 .workspace-shell [data-slot="app-shell-sidebar"] { padding-top: var(--workspace-header-height, 0px); }

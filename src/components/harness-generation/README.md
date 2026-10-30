@@ -37,6 +37,14 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-30 (tagging moves to the author's world view):** SENSEI: the
+  Chapters card and chapter page #487 put on World Info were in the wrong
+  place, the regular novel page every reader opens. They are gone. Tagging is
+  seen only in Create's world view (`AuthorWorldView` in
+  `src/library/stories/`), where an author checks chapters and tags them a few
+  at a time (`retagChapter`, one call each, in order) and opens one with its
+  tags lit (`AuthorChapterView`). The engine from #487 is unchanged.
+
 - **2026-10-29:** Chapter selection moves from the header to the bottom chapter pill, between Previous and Next. The rightmost action opens a compact chooser labeled only Fate and Create. Chapter navigation, Create restrictions and Fate Survival gates keep their existing owners; the app and Workshop share the controls.
 
 - **2026-10-29 (any chapter tagged, one at a time, and the record on the

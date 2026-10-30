@@ -37,12 +37,13 @@ describe('NovelExpanded addresses', () => {
       { page: 'story', storyId: 'hst_1' },
       { page: 'read', storyId: 'hst_1' },
       { page: 'blueprint', storyId: 'hst_1' },
-      { page: 'chapter', storyId: 'hst_1', chapterNumber: 3 },
+      { page: 'world', storyId: 'hst_1' },
+      { page: 'world', storyId: 'hst_1', chapterNumber: 3 },
     ];
-    expect(pages.map(routeSearch)).toEqual(['', '?page=discover', '?page=create', '?story=hst_1', '?story=hst_1&read=1', '?story=hst_1&blueprint=1', '?story=hst_1&chapter=3']);
-    // A chapter that is no number opens the story itself.
-    expect(parseRoute('?story=hst_1&chapter=0')).toEqual({ page: 'story', storyId: 'hst_1' });
-    expect(parseRoute('?story=hst_1&chapter=three')).toEqual({ page: 'story', storyId: 'hst_1' });
+    expect(pages.map(routeSearch)).toEqual(['', '?page=discover', '?page=create', '?story=hst_1', '?story=hst_1&read=1', '?story=hst_1&blueprint=1',
+      '?page=create&world=hst_1', '?page=create&world=hst_1&chapter=3']);
+    // A chapter that is no number opens the world itself.
+    expect(parseRoute('?page=create&world=hst_1&chapter=0')).toEqual({ page: 'world', storyId: 'hst_1' });
     for (const page of pages) expect(parseRoute(routeSearch(page))).toEqual(page);
   });
 

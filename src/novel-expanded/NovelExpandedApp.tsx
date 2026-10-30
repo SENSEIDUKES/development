@@ -7,7 +7,7 @@ import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
 import {
   HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, DaoSparksButton, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderProfileProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
 } from '@seihouse/library/shell';
-import { CreateStorySettings, StoryPages, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
+import { AuthorWorldView, CreateStorySettings, StoryPages, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { createOfficialCapaDefaultLoadout } from '../host/generation/capa/officialCapaSkills';
 import { NarrativeButton } from '@seihouse/sen/presentation';
@@ -98,12 +98,12 @@ export function NovelExpandedApp({ services, readerMixer }: {
 function familiarPlace(page: ReturnType<typeof useAppRoute>[0]['page']): { title: string; help: FamiliarHelpPlace } {
   switch (page) {
     case 'create': return { title: 'Create', help: 'story-seed' };
+    case 'world': return { title: 'Create', help: 'library' };
     case 'read': return { title: 'Reader', help: 'reader' };
     case 'discover': return { title: 'Discover', help: 'library' };
     case 'profile': return { title: 'Profile', help: 'library' };
     case 'story':
     case 'blueprint': return { title: 'World Info', help: 'library' };
-    case 'chapter': return { title: 'Studio', help: 'library' };
     case 'home': return { title: 'Home', help: 'library' };
   }
 }
@@ -197,8 +197,12 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const caveStories = useMemo(() => state ? state.stories.map(story => ({
     id: story.id, title: story.title, userId: NOVEL_EXPANDED_READER_ID, sourceSeedId: storySourceSeedId(state, story),
   })) : [], [state]);
-  const storyId = route.page === 'story' || route.page === 'read' || route.page === 'blueprint' || route.page === 'chapter' ? route.storyId : undefined;
+  const storyId = route.page === 'story' || route.page === 'read' || route.page === 'blueprint' ? route.storyId : undefined;
+  const worldId = route.page === 'world' ? route.storyId : undefined;
   const missing = Boolean(state && storyId && !findStory(state, storyId));
+  // A world that is not here (an old link, another browser) goes back to Create.
+  const missingWorld = Boolean(state && worldId && !findStory(state, worldId));
+  useEffect(() => { if (missingWorld) navigate({ page: 'create' }, { replace: true }); }, [missingWorld, navigate]);
   // A story that is not here (an old link, another browser) goes Home.
   useEffect(() => { if (missing) navigate(HOME_ROUTE, { replace: true }); }, [missing, navigate]);
 
@@ -245,6 +249,18 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
 
   if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} menuMusic={menuMusicSlot} accentColor={profile.accentColor} />);
 
+  // A world as its author sees it: tapped under Your worlds in Create. Tagging lives here and nowhere else.
+  if (route.page === 'world') return withFamiliar(missingWorld ? null : <AppShell route={{ page: 'create' }} navigate={navigate} stories={worlds}
+    readerProfile={profile} mainLabel="Create">
+    <div className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6">
+      <AuthorWorldView stories={stories} worlds={creatorWorlds} storyId={route.storyId} chapterNumber={route.chapterNumber}
+        onChooseWorld={id => navigate({ page: 'world', storyId: id }, { replace: true })}
+        onOpenChapter={chapterNumber => navigate({ page: 'world', storyId: route.storyId, chapterNumber })}
+        onCloseChapter={() => navigate({ page: 'world', storyId: route.storyId })}
+        onBack={() => navigate({ page: 'create' })} />
+    </div>
+  </AppShell>);
+
   // Create: the Creator Space, unless a Story Seed (new or saved) is open.
   if (route.page === 'create' && !route.seedId && !route.newSeed) return withFamiliar(<CreateHubPage worlds={creatorWorlds} stories={worlds} navigate={navigate} readerProfile={profile} sparks={sparks} />);
 
@@ -276,16 +292,12 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     }} />);
 
   if (storyId) return withFamiliar(missing ? null : <StoryPages key={storyId} stories={stories} storyId={storyId}
-    page={route.page === 'read' ? 'read' : route.page === 'blueprint' ? 'blueprint' : route.page === 'chapter' ? 'chapter' : 'info'}
-    chapterNumber={route.page === 'chapter' ? route.chapterNumber : undefined} readerStateRepository={services.readerState}
+    page={route.page === 'read' ? 'read' : route.page === 'blueprint' ? 'blueprint' : 'info'} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
     writingAgent={AGENTS.VERSA} backLabel="Back to your stories" covers={covers} codexPictures={codexPictures}
     // World Info sits in the Library Shell; the Reader never does.
     frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds}
-      readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : route.page === 'chapter' ? 'Studio' : 'World Info'}>{info}</AppShell>}
-    // A chapter's Studio page, from World Info's Chapters; Back returns to World Info.
-    onOpenChapter={chapterNumber => navigate({ page: 'chapter', storyId, chapterNumber })}
-    onCloseChapter={() => navigate({ page: 'story', storyId })}
+      readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}
     // Every story on this device is the reader's own, so its Blueprint opens for its creator.
     onOpenBlueprint={() => navigate({ page: 'blueprint', storyId })}
     onCloseBlueprint={() => navigate({ page: 'story', storyId })}

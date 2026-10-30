@@ -333,28 +333,16 @@ it('turns the reading pill into Begin Story for a story with no chapters that th
 const informationCard = () => container.querySelector<HTMLButtonElement>('button.world-card-info-information:not(.world-card-info-expanding)');
 const settingsCard = () => container.querySelector<HTMLButtonElement>('button.world-card-info-settings-card');
 
-it('lays out Codex, Portal, Information, Chapters and Settings, each only when it has somewhere to go', async () => {
+it('lays out Codex, Portal, Information and Settings, each only when it has somewhere to go', async () => {
   const onOpenCodex = vi.fn();
   act(() => root.render(<WorldCardInfo story={infoStory} onOpenCodex={onOpenCodex} portal={{ expansions: [] }}
-    settings={<p>Reading Mode</p>} chapters={{ summary: '3 chapters · 2 tagged', panel: <p>Chapter 1 · Read by fixture</p> }} />));
+    settings={<p>Reading Mode</p>} />));
   const titles = [...container.querySelectorAll('.world-card-info-tools .world-card-info-tool-title')].map(title => title.textContent);
-  expect(titles).toEqual(['Codex', 'Portal', 'Information', 'Chapters', 'Settings']);
+  expect(titles).toEqual(['Codex', 'Portal', 'Information', 'Settings']);
   const codex = container.querySelector<HTMLElement>('[role="button"][aria-label^="Codex"]')!;
   act(() => codex.click());
   expect(onOpenCodex).toHaveBeenCalledTimes(1);
   expect(container.textContent).not.toContain('Fate Timeline');
-  // Chapters carries the host's line and opens the host's panel below the cards, one part of the page at a time.
-  const chaptersCard = container.querySelector<HTMLButtonElement>('button.world-card-info-chapters-card')!;
-  expect(chaptersCard.querySelector('.world-card-info-tool-description')?.textContent).toBe('3 chapters · 2 tagged');
-  expect(container.querySelector('[data-testid="world-info-chapters"]')).toBeNull();
-  act(() => chaptersCard.click());
-  expect(container.querySelector('[data-testid="world-info-chapters"]')?.textContent).toContain('Chapter 1 · Read by fixture');
-  act(() => settingsCard()!.click());
-  expect(container.querySelector('[data-testid="world-info-chapters"]')).toBeNull();
-  expect(container.querySelector('[data-testid="world-info-settings"]')).toBeTruthy();
-  // Without the host's Chapters there is no card.
-  act(() => root.render(<WorldCardInfo story={infoStory} onOpenCodex={onOpenCodex} portal={{ expansions: [] }} settings={<p>Reading Mode</p>} />));
-  expect([...container.querySelectorAll('.world-card-info-tools .world-card-info-tool-title')].map(title => title.textContent)).toEqual(['Codex', 'Portal', 'Information', 'Settings']);
 
   // Information alone, when the host supplies nothing else.
   act(() => root.render(<WorldCardInfo story={infoStory} />));

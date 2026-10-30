@@ -12,10 +12,12 @@ import type { DiscoverMedium } from '@seihouse/library/discover';
  *   the way to start a new one; `&seed=new` opens Story Seed (and its World
  *   Blueprint) for a new story, `&seed=<id>` a saved Story Seed (a Sparks
  *   spark begun from Home)
+ * - A world as its author sees it (Blueprint, Chapters, Codex, Assets), opened
+ *   from Your worlds in Create: `/app/?page=create&world=<id>`, with
+ *   `&chapter=<n>` for a chapter opened from its Chapters
  * - Story View (World Info): `/app/?story=<id>`
  * - Reader: `/app/?story=<id>&read=1`
  * - A story's Blueprint: `/app/?story=<id>&blueprint=1`
- * - A chapter in the story's Studio: `/app/?story=<id>&chapter=<n>`
  * - Profile (the Cultivator Cave): `/app/?page=profile`, with the Cave's own
  *   page in `cave` (Settings: `&cave=/settings`). The Cave moves between its
  *   pages itself, through that one parameter.
@@ -24,10 +26,11 @@ export type NovelExpandedRoute =
   | { page: 'home' }
   | { page: 'discover'; section?: 'creators' | 'codex'; medium?: DiscoverMedium; lore?: string; query?: string; category?: string }
   | { page: 'create'; seedId?: string; newSeed?: boolean }
+  /** A world as its author sees it in Create: its Blueprint, Chapters, Codex and Assets; a chapter opened from Chapters. */
+  | { page: 'world'; storyId: string; chapterNumber?: number }
   | { page: 'story'; storyId: string }
   | { page: 'read'; storyId: string }
   | { page: 'blueprint'; storyId: string }
-  | { page: 'chapter'; storyId: string; chapterNumber: number }
   | { page: 'profile'; cave?: string };
 
 export const HOME_ROUTE: NovelExpandedRoute = { page: 'home' };
@@ -35,13 +38,8 @@ export const HOME_ROUTE: NovelExpandedRoute = { page: 'home' };
 export function parseRoute(search: string): NovelExpandedRoute {
   const query = new URLSearchParams(search);
   const storyId = query.get('story')?.trim();
-  if (storyId) {
-    const chapterNumber = Number(query.get('chapter'));
-    return query.get('read') === '1' ? { page: 'read', storyId }
-      : query.get('blueprint') === '1' ? { page: 'blueprint', storyId }
-      : Number.isInteger(chapterNumber) && chapterNumber > 0 ? { page: 'chapter', storyId, chapterNumber }
-      : { page: 'story', storyId };
-  }
+  if (storyId) return query.get('read') === '1' ? { page: 'read', storyId }
+    : query.get('blueprint') === '1' ? { page: 'blueprint', storyId } : { page: 'story', storyId };
   if (query.get('page') === 'discover') {
     const lore = query.get('lore')?.trim();
     const section = query.get('section');
@@ -51,6 +49,11 @@ export function parseRoute(search: string): NovelExpandedRoute {
       : section === 'creators' || section === 'codex' ? { ...base, section } : base;
   }
   if (query.get('page') === 'create') {
+    const worldId = query.get('world')?.trim();
+    if (worldId) {
+      const chapterNumber = Number(query.get('chapter'));
+      return Number.isInteger(chapterNumber) && chapterNumber > 0 ? { page: 'world', storyId: worldId, chapterNumber } : { page: 'world', storyId: worldId };
+    }
     const seedId = query.get('seed')?.trim();
     return seedId === 'new' ? { page: 'create', newSeed: true } : seedId ? { page: 'create', seedId } : { page: 'create' };
   }
@@ -66,10 +69,10 @@ export function routeSearch(route: NovelExpandedRoute): string {
     case 'home': return '';
     case 'discover': return `?${new URLSearchParams({ page: 'discover', ...(route.lore ? { lore: route.lore, ...(route.query ? { q: route.query } : {}), ...(route.category ? { category: route.category } : {}) } : route.section ? { section: route.section } : {}), ...(route.medium ? { medium: route.medium } : {}) })}`;
     case 'create': return route.seedId ? `?${new URLSearchParams({ page: 'create', seed: route.seedId })}` : route.newSeed ? '?page=create&seed=new' : '?page=create';
+    case 'world': return `?${new URLSearchParams({ page: 'create', world: route.storyId, ...(route.chapterNumber ? { chapter: String(route.chapterNumber) } : {}) })}`;
     case 'story': return `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;
     case 'blueprint': return `?story=${encodeURIComponent(route.storyId)}&blueprint=1`;
-    case 'chapter': return `?story=${encodeURIComponent(route.storyId)}&chapter=${route.chapterNumber}`;
     case 'profile': return `?${new URLSearchParams(route.cave ? { page: 'profile', cave: route.cave } : { page: 'profile' })}`;
   }
 }

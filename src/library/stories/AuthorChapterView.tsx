@@ -7,21 +7,22 @@ import { CHAPTER_TAGGING_KINDS, chapterBlocks, chapterTagMarks, describeChapterT
 import type { LibraryStories } from './useLibraryStories';
 
 /**
- * A chapter in the world's Studio (SENSEI, 2026-10-29, `docs/create-hub.md`
- * phase B): the chapter's own prose with its tags lit where they landed, the
- * tagger's findings beside it, one kind per line, and Tag this chapter. Each
- * finding is a switch that lights its kind alone, so a Sound Cue, a speaker
- * or a holding is found at a glance. The prose is never editable here.
+ * One chapter, opened from the Chapters tab of the author's world view in
+ * Create (`AuthorWorldView`): the chapter's own prose with its tags lit where
+ * they landed, the tagger's findings beside it, one kind per line, and Tag
+ * this chapter. Each finding is a switch that lights its kind alone, so a
+ * Sound Cue, a speaker or a holding is found at a glance. The prose is never
+ * editable here. Only the author ever sees it.
  */
 
 const keepProse = () => undefined;
 const ALL_KINDS: ReadonlySet<ChapterTaggingKind> = new Set(CHAPTER_TAGGING_KINDS.map(entry => entry.kind));
 
-export function StudioChapterPage({ stories, storyId, chapterNumber, onBack }: {
+export function AuthorChapterView({ stories, storyId, chapterNumber, onBack }: {
   stories: LibraryStories;
   storyId: string;
   chapterNumber: number;
-  /** Back to the world's Story View. */
+  /** Back to the world's chapters. */
   onBack: () => void;
 }) {
   const { state, controller, canGenerate } = stories;
@@ -36,7 +37,7 @@ export function StudioChapterPage({ stories, storyId, chapterNumber, onBack }: {
   const overlay = useMemo(() => (chapter ? { marks: chapterTagMarks(chapter, shown) } : undefined), [chapter, shown]);
   if (!state || !story || !chapter || !account) {
     return <div className="mx-auto max-w-3xl px-4 py-6">
-      <LibraryButton variant="ghost" size="icon" icon={ArrowLeft} aria-label="Back to World Info" onClick={onBack} />
+      <LibraryButton variant="ghost" size="icon" icon={ArrowLeft} aria-label="Back to chapters" onClick={onBack} />
       <p role="alert" className="mt-4 text-sm text-amber-200">This chapter is not here.</p>
     </div>;
   }
@@ -62,20 +63,13 @@ export function StudioChapterPage({ stories, storyId, chapterNumber, onBack }: {
   const status = account.status === 'tagged' ? `${marks === 1 ? '1 mark' : `${marks.toLocaleString()} marks`} on the page`
     : account.status === 'failed' ? 'The tagger could not read this chapter' : 'Not tagged yet';
 
-  return <div className="mx-auto max-w-6xl" data-testid="studio-chapter" data-chapter-number={chapter.chapterNumber} data-tagging-status={account.status}>
-    {/* The way back, and the page's name, as World Info names itself. */}
-    <div className="flex items-center justify-between gap-3">
-      <LibraryButton variant="ghost" size="icon" icon={ArrowLeft} aria-label="Back to World Info" onClick={onBack} className="shrink-0" />
-      <p className="flex min-w-0 items-center gap-2 font-sc text-[0.625rem] font-bold uppercase tracking-[0.25em] whitespace-nowrap text-[#d4af37] sm:text-xs sm:tracking-[0.3em]" aria-hidden="true">
-        Studio
-        <span className="hidden items-center min-[360px]:flex"><span className="h-1.5 w-1.5 rotate-45 border border-[#d4af37]" /><span className="h-px w-6 bg-[#d4af37]/80 sm:w-12" /></span>
-      </p>
-    </div>
+  return <div data-testid="author-chapter" data-chapter-number={chapter.chapterNumber} data-tagging-status={account.status}>
+    <LibraryButton variant="ghost" size="sm" icon={ArrowLeft} onClick={onBack}>Chapters</LibraryButton>
 
-    <header className="mt-6 sm:mt-8">
+    <header className="mt-4">
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/60">Chapter {chapter.chapterNumber} of {chapters.length}</p>
-      <h1 className="mt-2 font-display text-3xl text-white sm:text-4xl">{chapter.title}</h1>
-      <p className="mt-2 text-sm text-neutral-400" data-testid="studio-chapter-status">{status}</p>
+      <h2 className="mt-2 font-display text-2xl text-white sm:text-3xl">{chapter.title}</h2>
+      <p className="mt-2 text-sm text-neutral-400" data-testid="author-chapter-status">{status}</p>
     </header>
 
     {/* The one action, then the findings, then the chapter: on a wide page the findings stand beside the prose. */}
@@ -90,7 +84,7 @@ export function StudioChapterPage({ stories, storyId, chapterNumber, onBack }: {
           {problem && <p role="alert" className="text-sm text-amber-200">{problem}</p>}
         </div>
 
-        <ul className="mt-5 flex flex-wrap gap-2 lg:flex-col lg:gap-1.5" data-testid="studio-chapter-findings">
+        <ul className="mt-5 flex flex-wrap gap-2 lg:flex-col lg:gap-1.5" data-testid="author-chapter-findings">
           {account.kinds.length ? account.kinds.map(line => {
             const { tone } = CHAPTER_TAGGING_KINDS.find(entry => entry.kind === line.kind)!;
             const on = line.state === 'found' && shown.has(line.kind);
@@ -109,7 +103,7 @@ export function StudioChapterPage({ stories, storyId, chapterNumber, onBack }: {
           }) : <li className="text-sm text-neutral-500">{account.status === 'failed' ? account.problem : 'Tag this chapter to see what the tagger finds.'}</li>}
         </ul>
 
-        <details className="mt-5 text-xs text-neutral-400" data-testid="studio-chapter-record">
+        <details className="mt-5 text-xs text-neutral-400" data-testid="author-chapter-record">
           <summary className="cursor-pointer text-neutral-500">{account.headline}</summary>
           <div className="mt-2 space-y-1">
             {account.notes && <p>{account.notes}</p>}
@@ -119,7 +113,7 @@ export function StudioChapterPage({ stories, storyId, chapterNumber, onBack }: {
         </details>
       </aside>
 
-      <article className="mt-8 min-w-0 lg:order-1 lg:mt-0" lang={story.originalLanguage} data-testid="studio-chapter-prose">
+      <article className="mt-8 min-w-0 lg:order-1 lg:mt-0" lang={story.originalLanguage} data-testid="author-chapter-prose">
         <HighlightEngine blocks={blocks} onBlocksChange={keepProse} editable={false} locale={story.originalLanguage} overlay={overlay}
           className="max-w-[38em] font-serif text-[1.0625rem] leading-[1.8] text-neutral-200" />
       </article>

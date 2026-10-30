@@ -1,5 +1,15 @@
 # NovelExpanded app
 
+- **2026-10-30** — **The author's world view.** Tapping a world under Your
+  worlds in Create opens it as its author sees it (`AuthorWorldView`,
+  `?page=create&world=<id>`), iTunes-plain, SENSEI's design: the author's worlds
+  on the left as mini world cards (a row on a phone), a Novel | Sequential Art
+  switcher (Sequential Art inactive), and Blueprint, Chapters, Codex (coming)
+  and Assets (the world's CAPA and media skill packs). Chapters lists every
+  chapter: check them (shift-click for a run), Tag reads them in order, Stop
+  finishes the one being read, and a chapter opens with its tags lit. Tagging
+  is seen here and nowhere else: the Chapters card and chapter page #487 put on
+  World Info are gone, and the regular novel page is as it was.
 - **2026-10-30 (night)** — The header is back to its original box shape, and
   the Portrait menu's Store opens the Celestial Store (`/home/store`), not the
   creator's User Shop.
@@ -128,10 +138,10 @@ rewrites and every page survives a reload.
 | Home | `/app/` | Events above Featured, the reader's stories, newest first, and Carve New Destiny |
 | Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); Novel / Manga / Game / Video (`medium`) above section navigation, left browsing rail, scoped All / My updates, genres and rankings outside Lore |
 | Create | `/app/?page=create` | The Library's Creator Space: the reader's worlds (Continue, Studio), Energy, the Creator Toolkit previews and Create |
+| A world, for its author | `/app/?page=create&world=<id>` (`&chapter=<n>` for one chapter) | What a world opens to when its author taps it under Your worlds: the author's worlds as mini world cards, Novel (Sequential Art later), and Blueprint, Chapters, Codex (coming) and Assets (`AuthorWorldView`). Chapters is the iTunes list where chapters are checked and tagged a few at a time; a chapter opens with its tags lit. The only place in the app where tagging is seen |
 | Story Seed | `/app/?page=create&seed=new` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story; `&seed=<id>` opens a saved seed |
 | Story View | `/app/?story=<id>` | The story's World Info page: Begin Story or Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
-| Studio chapter | `/app/?story=<id>&chapter=<n>` | One chapter in the world's Studio, from World Info's Chapters card: the prose with its tags lit where they landed, the tagger's findings per kind as switches beside it, and Tag this chapter (`StudioChapterPage`). Back returns to World Info |
 | Blueprint | `/app/?story=<id>&blueprint=1` | The story's own World Blueprint, opened from World Info's Blueprint button. Every story on the device is the reader's own, so it opens for its creator: editable while the novel is private, saved as a new Foundation revision the next chapter uses |
 | Profile | `/app/?page=profile` | The Library's Cultivator Cave; its own pages in `cave` (Settings: `&cave=/settings`). |
 

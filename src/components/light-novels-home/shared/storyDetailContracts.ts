@@ -60,8 +60,6 @@ export interface StoryDetailScreenProps {
   portal?: { expansions: readonly WorldExpansionPreview[] };
   /** See `WorldCardInfoProps.settings`. */
   settings?: ReactNode;
-  /** See `WorldCardInfoProps.chapters`. */
-  chapters?: { summary: string; panel: ReactNode };
   onOpenTimeline?: () => void;
   /** The viewer's known reading position, when the host has one. */
   readingPosition?: { chapterNumber: number };

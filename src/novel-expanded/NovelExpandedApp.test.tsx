@@ -478,7 +478,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(document.querySelector('[data-testid="novel-expanded-home"]')).toBeTruthy();
   });
 
-  it('the Creator Space lists the reader\'s worlds: Continue opens the Reader, Studio and the card open World Info, Energy opens the Cave', async () => {
+  it('the Creator Space lists the reader\'s worlds: Continue opens the Reader, the card opens the world for its author, Studio opens World Info, Energy opens the Cave', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
@@ -494,7 +494,18 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     await click(buttonByText('Studio', hub()), 'Studio', 20);
     expect(address()).toBe(`/app/?story=${created.id}`);
     expect(worldInfo()).toBeTruthy();
+    // World Info, the regular novel page, carries no tagging.
+    expect(worldInfo()!.textContent).not.toMatch(/Tag this chapter|Tagging/);
     await back();
+    // The card opens the world as its author sees it: its chapters, inside Create.
+    await click(hub().querySelector(`button[aria-label^="Open ${created.title}"]`), 'the world card', 40);
+    expect(address()).toBe(`/app/?page=create&world=${created.id}`);
+    const world = document.querySelector<HTMLElement>('[data-testid="author-world"]')!;
+    expect(world.querySelector('h1')!.textContent).toBe(created.title);
+    expect([...world.querySelectorAll('[role="tab"]')].map(entry => entry.textContent)).toEqual(['Blueprint', 'Chapters', 'Codex', 'Assets']);
+    expect(world.querySelector('[data-testid="author-world-no-chapters"]')).toBeTruthy();
+    await click(world.querySelector('button[aria-label="Back to Create"]'), 'Back to Create', 20);
+    expect(address()).toBe('/app/?page=create');
     await click(hub().querySelector('button.creator-space-stat'), 'Energy', 20);
     expect(address()).toBe('/app/?page=profile&cave=%2Fhome%2Fenergy');
   });

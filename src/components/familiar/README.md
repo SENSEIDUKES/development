@@ -9,7 +9,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - Source: supplied `Familiars/Packages/` collection (not a Git repository), containing twelve validated Familiar packages.
 - Preview: Workshop **Customization → Familiar** and `?preview=familiar`.
 - First Workshop record: 2026-09-20.
-- Last recorded Workshop update: 2026-10-16.
+- Last recorded Workshop update: 2026-10-30.
 - Historical source inspection: 2026-10-06.
 - Lifecycle: supplied source packages retained; the reusable renderer, host catalogue, and Energy interaction remain in Development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
@@ -28,6 +28,30 @@ from the supplied `qa/previews/*.gif` files, including their longer end-frame ho
 The renderer plays the original atlas cells with those durations, without interpolating,
 mirroring, recoloring, or regenerating the artwork. Motion stays inside one fixed cell;
 running does not move the Familiar across the page. Each animation loops for inspection.
+
+### Companion playback — 2026-10-30
+
+The floating companion uses `FamiliarSprite`'s `playback="companion"` mode:
+idle holds each supplied frame six times longer, and an engagement/activity reaction
+plays three cycles before returning to idle. An unchanged open tray or parent render
+does not restart a finished reaction. The existing engagement wave remains the Library's
+interaction clip. Movement and explicit Workshop atlas inspection retain raw looping;
+standalone sprites default to raw looping and `playOnce` retains its single-play contract
+for generation overlays. Header recall behavior is unchanged.
+
+These cadence rules were checked against the locally installed Codex 26.1027.3384.0:
+`p7i`/`b7i` in `app-initial-4267e52fe5b0.js` apply the sixfold idle holds and three
+reaction cycles; `k7i` maps a target to sixteen clockwise look directions. This is
+behavioral reference evidence, not a dependency on Codex's private bundled symbols.
+The source atlas and GIF timing metadata remain unchanged.
+
+`FamiliarCompanion` supplies an optional `lookAnimation` from mouse position inside
+the page or bounded Workshop canvas. It takes effect only at rest; movement, explicit
+inspection and reactions take priority. Leaving the page/canvas, blurring, scrolling,
+resizing or touching clears the target. Reduced motion disables gaze and animation;
+hidden/offscreen companions stop playback and never queue missed reactions. Looks hold
+one supplied cell without a timer; frame playback updates the loaded image directly.
+The app and its Workshop previews share this same Library-owned companion.
 
 `public/familiars/celestial-guardian/` owns the unchanged sprite sheet, neutral crop,
 and nine QA GIFs. `src/host/familiar/package-metadata/celestial-guardian/` owns the
@@ -341,6 +365,15 @@ desktop hover, 320/390px viewport centering, desktop centering, tray alignment a
 Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
+
+- 2026-10-30: Matched the verified Codex companion cadence: sixfold idle holds,
+  three-cycle reactions and mouse-directed still poses, with raw inspection and
+  generation one-shots preserved. Checked all twelve atlases, 30-second idle samples
+  for Galaxy Octopus, Celestial Guardian and Quill, and the app/Workshop at 390px
+  and desktop widths. Focused Familiar, host, preview and generation-overlay checks:
+  148 tests passed. Type/build and boundary validation uses a case-sensitive Linux
+  checkout because the existing ChapterTagging/chapterTagging import collision
+  prevents those repository-wide checks on Windows.
 
 - 2026-10-29: Live talk is a setting, off by default: Settings → Familiar →
   Live talk (beta); off, the microphone listens with the device voice. On, the

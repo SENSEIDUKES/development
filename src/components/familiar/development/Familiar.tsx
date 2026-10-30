@@ -81,7 +81,7 @@ export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onM
       aria-expanded={expanded} aria-controls={actionsId}
       onClick={event => { triggerProps?.onClick?.(event); if (!event.defaultPrevented) setPinned(value => !value); }}
       aria-describedby={[triggerProps?.['aria-describedby'], statusId].filter(Boolean).join(' ')}>
-      <FamiliarSprite {...props} animation={animation} statusId={statusId} />
+      <FamiliarSprite {...props} animation={animation} playback={props.animation ? 'loop' : props.playback} statusId={statusId} />
     </button>
     <div className="familiar-dock">
       <button type="button" className="familiar-shadow" hidden={expanded} aria-label="Show Familiar actions" aria-expanded={expanded} aria-controls={actionsId} onClick={() => setPinned(true)}><span /></button>

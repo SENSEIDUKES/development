@@ -184,7 +184,7 @@ describe("protected Story Seed World Blueprint generation", () => {
       expect(instructions).toContain('"minLength":1');
       expect(instructions).toContain('"maximum":40');
       expect(response.status).toBe(incomplete ? 502 : 200);
-      if (incomplete) expect(response.body).toEqual({ error: 'The model could not produce a complete World Blueprint. No Story Seed data was changed; please retry.' });
+      if (incomplete) expect(response.body).toMatchObject({ error: expect.stringMatching(/^The model's World Blueprint left out .+\. Nothing was saved; generate again\.$/) });
       else expect(response.body).toMatchObject({ title: 'The Swallowed Star' });
       expect(seed).toEqual(before);
     } finally {
@@ -450,15 +450,15 @@ describe("protected Story Seed World Blueprint generation", () => {
       onError,
     });
 
+    // The creator is told which parts were left out, in their words, never a vague retry.
     expect(response.status).toBe(502);
     expect(response.body).toEqual({
-      error: "The model could not produce a complete World Blueprint. No Story Seed data was changed; please retry.",
+      error: "The model's World Blueprint left out the logline, the first-arc promise, the trope rules, the style bible, "
+        + "the main character's age, and the main character's appearance. Nothing was saved; generate again.",
     });
     expect(onError).toHaveBeenCalledOnce();
-    expect(onError.mock.calls[0][0]).toEqual(new Error(
-      "Gemini returned an incomplete World Blueprint: logline, firstArcPromise, tropeRules, styleBible, "
-      + "mainCharacter.age, mainCharacter.appearance.",
-    ));
+    expect((onError.mock.calls[0][0] as { missing: string[] }).missing)
+      .toEqual(['logline', 'firstArcPromise', 'tropeRules', 'styleBible', 'mainCharacter.age', 'mainCharacter.appearance']);
   });
 
   it("rejects an invalid configured model before calling the provider", async () => {

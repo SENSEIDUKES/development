@@ -149,6 +149,11 @@ read it.
 
 ## Workshop history
 
+- **2026-10-31** — A Blueprint the model leaves incomplete now says which
+  parts are missing ("left out the factions"), in place of "could not produce
+  a complete World Blueprint", and no longer names Gemini whatever the model
+  (`BlueprintIncompleteError`). SENSEI's failed Blueprint with Claude Haiku 5.5
+  had left out the factions; the retry a minute later succeeded.
 - 2026-10-30 — Claude through OpenRouter now uses the same JSON instructions as
   direct Claude, omits custom sampling, and does not submit the host schema as a
   structured-output grammar. Blueprint bounds such as `minLength`, `maximum`

@@ -15,6 +15,13 @@ const FALLBACK_MODELS = new Set(['claude-opus-5-5', 'claude-sonnet-5-5', 'claude
 const EFFORTS = new Set(['low', 'medium', 'high', 'xhigh', 'max']);
 type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
+/** Preserve the full host schema as instructions; Claude's grammar rejects some constraints. */
+export const claudeSystemInstruction = (
+  request: Pick<TextGenerationRequest, 'systemInstruction' | 'responseFormat' | 'responseJsonSchema'>,
+): string => request.responseFormat === 'json'
+  ? `${request.systemInstruction}\nReturn only the JSON answer, without Markdown fences.${request.responseJsonSchema ? `\nThe answer must match this JSON schema: ${JSON.stringify(request.responseJsonSchema)}` : ''}`
+  : request.systemInstruction;
+
 /** Safe text for an SDK error: status and, for a bad request, the API's reason. Never the key. */
 const failure = (error: unknown): ModelRouterError => {
   if (error instanceof Anthropic.APIConnectionError) return new ModelRouterError('provider-error', 'Could not reach Anthropic.');
@@ -43,9 +50,7 @@ export async function generateAnthropicText(
   // The Harness schemas use constraints (exact paragraph counts, open objects)
   // that Claude's strict JSON outputs refuse, so the schema goes in the
   // instructions and the host's validator stays authoritative, as for MiniMax.
-  const system = request.responseFormat === 'json'
-    ? `${request.systemInstruction}\nReturn only the JSON answer, without Markdown fences.${request.responseJsonSchema ? `\nThe answer must match this JSON schema: ${JSON.stringify(request.responseJsonSchema)}` : ''}`
-    : request.systemInstruction;
+  const system = claudeSystemInstruction(request);
   const level = resolveReasoningLevel(request.model, request.reasoningLevel);
   const effort = level && EFFORTS.has(level) ? level as Effort : undefined;
   const fallback = FALLBACK_MODELS.has(model);

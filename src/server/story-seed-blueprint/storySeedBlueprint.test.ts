@@ -163,6 +163,35 @@ const manifest = async (provider: RecordingProvider) => handleStorySeedBlueprint
 });
 
 describe("protected Story Seed World Blueprint generation", () => {
+  it.each([false, true])('routes the real Blueprint schema through Claude without weakening answer validation (incomplete=%s)', async incomplete => {
+    const seed = storySeedInputFromSpark(HAND_SPARKS.find(item => item.title === 'The Swallowed Star')!);
+    const before = structuredClone(seed);
+    let sent: Record<string, unknown> = {};
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      sent = JSON.parse(String(init?.body));
+      if ('temperature' in sent || 'response_format' in sent) return new Response(JSON.stringify({ error: { message: 'Provider returned error' } }), { status: 400 });
+      return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(incomplete ? { title: 'Incomplete' } : generatedBlueprint()) }, finish_reason: 'stop' }] }));
+    });
+    try {
+      const response = await handleStorySeedBlueprintHttp({ method: 'POST',
+        headers: { Authorization: 'Bearer development-access-token' },
+        body: { storySeed: seed, model: 'openrouter/anthropic/claude-haiku-5.5' },
+      }, { environment: { ...environment, OPENROUTER_API_KEY: 'test-key' } });
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(sent).toMatchObject({ model: 'anthropic/claude-haiku-5.5', reasoning: { effort: 'low' } });
+      const instructions = (sent.messages as Array<{ content: string }>)[0].content;
+      expect(instructions).toContain('The answer must match this JSON schema:');
+      expect(instructions).toContain('"minLength":1');
+      expect(instructions).toContain('"maximum":40');
+      expect(response.status).toBe(incomplete ? 502 : 200);
+      if (incomplete) expect(response.body).toEqual({ error: 'The model could not produce a complete World Blueprint. No Story Seed data was changed; please retry.' });
+      else expect(response.body).toMatchObject({ title: 'The Swallowed Star' });
+      expect(seed).toEqual(before);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
   it('takes The Swallowed Star through tag validation and into a complete Blueprint', async () => {
     const spark = HAND_SPARKS.find(item => item.title === 'The Swallowed Star')!;
     const storySeed = storySeedInputFromSpark(spark);

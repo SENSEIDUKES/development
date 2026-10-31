@@ -1,3 +1,4 @@
+import { parseModelJson } from '../../../narrative/modelJson';
 import { splitSentences } from '../../highlight-engine/shared/manuscript';
 import {
   CHARACTER_LOOK_TRAITS,
@@ -122,8 +123,7 @@ const words = (value: unknown, limit: number): string | undefined => {
  * by, each a few words. Anything else is no look.
  */
 export function readDescribedLooks(raw: string | undefined, subjects: readonly HarnessLookSubject[]): DescribedLook[] {
-  let parsed: unknown;
-  try { parsed = JSON.parse(raw ?? ''); } catch { return []; }
+  const parsed = parseModelJson(raw);
   const looks = isRecord(parsed) && Array.isArray(parsed.looks) ? parsed.looks : [];
   const asked = new Map(subjects.map(subject => [subject.id, subject]));
   const written = new Map<string, DescribedLook>();

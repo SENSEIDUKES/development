@@ -1,3 +1,4 @@
+import { modelJsonCandidates } from '../../../narrative/modelJson';
 import { chapterTitleFallback, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
 import type { FrozenNarrativeMedia } from '../../../audio/media';
 import { describeSetAsideSoundCue, placeSoundCues } from '../../../audio/soundCuePlacement';
@@ -50,14 +51,8 @@ const stringList = (value: unknown): string[] | undefined => {
   return values.length ? values : undefined;
 };
 
-const jsonCandidate = (raw: string): string[] => {
-  const trimmed = raw.trim();
-  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i)?.[1]?.trim();
-  return [trimmed, fenced].filter((candidate): candidate is string => Boolean(candidate));
-};
-
 const parseJsonObject = (raw: string): Record<string, unknown> | undefined => {
-  for (const candidate of jsonCandidate(raw)) {
+  for (const candidate of modelJsonCandidates(raw)) {
     try {
       const parsed = JSON.parse(candidate);
       if (isRecord(parsed)) return parsed;

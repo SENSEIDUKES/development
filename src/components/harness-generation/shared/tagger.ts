@@ -1,3 +1,4 @@
+import { parseModelJson } from '../../../narrative/modelJson';
 import { worldCardsOfKind, type WorldRecord } from '../../../narrative/worldRecord';
 import type { CodexEntry, CodexEntryKind, HoldingsSection } from '../../../narrative/holdings';
 import type { HarnessChapter, HarnessChapterTagging, HarnessTagRequest, HarnessTagSubject, HarnessWorkspaceState } from '../../../narrative/generation';
@@ -413,17 +414,19 @@ const untaggableParagraph = (sent: readonly string[]) => {
 
 /** The notes in one answer, as far as it can be read as a list of them; an entry that is no note is dropped and named. */
 const readNotes = (raw: string | undefined): { notes: TagNote[]; dropped: string[]; count: number } | string => {
-  let parsed: unknown;
-  try { parsed = JSON.parse(raw ?? ''); } catch { return 'The answer was not readable JSON.'; }
-  if (!isRecord(parsed) || !Array.isArray(parsed.notes)) return 'The answer held no list of notes.';
+  const parsed = parseModelJson(raw);
+  if (parsed === undefined) return 'The answer was not readable JSON.';
+  // `{ notes: [...] }` as asked, or the bare list a model sometimes returns instead.
+  const list = Array.isArray(parsed) ? parsed : isRecord(parsed) && Array.isArray(parsed.notes) ? parsed.notes : undefined;
+  if (!list) return 'The answer held no list of notes.';
   const notes: TagNote[] = [];
   const dropped: string[] = [];
-  parsed.notes.forEach((entry, index) => {
+  list.forEach((entry, index) => {
     if (!isRecord(entry) || typeof entry.tag !== 'string') { dropped.push(`note ${index + 1}: it is not a note with a tag`); return; }
     const paragraph = typeof entry.paragraph === 'number' ? entry.paragraph : typeof entry.paragraph === 'string' ? Number(entry.paragraph) : Number.NaN;
     notes.push({ paragraph, words: typeof entry.words === 'string' ? entry.words : '', tag: entry.tag });
   });
-  return { notes, dropped, count: parsed.notes.length };
+  return { notes, dropped, count: list.length };
 };
 
 /**

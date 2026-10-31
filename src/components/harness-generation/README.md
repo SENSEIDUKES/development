@@ -37,6 +37,20 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-31 (a fenced answer is still the answer):** SENSEI's three-chapter
+  test of The Starlight Mortar with Claude Haiku 5.5 tagged nothing and filled
+  no Codex card. The tagger had answered well (34 notes for chapter 2, 24 for
+  chapter 3), but since #495 Claude is given its schema in the instructions
+  rather than enforced, and it wrapped one answer in a Markdown code fence and
+  returned the other as a bare list; the tagger's reader refused both. The
+  same strict reading turned a fenced World Blueprint into "could not produce a
+  complete World Blueprint". Every reader of a model's JSON answer now goes
+  through one reader (`parseModelJson`, `src/narrative/modelJson.ts`): the
+  tagger (which also takes a bare list of notes), the chapter writer, the look
+  writer and the World Blueprint. Replayed, both lost answers place every note.
+  Chapter 1's "Load failed" was the browser losing the request, not the
+  tagger; it is tagged again from the Chapters list.
+
 - **2026-10-30 (tagging moves to the author's world view):** SENSEI: the
   Chapters card and chapter page #487 put on World Info were in the wrong
   place, the regular novel page every reader opens. They are gone. Tagging is

@@ -223,6 +223,32 @@ export class BlueprintRequestError extends Error {
   }
 }
 
+/** What each required part is called where a creator reads it. */
+const BLUEPRINT_PART_NAMES: Record<string, string> = {
+  title: 'the title', logline: 'the logline', worldOverview: 'the world overview', startingLocation: 'the opening location',
+  societyStructure: 'the society', powerSystemOutline: 'the power system', mcProfile: "the main character's profile",
+  firstArcPromise: 'the first-arc promise', tropeRules: 'the trope rules', styleBible: 'the style bible',
+  destinedEnding: 'the Destined Ending', majorFactions: 'the factions', initialCharacters: 'the supporting characters',
+  estimatedArcs: 'the story length', 'mainCharacter.name': "the main character's name", 'mainCharacter.age': "the main character's age",
+  'mainCharacter.personality': "the main character's personality", 'mainCharacter.appearance': "the main character's appearance",
+  'mainCharacter.backgroundProfile': "the main character's backstory",
+};
+
+/**
+ * The model's answer left out parts a Blueprint must have. Nothing is padded or
+ * saved, and the creator is told which parts, so a retry is a choice made
+ * knowing why rather than a guess (SENSEI, 2026-10-31: a Blueprint failed with
+ * no reason given, and the server's own log named the factions).
+ */
+export class BlueprintIncompleteError extends Error {
+  constructor(readonly missing: readonly string[]) {
+    const parts = missing.map(field => BLUEPRINT_PART_NAMES[field] ?? field);
+    const list = parts.length <= 2 ? parts.join(' and ') : `${parts.slice(0, -1).join(', ')}, and ${parts.at(-1)}`;
+    super(`The model's World Blueprint left out ${list}. Nothing was saved; generate again.`);
+    this.name = "BlueprintIncompleteError";
+  }
+}
+
 /** The model's Arc 1 or story length is not what was asked for. Nothing is shortened, padded or saved. */
 export class BlueprintRoadmapError extends Error {
   constructor(message: string) {
@@ -281,7 +307,7 @@ const assertCompleteGeneratedBlueprint = (blueprint: WorldBlueprint): void => {
     missing.push("estimatedArcs");
   }
   if (missing.length > 0) {
-    throw new Error(`Gemini returned an incomplete World Blueprint: ${missing.join(", ")}.`);
+    throw new BlueprintIncompleteError(missing);
   }
 };
 

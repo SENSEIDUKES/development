@@ -8,6 +8,7 @@ import {
   type StorySeedBlueprintEnvironment,
 } from "./config";
 import {
+  BlueprintIncompleteError,
   BlueprintOutputLimitError,
   BlueprintRequestError,
   BlueprintRoadmapError,
@@ -179,7 +180,7 @@ export async function handleStorySeedBlueprintHttp(
     }
     // An output limit or an unusable Arc 1 is reported as it is, never hidden
     // behind a generic retry message or shortened to fit.
-    if (error instanceof BlueprintOutputLimitError || error instanceof BlueprintRoadmapError) {
+    if (error instanceof BlueprintOutputLimitError || error instanceof BlueprintRoadmapError || error instanceof BlueprintIncompleteError) {
       return errorResponse(502, message);
     }
     // The one model failure a creator can act on: the model was still writing at the deadline.

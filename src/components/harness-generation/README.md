@@ -37,6 +37,17 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-31 (a voice that fails is named, never silently the narrator's):**
+  SENSEI on Windows (Edge): every quoted line paused two or three seconds,
+  then was read in the narrator's voice. The script was right (the Vessel
+  test's chapters carry 19–41 tagged character lines); the character voice
+  failed on the device, and Read Aloud's fallback re-read the line with no
+  voice, so the browser's default, the narrator's, took it without a word.
+  Now a voice that fails is set aside for the session, the line is read
+  again by its role's next free voice, and Reader Settings → Narration says
+  which voice failed, with the browser's own error, and which voice reads
+  those lines now. Choosing the failed voice again tries it again. Only a
+  line that fails with no voice left is skipped.
 - **2026-10-31 (a fenced answer is still the answer):** SENSEI's three-chapter
   test of The Starlight Mortar with Claude Haiku 5.5 tagged nothing and filled
   no Codex card. The tagger had answered well (34 notes for chapter 2, 24 for

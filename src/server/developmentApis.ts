@@ -157,7 +157,7 @@ export const generationApis = (
             { method: request.method, body, headers: request.headers },
             {
               environment,
-              onError: error => console.error('[story-seed-blueprint]', error),
+              onError: (error, context) => console.error('[story-seed-blueprint]', context ?? {}, error),
               onAnswer: ({ model, durationMs }) => console.info(`[story-seed-blueprint] ${model} answered in ${Math.round(durationMs / 1000)}s`),
             },
           );

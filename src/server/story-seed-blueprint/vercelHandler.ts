@@ -22,7 +22,7 @@ export default async function storySeedBlueprintHandler(
     { method: request.method, body: request.body, headers: request.headers },
     {
       environment: process.env,
-      onError: error => console.error("[story-seed-blueprint]", error),
+      onError: (error, context) => console.error("[story-seed-blueprint]", context ?? {}, error),
       // One line per Blueprint: which model wrote it and how long it took. Never the Seed.
       onAnswer: ({ model, durationMs }) => console.info(`[story-seed-blueprint] ${model} answered in ${Math.round(durationMs / 1000)}s`),
     },

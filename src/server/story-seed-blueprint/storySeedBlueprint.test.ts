@@ -7,6 +7,8 @@ import { handleStorySeedBlueprintHttp } from "./http";
 import { resolveStorySeedBlueprintConfig } from "./config";
 import { BlueprintOutputLimitError } from "./generate";
 import { ModelRouterError } from "@seihouse/library/model-router-server";
+import { storySeedInputFromSpark } from '@seihouse/sen/story-seed';
+import { HAND_SPARKS } from '../../components/sparks/shared/builtInSparks';
 import type {
   WorldBlueprintModelProvider,
   WorldBlueprintModelRequest,
@@ -161,6 +163,39 @@ const manifest = async (provider: RecordingProvider) => handleStorySeedBlueprint
 });
 
 describe("protected Story Seed World Blueprint generation", () => {
+  it('takes The Swallowed Star through tag validation and into a complete Blueprint', async () => {
+    const spark = HAND_SPARKS.find(item => item.title === 'The Swallowed Star')!;
+    const storySeed = storySeedInputFromSpark(spark);
+    const before = structuredClone(storySeed);
+    const provider = new RecordingProvider();
+    const response = await handleStorySeedBlueprintHttp({ method: 'POST',
+      headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed },
+    }, { environment, providerFactory: () => provider });
+    expect(response.status).toBe(200);
+    expect(provider.requests).toHaveLength(1);
+    expect(provider.requests[0].userPrompt).toContain(spark.premise);
+    expect(storySeed.story.required.storyTags).toEqual(expect.arrayContaining(['revenge', 'cultivation realms']));
+    expect(response.body).toMatchObject({ title: spark.title });
+    expect(storySeed).toEqual(before);
+  });
+
+  it.each(['Provider returned error', 'Story Tags are required', 'Premise is required'])('sanitizes provider failures even when they include validation text: %s', async upstreamText => {
+    const model = 'openrouter/openai/gpt-6-luna';
+    const failure = new ModelRouterError('provider-error', `OpenRouter 400: ${upstreamText}: private upstream details`);
+    const onError = vi.fn();
+    const storySeed = storySeedInputFromSpark(HAND_SPARKS.find(item => item.title === 'The Swallowed Star')!);
+    const before = structuredClone(storySeed);
+    const response = await handleStorySeedBlueprintHttp({ method: 'POST',
+      headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed, model },
+    }, { environment: { ...environment, OPENROUTER_API_KEY: 'test-key' },
+      providerFactory: () => ({ generate: async () => { throw failure; } }), onError });
+    expect(response.status).toBe(502);
+    expect(response.body).toEqual({ error: `The model provider failed the Blueprint request for ${model}. Try again or choose another writing model in the Model Router. No Story Seed data was changed.` });
+    expect(JSON.stringify(response.body)).not.toContain('private upstream details');
+    expect(onError).toHaveBeenCalledWith(failure, { model });
+    expect(storySeed).toEqual(before);
+  });
+
   it('plans only Arc 1 with a hidden look-ahead, and retains author-owned Hard Pins, Fun Settings and the opening goal', async () => {
     const seed = canonicalSeed();
     seed.story.optional.hardPins = [{ text: 'Keep the master alive.' }];
@@ -506,12 +541,12 @@ describe("Blueprint model: the chapter model the reader chose", () => {
     expect(stopped.status).toBe(502);
     expect(errorOf(stopped)).toBe("The model was still writing after 170 seconds, so it was stopped. Choose a lower reasoning level or a faster model in the Model Router. No Story Seed data was changed.");
     expect(unanswered).not.toHaveBeenCalled();
-    // Any other provider failure keeps the plain retry message.
+    // A provider failure is distinguished from an incomplete model answer.
     const failing: WorldBlueprintModelProvider = {
       generate: async () => { throw new ModelRouterError("provider-error", "OpenRouter 500: upstream"); },
     };
     const failed = await handleStorySeedBlueprintHttp(request, { environment: withRouter, providerFactory: () => failing });
-    expect(errorOf(failed)).toBe("The model could not produce a complete World Blueprint. No Story Seed data was changed; please retry.");
+    expect(errorOf(failed)).toBe("The model provider failed the Blueprint request for openrouter/z-ai/glm-5.3-flash. Try again or choose another writing model in the Model Router. No Story Seed data was changed.");
   });
 });
 

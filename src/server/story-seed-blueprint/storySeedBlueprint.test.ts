@@ -192,6 +192,23 @@ describe("protected Story Seed World Blueprint generation", () => {
     }
   });
 
+  it('reads a Blueprint Claude wraps in a Markdown code fence (SENSEI, 2026-10-31)', async () => {
+    const seed = storySeedInputFromSpark(HAND_SPARKS.find(item => item.title === 'The Swallowed Star')!);
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({
+      choices: [{ message: { content: `\`\`\`json\n${JSON.stringify(generatedBlueprint())}\n\`\`\`` }, finish_reason: 'stop' }],
+    })));
+    try {
+      const response = await handleStorySeedBlueprintHttp({ method: 'POST',
+        headers: { Authorization: 'Bearer development-access-token' },
+        body: { storySeed: seed, model: 'openrouter/anthropic/claude-haiku-5.5' },
+      }, { environment: { ...environment, OPENROUTER_API_KEY: 'test-key' } });
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ title: 'The Swallowed Star' });
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
   it('takes The Swallowed Star through tag validation and into a complete Blueprint', async () => {
     const spark = HAND_SPARKS.find(item => item.title === 'The Swallowed Star')!;
     const storySeed = storySeedInputFromSpark(spark);

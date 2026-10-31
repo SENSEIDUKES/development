@@ -1,3 +1,4 @@
+import { parseModelJson } from '@seihouse/sen/contracts';
 import { ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, STORY_LENGTH_ARCS, arcPlanFromDraft } from '@seihouse/sen/arc-goals';
 import { createModelRouter, ModelRouterError, type GenerationResult, type ReasoningLevel } from '@seihouse/library/model-router-server';
 import {
@@ -145,7 +146,10 @@ const parseBlueprintResponse = async (
   try {
     const result = await generation;
     if (result.capability !== 'text') throw new Error('Unexpected speech result.');
-    return JSON.parse(result.text.trim()) as unknown;
+    // A fenced answer is still the answer (Claude without enforced structured output).
+    const parsed = parseModelJson(result.text);
+    if (parsed === undefined) throw new Error('The model\'s answer was not readable JSON.');
+    return parsed;
   } catch (error) {
     if (error instanceof ModelRouterError && error.code === 'output-limit') {
       throw new BlueprintOutputLimitError(maxOutputTokens);

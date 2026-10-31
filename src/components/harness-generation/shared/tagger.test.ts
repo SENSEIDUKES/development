@@ -3,6 +3,7 @@ import { buildHarnessTagPrompt } from '../../../server/harness-generation/tagger
 import { notesOfTaggedChapter, placeTagNotes, planChapterTagging, readChapterTagging, tagSubjectsOfStory, type TagNote } from './tagger';
 import type { CodexEntry } from '../../../narrative/holdings';
 import type { WorldRecord } from '../../../narrative/worldRecord';
+import starlightMortar from '../../../test-utils/fixtures/starlightMortarTagging.json';
 
 /**
  * The tagger reads a chapter that is already written and writes the app's tags
@@ -58,6 +59,26 @@ const GOOD: TagNote[] = [
   { paragraph: 2, words: '“Hold the gate,”', tag: '[[@MC]]' },
   { paragraph: 3, words: 'A gaunt figure in ash-grey robes stepped out of the dust.', tag: '[[appears: Old Wen | character]]' },
 ];
+
+describe('answers as Claude returns them without enforced structured output (SENSEI, 2026-10-31)', () => {
+  // The Starlight Mortar: chapter 2's answer came wrapped in a Markdown fence and
+  // chapter 3's as a bare list of notes. Both were complete, and both were lost.
+  it.each(starlightMortar.chapters)('reads chapter $chapterNumber\'s notes and tags the chapter', ({ chapterNumber, paragraphs, raw }) => {
+    const tagging = readChapterTagging({ raw, sent: paragraphs, chapterNumber, at: '2026-10-31T03:50:00.000Z', model: 'anthropic/claude-haiku-5-5',
+      options: { speakersExpected: true, appearancesExpected: true } });
+    expect(tagging.record.status).toBe('tagged');
+    expect(tagging.record.notes!.written).toBeGreaterThan(20);
+    expect(tagging.record.notes!.placed).toBeGreaterThan(0);
+    expect(tagging.tags!.speakers.length).toBeGreaterThan(0);
+    expect(tagging.tags!.appearances!.length).toBeGreaterThan(0);
+  });
+
+  it('still says plainly when an answer is no JSON, or holds no notes', () => {
+    const at = '2026-10-31T03:50:00.000Z';
+    expect(readChapterTagging({ raw: 'I could not tag this.', sent: PARAGRAPHS, chapterNumber: 1, at }).record.problem).toBe('The answer was not readable JSON.');
+    expect(readChapterTagging({ raw: '```json\n{"tags": []}\n```', sent: PARAGRAPHS, chapterNumber: 1, at }).record.problem).toBe('The answer held no list of notes.');
+  });
+});
 
 describe('the record counts its notes', () => {
   it('counts what the final placement placed, and a dropped note once', () => {

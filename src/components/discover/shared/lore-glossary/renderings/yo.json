@@ -1,0 +1,1190 @@
+{
+ "qi": [
+  "Kí (Agbára ẹmí)",
+  "Agbára ẹmí (Qi)."
+ ],
+ "cultivation": [
+  "Iṣeduro Ẹmí",
+  "Àkóso ẹmí (Cultivation)."
+ ],
+ "dantian": [
+  "Ibùdó Agbára (Dantian)",
+  "Ibùdó agbára."
+ ],
+ "immortal-qi": [
+  "Kí Àìkú",
+  "Agbára àìkú."
+ ],
+ "cultivation-realm": [
+  "Ipele Ẹmí",
+  "Ipele."
+ ],
+ "heavenly-tribulation": [
+  "Àdánwò Ọ̀run"
+ ],
+ "nascent-soul": [
+  "Ọkàn Tuntun"
+ ],
+ "golden-core": [
+  "Kókó Wúrà"
+ ],
+ "foundation-establishment": [
+  "Ìpìlẹ̀ Ìdásílẹ̀"
+ ],
+ "qi-refining": [
+  "Ìkópọ̀ Kí"
+ ],
+ "core-formation": [
+  "Ìdásílẹ̀ Kókó"
+ ],
+ "spirit-severing": [
+  "Ìkésírè Ẹmí"
+ ],
+ "dao-seeking": [
+  "Wíwá Ọ̀nà (Dao)"
+ ],
+ "domain": [
+  "Agbègbè",
+  "Agbègbè agbára."
+ ],
+ "ascension": [
+  "Ìgòkè"
+ ],
+ "meridians": [
+  "Okùn Ẹmí"
+ ],
+ "spiritual-root": [
+  "Gbòǹgbò Ẹmí"
+ ],
+ "jing-qi-shen": [
+  "Jing, Kí, Shen",
+  "Àwọn ìṣúra mẹ́ta."
+ ],
+ "body-tempering": [
+  "Ìfọ̀mọ́ Ara"
+ ],
+ "fiendgod-body-refining": [
+  "Ìfọ̀mọ́ Ara Ẹ̀mí Èṣù-Ọlọ́run"
+ ],
+ "heartforce-cultivation": [
+  "Ìdàgbàsókè Agbára Ọkàn"
+ ],
+ "dual-cultivation": [
+  "Ìdàgbàsókè Méjì"
+ ],
+ "alchemy": [
+  "Ṣíṣe Egbògi"
+ ],
+ "spirit-stone": [
+  "Òkúta Ẹmí"
+ ],
+ "spiritual-treasure": [
+  "Ohun Èlò Ìṣúra"
+ ],
+ "storage-ring": [
+  "Òrùka Ìpamọ́"
+ ],
+ "talisman": [
+  "Tírà / Lóògùn"
+ ],
+ "formation": [
+  "Ètò Ìdáàbòbò"
+ ],
+ "sect": [
+  "Ẹgbẹ́ (Sect)"
+ ],
+ "clan": [
+  "Ìdílé Ńlá"
+ ],
+ "patriarch": [
+  "Olórí Ìdílé"
+ ],
+ "elder": [
+  "Alàgbà"
+ ],
+ "disciple-hierarchy": [
+  "Ìtòlẹ́sẹẹsẹ Ọmọ-ẹ̀yìn"
+ ],
+ "spirit-beast": [
+  "Ẹranko Ẹmí"
+ ],
+ "beast-taming": [
+  "Ìtúmọ̀ Ẹranko"
+ ],
+ "heavenly-dao": [
+  "Ọ̀nà Ọ̀run"
+ ],
+ "dao": [
+  "Ọ̀nà (Dao)"
+ ],
+ "karma": [
+  "Kámà (Èrè àti Ẹ̀bi)"
+ ],
+ "reincarnation": [
+  "Àtúnwá"
+ ],
+ "regression": [
+  "Ìpadàbọ̀"
+ ],
+ "transmigration": [
+  "Ìrìn-àjò Ẹmí"
+ ],
+ "isekai": [
+  "Ayé Òtúǹtù (Isekai)"
+ ],
+ "otome-isekai": [
+  "Isekai Fún Obìnrin"
+ ],
+ "hunter-system": [
+  "Ètò Ọdẹ"
+ ],
+ "constellation": [
+  "Ìràwọ̀ Ńlá"
+ ],
+ "dungeon": [
+  "Hòrò"
+ ],
+ "tower": [
+  "Ilé-Ìṣó"
+ ],
+ "system": [
+  "Ètò"
+ ],
+ "status-window": [
+  "Fèrèsé Ipò"
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "Ọgbọ́n / Ẹ̀bùn"
+ ],
+ "level-up": [
+  "Ìgòkè Ipele"
+ ],
+ "quest": [
+  "Iṣẹ́ (Quest)"
+ ],
+ "guild": [
+  "Ẹgbẹ́ (Guild)"
+ ],
+ "rarity": [
+  "Ọ̀wọ́n"
+ ],
+ "loot": [
+  "Ìkógun"
+ ],
+ "wuxia": [
+  "Wuxia"
+ ],
+ "xianxia": [
+  "Xianxia"
+ ],
+ "xuanhuan": [
+  "Xuanhuan"
+ ],
+ "murim": [
+  "Murim"
+ ],
+ "litrpg": [
+  "LitRPG"
+ ],
+ "progression-fantasy": [
+  "Ìtàn Ìtẹ̀síwájú"
+ ],
+ "academy-arc": [
+  "Apá Ilé-Ẹ̀kọ́"
+ ],
+ "guide": [
+  "Atọ́nà"
+ ],
+ "esper": [
+  "Esper"
+ ],
+ "arrogant-young-master": [
+  "Ọ̀dọ́mọkùnrin Onígbèéraga"
+ ],
+ "face": [
+  "Ojú / Ìyì",
+  "Face (Reputation)."
+ ],
+ "face-slapping": [
+  "Ìgbá-lójú"
+ ],
+ "tournament-arc": [
+  "Apá Ìdíje"
+ ],
+ "secret-realm": [
+  "Agbègbè Ìkọ̀kọ̀"
+ ],
+ "auction": [
+  "Ìtajà (Auction)"
+ ],
+ "bloodline": [
+  "Ìran Ẹ̀jẹ̀"
+ ],
+ "physique": [
+  "Ìrísí Ara"
+ ],
+ "dao-companion": [
+  "Alábàágbé Ọ̀nà"
+ ],
+ "harem": [
+  "Harem (Ọ̀pọ̀ aya)"
+ ],
+ "cannon-fodder": [
+  "Asán"
+ ],
+ "villainess": [
+  "Obìnrin Ibi"
+ ],
+ "protagonist-halo": [
+  "Ìtàn Ẹwà Olú-Ẹdá"
+ ],
+ "system-shop": [
+  "Ilé-Ìtajà Ètò"
+ ],
+ "inventory": [
+  "Ìkáwọ́ Ẹrù"
+ ],
+ "class": [
+  "Ẹ̀ka (Class)"
+ ],
+ "stat": [
+  "Iye (Stat)"
+ ],
+ "skill-tree": [
+  "Ìtòlẹ́sẹẹsẹ Ọgbọ́n"
+ ],
+ "party": [
+  "Ẹgbẹ́ Kékeré"
+ ],
+ "raid": [
+  "Ìkọlù (Raid)"
+ ],
+ "pvp": [
+  "PvP",
+  "Player vs Player."
+ ],
+ "pve": [
+  "PvE",
+  "Player vs Environment."
+ ],
+ "npc": [
+  "NPC"
+ ],
+ "sentient-system": [
+  "Ètò Alámọ̀yé"
+ ],
+ "regression-novel": [
+  "Ìwé Ìpadàbọ̀"
+ ],
+ "transmigration-novel": [
+  "Ìwé Ìrìn-àjò Ẹmí"
+ ],
+ "cultivation-technique": [
+  "Ọgbọ́n Ìdàgbàsókè"
+ ],
+ "forbidden-technique": [
+  "Ọgbọ́n Èèwọ̀"
+ ],
+ "sword-intent": [
+  "Ète Idà"
+ ],
+ "domain-expansion": [
+  "Ìfẹ̀sí Agbègbè"
+ ],
+ "heavenly-tribulation-lightning": [
+  "Mànàmáná Àdánwò Ọ̀run"
+ ],
+ "soul": [
+  "Ọkàn"
+ ],
+ "spiritual-sense": [
+  "Imọ̀ Ẹmí"
+ ],
+ "qi-deviation": [
+  "Ìṣìnà Kí"
+ ],
+ "heart-devil": [
+  "Èṣù Ọkàn"
+ ],
+ "merit": [
+  "Ẹ̀tọ́ / Ìyìn"
+ ],
+ "karmic-fire": [
+  "Iná Kámà"
+ ],
+ "ascension-platform": [
+  "Pèpéle Ìgòkè"
+ ],
+ "lower-realm": [
+  "Ayé Ìsàlẹ̀"
+ ],
+ "immortal-realm": [
+  "Ayé Àìkú"
+ ],
+ "spirit-realm": [
+  "Ayé Ẹmí"
+ ],
+ "great-thousand-world": [
+  "Ayé Ẹgbẹ̀rún Ńlá"
+ ],
+ "plane": [
+  "Ipele Ayé",
+  "Plane (Dimension)."
+ ],
+ "world-tree": [
+  "Igi Ayé"
+ ],
+ "celestial-empire": [
+  "Ilẹ̀ Ọba Ọ̀run"
+ ],
+ "demon": [
+  "Èṣù"
+ ],
+ "orthodox-vs-unorthodox": [
+  "Títọ́ tàbí Àìtọ́"
+ ],
+ "sect-war": [
+  "Ogun Ẹgbẹ́"
+ ],
+ "resource-war": [
+  "Ogun Ohun Àmúṣọrọ̀"
+ ],
+ "talent": [
+  "Ẹ̀bùn / Ọgbọ́n"
+ ],
+ "cheat": [
+  "Ayé Ìrọ̀rùn (Cheat)"
+ ],
+ "time-dilation": [
+  "Ìfàgùn Àkókò"
+ ],
+ "appraisal": [
+  "Ìwádìí / Ìmọ̀"
+ ],
+ "loot-box": [
+  "Àpótí Ìkógun"
+ ],
+ "pay-to-win": [
+  "Sanwó láti Ṣẹ́gun"
+ ],
+ "player": [
+  "Òṣèré / Ẹlẹ́rè"
+ ],
+ "administrator": [
+  "Alámòójútó"
+ ],
+ "tutorial": [
+  "Ìkọ́ni"
+ ],
+ "hidden-quest": [
+  "Iṣẹ́ Ìkọ̀kọ̀"
+ ],
+ "repair": [
+  "Àtúnṣe"
+ ],
+ "death-penalty": [
+  "Ìyà Ikú"
+ ],
+ "respawn": [
+  "Ìpadàwà"
+ ],
+ "fast-travel": [
+  "Ìrìn-àjò Ìyára"
+ ],
+ "mount": [
+  "Ẹranko Ìgùn"
+ ],
+ "pet": [
+  "Ẹranko Ọ̀sìn"
+ ],
+ "crafting": [
+  "Iṣẹ́ Ọwọ́"
+ ],
+ "enchanting": [
+  "Mímú Dán / Oògùn"
+ ],
+ "socket": [
+  "Ìhò (Socket)"
+ ],
+ "set-item": [
+  "Ìtò Eto (Set)"
+ ],
+ "unique-item": [
+  "Ohun Àrà"
+ ],
+ "courting-death": [
+  "Wíwá Ikú"
+ ],
+ "mount-tai": [
+  "Òkè Tai"
+ ],
+ "kowtow": [
+  "Ìkúnlẹ̀"
+ ],
+ "jade-slip": [
+  "Pélébé Jade"
+ ],
+ "romance-fantasy": [
+  "Ìtàn Ìfẹ́ Àròsọ"
+ ],
+ "returner": [
+  "Olùpadà"
+ ],
+ "sword-cultivator": [
+  "Aláàkóso Idà"
+ ],
+ "foundation-establishment-pill": [
+  "Egbògi Ìpìlẹ̀"
+ ],
+ "marrow-cleansing-pill": [
+  "Egbògi Ìfọ̀mọ́ Eegun"
+ ],
+ "fasting-pill": [
+  "Egbògi Ààwẹ̀"
+ ],
+ "blood-burning-pill": [
+  "Egbògi Iná Ẹ̀jẹ̀"
+ ],
+ "shim-gong": [
+  "Shim Gong"
+ ],
+ "shin-bup": [
+  "Shin Bup"
+ ],
+ "jeom-hyeol": [
+  "Jeom Hyeol"
+ ],
+ "ho-shin-gang-qi": [
+  "Ho Shin Gang Qi"
+ ],
+ "geom-gi": [
+  "Geom Gi"
+ ],
+ "sama": [
+  "-sama"
+ ],
+ "senpai-kouhai": [
+  "Senpai / Kouhai"
+ ],
+ "ojou-sama": [
+  "Ojou-sama"
+ ],
+ "maou-gun": [
+  "Ẹgbẹ́ Ọmọ-Ogun Èṣù"
+ ],
+ "dao-child": [
+  "Ọmọ Dao"
+ ],
+ "peak-master": [
+  "Alákóso Òkè"
+ ],
+ "sect-leader": [
+  "Olórí Ẹgbẹ́"
+ ],
+ "handyman-disciple": [
+  "Ọmọ-ẹ̀yìn Alágbàṣe"
+ ],
+ "guest-elder": [
+  "Alàgbà Àlejò"
+ ],
+ "sweeping-monk": [
+  "Móńkì Agbálẹ̀"
+ ],
+ "hidden-class": [
+  "Ẹ̀ka Ìkọ̀kọ̀"
+ ],
+ "necromancer": [
+  "Awo Òkú"
+ ],
+ "job-advancement": [
+  "Ìgbéga Iṣẹ́"
+ ],
+ "berserker": [
+  "Oníjà Akíkanjú"
+ ],
+ "paladin": [
+  "Jagunjagun Mímọ́"
+ ],
+ "beast-core": [
+  "Kókó Ẹranko"
+ ],
+ "soul-contract": [
+  "Àdéhùn Ọkàn"
+ ],
+ "beast-pouch": [
+  "Àpò Ẹranko"
+ ],
+ "bloodline-evolution": [
+  "Ìdàgbàsókè Ìran Ẹ̀jẹ̀"
+ ],
+ "familiar": [
+  "Ẹranko Mímọ̀ (Familiar)"
+ ],
+ "equality-contract": [
+  "Àdéhùn Dídọ́gba"
+ ],
+ "heavenly-flame": [
+  "Iná Ọ̀run"
+ ],
+ "spirit-herb": [
+  "Ewé Ẹmí"
+ ],
+ "spirit-spring-water": [
+  "Omi Ìsun Ẹmí"
+ ],
+ "array-eye": [
+  "Ojú Ètò"
+ ],
+ "formation-flag": [
+  "Àsìá Ètò"
+ ],
+ "spirit-gathering-array": [
+  "Ètò Ìkópọ̀ Ẹmí"
+ ],
+ "red-gate": [
+  "Ẹnubodè Pupa"
+ ],
+ "clear-condition": [
+  "Àdéhùn Ìparí"
+ ],
+ "magic-stone": [
+  "Òkúta Idán"
+ ],
+ "penalty-quest": [
+  "Iṣẹ́ Ìyà"
+ ],
+ "floor-master": [
+  "Olórí Ilẹ̀"
+ ],
+ "porter": [
+  "Aláàrù"
+ ],
+ "scenario": [
+  "Àpẹẹrẹ Ìtàn"
+ ],
+ "probability": [
+  "Ṣíṣeéṣe"
+ ],
+ "stigma": [
+  "Àmì"
+ ],
+ "murim-alliance": [
+  "Ìṣọ̀kan Murim"
+ ],
+ "demonic-cult": [
+  "Ẹgbẹ́ Èṣù"
+ ],
+ "northern-duke": [
+  "Baálẹ̀ Àríwá"
+ ],
+ "tea-party": [
+  "Àríyá Tíì"
+ ],
+ "munchkin": [
+  "Munchkin"
+ ],
+ "cider": [
+  "Cider"
+ ],
+ "black-mastermind": [
+  "Ọ̀gá Ètò Dúdú"
+ ],
+ "dokkaebi": [
+  "Dokkaebi"
+ ],
+ "internal-energy": [
+  "Naegong"
+ ],
+ "jade-beauty": [
+  "Arẹwà Jade"
+ ],
+ "white-lotus": [
+  "Lotus Funfun"
+ ],
+ "eating-tofu": [
+  "Jíjẹ Tofu"
+ ],
+ "coughing-up-blood": [
+  "Ikọ Ẹ̀jẹ̀"
+ ],
+ "frog-in-well": [
+  "Ọ̀pọ̀lọ Nínú Kànga"
+ ],
+ "heaven-defying": [
+  "Títako Ọ̀run"
+ ],
+ "green-hat": [
+  "Fìlà Aláwọ̀ Ewé (Ẹ̀tàn)"
+ ],
+ "shuang-wen": [
+  "Shuang Wen"
+ ],
+ "giving-face": [
+  "Fífún Ní Ìyì"
+ ],
+ "dungeon-core": [
+  "Kókó Hòrò"
+ ],
+ "fiefdom": [
+  "Ilẹ̀ Ìjọba"
+ ],
+ "node": [
+  "Kókó Pàtàkì (Node)"
+ ],
+ "contribution-points": [
+  "Oókan Ìkówó"
+ ],
+ "sect-mission-hall": [
+  "Gbọ̀ngàn Iṣẹ́ Ẹgbẹ́"
+ ],
+ "spirit-garden": [
+  "Ọgbà Ẹmí"
+ ],
+ "city-lord": [
+  "Baálẹ̀ Ìlú"
+ ],
+ "edict": [
+  "Òfin Ọba"
+ ],
+ "vassal": [
+  "Ẹrú / Ọmọ-ẹ̀yìn Ọba"
+ ],
+ "primordial-chaos": [
+  "Rúkèrúdò Ìpìlẹ̀"
+ ],
+ "the-void": [
+  "Òfo / Òfúrufú"
+ ],
+ "life-forbidden-zone": [
+  "Agbègbè Èèwọ̀ Ìyè"
+ ],
+ "ancient-desolate-beast": [
+  "Ẹranko Àròdá Ìgbàanì"
+ ],
+ "star-field": [
+  "Agbègbè Ìràwọ̀"
+ ],
+ "spatial-storm": [
+  "Ìjì Ayé"
+ ],
+ "nine-heavens": [
+  "Ọ̀run Mẹ́sàn-án"
+ ],
+ "river-of-time": [
+  "Odò Àkókò"
+ ],
+ "epoch": [
+  "Ìgbà / Sànmánì"
+ ],
+ "karmic-thread": [
+  "Okùn Kámà"
+ ],
+ "origin-source": [
+  "Orísun Ìpìlẹ̀"
+ ],
+ "heaven-and-earth": [
+  "Ọ̀run àti Ayé"
+ ],
+ "wuji": [
+  "Wuji"
+ ],
+ "dao-source": [
+  "Orísun Dao"
+ ],
+ "engagement-annulment": [
+  "Ìbàjẹ́ Àdéhùn Ìgbéyàwó"
+ ],
+ "toad-lusting-after-swan-meat": [
+  "Ọ̀pọ̀lọ Ń Ṣàfẹ́rí Ẹran Ẹyẹ",
+  "Toad Lusting..."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "Má Ṣe Fìyà Jẹ Ọmọdé",
+  "Don't Bully..."
+ ],
+ "concubine": [
+  "Aya Kékeré"
+ ],
+ "sect-rules": [
+  "Òfin Ẹgbẹ́"
+ ],
+ "filial-piety": [
+  "Ìtọ́jú Òbí"
+ ],
+ "pill-tribulation": [
+  "Àdánwò Egbògi"
+ ],
+ "monster-genius": [
+  "Ọlọ́gbọ́n Àràmàǹdà (Monster)"
+ ],
+ "gu-venom-witchcraft": [
+  "Gu (Oró / Idán)"
+ ],
+ "corpse-refining": [
+  "Ìfọ̀mọ́ Òkú"
+ ],
+ "fairy-sister": [
+  "Ẹ̀gbọ́n Ẹwà Idán"
+ ],
+ "young-miss": [
+  "Ọmọbìnrin (Young Miss)"
+ ],
+ "mount-kunlun": [
+  "Òkè Kunlun"
+ ],
+ "aggro": [
+  "Agbára Ìdènà (Aggro)"
+ ],
+ "crowd-control": [
+  "Ìkápá Ọ̀pọ̀lọpọ̀"
+ ],
+ "kiting": [
+  "Kiting"
+ ],
+ "aoe": [
+  "AoE"
+ ],
+ "proc": [
+  "Proc"
+ ],
+ "kill-steal": [
+  "Jí Ikú"
+ ],
+ "tank": [
+  "Tanki (Olùdáàbòbò)"
+ ],
+ "dps": [
+  "DPS"
+ ],
+ "gold-sink": [
+  "Ìnákúòwó (Gold Sink)"
+ ],
+ "auction-sniping": [
+  "Wíwá Ìtajà Láti Ṣẹ́gun"
+ ],
+ "griefing": [
+  "Ìkápá Láti Bànújẹ́ (Griefing)"
+ ],
+ "dot": [
+  "DoT",
+  "Damage over Time."
+ ],
+ "contract-marriage": [
+  "Ìgbéyàwó Àdéhùn"
+ ],
+ "reawakening": [
+  "Ìtají-padà"
+ ],
+ "tyrant": [
+  "Aláàkóso Ìkà"
+ ],
+ "obsessive-male-lead": [
+  "Olórí Ọkùnrin Tí Ó Ní Àfẹ́jù"
+ ],
+ "original-heroine": [
+  "Akọni Obìnrin Tòótọ́"
+ ],
+ "regression-trauma": [
+  "Ọgbẹ́ Ọkàn Ìpadàbọ̀"
+ ],
+ "hunter-association": [
+  "Ẹgbẹ́ Ọdẹ"
+ ],
+ "sudden-death": [
+  "Ikú Òjijì"
+ ],
+ "guild-master": [
+  "Ọ̀gá Ẹgbẹ́"
+ ],
+ "adventurer-ranks": [
+  "Ipele Arìnrìn-àjò"
+ ],
+ "beastkin": [
+  "Ìran Ẹranko"
+ ],
+ "demon-god": [
+  "Ọlọ́run Èṣù"
+ ],
+ "unique-skill": [
+  "Ọgbọ́n Àkànṣe"
+ ],
+ "demon-realm": [
+  "Ayé Èṣù"
+ ],
+ "slave-crest": [
+  "Àmì Ẹrú"
+ ],
+ "subjugation": [
+  "Ìtẹriba"
+ ],
+ "otherworlder": [
+  "Alágbègbè Òtúǹtù"
+ ],
+ "heros-party": [
+  "Ẹgbẹ́ Akọni"
+ ],
+ "dao-heart": [
+  "Ọkàn Dao"
+ ],
+ "severing-mortal-ties": [
+  "Ìkésírè Okùn Ayé"
+ ],
+ "five-elements": [
+  "Ohun Àkọ́kọ́ Mẹ̀ẹ́dógún"
+ ],
+ "yin-and-yang": [
+  "Yin àti Yang"
+ ],
+ "enlightenment": [
+  "Ìmọ́lẹ̀ Ọkàn"
+ ],
+ "mortal-tribulation": [
+  "Àdánwò Ayé"
+ ],
+ "soul-dissipation": [
+  "Ìdádùró Ọkàn"
+ ],
+ "dao-marks": [
+  "Àmì Dao"
+ ],
+ "nirvana": [
+  "Nirvana"
+ ],
+ "fellow-daoist": [
+  "Ẹlẹgbẹ́ Dao"
+ ],
+ "sect-familial-address": [
+  "Orúkọ Ìdílé Ẹgbẹ́"
+ ],
+ "cold-snort": [
+  "Mími Tútù"
+ ],
+ "dog-leg-lackey": [
+  "Ẹrú Tí Kò Níyì",
+  "Lackey."
+ ],
+ "jianghu": [
+  "Jianghu"
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "Jíjókòó Lórí Òkè Ń Wò Ẹkùn Níjà",
+  "Sitting on the Mountain..."
+ ],
+ "chaebol": [
+  "Chaebol"
+ ],
+ "heavenly-oath": [
+  "Ìbúra Ọ̀run"
+ ],
+ "title-achievement": [
+  "Orúkọ Ìyìn / Àṣeyọrí"
+ ],
+ "system-erasure": [
+  "Ìfagilé Ètò"
+ ],
+ "sweet-potato": [
+  "Kúkúndùnkú (Ipò Tó Nira)",
+  "Sweet Potato (Goguma)."
+ ],
+ "white-moonlight": [
+  "Ìmọ́lẹ̀ Òṣùpá Funfun"
+ ],
+ "cinnabar-mole": [
+  "Àmì Pupa (Cinnabar)"
+ ],
+ "holy-mother": [
+  "Ìyá Mímọ́"
+ ],
+ "dog-blood": [
+  "Ẹ̀jẹ̀ Ajá (Melodrama)"
+ ],
+ "angst": [
+  "Àníyàn"
+ ],
+ "scum": [
+  "Ẹlẹ́gbin"
+ ],
+ "brain-dead": [
+  "Òpè"
+ ],
+ "meat": [
+  "Ẹran (Ìfẹ́)",
+  "Meat (Smut)."
+ ],
+ "green-tea": [
+  "Tíì Aláwọ̀ Ewé (Ẹ̀tàn)",
+  "Green Tea (Manipulative)."
+ ],
+ "territory": [
+  "Agbègbè (Territory)"
+ ],
+ "rebirth": [
+  "Àtúnbí"
+ ],
+ "devil-mara": [
+  "Èṣù / Mara"
+ ],
+ "demonic-beast": [
+  "Ẹranko Èṣù"
+ ],
+ "truck-kun": [
+  "Ọkọ̀-Akẹ́rù (Truck-kun)"
+ ],
+ "cheat-skill": [
+  "Ọgbọ́n Ẹ̀tàn (Cheat)"
+ ],
+ "divine-protection": [
+  "Ìdáàbòbò Ọlọ́run"
+ ],
+ "genkai-toppa": [
+  "Fífo Ipele",
+  "Limit Break."
+ ],
+ "chuunibyou": [
+  "Chuunibyou"
+ ],
+ "tsundere": [
+  "Tsundere"
+ ],
+ "yandere": [
+  "Yandere"
+ ],
+ "san": [
+  "-san"
+ ],
+ "chan": [
+  "-chan"
+ ],
+ "kun": [
+  "-kun"
+ ],
+ "dono": [
+  "-dono"
+ ],
+ "sensei": [
+  "-sensei"
+ ],
+ "adventurer-guild": [
+  "Ẹgbẹ́ Arìnrìn-àjò"
+ ],
+ "vrmmo": [
+  "VRMMO"
+ ],
+ "goddess": [
+  "Òrìṣà Obìnrin"
+ ],
+ "gate": [
+  "Ẹnubodè"
+ ],
+ "awakening": [
+  "Ìtají"
+ ],
+ "regressor": [
+  "Olùpadàbọ̀"
+ ],
+ "national-level-hunter": [
+  "Ọdẹ Ipele Orílẹ̀-Èdè"
+ ],
+ "hunter-rank": [
+  "Ipele Ọdẹ"
+ ],
+ "grade": [
+  "Ipele (Grade)"
+ ],
+ "mana": [
+  "Mana"
+ ],
+ "shadow-soldier": [
+  "Ọmọ-Ogun Òjìji"
+ ],
+ "monarch": [
+  "Ọba"
+ ],
+ "hyung": [
+  "Hyung"
+ ],
+ "noona": [
+  "Noona"
+ ],
+ "oppa": [
+  "Oppa"
+ ],
+ "sunbae": [
+  "Sunbae"
+ ],
+ "ahjussi": [
+  "Ahjussi"
+ ],
+ "ahjumma": [
+  "Ahjumma"
+ ],
+ "dungeon-break": [
+  "Ìbàjẹ́ Hòrò"
+ ],
+ "boss-monster": [
+  "Ọ̀gá Ẹranko"
+ ],
+ "first-clear": [
+  "Ìparí Àkọ́kọ́"
+ ],
+ "clear": [
+  "Ìparí (Clear)"
+ ],
+ "penalty": [
+  "Ìyà"
+ ],
+ "compensation": [
+  "Ẹsan"
+ ],
+ "ranker": [
+  "Ẹlẹ́rè Gíga"
+ ],
+ "player-kill": [
+  "Ìpànìyàn Ẹlẹ́rè"
+ ],
+ "broadcast": [
+  "Ìkede"
+ ],
+ "mutant-monster": [
+  "Ẹranko Àràmàǹdà Tuntun"
+ ],
+ "growth-type-ability": [
+  "Agbára Ìdàgbàsókè"
+ ],
+ "evolution": [
+  "Ìyípadà"
+ ],
+ "floor": [
+  "Ilẹ̀ / Pèpéle"
+ ],
+ "test": [
+  "Ìdánwò"
+ ],
+ "test-administrator": [
+  "Olùbójútó Ìdánwò"
+ ],
+ "floor-guardian": [
+  "Olùdáàbòbò Ilẹ̀"
+ ],
+ "irregular": [
+  "Àràmàǹdà (Irregular)"
+ ],
+ "regular": [
+  "Déédé"
+ ],
+ "hidden-floor": [
+  "Ilẹ̀ Ìkọ̀kọ̀"
+ ],
+ "wall": [
+  "Ògiri"
+ ],
+ "family": [
+  "Ìdílé"
+ ],
+ "observer": [
+  "Olùwòye"
+ ],
+ "onii-chan": [
+  "Onii-chan"
+ ],
+ "onee-chan": [
+  "Onee-chan"
+ ],
+ "ossan": [
+  "Ossan"
+ ],
+ "osananajimi": [
+  "Osananajimi"
+ ],
+ "kokuhaku": [
+  "Kokuhaku"
+ ],
+ "bunkasai": [
+  "Bunkasai"
+ ],
+ "guild-card": [
+  "Káàdì Ẹgbẹ́"
+ ],
+ "job-change": [
+  "Ìyípadà Iṣẹ́"
+ ],
+ "labyrinth": [
+  "Labyrinth"
+ ],
+ "blacksmith": [
+  "Alágbẹ̀dẹ"
+ ],
+ "slow-life": [
+  "Ìgbé-ayé Pẹ̀lẹ́"
+ ],
+ "skill-book": [
+  "Ìwé Ọgbọ́n"
+ ],
+ "great-sage": [
+  "Ọlọ́gbọ́n Ńlá"
+ ],
+ "sacred-sword": [
+  "Idà Mímọ́"
+ ],
+ "entrance-exam": [
+  "Ìdánwò Ìwọlé"
+ ],
+ "class-ranking": [
+  "Ìtòlẹ́sẹẹsẹ Ẹ̀ka"
+ ],
+ "mob-class": [
+  "Ẹ̀ka Asán (Mob)"
+ ],
+ "late-bloomer": [
+  "Olùdàgbàsókè Kẹ́yìn"
+ ],
+ "graduation-trial": [
+  "Ìdánwò Ìkẹ́kọ̀ọ́yege"
+ ],
+ "novel-knowledge": [
+  "Ìmọ̀ Ìwé Àròsọ"
+ ],
+ "fourth-wall": [
+  "Ògiri Kẹrin"
+ ],
+ "system-voice": [
+  "Ohùn Ètò"
+ ],
+ "authors-note": [
+  "Àkíyèsí Òǹkọ̀wé"
+ ],
+ "ancient-ruins": [
+  "Ibi Ìṣúra Ìgbàanì"
+ ],
+ "spirit-vein": [
+  "Okùn Ẹmí (Vein)"
+ ],
+ "middle-realm": [
+  "Ayé Àárín"
+ ],
+ "void": [
+  "Òfúrufú"
+ ],
+ "chaos": [
+  "Rúkèrúdò"
+ ],
+ "tribute": [
+  "Owó-orí / Ẹ̀bùn"
+ ],
+ "garrison": [
+  "Àgọ́ Ọmọ-Ogun"
+ ],
+ "liege": [
+  "Olúwa (Liege)"
+ ],
+ "totem-beast": [
+  "Ẹranko Totem"
+ ],
+ "beast-master": [
+  "Ọ̀gá Ẹranko"
+ ]
+}

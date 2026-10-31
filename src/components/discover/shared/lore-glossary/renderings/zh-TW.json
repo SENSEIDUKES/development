@@ -1,0 +1,650 @@
+{
+ "qi": [
+  "氣"
+ ],
+ "cultivation": [
+  "修煉"
+ ],
+ "dantian": [
+  "丹田"
+ ],
+ "immortal-qi": [
+  "仙氣"
+ ],
+ "cultivation-realm": [
+  "境界"
+ ],
+ "heavenly-tribulation": [
+  "天劫"
+ ],
+ "nascent-soul": [
+  "元嬰"
+ ],
+ "golden-core": [
+  "金丹"
+ ],
+ "foundation-establishment": [
+  "築基"
+ ],
+ "qi-refining": [
+  "凝氣"
+ ],
+ "core-formation": [
+  "結丹"
+ ],
+ "spirit-severing": [
+  "斬靈"
+ ],
+ "dao-seeking": [
+  "問道"
+ ],
+ "domain": [
+  "領域"
+ ],
+ "ascension": [
+  "飛升"
+ ],
+ "meridians": [
+  "經脈"
+ ],
+ "spiritual-root": [
+  "靈根"
+ ],
+ "jing-qi-shen": [
+  "精氣神"
+ ],
+ "body-tempering": [
+  "淬體"
+ ],
+ "fiendgod-body-refining": [
+  "神魔煉體"
+ ],
+ "heartforce-cultivation": [
+  "心力修煉"
+ ],
+ "dual-cultivation": [
+  "雙修"
+ ],
+ "alchemy": [
+  "煉丹"
+ ],
+ "spirit-stone": [
+  "靈石"
+ ],
+ "spiritual-treasure": [
+  "法寶"
+ ],
+ "storage-ring": [
+  "儲物戒指"
+ ],
+ "talisman": [
+  "符籙"
+ ],
+ "formation": [
+  "陣法"
+ ],
+ "sect": [
+  "宗門"
+ ],
+ "clan": [
+  "家族"
+ ],
+ "patriarch": [
+  "老祖"
+ ],
+ "elder": [
+  "長老"
+ ],
+ "disciple-hierarchy": [
+  "弟子等級"
+ ],
+ "spirit-beast": [
+  "靈獸"
+ ],
+ "beast-taming": [
+  "御獸"
+ ],
+ "heavenly-dao": [
+  "天道"
+ ],
+ "dao": [
+  "道"
+ ],
+ "karma": [
+  "因果"
+ ],
+ "reincarnation": [
+  "輪迴"
+ ],
+ "regression": [
+  "重生"
+ ],
+ "transmigration": [
+  "穿越"
+ ],
+ "system": [
+  "系統"
+ ],
+ "wuxia": [
+  "武俠"
+ ],
+ "xianxia": [
+  "仙俠"
+ ],
+ "xuanhuan": [
+  "玄幻"
+ ],
+ "murim": [
+  "武林"
+ ],
+ "academy-arc": [
+  "學院篇"
+ ],
+ "arrogant-young-master": [
+  "紈絝少爺"
+ ],
+ "face": [
+  "面子"
+ ],
+ "face-slapping": [
+  "打臉"
+ ],
+ "tournament-arc": [
+  "大比"
+ ],
+ "secret-realm": [
+  "秘境"
+ ],
+ "auction": [
+  "拍賣會"
+ ],
+ "bloodline": [
+  "血脈"
+ ],
+ "physique": [
+  "體質"
+ ],
+ "dao-companion": [
+  "道侶"
+ ],
+ "harem": [
+  "後宮"
+ ],
+ "cannon-fodder": [
+  "炮灰"
+ ],
+ "protagonist-halo": [
+  "主角光環"
+ ],
+ "transmigration-novel": [
+  "穿越小說"
+ ],
+ "cultivation-technique": [
+  "功法"
+ ],
+ "forbidden-technique": [
+  "禁術"
+ ],
+ "sword-intent": [
+  "劍意"
+ ],
+ "domain-expansion": [
+  "領域展開"
+ ],
+ "heavenly-tribulation-lightning": [
+  "劫雷"
+ ],
+ "soul": [
+  "靈魂"
+ ],
+ "spiritual-sense": [
+  "神識"
+ ],
+ "qi-deviation": [
+  "走火入魔"
+ ],
+ "heart-devil": [
+  "心魔"
+ ],
+ "merit": [
+  "功德"
+ ],
+ "karmic-fire": [
+  "業火"
+ ],
+ "ascension-platform": [
+  "飛升台"
+ ],
+ "lower-realm": [
+  "下界"
+ ],
+ "immortal-realm": [
+  "仙界"
+ ],
+ "spirit-realm": [
+  "靈界"
+ ],
+ "great-thousand-world": [
+  "大千世界"
+ ],
+ "plane": [
+  "位面"
+ ],
+ "world-tree": [
+  "世界樹"
+ ],
+ "celestial-empire": [
+  "天朝"
+ ],
+ "demon": [
+  "魔族"
+ ],
+ "orthodox-vs-unorthodox": [
+  "正魔之爭"
+ ],
+ "sect-war": [
+  "宗門大戰"
+ ],
+ "resource-war": [
+  "資源戰"
+ ],
+ "talent": [
+  "天賦"
+ ],
+ "cheat": [
+  "金手指"
+ ],
+ "time-dilation": [
+  "時間加速"
+ ],
+ "appraisal": [
+  "鑑定"
+ ],
+ "mount": [
+  "坐騎"
+ ],
+ "crafting": [
+  "煉器"
+ ],
+ "courting-death": [
+  "找死"
+ ],
+ "mount-tai": [
+  "泰山"
+ ],
+ "kowtow": [
+  "磕頭"
+ ],
+ "jade-slip": [
+  "玉簡"
+ ],
+ "returner": [
+  "回歸者"
+ ],
+ "sword-cultivator": [
+  "劍修"
+ ],
+ "foundation-establishment-pill": [
+  "築基丹"
+ ],
+ "marrow-cleansing-pill": [
+  "洗髓丹"
+ ],
+ "fasting-pill": [
+  "辟穀丹"
+ ],
+ "blood-burning-pill": [
+  "燃血丹"
+ ],
+ "shim-gong": [
+  "心功"
+ ],
+ "shin-bup": [
+  "身法"
+ ],
+ "jeom-hyeol": [
+  "點穴"
+ ],
+ "ho-shin-gang-qi": [
+  "護身罡氣"
+ ],
+ "geom-gi": [
+  "劍氣"
+ ],
+ "dao-child": [
+  "道子"
+ ],
+ "peak-master": [
+  "峰主"
+ ],
+ "sect-leader": [
+  "宗主"
+ ],
+ "handyman-disciple": [
+  "雜役弟子"
+ ],
+ "guest-elder": [
+  "客卿長老"
+ ],
+ "sweeping-monk": [
+  "掃地僧"
+ ],
+ "beast-core": [
+  "妖丹"
+ ],
+ "soul-contract": [
+  "靈魂契約"
+ ],
+ "beast-pouch": [
+  "靈獸袋"
+ ],
+ "bloodline-evolution": [
+  "血脈進化"
+ ],
+ "equality-contract": [
+  "平等契約"
+ ],
+ "heavenly-flame": [
+  "異火"
+ ],
+ "spirit-herb": [
+  "靈草"
+ ],
+ "spirit-spring-water": [
+  "靈泉"
+ ],
+ "array-eye": [
+  "陣眼"
+ ],
+ "formation-flag": [
+  "陣旗"
+ ],
+ "spirit-gathering-array": [
+  "聚靈陣"
+ ],
+ "murim-alliance": [
+  "武林盟"
+ ],
+ "demonic-cult": [
+  "魔教"
+ ],
+ "internal-energy": [
+  "內功"
+ ],
+ "jade-beauty": [
+  "絕色美女"
+ ],
+ "white-lotus": [
+  "白蓮花"
+ ],
+ "eating-tofu": [
+  "吃豆腐"
+ ],
+ "coughing-up-blood": [
+  "吐血"
+ ],
+ "frog-in-well": [
+  "井底之蛙"
+ ],
+ "heaven-defying": [
+  "逆天"
+ ],
+ "green-hat": [
+  "綠帽子"
+ ],
+ "shuang-wen": [
+  "爽文"
+ ],
+ "giving-face": [
+  "給面子"
+ ],
+ "node": [
+  "節點"
+ ],
+ "contribution-points": [
+  "貢獻點"
+ ],
+ "sect-mission-hall": [
+  "任務閣"
+ ],
+ "spirit-garden": [
+  "靈藥園"
+ ],
+ "city-lord": [
+  "城主"
+ ],
+ "edict": [
+  "法旨"
+ ],
+ "vassal": [
+  "附庸"
+ ],
+ "primordial-chaos": [
+  "混沌"
+ ],
+ "the-void": [
+  "虛空"
+ ],
+ "life-forbidden-zone": [
+  "生命禁區"
+ ],
+ "ancient-desolate-beast": [
+  "太古荒獸"
+ ],
+ "star-field": [
+  "星域"
+ ],
+ "spatial-storm": [
+  "空間風暴"
+ ],
+ "nine-heavens": [
+  "九天"
+ ],
+ "river-of-time": [
+  "時間長河"
+ ],
+ "epoch": [
+  "紀元"
+ ],
+ "karmic-thread": [
+  "因果線"
+ ],
+ "origin-source": [
+  "本源"
+ ],
+ "heaven-and-earth": [
+  "天地"
+ ],
+ "wuji": [
+  "無極"
+ ],
+ "dao-source": [
+  "道源"
+ ],
+ "engagement-annulment": [
+  "退婚"
+ ],
+ "toad-lusting-after-swan-meat": [
+  "癩蛤蟆想吃天鵝肉"
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "莫欺少年窮"
+ ],
+ "concubine": [
+  "妾室"
+ ],
+ "sect-rules": [
+  "門規"
+ ],
+ "filial-piety": [
+  "孝道"
+ ],
+ "pill-tribulation": [
+  "丹劫"
+ ],
+ "monster-genius": [
+  "妖孽"
+ ],
+ "gu-venom-witchcraft": [
+  "蠱"
+ ],
+ "corpse-refining": [
+  "煉屍"
+ ],
+ "fairy-sister": [
+  "神仙姐姐"
+ ],
+ "young-miss": [
+  "大小姐"
+ ],
+ "mount-kunlun": [
+  "崑崙山"
+ ],
+ "auction-sniping": [
+  "截胡"
+ ],
+ "dao-heart": [
+  "道心"
+ ],
+ "severing-mortal-ties": [
+  "斬斷塵緣"
+ ],
+ "five-elements": [
+  "五行"
+ ],
+ "yin-and-yang": [
+  "陰陽"
+ ],
+ "enlightenment": [
+  "頓悟"
+ ],
+ "mortal-tribulation": [
+  "紅塵劫"
+ ],
+ "soul-dissipation": [
+  "魂飛魄散"
+ ],
+ "dao-marks": [
+  "道痕"
+ ],
+ "nirvana": [
+  "涅槃"
+ ],
+ "fellow-daoist": [
+  "道友"
+ ],
+ "sect-familial-address": [
+  "師兄弟"
+ ],
+ "cold-snort": [
+  "冷哼"
+ ],
+ "dog-leg-lackey": [
+  "狗腿子"
+ ],
+ "jianghu": [
+  "江湖"
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "坐山觀虎鬥"
+ ],
+ "heavenly-oath": [
+  "天道誓言"
+ ],
+ "white-moonlight": [
+  "白月光"
+ ],
+ "cinnabar-mole": [
+  "朱砂痣"
+ ],
+ "holy-mother": [
+  "聖母"
+ ],
+ "dog-blood": [
+  "狗血"
+ ],
+ "angst": [
+  "虐心"
+ ],
+ "scum": [
+  "人渣"
+ ],
+ "brain-dead": [
+  "腦殘"
+ ],
+ "meat": [
+  "肉"
+ ],
+ "green-tea": [
+  "綠茶"
+ ],
+ "territory": [
+  "領地"
+ ],
+ "rebirth": [
+  "重生"
+ ],
+ "devil-mara": [
+  "天魔"
+ ],
+ "demonic-beast": [
+  "妖獸"
+ ],
+ "entrance-exam": [
+  "入學試煉"
+ ],
+ "class-ranking": [
+  "班級排名"
+ ],
+ "mob-class": [
+  "雜役班"
+ ],
+ "late-bloomer": [
+  "大器晚成"
+ ],
+ "graduation-trial": [
+  "畢業試煉"
+ ],
+ "novel-knowledge": [
+  "小說知識"
+ ],
+ "fourth-wall": [
+  "第四面牆"
+ ],
+ "system-voice": [
+  "系統提示音"
+ ],
+ "authors-note": [
+  "作者的話"
+ ],
+ "ancient-ruins": [
+  "遠古遺跡"
+ ],
+ "spirit-vein": [
+  "靈脈"
+ ],
+ "middle-realm": [
+  "中境"
+ ],
+ "void": [
+  "虛空"
+ ],
+ "chaos": [
+  "混沌"
+ ],
+ "tribute": [
+  "貢品"
+ ],
+ "garrison": [
+  "駐軍"
+ ],
+ "liege": [
+  "領主"
+ ],
+ "totem-beast": [
+  "圖騰獸"
+ ],
+ "beast-master": [
+  "獸師"
+ ]
+}

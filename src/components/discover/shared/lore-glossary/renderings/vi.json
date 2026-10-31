@@ -1,0 +1,1544 @@
+{
+ "qi": [
+  "Khí",
+  "Giữ nguyên Hán Việt."
+ ],
+ "cultivation": [
+  "Tu Chân",
+  "Hoặc Tu Luyện."
+ ],
+ "dantian": [
+  "Đan Điền",
+  "Huyệt đạo chính."
+ ],
+ "immortal-qi": [
+  "Tiên Khí",
+  "Phân biệt với Linh Khí/Khí."
+ ],
+ "cultivation-realm": [
+  "Cảnh Giới",
+  "Hoặc Tu Vi."
+ ],
+ "heavenly-tribulation": [
+  "Thiên Kiếp",
+  "Sấm sét độ kiếp."
+ ],
+ "nascent-soul": [
+  "Nguyên Anh",
+  "Cảnh giới Nguyên Anh."
+ ],
+ "golden-core": [
+  "Kim Đan",
+  "Cảnh giới Kim Đan."
+ ],
+ "foundation-establishment": [
+  "Trúc Cơ",
+  "Cảnh giới Trúc Cơ."
+ ],
+ "qi-refining": [
+  "Luyện Khí",
+  "Cảnh giới Luyện Khí."
+ ],
+ "core-formation": [
+  "Kết Đan",
+  "Giai đoạn tạo Kim Đan."
+ ],
+ "spirit-severing": [
+  "Trảm Linh",
+  "Cảnh giới Trảm Linh."
+ ],
+ "dao-seeking": [
+  "Vấn Đạo",
+  "Hỏi đạo."
+ ],
+ "domain": [
+  "Lĩnh Vực",
+  "Hoặc Vực."
+ ],
+ "ascension": [
+  "Phi Thăng",
+  "Lên cõi trên."
+ ],
+ "meridians": [
+  "Kinh Mạch",
+  "Đường dẫn khí."
+ ],
+ "spiritual-root": [
+  "Linh Căn",
+  "Thiên phú tu luyện."
+ ],
+ "jing-qi-shen": [
+  "Tinh, Khí, Thần",
+  "Tam bảo."
+ ],
+ "body-tempering": [
+  "Luyện Thể",
+  "Rèn luyện thân thể."
+ ],
+ "fiendgod-body-refining": [
+  "Thần Ma Luyện Thể",
+  "Thể loại."
+ ],
+ "heartforce-cultivation": [
+  "Tâm Lực",
+  "Sức mạnh tâm trí."
+ ],
+ "dual-cultivation": [
+  "Song Tu",
+  "Tu luyện có bạn đạo."
+ ],
+ "alchemy": [
+  "Luyện Đan",
+  "Thuật luyện thuốc."
+ ],
+ "spirit-stone": [
+  "Linh Thạch",
+  "Tiền tệ tu chân."
+ ],
+ "spiritual-treasure": [
+  "Pháp Bảo",
+  "Vũ khí/đồ dùng tu chân."
+ ],
+ "storage-ring": [
+  "Không Gian Giới Chỉ",
+  "Hoặc Nhẫn Trữ Vật."
+ ],
+ "talisman": [
+  "Bùa Chú",
+  "Hoặc Phù Lục."
+ ],
+ "formation": [
+  "Trận Pháp",
+  "Hoặc Trận."
+ ],
+ "sect": [
+  "Tông Môn",
+  "Hoặc Môn Phái."
+ ],
+ "clan": [
+  "Gia Tộc",
+  "Gia đình lớn."
+ ],
+ "patriarch": [
+  "Lão Tổ",
+  "Hoặc Tộc Trưởng."
+ ],
+ "elder": [
+  "Trưởng Lão",
+  "Thành viên cấp cao."
+ ],
+ "disciple-hierarchy": [
+  "Cấp Bậc Đệ Tử",
+  "Hệ thống đệ tử."
+ ],
+ "spirit-beast": [
+  "Linh Thú",
+  "Hoặc Yêu Thú."
+ ],
+ "beast-taming": [
+  "Ngự Thú",
+  "Thuần phục thú."
+ ],
+ "heavenly-dao": [
+  "Thiên Đạo",
+  "Quy luật đất trời."
+ ],
+ "dao": [
+  "Đạo",
+  "Con đường, chân lý."
+ ],
+ "karma": [
+  "Nhân Quả",
+  "Nghiệp báo."
+ ],
+ "reincarnation": [
+  "Luân Hồi",
+  "Hoặc Chuyển Sinh."
+ ],
+ "regression": [
+  "Trọng Sinh",
+  "Quay về quá khứ."
+ ],
+ "transmigration": [
+  "Xuyên Không",
+  "Xuyên việt."
+ ],
+ "isekai": [
+  "Dị Giới",
+  "Hoặc Isekai."
+ ],
+ "otome-isekai": [
+  "Otome Isekai",
+  "Nữ cường / Xuyên sách."
+ ],
+ "hunter-system": [
+  "Hệ Thống Thợ Săn",
+  "Võng Du."
+ ],
+ "constellation": [
+  "Tinh Tú",
+  "Hoặc Chòm Sao."
+ ],
+ "dungeon": [
+  "Hầm Ngục",
+  "Phó bản."
+ ],
+ "tower": [
+  "Tòa Tháp",
+  "Hoặc Tháp."
+ ],
+ "system": [
+  "Hệ Thống",
+  "Giao diện RPG."
+ ],
+ "status-window": [
+  "Cửa Sổ Trạng Thái",
+  "Bảng thông tin."
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "Kỹ Năng",
+  "Hoặc Chiêu Thức."
+ ],
+ "level-up": [
+  "Thăng Cấp",
+  "Hoặc Lên Cấp."
+ ],
+ "quest": [
+  "Nhiệm Vụ",
+  "Nhiệm vụ hệ thống."
+ ],
+ "guild": [
+  "Công Hội"
+ ],
+ "rarity": [
+  "Độ Hiếm",
+  "Phẩm chất."
+ ],
+ "loot": [
+  "Vật Phẩm",
+  "Đồ rớt ra."
+ ],
+ "wuxia": [
+  "Võ Hiệp",
+  "Thể loại võ hiệp."
+ ],
+ "xianxia": [
+  "Tiên Hiệp",
+  "Thể loại tiên hiệp."
+ ],
+ "xuanhuan": [
+  "Huyền Huyễn",
+  "Đông phương huyễn tưởng."
+ ],
+ "murim": [
+  "Võ Lâm",
+  "Murim (Hàn Quốc)."
+ ],
+ "litrpg": [
+  "Võng Du",
+  "Game nhập vai."
+ ],
+ "progression-fantasy": [
+  "Tiến Cấp Huyễn Tưởng",
+  "Thể loại phụ."
+ ],
+ "academy-arc": [
+  "Học Viện",
+  "Arc học viện."
+ ],
+ "guide": [
+  "Dẫn Đạo",
+  "Dẫn đường / lính gác."
+ ],
+ "esper": [
+  "Dị Năng Giả",
+  "Người có siêu năng lực."
+ ],
+ "arrogant-young-master": [
+  "Thiếu Gia Kiêu Ngạo",
+  "Hoặc Hoàn khố đệ tử."
+ ],
+ "face": [
+  "Thể Diện",
+  "Mặt mũi."
+ ],
+ "face-slapping": [
+  "Vả Mặt",
+  "Đánh mặt."
+ ],
+ "tournament-arc": [
+  "Đại Hội",
+  "Giải đấu võ thuật."
+ ],
+ "secret-realm": [
+  "Bí Cảnh",
+  "Không gian độc lập."
+ ],
+ "auction": [
+  "Hội Đấu Giá",
+  "Mua bán."
+ ],
+ "bloodline": [
+  "Huyết Mạch",
+  "Dòng máu."
+ ],
+ "physique": [
+  "Thể Chất",
+  "Đặc tính cơ thể."
+ ],
+ "dao-companion": [
+  "Đạo Lữ",
+  "Bạn lữ tu luyện."
+ ],
+ "harem": [
+  "Hậu Cung",
+  "Nhiều vợ."
+ ],
+ "cannon-fodder": [
+  "Pháo Hôi",
+  "Nhân vật hy sinh."
+ ],
+ "villainess": [
+  "Nữ Phụ Phản Diện",
+  "Ác nữ."
+ ],
+ "protagonist-halo": [
+  "Hào Quang Nhân Vật Chính",
+  "Bàn tay vàng."
+ ],
+ "system-shop": [
+  "Cửa Hàng Hệ Thống",
+  "Shop ảo."
+ ],
+ "inventory": [
+  "Túi Đồ",
+  "Hoặc Không gian chứa đồ."
+ ],
+ "class": [
+  "Nghề Nghiệp",
+  "Hoặc Chức Nghiệp."
+ ],
+ "stat": [
+  "Chỉ Số",
+  "Trạng thái."
+ ],
+ "skill-tree": [
+  "Cây Kỹ Năng",
+  "Sơ đồ."
+ ],
+ "party": [
+  "Tổ Đội",
+  "Nhóm."
+ ],
+ "raid": [
+  "Săn Đội",
+  "Hoặc Phó Bản Tổ Đội."
+ ],
+ "pvp": [
+  "PvP",
+  "Người đấu Người."
+ ],
+ "pve": [
+  "PvE",
+  "Đánh quái."
+ ],
+ "npc": [
+  "NPC",
+  "Nhân vật phụ."
+ ],
+ "sentient-system": [
+  "Hệ Thống Có Ý Thức",
+  "Hệ thống AI."
+ ],
+ "regression-novel": [
+  "Trọng Sinh Văn",
+  "Thể loại trọng sinh."
+ ],
+ "transmigration-novel": [
+  "Xuyên Không Văn",
+  "Thể loại xuyên không."
+ ],
+ "cultivation-technique": [
+  "Công Pháp",
+  "Bí kíp tu luyện."
+ ],
+ "forbidden-technique": [
+  "Cấm Thuật",
+  "Kỹ năng cấm."
+ ],
+ "sword-intent": [
+  "Kiếm Ý",
+  "Hoặc Kiếm Tâm."
+ ],
+ "domain-expansion": [
+  "Triển Khai Lĩnh Vực",
+  "Mở rộng lãnh vực."
+ ],
+ "heavenly-tribulation-lightning": [
+  "Kiếp Lôi",
+  "Sấm sét thiên kiếp."
+ ],
+ "soul": [
+  "Linh Hồn",
+  "Hồn phách."
+ ],
+ "spiritual-sense": [
+  "Thần Thức",
+  "Cảm nhận linh hồn."
+ ],
+ "qi-deviation": [
+  "Tẩu Hỏa Nhập Ma",
+  "Tai nạn tu luyện."
+ ],
+ "heart-devil": [
+  "Tâm Ma",
+  "Chướng ngại tâm lý."
+ ],
+ "merit": [
+  "Công Đức",
+  "Nhân quả tốt."
+ ],
+ "karmic-fire": [
+  "Nghiệp Hỏa",
+  "Lửa nhân quả."
+ ],
+ "ascension-platform": [
+  "Phi Thăng Đài",
+  "Nơi phi thăng."
+ ],
+ "lower-realm": [
+  "Hạ Giới",
+  "Phàm giới."
+ ],
+ "immortal-realm": [
+  "Tiên Giới",
+  "Cõi tiên."
+ ],
+ "spirit-realm": [
+  "Linh Giới",
+  "Thế giới tâm linh."
+ ],
+ "great-thousand-world": [
+  "Đại Thiên Thế Giới",
+  "Vũ trụ."
+ ],
+ "plane": [
+  "Vị Diện",
+  "Hoặc Không gian."
+ ],
+ "world-tree": [
+  "Thế Giới Thụ",
+  "Cây thế giới."
+ ],
+ "celestial-empire": [
+  "Thiên Triều",
+  "Hoặc Tiên Giới."
+ ],
+ "demon": [
+  "Yêu Ma",
+  "Hoặc Ma tộc."
+ ],
+ "orthodox-vs-unorthodox": [
+  "Chính Phái vs Tà Phái",
+  "Danh môn chính phái."
+ ],
+ "sect-war": [
+  "Tông Môn Chiến",
+  "Chiến tranh bang phái."
+ ],
+ "resource-war": [
+  "Tài Nguyên Chiến",
+  "Tranh giành tài nguyên."
+ ],
+ "talent": [
+  "Tư Chất",
+  "Hoặc Căn Cốt."
+ ],
+ "cheat": [
+  "Bàn Tay Vàng"
+ ],
+ "time-dilation": [
+  "Gia Tốc Thời Gian",
+  "Thay đổi thời gian."
+ ],
+ "appraisal": [
+  "Giám Định",
+  "Phân tích chỉ số."
+ ],
+ "loot-box": [
+  "Hộp Vật Phẩm",
+  "Gacha."
+ ],
+ "pay-to-win": [
+  "Đô La Thần Chưởng"
+ ],
+ "player": [
+  "Người Chơi"
+ ],
+ "administrator": [
+  "Quản Trị Viên",
+  "Admin."
+ ],
+ "tutorial": [
+  "Tân Thủ Thôn",
+  "Hoặc Hướng Dẫn."
+ ],
+ "hidden-quest": [
+  "Nhiệm Vụ Ẩn",
+  "Nhiệm vụ bí mật."
+ ],
+ "repair": [
+  "Sửa Chữa",
+  "Khôi phục độ bền."
+ ],
+ "death-penalty": [
+  "Hình Phạt Tử Vong",
+  "Rớt cấp/rớt đồ."
+ ],
+ "respawn": [
+  "Hồi Sinh",
+  "Sống lại."
+ ],
+ "fast-travel": [
+  "Truyền Tống",
+  "Dịch chuyển."
+ ],
+ "mount": [
+  "Thú Cưỡi",
+  "Tọa kỵ."
+ ],
+ "pet": [
+  "Sủng Vật",
+  "Thú cưng."
+ ],
+ "crafting": [
+  "Chế Tạo",
+  "Nghề nghiệp."
+ ],
+ "enchanting": [
+  "Phù Phép",
+  "Hoặc Khảm Nạm."
+ ],
+ "socket": [
+  "Lỗ Khảm",
+  "Để gắn ngọc."
+ ],
+ "set-item": [
+  "Trang Bị Bộ",
+  "Set đồ."
+ ],
+ "unique-item": [
+  "Trang Bị Độc Nhất",
+  "Đồ Unique."
+ ],
+ "courting-death": [
+  "Tự Tìm Đường Chết",
+  "Muốn chết à."
+ ],
+ "mount-tai": [
+  "Thái Sơn",
+  "Có mắt không tròng."
+ ],
+ "kowtow": [
+  "Dập Đầu",
+  "Quỳ lạy."
+ ],
+ "jade-slip": [
+  "Ngọc Giản",
+  "Thẻ ngọc."
+ ],
+ "romance-fantasy": [
+  "Huyễn Tình",
+  "Ngôn tình giả tưởng."
+ ],
+ "returner": [
+  "Kẻ Trở Về",
+  "Người trùng sinh."
+ ],
+ "sword-cultivator": [
+  "Kiếm Tu",
+  "Tu kiếm đạo."
+ ],
+ "foundation-establishment-pill": [
+  "Trúc Cơ Đan",
+  "Thuốc thăng cấp."
+ ],
+ "marrow-cleansing-pill": [
+  "Tẩy Tủy Đan",
+  "Thuốc rèn thể chất."
+ ],
+ "fasting-pill": [
+  "B辟 Cốc Đan"
+ ],
+ "blood-burning-pill": [
+  "Nhiên Huyết Đan",
+  "Thuốc bạo phát."
+ ],
+ "shim-gong": [
+  "Tâm Công",
+  "Nội công Hàn."
+ ],
+ "shin-bup": [
+  "Thân Pháp",
+  "Bộ pháp di chuyển."
+ ],
+ "jeom-hyeol": [
+  "Điểm Huyệt",
+  "Điểm huyệt đạo."
+ ],
+ "ho-shin-gang-qi": [
+  "Hộ Thân Cương Khí",
+  "Lá chắn khí."
+ ],
+ "geom-gi": [
+  "Kiếm Khí",
+  "Khí của kiếm."
+ ],
+ "sama": [
+  "-sama",
+  "Hậu tố tôn kính."
+ ],
+ "senpai-kouhai": [
+  "Senpai / Kouhai",
+  "Tiền bối / Hậu bối."
+ ],
+ "ojou-sama": [
+  "Ojou-sama",
+  "Đại tiểu thư."
+ ],
+ "maou-gun": [
+  "Ma Vương Quân",
+  "Quân đội ma vương."
+ ],
+ "dao-child": [
+  "Đạo Tử",
+  "Thánh tử."
+ ],
+ "peak-master": [
+  "Phong Chủ",
+  "Chủ ngọn núi."
+ ],
+ "sect-leader": [
+  "Tông Chủ",
+  "Hoặc Chưởng Môn."
+ ],
+ "handyman-disciple": [
+  "Tạp Dịch Đệ Tử",
+  "Người làm công."
+ ],
+ "guest-elder": [
+  "Khách Khanh Trưởng Lão",
+  "Trưởng lão ngoại môn."
+ ],
+ "sweeping-monk": [
+  "Tảo Địa Tăng",
+  "Cao thủ ẩn danh."
+ ],
+ "hidden-class": [
+  "Chức Nghiệp Ẩn",
+  "Nghề bí mật."
+ ],
+ "necromancer": [
+  "Vong Linh Pháp Sư"
+ ],
+ "job-advancement": [
+  "Chuyển Chức",
+  "Chuyển nghề."
+ ],
+ "berserker": [
+  "Cuồng Chiến Sĩ"
+ ],
+ "paladin": [
+  "Thánh Kỵ Sĩ",
+  "Hiệp sĩ thánh."
+ ],
+ "beast-core": [
+  "Yêu Đan",
+  "Hoặc Ma hạch."
+ ],
+ "soul-contract": [
+  "Linh Hồn Khế Ước",
+  "Ký kết linh hồn."
+ ],
+ "beast-pouch": [
+  "Linh Thú Bằng",
+  "Túi trữ linh thú."
+ ],
+ "bloodline-evolution": [
+  "Huyết Mạch Tiến Hóa",
+  "Thăng cấp dòng máu."
+ ],
+ "familiar": [
+  "Linh Sủng",
+  "Thú triệu hồi."
+ ],
+ "equality-contract": [
+  "Bình Đẳng Khế Ước",
+  "Hợp đồng ngang hàng."
+ ],
+ "heavenly-flame": [
+  "Dị Hỏa",
+  "Lửa đặc biệt."
+ ],
+ "spirit-herb": [
+  "Linh Thảo",
+  "Thảo dược có linh khí."
+ ],
+ "spirit-spring-water": [
+  "Linh Tuyền Thủy",
+  "Nước suối linh khí."
+ ],
+ "array-eye": [
+  "Trận Nhãn",
+  "Mắt trận."
+ ],
+ "formation-flag": [
+  "Trận Kỳ",
+  "Cờ trận."
+ ],
+ "spirit-gathering-array": [
+  "Tụ Linh Trận",
+  "Trận pháp tập trung khí."
+ ],
+ "red-gate": [
+  "Cổng Đỏ",
+  "Cổng nguy hiểm."
+ ],
+ "clear-condition": [
+  "Điều Kiện Qua Ải",
+  "Để hoàn thành hầm ngục."
+ ],
+ "magic-stone": [
+  "Ma Thạch",
+  "Đá ma thuật."
+ ],
+ "penalty-quest": [
+  "Nhiệm Vụ Trừng Phạt",
+  "Hình phạt."
+ ],
+ "floor-master": [
+  "Tầng Chủ",
+  "Boss của tầng."
+ ],
+ "porter": [
+  "Kẻ Vác Đồ"
+ ],
+ "scenario": [
+  "Kịch Bản",
+  "Kịch bản (ORV)."
+ ],
+ "probability": [
+  "Cái Giá Của Khả Năng",
+  "개연성."
+ ],
+ "stigma": [
+  "Thánh Ngôn",
+  "Hoặc Dấu Ấn."
+ ],
+ "murim-alliance": [
+  "Võ Lâm Minh",
+  "Chính phái."
+ ],
+ "demonic-cult": [
+  "Ma Giáo",
+  "Tà phái."
+ ],
+ "northern-duke": [
+  "Bắc Địa Công Tước",
+  "Nam chính RoFan."
+ ],
+ "tea-party": [
+  "Tiệc Trà",
+  "Buổi họp mặt."
+ ],
+ "munchkin": [
+  "Munchkin",
+  "Nhân vật bá đạo."
+ ],
+ "cider": [
+  "Cider",
+  "Sảng văn, giải tỏa."
+ ],
+ "black-mastermind": [
+  "Trùm Cuối Trá Hình",
+  "Hoặc Hắc Mạc."
+ ],
+ "dokkaebi": [
+  "Dokkaebi",
+  "Tinh linh Hàn."
+ ],
+ "internal-energy": [
+  "Nội Công",
+  "Nội lực."
+ ],
+ "jade-beauty": [
+  "Tuyệt Thế Giai Nhân",
+  "Người đẹp như ngọc."
+ ],
+ "white-lotus": [
+  "Bạch Liên Hoa",
+  "Giả vờ ngây thơ."
+ ],
+ "eating-tofu": [
+  "Ăn Đậu Hũ",
+  "Sàm sỡ nhẹ."
+ ],
+ "coughing-up-blood": [
+  "Thổ Huyết",
+  "Ngụm máu."
+ ],
+ "frog-in-well": [
+  "Ếch Ngồi Đáy Giếng",
+  "Thiển cận."
+ ],
+ "heaven-defying": [
+  "Nghịch Thiên",
+  "Quá mạnh."
+ ],
+ "green-hat": [
+  "Cắm Sừng",
+  "Đội mũ xanh."
+ ],
+ "shuang-wen": [
+  "Sảng Văn",
+  "Truyện hài lòng."
+ ],
+ "giving-face": [
+  "Nể Mặt",
+  "Cho thể diện."
+ ],
+ "dungeon-core": [
+  "Lõi Hầm Ngục",
+  "Trái tim hầm ngục."
+ ],
+ "fiefdom": [
+  "Lãnh Địa",
+  "Đất đai phong tước."
+ ],
+ "node": [
+  "Linh Mạch",
+  "Điểm hội tụ năng lượng."
+ ],
+ "contribution-points": [
+  "Điểm Cống Hiến",
+  "Điểm thưởng sect."
+ ],
+ "sect-mission-hall": [
+  "Nhiệm Vụ Các",
+  "Nơi nhận quest."
+ ],
+ "spirit-garden": [
+  "Linh Dược Viên",
+  "Vườn thuốc."
+ ],
+ "city-lord": [
+  "Thành Chủ",
+  "Người đứng đầu thành."
+ ],
+ "edict": [
+  "Chiếu Chỉ",
+  "Lệnh thiên đạo."
+ ],
+ "vassal": [
+  "Chư Hầu",
+  "Kẻ hầu."
+ ],
+ "primordial-chaos": [
+  "Hỗn Độn Sơ Khai",
+  "Khởi nguyên."
+ ],
+ "the-void": [
+  "Hư Không",
+  "Không gian sâu."
+ ],
+ "life-forbidden-zone": [
+  "Cấm Địa Sinh Mệnh",
+  "Nơi chết chóc."
+ ],
+ "ancient-desolate-beast": [
+  "Thái Cổ Hoang Thú",
+  "Quái thú thượng cổ."
+ ],
+ "star-field": [
+  "Tinh Vực",
+  "Vùng sao."
+ ],
+ "spatial-storm": [
+  "Không Gian Bão Táp",
+  "Bão không gian."
+ ],
+ "nine-heavens": [
+  "Cửu Trùng Thiên",
+  "Chín tầng trời."
+ ],
+ "river-of-time": [
+  "Thời Gian Trường Hà",
+  "Dòng sông thời gian."
+ ],
+ "epoch": [
+  "Kỷ Nguyên",
+  "Đại thế."
+ ],
+ "karmic-thread": [
+  "Nhân Quả Tuyến",
+  "Đường nhân quả."
+ ],
+ "origin-source": [
+  "Bản Nguyên",
+  "Sức mạnh gốc."
+ ],
+ "heaven-and-earth": [
+  "Thiên Địa",
+  "Trời đất."
+ ],
+ "wuji": [
+  "Vô Cực",
+  "Vô hạn."
+ ],
+ "dao-source": [
+  "Đạo Nguyên",
+  "Gốc của Đạo."
+ ],
+ "engagement-annulment": [
+  "Từ Hôn",
+  "Hủy hôn ước."
+ ],
+ "toad-lusting-after-swan-meat": [
+  "Cóc Ghẻ Đòi Ăn Thịt Thiên Nga",
+  "Thành ngữ."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "Đừng Khinh Thiếu Niên Nghèo",
+  "Câu nói kinh điển."
+ ],
+ "concubine": [
+  "Thiếp",
+  "Vợ lẽ."
+ ],
+ "sect-rules": [
+  "Môn Quy",
+  "Luật lệ tông môn."
+ ],
+ "filial-piety": [
+  "Hiếu Đạo",
+  "Chữ hiếu."
+ ],
+ "pill-tribulation": [
+  "Đan Kiếp",
+  "Thiên kiếp khi luyện đan."
+ ],
+ "monster-genius": [
+  "Yêu Nghiệt",
+  "Thiên tài quá khủng."
+ ],
+ "gu-venom-witchcraft": [
+  "Cổ Trùng",
+  "Thuật sâu độc."
+ ],
+ "corpse-refining": [
+  "Luyện Thi",
+  "Điều khiển xác chết."
+ ],
+ "fairy-sister": [
+  "Thần Tiên Tỷ Tỷ",
+  "Xưng hô."
+ ],
+ "young-miss": [
+  "Tiểu Thư",
+  "Đại tiểu thư."
+ ],
+ "mount-kunlun": [
+  "Côn Lôn Sơn",
+  "Núi thiêng."
+ ],
+ "aggro": [
+  "Cừu Hận",
+  "Chỉ số aggro."
+ ],
+ "crowd-control": [
+  "Khống Chế"
+ ],
+ "kiting": [
+  "Thả Diều",
+  "Đánh và chạy."
+ ],
+ "aoe": [
+  "Phạm Vi",
+  "Sát thương diện rộng."
+ ],
+ "proc": [
+  "Kích Phát",
+  "Kích hoạt hiệu ứng."
+ ],
+ "kill-steal": [
+  "Cướp Quái",
+  "Cướp mạng."
+ ],
+ "tank": [
+  "Đỡ Đòn",
+  "Tanker."
+ ],
+ "dps": [
+  "Sát Thương Chính",
+  "Damager."
+ ],
+ "gold-sink": [
+  "Nơi Đốt Tiền",
+  "Rút tiền khỏi game."
+ ],
+ "auction-sniping": [
+  "Đấu Giá Phút Cuối",
+  "Cướp đấu giá."
+ ],
+ "griefing": [
+  "Phá Game",
+  "Phá hoại."
+ ],
+ "dot": [
+  "Sát Thương Duy Trì",
+  "Damage over time."
+ ],
+ "contract-marriage": [
+  "Hợp Đồng Hôn Nhân",
+  "Cưới giả."
+ ],
+ "reawakening": [
+  "Thức Tỉnh Lần Hai",
+  "Awaken lần nữa."
+ ],
+ "tyrant": [
+  "Bạo Chúa",
+  "Vua chúa tàn ác."
+ ],
+ "obsessive-male-lead": [
+  "Nam Chính Chiếm Hữu",
+  "Yandere light."
+ ],
+ "original-heroine": [
+  "Nữ Chính Nguyên Tác",
+  "Nguyên nữ chính."
+ ],
+ "regression-trauma": [
+  "Chướng Ngại Trọng Sinh",
+  "Ám ảnh kiếp trước."
+ ],
+ "hunter-association": [
+  "Hiệp Hội Thợ Săn",
+  "Cơ quan quản lý."
+ ],
+ "sudden-death": [
+  "Đột Tử",
+  "Chết bất đắc kỳ tử."
+ ],
+ "guild-master": [
+  "Hội Trưởng",
+  "Chủ guild."
+ ],
+ "adventurer-ranks": [
+  "Cấp Bậc Mạo Hiểm Giả",
+  "Rank."
+ ],
+ "beastkin": [
+  "Thú Nhân",
+  "Bán thú."
+ ],
+ "demon-god": [
+  "Ma Thần",
+  "Thần bóng tối."
+ ],
+ "unique-skill": [
+  "Kỹ Năng Độc Nhất",
+  "Kỹ năng hiếm."
+ ],
+ "demon-realm": [
+  "Ma Giới",
+  "Cõi quỷ."
+ ],
+ "slave-crest": [
+  "Nô Lệ Ấn",
+  "Dấu ấn nô lệ."
+ ],
+ "subjugation": [
+  "Thảo Phạt",
+  "Đi đánh quái."
+ ],
+ "otherworlder": [
+  "Dị Giới Nhân",
+  "Kẻ từ thế giới khác."
+ ],
+ "heros-party": [
+  "Tổ Đội Dũng Giả",
+  "Nhóm anh hùng."
+ ],
+ "dao-heart": [
+  "Đạo Tâm",
+  "Tâm trí tu đạo."
+ ],
+ "severing-mortal-ties": [
+  "Trảm Phàm Trần",
+  "Cắt đứt duyên phàm."
+ ],
+ "five-elements": [
+  "Ngũ Hành",
+  "Kim, Mộc, Thủy, Hỏa, Thổ."
+ ],
+ "yin-and-yang": [
+  "Âm Dương",
+  "Nhị nguyên."
+ ],
+ "enlightenment": [
+  "Đốn Ngộ",
+  "Giác ngộ."
+ ],
+ "mortal-tribulation": [
+  "Phàm Kiếp",
+  "Kiếp nạn người phàm."
+ ],
+ "soul-dissipation": [
+  "Hồn Phi Phách Tán",
+  "Chết vĩnh viễn."
+ ],
+ "dao-marks": [
+  "Đạo Ngấn",
+  "Dấu vết đạo lý."
+ ],
+ "nirvana": [
+  "Niết Bàn",
+  "Trùng sinh lửa đỏ."
+ ],
+ "fellow-daoist": [
+  "Đạo Hữu",
+  "Lời chào."
+ ],
+ "sect-familial-address": [
+  "Sư Huynh/Sư Muội",
+  "Cách gọi trong môn phái."
+ ],
+ "cold-snort": [
+  "Lạnh Lùng Hừ Tiếng",
+  "Thể hiện sự khinh bỉ."
+ ],
+ "dog-leg-lackey": [
+  "Cẩu Nô Tài",
+  "Hoặc Tay sai."
+ ],
+ "jianghu": [
+  "Giang Hồ",
+  "Thế giới võ lâm."
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "Tọa Sơn Quan Hổ Đấu",
+  "Ngư ông đắc lợi."
+ ],
+ "chaebol": [
+  "Tài Phiệt",
+  "Tập đoàn kinh tế Hàn."
+ ],
+ "heavenly-oath": [
+  "Thiên Đạo Thệ Ngôn",
+  "Lời thề độc."
+ ],
+ "title-achievement": [
+  "Danh Hiệu",
+  "Phần thưởng hệ thống."
+ ],
+ "system-erasure": [
+  "Hệ Thống Mạt Sát",
+  "Xóa sổ."
+ ],
+ "sweet-potato": [
+  "Khoai Lang",
+  "Ức chế (Goguma)."
+ ],
+ "white-moonlight": [
+  "Bạch Nguyệt Quang",
+  "Mối tình đầu."
+ ],
+ "cinnabar-mole": [
+  "Nốt Ruồi Chu Sa",
+  "Người tình khắc cốt."
+ ],
+ "holy-mother": [
+  "Thánh Mẫu",
+  "Tốt bụng thái quá."
+ ],
+ "dog-blood": [
+  "Máu Chó",
+  "Tình tiết phi lý cẩu huyết."
+ ],
+ "angst": [
+  "Ngược Tâm",
+  "Đau đớn tâm lý."
+ ],
+ "scum": [
+  "Tra Nam/Tra Nữ",
+  "Cặn bã."
+ ],
+ "brain-dead": [
+  "Não Tàn",
+  "Thiếu logic."
+ ],
+ "meat": [
+  "Thịt",
+  "Cảnh H (Smut)."
+ ],
+ "green-tea": [
+  "Trà Xanh",
+  "Thảo mai giả tạo."
+ ],
+ "territory": [
+  "Lãnh Địa",
+  "Khu vực quản lý."
+ ],
+ "rebirth": [
+  "Trùng Sinh",
+  "Sống lại đời này."
+ ],
+ "devil-mara": [
+  "Thiên Ma",
+  "Quỷ dữ."
+ ],
+ "demonic-beast": [
+  "Ma Thú",
+  "Thú bị ma hóa."
+ ],
+ "truck-kun": [
+  "Xe Tải-kun",
+  "Tác giả xuyên không."
+ ],
+ "cheat-skill": [
+  "Kỹ Năng Gian Lận",
+  "Kỹ năng bá đạo."
+ ],
+ "divine-protection": [
+  "Gia Hộ",
+  "Bảo hộ của thần."
+ ],
+ "genkai-toppa": [
+  "Đột Phá Giới Hạn",
+  "Vượt quá giới hạn."
+ ],
+ "chuunibyou": [
+  "Hội Chứng Tuổi Teen",
+  "Hoang tưởng."
+ ],
+ "tsundere": [
+  "Ngoài Lạnh Trong Nóng"
+ ],
+ "yandere": [
+  "Bệnh Kiều",
+  "Yêu đến điên cuồng."
+ ],
+ "san": [
+  "-san",
+  "Hậu tố (Anh/Chị)."
+ ],
+ "chan": [
+  "-chan",
+  "Hậu tố bé nhỏ."
+ ],
+ "kun": [
+  "-kun",
+  "Hậu tố nam sinh."
+ ],
+ "dono": [
+  "-dono",
+  "Ngài."
+ ],
+ "sensei": [
+  "-sensei",
+  "Thầy/Cô."
+ ],
+ "adventurer-guild": [
+  "Công Hội Mạo Hiểm Giả",
+  "Nơi nhận nhiệm vụ."
+ ],
+ "vrmmo": [
+  "Võng Du Thực Tế Ảo",
+  "Game VR."
+ ],
+ "goddess": [
+  "Nữ Thần",
+  "Vị thần nữ."
+ ],
+ "gate": [
+  "Cổng Không Gian"
+ ],
+ "awakening": [
+  "Thức Tỉnh",
+  "Đánh thức dị năng."
+ ],
+ "regressor": [
+  "Người Trùng Sinh"
+ ],
+ "national-level-hunter": [
+  "Thợ Săn Cấp Quốc Gia",
+  "Hạng tối cao."
+ ],
+ "hunter-rank": [
+  "Cấp Bậc Thợ Săn",
+  "Rank S, A, B..."
+ ],
+ "grade": [
+  "Phẩm Cấp"
+ ],
+ "mana": [
+  "Ma Lực",
+  "Năng lượng phép."
+ ],
+ "shadow-soldier": [
+  "Bóng Ma",
+  "Lính triệu hồi."
+ ],
+ "monarch": [
+  "Quân Vương",
+  "Vị vua."
+ ],
+ "hyung": [
+  "Hyung",
+  "Anh (nam gọi)."
+ ],
+ "noona": [
+  "Noona",
+  "Chị (nam gọi)."
+ ],
+ "oppa": [
+  "Oppa",
+  "Anh (nữ gọi)."
+ ],
+ "sunbae": [
+  "Sunbae",
+  "Tiền bối."
+ ],
+ "ahjussi": [
+  "Ahjussi"
+ ],
+ "ahjumma": [
+  "Ahjumma",
+  "Cô/Dì."
+ ],
+ "dungeon-break": [
+  "Hầm Ngục Bạo Động",
+  "Quái vật thoát ra."
+ ],
+ "boss-monster": [
+  "Quái Vật Hộ Cấp",
+  "Boss."
+ ],
+ "first-clear": [
+  "Lần Qua Ải Đầu Tiên",
+  "First Blood hầm ngục."
+ ],
+ "clear": [
+  "Qua Ải",
+  "Phá đảo hầm ngục."
+ ],
+ "penalty": [
+  "Hình Phạt",
+  "Do không làm quest."
+ ],
+ "compensation": [
+  "Phần Thưởng Đền Bù",
+  "Item bồi thường."
+ ],
+ "ranker": [
+  "Cao Thủ",
+  "Người chơi lọt top."
+ ],
+ "player-kill": [
+  "Đồ Sát",
+  "PK người chơi."
+ ],
+ "broadcast": [
+  "Phát Sóng Trực Tiếp",
+  "Stream."
+ ],
+ "mutant-monster": [
+  "Quái Vật Đột Biến",
+  "Quái dị biến."
+ ],
+ "growth-type-ability": [
+  "Kỹ Năng Trưởng Thành",
+  "Skill tiến hóa."
+ ],
+ "evolution": [
+  "Tiến Hóa",
+  "Đột phá cấp độ."
+ ],
+ "floor": [
+  "Tầng",
+  "Tầng tháp."
+ ],
+ "test": [
+  "Bài Kiểm Tra",
+  "Thí luyện."
+ ],
+ "test-administrator": [
+  "Người Quản Lý Bài Thi",
+  "Giám khảo tháp."
+ ],
+ "floor-guardian": [
+  "Người Gác Tầng",
+  "Boss tháp."
+ ],
+ "irregular": [
+  "Kẻ Ngoại Lệ",
+  "Bất quy tắc (TOG)."
+ ],
+ "regular": [
+  "Người Được Chọn",
+  "Dân bản địa (TOG)."
+ ],
+ "hidden-floor": [
+  "Tầng Ẩn",
+  "Tầng bí mật."
+ ],
+ "wall": [
+  "Bức Tường",
+  "Giới hạn."
+ ],
+ "family": [
+  "Gia Tộc Tháp",
+  "Mười gia tộc lớn."
+ ],
+ "observer": [
+  "Người Quan Sát",
+  "Người xem từ xa."
+ ],
+ "onii-chan": [
+  "Onii-chan",
+  "Anh trai (JP)."
+ ],
+ "onee-chan": [
+  "Onee-chan",
+  "Chị gái (JP)."
+ ],
+ "ossan": [
+  "Ossan",
+  "Ông chú (JP)."
+ ],
+ "osananajimi": [
+  "Thanh Mai Trúc Mã",
+  "Bạn thuở nhỏ."
+ ],
+ "kokuhaku": [
+  "Tỏ Tình",
+  "Lời tỏ tình."
+ ],
+ "bunkasai": [
+  "Lễ Hội Trường",
+  "Lễ hội văn hóa."
+ ],
+ "guild-card": [
+  "Thẻ Hội Viên",
+  "Thẻ Guild."
+ ],
+ "job-change": [
+  "Chuyển Chức",
+  "Chuyển nghề 2."
+ ],
+ "labyrinth": [
+  "Mê Cung",
+  "Hầm ngục cực lớn."
+ ],
+ "blacksmith": [
+  "Thợ Rèn",
+  "Nghề phụ."
+ ],
+ "slow-life": [
+  "Cuộc Sống Bình Yên",
+  "Thể loại điền viên."
+ ],
+ "skill-book": [
+  "Sách Kỹ Năng",
+  "Sách học skill."
+ ],
+ "great-sage": [
+  "Đại Hiền Giả",
+  "Danh hiệu/Hệ thống."
+ ],
+ "sacred-sword": [
+  "Thánh Kiếm",
+  "Thần khí."
+ ],
+ "entrance-exam": [
+  "Kỳ Thi Đầu Vào",
+  "Thi vào học viện."
+ ],
+ "class-ranking": [
+  "Bảng Xếp Hạng Lớp",
+  "Thành tích học viên."
+ ],
+ "mob-class": [
+  "Nhân Vật Quần Chúng",
+  "Lớp pháo hôi."
+ ],
+ "late-bloomer": [
+  "Nhân Tài Nở Muộn",
+  "Phế vật vùng lên."
+ ],
+ "graduation-trial": [
+  "Bài Thi Tốt Nghiệp",
+  "Cuộc thi cuối khóa."
+ ],
+ "novel-knowledge": [
+  "Biết Trước Kịch Bản",
+  "Ký ức về truyện."
+ ],
+ "fourth-wall": [
+  "Bức Tường Thứ Tư",
+  "Skill chống nhận thức."
+ ],
+ "system-voice": [
+  "Giọng Nói Hệ Thống",
+  "Thông báo ting ting."
+ ],
+ "authors-note": [
+  "Lời Tác Giả",
+  "Ghi chú (ORV)."
+ ],
+ "ancient-ruins": [
+  "Di Tích Cổ",
+  "Bí cảnh thời viễn cổ."
+ ],
+ "spirit-vein": [
+  "Linh Mạch",
+  "Mạch nước/khí."
+ ],
+ "middle-realm": [
+  "Trung Tiên Giới",
+  "Cõi giữa."
+ ],
+ "void": [
+  "Hư Vô",
+  "Khoảng không."
+ ],
+ "chaos": [
+  "Hỗn Mang",
+  "Trạng thái hỗn độn."
+ ],
+ "tribute": [
+  "Cống Phẩm",
+  "Đồ dâng lên."
+ ],
+ "garrison": [
+  "Cứ Điểm",
+  "Trại đóng quân."
+ ],
+ "liege": [
+  "Lãnh Chúa",
+  "Người đứng đầu."
+ ],
+ "totem-beast": [
+  "Đồ Đằng Thú",
+  "Thú bảo hộ."
+ ],
+ "beast-master": [
+  "Ngự Thú Sư",
+  "Nghề nghiệp."
+ ]
+}

@@ -1,0 +1,1382 @@
+{
+ "qi": [
+  "Qi",
+  "Nguvu ya kiroho."
+ ],
+ "cultivation": [
+  "Kilimo cha Kiroho"
+ ],
+ "dantian": [
+  "Dantian",
+  "Kituo cha nishati."
+ ],
+ "immortal-qi": [
+  "Qi ya Kutokufa",
+  "Qi abadi."
+ ],
+ "cultivation-realm": [
+  "Ulimwengu wa Kilimo",
+  "Kiwango cha nguvu."
+ ],
+ "heavenly-tribulation": [
+  "Dhiki ya Mbinguni",
+  "Adhabu ya mbingu."
+ ],
+ "nascent-soul": [
+  "Nafsi Changa",
+  "Roho mchanga."
+ ],
+ "golden-core": [
+  "Kiini cha Dhahabu",
+  "Kiini dhahabu."
+ ],
+ "foundation-establishment": [
+  "Kuanzishwa kwa Msingi",
+  "Ujenzi wa msingi."
+ ],
+ "qi-refining": [
+  "Condensation ya Qi",
+  "Hatua ya kwanza."
+ ],
+ "core-formation": [
+  "Uundaji wa Kiini",
+  "Uundaji wa msingi."
+ ],
+ "spirit-severing": [
+  "Kukatwa kwa Roho",
+  "Kutenganisha roho."
+ ],
+ "dao-seeking": [
+  "Kutafuta Dao",
+  "Njia ya Dao."
+ ],
+ "domain": [
+  "Kikoa",
+  "Eneo la udhibiti."
+ ],
+ "ascension": [
+  "Kupaa",
+  "Kupaa mbinguni."
+ ],
+ "meridians": [
+  "Njia ya Nishati",
+  "Mshipa wa Qi."
+ ],
+ "spiritual-root": [
+  "Mzizi wa Kiroho",
+  "Kipaji cha asili."
+ ],
+ "jing-qi-shen": [
+  "Jing, Qi, Shen",
+  "Hazina tatu."
+ ],
+ "body-tempering": [
+  "Kukaza Mwili",
+  "Kujenga mwili."
+ ],
+ "fiendgod-body-refining": [
+  "Usafishaji wa Mwili wa Fiendgod",
+  "Kilimo cha miungu na mashetani."
+ ],
+ "heartforce-cultivation": [
+  "Kilimo cha Nguvu ya Moyo",
+  "Nguvu ya akili."
+ ],
+ "dual-cultivation": [
+  "Kilimo cha Pamoja",
+  "Kilimo cha wawili."
+ ],
+ "alchemy": [
+  "Kutengeneza Vidonge",
+  "Kemia ya dawa."
+ ],
+ "spirit-stone": [
+  "Jiwe la Roho",
+  "Fedha ya watawa."
+ ],
+ "spiritual-treasure": [
+  "Kifaa cha Kichawi"
+ ],
+ "storage-ring": [
+  "Pete ya Kuhifadhi",
+  "Pete ya nafasi."
+ ],
+ "talisman": [
+  "Talismani",
+  "Hirizi."
+ ],
+ "formation": [
+  "Mkusanyiko wa Kichawi",
+  "Muundo wa uchawi."
+ ],
+ "sect": [
+  "Dhehebu"
+ ],
+ "clan": [
+  "Ukoo",
+  "Familia kubwa."
+ ],
+ "patriarch": [
+  "Babu Mkuu",
+  "Kiongozi wa ukoo."
+ ],
+ "elder": [
+  "Mzee",
+  "Kiongozi msaidizi."
+ ],
+ "disciple-hierarchy": [
+  "Utawala wa Wanafunzi",
+  "Ngazi za wanafunzi."
+ ],
+ "spirit-beast": [
+  "Mnyama wa Kiroho",
+  "Mnyama wa nguvu."
+ ],
+ "beast-taming": [
+  "Kufuga Wanyama",
+  "Kudhibiti wanyama."
+ ],
+ "heavenly-dao": [
+  "Dao wa Mbinguni",
+  "Mapenzi ya mbinguni."
+ ],
+ "dao": [
+  "Dao",
+  "Njia."
+ ],
+ "karma": [
+  "Karma"
+ ],
+ "reincarnation": [
+  "Kuzaliwa Upya"
+ ],
+ "regression": [
+  "Kurudi Nyuma",
+  "Kurudi zamani."
+ ],
+ "transmigration": [
+  "Kuhamia Mwili Mwingine"
+ ],
+ "isekai": [
+  "Isekai",
+  "Dunia nyingine."
+ ],
+ "otome-isekai": [
+  "Otome Isekai"
+ ],
+ "hunter-system": [
+  "Mfumo wa Mwindaji"
+ ],
+ "constellation": [
+  "Nyota",
+  "Miungu watazamaji."
+ ],
+ "dungeon": [
+  "Simo"
+ ],
+ "tower": [
+  "Mnara"
+ ],
+ "system": [
+  "Mfumo"
+ ],
+ "status-window": [
+  "Dirisha la Hali",
+  "Dirisha la mfumo."
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "Ujuzi"
+ ],
+ "level-up": [
+  "Kupanda Ngazi"
+ ],
+ "quest": [
+  "Jukumu"
+ ],
+ "guild": [
+  "Chama"
+ ],
+ "rarity": [
+  "Uhadimu",
+  "Daraja la kitu."
+ ],
+ "loot": [
+  "Ngawira"
+ ],
+ "wuxia": [
+  "Wuxia"
+ ],
+ "xianxia": [
+  "Xianxia"
+ ],
+ "xuanhuan": [
+  "Xuanhuan"
+ ],
+ "murim": [
+  "Murim"
+ ],
+ "litrpg": [
+  "LitRPG"
+ ],
+ "progression-fantasy": [
+  "Ndoto ya Maendeleo"
+ ],
+ "academy-arc": [
+  "Sehemu ya Chuo"
+ ],
+ "guide": [
+  "Mwongozo",
+  "Kiongozi."
+ ],
+ "esper": [
+  "Esper"
+ ],
+ "arrogant-young-master": [
+  "Bwana Mdogo Mjeuri",
+  "Kijana jeuri."
+ ],
+ "face": [
+  "Heshima",
+  "Face (Reputation)."
+ ],
+ "face-slapping": [
+  "Kupiga Kofi Usoni",
+  "Kudhalilisha."
+ ],
+ "tournament-arc": [
+  "Sehemu ya Mashindano",
+  "Mashindano."
+ ],
+ "secret-realm": [
+  "Ulimwengu wa Siri",
+  "Eneo la siri."
+ ],
+ "auction": [
+  "Mnada"
+ ],
+ "bloodline": [
+  "Ukoo wa Damu",
+  "Mstari wa damu."
+ ],
+ "physique": [
+  "Fizikia",
+  "Mwili."
+ ],
+ "dao-companion": [
+  "Mwenza wa Dao",
+  "Mwenzi wa kilimo."
+ ],
+ "harem": [
+  "Harem"
+ ],
+ "cannon-fodder": [
+  "Chakula cha Mizinga",
+  "Wahusika wadogo."
+ ],
+ "villainess": [
+  "Mwanamke Mwovu"
+ ],
+ "protagonist-halo": [
+  "Aura ya Mhusika Mkuu",
+  "Bahati ya mhusika mkuu."
+ ],
+ "system-shop": [
+  "Duka la Mfumo"
+ ],
+ "inventory": [
+  "Hifadhi",
+  "Mali."
+ ],
+ "class": [
+  "Darasa",
+  "Aina ya kazi."
+ ],
+ "stat": [
+  "Takwimu"
+ ],
+ "skill-tree": [
+  "Mti wa Ujuzi"
+ ],
+ "party": [
+  "Kundi"
+ ],
+ "raid": [
+  "Uvamizi"
+ ],
+ "pvp": [
+  "PvP"
+ ],
+ "pve": [
+  "PvE"
+ ],
+ "npc": [
+  "NPC"
+ ],
+ "sentient-system": [
+  "Mfumo Wenye Akili",
+  "Mfumo wenye ufahamu."
+ ],
+ "regression-novel": [
+  "Riwaya ya Kurudi Nyuma",
+  "Riwaya ya kurudi zamani."
+ ],
+ "transmigration-novel": [
+  "Riwaya ya Transmigration"
+ ],
+ "cultivation-technique": [
+  "Mbinu ya Kilimo"
+ ],
+ "forbidden-technique": [
+  "Mbinu Iliyopigwa Marufuku",
+  "Mbinu marufuku."
+ ],
+ "sword-intent": [
+  "Nia ya Upanga"
+ ],
+ "domain-expansion": [
+  "Upanuzi wa Kikoa",
+  "Kupanua uwanja."
+ ],
+ "heavenly-tribulation-lightning": [
+  "Umeme wa Dhiki ya Mbinguni",
+  "Umeme wa adhabu."
+ ],
+ "soul": [
+  "Roho"
+ ],
+ "spiritual-sense": [
+  "Hisia za Kiroho",
+  "Nguvu za kiroho."
+ ],
+ "qi-deviation": [
+  "Kupotoka kwa Qi"
+ ],
+ "heart-devil": [
+  "Shetani wa Moyo"
+ ],
+ "merit": [
+  "Sifa Zema",
+  "Karma nzuri."
+ ],
+ "karmic-fire": [
+  "Moto wa Karma"
+ ],
+ "ascension-platform": [
+  "Jukwaa la Kupaa"
+ ],
+ "lower-realm": [
+  "Ulimwengu wa Chini",
+  "Dunia ya chini."
+ ],
+ "immortal-realm": [
+  "Ulimwengu wa Kutokufa",
+  "Dunia abadi."
+ ],
+ "spirit-realm": [
+  "Ulimwengu wa Roho",
+  "Dunia ya roho."
+ ],
+ "great-thousand-world": [
+  "Dunia Elfu Kubwa",
+  "Dunia kuu."
+ ],
+ "plane": [
+  "Ndege ya Uwepo",
+  "Ndege (Dimesion)."
+ ],
+ "world-tree": [
+  "Mti wa Dunia"
+ ],
+ "celestial-empire": [
+  "Dola ya Mbinguni",
+  "Ufalme wa mbinguni."
+ ],
+ "demon": [
+  "Pepo"
+ ],
+ "orthodox-vs-unorthodox": [
+  "Haki dhidi ya Waovu",
+  "Wazuri dhidi ya wabaya."
+ ],
+ "sect-war": [
+  "Vita vya Dhehebu",
+  "Vita vya sect."
+ ],
+ "resource-war": [
+  "Vita vya Rasilimali"
+ ],
+ "talent": [
+  "Kipaji"
+ ],
+ "cheat": [
+  "Njia ya Mkato (Cheat)",
+  "Kudanganya."
+ ],
+ "time-dilation": [
+  "Upanuzi wa Muda",
+  "Kubadilisha wakati."
+ ],
+ "appraisal": [
+  "Tathmini"
+ ],
+ "loot-box": [
+  "Sanduku la Ngawira",
+  "Sanduku la loot."
+ ],
+ "pay-to-win": [
+  "Lipa ili Ushinde"
+ ],
+ "player": [
+  "Mchezaji"
+ ],
+ "administrator": [
+  "Msimamizi"
+ ],
+ "tutorial": [
+  "Mafunzo"
+ ],
+ "hidden-quest": [
+  "Jukumu Lililojificha",
+  "Quest siri."
+ ],
+ "repair": [
+  "Kukarabati",
+  "Kutengeneza."
+ ],
+ "death-penalty": [
+  "Adhabu ya Kifo",
+  "Adhabu ya kufa."
+ ],
+ "respawn": [
+  "Kuzaliwa Upya (Respawn)"
+ ],
+ "fast-travel": [
+  "Kusafiri Haraka"
+ ],
+ "mount": [
+  "Mnyama wa Kupanda",
+  "Mnyama wa usafiri."
+ ],
+ "pet": [
+  "Mnyama wa Kipenzi"
+ ],
+ "crafting": [
+  "Uundaji",
+  "Kutengeneza vitu."
+ ],
+ "enchanting": [
+  "Kuroga (Enchanting)",
+  "Kutia uchawi."
+ ],
+ "socket": [
+  "Soketi"
+ ],
+ "set-item": [
+  "Kifaa cha Seti"
+ ],
+ "unique-item": [
+  "Kifaa cha Kipekee"
+ ],
+ "courting-death": [
+  "Kutafuta Kifo"
+ ],
+ "mount-tai": [
+  "Mlima Tai"
+ ],
+ "kowtow": [
+  "Kusujudu (Kowtow)",
+  "Kusujudu."
+ ],
+ "jade-slip": [
+  "Kipande cha Jades",
+  "Jiwe la kumbukumbu."
+ ],
+ "romance-fantasy": [
+  "Ndoto ya Kimapenzi"
+ ],
+ "returner": [
+  "Anayerudi"
+ ],
+ "sword-cultivator": [
+  "Mkulima wa Upanga",
+  "Mpiga upanga."
+ ],
+ "foundation-establishment-pill": [
+  "Kidonge cha Kuanzisha Msingi",
+  "Kidonge cha msingi."
+ ],
+ "marrow-cleansing-pill": [
+  "Kidonge cha Kusafisha Uloto",
+  "Kidonge cha kusafisha mwili."
+ ],
+ "fasting-pill": [
+  "Kidonge cha Kufunga"
+ ],
+ "blood-burning-pill": [
+  "Kidonge cha Kuchoma Damu",
+  "Kidonge cha damu."
+ ],
+ "shim-gong": [
+  "Shim Gong"
+ ],
+ "shin-bup": [
+  "Shin Bup"
+ ],
+ "jeom-hyeol": [
+  "Jeom Hyeol"
+ ],
+ "ho-shin-gang-qi": [
+  "Ho Shin Gang Qi"
+ ],
+ "geom-gi": [
+  "Geom Gi"
+ ],
+ "sama": [
+  "-sama"
+ ],
+ "senpai-kouhai": [
+  "Senpai / Kouhai"
+ ],
+ "ojou-sama": [
+  "Ojou-sama"
+ ],
+ "maou-gun": [
+  "Jeshi la Maou"
+ ],
+ "dao-child": [
+  "Mtoto wa Dao"
+ ],
+ "peak-master": [
+  "Mkuu wa Kilele",
+  "Kiongozi wa mlima."
+ ],
+ "sect-leader": [
+  "Kiongozi wa Dhehebu",
+  "Kiongozi wa Sect."
+ ],
+ "handyman-disciple": [
+  "Mwanafunzi wa Kazi Ndogo",
+  "Mwanafunzi wa kazi za mikono."
+ ],
+ "guest-elder": [
+  "Mzee Mgeni"
+ ],
+ "sweeping-monk": [
+  "Mtawa Mfagiaji"
+ ],
+ "hidden-class": [
+  "Darasa Lililojificha",
+  "Darasa la siri."
+ ],
+ "necromancer": [
+  "Mchawi wa Wafu (Necromancer)",
+  "Mchawi wa wafu."
+ ],
+ "job-advancement": [
+  "Kupanda Darasa la Kazi",
+  "Kupanda kazi."
+ ],
+ "berserker": [
+  "Mpiganaji Mwitu (Berserker)"
+ ],
+ "paladin": [
+  "Shujaa Mtakatifu (Paladin)"
+ ],
+ "beast-core": [
+  "Kiini cha Mnyama"
+ ],
+ "soul-contract": [
+  "Mkataba wa Roho"
+ ],
+ "beast-pouch": [
+  "Mfuko wa Mnyama"
+ ],
+ "bloodline-evolution": [
+  "Mageuzi ya Ukoo wa Damu",
+  "Kukua kwa ukoo."
+ ],
+ "familiar": [
+  "Kiumbe Msaidizi (Familiar)",
+  "Msaidizi wa kichawi."
+ ],
+ "equality-contract": [
+  "Mkataba wa Usawa"
+ ],
+ "heavenly-flame": [
+  "Moto wa Mbinguni"
+ ],
+ "spirit-herb": [
+  "Mmea wa Kiroho"
+ ],
+ "spirit-spring-water": [
+  "Maji ya Chemchemi ya Kiroho",
+  "Maji ya kiroho."
+ ],
+ "array-eye": [
+  "Jicho la Mkusanyiko",
+  "Jicho la muundo."
+ ],
+ "formation-flag": [
+  "Bendera ya Muundo"
+ ],
+ "spirit-gathering-array": [
+  "Muundo wa Kukusanya Roho",
+  "Muundo wa kukusanya Qi."
+ ],
+ "red-gate": [
+  "Lango Jekundu"
+ ],
+ "clear-condition": [
+  "Sharti la Kumaliza"
+ ],
+ "magic-stone": [
+  "Jiwe la Kichawi",
+  "Jiwe la uchawi."
+ ],
+ "penalty-quest": [
+  "Jukumu la Adhabu"
+ ],
+ "floor-master": [
+  "Mkuu wa Ghorofa",
+  "Kiongozi wa ghorofa."
+ ],
+ "porter": [
+  "Mbeba Mizigo"
+ ],
+ "scenario": [
+  "Tukio"
+ ],
+ "probability": [
+  "Uwezekano"
+ ],
+ "stigma": [
+  "Alama ya Aibu (Stigma)",
+  "Alama ya stigmata."
+ ],
+ "murim-alliance": [
+  "Muungano wa Murim"
+ ],
+ "demonic-cult": [
+  "Dhehebu la Kipepo"
+ ],
+ "northern-duke": [
+  "Mtawala wa Kaskazini"
+ ],
+ "tea-party": [
+  "Sherehe ya Chai"
+ ],
+ "munchkin": [
+  "Munchkin"
+ ],
+ "cider": [
+  "Cider"
+ ],
+ "black-mastermind": [
+  "Kiongozi Mwovu",
+  "Kiongozi wa nyuma."
+ ],
+ "dokkaebi": [
+  "Dokkaebi"
+ ],
+ "internal-energy": [
+  "Naegong"
+ ],
+ "jade-beauty": [
+  "Mrembo wa Jades",
+  "Mrembo kama jade."
+ ],
+ "white-lotus": [
+  "Mkungugu Mweupe",
+  "Mwanamke mnafiki."
+ ],
+ "eating-tofu": [
+  "Kula Tofu (Kumchumbia)",
+  "Kula tofu."
+ ],
+ "coughing-up-blood": [
+  "Kukohoa Damu"
+ ],
+ "frog-in-well": [
+  "Chura Kisimani"
+ ],
+ "heaven-defying": [
+  "Kukaidi Mbinguni",
+  "Kukaidi mbingu."
+ ],
+ "green-hat": [
+  "Kofia ya Kijani",
+  "Kofia ya kijani (kusalitiwa)."
+ ],
+ "shuang-wen": [
+  "Shuang Wen",
+  "Riwaya tamu."
+ ],
+ "giving-face": [
+  "Kupa Heshima",
+  "Kumpa mtu heshima."
+ ],
+ "dungeon-core": [
+  "Kiini cha Simo",
+  "Kiini cha dungeon."
+ ],
+ "fiefdom": [
+  "Eneo la Kikabaila",
+  "Eneo la bwana."
+ ],
+ "node": [
+  "Njia Ndogo (Node)"
+ ],
+ "contribution-points": [
+  "Pointi za Mchango"
+ ],
+ "sect-mission-hall": [
+  "Ukumbi wa Misheni wa Dhehebu",
+  "Jengo la misheni."
+ ],
+ "spirit-garden": [
+  "Bustani ya Kiroho"
+ ],
+ "city-lord": [
+  "Bwana wa Jiji",
+  "Mkuu wa jiji."
+ ],
+ "edict": [
+  "Amri",
+  "Amri ya mfalme."
+ ],
+ "vassal": [
+  "Mtumishi (Vassal)",
+  "Mtumishi."
+ ],
+ "primordial-chaos": [
+  "Machafuko ya Asili"
+ ],
+ "the-void": [
+  "Utupu"
+ ],
+ "life-forbidden-zone": [
+  "Eneo Lililokatazwa Kuishi",
+  "Eneo hatari."
+ ],
+ "ancient-desolate-beast": [
+  "Mnyama Mwitu wa Kale",
+  "Mnyama wa kale."
+ ],
+ "star-field": [
+  "Uwanja wa Nyota"
+ ],
+ "spatial-storm": [
+  "Dhoruba ya Anga",
+  "Dhoruba ya nafasi."
+ ],
+ "nine-heavens": [
+  "Mbingu Tisa"
+ ],
+ "river-of-time": [
+  "Mto wa Muda",
+  "Mto wa wakati."
+ ],
+ "epoch": [
+  "Enzi"
+ ],
+ "karmic-thread": [
+  "Uzi wa Karma"
+ ],
+ "origin-source": [
+  "Chanzo cha Asili"
+ ],
+ "heaven-and-earth": [
+  "Mbingu na Ardhi"
+ ],
+ "wuji": [
+  "Wuji"
+ ],
+ "dao-source": [
+  "Chanzo cha Dao"
+ ],
+ "engagement-annulment": [
+  "Uvunjaji wa Uchumba",
+  "Kuvunja uchumba."
+ ],
+ "toad-lusting-after-swan-meat": [
+  "Chura Kutamani Nyama ya Bata Maji",
+  "Chura kutamani bata maji."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "Usimwonee Kijana Maskini"
+ ],
+ "concubine": [
+  "Suria"
+ ],
+ "sect-rules": [
+  "Kanuni za Dhehebu",
+  "Sheria za Sect."
+ ],
+ "filial-piety": [
+  "Heshima kwa Wazazi"
+ ],
+ "pill-tribulation": [
+  "Dhiki ya Vidonge",
+  "Adhabu ya vidonge."
+ ],
+ "monster-genius": [
+  "Mnyama (Mwenye Akili Sana)",
+  "Jiniasi."
+ ],
+ "gu-venom-witchcraft": [
+  "Gu",
+  "Gu (Uchawi/Sumu)."
+ ],
+ "corpse-refining": [
+  "Kusafisha Maiti",
+  "Nekromansi."
+ ],
+ "fairy-sister": [
+  "Dada wa Kichawi",
+  "Dada mrembo."
+ ],
+ "young-miss": [
+  "Bibi Mdogo"
+ ],
+ "mount-kunlun": [
+  "Mlima Kunlun"
+ ],
+ "aggro": [
+  "Aggro",
+  "Kuvuta umakini wa maadui."
+ ],
+ "crowd-control": [
+  "Udhibiti wa Umati",
+  "Kudhibiti umati (CC)."
+ ],
+ "kiting": [
+  "Kiting",
+  "Kupiga na kukimbia."
+ ],
+ "aoe": [
+  "Athari ya Eneo (AoE)",
+  "Mashambulizi ya eneo."
+ ],
+ "proc": [
+  "Proc"
+ ],
+ "kill-steal": [
+  "Kuiba Uuaji (Kill Steal)",
+  "Kuiba kill."
+ ],
+ "tank": [
+  "Mlinzi (Tank)"
+ ],
+ "dps": [
+  "DPS"
+ ],
+ "gold-sink": [
+  "Uvujaji wa Dhahabu",
+  "Kupunguza pesa."
+ ],
+ "auction-sniping": [
+  "Unyang'anyi wa Mnada",
+  "Kupiga mnada mwishoni."
+ ],
+ "griefing": [
+  "Uharibifu (Griefing)",
+  "Kuharibu mchezo."
+ ],
+ "dot": [
+  "Uharibifu kwa Muda (DoT)",
+  "Damage over time."
+ ],
+ "contract-marriage": [
+  "Ndoa ya Mkataba"
+ ],
+ "reawakening": [
+  "Kuamka Tena",
+  "Kuamka kwa pili."
+ ],
+ "tyrant": [
+  "Dikteta",
+  "Mtawala dhalimu."
+ ],
+ "obsessive-male-lead": [
+  "Mhusika Mkuu wa Kiume Mwenye Obsession",
+  "Yandere mwanaume."
+ ],
+ "original-heroine": [
+  "Mhusika Mkuu wa Asili (Kike)",
+  "Heroine wa asili."
+ ],
+ "regression-trauma": [
+  "Trauma ya Kurudi Nyuma"
+ ],
+ "hunter-association": [
+  "Chama cha Wawindaji"
+ ],
+ "sudden-death": [
+  "Kifo cha Ghafla"
+ ],
+ "guild-master": [
+  "Kiongozi wa Chama",
+  "Kiongozi wa guild."
+ ],
+ "adventurer-ranks": [
+  "Viwango vya Wapelelezi",
+  "Daraja za wapelelezi."
+ ],
+ "beastkin": [
+  "Binadamu wa Mnyama",
+  "Watu wanyama."
+ ],
+ "demon-god": [
+  "Mungu wa Kipepo",
+  "Mungu wa mashetani."
+ ],
+ "unique-skill": [
+  "Ujuzi wa Kipekee"
+ ],
+ "demon-realm": [
+  "Ulimwengu wa Kipepo",
+  "Dunia ya mashetani."
+ ],
+ "slave-crest": [
+  "Alama ya Mtumwa"
+ ],
+ "subjugation": [
+  "Utiisho",
+  "Kutiisha."
+ ],
+ "otherworlder": [
+  "Mtu wa Dunia Nyingine"
+ ],
+ "heros-party": [
+  "Kundi la Shujaa",
+  "Kundi la pahlawan."
+ ],
+ "dao-heart": [
+  "Moyo wa Dao"
+ ],
+ "severing-mortal-ties": [
+  "Kukata Mahusiano ya Kufa",
+  "Kukata uhusiano na dunia."
+ ],
+ "five-elements": [
+  "Vipengele Vitano",
+  "Vitu vitano (Wu Xing)."
+ ],
+ "yin-and-yang": [
+  "Yin na Yang"
+ ],
+ "enlightenment": [
+  "Nuru (Enlightenment)",
+  "Kupata mwangaza."
+ ],
+ "mortal-tribulation": [
+  "Dhiki ya Kufa",
+  "Adhabu ya dunia."
+ ],
+ "soul-dissipation": [
+  "Kusambaratika kwa Roho",
+  "Roho kufa kabisa."
+ ],
+ "dao-marks": [
+  "Alama za Dao"
+ ],
+ "nirvana": [
+  "Nirvana"
+ ],
+ "fellow-daoist": [
+  "Mwenzangu wa Dao",
+  "Mwanadau mwezangu."
+ ],
+ "sect-familial-address": [
+  "Wito wa Kifamilia Kwenye Dhehebu",
+  "Ndugu wa sect."
+ ],
+ "cold-snort": [
+  "Mkoromo Baridi",
+  "Kudharau."
+ ],
+ "dog-leg-lackey": [
+  "Mtumishi (Lackey)",
+  "Mfuasi mtiifu."
+ ],
+ "jianghu": [
+  "Jianghu",
+  "Ulimwengu wa martial arts."
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "Kukaa Mlimani Kutazama Chui Wakipigana",
+  "Kuangalia ugomvi ukiendelea."
+ ],
+ "chaebol": [
+  "Chaebol",
+  "Makampuni makubwa ya Korea."
+ ],
+ "heavenly-oath": [
+  "Kiapo cha Mbinguni"
+ ],
+ "title-achievement": [
+  "Cheo / Mafanikio",
+  "Taji / Mafanikio."
+ ],
+ "system-erasure": [
+  "Kufutwa kwa Mfumo",
+  "Kufutwa na mfumo."
+ ],
+ "sweet-potato": [
+  "Kiazi Kitamu",
+  "Kuvunja moyo (Goguma)."
+ ],
+ "white-moonlight": [
+  "Mwanga Mweupe wa Mwezi",
+  "Mpenzi wa kwanza."
+ ],
+ "cinnabar-mole": [
+  "Fuko Jekundu",
+  "Kumbukumbu ya upendo."
+ ],
+ "holy-mother": [
+  "Mama Mtakatifu",
+  "Mtu mwema sana (Mjinga)."
+ ],
+ "dog-blood": [
+  "Damu ya Mbwa",
+  "Melodrama."
+ ],
+ "angst": [
+  "Wasiwasi (Angst)",
+  "Mateso ya kisaikolojia."
+ ],
+ "scum": [
+  "Takataka (Scum)",
+  "Mtu mbaya."
+ ],
+ "brain-dead": [
+  "Aliyekufa Ubongo",
+  "Asiye na akili."
+ ],
+ "meat": [
+  "Nyama (Smut)",
+  "Sehemu za 18+."
+ ],
+ "green-tea": [
+  "Chai ya Kijani",
+  "Mwanamke mnafiki."
+ ],
+ "territory": [
+  "Wilaya",
+  "Eneo la kumiliki."
+ ],
+ "rebirth": [
+  "Kuzaliwa Upya"
+ ],
+ "devil-mara": [
+  "Ibilisi / Mara",
+  "Ibilisi."
+ ],
+ "demonic-beast": [
+  "Mnyama wa Kipepo"
+ ],
+ "truck-kun": [
+  "Truck-kun",
+  "Gari linalosababisha Isekai."
+ ],
+ "cheat-skill": [
+  "Ujuzi wa Kudanganya",
+  "Skill ya kudanganya."
+ ],
+ "divine-protection": [
+  "Ulinzi wa Kiroho",
+  "Ulinzi wa mungu."
+ ],
+ "genkai-toppa": [
+  "Kuvunja Kikomo"
+ ],
+ "chuunibyou": [
+  "Chuunibyou",
+  "Ugonjwa wa darasa la nane."
+ ],
+ "tsundere": [
+  "Tsundere"
+ ],
+ "yandere": [
+  "Yandere"
+ ],
+ "san": [
+  "-san"
+ ],
+ "chan": [
+  "-chan"
+ ],
+ "kun": [
+  "-kun"
+ ],
+ "dono": [
+  "-dono"
+ ],
+ "sensei": [
+  "-sensei"
+ ],
+ "adventurer-guild": [
+  "Chama cha Wapelelezi",
+  "Guild ya wapelelezi."
+ ],
+ "vrmmo": [
+  "VRMMO",
+  "Mchezo wa VRMMO."
+ ],
+ "goddess": [
+  "Mungu wa Kike"
+ ],
+ "gate": [
+  "Lango",
+  "Gate (Portal)."
+ ],
+ "awakening": [
+  "Kuamka",
+  "Kupata nguvu (Awaken)."
+ ],
+ "regressor": [
+  "Anayerudi Nyuma",
+  "Mtu aliyerudi zamani."
+ ],
+ "national-level-hunter": [
+  "Mwindaji wa Ngazi ya Kitaifa",
+  "Hunter wa kitaifa."
+ ],
+ "hunter-rank": [
+  "Kiwango cha Mwindaji",
+  "Cheo cha hunter."
+ ],
+ "grade": [
+  "Daraja"
+ ],
+ "mana": [
+  "Mana"
+ ],
+ "shadow-soldier": [
+  "Mwanajeshi Kivuli",
+  "Mwanajeshi wa kivuli."
+ ],
+ "monarch": [
+  "Mfalme"
+ ],
+ "hyung": [
+  "Hyung",
+  "Kaka mkubwa (kwa mwanaume)."
+ ],
+ "noona": [
+  "Noona",
+  "Dada mkubwa (kwa mwanaume)."
+ ],
+ "oppa": [
+  "Oppa",
+  "Kaka mkubwa (kwa mwanamke)."
+ ],
+ "sunbae": [
+  "Sunbae",
+  "Senior."
+ ],
+ "ahjussi": [
+  "Ahjussi",
+  "Mjomba."
+ ],
+ "ahjumma": [
+  "Ahjumma",
+  "Shangazi."
+ ],
+ "dungeon-break": [
+  "Uvunjaji wa Simo"
+ ],
+ "boss-monster": [
+  "Mnyama wa Bos"
+ ],
+ "first-clear": [
+  "Kumaliza kwa Kwanza",
+  "Mtu wa kwanza kumaliza."
+ ],
+ "clear": [
+  "Kumaliza (Clear)"
+ ],
+ "penalty": [
+  "Adhabu"
+ ],
+ "compensation": [
+  "Fidia"
+ ],
+ "ranker": [
+  "Mwenye Cheo (Ranker)"
+ ],
+ "player-kill": [
+  "Kuua Mchezaji (PK)"
+ ],
+ "broadcast": [
+  "Matangazo (Broadcast)",
+  "Matangazo."
+ ],
+ "mutant-monster": [
+  "Mnyama Kigeugeu",
+  "Monster aliyebadilika."
+ ],
+ "growth-type-ability": [
+  "Uwezo wa Aina ya Ukuaji",
+  "Uwezo unaokua."
+ ],
+ "evolution": [
+  "Mageuzi"
+ ],
+ "floor": [
+  "Ghorofa"
+ ],
+ "test": [
+  "Mtihani"
+ ],
+ "test-administrator": [
+  "Msimamizi wa Mtihani"
+ ],
+ "floor-guardian": [
+  "Mlinzi wa Ghorofa"
+ ],
+ "irregular": [
+  "Sio Kawaida (Irregular)"
+ ],
+ "regular": [
+  "Kawaida"
+ ],
+ "hidden-floor": [
+  "Ghorofa Iliyojificha",
+  "Ghorofa ya siri."
+ ],
+ "wall": [
+  "Ukuta"
+ ],
+ "family": [
+  "Familia",
+  "Familia (Tower)."
+ ],
+ "observer": [
+  "Mwangalizi",
+  "Mtazamaji."
+ ],
+ "onii-chan": [
+  "Onii-chan",
+  "Kaka (JP)."
+ ],
+ "onee-chan": [
+  "Onee-chan",
+  "Dada (JP)."
+ ],
+ "ossan": [
+  "Ossan",
+  "Mzee (JP)."
+ ],
+ "osananajimi": [
+  "Osananajimi",
+  "Rafiki wa utotoni."
+ ],
+ "kokuhaku": [
+  "Kokuhaku",
+  "Kukiri mapenzi."
+ ],
+ "bunkasai": [
+  "Bunkasai",
+  "Tamasha la shule."
+ ],
+ "guild-card": [
+  "Kadi ya Chama",
+  "Kadi ya guild."
+ ],
+ "job-change": [
+  "Kubadilisha Kazi",
+  "Kubadili darasa."
+ ],
+ "labyrinth": [
+  "Maabara (Labyrinth)",
+  "Dungeon kubwa."
+ ],
+ "blacksmith": [
+  "Mhunzi"
+ ],
+ "slow-life": [
+  "Maisha ya Polepole",
+  "Maisha ya utulivu."
+ ],
+ "skill-book": [
+  "Kitabu cha Ujuzi"
+ ],
+ "great-sage": [
+  "Mwenye Hekima Mkuu",
+  "Mwenye hekima mkubwa."
+ ],
+ "sacred-sword": [
+  "Upanga Mtakatifu"
+ ],
+ "entrance-exam": [
+  "Mtihani wa Kuingia"
+ ],
+ "class-ranking": [
+  "Nafasi ya Darasa",
+  "Daraja la darasa."
+ ],
+ "mob-class": [
+  "Wahusika wa Pembeni (Mob)"
+ ],
+ "late-bloomer": [
+  "Anayekua Kuchelewa"
+ ],
+ "graduation-trial": [
+  "Mtihani wa Kuhitimu"
+ ],
+ "novel-knowledge": [
+  "Maarifa ya Riwaya",
+  "Maarifa ya hadithi."
+ ],
+ "fourth-wall": [
+  "Ukuta wa Nne"
+ ],
+ "system-voice": [
+  "Sauti ya Mfumo"
+ ],
+ "authors-note": [
+  "Ujumbe wa Mwandishi",
+  "Maelezo ya mwandishi."
+ ],
+ "ancient-ruins": [
+  "Magofu ya Kale"
+ ],
+ "spirit-vein": [
+  "Mshipa wa Kiroho"
+ ],
+ "middle-realm": [
+  "Ulimwengu wa Kati",
+  "Dunia ya kati."
+ ],
+ "void": [
+  "Utupu Mkuu",
+  "Utupu."
+ ],
+ "chaos": [
+  "Machafuko"
+ ],
+ "tribute": [
+  "Kodi (Tribute)",
+  "Sadaka."
+ ],
+ "garrison": [
+  "Garnisheni",
+  "Kambi ya jeshi."
+ ],
+ "liege": [
+  "Bwana"
+ ],
+ "totem-beast": [
+  "Mnyama wa Totem"
+ ],
+ "beast-master": [
+  "Bwana wa Wanyama",
+  "Mtawala wa wanyama."
+ ]
+}

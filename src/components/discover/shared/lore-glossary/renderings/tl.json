@@ -1,0 +1,1258 @@
+{
+ "qi": [
+  "Qi",
+  "Panatilihin ang Qi."
+ ],
+ "cultivation": [
+  "Kultibasyon",
+  "Paglilinang."
+ ],
+ "dantian": [
+  "Dantian",
+  "Sentro ng enerhiya."
+ ],
+ "immortal-qi": [
+  "Qi ng Imortal",
+  "O Imortal na Qi."
+ ],
+ "cultivation-realm": [
+  "Antas ng Kultibasyon",
+  "Baitang ng paglilinang."
+ ],
+ "heavenly-tribulation": [
+  "Maka-Langit na Pagsubok",
+  "Tribulasyon."
+ ],
+ "nascent-soul": [
+  "Sanggol na Kaluluwa"
+ ],
+ "golden-core": [
+  "Gintong Ubod"
+ ],
+ "foundation-establishment": [
+  "Pagtatatag ng Pundasyon"
+ ],
+ "qi-refining": [
+  "Pag-iipon ng Qi",
+  "Kondensasyon ng Qi."
+ ],
+ "core-formation": [
+  "Pagbuo ng Ubod"
+ ],
+ "spirit-severing": [
+  "Pagputol ng Espiritu"
+ ],
+ "dao-seeking": [
+  "Paghahanap ng Dao"
+ ],
+ "domain": [
+  "Nasasakupan",
+  "O Domain."
+ ],
+ "ascension": [
+  "Pag-akyat",
+  "Ascension sa itaas na mundo."
+ ],
+ "meridians": [
+  "Meridian",
+  "Daluyan ng enerhiya."
+ ],
+ "spiritual-root": [
+  "Espirituwal na Ugat"
+ ],
+ "jing-qi-shen": [
+  "Jing, Qi, Shen",
+  "Tatlong Kayamanan."
+ ],
+ "body-tempering": [
+  "Pagpapanday ng Katawan"
+ ],
+ "fiendgod-body-refining": [
+  "Pagdalisay ng Katawan ng Diyos-Demonyo",
+  "Fiendgod."
+ ],
+ "heartforce-cultivation": [
+  "Kultibasyon ng Puso",
+  "Heartforce."
+ ],
+ "dual-cultivation": [
+  "Dalawahang Kultibasyon"
+ ],
+ "alchemy": [
+  "Paggawa ng Pildoras",
+  "Alkemya."
+ ],
+ "spirit-stone": [
+  "Espirituwal na Bato"
+ ],
+ "spiritual-treasure": [
+  "Artepakto",
+  "O Kagamitang Mahika."
+ ],
+ "storage-ring": [
+  "Singsing na Imbakan"
+ ],
+ "talisman": [
+  "Anting-anting",
+  "O Talisman."
+ ],
+ "formation": [
+  "Pormasyon",
+  "Formation / Array."
+ ],
+ "sect": [
+  "Sekta"
+ ],
+ "clan": [
+  "Angkan",
+  "Klan."
+ ],
+ "patriarch": [
+  "Patriarka",
+  "Pinuno ng angkan."
+ ],
+ "elder": [
+  "Nakatatanda"
+ ],
+ "disciple-hierarchy": [
+  "Hirarkiya ng mga Disipulo",
+  "Mga ranggo ng disipulo."
+ ],
+ "spirit-beast": [
+  "Espirituwal na Halimaw"
+ ],
+ "beast-taming": [
+  "Pagpapaamo ng Halimaw"
+ ],
+ "heavenly-dao": [
+  "Maka-Langit na Dao"
+ ],
+ "dao": [
+  "Dao",
+  "Ang Daan."
+ ],
+ "karma": [
+  "Karma",
+  "Sanhi at Bunga."
+ ],
+ "reincarnation": [
+  "Reinkarnasyon",
+  "Pag-ikot ng buhay."
+ ],
+ "regression": [
+  "Regresyon",
+  "Pagbalik sa nakaraan."
+ ],
+ "transmigration": [
+  "Transmigrasyon",
+  "Paglipat ng kaluluwa."
+ ],
+ "isekai": [
+  "Isekai",
+  "Ibang mundo."
+ ],
+ "otome-isekai": [
+  "Otome Isekai",
+  "Otome game isekai."
+ ],
+ "hunter-system": [
+  "Sistema ng Hunter"
+ ],
+ "constellation": [
+  "Konstelasyon"
+ ],
+ "dungeon": [
+  "Dungeon",
+  "Piitan."
+ ],
+ "tower": [
+  "Tore"
+ ],
+ "system": [
+  "Sistema"
+ ],
+ "status-window": [
+  "Bintana ng Katayuan"
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "Kasanayan"
+ ],
+ "level-up": [
+  "Mag-Level Up"
+ ],
+ "quest": [
+  "Kuwes"
+ ],
+ "guild": [
+  "Guild",
+  "Samahan."
+ ],
+ "rarity": [
+  "Bihira"
+ ],
+ "loot": [
+  "Loot",
+  "Gantimpala."
+ ],
+ "wuxia": [
+  "Wuxia",
+  "Bela-sining na nobela."
+ ],
+ "xianxia": [
+  "Xianxia",
+  "Mahiwagang boksing."
+ ],
+ "xuanhuan": [
+  "Xuanhuan"
+ ],
+ "murim": [
+  "Murim",
+  "Mundo ng martial arts."
+ ],
+ "litrpg": [
+  "LitRPG"
+ ],
+ "progression-fantasy": [
+  "Pantasya ng Pag-unlad"
+ ],
+ "academy-arc": [
+  "Yugto ng Akademya"
+ ],
+ "guide": [
+  "Gabay"
+ ],
+ "esper": [
+  "Esper"
+ ],
+ "arrogant-young-master": [
+  "Mayabang na Nakababatang Amo",
+  "Young Master."
+ ],
+ "face": [
+  "Mukha",
+  "Karangalan/Reputasyon."
+ ],
+ "face-slapping": [
+  "Sampal sa Mukha"
+ ],
+ "tournament-arc": [
+  "Yugto ng Paligsahan"
+ ],
+ "secret-realm": [
+  "Lihim na Nasasakupan"
+ ],
+ "auction": [
+  "Subasta"
+ ],
+ "bloodline": [
+  "Linya ng Dugo"
+ ],
+ "physique": [
+  "Pangangatawan"
+ ],
+ "dao-companion": [
+  "Kasama sa Dao"
+ ],
+ "harem": [
+  "Harem"
+ ],
+ "cannon-fodder": [
+  "Pambala sa Kanyon"
+ ],
+ "villainess": [
+  "Kontrabidang Babae"
+ ],
+ "protagonist-halo": [
+  "Aura ng Pangunahing Tauhan",
+  "Plot armor."
+ ],
+ "system-shop": [
+  "Tindahan ng Sistema"
+ ],
+ "inventory": [
+  "Imbentaryo"
+ ],
+ "class": [
+  "Klase",
+  "Class (RPG)."
+ ],
+ "stat": [
+  "Istatistika"
+ ],
+ "skill-tree": [
+  "Puno ng Kasanayan"
+ ],
+ "party": [
+  "Grupo"
+ ],
+ "raid": [
+  "Pagsalakay"
+ ],
+ "pvp": [
+  "PvP",
+  "Player vs Player."
+ ],
+ "pve": [
+  "PvE",
+  "Player vs Environment."
+ ],
+ "npc": [
+  "NPC",
+  "Non-player character."
+ ],
+ "sentient-system": [
+  "May Malay na Sistema"
+ ],
+ "regression-novel": [
+  "Nobela ng Regresyon",
+  "Nobela ng pagbalik."
+ ],
+ "transmigration-novel": [
+  "Nobela ng Transmigrasyon",
+  "Nobela ng paglipat."
+ ],
+ "cultivation-technique": [
+  "Teknik ng Kultibasyon"
+ ],
+ "forbidden-technique": [
+  "Ipinagbabawal na Teknik"
+ ],
+ "sword-intent": [
+  "Layunin ng Espada"
+ ],
+ "domain-expansion": [
+  "Pagpapalawak ng Nasasakupan"
+ ],
+ "heavenly-tribulation-lightning": [
+  "Kidlat ng Maka-Langit na Pagsubok",
+  "Tribulation lightning."
+ ],
+ "soul": [
+  "Kaluluwa"
+ ],
+ "spiritual-sense": [
+  "Espirituwal na Pakiramdam"
+ ],
+ "qi-deviation": [
+  "Paglihis ng Qi"
+ ],
+ "heart-devil": [
+  "Demonyo sa Puso"
+ ],
+ "merit": [
+  "Merito",
+  "Karmic merit."
+ ],
+ "karmic-fire": [
+  "Apoy ng Karma"
+ ],
+ "ascension-platform": [
+  "Plataporma ng Pag-akyat"
+ ],
+ "lower-realm": [
+  "Mababang Mundo"
+ ],
+ "immortal-realm": [
+  "Imortal na Mundo"
+ ],
+ "spirit-realm": [
+  "Espirituwal na Mundo"
+ ],
+ "great-thousand-world": [
+  "Dakilang Sanlibong Mundo"
+ ],
+ "plane": [
+  "Kapatagan / Dimensyon",
+  "Plane of existence."
+ ],
+ "world-tree": [
+  "Puno ng Mundo"
+ ],
+ "celestial-empire": [
+  "Maka-Langit na Imperyo"
+ ],
+ "demon": [
+  "Demonyo"
+ ],
+ "orthodox-vs-unorthodox": [
+  "Ortodokso vs Hindi Ortodokso",
+  "Righteous vs Demonic."
+ ],
+ "sect-war": [
+  "Digmaan ng Sekta"
+ ],
+ "resource-war": [
+  "Digmaan para sa Yaman"
+ ],
+ "talent": [
+  "Talento"
+ ],
+ "cheat": [
+  "Daya"
+ ],
+ "time-dilation": [
+  "Paglawak ng Oras"
+ ],
+ "appraisal": [
+  "Pagtatasa"
+ ],
+ "loot-box": [
+  "Loot Box",
+  "Kahon ng gantimpala."
+ ],
+ "pay-to-win": [
+  "Pay to Win",
+  "Magbayad para manalo."
+ ],
+ "player": [
+  "Manlalaro"
+ ],
+ "administrator": [
+  "Administrador"
+ ],
+ "tutorial": [
+  "Tutorial"
+ ],
+ "hidden-quest": [
+  "Nakatagong Kuwes"
+ ],
+ "repair": [
+  "Pag-aayos"
+ ],
+ "death-penalty": [
+  "Parusa sa Pagkamatay"
+ ],
+ "respawn": [
+  "Muling Pagkabuhay"
+ ],
+ "fast-travel": [
+  "Mabilis na Paglalakbay"
+ ],
+ "mount": [
+  "Sinasakyan"
+ ],
+ "pet": [
+  "Alaga"
+ ],
+ "crafting": [
+  "Paggawa"
+ ],
+ "enchanting": [
+  "Pag-e-enchant"
+ ],
+ "socket": [
+  "Lagakan",
+  "Socket (for gems)."
+ ],
+ "set-item": [
+  "Set ng Item"
+ ],
+ "unique-item": [
+  "Kakaibang Item"
+ ],
+ "courting-death": [
+  "Nililigawan ang Kamatayan"
+ ],
+ "mount-tai": [
+  "Bundok Tai"
+ ],
+ "kowtow": [
+  "Kowtow",
+  "Luluhod at yuyuko."
+ ],
+ "jade-slip": [
+  "Piraso ng Jade"
+ ],
+ "romance-fantasy": [
+  "Romance Fantasy"
+ ],
+ "returner": [
+  "Bumalik"
+ ],
+ "sword-cultivator": [
+  "Kultibador ng Espada"
+ ],
+ "foundation-establishment-pill": [
+  "Pildoras ng Pagtatatag ng Pundasyon"
+ ],
+ "marrow-cleansing-pill": [
+  "Pildoras ng Paglilinis ng Utak ng Buto"
+ ],
+ "fasting-pill": [
+  "Pildoras sa Pag-aayuno"
+ ],
+ "blood-burning-pill": [
+  "Pildoras sa Pagsunog ng Dugo"
+ ],
+ "shim-gong": [
+  "Shim Gong",
+  "Inner energy (Korean)."
+ ],
+ "shin-bup": [
+  "Shin Bup",
+  "Movement technique."
+ ],
+ "jeom-hyeol": [
+  "Jeom Hyeol",
+  "Pressure point."
+ ],
+ "ho-shin-gang-qi": [
+  "Ho Shin Gang Qi",
+  "Protective aura."
+ ],
+ "geom-gi": [
+  "Geom Gi",
+  "Sword aura."
+ ],
+ "sama": [
+  "-sama",
+  "Honorific."
+ ],
+ "senpai-kouhai": [
+  "Senpai / Kouhai",
+  "Senior / Junior."
+ ],
+ "ojou-sama": [
+  "Ojou-sama",
+  "Young Lady."
+ ],
+ "maou-gun": [
+  "Hukbo ng Maou",
+  "Demon Lord's Army."
+ ],
+ "dao-child": [
+  "Anak ng Dao"
+ ],
+ "peak-master": [
+  "Guro ng Tugatog"
+ ],
+ "sect-leader": [
+  "Pinuno ng Sekta"
+ ],
+ "handyman-disciple": [
+  "Disipulong Tagapaglilingkod"
+ ],
+ "guest-elder": [
+  "Panauhing Nakatatanda"
+ ],
+ "sweeping-monk": [
+  "Mongheng Nagwawalis",
+  "Sweeping Monk (Hidden master)."
+ ],
+ "hidden-class": [
+  "Nakatagong Klase"
+ ],
+ "necromancer": [
+  "Necromancer",
+  "Tagabuhay ng patay."
+ ],
+ "job-advancement": [
+  "Pag-angat ng Klase"
+ ],
+ "berserker": [
+  "Berserker"
+ ],
+ "paladin": [
+  "Paladin"
+ ],
+ "beast-core": [
+  "Ubod ng Halimaw"
+ ],
+ "soul-contract": [
+  "Kontrata ng Kaluluwa"
+ ],
+ "beast-pouch": [
+  "Supot para sa Halimaw"
+ ],
+ "bloodline-evolution": [
+  "Ebolusyon ng Linya ng Dugo"
+ ],
+ "familiar": [
+  "Alagang Espiritu"
+ ],
+ "equality-contract": [
+  "Kontrata ng Pagkakapantay-pantay"
+ ],
+ "heavenly-flame": [
+  "Maka-Langit na Apoy"
+ ],
+ "spirit-herb": [
+  "Espirituwal na Halamang-gamot"
+ ],
+ "spirit-spring-water": [
+  "Tubig ng Espirituwal na Bukal"
+ ],
+ "array-eye": [
+  "Mata ng Pormasyon"
+ ],
+ "formation-flag": [
+  "Bandila ng Pormasyon"
+ ],
+ "spirit-gathering-array": [
+  "Pormasyon sa Pag-iipon ng Espiritu"
+ ],
+ "red-gate": [
+  "Pulang Tarangkahan"
+ ],
+ "clear-condition": [
+  "Kondisyon para Matapos"
+ ],
+ "magic-stone": [
+  "Batong Mahika"
+ ],
+ "penalty-quest": [
+  "Parusang Kuwes"
+ ],
+ "floor-master": [
+  "Guro ng Palapag"
+ ],
+ "porter": [
+  "Tagadala"
+ ],
+ "scenario": [
+  "Senaryo",
+  "Scenario (ORV)."
+ ],
+ "probability": [
+  "Posibilidad",
+  "Probability (ORV)."
+ ],
+ "stigma": [
+  "Estigma"
+ ],
+ "murim-alliance": [
+  "Alyansa ng Murim"
+ ],
+ "demonic-cult": [
+  "Kulto ng Demonyo"
+ ],
+ "northern-duke": [
+  "Dukeng Taga-Hilaga"
+ ],
+ "tea-party": [
+  "Piging ng Tsaa"
+ ],
+ "munchkin": [
+  "Munchkin",
+  "Munchkin (OP character)."
+ ],
+ "cider": [
+  "Cider",
+  "Refreshing resolution."
+ ],
+ "black-mastermind": [
+  "Itim na Utak"
+ ],
+ "dokkaebi": [
+  "Dokkaebi"
+ ],
+ "internal-energy": [
+  "Naegong",
+  "Inner energy (Korean)."
+ ],
+ "jade-beauty": [
+  "Kagandahang Kasing-kinis ng Jade"
+ ],
+ "white-lotus": [
+  "Puting Lotus"
+ ],
+ "eating-tofu": [
+  "Kumakain ng Tofu",
+  "Eating Tofu (Flirting/Harassment)."
+ ],
+ "coughing-up-blood": [
+  "Umuubo ng Dugo"
+ ],
+ "frog-in-well": [
+  "Palaka sa Loob ng Balon"
+ ],
+ "heaven-defying": [
+  "Sumusuway sa Langit"
+ ],
+ "green-hat": [
+  "Berdeng Sumbrero",
+  "Green Hat (Cuckold)."
+ ],
+ "shuang-wen": [
+  "Shuang Wen",
+  "Satisfying story."
+ ],
+ "giving-face": [
+  "Nagbibigay Mukha"
+ ],
+ "dungeon-core": [
+  "Ubod ng Dungeon"
+ ],
+ "fiefdom": [
+  "Nasasakupang Lupain"
+ ],
+ "node": [
+  "Node",
+  "Energy node."
+ ],
+ "contribution-points": [
+  "Puntos ng Kontribusyon"
+ ],
+ "sect-mission-hall": [
+  "Bulwagan ng Misyon ng Sekta"
+ ],
+ "spirit-garden": [
+  "Halamanan ng Espiritu"
+ ],
+ "city-lord": [
+  "Panginoon ng Lungsod"
+ ],
+ "edict": [
+  "Kautusan"
+ ],
+ "vassal": [
+  "Balyo"
+ ],
+ "primordial-chaos": [
+  "Sinaunang Kaguluhan"
+ ],
+ "the-void": [
+  "Ang Kawalan"
+ ],
+ "life-forbidden-zone": [
+  "Ipinagbabawal na Sona ng Buhay"
+ ],
+ "ancient-desolate-beast": [
+  "Sinaunang Halimaw ng Kawalan"
+ ],
+ "star-field": [
+  "Parang ng Bituin"
+ ],
+ "spatial-storm": [
+  "Bagyo sa Kalawakan"
+ ],
+ "nine-heavens": [
+  "Siyam na Kalangitan"
+ ],
+ "river-of-time": [
+  "Ilog ng Oras"
+ ],
+ "epoch": [
+  "Panahon"
+ ],
+ "karmic-thread": [
+  "Sinulid ng Karma"
+ ],
+ "origin-source": [
+  "Pinagmulan"
+ ],
+ "heaven-and-earth": [
+  "Langit at Lupa"
+ ],
+ "wuji": [
+  "Wuji",
+  "Wuji (Limitless)."
+ ],
+ "dao-source": [
+  "Pinagmulan ng Dao"
+ ],
+ "engagement-annulment": [
+  "Pagpapawalang-bisa ng Kasunduan sa Pag-ibig"
+ ],
+ "toad-lusting-after-swan-meat": [
+  "Palakang Naghahangad ng Karne ng Sisne"
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "Huwag Apihin ang Batanh Mahirap"
+ ],
+ "concubine": [
+  "Kabit / Asawang-Gabi"
+ ],
+ "sect-rules": [
+  "Mga Tuntunin ng Sekta"
+ ],
+ "filial-piety": [
+  "Utang na Loob sa Magulang"
+ ],
+ "pill-tribulation": [
+  "Pagsubok ng Pildoras"
+ ],
+ "monster-genius": [
+  "Halimaw (Henyo)"
+ ],
+ "gu-venom-witchcraft": [
+  "Gu"
+ ],
+ "corpse-refining": [
+  "Pagdalisay ng Bangkay"
+ ],
+ "fairy-sister": [
+  "Ate Diwata"
+ ],
+ "young-miss": [
+  "Nakababatang Binibini"
+ ],
+ "mount-kunlun": [
+  "Bundok Kunlun"
+ ],
+ "aggro": [
+  "Aggro"
+ ],
+ "crowd-control": [
+  "Kontrol sa Karamiha"
+ ],
+ "kiting": [
+  "Kiting"
+ ],
+ "aoe": [
+  "AoE"
+ ],
+ "proc": [
+  "Proc"
+ ],
+ "kill-steal": [
+  "Nakaw-Patay"
+ ],
+ "tank": [
+  "Tank"
+ ],
+ "dps": [
+  "DPS",
+  "Damage Per Second."
+ ],
+ "gold-sink": [
+  "Gastusan ng Ginto"
+ ],
+ "auction-sniping": [
+  "Pagsingit sa Subasta"
+ ],
+ "griefing": [
+  "Pamemerwisyo"
+ ],
+ "dot": [
+  "DoT",
+  "Damage over Time."
+ ],
+ "contract-marriage": [
+  "Kontratang Kasal"
+ ],
+ "reawakening": [
+  "Muling Pagkamulat"
+ ],
+ "tyrant": [
+  "Tirante"
+ ],
+ "obsessive-male-lead": [
+  "Nahuhumaling na Bida (Lalaki)"
+ ],
+ "original-heroine": [
+  "Orihinal na Bida (Babae)"
+ ],
+ "regression-trauma": [
+  "Trauma ng Regresyon"
+ ],
+ "hunter-association": [
+  "Asosasyon ng mga Hunter"
+ ],
+ "sudden-death": [
+  "Biglaang Kamatayan"
+ ],
+ "guild-master": [
+  "Master ng Guild"
+ ],
+ "adventurer-ranks": [
+  "Ranggo ng Adventurer"
+ ],
+ "beastkin": [
+  "Beastkin",
+  "Taong-Halimaw."
+ ],
+ "demon-god": [
+  "Diyos ng mga Demonyo"
+ ],
+ "unique-skill": [
+  "Kakaibang Kasanayan"
+ ],
+ "demon-realm": [
+  "Mundo ng Demonyo"
+ ],
+ "slave-crest": [
+  "Selyo ng Alipin"
+ ],
+ "subjugation": [
+  "Pagsupil"
+ ],
+ "otherworlder": [
+  "Dayuhan mula sa Ibang Mundo"
+ ],
+ "heros-party": [
+  "Grupo ng Bayani"
+ ],
+ "dao-heart": [
+  "Puso ng Dao"
+ ],
+ "severing-mortal-ties": [
+  "Pagputol sa Ugnayang Mortal"
+ ],
+ "five-elements": [
+  "Limang Elemento"
+ ],
+ "yin-and-yang": [
+  "Yin at Yang"
+ ],
+ "enlightenment": [
+  "Kaliwanagan"
+ ],
+ "mortal-tribulation": [
+  "Mortal na Pagsubok"
+ ],
+ "soul-dissipation": [
+  "Paglaho ng Kaluluwa"
+ ],
+ "dao-marks": [
+  "Marka ng Dao"
+ ],
+ "nirvana": [
+  "Nirvana"
+ ],
+ "fellow-daoist": [
+  "Kasama sa Dao"
+ ],
+ "sect-familial-address": [
+  "Kapatid sa Sekta"
+ ],
+ "cold-snort": [
+  "Malamig na Pag-ingos"
+ ],
+ "dog-leg-lackey": [
+  "Tau-tauhan",
+  "Lackey."
+ ],
+ "jianghu": [
+  "Jianghu"
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "Nakaupo sa Bundok at Pinapanood ang Mag-away na mga Tigre",
+  "Sitting on the Mountain..."
+ ],
+ "chaebol": [
+  "Chaebol"
+ ],
+ "heavenly-oath": [
+  "Maka-Langit na Sumpa"
+ ],
+ "title-achievement": [
+  "Titulo / Tagumpay"
+ ],
+ "system-erasure": [
+  "Pagbura ng Sistema"
+ ],
+ "sweet-potato": [
+  "Kamote",
+  "Sweet Potato (Goguma/Frustrating)."
+ ],
+ "white-moonlight": [
+  "Puting Liwanag ng Buwan"
+ ],
+ "cinnabar-mole": [
+  "Nunal na Sinabar"
+ ],
+ "holy-mother": [
+  "Banal na Ina",
+  "Holy Mother (Naive)."
+ ],
+ "dog-blood": [
+  "Dugo ng Aso",
+  "Dog Blood (Melodramatic)."
+ ],
+ "angst": [
+  "Pagdurusa"
+ ],
+ "scum": [
+  "Basura"
+ ],
+ "brain-dead": [
+  "Walang Utak"
+ ],
+ "meat": [
+  "Laman",
+  "Meat (Smut)."
+ ],
+ "green-tea": [
+  "Berdeng Tsaa",
+  "Green Tea (Manipulative)."
+ ],
+ "territory": [
+  "Teritoryo"
+ ],
+ "rebirth": [
+  "Muling Pagsilang"
+ ],
+ "devil-mara": [
+  "Demonyo / Mara"
+ ],
+ "demonic-beast": [
+  "Demonyong Halimaw"
+ ],
+ "truck-kun": [
+  "Truck-kun"
+ ],
+ "cheat-skill": [
+  "Pandayang Kasanayan"
+ ],
+ "divine-protection": [
+  "Banal na Proteksyon"
+ ],
+ "genkai-toppa": [
+  "Paglagpas sa Limitasyon",
+  "Limit Break."
+ ],
+ "chuunibyou": [
+  "Chuunibyou"
+ ],
+ "tsundere": [
+  "Tsundere"
+ ],
+ "yandere": [
+  "Yandere"
+ ],
+ "san": [
+  "-san",
+  "Honorific."
+ ],
+ "chan": [
+  "-chan",
+  "Honorific."
+ ],
+ "kun": [
+  "-kun",
+  "Honorific."
+ ],
+ "dono": [
+  "-dono",
+  "Honorific."
+ ],
+ "sensei": [
+  "-sensei",
+  "Teacher."
+ ],
+ "adventurer-guild": [
+  "Guild ng Adventurer"
+ ],
+ "vrmmo": [
+  "VRMMO"
+ ],
+ "goddess": [
+  "Diyosa"
+ ],
+ "gate": [
+  "Tarangkahan"
+ ],
+ "awakening": [
+  "Pagmulat"
+ ],
+ "regressor": [
+  "Regressor"
+ ],
+ "national-level-hunter": [
+  "Pambansang Hunter"
+ ],
+ "hunter-rank": [
+  "Ranggo ng Hunter"
+ ],
+ "grade": [
+  "Grado"
+ ],
+ "mana": [
+  "Mana"
+ ],
+ "shadow-soldier": [
+  "Militar ng Anino"
+ ],
+ "monarch": [
+  "Monarka"
+ ],
+ "hyung": [
+  "Kuya (Para sa lalaki)"
+ ],
+ "noona": [
+  "Ate (Para sa lalaki)"
+ ],
+ "oppa": [
+  "Kuya (Para sa babae)"
+ ],
+ "sunbae": [
+  "Senior"
+ ],
+ "ahjussi": [
+  "Tito"
+ ],
+ "ahjumma": [
+  "Tita"
+ ],
+ "dungeon-break": [
+  "Dungeon Break"
+ ],
+ "boss-monster": [
+  "Boss na Halimaw"
+ ],
+ "first-clear": [
+  "Unang Clear"
+ ],
+ "clear": [
+  "Natapos"
+ ],
+ "penalty": [
+  "Parusa"
+ ],
+ "compensation": [
+  "Kompensasyon"
+ ],
+ "ranker": [
+  "Ranker"
+ ],
+ "player-kill": [
+  "Player Kill"
+ ],
+ "broadcast": [
+  "Broadcast",
+  "Broadcast/Stream."
+ ],
+ "mutant-monster": [
+  "Mutanteng Halimaw"
+ ],
+ "growth-type-ability": [
+  "Kasanayang Lumalago"
+ ],
+ "evolution": [
+  "Ebolusyon"
+ ],
+ "floor": [
+  "Palapag"
+ ],
+ "test": [
+  "Pagsusulit"
+ ],
+ "test-administrator": [
+  "Tagapangasiwa ng Pagsusulit"
+ ],
+ "floor-guardian": [
+  "Tagapagbantay ng Palapag"
+ ],
+ "irregular": [
+  "Hindi Pangkaraniwan"
+ ],
+ "regular": [
+  "Pangkaraniwan"
+ ],
+ "hidden-floor": [
+  "Nakatagong Palapag"
+ ],
+ "wall": [
+  "Pader"
+ ],
+ "family": [
+  "Pamilya"
+ ],
+ "observer": [
+  "Tagamasid"
+ ],
+ "onii-chan": [
+  "Kuya (JP)"
+ ],
+ "onee-chan": [
+  "Ate (JP)"
+ ],
+ "ossan": [
+  "Tito / Matanda (JP)"
+ ],
+ "osananajimi": [
+  "Kababatang Kaibigan"
+ ],
+ "kokuhaku": [
+  "Pagtatapat ng Pag-ibig"
+ ],
+ "bunkasai": [
+  "Pista ng Kultura"
+ ],
+ "guild-card": [
+  "Kard ng Guild"
+ ],
+ "job-change": [
+  "Paglipat ng Klase"
+ ],
+ "labyrinth": [
+  "Labirinto"
+ ],
+ "blacksmith": [
+  "Panday"
+ ],
+ "slow-life": [
+  "Mabagal na Buhay"
+ ],
+ "skill-book": [
+  "Libro ng Kasanayan"
+ ],
+ "great-sage": [
+  "Dakilang Pantas"
+ ],
+ "sacred-sword": [
+  "Banal na Espada"
+ ],
+ "entrance-exam": [
+  "Pagsusulit sa Pagpasok"
+ ],
+ "class-ranking": [
+  "Ranggo ng Klase"
+ ],
+ "mob-class": [
+  "Klaseng Mob"
+ ],
+ "late-bloomer": [
+  "Huling Namulaklak"
+ ],
+ "graduation-trial": [
+  "Pagsubok para Makapagtapos"
+ ],
+ "novel-knowledge": [
+  "Kaalaman sa Nobela"
+ ],
+ "fourth-wall": [
+  "Ika-apat na Pader"
+ ],
+ "system-voice": [
+  "Tinig ng Sistema"
+ ],
+ "authors-note": [
+  "Tala ng May-akda"
+ ],
+ "ancient-ruins": [
+  "Sinaunang Guho"
+ ],
+ "spirit-vein": [
+  "Ugat ng Espiritu"
+ ],
+ "middle-realm": [
+  "Gitnang Mundo"
+ ],
+ "void": [
+  "Kawalan"
+ ],
+ "chaos": [
+  "Kaguluhan"
+ ],
+ "tribute": [
+  "Tributo"
+ ],
+ "garrison": [
+  "Kuta"
+ ],
+ "liege": [
+  "Panginoon"
+ ],
+ "totem-beast": [
+  "Halimaw ng Totem"
+ ],
+ "beast-master": [
+  "Guro ng mga Halimaw"
+ ]
+}

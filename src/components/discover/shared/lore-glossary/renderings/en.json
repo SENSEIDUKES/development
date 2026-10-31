@@ -1,0 +1,1558 @@
+{
+ "qi": [
+  "Qi",
+  "Preserve as 'Qi' in xianxia/xuanhuan; 'Ki' in Korean murim; 'internal energy' in wuxia. Never translate as 'mana' or 'magic power.'"
+ ],
+ "cultivation": [
+  "Cultivation",
+  "Industry standard for 'Xiu Lian'. NEVER translate as 'training' or 'practice' as a standalone noun in Xianxia context."
+ ],
+ "dantian": [
+  "Dantian",
+  "Preserve as 'Dantian' (standard in translation community). 'Elixir field' acceptable for first mention. Never 'mana pool' or 'core' alone."
+ ],
+ "immortal-qi": [
+  "Immortal Qi",
+  "Preserve as 'Immortal Qi' or 'Xian Qi.' Distinguish clearly from ordinary Qi in translation."
+ ],
+ "cultivation-realm": [
+  "Cultivation Realm",
+  "Preserve realm names per novel's system (e.g., 'Foundation Establishment' not 'Level 10'). Use 'realm' not 'level.' Include realm hierarchy table per series in glossary."
+ ],
+ "heavenly-tribulation": [
+  "Heavenly Tribulation",
+  "Standard term: 'Heavenly Tribulation.' 'Lightning Tribulation' for specific events. Never 'boss fight' or 'trial.'"
+ ],
+ "nascent-soul": [
+  "Nascent Soul",
+  "Standard: 'Nascent Soul' (stage) / 'Nascent Soul' (the entity). 'Yuan Ying' acceptable in xianxia. Distinguish from 'Golden Core' (Jie Dan) which precedes it."
+ ],
+ "golden-core": [
+  "Golden Core",
+  "'Golden Core' for the object; 'Core Formation' for the stage. 'Jie Dan' in pinyin for xianxia flavor."
+ ],
+ "foundation-establishment": [
+  "Foundation Establishment",
+  "Standard: 'Foundation Establishment.' 'Foundation Building' acceptable. Avoid 'Base Building' (LitRPG connotation)."
+ ],
+ "qi-refining": [
+  "Qi Condensation",
+  "'Qi Condensation' or 'Qi Refining' standard. 'Qi Gathering' acceptable. Not 'Level 1.'"
+ ],
+ "core-formation": [
+  "Core Formation",
+  "'Core Formation' for the stage; 'Golden Core' for the result. See Golden Core entry."
+ ],
+ "spirit-severing": [
+  "Spirit Severing",
+  "'Spirit Severing' standard. 'Dividing Spirit' literal but less common."
+ ],
+ "dao-seeking": [
+  "Dao Seeking",
+  "'Dao Seeking' standard. Preserve 'Dao' untranslated."
+ ],
+ "domain": [
+  "Domain",
+  "Xianxia: Metaphysical combat space (Yu). Kingdom Building: NEVER use 'Domain' for land; use 'Territory' or 'Fiefdom' to prevent reader confusion."
+ ],
+ "ascension": [
+  "Ascension",
+  "'Ascension' standard. 'Flying Ascension' for flavor. Not 'leveling up' or 'promotion.'"
+ ],
+ "meridians": [
+  "Meridian",
+  "'Meridian' standard (TCM term). 'Channel' acceptable. Never 'blood vessel' or 'nerve.'"
+ ],
+ "spiritual-root": [
+  "Spiritual Root",
+  "'Spiritual Root' standard. 'Spirit Root' common shorthand. 'Talent' or 'Aptitude' for general discussion."
+ ],
+ "jing-qi-shen": [
+  "Jing, Qi, Shen",
+  "Preserve 'Jing, Qi, Shen' or 'Three Treasures.' Define on first use. Do not translate as 'Body, Mind, Soul.'"
+ ],
+ "body-tempering": [
+  "Body Tempering",
+  "'Body Tempering' or 'Body Refinement' standard. 'Body Forging' for more metallic/hardening focus."
+ ],
+ "fiendgod-body-refining": [
+  "Fiendgod Body Refining",
+  "'Fiendgod Body Refining' preserves the mythic flavor. 'Demonic God Body' alternative."
+ ],
+ "heartforce-cultivation": [
+  "Heartforce Cultivation",
+  "'Heartforce' (one word) becoming standard. 'Heart Force' acceptable. Not 'willpower' alone."
+ ],
+ "dual-cultivation": [
+  "Dual Cultivation",
+  "'Dual Cultivation' standard. 'Paired Cultivation' for neutral tone. Context determines connotation."
+ ],
+ "alchemy": [
+  "Pill Concocting",
+  "'Pill Concocting' or 'Alchemy' for the art; 'Pill Refining' for the process. 'Dan' preserved in 'Golden Core' (Jie Dan)."
+ ],
+ "spirit-stone": [
+  "Spirit Stone",
+  "'Spirit Stone' standard. 'Spirit Crystal' for higher grades. Never 'mana crystal' or 'coin.'"
+ ],
+ "spiritual-treasure": [
+  "Artifact",
+  "'Artifact' or 'Magic Treasure' standard. 'Dharma Treasure' for Buddhist-flavored settings. 'Spiritual Tool' for lower-tier. Preserve 'Artifact Spirit' for sentient ones."
+ ],
+ "storage-ring": [
+  "Storage Ring",
+  "'Storage Ring' or 'Spatial Ring' standard. 'Interspatial Ring' for higher-tier."
+ ],
+ "talisman": [
+  "Talisman",
+  "'Talisman' standard. 'Fu' in pinyin for flavor. 'Charm' too light."
+ ],
+ "formation": [
+  "Formation",
+  "'Formation' or 'Array' standard. 'Grand Formation' for large-scale. 'Array Master' for specialist."
+ ],
+ "sect": [
+  "Sect",
+  "'Sect' standard for cultivation orgs. 'School' for smaller/academic. 'Clan' for bloodline-based. Preserve hierarchy terms."
+ ],
+ "clan": [
+  "Clan",
+  "'Clan' standard. 'Family' for smaller. 'House' for noble/feudal flavor. 'Bloodline' for the ability aspect."
+ ],
+ "patriarch": [
+  "Patriarch",
+  "'Patriarch' standard. 'Ancestor' (Zu Shi) for flavor. 'Forefather' alternative."
+ ],
+ "elder": [
+  "Elder",
+  "'Elder' standard. 'Grand/Great Elder' for higher ranks. Preserve 'Zhang Lao' in dialogue if flavor needed."
+ ],
+ "disciple-hierarchy": [
+  "Disciple Hierarchy",
+  "Preserve 'Outer/Inner/Core Disciple' as standard terms. 'Personal Disciple' = direct disciple of a peak master."
+ ],
+ "spirit-beast": [
+  "Spirit Beast",
+  "Neutral or tameable magical creatures. Use 'Demonic Beast' strictly for hostile/corrupted monsters."
+ ],
+ "beast-taming": [
+  "Beast Taming",
+  "'Beast Taming' standard. 'Beast Mastery' alternative. 'Pet System' for LitRPG-flavored."
+ ],
+ "heavenly-dao": [
+  "Heavenly Dao",
+  "'Heavenly Dao' standard. 'Will of Heaven' for personified agency. 'World Will' for system/LitRPG overlap."
+ ],
+ "dao": [
+  "Dao",
+  "Always preserve as 'Dao.' Never 'Way' or 'Path' alone. 'Sword Dao,' 'Dao of Fire,' etc."
+ ],
+ "karma": [
+  "Karma",
+  "'Karma' standard. 'Karmic debt/tie/fire' for specific manifestations. 'Ye' in pinyin for flavor."
+ ],
+ "reincarnation": [
+  "Reincarnation",
+  "'Reincarnation' for the cycle/process. 'Rebirth' for the event. Distinguish from 'Regression' and 'Transmigration.'"
+ ],
+ "regression": [
+  "Regression",
+  "STRICTLY for Korean 'Hoegwi' (time travel to one's OWN past body). NEVER use for Chinese 'Rebirth' or Japanese 'Isekai'."
+ ],
+ "transmigration": [
+  "Transmigration",
+  "Chinese 'Chuan Yue' / 'Chuan Shu'. Entering a book, game, or alternate world. Distinct from Isekai (Japanese) and Regression (Korean time travel)."
+ ],
+ "isekai": [
+  "Isekai",
+  "Preserve 'Isekai' as genre label. 'Another World' for description. 'Transportation' for summoning variant."
+ ],
+ "otome-isekai": [
+  "Otome Isekai",
+  "'Otome Isekai' standard genre term. 'Villainess' for protagonist role. 'Otome Game' for setting."
+ ],
+ "hunter-system": [
+  "Hunter System",
+  "'Hunter' for individuals. 'Awakening' for the event. 'Rank' (S/A/B/C/D/E/F) preserved. 'Gate' for portals. 'Dungeon' for instances."
+ ],
+ "constellation": [
+  "Constellation",
+  "'Constellation' standard. 'Sponsor' for functional role. 'Star' for metaphor. Preserve 'Coin' for currency."
+ ],
+ "dungeon": [
+  "Dungeon",
+  "'Dungeon' standard. 'Gate' for the entrance. 'Instance' for LitRPG overlap. 'Rift' for spatial tear flavor."
+ ],
+ "tower": [
+  "Tower",
+  "'Tower' standard. 'Floor' for levels. 'Climber' or 'Challenger' for participants."
+ ],
+ "system": [
+  "System",
+  "'System' universal. 'Status Window/Menu' for UI. 'Sentient System' for personality. 'Administrator' for governing entity."
+ ],
+ "status-window": [
+  "Status Window",
+  "'Status Window' or 'Status Screen' standard. 'Character Sheet' for tabletop flavor."
+ ],
+ "level": [
+  "Level",
+  "Translate as the standard game/system sense of level or rank. Do not confuse with cultivation realm unless the narrative explicitly equates the two systems."
+ ],
+ "skill": [
+  "Skill",
+  "'Skill' for System-granted. 'Technique' for cultivation-learned. 'Passive/Active' for type. Preserve skill names."
+ ],
+ "level-up": [
+  "Level Up",
+  "'Level Up' standard. 'Rank Up' for class/job tier. 'Breakthrough' reserved for cultivation realms."
+ ],
+ "quest": [
+  "Quest",
+  "'Quest' standard. 'Mission' for military/org flavor. Preserve type modifiers."
+ ],
+ "guild": [
+  "Guild",
+  "'Guild' standard. 'Clan' for smaller/kinship. 'Association' for official body (e.g., Hunter Association)."
+ ],
+ "rarity": [
+  "Rarity",
+  "Preserve color/grade names. 'Rarity' for items. 'Grade' for skills/pets. 'Tier' for equipment slots."
+ ],
+ "loot": [
+  "Loot",
+  "'Loot' or 'Drop' standard. 'Drop Rate' for probability. 'Rare Drop' for low-probability high-value."
+ ],
+ "wuxia": [
+  "Wuxia",
+  "Preserve 'Wuxia' as genre label. 'Martial Arts Fantasy' for marketing."
+ ],
+ "xianxia": [
+  "Xianxia",
+  "Preserve 'Xianxia.' Do not use as catch-all for all cultivation novels."
+ ],
+ "xuanhuan": [
+  "Xuanhuan",
+  "Preserve 'Xuanhuan.' 'Eastern Fantasy' for Western marketing."
+ ],
+ "murim": [
+  "Murim",
+  "'Murim' for Korean works. 'Wulin' or 'Jianghu' for Chinese. 'Martial World' descriptive."
+ ],
+ "litrpg": [
+  "LitRPG",
+  "'LitRPG' standard. 'GameLit' broader (includes non-progression). 'System Novel' for Asian webnovel flavor."
+ ],
+ "progression-fantasy": [
+  "Progression Fantasy",
+  "'Progression Fantasy' standard genre term. Use for categorization."
+ ],
+ "academy-arc": [
+  "Academy Arc",
+  "'Academy Arc' standard. 'Magic Academy' / 'Cultivation Academy' for flavor."
+ ],
+ "guide": [
+  "Guide",
+  "'Guide' and 'Esper' preserve as terms. 'Guiding' for the mechanic. 'Compatibility' for match quality."
+ ],
+ "esper": [
+  "Esper",
+  "'Esper' standard. 'Awakened' for general. 'Rampage' for berserk state."
+ ],
+ "arrogant-young-master": [
+  "Arrogant Young Master",
+  "'Arrogant Young Master' standard. 'Young Master' (Gongzi) as address. 'Face-slapping' for the trope."
+ ],
+ "face": [
+  "Face",
+  "'Face' preserve as cultural concept. 'Lose face' / 'Give face' as verbs. 'Face-slapping' for trope."
+ ],
+ "face-slapping": [
+  "Face-Slapping",
+  "'Face-slapping' standard term. 'Comeuppance' for literary description."
+ ],
+ "tournament-arc": [
+  "Tournament Arc",
+  "'Tournament Arc' standard. Qualifier: 'Sect Tournament,' 'Hunter Ranking Exam,' etc."
+ ],
+ "secret-realm": [
+  "Secret Realm",
+  "'Secret Realm' standard. 'Mystic Realm' alternative. 'Inheritance Ground' for specific purpose."
+ ],
+ "auction": [
+  "Auction",
+  "'Auction' standard. 'Auction House' for the organization. 'Black Market' for illicit."
+ ],
+ "bloodline": [
+  "Bloodline",
+  "'Bloodline' standard. 'Bloodline Power' for the ability. 'Bloodline Nobility' for social aspect."
+ ],
+ "physique": [
+  "Physique",
+  "'Physique' or 'Constitution' standard. 'Special Physique' for rare types. 'Trash Physique' for trope."
+ ],
+ "dao-companion": [
+  "Dao Companion",
+  "'Dao Companion' standard. 'Cultivation Partner' functional. 'Twin Cultivation Partner' if dual cultivation focused."
+ ],
+ "harem": [
+  "Harem",
+  "'Harem' standard genre tag. 'Polyamory' for modern/egalitarian. 'Multiple Love Interests' neutral."
+ ],
+ "cannon-fodder": [
+  "Cannon Fodder",
+  "'Cannon Fodder' standard. 'Pao Hui' in pinyin for flavor. 'Expendable' descriptive."
+ ],
+ "villainess": [
+  "Villainess",
+  "'Villainess' standard. 'Akuyaku Reijou' for Japanese context. 'Villainess Reincarnation' for genre."
+ ],
+ "protagonist-halo": [
+  "Protagonist Halo",
+  "'Protagonist Halo' or 'Plot Armor.' 'Son of Destiny' (Tian Ming Zhi Zi) for in-world term."
+ ],
+ "system-shop": [
+  "System Shop",
+  "'System Shop' or 'Shop.' 'Exchange' for contribution-based."
+ ],
+ "inventory": [
+  "Inventory",
+  "'Inventory' standard. 'Storage' for spatial artifact. 'Item Box' for Japanese flavor."
+ ],
+ "class": [
+  "Class",
+  "'Class' standard. 'Job' for Japanese flavor. 'Advanced Class' for tier 2+. 'Hidden Class' for secret."
+ ],
+ "stat": [
+  "Stat",
+  "Preserve abbreviations (STR, AGI, INT, VIT, DEX, WIS, LUK). 'Stat' or 'Attribute' standard."
+ ],
+ "skill-tree": [
+  "Skill Tree",
+  "'Skill Tree' standard. 'Talent Tree' for passive-focused."
+ ],
+ "party": [
+  "Party",
+  "'Party' standard. 'Raid' for large groups (10+). 'Team' for PvP/hunter squads."
+ ],
+ "raid": [
+  "Raid",
+  "'Raid' standard. 'Raid Boss' for the enemy. 'World Boss' distinction."
+ ],
+ "pvp": [
+  "PvP",
+  "'PvP' standard. 'PK' for player killing (often non-consensual). 'Arena' for ranked."
+ ],
+ "pve": [
+  "PvE",
+  "'PvE' standard. 'Grinding' for repetitive farming. 'Speedrun' for optimized clears."
+ ],
+ "npc": [
+  "NPC",
+  "'NPC' standard. 'Native' for world-born vs transmigrator distinction."
+ ],
+ "sentient-system": [
+  "Sentient System",
+  "'Sentient System' standard. 'System-chan' for comedic/personified."
+ ],
+ "regression-novel": [
+  "Regression Novel",
+  "'Regression Novel' standard. 'Return' for Korean 'Hoegwi.' 'Time Loop' if repeating same segment."
+ ],
+ "transmigration-novel": [
+  "Transmigration Novel",
+  "'Transmigration Novel' standard. 'Book Transmigration' / 'Game Transmigration' for specificity."
+ ],
+ "cultivation-technique": [
+  "Cultivation Technique",
+  "'Cultivation Technique' for main method. 'Technique' for combat/movement. 'Manual' or 'Scripture' for the physical book. 'Gong Fa' in pinyin."
+ ],
+ "forbidden-technique": [
+  "Forbidden Technique",
+  "'Forbidden Technique' standard. 'Demonic Art' if demonic Qi. 'Taboo Art' for flavor."
+ ],
+ "sword-intent": [
+  "Sword Intent",
+  "'Sword Intent' standard. 'Sword Will' alternative. 'Sword Heart' for emotional core."
+ ],
+ "domain-expansion": [
+  "Domain Expansion",
+  "STRICTLY reserve for Japanese 'Ryouiki Tenkai' (Jujutsu Kaisen style). Do not use for Xianxia Domains."
+ ],
+ "heavenly-tribulation-lightning": [
+  "Heavenly Tribulation Lightning",
+  "'Heavenly Tribulation Lightning' or 'Tribulation Lightning.' 'Divine Lightning' for refined version."
+ ],
+ "soul": [
+  "Soul",
+  "Hierarchy: Spiritual Sense -> Nascent Soul -> Origin Soul -> Primordial Spirit. Do not mix up the stages."
+ ],
+ "spiritual-sense": [
+  "Spiritual Sense",
+  "'Spiritual Sense' or 'Divine Sense' standard. 'Shen Nian' in pinyin."
+ ],
+ "qi-deviation": [
+  "Qi Deviation",
+  "'Qi Deviation' standard. 'Zou Huo Ru Mo' for flavor. 'Heart Devil' (Xin Mo) for the internal cause."
+ ],
+ "heart-devil": [
+  "Heart Devil",
+  "'Heart Devil' standard. 'Inner Demon' descriptive. 'Dao Heart' (Dao Xin) = cultivation resolve."
+ ],
+ "merit": [
+  "Merit",
+  "'Merit' or 'Karmic Merit.' 'Merit Points' for System currency."
+ ],
+ "karmic-fire": [
+  "Karmic Fire",
+  "'Karmic Fire' standard. 'Karma Fire' alternative."
+ ],
+ "ascension-platform": [
+  "Ascension Platform",
+  "'Ascension Platform' standard. 'Immortal Platform' alternative."
+ ],
+ "lower-realm": [
+  "Lower Realm",
+  "'Lower Realm' standard. 'Mortal World' descriptive. 'Small World' for pocket dimensions."
+ ],
+ "immortal-realm": [
+  "Immortal Realm",
+  "'Immortal Realm' standard. 'Upper Realm' relative. 'Celestial Realm' for bureaucratic flavor."
+ ],
+ "spirit-realm": [
+  "Spirit Realm",
+  "'Spirit Realm' standard. Clarify cosmology per novel."
+ ],
+ "great-thousand-world": [
+  "Great Thousand World",
+  "'Great Thousand World' standard. 'Major World' descriptive. 'Three Thousand Worlds' for multiverse."
+ ],
+ "plane": [
+  "Plane",
+  "'Plane' standard (D&D/MTG influence). 'World' for layman. 'Dimension' for sci-fi flavor."
+ ],
+ "world-tree": [
+  "World Tree",
+  "'World Tree' standard. 'Cosmic Tree' descriptive."
+ ],
+ "celestial-empire": [
+  "Celestial Empire",
+  "'Heavenly Court' or 'Celestial Empire.' 'Tian Ting' in pinyin. 'Divine Bureaucracy' descriptive."
+ ],
+ "demon": [
+  "Demon",
+  "Biological race (Yao/Mazoku). Use 'Devil' or 'Fiend' for Mo Xiu (corrupted cultivators). Use 'Mara' for Buddhist psychological blockages."
+ ],
+ "orthodox-vs-unorthodox": [
+  "Orthodox vs Unorthodox",
+  "'Orthodox' (Righteous) vs 'Unorthodox' (Demonic/Evil). 'Righteous Path' vs 'Demonic Path.' 'Zheng Xie' in pinyin."
+ ],
+ "sect-war": [
+  "Sect War",
+  "'Sect War' standard. 'Great War' for world-spanning."
+ ],
+ "resource-war": [
+  "Resource War",
+  "'Resource War' standard. 'Spirit Vein War' specific."
+ ],
+ "talent": [
+  "Talent",
+  "'Talent' or 'Aptitude' standard. 'Comprehension' for Dao understanding specifically."
+ ],
+ "cheat": [
+  "Cheat",
+  "'Golden Finger' for Chinese novels. 'Cheat' or 'System' for LitRPG. 'Cheat Ability' descriptive."
+ ],
+ "time-dilation": [
+  "Time Dilation",
+  "'Time Dilation' or 'Time Acceleration' standard. 'Time Chamber' for the location."
+ ],
+ "appraisal": [
+  "Appraisal",
+  "'Appraisal' or 'Identify' standard. 'Appraisal Eye' for the cheat skill. 'Inspect' for System UI."
+ ],
+ "loot-box": [
+  "Loot Box",
+  "'Gacha' for Japanese/mobile game flavor. 'Loot Box' for Western. 'Random Box' neutral. 'Pity' for guaranteed rate."
+ ],
+ "pay-to-win": [
+  "Pay to Win",
+  "'P2W' standard. 'Whale' for spender. 'F2P' for free player. 'Cash Shop' for store."
+ ],
+ "player": [
+  "Player",
+  "'Player' for LitRPG. 'Awakened/Hunter' for Korean. 'Transmigrator' for isekai."
+ ],
+ "administrator": [
+  "Administrator",
+  "'Administrator' or 'Admin' standard. 'Floor Master' for Tower boss. 'Game Master' for GM."
+ ],
+ "tutorial": [
+  "Tutorial",
+  "'Tutorial' standard. 'Beginner Zone' for area."
+ ],
+ "hidden-quest": [
+  "Hidden Quest",
+  "'Hidden Quest' standard. 'Secret Quest' alternative."
+ ],
+ "repair": [
+  "Repair",
+  "'Repair' and 'Durability' standard. 'Broken' state."
+ ],
+ "death-penalty": [
+  "Death Penalty",
+  "'Death Penalty' standard. 'Corpse Run' for retrieval mechanic. 'Hardcore' for permadeath."
+ ],
+ "respawn": [
+  "Respawn",
+  "'Respawn' standard. 'Revive' for healer skill. 'Resurrection' for high-tier."
+ ],
+ "fast-travel": [
+  "Fast Travel",
+  "'Fast Travel' standard. 'Teleport' for instant. 'Waypoint' for network nodes."
+ ],
+ "mount": [
+  "Mount",
+  "'Mount' standard. 'Flying Mount' distinction. 'Riding Pet' for beast-taming flavor."
+ ],
+ "pet": [
+  "Pet",
+  "'Pet' or 'Companion' standard. 'Familiar' for magic flavor. 'Contracted Beast' for beast-taming."
+ ],
+ "crafting": [
+  "Crafting",
+  "'Crafting' general. Specific: 'Blacksmithing,' 'Alchemy,' 'Cooking,' etc. 'Recipe' for instructions."
+ ],
+ "enchanting": [
+  "Enchanting",
+  "'Enchanting' or 'Enhancement' standard. '+X' notation preserved. 'Failstack' = accumulated fail chance bonus."
+ ],
+ "socket": [
+  "Socket",
+  "'Socket' standard. 'Gem Slot' specific. 'Rune' for ARPG flavor."
+ ],
+ "set-item": [
+  "Set Item",
+  "'Set Item' standard. 'Set Bonus' for effects. 'Class Set' for tailored."
+ ],
+ "unique-item": [
+  "Unique Item",
+  "'Unique Item' or 'Named Item' standard. 'Legendary' for rarity tier. 'Artifact' for highest."
+ ],
+ "courting-death": [
+  "Courting Death",
+  "Preserve as 'Courting death' or 'Seeking death'. Never translate as 'suicidal' or 'risking your life', as it carries a specific arrogant/threatening connotation in Asian web novels."
+ ],
+ "mount-tai": [
+  "Mount Tai",
+  "Do not translate the idiom literally in non-Asian languages without context. Translate the *meaning* (e.g., 'failed to recognize a hidden dragon' or 'blind to greatness') but keep 'Mount Tai' in the glossary for cultural footnotes."
+ ],
+ "kowtow": [
+  "Kowtow",
+  "Preserve 'Kowtow'. Do not use 'bow' or 'kneel', as kowtow implies ultimate humiliation and submission in Eastern culture."
+ ],
+ "jade-slip": [
+  "Jade Slip",
+  "Always 'Jade Slip' or 'Bamboo Slip'. Never 'scroll' or 'book' unless physically described as such."
+ ],
+ "romance-fantasy": [
+  "Romance Fantasy",
+  "Preserve 'RoFan' as a community tag, but translate as 'Romance Fantasy' for general audiences."
+ ],
+ "returner": [
+  "Returner",
+  "Use 'Returner' or 'Returnee'. Do not confuse with 'Regressor' (who goes back in time). This is a spatial/dimensional return, not a temporal one."
+ ],
+ "sword-cultivator": [
+  "Sword Cultivator",
+  "'Sword Cultivator' standard. 'Sword Immortal' for high realms."
+ ],
+ "foundation-establishment-pill": [
+  "Foundation Establishment Pill",
+  "Always 'Foundation Establishment Pill'. Never 'Base Building Pill'. Crucial plot device for sect resource allocation."
+ ],
+ "marrow-cleansing-pill": [
+  "Marrow Cleansing Pill",
+  "'Marrow Cleansing Pill' standard. Describe the 'black sludge' effect as it is a universal trope."
+ ],
+ "fasting-pill": [
+  "Fasting Pill",
+  "'Fasting Pill' or 'Inedia Pill'. 'Bi Gu' refers to the Daoist practice of grain avoidance."
+ ],
+ "blood-burning-pill": [
+  "Blood Burning Pill",
+  "'Blood Burning Pill' or 'Berserker Pill'. Emphasize the severe post-use backlash."
+ ],
+ "shim-gong": [
+  "Shim Gong",
+  "Translate as 'Internal Breathing Technique', 'Heart Method', or 'Qi Circulation Method'. Keep 'Shim Gong' in glossary for Korean Murim context."
+ ],
+ "shin-bup": [
+  "Shin Bup",
+  "'Lightness Skill' or 'Movement Technique'. Use 'Qinggong' only if the novel explicitly uses Chinese terminology."
+ ],
+ "jeom-hyeol": [
+  "Jeom Hyeol",
+  "'Meridian Point Striking' or 'Acupoint Sealing'. 'Dim Mak' is the Cantonese/Westernized term, use only for specific contexts."
+ ],
+ "ho-shin-gang-qi": [
+  "Ho Shin Gang Qi",
+  "'Protective Aura' or 'Iron Shirt' (if body cultivation). 'Aura Shield' for modern translations."
+ ],
+ "geom-gi": [
+  "Geom Gi",
+  "'Sword Aura' or 'Sword Energy'. 'Sword Qi' is acceptable but 'Aura' is preferred in Korean Murim translations to distinguish from general Qi."
+ ],
+ "sama": [
+  "-sama",
+  "Translate contextually as 'Lord [Name]', 'Lady [Name]', or 'Master'. Do not leave as '-sama' in formal English prose unless it'sa specific stylistic choice or dialogue quirk."
+ ],
+ "senpai-kouhai": [
+  "Senpai / Kouhai",
+  "Translate as 'Senior' and 'Junior' or 'Upperclassman/Underclassman'. In martial arts contexts, 'Senior Brother'/'Junior Brother' is preferred."
+ ],
+ "ojou-sama": [
+  "Ojou-sama",
+  "Translate as 'Lady [Name]', 'Noble Lady', or 'Young Miss'. Keep the archetype traits in mind for character voice translation."
+ ],
+ "maou-gun": [
+  "Maou-gun",
+  "Translate as 'Demon Lord's Army' or 'Demon Army'. 'Four Heavenly Kings' is the standard translation for the top generals (Shitennou)."
+ ],
+ "dao-child": [
+  "Dao Child",
+  "Translate as 'Dao Child' or 'Holy Son'. Never 'Child of the Way' or 'Dao Son'. Capitalize as a title (e.g., 'the Dao Child of the Sword Sect')."
+ ],
+ "peak-master": [
+  "Peak Master",
+  "'Peak Master' or 'Mountain Lord' standard. 'Hall Master' for administrative buildings. Crucial for understanding sect politics and internal factions."
+ ],
+ "sect-leader": [
+  "Sect Leader",
+  "'Sect Leader' or 'Sect Master' standard. Distinguish from 'Patriarch' (ancient founder/ultimate weapon) and 'Peak Master' (sub-branch leader)."
+ ],
+ "handyman-disciple": [
+  "Handyman Disciple",
+  "'Handyman Disciple' or 'Servant Disciple' standard. Conveys the extreme low-status and menial labor aspect better than just 'Outer Disciple'."
+ ],
+ "guest-elder": [
+  "Guest Elder",
+  "'Guest Elder' or 'Honorary Elder' standard. Important for sect recruitment arcs and political maneuvering."
+ ],
+ "sweeping-monk": [
+  "Sweeping Monk",
+  "Translate the literal action ('the old sweeper') but tag as 'Hidden Expert' in metadata. Do not spoil the trope in the translation itself, but ensure the AI recognizes the trope's narrative weight."
+ ],
+ "hidden-class": [
+  "Hidden Class",
+  "'Hidden Class' or 'Secret Class' standard. Capitalize as a proper noun system notification (e.g., '[System: You have unlocked a Hidden Class]')."
+ ],
+ "necromancer": [
+  "Necromancer",
+  "'Necromancer' standard. 'Shadow Monarch' if the novel specifically uses the shadow-extraction mechanic. 'Death Mage' for general fantasy."
+ ],
+ "job-advancement": [
+  "Job Advancement",
+  "'Job Advancement' or 'Class Promotion' standard. Use 'Advancement' to distinguish from 'Awakening' (which usually refers to gaining Hunter powers initially)."
+ ],
+ "berserker": [
+  "Berserker",
+  "'Berserker' standard. 'Frenzy' for the state. Distinguish from standard 'Warrior' or 'Knight' classes."
+ ],
+ "paladin": [
+  "Paladin",
+  "'Paladin' or 'Holy Knight' standard. 'Templar' for strictly religious/military order contexts."
+ ],
+ "beast-core": [
+  "Beast Core",
+  "'Beast Core' or 'Monster Core' standard. 'Yao Dan' in pinyin for Xianxia. Crucial loot drop in both Cultivation and Hunter novels."
+ ],
+ "soul-contract": [
+  "Soul Contract",
+  "'Soul Contract' standard. Emphasize the severe backlash if broken. Distinguish from lower-tier 'Blood Contracts' or 'Equality Contracts'."
+ ],
+ "beast-pouch": [
+  "Beast Pouch",
+  "'Beast Pouch' or 'Spirit Beast Bag' standard. CRITICAL LORE NOTE: AI must understand that standard Storage Rings KILL living things, making the Beast Pouch a necessary, distinct item."
+ ],
+ "bloodline-evolution": [
+  "Bloodline Evolution",
+  "'Bloodline Evolution' or 'Evolution' standard. 'Atavism' (返祖) for reverting to an ancient, purer ancestor bloodline."
+ ],
+ "familiar": [
+  "Familiar",
+  "Reserve for Western/Japanese magic academy contexts. Do not use for Xianxia Spirit Beasts."
+ ],
+ "equality-contract": [
+  "Equality Contract",
+  "'Equality Contract' standard. Highlights the protagonist's benevolent nature compared to traditional, enslaving tamers."
+ ],
+ "heavenly-flame": [
+  "Heavenly Flame",
+  "'Heavenly Flame' or 'Earthly Flame' standard. Capitalize as proper nouns when named (e.g., 'Blue Lotus Earthly Flame'). Crucial for alchemy and combat-centric Xianxia (e.g., Battle Through the Heavens)."
+ ],
+ "spirit-herb": [
+  "Spirit Herb",
+  "'Spirit Herb' or 'Spiritual Plant' standard. 'Magic Herb' for Western/LitRPG overlap. Never just 'weed' or 'plant'."
+ ],
+ "spirit-spring-water": [
+  "Spirit Spring Water",
+  "'Spirit Spring Water' standard. 'Jade Nectar' for higher-tier/rarer variants."
+ ],
+ "array-eye": [
+  "Array Eye",
+  "'Array Eye' or 'Formation Core' standard. Do not translate literally as 'eye of the array' without context; it is a structural weak point, not a literal eyeball."
+ ],
+ "formation-flag": [
+  "Formation Flag",
+  "'Formation Flag' or 'Array Banner' standard. 'Array Disk' (Zhen Pan) for flat, compass-like tools used to control the formation."
+ ],
+ "spirit-gathering-array": [
+  "Spirit Gathering Array",
+  "'Spirit Gathering Array' or 'Qi Gathering Formation' standard. Essential for sect infrastructure and real-estate plots in cultivation cities."
+ ],
+ "red-gate": [
+  "Red Gate",
+  "ALWAYS 'Red Gate'. Do not translate as 'crimson door' or 'red portal'. It is a specific, recognized proper noun for an inescapable death-trap dungeon in Korean urban fantasy."
+ ],
+ "clear-condition": [
+  "Clear Condition",
+  "'Clear Condition' or 'Break Condition' standard. Essential for Tower climbing and survival arcs where the objective isn't always just combat."
+ ],
+ "magic-stone": [
+  "Magic Stone",
+  "'Magic Stone' or 'Magic Crystal' standard. Distinguish from 'Spirit Stones' (Xianxia currency) and 'Beast Cores' (Xianxia alchemy)."
+ ],
+ "penalty-quest": [
+  "Penalty Quest",
+  "'Penalty Quest' standard. Emphasize the lethal, punitive nature of the mechanic compared to standard side-quests."
+ ],
+ "floor-master": [
+  "Floor Master",
+  "'Floor Master' or 'Floor Boss' standard. 'Gatekeeper' if the entity's lore is specifically to bar passage rather than rule the floor."
+ ],
+ "porter": [
+  "Porter",
+  "'Porter' is the industry-standard translation for the Korean 'Potter'. Do not use 'Bellhop' or 'Luggage Carrier'."
+ ],
+ "scenario": [
+  "Scenario",
+  "ALWAYS translate as 'Scenario' in Korean System novels, not 'Quest' or 'Script'. It implies a forced, narrative-driven survival event."
+ ],
+ "probability": [
+  "Probability",
+  "Translate as 'Probability'. The System often announces 'The probability of [X] has increased.' Do not translate as 'Luck' or 'Odds'."
+ ],
+ "stigma": [
+  "Stigma",
+  "'Stigma' or 'Brand' standard. Distinguish from 'Skill' or 'Trait'."
+ ],
+ "murim-alliance": [
+  "Murim Alliance",
+  "'Murim Alliance' or 'Wulin Alliance' standard. Capitalize as a proper noun organization."
+ ],
+ "demonic-cult": [
+  "Demonic Cult",
+  "'Demonic Cult' or 'Unorthodox Faction' standard. 'Magyo' for flavor. Do not translate as 'Demon Religion'."
+ ],
+ "northern-duke": [
+  "Northern Duke",
+  "'Northern Duke' or 'Duke of the North' standard. Recognize this as a massive cultural trope, not just a geographical title."
+ ],
+ "tea-party": [
+  "Tea Party",
+  "Translate as 'Tea Party' or 'Social Gathering'. The AI must understand this is a high-tension political event, not a casual hangout."
+ ],
+ "munchkin": [
+  "Munchkin",
+  "Translate descriptively as 'Overpowered Protagonist' or 'Cheat Character' in prose. Keep 'Munchkin' for community tags and wiki metadata."
+ ],
+ "cider": [
+  "Cider",
+  "NEVER translate literally as the beverage in prose. Translate the *feeling*: 'cathartic', 'refreshing', 'satisfying', or 'ruthless'. Crucial for understanding Korean reader reviews and meta-commentary."
+ ],
+ "black-mastermind": [
+  "Black Mastermind",
+  "'Mastermind' or 'True Culprit' standard. 'Black Mastermind' preserves the literal Korean nuance for wiki/tags."
+ ],
+ "dokkaebi": [
+  "Dokkaebi",
+  "'Dokkaebi' is preferred for cultural flavor, but 'System Admin' or 'Fairy' is acceptable for general audiences. Never translate as 'Demon' or 'Orc'."
+ ],
+ "internal-energy": [
+  "Naegong",
+  "'Inner Force' or 'Internal Energy' standard. Keep 'Naegong' in glossary. Distinguish from 'Shim Gong' (the technique/manual)."
+ ],
+ "jade-beauty": [
+  "Jade Beauty",
+  "Translate as 'Jade Beauty' or 'Peerless Beauty'. In serious prose, vary the descriptions (e.g., 'flawless complexion', 'ethereal beauty') so the English text doesn't sound like a repetitive meme, but keep 'Jade Beauty' in the glossary for wiki/tags."
+ ],
+ "white-lotus": [
+  "White Lotus",
+  "NEVER translate literally as a flower in prose. Translate the *intent*: 'manipulative hypocrite', 'feigned innocence', or 'two-faced'. Use 'White Lotus' for community tags and wiki archetypes."
+ ],
+ "eating-tofu": [
+  "Eating Tofu",
+  "CRITICAL: NEVER translate literally as consuming food. Translate contextually as 'taking advantage of her', 'getting handsy', 'stealing a kiss', or 'flirting'."
+ ],
+ "coughing-up-blood": [
+  "Coughing Up Blood",
+  "Translate as 'coughing up blood' or 'spitting blood' for physical damage. If used metaphorically in modern/system settings, translate as 'furious', 'livid', or 'suffering a mental breakdown'."
+ ],
+ "frog-in-well": [
+  "Frog in the Well",
+  "Translate as 'ignorant', 'narrow-minded', or 'frog in a well'. Do not use literal amphibian references unless the MC is specifically mocking them with the idiom."
+ ],
+ "heaven-defying": [
+  "Heaven-Defying",
+  "'Heaven-Defying' or 'Defying the Heavens' standard. Capitalize when used as a proper noun concept (e.g., 'His luck was truly Heaven-Defying')."
+ ],
+ "green-hat": [
+  "Green Hat",
+  "CRITICAL: NEVER translate as literal clothing. Translate as 'cuckold', 'cuckoldry', or 'being cheated on'. The AI must understand this is a lethal insult, not a fashion critique."
+ ],
+ "shuang-wen": [
+  "Shuang Wen",
+  "Translate descriptively as 'Cathartic Novel', 'Power Fantasy', or 'Feel-Good Story' in prose. Use 'Shuang Wen' for app genre tags and community recommendations."
+ ],
+ "giving-face": [
+  "Giving Face",
+  "Translate as 'showing respect', 'honoring them', or 'accepting the apology'. For 'Refusing face', use 'snubbing', 'showing no respect', or 'humiliating them'."
+ ],
+ "dungeon-core": [
+  "Dungeon Core",
+  "'Dungeon Core' standard. CRITICAL: Do not confuse with Xianxia 'Golden Core' (Jie Dan) or 'Core Formation'. This is an architectural/monster-spawning entity, not a cultivator's internal organ."
+ ],
+ "fiefdom": [
+  "Fiefdom",
+  "Use 'Fiefdom', 'Demesne', or 'Territory' for political/feudal land. Reserve 'Domain' strictly for Cultivation spatial laws (Yu) to prevent reader confusion."
+ ],
+ "node": [
+  "Node",
+  "'Node' or 'Nexus' standard. 'Ley Line Node' for Western fantasy. 'Spirit Node' for Eastern hybrids."
+ ],
+ "contribution-points": [
+  "Contribution Points",
+  "ALWAYS 'Contribution Points' or 'Sect Points'. NEVER translate as 'Merit' (which implies karma/Heavenly Dao) or 'Spirit Stones'."
+ ],
+ "sect-mission-hall": [
+  "Sect Mission Hall",
+  "'Sect Mission Hall' or 'Task Pavilion' standard. Distinguish from a LitRPG 'System Quest Log', as this is a physical, diegetic building where disciples gather and gossip."
+ ],
+ "spirit-garden": [
+  "Spirit Garden",
+  "'Spirit Garden' or 'Herb Garden' standard. 'Medicinal Field' for larger, wilder plots."
+ ],
+ "city-lord": [
+  "City Lord",
+  "'City Lord' standard for Eastern/Cultivation cities. 'Governor' or 'Margrave' for Western/Feudal settings."
+ ],
+ "edict": [
+  "Edict",
+  "'Edict' or 'Decree' standard. Capitalize when referring to a specific System action (e.g., '[System: Issuing Edict - Tax Reduction]')."
+ ],
+ "vassal": [
+  "Vassal",
+  "'Vassal' or 'Tributary State' standard. 'Puppet Sect' if the sovereignty is entirely fake and controlled from the shadows."
+ ],
+ "primordial-chaos": [
+  "Primordial Chaos",
+  "'Primordial Chaos' or 'Chaos' standard. Do not confuse with 'Demonic Qi' (which is corruptive) or 'The Void' (which is spatial)."
+ ],
+ "the-void": [
+  "The Void",
+  "'The Void' or 'Void Space' standard. Distinguish from 'Chaos' (which is energetic) and 'Space' (which is a fundamental law)."
+ ],
+ "life-forbidden-zone": [
+  "Life Forbidden Zone",
+  "'Life Forbidden Zone' or 'Forbidden Zone' standard. Capitalize when referring to specific named zones (e.g., 'The Burial God Forbidden Zone')."
+ ],
+ "ancient-desolate-beast": [
+  "Ancient Desolate Beast",
+  "'Desolate Beast' or 'Ancient Desolate Beast' standard. 'True Spirit' for those with divine lineage. Do not translate simply as 'monster' or 'wild animal'."
+ ],
+ "star-field": [
+  "Star Field",
+  "'Star Field' or 'Astral River' standard. 'Galaxy' for Western sci-fi overlap. Use to denote the macro-geography of the universe beyond a single world."
+ ],
+ "spatial-storm": [
+  "Spatial Storm",
+  "'Spatial Storm' or 'Void Storm' standard. Distinguish from 'Heavenly Tribulation' (which is divine lightning from the heavens)."
+ ],
+ "nine-heavens": [
+  "Nine Heavens",
+  "'Nine Heavens' standard. Capitalize as a proper noun location. Do not translate as 'nine skies' or 'nine skies above'."
+ ],
+ "river-of-time": [
+  "River of Time",
+  "ALWAYS 'River of Time' or 'Long River of Time'. NEVER translate as a literal geographical river with water. It is a fundamental cosmic law."
+ ],
+ "epoch": [
+  "Epoch",
+  "'Epoch' or 'Chaos Cycle' standard. 'Kalpa' for Buddhist-influenced settings. Do not use 'period' or 'age', which are too small and mortal-scaled."
+ ],
+ "karmic-thread": [
+  "Karmic Thread",
+  "'Karmic Thread' or 'Thread of Fate' standard. NEVER translate as 'cause and effect wire' or 'line of reason'."
+ ],
+ "origin-source": [
+  "Origin Source",
+  "'Origin Source' or 'World Source' standard. Distinguish from 'Spiritual Root' (personal talent) or 'Qi Source' (energy well)."
+ ],
+ "heaven-and-earth": [
+  "Heaven and Earth",
+  "Translate contextually as 'The Universe', 'The World', or 'Creation' in prose to avoid clunky literalism, but preserve 'Heaven and Earth' in idioms (e.g., 'Heaven and Earth as a furnace')."
+ ],
+ "wuji": [
+  "Wuji",
+  "'Wuji' or 'Primordial Void' standard. Distinguish from 'The Void' (Xu Kong), which is spatial. Wuji is ontological (the absence of reality itself)."
+ ],
+ "dao-source": [
+  "Dao Source",
+  "'Dao Source' or 'Origin of the Dao' standard. Capitalize as a supreme title/realm."
+ ],
+ "engagement-annulment": [
+  "Engagement Annulment",
+  "'Engagement Annulment' or 'Marriage Annulment' standard. This is NOT a modern divorce; it is a formal, public severing of a clan-level contract that constitutes a lethal loss of Face. The AI must treat this as an act of war, not a breakup."
+ ],
+ "toad-lusting-after-swan-meat": [
+  "Toad Lusting After Swan Meat",
+  "Translate the idiom contextually as 'a toad lusting after swan meat' (preserved for flavor) or 'delusions above your station' (adapted). The AI must understand this is a severe social insult about romantic ambition, not about actual animals or food."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "Don't Bully the Young Into Poverty",
+  "Preserve as 'Don't bully the young into poverty' or adapt as 'Never underestimate the young'. The AI must recognize this as a formal, iconic vow of future revenge, not casual dialogue."
+ ],
+ "concubine": [
+  "Concubine",
+  "'Concubine' standard for Eastern/ancient settings. 'Consort' for imperial contexts. The AI should understand the political and hierarchical implications, not treat it as casual polyamory."
+ ],
+ "sect-rules": [
+  "Sect Rules",
+  "'Sect Rules' or 'Clan Laws' standard. Capitalize when referring to a specific code (e.g., 'The Third Sect Rule')."
+ ],
+ "filial-piety": [
+  "Filial Piety",
+  "'Filial Piety' standard. 'Filial Duty' for casual contexts. The AI must understand this is a binding cosmic/social law, not just 'being polite to parents'."
+ ],
+ "pill-tribulation": [
+  "Pill Tribulation",
+  "CRITICAL: AI often confuses this with a human's tribulation. Ensure the translation makes it clear that the *pill itself* is being struck by lightning, not the alchemist (though the alchemist often intervenes to block it)."
+ ],
+ "monster-genius": [
+  "Monster (Genius)",
+  "Translate as 'monster', 'freak', or 'monstrous genius'. The AI must NOT assume the character is a literal beast or demon unless the context specifies 'Demon Race'."
+ ],
+ "gu-venom-witchcraft": [
+  "Gu (Venom/Witchcraft)",
+  "Translate as 'Gu', 'Venom Insects', or 'Parasitic Sorcery'. Distinguish from standard 'Beast Taming', as Gu is inherently sinister, parasitic, and venom-based."
+ ],
+ "corpse-refining": [
+  "Corpse Refining",
+  "'Corpse Refining' or 'Puppetry' standard. 'Iron/Copper Corpse' for the specific ranks. Distinguish from Western 'Necromancy' (which raises skeletons/spiritually), as this is physical, alchemical body-tempering of the dead."
+ ],
+ "fairy-sister": [
+  "Fairy Sister",
+  "Translate as 'Fairy Sister', 'Senior Sister', or 'Goddess'. Do not translate 'Xian Zi' as a literal magical fairy with wings. It means 'ethereal woman'."
+ ],
+ "young-miss": [
+  "Young Miss",
+  "'Young Miss' or 'Noble Daughter' standard. CRITICAL LORE NOTE: In modern Chinese slang, 'Xiao Jie' can mean 'prostitute', but in historical/cultivation web novels, it STRICTLY means 'noble daughter'. The AI must never apply the modern slang connotation here."
+ ],
+ "mount-kunlun": [
+  "Mount Kunlun",
+  "Always 'Mount Kunlun'. Capitalize as a proper noun. Recognize it as a mythological heavyweight, not just a random mountain."
+ ],
+ "aggro": [
+  "Aggro",
+  "CRITICAL: NEVER translate as 'anger', 'hatred', or 'hostility' in a combat context. Translate as 'aggro', 'threat', or 'enmity'. (e.g., 'The monster's threat level shifted to the healer.')"
+ ],
+ "crowd-control": [
+  "Crowd Control",
+  "Translate as 'Crowd Control' or preserve the acronym 'CC'. Do not translate as 'riot control' or 'mob control'. 'CC the boss' means 'stun the boss', not 'control the crowd of people'."
+ ],
+ "kiting": [
+  "Kiting",
+  "CRITICAL: NEVER translate as 'flying a kite' or 'toy kite'. Translate as 'kiting', 'leading the monster', or 'hit-and-run tactics'."
+ ],
+ "aoe": [
+  "AoE",
+  "Preserve as 'AoE' or translate as 'Area of Effect'. 'Splash damage' is acceptable for physical attacks. Do not translate the acronym literally."
+ ],
+ "proc": [
+  "Proc",
+  "CRITICAL: NEVER translate as 'process', 'procurement', or 'proceed'. Translate as 'proc' (gamer slang), 'trigger', or 'activate'. (e.g., 'My passive skill triggered.')"
+ ],
+ "kill-steal": [
+  "Kill Steal",
+  "'Kill Steal' or 'KS' standard. In Korean novels, '막타' (Mak-ta) literally means 'Last Hit' but functions identically to 'Kill Steal' or 'Sniping the boss'. Translate contextually as 'stealing the kill'."
+ ],
+ "tank": [
+  "Tank",
+  "'Tank' standard. 'Meat Shield' for slang. Do not translate as 'armored vehicle' or 'water tank'."
+ ],
+ "dps": [
+  "DPS",
+  "Preserve 'DPS' or translate as 'Damage Dealer'. In Korean novels, they frequently use the English loanword 'Dealer' (딜러) to mean DPS. Translate 'Dealer' as 'DPS' or 'Damage Dealer' in combat contexts, not 'merchant'."
+ ],
+ "gold-sink": [
+  "Gold Sink",
+  "'Gold Sink' or 'Money Sink' standard. Do not translate literally as a 'sink made of gold' or a 'plumbing fixture'. It is an economic term."
+ ],
+ "auction-sniping": [
+  "Auction Sniping",
+  "Translate as 'Auction Sniping' or 'Last-second bidding'. CRITICAL: Ensure the AI knows this is an economic bidding tactic, not 'shooting someone with a sniper rifle'."
+ ],
+ "griefing": [
+  "Griefing",
+  "'Griefing' or 'Trolling' standard. Distinguish from legitimate 'PK' (Player Killing) or PvP, which is often a valid game mechanic. Griefing is purely malicious harassment."
+ ],
+ "dot": [
+  "DoT",
+  "Preserve 'DoT' or translate as 'Damage over Time'. 'Bleed/Poison/Burn' are specific types of DoTs. Do not translate as 'Doctor of Theology' or 'a dot on a map'."
+ ],
+ "contract-marriage": [
+  "Contract Marriage",
+  "'Contract Marriage' or 'Marriage of Convenience' standard. Do not translate as 'Business Marriage' unless it'sa modern corporate setting."
+ ],
+ "reawakening": [
+  "Reawakening",
+  "'Reawakening' or 'Second Awakening' standard. Distinguish from the initial 'Awakening' (Gak-seong) and standard LitRPG 'Leveling Up'."
+ ],
+ "tyrant": [
+  "Tyrant",
+  "'Tyrant' or 'Mad Emperor' standard. Capitalize when used as a title (e.g., 'The Tyrant of the Empire')."
+ ],
+ "obsessive-male-lead": [
+  "Obsessive Male Lead",
+  "'Obsessive Male Lead' or 'Possessive Male Lead' standard. Use 'Yandere' only for community tags/wiki metadata, as it'sa Japanese term."
+ ],
+ "original-heroine": [
+  "Original Heroine",
+  "'Original Heroine' or 'Original Female Lead' standard. The AI must recognize that in this genre, the 'Original Heroine' is usually the *actual* antagonist."
+ ],
+ "regression-trauma": [
+  "Regression Trauma",
+  "Translate descriptively as 'Regression Trauma', 'PTSD from his past life', or 'the weight of his memories'."
+ ],
+ "hunter-association": [
+  "Hunter Association",
+  "'Hunter Association' standard. Distinguish from private 'Hunter Guilds'. The Association is the government/police; the Guilds are the military/corporations."
+ ],
+ "sudden-death": [
+  "Sudden Death",
+  "Translate as 'Sudden Death' or 'Traffic Accident' in prose. Keep 'Truck-kun' for app community tags and meta-humor wikis."
+ ],
+ "guild-master": [
+  "Guild Master",
+  "'Guild Master' standard for fantasy/action contexts. If the novel heavily emphasizes the corporate/financial aspect, 'Guild CEO' is acceptable."
+ ],
+ "adventurer-ranks": [
+  "Adventurer Ranks",
+  "Preserve the Letter (F-S) or Material (Iron-Orichalcum) hierarchy. Do not translate as 'military ranks' or 'corporate tiers'. Capitalize ranks (e.g., 'S-Rank Adventurer')."
+ ],
+ "beastkin": [
+  "Beastkin",
+  "ALWAYS translate as 'Beastkin' or 'Demi-human'. NEVER translate 'Juujin' as 'monster' or 'wild man', as this erases the racial/political allegory central to many Isekai plots."
+ ],
+ "demon-god": [
+  "Demon God",
+  "'Demon God' or 'Majin' standard. Distinguish clearly from 'Demon Lord' (Maou)."
+ ],
+ "unique-skill": [
+  "Unique Skill",
+  "'Unique Skill' standard. Capitalize as a proper noun System mechanic (e.g., 'He awakened his Unique Skill'). Distinguish from standard 'Magic' or 'Arts'."
+ ],
+ "demon-realm": [
+  "Demon Realm",
+  "'Demon Realm' or 'Demon World' standard. Capitalize as a proper noun geographical location."
+ ],
+ "slave-crest": [
+  "Slave Crest",
+  "'Slave Crest' or 'Geas' standard. Do not translate as 'prison tattoo' or 'gang mark'. It is a magical, binding contract."
+ ],
+ "subjugation": [
+  "Subjugation",
+  "ALWAYS 'Subjugation' or 'Extermination' for monsters. NEVER 'Conquest' or 'Pacification' unless referring to a human rebellion."
+ ],
+ "otherworlder": [
+  "Otherworlder",
+  "'Otherworlder' or 'Outsider' standard. Distinguish from 'Transmigrator' (which is the meta-narrative term; 'Otherworlder' is what the native NPCs call them)."
+ ],
+ "heros-party": [
+  "Hero's Party",
+  "'Hero's Party' or 'Hero's Companions' standard. Capitalize as a formal, Kingdom-recognized title."
+ ],
+ "dao-heart": [
+  "Dao Heart",
+  "ALWAYS 'Dao Heart'. Do not translate as 'morals', 'conscience', or 'mental health'. It is a tangible, cultivable asset in the Xianxia universe."
+ ],
+ "severing-mortal-ties": [
+  "Severing Mortal Ties",
+  "'Severing Mortal Ties' or 'Cutting Worldly Attachments' standard. Do not translate simply as 'moving away' or 'breaking up'. It is a profound, often tragic metaphysical necessity."
+ ],
+ "five-elements": [
+  "Five Elements",
+  "'Five Elements' standard. 'Five Phases' for academic/historical contexts. Ensure the AI understands 'Metal' (Jin) represents all minerals/gold/swords, not just the material, and 'Wood' (Mu) represents all flora/life."
+ ],
+ "yin-and-yang": [
+  "Yin and Yang",
+  "Preserve as 'Yin and Yang'. Do not translate as 'Good and Evil' or 'Light and Dark magic', as Yin/Yang are neutral, natural forces, not moral alignments."
+ ],
+ "enlightenment": [
+  "Enlightenment",
+  "'Enlightenment' or 'Epiphany' standard. Distinguish from LitRPG 'Level Up'. This is a philosophical breakthrough that results in a power surge, not a system notification."
+ ],
+ "mortal-tribulation": [
+  "Mortal Tribulation",
+  "'Mortal Tribulation' or 'Red Dust Tribulation' standard. CRITICAL: AI must understand the character is willingly living as a powerless human to gain philosophical enlightenment, not being punished or stripped of power by an enemy."
+ ],
+ "soul-dissipation": [
+  "Soul Dissipation",
+  "'Soul Dissipation' or 'Soul Scattering' standard. Distinguish heavily from standard 'death'. When a villain threatens this, they are threatening absolute, eternal erasure."
+ ],
+ "dao-marks": [
+  "Dao Marks",
+  "'Dao Marks' or 'Dao Patterns' standard. Do not translate as 'graffiti', 'tattoos', or 'writing'. They are the literal source code of the universe etched into matter."
+ ],
+ "nirvana": [
+  "Nirvana",
+  "'Nirvana' or 'Nirvana Rebirth' standard. Distinguish from standard 'Reincarnation' (which involves a new body/baby). Nirvana is a self-inflicted, fiery metamorphosis of the current existence."
+ ],
+ "fellow-daoist": [
+  "Fellow Daoist",
+  "ALWAYS 'Fellow Daoist' or simply 'Friend'. NEVER translate literally as 'Friend of the Way' or 'Colleague' (which sounds like a modern corporate office)."
+ ],
+ "sect-familial-address": [
+  "Sect Familial Address",
+  "Use 'Senior/Junior Brother/Sister' and 'Martial Uncle/Aunt'. CRITICAL: The AI must understand this denotes *martial seniority*, not biological family or age. Do not use 'Older/Younger Brother'."
+ ],
+ "cold-snort": [
+  "Cold Snort",
+  "Translate as 'Hmph', *snorted coldly*, or *gave a cold harrumph*. CRITICAL: NEVER translate as a literal pig snort, 'he hummed', or 'he breathed heavily'. It is a vocal expression of contempt."
+ ],
+ "dog-leg-lackey": [
+  "Dog Leg / Lackey",
+  "Translate as 'lackey', 'sycophant', 'lapdog', or 'flunky'. CRITICAL LORE NOTE: If the MC yells 'I will chop off your dog legs!', they mean 'I will kill your lackeys!', NOT that they are performing veterinary amputation."
+ ],
+ "jianghu": [
+  "Jianghu",
+  "Preserve as 'Jianghu' or translate as 'Martial Arts World'. CRITICAL: NEVER translate literally as 'rivers and lakes' (geographical bodies of water). 'Retiring from the Jianghu' means leaving the martial life, not moving away from a lake."
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "Sitting on the Mountain Watching Tigers Fight",
+  "Translate the *meaning* ('letting them tear each other apart', 'waiting for them to exhaust themselves') rather than the literal imagery of watching animals at a zoo."
+ ],
+ "chaebol": [
+  "Chaebol",
+  "Translate as 'Chaebol', 'Conglomerate', or 'Mega-Corporation'. Recognize this as a massive socio-economic power player in modern KR urban fantasy."
+ ],
+ "heavenly-oath": [
+  "Heavenly Oath",
+  "'Heavenly Oath' or 'Soul Oath' standard. Do not translate as a 'legal contract' or 'pinky promise'. It is a metaphysical, lethal binding."
+ ],
+ "title-achievement": [
+  "Title / Achievement",
+  "'Title' or 'Achievement' standard. Distinguish clearly from 'Class' (which dictates skills) and 'Skill' (which is an active ability)."
+ ],
+ "system-erasure": [
+  "System Erasure",
+  "'System Erasure' or 'Deletion' standard. Emphasize the finality and horror of being deleted like a computer file, rather than just 'dying'."
+ ],
+ "sweet-potato": [
+  "Sweet Potato",
+  "CRITICAL: NEVER translate literally as the root vegetable in prose or reviews. Translate the feeling: 'frustrating', 'suffocating', 'infuriating', or 'slow-burn'. Essential for understanding Korean reader complaints (e.g., 'This arc is pure sweet potato')."
+ ],
+ "white-moonlight": [
+  "White Moonlight",
+  "Translate as 'White Moonlight' for cultural flavor in poetic contexts, or 'idealized first love' / 'unattainable memory' for smoother English prose. NEVER translate as literal astronomical moonlight."
+ ],
+ "cinnabar-mole": [
+  "Cinnabar Mole",
+  "Translate as 'Cinnabar Mole' in poetic/metaphorical contexts, or 'passionate, unforgettable love' in prose. Do not translate as a literal dermatological skin condition."
+ ],
+ "holy-mother": [
+  "Holy Mother",
+  "CRITICAL: NEVER translate as the Virgin Mary or a literal religious figure. Translate the behavior: 'toxic pacifist', 'naively merciful', 'blindly forgiving', or 'illogically self-sacrificing'."
+ ],
+ "dog-blood": [
+  "Dog Blood",
+  "NEVER translate as literal animal blood or gore. Translate as 'soap opera drama', 'melodramatic', 'cliché', or 'ridiculously dramatic'."
+ ],
+ "angst": [
+  "Angst",
+  "Translate as 'Angst', 'Heart-wrenching', or 'Tragic'. In community tags, preserve 'Nue' or 'Angst'. Distinguish from simple 'sadness'; 'Nue' implies active, often drawn-out emotional or physical torment."
+ ],
+ "scum": [
+  "Scum",
+  "Translate as 'Scum', 'Trash', 'Cheater', or 'Manipulative'. 'Scum Man' is the universally recognized translation for Zha Nan. Do not translate as literal garbage or waste."
+ ],
+ "brain-dead": [
+  "Brain-dead",
+  "Translate as 'brainless', 'illogical', or 'lacking common sense'. Do not translate as a medical condition or literal brain death."
+ ],
+ "meat": [
+  "Meat",
+  "NEVER translate literally as culinary meat or livestock in review/meta contexts. Translate as 'smut', 'explicit content', 'spicy scenes', or 'NSFW'. Crucial for parsing reader reviews and content warnings."
+ ],
+ "green-tea": [
+  "Green Tea",
+  "NEVER translate as the beverage. Translate the intent: 'manipulative', 'feigning innocence', 'two-faced', or 'scheming'. If used as a direct insult in dialogue, 'scheming witch' or 'fake innocent' works best."
+ ],
+ "territory": [
+  "Territory",
+  "CRITICAL: Translate strictly as 'Territory', 'Fiefdom', or 'Estate'. NEVER translate as 'Domain' to avoid confusion with the metaphysical combat space."
+ ],
+ "rebirth": [
+  "Rebirth",
+  "Chinese 'Chong Sheng'. Can mean waking up in the past (similar to regression) OR waking up in a completely new body in the future. Context dictates."
+ ],
+ "devil-mara": [
+  "Devil / Mara",
+  "CRITICAL: 'Devil' or 'Fiend' for Mo Xiu/Mo Zu to emphasize evil/corruption. 'Inner Demon/Heart Devil' for psychological blockages. 'Mara' for Buddhist contexts. Keep distinct from biological 'Demons' (Yao)."
+ ],
+ "demonic-beast": [
+  "Demonic Beast",
+  "CRITICAL: 'Demonic Beast' or 'Monster' for hostile creatures. Distinguish strictly from the neutral/intelligent 'Spirit Beast'."
+ ],
+ "truck-kun": [
+  "Truck-kun",
+  "Preserve as 'Truck-kun' with the honorific intact; it is a proper-noun meme within the fandom, not a literal truck description. Do not translate the '-kun' away."
+ ],
+ "cheat-skill": [
+  "Cheat Skill",
+  "Translate as 'Cheat Skill' or 'Cheat Ability' — 'cheat' is used descriptively in-genre, not pejoratively. Do not soften to 'special skill,' which loses the balance-breaking connotation."
+ ],
+ "divine-protection": [
+  "Divine Protection",
+  "Translate as 'Divine Protection' or 'Blessing.' Keep distinct from 'Skill' — a Protection is passive and deity-sourced; a Skill is typically active and self-developed or system-granted."
+ ],
+ "genkai-toppa": [
+  "Genkai Toppa",
+  "Translate as 'Limit Break' for general audiences, or preserve 'Genkai Toppa' in more hardcore-fan-oriented releases. Context (target readership) decides."
+ ],
+ "chuunibyou": [
+  "Chuunibyou",
+  "Preserve as 'Chuunibyou' with a light gloss on first use ('main-character delusions'/'edgy teen phase'). Avoid literal translation of '8th-grader disease,' which reads as nonsensical to non-JP-fluent readers without context."
+ ],
+ "tsundere": [
+  "Tsundere",
+  "Preserve as 'Tsundere' — it has full fandom-lexicon status in English and translating it ('cold-then-warm girl') reads as clunky and loses genre signaling."
+ ],
+ "yandere": [
+  "Yandere",
+  "Preserve as 'Yandere' — established fandom term with no adequate one-word English equivalent that preserves the tonal warning it carries."
+ ],
+ "san": [
+  "-san",
+  "Preserve as '-san' in xianxia-adjacent isekai and slice-of-life translations where honorifics are kept; drop entirely (rendered as plain name) in Westernized adaptations. House style decides — flag at project level, not per-instance."
+ ],
+ "chan": [
+  "-chan",
+  "Preserve as '-chan' when honorifics are kept in-text; if dropped, compensate with an affectionate nickname or diminutive in English to avoid losing the intimacy signal entirely."
+ ],
+ "kun": [
+  "-kun",
+  "Preserve as '-kun' when honorifics are kept in-text. Do not conflate with '-chan' — '-kun' carries different gender and formality connotations."
+ ],
+ "dono": [
+  "-dono",
+  "Preserve as '-dono' to signal archaic/formal register; if dropped, compensate in English with formal address ('Lord [Name]', 'milord') rather than a plain name, or the register shift is lost."
+ ],
+ "sensei": [
+  "-sensei",
+  "Preserve as '-sensei' when honorifics are kept; translate as 'Teacher' or 'Master' only when the honorific set is otherwise fully localized for the target release."
+ ],
+ "adventurer-guild": [
+  "Adventurer Guild",
+  "Translate as 'Adventurer Guild.' Distinguish from 'Hunter Association' (Korean equivalent institution) — do not use interchangeably across source-language contexts."
+ ],
+ "vrmmo": [
+  "VRMMO",
+  "Preserve as 'VRMMO.' CRITICAL: do not conflate with 'Isekai' — a VRMMO world is explicitly fictional/simulated within the story's own logic, whereas Isekai implies a genuinely separate reality. Conflating them causes plot-logic translation errors."
+ ],
+ "goddess": [
+  "Goddess",
+  "Translate as 'Goddess,' capitalized when referring to this specific framing-device character rather than deities generally. Distinguish from setting-specific named gods."
+ ],
+ "gate": [
+  "Gate",
+  "Translate as 'Gate.' Keep distinct from 'Red Gate' — Gate is the umbrella term; Red Gate is a specific high-danger variant that seals Hunters inside until cleared, with no rescue possible."
+ ],
+ "awakening": [
+  "Awakening",
+  "Translate as 'Awakening' for the event and 'Awakened' for the resulting status noun (an Awakened person). Keep distinct from 'Reawakening,' which is specifically a SECOND awakening event, not a synonym for the first."
+ ],
+ "regressor": [
+  "Regressor",
+  "Translate as 'Regressor.' Do not use interchangeably with 'Returner' — Regressor implies time travel into one's own past self; Returner implies a spatial/dimensional return from elsewhere (per the existing Regression and Returner entries)."
+ ],
+ "national-level-hunter": [
+  "National Level Hunter",
+  "Preserve the full phrase 'National Level Hunter' — do not shorten to 'S-Rank,' which is a lower, more common tier. This is a distinct, higher classification band."
+ ],
+ "hunter-rank": [
+  "Hunter Rank",
+  "Translate as 'Rank' when referring to a Hunter's personal classification. Do NOT conflate with 'Grade,' which classifies items, monsters, and Gates rather than people — even though both derive from the same Korean source word (등급)."
+ ],
+ "grade": [
+  "Grade",
+  "Translate as 'Grade' for items, monsters, and Gates. Do NOT conflate with 'Rank,' which is reserved for a Hunter's own personal classification — this split is an English-side convention imposed on a single shared source term to keep readers from confusing hunter power with object power."
+ ],
+ "mana": [
+  "Mana",
+  "CRITICAL: 'Mana' is valid ONLY in LitRPG/System/Hunter contexts. It must NEVER be used to translate 'Qi' in Xianxia/Wuxia/Cultivation contexts (see the Qi entry's explicit ban). The two energy systems run on incompatible cosmological logic and must stay lexically separate."
+ ],
+ "shadow-soldier": [
+  "Shadow Soldier",
+  "Translate as 'Shadow Soldier' (individual) / 'Shadow Army' or 'Shadow Legion' (collective). Preserve the 'Shadow' qualifier — do not generalize to plain 'undead minion,' which loses the specific genre association."
+ ],
+ "monarch": [
+  "Monarch",
+  "Translate as 'Monarch.' Preserve the specific domain qualifier (Shadow/Ice/Beast, etc.) as part of the title rather than translating generically as 'Ruler' or 'Lord,' which loses the power-hierarchy signal."
+ ],
+ "hyung": [
+  "Hyung",
+  "Preserve as 'Hyung' when honorifics are kept in-text; substitute with the character's name or 'bro'/'man' only if honorifics are fully localized away for the release."
+ ],
+ "noona": [
+  "Noona",
+  "Preserve as 'Noona' when honorifics are kept in-text. Note the gender-specificity — used only by male speakers; a female speaker addressing an older female friend would use 'Unnie' instead."
+ ],
+ "oppa": [
+  "Oppa",
+  "Preserve as 'Oppa' — it is widely fandom-recognized and often carries romantic-comedy connotations that a translated equivalent like 'big bro' would flatten or misrepresent."
+ ],
+ "sunbae": [
+  "Sunbae",
+  "Preserve as 'Sunbae' (or translate as 'Senior' if honorifics are localized away). Keep distinct from age-based honorifics like Hyung/Noona/Oppa — Sunbae is tenure-based, not age-based."
+ ],
+ "ahjussi": [
+  "Ahjussi",
+  "Preserve as 'Ahjussi' when honorifics are kept — it carries an age/social-distance signal that 'Mister' or 'Sir' only partially captures. Tone should be conveyed through surrounding dialogue, not the term itself."
+ ],
+ "ahjumma": [
+  "Ahjumma",
+  "Preserve as 'Ahjumma' when honorifics are kept — the term carries both an age marker and a cultural-archetype connotation that a flat translation like 'ma'am' loses entirely."
+ ],
+ "dungeon-break": [
+  "Dungeon Break",
+  "Translate/preserve as 'Dungeon Break.' Keep distinct from a Gate simply 'closing' or being 'cleared' — a Break specifically denotes catastrophic failure with real-world monster incursion."
+ ],
+ "boss-monster": [
+  "Boss Monster",
+  "Translate as 'Boss Monster' or 'Dungeon Boss.' Distinguish from an ordinary high-Grade monster encountered en route — the Boss designation implies a guaranteed, climactic, named encounter."
+ ],
+ "first-clear": [
+  "First Clear",
+  "Translate as 'First Clear.' Preserve as a distinct mechanical term rather than folding into generic 'clearing' — the 'first' qualifier is what triggers the bonus-reward mechanic."
+ ],
+ "clear": [
+  "Clear",
+  "Translate as 'Clear.' Functions as both verb ('to clear a Gate') and noun ('the Clear'); keep consistent with 'First Clear' as the specialized bonus-reward variant."
+ ],
+ "penalty": [
+  "Penalty",
+  "Translate as 'Penalty.' Keep as a System-specific mechanical term rather than generalizing to 'punishment,' which loses the automated, non-negotiable nature of the consequence."
+ ],
+ "compensation": [
+  "Compensation",
+  "Translate as 'Compensation' or 'Reward'; 'Compensation' is the more literal and commonly-used term in fan translation communities for this specific System mechanic."
+ ],
+ "ranker": [
+  "Ranker",
+  "Translate as 'Ranker.' Keep distinct from 'Hunter Rank' — a Ranker's position is competitive and leaderboard-based (can rise or fall), while Hunter Rank is a certified classification tier."
+ ],
+ "player-kill": [
+  "Player Kill",
+  "Preserve as 'PK' or spell out 'Player Kill' on first use — this is gaming jargon carried directly into System-genre fiction and assumes reader familiarity with LitRPG conventions."
+ ],
+ "broadcast": [
+  "Broadcast",
+  "Translate as 'Broadcast.' Distinguish from ordinary in-story media — this is specifically a System- or Association-facilitated live feed of combat, not general news coverage."
+ ],
+ "mutant-monster": [
+  "Mutant Monster",
+  "Translate as 'Mutant Monster' or 'Variant.' Keep distinct from 'Boss Monster' — a Mutant is an anomaly within its Grade, not a guaranteed climactic encounter."
+ ],
+ "growth-type-ability": [
+  "Growth-Type Ability",
+  "Translate the mechanical concept as 'Growth-Type Ability.' In dialogue where characters mock the ability, 'Trash Skill' or 'Junk Skill' captures the in-story derision; use the harsher term only in that mocking context, not as the neutral narrator-voice descriptor."
+ ],
+ "evolution": [
+  "Evolution",
+  "Translate as 'Evolution.' Keep distinct from ordinary leveling — Evolution implies a qualitative transformation (new name, new tier) rather than a numeric stat increase."
+ ],
+ "floor": [
+  "Floor",
+  "Translate as 'Floor.' Keep consistent with 'Tower' terminology — do not substitute 'Level,' which reads as a LitRPG stat-level term rather than a physical/structural location within the Tower."
+ ],
+ "test": [
+  "Test",
+  "Translate as 'Test.' Keep distinct from 'Scenario' — do not use interchangeably even though both are System/structure-issued challenges; a Test is bound to a specific Floor of a Tower."
+ ],
+ "test-administrator": [
+  "Test Administrator",
+  "Translate as 'Test Administrator' or 'Examiner.' Keep distinct from 'Floor Guardian' — an Administrator oversees and judges; a Guardian is the combat obstacle itself, and the two roles may or may not be held by the same individual depending on the work."
+ ],
+ "floor-guardian": [
+  "Floor Guardian",
+  "Translate as 'Floor Guardian' or 'Guardian.' Keep distinct from 'Boss Monster' (Hunter/Dungeon-genre term for a Grade-classified dungeon enemy) — a Floor Guardian is Tower-specific and often sapient, sometimes even administrative rather than purely hostile."
+ ],
+ "irregular": [
+  "Irregular",
+  "Preserve/translate as 'Irregular' — an established loanword-adjacent term in the subgenre. Keep capitalized when used as a formal status designation rather than a casual adjective."
+ ],
+ "regular": [
+  "Regular",
+  "Translate/preserve as 'Regular,' always paired conceptually with 'Irregular.' Rarely needs emphasis on its own — mostly appears as a contrast term."
+ ],
+ "hidden-floor": [
+  "Hidden Floor",
+  "Translate as 'Hidden Floor' or 'Secret Floor.' Keep distinct from ordinary numbered Floors — its defining trait is that most climbers never know it exists."
+ ],
+ "wall": [
+  "Wall",
+  "Translate as 'the Wall,' capitalized when used as this specific power-gap trope rather than a literal architectural wall. Context should make clear which sense is meant; when ambiguous, favor the metaphorical reading in Tower/Ranker-adjacent scenes."
+ ],
+ "family": [
+  "Family",
+  "Translate as 'Family' when the source uses the loanword sense (an organized power bloc), not a literal blood-relation family. Disambiguate from ordinary kinship 'family' by context — this is a political/organizational entity."
+ ],
+ "observer": [
+  "Observer",
+  "Translate as 'Observer.' Keep distinct from 'Test Administrator' — an Observer's defining trait is non-interference; an Administrator has active authority over the Test itself."
+ ],
+ "onii-chan": [
+  "Onii-chan",
+  "Preserve as 'Onii-chan' when honorifics/kinship terms are kept in-text; translate as 'big brother' or the character's name with an affectionate qualifier if honorifics are fully localized away."
+ ],
+ "onee-chan": [
+  "Onee-chan",
+  "Preserve as 'Onee-chan' when honorifics/kinship terms are kept in-text; translate as 'big sister' or an affectionate qualifier if honorifics are fully localized away."
+ ],
+ "ossan": [
+  "Ossan",
+  "Translate as 'Ossan' (preserved as slang/nickname) or 'middle-aged man' depending on register. When referring to the subgenre trope itself, use 'Ossan protagonist' or 'Ossan isekai.'"
+ ],
+ "osananajimi": [
+  "Osananajimi",
+  "Translate as 'Childhood Friend.' Preserve 'Osananajimi' only in fan-translation-style releases where genre-savvy readers recognize the trope name itself."
+ ],
+ "kokuhaku": [
+  "Kokuhaku",
+  "Translate as 'Confession.' Capitalize when referring to the specific story-beat trope rather than a confession in the general sense (e.g., confessing a crime)."
+ ],
+ "bunkasai": [
+  "Bunkasai",
+  "Translate as 'Cultural Festival' or 'School Festival' for general audiences; preserve 'Bunkasai' only where the setting's specific Japanese school-life flavor is being emphasized."
+ ],
+ "guild-card": [
+  "Guild Card",
+  "Translate as 'Guild Card.' Keep distinct from 'Status Window' — a Status Window is a private, personal-only display; a Guild Card is a physical, shareable object others can inspect."
+ ],
+ "job-change": [
+  "Job Change",
+  "Translate as 'Job Change' or 'Class Change.' Keep distinct from ordinary leveling — a Job Change implies a qualitative upgrade to a new named Class tier, not a numeric stat increase."
+ ],
+ "labyrinth": [
+  "Labyrinth",
+  "Translate as 'Labyrinth' or 'Dungeon' depending on target tone — favor 'Labyrinth' when the source deliberately uses the native term (迷宮) to evoke a more classical/mythic register rather than the casual loanword ダンジョン."
+ ],
+ "blacksmith": [
+  "Blacksmith",
+  "Translate as 'Blacksmith.' When referring to the specific slow-paced crafting-focused protagonist subgenre, use 'Blacksmith isekai' or 'crafting isekai.'"
+ ],
+ "slow-life": [
+  "Slow Life",
+  "Translate/preserve as 'Slow Life,' used as a genre/subgenre tag rather than a mechanical term — signals reader expectation of low conflict and domestic-focused pacing."
+ ],
+ "skill-book": [
+  "Skill Book",
+  "Translate as 'Skill Book.' Keep distinct from a Skill simply being learned through leveling or training — a Skill Book grants the ability instantly upon use, bypassing the normal acquisition process."
+ ],
+ "great-sage": [
+  "Great Sage",
+  "Translate as 'Great Sage' or 'Sage.' Keep distinct from 'Goddess' — a Sage is an in-world mentor figure; a Goddess is the framing-device deity who typically appears only at the story's outset."
+ ],
+ "sacred-sword": [
+  "Sacred Sword",
+  "Translate as 'Sacred Sword' or 'Holy Sword.' Preserve 'Seiken' only in titles/proper-noun contexts where the term functions as part of a specific weapon's name."
+ ],
+ "entrance-exam": [
+  "Entrance Exam",
+  "Translate as 'Entrance Exam' or 'Admission Trial' depending on setting register — modern-flavored Hunter academies read more naturally as 'Exam'; classical xianxia settings read more naturally as 'Trial.'"
+ ],
+ "class-ranking": [
+  "Class Ranking",
+  "Translate as 'Class Ranking,' or preserve the specific numbering/lettering convention (e.g., '1st Class,' 'S-Class') used by the source text."
+ ],
+ "mob-class": [
+  "Mob Class",
+  "Translate as 'Mob Class,' 'F-Class,' or 'Fodder Class' depending on the letter/rank convention used in-text. Keep the derisive tone — this is meant to read as an insult, not a neutral administrative label."
+ ],
+ "late-bloomer": [
+  "Late Bloomer",
+  "Translate as 'Late Bloomer' for the archetype generally; 'Hidden Talent' when emphasizing the concealment aspect specifically rather than the delayed-timing aspect."
+ ],
+ "graduation-trial": [
+  "Graduation Trial",
+  "Translate as 'Graduation Trial.' Keep distinct from the opening 'Entrance Exam' — the Graduation Trial closes the arc and is typically framed as far more dangerous."
+ ],
+ "novel-knowledge": [
+  "Novel Knowledge",
+  "Translate as 'Novel Knowledge' or 'Future Knowledge.' Keep distinct from ordinary Regression/prophecy — this specifically implies the protagonist experienced the world's events as consumed media, not as a lived first timeline."
+ ],
+ "fourth-wall": [
+  "Fourth Wall",
+  "Translate/preserve as 'Fourth Wall' or 'breaking the fourth wall.' Keep distinct from Novel Knowledge — a Fourth Wall break addresses the fictional frame itself, while Novel Knowledge is a character simply knowing what happens next."
+ ],
+ "system-voice": [
+  "System Voice",
+  "Translate as 'the System' when referring to the entity/mechanic broadly, and preserve notification text in a distinct visual register (brackets, italics, or a system-message format) to separate it from ordinary narration and dialogue."
+ ],
+ "authors-note": [
+  "Author's Note",
+  "Preserve as a clearly separated 'Author's Note' or 'TL Note' block, distinct from in-story text — never blend this content into the narrative voice, as it breaks the fictional frame by design."
+ ],
+ "ancient-ruins": [
+  "Ancient Ruins",
+  "Translate as 'Ancient Ruins.' Keep distinct from 'Life Forbidden Zone' — Ruins are defined by their lost-civilization origin and salvageable treasure, not primarily by lethal danger to living cultivators, though danger is often present as well."
+ ],
+ "spirit-vein": [
+  "Spirit Vein",
+  "Translate as 'Spirit Vein' or 'Dragon Vein.' Avoid 'Ley Line' except where the target audience is expected to be more familiar with Western esoteric terminology than xianxia convention — 'Ley Line' can read as tonally mismatched in a xianxia setting."
+ ],
+ "middle-realm": [
+  "Middle Realm",
+  "Translate as 'Middle Realm.' Completes the three-tier hierarchy alongside 'Lower Realm' and 'Immortal Realm' — keep all three terminologically consistent within a single work rather than substituting synonyms for any one tier."
+ ],
+ "void": [
+  "Void",
+  "Translate as 'the Void.' Capitalize when referring to this specific cosmological space rather than 'void' used as an ordinary adjective for emptiness."
+ ],
+ "chaos": [
+  "Chaos",
+  "Translate as 'Chaos' or 'Primordial Chaos.' Keep distinct from 'the Void' — Chaos is pre-creation and generative (the source cosmology emerges from it), while the Void is a lawless gap within an already-existing cosmic structure."
+ ],
+ "tribute": [
+  "Tribute",
+  "Translate as 'Tribute.' Keep distinct from ordinary 'tax' — Tribute specifically flows upward within a political hierarchy (vassal to liege), not from citizen to state."
+ ],
+ "garrison": [
+  "Garrison",
+  "Translate as 'Garrison.' Use for a stationed defensive force specifically, not for an offensive army mobilized for a specific campaign."
+ ],
+ "liege": [
+  "Liege",
+  "Translate as 'Liege' or 'Overlord.' Always pairs conceptually with 'Vassal' — the two terms define each other's position in the hierarchy and should stay terminologically consistent across a single work."
+ ],
+ "totem-beast": [
+  "Totem Beast",
+  "Translate as 'Totem Beast.' Keep distinct from a personally-bonded companion beast under Soul Contract or Equality Contract — a Totem Beast's relationship is collective/civilizational, not individual."
+ ],
+ "beast-master": [
+  "Beast Master",
+  "Translate as 'Beast Master' or 'Beast Tamer.' Use for the professional title/Class specifically; use 'Beast Taming' for the underlying system or activity itself."
+ ]
+}

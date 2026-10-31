@@ -1,0 +1,1517 @@
+{
+ "qi": [
+  "ปราณ",
+  "Pran (Chi/Qi)."
+ ],
+ "cultivation": [
+  "การบำเพ็ญเพียร",
+  "Gan bamphen phian."
+ ],
+ "dantian": [
+  "ตันเถียน"
+ ],
+ "immortal-qi": [
+  "ปราณเซียน",
+  "Pran Sian."
+ ],
+ "cultivation-realm": [
+  "ระดับพลัง",
+  "Radap phalang (Level kekuatan)."
+ ],
+ "heavenly-tribulation": [
+  "ทัณฑ์สวรรค์",
+  "Than Sawan."
+ ],
+ "nascent-soul": [
+  "วิญญาณก่อกำเนิด",
+  "Winyan ko kamnoet."
+ ],
+ "golden-core": [
+  "แก่นทองคำ",
+  "Kaen thongkham."
+ ],
+ "foundation-establishment": [
+  "สร้างรากฐาน",
+  "Sang rakthan."
+ ],
+ "qi-refining": [
+  "รวบรวมลมปราณ",
+  "Ruapruam lom pran."
+ ],
+ "core-formation": [
+  "ก่อเกิดแก่นปราณ",
+  "Kokoet kaen pran."
+ ],
+ "spirit-severing": [
+  "ตัดวิญญาณ",
+  "Tat winyan."
+ ],
+ "dao-seeking": [
+  "แสวงเต๋า",
+  "Sawaeng Tao."
+ ],
+ "domain": [
+  "อาณาเขต",
+  "Anakhet (Domain/Territory)."
+ ],
+ "ascension": [
+  "การบรรลุเซียน",
+  "Kan banlu sian (Mencapai keabadian)."
+ ],
+ "meridians": [
+  "เส้นลมปราณ",
+  "Sen lom pran."
+ ],
+ "spiritual-root": [
+  "รากวิญญาณ",
+  "Rak winyan."
+ ],
+ "jing-qi-shen": [
+  "จิง ชี่ เสิน"
+ ],
+ "body-tempering": [
+  "หลอมกายา",
+  "Lom kaya."
+ ],
+ "fiendgod-body-refining": [
+  "หลอมกายาเทพอสูร",
+  "Lom kaya thep asun."
+ ],
+ "heartforce-cultivation": [
+  "พลังใจ",
+  "Phalang jai."
+ ],
+ "dual-cultivation": [
+  "บำเพ็ญคู่",
+  "Bamphen khu."
+ ],
+ "alchemy": [
+  "หลอมโอสถ",
+  "Lom osot."
+ ],
+ "spirit-stone": [
+  "หินวิญญาณ",
+  "Hin winyan."
+ ],
+ "spiritual-treasure": [
+  "ของวิเศษ",
+  "Khong wiset."
+ ],
+ "storage-ring": [
+  "แหวนมิติ",
+  "Waen miti (Cincin dimensi)."
+ ],
+ "talisman": [
+  "ยันต์"
+ ],
+ "formation": [
+  "ค่ายกล",
+  "Khai kon."
+ ],
+ "sect": [
+  "สำนัก",
+  "Samnak."
+ ],
+ "clan": [
+  "ตระกูล",
+  "Trakun."
+ ],
+ "patriarch": [
+  "ผู้นำตระกูล",
+  "Phu nam trakun."
+ ],
+ "elder": [
+  "ผู้อาวุโส",
+  "Phu awuso."
+ ],
+ "disciple-hierarchy": [
+  "ลำดับศิษย์",
+  "Lamdap sit."
+ ],
+ "spirit-beast": [
+  "สัตว์วิญญาณ",
+  "Sat winyan."
+ ],
+ "beast-taming": [
+  "ฝึกสัตว์อสูร",
+  "Fuk sat asun."
+ ],
+ "heavenly-dao": [
+  "เต๋าสวรรค์",
+  "Tao sawan."
+ ],
+ "dao": [
+  "เต๋า"
+ ],
+ "karma": [
+  "กรรม",
+  "Kam (Karma)."
+ ],
+ "reincarnation": [
+  "กลับชาติมาเกิด",
+  "Klap chat ma koet."
+ ],
+ "regression": [
+  "ย้อนเวลา",
+  "Yon wela."
+ ],
+ "transmigration": [
+  "ทะลุมิติ",
+  "Thalu miti."
+ ],
+ "isekai": [
+  "ต่างโลก",
+  "Tang lok (Isekai)."
+ ],
+ "otome-isekai": [
+  "โอโตเมะต่างโลก",
+  "Otome tang lok."
+ ],
+ "hunter-system": [
+  "ระบบฮันเตอร์",
+  "Rabop Hunter."
+ ],
+ "constellation": [
+  "กลุ่มดาว",
+  "Klum dao."
+ ],
+ "dungeon": [
+  "ดันเจี้ยน"
+ ],
+ "tower": [
+  "หอคอย",
+  "Hokhoi."
+ ],
+ "system": [
+  "ระบบ",
+  "Rabop."
+ ],
+ "status-window": [
+  "หน้าต่างสถานะ",
+  "Natang sathana."
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "สกิล",
+  "Skill (Sakin)."
+ ],
+ "level-up": [
+  "อัปเลเวล",
+  "Ap level."
+ ],
+ "quest": [
+  "เควสต์"
+ ],
+ "guild": [
+  "กิลด์"
+ ],
+ "rarity": [
+  "ระดับความหายาก",
+  "Radap khwam hayak."
+ ],
+ "loot": [
+  "ของดรอป",
+  "Khong drop (Loot/Drop)."
+ ],
+ "wuxia": [
+  "กำลังภายใน",
+  "Kamlang phainai (Wuxia)."
+ ],
+ "xianxia": [
+  "เทพเซียน",
+  "Thep sian (Xianxia)."
+ ],
+ "xuanhuan": [
+  "แฟนตาซีตะวันออก",
+  "Fantasy Tawan-ok (Eastern Fantasy)."
+ ],
+ "murim": [
+  "มูริม"
+ ],
+ "litrpg": [
+  "LitRPG"
+ ],
+ "progression-fantasy": [
+  "แฟนตาซีแนวพัฒนาการ",
+  "Fantasy naeo phatthanakan."
+ ],
+ "academy-arc": [
+  "ภาคโรงเรียน",
+  "Phak rongrian."
+ ],
+ "guide": [
+  "ไกด์"
+ ],
+ "esper": [
+  "เอสเปอร์"
+ ],
+ "arrogant-young-master": [
+  "คุณชายจอมหยิ่ง",
+  "Khun chai jom ying."
+ ],
+ "face": [
+  "หน้าตา",
+  "Nata (Face/Reputation)."
+ ],
+ "face-slapping": [
+  "ตบหน้า",
+  "Top na."
+ ],
+ "tournament-arc": [
+  "ภาคงานประลอง",
+  "Phak ngan pralong."
+ ],
+ "secret-realm": [
+  "แดนลับ",
+  "Daen lap."
+ ],
+ "auction": [
+  "งานประมูล",
+  "Ngan pramun."
+ ],
+ "bloodline": [
+  "สายเลือด",
+  "Sai lueat."
+ ],
+ "physique": [
+  "กายา",
+  "Kaya."
+ ],
+ "dao-companion": [
+  "คู่บำเพ็ญ",
+  "Khu bamphen."
+ ],
+ "harem": [
+  "ฮาเร็ม"
+ ],
+ "cannon-fodder": [
+  "ตัวประกอบใช้แล้วทิ้ง",
+  "Tua prakop chai laeo thing."
+ ],
+ "villainess": [
+  "นางร้าย",
+  "Nang rai."
+ ],
+ "protagonist-halo": [
+  "ออร่าตัวเอก",
+  "Aura tua ek."
+ ],
+ "system-shop": [
+  "ร้านค้าระบบ",
+  "Ran kha rabop."
+ ],
+ "inventory": [
+  "ช่องเก็บของ",
+  "Chong kep khong."
+ ],
+ "class": [
+  "อาชีพ",
+  "Achip (Class/Job)."
+ ],
+ "stat": [
+  "ค่าสถานะ",
+  "Kha sathana."
+ ],
+ "skill-tree": [
+  "สายสกิล",
+  "Sai skill."
+ ],
+ "party": [
+  "ปาร์ตี้"
+ ],
+ "raid": [
+  "เรด"
+ ],
+ "pvp": [
+  "PvP"
+ ],
+ "pve": [
+  "PvE"
+ ],
+ "npc": [
+  "NPC"
+ ],
+ "sentient-system": [
+  "ระบบมีชีวิต",
+  "Rabop mi chiwit."
+ ],
+ "regression-novel": [
+  "นิยายย้อนเวลา",
+  "Niyai yon wela."
+ ],
+ "transmigration-novel": [
+  "นิยายทะลุมิติ",
+  "Niyai thalu miti."
+ ],
+ "cultivation-technique": [
+  "วิชาบำเพ็ญเพียร",
+  "Wicha bamphen phian."
+ ],
+ "forbidden-technique": [
+  "วิชาต้องห้าม",
+  "Wicha tong ham."
+ ],
+ "sword-intent": [
+  "เจตจำนงกระบี่",
+  "Chetchamnong krabi."
+ ],
+ "domain-expansion": [
+  "กางอาณาเขต",
+  "Kang anakhet."
+ ],
+ "heavenly-tribulation-lightning": [
+  "อัสนีสวรรค์",
+  "Atsani sawan."
+ ],
+ "soul": [
+  "วิญญาณ",
+  "Winyan."
+ ],
+ "spiritual-sense": [
+  "สัมผัสวิญญาณ",
+  "Samphat winyan."
+ ],
+ "qi-deviation": [
+  "ธาตุไฟแตกซ่าน",
+  "That fai taek san."
+ ],
+ "heart-devil": [
+  "มารในใจ",
+  "Man nai jai."
+ ],
+ "merit": [
+  "บุญกุศล",
+  "Bun kuson."
+ ],
+ "karmic-fire": [
+  "ไฟกรรม",
+  "Fai kam."
+ ],
+ "ascension-platform": [
+  "แท่นบรรลุเซียน",
+  "Thaen banlu sian."
+ ],
+ "lower-realm": [
+  "โลกเบื้องล่าง",
+  "Lok bueang lang."
+ ],
+ "immortal-realm": [
+  "แดนเซียน",
+  "Daen sian."
+ ],
+ "spirit-realm": [
+  "แดนวิญญาณ",
+  "Daen winyan."
+ ],
+ "great-thousand-world": [
+  "โลกมหาพันธุ",
+  "Lok maha phan."
+ ],
+ "plane": [
+  "มิติ",
+  "Miti."
+ ],
+ "world-tree": [
+  "ต้นไม้โลก",
+  "Tonmai lok."
+ ],
+ "celestial-empire": [
+  "จักรวรรดิสวรรค์",
+  "Chakkrawat sawan."
+ ],
+ "demon": [
+  "ปีศาจ",
+  "Pisat."
+ ],
+ "orthodox-vs-unorthodox": [
+  "ธรรมะกับอธรรม",
+  "Thamma kap atham."
+ ],
+ "sect-war": [
+  "สงครามสำนัก",
+  "Songkhram samnak."
+ ],
+ "resource-war": [
+  "สงครามแย่งชิงทรัพยากร",
+  "Songkhram yaeng ching sapphayakon."
+ ],
+ "talent": [
+  "พรสวรรค์",
+  "Phonsawan."
+ ],
+ "cheat": [
+  "สูตรโกง",
+  "Sut kong (Cheat)."
+ ],
+ "time-dilation": [
+  "การยืดเวลา",
+  "Kan yuet wela."
+ ],
+ "appraisal": [
+  "ประเมิน",
+  "Pramoen."
+ ],
+ "loot-box": [
+  "กาชา / กล่องสุ่ม",
+  "Gacha / Klong sum."
+ ],
+ "pay-to-win": [
+  "เทพทรู",
+  "Thep True (Pay to win)."
+ ],
+ "player": [
+  "เพลเยอร์"
+ ],
+ "administrator": [
+  "ผู้ดูแลระบบ",
+  "Phu dulae rabop."
+ ],
+ "tutorial": [
+  "บททดสอบเริ่มต้น",
+  "Bot thotsop roemton (Tutorial)."
+ ],
+ "hidden-quest": [
+  "เควสต์ลับ",
+  "Quest lap."
+ ],
+ "repair": [
+  "ซ่อมแซม",
+  "Somsaem."
+ ],
+ "death-penalty": [
+  "บทลงโทษเมื่อตาย",
+  "Bot longthot muea tai."
+ ],
+ "respawn": [
+  "เกิดใหม่",
+  "Koet mai (Respawn)."
+ ],
+ "fast-travel": [
+  "วาร์ป / ฟาสต์ทราเวล",
+  "Warp / Fast travel."
+ ],
+ "mount": [
+  "สัตว์พาหนะ",
+  "Sat phahana."
+ ],
+ "pet": [
+  "สัตว์เลี้ยง",
+  "Sat liang."
+ ],
+ "crafting": [
+  "คราฟต์",
+  "Craft."
+ ],
+ "enchanting": [
+  "เสริมพลังเวท",
+  "Soem phalang wet."
+ ],
+ "socket": [
+  "ช่องใส่หิน",
+  "Chong sai hin."
+ ],
+ "set-item": [
+  "ไอเทมเซ็ต",
+  "Item set."
+ ],
+ "unique-item": [
+  "ไอเทมระดับยูนีค",
+  "Item radap unique."
+ ],
+ "courting-death": [
+  "รนหาที่ตาย",
+  "Ron ha thi tai."
+ ],
+ "mount-tai": [
+  "ยอดเขาไท่ซาน",
+  "Yot khao Thai San."
+ ],
+ "kowtow": [
+  "โขกศีรษะ",
+  "Khok sisa."
+ ],
+ "jade-slip": [
+  "หยกหยกบันทึก",
+  "Yok banthuek."
+ ],
+ "romance-fantasy": [
+  "โรแมนติกแฟนตาซี (โรแฟน)",
+  "Romantic Fantasy (RoFan)."
+ ],
+ "returner": [
+  "ผู้กลับมา",
+  "Phu klap ma."
+ ],
+ "sword-cultivator": [
+  "ผู้บำเพ็ญกระบี่",
+  "Phu bamphen krabi."
+ ],
+ "foundation-establishment-pill": [
+  "โอสถสร้างรากฐาน",
+  "Osot sang rakthan."
+ ],
+ "marrow-cleansing-pill": [
+  "โอสถชำระไขกระดูก",
+  "Osot chamra khai kraduk."
+ ],
+ "fasting-pill": [
+  "โอสถอิ่มทิพย์",
+  "Osot im thip (Bigu pill)."
+ ],
+ "blood-burning-pill": [
+  "โอสถเผาผลาญโลหิต",
+  "Osot phao phlan lohit."
+ ],
+ "shim-gong": [
+  "ชิมกง",
+  "Shim Gong (วิชากำลังภายใน)."
+ ],
+ "shin-bup": [
+  "ชินบอบ",
+  "Shin Bup (วิชาตัวเบา)."
+ ],
+ "jeom-hyeol": [
+  "จอมฮยอล",
+  "Jeom Hyeol (สกัดจุด)."
+ ],
+ "ho-shin-gang-qi": [
+  "โฮชินกังฉี",
+  "Ho Shin Gang Qi (ปราณคุ้มกาย)."
+ ],
+ "geom-gi": [
+  "กอมกี",
+  "Geom Gi (ปราณกระบี่)."
+ ],
+ "sama": [
+  "ท่าน",
+  "Than (-sama)."
+ ],
+ "senpai-kouhai": [
+  "รุ่นพี่ / รุ่นน้อง",
+  "Run phi / Run nong."
+ ],
+ "ojou-sama": [
+  "คุณหนู",
+  "Khun nu."
+ ],
+ "maou-gun": [
+  "กองทัพจอมมาร",
+  "Kong thap chom man."
+ ],
+ "dao-child": [
+  "บุตรแห่งเต๋า",
+  "But haeng tao."
+ ],
+ "peak-master": [
+  "เจ้าขุนเขา",
+  "Chao khun khao."
+ ],
+ "sect-leader": [
+  "เจ้าสำนัก",
+  "Chao samnak."
+ ],
+ "handyman-disciple": [
+  "ศิษย์รับใช้",
+  "Sit rap chai."
+ ],
+ "guest-elder": [
+  "ผู้อาวุโสรับเชิญ",
+  "Phu awuso rap choen."
+ ],
+ "sweeping-monk": [
+  "หลวงจีนกวาดลาน",
+  "Luang jin kwat lan."
+ ],
+ "hidden-class": [
+  "อาชีพลับ",
+  "Achip lap."
+ ],
+ "necromancer": [
+  "เนโครแมนเซอร์"
+ ],
+ "job-advancement": [
+  "เปลี่ยนอาชีพ",
+  "Plian achip."
+ ],
+ "berserker": [
+  "เบอร์เซิร์กเกอร์"
+ ],
+ "paladin": [
+  "พาลาดิน"
+ ],
+ "beast-core": [
+  "แก่นอสูร",
+  "Kaen asun."
+ ],
+ "soul-contract": [
+  "พันธสัญญาแห่งวิญญาณ",
+  "Phanthasanya haeng winyan."
+ ],
+ "beast-pouch": [
+  "ถุงสัตว์อสูร",
+  "Thung sat asun."
+ ],
+ "bloodline-evolution": [
+  "วิวัฒนาการสายเลือด",
+  "Wiwatthanakan sai lueat."
+ ],
+ "familiar": [
+  "สัตว์รับใช้ / แฟมิเลียร์",
+  "Sat rap chai / Familiar."
+ ],
+ "equality-contract": [
+  "พันธสัญญาเท่าเทียม",
+  "Phanthasanya thao thiam."
+ ],
+ "heavenly-flame": [
+  "เพลิงสวรรค์",
+  "Phloeng sawan."
+ ],
+ "spirit-herb": [
+  "สมุนไพรวิญญาณ",
+  "Samunphrai winyan."
+ ],
+ "spirit-spring-water": [
+  "น้ำพุวิญญาณ",
+  "Nam phu winyan."
+ ],
+ "array-eye": [
+  "ตาค่ายกล",
+  "Ta khai kon."
+ ],
+ "formation-flag": [
+  "ธงค่ายกล",
+  "Thong khai kon."
+ ],
+ "spirit-gathering-array": [
+  "ค่ายกลรวบรวมปราณ",
+  "Khai kon ruapruam pran."
+ ],
+ "red-gate": [
+  "เกตสีแดง",
+  "Gate si daeng."
+ ],
+ "clear-condition": [
+  "เงื่อนไขการเคลียร์",
+  "Ngueankhai kan clear."
+ ],
+ "magic-stone": [
+  "หินเวทมนตร์",
+  "Hin wetmon."
+ ],
+ "penalty-quest": [
+  "เควสต์ลงโทษ",
+  "Quest longthot."
+ ],
+ "floor-master": [
+  "บอสประจำชั้น",
+  "Boss pracham chan."
+ ],
+ "porter": [
+  "พนักงานแบกของ",
+  "Phanakngan baek khong."
+ ],
+ "scenario": [
+  "ซีนาริโอ",
+  "Scenario (ORV)."
+ ],
+ "probability": [
+  "ความเป็นไปได้",
+  "Khwam pen pai dai (ORV)."
+ ],
+ "stigma": [
+  "ตราบาป / สติกม่า",
+  "Tra bap / Stigma."
+ ],
+ "murim-alliance": [
+  "สมาพันธ์มูริม",
+  "Samaphan murim."
+ ],
+ "demonic-cult": [
+  "พรรคมาร",
+  "Phak man."
+ ],
+ "northern-duke": [
+  "ดยุกแดนเหนือ",
+  "Duke daen nuea."
+ ],
+ "tea-party": [
+  "งานเลี้ยงน้ำชา",
+  "Ngan liang nam cha."
+ ],
+ "munchkin": [
+  "มันช์กิ้น",
+  "Munchkin (OP)."
+ ],
+ "cider": [
+  "ไซเดอร์",
+  "Cider (Sida - สะใจ)."
+ ],
+ "black-mastermind": [
+  "บอสลับเบื้องหลัง",
+  "Boss lap bueang lang."
+ ],
+ "dokkaebi": [
+  "โทแกบี",
+  "Tokkaebi."
+ ],
+ "internal-energy": [
+  "แนกง"
+ ],
+ "jade-beauty": [
+  "หญิงงามดั่งหยก",
+  "Ying ngam dang yok."
+ ],
+ "white-lotus": [
+  "ดอกบัวขาว",
+  "Dok bua khao."
+ ],
+ "eating-tofu": [
+  "กินเต้าหู้",
+  "Kin taohu (Luanlam)."
+ ],
+ "coughing-up-blood": [
+  "กระอักเลือด",
+  "Kra-ak lueat."
+ ],
+ "frog-in-well": [
+  "กบในกะลา",
+  "Kop nai kala."
+ ],
+ "heaven-defying": [
+  "ฝืนลิขิตฟ้า / ทวนสวรรค์",
+  "Fuen likhit fa / Thuan sawan."
+ ],
+ "green-hat": [
+  "สวมหมวกเขียว",
+  "Suam muak khiao (Nokchai)."
+ ],
+ "shuang-wen": [
+  "นิยายสายสุขนิยม",
+  "Niyai sai suk niyom."
+ ],
+ "giving-face": [
+  "ไว้หน้า",
+  "Wai na."
+ ],
+ "dungeon-core": [
+  "แก่นดันเจี้ยน",
+  "Kaen dungeon."
+ ],
+ "fiefdom": [
+  "เขตแดนปกครอง",
+  "Khet daen pokkhrong."
+ ],
+ "node": [
+  "จุดชีพจร",
+  "Chut chiphachon."
+ ],
+ "contribution-points": [
+  "แต้มผลงาน",
+  "Taem phon-ngan."
+ ],
+ "sect-mission-hall": [
+  "หอภารกิจ",
+  "Ho pharakit."
+ ],
+ "spirit-garden": [
+  "สวนสมุนไพรวิญญาณ",
+  "Suan samunphrai winyan."
+ ],
+ "city-lord": [
+  "เจ้าเมือง",
+  "Chao mueang."
+ ],
+ "edict": [
+  "ราชโองการ",
+  "Ratcha-ongkan."
+ ],
+ "vassal": [
+  "ผู้ใต้บังคับบัญชา",
+  "Phu tai bangkhap bancha."
+ ],
+ "primordial-chaos": [
+  "ความโกลาหลบรรพกาล",
+  "Khwam kolahon banphakan."
+ ],
+ "the-void": [
+  "ความว่างเปล่า",
+  "Khwam wang plao."
+ ],
+ "life-forbidden-zone": [
+  "เขตหวงห้ามสิ่งมีชีวิต",
+  "Khet huang ham sing mi chiwit."
+ ],
+ "ancient-desolate-beast": [
+  "อสูรบรรพกาล",
+  "Asun banphakan."
+ ],
+ "star-field": [
+  "เขตแดนดวงดาว",
+  "Khet daen duang dao."
+ ],
+ "spatial-storm": [
+  "พายุมิติ",
+  "Phayu miti."
+ ],
+ "nine-heavens": [
+  "สวรรค์ชั้นเก้า",
+  "Sawan chan kao."
+ ],
+ "river-of-time": [
+  "แม่น้ำแห่งกาลเวลา",
+  "Maenam haeng kan wela."
+ ],
+ "epoch": [
+  "ยุคสมัย",
+  "Yuk samai."
+ ],
+ "karmic-thread": [
+  "ด้ายแห่งกรรม",
+  "Dai haeng kam."
+ ],
+ "origin-source": [
+  "แหล่งกำเนิด",
+  "Laeng kamnoet."
+ ],
+ "heaven-and-earth": [
+  "ฟ้าดิน",
+  "Fa din."
+ ],
+ "wuji": [
+  "อู๋จี๋",
+  "Uji (ไร้ขีดจำกัด)."
+ ],
+ "dao-source": [
+  "ต้นกำเนิดเต๋า",
+  "Ton kamnoet tao."
+ ],
+ "engagement-annulment": [
+  "ถอนหมั้น",
+  "Thon man."
+ ],
+ "toad-lusting-after-swan-meat": [
+  "คางคกอยากกินเนื้อหงส์",
+  "Khangkhok yak kin nuea hong."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "อย่ารังแกเด็กหนุ่มที่ยากจน",
+  "Ya rangkae dek num thi yakjon."
+ ],
+ "concubine": [
+  "อนุภรรยา",
+  "Anuphanraya."
+ ],
+ "sect-rules": [
+  "กฎสำนัก",
+  "Kot samnak."
+ ],
+ "filial-piety": [
+  "ความกตัญญู",
+  "Khwam katanyu."
+ ],
+ "pill-tribulation": [
+  "ทัณฑ์โอสถ",
+  "Than osot."
+ ],
+ "monster-genius": [
+  "สัตว์ประหลาด (อัจฉริยะ)",
+  "Satpralat (Atchariya)."
+ ],
+ "gu-venom-witchcraft": [
+  "กู่",
+  "Ku (วิชาคุณไสย)."
+ ],
+ "corpse-refining": [
+  "หลอมศพ",
+  "Lom sop."
+ ],
+ "fairy-sister": [
+  "พี่สาวเทพธิดา",
+  "Phi sao thepthida."
+ ],
+ "young-miss": [
+  "คุณหนูใหญ่",
+  "Khun nu yai."
+ ],
+ "mount-kunlun": [
+  "เขาคุนหลุน",
+  "Khao Khunlun."
+ ],
+ "aggro": [
+  "แอกโกร"
+ ],
+ "crowd-control": [
+  "สถานะควบคุม",
+  "Sathana khuap khum (CC)."
+ ],
+ "kiting": [
+  "ไคต์ติ้ง"
+ ],
+ "aoe": [
+  "โจมตีหมู่ / AoE"
+ ],
+ "proc": [
+  "ติดสถานะ / คริ",
+  "Titsathana / Proc."
+ ],
+ "kill-steal": [
+  "ลาสช็อต / ขโมยคิล",
+  "Last shot / Khmoi kill."
+ ],
+ "tank": [
+  "แทงค์"
+ ],
+ "dps": [
+  "ดีพีเอส / ดาเมจ",
+  "DPS / Damage."
+ ],
+ "gold-sink": [
+  "ผลาญเงิน",
+  "Phlan ngoen."
+ ],
+ "auction-sniping": [
+  "ปาดหน้าประมูล",
+  "Pat na pramun."
+ ],
+ "griefing": [
+  "ป่วนเกม",
+  "Puan game."
+ ],
+ "dot": [
+  "ดาเมจต่อเนื่อง / DoT",
+  "Damage to nueang / DoT."
+ ],
+ "contract-marriage": [
+  "แต่งงานหลอกๆ",
+  "Taeng ngan lok lok."
+ ],
+ "reawakening": [
+  "ตื่นรู้ครั้งที่สอง",
+  "Tuen ru khrang thi song."
+ ],
+ "tyrant": [
+  "ทรราช",
+  "Thorarat."
+ ],
+ "obsessive-male-lead": [
+  "พระเอกสายยัน",
+  "Phra-ek sai yan."
+ ],
+ "original-heroine": [
+  "นางเอกต้นฉบับ",
+  "Nang ek tonchapap."
+ ],
+ "regression-trauma": [
+  "ปมฝังใจจากการย้อนเวลา",
+  "Pom fang jai jak kan yon wela."
+ ],
+ "hunter-association": [
+  "สมาคมฮันเตอร์",
+  "Samakhom Hunter."
+ ],
+ "sudden-death": [
+  "ตายกะทันหัน",
+  "Tai kathanhan."
+ ],
+ "guild-master": [
+  "กิลด์มาสเตอร์ / หัวหน้ากิลด์",
+  "Guild Master / Hua na Guild."
+ ],
+ "adventurer-ranks": [
+  "แรงก์นักผจญภัย",
+  "Rank nak phachonphai."
+ ],
+ "beastkin": [
+  "มนุษย์สัตว์",
+  "Manut sat."
+ ],
+ "demon-god": [
+  "เทพมาร",
+  "Thep man."
+ ],
+ "unique-skill": [
+  "สกิลเฉพาะตัว",
+  "Skill chapho tua."
+ ],
+ "demon-realm": [
+  "แดนปีศาจ / แดนมาร",
+  "Daen pisat / Daen man."
+ ],
+ "slave-crest": [
+  "ตราทาส",
+  "Tra that."
+ ],
+ "subjugation": [
+  "ปราบปราม",
+  "Prap pram."
+ ],
+ "otherworlder": [
+  "คนต่างโลก",
+  "Khon tang lok."
+ ],
+ "heros-party": [
+  "ปาร์ตี้ผู้กล้า",
+  "Party phu kla."
+ ],
+ "dao-heart": [
+  "ใจเต๋า",
+  "Jai tao."
+ ],
+ "severing-mortal-ties": [
+  "ตัดขาดทางโลก",
+  "Tat khat thang lok."
+ ],
+ "five-elements": [
+  "เบญจธาตุ",
+  "Benchathat."
+ ],
+ "yin-and-yang": [
+  "หยินหยาง",
+  "Yin Yang."
+ ],
+ "enlightenment": [
+  "รู้แจ้ง",
+  "Ru jaeng."
+ ],
+ "mortal-tribulation": [
+  "ด่านเคราะห์ทางโลก",
+  "Dan khro thang lok."
+ ],
+ "soul-dissipation": [
+  "วิญญาณแตกซ่าน",
+  "Winyan taek san."
+ ],
+ "dao-marks": [
+  "รอยประทับเต๋า",
+  "Roi prathap tao."
+ ],
+ "nirvana": [
+  "นิพพาน",
+  "Nipphan."
+ ],
+ "fellow-daoist": [
+  "สหายเต๋า",
+  "Sahai tao."
+ ],
+ "sect-familial-address": [
+  "ศิษย์พี่ / ศิษย์น้อง",
+  "Sit phi / Sit nong."
+ ],
+ "cold-snort": [
+  "แค่นเสียงเย็น",
+  "Khaen siang yen."
+ ],
+ "dog-leg-lackey": [
+  "ลูกสมุน / สุนัขรับใช้",
+  "Luk samun / Sunak rap chai."
+ ],
+ "jianghu": [
+  "ยุทธภพ",
+  "Yutthaphop."
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "นั่งบนภูเขาดูเสือกัดกัน",
+  "Nang bon phukhao du suea kat kan."
+ ],
+ "chaebol": [
+  "แชโบล"
+ ],
+ "heavenly-oath": [
+  "สัตย์สาบานต่อฟ้า",
+  "Sat saban to fa."
+ ],
+ "title-achievement": [
+  "ฉายา / ความสำเร็จ",
+  "Chaya / Khwam samret."
+ ],
+ "system-erasure": [
+  "ระบบลบตัวตน",
+  "Rabop lop tua ton."
+ ],
+ "sweet-potato": [
+  "มันเผา",
+  "Man phao (Koguma)."
+ ],
+ "white-moonlight": [
+  "แสงจันทร์ขาว",
+  "Saeng jan khao (First love)."
+ ],
+ "cinnabar-mole": [
+  "ไฝเสน่ห์",
+  "Fai sane."
+ ],
+ "holy-mother": [
+  "แม่พระ",
+  "Mae phra."
+ ],
+ "dog-blood": [
+  "เลือดหมา",
+  "Lueat ma (Nam nao)."
+ ],
+ "angst": [
+  "ปวดตับ",
+  "Puat tap (Drama)."
+ ],
+ "scum": [
+  "สวะ",
+  "Sawa."
+ ],
+ "brain-dead": [
+  "ไร้สมอง",
+  "Rai samong."
+ ],
+ "meat": [
+  "ฉากเรท",
+  "Chak rate (NC/Smut)."
+ ],
+ "green-tea": [
+  "ชาเขียว",
+  "Cha khiao (Faek)."
+ ],
+ "territory": [
+  "ดินแดน / อาณาเขต",
+  "Dindaen / Anakhet."
+ ],
+ "rebirth": [
+  "เกิดใหม่",
+  "Koet mai."
+ ],
+ "devil-mara": [
+  "มาร"
+ ],
+ "demonic-beast": [
+  "สัตว์มาร",
+  "Sat man."
+ ],
+ "truck-kun": [
+  "รถบรรทุกซัง",
+  "Rot banthuk-san (Truck-kun)."
+ ],
+ "cheat-skill": [
+  "สกิลโกง",
+  "Skill kong."
+ ],
+ "divine-protection": [
+  "พรคุ้มครองจากเทพ",
+  "Phon khum khrong jak thep."
+ ],
+ "genkai-toppa": [
+  "ข้ามขีดจำกัด",
+  "Kham khit jamkat."
+ ],
+ "chuunibyou": [
+  "จูนิเบียว"
+ ],
+ "tsundere": [
+  "ซึนเดเระ"
+ ],
+ "yandere": [
+  "ยันเดเระ"
+ ],
+ "san": [
+  "ซัง",
+  "San (-san)."
+ ],
+ "chan": [
+  "จัง",
+  "Chan (-chan)."
+ ],
+ "kun": [
+  "คุง",
+  "Khun (-kun)."
+ ],
+ "dono": [
+  "โดโนะ",
+  "Dono (-dono)."
+ ],
+ "sensei": [
+  "เซนเซย์"
+ ],
+ "adventurer-guild": [
+  "กิลด์นักผจญภัย",
+  "Guild nak phachonphai."
+ ],
+ "vrmmo": [
+  "เกมโลกเสมือน",
+  "Game lok samuean (VRMMO)."
+ ],
+ "goddess": [
+  "เทพธิดา",
+  "Thepthida."
+ ],
+ "gate": [
+  "เกต"
+ ],
+ "awakening": [
+  "ตื่นรู้",
+  "Tuen ru (Awaken)."
+ ],
+ "regressor": [
+  "ผู้ย้อนเวลา",
+  "Phu yon wela."
+ ],
+ "national-level-hunter": [
+  "ฮันเตอร์ระดับชาติ",
+  "Hunter radap chat."
+ ],
+ "hunter-rank": [
+  "แรงก์ฮันเตอร์",
+  "Rank Hunter."
+ ],
+ "grade": [
+  "ระดับ / เกรด",
+  "Radap / Grade."
+ ],
+ "mana": [
+  "มานา"
+ ],
+ "shadow-soldier": [
+  "ทหารเงา",
+  "Thahan ngao."
+ ],
+ "monarch": [
+  "จักรพรรดิ",
+  "Chakkraphat."
+ ],
+ "hyung": [
+  "ฮยอง",
+  "Hyong."
+ ],
+ "noona": [
+  "นูน่า",
+  "Nuna."
+ ],
+ "oppa": [
+  "โอปป้า"
+ ],
+ "sunbae": [
+  "ซอนเบ",
+  "Sonbae."
+ ],
+ "ahjussi": [
+  "อาจุสซี",
+  "Ajussi."
+ ],
+ "ahjumma": [
+  "อาจุมม่า",
+  "Ajumma."
+ ],
+ "dungeon-break": [
+  "ดันเจี้ยนเบรก"
+ ],
+ "boss-monster": [
+  "บอสมอนสเตอร์"
+ ],
+ "first-clear": [
+  "เคลียร์ครั้งแรก",
+  "Clear khrang raek."
+ ],
+ "clear": [
+  "เคลียร์"
+ ],
+ "penalty": [
+  "บทลงโทษ",
+  "Bot longthot."
+ ],
+ "compensation": [
+  "ค่าตอบแทน",
+  "Kha top thaen."
+ ],
+ "ranker": [
+  "แรงเกอร์"
+ ],
+ "player-kill": [
+  "ฆ่าผู้เล่น",
+  "Kha phu len (PK)."
+ ],
+ "broadcast": [
+  "ถ่ายทอดสด",
+  "Thai thot sot."
+ ],
+ "mutant-monster": [
+  "มอนสเตอร์กลายพันธุ์",
+  "Monster klai phan."
+ ],
+ "growth-type-ability": [
+  "สกิลเติบโต",
+  "Skill toepto."
+ ],
+ "evolution": [
+  "วิวัฒนาการ",
+  "Wiwatthanakan."
+ ],
+ "floor": [
+  "ชั้น",
+  "Chan."
+ ],
+ "test": [
+  "การทดสอบ",
+  "Kan thotsop."
+ ],
+ "test-administrator": [
+  "ผู้คุมสอบ",
+  "Phu khum sop."
+ ],
+ "floor-guardian": [
+  "ผู้พิทักษ์ชั้น",
+  "Phu phithak chan."
+ ],
+ "irregular": [
+  "ผู้ผิดปกติ",
+  "Phu phit pakati."
+ ],
+ "regular": [
+  "ผู้ปกติ",
+  "Phu pakati."
+ ],
+ "hidden-floor": [
+  "ชั้นลับ",
+  "Chan lap."
+ ],
+ "wall": [
+  "กำแพง",
+  "Kamphaeng."
+ ],
+ "family": [
+  "ตระกูลสิบตระกูล",
+  "Trakun (10 Great Families)."
+ ],
+ "observer": [
+  "ผู้สังเกตการณ์",
+  "Phu sangket kan."
+ ],
+ "onii-chan": [
+  "โอนี่จัง"
+ ],
+ "onee-chan": [
+  "โอเน่จัง"
+ ],
+ "ossan": [
+  "ตาลุง",
+  "Ta lung (Ossan)."
+ ],
+ "osananajimi": [
+  "เพื่อนสมัยเด็ก",
+  "Phuean samai dek."
+ ],
+ "kokuhaku": [
+  "สารภาพรัก",
+  "Saraphap rak."
+ ],
+ "bunkasai": [
+  "งานเทศกาลวัฒนธรรม",
+  "Ngan thetsakan watthanatham."
+ ],
+ "guild-card": [
+  "บัตรกิลด์",
+  "Bat Guild."
+ ],
+ "job-change": [
+  "เปลี่ยนคลาส",
+  "Plian Class."
+ ],
+ "labyrinth": [
+  "เขาวงกต",
+  "Khao wongkot."
+ ],
+ "blacksmith": [
+  "ช่างตีเหล็ก",
+  "Chang ti lek."
+ ],
+ "slow-life": [
+  "ใช้ชีวิตสโลว์ไลฟ์",
+  "Chai chiwit slow life."
+ ],
+ "skill-book": [
+  "ตำราสกิล",
+  "Tamra skill."
+ ],
+ "great-sage": [
+  "มหาปราชญ์",
+  "Maha prat."
+ ],
+ "sacred-sword": [
+  "ดาบศักดิ์สิทธิ์",
+  "Dap saksit."
+ ],
+ "entrance-exam": [
+  "สอบเข้า",
+  "Sop khao."
+ ],
+ "class-ranking": [
+  "อันดับคลาส",
+  "Andap class."
+ ],
+ "mob-class": [
+  "ตัวประกอบ",
+  "Tua prakop (Mob)."
+ ],
+ "late-bloomer": [
+  "เก่งช้า",
+  "Keng cha."
+ ],
+ "graduation-trial": [
+  "ทดสอบจบการศึกษา",
+  "Thotsop chop kan sueksa."
+ ],
+ "novel-knowledge": [
+  "ความรู้จากนิยาย",
+  "Khwam ru jak niyai."
+ ],
+ "fourth-wall": [
+  "กำแพงที่สี่",
+  "Kamphaeng thi si."
+ ],
+ "system-voice": [
+  "เสียงระบบ",
+  "Siang rabop."
+ ],
+ "authors-note": [
+  "บันทึกนักเขียน",
+  "Banthuek nak khian."
+ ],
+ "ancient-ruins": [
+  "โบราณสถาน",
+  "Boran sathan."
+ ],
+ "spirit-vein": [
+  "ชีพจรวิญญาณ",
+  "Chiphachon winyan."
+ ],
+ "middle-realm": [
+  "แดนกลาง",
+  "Daen klang."
+ ],
+ "void": [
+  "ความว่างเปล่า",
+  "Khwam wang plao."
+ ],
+ "chaos": [
+  "โกลาหล",
+  "Kolahon."
+ ],
+ "tribute": [
+  "เครื่องบรรณาการ",
+  "Khrueang bannakan."
+ ],
+ "garrison": [
+  "ป้อมปราการ",
+  "Pom prakan."
+ ],
+ "liege": [
+  "ท่านลอร์ด",
+  "Than Lord."
+ ],
+ "totem-beast": [
+  "สัตว์ศักดิ์สิทธิ์ประจำเผ่า",
+  "Sat saksit pracham phao."
+ ],
+ "beast-master": [
+  "ผู้ฝึกสัตว์",
+  "Phu fuk sat."
+ ]
+}

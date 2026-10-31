@@ -1,0 +1,1238 @@
+{
+ "qi": [
+  "Ike Mmụọ (Qi)",
+  "Ike nke mmụọ."
+ ],
+ "cultivation": [
+  "Ọzụzụ Mmụọ",
+  "Ọzụzụ nke mmụọ."
+ ],
+ "dantian": [
+  "Ebe Ike (Dantian)",
+  "Ebe ike gbadoro ụkwụ."
+ ],
+ "immortal-qi": [
+  "Ike Mmụọ Adịghị Anwụ Anwụ",
+  "Ike mmụọ ebighị ebi."
+ ],
+ "cultivation-realm": [
+  "Ọkwa Ọzụzụ",
+  "Ọkwa mmụọ."
+ ],
+ "heavenly-tribulation": [
+  "Ule nke Eluigwe",
+  "Ule eluigwe."
+ ],
+ "nascent-soul": [
+  "Mmụọ Ọhụrụ"
+ ],
+ "golden-core": [
+  "Isi Ọlaedo"
+ ],
+ "foundation-establishment": [
+  "Ntọala Nkwado"
+ ],
+ "qi-refining": [
+  "Nchịkọta Ike"
+ ],
+ "core-formation": [
+  "Nhazi Isi"
+ ],
+ "spirit-severing": [
+  "Mbibi Mmụọ"
+ ],
+ "dao-seeking": [
+  "Ọchụchọ Ụzọ (Dao)",
+  "Ịchọ ụzọ."
+ ],
+ "domain": [
+  "Mpaghara",
+  "Mpaghara ike."
+ ],
+ "ascension": [
+  "Nrigo",
+  "Nrigo eluigwe."
+ ],
+ "meridians": [
+  "Ụzọ Ike"
+ ],
+ "spiritual-root": [
+  "Mgbọrọgwụ Mmụọ"
+ ],
+ "jing-qi-shen": [
+  "Jing, Qi, Shen",
+  "Ihe oké ọnụ ahịa atọ."
+ ],
+ "body-tempering": [
+  "Nkwadebe Ahụ"
+ ],
+ "fiendgod-body-refining": [
+  "Nnụcha Ahụ Mmụọ Ọjọọ na Chi",
+  "Nnụcha ahụ ike."
+ ],
+ "heartforce-cultivation": [
+  "Ọzụzụ Ike Obi",
+  "Ike obi."
+ ],
+ "dual-cultivation": [
+  "Ọzụzụ Abụọ"
+ ],
+ "alchemy": [
+  "Ịme Ọgwụ"
+ ],
+ "spirit-stone": [
+  "Nkume Mmụọ"
+ ],
+ "spiritual-treasure": [
+  "Ngwá Ọrụ Ike"
+ ],
+ "storage-ring": [
+  "Mgbaaka Nchekwa"
+ ],
+ "talisman": [
+  "Ọtụmọkpọ"
+ ],
+ "formation": [
+  "Nhazi Ike"
+ ],
+ "sect": [
+  "Otu (Sect)",
+  "Otu mmụọ."
+ ],
+ "clan": [
+  "Ezinụlọ (Clan)",
+  "Ezinụlọ ukwu."
+ ],
+ "patriarch": [
+  "Onye Ndú Ezinụlọ"
+ ],
+ "elder": [
+  "Okenye"
+ ],
+ "disciple-hierarchy": [
+  "Usoro Ndị Na-eso Ụzọ",
+  "Usoro ụmụ akwụkwọ."
+ ],
+ "spirit-beast": [
+  "Anụ Mmụọ"
+ ],
+ "beast-taming": [
+  "Ịzụ Anụ Ọhịa"
+ ],
+ "heavenly-dao": [
+  "Ụzọ Eluigwe"
+ ],
+ "dao": [
+  "Ụzọ (Dao)"
+ ],
+ "karma": [
+  "Úmù Afọ (Karma)",
+  "Ihe arụpụtara."
+ ],
+ "reincarnation": [
+  "Ịlọ Ụwa"
+ ],
+ "regression": [
+  "Nlaghachi n'Oge"
+ ],
+ "transmigration": [
+  "Ịkwaga n'Ụwa Ọzọ"
+ ],
+ "isekai": [
+  "Ụwa Ọzọ (Isekai)",
+  "Ụwa ọzọ."
+ ],
+ "otome-isekai": [
+  "Isekai Ụmụ Nwaanyị"
+ ],
+ "hunter-system": [
+  "Usoro Dinta"
+ ],
+ "constellation": [
+  "Kpakpando (Constellation)",
+  "Kpakpando."
+ ],
+ "dungeon": [
+  "Ụlọ Mkpọrọ Okpuru Ala"
+ ],
+ "tower": [
+  "Ụlọ Elu (Tower)",
+  "Ụlọ elu."
+ ],
+ "system": [
+  "Usoro (System)",
+  "Usoro."
+ ],
+ "status-window": [
+  "Ihu Ọnọdụ"
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "Nka / Ikike",
+  "Ikike."
+ ],
+ "level-up": [
+  "Ịrịgo Ọkwa"
+ ],
+ "quest": [
+  "Ozi (Quest)"
+ ],
+ "guild": [
+  "Otu Ndị Ọrụ (Guild)",
+  "Otu ndị ọrụ."
+ ],
+ "rarity": [
+  "Ụkọ"
+ ],
+ "loot": [
+  "Ihe Nkwata"
+ ],
+ "wuxia": [
+  "Wuxia"
+ ],
+ "xianxia": [
+  "Xianxia"
+ ],
+ "xuanhuan": [
+  "Xuanhuan"
+ ],
+ "murim": [
+  "Murim"
+ ],
+ "litrpg": [
+  "LitRPG"
+ ],
+ "progression-fantasy": [
+  "Akụkọ Ọganihu"
+ ],
+ "academy-arc": [
+  "Akụkụ Ụlọ Akwụkwọ"
+ ],
+ "guide": [
+  "Onye Nduzi"
+ ],
+ "esper": [
+  "Esper"
+ ],
+ "arrogant-young-master": [
+  "Nwa Oké Ihe Nganga"
+ ],
+ "face": [
+  "Ihu (Nsọpụrụ)"
+ ],
+ "face-slapping": [
+  "Ịkụ Ụra"
+ ],
+ "tournament-arc": [
+  "Akụkụ Asọmpi"
+ ],
+ "secret-realm": [
+  "Mpaghara Nzuzo"
+ ],
+ "auction": [
+  "Ịzụ Ahịa / Ọrịre"
+ ],
+ "bloodline": [
+  "Agbụrụ Ọbara"
+ ],
+ "physique": [
+  "Ọdịdị Ahụ"
+ ],
+ "dao-companion": [
+  "Onye Mmekọ Dao"
+ ],
+ "harem": [
+  "Harem (Ọtụtụ Nwunye)"
+ ],
+ "cannon-fodder": [
+  "Ndị Anaghị Aba Uru"
+ ],
+ "villainess": [
+  "Nwaanyị Ọjọọ"
+ ],
+ "protagonist-halo": [
+  "Eke Onye Ọgụ"
+ ],
+ "system-shop": [
+  "Ụlọ Ahịa Usoro"
+ ],
+ "inventory": [
+  "Nchekwa Ngwongwo"
+ ],
+ "class": [
+  "Klas"
+ ],
+ "stat": [
+  "Nọmba Ọnọdụ (Stat)"
+ ],
+ "skill-tree": [
+  "Osisi Nka"
+ ],
+ "party": [
+  "Otu (Party)"
+ ],
+ "raid": [
+  "Mwakpo (Raid)",
+  "Mwakpo."
+ ],
+ "pvp": [
+  "PvP"
+ ],
+ "pve": [
+  "PvE"
+ ],
+ "npc": [
+  "NPC"
+ ],
+ "sentient-system": [
+  "Usoro Nwere Uche"
+ ],
+ "regression-novel": [
+  "Akwụkwọ Nlaghachi n'Oge"
+ ],
+ "transmigration-novel": [
+  "Akwụkwọ Ịkwaga Ụwa Ọzọ"
+ ],
+ "cultivation-technique": [
+  "Nka Ọzụzụ"
+ ],
+ "forbidden-technique": [
+  "Nka A Machibidoro"
+ ],
+ "sword-intent": [
+  "Ebumnuche Mma Agha"
+ ],
+ "domain-expansion": [
+  "Mmụba Mpaghara"
+ ],
+ "heavenly-tribulation-lightning": [
+  "Amụma Ule Eluigwe"
+ ],
+ "soul": [
+  "Mmụọ / Obi",
+  "Mmụọ."
+ ],
+ "spiritual-sense": [
+  "Mmetụta Mmụọ"
+ ],
+ "qi-deviation": [
+  "Njehie Ike (Qi Deviation)",
+  "Njehie ike."
+ ],
+ "heart-devil": [
+  "Mmụọ Ọjọọ Obi"
+ ],
+ "merit": [
+  "Urù"
+ ],
+ "karmic-fire": [
+  "Ọkụ Karma"
+ ],
+ "ascension-platform": [
+  "Ebe Nrigo"
+ ],
+ "lower-realm": [
+  "Ụwa Okpuru"
+ ],
+ "immortal-realm": [
+  "Ụwa Ebighị Ebi"
+ ],
+ "spirit-realm": [
+  "Ụwa Mmụọ"
+ ],
+ "great-thousand-world": [
+  "Nnukwu Puku Ụwa"
+ ],
+ "plane": [
+  "Ọkwa (Plane)",
+  "Ọkwa."
+ ],
+ "world-tree": [
+  "Osisi Ụwa"
+ ],
+ "celestial-empire": [
+  "Alaeze Eluigwe"
+ ],
+ "demon": [
+  "Mmụọ Ọjọọ"
+ ],
+ "orthodox-vs-unorthodox": [
+  "Eziokwu na Ụgha"
+ ],
+ "sect-war": [
+  "Agha Otu"
+ ],
+ "resource-war": [
+  "Agha Akụnụba"
+ ],
+ "talent": [
+  "Onyinye / Nka",
+  "Onyinye."
+ ],
+ "cheat": [
+  "Ihe Aghụghọ (Cheat)",
+  "Ihe aghụghọ."
+ ],
+ "time-dilation": [
+  "Mgbatị Oge"
+ ],
+ "appraisal": [
+  "Nnyocha"
+ ],
+ "loot-box": [
+  "Igbe Ihe Nkwata"
+ ],
+ "pay-to-win": [
+  "Kwụọ Ụgwọ Iji Mmeri"
+ ],
+ "player": [
+  "Onye Ọkpụkpọ"
+ ],
+ "administrator": [
+  "Onye Nchịkwa"
+ ],
+ "tutorial": [
+  "Nkụzi (Tutorial)",
+  "Nkụzi."
+ ],
+ "hidden-quest": [
+  "Ozi Nzuzo"
+ ],
+ "repair": [
+  "Mmezi"
+ ],
+ "death-penalty": [
+  "Ọnwụ Ahụhụ",
+  "Ahụhụ ọnwụ."
+ ],
+ "respawn": [
+  "Ịlọghachi (Respawn)",
+  "Ịlọghachi."
+ ],
+ "fast-travel": [
+  "Njem Ọsọ"
+ ],
+ "mount": [
+  "Anụ Ọgba"
+ ],
+ "pet": [
+  "Anụ Ụlọ"
+ ],
+ "crafting": [
+  "Ịkpa Ihe / Nrụpụta",
+  "Ịrụ ọrụ aka."
+ ],
+ "enchanting": [
+  "Ịgba Ọtụmọkpọ"
+ ],
+ "socket": [
+  "Oghere (Socket)",
+  "Oghere."
+ ],
+ "set-item": [
+  "Ihe Njikọ"
+ ],
+ "unique-item": [
+  "Ihe Pụrụ Iche"
+ ],
+ "courting-death": [
+  "Ịchọ Ọnwụ"
+ ],
+ "mount-tai": [
+  "Ugwu Tai"
+ ],
+ "kowtow": [
+  "Ịkpọ Isiala (Kowtow)",
+  "Ịkpọ isiala."
+ ],
+ "jade-slip": [
+  "Mbadamba Jade"
+ ],
+ "romance-fantasy": [
+  "Akụkọ Ịhụnanya (RoFan)",
+  "Akụkọ ịhụnanya."
+ ],
+ "returner": [
+  "Onye Lọghachiri"
+ ],
+ "sword-cultivator": [
+  "Onye Ọzụzụ Mma Agha"
+ ],
+ "foundation-establishment-pill": [
+  "Ọgwụ Ntọala"
+ ],
+ "marrow-cleansing-pill": [
+  "Ọgwụ Ịsacha Ọkpụkpụ"
+ ],
+ "fasting-pill": [
+  "Ọgwụ Ibu Ọnụ"
+ ],
+ "blood-burning-pill": [
+  "Ọgwụ Ọkụ Ọbara"
+ ],
+ "shim-gong": [
+  "Shim Gong"
+ ],
+ "shin-bup": [
+  "Shin Bup"
+ ],
+ "jeom-hyeol": [
+  "Jeom Hyeol"
+ ],
+ "ho-shin-gang-qi": [
+  "Ho Shin Gang Qi"
+ ],
+ "geom-gi": [
+  "Geom Gi"
+ ],
+ "sama": [
+  "-sama"
+ ],
+ "senpai-kouhai": [
+  "Senpai / Kouhai"
+ ],
+ "ojou-sama": [
+  "Ojou-sama"
+ ],
+ "maou-gun": [
+  "Ndị Agha Maou"
+ ],
+ "dao-child": [
+  "Nwa Dao"
+ ],
+ "peak-master": [
+  "Nna-ukwu Ugwu"
+ ],
+ "sect-leader": [
+  "Onye Ndú Otu"
+ ],
+ "handyman-disciple": [
+  "Nwa Akwụkwọ Onye Ọrụ",
+  "Onye ọrụ nwa akwụkwọ."
+ ],
+ "guest-elder": [
+  "Okenye Ọbịa"
+ ],
+ "sweeping-monk": [
+  "Mọnk Na-aza Azịza"
+ ],
+ "hidden-class": [
+  "Klas Nzuzo"
+ ],
+ "necromancer": [
+  "Onye Ọkachamara Ọnwụ (Necromancer)",
+  "Onye ọkachamara ọnwụ."
+ ],
+ "job-advancement": [
+  "Nkwalite Ọrụ"
+ ],
+ "berserker": [
+  "Onye Ọgụ Ìwú (Berserker)"
+ ],
+ "paladin": [
+  "Onye Ọgụ Nsọ (Paladin)"
+ ],
+ "beast-core": [
+  "Isi Anụ Ọhịa"
+ ],
+ "soul-contract": [
+  "Nkwekọrịta Mmụọ"
+ ],
+ "beast-pouch": [
+  "Akpa Anụ Ọhịa"
+ ],
+ "bloodline-evolution": [
+  "Ntozu Agbụrụ Ọbara"
+ ],
+ "familiar": [
+  "Anụ Ọzụzụ (Familiar)",
+  "Anụ ọzụzụ."
+ ],
+ "equality-contract": [
+  "Nkwekọrịta Ịhata"
+ ],
+ "heavenly-flame": [
+  "Ọkụ Eluigwe"
+ ],
+ "spirit-herb": [
+  "Ahịhịa Mmụọ"
+ ],
+ "spirit-spring-water": [
+  "Mmiri Isi Mmụọ"
+ ],
+ "array-eye": [
+  "Anya Nhazi"
+ ],
+ "formation-flag": [
+  "Ọkọlọtọ Nhazi"
+ ],
+ "spirit-gathering-array": [
+  "Nhazi Nchịkọta Mmụọ"
+ ],
+ "red-gate": [
+  "Ọnụ Ụzọ Uhie"
+ ],
+ "clear-condition": [
+  "Ọnọdụ Ngwụcha"
+ ],
+ "magic-stone": [
+  "Nkume Ime Anwansi"
+ ],
+ "penalty-quest": [
+  "Ozi Ahụhụ"
+ ],
+ "floor-master": [
+  "Nna-ukwu Ala"
+ ],
+ "porter": [
+  "Onye Na-ebu Ibu"
+ ],
+ "scenario": [
+  "Ọnọdụ Akụkọ"
+ ],
+ "probability": [
+  "Ihe Kwesịrị Ime",
+  "Ohere."
+ ],
+ "stigma": [
+  "Akara (Stigma)",
+  "Akara."
+ ],
+ "murim-alliance": [
+  "Njikọ Murim"
+ ],
+ "demonic-cult": [
+  "Otu Mmụọ Ọjọọ"
+ ],
+ "northern-duke": [
+  "Onye Ọchịchị Ugwu (Duke)",
+  "Duke Ugwu."
+ ],
+ "tea-party": [
+  "Oriri Tii"
+ ],
+ "munchkin": [
+  "Munchkin"
+ ],
+ "cider": [
+  "Cider"
+ ],
+ "black-mastermind": [
+  "Onye Nduzi Ojii"
+ ],
+ "dokkaebi": [
+  "Dokkaebi"
+ ],
+ "internal-energy": [
+  "Naegong"
+ ],
+ "jade-beauty": [
+  "Ọma Jade",
+  "Nwaanyị mara mma."
+ ],
+ "white-lotus": [
+  "Ọcha Lotus",
+  "Lotus ọcha."
+ ],
+ "eating-tofu": [
+  "Iri Tofu"
+ ],
+ "coughing-up-blood": [
+  "Ịkwara Ọbara"
+ ],
+ "frog-in-well": [
+  "Awọ n'Ime Olulu",
+  "Awọ n'olulu."
+ ],
+ "heaven-defying": [
+  "Mmegide Eluigwe"
+ ],
+ "green-hat": [
+  "Okpu Ndụ Ndụ (Ịkwa Iko)",
+  "Okpu ndụ ndụ."
+ ],
+ "shuang-wen": [
+  "Shuang Wen"
+ ],
+ "giving-face": [
+  "Inye Nsọpụrụ"
+ ],
+ "dungeon-core": [
+  "Isi Ụlọ Mkpọrọ"
+ ],
+ "fiefdom": [
+  "Ala Eze (Fiefdom)",
+  "Ala eze."
+ ],
+ "node": [
+  "Ebe Njikọ (Node)",
+  "Ebe njikọ."
+ ],
+ "contribution-points": [
+  "Akara Ntinyeaka"
+ ],
+ "sect-mission-hall": [
+  "Ụlọ Ozi Otu"
+ ],
+ "spirit-garden": [
+  "Ubi Mmụọ"
+ ],
+ "city-lord": [
+  "Onye Ọchịchị Obodo"
+ ],
+ "edict": [
+  "Iwu Eze"
+ ],
+ "vassal": [
+  "Onye Na-ejere Ozi"
+ ],
+ "primordial-chaos": [
+  "Ọgbaghara Mbụ"
+ ],
+ "the-void": [
+  "Oghere Ọtọ (The Void)",
+  "Oghere ọtọ."
+ ],
+ "life-forbidden-zone": [
+  "Mpaghara E Machibidoro Ndụ"
+ ],
+ "ancient-desolate-beast": [
+  "Anụ Ọhịa Oge Ochie"
+ ],
+ "star-field": [
+  "Ubi Kpakpando"
+ ],
+ "spatial-storm": [
+  "Oké Ifufe Oghere"
+ ],
+ "nine-heavens": [
+  "Eluigwe Itoolu"
+ ],
+ "river-of-time": [
+  "Osimiri Oge"
+ ],
+ "epoch": [
+  "Oge (Epoch)"
+ ],
+ "karmic-thread": [
+  "Eriri Karma"
+ ],
+ "origin-source": [
+  "Isi mmalite"
+ ],
+ "heaven-and-earth": [
+  "Eluigwe na Ụwa"
+ ],
+ "wuji": [
+  "Wuji"
+ ],
+ "dao-source": [
+  "Isi Dao"
+ ],
+ "engagement-annulment": [
+  "Ịkagbu Nkwa Alụmdi"
+ ],
+ "toad-lusting-after-swan-meat": [
+  "Awọ Na-achọ Anụ Ugo",
+  "Awọ na-achọ ugo."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "Ejila Ịda Ogbenye Kpagbuo Onye Ntorobịa"
+ ],
+ "concubine": [
+  "Nwunye Iko"
+ ],
+ "sect-rules": [
+  "Iwu Otu"
+ ],
+ "filial-piety": [
+  "Nkwanye Ùgwù Nye Ndị Nne na Nna"
+ ],
+ "pill-tribulation": [
+  "Ule Ọgwụ"
+ ],
+ "monster-genius": [
+  "Nnukwu Amamihe (Monster)",
+  "Nnukwu amamihe."
+ ],
+ "gu-venom-witchcraft": [
+  "Gu (Mmụọ / Nsi)"
+ ],
+ "corpse-refining": [
+  "Nnụcha Ozu"
+ ],
+ "fairy-sister": [
+  "Nwanne Nwaanyị Ọma"
+ ],
+ "young-miss": [
+  "Ada (Young Miss)"
+ ],
+ "mount-kunlun": [
+  "Ugwu Kunlun"
+ ],
+ "aggro": [
+  "Ịdọrọ Uche (Aggro)"
+ ],
+ "crowd-control": [
+  "Nchịkwa Ìgwè (CC)"
+ ],
+ "kiting": [
+  "Kiting"
+ ],
+ "aoe": [
+  "AoE (Mpaghara)"
+ ],
+ "proc": [
+  "Proc"
+ ],
+ "kill-steal": [
+  "Izu Ohi Ọnwụ (Kill Steal)"
+ ],
+ "tank": [
+  "Onye Nche (Tank)"
+ ],
+ "dps": [
+  "DPS"
+ ],
+ "gold-sink": [
+  "Ihe Na-eloda Ego (Gold Sink)"
+ ],
+ "auction-sniping": [
+  "Iweghara Ọrịre Na Mberede"
+ ],
+ "griefing": [
+  "Ịkpasu Iwe (Griefing)"
+ ],
+ "dot": [
+  "Mmebi Oge Gaa (DoT)"
+ ],
+ "contract-marriage": [
+  "Alụmdi na Nwunye Nkwekọrịta"
+ ],
+ "reawakening": [
+  "Ịkpọte Ọzọ"
+ ],
+ "tyrant": [
+  "Onye Ọchịchị Aka Ike (Tyrant)",
+  "Onye ọchịchị aka ike."
+ ],
+ "obsessive-male-lead": [
+  "Onye Ndú Nwoke Nwere Echiche Gbagọrọ Agbagọ",
+  "Onye ndú nwoke."
+ ],
+ "original-heroine": [
+  "Nwaanyị Ọgụ Mbụ"
+ ],
+ "regression-trauma": [
+  "Ọnya Obi Nlaghachi"
+ ],
+ "hunter-association": [
+  "Otu Ndị Dinta"
+ ],
+ "sudden-death": [
+  "Ọnwụ Mberede"
+ ],
+ "guild-master": [
+  "Nna-ukwu Otu"
+ ],
+ "adventurer-ranks": [
+  "Ọkwa Ndị Njem"
+ ],
+ "beastkin": [
+  "Ụdị Anụmanụ"
+ ],
+ "demon-god": [
+  "Chi Mmụọ Ọjọọ"
+ ],
+ "unique-skill": [
+  "Nka Pụrụ Iche"
+ ],
+ "demon-realm": [
+  "Ala Mmụọ Ọjọọ"
+ ],
+ "slave-crest": [
+  "Akara Ịbụ Ohu"
+ ],
+ "subjugation": [
+  "Mkpebi"
+ ],
+ "otherworlder": [
+  "Onye Ụwa Ọzọ"
+ ],
+ "heros-party": [
+  "Otu Onye Ọgụ"
+ ],
+ "dao-heart": [
+  "Obi Dao"
+ ],
+ "severing-mortal-ties": [
+  "Ịbipụ Njikọ Ụwa"
+ ],
+ "five-elements": [
+  "Ihe Ise Mbụ"
+ ],
+ "yin-and-yang": [
+  "Yin na Yang"
+ ],
+ "enlightenment": [
+  "Nghọta Ìhè"
+ ],
+ "mortal-tribulation": [
+  "Ule nke Ụwa"
+ ],
+ "soul-dissipation": [
+  "Mgbasa Mmụọ"
+ ],
+ "dao-marks": [
+  "Akara Dao"
+ ],
+ "nirvana": [
+  "Nirvana"
+ ],
+ "fellow-daoist": [
+  "Onye Dao Ibe m"
+ ],
+ "sect-familial-address": [
+  "Aha Ezinụlọ Otu"
+ ],
+ "cold-snort": [
+  "Mkuume Oyi"
+ ],
+ "dog-leg-lackey": [
+  "Onye Neso Ụzọ (Lackey)",
+  "Onye neso ụzọ."
+ ],
+ "jianghu": [
+  "Jianghu"
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "Ịnọ n'Ugwu Na-ele Agụ Na-alụ Ọgụ"
+ ],
+ "chaebol": [
+  "Chaebol"
+ ],
+ "heavenly-oath": [
+  "Iyi Eluigwe"
+ ],
+ "title-achievement": [
+  "Aha / Ihe Nrite"
+ ],
+ "system-erasure": [
+  "Mbibi Usoro"
+ ],
+ "sweet-potato": [
+  "Nduku Ụtọ (Ọnọdụ Siri Ike)",
+  "Nduku ụtọ."
+ ],
+ "white-moonlight": [
+  "Ìhè Ọnwa Ọcha"
+ ],
+ "cinnabar-mole": [
+  "Àfọ̀ Uhie (Cinnabar Mole)",
+  "Àfọ̀ uhie."
+ ],
+ "holy-mother": [
+  "Nne Nsọ"
+ ],
+ "dog-blood": [
+  "Ọbara Nkịta (Melodrama)",
+  "Ọbara nkịta."
+ ],
+ "angst": [
+  "Ichegbu (Angst)",
+  "Ichegbu."
+ ],
+ "scum": [
+  "Ihe Ọjọọ (Scum)",
+  "Ihe ọjọọ."
+ ],
+ "brain-dead": [
+  "Onye Nzuzu (Brain-dead)",
+  "Onye nzuzu."
+ ],
+ "meat": [
+  "Anụ (Smut)"
+ ],
+ "green-tea": [
+  "Tii Ndụ Ndụ (Aghụghọ)",
+  "Tii ndụ ndụ."
+ ],
+ "territory": [
+  "Ala Achịkwa"
+ ],
+ "rebirth": [
+  "A mụrụ ọhụrụ"
+ ],
+ "devil-mara": [
+  "Ekwensu / Mara"
+ ],
+ "demonic-beast": [
+  "Anụ Ọhịa Mmụọ Ọjọọ"
+ ],
+ "truck-kun": [
+  "Ụgbọala (Truck-kun)"
+ ],
+ "cheat-skill": [
+  "Nka Aghụghọ"
+ ],
+ "divine-protection": [
+  "Nchebe Nsọ"
+ ],
+ "genkai-toppa": [
+  "Ịgbaji Ókè"
+ ],
+ "chuunibyou": [
+  "Chuunibyou"
+ ],
+ "tsundere": [
+  "Tsundere"
+ ],
+ "yandere": [
+  "Yandere"
+ ],
+ "san": [
+  "-san"
+ ],
+ "chan": [
+  "-chan"
+ ],
+ "kun": [
+  "-kun"
+ ],
+ "dono": [
+  "-dono"
+ ],
+ "sensei": [
+  "-sensei"
+ ],
+ "adventurer-guild": [
+  "Otu Ndị Njem"
+ ],
+ "vrmmo": [
+  "VRMMO"
+ ],
+ "goddess": [
+  "Chi Nwaanyị"
+ ],
+ "gate": [
+  "Ọnụ Ụzọ"
+ ],
+ "awakening": [
+  "Ịkpọte"
+ ],
+ "regressor": [
+  "Onye Nlaghachi"
+ ],
+ "national-level-hunter": [
+  "Dinta Ọkwa Mba"
+ ],
+ "hunter-rank": [
+  "Ọkwa Dinta"
+ ],
+ "grade": [
+  "Ọkwa (Grade)",
+  "Ọkwa."
+ ],
+ "mana": [
+  "Mana"
+ ],
+ "shadow-soldier": [
+  "Onye Agha Onyinyo"
+ ],
+ "monarch": [
+  "Eze (Monarch)"
+ ],
+ "hyung": [
+  "Hyung"
+ ],
+ "noona": [
+  "Noona"
+ ],
+ "oppa": [
+  "Oppa"
+ ],
+ "sunbae": [
+  "Sunbae"
+ ],
+ "ahjussi": [
+  "Ahjussi"
+ ],
+ "ahjumma": [
+  "Ahjumma"
+ ],
+ "dungeon-break": [
+  "Mgbaji Ụlọ Mkpọrọ"
+ ],
+ "boss-monster": [
+  "Onye Ndú Anụ Ọhịa (Boss)",
+  "Onye ndú anụ ọhịa."
+ ],
+ "first-clear": [
+  "Mmecha Mbụ"
+ ],
+ "clear": [
+  "Mmecha (Clear)",
+  "Mmecha."
+ ],
+ "penalty": [
+  "Ntaramahụhụ"
+ ],
+ "compensation": [
+  "Ụgwọ Ọrụ"
+ ],
+ "ranker": [
+  "Onye Nọ n'Ọkwa"
+ ],
+ "player-kill": [
+  "Ogbue Ọkpụkpọ (PK)",
+  "Ogbue ọkpụkpọ."
+ ],
+ "broadcast": [
+  "Mgbasa Ozi"
+ ],
+ "mutant-monster": [
+  "Anụ Ọhịa Gbanwere"
+ ],
+ "growth-type-ability": [
+  "Ikike Ntozu"
+ ],
+ "evolution": [
+  "Mbanwe (Evolution)",
+  "Mbanwe."
+ ],
+ "floor": [
+  "Ala / Ghorofa"
+ ],
+ "test": [
+  "Ule"
+ ],
+ "test-administrator": [
+  "Onye Nchịkwa Ule"
+ ],
+ "floor-guardian": [
+  "Onye Nche Ala"
+ ],
+ "irregular": [
+  "Onye Na-adịghị Ka Ndị Ọzọ"
+ ],
+ "regular": [
+  "Onye Dị Ka Ndị Ọzọ",
+  "Onye nkịtị."
+ ],
+ "hidden-floor": [
+  "Ala Nzuzo"
+ ],
+ "wall": [
+  "Mgbidi"
+ ],
+ "family": [
+  "Ezinụlọ"
+ ],
+ "observer": [
+  "Onye Nleanya"
+ ],
+ "onii-chan": [
+  "Onii-chan"
+ ],
+ "onee-chan": [
+  "Onee-chan"
+ ],
+ "ossan": [
+  "Ossan"
+ ],
+ "osananajimi": [
+  "Osananajimi"
+ ],
+ "kokuhaku": [
+  "Kokuhaku"
+ ],
+ "bunkasai": [
+  "Bunkasai"
+ ],
+ "guild-card": [
+  "Kaadị Otu"
+ ],
+ "job-change": [
+  "Ngbanwe Ọrụ"
+ ],
+ "labyrinth": [
+  "Labyrinth"
+ ],
+ "blacksmith": [
+  "Ọkpụ Ụzụ"
+ ],
+ "slow-life": [
+  "Ndụ Nwayọ"
+ ],
+ "skill-book": [
+  "Akwụkwọ Nka"
+ ],
+ "great-sage": [
+  "Nnukwu Ọkà Amamihe"
+ ],
+ "sacred-sword": [
+  "Mma Agha Nsọ"
+ ],
+ "entrance-exam": [
+  "Ule Ịbata"
+ ],
+ "class-ranking": [
+  "Ọkwa Klas"
+ ],
+ "mob-class": [
+  "Klas Ndị Nkịtị"
+ ],
+ "late-bloomer": [
+  "Onye Oge Na-aga"
+ ],
+ "graduation-trial": [
+  "Ule Ngụsị Akwụkwọ"
+ ],
+ "novel-knowledge": [
+  "Amamihe Akwụkwọ"
+ ],
+ "fourth-wall": [
+  "Mgbidi Nke Anọ"
+ ],
+ "system-voice": [
+  "Olu Usoro"
+ ],
+ "authors-note": [
+  "Ihe Edeturu Odee"
+ ],
+ "ancient-ruins": [
+  "Mkpọmkpọ Ebe Oge Ochie"
+ ],
+ "spirit-vein": [
+  "Akwara Mmụọ"
+ ],
+ "middle-realm": [
+  "Ụwa Etiti"
+ ],
+ "void": [
+  "Oghere (Void)",
+  "Oghere."
+ ],
+ "chaos": [
+  "Ọgbaghara"
+ ],
+ "tribute": [
+  "Ụtụ (Tribute)"
+ ],
+ "garrison": [
+  "Ogige Ndị Agha"
+ ],
+ "liege": [
+  "Nna-ukwu (Liege)",
+  "Nna-ukwu."
+ ],
+ "totem-beast": [
+  "Anụ Ọhịa Totem"
+ ],
+ "beast-master": [
+  "Onye Nchịkwa Anụ Ọhịa"
+ ]
+}

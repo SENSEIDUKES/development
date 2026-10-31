@@ -1,0 +1,386 @@
+{
+ "reincarnation": [
+  "환생"
+ ],
+ "regression": [
+  "회귀"
+ ],
+ "transmigration": [
+  "빙의"
+ ],
+ "hunter-system": [
+  "헌터 시스템"
+ ],
+ "constellation": [
+  "성좌"
+ ],
+ "dungeon": [
+  "던전"
+ ],
+ "tower": [
+  "탑"
+ ],
+ "system": [
+  "시스템"
+ ],
+ "guild": [
+  "길드"
+ ],
+ "murim": [
+  "무림"
+ ],
+ "academy-arc": [
+  "아카데미"
+ ],
+ "guide": [
+  "가이드"
+ ],
+ "esper": [
+  "에스퍼"
+ ],
+ "arrogant-young-master": [
+  "망나니"
+ ],
+ "face": [
+  "체면"
+ ],
+ "face-slapping": [
+  "참교육"
+ ],
+ "tournament-arc": [
+  "토너먼트"
+ ],
+ "bloodline": [
+  "혈통"
+ ],
+ "harem": [
+  "하렘"
+ ],
+ "protagonist-halo": [
+  "주인공 보정"
+ ],
+ "party": [
+  "파티"
+ ],
+ "raid": [
+  "레이드"
+ ],
+ "pvp": [
+  "피브이피"
+ ],
+ "regression-novel": [
+  "회귀물"
+ ],
+ "transmigration-novel": [
+  "빙의물"
+ ],
+ "talent": [
+  "재능"
+ ],
+ "cheat": [
+  "치트"
+ ],
+ "loot-box": [
+  "가챠"
+ ],
+ "pay-to-win": [
+  "과금"
+ ],
+ "player": [
+  "플레이어"
+ ],
+ "administrator": [
+  "관리자"
+ ],
+ "tutorial": [
+  "튜토리얼"
+ ],
+ "romance-fantasy": [
+  "로판"
+ ],
+ "returner": [
+  "귀환자"
+ ],
+ "shim-gong": [
+  "심공"
+ ],
+ "shin-bup": [
+  "신법"
+ ],
+ "jeom-hyeol": [
+  "점혈"
+ ],
+ "ho-shin-gang-qi": [
+  "호신강기"
+ ],
+ "geom-gi": [
+  "검기"
+ ],
+ "hidden-class": [
+  "히든 클래스"
+ ],
+ "necromancer": [
+  "네크로맨서"
+ ],
+ "job-advancement": [
+  "전직"
+ ],
+ "red-gate": [
+  "레드 게이트"
+ ],
+ "clear-condition": [
+  "클리어 조건"
+ ],
+ "magic-stone": [
+  "마석"
+ ],
+ "penalty-quest": [
+  "패널티 퀘스트"
+ ],
+ "floor-master": [
+  "층주"
+ ],
+ "porter": [
+  "짐꾼"
+ ],
+ "scenario": [
+  "시나리오"
+ ],
+ "probability": [
+  "개연성"
+ ],
+ "stigma": [
+  "성흔"
+ ],
+ "murim-alliance": [
+  "무림맹"
+ ],
+ "demonic-cult": [
+  "마교"
+ ],
+ "northern-duke": [
+  "북부 대공"
+ ],
+ "tea-party": [
+  "다과회"
+ ],
+ "munchkin": [
+  "먼치킨"
+ ],
+ "cider": [
+  "사이다"
+ ],
+ "black-mastermind": [
+  "흑막"
+ ],
+ "dokkaebi": [
+  "도깨비"
+ ],
+ "internal-energy": [
+  "내공"
+ ],
+ "aggro": [
+  "어그로"
+ ],
+ "crowd-control": [
+  "군중제어"
+ ],
+ "aoe": [
+  "광역기"
+ ],
+ "kill-steal": [
+  "막타"
+ ],
+ "tank": [
+  "탱커"
+ ],
+ "dps": [
+  "딜러"
+ ],
+ "griefing": [
+  "트롤링"
+ ],
+ "contract-marriage": [
+  "계약 결혼"
+ ],
+ "reawakening": [
+  "재각성"
+ ],
+ "tyrant": [
+  "폭군"
+ ],
+ "obsessive-male-lead": [
+  "집착남주"
+ ],
+ "original-heroine": [
+  "원작 여주"
+ ],
+ "regression-trauma": [
+  "회귀 트라우마"
+ ],
+ "hunter-association": [
+  "헌터 협회"
+ ],
+ "sudden-death": [
+  "즉사"
+ ],
+ "guild-master": [
+  "길드장"
+ ],
+ "cold-snort": [
+  "콧방귀"
+ ],
+ "chaebol": [
+  "재벌"
+ ],
+ "title-achievement": [
+  "칭호"
+ ],
+ "system-erasure": [
+  "시스템 말소"
+ ],
+ "sweet-potato": [
+  "고구마"
+ ],
+ "scum": [
+  "쓰레기"
+ ],
+ "brain-dead": [
+  "무뇌"
+ ],
+ "gate": [
+  "게이트"
+ ],
+ "awakening": [
+  "각성"
+ ],
+ "regressor": [
+  "회귀자"
+ ],
+ "national-level-hunter": [
+  "국가급 헌터"
+ ],
+ "hunter-rank": [
+  "등급"
+ ],
+ "grade": [
+  "등급"
+ ],
+ "mana": [
+  "마나"
+ ],
+ "shadow-soldier": [
+  "그림자 병사"
+ ],
+ "monarch": [
+  "군주"
+ ],
+ "hyung": [
+  "형"
+ ],
+ "noona": [
+  "누나"
+ ],
+ "oppa": [
+  "오빠"
+ ],
+ "sunbae": [
+  "선배"
+ ],
+ "ahjussi": [
+  "아저씨"
+ ],
+ "ahjumma": [
+  "아줌마"
+ ],
+ "dungeon-break": [
+  "던전 브레이크"
+ ],
+ "boss-monster": [
+  "보스 몬스터"
+ ],
+ "first-clear": [
+  "최초 클리어"
+ ],
+ "clear": [
+  "클리어"
+ ],
+ "penalty": [
+  "패널티"
+ ],
+ "compensation": [
+  "보상"
+ ],
+ "ranker": [
+  "랭커"
+ ],
+ "player-kill": [
+  "플레이어 킬"
+ ],
+ "broadcast": [
+  "중계"
+ ],
+ "mutant-monster": [
+  "변종 몬스터"
+ ],
+ "growth-type-ability": [
+  "성장형"
+ ],
+ "evolution": [
+  "진화"
+ ],
+ "floor": [
+  "층"
+ ],
+ "test": [
+  "시험"
+ ],
+ "test-administrator": [
+  "시험 감독관"
+ ],
+ "floor-guardian": [
+  "층의 수호자"
+ ],
+ "irregular": [
+  "이레귤러"
+ ],
+ "regular": [
+  "레귤러"
+ ],
+ "hidden-floor": [
+  "숨겨진 층"
+ ],
+ "wall": [
+  "벽"
+ ],
+ "family": [
+  "패밀리"
+ ],
+ "observer": [
+  "감시자"
+ ],
+ "entrance-exam": [
+  "입학 시험"
+ ],
+ "class-ranking": [
+  "반 배정"
+ ],
+ "mob-class": [
+  "엑스트라"
+ ],
+ "graduation-trial": [
+  "졸업 시험"
+ ],
+ "novel-knowledge": [
+  "원작 지식"
+ ],
+ "fourth-wall": [
+  "제4의 벽"
+ ],
+ "system-voice": [
+  "시스템 음성"
+ ],
+ "authors-note": [
+  "작가의 말"
+ ]
+}

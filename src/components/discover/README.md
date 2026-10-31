@@ -28,7 +28,7 @@ format. Lore remains shared, with its local language and mode preserved.
 | Codex | Characters and Items only; expandable entries with descriptions and source-story cards; tracked entries in My updates |
 | Genres | Cover-backed tiles for Stories or Creators, counting the current search and feed; selecting a tile opens that genre's catalogue |
 | Heavenly Rankings | A separate overall view for stories, creators, characters or items; search and genres preserve original ranks; returning to Browse restores its feed |
-| Lore | Directly opens the existing encyclopedia, with alias search, a category rail and localized articles; no genres or rankings |
+| Lore | Directly opens the encyclopedia: 398 terms with alias search, a category rail, localized articles and Write it as with Copy on every term; no genres or rankings |
 
 NovelExpanded (`src/novel-expanded/DiscoverPage.tsx`) shows it with sample worlds
 while its look and feel is refined. The Workshop previews that page at
@@ -36,11 +36,16 @@ while its look and feel is refined. The Workshop previews that page at
 
 `DiscoverEncyclopedia` uses that same package entry; the old doorway has been
 replaced by the Lore navigation link. The host supplies URLs, navigation and existing profile language/Reading
-Mode defaults; the encyclopedia owns its 36-term catalogue and localized copy.
-`shared/loreCatalogue.ts` holds stable IDs, aliases and original scripts;
-`shared/loreEnglish.ts` is the English editorial reference; `shared/lore-locales/`
-holds definitions loaded on demand for the existing supported languages.
-`shared/loreInterfaceCopy.ts` holds their interface and category copy.
+Mode defaults; the encyclopedia owns its catalogue and localized copy.
+`shared/loreCatalogue.ts` holds the curated core's permanent IDs, aliases and
+original scripts, and loads the rest on demand; `shared/loreEnglish.ts` is the
+curated core's English editorial reference; `shared/lore-locales/` holds its
+definitions loaded on demand for the existing supported languages.
+`shared/lore-glossary/` is generated from SENSEI's master glossary
+(`docs/lore/master-glossary.json`, `node scripts/buildLoreGlossary.mjs`):
+`terms.json` and one `renderings/<language>.json` per language, each loaded
+only when Lore needs it. `shared/loreInterfaceCopy.ts` holds interface and
+category copy.
 
 The directory and articles live under Discover's `lore` query parameter, with
 `q` and `category` retained on article navigation. Local language/mode overrides
@@ -52,6 +57,13 @@ fabricates a personal term list. See the direction document for
 mode behavior and translation-review limits.
 
 ## History
+
+- **2026-10-30 (Lore as a translator's reference)** — Loaded SENSEI's master
+  glossary into Lore: 398 terms in eleven categories, with permanent ids that
+  future user versions attach to. Every term shows Write it as, in the reading
+  language, with a Copy button, and the directory has Copy all; the copied
+  lines paste into a translation skill. Removed the per-category genre notes
+  and the "In the genre" article section; the scope line covers them.
 
 - **2026-10-26 (hierarchy)** — Put the medium first and section navigation below
   it: choose Novel, Manga, Game or Video, then Stories, Creators, Codex or Lore.

@@ -1,0 +1,1189 @@
+{
+ "qi": [
+  "چی (Qi)"
+ ],
+ "cultivation": [
+  "تزکیه / پرورش (Cultivation)"
+ ],
+ "dantian": [
+  "دانتیان (Dantian)"
+ ],
+ "immortal-qi": [
+  "چی جاودانه"
+ ],
+ "cultivation-realm": [
+  "قلمرو تزکیه"
+ ],
+ "heavenly-tribulation": [
+  "عذاب آسمانی"
+ ],
+ "nascent-soul": [
+  "روح نوپا"
+ ],
+ "golden-core": [
+  "هسته طلایی"
+ ],
+ "foundation-establishment": [
+  "تاسیس پایه",
+  "Foundation."
+ ],
+ "qi-refining": [
+  "تراکم چی"
+ ],
+ "core-formation": [
+  "تشکیل هسته"
+ ],
+ "spirit-severing": [
+  "قطع روح"
+ ],
+ "dao-seeking": [
+  "جستجوی دائو"
+ ],
+ "domain": [
+  "قلمرو (Domain)"
+ ],
+ "ascension": [
+  "عروج"
+ ],
+ "meridians": [
+  "نصف‌النهار / مریدین (Meridian)"
+ ],
+ "spiritual-root": [
+  "ریشه معنوی"
+ ],
+ "jing-qi-shen": [
+  "جینگ، چی، شن"
+ ],
+ "body-tempering": [
+  "آبدیده کردن بدن"
+ ],
+ "fiendgod-body-refining": [
+  "تصفیه بدن خدای شیطانی",
+  "Fiendgod Refining."
+ ],
+ "heartforce-cultivation": [
+  "تزکیه نیروی قلب",
+  "Heartforce."
+ ],
+ "dual-cultivation": [
+  "تزکیه دوگانه"
+ ],
+ "alchemy": [
+  "معجون‌سازی / ساخت قرص",
+  "Alchemy."
+ ],
+ "spirit-stone": [
+  "سنگ روح"
+ ],
+ "spiritual-treasure": [
+  "مصنوعات جادویی (Artifact)"
+ ],
+ "storage-ring": [
+  "حلقه ذخیره‌سازی"
+ ],
+ "talisman": [
+  "طلسم (Talisman)"
+ ],
+ "formation": [
+  "آرایش (Formation)"
+ ],
+ "sect": [
+  "فرقه (Sect)"
+ ],
+ "clan": [
+  "قبیله (Clan)"
+ ],
+ "patriarch": [
+  "پدرسالار / رئیس قبیله"
+ ],
+ "elder": [
+  "ارشد / بزرگ"
+ ],
+ "disciple-hierarchy": [
+  "سلسله مراتب شاگردان"
+ ],
+ "spirit-beast": [
+  "جانور روح"
+ ],
+ "beast-taming": [
+  "رام کردن جانور"
+ ],
+ "heavenly-dao": [
+  "دائو آسمانی"
+ ],
+ "dao": [
+  "دائو"
+ ],
+ "karma": [
+  "کارما"
+ ],
+ "reincarnation": [
+  "تناسخ"
+ ],
+ "regression": [
+  "بازگشت / رگرسیون"
+ ],
+ "transmigration": [
+  "مهاجرت روح"
+ ],
+ "isekai": [
+  "ایسکای (جهان دیگر)"
+ ],
+ "otome-isekai": [
+  "اوتومه ایسکای"
+ ],
+ "hunter-system": [
+  "سیستم شکارچی"
+ ],
+ "constellation": [
+  "صورت فلکی"
+ ],
+ "dungeon": [
+  "سیاه‌چال (Dungeon)"
+ ],
+ "tower": [
+  "برج"
+ ],
+ "system": [
+  "سیستم"
+ ],
+ "status-window": [
+  "پنجره وضعیت"
+ ],
+ "level": [
+  "Level",
+  "Game/system progression tier."
+ ],
+ "skill": [
+  "مهارت"
+ ],
+ "level-up": [
+  "ارتقای سطح"
+ ],
+ "quest": [
+  "ماموریت (Quest)"
+ ],
+ "guild": [
+  "انجمن (Guild)"
+ ],
+ "rarity": [
+  "کمیابی"
+ ],
+ "loot": [
+  "غنیمت (Loot)"
+ ],
+ "wuxia": [
+  "ووشیا"
+ ],
+ "xianxia": [
+  "شیانشیا"
+ ],
+ "xuanhuan": [
+  "شوانهوان"
+ ],
+ "murim": [
+  "موریم"
+ ],
+ "litrpg": [
+  "LitRPG"
+ ],
+ "progression-fantasy": [
+  "فانتزی پیشرفت",
+  "Progression."
+ ],
+ "academy-arc": [
+  "قوس آکادمی"
+ ],
+ "guide": [
+  "راهنما"
+ ],
+ "esper": [
+  "اسپر (قدرت‌مند ذهنی)"
+ ],
+ "arrogant-young-master": [
+  "استاد جوان مغرور"
+ ],
+ "face": [
+  "آبرو / چهره",
+  "Face/Reputation."
+ ],
+ "face-slapping": [
+  "سیلی زدن (تحقیر کردن)"
+ ],
+ "tournament-arc": [
+  "قوس مسابقات",
+  "Tournament."
+ ],
+ "secret-realm": [
+  "قلمرو مخفی"
+ ],
+ "auction": [
+  "حراج"
+ ],
+ "bloodline": [
+  "نسل / خط خونی"
+ ],
+ "physique": [
+  "فیزیک / ساختار بدن"
+ ],
+ "dao-companion": [
+  "همراه دائو"
+ ],
+ "harem": [
+  "حرمسرا"
+ ],
+ "cannon-fodder": [
+  "گوشت دم توپ"
+ ],
+ "villainess": [
+  "زن شرور"
+ ],
+ "protagonist-halo": [
+  "هاله قهرمان"
+ ],
+ "system-shop": [
+  "فروشگاه سیستم"
+ ],
+ "inventory": [
+  "فهرست موجودی"
+ ],
+ "class": [
+  "کلاس (Class)"
+ ],
+ "stat": [
+  "آمار (Stat)"
+ ],
+ "skill-tree": [
+  "درخت مهارت"
+ ],
+ "party": [
+  "گروه (Party)"
+ ],
+ "raid": [
+  "یورش (Raid)"
+ ],
+ "pvp": [
+  "بازیکن در برابر بازیکن"
+ ],
+ "pve": [
+  "بازیکن در برابر محیط"
+ ],
+ "npc": [
+  "شخصیت غیرقابل بازی (NPC)"
+ ],
+ "sentient-system": [
+  "سیستم دارای احساس"
+ ],
+ "regression-novel": [
+  "رمان بازگشت"
+ ],
+ "transmigration-novel": [
+  "رمان مهاجرت روح"
+ ],
+ "cultivation-technique": [
+  "تکنیک تزکیه"
+ ],
+ "forbidden-technique": [
+  "تکنیک ممنوعه"
+ ],
+ "sword-intent": [
+  "نیت شمشیر"
+ ],
+ "domain-expansion": [
+  "گسترش قلمرو"
+ ],
+ "heavenly-tribulation-lightning": [
+  "صاعقه عذاب آسمانی",
+  "Tribulation Lightning."
+ ],
+ "soul": [
+  "روح"
+ ],
+ "spiritual-sense": [
+  "حس معنوی"
+ ],
+ "qi-deviation": [
+  "انحراف چی"
+ ],
+ "heart-devil": [
+  "شیطان قلب"
+ ],
+ "merit": [
+  "شایستگی / ثواب"
+ ],
+ "karmic-fire": [
+  "آتش کارمایی"
+ ],
+ "ascension-platform": [
+  "سکو عروج"
+ ],
+ "lower-realm": [
+  "قلمرو پایین"
+ ],
+ "immortal-realm": [
+  "قلمرو جاودانه"
+ ],
+ "spirit-realm": [
+  "قلمرو ارواح"
+ ],
+ "great-thousand-world": [
+  "هزاران جهان بزرگ"
+ ],
+ "plane": [
+  "سطح (Plane)"
+ ],
+ "world-tree": [
+  "درخت جهان"
+ ],
+ "celestial-empire": [
+  "امپراتوری آسمانی"
+ ],
+ "demon": [
+  "شیطان"
+ ],
+ "orthodox-vs-unorthodox": [
+  "ارتدکس در برابر غیر ارتدکس"
+ ],
+ "sect-war": [
+  "جنگ فرقه"
+ ],
+ "resource-war": [
+  "جنگ منابع"
+ ],
+ "talent": [
+  "استعداد"
+ ],
+ "cheat": [
+  "تقلب (Cheat)"
+ ],
+ "time-dilation": [
+  "اتساع زمان"
+ ],
+ "appraisal": [
+  "ارزیابی"
+ ],
+ "loot-box": [
+  "جعبه غنیمت"
+ ],
+ "pay-to-win": [
+  "پرداخت برای پیروزی"
+ ],
+ "player": [
+  "بازیکن"
+ ],
+ "administrator": [
+  "مدیر"
+ ],
+ "tutorial": [
+  "آموزش (Tutorial)"
+ ],
+ "hidden-quest": [
+  "ماموریت پنهان"
+ ],
+ "repair": [
+  "تعمیر"
+ ],
+ "death-penalty": [
+  "مجازات مرگ"
+ ],
+ "respawn": [
+  "تولد دوباره (Respawn)"
+ ],
+ "fast-travel": [
+  "سفر سریع"
+ ],
+ "mount": [
+  "مرکب (Mount)"
+ ],
+ "pet": [
+  "حیوان خانگی"
+ ],
+ "crafting": [
+  "ساخت و ساز (Crafting)"
+ ],
+ "enchanting": [
+  "افسون‌گری"
+ ],
+ "socket": [
+  "سوکت"
+ ],
+ "set-item": [
+  "مجموعه اقلام"
+ ],
+ "unique-item": [
+  "مورد منحصر به فرد"
+ ],
+ "courting-death": [
+  "در آغوش کشیدن مرگ"
+ ],
+ "mount-tai": [
+  "کوه تای"
+ ],
+ "kowtow": [
+  "کوتو (سجده کردن)"
+ ],
+ "jade-slip": [
+  "لوح یشمی"
+ ],
+ "romance-fantasy": [
+  "فانتزی عاشقانه"
+ ],
+ "returner": [
+  "بازگشته"
+ ],
+ "sword-cultivator": [
+  "تزکیه‌کننده شمشیر"
+ ],
+ "foundation-establishment-pill": [
+  "قرص تاسیس پایه",
+  "Foundation Pill."
+ ],
+ "marrow-cleansing-pill": [
+  "قرص پاک‌سازی مغز استخوان"
+ ],
+ "fasting-pill": [
+  "قرص روزه"
+ ],
+ "blood-burning-pill": [
+  "قرص سوزاندن خون"
+ ],
+ "shim-gong": [
+  "شیم گونگ"
+ ],
+ "shin-bup": [
+  "شین بوپ"
+ ],
+ "jeom-hyeol": [
+  "جوم هیول"
+ ],
+ "ho-shin-gang-qi": [
+  "هو شین گانگ چی"
+ ],
+ "geom-gi": [
+  "گیوم گی"
+ ],
+ "sama": [
+  "-ساما"
+ ],
+ "senpai-kouhai": [
+  "سنپای / کوهای"
+ ],
+ "ojou-sama": [
+  "اوجو-ساما"
+ ],
+ "maou-gun": [
+  "ارتش مائو"
+ ],
+ "dao-child": [
+  "کودک دائو"
+ ],
+ "peak-master": [
+  "استاد قله"
+ ],
+ "sect-leader": [
+  "رهبر فرقه"
+ ],
+ "handyman-disciple": [
+  "شاگرد خدمتکار"
+ ],
+ "guest-elder": [
+  "بزرگ مهمان"
+ ],
+ "sweeping-monk": [
+  "راهب جاروکش"
+ ],
+ "hidden-class": [
+  "کلاس پنهان"
+ ],
+ "necromancer": [
+  "نکرومانسر (احضارکننده مردگان)"
+ ],
+ "job-advancement": [
+  "ارتقای شغل"
+ ],
+ "berserker": [
+  "دیوانه‌جنگجو (برزرکر)"
+ ],
+ "paladin": [
+  "پالادین"
+ ],
+ "beast-core": [
+  "هسته جانور"
+ ],
+ "soul-contract": [
+  "قرارداد روح"
+ ],
+ "beast-pouch": [
+  "کیسه جانور"
+ ],
+ "bloodline-evolution": [
+  "تکامل نسل"
+ ],
+ "familiar": [
+  "آشنا (جانور همراه)"
+ ],
+ "equality-contract": [
+  "قرارداد برابری"
+ ],
+ "heavenly-flame": [
+  "شعله آسمانی"
+ ],
+ "spirit-herb": [
+  "گیاه دارویی روح"
+ ],
+ "spirit-spring-water": [
+  "آب چشمه روح"
+ ],
+ "array-eye": [
+  "چشم آرایش"
+ ],
+ "formation-flag": [
+  "پرچم آرایش"
+ ],
+ "spirit-gathering-array": [
+  "آرایش جمع‌آوری روح"
+ ],
+ "red-gate": [
+  "دروازه قرمز"
+ ],
+ "clear-condition": [
+  "شرایط پاکسازی"
+ ],
+ "magic-stone": [
+  "سنگ جادویی"
+ ],
+ "penalty-quest": [
+  "ماموریت جریمه"
+ ],
+ "floor-master": [
+  "استاد طبقه"
+ ],
+ "porter": [
+  "باربر (Porter)"
+ ],
+ "scenario": [
+  "سناریو"
+ ],
+ "probability": [
+  "احتمال"
+ ],
+ "stigma": [
+  "ننگ / انگ"
+ ],
+ "murim-alliance": [
+  "اتحاد موریم"
+ ],
+ "demonic-cult": [
+  "فرقه شیطانی"
+ ],
+ "northern-duke": [
+  "دوک شمالی"
+ ],
+ "tea-party": [
+  "مهمانی چای"
+ ],
+ "munchkin": [
+  "مانچکین"
+ ],
+ "cider": [
+  "سایدر (تسکین دهنده)"
+ ],
+ "black-mastermind": [
+  "مغز متفکر سیاه"
+ ],
+ "dokkaebi": [
+  "دوکائبی"
+ ],
+ "internal-energy": [
+  "نائگونگ"
+ ],
+ "jade-beauty": [
+  "زیبای یشمی"
+ ],
+ "white-lotus": [
+  "نیلوفر سفید (ریاکار)"
+ ],
+ "eating-tofu": [
+  "خوردن توفو (استفاده از کسی)"
+ ],
+ "coughing-up-blood": [
+  "سرفه کردن خون"
+ ],
+ "frog-in-well": [
+  "قورباغه در چاه"
+ ],
+ "heaven-defying": [
+  "مخالف بهشت"
+ ],
+ "green-hat": [
+  "کلاه سبز (خیانت دیده)"
+ ],
+ "shuang-wen": [
+  "شوانگ ون"
+ ],
+ "giving-face": [
+  "آبرو دادن"
+ ],
+ "dungeon-core": [
+  "هسته سیاه‌چال"
+ ],
+ "fiefdom": [
+  "قلمرو فئودالی"
+ ],
+ "node": [
+  "گره"
+ ],
+ "contribution-points": [
+  "امتیاز مشارکت"
+ ],
+ "sect-mission-hall": [
+  "تالار ماموریت فرقه"
+ ],
+ "spirit-garden": [
+  "باغ ارواح"
+ ],
+ "city-lord": [
+  "ارباب شهر"
+ ],
+ "edict": [
+  "فرمان"
+ ],
+ "vassal": [
+  "دست‌نشانده"
+ ],
+ "primordial-chaos": [
+  "آشوب نخستین"
+ ],
+ "the-void": [
+  "خلاء"
+ ],
+ "life-forbidden-zone": [
+  "منطقه ممنوعه زندگی"
+ ],
+ "ancient-desolate-beast": [
+  "جانور متروک باستانی"
+ ],
+ "star-field": [
+  "میدان ستاره‌ای"
+ ],
+ "spatial-storm": [
+  "طوفان فضایی"
+ ],
+ "nine-heavens": [
+  "نه بهشت"
+ ],
+ "river-of-time": [
+  "رودخانه زمان"
+ ],
+ "epoch": [
+  "عصر / دوران"
+ ],
+ "karmic-thread": [
+  "رشته کارمایی"
+ ],
+ "origin-source": [
+  "منبع اصلی"
+ ],
+ "heaven-and-earth": [
+  "بهشت و زمین"
+ ],
+ "wuji": [
+  "ووجی"
+ ],
+ "dao-source": [
+  "منبع دائو"
+ ],
+ "engagement-annulment": [
+  "لغو نامزدی"
+ ],
+ "toad-lusting-after-swan-meat": [
+  "وزغ در هوس گوشت قو",
+  "Toad Lusting..."
+ ],
+ "dont-bully-the-young-into-poverty": [
+  "جوانان را برای فقر اذیت نکنید",
+  "Don't Bully..."
+ ],
+ "concubine": [
+  "صیغه"
+ ],
+ "sect-rules": [
+  "قوانین فرقه"
+ ],
+ "filial-piety": [
+  "احترام به والدین"
+ ],
+ "pill-tribulation": [
+  "عذاب قرص"
+ ],
+ "monster-genius": [
+  "هیولا (نابغه)"
+ ],
+ "gu-venom-witchcraft": [
+  "گو (سم / جادو)"
+ ],
+ "corpse-refining": [
+  "تصفیه جسد"
+ ],
+ "fairy-sister": [
+  "خواهر پری"
+ ],
+ "young-miss": [
+  "خانم جوان"
+ ],
+ "mount-kunlun": [
+  "کوه کونلون"
+ ],
+ "aggro": [
+  "جلب توجه دشمن (Aggro)"
+ ],
+ "crowd-control": [
+  "کنترل جمعیت (CC)"
+ ],
+ "kiting": [
+  "کایتینگ (دور زدن دشمن)"
+ ],
+ "aoe": [
+  "منطقه تاثیر (AoE)"
+ ],
+ "proc": [
+  "فعال شدن (Proc)"
+ ],
+ "kill-steal": [
+  "سرقت قتل"
+ ],
+ "tank": [
+  "تانک (محافظ)"
+ ],
+ "dps": [
+  "آسیب در ثانیه (DPS)"
+ ],
+ "gold-sink": [
+  "غرق کردن طلا"
+ ],
+ "auction-sniping": [
+  "شکار در حراجی"
+ ],
+ "griefing": [
+  "آزار رساندن به دیگران (Griefing)"
+ ],
+ "dot": [
+  "آسیب در طول زمان (DoT)",
+  "Damage over Time."
+ ],
+ "contract-marriage": [
+  "ازدواج قراردادی"
+ ],
+ "reawakening": [
+  "بیداری مجدد"
+ ],
+ "tyrant": [
+  "مستبد"
+ ],
+ "obsessive-male-lead": [
+  "نقش اول مرد وسواسی",
+  "Obsessive Male..."
+ ],
+ "original-heroine": [
+  "قهرمان زن اصلی"
+ ],
+ "regression-trauma": [
+  "ترومای بازگشت"
+ ],
+ "hunter-association": [
+  "انجمن شکارچیان"
+ ],
+ "sudden-death": [
+  "مرگ ناگهانی"
+ ],
+ "guild-master": [
+  "استاد انجمن"
+ ],
+ "adventurer-ranks": [
+  "رتبه‌های ماجراجو"
+ ],
+ "beastkin": [
+  "جانور‌انسان"
+ ],
+ "demon-god": [
+  "خدای شیطان"
+ ],
+ "unique-skill": [
+  "مهارت منحصر به فرد"
+ ],
+ "demon-realm": [
+  "قلمرو شیطانی"
+ ],
+ "slave-crest": [
+  "نشان برده"
+ ],
+ "subjugation": [
+  "تحت انقیاد درآوردن"
+ ],
+ "otherworlder": [
+  "شخصی از جهان دیگر"
+ ],
+ "heros-party": [
+  "گروه قهرمان"
+ ],
+ "dao-heart": [
+  "قلب دائو"
+ ],
+ "severing-mortal-ties": [
+  "قطع روابط فانی"
+ ],
+ "five-elements": [
+  "پنج عنصر"
+ ],
+ "yin-and-yang": [
+  "یین و یانگ"
+ ],
+ "enlightenment": [
+  "روشن‌بینی"
+ ],
+ "mortal-tribulation": [
+  "عذاب فانی"
+ ],
+ "soul-dissipation": [
+  "پراکندگی روح"
+ ],
+ "dao-marks": [
+  "نشانه‌های دائو"
+ ],
+ "nirvana": [
+  "نیروانا"
+ ],
+ "fellow-daoist": [
+  "هم‌مسلک دائو"
+ ],
+ "sect-familial-address": [
+  "عناوین خانوادگی فرقه",
+  "Sect Address."
+ ],
+ "cold-snort": [
+  "خرناس سرد"
+ ],
+ "dog-leg-lackey": [
+  "پای سگ / چاپلوس",
+  "Lackey."
+ ],
+ "jianghu": [
+  "جیانگهو"
+ ],
+ "sitting-on-the-mountain-watching-tigers-fight": [
+  "نشستن روی کوه و تماشای جنگ ببرها",
+  "Watching Tigers..."
+ ],
+ "chaebol": [
+  "چائبول"
+ ],
+ "heavenly-oath": [
+  "سوگند آسمانی"
+ ],
+ "title-achievement": [
+  "عنوان / دستاورد"
+ ],
+ "system-erasure": [
+  "پاک شدن سیستم"
+ ],
+ "sweet-potato": [
+  "سیب‌زمینی شیرین (وضعیت ناامیدکننده)"
+ ],
+ "white-moonlight": [
+  "مهتاب سفید (اولین عشق)"
+ ],
+ "cinnabar-mole": [
+  "خال شنگرفی"
+ ],
+ "holy-mother": [
+  "مادر مقدس (بیش از حد مهربان)"
+ ],
+ "dog-blood": [
+  "خون سگ (درام اغراق‌آمیز)"
+ ],
+ "angst": [
+  "اضطراب"
+ ],
+ "scum": [
+  "آشغال (فرد پست)"
+ ],
+ "brain-dead": [
+  "مرگ مغزی (احمق)"
+ ],
+ "meat": [
+  "گوشت (محتوای بزرگسالان)",
+  "Meat (Smut)."
+ ],
+ "green-tea": [
+  "چای سبز (زن مکار)"
+ ],
+ "territory": [
+  "قلمرو"
+ ],
+ "rebirth": [
+  "تولد دوباره"
+ ],
+ "devil-mara": [
+  "شیطان / مارا"
+ ],
+ "demonic-beast": [
+  "جانور شیطانی"
+ ],
+ "truck-kun": [
+  "کامیون-کون"
+ ],
+ "cheat-skill": [
+  "مهارت تقلب"
+ ],
+ "divine-protection": [
+  "حفاظت الهی"
+ ],
+ "genkai-toppa": [
+  "شکستن محدودیت",
+  "Limit Break."
+ ],
+ "chuunibyou": [
+  "چونیبیو"
+ ],
+ "tsundere": [
+  "تسوندره"
+ ],
+ "yandere": [
+  "یاندِره"
+ ],
+ "san": [
+  "-سان"
+ ],
+ "chan": [
+  "-چان"
+ ],
+ "kun": [
+  "-کون"
+ ],
+ "dono": [
+  "-دونو"
+ ],
+ "sensei": [
+  "-سنسی"
+ ],
+ "adventurer-guild": [
+  "انجمن ماجراجویان"
+ ],
+ "vrmmo": [
+  "VRMMO"
+ ],
+ "goddess": [
+  "الهه"
+ ],
+ "gate": [
+  "دروازه"
+ ],
+ "awakening": [
+  "بیداری"
+ ],
+ "regressor": [
+  "بازگشت‌کننده"
+ ],
+ "national-level-hunter": [
+  "شکارچی سطح ملی",
+  "National Hunter."
+ ],
+ "hunter-rank": [
+  "رتبه شکارچی"
+ ],
+ "grade": [
+  "درجه"
+ ],
+ "mana": [
+  "مانا"
+ ],
+ "shadow-soldier": [
+  "سرباز سایه"
+ ],
+ "monarch": [
+  "پادشاه / فرمانروا"
+ ],
+ "hyung": [
+  "هیونگ"
+ ],
+ "noona": [
+  "نونا"
+ ],
+ "oppa": [
+  "اوپا"
+ ],
+ "sunbae": [
+  "سونبه"
+ ],
+ "ahjussi": [
+  "آجوشی"
+ ],
+ "ahjumma": [
+  "آجوما"
+ ],
+ "dungeon-break": [
+  "شکستن سیاه‌چال"
+ ],
+ "boss-monster": [
+  "هیولای رئیس"
+ ],
+ "first-clear": [
+  "اولین پاکسازی"
+ ],
+ "clear": [
+  "پاکسازی"
+ ],
+ "penalty": [
+  "جریمه"
+ ],
+ "compensation": [
+  "جبران / غرامت"
+ ],
+ "ranker": [
+  "رتبه‌دار"
+ ],
+ "player-kill": [
+  "قتل بازیکن (PK)"
+ ],
+ "broadcast": [
+  "پخش / برودکست"
+ ],
+ "mutant-monster": [
+  "هیولای جهش‌یافته"
+ ],
+ "growth-type-ability": [
+  "توانایی نوع رشد"
+ ],
+ "evolution": [
+  "تکامل"
+ ],
+ "floor": [
+  "طبقه"
+ ],
+ "test": [
+  "آزمون"
+ ],
+ "test-administrator": [
+  "مدیر آزمون"
+ ],
+ "floor-guardian": [
+  "نگهبان طبقه"
+ ],
+ "irregular": [
+  "نامنظم / بی‌قاعده"
+ ],
+ "regular": [
+  "منظم / باقاعده"
+ ],
+ "hidden-floor": [
+  "طبقه پنهان"
+ ],
+ "wall": [
+  "دیوار"
+ ],
+ "family": [
+  "خانواده"
+ ],
+ "observer": [
+  "ناظر"
+ ],
+ "onii-chan": [
+  "اونی-چان"
+ ],
+ "onee-chan": [
+  "اونه-چان"
+ ],
+ "ossan": [
+  "اوسان"
+ ],
+ "osananajimi": [
+  "اوساناناجیمی"
+ ],
+ "kokuhaku": [
+  "کوکوهاکو"
+ ],
+ "bunkasai": [
+  "بونکاسای"
+ ],
+ "guild-card": [
+  "کارت انجمن"
+ ],
+ "job-change": [
+  "تغییر شغل"
+ ],
+ "labyrinth": [
+  "هزارتو"
+ ],
+ "blacksmith": [
+  "آهنگر"
+ ],
+ "slow-life": [
+  "زندگی آرام"
+ ],
+ "skill-book": [
+  "کتاب مهارت"
+ ],
+ "great-sage": [
+  "حکیم بزرگ"
+ ],
+ "sacred-sword": [
+  "شمشیر مقدس"
+ ],
+ "entrance-exam": [
+  "آزمون ورودی"
+ ],
+ "class-ranking": [
+  "رتبه‌بندی کلاس"
+ ],
+ "mob-class": [
+  "کلاس اوباش (عادی)"
+ ],
+ "late-bloomer": [
+  "شکوفایی دیرهنگام"
+ ],
+ "graduation-trial": [
+  "آزمون فارغ‌التحصیلی"
+ ],
+ "novel-knowledge": [
+  "دانش رمان"
+ ],
+ "fourth-wall": [
+  "دیوار چهارم"
+ ],
+ "system-voice": [
+  "صدای سیستم"
+ ],
+ "authors-note": [
+  "یادداشت نویسنده"
+ ],
+ "ancient-ruins": [
+  "ویرانه‌های باستانی"
+ ],
+ "spirit-vein": [
+  "رگ معنوی"
+ ],
+ "middle-realm": [
+  "قلمرو میانی"
+ ],
+ "void": [
+  "خلاء"
+ ],
+ "chaos": [
+  "آشوب"
+ ],
+ "tribute": [
+  "خراج / پیشکش"
+ ],
+ "garrison": [
+  "پادگان"
+ ],
+ "liege": [
+  "ارباب"
+ ],
+ "totem-beast": [
+  "جانور توتمی"
+ ],
+ "beast-master": [
+  "ارباب جانوران"
+ ]
+}

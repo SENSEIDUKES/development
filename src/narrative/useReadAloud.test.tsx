@@ -217,13 +217,45 @@ describe('useReadAloud', () => {
     expect(player.notice).toBeUndefined();
   });
 
-  it('retries a failing voice once without it, then skips the line', () => {
+  it('sets a failing voice aside and reads the line again with the next one, until none is left, then skips the line', () => {
     mount();
     act(() => player.play(1));
-    act(() => { fake.start(); fake.fail('network'); vi.advanceTimersByTime(0); });
+    const fail = (error: string) => act(() => { fake.start(); fake.fail(error); vi.advanceTimersByTime(0); });
+    fail('network');
+    expect(lastSpoken()).toMatchObject({ text: 'The tide went out.', lang: 'en-US' });
+    expect(lastSpoken().voice?.name).toBe('Samantha');
+    expect(player.voiceProblem).toBe('Daniel couldn\'t speak on this device (network). Samantha reads the narration instead.');
+    fail('synthesis-failed');
+    expect(lastSpoken().voice?.name).toBe('Rishi');
+    fail('synthesis-failed');
+    // No English voice is left: the device chooses one by the language alone.
     expect(lastSpoken()).toMatchObject({ text: 'The tide went out.', voice: null, lang: 'en' });
+    fail('synthesis-failed');
+    expect(lastSpoken().text).toBe('“Ring the bells,”');
+  });
+
+  it('on Windows, a character voice that fails is replaced by another character voice, never silently by the narrator\'s', () => {
+    fake = createFakeSpeechSynthesis({ voices: [
+      fakeVoice('Microsoft David - English (United States)', 'en-US', { default: true }),
+      fakeVoice('Microsoft Mark - English (United States)', 'en-US'),
+      fakeVoice('Microsoft Zira - English (United States)', 'en-US'),
+    ] });
+    engine = createWebSpeechEngine({ speechSynthesis: fake.speechSynthesis, SpeechSynthesisUtterance: fake.SpeechSynthesisUtterance });
+    mount();
+    expect(player.choice.protagonist?.name).toBe('Microsoft Mark - English (United States)');
+    act(() => player.play(2));
+    expect(lastSpoken()).toMatchObject({ text: '“Ring the bells,”' });
+    expect(lastSpoken().voice?.name).toBe('Microsoft Mark - English (United States)');
     act(() => { fake.start(); fake.fail('synthesis-failed'); vi.advanceTimersByTime(0); });
     expect(lastSpoken().text).toBe('“Ring the bells,”');
+    expect(lastSpoken().voice?.name).toBe('Microsoft Zira - English (United States)');
+    expect(player.voiceProblem).toBe('Microsoft Mark - English (United States) couldn\'t speak on this device (synthesis-failed). '
+      + 'Microsoft Zira - English (United States) reads the main character\'s lines instead.');
+    // The rest of the session keeps the replacement; choosing the failed voice again tries it again.
+    expect(player.choice.protagonist?.name).toBe('Microsoft Zira - English (United States)');
+    act(() => player.setVoice('protagonist', player.voices.find(each => each.name.startsWith('Microsoft Mark'))));
+    expect(player.voiceProblem).toBeUndefined();
+    expect(player.choice.protagonist?.name).toBe('Microsoft Mark - English (United States)');
   });
 
   it('a voice preview pauses the chapter instead of killing it', () => {
@@ -248,7 +280,7 @@ describe('useReadAloud', () => {
     expect(lastSpoken()).toMatchObject({ text: 'Ye Chen said.', rate: 1.5 });
     expect(lastSpoken().voice?.name).toBe('Samantha');
     const saved = JSON.parse(values.get('read-aloud')!);
-    expect(saved).toMatchObject({ v: 1, rate: 1.5, voices: { en: { narrator: { name: 'Samantha', lang: 'en-US' } } } });
+    expect(saved).toMatchObject({ v: 2, rate: 1.5, voices: { en: { narrator: { name: 'Samantha', lang: 'en-US' } } } });
     act(() => player.resetVoices());
     expect(JSON.parse(values.get('read-aloud')!).voices).toEqual({});
   });
@@ -259,7 +291,7 @@ describe('useReadAloud', () => {
     act(() => player.setRate(0.5));
     act(() => player.play(1));
     expect(lastSpoken()).toMatchObject({ text: 'The tide went out.', rate: 0.5 });
-    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 1, rate: 0.5 });
+    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 2, rate: 0.5 });
     act(() => root.unmount());
     root = createRoot(container);
     mount({ chapter: 1, storage });

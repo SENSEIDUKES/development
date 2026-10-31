@@ -334,7 +334,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
       await click(document.querySelector('button[aria-label="Reader Settings"]'), 'Reader Settings');
       await click([...document.querySelectorAll('[role="tab"]')].find(tab => tab.textContent === 'Narration'), 'Narration tab');
       await click(document.querySelector('input[name="read-aloud-rate"][value="1.5"]'), 'Speed 1.5×');
-      expect(JSON.parse(window.localStorage.getItem('novelexpanded-reader-read-aloud')!)).toMatchObject({ v: 1, rate: 1.5 });
+      expect(JSON.parse(window.localStorage.getItem('novelexpanded-reader-read-aloud')!)).toMatchObject({ v: 2, rate: 1.5 });
 
       // The soundtrack: the note sits with the Reader's bottom bar, and its mute is kept with the reader's other device choices.
       const note = document.querySelector<HTMLButtonElement>('[data-testid="reader-bottom-bar"] [data-testid="story-audio-note"] button');

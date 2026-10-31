@@ -16,9 +16,10 @@ export function appLibraryLocation(route: NovelExpandedRoute): LibraryLocation {
     case 'discover': return { screen: 'home', collection: 'challenges' };
     // The Creator Space is the Library's Create destination; Story Seed is its own workspace.
     case 'create': return route.seedId || route.newSeed ? { screen: 'creator' } : { screen: 'creator-space' };
+    // A world as its author sees it belongs to Create.
+    case 'world': return { screen: 'creator-space' };
     case 'story':
-    case 'blueprint':
-    case 'chapter': return { screen: 'detail' };
+    case 'blueprint': return { screen: 'detail' };
     case 'read': return { screen: 'reader' };
     case 'profile': return { screen: 'profile', cave: route.cave };
   }

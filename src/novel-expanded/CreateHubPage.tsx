@@ -40,8 +40,9 @@ export function creatorWorldsOf(state: HarnessWorkspaceState, worlds: readonly H
  * worlds, the live Energy balance and the Toolkit previews, and the way into
  * each thing a creator does next: Create plants a new Story Seed, Sparks
  * offers a story idea and begins it as a new Story Seed, Continue
- * opens a world's Reader (where its next chapter is written), Studio and the
- * card itself open its World Info, and Energy opens the Cave's Energy page.
+ * opens a world's Reader (where its next chapter is written), the card itself
+ * opens the world as its author sees it (its Blueprint, Chapters, Codex and
+ * Assets), Studio opens its World Info, and Energy opens the Cave's Energy page.
  */
 export function CreateHubPage({ worlds, stories, navigate, readerProfile, sparks }: {
   worlds: readonly CreatorWorld[];
@@ -60,7 +61,7 @@ export function CreateHubPage({ worlds, stories, navigate, readerProfile, sparks
         onCreate={() => navigate({ page: 'create', newSeed: true })}
         onOpenEnergy={() => navigate({ page: 'profile', cave: '/home/energy' })}
         onContinueWorld={storyId => navigate({ page: 'read', storyId })}
-        onOpenWorld={world => navigate({ page: 'story', storyId: world.id })}
+        onOpenWorld={world => navigate({ page: 'world', storyId: world.id })}
         onOpenStudio={storyId => navigate({ page: 'story', storyId })} />
     </div>
   </AppShell>;

@@ -24,7 +24,15 @@ const NO_SOUND_WORDS = { words: [], answered: [] };
  * until the reader opens it. A change applies to chapters
  * written from then on; while a chapter is being written they wait, and say so.
  */
-export function StorySettings({ stories, storyId }: { stories: LibraryStories; storyId: string }) {
+export function StorySettings({ stories, storyId, only }: {
+  stories: LibraryStories;
+  storyId: string;
+  /**
+   * `assets`: only the world's skill packs (its CAPA skills, Media Loadout and
+   * Sound Words), for the Assets tab of the author's world view in Create.
+   */
+  only?: 'assets';
+}) {
   const { state, controller } = stories;
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string>();
@@ -46,13 +54,14 @@ export function StorySettings({ stories, storyId }: { stories: LibraryStories; s
   };
   const busy = saving || writing;
 
-  return <section className="space-y-4" data-testid="story-view-settings" aria-label="Story Settings">
+  const assets = only === 'assets';
+  return <section className="space-y-4" data-testid={assets ? 'story-assets' : 'story-view-settings'} aria-label={assets ? 'Assets' : 'Story Settings'}>
       {writing && <p role="status" className="rounded-xl border border-cyan-300/20 bg-cyan-400/[0.06] p-3 text-sm text-cyan-50/85" data-testid="story-settings-writing">
         A chapter is being written. Settings can change again once it is finished.
       </p>}
       {problem && <p role="alert" className="rounded-xl border border-human/30 bg-human-brand/10 p-3 text-sm text-human">{problem}</p>}
-      <StorySettingsPanel title="Language and Reading Mode" story={story} installedSkills={stories.skills} busy={busy}
-        onReadingModeChange={(mode: ChapterWritingStyle) => change(() => controller.setChapterWritingStyle(story.id, mode))} />
+      {!assets && <StorySettingsPanel title="Language and Reading Mode" story={story} installedSkills={stories.skills} busy={busy}
+        onReadingModeChange={(mode: ChapterWritingStyle) => change(() => controller.setChapterWritingStyle(story.id, mode))} />}
       <StorySkillSlots story={story} fateMode={fateMode} installedSkills={stories.skills}
         busy={busy}
         onChange={(slot: HarnessSkillSlotId, reference?: HarnessSkillReference) => change(() => controller.setSkillSlot(story.id, slot, reference))}
@@ -69,7 +78,7 @@ export function StorySettings({ stories, storyId }: { stories: LibraryStories; s
         onChange={(slot: StoryMediaLoadoutSlot, reference?: MediaPackReference) => change(() => controller.setMediaSelection(story.id, slot, reference))} />
       <SoundWordsPanel words={storySoundWords.words} answered={storySoundWords.answered} presets={stories.soundWordPresets} busy={busy}
         onChange={words => change(() => controller.setSoundWords(story.id, words))} onImport={stories.importSoundWords} />
-      <AuthorNotesPanel story={story} busy={busy}
-        onSave={notes => change(() => controller.setAuthorNotes(story.id, notes))} />
+      {!assets && <AuthorNotesPanel story={story} busy={busy}
+        onSave={notes => change(() => controller.setAuthorNotes(story.id, notes))} />}
   </section>;
 }

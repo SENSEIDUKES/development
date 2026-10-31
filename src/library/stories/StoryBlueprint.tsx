@@ -25,7 +25,8 @@ export interface StoryBlueprintViewProps {
   /** False once the novel is shared or public: its creator then views it too. */
   isPrivate: boolean;
   busy?: boolean;
-  onBack: () => void;
+  /** The way back. Without it the page shows no back row (inside the author's world view, which has its own). */
+  onBack?: () => void;
   backLabel?: string;
   /** Saves the creator's edit as the novel's next Foundation revision. */
   onSave?: (next: NovelBlueprintSnapshot) => Promise<void>;
@@ -69,13 +70,13 @@ export function StoryBlueprintView({ title, snapshot, destinedEnding, access, is
 
   return <div className="mx-auto max-w-5xl space-y-5" data-story-blueprint data-blueprint-view={access.view}
     data-blueprint-editable={editable ? 'true' : 'false'}>
-    <div className="flex items-center justify-between gap-3">
+    {onBack && <div className="flex items-center justify-between gap-3">
       <LibraryButton variant="ghost" size="icon" icon={ArrowLeft} aria-label={backLabel} onClick={onBack} className="shrink-0" />
       <p className="flex min-w-0 items-center gap-2 font-sc text-[0.625rem] font-bold uppercase tracking-[0.25em] whitespace-nowrap text-[#d4af37] sm:text-xs sm:tracking-[0.3em]" aria-hidden="true">
         Blueprint
         <span className="hidden items-center min-[360px]:flex"><span className="h-1.5 w-1.5 rotate-45 border border-[#d4af37]" /><span className="h-px w-6 bg-[#d4af37]/80 sm:w-12" /></span>
       </p>
-    </div>
+    </div>}
     <header className="space-y-2">
       <h1 className="font-display text-2xl text-white sm:text-3xl">{title}</h1>
       <div className="flex flex-wrap items-center gap-3">
@@ -104,7 +105,7 @@ export function StoryBlueprintPage({ stories, storyId, access, onBack, backLabel
   stories: LibraryStories;
   storyId: string;
   access: StoryBlueprintAccess;
-  onBack: () => void;
+  onBack?: () => void;
   backLabel?: string;
   onCopy?: StoryBlueprintViewProps['onCopy'];
 }) {

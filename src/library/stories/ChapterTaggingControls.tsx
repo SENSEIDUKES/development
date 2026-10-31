@@ -1,4 +1,3 @@
-import { ChevronRight } from 'lucide-react';
 import { findStory, type CodexEntry, type HarnessChapter } from '@seihouse/sen/harness-generation';
 import { NarrativeButton as LibraryButton } from '@seihouse/sen/presentation';
 import { describeChapterTagging } from './chapterTagging';
@@ -6,9 +5,9 @@ import type { LibraryStories } from './useLibraryStories';
 
 /**
  * A chapter's tagging record in words and Tag this chapter on any committed
- * chapter (SENSEI, 2026-10-29, `docs/create-hub.md` phase B), for the Workshop's
- * HARNESS workspace, and World Info's Chapters list, the way into each
- * chapter's Studio page in the app. The page itself is `StudioChapterPage`.
+ * chapter, for the Workshop's HARNESS workspace (a developer instrument). In
+ * the app, tagging lives only in the author's world view in Create
+ * (`AuthorWorldView`).
  */
 
 /** What the tagger made of one chapter: read or not, by what, and one line per kind of tag. */
@@ -47,42 +46,4 @@ export function TagChapterAction({ chapter, gap, busy, onTag }: {
   return <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={onTag}>
     {chapter.tagging ? 'Tag this chapter again' : 'Tag this chapter'}
   </LibraryButton>;
-}
-
-/**
- * World Info's Chapters: every committed chapter of the story, in order, each
- * a way into its Studio page (`StudioChapterPage`), with one line saying
- * whether the tagger has read it and what it found.
- */
-export function StoryChapterList({ stories, storyId, onOpen }: {
-  stories: LibraryStories;
-  storyId: string;
-  /** Opens a chapter's Studio page. Without it the list only tells. */
-  onOpen?: (chapterNumber: number) => void;
-}) {
-  const { state } = stories;
-  if (!state || !findStory(state, storyId)) return null;
-  const chapters = state.chapters.filter(chapter => chapter.storyId === storyId).sort((left, right) => left.chapterNumber - right.chapterNumber);
-  return <ol className="grid gap-2 text-left" data-testid="story-chapters" aria-label="Chapters">
-    {chapters.map(chapter => {
-      const account = describeChapterTagging(chapter, { entries: state.codexEntries });
-      const found = account.kinds.filter(line => line.state === 'found').map(line => line.kind);
-      const line = account.status === 'tagged' ? (found.length ? `Tagged · ${found.join(', ')}` : 'Tagged · nothing found')
-        : account.status === 'failed' ? 'The tagger could not read it' : 'Not tagged yet';
-      const face = <>
-        <span className="min-w-0 flex-1">
-          <span className="block font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-200/55">Chapter {chapter.chapterNumber}</span>
-          <span className="mt-0.5 block truncate font-display text-lg text-white">{chapter.title}</span>
-          <span className="mt-0.5 block text-xs text-neutral-400" data-testid="story-chapter-line">{line}</span>
-        </span>
-        {onOpen && <ChevronRight size={20} aria-hidden="true" className="shrink-0 text-[#d4af37]" />}
-      </>;
-      return <li key={chapter.id} data-testid="story-chapter" data-chapter-number={chapter.chapterNumber}>
-        {onOpen
-          ? <button type="button" onClick={() => onOpen(chapter.chapterNumber)} aria-label={`Chapter ${chapter.chapterNumber}: ${chapter.title}`}
-              className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-left transition-colors hover:border-white/25">{face}</button>
-          : <div className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">{face}</div>}
-      </li>;
-    })}
-  </ol>;
 }

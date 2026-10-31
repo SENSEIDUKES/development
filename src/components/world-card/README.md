@@ -107,7 +107,6 @@ pieces rather than page-local cards or buttons:
 | Backdrop clip | `WorldCardBackdropVideo` (shared with the Feature card) |
 | Portal card | the world's connected media (`WorldExpressions`) below the cards |
 | Information card (format symbol) | `WorldCardInformationPanel`: everything about the world, Author's notes last |
-| Chapters card | the host's own panel (`chapters.panel`, in the Library `StoryChapterList`: every chapter in a row, each opening its Studio page), below the cards, with the host's line on the card |
 | Settings card | `WorldCardSettings`: Read it in, then the host's story settings, below the cards |
 | Synopsis More / Less | `LibraryButton` (`ghost`) |
 
@@ -135,9 +134,8 @@ pieces rather than page-local cards or buttons:
   5. the story tags.
   The synopsis, Open Codex and Information follow. From 768px the cover stands
   on the left as the tall cover and the rest sits beside it, left aligned:
-  states, title, byline, meta with the current arc, tags, then the pill. The old reading-action Chapters card is gone; its count, current arc and
-  reading action now live in the meta line and the pill. (The Chapters card
-  among today's tool cards is a different thing: the host's chapter list, below.)
+  states, title, byline, meta with the current arc, tags, then the pill. The Chapters card is gone; its count, current arc and
+  reading action now live in the meta line and the pill.
 - **Story tags in their catalog colors.** Each tag resolves against the Story
   Seed tag catalog. It shows its catalog label with its category's color dot
   and a matching tinted border (for example Politics & War in purple, Destiny &
@@ -173,7 +171,7 @@ pieces rather than page-local cards or buttons:
   **More** sits beside the last line and appears only when the text actually
   overflows, with `aria-expanded` and `aria-controls`. A missing synopsis says
   so.
-- **The former reading-action Chapters card (historical; replaced by the pill above).**
+- **Chapters card: the only reading action.**
   - The card sits on a faint second card edge, like a stack of chapters. It
     shows a crop of the same cover on the left (from 340px), then the chapter
     count, a divider and the cue on one row, with the current arc underneath.
@@ -189,11 +187,9 @@ pieces rather than page-local cards or buttons:
   - Without the matching action (`onRead` with chapters, `onStart` without),
     the card is static text. It is not focusable and shows no arrow.
   - There is no hero read button and no fixed bottom bar.
-- **The cards.** Under the synopsis: **Codex**, **Portal**, **Information**,
-  **Chapters** and **Settings** (two by two from 768px, stacked on phones), each
-  only when it has somewhere to go. **Chapters** (`chapters`) opens the host's
-  own panel below the cards (in the app, the story's chapters in rows, each
-  opening its Studio page), with the host's line on the card. Codex is a quieter `LibraryCard` row led by the
+- **The four cards.** Under the synopsis: **Codex**, **Portal**, **Information**
+  and **Settings** (two by two from 768px, stacked on phones), each only when it
+  has somewhere to go. Codex is a quieter `LibraryCard` row led by the
   Library's own book artwork, shown only when the host supplies its handler.
   Portal (`portal`) opens the world's connected media below the cards.
   **Information**, marked with the world's format symbol (the mark that used
@@ -207,7 +203,7 @@ pieces rather than page-local cards or buttons:
   host passes `readingLanguage` (a language no one has read it in yet makes
   this reader the first, translated as they read), then the host's `settings`
   (the app's Story Settings: language and Reading Mode, skills, media and
-  Author's notes). Portal, Chapters and Settings open one at a time. Information appears
+  Author's notes). Portal and Settings open one at a time. Information appears
   for a Library world with story details;
   a Create world without them has none of the cards. Fate Timeline is no longer part of the Info page, and `onOpenTimeline`
   is gone from `WorldCardInfoProps`. There are no disabled placeholders. There is no Characters section (characters belong in
@@ -376,13 +372,8 @@ Workshop sample data remains outside the host adapter.
 
 ## Workshop history
 
-- **2026-10-29** — **Chapters card.** `WorldCardInfo` (and `StoryDetailScreen`)
-  take `chapters?: { summary, panel }`: a fifth card between Information and
-  Settings that opens the host's panel below the cards, one part of the page
-  at a time with Portal and Settings. In the app the Library fills it with
-  the story's chapters in rows (`StoryChapterList`), each opening the
-  chapter's Studio page, once the story has a chapter; without it there is no
-  card.
+- **2026-10-30** — The Chapters card (#487) is removed: tagging is an author's
+  tool and lives in Create's world view, never on World Info.
 - **2026-10-28** — With the owner's approval, removed the old copies in `reference/`
   (`WorldCardFull`, `WorldCardCompact` and their stylesheet) and the Original Reference
   and Compare panes, which also showed Home's old story detail. The workspace now shows

@@ -188,3 +188,5 @@ export function NarrativeCardFooter(props: P.NarrativeCardFooterProps) {
   const Component = useContext(PresentationContext).NarrativeCardFooter;
   return <Component {...props} />;
 }
+
+export { GenreIcon, type GenreIconProps } from '../components/sparks/development/GenreIcon';

@@ -1,13 +1,13 @@
 import { createContext, useContext, type ComponentType, type ReactNode } from 'react';
-import { Search, Settings, Users, Loader2 } from 'lucide-react';
+import { Search, Settings, Users, Loader2, Sparkles, Save } from 'lucide-react';
 
-export type NarrativeIconName = 'search' | 'settings' | 'characters' | 'generating';
+export type NarrativeIconName = 'search' | 'settings' | 'characters' | 'generating' | 'spark' | 'save';
 export interface NarrativeIconProps { name: NarrativeIconName; className?: string; size?: number | string }
 export interface NarrativeArt {
   Icon: ComponentType<NarrativeIconProps>;
   backdrops: readonly string[];
 }
-const icons = { search: Search, settings: Settings, characters: Users, generating: Loader2 };
+const icons = { search: Search, settings: Settings, characters: Users, generating: Loader2, spark: Sparkles, save: Save };
 function DefaultIcon({ name, ...props }: NarrativeIconProps) { const Icon = icons[name]; return <Icon aria-hidden="true" {...props} />; }
 const ArtContext = createContext<NarrativeArt>({ Icon: DefaultIcon, backdrops: [] });
 

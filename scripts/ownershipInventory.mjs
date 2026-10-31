@@ -35,6 +35,7 @@ export const ownershipRules = [
   ['src/components/chapter-manifestation/shared/', 'sen', 'manifestation contracts'],
   ['src/components/chapter-manifestation/development/', 'library', 'Celestial manifestations'],
   ['src/components/motion-picture/development/', 'sen', 'motion picture'],
+  ['src/components/sparks/', 'sen', 'story sparks'],
   ['src/components/library-shell/', 'library', 'shell'],
   ['src/components/library-presentation/', 'library', 'presentation adapter'],
   ['src/components/sen-icons/', 'library', 'Celestial icons'],

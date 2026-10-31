@@ -520,10 +520,10 @@ export const workshopEntries: WorkshopEntry[] = [
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/world-card/', lastCompared: '2026-09-27' },
   },
   {
-    id: 'dao-insights', section: 'components', owner: 'library', status: 'active', title: 'Sparks',
-    description: 'Story Sparks in the Dao\'s voice: choose a genre, then Random (the Dao rambles a premise) or Custom (your rough beginning shaped into one). In the Creator Space a spark begins a new Story Seed or is kept in the Story Bank; inside a Story Seed it fills that seed\'s Origin. A spark icon button opens it where writers create.',
+    id: 'dao-insights', section: 'components', owner: 'sen', status: 'active', title: 'Sparks',
+    description: 'Find a beginning for your next story. Explore a genre, invent one, or shape your own idea, then use the spark in a Story Seed or save it to the Story Bank. This preview uses local examples.',
     category: 'other', version: 'v1.0',
-    source: { repository: 'SENSEIDUKES/development', path: 'src/components/library-shell/development/main-library/DaoInsights.tsx; src/components/library-shell/development/DaoSparksButton.tsx; src/components/library-shell/development/main-library/daoSparks.ts; src/components/story-seed/shared/storySpark.ts; src/server/story-spark/', lastCompared: 'Not applicable — DEV-native' },
+    source: { repository: 'SENSEIDUKES/development', path: 'src/components/sparks/; src/components/story-seed/shared/storySpark.ts; src/server/story-spark/', lastCompared: 'Not applicable — DEV-native' },
   },
   {
     id: 'celestial-backdrop',

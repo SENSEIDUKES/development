@@ -23,7 +23,7 @@ export function LibraryLook({ accentColor, className = '', style, children, ...a
   const { homeImages } = useLibraryAssets();
   const art = homeImages?.[0];
   return <LibraryAppearanceScope color={accentColor ?? LIBRARY_LOOK_ACCENT}>
-    <div {...attributes} className={`library-look ${className}`.trim()}
+    <div data-narrative-overlay-root {...attributes} className={`library-look ${className}`.trim()}
       style={art ? { ...style, '--library-look-art': `url(${JSON.stringify(art)})` } as CSSProperties : style}>
       {children}
     </div>

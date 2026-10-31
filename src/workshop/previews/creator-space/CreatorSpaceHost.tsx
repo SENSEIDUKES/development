@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { CreatorSpace, type CreatorWorld, type CreatorWorldsState } from '@seihouse/library/creator-space';
 import { useEnergyAccount } from '@seihouse/library/energy';
-import { DaoSparksButton, type DaoSparkHost, type LibraryLocation } from '@seihouse/library/shell';
+import { type LibraryLocation } from '@seihouse/library/shell';
+import { SparksButton, type SparkHost } from '@seihouse/sen/story-seed';
 import type { HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
 import { CREATOR_TOOLKIT, SAMPLE_CREATOR_WORLDS } from './previewData';
@@ -55,7 +56,7 @@ export function CreatorSpaceHost({ onNavigate, onOpenWorld, sparks, source = rea
   onNavigate: (location: LibraryLocation) => void;
   onOpenWorld: (world: CreatorWorld) => void;
   /** Sparks for the title row; without a host it offers the Dao's own hand-written sparks. */
-  sparks?: DaoSparkHost;
+  sparks?: SparkHost;
   source?: CreatorWorldsSource;
 }) {
   const [worlds, setWorlds] = useState<CreatorWorldsState>(() => source === 'sample'
@@ -85,12 +86,12 @@ export function CreatorSpaceHost({ onNavigate, onOpenWorld, sparks, source = rea
   };
 
   // A spark begun here would open a new Story Seed; the preview says so instead.
-  const sparkHost: DaoSparkHost = sparks ?? {
+  const sparkHost: SparkHost = sparks ?? {
     beginSpark: async spark => { setSampleNotice(`Spark: with the app, “${spark.title || spark.genre}” opens as a new Story Seed in Create.`); },
   };
   return <>
     <CreatorSpace worlds={worlds} energy={energy} toolkit={CREATOR_TOOLKIT}
-      sparks={<DaoSparksButton host={sparkHost} copyText={async text => { await navigator.clipboard?.writeText(text); }} />}
+      sparks={<SparksButton host={sparkHost} />}
       onCreate={() => onNavigate({ screen: 'creator' })}
       onOpenEnergy={() => onNavigate({ screen: 'profile', cave: '/home/energy' })}
       onContinueWorld={id => act(id, true)}

@@ -1,5 +1,7 @@
 # Library Shell
 
+- **2026-10-30 (Sparks adopts the app preset)** — Uses the canonical Violet inset outer panel, Midnight violet premise card, Obsidian controls and Spectrum action, with the reusable Reader rim. The portal stays within its host `LibraryLook` so saved accent and background tint reach it. The existing Workshop preview wears that same look. Preserves PR #490's Creator Space and Story Seed placements and fill-Origin behavior alongside the simplified panel and revised prompts.
+
 - **2026-10-30 (night)** — From SENSEI: the header is back to its original box (straight edges, bottom hairline); the page still scrolls beneath it. The Portrait menu's Store opens the official Celestial Store at `/home/store` (it had pointed at `/store`, which landed on the creator's empty User Shop).
 
 - **2026-10-30 (late)** — From SENSEI: the header sits flush with the top of the screen again (straight top edge, reaching under the notch) and keeps the bottom navigation's pill curve on its bottom corners. The Portrait menu's Settings entry is replaced by the host's Store (`WorkspaceHeaderProfile.onOpenStore`; NovelExpanded opens the Celestial Store). Settings stays in the sidebar and the Profile page.
@@ -9,6 +11,9 @@
 - **2026-10-30 (later)** — From SENSEI on the first deploy: the header is a floating dock like the bottom navigation (inset from the screen's edges and below the notch, 24px corners, the same thin gold rim and glow), Search is a black pill, and the Profile Portrait is a black circle with the bottom bar's Profile figure, which the reader's own picture fills edge to edge (no more initials on a brown disc). The Library Shell Development preview now supplies the Portrait's reader, Sign in (the not-connected sign-in screen), Your profile and Settings, as the app does (Codex review on PR #490).
 
 - **2026-10-30** — The header reads `Logo | Search | Familiar | Sound | Profile Portrait` (SENSEI). `WorkspaceHeaderSearch` (in `WorkspaceHeaderUtilities.tsx`) is a wide field-style trigger right after the logo, opening the existing Search sheet on a tap, never on focus. `WorkspaceHeaderProfile.tsx` adds the Profile Portrait in `SEIAppHeader`'s profile slot: a 44px `SEIAvatar` (or a profile glyph without a host profile) opening one menu that holds the host's reader (name, rank), Sign in, Your profile and Settings, then Preferred Language, Menu music and Help, which move out of the old Preferences card. `WorkspaceHeaderProfileProvider` supplies the reader and one shared open state; `useWorkspaceHeaderProfileMenu().open()` lets the sidebar's profile card open the same menu beside itself. `useHeaderDisclosure` gains a controlled mode for it. Removed the header's center slot (`center`, `centerBreakpoint`, `WorkspaceHeaderCenterProvider`) and the Preferences gear. Dao Insights is renamed **Sparks** for readers (code names unchanged): the ticker is replaced by a spark icon button (`DaoSparksButton`, replacing `MainLibraryHomeInsights`), and `DaoInsights` takes `purpose="fill-seed"` for Story Seed's Origin.
+- **2026-10-30 (Sparks presentation)** — Renamed the visible trigger, panel and existing Workshop entry to Sparks. The shared app/Workshop panel now leads with the title and readable, unclipped premise; removed the Fate Survival switch, tradition/tag row, invented-genre badge, elder aside and subtitle. Random/Custom and the genre trigger share one row, opening the existing Story Paths picker. Seek, Use, Save and Copy remain available, and planting still carries the spark's Origin metadata. Sparks no longer requests Fate Survival; its Story Seed setting remains available later.
+
+- **2026-10-30** — Story Spark's server prompt now asks for one or two vivid sentences that bring a beginning to life while leaving its direction open. Custom ideas are preserved with minimal elaboration; invented genres welcome simple ideas and familiar fantasies adapted into East Asian fantasy. Removed the required twist, escalation and elder persona from premise writing. The existing response fields, Fate Survival request, automatic tag rules and built-in sparks are unchanged. The isolated Workshop example now illustrates Fungal Kingdom Cultivation instead of always returning Echo Cultivation, and no longer appends a forced conflict to custom ideas. These fixtures illustrate the direction; they do not exercise model prompts.
 
 - **2026-10-27** — Preferences supports a host-controlled Menu music switch using the canonical SEIHouse switch, card spacing and typography. Its setting is shared with Profile Sound settings; the host keeps ownership of playback and persistence. Development previews expose the same switch with Workshop preferences.
 
@@ -428,3 +433,17 @@ preview still opens Fate Survival's collection there.
   existing tablet breakpoint as well as flex bases. Safari's shrink-to-fit frame
   includes all button widths, keeping its border around the entire dock. Phone
   dimensions and desktop sidebar behavior remain unchanged.
+
+### 2026-10-30 — Spark usage and simpler actions
+
+Removed Copy from Sparks; Use and Save remain. The header reads remaining generated requests from the existing server guard on open, refocus and generation responses, including errors. Owner tokens show No daily limit. The existing 20-request visitor window and owner bypass are unchanged; a future ten-per-day policy is not implemented. This remains the existing in-memory, per-process visitor guard, not a persistent account quota. Workshop fixtures demonstrate the same counter without calling a model.
+
+The model no longer generates the hidden elder aside or voice fields; the optional stored fields remain readable. No model-generated tags are requested.
+
+### 2026-10-30 — Protagonist preference in Sparks
+
+Added a compact Any / Male / Female protagonist selector, defaulting to Any, for Random, Custom and invented genres. The existing Story Spark request carries the optional preference to the server prompt; no audience stereotypes or additional plot are requested. Selecting a gender requires a model: offline or failed generation never substitutes an unrelated built-in spark. The choice shapes the generated premise that Use and Save already preserve. App and Workshop share the selector; preview responses are fixtures, not model validation.
+
+### 2026-10-30 — Sparks moves to SEN
+
+The shell no longer exports the Sparks button or owns its behavior. App and preview consumers import `SparksButton` and `SparkHost` from `@seihouse/sen/story-seed`. Library supplies only its branded presentation. See [the SEN feature](../sparks/README.md).

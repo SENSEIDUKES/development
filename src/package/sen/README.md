@@ -1,5 +1,12 @@
 # `@seihouse/sen`
 
+**Unreleased (2026-10-30, Sparks ownership):** `./story-seed` now exports
+`SparksButton`, `Sparks`, `SparkHost`, `StorySparkUsage`, `StorySparkStatus`
+and the shared genre picker. Import Sparks from SEN instead of Library's shell.
+The panel works with universal defaults; Library supplies its visual preset
+through presentation adapters and `--spark-*` tokens. The host retains generation,
+usage policy and saving. See [Sparks](../../components/sparks/README.md).
+
 **Unreleased (2026-10-30):** `./story-seed` exports `applyStorySparkToSeed`: a
 Story Spark's whole Origin (premise, genre, tradition, Story Tags, Survival and a
 title when it has one) into an existing seed, keeping every other choice and where

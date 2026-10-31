@@ -9,7 +9,8 @@
 import { useMemo, useState } from 'react';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
-import { DaoSparksButton, type DaoSparkHost } from '@seihouse/library/shell';
+import { SparksButton, type SparkHost } from '@seihouse/sen/story-seed';
+import { LibraryLook } from '@seihouse/library/presentation';
 import { storyStyleForGenre } from '@seihouse/sen/story-seed';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'dao-insights')!;
@@ -27,23 +28,34 @@ const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 type SparkPurpose = 'new-seed' | 'fill-seed';
 
-const hostFor = (state: SparkState, purpose: SparkPurpose, report: (message: string) => void): DaoSparkHost => ({
-  checkSparks: async () => state !== 'no-model',
-  requestSpark: async request => {
+const hostFor = (state: SparkState, purpose: SparkPurpose, report: (message: string) => void): SparkHost => {
+  let used = state === 'daily-limit' ? 20 : 0;
+  const resetsAt = Date.now() + 24 * 60 * 60 * 1000;
+  const usage = () => ({ unlimited: false as const, limit: 20, remaining: 20 - used, resetsAt: used ? resetsAt : null });
+  return ({
+  checkSparks: async () => ({ configured: state !== 'no-model', usage: usage() }),
+  requestSpark: async (request, _signal, onUsage) => {
+    const exhausted = used >= 20;
+    if (!exhausted) used += 1;
+    onUsage?.(usage());
     await wait(700);
     if (state === 'model-fails') throw new Error('The Dao was silent. Seek again.');
-    if (state === 'daily-limit') throw new Error('The Dao has spoken its twenty sparks for today. Seek again tomorrow, or plant one you already have.');
-    const genre = request.inventGenre ? 'Echo Cultivation' : request.genre;
+    if (exhausted) throw new Error('The Dao has spoken its twenty sparks for today. Seek again tomorrow, or plant one you already have.');
+    const genre = request.inventGenre ? 'Fungal Kingdom Cultivation' : request.genre;
+    const mushroom = request.protagonistGender === 'male' ? 'a mushroom spirit boy' : request.protagonistGender === 'female' ? 'a mushroom spirit girl' : 'a small mushroom';
+    const gardener = request.protagonistGender === 'male' ? 'a young man' : request.protagonistGender === 'female' ? 'a young woman' : 'a young gardener';
     return {
       genre,
       inventedGenre: Boolean(request.inventGenre),
-      title: `The ${genre} Graduate`,
+      title: request.idea ? '' : request.inventGenre ? 'Beneath the Mountain Shrine' : 'The Mountain Garden',
       style: storyStyleForGenre(genre),
       survival: Boolean(request.fateSurvival),
-      ...(request.inventGenre ? { genreNote: 'Every technique is a sound, and every sound must be answered.' } : {}),
+      ...(request.inventGenre ? { genreNote: 'Fungi gather spiritual energy, forming colonies that grow into kingdoms.' } : {}),
       premise: request.idea
-        ? `${request.idea.replace(/[.\s]+$/, '')}, until the ${genre} world decides that is the one thing it cannot allow.`
-        : `A disciple discovers the ${genre} sect's oldest rule was written to keep one student from ever graduating: her.`,
+        ? request.idea
+        : request.inventGenre
+          ? `Beneath an abandoned mountain shrine, ${mushroom} awakens to the faint thoughts of the colony around it.`
+          : `In this ${genre} world, ${gardener} spends each morning tending the plants beside a quiet mountain shrine.`,
       aside: 'The Workshop oracle mutters this spark from local fixtures. Nothing leaves the preview.',
       voice: 'Workshop Oracle of the Local Fixtures',
     };
@@ -53,9 +65,8 @@ const hostFor = (state: SparkState, purpose: SparkPurpose, report: (message: str
   beginSpark: async spark => report(purpose === 'fill-seed'
     ? `Used: ${spark.genre}. (Preview: the app fills the open Story Seed's Origin.)`
     : `Begun: ${spark.genre}. (Preview: the app opens the new Story Seed in Create.)`),
-});
-
-const copyText = async (text: string) => { await navigator.clipboard?.writeText(text); };
+  });
+};
 
 function Stage({ children, note }: { children: React.ReactNode; note: React.ReactNode }) {
   return <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center gap-6 px-4 py-12">
@@ -67,10 +78,10 @@ function Stage({ children, note }: { children: React.ReactNode; note: React.Reac
 function DaoInsightsDevelopment({ state, purpose }: { state: SparkState; purpose: SparkPurpose }) {
   const [report, setReport] = useState<string | null>(null);
   const host = useMemo(() => hostFor(state, purpose, setReport), [state, purpose]);
-  return <Stage note={<>Tap Sparks to open the panel. {purpose === 'fill-seed' ? 'As in Story Seed\'s Origin: a chosen spark fills the open seed.' : 'As in the Creator Space: a chosen spark begins a new Story Seed.'}{report && <span role="status" className="mt-2 block text-cyan-200/80">{report}</span>}</>}>
+  return <LibraryLook className="min-h-[60vh]"><Stage note={<>Tap Sparks to open the panel. {purpose === 'fill-seed' ? 'As in Story Seed\'s Origin: a chosen spark fills the open seed.' : 'As in the Creator Space: a chosen spark begins a new Story Seed.'}{report && <span role="status" className="mt-2 block text-cyan-200/80">{report}</span>}</>}>
     {/* `key` gives each state a fresh panel, so its model check runs again. */}
-    <DaoSparksButton key={`${state}-${purpose}`} purpose={purpose} copyText={copyText} host={host} />
-  </Stage>;
+    <SparksButton key={`${state}-${purpose}`} purpose={purpose} host={host} />
+  </Stage></LibraryLook>;
 }
 
 const PURPOSES: { id: SparkPurpose; label: string }[] = [

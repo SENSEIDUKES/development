@@ -79,10 +79,12 @@ header.reader-glass-bar::after {
    one side, while cards and buttons have four. Inherited radii follow each shape
    without clipping content, focus outlines or the surface's outer shadow. */
 .reader-border-glow::after,
+.library-look :is([data-sen-spark='panel'], [data-sen-spark='premise'])::after,
 :where(.library-look) :is([data-home-panel], [data-slot='empty-state'], [data-home-events], .home-event, .world-card-base, .world-card-banner, .workspace-header, .workspace-profile-panel, [data-slot='app-shell-sidebar'], .library-global-navigation > div, .library-footer, .discover-medium-switcher, .discover-fate, .world-card-info, .seed-field-scope .glass-panel, .seed-live-card, .cave-home-identity, .cave-home-control, .cave-home-pillar, .story-auth-glass)::after,
 :where(body:has(.library-look)) :is(.familiar-helper, .familiar-energy-panel, .familiar-actions)::after { all: unset; }
 .reader-glass-panel::after,
 .reader-border-glow::after,
+.library-look :is([data-sen-spark='panel'], [data-sen-spark='premise'])::after,
 :where(.library-look) :is([data-home-panel], [data-slot='empty-state'], [data-home-events], .home-event, .world-card-base, .world-card-banner, .workspace-header, .workspace-profile-panel, [data-slot='app-shell-sidebar'], .library-global-navigation > div, .library-footer, .discover-medium-switcher, .discover-fate, .world-card-info, .seed-field-scope .glass-panel, .seed-live-card, .cave-home-identity, .cave-home-control, .cave-home-pillar, .story-auth-glass)::after,
 :where(body:has(.library-look)) :is(.familiar-helper, .familiar-energy-panel, .familiar-actions)::after {
   content: '';
@@ -350,6 +352,7 @@ html[data-reader-scrollbar][data-reader-scrolling] { scrollbar-color: #c9a24a99 
   .reader-glass-panel::after,
   .reader-glass-picker::after,
   .reader-border-glow::after,
+  .library-look :is([data-sen-spark='panel'], [data-sen-spark='premise'])::after,
   :where(.library-look) :is([data-home-panel], [data-slot='empty-state'], [data-home-events], .home-event, .world-card-base, .world-card-banner, .workspace-header, .workspace-profile-panel, [data-slot='app-shell-sidebar'], .library-global-navigation > div, .library-footer, .discover-medium-switcher, .discover-fate, .world-card-info, .seed-field-scope .glass-panel, .seed-live-card, .cave-home-identity, .cave-home-control, .cave-home-pillar, .story-auth-glass)::after,
   :where(body:has(.library-look)) :is(.familiar-helper, .familiar-energy-panel, .familiar-actions)::after { display: none; }
 }

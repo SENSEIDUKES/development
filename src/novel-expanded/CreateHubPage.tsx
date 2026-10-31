@@ -1,5 +1,5 @@
 import { CreatorSpace, type CreatorWorld } from '@seihouse/library/creator-space';
-import { DaoSparksButton, type DaoSparkHost } from '@seihouse/library/shell';
+import { SparksButton, type SparkHost } from '@seihouse/sen/story-seed';
 import { useEnergyAccount } from '@seihouse/library/energy';
 import type { HomeWorld } from '@seihouse/library/home';
 import type { UserProfile } from '@seihouse/library/profile';
@@ -51,13 +51,13 @@ export function CreateHubPage({ worlds, stories, navigate, readerProfile, sparks
   navigate: Navigate;
   readerProfile: UserProfile;
   /** Sparks: a chosen spark is planted as a new Story Seed and opened. */
-  sparks: DaoSparkHost;
+  sparks: SparkHost;
 }) {
   const energy = useEnergyAccount();
   return <AppShell route={{ page: 'create' }} navigate={navigate} stories={stories} readerProfile={readerProfile} mainLabel="Create">
     <div className="mx-auto w-full max-w-7xl px-4 py-6" data-testid="novel-expanded-create-hub">
       <CreatorSpace worlds={{ status: 'ready', items: worlds }} energy={energy} toolkit={CREATOR_TOOLKIT}
-        sparks={<DaoSparksButton host={sparks} copyText={text => navigator.clipboard.writeText(text)} />}
+        sparks={<SparksButton host={sparks} />}
         onCreate={() => navigate({ page: 'create', newSeed: true })}
         onOpenEnergy={() => navigate({ page: 'profile', cave: '/home/energy' })}
         onContinueWorld={storyId => navigate({ page: 'read', storyId })}

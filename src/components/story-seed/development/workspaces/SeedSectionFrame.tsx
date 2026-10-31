@@ -1,6 +1,6 @@
 import React, { useContext, useId, useState } from 'react';
 import { Check, Info, Sparkle, Sparkles } from 'lucide-react';
-import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../radioGroupKeyboard';
+import { handleRadioGroupKeyDown, radioGroupTabIndex } from '@seihouse/sen/story-seed';
 import { SEED_FAMILIES, type SeedSection } from '../seedSections';
 import { SENStorySeedIcon } from '../SENStorySeedIcon';
 import { SeedPartContext } from '../creator/SeedPart';

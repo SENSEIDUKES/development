@@ -182,7 +182,37 @@ describe('published Model Router server contract', () => {
     expect(sent.max_tokens).toBeGreaterThan(textRequest.maxOutputTokens);
   });
 
-  it('keeps non-Gemini OpenRouter sampling and reasoning unchanged', async () => {
+  it.each(['openrouter/anthropic/claude-haiku-5.5', 'anthropic/claude-haiku-5.5'])('adapts Claude JSON requests without unsupported sampling or structured-output constraints (%s)', async model => {
+    let sent: Record<string, unknown> = {};
+    const schema = { type: 'object', properties: { name: { type: 'string', minLength: 1 }, arcs: { type: 'integer', minimum: 10, maximum: 40 }, goals: { type: 'array', minItems: 1, maxItems: 5 } } };
+    await generateOpenRouterText({ ...textRequest, apiKey: 'secret', model, reasoningEffort: 'low', responseJsonSchema: schema,
+      fetchImpl: vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+        sent = JSON.parse(init!.body as string);
+        // Emulate the provider rejecting the formerly sent grammar and sampling.
+        if ('temperature' in sent || 'response_format' in sent) return new Response(JSON.stringify({ error: { message: 'Provider returned error' } }), { status: 400 });
+        return new Response(JSON.stringify({ choices: [{ message: { content: '{"name":"A world","arcs":10,"goals":[]}' }, finish_reason: 'stop' }] }));
+      }) as typeof fetch,
+    });
+    expect(sent).toMatchObject({ model: 'anthropic/claude-haiku-5.5', reasoning: { effort: 'low' } });
+    expect(sent).not.toHaveProperty('temperature');
+    expect(sent).not.toHaveProperty('response_format');
+    expect(sent.messages).toEqual([
+      { role: 'system', content: `system\nReturn only the JSON answer, without Markdown fences.\nThe answer must match this JSON schema: ${JSON.stringify(schema)}` },
+      { role: 'user', content: 'prompt' },
+    ]);
+  });
+
+  it.each(CHAPTER_MODELS.filter(model => model.provider === 'openrouter' && !model.id.includes('/anthropic/')))('preserves the structured-output request for $id', async ({ id }) => {
+    const schema = { type: 'object', properties: { name: { type: 'string', minLength: 1 } } };
+    const fetchMock = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => new Response(JSON.stringify({ choices: [{ message: { content: '{"name":"A world"}' }, finish_reason: 'stop' }] })));
+    await createModelRouter({ credentials: { openrouter: 'secret' }, fetch: fetchMock }).generate({ ...textRequest, model: id, responseJsonSchema: schema });
+    const sent = JSON.parse(fetchMock.mock.calls[0][1]!.body as string);
+    expect(sent.response_format).toEqual({ type: 'json_schema', json_schema: { name: 'response', strict: false, schema } });
+    expect(sent.messages).toEqual([{ role: 'system', content: 'system' }, { role: 'user', content: 'prompt' }]);
+    if (!id.includes('/google/')) expect(sent.temperature).toBe(textRequest.temperature);
+  });
+
+  it('keeps OpenAI OpenRouter sampling and reasoning unchanged', async () => {
     const fetchMock = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => new Response(JSON.stringify({
       choices: [{ message: { content: 'answer' }, finish_reason: 'stop' }],
     })));

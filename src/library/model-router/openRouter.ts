@@ -1,4 +1,5 @@
 import { CHAPTER_MODELS, providerModelName, resolveReasoningLevel } from './catalog';
+import { claudeSystemInstruction } from './anthropic';
 
 const OPENROUTER_CHAT_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -15,7 +16,7 @@ export interface OpenRouterTextRequest {
   model: string;
   systemInstruction: string;
   userPrompt: string;
-  /** Custom sampling for non-Gemini models only; Gemini uses provider defaults. */
+  /** Custom sampling except for Gemini and Claude, which use provider defaults. */
   temperature: number;
   maxOutputTokens: number;
   responseFormat: 'json' | 'text';
@@ -98,10 +99,14 @@ export async function generateOpenRouterText(request: OpenRouterTextRequest): Pr
   request.abortSignal?.addEventListener('abort', forwardAbort, { once: true });
   const timeout = request.timeoutMs ? setTimeout(forwardAbort, request.timeoutMs) : undefined;
   try {
-    const format = responseFormat(request);
     // A bare OpenRouter name keeps its vendor, including google/gemini-….
     const model = request.model.replace(/^openrouter\//, '');
     const isGemini = /^google\/gemini-/i.test(model);
+    const isClaude = /^anthropic\/claude-/i.test(model);
+    // Match the direct Claude adapter. Blueprint/HARNESS schemas contain numeric,
+    // string and array bounds Claude's structured-output grammar rejects with 400.
+    // Keep the complete schema in the instructions and the host validation intact.
+    const format = isClaude ? undefined : responseFormat(request);
     const reasoningEffort = isGemini
       ? resolveReasoningLevel(model, request.reasoningEffort)
       : request.reasoningEffort;
@@ -117,10 +122,10 @@ export async function generateOpenRouterText(request: OpenRouterTextRequest): Pr
       body: JSON.stringify({
         model,
         messages: [
-          { role: 'system', content: request.systemInstruction },
+          { role: 'system', content: isClaude ? claudeSystemInstruction(request) : request.systemInstruction },
           { role: 'user', content: request.userPrompt },
         ],
-        ...(isGemini ? {} : { temperature: request.temperature }),
+        ...(isGemini || isClaude ? {} : { temperature: request.temperature }),
         max_tokens: request.maxOutputTokens + REASONING_HEADROOM_TOKENS,
         ...(format ? { response_format: format } : {}),
         ...(reasoningEffort ? { reasoning: { effort: reasoningEffort } } : {}),

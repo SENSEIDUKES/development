@@ -149,6 +149,14 @@ read it.
 
 ## Workshop history
 
+- 2026-10-30 — Claude through OpenRouter now uses the same JSON instructions as
+  direct Claude, omits custom sampling, and does not submit the host schema as a
+  structured-output grammar. Blueprint bounds such as `minLength`, `maximum`
+  and `maxItems` are unsupported by [Claude's grammar](https://platform.claude.com/docs/en/build-with-claude/structured-outputs#json-schema-limitations)
+  and can reject the request before generation. The full schema remains in the
+  instructions and Blueprint validation still rejects incomplete answers. Other
+  OpenRouter models retain their existing sampling and structured-output requests.
+
 - 2026-10-29 — The Chapter Tagger gets its own model and reasoning choice in
   the Chapters tab (above). Until now it read every chapter with the model
   that wrote it, at that model's lowest level.

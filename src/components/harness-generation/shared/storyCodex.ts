@@ -15,6 +15,7 @@ import { harnessParagraphBlockId } from './chapterBody';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { factionNamed, type DeclaredFaction } from './factions';
 import { deriveAppearances, type AppearanceFlag, type AppearancePassage, type AppearanceSubject } from './appearances';
+import { deriveStatuses } from './statuses';
 import {
   deriveHoldings,
   holdingTargetKind,
@@ -130,6 +131,8 @@ export interface CodexCharacter {
   /** Their appearance on the page, and their look. Absent for someone met only by their words or holdings. */
   appearance?: CodexAppearance;
   rank?: { text: string; events: HoldingEvent[] };
+  /** How they are now, from the latest status tag, with the passage that showed it. Absent while no tag gave one. */
+  status?: { text: string; passage: CodexPassage };
   /** Things they hold now, in the order they came to hold them. */
   things: HeldThing[];
   /** Abilities they are learning or know. */
@@ -200,7 +203,7 @@ export interface StoryCodexRecord {
 }
 
 /** What the Codex reads from a chapter. */
-export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'holdingChanges' | 'closingHoldings' | 'appearances' | 'looks'>;
+export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'holdingChanges' | 'closingHoldings' | 'appearances' | 'looks' | 'statuses'>;
 
 const paragraphOrder = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
 const comesBefore = (left: CodexPassage, right: CodexPassage) =>
@@ -401,11 +404,18 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     .filter(faction => ((faction.firstSeen && faction.voice) || faction.atChapterZero) && reached(faction))
     .sort((left, right) => inRecordOrder(left, right, faction => factionOrder.indexOf(faction)));
 
+  // How each is now: the latest status tag, by their entry or any name they answer to.
+  const statuses = deriveStatuses(ordered);
+  const statusFor = (character: Working) => statuses.get(character.key)
+    ?? [...character.names].map(name => statuses.get(`character:${name}`)).find(Boolean);
   const known = [...characters.values()].filter(character => (character.firstSeen || character.atChapterZero) && reached(character));
   const roster: CodexCharacter[] = known
     .sort((left, right) => Number(right.mainCharacter) - Number(left.mainCharacter)
       || inRecordOrder(left, right, character => known.indexOf(character)))
-    .map(({ names: _names, ...character }) => character);
+    .map(({ names, ...character }) => {
+      const status = statusFor({ ...character, names });
+      return status ? { ...character, status: { text: status.status, passage: { chapterNumber: status.passage.chapterNumber, blockId: status.passage.blockId, text: status.passage.text } } } : character;
+    });
 
   // Things: what the world opened with, then every change the record saw,
   // gathered by the thing, with its holder now.

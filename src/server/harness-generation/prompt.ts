@@ -190,7 +190,7 @@ export const presentStoryInformationPacketSections = (packet: StoryInformationPa
   ...(packet.worldAtChapterZero ? [{ section: 'worldAtChapterZero' as const, text: ['THE WORLD AT CHAPTER 0 (the world the story opens with, set down before any chapter was written)', presentWorldRecord(packet.worldAtChapterZero)].join('\n') }] : []),
   { section: 'canonicalState', text: ['CURRENT CANONICAL STATE (latest applicable state per resolved entity)', presentCanonicalState(packet.canonicalState)].join('\n') },
   ...(packet.holdings ? [{ section: 'holdings' as const, text: ['HOLDINGS (what each character has now, by exact name; the main character first)', presentHoldings(packet.holdings)].join('\n') }] : []),
-  ...(packet.appearances ? [{ section: 'appearances' as const, text: ['APPEARED (every character and thing already on the page, by exact name, with its look; the main character first)', presentAppearances(packet.appearances)].join('\n') }] : []),
+  ...(packet.appearances ? [{ section: 'appearances' as const, text: ['APPEARED (every character and thing already on the page, by exact name, with its look and any status; the main character first)', presentAppearances(packet.appearances)].join('\n') }] : []),
 ];
 
 /**
@@ -221,7 +221,7 @@ export const presentWorldRecord = (world: WorldRecord) => {
 
 /** One character or thing per line: its name, what it is, and its look once written down. */
 export const presentAppearances = (appearances: NonNullable<StoryInformationPacket['appearances']>) => appearances.entries.length
-  ? appearances.entries.map(entry => `- ${entry.name} (${entry.mainCharacter ? 'main character' : entry.entity}): ${entry.look ?? 'look not written down yet'}`).join('\n')
+  ? appearances.entries.map(entry => `- ${entry.name} (${entry.mainCharacter ? 'main character' : entry.entity}${entry.status ? `, ${entry.status}` : ''}): ${entry.look ?? 'look not written down yet'}`).join('\n')
   : 'Nobody and nothing has appeared yet.';
 
 /**

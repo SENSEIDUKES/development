@@ -8,6 +8,7 @@ import {
   SEN_SOUND_CUES_INSTRUCTIONS,
   SEN_SOUNDTRACK_INSTRUCTIONS,
   SEN_SPEAKERS_INSTRUCTIONS,
+  SEN_STATUS_INSTRUCTIONS,
   assembleCapaPrompt,
   buildHarnessOfficialOutputRequirements,
   presentSoundVocabulary,
@@ -48,6 +49,7 @@ export type WriterInstructionId =
   | 'speakers'
   | 'holdings'
   | 'appearance'
+  | 'status'
   | 'reading-guide'
   | 'return-format'
   | 'hard-rules'
@@ -178,6 +180,11 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
     id: 'appearance', title: 'Appearance', source: 'HARNESS',
     when: 'Every chapter the tagger reads.',
     text: SEN_APPEARANCE_INSTRUCTIONS,
+  },
+  {
+    id: 'status', title: 'Status', source: 'HARNESS',
+    when: 'Every chapter the tagger reads. The tagger is told each character\'s status so far beside their name.',
+    text: SEN_STATUS_INSTRUCTIONS,
   },
   {
     id: 'sound-cues', title: 'Sound Cues', source: 'HARNESS',

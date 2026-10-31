@@ -999,6 +999,13 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
    before Place on 2026-10-14 (SENSEI): "the world remembers what you did"
    mostly comes from Status and Ties, so a dead sect leader stays dead because
    his card says so, and a pin naming him can close (Stage E3).
+   **Built (2026-10-31),** the way appearances are built: the tagger tags the
+   sentence where a character's condition changes, `[[status: Name | how they
+   are now]]`, in a few plain words (rank stays the Holdings rank tag). A
+   character's status now is the latest tag in story order, never stored. The
+   tagger reads each character's status so far beside their name, the writer
+   reads it in Appeared beside the look, and the Codex card shows it with the
+   passage that showed it. Not yet proven with a real model.
 3. **Place:** places become Codex entries, and the record knows where each
    character is.
 4. **Scene:** where a story scene starts, where it is, when (time of day,

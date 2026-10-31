@@ -3,6 +3,7 @@ import { harnessArcContext, harnessStoryMode } from './arcState';
 import { projectCanonicalState } from './canonicalProjection';
 import { deriveHoldings, holdingsSection } from './holdings';
 import { appearancesSection, deriveAppearances } from './appearances';
+import { deriveStatuses } from './statuses';
 import { storyPointOfView } from './pointOfView';
 import { protagonistNames } from './speakers';
 import { semanticReaderChanges } from './readerEdits';
@@ -182,7 +183,7 @@ export const compileStoryInformationPacket = (
   const appearances = appearancesSection(deriveAppearances({
     entries: state.codexEntries.filter(entry => entry.storyId === story.id),
     chapters,
-  }));
+  }), deriveStatuses(chapters));
 
   const sections: PacketSectionMeasurement[] = [
     measure('currentStory', currentStory),

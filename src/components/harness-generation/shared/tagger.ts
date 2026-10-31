@@ -8,6 +8,7 @@ import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import type { HarnessWarning } from '../../../narrative/generation';
 import { SOUNDTRACK_TAG_WORDS, SOUND_TAG_WORDS, readMarks } from '../../../narrative/marks';
+import { statusOfEntry, type CurrentStatus } from './statuses';
 import { findSpokenLines } from '../../../narrative/speech';
 import { splitSentences } from '../../highlight-engine/shared/manuscript';
 import { normalizeIdentityLabel } from './canonicalProjection';
@@ -45,9 +46,11 @@ const CARD_KIND_SUBJECTS: ReadonlyArray<CodexEntryKind> = ['character', 'thing',
  * is listed once, and the Codex wins, because its entry is the identity a tag
  * actually resolves to.
  */
-export function tagSubjectsOfStory({ entries, world }: {
+export function tagSubjectsOfStory({ entries, world, statuses }: {
   entries: readonly CodexEntry[];
   world?: WorldRecord;
+  /** Each character's status going into the chapter. */
+  statuses?: ReadonlyMap<string, CurrentStatus>;
 }): HarnessTagSubject[] {
   const subjects: HarnessTagSubject[] = [];
   const taken = new Set<string>();
@@ -58,11 +61,13 @@ export function tagSubjectsOfStory({ entries, world }: {
     subjects.push(subject);
   };
   for (const entry of entries) {
+    const status = entry.kind === 'character' && statuses ? statusOfEntry(statuses, entry)?.status : undefined;
     add({
       name: entry.name,
       kind: entry.kind,
       ...(entry.aliases?.length ? { aliases: [...entry.aliases] } : {}),
       ...(entry.mainCharacter ? { mainCharacter: true as const } : {}),
+      ...(status ? { status } : {}),
     });
   }
   for (const kind of CARD_KIND_SUBJECTS) {
@@ -84,12 +89,14 @@ export function tagSubjectsOfStory({ entries, world }: {
  * which is what makes re-tagging an existing chapter the same operation as
  * tagging a new one.
  */
-export function planChapterTagging({ chapter, entries, world, holdings, soundWords, soundtrack, language, model, reasoningLevel }: {
+export function planChapterTagging({ chapter, entries, world, holdings, statuses, soundWords, soundtrack, language, model, reasoningLevel }: {
   chapter: Pick<HarnessChapter, 'id' | 'storyId' | 'chapterNumber' | 'paragraphs'>;
   entries: readonly CodexEntry[];
   world?: WorldRecord;
   /** What each character had going into this chapter. */
   holdings?: HoldingsSection;
+  /** How each character was going into this chapter. */
+  statuses?: ReadonlyMap<string, CurrentStatus>;
   soundWords?: readonly SoundWord[];
   soundtrack?: SoundtrackVocabulary;
   language: string;
@@ -107,7 +114,7 @@ export function planChapterTagging({ chapter, entries, world, holdings, soundWor
     ...(reasoningLevel ? { reasoningLevel } : {}),
     language,
     paragraphs: [...chapter.paragraphs],
-    subjects: tagSubjectsOfStory({ entries, world }),
+    subjects: tagSubjectsOfStory({ entries, world, statuses }),
     ...(holdings?.characters.length ? { holdings } : {}),
     ...(soundWords?.length ? { soundWords: [...soundWords] } : {}),
     ...(soundtrack ? { soundtrack } : {}),
@@ -164,6 +171,7 @@ export interface ChapterTags {
   speakers: ReturnType<typeof acceptChapterTags>['speakers'];
   holdingChanges: ReturnType<typeof acceptChapterTags>['holdingChanges'];
   appearances: ReturnType<typeof acceptChapterTags>['appearances'];
+  statuses: ReturnType<typeof acceptChapterTags>['statuses'];
   scene: ReturnType<typeof acceptChapterTags>['scene'];
 }
 
@@ -489,6 +497,7 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
           speakers: read.speakers,
           holdingChanges: read.holdingChanges,
           appearances: read.appearances,
+          statuses: read.statuses,
           scene: read.scene,
         },
       };

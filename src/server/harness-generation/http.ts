@@ -132,7 +132,8 @@ const parseTagRequest = (parsed: Record<string, unknown>): HarnessTagRequest => 
     && Array.isArray(subjects) && subjects.length <= TAG_SUBJECT_LIMIT
     && subjects.every(subject => isRecord(subject) && within(subject.name, TAG_NAME_CHARACTERS) && Boolean((subject.name as string).trim())
       && TAG_SUBJECT_KINDS.has(subject.kind as string)
-      && (subject.aliases === undefined || (Array.isArray(subject.aliases) && subject.aliases.every(alias => within(alias, TAG_NAME_CHARACTERS)))));
+      && (subject.aliases === undefined || (Array.isArray(subject.aliases) && subject.aliases.every(alias => within(alias, TAG_NAME_CHARACTERS))))
+      && (subject.status === undefined || within(subject.status, TAG_NAME_CHARACTERS)));
   if (!valid) throw new Error(`A tagging request needs its chapter, model and language, 1 to ${TAG_PARAGRAPH_LIMIT} paragraphs, and at most ${TAG_SUBJECT_LIMIT} named subjects.`);
   // The sound words travel with the chapter the tagger reads, so they are
   // checked against the same limits a Sound Cue pack is held to before any call.

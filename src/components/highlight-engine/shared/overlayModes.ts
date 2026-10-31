@@ -51,6 +51,7 @@ export const ATTACHMENT_COLORS: Readonly<Record<string, { label: string; tone: s
   speaker: { label: 'Speaker', tone: 'rgba(45, 212, 191, .4)' },
   'holding-change': { label: 'Holding', tone: 'rgba(74, 222, 128, .4)' },
   appearance: { label: 'Appearance', tone: 'rgba(167, 139, 250, .45)' },
+  status: { label: 'Status', tone: 'rgba(251, 146, 60, .45)' },
 };
 
 /** The attachment kind each overlay shows. */

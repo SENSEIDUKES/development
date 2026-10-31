@@ -13,6 +13,7 @@ import {
   type HoldingsSectionCharacter,
 } from '../../../narrative/holdings';
 import type { AppearanceAttachment } from '../../../narrative/appearances';
+import type { StatusAttachment } from '../../../narrative/statuses';
 import { isHoldingTagWord, type WordTag } from '../../../narrative/marks';
 import type { CurrentStoryProjection } from '../../../narrative/generation';
 import { worldCardKey, type WorldCard, type WorldCardKindId, type WorldRecord } from '../../../narrative/worldRecord';
@@ -257,16 +258,20 @@ export interface CodexEntryResolver {
  * chapter id. Shared by the rewrite that removes a chapter and the re-tag that
  * replaces its tags, so one chapter's leavings are found one way.
  */
+/** The tags of a chapter that name Codex entries. */
+type TagsNaming = { holdingChanges?: HoldingChangeAttachment[]; appearances?: AppearanceAttachment[]; statuses?: StatusAttachment[] };
+
 export function codexEntriesWithoutChapter({ entries, otherChapters, chapter, storyId }: {
   entries: readonly CodexEntry[];
   /** Every other chapter of the story; this one is deliberately not among them. */
-  otherChapters: ReadonlyArray<{ storyId: string; holdingChanges?: HoldingChangeAttachment[]; appearances?: AppearanceAttachment[] }>;
-  chapter: { id: string; holdingChanges?: HoldingChangeAttachment[]; appearances?: AppearanceAttachment[] };
+  otherChapters: ReadonlyArray<{ storyId: string } & TagsNaming>;
+  chapter: { id: string } & TagsNaming;
   storyId: string;
 }): CodexEntry[] {
-  const named = (entry: { holdingChanges?: HoldingChangeAttachment[]; appearances?: AppearanceAttachment[] }) => [
+  const named = (entry: TagsNaming) => [
     ...(entry.holdingChanges ?? []).flatMap(change => [change.payload.holder.entryId, change.payload.target?.entryId]),
     ...(entry.appearances ?? []).map(appearance => appearance.payload.subject.entryId),
+    ...(entry.statuses ?? []).map(status => status.payload.subject.entryId),
   ];
   const usedElsewhere = new Set(otherChapters.filter(other => other.storyId === storyId).flatMap(named));
   const usedHere = new Set(named(chapter));

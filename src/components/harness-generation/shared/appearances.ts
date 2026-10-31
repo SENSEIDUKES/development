@@ -18,6 +18,7 @@ import { normalizeIdentityLabel } from './canonicalProjection';
 import { factionNamed, type DeclaredFaction } from './factions';
 import { createCodexEntryResolver, holdingName, pointedSentence, type CodexEntryResolver, type DeclaredCharacter, type HoldingPassage } from './holdings';
 import { isMainCharacterTag } from './speakers';
+import type { CurrentStatus } from './statuses';
 
 /**
  * Appearances in the HARNESS: the writer's appears and look tags read into
@@ -471,12 +472,14 @@ export const APPEARED_SECTION_THINGS = 10;
  * most recently first, each with its look's one line once it is written down.
  * Exact names only; how to use them is the Appearance skill's job.
  */
-export function appearancesSection(state: AppearancesState): AppearancesSection {
+export function appearancesSection(state: AppearancesState, statuses?: ReadonlyMap<string, CurrentStatus>): AppearancesSection {
+  const statusOf = (subject: AppearanceSubject) => (subject.entity === 'character' ? statuses?.get(subject.key)?.status : undefined);
   const entryOf = (subject: AppearanceSubject): AppearancesSectionEntry => ({
     name: subject.name,
     entity: subject.entity,
     ...(subject.mainCharacter ? { mainCharacter: true as const } : {}),
     ...(appearedLookLine(subject) ? { look: appearedLookLine(subject)! } : {}),
+    ...(statusOf(subject) ? { status: statusOf(subject)! } : {}),
   });
   const recent = (left: AppearanceSubject, right: AppearanceSubject) => (state.recency.get(right.key) ?? 0) - (state.recency.get(left.key) ?? 0);
   const main = state.subjects.find(subject => subject.mainCharacter);

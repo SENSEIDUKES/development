@@ -52,6 +52,7 @@ describe('a chapter\'s tagging record, in words', () => {
       Speakers: ['nothing', 'The tagger found nothing here.'],
       Holdings: ['nothing', 'The tagger found nothing here.'],
       Appearances: ['nothing', 'The tagger found nothing here.'],
+      Status: ['not-asked', 'Tagged before Status existed: tag it again to read it.'],
     });
   });
 
@@ -75,6 +76,7 @@ describe('a chapter\'s tagging record, in words', () => {
       ] as never,
       holdingChanges: [{ payload: { origin: 'harness', verb: 'gained', holder: { name: 'MC', entryId: 'e-mc' }, target: { name: 'MC\'s sword', entryId: 'e-sword' } } }] as never,
       appearances: [{ payload: { origin: 'harness', event: 'appears', entity: 'character', subject: { name: 'MC', entryId: 'e-mc' } } }] as never,
+      statuses: [{ payload: { origin: 'harness', subject: { name: 'Elder Qin' }, status: 'dead' } }] as never,
     }), { entries, locale: 'en-US' });
     expect(account.notes).toBe('6 notes written · 5 placed · 1 dropped');
     expect(kinds(account)).toEqual({
@@ -83,6 +85,7 @@ describe('a chapter\'s tagging record, in words', () => {
       Speakers: ['found', '3 spoken lines: Ye Chen, Elder Qin'],
       Holdings: ['found', '1 change: gained Rusted Iron Sword'],
       Appearances: ['found', '1 appearance: Ye Chen'],
+      Status: ['found', '1 status: Elder Qin dead'],
     });
     expect(account.problems).toEqual([
       'Dropped 1 of the tagger\'s 6 notes: [[@MC]] on paragraph 9: the paragraph has no such words.',

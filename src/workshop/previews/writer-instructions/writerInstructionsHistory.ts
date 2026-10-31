@@ -21,6 +21,11 @@ export interface WriterInstructionsChange {
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
     date: '2026-10-31',
+    summary: 'The Status tag, the second information tag (SENSEI, 2026-10-31: finish the information tags before linking names to their colors). The tagger is taught one more tag, built like the appearance tag: on the sentence where the prose shows a character\'s condition change, [[status: Name | how they are now]] (wounded, healed, poisoned, captured, freed, sealed, transformed, dead), in a few plain words, never a mood, a plan or a rumour; rank stays the Holdings rank tag. Beside each character\'s name the tagger now also reads their status so far. Its role line names "how someone is now" among what a tag marks.',
+    changed: { tagger: '1e48f05a725f60', status: '1f01efa2b91f6a' },
+  },
+  {
+    date: '2026-10-31',
     summary: 'Chapters stop ending like a ledger (SENSEI, 2026-10-31, from The Vessel of Dying Embers: every chapter closed on a tally, "They had gained a map… They had spent no coal"). Two lines told the writer to state balances in the prose: the writing rules ("state current balances in the prose when they change") and the reading guide on resources ("State new balances in the prose when they change"). With a survival-camps story whose style bible asks for scarcity, the writer did the literal thing and summed up what changed at the end of each chapter. Balances are still carried: the tags and Holdings record them. The writing rules now say: when something is gained, spent or lost, show it happening in the scene; never sum up what changed at the end of a chapter. The reading guide now says: show a change in the scene where it happens, never as a summary.',
     changed: { 'writing-rules': '09877256ff02ba', 'reading-guide': '098b12aae2dbb5' },
   },

@@ -48,6 +48,13 @@ existing Chapter Generation feature.
   which voice failed, with the browser's own error, and which voice reads
   those lines now. Choosing the failed voice again tries it again. Only a
   line that fails with no voice left is skipped.
+  The same day SENSEI found the cause: on the same device, the Workshop
+  Reader switched voices on iPhone and Windows while the app did not, and the
+  two chose different voices. Both build the same script (the tagger's speaker
+  tags reach Read Aloud: Vessel's chapter 1 has 31 side and 14 main-character
+  lines) with the same picks and language; only the app had voice choices
+  saved from earlier. The saved narration format is now 2, so those choices
+  are dropped once and every reader starts from the defaults.
 - **2026-10-31 (a fenced answer is still the answer):** SENSEI's three-chapter
   test of The Starlight Mortar with Claude Haiku 5.5 tagged nothing and filled
   no Codex card. The tagger had answered well (34 notes for chapter 2, 24 for

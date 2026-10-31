@@ -587,7 +587,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(buttonBy(byLabel('Narration speed: 1'))!.getAttribute('aria-pressed')).toBe('true');
     await click(byLabel('Narration speed: 0.5'), 'Half speed');
     expect(container.querySelector('[data-testid="reader-narration-speed"]')!.textContent).toBe('½');
-    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 1, rate: 0.5 });
+    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 2, rate: 0.5 });
     await click(byLabel('Reader Settings'), 'Reader Settings');
     const dialog = container.ownerDocument.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(dialog.querySelector('h2')!.textContent).toBe('Reader Settings');
@@ -609,10 +609,10 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     const speed = container.querySelector('[data-testid="reader-narration-speed"]')!;
     expect(speed.textContent).toBe('1½');
     expect(dialog.querySelector<HTMLInputElement>('input[name="read-aloud-rate"][value="1.5"]')!.checked).toBe(true);
-    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 1, rate: 1.5 });
+    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 2, rate: 1.5 });
     await act(async () => { dialog.querySelector<HTMLInputElement>('input[name="read-aloud-rate"][value="1.25"]')!.click(); });
     expect(speed.textContent).toBe('1¼');
-    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 1, rate: 1.25 });
+    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 2, rate: 1.25 });
     await act(async () => { buttonBy(byLabel('Preview the Side characters voice'))!.click(); });
     await flush();
     expect(lastSpoken().voice?.name).toBe('Samantha');

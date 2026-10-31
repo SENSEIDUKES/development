@@ -280,7 +280,7 @@ describe('useReadAloud', () => {
     expect(lastSpoken()).toMatchObject({ text: 'Ye Chen said.', rate: 1.5 });
     expect(lastSpoken().voice?.name).toBe('Samantha');
     const saved = JSON.parse(values.get('read-aloud')!);
-    expect(saved).toMatchObject({ v: 1, rate: 1.5, voices: { en: { narrator: { name: 'Samantha', lang: 'en-US' } } } });
+    expect(saved).toMatchObject({ v: 2, rate: 1.5, voices: { en: { narrator: { name: 'Samantha', lang: 'en-US' } } } });
     act(() => player.resetVoices());
     expect(JSON.parse(values.get('read-aloud')!).voices).toEqual({});
   });
@@ -291,7 +291,7 @@ describe('useReadAloud', () => {
     act(() => player.setRate(0.5));
     act(() => player.play(1));
     expect(lastSpoken()).toMatchObject({ text: 'The tide went out.', rate: 0.5 });
-    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 1, rate: 0.5 });
+    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 2, rate: 0.5 });
     act(() => root.unmount());
     root = createRoot(container);
     mount({ chapter: 1, storage });

@@ -217,18 +217,21 @@ describe('preferences', () => {
     expect(parseReadAloudPreferences(serializeReadAloudPreferences(saved))).toEqual(saved);
     expect(parseReadAloudPreferences(null)).toBe(DEFAULT_READ_ALOUD_PREFERENCES);
     expect(parseReadAloudPreferences('{not json')).toBe(DEFAULT_READ_ALOUD_PREFERENCES);
-    expect(parseReadAloudPreferences('{"v":2,"rate":1.5}')).toBe(DEFAULT_READ_ALOUD_PREFERENCES);
-    expect(parseReadAloudPreferences('{"v":1,"rate":0.1}').rate).toBe(0.5);
-    expect(parseReadAloudPreferences('{"v":1,"rate":0.5}').rate).toBe(0.5);
-    expect(parseReadAloudPreferences('{"v":1,"rate":9}').rate).toBe(2);
-    expect(parseReadAloudPreferences('{"v":1,"rate":"fast"}').rate).toBe(1);
-    expect(parseReadAloudPreferences(JSON.stringify({ v: 1, rate: 1, voices: { xx: { narrator: { uri: 'a', name: 'a', lang: 'en' } }, en: { narrator: { uri: 7 }, side: 'Daniel' } } })).voices).toEqual({});
+    expect(parseReadAloudPreferences('{"v":3,"rate":1.5}')).toBe(DEFAULT_READ_ALOUD_PREFERENCES);
+    // Choices saved before 2026-10-31 sent quotes to the narrator: they are dropped once.
+    expect(parseReadAloudPreferences(JSON.stringify({ v: 1, rate: 1.5, voices: { en: { side: { uri: 'uri:Daniel', name: 'Daniel', lang: 'en-GB' } } } })))
+      .toBe(DEFAULT_READ_ALOUD_PREFERENCES);
+    expect(parseReadAloudPreferences('{"v":2,"rate":0.1}').rate).toBe(0.5);
+    expect(parseReadAloudPreferences('{"v":2,"rate":0.5}').rate).toBe(0.5);
+    expect(parseReadAloudPreferences('{"v":2,"rate":9}').rate).toBe(2);
+    expect(parseReadAloudPreferences('{"v":2,"rate":"fast"}').rate).toBe(1);
+    expect(parseReadAloudPreferences(JSON.stringify({ v: 2, rate: 1, voices: { xx: { narrator: { uri: 'a', name: 'a', lang: 'en' } }, en: { narrator: { uri: 7 }, side: 'Daniel' } } })).voices).toEqual({});
   });
 
   it('reads and writes through the host port, and storage that fails is only advisory', () => {
     const { storage, values } = memory();
     writeReadAloudPreferences(storage, { rate: 1.5, voices: {} });
-    expect(JSON.parse(values.get('read-aloud')!)).toEqual({ v: 1, rate: 1.5, voices: {} });
+    expect(JSON.parse(values.get('read-aloud')!)).toEqual({ v: 2, rate: 1.5, voices: {} });
     expect(readReadAloudPreferences(storage).rate).toBe(1.5);
     const broken = { read: () => { throw new Error('denied'); }, write: () => { throw new Error('denied'); }, remove: () => undefined };
     expect(readReadAloudPreferences(broken)).toBe(DEFAULT_READ_ALOUD_PREFERENCES);

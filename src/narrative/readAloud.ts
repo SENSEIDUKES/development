@@ -367,6 +367,13 @@ export interface ReadAloudPreferences {
 }
 
 export const READ_ALOUD_PREFERENCE_KEY = 'read-aloud';
+/**
+ * The saved format. 2 since 2026-10-31: voice choices saved before then made a
+ * reader's quotes fall back to the narrator on devices where the defaults
+ * switch voices correctly, so they are dropped once and every reader starts
+ * from the defaults.
+ */
+const READ_ALOUD_PREFERENCE_VERSION = 2;
 /** The reader's selectable narration speeds; the watchdog scales with the saved rate. */
 export const READ_ALOUD_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 export const DEFAULT_READ_ALOUD_PREFERENCES: ReadAloudPreferences = { rate: 1, voices: {} };
@@ -386,7 +393,7 @@ export function parseReadAloudPreferences(raw: string | null | undefined): ReadA
   if (!raw) return DEFAULT_READ_ALOUD_PREFERENCES;
   try {
     const parsed = JSON.parse(raw) as { v?: unknown; rate?: unknown; voices?: unknown };
-    if (!parsed || typeof parsed !== 'object' || parsed.v !== 1) return DEFAULT_READ_ALOUD_PREFERENCES;
+    if (!parsed || typeof parsed !== 'object' || parsed.v !== READ_ALOUD_PREFERENCE_VERSION) return DEFAULT_READ_ALOUD_PREFERENCES;
     const voices: ReadAloudPreferences['voices'] = {};
     if (parsed.voices && typeof parsed.voices === 'object') {
       for (const [language, roles] of Object.entries(parsed.voices as Record<string, unknown>)) {
@@ -406,7 +413,7 @@ export function parseReadAloudPreferences(raw: string | null | undefined): ReadA
 }
 
 export const serializeReadAloudPreferences = (preferences: ReadAloudPreferences) =>
-  JSON.stringify({ v: 1, rate: clampRate(preferences.rate), voices: preferences.voices });
+  JSON.stringify({ v: READ_ALOUD_PREFERENCE_VERSION, rate: clampRate(preferences.rate), voices: preferences.voices });
 
 /** Saved preferences from the host's storage; storage that fails reads as the defaults. */
 export function readReadAloudPreferences(storage?: ReaderPreferenceStorage): ReadAloudPreferences {

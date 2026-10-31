@@ -108,6 +108,10 @@ export function createWebSpeechEngine(scope: SpeechScope = globalThis as SpeechS
   };
 }
 
+/** The device's voices without the ones that failed this session. */
+const usableVoices = (voices: readonly ReadAloudVoice[], failed: ReadonlyMap<string, string>) =>
+  (failed.size ? voices.filter(voice => !failed.has(voice.voiceURI)) : voices);
+
 // ─── The player ─────────────────────────────────────────────────────────────
 
 /**
@@ -146,6 +150,8 @@ export interface ReadAloud {
   lineIndex: number;
   /** A short message for the reader, e.g. when the browser needs another tap. */
   notice?: string;
+  /** The last voice that failed on this device: which, why, and what reads its lines now. */
+  voiceProblem?: string;
   /** Every voice on this device. */
   voices: readonly ReadAloudVoice[];
   /** The voices that can read the story's language, best first. */
@@ -190,14 +196,15 @@ interface PlayerState {
   scriptKey: string;
   script?: ReadAloudScript;
   started: boolean;
-  /** The current line failed once with its chosen voice and is retried without it. */
-  retried: boolean;
   firstLine: boolean;
   suspended: boolean;
   lastEventAt: number;
   hiddenAt: number;
   timers: Set<ReturnType<typeof setTimeout>>;
 }
+
+/** Who a role's lines belong to, for the reader. */
+const ROLE_LINES: Record<ReadAloudRole, string> = { narrator: 'the narration', protagonist: 'the main character\'s lines', side: 'the side characters\' lines' };
 
 const sameVoices = (left: readonly ReadAloudVoice[], right: readonly ReadAloudVoice[]) =>
   left.length === right.length && left.every((voice, index) => voice.voiceURI === right[index].voiceURI && voice.lang === right[index].lang);
@@ -207,7 +214,9 @@ const sameVoices = (left: readonly ReadAloudVoice[], right: readonly ReadAloudVo
  * reads it again from its start, which every browser does reliably where
  * native pause does not. A changed voice or speed applies from the next line,
  * so nothing restarts mid-line. The first line is spoken inside the Listen tap
- * itself, which iOS requires.
+ * itself, which iOS requires. A voice that fails on this device is set aside
+ * for the session and named to the reader; its role takes the next free voice,
+ * never silently the narrator's.
  */
 export function useReadAloud({
   scriptKey, buildScript, language = 'en', preferences, picks, suspended = false, engine: suppliedEngine,
@@ -216,16 +225,37 @@ export function useReadAloud({
   const [voices, setVoices] = useState<readonly ReadAloudVoice[]>(() => engine.getVoices());
   const [prefs, setPrefs] = useState<ReadAloudPreferences>(() => readReadAloudPreferences(preferences));
   const [view, setView] = useState<Pick<PlayerState, 'status' | 'listening' | 'index' | 'notice'>>({ status: 'idle', listening: false, index: 0 });
-  const choice = useMemo(() => resolveReadAloudVoices(voices, language, prefs, picks), [voices, language, prefs, picks]);
+  // Voices that failed on this device this session (URI → the browser's error), and the reader's note about the last one.
+  const [failed, setFailed] = useState<ReadonlyMap<string, string>>(() => new Map());
+  const [voiceProblem, setVoiceProblem] = useState<string>();
+  const failedRef = useRef(failed);
+  const choice = useMemo(() => resolveReadAloudVoices(usableVoices(voices, failed), language, prefs, picks), [voices, failed, language, prefs, picks]);
   const languageVoices = useMemo(() => voicesForLanguage(voices, language), [voices, language]);
 
   const live = useRef<PlayerState>({
-    status: 'idle', listening: false, index: 0, token: 0, scriptKey, started: false, retried: false, firstLine: true,
+    status: 'idle', listening: false, index: 0, token: 0, scriptKey, started: false, firstLine: true,
     suspended, lastEventAt: 0, hiddenAt: 0, timers: new Set(),
   });
   // Speech callbacks outlive renders: they read the latest values from here.
-  const latest = useRef({ choice, rate: prefs.rate, language, buildScript });
-  latest.current = { choice, rate: prefs.rate, language, buildScript };
+  const latest = useRef({ voices, prefs, picks, rate: prefs.rate, language, buildScript });
+  latest.current = { voices, prefs, picks, rate: prefs.rate, language, buildScript };
+
+  /** The voice each role reads with right now, without the voices that failed (even before the next render). */
+  const castNow = useCallback((): ReadAloudVoiceChoice => {
+    const { voices: all, language: storyLanguage, prefs: saved, picks: preferred } = latest.current;
+    return resolveReadAloudVoices(usableVoices(all, failedRef.current), storyLanguage, saved, preferred);
+  }, []);
+
+  /** Sets a failed voice aside for the session and tells the reader which voice reads its role now. */
+  const setAside = useCallback((voice: ReadAloudVoice, error: string, role: ReadAloudRole) => {
+    failedRef.current = new Map(failedRef.current).set(voice.voiceURI, error);
+    setFailed(failedRef.current);
+    const next = castNow()[role];
+    const instead = next ? `${next.name} reads ${ROLE_LINES[role]} instead.` : `The device chooses a voice for ${ROLE_LINES[role]} instead.`;
+    const message = `${voice.name} couldn't speak on this device (${error}). ${instead}`;
+    console.warn(`[Read Aloud] ${message}`);
+    setVoiceProblem(message);
+  }, [castNow]);
 
   const publish = useCallback(() => {
     const { status, listening, index, notice } = live.current;
@@ -294,14 +324,13 @@ export function useReadAloud({
       if (engine.isSpeaking() && checks < WATCHDOG.rechecks) { watch(checks + 1); return; }
       // The line never reported its end: go on to the next one.
       engine.cancel();
-      state.retried = false;
       speakAt(index + 1, 0);
     }, (estimateSpeechMs(line.text) / latest.current.rate) * WATCHDOG.factor + WATCHDOG.paddingMs);
 
     const begin = () => {
       if (token !== state.token) return;
-      const { choice: voices, rate, language: storyLanguage } = latest.current;
-      const voice = state.retried ? undefined : voices[line.role];
+      const { rate, language: storyLanguage } = latest.current;
+      const voice = castNow()[line.role];
       engine.speak({ text: line.text, voice, lang: voice?.lang ?? speechLanguageTag(storyLanguage), rate, pitch: 1, volume: READ_ALOUD_VOLUME }, {
         onStart: () => {
           if (token !== state.token) return;
@@ -313,16 +342,15 @@ export function useReadAloud({
         onEnd: () => {
           if (token !== state.token) return;
           state.lastEventAt = Date.now();
-          state.retried = false;
           state.firstLine = false;
           speakAt(index + 1, LINE_GAP_MS);
         },
         onError: error => {
           if (token !== state.token || error === 'interrupted' || error === 'canceled') return;
           if (error === 'not-allowed') { pauseForTap(); return; }
-          // A voice that fails (an offline network voice) gets one retry without it; then the line is skipped.
-          if (!state.retried && voices[line.role]) { state.retried = true; speakAt(index, 0); return; }
-          state.retried = false;
+          // A voice that fails is set aside and the line read again by its role's next voice; a line
+          // that fails with no voice to blame is skipped. Each retry sets one more voice aside, so it ends.
+          if (voice && !failedRef.current.has(voice.voiceURI)) { setAside(voice, error, line.role); speakAt(index, 0); return; }
           speakAt(index + 1, 0);
         },
       });
@@ -336,7 +364,7 @@ export function useReadAloud({
     // A line spoken right after a cancellation can be dropped by Chrome; the first one is spoken at once (iOS).
     if (wait === undefined) begin();
     else later(begin, wait);
-  }, [clearTimers, engine, later, pauseForTap, publish, scriptFor]);
+  }, [castNow, clearTimers, engine, later, pauseForTap, publish, scriptFor, setAside]);
 
   const play = useCallback((fromLine = 0) => {
     if (!engine.supported) return;
@@ -347,7 +375,6 @@ export function useReadAloud({
     if (busy) halt();
     state.listening = true;
     state.firstLine = true;
-    state.retried = false;
     speakAt(Math.max(0, Math.min(Math.trunc(fromLine), lines.length - 1)), busy ? 0 : undefined);
   }, [engine, halt, scriptFor, speakAt]);
 
@@ -366,7 +393,6 @@ export function useReadAloud({
     const busy = engine.isSpeaking();
     if (busy) halt();
     state.listening = true;
-    state.retried = false;
     speakAt(state.index, busy ? 0 : undefined);
   }, [engine, halt, speakAt]);
 
@@ -420,7 +446,6 @@ export function useReadAloud({
     }
     if (state.status === 'playing') {
       halt();
-      state.retried = false;
       speakAt(target, 0);
       return;
     }
@@ -444,7 +469,17 @@ export function useReadAloud({
     });
   }, []);
 
-  const setVoice = useCallback((role: ReadAloudRole, voice: ReadAloudVoice | undefined) => updateVoices(role, voice), [updateVoices]);
+  const setVoice = useCallback((role: ReadAloudRole, voice: ReadAloudVoice | undefined) => {
+    // A reader who chooses a voice that failed gets to try it again.
+    if (voice && failedRef.current.has(voice.voiceURI)) {
+      const kept = new Map(failedRef.current);
+      kept.delete(voice.voiceURI);
+      failedRef.current = kept;
+      setFailed(kept);
+      setVoiceProblem(undefined);
+    }
+    updateVoices(role, voice);
+  }, [updateVoices]);
   const resetVoices = useCallback(() => updateVoices(undefined, undefined), [updateVoices]);
   const setRate = useCallback((rate: number) => {
     if (!Number.isFinite(rate)) return;
@@ -462,8 +497,8 @@ export function useReadAloud({
       publish();
     } else if (busy) halt();
     const lines = scriptFor().lines;
-    const { choice: voices, rate, language: storyLanguage } = latest.current;
-    const voice = voices[role];
+    const { rate, language: storyLanguage } = latest.current;
+    const voice = castNow()[role];
     const sample = (lines.find(line => line.role === role) ?? lines[0])?.text ?? voice?.name;
     if (!sample) return;
     const token = ++state.token;
@@ -474,7 +509,7 @@ export function useReadAloud({
     };
     if (busy) later(say, 0);
     else say();
-  }, [engine, halt, later, publish, scriptFor]);
+  }, [castNow, engine, halt, later, publish, scriptFor]);
 
   // Voices arrive late on most devices, and iOS may never announce them.
   useEffect(() => {
@@ -563,6 +598,7 @@ export function useReadAloud({
     line,
     lineIndex: view.index,
     notice: view.notice,
+    voiceProblem,
     voices,
     languageVoices,
     choice,

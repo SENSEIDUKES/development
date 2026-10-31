@@ -198,6 +198,9 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer,
                 <div className="reader-settings-group">
                   {READ_ALOUD_ROLES.map(role => <VoicePicker key={role} role={role} readAloud={readAloud} language={language} />)}
                 </div>
+                {readAloud.voiceProblem && <p role="note" data-testid="read-aloud-voice-problem" className="mt-3 text-sm text-(--reader-warning-soft)">
+                  {readAloud.voiceProblem}
+                </p>}
                 <p className="reader-settings-help">Online voices may take a moment to start.</p>
                 <button type="button" onClick={readAloud.resetVoices}
                   className="reader-settings-reset">

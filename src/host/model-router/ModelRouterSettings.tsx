@@ -14,8 +14,9 @@ import type {
   ModelRouterCapabilityStatus,
   ModelRouterStatus,
 } from '../../server/model-router/status';
-import { ENERGY_GRADE_LABELS, ENERGY_GRADES, GRADED_ENERGY_PRICES, modelEnergyGrade, type EnergyGrade, type GradedEnergyKind } from '@seihouse/library/energy';
-import { useModelPreference, useReasoningPreferences, useTaggerPreference, type ModelPreferenceCapability } from '../generation/modelPreference';
+import { costsMoreThanTier, ENERGY_GRADE_LABELS, ENERGY_GRADES, ENERGY_TIER_MODELS, GRADED_ENERGY_PRICES, modelEnergyGrade, type EnergyGrade, type GradedEnergyKind } from '@seihouse/library/energy';
+import { useModelPreference, useReasoningPreferences, useTaggerPreference, useTierPreference, writeTierModel, writeTierPreference, type ModelPreferenceCapability } from '../generation/modelPreference';
+import { TierBadge } from './TierBadge';
 import { HostDialog } from '../dialog/HostDialog';
 
 type Load =
@@ -57,25 +58,17 @@ type RouterModel = ModelRouterCapabilityStatus['models'][number];
 type RouterProvider = ModelRouterCapabilityStatus['providers'][number];
 
 /** The capabilities priced in Energy by grade, and how one is counted. */
-const ENERGY_PRICED: Partial<Record<ModelRouterCapabilityStatus['id'], { kind: GradedEnergyKind; per: string }>> = {
-  chapters: { kind: 'chapter', per: 'a chapter' },
-  images: { kind: 'image', per: 'an image' },
-  live: { kind: 'live-minute', per: 'a minute' },
+const ENERGY_PRICED: Partial<Record<ModelRouterCapabilityStatus['id'], { kind: GradedEnergyKind }>> = {
+  chapters: { kind: 'chapter' },
+  images: { kind: 'image' },
+  live: { kind: 'live-minute' },
 };
-const GRADE_STYLES: Record<EnergyGrade, string> = {
-  mortal: 'border-slate-300/25 text-slate-200',
-  immortal: 'border-violet-400/40 text-violet-200',
-  heaven: 'border-amber-300/45 text-amber-200',
-};
+const pricePer = (kind: GradedEnergyKind, grade: EnergyGrade) => `${GRADED_ENERGY_PRICES[kind][grade]}${kind === 'live-minute' ? '/min' : ''}`;
 
-/** A model's grade and what one costs on it, e.g. "Immortal · 4 Energy". */
+/** A model's own grade and what one costs on it, e.g. "Immortal · 4". */
 function EnergyBadge({ model, kind }: { model: string; kind: GradedEnergyKind }) {
   const grade = modelEnergyGrade(model);
-  return (
-    <span data-energy-grade={grade} className={`rounded border px-1 py-px ${GRADE_STYLES[grade]}`}>
-      {ENERGY_GRADE_LABELS[grade]} · {GRADED_ENERGY_PRICES[kind][grade]}{kind === 'live-minute' ? '/min' : ''}
-    </span>
-  );
+  return <TierBadge grade={grade}> · {pricePer(kind, grade)}</TierBadge>;
 }
 
 function ModelRow({ model, selected, selectable, reasoningLevel, energy, onSelect }: {
@@ -256,6 +249,57 @@ const SELECTABLE: Partial<Record<ModelRouterCapabilityStatus['id'], { preference
   live: { preference: 'live', noun: 'live speech', note: 'Hears and answers in one conversation: the Familiar\'s live talk (Settings → Familiar → Live talk) uses the model chosen here.' },
 };
 
+/**
+ * The three tiers for one job: readers choose a tier, and the team sets the
+ * model behind each (here on this device, to try; for everyone in
+ * `ENERGY_TIER_MODELS`). A model picked exactly in the list below wins over
+ * the tier and costs its own grade. A tier model that costs more to run than
+ * the tier brings in is flagged.
+ */
+function TiersSection({ capability, kind, preference }: { capability: ModelRouterCapabilityStatus; kind: GradedEnergyKind; preference: ModelPreferenceCapability }) {
+  const tiers = useTierPreference(preference);
+  const active = tiers.exact ? undefined : tiers.tier ?? 'mortal';
+  const name = (id?: string) => (id ? capability.models.find(model => model.id === id)?.label.replace(/ · OpenRouter$/, '') ?? id : 'None yet');
+  const offered = capability.models.filter(model => model.available);
+  return (
+    <section aria-label="Tiers" className="space-y-1.5 rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-2">
+      <h3 className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Tiers</h3>
+      <div role="radiogroup" aria-label={`${capability.label} tier`} className="space-y-1">
+        {ENERGY_GRADES.map(grade => {
+          const model = tiers.models[grade];
+          const loses = Boolean(model) && costsMoreThanTier(model, grade);
+          return (
+            <div key={grade} data-tier={grade} className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <button type="button" role="radio" aria-checked={active === grade} disabled={!model} onClick={() => writeTierPreference(preference, grade)}
+                  className={`host-touch flex min-w-[7.5rem] shrink-0 items-center rounded-md border px-1.5 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors disabled:opacity-40 ${active === grade
+                    ? 'border-cyan-400/40 bg-cyan-500/10'
+                    : 'border-transparent hover:bg-white/5'}`}>
+                  <TierBadge grade={grade}> · {pricePer(kind, grade)}</TierBadge>
+                </button>
+                <select aria-label={`${ENERGY_GRADE_LABELS[grade]} model`} value={tiers.local[grade] ?? ''}
+                  onChange={event => writeTierModel(preference, grade, event.target.value || undefined)}
+                  className="host-touch min-w-0 flex-1 rounded-md border border-white/10 bg-[#05070d] px-1.5 py-1 text-[12px] text-white/85">
+                  <option value="">Team: {name(ENERGY_TIER_MODELS[kind][grade])}</option>
+                  {offered.map(option => <option key={option.id} value={option.id}>{name(option.id)}</option>)}
+                </select>
+              </div>
+              {loses && <p data-tier-warning className="pl-1 text-[10px] leading-snug text-amber-300">{name(model)} costs more to run than {ENERGY_GRADE_LABELS[grade]} brings in.</p>}
+            </div>
+          );
+        })}
+      </div>
+      {tiers.exact && (
+        <p data-exact-pick className="flex flex-wrap items-center gap-x-2 text-[11px] text-white/60">
+          <span>Using your own pick: {name(tiers.exact)}, at its own grade.</span>
+          <button type="button" onClick={() => writeTierPreference(preference, tiers.tier ?? 'mortal')} className="host-touch rounded-md border border-white/10 px-2 py-0.5 text-white/80 hover:bg-white/5">Use tiers</button>
+        </p>
+      )}
+      <p className="text-[10px] leading-snug text-white/35">Readers choose a tier; the team sets its model. A tier model changed here applies on this device. Picking a model below uses it exactly, at its own grade.</p>
+    </section>
+  );
+}
+
 function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStatus }) {
   const choice = SELECTABLE[capability.id];
   const selectable = Boolean(choice);
@@ -276,6 +320,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
 
   return (
     <div className="space-y-2.5" role="tabpanel" aria-label={`${capability.label} router`}>
+      {priced && choice && <TiersSection capability={capability} kind={priced.kind} preference={choice.preference} />}
       <div className="flex items-start justify-between gap-2">
         <ProviderPicker providers={capability.providers} models={capability.models} active={activeProvider.id} onPick={setProvider} />
         {capability.id === 'chapters' && (
@@ -297,11 +342,6 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
       )}
       {activeProvider.id === 'lmstudio' && <p className="text-[11px] leading-snug text-white/45">Uses the text model currently loaded in LM Studio at localhost:1234. Start its server and keep one text model loaded. No API key needed; local development only.</p>}
       {note && <p className="text-[11px] leading-snug text-white/45">{note}</p>}
-      {priced && (
-        <p data-energy-prices className="text-[11px] leading-snug text-white/45">
-          Energy {priced.per}: {ENERGY_GRADES.map(grade => `${ENERGY_GRADE_LABELS[grade]} ${GRADED_ENERGY_PRICES[priced.kind][grade]}`).join(' · ')}
-        </p>
-      )}
       <ul className="space-y-0.5 rounded-lg border border-white/10 bg-white/[0.02] p-1"
         role={selectable ? 'radiogroup' : undefined} aria-label={choice ? `${activeProvider.label} ${choice.noun} models` : undefined}>
         {models.map(model => (

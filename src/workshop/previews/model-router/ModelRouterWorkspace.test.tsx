@@ -3,7 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ModelRouterGear } from '../../../host/model-router/ModelRouterSettings';
-import { readModelPreference, readReasoningPreference, readTaggerPreference } from '../../../host/generation/modelPreference';
+import { chosenEnergyGrade, readExactModel, readModelPreference, readReasoningPreference, readTaggerPreference, readTierPreference } from '../../../host/generation/modelPreference';
 import { modelRouterStatus } from '../../../server/model-router/status';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -73,7 +73,6 @@ it('chooses the live speech model the Familiar\'s live talk uses, from the provi
 it('shows each model\'s grade and its Energy price', async () => {
   await openRouter({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' });
   const grade = (id: string) => document.querySelector(`[data-model="${id}"] [data-energy-grade]`)?.textContent;
-  expect(document.querySelector('[data-energy-prices]')?.textContent).toBe('Energy a chapter: Mortal 2 · Immortal 4 · Heaven 8');
   expect(grade('google/gemini-3.1-flash-lite')).toBe('Mortal · 2');
   expect(grade('google/gemini-3.8-flash')).toBe('Immortal · 4');
   expect(grade('google/gemini-3.1-pro-preview')).toBe('Heaven · 8');
@@ -83,6 +82,45 @@ it('shows each model\'s grade and its Energy price', async () => {
   // Text to speech is not priced by grade.
   await click(tabs.find(tab => tab.textContent === 'Text to speech')!);
   expect(document.querySelector('[data-energy-grade]')).toBeNull();
+});
+
+it('lets the reader choose a tier and the team set the model behind each, warning when a tier would lose money', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g', ANTHROPIC_API_KEY: 'a' });
+  const tiers = document.querySelector('[aria-label="Tiers"]')!;
+  const tier = (grade: string) => tiers.querySelector<HTMLButtonElement>(`[data-tier="${grade}"] [role="radio"]`)!;
+  const slot = (grade: string) => tiers.querySelector<HTMLSelectElement>(`[data-tier="${grade}"] select`)!;
+  // The tiers wear Story Seed's Fate Pressure flames, with their price.
+  expect(tier('mortal').textContent).toBe('Mortal · 2');
+  expect(tier('heaven').textContent).toBe('Heaven · 8');
+  expect(tier('heaven').querySelector('svg')).not.toBeNull();
+  // Nothing chosen: Mortal, the server's default model.
+  expect(tier('mortal').getAttribute('aria-checked')).toBe('true');
+  expect(readModelPreference('chapters')).toBeUndefined();
+  expect(slot('heaven').options[0].textContent).toBe('Team: Claude Opus 5.5');
+  // Heaven: the team's Heaven model writes, at Heaven's price.
+  await click(tier('heaven'));
+  expect(readTierPreference('chapters')).toBe('heaven');
+  expect(readModelPreference('chapters')).toBe('anthropic/claude-opus-5-5');
+  expect(row('anthropic/claude-opus-5-5')).toBeNull(); // another provider's list
+  // The team tries another model behind Heaven on this device; its price stays Heaven's.
+  await act(async () => { slot('heaven').value = 'google/gemini-3.1-flash-lite'; slot('heaven').dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(readModelPreference('chapters')).toBe('google/gemini-3.1-flash-lite');
+  expect(chosenEnergyGrade('chapters', 'google/gemini-3.1-flash-lite')).toBe('heaven');
+  // A model that costs more than its tier brings in is flagged.
+  await act(async () => { slot('mortal').value = 'anthropic/claude-opus-5-5'; slot('mortal').dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(tiers.querySelector('[data-tier="mortal"] [data-tier-warning]')?.textContent).toBe('Claude Opus 5.5 costs more to run than Mortal brings in.');
+  // An exact pick wins over the tier, at its own grade, until the reader goes back to tiers.
+  await click(row('google/gemini-3.8-flash')!);
+  expect(readExactModel('chapters')).toBe('google/gemini-3.8-flash');
+  expect(chosenEnergyGrade('chapters', 'google/gemini-3.8-flash')).toBe('immortal');
+  expect(tier('heaven').getAttribute('aria-checked')).toBe('false');
+  await click([...tiers.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'Use tiers')!);
+  expect(readExactModel('chapters')).toBeUndefined();
+  expect(readModelPreference('chapters')).toBe('google/gemini-3.1-flash-lite');
+  // Live speech has no Heaven model yet.
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
+  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
+  expect(document.querySelector<HTMLButtonElement>('[aria-label="Tiers"] [data-tier="heaven"] [role="radio"]')!.disabled).toBe(true);
 });
 
 it('shows one provider at a time, starting with the provider of the selected model', async () => {

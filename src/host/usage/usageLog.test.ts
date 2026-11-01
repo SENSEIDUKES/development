@@ -22,6 +22,11 @@ describe('the usage record', () => {
     expect(readUsage()).toHaveLength(1);
   });
 
+  it('prices an entry at the tier it was chosen at, which can differ from its model\'s grade', () => {
+    expect(usageEnergy({ at: 0, kind: 'chapter', model: 'google/gemini-3.1-flash-lite', grade: 'heaven' })).toBe(8);
+    expect(usageEnergy({ at: 0, kind: 'live', model: 'google/gemini-3.8-live', grade: 'immortal', seconds: 20 })).toBe(2);
+  });
+
   it('prices each entry in Energy by its model\'s grade', () => {
     expect(usageEnergy({ at: 0, kind: 'chapter', model: 'google/gemini-3.8-flash' })).toBe(4);
     expect(usageEnergy({ at: 0, kind: 'story-upkeep', model: 'google/gemini-3.8-flash', task: 'Tagging' })).toBe(0);
@@ -37,7 +42,7 @@ describe('the usage record', () => {
     await client.generate({ model: 'google/gemini-3.8-flash' } as never);
     await client.tagChapter({ model: 'google/gemini-3.8-flash', operation: 'tag-chapter' } as never);
     expect(readUsage().map(({ at: _at, ...entry }) => entry)).toEqual([
-      { kind: 'chapter', model: 'google/gemini-3.8-flash', inputTokens: 1_200, outputTokens: 300 },
+      { kind: 'chapter', grade: 'immortal', model: 'google/gemini-3.8-flash', inputTokens: 1_200, outputTokens: 300 },
       { kind: 'story-upkeep', task: 'Tagging', model: 'google/gemini-3.8-flash', inputTokens: 1_200, outputTokens: 300 },
     ]);
     // A count the server estimated stays marked as an estimate.
@@ -59,7 +64,7 @@ describe('the usage record', () => {
     session.end();
     handlers!.ended();
     expect(end).toHaveBeenCalledOnce();
-    expect(readUsage().map(({ at: _at, ...entry }) => entry)).toEqual([{ kind: 'live', model: 'openai/gpt-live-1', seconds: 95 }]);
+    expect(readUsage().map(({ at: _at, ...entry }) => entry)).toEqual([{ kind: 'live', model: 'openai/gpt-live-1', grade: 'immortal', seconds: 95 }]);
     // A talk that never connected costs nothing and is not recorded.
     withLiveUsage(inner, 'openai/gpt-live-1', () => clock).start({} as never, events);
     handlers!.ended('Live talk could not start', true);

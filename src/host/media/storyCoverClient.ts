@@ -1,6 +1,7 @@
 import type { CodexPictureRequest, StoryCoverRequest } from '@seihouse/library/stories';
 import { base64ToBlob } from './imageFiles';
 import { recordUsage } from '../usage/usageLog';
+import { chosenEnergyGrade } from '../generation/modelPreference';
 
 export const STORY_COVER_ENDPOINT = '/api/story-cover';
 
@@ -35,7 +36,8 @@ async function requestImage(body: Record<string, unknown>, options: ImageRequest
   if (typeof answer?.image !== 'string' || typeof answer.mimeType !== 'string' || !answer.mimeType.startsWith('image/')) {
     throw new StoryCoverRequestError('The cover server answered without an image.', 502);
   }
-  recordUsage({ kind: 'image', model: typeof answer.model === 'string' ? answer.model : options.model });
+  const used = typeof answer.model === 'string' ? answer.model : options.model;
+  recordUsage({ kind: 'image', model: used, grade: chosenEnergyGrade('images', used) });
   return base64ToBlob(answer.image, answer.mimeType);
 }
 

@@ -102,6 +102,10 @@ or verified against a production deployment.
 
 ## Workshop history
 
+- **2026-11-01 tiers** — `ENERGY_TIER_MODELS` is the team's model behind each tier per kind
+  (chapters: Gemini 3.1 Flash Lite, Gemini 3.8 Flash, Claude Opus 5.5; images: Nano Banana 2 Lite, Nano
+  Banana 2, Nano Banana Pro; live: Gemini 3.8 Live, GPT-Live 1, Heaven not yet). A generation made by
+  tier is priced at that tier (`EnergyModelsProvider` `grades`), whatever its model's own grade.
 - **2026-11-01 live talk repriced** — Live talk costs 3 / 6 / 9 Energy a minute (Mortal, Immortal,
   Heaven), at least twice the provider's price: Gemini 3.8 Live is at most $0.023 a minute, GPT-Live 1
   is $0.05 a minute plus its backend model. It is charged by the started 20 seconds (1 / 2 / 3 a

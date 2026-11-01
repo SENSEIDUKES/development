@@ -6,10 +6,11 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { AudioLines, BookOpenText, Image as ImageIcon, Map as MapIcon, type LucideIcon } from 'lucide-react';
-import { ENERGY_GRADE_LABELS, modelEnergyGrade, type EnergyGrade } from '@seihouse/library/energy';
+import { ENERGY_GRADES } from '@seihouse/library/energy';
+import { TierBadge } from '../model-router/TierBadge';
 import type { ModelRouterStatus } from '../../server/model-router/status';
 import { HostDialog } from '../dialog/HostDialog';
-import { usageEnergy, useUsageLog, type UsageEntry, type UsageKind } from './usageLog';
+import { usageEnergy, usageGrade, useUsageLog, type UsageEntry, type UsageKind } from './usageLog';
 
 type Range = 'today' | 'week' | 'month';
 type View = 'energy' | 'behind';
@@ -29,12 +30,6 @@ const GROUPS: { id: Group; icon: LucideIcon; color: string; tint: string; legend
   { id: 'familiar', icon: AudioLines, color: 'bg-amber-300', tint: 'bg-amber-300/15', legend: 'Familiar talk' },
   { id: 'worlds', icon: MapIcon, color: 'bg-emerald-300', tint: 'bg-emerald-300/15', legend: 'Worlds' },
 ];
-
-const GRADE_STYLES: Record<EnergyGrade, string> = {
-  mortal: 'border-slate-300/25 text-slate-200',
-  immortal: 'border-violet-400/40 text-violet-200',
-  heaven: 'border-amber-300/45 text-amber-200',
-};
 
 /** Model names from the Model Router's own status (the same list it shows); a model's id until they arrive. */
 function useModelLabels(endpoint = '/api/model-router'): Map<string, string> {
@@ -151,7 +146,8 @@ function BehindTheScenes({ entries }: { entries: UsageEntry[] }) {
     <div className="space-y-2">
       <ul className="space-y-2" aria-label="By model">
         {models.map(([model, calls]) => {
-          const grade = modelEnergyGrade(model || undefined);
+          // A model can be used at more than one tier (as a tier's model, or picked exactly).
+          const grades = ENERGY_GRADES.filter(grade => calls.some(entry => entry.kind !== 'story-upkeep' && usageGrade(entry) === grade));
           const tokensIn = calls.reduce((sum, entry) => sum + (entry.inputTokens ?? 0), 0);
           const about = calls.some(entry => entry.tokensEstimated) ? '≈ ' : '';
           const tokensOut = calls.reduce((sum, entry) => sum + (entry.outputTokens ?? 0), 0);
@@ -176,7 +172,7 @@ function BehindTheScenes({ entries }: { entries: UsageEntry[] }) {
                   {model && <span className="block truncate font-mono text-[10px] text-white/30">{model}</span>}
                 </span>
                 <span className="flex shrink-0 flex-col items-end gap-0.5">
-                  <span className={`rounded border px-1 py-px font-mono text-[9px] uppercase tracking-wider ${GRADE_STYLES[grade]}`}>{ENERGY_GRADE_LABELS[grade]}</span>
+                  <span className="flex gap-1 font-mono text-[9px] uppercase tracking-wider">{grades.map(grade => <TierBadge key={grade} grade={grade} />)}</span>
                   <span data-usage-model-energy className="text-[12px] tabular-nums text-amber-200">{number.format(energy)} Energy</span>
                 </span>
               </div>

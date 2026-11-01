@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NarrativeAudioProvider, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FamiliarHelperAction, FamiliarHelperProvider, useFamiliarHelperContext } from './FamiliarHelper';
-import type { FamiliarHelperContext, FamiliarLive, FamiliarLiveEvents, FamiliarVoice } from '../../../library/familiars/helper';
+import type { FamiliarHelperContext, FamiliarLive, FamiliarLiveEvents, FamiliarVoice, FamiliarWakeWord } from '../../../library/familiars/helper';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root;
@@ -196,6 +196,37 @@ describe('Familiar helper surface', () => {
     await click('Hang up');
     expect(end).toHaveBeenCalledOnce();
     expect(button('Talk with your Familiar')).toBeTruthy();
+  });
+  it('calls the Familiar when its wake word is heard, and listens for it only while the Familiar is idle', async () => {
+    vi.useFakeTimers();
+    try {
+      const t = setup();
+      let events: FamiliarLiveEvents | undefined;
+      const live: FamiliarLive = { start: vi.fn((_brief, handlers) => { events = handlers; return { end: vi.fn(), send: vi.fn() }; }) };
+      let heard: (() => void) | undefined;
+      const stops: ReturnType<typeof vi.fn>[] = [];
+      const wake: FamiliarWakeWord = { available: true, listen: vi.fn((_word, _language, onHeard) => { heard = onHeard; const stop = vi.fn(); stops.push(stop); return stop; }) };
+      act(() => root.render(<FamiliarHelperProvider voice={t.voice} live={live} wake={wake}>
+        <Screen context={t.context} /><FamiliarHelperAction />
+      </FamiliarHelperProvider>));
+      expect(wake.listen).toHaveBeenCalledWith('familiar', 'en-US', expect.any(Function), expect.any(Function));
+      // Hearing it calls the Familiar as its microphone does, once the recognizer has let go.
+      act(() => heard!());
+      expect(stops.at(-1)).toHaveBeenCalled();
+      expect(live.start).not.toHaveBeenCalled();
+      await act(async () => { vi.advanceTimersByTime(250); });
+      expect(live.start).toHaveBeenCalledWith(expect.anything(), expect.anything(), { microphone: true });
+      expect(document.querySelector('[role="dialog"], .familiar-helper')).toBeTruthy();
+      // No listening for it while talking.
+      const calls = (wake.listen as ReturnType<typeof vi.fn>).mock.calls.length;
+      act(() => events!.connected());
+      expect((wake.listen as ReturnType<typeof vi.fn>).mock.calls.length).toBe(calls);
+      // Back to idle, it listens again.
+      await click('Hang up');
+      expect((wake.listen as ReturnType<typeof vi.fn>).mock.calls.length).toBe(calls + 1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it('puts a typed message that could not be sent back in the box', async () => {
     const t = setup();

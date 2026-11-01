@@ -5,6 +5,7 @@ import { WorkspaceHeaderAccessoryProvider, useLibraryBottomClearance } from '@se
 import { defaultFamiliar, familiarCatalogueEntry } from '../host/familiar/catalogue';
 import { createFamiliarBrowserVoice } from '../host/familiar/voice';
 import { useFamiliarLive } from '../host/familiar/liveTalk';
+import { createFamiliarWakeWord } from '../host/familiar/wakeWord';
 
 /** The space the Familiar keeps above the bottom bar and the music note floating over it. */
 const BOTTOM_GAP = 8;
@@ -25,6 +26,7 @@ const READER_BOTTOM = 136;
  * the reader's account. `place` is the page, for the Familiar's Explain.
  * With Settings → Familiar → Live talk (beta) on, and where the server offers
  * it, its microphone starts a live conversation with the equipped Familiar.
+ * With Say “Familiar” (beta) on, saying the word calls it as its microphone does.
  */
 export function AppFamiliar({ profile, present, reading = false, place, boundaryRef, children }: { profile: UserProfile; present: boolean; reading?: boolean; place: { title: string; help: FamiliarHelpPlace }; boundaryRef?: RefObject<HTMLElement | null>; children: ReactNode }) {
   const inHeader = profile.familiarInHeader ?? false;
@@ -33,11 +35,12 @@ export function AppFamiliar({ profile, present, reading = false, place, boundary
   useEffect(() => { setMinimized(inHeader); }, [inHeader]);
   const [voice] = useState(createFamiliarBrowserVoice);
   const live = useFamiliarLive();
+  const [wake] = useState(createFamiliarWakeWord);
   const familiar = (familiarCatalogueEntry(profile.familiarId) ?? defaultFamiliar).definition;
   const clearance = useLibraryBottomClearance();
   const bottomInset = reading ? READER_BOTTOM : clearance ? clearance + BOTTOM_GAP : 0;
   const recall = present && minimized ? <FamiliarRecall key={familiar.id} familiar={familiar} onRecall={() => setMinimized(false)} /> : null;
-  return <FamiliarHelperProvider voice={voice} live={profile.familiarLiveTalk ? live : undefined} familiar={{ name: familiar.displayName, description: familiar.description }} bottomInset={bottomInset}><WorkspaceHeaderAccessoryProvider accessory={recall}>
+  return <FamiliarHelperProvider voice={voice} live={profile.familiarLiveTalk ? live : undefined} wake={profile.familiarWakeWord ? wake : undefined} familiar={{ name: familiar.displayName, description: familiar.description }} bottomInset={bottomInset}><WorkspaceHeaderAccessoryProvider accessory={recall}>
     <FamiliarPlace title={place.title} help={place.help} />
     {children}
     {present && <FamiliarCompanion key={familiar.id} familiar={familiar} size={profile.familiarSize}

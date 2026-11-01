@@ -28,10 +28,14 @@ describe('Energy grades', () => {
     expect(modelEnergyGrade(undefined)).toBe('mortal');
   });
 
-  it('charges live talk per started minute', () => {
+  it('charges live talk per started 20 seconds, in whole Energy', () => {
+    for (const price of Object.values(GRADED_ENERGY_PRICES['live-minute'])) expect(price % 3).toBe(0);
     expect(liveTalkEnergy('google/gemini-3.8-live', 0)).toBe(0);
-    expect(liveTalkEnergy('google/gemini-3.8-live', 30)).toBe(3);
-    expect(liveTalkEnergy('google/gemini-3.8-live', 61)).toBe(6);
-    expect(liveTalkEnergy('openai/gpt-live-1', 125)).toBe(18);
+    // A quick call is one step.
+    expect(liveTalkEnergy('google/gemini-3.8-live', 15)).toBe(1);
+    expect(liveTalkEnergy('google/gemini-3.8-live', 30)).toBe(2);
+    expect(liveTalkEnergy('google/gemini-3.8-live', 60)).toBe(3);
+    expect(liveTalkEnergy('openai/gpt-live-1', 20)).toBe(2);
+    expect(liveTalkEnergy('openai/gpt-live-1', 125)).toBe(14);
   });
 });

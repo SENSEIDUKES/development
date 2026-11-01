@@ -74,6 +74,18 @@ export interface FamiliarVoice {
   play?(url: string, done: () => void, failure: (message: string) => void): () => void;
 }
 
+/** The word that calls the Familiar while the app is open, like a smart speaker's. */
+export const FAMILIAR_WAKE_WORD = 'familiar';
+
+/**
+ * A host's wake word: listens in the background for `word` and calls `heard`
+ * once when it is said. Returns the stop. `failure` says why it cannot listen.
+ */
+export interface FamiliarWakeWord {
+  readonly available: boolean;
+  listen(word: string, language: string, heard: () => void, failure?: (message: string) => void): () => void;
+}
+
 /**
  * What a live conversation is told when it starts: who the Familiar is, where
  * the reader is, and what it can explain and do there. Its facts are the
@@ -147,6 +159,14 @@ const MODE_WORDS: Record<string, FamiliarMode> = { explain: 'explain', action: '
 const NOTHING: Record<FamiliarMode, string> = { explain: 'Nothing to explain here yet.', action: 'Nothing to do here yet.' };
 /** How long a previewed sound plays before the microphone opens again. */
 const PREVIEW_MS = 2_500;
+/**
+ * Live talk is short, like a smart speaker: after this long with nothing said
+ * by either side, the Familiar hangs up. A typed conversation waits longer.
+ */
+export const FAMILIAR_LIVE_QUIET_MS = 10_000;
+export const FAMILIAR_TYPED_QUIET_MS = 60_000;
+/** The note left when the Familiar hangs up after a quiet moment. */
+export const FAMILIAR_QUIET_NOTE = 'Hung up after a quiet moment.';
 
 /** Exact preset names, or a named input followed by its verbatim text. No intent inference. */
 export function matchFamiliarCommand(actions: readonly FamiliarHelperAction[], text: string) {
@@ -190,6 +210,10 @@ export class FamiliarHelperController {
   private identity = { name: 'Familiar', description: '' };
   /** The chat line each side is still saying in this turn. */
   private openTurn: Partial<Record<'reader' | 'familiar', number>> = {};
+  /** Hangs up the conversation once nothing has been said for a while. */
+  private quietTimer?: ReturnType<typeof setTimeout>;
+  /** Restarts the current conversation's quiet countdown. */
+  private stillTalking?: () => void;
 
   constructor(readonly voice: FamiliarVoice, readonly language = 'en-US', readonly live?: FamiliarLive) {}
   /** Who the Familiar is, for live talk: the reader's equipped Familiar. */
@@ -510,9 +534,20 @@ export class FamiliarHelperController {
       topics: context.topics.map(({ id, label, explanation }) => ({ id, label, explanation })),
       actions: context.actions.map(({ id, label, detail, input }) => ({ id, label, ...(detail ? { detail } : {}), ...(input ? { input } : {}) })),
     };
+    // Every word from either side, a typed message or a step on the screen keeps the conversation open.
+    const stillTalking = () => {
+      clearTimeout(this.quietTimer);
+      this.quietTimer = setTimeout(() => {
+        if (!current() || this.state.live?.status !== 'on') return;
+        this.hangUp();
+        this.addLine({ speaker: 'note', text: FAMILIAR_QUIET_NOTE });
+      }, this.state.live?.listening === false ? FAMILIAR_TYPED_QUIET_MS : FAMILIAR_LIVE_QUIET_MS);
+    };
+    this.stillTalking = stillTalking;
     const session = this.live.start(brief, {
       connected: () => {
         if (!current() || !this.state.live) return;
+        stillTalking();
         this.update({ live: { ...this.state.live, status: 'on' } });
         const note: FamiliarChatLine = { speaker: 'note', text: `Talking on ${context.title}` };
         const at = Math.min(begins, this.state.chat.length);
@@ -522,11 +557,12 @@ export class FamiliarHelperController {
         this.typedAhead = [];
         for (const text of typed) this.liveSession?.send(text);
       },
-      caption: (speaker, text) => { if (current()) this.caption(speaker, text); },
-      notice: text => { if (current()) this.addLine({ speaker: 'note', text }); },
-      call: call => current() ? this.answerLive(call) : Promise.resolve('The conversation has ended.'),
+      caption: (speaker, text) => { if (current()) { if (text) stillTalking(); this.caption(speaker, text); } },
+      notice: text => { if (current()) { stillTalking(); this.addLine({ speaker: 'note', text }); } },
+      call: call => { if (!current()) return Promise.resolve('The conversation has ended.'); stillTalking(); return this.answerLive(call); },
       ended: (problem, unavailable) => {
         if (!current()) return;
+        clearTimeout(this.quietTimer);
         this.liveRun = undefined;
         this.liveSession = undefined;
         const unsent = this.typedAhead;
@@ -555,6 +591,7 @@ export class FamiliarHelperController {
     if (!this.liveRun) this.startLive(false);
     if (!this.liveRun) return;
     this.addLine({ speaker: 'reader', text: message });
+    this.stillTalking?.();
     if (this.state.live?.status === 'on') this.liveSession?.send(message);
     else this.typedAhead.push(message);
   };
@@ -568,6 +605,7 @@ export class FamiliarHelperController {
   hangUp = () => {
     if (!this.liveRun) return;
     const session = this.liveSession;
+    clearTimeout(this.quietTimer);
     this.liveRun = undefined;
     this.liveSession = undefined;
     session?.end();

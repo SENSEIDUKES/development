@@ -55,6 +55,8 @@ export interface UserProfile {
   familiarInHeader?: boolean;
   /** Live talk with the Familiar (beta); off (the default), it listens with the device voice. */
   familiarLiveTalk?: boolean;
+  /** Saying "Familiar" calls it, as tapping its microphone does (device speech recognition). */
+  familiarWakeWord?: boolean;
   /** The account's UI language. Distinct from the reading language. */
   interfaceLanguage: SenLanguageCode;
   /** The language Reader Chamber displays by default; never story canon. */

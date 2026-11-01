@@ -1172,6 +1172,13 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await act(async () => { liveTalk().click(); });
     await flush(10);
     expect(services.profile.read().familiarLiveTalk).toBe(true);
+    // Say "Familiar" (beta): off by default; on, it is kept on the device.
+    const wakeWord = () => cave()!.querySelectorAll<HTMLInputElement>('.familiar-header-switch')[2];
+    expect(wakeWord().closest('.familiar-size-control')!.textContent).toContain('Say “Familiar” (beta)');
+    expect(wakeWord().checked).toBe(false);
+    await act(async () => { wakeWord().click(); });
+    await flush(10);
+    expect(services.profile.read().familiarWakeWord).toBe(true);
   });
 
   it('translates the interface across all 30 languages in Settings, previews during confirmation, reverts on cancel, and persists when kept', async () => {

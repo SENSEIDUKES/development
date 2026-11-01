@@ -131,7 +131,7 @@ function EnergyView({ entries, range, now }: { entries: UsageEntry[]; range: typ
       </ul>
       <p className="text-[11px] leading-snug text-white/40">
         Preview: Energy is counted here but not taken from your balance yet.
-        {byGroup.some(group => group.id === 'familiar') ? ' Familiar talk counts each started minute.' : ''} Kept on this device for 90 days.
+        {byGroup.some(group => group.id === 'familiar') ? ' Familiar talk counts every started 20 seconds.' : ''} Kept on this device for 90 days.
       </p>
     </div>
   );

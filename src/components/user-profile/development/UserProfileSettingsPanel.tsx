@@ -505,6 +505,7 @@ export function UserProfileSettingsPanel({
                 size={profile?.familiarSize} onSizeChange={controller.handleFamiliarSizeChange}
                 inHeader={profile?.familiarInHeader ?? false} onInHeaderChange={controller.handleFamiliarInHeaderChange}
                 liveTalk={profile?.familiarLiveTalk ?? false} onLiveTalkChange={controller.handleFamiliarLiveTalkChange}
+                wakeWord={profile?.familiarWakeWord ?? false} onWakeWordChange={controller.handleFamiliarWakeWordChange}
                 pending={controller.isSavingFamiliar} disabled={!profile || !controller.handleFamiliarChange}
                 onSelect={id => void controller.handleFamiliarChange?.(id)} />
             </SEITabsPanel>

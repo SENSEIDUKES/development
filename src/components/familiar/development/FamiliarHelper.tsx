@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef,
 import { createPortal } from 'react-dom';
 import { Check, Info, Keyboard, Lightbulb, MessagesSquare, Mic, Pause, Play, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
-import { FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice } from '../../../library/familiars/helper';
+import { FAMILIAR_WAKE_WORD, FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice, type FamiliarWakeWord } from '../../../library/familiars/helper';
 
 const Helper = createContext<FamiliarHelperController | null>(null);
 const FocusReturn = createContext<RefObject<HTMLElement | null> | null>(null);
@@ -55,8 +55,11 @@ function playLine(currentPlayback: () => NarrativeAudioPlayback | null, url: str
  * Reader page. With `live`, the microphone starts a live conversation with the
  * equipped `familiar` instead of the device voice.
  */
-export function FamiliarHelperProvider({ voice, live, familiar, language = 'en-US', bottomInset = 88, children }: {
-  voice: FamiliarVoice; live?: FamiliarLive; familiar?: { name: string; description: string }; language?: string; bottomInset?: number; children: ReactNode;
+export function FamiliarHelperProvider({ voice, live, wake, familiar, language = 'en-US', bottomInset = 88, children }: {
+  voice: FamiliarVoice; live?: FamiliarLive;
+  /** With a wake word, saying "Familiar" calls it as tapping its microphone does. */
+  wake?: FamiliarWakeWord;
+  familiar?: { name: string; description: string }; language?: string; bottomInset?: number; children: ReactNode;
 }) {
   // Recorded lines play on the host's shared player, read when each line starts.
   const narrative = useOptionalNarrativeAudio();
@@ -75,7 +78,41 @@ export function FamiliarHelperProvider({ voice, live, familiar, language = 'en-U
     document.addEventListener('visibilitychange', hide);
     return () => { document.removeEventListener('visibilitychange', hide); helper.suspend(); };
   }, [helper]);
-  return <Helper.Provider value={helper}><FocusReturn.Provider value={returnFocus}>{children}<FamiliarHelperPanel helper={helper} bottomInset={Math.max(16, bottomInset)} /></FocusReturn.Provider></Helper.Provider>;
+  return <Helper.Provider value={helper}><FocusReturn.Provider value={returnFocus}>{children}<FamiliarHelperPanel helper={helper} bottomInset={Math.max(16, bottomInset)} />
+    {wake?.available && <FamiliarWakeListener helper={helper} wake={wake} language={language} />}</FocusReturn.Provider></Helper.Provider>;
+}
+
+/**
+ * Listens for the wake word while the Familiar is idle and the page is in
+ * view; never while it talks, listens, speaks or saves. Hearing it calls the
+ * Familiar as its microphone does: a live conversation, or the device voice.
+ */
+/** How long after hearing the wake word the Familiar opens: the recognizer releases the microphone. */
+const WAKE_HANDOVER_MS = 250;
+
+function FamiliarWakeListener({ helper, wake, language }: { helper: FamiliarHelperController; wake: FamiliarWakeWord; language: string }) {
+  const state = useSyncExternalStore(helper.subscribe, helper.getSnapshot, helper.getSnapshot);
+  const [visible, setVisible] = useState(() => typeof document === 'undefined' || document.visibilityState !== 'hidden');
+  useEffect(() => {
+    const follow = () => setVisible(document.visibilityState !== 'hidden');
+    document.addEventListener('visibilitychange', follow);
+    return () => document.removeEventListener('visibilitychange', follow);
+  }, []);
+  const idle = visible && !state.live && (state.phase === 'ready' || state.phase === 'review');
+  useEffect(() => {
+    if (!idle) return;
+    let stop: (() => void) | undefined;
+    let called = false;
+    stop = wake.listen(FAMILIAR_WAKE_WORD, language, () => {
+      if (called) return;
+      called = true;
+      stop?.();
+      // The recognizer lets go of the microphone first, so the conversation can take it.
+      setTimeout(() => helper.open(true), WAKE_HANDOVER_MS);
+    }, message => console.warn('[familiar] the wake word stopped listening:', message));
+    return () => stop?.();
+  }, [idle, wake, language, helper]);
+  return null;
 }
 
 /**

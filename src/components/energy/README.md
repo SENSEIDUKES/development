@@ -102,12 +102,13 @@ or verified against a production deployment.
 
 ## Workshop history
 
-- **2026-11-01 live talk repriced** — Live talk costs 3 / 6 / 9 Energy a started minute
-  (Mortal, Immortal, Heaven), at least twice the provider's price: Gemini 3.8 Live is at most $0.023
-  a minute, GPT-Live 1 is $0.05 a minute plus its backend model.
+- **2026-11-01 live talk repriced** — Live talk costs 3 / 6 / 9 Energy a minute (Mortal, Immortal,
+  Heaven), at least twice the provider's price: Gemini 3.8 Live is at most $0.023 a minute, GPT-Live 1
+  is $0.05 a minute plus its backend model. It is charged by the started 20 seconds (1 / 2 / 3 a
+  step), so a quick call costs one step.
 - **2026-11-01 grades** — Chapters cost 2 Energy. `shared/energyGrades.ts` sorts each chapter,
   image and live model into Mortal, Immortal or Heaven, with one Energy price per grade: chapter
-  2 / 4 / 8, image 5 / 10 / 20, live talk 3 / 6 / 9 a started minute. Mortal equals the catalog
+  2 / 4 / 8, image 5 / 10 / 20, live talk 3 / 6 / 9 a minute, by the started 20 seconds. Mortal equals the catalog
   price. Chapter narration is not priced yet. The Model Router shows each model's grade and price;
   every price shown before generating (`EnergyActionCost`, `EnergyCostMeter`, portraits, covers)
   is the grade's price for the host's model (`EnergyModelsProvider`; the app passes the Router's choice);

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { FamiliarHelperController, matchFamiliarCommand, type FamiliarHelperAction, type FamiliarHelperContext, type FamiliarLive, type FamiliarLiveBrief, type FamiliarLiveEvents, type FamiliarVoice } from './helper';
+import { FAMILIAR_LIVE_QUIET_MS, FAMILIAR_QUIET_NOTE, FAMILIAR_TYPED_QUIET_MS, FamiliarHelperController, matchFamiliarCommand, type FamiliarHelperAction, type FamiliarHelperContext, type FamiliarLive, type FamiliarLiveBrief, type FamiliarLiveEvents, type FamiliarVoice } from './helper';
 
 function setup() {
   const run = vi.fn(async (_text: string) => {});
@@ -295,6 +295,41 @@ describe('Familiar live talk', () => {
     expect(t.helper.getSnapshot().chat).toHaveLength(4);
     // The device voice never listens over it.
     expect(t.voice.listen).not.toHaveBeenCalled();
+  });
+  it('hangs up by itself after a quiet moment, like a smart speaker; anything said keeps it open', () => {
+    vi.useFakeTimers();
+    try {
+      const t = live();
+      t.helper.talk();
+      t.events().connected();
+      vi.advanceTimersByTime(FAMILIAR_LIVE_QUIET_MS - 1_000);
+      t.events().caption('reader', 'What is energy?');
+      vi.advanceTimersByTime(FAMILIAR_LIVE_QUIET_MS - 1_000);
+      t.events().caption('familiar', 'It pays for manifesting.');
+      vi.advanceTimersByTime(FAMILIAR_LIVE_QUIET_MS - 1_000);
+      expect(t.helper.getSnapshot().live?.status).toBe('on');
+      expect(t.end).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1_000);
+      expect(t.end).toHaveBeenCalledOnce();
+      expect(t.helper.getSnapshot().live).toBeUndefined();
+      expect(t.helper.getSnapshot().chat.at(-1)).toEqual({ speaker: 'note', text: FAMILIAR_QUIET_NOTE });
+      // A typed conversation waits longer for the next message.
+      t.helper.say('Hello');
+      t.events().connected();
+      vi.advanceTimersByTime(FAMILIAR_LIVE_QUIET_MS + 1_000);
+      expect(t.helper.getSnapshot().live?.status).toBe('on');
+      vi.advanceTimersByTime(FAMILIAR_TYPED_QUIET_MS);
+      expect(t.helper.getSnapshot().live).toBeUndefined();
+      // Hanging up by hand leaves no countdown behind.
+      t.helper.talk();
+      t.events().connected();
+      t.helper.talk();
+      const ends = t.end.mock.calls.length;
+      vi.advanceTimersByTime(FAMILIAR_TYPED_QUIET_MS * 2);
+      expect(t.end.mock.calls.length).toBe(ends);
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it('shows topics and proposes changes for the reader to confirm, and confirms only when asked', async () => {
     const t = live();

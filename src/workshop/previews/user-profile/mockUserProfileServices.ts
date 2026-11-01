@@ -81,7 +81,7 @@ export interface MockUserProfileServicesOptions {
   claimMode?: 'success' | 'failed' | 'unresolved';
   repairMode?: 'success' | 'failed';
   profileOverride?: Partial<UserProfile>;
-  onFamiliarProfile?: (selection: { uid: string | null; familiarId?: string; familiarSize?: number; familiarInHeader?: boolean; familiarLiveTalk?: boolean }) => void;
+  onFamiliarProfile?: (selection: { uid: string | null; familiarId?: string; familiarSize?: number; familiarInHeader?: boolean; familiarLiveTalk?: boolean; familiarWakeWord?: boolean }) => void;
   unlockedSpecialQi?: readonly SpecialQiId[];
   /**
    * The Store account to use instead of the in-memory grant — the development
@@ -222,7 +222,7 @@ export function createMockUserProfileServices({
           return;
         }
         profileRef.current = scenario.profile ? { ...scenario.profile, ...profileOverride } : null;
-        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: profileRef.current?.familiarId, familiarSize: profileRef.current?.familiarSize, familiarInHeader: profileRef.current?.familiarInHeader, familiarLiveTalk: profileRef.current?.familiarLiveTalk });
+        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: profileRef.current?.familiarId, familiarSize: profileRef.current?.familiarSize, familiarInHeader: profileRef.current?.familiarInHeader, familiarLiveTalk: profileRef.current?.familiarLiveTalk, familiarWakeWord: profileRef.current?.familiarWakeWord });
         setProfile(profileRef.current);
         setFormData(profileRef.current ?? {});
         setIsLoading(false);
@@ -382,7 +382,7 @@ export function createMockUserProfileServices({
         setProfile(next);
         // Preserve unrelated identity/language drafts while committing this field.
         setFormData(previous => ({ ...previous, familiarId: id }));
-        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: id, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: next.familiarLiveTalk });
+        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: id, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: next.familiarLiveTalk, familiarWakeWord: next.familiarWakeWord });
       } catch (failure) {
         if (mounted.current && epoch === accountEpoch.current) setError(failure instanceof Error ? failure.message : 'Familiar selection failed.');
       } finally {
@@ -400,7 +400,7 @@ export function createMockUserProfileServices({
       profileRef.current = next;
       setProfile(next);
       setFormData(previous => ({ ...previous, familiarSize }));
-      onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: next.familiarLiveTalk });
+      onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: next.familiarLiveTalk, familiarWakeWord: next.familiarWakeWord });
     }, [currentUser]);
 
     const handleFamiliarInHeaderChange = useCallback((inHeader: boolean) => {
@@ -408,7 +408,15 @@ export function createMockUserProfileServices({
       const next = { ...profileRef.current, familiarInHeader: inHeader || undefined, updatedAt: new Date().toISOString() };
       profileRef.current = next;
       setProfile(next);
-      if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: inHeader, familiarLiveTalk: next.familiarLiveTalk });
+      if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: inHeader, familiarLiveTalk: next.familiarLiveTalk, familiarWakeWord: next.familiarWakeWord });
+    }, [currentUser]);
+
+    const handleFamiliarWakeWordChange = useCallback((wakeWord: boolean) => {
+      if (!profileRef.current) return;
+      const next = { ...profileRef.current, familiarWakeWord: wakeWord || undefined, updatedAt: new Date().toISOString() };
+      profileRef.current = next;
+      setProfile(next);
+      if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: next.familiarLiveTalk, familiarWakeWord: wakeWord });
     }, [currentUser]);
 
     const handleFamiliarLiveTalkChange = useCallback((liveTalk: boolean) => {
@@ -416,7 +424,7 @@ export function createMockUserProfileServices({
       const next = { ...profileRef.current, familiarLiveTalk: liveTalk || undefined, updatedAt: new Date().toISOString() };
       profileRef.current = next;
       setProfile(next);
-      if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: liveTalk });
+      if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: liveTalk, familiarWakeWord: next.familiarWakeWord });
     }, [currentUser]);
 
     const handleLanguageChangeDirect = useCallback(
@@ -888,6 +896,7 @@ export function createMockUserProfileServices({
       handleFamiliarSizeChange,
       handleFamiliarInHeaderChange,
       handleFamiliarLiveTalkChange,
+      handleFamiliarWakeWordChange,
       isSavingFamiliar,
 
       showAdvanced,

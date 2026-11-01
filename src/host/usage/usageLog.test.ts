@@ -26,7 +26,7 @@ describe('the usage record', () => {
     expect(usageEnergy({ at: 0, kind: 'chapter', model: 'google/gemini-3.8-flash' })).toBe(4);
     expect(usageEnergy({ at: 0, kind: 'story-upkeep', model: 'google/gemini-3.8-flash', task: 'Tagging' })).toBe(0);
     expect(usageEnergy({ at: 0, kind: 'image', model: 'google/gemini-3.1-flash-lite-image' })).toBe(5);
-    expect(usageEnergy({ at: 0, kind: 'live', model: 'openai/gpt-live-1', seconds: 90 })).toBe(12);
+    expect(usageEnergy({ at: 0, kind: 'live', model: 'openai/gpt-live-1', seconds: 90 })).toBe(10);
     expect(usageEnergy({ at: 0, kind: 'blueprint', model: 'anthropic/claude-opus-5-5' })).toBe(8);
   });
 

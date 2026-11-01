@@ -68,13 +68,17 @@ export interface FamiliarSelectionProps {
   /** Live talk (beta): the Familiar converses in its own voice instead of listening with the device voice. */
   liveTalk?: boolean;
   onLiveTalkChange?: (liveTalk: boolean) => void;
+  /** Saying "Familiar" calls it, as tapping its microphone does. */
+  wakeWord?: boolean;
+  onWakeWordChange?: (wakeWord: boolean) => void;
 }
 
 /** Present host-owned unlock options and optional live sizing without storing preferences. */
-export function FamiliarSelection({ options, selectedId, pending = false, disabled = false, onSelect, size, onSizeChange, inHeader = false, onInHeaderChange, liveTalk = false, onLiveTalkChange }: FamiliarSelectionProps) {
+export function FamiliarSelection({ options, selectedId, pending = false, disabled = false, onSelect, size, onSizeChange, inHeader = false, onInHeaderChange, liveTalk = false, onLiveTalkChange, wakeWord = false, onWakeWordChange }: FamiliarSelectionProps) {
   const sizeId = useId();
   const headerId = useId();
   const liveId = useId();
+  const wakeId = useId();
   const mobile = useFamiliarMobile();
   const currentSize = familiarDisplaySize(size, mobile);
   const percent = Math.round((currentSize - (mobile ? 0.5 : 0)) * 100);
@@ -102,6 +106,11 @@ export function FamiliarSelection({ options, selectedId, pending = false, disabl
       <div><label htmlFor={liveId}>Live talk (beta)</label><p>Talk with your Familiar like a person, in its own voice. Still being tested; off, it listens the usual way.</p></div>
       <input id={liveId} type="checkbox" role="switch" className="familiar-header-switch" checked={liveTalk} disabled={disabled}
         onChange={event => onLiveTalkChange(event.target.checked)} />
+    </div>}
+    {onWakeWordChange && <div className="familiar-size-control">
+      <div><label htmlFor={wakeId}>Say “Familiar” (beta)</label><p>Say “Familiar” to call it, like tapping its microphone. While the app is open, your device's speech recognition listens for the word.</p></div>
+      <input id={wakeId} type="checkbox" role="switch" className="familiar-header-switch" checked={wakeWord} disabled={disabled}
+        onChange={event => onWakeWordChange(event.target.checked)} />
     </div>}
     {!options.length && <p>No Familiars are available yet.</p>}
     <div className="familiar-selection-options">

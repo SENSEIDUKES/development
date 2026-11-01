@@ -59,6 +59,7 @@ export interface UserProfileController {
   handleFamiliarSizeChange?: (size: number) => void;
   handleFamiliarInHeaderChange?: (inHeader: boolean) => void;
   handleFamiliarLiveTalkChange?: (liveTalk: boolean) => void;
+  handleFamiliarWakeWordChange?: (wakeWord: boolean) => void;
   // Library / app-shell state (production: `useAppStore`)
   syncStatus: string;
   lastSavedTime: Date | null;

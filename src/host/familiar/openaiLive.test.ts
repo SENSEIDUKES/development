@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { FamiliarLiveBrief, FamiliarLiveEvents } from '@seihouse/library/familiar';
 import { createFamiliarOpenAiLive } from './openaiLive';
 
@@ -98,6 +98,19 @@ describe('Familiar live talk on GPT-Live', () => {
     vi.advanceTimersByTime(3_000);
     expect(Peer.last.close).toHaveBeenCalled();
     expect(handlers.ended).not.toHaveBeenCalled();
+  });
+
+  it('on an iPhone, switches music\'s playback-only audio mode to record before asking for the microphone, and back after', async () => {
+    const session = { type: 'playback' };
+    Object.defineProperty(navigator, 'audioSession', { value: session, configurable: true });
+    onTestFinished(() => { delete (navigator as { audioSession?: unknown }).audioSession; });
+    let typeWhenAsked: string | undefined;
+    const getUserMedia = vi.fn(async () => { typeWhenAsked = session.type; return { getTracks: () => [track], getAudioTracks: () => [track] } as unknown as MediaStream; });
+    const talk = live(answered(), getUserMedia).start(brief, events());
+    expect(typeWhenAsked).toBe('play-and-record');
+    await vi.waitFor(() => expect(Peer.last.remote).toBeTruthy());
+    talk.end();
+    expect(session.type).toBe('playback');
   });
 
   it('opens a typed conversation that only receives the voice and never asks for the microphone', async () => {

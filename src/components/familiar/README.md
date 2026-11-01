@@ -366,6 +366,7 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-11-01: On iPhone, live talk and the device voice asked for the microphone while music had Safari in playback-only mode, and the phone refused it ("AudioSession category is not compatible with audio capture"). Listening now switches to play-and-record at the tap and puts the earlier mode back when it ends (`src/host/familiar/audioSession.ts`).
 - 2026-11-01: Live talk on OpenAI GPT-Live, which the Router serves first when
   its key is set: the phone connects over WebRTC (it captures the microphone
   and plays the voice itself), GPT-Live speaks as the Familiar from its facts,

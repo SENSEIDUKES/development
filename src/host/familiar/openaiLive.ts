@@ -1,5 +1,6 @@
 import type { FamiliarLive } from '@seihouse/library/familiar';
 import { createSavedAccessToken } from '../generation/accessToken';
+import { openMicrophoneSession } from './audioSession';
 import { describeFailure, liveCall } from './live';
 
 const ENDPOINT = '/api/familiar-live';
@@ -56,6 +57,8 @@ export function createFamiliarOpenAiLive(dependencies: FamiliarOpenAiLiveDepende
       // Asked for during the tap: a phone may refuse a microphone asked for later.
       let stream: MediaStream | undefined;
       let asking: Promise<MediaStream> | undefined;
+      // On an iPhone, music's playback-only mode would refuse the microphone.
+      const releaseSession = microphone ? openMicrophoneSession() : () => undefined;
       if (microphone) {
         try { asking = getUserMedia!({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
         catch (error) { asking = Promise.reject(error); }
@@ -78,6 +81,7 @@ export function createFamiliarOpenAiLive(dependencies: FamiliarOpenAiLiveDepende
         clearTimeout(connecting);
         clearTimeout(closing);
         stream?.getTracks().forEach(track => track.stop());
+        releaseSession();
         try { channel.close(); } catch { /* already closed */ }
         try { peer.close(); } catch { /* already closed */ }
         audio.srcObject = null;
@@ -210,6 +214,7 @@ export function createFamiliarOpenAiLive(dependencies: FamiliarOpenAiLiveDepende
           over = true;
           channel.send(JSON.stringify({ type: 'session.close' }));
           stream?.getTracks().forEach(track => track.stop());
+          releaseSession();
           audio.srcObject = null;
           closing = setTimeout(cleanup, CLOSE_MS);
         },

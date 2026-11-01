@@ -1,5 +1,6 @@
 import type { FamiliarLive, FamiliarLiveCall } from '@seihouse/library/familiar';
 import { createSavedAccessToken } from '../generation/accessToken';
+import { openMicrophoneSession } from './audioSession';
 
 const ENDPOINT = '/api/familiar-live';
 /** Gemini Live, opened with the single-use token the server minted. */
@@ -125,6 +126,8 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
       let stream: MediaStream | undefined;
       // Asked for during the tap too: a phone may refuse a microphone asked for later.
       let asking: Promise<MediaStream> | undefined;
+      // On an iPhone, music's playback-only mode would refuse the microphone.
+      const releaseSession = microphone ? openMicrophoneSession() : () => undefined;
       if (microphone) {
         try { asking = getUserMedia!({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } }); }
         catch (error) { asking = Promise.reject(error); }
@@ -152,6 +155,7 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
         capture?.disconnect();
         source?.disconnect();
         stream?.getTracks().forEach(track => track.stop());
+        releaseSession();
         if (socket && socket.readyState <= 1) socket.close(1000);
         void audio.close().catch(() => {});
       };

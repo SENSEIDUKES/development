@@ -1,4 +1,5 @@
 import type { FamiliarVoice } from '@seihouse/library/familiar';
+import { openMicrophoneSession } from './audioSession';
 
 interface Recognition {
   lang: string;
@@ -37,9 +38,12 @@ export function createFamiliarBrowserVoice(): FamiliarVoice {
       let finished = false;
       let restarts = 0;
       let grace: ReturnType<typeof setTimeout> | undefined;
+      // On an iPhone, music's playback-only mode would refuse the microphone.
+      const releaseSession = openMicrophoneSession();
       const heard = () => `${heardBefore} ${heardNow}`.trim();
       const cleanup = () => {
         finished = true;
+        releaseSession();
         clearTimeout(limit);
         clearTimeout(grace);
         recognition.onresult = recognition.onerror = recognition.onend = null;

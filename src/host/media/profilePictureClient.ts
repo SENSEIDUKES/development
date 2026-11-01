@@ -1,4 +1,5 @@
 import { base64ToBlob, blobToBase64, shrinkImage } from './imageFiles';
+import { recordUsage } from '../usage/usageLog';
 
 export const PROFILE_PICTURE_ENDPOINT = '/api/profile-picture';
 
@@ -56,12 +57,13 @@ export async function requestProfilePicture(photo: ProfilePhoto, options: {
   } catch {
     throw new ProfilePictureRequestError('The portrait server could not be reached. Check the connection and try again.', 0);
   }
-  const body = await response.json().catch(() => undefined) as { image?: unknown; mimeType?: unknown; error?: unknown } | undefined;
+  const body = await response.json().catch(() => undefined) as { image?: unknown; mimeType?: unknown; model?: unknown; error?: unknown } | undefined;
   if (!response.ok) {
     throw new ProfilePictureRequestError(typeof body?.error === 'string' ? body.error : `The portrait server answered ${response.status}.`, response.status);
   }
   if (typeof body?.image !== 'string' || typeof body.mimeType !== 'string' || !body.mimeType.startsWith('image/')) {
     throw new ProfilePictureRequestError('The portrait server answered without an image.', 502);
   }
+  recordUsage({ kind: 'image', model: typeof body.model === 'string' ? body.model : options.model });
   return base64ToBlob(body.image, body.mimeType);
 }

@@ -40,7 +40,7 @@ describe('Energy HTTP boundary', () => {
       uid: 'workshop-cultivator', balance: 500, available: 500,
       developmentControls: { initialGrant: 500 },
     });
-    expect(snapshot(response.body).prices.find(entry => entry.actionId === 'chapter.generate')?.price).toBe(1);
+    expect(snapshot(response.body).prices.find(entry => entry.actionId === 'chapter.generate')?.price).toBe(2);
   });
 
   it('never lets a request body choose the account', async () => {

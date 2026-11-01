@@ -39,11 +39,13 @@ future adapter has an executable definition of correct to satisfy.
 ## Prices
 
 Prices live in one place: `src/components/energy/shared/energyContracts.ts`. The current
-projected generation schedule is chapter 1, image 3, short cue 3, long cue 15, soundscape 20,
+projected generation schedule is chapter 2, image 5, short cue 3, long cue 15, soundscape 20,
 and video 30–50 Energy; video requires a trusted whole-number quote in that range.
 `narration.generate` and `translation.generate` exist but are unpriced and cannot be reserved.
-The user-facing price never depends on provider cost; `settle` may record provider cost as
-internal transaction metadata that no snapshot exposes.
+A model's grade (Mortal, Immortal, Heaven; `energyGrades.ts`) follows what it costs to run, and
+each grade has its own whole Energy price (owner's decision, 2026-11-01). The price a reader pays
+is the grade's, never a provider's amount; `settle` may record provider cost as internal
+transaction metadata that no snapshot exposes.
 
 ## Identity and authorization
 

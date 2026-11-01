@@ -5,6 +5,7 @@ import { LibraryLook } from '@seihouse/library/presentation';
 import { allFamiliarOptions } from '../host/familiar/catalogue';
 import { createDeviceProfileServices, type DevicePortraitMaker } from '../host/profile/deviceProfileServices';
 import { ModelRouterDialog } from '../host/model-router/ModelRouterSettings';
+import { UsageDialog } from '../host/usage/UsagePanel';
 import { appRouteFor } from './appPlaces';
 import { HOME_ROUTE, routeHref, type Navigate } from './routes';
 import type { NovelExpandedServices } from './services';
@@ -45,8 +46,9 @@ export function ProfilePage({ services, stories, navigate, portraits, menuMusic,
   accentColor?: string;
   navigate: Navigate;
 }) {
-  // Settings › Advanced Tools › Model Router opens the Router over the Cave.
+  // Settings › Advanced Tools › Model Router and Usage open over the Cave.
   const [routerOpen, setRouterOpen] = useState(false);
+  const [usageOpen, setUsageOpen] = useState(false);
   const profileServices = useMemo(() => createDeviceProfileServices({
     store: services.profile,
     familiars: allFamiliarOptions,
@@ -57,6 +59,7 @@ export function ProfilePage({ services, stories, navigate, portraits, menuMusic,
     notYetBuilt: { note: NOT_IN_THE_APP_YET, features: NOT_YET_BUILT },
     portraits,
     openModelRouter: () => setRouterOpen(true),
+    openUsage: () => setUsageOpen(true),
   }), [portraits, services.profile, services.readerPreferences, services.storySeeds, menuMusic]);
   // The Cave wears the Library's look like every other page; it keeps its own backdrop behind the shell.
   return <LibraryLook accentColor={accentColor} data-testid="novel-expanded-profile">
@@ -68,5 +71,6 @@ export function ProfilePage({ services, stories, navigate, portraits, menuMusic,
         onLogout={() => undefined} />
     </UserProfileServicesProvider>
     <ModelRouterDialog open={routerOpen} onClose={() => setRouterOpen(false)} />
+    <UsageDialog open={usageOpen} onClose={() => setUsageOpen(false)} />
   </LibraryLook>;
 }

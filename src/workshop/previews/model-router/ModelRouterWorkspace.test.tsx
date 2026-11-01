@@ -70,6 +70,21 @@ it('chooses the live speech model the Familiar\'s live talk uses, from the provi
   expect(document.querySelector('[data-model="eleven_v3"] button')).toBeNull();
 });
 
+it('shows each model\'s grade and its Energy price', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' });
+  const grade = (id: string) => document.querySelector(`[data-model="${id}"] [data-energy-grade]`)?.textContent;
+  expect(document.querySelector('[data-energy-prices]')?.textContent).toBe('Energy a chapter: Mortal 2 · Immortal 4 · Heaven 8');
+  expect(grade('google/gemini-3.1-flash-lite')).toBe('Mortal · 2');
+  expect(grade('google/gemini-3.8-flash')).toBe('Immortal · 4');
+  expect(grade('google/gemini-3.1-pro-preview')).toBe('Heaven · 8');
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
+  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
+  expect(grade('openai/gpt-live-1')).toBe('Immortal · 2/min');
+  // Text to speech is not priced by grade.
+  await click(tabs.find(tab => tab.textContent === 'Text to speech')!);
+  expect(document.querySelector('[data-energy-grade]')).toBeNull();
+});
+
 it('shows one provider at a time, starting with the provider of the selected model', async () => {
   await openRouter({ GEMINI_API_KEY: 'g', 'OpenRouter-Dev': 'o' });
   expect(provider('gemini').getAttribute('aria-selected')).toBe('true');

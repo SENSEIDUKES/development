@@ -16,6 +16,7 @@ import { createOfficialCapaDefaultLoadout, installOfficialCapaSkillsInMemory, OF
 import { HarnessGenerationRequestError } from '../host/generation/httpClient';
 import { writeModelPreference } from '../host/generation/modelPreference';
 import { modelRouterStatus } from '../server/model-router/status';
+import { recordUsage } from '../host/usage/usageLog';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
 import { StoryCoverRequestError } from '../host/media/storyCoverClient';
 import { createLocalStorySeedRepository } from '../host/story-seed/localStorySeedRepository';
@@ -525,7 +526,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(document.querySelector('[data-testid="novel-expanded-create"]')).toBeTruthy();
     // Create, on the creator's last step, wears the Energy badge with the World Blueprint's price (a chapter's, for now).
     await click(document.querySelector('[data-seed-creator-strip] button[data-step="manifest"]'), 'the Manifest step', 20);
-    expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('1');
+    expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('2');
     // Story Seed's own task bar stands where the global strip was; the note floats above it.
     expect(strip()).toBeNull();
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
@@ -1141,6 +1142,13 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(router.textContent).toContain('Text to speech');
     await click(router.querySelector('[aria-label="Close Model Router"]'), 'Close Model Router', 10);
     expect(document.body.querySelector('[aria-label="Close Model Router"]')).toBeNull();
+    // Usage beside it: what this device made, in Energy.
+    recordUsage({ kind: 'chapter', model: 'google/gemini-3.8-flash' });
+    await click(buttonByText('Usage', cave()!), 'Usage', 20);
+    const usage = document.body.querySelector('[role="dialog"][aria-modal="true"]')!;
+    expect(usage.querySelector('[data-usage-group="chapters"]')?.textContent).toBe('1 chapter written4 Energy');
+    await click(usage.querySelector('[aria-label="Close Usage"]'), 'Close Usage', 10);
+    expect(document.body.querySelector('[aria-label="Close Usage"]')).toBeNull();
     // Every Familiar is unlocked on the practice account; choosing one equips it everywhere at once.
     await click(buttonByText('Select Phoenix', cave()!), 'Select Phoenix', 20);
     expect(services.profile.read().familiarId).toBe('phoenix');

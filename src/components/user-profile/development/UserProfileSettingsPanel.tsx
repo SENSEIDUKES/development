@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   Archive,
   BookOpen,
+  BarChart3,
   Camera,
   Cloud,
   CloudOff,
@@ -153,6 +154,7 @@ export function UserProfileSettingsPanel({
     handleDefaultChapterWritingStyleChange,
     isSavingChapterWritingStyle,
     setIsSettingsOpen,
+    setIsUsageOpen,
     setIsShortcutsOpen,
     handleExportLibrary,
     handleImportLibrary,
@@ -706,6 +708,11 @@ export function UserProfileSettingsPanel({
                   <LibraryButton variant="secondary" fullWidth icon={Sliders} title="Model Router" disabled={Boolean(routerNote)} onClick={() => setIsSettingsOpen(true)}>
                     Model Router
                   </LibraryButton>
+                  {setIsUsageOpen && (
+                    <LibraryButton variant="secondary" fullWidth icon={BarChart3} title="Usage" onClick={() => setIsUsageOpen(true)}>
+                      Usage
+                    </LibraryButton>
+                  )}
 
                 </div>
                 <NotYetBuiltNote note={routerNote} />

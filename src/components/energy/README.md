@@ -106,6 +106,8 @@ or verified against a production deployment.
   image and live model into Mortal, Immortal or Heaven, with one Energy price per grade: chapter
   2 / 4 / 8, image 5 / 10 / 20, live talk 1 / 2 / 3 a started minute. Mortal equals the catalog
   price. Chapter narration is not priced yet. The Model Router shows each model's grade and price;
+  every price shown before generating (`EnergyActionCost`, `EnergyCostMeter`, portraits, covers)
+  is the grade's price for the host's model (`EnergyModelsProvider`; the app passes the Router's choice);
   the Usage page prices what this device made.
 - **2026-10-09 the Energy badge** — Every Energy number wears one badge: the Energy mark and
   the number in a gold-outlined pill, a balance (`EnergyAmount`, so the Profile home, the

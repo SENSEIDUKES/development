@@ -1,3 +1,4 @@
+import { RouterEnergyModels } from '../host/generation/RouterEnergyModels';
 import { DEFAULT_BACKGROUND_IMAGE_ID } from '@seihouse/library/presentation';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderMixerProvider, useOptionalReaderMixer, type ReaderMixer } from '@seihouse/audio-player';
@@ -76,7 +77,7 @@ export function NovelExpandedApp({ services, readerMixer }: {
   const [menuMusic] = useMenuMusic(services.readerPreferences);
   // The laptop sidebar opens the way the reader last left it, on this device.
   const [sidebarMode, setSidebarMode] = useStoredLibrarySidebarMode(services.readerPreferences);
-  return <ReaderMixerProvider mixer={readerMixer}><DevAudioPlaybackProvider>
+  return <RouterEnergyModels><ReaderMixerProvider mixer={readerMixer}><DevAudioPlaybackProvider>
     <LibraryPresentationProvider backgroundImageId={profile.backgroundImageId ?? DEFAULT_BACKGROUND_IMAGE_ID} accentColor={profile.accentColor} backgroundTint={profile.backgroundTint} assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS} loadingFamiliar={loadingFamiliar}>
       <LibraryDesktopNavigationProvider value="sidebar" sidebarMode={sidebarMode} onSidebarModeChange={setSidebarMode}>
         {/* The app's places in every Library navigation, the Cave's included. */}
@@ -90,7 +91,7 @@ export function NovelExpandedApp({ services, readerMixer }: {
         </LibraryDestinationsProvider>
       </LibraryDesktopNavigationProvider>
     </LibraryPresentationProvider>
-  </DevAudioPlaybackProvider></ReaderMixerProvider>;
+  </DevAudioPlaybackProvider></ReaderMixerProvider></RouterEnergyModels>;
 }
 
 /** Each page, for the Familiar: its name, and which help topics it explains. */

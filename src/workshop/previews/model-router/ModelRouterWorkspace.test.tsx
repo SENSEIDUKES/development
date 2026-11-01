@@ -117,10 +117,12 @@ it('lets the reader choose a tier and the team set the model behind each, warnin
   await click([...tiers.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'Use tiers')!);
   expect(readExactModel('chapters')).toBeUndefined();
   expect(readModelPreference('chapters')).toBe('google/gemini-3.1-flash-lite');
-  // Live speech has no Heaven model yet.
+  // Live speech: Heaven is ElevenLabs Realtime.
   const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
   await click(tabs.find(tab => tab.textContent === 'Live speech')!);
-  expect(document.querySelector<HTMLButtonElement>('[aria-label="Tiers"] [data-tier="heaven"] [role="radio"]')!.disabled).toBe(true);
+  expect(document.querySelector<HTMLSelectElement>('[aria-label="Tiers"] [data-tier="heaven"] select')!.options[0].textContent).toBe('Team: Eleven Realtime v1 Mini');
+  await click(document.querySelector<HTMLButtonElement>('[aria-label="Tiers"] [data-tier="heaven"] [role="radio"]')!);
+  expect(readModelPreference('live')).toBe('elevenlabs/eleven_realtime_v1_mini');
 });
 
 it('shows one provider at a time, starting with the provider of the selected model', async () => {

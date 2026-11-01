@@ -167,6 +167,10 @@ export const TTS_MODELS: readonly RoutedModel[] = [
 export const LIVE_MODELS: readonly RoutedModel[] = [
   { id: 'openai/gpt-live-1', label: 'GPT-Live 1', provider: 'openai', stage: 'current' },
   { id: 'google/gemini-3.8-live', label: 'Gemini 3.8 Live', provider: 'gemini', stage: 'current' },
+  // ElevenLabs Realtime (OpenAI's Realtime protocol over a WebSocket): its voices, and voices
+  // designed there. Last, so it never serves by default; it is chosen in the Router (Heaven tier).
+  { id: 'elevenlabs/eleven_realtime_v1_mini', label: 'Eleven Realtime v1 Mini', provider: 'elevenlabs', stage: 'current' },
+  { id: 'elevenlabs/eleven_realtime_v1_max', label: 'Eleven Realtime v1 Max', provider: 'elevenlabs', stage: 'current' },
 ];
 
 /** The live voice model used when the server names none (`FAMILIAR_LIVE_MODEL`). */
@@ -224,7 +228,7 @@ export const textModelProvider = (model: string): TextProviderId | undefined => 
 
 /** The provider-facing model name: `google/gemini-3.8-flash` → `gemini-3.8-flash`, `openrouter/openai/gpt-6-luna` → `openai/gpt-6-luna`. */
 export const providerModelName = (model: string): string =>
-  model.startsWith(OPENROUTER_PREFIX) ? model.slice(OPENROUTER_PREFIX.length) : model.replace(/^(?:google|minimax|anthropic|openai)\//, '');
+  model.startsWith(OPENROUTER_PREFIX) ? model.slice(OPENROUTER_PREFIX.length) : model.replace(/^(?:google|minimax|anthropic|openai|elevenlabs)\//, '');
 
 const titleCase = (value: string) => value
   .split('-')

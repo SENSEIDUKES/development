@@ -487,8 +487,13 @@ export function appearancesSection(state: AppearancesState, statuses?: ReadonlyM
   const things = state.subjects.filter(subject => subject.entity === 'thing').sort(recent).slice(0, APPEARED_SECTION_THINGS);
   // Someone the story gave a status but never tagged appearing still reaches the writer, with that status,
   // so a death tagged on its own is never forgotten.
-  const appeared = new Set(state.subjects.map(subject => subject.key));
-  const statusOnly = [...statuses ?? []].filter(([key]) => !appeared.has(key)).map(([key, current]): AppearancesSectionEntry => {
+  // Measured against who is actually listed, so a character the counts leave out still keeps their status;
+  // the most recent statuses first, as many as the characters' own count.
+  const listed = new Set([...(main ? [main] : []), ...characters, ...things].map(subject => subject.key));
+  const statusOnly = [...statuses ?? []].filter(([key]) => !listed.has(key))
+    .sort(([, left], [, right]) => right.passage.chapterNumber - left.passage.chapterNumber)
+    .slice(0, APPEARED_SECTION_CHARACTERS)
+    .map(([key, current]): AppearancesSectionEntry => {
     const entry = entries.find(candidate => candidate.id === key);
     return { name: entry?.name ?? current.name, entity: 'character', ...(entry?.mainCharacter ? { mainCharacter: true as const } : {}), status: current.status };
   });

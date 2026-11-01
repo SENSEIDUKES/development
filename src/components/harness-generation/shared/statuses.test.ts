@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  APPEARED_SECTION_CHARACTERS,
   HarnessGenerationController,
   appearancesSection,
   deriveAppearances,
@@ -84,6 +85,21 @@ describe('a character\'s status now', () => {
     const entries = [{ id: 'e-qin', storyId: 's', kind: 'character' as const, name: 'Elder Qin', origin: { source: 'foundation' as const }, createdAt: 'now' }];
     const section = appearancesSection(deriveAppearances({ entries, chapters: [] }), deriveStatuses([at(2, 'c2-p1', 0, 'dead')]), entries);
     expect(section.entries).toEqual([{ name: 'Elder Qin', entity: 'character', status: 'dead' }]);
+  });
+
+  it('keeps the status of someone the Appeared counts leave out', () => {
+    // More characters have appeared than Appeared lists: the oldest is left out, but their death is not.
+    const entries = Array.from({ length: APPEARED_SECTION_CHARACTERS + 1 }, (_, index) => ({
+      id: `e-${index}`, storyId: 's', kind: 'character' as const, name: `Elder ${index}`, origin: { source: 'foundation' as const }, createdAt: 'now',
+    }));
+    const appeared = entries.map((entry, index) => ({
+      id: `appearance:${index}`, kind: 'appearance' as const,
+      anchor: { level: 'span' as const, blockId: `c${index + 1}-p1`, startOffset: 0, endOffset: 8, selectedText: 'He came.' },
+      payload: { origin: 'harness' as const, event: 'appears' as const, entity: 'character' as const, subject: { name: entry.name, entryId: entry.id } },
+    }));
+    const chapters = appeared.map((appearance, index) => ({ id: `c${index + 1}`, chapterNumber: index + 1, appearances: [appearance] }));
+    const section = appearancesSection(deriveAppearances({ entries, chapters }), deriveStatuses([at(30, 'c30-p1', 0, 'dead', 'e-0')]), entries);
+    expect(section.entries.filter(entry => entry.name === 'Elder 0')).toEqual([{ name: 'Elder 0', entity: 'character', status: 'dead' }]);
   });
 
   it('reaches the writer in its Appeared list, beside the look', () => {

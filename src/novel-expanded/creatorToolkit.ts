@@ -8,7 +8,7 @@ import type {
   CreatorToolkitItem,
 } from '@seihouse/library/creator-space';
 import type { LibraryStories } from '@seihouse/library/stories';
-import { OFFICIAL_STYLE_REFERENCES } from '../host/generation/capa/officialCapaSkills';
+import { OFFICIAL_CAPA_PACKAGES, OFFICIAL_STYLE_REFERENCES } from '../host/generation/capa/officialCapaSkills';
 import { SEN_ATMOSPHERES, SEN_SCENE_ATMOSPHERES } from '../host/media/atmosphereCatalog';
 import { LIBRARY_BASE_MEDIA, LIBRARY_SOUND_WORDS } from '../host/media/libraryCatalog';
 import { SEN_SOUNDSCAPES, SEN_SOUNDSCAPES_PROVENANCE } from '../host/media/soundscapeCatalog';
@@ -228,6 +228,10 @@ const BUILTIN_ATMOSPHERES_PACKAGE: CreatorPluginPackage = {
   groups: groupAtmosphereEntries(SEN_SCENE_ATMOSPHERES),
 };
 
+const OFFICIAL_STYLE_PACKAGE_IDS = new Set(
+  OFFICIAL_CAPA_PACKAGES.filter(pkg => pkg.slot === 'style').map(pkg => pkg.packageId.toLowerCase()),
+);
+
 const OFFICIAL_STYLE_IDS = new Set([
   ...Object.values(OFFICIAL_STYLE_REFERENCES).map(ref => ref.id),
   'sen-default-style',
@@ -235,6 +239,16 @@ const OFFICIAL_STYLE_IDS = new Set([
   'capa-style-korean',
   'capa-style-japanese',
 ]);
+
+function isOfficialStyleSkill(skill: HarnessSkillManifest): boolean {
+  if (OFFICIAL_STYLE_IDS.has(skill.id)) return true;
+  const match = /^spp:([^:]+)/.exec(skill.id);
+  if (match) {
+    const pkgId = decodeURIComponent(match[1]).toLowerCase();
+    if (OFFICIAL_STYLE_PACKAGE_IDS.has(pkgId)) return true;
+  }
+  return false;
+}
 
 function mediaPackToPluginPackage(pack: LibraryStories['mediaPacks'][number]): CreatorPluginPackage {
   if (pack.type === 'soundscape') {
@@ -282,7 +296,7 @@ export function buildCreatorPluginCatalog(options?: {
   mediaPacks?: LibraryStories['mediaPacks'];
 }): CreatorPluginCatalog {
   const customStylePackages: CreatorPluginPackage[] = (options?.skills ?? [])
-    .filter(skill => skill.slot === 'style' && !OFFICIAL_STYLE_IDS.has(skill.id) && !/^STYLE\s*-\s*(CHINESE|JAPANESE|KOREAN)\b/i.test(skill.name))
+    .filter(skill => skill.slot === 'style' && !isOfficialStyleSkill(skill))
     .map(skill => ({
       id: `spp-skill-${skill.id}@${skill.version}`,
       kind: 'style',

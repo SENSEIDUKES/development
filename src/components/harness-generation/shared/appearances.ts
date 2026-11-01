@@ -472,7 +472,7 @@ export const APPEARED_SECTION_THINGS = 10;
  * most recently first, each with its look's one line once it is written down.
  * Exact names only; how to use them is the Appearance skill's job.
  */
-export function appearancesSection(state: AppearancesState, statuses?: ReadonlyMap<string, CurrentStatus>): AppearancesSection {
+export function appearancesSection(state: AppearancesState, statuses?: ReadonlyMap<string, CurrentStatus>, entries: readonly CodexEntry[] = []): AppearancesSection {
   const statusOf = (subject: AppearanceSubject) => (subject.entity === 'character' ? statuses?.get(subject.key)?.status : undefined);
   const entryOf = (subject: AppearanceSubject): AppearancesSectionEntry => ({
     name: subject.name,
@@ -485,5 +485,13 @@ export function appearancesSection(state: AppearancesState, statuses?: ReadonlyM
   const main = state.subjects.find(subject => subject.mainCharacter);
   const characters = state.subjects.filter(subject => subject.entity === 'character' && !subject.mainCharacter).sort(recent).slice(0, APPEARED_SECTION_CHARACTERS);
   const things = state.subjects.filter(subject => subject.entity === 'thing').sort(recent).slice(0, APPEARED_SECTION_THINGS);
-  return { entries: [...(main ? [main] : []), ...characters, ...things].map(entryOf) };
+  // Someone the story gave a status but never tagged appearing still reaches the writer, with that status,
+  // so a death tagged on its own is never forgotten.
+  const appeared = new Set(state.subjects.map(subject => subject.key));
+  const statusOnly = [...statuses ?? []].filter(([key]) => !appeared.has(key)).map(([key, current]): AppearancesSectionEntry => {
+    const entry = entries.find(candidate => candidate.id === key);
+    return { name: entry?.name ?? current.name, entity: 'character', ...(entry?.mainCharacter ? { mainCharacter: true as const } : {}), status: current.status };
+  });
+  const mainStatusOnly = statusOnly.filter(entry => entry.mainCharacter);
+  return { entries: [...(main ? [entryOf(main)] : mainStatusOnly), ...characters.map(entryOf), ...statusOnly.filter(entry => !entry.mainCharacter), ...things.map(entryOf)] };
 }

@@ -75,6 +75,8 @@ export const resolveStatuses = (statuses: readonly StatusAttachment[], resolver:
 /** A character's status now, with the passage that showed it. */
 export interface CurrentStatus {
   status: string;
+  /** Who, as the latest tag named them. */
+  name: string;
   passage: HoldingPassage;
 }
 
@@ -95,6 +97,7 @@ export function deriveStatuses(chapters: ReadonlyArray<{ id: string; chapterNumb
     for (const record of ordered) {
       now.set(statusKey(record.payload.subject), {
         status: record.payload.status,
+        name: record.payload.subject.name,
         passage: { chapterId: chapter.id, chapterNumber: chapter.chapterNumber, recordId: record.id, blockId: record.anchor.blockId, text: record.anchor.selectedText },
       });
     }

@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   HarnessGenerationController,
+  appearancesSection,
+  deriveAppearances,
   deriveStatuses,
   deriveStoryCodex,
   notesOfTaggedChapter,
@@ -76,6 +78,12 @@ describe('a character\'s status now', () => {
     const now = deriveStatuses([at(3, 'c3-p1', 0, 'dead'), at(1, 'c1-p4', 0, 'wounded')]);
     expect(now.get('e-qin')).toMatchObject({ status: 'dead', passage: { chapterNumber: 3 } });
     expect(deriveStatuses([at(1, 'c1-p4', 0, 'wounded')]).get('e-qin')?.status).toBe('wounded');
+  });
+
+  it('reaches the writer for someone never tagged appearing, so a death tagged on its own is never forgotten', () => {
+    const entries = [{ id: 'e-qin', storyId: 's', kind: 'character' as const, name: 'Elder Qin', origin: { source: 'foundation' as const }, createdAt: 'now' }];
+    const section = appearancesSection(deriveAppearances({ entries, chapters: [] }), deriveStatuses([at(2, 'c2-p1', 0, 'dead')]), entries);
+    expect(section.entries).toEqual([{ name: 'Elder Qin', entity: 'character', status: 'dead' }]);
   });
 
   it('reaches the writer in its Appeared list, beside the look', () => {

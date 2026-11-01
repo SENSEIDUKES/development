@@ -55,7 +55,8 @@ function useModelLabels(endpoint = '/api/model-router'): Map<string, string> {
 
 const number = new Intl.NumberFormat('en-US');
 const plural = (count: number, one: string, many: string) => `${number.format(count)} ${count === 1 ? one : many}`;
-const minutesOf = (seconds: number) => Math.max(1, Math.round(seconds / 60));
+/** "4 min 20 s": the exact time, the same in both views. */
+const talkTime = (seconds: number) => (seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min${seconds % 60 ? ` ${seconds % 60} s` : ''}`);
 
 const startOfDay = (time: number) => { const day = new Date(time); day.setHours(0, 0, 0, 0); return day.getTime(); };
 const DAY_MS = 24 * 60 * 60 * 1_000;
@@ -64,7 +65,7 @@ const DAY_MS = 24 * 60 * 60 * 1_000;
 function describe(group: Group, entries: UsageEntry[]): string {
   if (group === 'chapters') return plural(entries.filter(entry => entry.kind === 'chapter').length, 'chapter written', 'chapters written');
   if (group === 'pictures') return plural(entries.length, 'picture made', 'pictures made');
-  if (group === 'familiar') return `${plural(entries.reduce((sum, entry) => sum + minutesOf(entry.seconds ?? 0), 0), 'minute', 'minutes')} talking with your Familiar`;
+  if (group === 'familiar') return `${talkTime(entries.reduce((sum, entry) => sum + (entry.seconds ?? 0), 0))} talking with your Familiar`;
   return plural(entries.length, 'world planned', 'worlds planned');
 }
 
@@ -127,14 +128,18 @@ function EnergyView({ entries, range, now }: { entries: UsageEntry[]; range: typ
           );
         })}
       </ul>
-      <p className="text-[11px] leading-snug text-white/40">Each one shows its Energy price; Energy is not taken from your balance yet. Kept on this device for 90 days.</p>
+      <p className="text-[11px] leading-snug text-white/40">
+        Preview: Energy is counted here but not taken from your balance yet.
+        {byGroup.some(group => group.id === 'familiar') ? ' Familiar talk counts each started minute.' : ''} Kept on this device for 90 days.
+      </p>
     </div>
   );
 }
 
 function BehindTheScenes({ entries }: { entries: UsageEntry[] }) {
   const labels = useModelLabels();
-  const modelLabel = (model?: string) => (model ? labels.get(model) ?? model : 'Default model');
+  // A short name, with the model's id beneath it: "Nano Banana 2 Lite" over "google/gemini-3.1-flash-lite-image".
+  const modelName = (model?: string) => (model ? (labels.get(model) ?? model).replace(/\s*\([^)]*\)$/, '') : 'Default model');
   const models = useMemo(() => {
     const grouped = new Map<string, UsageEntry[]>();
     for (const entry of entries) grouped.set(entry.model ?? '', [...(grouped.get(entry.model ?? '') ?? []), entry]);
@@ -153,18 +158,25 @@ function BehindTheScenes({ entries }: { entries: UsageEntry[] }) {
           const images = calls.filter(entry => entry.kind === 'image').length;
           const blueprints = calls.filter(entry => entry.kind === 'blueprint').length;
           const seconds = calls.reduce((sum, entry) => sum + (entry.seconds ?? 0), 0);
+          const energy = calls.reduce((sum, entry) => sum + usageEnergy(entry), 0);
           const parts = [
             chapters && plural(chapters, 'chapter', 'chapters'),
             upkeep.length && `${plural(upkeep.length, 'upkeep call', 'upkeep calls')} (${[...new Set(upkeep.map(entry => entry.task))].join(', ')})`,
             blueprints && plural(blueprints, 'Blueprint', 'Blueprints'),
             images && plural(images, 'image', 'images'),
-            seconds && `${Math.floor(seconds / 60)} min ${seconds % 60} s of live talk`,
+            seconds && `${talkTime(seconds)} of live talk`,
           ].filter(Boolean);
           return (
             <li key={model} data-usage-model={model} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="min-w-0 truncate text-[13px] text-white/90">{modelLabel(model || undefined)}</span>
-                <span className={`shrink-0 rounded border px-1 py-px font-mono text-[9px] uppercase tracking-wider ${GRADE_STYLES[grade]}`}>{ENERGY_GRADE_LABELS[grade]}</span>
+              <div className="flex items-start justify-between gap-2">
+                <span className="min-w-0">
+                  <span className="block truncate text-[13px] text-white/90">{modelName(model || undefined)}</span>
+                  {model && <span className="block truncate font-mono text-[10px] text-white/30">{model}</span>}
+                </span>
+                <span className="flex shrink-0 flex-col items-end gap-0.5">
+                  <span className={`rounded border px-1 py-px font-mono text-[9px] uppercase tracking-wider ${GRADE_STYLES[grade]}`}>{ENERGY_GRADE_LABELS[grade]}</span>
+                  <span data-usage-model-energy className="text-[12px] tabular-nums text-amber-200">{number.format(energy)} Energy</span>
+                </span>
               </div>
               <p className="text-[11px] text-white/55">{parts.join(' · ')}</p>
               {(tokensIn > 0 || tokensOut > 0) && (

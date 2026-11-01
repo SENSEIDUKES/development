@@ -39,7 +39,8 @@ it('says what was made in the reader\'s words, and its Energy', async () => {
   expect(container.querySelector('[data-usage-total]')?.textContent).toContain('20 Energy');
   expect(group('chapters')).toBe('2 chapters written10 Energy');
   expect(group('pictures')).toBe('1 picture made5 Energy');
-  expect(group('familiar')).toBe('3 minutes talking with your Familiar3 Energy');
+  expect(group('familiar')).toBe('2 min 30 s talking with your Familiar3 Energy');
+  expect(container.textContent).toContain('Preview: Energy is counted here but not taken from your balance yet. Familiar talk counts each started minute.');
   expect(group('worlds')).toBe('1 world planned2 Energy');
   expect(container.querySelector('[role="img"]')).not.toBeNull();
   expect(container.querySelector('[data-usage-legend]')?.textContent).toBe('ChaptersPicturesFamiliar talkWorlds');
@@ -60,11 +61,26 @@ it('shows each model, its grade and the provider\'s counts behind the scenes', a
   const luna = container.querySelector('[data-usage-model="openrouter/openai/gpt-6-luna"]')!.textContent;
   expect(luna).toContain('GPT-6 Luna');
   expect(luna).toContain('Mortal');
+  // A chapter at Mortal; its upkeep is part of it.
+  expect(container.querySelector('[data-usage-model="openrouter/openai/gpt-6-luna"] [data-usage-model-energy]')?.textContent).toBe('2 Energy');
   expect(luna).toContain('1 chapter · 1 upkeep call (Tagging)');
   expect(luna).toContain('25,000 tokens in · 4,800 out');
   const live = container.querySelector('[data-usage-model="openai/gpt-live-1"]')!.textContent;
   expect(live).toContain('Immortal');
   expect(live).toContain('1 min 35 s of live talk');
+  // Two started minutes at Immortal, the same total the Energy view shows.
+  expect(container.querySelector('[data-usage-model="openai/gpt-live-1"] [data-usage-model-energy]')?.textContent).toBe('4 Energy');
+});
+
+it('shows a long model name short, with its id beneath', async () => {
+  recordUsage({ kind: 'image', model: 'google/gemini-3.1-flash-lite-image', at: NOW - HOUR });
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(modelRouterStatus({})), { status: 200 })));
+  await render();
+  await click('Behind the scenes');
+  const card = container.querySelector('[data-usage-model="google/gemini-3.1-flash-lite-image"]')!;
+  expect(card.textContent).toContain('Nano Banana 2 Lite');
+  expect(card.textContent).not.toContain('(Gemini');
+  expect(card.textContent).toContain('google/gemini-3.1-flash-lite-image');
 });
 
 it('says when nothing was made', async () => {

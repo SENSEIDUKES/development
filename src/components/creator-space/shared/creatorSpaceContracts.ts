@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
-import type { EnergyAccountState } from '../../energy/shared/useEnergyAccount';
+import type { HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/ui';
+import type { MediaPack } from '../../../library/media/mediaPacks';
+import type { SkillPackageIntake } from '../../../library/stories/settings/SkillPackageImport';
+import type { EnergyAccountState } from '../../energy/shared/useEnergyAccount';
 
 /**
  * Where a world stands, as the host reports it. Library only labels it:
@@ -38,13 +41,66 @@ export type CreatorWorldsState =
   | { status: 'ready'; items: readonly CreatorWorld[] }
   | { status: 'error'; error: string };
 
-/** A pack or plugin shown as a preview; the browser/marketplace is not open yet. */
+export type CreatorToolkitKind = 'style' | 'soundscape' | 'cue' | 'atmosphere';
+export type CreatorToolkitFilter = 'all' | CreatorToolkitKind;
+
+/** A pack or plugin card shown in the Creator Toolkit section on Create. */
 export interface CreatorToolkitItem {
   id: string;
   title: string;
   description: string;
-  kind: 'style' | 'soundscape';
+  kind: CreatorToolkitKind;
   imageUrl?: string;
+}
+
+/** An individual score, cue recording, atmosphere bed, or style guide inside an `.spp` package. */
+export interface CreatorPluginFile {
+  id: string;
+  title: string;
+  /** Short badge or trigger word, e.g. sound word ("dark chant") or scene word ("gentle rain"). */
+  badge?: string;
+  /** Tags, tradition, or description for this file. */
+  detail?: string;
+}
+
+/** A mood, category, or weather group inside a parent `.spp` package. */
+export interface CreatorPluginGroup {
+  id: string;
+  label: string;
+  files: readonly CreatorPluginFile[];
+}
+
+/** A parent `.spp` package (built-in or user-installed) shown first in Creator Plugins. */
+export interface CreatorPluginPackage {
+  id: string;
+  kind: CreatorToolkitKind;
+  title: string;
+  description: string;
+  version: string;
+  builtIn?: boolean;
+  unitSingular: string;
+  unitPlural: string;
+  groups: readonly CreatorPluginGroup[];
+}
+
+/** Host-supplied `.spp` package inventory for the Creator Plugins view. */
+export interface CreatorPluginCatalog {
+  packages: readonly CreatorPluginPackage[];
+}
+
+export interface CreatorPluginsProps {
+  catalog: CreatorPluginCatalog;
+  initialFilter?: CreatorToolkitFilter;
+  onFilterChange?: (filter: CreatorToolkitFilter) => void;
+  /** Optional controlled open `.spp` package ID (e.g. from URL query). */
+  selectedPackId?: string | null;
+  onSelectPack?: (packId: string | null) => void;
+  onBack: () => void;
+  /** Installs a Soundscape, Sound Cue or Atmosphere `.spp` package on this device. */
+  onImportMediaPack?: (file: Blob) => Promise<MediaPack>;
+  /** Inspects and installs a CAPA skill `.spp` package on this device. */
+  skillIntake?: SkillPackageIntake;
+  onInstallSkill?: (skill: HarnessSkillManifest) => void | Promise<void>;
 }
 
 export interface CreatorSpaceProps {
@@ -62,8 +118,8 @@ export interface CreatorSpaceProps {
   onOpenWorld: (world: CreatorWorld) => void;
   /** The world's full Studio workspace. */
   onOpenStudio: (worldId: string) => void;
-  /** Opens a pack/plugin browser. Omit it while none exists; the page says so honestly. */
-  onBrowseToolkit?: () => void;
+  /** Opens the plugin browser, optionally focused on one clicked plugin kind. */
+  onBrowseToolkit?: (kind?: CreatorToolkitKind) => void;
   /** Re-reads the worlds after an error. */
   onRetryWorlds?: () => void;
   /** The host's Sparks button (SEN: `SparksButton`), beside the page title. */

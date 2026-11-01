@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { CreatorToolkitFilter } from '@seihouse/library/creator-space';
 import type { DiscoverMedium } from '@seihouse/library/discover';
+
+const TOOLKIT_FILTERS: ReadonlySet<string> = new Set<CreatorToolkitFilter>(['all', 'style', 'soundscape', 'cue', 'atmosphere']);
+const isToolkitFilter = (value: string | null): value is CreatorToolkitFilter => Boolean(value && TOOLKIT_FILTERS.has(value));
 
 /**
  * The app's pages: the four of its spine, in the order a reader meets them,
@@ -9,9 +13,9 @@ import type { DiscoverMedium } from '@seihouse/library/discover';
  * - Home: `/app/`
  * - Discover: `/app/?page=discover`
  * - Create: `/app/?page=create` is the Creator Space, the reader's worlds and
- *   the way to start a new one; `&seed=new` opens Story Seed (and its World
- *   Blueprint) for a new story, `&seed=<id>` a saved Story Seed (a Sparks
- *   spark begun from Home)
+ *   the way to start a new one; `&plugins=all|<kind>` opens Creator Plugins;
+ *   `&seed=new` opens Story Seed (and its World Blueprint) for a new story,
+ *   `&seed=<id>` a saved Story Seed (a Sparks spark begun from Home)
  * - A world as its author sees it (Blueprint, Chapters, Codex, Assets), opened
  *   from Your worlds in Create: `/app/?page=create&world=<id>`, with
  *   `&chapter=<n>` for a chapter opened from its Chapters
@@ -25,7 +29,7 @@ import type { DiscoverMedium } from '@seihouse/library/discover';
 export type NovelExpandedRoute =
   | { page: 'home' }
   | { page: 'discover'; section?: 'creators' | 'codex'; medium?: DiscoverMedium; lore?: string; query?: string; category?: string }
-  | { page: 'create'; seedId?: string; newSeed?: boolean }
+  | { page: 'create'; seedId?: string; newSeed?: boolean; plugins?: CreatorToolkitFilter; pluginPack?: string }
   /** A world as its author sees it in Create: its Blueprint, Chapters, Codex and Assets; a chapter opened from Chapters. */
   | { page: 'world'; storyId: string; chapterNumber?: number }
   | { page: 'story'; storyId: string }
@@ -55,7 +59,14 @@ export function parseRoute(search: string): NovelExpandedRoute {
       return Number.isInteger(chapterNumber) && chapterNumber > 0 ? { page: 'world', storyId: worldId, chapterNumber } : { page: 'world', storyId: worldId };
     }
     const seedId = query.get('seed')?.trim();
-    return seedId === 'new' ? { page: 'create', newSeed: true } : seedId ? { page: 'create', seedId } : { page: 'create' };
+    if (seedId === 'new') return { page: 'create', newSeed: true };
+    if (seedId) return { page: 'create', seedId };
+    const plugins = query.get('plugins')?.trim() ?? null;
+    if (isToolkitFilter(plugins)) {
+      const pluginPack = query.get('pack')?.trim();
+      return pluginPack ? { page: 'create', plugins, pluginPack } : { page: 'create', plugins };
+    }
+    return { page: 'create' };
   }
   if (query.get('page') === 'profile') {
     const cave = query.get('cave')?.trim();
@@ -68,7 +79,10 @@ export function routeSearch(route: NovelExpandedRoute): string {
   switch (route.page) {
     case 'home': return '';
     case 'discover': return `?${new URLSearchParams({ page: 'discover', ...(route.lore ? { lore: route.lore, ...(route.query ? { q: route.query } : {}), ...(route.category ? { category: route.category } : {}) } : route.section ? { section: route.section } : {}), ...(route.medium ? { medium: route.medium } : {}) })}`;
-    case 'create': return route.seedId ? `?${new URLSearchParams({ page: 'create', seed: route.seedId })}` : route.newSeed ? '?page=create&seed=new' : '?page=create';
+    case 'create': return route.seedId ? `?${new URLSearchParams({ page: 'create', seed: route.seedId })}`
+      : route.newSeed ? '?page=create&seed=new'
+      : route.plugins ? `?${new URLSearchParams({ page: 'create', plugins: route.plugins, ...(route.pluginPack ? { pack: route.pluginPack } : {}) })}`
+      : '?page=create';
     case 'world': return `?${new URLSearchParams({ page: 'create', world: route.storyId, ...(route.chapterNumber ? { chapter: String(route.chapterNumber) } : {}) })}`;
     case 'story': return `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;

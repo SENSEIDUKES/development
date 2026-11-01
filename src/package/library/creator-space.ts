@@ -3,7 +3,8 @@
  *
  * A creator workspace over host-owned truth: the host supplies the creator's
  * worlds, the Energy read projection, the Toolkit previews and every
- * destination (Story Seed, Energy, the world's chapter workspace and Studio).
+ * destination (Story Seed, Energy, Plugins, the world's chapter workspace and Studio).
  */
 export * from '../../components/creator-space/shared/creatorSpaceContracts';
 export * from '../../components/creator-space/development/CreatorSpace';
+export * from '../../components/creator-space/development/CreatorPlugins';

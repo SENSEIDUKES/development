@@ -62,6 +62,11 @@ describe('NovelExpanded addresses', () => {
     expect(parseRoute('?page=create&seed=')).toEqual({ page: 'create' });
     expect(parseRoute('?page=create&seed=new')).toEqual({ page: 'create', newSeed: true });
     expect(routeSearch({ page: 'create', newSeed: true })).toBe('?page=create&seed=new');
+    expect(routeSearch({ page: 'create', plugins: 'all' })).toBe('?page=create&plugins=all');
+    expect(parseRoute('?page=create&plugins=cue')).toEqual({ page: 'create', plugins: 'cue' });
+    expect(routeSearch({ page: 'create', plugins: 'soundscape', pluginPack: 'ne-soundscapes-vol-1' })).toBe('?page=create&plugins=soundscape&pack=ne-soundscapes-vol-1');
+    expect(parseRoute('?page=create&plugins=soundscape&pack=ne-soundscapes-vol-1')).toEqual({ page: 'create', plugins: 'soundscape', pluginPack: 'ne-soundscapes-vol-1' });
+    expect(parseRoute('?page=create&plugins=unknown')).toEqual({ page: 'create' });
   });
 
   it('keeps an id that needs escaping intact', () => {

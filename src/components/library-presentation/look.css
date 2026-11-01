@@ -201,11 +201,32 @@ body:has(.library-look) :is(.familiar-helper-place, .familiar-helper-quiet) { co
   -webkit-backdrop-filter: var(--library-look-blur);
   backdrop-filter: var(--library-look-blur);
 }
-.library-look [data-creator-space] .creator-space-link {
+.library-look [data-creator-space] :is(.creator-space-link, .creator-plugin-filter) {
+  color: var(--library-material-text);
+  box-shadow: var(--library-material-control-shadow);
   background: var(--library-material-control-fill);
   border-color: var(--reader-glass-edge);
   -webkit-backdrop-filter: var(--library-material-control-blur);
   backdrop-filter: var(--library-material-control-blur);
+}
+
+.library-look [data-creator-space] .creator-plugin-filter[data-active] {
+  border-color: var(--library-accent, var(--color-gold-accent));
+  color: var(--library-accent, var(--color-gold-accent));
+}
+.library-look [data-creator-space] .creator-plugin-panel {
+  background: var(--library-material-card-fill);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--library-material-card-shadow);
+  -webkit-backdrop-filter: var(--library-material-card-blur);
+  backdrop-filter: var(--library-material-card-blur);
+}
+.library-look [data-creator-space] :is(.creator-plugin-card, .creator-plugin-spp) {
+  background: var(--library-material-shell-fill);
+  border-color: var(--reader-glass-edge);
+}
+.library-look [data-creator-space] .creator-plugin-spp:hover {
+  border-color: var(--library-accent, var(--color-gold-accent));
 }
 
 /* ── Sign-in (the OAuth screen) ────────────────────────────────────────────

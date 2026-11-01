@@ -261,7 +261,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   </AppShell>);
 
   // Create: the Creator Space, unless a Story Seed (new or saved) is open.
-  if (route.page === 'create' && !route.seedId && !route.newSeed) return withFamiliar(<CreateHubPage worlds={creatorWorlds} stories={worlds} navigate={navigate} readerProfile={profile} sparks={sparks} />);
+  if (route.page === 'create' && !route.seedId && !route.newSeed) return withFamiliar(<CreateHubPage worlds={creatorWorlds} stories={worlds} navigate={navigate} readerProfile={profile} sparks={sparks} plugins={route.plugins} pluginPack={route.pluginPack} pluginStories={stories} />);
 
   if (route.page === 'create') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     seedId={route.seedId} accentColor={profile.accentColor}

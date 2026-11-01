@@ -7,18 +7,19 @@ reconnect them as they are or re-sync with the old production app. The destinati
 is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 - **Source repository:** `SENSEIDUKES/development` (born here; no production original)
-- **Source location:** `src/components/creator-space/` (page and display contracts);
+- **Source location:** `src/components/creator-space/` (page, plugins view and display contracts);
   host adapter `src/workshop/previews/creator-space/CreatorSpaceHost.tsx`
 - **Visual direction:** the supplied Create reference image (Creator Space → Creator
   Toolkit → Your worlds, CELESTIAL LIBRARY header, Home — Create — Discover — Profile strip)
 - **Workshop preview:** `?preview=creator-space` (Pages → Create), with Sample worlds or
   this browser's stories, at Mobile, Tablet and Laptop sizes
-- **In-app route:** the NovelExpanded app's Create tab, `/app/?page=create` (since 2026-10-29);
+- **In-app route:** the NovelExpanded app's Create tab, `/app/?page=create` (and
+  `/app/?page=create&plugins=all|style|soundscape|cue|atmosphere` for Creator Plugins);
   in the Library shell preview, `{ screen: 'creator-space' }`:
   `/library-shell.html?variant=development&source=main-library&screen=creator-space`
   (add `&worlds=sample` for the sample set)
 - **Created:** 2026-09-26
-- **Last recorded Workshop update:** 2026-09-26
+- **Last recorded Workshop update:** 2026-11-01
 - **Historical source inspection:** 2026-09-26 (Library shell navigation, Home cards, Energy,
   and the chapter workspace were inspected in this repository)
 - **Status:** approved reconstruction (Workshop Replica Mode B), first usable pass
@@ -36,11 +37,13 @@ screen:
    Cave's Energy page) and **In progress** (worlds that have not reached their ending; a
    plain reading with no destination). "Ready to share" is deliberately absent until
    publishing exists.
-2. **Creator Toolkit** — a small, labelled **Preview** of Style Packs (the official Chinese,
-   Korean and Japanese writing styles) and Soundscapes (the first-party ambient catalog).
-   There is no pack browser yet, so **Browse plugins** and the cards say so in one status
-   line instead of pretending a marketplace works. A host that builds one passes
-   `onBrowseToolkit` and the Preview tag and message disappear.
+2. **Creator Toolkit** — a responsive grid of **Style Packs** (the official Chinese,
+   Korean and Japanese writing styles), **Soundscapes** (the first-party ambient catalog), **Cues** (the
+   first-party inline sound effects) and **Atmospheres** (the first-party weather and place sounds).
+   When the host supplies `onBrowseToolkit`, **Browse plugins** and each card open **Creator Plugins**
+   (`CreatorPlugins`), showing the built-in Style Packs, Soundscapes, Cues and Atmospheres alongside
+   `.spp` skill and audio pack import. Without `onBrowseToolkit`, a Preview tag and one honest status
+   line appear instead.
 3. **Your worlds** — the main focus. A native, swipeable scroll-snap row of Home-style
    `LibraryCard` covers with title and "Ch. N · Draft/Shared/Public/Complete", the most
    recently changed world first and selected. Tapping a card selects it; beneath the row
@@ -59,7 +62,7 @@ screen:
 ## Ownership and contracts
 
 Library-owned (`@seihouse/library/creator-space`). SEN is untouched and never imports it.
-`CreatorSpace` renders display data and reports intent; the host owns every truth and
+`CreatorSpace` and `CreatorPlugins` render display data and report intent; the host owns every truth and
 destination:
 
 | Prop | Host responsibility |
@@ -68,7 +71,7 @@ destination:
 | `energy` | The `useEnergyAccount` read; the page never computes a balance |
 | `toolkit` | Preview items (title, description, kind, art) |
 | `onCreate`, `onOpenEnergy`, `onContinueWorld`, `onOpenStudio` | Existing destinations |
-| `onBrowseToolkit`, `onRetryWorlds` | Optional; omitted means "not built" / no retry |
+| `onBrowseToolkit`, `onRetryWorlds` | Optional; `onBrowseToolkit(kind?)` opens `CreatorPlugins`, omitted means "not built" |
 
 The selected world is local UI state. The shell keeps the page mounted after its first visit,
 like Home, so the selection survives tab switches.
@@ -106,6 +109,7 @@ changes only when the owner asks. Historical references stay untouched.
 The existing local files named by this inventory are:
 
 - `development/CreatorSpace.tsx`
+- `development/CreatorPlugins.tsx`
 - `development/creator-space.css`
 - `shared/creatorSpaceContracts.ts`
 
@@ -120,7 +124,8 @@ Energy client, and destinations for Story Seed, Energy and the chapter workspace
 
 - Worlds are the chapter workspace's local stories in this browser; there is no account-wide
   story list in DEV yet, and a Vercel preview URL starts with an empty store.
-- The Toolkit is a preview of real systems; there is no pack or plugin marketplace.
+- Creator Plugins shows the built-in first-party catalogs and local `.spp` pack import; there is
+  no public third-party marketplace yet.
 
 ## Verification
 
@@ -133,6 +138,15 @@ destinations, tab switches and history, empty and local states, 320/768/1440 wid
 reduced motion. Evidence: `output/playwright/creator-space/`.
 
 ## Workshop history
+
+- **2026-11-01 (Toolkit plugins & Creator Plugins view):** Added **Cues** and **Atmospheres**
+  beside Style Packs and Soundscapes in the Creator Toolkit, switched the Toolkit from a
+  horizontal strip to a container-responsive grid with zero horizontal overflow, styled
+  **Browse plugins** as a rounded pill control inside the Library look, and wired both
+  **Browse plugins** and the cards to open **Creator Plugins** (`CreatorPlugins`). Creator
+  Plugins presents parent `.spp` packages first (with group count breakdowns such as
+  `NovelExpanded Soundscapes Vol. 1` → `Adventure (3)`, `Ambient (2)`, etc.) and opens a
+  clicked `.spp` package to inspect its groups and individual files alongside `.spp` import.
 
 - **2026-10-30 (Sparks):** From SENSEI's header redesign, Sparks (formerly Dao
   Insights) moves here from the header: `CreatorSpace` takes `sparks`, shown beside the

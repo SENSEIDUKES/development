@@ -25,7 +25,9 @@ export type GradedEnergyKind = 'chapter' | 'image' | 'live-minute';
 export const GRADED_ENERGY_PRICES: Record<GradedEnergyKind, Record<EnergyGrade, number>> = {
   chapter: { mortal: 2, immortal: 4, heaven: 8 },
   image: { mortal: 5, immortal: 10, heaven: 20 },
-  'live-minute': { mortal: 1, immortal: 2, heaven: 3 },
+  // At least twice the provider's price a minute (1 Energy = $0.02): Gemini 3.8 Live is at most
+  // $0.023 a minute talking both ways; GPT-Live 1 is $0.05 a minute plus its backend model (2026-11-01).
+  'live-minute': { mortal: 3, immortal: 6, heaven: 9 },
 };
 
 /** Each model's grade, by the Model Router's model id. */

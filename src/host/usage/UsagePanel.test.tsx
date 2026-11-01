@@ -35,11 +35,11 @@ it('says what was made in the reader\'s words, and its Energy', async () => {
   recordUsage({ kind: 'chapter', model: 'anthropic/claude-opus-5-5', at: NOW - 40 * 24 * HOUR });
   await render();
 
-  // The last 7 days: 2 + 8 (chapters), 5 (picture), 3 (live, three started minutes), 2 (the Blueprint, a chapter's price).
-  expect(container.querySelector('[data-usage-total]')?.textContent).toContain('20 Energy');
+  // The last 7 days: 2 + 8 (chapters), 5 (picture), 9 (live, three started minutes), 2 (the Blueprint, a chapter's price).
+  expect(container.querySelector('[data-usage-total]')?.textContent).toContain('26 Energy');
   expect(group('chapters')).toBe('2 chapters written10 Energy');
   expect(group('pictures')).toBe('1 picture made5 Energy');
-  expect(group('familiar')).toBe('2 min 30 s talking with your Familiar3 Energy');
+  expect(group('familiar')).toBe('2 min 30 s talking with your Familiar9 Energy');
   expect(container.textContent).toContain('Preview: Energy is counted here but not taken from your balance yet. Familiar talk counts each started minute.');
   expect(group('worlds')).toBe('1 world planned2 Energy');
   expect(container.querySelector('[role="img"]')).not.toBeNull();
@@ -47,7 +47,7 @@ it('says what was made in the reader\'s words, and its Energy', async () => {
   expect(container.textContent).not.toMatch(/token/i);
 
   await click('Today');
-  expect(container.querySelector('[data-usage-total]')?.textContent).toContain('12 Energy');
+  expect(container.querySelector('[data-usage-total]')?.textContent).toContain('18 Energy');
   expect(group('chapters')).toBe('1 chapter written2 Energy');
 });
 
@@ -69,7 +69,7 @@ it('shows each model, its grade and the provider\'s counts behind the scenes', a
   expect(live).toContain('Immortal');
   expect(live).toContain('1 min 35 s of live talk');
   // Two started minutes at Immortal, the same total the Energy view shows.
-  expect(container.querySelector('[data-usage-model="openai/gpt-live-1"] [data-usage-model-energy]')?.textContent).toBe('4 Energy');
+  expect(container.querySelector('[data-usage-model="openai/gpt-live-1"] [data-usage-model-energy]')?.textContent).toBe('12 Energy');
 });
 
 it('shows a long model name short, with its id beneath', async () => {

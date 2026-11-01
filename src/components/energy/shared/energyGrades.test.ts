@@ -30,8 +30,8 @@ describe('Energy grades', () => {
 
   it('charges live talk per started minute', () => {
     expect(liveTalkEnergy('google/gemini-3.8-live', 0)).toBe(0);
-    expect(liveTalkEnergy('google/gemini-3.8-live', 30)).toBe(1);
-    expect(liveTalkEnergy('google/gemini-3.8-live', 61)).toBe(2);
-    expect(liveTalkEnergy('openai/gpt-live-1', 125)).toBe(6);
+    expect(liveTalkEnergy('google/gemini-3.8-live', 30)).toBe(3);
+    expect(liveTalkEnergy('google/gemini-3.8-live', 61)).toBe(6);
+    expect(liveTalkEnergy('openai/gpt-live-1', 125)).toBe(18);
   });
 });

@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "Zana za Juu",
       "Model presets and routing overrides.": "Mipangilio ya awali ya modeli na ubadilishaji wa uelekezaji.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "Sanidi mipangilio maalum ya modeli, uelekezaji au vitambulisho vya API.",
-      "Aether Router": "Kielekezi cha Aether",
+      "Model Router": "Kielekezi cha Modeli",
       "Cultivator": "Mkulima wa Kiroho",
       "Mortal": "Mwanadamu",
       "Daily Dao Pillar": "Nguzo ya Dao ya Kila Siku",

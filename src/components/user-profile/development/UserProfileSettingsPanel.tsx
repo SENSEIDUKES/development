@@ -703,8 +703,8 @@ export function UserProfileSettingsPanel({
                   Configure custom model presets, routing overrides, or API credential endpoints.
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
-                  <LibraryButton variant="secondary" fullWidth icon={Sliders} title="Aether Router" disabled={Boolean(routerNote)} onClick={() => setIsSettingsOpen(true)}>
-                    Aether Router
+                  <LibraryButton variant="secondary" fullWidth icon={Sliders} title="Model Router" disabled={Boolean(routerNote)} onClick={() => setIsSettingsOpen(true)}>
+                    Model Router
                   </LibraryButton>
 
                 </div>

@@ -3,7 +3,7 @@
  * app, until its database). The profile record lives on this device
  * (`deviceProfile.ts`); balances, rewards and Familiar ownership come from the
  * Library economy's own clients, mounted by the host; and the account and
- * server pieces (sign-out, sync, backup, the Aether Router, code redemption,
+ * server pieces (sign-out, sync, backup, the Model Router, code redemption,
  * the Inbox) still show, each with the host's note. The profile picture is
  * made by the host's portrait maker when it gives one.
  */
@@ -51,6 +51,8 @@ export interface DeviceProfileServicesOptions {
   notYetBuilt?: UserProfileNotYetBuilt;
   /** Makes the profile picture: portraits from the reader's photo, and the chosen one made ready to keep. */
   portraits?: DevicePortraitMaker;
+  /** Opens the host's Model Router (Settings › Advanced Tools). */
+  openModelRouter?: () => void;
 }
 
 /** The host's profile picture maker. */
@@ -61,7 +63,7 @@ export interface DevicePortraitMaker {
   keep(portrait: Blob): Promise<string>;
 }
 
-export function createDeviceProfileServices({ store, familiars, celestialStore, soundPreferences, menuMusic, storySeeds, notYetBuilt, portraits }: DeviceProfileServicesOptions): UserProfileServices {
+export function createDeviceProfileServices({ store, familiars, celestialStore, soundPreferences, menuMusic, storySeeds, notYetBuilt, portraits, openModelRouter }: DeviceProfileServicesOptions): UserProfileServices {
   const records = async () => storySeeds ? storySeeds.repository.list(storySeeds.ownerId) : [];
   const generationNote = notYetBuilt?.features.includes('portrait-generation') ? notYetBuilt.note : undefined;
   return {
@@ -70,7 +72,7 @@ export function createDeviceProfileServices({ store, familiars, celestialStore, 
     celestialStore,
     soundPreferences,
     menuMusic,
-    useController: props => useDeviceProfileController(store, props, { familiars, generationNote, portraits }),
+    useController: props => useDeviceProfileController(store, props, { familiars, generationNote, portraits, openModelRouter }),
     // The host signs its one device reader in; the Spirit Link gate never shows.
     authenticate: noop,
     localOnlyMode: false,
@@ -100,7 +102,7 @@ export function createDeviceProfileServices({ store, familiars, celestialStore, 
 export function useDeviceProfileController(
   store: DeviceProfileStore,
   { currentUser, stories }: UserProfileControllerProps,
-  { familiars, generationNote, portraits }: { familiars: readonly FamiliarOption[]; generationNote?: string; portraits?: DevicePortraitMaker },
+  { familiars, generationNote, portraits, openModelRouter }: { familiars: readonly FamiliarOption[]; generationNote?: string; portraits?: DevicePortraitMaker; openModelRouter?: () => void },
 ): UserProfileController {
   const record = useDeviceProfile(store);
   const profile = currentUser ? record : null;
@@ -389,7 +391,7 @@ export function useDeviceProfileController(
     handleFamiliarLiveTalkChange,
     syncStatus: 'idle',
     lastSavedTime: profile ? new Date(profile.updatedAt) : null,
-    setIsSettingsOpen: noop,
+    setIsSettingsOpen: open => { if (open) openModelRouter?.(); },
     setIsShortcutsOpen: noop,
     handleExportLibrary: noop,
     handleImportLibrary: noop,

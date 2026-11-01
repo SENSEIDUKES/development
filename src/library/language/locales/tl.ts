@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "Mga Advanced na Tool",
       "Model presets and routing overrides.": "Mga preset ng modelo at routing override.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "I-configure ang mga custom na preset ng modelo, routing override, o API credential endpoint.",
-      "Aether Router": "Aether Router",
+      "Model Router": "Model Router",
       "Cultivator": "Kultibador",
       "Mortal": "Mortal",
       "Daily Dao Pillar": "Pang-araw-araw na Haligi ng Dao",

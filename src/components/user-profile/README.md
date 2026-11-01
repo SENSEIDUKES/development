@@ -981,3 +981,4 @@ existing Profile-only behavior.
   gold rim; the aura picker as a black control; the Energy page's summary cards
   and sections as outer panels. The Cave keeps its own backdrop, portrait ring
   and motes; the accent and tint preferences still apply through its own scope.
+- **2026-11-01 — Model Router:** Settings › Advanced Tools › Aether Router is renamed Model Router. In the app and this Workshop preview it opens the Model Router; `openModelRouter` (device services) and `onOpenModelRouter` (Workshop mock) carry the tap.

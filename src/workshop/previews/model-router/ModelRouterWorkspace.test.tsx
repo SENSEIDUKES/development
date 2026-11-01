@@ -2,7 +2,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { ModelRouterGear } from '../../ModelRouterSettings';
+import { ModelRouterGear } from '../../../host/model-router/ModelRouterSettings';
 import { readModelPreference, readReasoningPreference, readTaggerPreference } from '../../../host/generation/modelPreference';
 import { modelRouterStatus } from '../../../server/model-router/status';
 
@@ -29,7 +29,7 @@ it('opens from the gear with tabs for each model capability', async () => {
   await openRouter({ GEMINI_API_KEY: 'g' });
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
   const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
-  expect(tabs.map(tab => tab.textContent)).toEqual(['Chapters', 'Images', 'TTS', 'Audio', 'Video', '3D']);
+  expect(tabs.map(tab => tab.textContent)).toEqual(['Chapters', 'Images', 'Text to speech', 'Live speech', 'Audio', 'Video', '3D']);
   await click(tabs[2]);
   expect(document.querySelector('[data-model="eleven_multilingual_v2"] [aria-label="Selected"]')).not.toBeNull();
   expect(row('eleven_v3')).toBeNull();
@@ -46,12 +46,28 @@ it('selects and remembers direct MiniMax writing and image models, and shows exe
   await click(provider('minimax'));
   await click(row('minimax/image-01')!);
   expect(readModelPreference('images')).toBe('minimax/image-01');
-  await click(tabs[4]);
+  await click(tabs[5]);
   await click(provider('minimax'));
   expect(listedModels()).toHaveLength(11);
   expect(document.querySelector('[data-model="minimax/MiniMax-H3"]')!.textContent).not.toContain('Catalog only');
   expect(document.body.textContent).toContain('No Workshop feature generates video yet');
   expect(document.body.textContent).not.toContain('secret');
+});
+
+it('chooses the live speech model the Familiar\'s live talk uses, from the providers with a key', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' });
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
+  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
+  // GPT-Live serves by default when its key is set.
+  expect(provider('openai').getAttribute('aria-selected')).toBe('true');
+  expect(row('openai/gpt-live-1')!.getAttribute('aria-checked')).toBe('true');
+  expect(document.body.textContent).toContain('Familiar\'s live talk');
+  await click(provider('gemini'));
+  await click(row('google/gemini-3.8-live')!);
+  expect(readModelPreference('live')).toBe('google/gemini-3.8-live');
+  // Read aloud is its own tab, set on the server.
+  await click(tabs.find(tab => tab.textContent === 'Text to speech')!);
+  expect(document.querySelector('[data-model="eleven_v3"] button')).toBeNull();
 });
 
 it('shows one provider at a time, starting with the provider of the selected model', async () => {

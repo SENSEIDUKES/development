@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "Àwọn Irinṣẹ́ Ìpele Gíga",
       "Model presets and routing overrides.": "Àwọn ètò àwòkọ́ṣe àti ìyípadà ọ̀nà ìṣiṣẹ́.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "Ṣètò àwọn àwòkọ́ṣe àkànṣe, ìyípadà ọ̀nà ìṣiṣẹ́ tàbí àwọn ojú-ọ̀nà API.",
-      "Aether Router": "Olùdarí Aether",
+      "Model Router": "Olùdarí Àwòkọ́ṣe",
       "Cultivator": "Olùṣẹ̀dá Ẹ̀mí",
       "Mortal": "Ẹlẹ́ran-ara",
       "Daily Dao Pillar": "Òpó Dao Ojoojúmọ́",

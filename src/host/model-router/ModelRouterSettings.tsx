@@ -1,8 +1,9 @@
 /**
- * Workshop-wide Model Router: a gear button that opens the router from any
- * Workshop page. Pick a capability, then a provider, then a model. Chapters
- * and Images models are selectable; the choice is saved in this browser and
- * the features marked "follows router" use it. TTS and the rest are shown for
+ * The Model Router: pick a capability, then a provider, then a model. Opened
+ * from the Workshop's gear and from the app's Settings → Advanced → Model
+ * Router, one router for both. Chapters, Images and Live speech models are
+ * selectable; the choice is saved in this browser and the features marked
+ * "follows router" use it. Text to speech and the rest are shown for
  * reference.
  * "Used by" comes from `GENERATION_CONSUMERS` in the server catalog. The
  * Advanced button tunes the selected model's reasoning level.
@@ -13,8 +14,9 @@ import { AudioLines, BookOpenText, Box, Check, Image as ImageIcon, Music2, Setti
 import type {
   ModelRouterCapabilityStatus,
   ModelRouterStatus,
-} from '../server/model-router/status';
-import { useModelPreference, useReasoningPreferences, useTaggerPreference } from '../host/generation/modelPreference';
+} from '../../server/model-router/status';
+import { useModelPreference, useReasoningPreferences, useTaggerPreference, type ModelPreferenceCapability } from '../generation/modelPreference';
+import './modelRouter.css';
 
 type Load =
   | { state: 'loading' }
@@ -33,8 +35,8 @@ const CAPABILITY_ICONS = {
 const CAPABILITY_LABELS = {
   chapters: 'Chapters',
   images: 'Images',
-  tts: 'TTS',
-  live: 'Live voice',
+  tts: 'Text to speech',
+  live: 'Live speech',
   audio: 'Audio',
   video: 'Video',
   '3d': '3D',
@@ -42,8 +44,7 @@ const CAPABILITY_LABELS = {
 
 /** Why a capability's model is not chosen here. */
 const SERVER_OWNED_NOTE: Partial<Record<ModelRouterCapabilityStatus['id'], string>> = {
-  tts: 'The voice model is set on the server (ELEVENLABS_MODEL_ID). Codex voice requests never accept a model from the browser.',
-  live: 'The live voice model is set on the server (FAMILIAR_LIVE_MODEL). The Familiar\'s live talk never takes a model from the browser.',
+  tts: 'Reads written lines aloud. The voice model is set on the server (ELEVENLABS_MODEL_ID); Codex voice requests never accept a model from the browser.',
   audio: 'Gemini Lyria models are listed for reference; audio generation is not connected to a Workshop feature yet.',
   video: 'MiniMax video models have a server adapter; Veo is catalog only. No Workshop feature generates video yet. MiniMax model access depends on your subscription tier.',
   '3d': 'Tripo models are listed for reference; 3D generation is not connected to a Workshop feature yet.',
@@ -85,7 +86,7 @@ function ModelRow({ model, selected, selectable, reasoningLevel, onSelect }: {
   return (
     <li data-model={model.id}>
       <button type="button" role="radio" aria-checked={selected} disabled={!model.available} onClick={onSelect}
-        className={`workshop-touch-target flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 transition-colors disabled:cursor-not-allowed ${selected
+        className={`model-router-touch flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 transition-colors disabled:cursor-not-allowed ${selected
           ? 'border-cyan-400/40 bg-cyan-500/10'
           : 'border-transparent hover:bg-white/5'}`}>
         {body}
@@ -108,7 +109,7 @@ function ProviderPicker({ providers, models, active, onPick }: {
           <button key={provider.id} type="button" role="tab" aria-selected={active === provider.id} data-provider={provider.id}
             onClick={() => onPick(provider.id)}
             title={provider.id === 'lmstudio' ? 'Local development · no API key needed' : provider.configured ? 'Key configured' : `Needs ${provider.keyVariable}`}
-            className={`workshop-touch-target flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${active === provider.id
+            className={`model-router-touch flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${active === provider.id
               ? 'border-cyan-400/40 bg-cyan-500/15 text-cyan-50'
               : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
             <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${provider.configured ? 'bg-emerald-400' : 'bg-white/25'}`} />
@@ -132,7 +133,7 @@ function AdvancedSettings({ model, level, onChange }: {
     const active = (level ?? undefined) === value;
     return (
       <button key={label} type="button" role="radio" aria-checked={active} onClick={() => onChange(value)}
-        className={`workshop-touch-target rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
+        className={`model-router-touch rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
           ? 'border-violet-400/45 bg-violet-500/15 text-violet-50'
           : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
         {label}
@@ -181,7 +182,7 @@ function TaggerSettings({ models, chapterModel }: { models: RouterModel[]; chapt
     const active = level === value;
     return (
       <button key={label} type="button" role="radio" aria-checked={active} onClick={() => setTagger({ ...(chosen ? { model: chosen } : {}), ...(value ? { reasoningLevel: value } : {}) })}
-        className={`workshop-touch-target rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
+        className={`model-router-touch rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
           ? 'border-violet-400/45 bg-violet-500/15 text-violet-50'
           : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
         {label}
@@ -200,7 +201,7 @@ function TaggerSettings({ models, chapterModel }: { models: RouterModel[]; chapt
         <span className="sr-only">Chapter Tagger model</span>
         <select aria-label="Chapter Tagger model" value={chosen}
           onChange={event => setTagger({ ...(event.target.value ? { model: event.target.value } : {}), ...(tagger.reasoningLevel ? { reasoningLevel: tagger.reasoningLevel } : {}) })}
-          className="workshop-touch-target w-full rounded-md border border-white/10 bg-[#0b0e16] px-2 py-1.5 text-base text-white/85 sm:text-[12px]">
+          className="model-router-touch w-full rounded-md border border-white/10 bg-[#0b0e16] px-2 py-1.5 text-base text-white/85 sm:text-[12px]">
           <option value="">Same as chapters{chapterModel ? ` (${chapterModel.label.replace(/ · OpenRouter$/, '')})` : ''}</option>
           {providers.map(provider => (
             <optgroup key={provider} label={providerLabel[provider]}>
@@ -223,9 +224,17 @@ function TaggerSettings({ models, chapterModel }: { models: RouterModel[]; chapt
   );
 }
 
+/** Capabilities whose model the reader chooses here; the rest are set on the server. */
+const SELECTABLE: Partial<Record<ModelRouterCapabilityStatus['id'], { preference: ModelPreferenceCapability; noun: string; note?: string }>> = {
+  chapters: { preference: 'chapters', noun: 'chapter' },
+  images: { preference: 'images', noun: 'image' },
+  live: { preference: 'live', noun: 'live speech', note: 'Hears and answers in one conversation: the Familiar\'s live talk (Settings → Familiar → Live talk) uses the model chosen here.' },
+};
+
 function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStatus }) {
-  const selectable = capability.id === 'chapters' || capability.id === 'images';
-  const [saved, setSaved] = useModelPreference(capability.id === 'images' ? 'images' : 'chapters');
+  const choice = SELECTABLE[capability.id];
+  const selectable = Boolean(choice);
+  const [saved, setSaved] = useModelPreference(choice?.preference ?? 'chapters');
   const savedIsOffered = selectable && capability.models.some(model => model.id === saved && model.available);
   const selectedId = selectable && savedIsOffered ? saved : capability.defaultModel;
   const selectedProvider = capability.models.find(model => model.id === selectedId)?.provider;
@@ -234,7 +243,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
   );
   const activeProvider = capability.providers.find(item => item.id === provider) ?? capability.providers[0];
   const models = capability.models.filter(model => model.provider === activeProvider.id);
-  const note = SERVER_OWNED_NOTE[capability.id];
+  const note = choice?.note ?? SERVER_OWNED_NOTE[capability.id];
   const [reasoning, setReasoning] = useReasoningPreferences();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const selectedModel = capability.models.find(model => model.id === selectedId);
@@ -246,7 +255,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
         {capability.id === 'chapters' && (
           <button type="button" aria-label="Advanced settings" aria-expanded={advancedOpen} title="Advanced settings"
             onClick={() => setAdvancedOpen(open => !open)}
-            className={`workshop-touch-target grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors ${advancedOpen
+            className={`model-router-touch grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors ${advancedOpen
               ? 'border-violet-400/45 bg-violet-500/15 text-violet-100'
               : 'border-white/10 text-white/55 hover:bg-white/5 hover:text-white/85'}`}>
             <SlidersHorizontal aria-hidden="true" size={13} />
@@ -263,7 +272,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
       {activeProvider.id === 'lmstudio' && <p className="text-[11px] leading-snug text-white/45">Uses the text model currently loaded in LM Studio at localhost:1234. Start its server and keep one text model loaded. No API key needed; local development only.</p>}
       {note && <p className="text-[11px] leading-snug text-white/45">{note}</p>}
       <ul className="space-y-0.5 rounded-lg border border-white/10 bg-white/[0.02] p-1"
-        role={selectable ? 'radiogroup' : undefined} aria-label={selectable ? `${activeProvider.label} ${capability.id === 'images' ? 'image' : 'chapter'} models` : undefined}>
+        role={selectable ? 'radiogroup' : undefined} aria-label={choice ? `${activeProvider.label} ${choice.noun} models` : undefined}>
         {models.map(model => (
           <ModelRow key={model.id} model={model} selectable={selectable}
             reasoningLevel={selectable && model.reasoning?.levels.some(level => level === reasoning[model.id]) ? reasoning[model.id] : undefined}
@@ -315,12 +324,13 @@ export function ModelRouterPanel({ endpoint = '/api/model-router' }: { endpoint?
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/10 bg-white/[0.02] p-0.5" role="tablist" aria-label="Router capabilities">
-        {(['chapters', 'images', 'tts', 'audio', 'video', '3d'] as const).map(id => {
+      {/* Words and pictures, then speech (read aloud, and live), then the rest. */}
+      <div className="grid grid-cols-6 gap-1 rounded-lg border border-white/10 bg-white/[0.02] p-0.5" role="tablist" aria-label="Router capabilities">
+        {(['chapters', 'images', 'tts', 'live', 'audio', 'video', '3d'] as const).map(id => {
           const Icon = CAPABILITY_ICONS[id];
           return (
             <button key={id} type="button" role="tab" aria-selected={active === id} onClick={() => setActive(id)}
-              className={`workshop-touch-target flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors ${active === id
+              className={`model-router-touch flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors ${['audio', 'video', '3d'].includes(id) ? 'col-span-2' : 'col-span-3'} ${active === id
                 ? 'bg-cyan-500/15 text-cyan-100'
                 : 'text-white/55 hover:bg-white/5 hover:text-white/85'}`}>
               <Icon aria-hidden="true" size={13} />
@@ -342,53 +352,65 @@ export function ModelRouterPanel({ endpoint = '/api/model-router' }: { endpoint?
   );
 }
 
-/** Gear button that opens the Model Router over any Workshop page. */
-export function ModelRouterGear({ className = '' }: { className?: string }) {
-  const [open, setOpen] = useState(false);
+/**
+ * The Model Router over the page: a sheet on phones, a dialog on larger
+ * screens. Escape, the close button or a tap outside closes it, and focus goes
+ * back where it came from.
+ */
+export function ModelRouterDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const titleId = useId();
-  const trigger = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
 
   useEffect(() => {
     if (!open) return;
+    const returnTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     closeButton.current?.focus();
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') close.current(); };
     const overflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = overflow;
-      trigger.current?.focus();
+      returnTo?.focus();
     };
   }, [open]);
 
+  if (!open) return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-6"
+      onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId}
+        className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-white/10 bg-[#05070d] px-3 pb-[calc(0.9rem+env(safe-area-inset-bottom,0px))] pt-3 text-white shadow-2xl sm:rounded-2xl sm:px-4"
+        style={{ fontFamily: 'var(--font-sans)' }}>
+        <div className="mb-2.5 flex items-center justify-between gap-3">
+          <h2 id={titleId} className="text-sm font-semibold tracking-wide">Model Router</h2>
+          <button ref={closeButton} type="button" aria-label="Close Model Router" onClick={onClose}
+            className="model-router-touch grid h-8 w-8 place-items-center rounded-full border border-white/10 text-white/60 hover:bg-white/5 hover:text-white">
+            <X aria-hidden="true" size={15} />
+          </button>
+        </div>
+        <ModelRouterPanel />
+      </div>
+    </div>,
+    // Rendered at the body so a blurred or sticky header cannot trap the overlay.
+    document.body,
+  );
+}
+
+/** Gear button that opens the Model Router over any Workshop page. */
+export function ModelRouterGear({ className = '' }: { className?: string }) {
+  const [open, setOpen] = useState(false);
   return (
     <>
-      <button ref={trigger} type="button" aria-label="Model Router settings" title="Model Router" aria-haspopup="dialog" aria-expanded={open}
+      <button type="button" aria-label="Model Router settings" title="Model Router" aria-haspopup="dialog" aria-expanded={open}
         onClick={() => setOpen(true)}
-        className={`workshop-touch-target inline-grid h-9 w-9 shrink-0 place-items-center rounded-full border border-neutral-700/50 bg-neutral-900/80 text-neutral-300 shadow-lg backdrop-blur transition-colors hover:bg-neutral-800 hover:text-white ${className}`}>
+        className={`model-router-touch inline-grid h-9 w-9 shrink-0 place-items-center rounded-full border border-neutral-700/50 bg-neutral-900/80 text-neutral-300 shadow-lg backdrop-blur transition-colors hover:bg-neutral-800 hover:text-white ${className}`}>
         <Settings aria-hidden="true" size={17} />
       </button>
-      {open && createPortal(
-        <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-6"
-          onClick={event => { if (event.target === event.currentTarget) setOpen(false); }}>
-          <div role="dialog" aria-modal="true" aria-labelledby={titleId}
-            className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-white/10 bg-[#05070d] px-3 pb-[calc(0.9rem+env(safe-area-inset-bottom,0px))] pt-3 text-white shadow-2xl sm:rounded-2xl sm:px-4"
-            style={{ fontFamily: 'var(--font-sans)' }}>
-            <div className="mb-2.5 flex items-center justify-between gap-3">
-              <h2 id={titleId} className="text-sm font-semibold tracking-wide">Model Router</h2>
-              <button ref={closeButton} type="button" aria-label="Close Model Router" onClick={() => setOpen(false)}
-                className="workshop-touch-target grid h-8 w-8 place-items-center rounded-full border border-white/10 text-white/60 hover:bg-white/5 hover:text-white">
-                <X aria-hidden="true" size={15} />
-              </button>
-            </div>
-            <ModelRouterPanel />
-          </div>
-        </div>,
-        // Rendered at the body so a blurred or sticky header cannot trap the overlay.
-        document.body,
-      )}
+      <ModelRouterDialog open={open} onClose={() => setOpen(false)} />
     </>
   );
 }

@@ -96,6 +96,8 @@ export interface MockUserProfileServicesOptions {
    * Firebase Auth.
    */
   onSignIn: (account: AppUser) => void;
+  /** Opens the Model Router, as the app's Settings › Advanced Tools does. */
+  onOpenModelRouter?: () => void;
 }
 
 export const WORKSHOP_SOUND_PREFERENCES = createLocalReaderPreferenceStorage('workshop.reader.');
@@ -110,6 +112,7 @@ export function createMockUserProfileServices({
   celestialStore,
   logExcludedAction,
   onSignIn,
+  onOpenModelRouter,
 }: MockUserProfileServicesOptions): UserProfileServices {
   const scenario = getPreviewScenario(state);
 
@@ -854,7 +857,9 @@ export function createMockUserProfileServices({
       syncStatus: scenario.servicesFail ? 'error' : 'idle',
       lastSavedTime: profile ? new Date(profile.updatedAt) : null,
       setIsSettingsOpen: open => {
-        if (open) logExcludedAction('Aether Router settings modal (production app shell)');
+        if (!open) return;
+        if (onOpenModelRouter) onOpenModelRouter();
+        else logExcludedAction('Model Router (no router in this preview)');
       },
       setIsShortcutsOpen: open => {
         if (open) logExcludedAction('Shortcuts manual modal (production app shell)');

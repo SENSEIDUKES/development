@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "የላቁ መሣሪያዎች",
       "Model presets and routing overrides.": "የሞዴል ቅድመ-ቅንብሮች እና የመስመር ለውጦች።",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "ብጁ የሞዴል ቅድመ-ቅንብሮችን፣ የመስመር ለውጦችን ወይም የAPI መዳረሻዎችን ያዋቅሩ።",
-      "Aether Router": "ኤተር ራውተር",
+      "Model Router": "ሞዴል ራውተር",
       "Cultivator": "አሳዳጊ",
       "Mortal": "ሟች",
       "Daily Dao Pillar": "ዕለታዊ የዳኦ ዓምድ",

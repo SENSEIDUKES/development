@@ -151,6 +151,7 @@ read it.
 
 ## Workshop history
 
+- 2026-11-01 — Text to speech and Live speech are separate tabs. Live speech is chosen in the Router (`live` preference); the server runs that choice when its key is set. The Router opens from the app's Settings › Advanced Tools › Model Router.
 - 2026-11-01 — Live voice adds OpenAI GPT-Live 1, serving first when `OPENAI_API_KEY` is set.
 - **2026-10-31** — A Blueprint the model leaves incomplete now says which
   parts are missing ("left out the factions"), in place of "could not produce

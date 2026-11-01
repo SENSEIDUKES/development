@@ -13,11 +13,18 @@ const NOW = Date.parse('2026-10-29T12:00:00Z');
 
 describe('Familiar live talk route', () => {
   it('reports whether live talk is configured, without revealing the key', async () => {
-    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: { GEMINI_API_KEY: 'secret' } })).body).toEqual({ configured: true, provider: 'gemini' });
-    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: {} })).body).toEqual({ configured: false, provider: 'gemini' });
-    // With an OpenAI key, GPT-Live serves first; FAMILIAR_LIVE_MODEL chooses another.
-    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: { GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' } })).body).toEqual({ configured: true, provider: 'openai' });
-    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: { GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o', FAMILIAR_LIVE_MODEL: 'google/gemini-3.8-live' } })).body).toEqual({ configured: true, provider: 'gemini' });
+    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: { GEMINI_API_KEY: 'secret' } })).body).toEqual({
+      configured: true, provider: 'gemini', model: 'google/gemini-3.8-live', models: [{ id: 'google/gemini-3.8-live', provider: 'gemini' }],
+    });
+    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: {} })).body).toMatchObject({ configured: false, models: [] });
+    // With an OpenAI key, GPT-Live serves first; FAMILIAR_LIVE_MODEL chooses another. Both are offered to the Router.
+    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: { GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' } })).body).toEqual({
+      configured: true, provider: 'openai', model: 'openai/gpt-live-1',
+      models: [{ id: 'openai/gpt-live-1', provider: 'openai' }, { id: 'google/gemini-3.8-live', provider: 'gemini' }],
+    });
+    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: { GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o', FAMILIAR_LIVE_MODEL: 'google/gemini-3.8-live' } })).body)
+      .toMatchObject({ configured: true, provider: 'gemini' });
+    expect(JSON.stringify((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: { GEMINI_API_KEY: 'secret' } })).body)).not.toContain('secret');
     expect(await handleFamiliarLiveHttp({ method: 'POST', body: { brief } }, { environment: {} })).toMatchObject({ status: 503, body: { code: 'unavailable' } });
   });
 
@@ -125,5 +132,22 @@ describe('Familiar live talk route', () => {
     const sent = JSON.parse(String((fetch.mock.calls[0] as unknown as [string, RequestInit])[1].body));
     expect(sent.session.audio.output.voice).toBe('marin');
     expect(sent.session.delegation.responses.model).toBe('gpt-5.4-nano');
+  });
+
+  it('runs the reader\'s Router choice when this server can, and the server\'s own otherwise', async () => {
+    const create = vi.fn(async () => ({ name: 'auth_tokens/abc' }));
+    const fetch = vi.fn(async () => new Response(JSON.stringify({ session: { id: 'live_1' }, transport: { type: 'webrtc', sdp: 'answer' } }), { status: 201 }));
+    const environment = { GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' };
+    const chosen = await handleFamiliarLiveHttp({ method: 'POST', body: { brief, model: 'google/gemini-3.8-live' } },
+      { environment, tokens: () => ({ create }), openAiFetch: fetch as unknown as typeof globalThis.fetch });
+    expect(chosen.body).toMatchObject({ provider: 'gemini', token: 'auth_tokens/abc' });
+    expect(fetch).not.toHaveBeenCalled();
+    // A model this server cannot run falls back to its own choice.
+    const unknown = await handleFamiliarLiveHttp({ method: 'POST', body: { brief, sdp: 'offer', model: 'xai/grok-voice' } },
+      { environment, tokens: () => ({ create }), openAiFetch: fetch as unknown as typeof globalThis.fetch });
+    expect(unknown.body).toMatchObject({ provider: 'openai' });
+    const noKey = await handleFamiliarLiveHttp({ method: 'POST', body: { brief, model: 'openai/gpt-live-1' } },
+      { environment: { GEMINI_API_KEY: 'g' }, tokens: () => ({ create }) });
+    expect(noKey.body).toMatchObject({ provider: 'gemini' });
   });
 });

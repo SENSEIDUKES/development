@@ -28,6 +28,8 @@ export interface FamiliarOpenAiLiveDependencies {
   /** Where the Familiar's voice plays. */
   createAudio?: () => HTMLAudioElement;
   accessToken?: () => string | undefined;
+  /** The reader's Router choice of live model; the server runs it when it can. */
+  model?: string;
 }
 
 /**
@@ -187,7 +189,7 @@ export function createFamiliarOpenAiLive(dependencies: FamiliarOpenAiLiveDepende
           const response = await (dependencies.fetch ?? fetch)(ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-            body: JSON.stringify({ brief, sdp: peer.localDescription?.sdp }),
+            body: JSON.stringify({ brief, sdp: peer.localDescription?.sdp, ...(dependencies.model ? { model: dependencies.model } : {}) }),
           });
           const body = await response.json().catch(() => ({})) as { error?: string; detail?: string; transport?: { sdp?: string } };
           if (over) return;

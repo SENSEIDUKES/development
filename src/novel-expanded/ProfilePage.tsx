@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useFamiliarStoreAccount } from '@seihouse/library/familiar';
 import { LibraryProfile, UserProfileServicesProvider, type AppUser, type Story, type UserProfileFeature } from '@seihouse/library/profile';
 import { LibraryLook } from '@seihouse/library/presentation';
 import { allFamiliarOptions } from '../host/familiar/catalogue';
 import { createDeviceProfileServices, type DevicePortraitMaker } from '../host/profile/deviceProfileServices';
+import { ModelRouterDialog } from '../host/model-router/ModelRouterSettings';
 import { appRouteFor } from './appPlaces';
 import { HOME_ROUTE, routeHref, type Navigate } from './routes';
 import type { NovelExpandedServices } from './services';
@@ -17,7 +18,7 @@ export const NOT_IN_THE_APP_YET = 'Not in the app yet.';
 
 /** The Cave's account and server pieces: shown, each with the note, until the database and its services arrive. */
 const NOT_YET_BUILT: readonly UserProfileFeature[] = [
-  'shortcuts', 'redeem-code', 'sign-out', 'sync', 'backup', 'model-router', 'inbox',
+  'shortcuts', 'redeem-code', 'sign-out', 'sync', 'backup', 'inbox',
 ];
 
 /** Familiar ownership is the economy's: the Store charges QI or Energy and grants the Familiar there. */
@@ -44,6 +45,8 @@ export function ProfilePage({ services, stories, navigate, portraits, menuMusic,
   accentColor?: string;
   navigate: Navigate;
 }) {
+  // Settings › Advanced Tools › Model Router opens the Router over the Cave.
+  const [routerOpen, setRouterOpen] = useState(false);
   const profileServices = useMemo(() => createDeviceProfileServices({
     store: services.profile,
     familiars: allFamiliarOptions,
@@ -53,6 +56,7 @@ export function ProfilePage({ services, stories, navigate, portraits, menuMusic,
     storySeeds: { repository: services.storySeeds, ownerId: NOVEL_EXPANDED_READER_ID },
     notYetBuilt: { note: NOT_IN_THE_APP_YET, features: NOT_YET_BUILT },
     portraits,
+    openModelRouter: () => setRouterOpen(true),
   }), [portraits, services.profile, services.readerPreferences, services.storySeeds, menuMusic]);
   // The Cave wears the Library's look like every other page; it keeps its own backdrop behind the shell.
   return <LibraryLook accentColor={accentColor} data-testid="novel-expanded-profile">
@@ -63,5 +67,6 @@ export function ProfilePage({ services, stories, navigate, portraits, menuMusic,
         // Sever Link is not in the app yet: there is no account to leave.
         onLogout={() => undefined} />
     </UserProfileServicesProvider>
+    <ModelRouterDialog open={routerOpen} onClose={() => setRouterOpen(false)} />
   </LibraryLook>;
 }

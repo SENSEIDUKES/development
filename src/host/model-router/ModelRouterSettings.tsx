@@ -8,15 +8,15 @@
  * "Used by" comes from `GENERATION_CONSUMERS` in the server catalog. The
  * Advanced button tunes the selected model's reasoning level.
  */
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { AudioLines, BookOpenText, Box, Check, Image as ImageIcon, Music2, Settings, SlidersHorizontal, Video, Volume2, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { AudioLines, BookOpenText, Box, Check, Image as ImageIcon, Music2, Settings, SlidersHorizontal, Video, Volume2 } from 'lucide-react';
 import type {
   ModelRouterCapabilityStatus,
   ModelRouterStatus,
 } from '../../server/model-router/status';
+import { ENERGY_GRADE_LABELS, ENERGY_GRADES, GRADED_ENERGY_PRICES, modelEnergyGrade, type EnergyGrade, type GradedEnergyKind } from '@seihouse/library/energy';
 import { useModelPreference, useReasoningPreferences, useTaggerPreference, type ModelPreferenceCapability } from '../generation/modelPreference';
-import './modelRouter.css';
+import { HostDialog } from '../dialog/HostDialog';
 
 type Load =
   | { state: 'loading' }
@@ -56,8 +56,32 @@ const isStatus = (value: unknown): value is ModelRouterStatus =>
 type RouterModel = ModelRouterCapabilityStatus['models'][number];
 type RouterProvider = ModelRouterCapabilityStatus['providers'][number];
 
-function ModelRow({ model, selected, selectable, reasoningLevel, onSelect }: {
+/** The capabilities priced in Energy by grade, and how one is counted. */
+const ENERGY_PRICED: Partial<Record<ModelRouterCapabilityStatus['id'], { kind: GradedEnergyKind; per: string }>> = {
+  chapters: { kind: 'chapter', per: 'a chapter' },
+  images: { kind: 'image', per: 'an image' },
+  live: { kind: 'live-minute', per: 'a minute' },
+};
+const GRADE_STYLES: Record<EnergyGrade, string> = {
+  mortal: 'border-slate-300/25 text-slate-200',
+  immortal: 'border-violet-400/40 text-violet-200',
+  heaven: 'border-amber-300/45 text-amber-200',
+};
+
+/** A model's grade and what one costs on it, e.g. "Immortal · 4 Energy". */
+function EnergyBadge({ model, kind }: { model: string; kind: GradedEnergyKind }) {
+  const grade = modelEnergyGrade(model);
+  return (
+    <span data-energy-grade={grade} className={`rounded border px-1 py-px ${GRADE_STYLES[grade]}`}>
+      {ENERGY_GRADE_LABELS[grade]} · {GRADED_ENERGY_PRICES[kind][grade]}{kind === 'live-minute' ? '/min' : ''}
+    </span>
+  );
+}
+
+function ModelRow({ model, selected, selectable, reasoningLevel, energy, onSelect }: {
   model: RouterModel;
+  /** Present when the capability costs Energy by grade. */
+  energy?: GradedEnergyKind;
   selected: boolean;
   selectable: boolean;
   /** A non-default reasoning level saved in Advanced settings. */
@@ -71,6 +95,7 @@ function ModelRow({ model, selected, selectable, reasoningLevel, onSelect }: {
         <span className="block truncate font-mono text-[10px] leading-tight text-white/30">{model.id}</span>
       </span>
       <span className="flex shrink-0 items-center gap-1 font-mono text-[9px] uppercase tracking-wider">
+        {energy && <EnergyBadge model={model.id} kind={energy} />}
         {model.stage !== 'current' && <span className="rounded border border-amber-400/30 px-1 py-px text-amber-200">{model.stage}</span>}
         {model.isDefault && !selected && <span className="rounded border border-white/15 px-1 py-px text-white/50">Default</span>}
         {reasoningLevel && <span className="rounded border border-violet-400/35 px-1 py-px text-violet-200" title="Reasoning level">{reasoningLevel}</span>}
@@ -86,7 +111,7 @@ function ModelRow({ model, selected, selectable, reasoningLevel, onSelect }: {
   return (
     <li data-model={model.id}>
       <button type="button" role="radio" aria-checked={selected} disabled={!model.available} onClick={onSelect}
-        className={`model-router-touch flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 transition-colors disabled:cursor-not-allowed ${selected
+        className={`host-touch flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 transition-colors disabled:cursor-not-allowed ${selected
           ? 'border-cyan-400/40 bg-cyan-500/10'
           : 'border-transparent hover:bg-white/5'}`}>
         {body}
@@ -109,7 +134,7 @@ function ProviderPicker({ providers, models, active, onPick }: {
           <button key={provider.id} type="button" role="tab" aria-selected={active === provider.id} data-provider={provider.id}
             onClick={() => onPick(provider.id)}
             title={provider.id === 'lmstudio' ? 'Local development · no API key needed' : provider.configured ? 'Key configured' : `Needs ${provider.keyVariable}`}
-            className={`model-router-touch flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${active === provider.id
+            className={`host-touch flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${active === provider.id
               ? 'border-cyan-400/40 bg-cyan-500/15 text-cyan-50'
               : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
             <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${provider.configured ? 'bg-emerald-400' : 'bg-white/25'}`} />
@@ -133,7 +158,7 @@ function AdvancedSettings({ model, level, onChange }: {
     const active = (level ?? undefined) === value;
     return (
       <button key={label} type="button" role="radio" aria-checked={active} onClick={() => onChange(value)}
-        className={`model-router-touch rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
+        className={`host-touch rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
           ? 'border-violet-400/45 bg-violet-500/15 text-violet-50'
           : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
         {label}
@@ -182,7 +207,7 @@ function TaggerSettings({ models, chapterModel }: { models: RouterModel[]; chapt
     const active = level === value;
     return (
       <button key={label} type="button" role="radio" aria-checked={active} onClick={() => setTagger({ ...(chosen ? { model: chosen } : {}), ...(value ? { reasoningLevel: value } : {}) })}
-        className={`model-router-touch rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
+        className={`host-touch rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
           ? 'border-violet-400/45 bg-violet-500/15 text-violet-50'
           : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
         {label}
@@ -201,7 +226,7 @@ function TaggerSettings({ models, chapterModel }: { models: RouterModel[]; chapt
         <span className="sr-only">Chapter Tagger model</span>
         <select aria-label="Chapter Tagger model" value={chosen}
           onChange={event => setTagger({ ...(event.target.value ? { model: event.target.value } : {}), ...(tagger.reasoningLevel ? { reasoningLevel: tagger.reasoningLevel } : {}) })}
-          className="model-router-touch w-full rounded-md border border-white/10 bg-[#0b0e16] px-2 py-1.5 text-base text-white/85 sm:text-[12px]">
+          className="host-touch w-full rounded-md border border-white/10 bg-[#0b0e16] px-2 py-1.5 text-base text-white/85 sm:text-[12px]">
           <option value="">Same as chapters{chapterModel ? ` (${chapterModel.label.replace(/ · OpenRouter$/, '')})` : ''}</option>
           {providers.map(provider => (
             <optgroup key={provider} label={providerLabel[provider]}>
@@ -247,6 +272,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
   const [reasoning, setReasoning] = useReasoningPreferences();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const selectedModel = capability.models.find(model => model.id === selectedId);
+  const priced = ENERGY_PRICED[capability.id];
 
   return (
     <div className="space-y-2.5" role="tabpanel" aria-label={`${capability.label} router`}>
@@ -255,7 +281,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
         {capability.id === 'chapters' && (
           <button type="button" aria-label="Advanced settings" aria-expanded={advancedOpen} title="Advanced settings"
             onClick={() => setAdvancedOpen(open => !open)}
-            className={`model-router-touch grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors ${advancedOpen
+            className={`host-touch grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors ${advancedOpen
               ? 'border-violet-400/45 bg-violet-500/15 text-violet-100'
               : 'border-white/10 text-white/55 hover:bg-white/5 hover:text-white/85'}`}>
             <SlidersHorizontal aria-hidden="true" size={13} />
@@ -271,10 +297,15 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
       )}
       {activeProvider.id === 'lmstudio' && <p className="text-[11px] leading-snug text-white/45">Uses the text model currently loaded in LM Studio at localhost:1234. Start its server and keep one text model loaded. No API key needed; local development only.</p>}
       {note && <p className="text-[11px] leading-snug text-white/45">{note}</p>}
+      {priced && (
+        <p data-energy-prices className="text-[11px] leading-snug text-white/45">
+          Energy {priced.per}: {ENERGY_GRADES.map(grade => `${ENERGY_GRADE_LABELS[grade]} ${GRADED_ENERGY_PRICES[priced.kind][grade]}`).join(' · ')}
+        </p>
+      )}
       <ul className="space-y-0.5 rounded-lg border border-white/10 bg-white/[0.02] p-1"
         role={selectable ? 'radiogroup' : undefined} aria-label={choice ? `${activeProvider.label} ${choice.noun} models` : undefined}>
         {models.map(model => (
-          <ModelRow key={model.id} model={model} selectable={selectable}
+          <ModelRow key={model.id} model={model} selectable={selectable} energy={priced?.kind}
             reasoningLevel={selectable && model.reasoning?.levels.some(level => level === reasoning[model.id]) ? reasoning[model.id] : undefined}
             selected={model.id === selectedId} onSelect={() => setSaved(model.id)} />
         ))}
@@ -330,7 +361,7 @@ export function ModelRouterPanel({ endpoint = '/api/model-router' }: { endpoint?
           const Icon = CAPABILITY_ICONS[id];
           return (
             <button key={id} type="button" role="tab" aria-selected={active === id} onClick={() => setActive(id)}
-              className={`model-router-touch flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors ${['audio', 'video', '3d'].includes(id) ? 'col-span-2' : 'col-span-3'} ${active === id
+              className={`host-touch flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors ${['audio', 'video', '3d'].includes(id) ? 'col-span-2' : 'col-span-3'} ${active === id
                 ? 'bg-cyan-500/15 text-cyan-100'
                 : 'text-white/55 hover:bg-white/5 hover:text-white/85'}`}>
               <Icon aria-hidden="true" size={13} />
@@ -352,52 +383,9 @@ export function ModelRouterPanel({ endpoint = '/api/model-router' }: { endpoint?
   );
 }
 
-/**
- * The Model Router over the page: a sheet on phones, a dialog on larger
- * screens. Escape, the close button or a tap outside closes it, and focus goes
- * back where it came from.
- */
+/** The Model Router over the page (see `HostDialog`). */
 export function ModelRouterDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const titleId = useId();
-  const closeButton = useRef<HTMLButtonElement>(null);
-  const close = useRef(onClose);
-  close.current = onClose;
-
-  useEffect(() => {
-    if (!open) return;
-    const returnTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    closeButton.current?.focus();
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') close.current(); };
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = overflow;
-      returnTo?.focus();
-    };
-  }, [open]);
-
-  if (!open) return null;
-  return createPortal(
-    <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-6"
-      onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId}
-        className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-white/10 bg-[#05070d] px-3 pb-[calc(0.9rem+env(safe-area-inset-bottom,0px))] pt-3 text-white shadow-2xl sm:rounded-2xl sm:px-4"
-        style={{ fontFamily: 'var(--font-sans)' }}>
-        <div className="mb-2.5 flex items-center justify-between gap-3">
-          <h2 id={titleId} className="text-sm font-semibold tracking-wide">Model Router</h2>
-          <button ref={closeButton} type="button" aria-label="Close Model Router" onClick={onClose}
-            className="model-router-touch grid h-8 w-8 place-items-center rounded-full border border-white/10 text-white/60 hover:bg-white/5 hover:text-white">
-            <X aria-hidden="true" size={15} />
-          </button>
-        </div>
-        <ModelRouterPanel />
-      </div>
-    </div>,
-    // Rendered at the body so a blurred or sticky header cannot trap the overlay.
-    document.body,
-  );
+  return <HostDialog open={open} onClose={onClose} title="Model Router"><ModelRouterPanel /></HostDialog>;
 }
 
 /** Gear button that opens the Model Router over any Workshop page. */
@@ -407,7 +395,7 @@ export function ModelRouterGear({ className = '' }: { className?: string }) {
     <>
       <button type="button" aria-label="Model Router settings" title="Model Router" aria-haspopup="dialog" aria-expanded={open}
         onClick={() => setOpen(true)}
-        className={`model-router-touch inline-grid h-9 w-9 shrink-0 place-items-center rounded-full border border-neutral-700/50 bg-neutral-900/80 text-neutral-300 shadow-lg backdrop-blur transition-colors hover:bg-neutral-800 hover:text-white ${className}`}>
+        className={`host-touch inline-grid h-9 w-9 shrink-0 place-items-center rounded-full border border-neutral-700/50 bg-neutral-900/80 text-neutral-300 shadow-lg backdrop-blur transition-colors hover:bg-neutral-800 hover:text-white ${className}`}>
         <Settings aria-hidden="true" size={17} />
       </button>
       <ModelRouterDialog open={open} onClose={() => setOpen(false)} />

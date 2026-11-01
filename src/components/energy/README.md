@@ -75,7 +75,7 @@ provider call and durably records the provider result before settlement. An
 unknown provider outcome keeps the hold and fails closed on retry instead of
 calling the provider twice. There is no client-authorized refund. Any future
 settled-charge refund must be an append-only server adjustment that preserves
-  the original charge. The current catalog labels chapter (1), image (3), short cue (3), long cue
+  the original charge. The current catalog labels chapter (2), image (5), short cue (3), long cue
   (15), soundscape (20), and video (30–50) as **projected**. A variable video reservation requires
   a trusted whole-number quote in that range; no current generation owner calls this boundary.
 
@@ -102,6 +102,11 @@ or verified against a production deployment.
 
 ## Workshop history
 
+- **2026-11-01 grades** — Chapters cost 2 Energy. `shared/energyGrades.ts` sorts each chapter,
+  image and live model into Mortal, Immortal or Heaven, with one Energy price per grade: chapter
+  2 / 4 / 8, image 5 / 10 / 20, live talk 1 / 2 / 3 a started minute. Mortal equals the catalog
+  price. Chapter narration is not priced yet. The Model Router shows each model's grade and price;
+  the Usage page prices what this device made.
 - **2026-10-09 the Energy badge** — Every Energy number wears one badge: the Energy mark and
   the number in a gold-outlined pill, a balance (`EnergyAmount`, so the Profile home, the
   Store and the Energy page) or a cost (`EnergyActionCost`). `EnergyCostMeter` puts an

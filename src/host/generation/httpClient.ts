@@ -1,5 +1,6 @@
 import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessGenerationServerInfo, type HarnessArcRequest, type HarnessHoldingsFixRequest, type HarnessLookRequest, type HarnessTagRequest } from '@seihouse/sen/harness-generation';
 import { readReasoningPreference } from './modelPreference';
+import { recordUsage } from '../usage/usageLog';
 
 const withReasoningLevel = <T extends { model: string }>(request: T): T & { reasoningLevel?: string } => {
   const reasoningLevel = typeof window === 'undefined' ? undefined : readReasoningPreference(request.model);
@@ -73,15 +74,16 @@ export class HarnessGenerationHttpClient implements HarnessGenerationModelAdapte
     return this.post(request);
   }
 
-  async arcOperation(request: HarnessArcRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
+  async arcOperation(request: HarnessArcRequest): Promise<HarnessGenerationResponse> { return this.post(request, 'Arc planning'); }
 
-  async fixHoldings(request: HarnessHoldingsFixRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
+  async fixHoldings(request: HarnessHoldingsFixRequest): Promise<HarnessGenerationResponse> { return this.post(request, 'Holdings'); }
 
-  async describeLooks(request: HarnessLookRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
+  async describeLooks(request: HarnessLookRequest): Promise<HarnessGenerationResponse> { return this.post(request, 'Looks'); }
 
-  async tagChapter(request: HarnessTagRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
+  async tagChapter(request: HarnessTagRequest): Promise<HarnessGenerationResponse> { return this.post(request, 'Tagging'); }
 
-  private async post(request: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest | HarnessTagRequest): Promise<HarnessGenerationResponse> {
+  /** `upkeep` names a story-upkeep step; without it the call is a chapter. Either is recorded for the Usage page. */
+  private async post(request: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest | HarnessTagRequest, upkeep?: string): Promise<HarnessGenerationResponse> {
     const token = this.accessToken?.()?.trim();
     const response = await fetch(this.endpoint, {
       method: 'POST',
@@ -96,6 +98,14 @@ export class HarnessGenerationHttpClient implements HarnessGenerationModelAdapte
       body: JSON.stringify('operation' in request && request.operation === 'tag-chapter' ? request : withReasoningLevel(request)),
     });
     if (!response.ok) throw new HarnessGenerationRequestError(await responseError(response), response.status);
-    return parseGenerationResponse(await response.json());
+    const answer = parseGenerationResponse(await response.json());
+    const { model, usage } = answer.providerReceipt;
+    recordUsage({
+      kind: upkeep ? 'story-upkeep' : 'chapter', task: upkeep, model: typeof model === 'string' ? model : request.model,
+      inputTokens: usage?.inputTokens, outputTokens: usage?.outputTokens,
+      // The server estimates from the text when a provider reports no count.
+      tokensEstimated: usage?.source === 'estimated' ? true : undefined,
+    });
+    return answer;
   }
 }

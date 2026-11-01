@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FamiliarLive } from '@seihouse/library/familiar';
 import { useModelPreference } from '../generation/modelPreference';
+import { recordUsage } from '../usage/usageLog';
 import { createFamiliarGeminiLive } from './live';
 import { createFamiliarOpenAiLive } from './openaiLive';
 
@@ -37,6 +38,31 @@ export const chooseLiveModel = (offer: FamiliarLiveOffer, preferred?: string) =>
   offer.models.find(model => model.id === preferred) ?? { id: offer.model, provider: offer.provider };
 
 /**
+ * Records each conversation for the Usage page: its model and how long it ran,
+ * from the moment it connected until it ended or the reader hung up. A talk
+ * that never connected is not recorded.
+ */
+export function withLiveUsage(live: FamiliarLive, model: string, now: () => number = Date.now): FamiliarLive {
+  return {
+    start(brief, events, options) {
+      let connectedAt: number | undefined;
+      let recorded = false;
+      const record = () => {
+        if (recorded || connectedAt === undefined) return;
+        recorded = true;
+        recordUsage({ kind: 'live', model, seconds: Math.max(0, Math.round((now() - connectedAt) / 1_000)) });
+      };
+      const session = live.start(brief, {
+        ...events,
+        connected: () => { connectedAt ??= now(); events.connected(); },
+        ended: (problem, unavailable) => { record(); events.ended(problem, unavailable); },
+      }, options);
+      return { ...session, end: () => { record(); session.end(); }, send: text => session.send(text) };
+    },
+  };
+}
+
+/**
  * Live talk on the model the Router chose (Model Router → Live speech), or the
  * server's own (GPT-Live or Gemini Live), once the server says it can; until
  * then, or without it, the device voice.
@@ -53,7 +79,7 @@ export function useFamiliarLive(): FamiliarLive | undefined {
   useEffect(() => {
     if (!offer) { setLive(undefined); return; }
     const chosen = chooseLiveModel(offer, preferred);
-    setLive(chosen.provider === 'openai' ? createFamiliarOpenAiLive({ model: chosen.id }) : createFamiliarGeminiLive({ model: chosen.id }));
+    setLive(withLiveUsage(chosen.provider === 'openai' ? createFamiliarOpenAiLive({ model: chosen.id }) : createFamiliarGeminiLive({ model: chosen.id }), chosen.id));
   }, [offer, preferred]);
   return live;
 }

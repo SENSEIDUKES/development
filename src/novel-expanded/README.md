@@ -1,5 +1,6 @@
 # NovelExpanded app
 
+- **2026-11-01** — Settings › Advanced Tools › Usage: what this device made (chapters, pictures, Familiar talk, worlds) and its Energy, with a Behind the scenes view of models and token counts. Recorded in this browser for 90 days (`src/host/usage/`). Chapters cost 2 Energy.
 - **2026-11-01** — Settings › Advanced Tools › Model Router (was Aether Router) opens the Model Router.
 - **2026-10-30** — **The author's world view.** Tapping a world under Your
   worlds in Create opens it as its author sees it (`AuthorWorldView`,

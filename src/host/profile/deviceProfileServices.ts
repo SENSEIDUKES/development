@@ -53,6 +53,8 @@ export interface DeviceProfileServicesOptions {
   portraits?: DevicePortraitMaker;
   /** Opens the host's Model Router (Settings › Advanced Tools). */
   openModelRouter?: () => void;
+  /** Opens the host's Usage page (Settings › Advanced Tools). */
+  openUsage?: () => void;
 }
 
 /** The host's profile picture maker. */
@@ -63,7 +65,7 @@ export interface DevicePortraitMaker {
   keep(portrait: Blob): Promise<string>;
 }
 
-export function createDeviceProfileServices({ store, familiars, celestialStore, soundPreferences, menuMusic, storySeeds, notYetBuilt, portraits, openModelRouter }: DeviceProfileServicesOptions): UserProfileServices {
+export function createDeviceProfileServices({ store, familiars, celestialStore, soundPreferences, menuMusic, storySeeds, notYetBuilt, portraits, openModelRouter, openUsage }: DeviceProfileServicesOptions): UserProfileServices {
   const records = async () => storySeeds ? storySeeds.repository.list(storySeeds.ownerId) : [];
   const generationNote = notYetBuilt?.features.includes('portrait-generation') ? notYetBuilt.note : undefined;
   return {
@@ -72,7 +74,7 @@ export function createDeviceProfileServices({ store, familiars, celestialStore, 
     celestialStore,
     soundPreferences,
     menuMusic,
-    useController: props => useDeviceProfileController(store, props, { familiars, generationNote, portraits, openModelRouter }),
+    useController: props => useDeviceProfileController(store, props, { familiars, generationNote, portraits, openModelRouter, openUsage }),
     // The host signs its one device reader in; the Spirit Link gate never shows.
     authenticate: noop,
     localOnlyMode: false,
@@ -102,7 +104,7 @@ export function createDeviceProfileServices({ store, familiars, celestialStore, 
 export function useDeviceProfileController(
   store: DeviceProfileStore,
   { currentUser, stories }: UserProfileControllerProps,
-  { familiars, generationNote, portraits, openModelRouter }: { familiars: readonly FamiliarOption[]; generationNote?: string; portraits?: DevicePortraitMaker; openModelRouter?: () => void },
+  { familiars, generationNote, portraits, openModelRouter, openUsage }: { familiars: readonly FamiliarOption[]; generationNote?: string; portraits?: DevicePortraitMaker; openModelRouter?: () => void; openUsage?: () => void },
 ): UserProfileController {
   const record = useDeviceProfile(store);
   const profile = currentUser ? record : null;
@@ -392,6 +394,7 @@ export function useDeviceProfileController(
     syncStatus: 'idle',
     lastSavedTime: profile ? new Date(profile.updatedAt) : null,
     setIsSettingsOpen: open => { if (open) openModelRouter?.(); },
+    setIsUsageOpen: openUsage ? open => { if (open) openUsage(); } : undefined,
     setIsShortcutsOpen: noop,
     handleExportLibrary: noop,
     handleImportLibrary: noop,

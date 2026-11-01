@@ -127,10 +127,10 @@ describe('Reusable Energy pieces', () => {
 
   it('floats the price up as each new result arrives, never for those already there', async () => {
     await render(<EnergyCostMeter actionId="chapter.generate" made={3} />);
-    expect(container.querySelector('.energy-action-cost')?.textContent).toBe('1');
+    expect(container.querySelector('.energy-action-cost')?.textContent).toBe('2');
     expect(container.querySelector('[data-energy-spend]')).toBeNull();
     await render(<EnergyCostMeter actionId="chapter.generate" made={4} />);
-    expect(container.querySelector('[data-energy-spend]')?.getAttribute('data-energy-spend')).toBe('1');
+    expect(container.querySelector('[data-energy-spend]')?.getAttribute('data-energy-spend')).toBe('2');
     expect(container.querySelectorAll('.energy-spend-floater__item')).toHaveLength(1);
   });
 
@@ -152,9 +152,9 @@ describe('Reusable Energy pieces', () => {
     await render(<><EnergyActionCost actionId="chapter.generate" /><EnergyActionCost actionId="image.generate" /><EnergyActionCost actionId="narration.generate" /><EnergyActionCost price={7} /></>);
     const costs = Array.from(container.querySelectorAll('.energy-action-cost'));
     // The Energy mark is drawn artwork now, so only the number is text.
-    expect(costs.map(cost => cost.textContent)).toEqual(['1', '5', '7']);
+    expect(costs.map(cost => cost.textContent)).toEqual(['2', '5', '7']);
     expect(costs.every(cost => cost.querySelector('[data-sen-navigation-icon="energy"]'))).toBe(true);
-    expect(costs[0].getAttribute('aria-label')).toBe('Costs 1 Energy (projected)');
+    expect(costs[0].getAttribute('aria-label')).toBe('Costs 2 Energy (projected)');
     expect(ENERGY_PRICE_CATALOG.find(entry => entry.actionId === 'narration.generate')?.price).toBeNull();
   });
 

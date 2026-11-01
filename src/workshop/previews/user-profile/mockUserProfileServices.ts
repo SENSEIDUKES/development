@@ -98,6 +98,8 @@ export interface MockUserProfileServicesOptions {
   onSignIn: (account: AppUser) => void;
   /** Opens the Model Router, as the app's Settings › Advanced Tools does. */
   onOpenModelRouter?: () => void;
+  /** Opens the Usage page, as the app's Settings › Advanced Tools does. */
+  onOpenUsage?: () => void;
 }
 
 export const WORKSHOP_SOUND_PREFERENCES = createLocalReaderPreferenceStorage('workshop.reader.');
@@ -113,6 +115,7 @@ export function createMockUserProfileServices({
   logExcludedAction,
   onSignIn,
   onOpenModelRouter,
+  onOpenUsage,
 }: MockUserProfileServicesOptions): UserProfileServices {
   const scenario = getPreviewScenario(state);
 
@@ -861,6 +864,7 @@ export function createMockUserProfileServices({
         if (onOpenModelRouter) onOpenModelRouter();
         else logExcludedAction('Model Router (no router in this preview)');
       },
+      setIsUsageOpen: onOpenUsage ? open => { if (open) onOpenUsage(); } : undefined,
       setIsShortcutsOpen: open => {
         if (open) logExcludedAction('Shortcuts manual modal (production app shell)');
       },

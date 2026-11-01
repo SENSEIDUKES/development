@@ -982,3 +982,4 @@ existing Profile-only behavior.
   and sections as outer panels. The Cave keeps its own backdrop, portrait ring
   and motes; the accent and tint preferences still apply through its own scope.
 - **2026-11-01 — Model Router:** Settings › Advanced Tools › Aether Router is renamed Model Router. In the app and this Workshop preview it opens the Model Router; `openModelRouter` (device services) and `onOpenModelRouter` (Workshop mock) carry the tap.
+- **2026-11-01 — Usage:** Settings › Advanced Tools shows a Usage button beside Model Router when the host provides `setIsUsageOpen` (device services `openUsage`, Workshop mock `onOpenUsage`). In the app and this Workshop preview it opens the Usage page, which reads this browser's own usage record.

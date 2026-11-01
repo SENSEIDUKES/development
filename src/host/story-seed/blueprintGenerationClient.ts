@@ -1,5 +1,6 @@
 import { type BlueprintGenerationPayload, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { isLocalDevelopmentModel, readReasoningPreference } from '../generation/modelPreference';
+import { recordUsage } from '../usage/usageLog';
 
 const ENDPOINT = '/api/generate-blueprint';
 /** Longer than the server's 180-second route, so the server's own answer, a deadline included, arrives first. */
@@ -105,8 +106,12 @@ export const requestWorldBlueprint = async (
   accessToken: string,
   signal?: AbortSignal,
   model?: string,
-): Promise<WorldBlueprint> => await postBlueprintRequest(withChapterModel(payload, model), accessToken, {
-  missingToken: 'Enter the Development access token before manifesting the World Blueprint.',
-  failed: status => `World Blueprint generation failed with status ${status}.`,
-  timedOut: 'World Blueprint generation timed out. No Story Seed data was changed; please retry.',
-}, signal) as unknown as WorldBlueprint;
+): Promise<WorldBlueprint> => {
+  const blueprint = await postBlueprintRequest(withChapterModel(payload, model), accessToken, {
+    missingToken: 'Enter the Development access token before manifesting the World Blueprint.',
+    failed: status => `World Blueprint generation failed with status ${status}.`,
+    timedOut: 'World Blueprint generation timed out. No Story Seed data was changed; please retry.',
+  }, signal);
+  recordUsage({ kind: 'blueprint', model });
+  return blueprint as unknown as WorldBlueprint;
+};

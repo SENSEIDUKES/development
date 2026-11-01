@@ -18,7 +18,7 @@ describe('trusted Library usage adapter', () => {
     const results = await Promise.allSettled(['a', 'b'].map(storyId => port.authorize({ operationId: 'shared', capability: 'chapter', storyId })));
     expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
     expect(results.filter(result => result.status === 'rejected')).toHaveLength(1);
-    expect((await service.getBalance(principal)).held).toBe(1);
+    expect((await service.getBalance(principal)).held).toBe(2);
   });
   it('reserves once, recovers without another hold, and settles once', async () => {
     const { service, port } = setup();
@@ -27,10 +27,10 @@ describe('trusted Library usage adapter', () => {
     expect(a).toEqual(b);
     expect(a.state).toBe('authorized');
     expect(await port.recover('one')).toEqual(a);
-    expect((await service.getBalance(principal)).held).toBe(1);
+    expect((await service.getBalance(principal)).held).toBe(2);
     await Promise.all([port.settle(a.receipt),port.settle(a.receipt)]);
     expect(await port.recover('one')).toEqual({ receipt: a.receipt, state: 'settled' });
-    expect(await service.getBalance(principal)).toEqual({ balance:499, held:0, available:499 });
+    expect(await service.getBalance(principal)).toEqual({ balance:498, held:0, available:498 });
   });
   it('releases idempotently and refuses a receipt from another verified account', async () => {
     const {service,port}=setup();

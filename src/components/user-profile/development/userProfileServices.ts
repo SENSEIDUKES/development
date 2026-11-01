@@ -63,6 +63,8 @@ export interface UserProfileController {
   syncStatus: string;
   lastSavedTime: Date | null;
   setIsSettingsOpen: (open: boolean) => void;
+  /** Opens the host's Usage page (Settings › Advanced Tools). Without it, no Usage button shows. */
+  setIsUsageOpen?: (open: boolean) => void;
   setIsShortcutsOpen: (open: boolean) => void;
   handleExportLibrary: () => void;
   handleImportLibrary: (event: React.ChangeEvent<HTMLInputElement>) => void;

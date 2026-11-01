@@ -489,7 +489,7 @@ describe('Cultivator Cave home', () => {
     expect(panel.querySelector('[data-economy-section="energy"]')?.textContent).toContain('1 Energy = $0.02');
     expect(panel.querySelector('[data-economy-section="qi"]')?.textContent).toContain('1 QI = $0.002');
     expect(panel.querySelector('[data-economy-section="dao-xp"]')?.textContent).toContain('Master50,000 DAO XP');
-    expect(panel.querySelector('[data-energy-action="chapter.generate"]')?.textContent).toContain('1');
+    expect(panel.querySelector('[data-energy-action="chapter.generate"]')?.textContent).toContain('2 Energy');
     expect(panel.querySelector('[data-energy-action="image.generate"]')?.textContent).toContain('5');
     expect(panel.querySelector('[data-energy-action="short-cue.generate"]')?.textContent).toContain('3');
     expect(panel.querySelector('[data-energy-action="long-cue.generate"]')?.textContent).toContain('15');

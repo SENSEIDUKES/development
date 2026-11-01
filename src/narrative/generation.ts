@@ -4,6 +4,7 @@ import type { SpeakerAttachment } from './speech';
 import type { CodexEntry, CodexEntryKind, HoldingChangeAttachment, HoldingsSection } from './holdings';
 import type { WorldCard, WorldRecord } from './worldRecord';
 import type { AppearanceAttachment, AppearanceEntity, AppearanceEvent, AppearancesSection, ChapterLooks, Look } from './appearances';
+import type { StatusAttachment } from './statuses';
 import type { SoundWord } from '../audio/soundWords';
 import type { AudioTags } from '../audio/audioTags';
 import type { SoundtrackVocabulary } from '../audio/soundtrackVocabulary';
@@ -37,8 +38,9 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * world record a home of its own on the workspace, so a chapter can add a card
  * to it, seeded from each story's active Foundation; 40 numbers every saved
  * workspace with its revision, so a save made from an older one (another tab)
- * is refused instead of overwriting it. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 41 as const;
+ * is refused instead of overwriting it; 42 adds each chapter's optional
+ * statuses (how a character is now, from the status tag). */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 42 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -574,7 +576,7 @@ export type HarnessModelPlan = string | {
  */
 export interface HarnessChapterAuthoring {
   editedAt: string;
-  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment | AppearanceAttachment>;
+  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment | AppearanceAttachment | StatusAttachment>;
 }
 
 export interface HarnessChapterMetrics {
@@ -610,6 +612,8 @@ export interface HarnessAcceptedChapterDraft {
    * as written; they resolve to Codex entries when the chapter commits.
    */
   appearances?: AppearanceAttachment[];
+  /** Every status the tagger tagged (how a character is now), on the sentence its tag points at. Names resolve when the chapter commits. */
+  statuses?: StatusAttachment[];
   /** The chapter's music and atmosphere, from the writer's soundscape and atmosphere tags. */
   scene?: HarnessChapterScene;
   title: string;
@@ -668,6 +672,7 @@ export interface HarnessWarning {
     | 'soundtrack_incomplete'
     | 'holding_tags_incomplete'
     | 'appearance_tags_incomplete'
+    | 'status_tags_incomplete'
     /** A note the tagger wrote could not be placed on its paragraph (its words are not there, or not there once) and was dropped on its own. */
     | 'tag_note_dropped';
   message: string;
@@ -952,6 +957,12 @@ export interface HarnessChapter {
    * the Appearance skill. Who has appeared is worked out from these, never stored.
    */
   appearances?: AppearanceAttachment[];
+  /**
+   * How characters are now: one status per status tag, on the sentence it
+   * points at, with its name resolved to a Codex entry. Each character's
+   * status now is worked out from these, never stored.
+   */
+  statuses?: StatusAttachment[];
   /**
    * The looks the look step wrote down after the chapter committed, one per
    * appearance it read. Absent when it found nothing to describe, or did not run.
@@ -1374,6 +1385,8 @@ export interface HarnessTagSubject {
   aliases?: string[];
   /** The one subject whose tags use the main character's own tag instead of a name. */
   mainCharacter?: true;
+  /** A character's status going into the chapter, when a status tag ever gave one. */
+  status?: string;
 }
 
 /**

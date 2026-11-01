@@ -3,6 +3,7 @@ import { harnessArcContext, harnessStoryMode } from './arcState';
 import { projectCanonicalState } from './canonicalProjection';
 import { deriveHoldings, holdingsSection } from './holdings';
 import { appearancesSection, deriveAppearances } from './appearances';
+import { deriveStatuses } from './statuses';
 import { storyPointOfView } from './pointOfView';
 import { protagonistNames } from './speakers';
 import { semanticReaderChanges } from './readerEdits';
@@ -179,10 +180,8 @@ export const compileStoryInformationPacket = (
   // Beside it, who and what is already on the page, with each look, worked out
   // again from the committed chapters' appearances: the most recently seen
   // first, as many as its own counts allow.
-  const appearances = appearancesSection(deriveAppearances({
-    entries: state.codexEntries.filter(entry => entry.storyId === story.id),
-    chapters,
-  }));
+  const storyEntries = state.codexEntries.filter(entry => entry.storyId === story.id);
+  const appearances = appearancesSection(deriveAppearances({ entries: storyEntries, chapters }), deriveStatuses(chapters), storyEntries);
 
   const sections: PacketSectionMeasurement[] = [
     measure('currentStory', currentStory),

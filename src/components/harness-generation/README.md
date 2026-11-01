@@ -37,6 +37,23 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-31 (Status, the second information tag):** SENSEI: finish the
+  information tags before name colors link to the Codex, and build each the
+  way the others work, simply. Status is the appearance tag's twin: the
+  tagger tags the sentence where a character's condition changes,
+  `[[status: Name | how they are now]]` (wounded, healed, poisoned, captured,
+  freed, sealed, transformed, dead) in a few plain words; rank stays the
+  Holdings rank tag. The HARNESS reads it with the chapter's other tags
+  (`placeStatuses`), saves a `StatusAttachment` on its sentence, and resolves
+  its name to a Codex character when the chapter commits, with the same
+  resolver as appearances and holdings. A character's status now is the
+  latest tag in story order (`deriveStatuses`), never stored. The tagger
+  reads each character's status so far beside their name; the writer reads
+  it in Appeared beside the look ("Elder Qin (character, dead): …"); the
+  Codex card shows it as a chip with its passage; the author's chapter view
+  lights it as its own kind. A chapter tagged before today says so instead of
+  "found nothing". Schema 42 (an optional field). Writer Instructions:
+  Status and the tagger's role line, dated.
 - **2026-10-31 (a voice that fails is named, never silently the narrator's):**
   SENSEI on Windows (Edge): every quoted line paused two or three seconds,
   then was read in the narrator's voice. The script was right (the Vessel

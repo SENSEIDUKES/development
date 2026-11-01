@@ -18,6 +18,7 @@ import { normalizeIdentityLabel } from './canonicalProjection';
 import { factionNamed, type DeclaredFaction } from './factions';
 import { createCodexEntryResolver, holdingName, pointedSentence, type CodexEntryResolver, type DeclaredCharacter, type HoldingPassage } from './holdings';
 import { isMainCharacterTag } from './speakers';
+import type { CurrentStatus } from './statuses';
 
 /**
  * Appearances in the HARNESS: the writer's appears and look tags read into
@@ -471,16 +472,31 @@ export const APPEARED_SECTION_THINGS = 10;
  * most recently first, each with its look's one line once it is written down.
  * Exact names only; how to use them is the Appearance skill's job.
  */
-export function appearancesSection(state: AppearancesState): AppearancesSection {
+export function appearancesSection(state: AppearancesState, statuses?: ReadonlyMap<string, CurrentStatus>, entries: readonly CodexEntry[] = []): AppearancesSection {
+  const statusOf = (subject: AppearanceSubject) => (subject.entity === 'character' ? statuses?.get(subject.key)?.status : undefined);
   const entryOf = (subject: AppearanceSubject): AppearancesSectionEntry => ({
     name: subject.name,
     entity: subject.entity,
     ...(subject.mainCharacter ? { mainCharacter: true as const } : {}),
     ...(appearedLookLine(subject) ? { look: appearedLookLine(subject)! } : {}),
+    ...(statusOf(subject) ? { status: statusOf(subject)! } : {}),
   });
   const recent = (left: AppearanceSubject, right: AppearanceSubject) => (state.recency.get(right.key) ?? 0) - (state.recency.get(left.key) ?? 0);
   const main = state.subjects.find(subject => subject.mainCharacter);
   const characters = state.subjects.filter(subject => subject.entity === 'character' && !subject.mainCharacter).sort(recent).slice(0, APPEARED_SECTION_CHARACTERS);
   const things = state.subjects.filter(subject => subject.entity === 'thing').sort(recent).slice(0, APPEARED_SECTION_THINGS);
-  return { entries: [...(main ? [main] : []), ...characters, ...things].map(entryOf) };
+  // Someone the story gave a status but never tagged appearing still reaches the writer, with that status,
+  // so a death tagged on its own is never forgotten.
+  // Measured against who is actually listed, so a character the counts leave out still keeps their status;
+  // the most recent statuses first, as many as the characters' own count.
+  const listed = new Set([...(main ? [main] : []), ...characters, ...things].map(subject => subject.key));
+  const statusOnly = [...statuses ?? []].filter(([key]) => !listed.has(key))
+    .sort(([, left], [, right]) => right.passage.chapterNumber - left.passage.chapterNumber)
+    .slice(0, APPEARED_SECTION_CHARACTERS)
+    .map(([key, current]): AppearancesSectionEntry => {
+    const entry = entries.find(candidate => candidate.id === key);
+    return { name: entry?.name ?? current.name, entity: 'character', ...(entry?.mainCharacter ? { mainCharacter: true as const } : {}), status: current.status };
+  });
+  const mainStatusOnly = statusOnly.filter(entry => entry.mainCharacter);
+  return { entries: [...(main ? [entryOf(main)] : mainStatusOnly), ...characters.map(entryOf), ...statusOnly.filter(entry => !entry.mainCharacter), ...things.map(entryOf)] };
 }

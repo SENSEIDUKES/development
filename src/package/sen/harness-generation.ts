@@ -96,6 +96,7 @@ export { chapterSoundtrack, type ChapterSoundtrackReading } from '../../componen
 export { SEN_SPEAKERS_INSTRUCTIONS } from '../../components/harness-generation/shared/speakersSkill';
 export { SEN_HOLDINGS_INSTRUCTIONS } from '../../components/harness-generation/shared/holdingsSkill';
 export { SEN_APPEARANCE_INSTRUCTIONS } from '../../components/harness-generation/shared/appearanceSkill';
+export { SEN_STATUS_INSTRUCTIONS } from '../../components/harness-generation/shared/statusSkill';
 export { HARNESS_TAG_RULES } from '../../components/harness-generation/shared/tagRules';
 export { isStraySoundTag, settleStraySoundTags, trimLeadingStrayPunctuation } from '../../components/harness-generation/shared/soundTagRepair';
 export {
@@ -178,6 +179,17 @@ export {
   type ResolvedAppearances,
 } from '../../components/harness-generation/shared/appearances';
 export {
+  deriveStatuses,
+  placeStatuses,
+  readStatusTag,
+  resolveStatuses,
+  statusKey,
+  statusOfEntry,
+  type CurrentStatus,
+  type ReadStatusTag,
+  type StatusPlacement,
+} from '../../components/harness-generation/shared/statuses';
+export {
   LOOK_DECLARED_CHARACTERS,
   LOOK_PASSAGE_CHARACTERS,
   LOOK_SUBJECT_LIMIT,
@@ -205,6 +217,7 @@ export {
 } from '../../components/harness-generation/shared/tagger';
 export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';
+export * from '../../narrative/statuses';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
 export { HarnessReaderSession, type HarnessReaderWriting, type ReaderHostTools, type ReaderSoundAuthoring } from '../../components/harness-generation/development/HarnessReaderSession';

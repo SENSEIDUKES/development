@@ -96,7 +96,7 @@ describe('HARNESS appearances through appears and look tags', () => {
     const request = generate.mock.calls[0][0] as HarnessGenerationRequest;
     // The writer is taught no tags, and the first chapter is told nobody has appeared yet.
     expect(request.capaPrompt.skills.map(skill => skill.slot)).toEqual(['author']);
-    expect(buildHarnessGenerationPrompt(request).userPrompt).toContain('APPEARED (every character and thing already on the page, by exact name, with its look; the main character first)\nNobody and nothing has appeared yet.');
+    expect(buildHarnessGenerationPrompt(request).userPrompt).toContain('APPEARED (every character and thing already on the page, by exact name, with its look and any status; the main character first)\nNobody and nothing has appeared yet.');
 
     const state = controller.snapshot();
     const [chapter] = state.chapters;

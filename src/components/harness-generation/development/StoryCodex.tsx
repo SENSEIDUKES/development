@@ -287,6 +287,9 @@ function CharacterProfile({ character, art, onBack, onReadPassage }: { character
       {character.firstSeen
         ? <PassageChip passage={character.firstSeen} label={`First seen · Ch. ${character.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
         : <span className="inline-flex min-h-8 items-center rounded-full border border-(--reader-light)/12 bg-(--reader-light)/[0.04] px-2.5 text-[11px] text-(--reader-text-muted)">{AT_THE_START}</span>}
+      {character.status && <span data-testid="codex-status" className="contents">
+        <PassageChip passage={character.status.passage} label={`${character.status.text} · Ch. ${character.status.passage.chapterNumber}`} onReadPassage={onReadPassage} />
+      </span>}
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>

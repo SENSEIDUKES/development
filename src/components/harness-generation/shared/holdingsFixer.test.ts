@@ -343,6 +343,27 @@ describe('Holdings fixer: the answers', () => {
     expect(result.chapter.paragraphs[0].slice(moved.startOffset, moved.endOffset)).toBe('Elder Qin watched from the door.');
   });
 
+  it('treats a status like an appearance: never rewrites its sentence, and moves it with the text', async () => {
+    const { state, latest: written_ } = await written(reply([SWORD, '[[gained: MC | Spirit Pill]] He pocketed a spirit pill.']),
+      reply(['[[lost: MC | Spirit Pill | 2]] Ye Chen swallowed two pills at once. Elder Qin fell dead.']));
+    const paragraph = written_.paragraphs[0];
+    const start = paragraph.indexOf('Elder Qin fell dead.');
+    const status = (startOffset: number, endOffset: number) => ({
+      id: 'status:1', kind: 'status' as const,
+      anchor: { level: 'span' as const, blockId: 'c2-p1', startOffset, endOffset, selectedText: paragraph.slice(startOffset, endOffset) },
+      payload: { origin: 'harness' as const, subject: { name: 'Elder Qin' }, status: 'dead' },
+    });
+    const latest = { ...written_, statuses: [status(start, start + 'Elder Qin fell dead.'.length)] };
+    const answer = { case: 'c1', outcome: 'prose', replacement: 'Ye Chen swallowed his last pill.', tags: '[[lost: MC | Spirit Pill]]', reason: 'One pill.' };
+    // A status on the sentence keeps it from being rewritten.
+    expect(apply(state, { ...latest, statuses: [status(0, 40)] }, [answer]).plan.cases[0].case.answers).toEqual(['record', 'fine', 'major']);
+    // A sentence before it is corrected, and the status moves with its words.
+    const { result } = apply(state, latest, [answer]);
+    expect(result.fixes[0].outcome).toBe('fixed-sentence');
+    const moved = result.chapter.statuses![0].anchor;
+    expect(result.chapter.paragraphs[0].slice(moved.startOffset, moved.endOffset)).toBe('Elder Qin fell dead.');
+  });
+
   it('points a merged name\'s appearances at the entry it joins', async () => {
     const { state, latest } = await written(reply([SWORD]),
       reply(['[[appears: Rusted Sword | thing]] [[gained: MC | Rusted Sword]] Ye Chen found a second rusted sword.']));

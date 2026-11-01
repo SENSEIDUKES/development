@@ -2,7 +2,7 @@ import { MAIN_CHARACTER_SPEAKER_TAG } from '../../../narrative/speech';
 
 /**
  * The HARNESS tag rules: what holds for every kind of tag a chapter carries
- * (sounds, speakers, holding changes, appearances, and the kinds still to
+ * (sounds, speakers, holding changes, appearances, statuses, and the kinds still to
  * come). They are said once, before the first kind's own teaching, so each
  * kind's own section carries only what it marks, its format, one example and
  * its few rules. How a tag names someone is said here once, for every kind

@@ -101,6 +101,8 @@ export interface AppearancesSectionEntry {
   mainCharacter?: true;
   /** The look's one line, once it is written down. */
   look?: string;
+  /** How they are now, when a status tag gave one. */
+  status?: string;
 }
 
 /**

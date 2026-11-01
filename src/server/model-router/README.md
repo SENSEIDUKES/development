@@ -17,7 +17,7 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 | Chapters | Gemini, OpenRouter, MiniMax, Anthropic, local LM Studio | Harness Generation, Holdings Fixer, Look Describer, Chapter Tagger (its own choice, else the chapter model), Story Seed Blueprint, Story Spark, Reader Translation |
 | Images | Gemini, OpenRouter, MiniMax | Story Cover, Image Lab, Profile Picture |
 | TTS | ElevenLabs | Codex Voice Quote |
-| Live voice | Gemini | Familiar Live Talk |
+| Live voice | OpenAI, Gemini | Familiar Live Talk |
 | Audio | Gemini | none yet (catalog only) |
 | Video | Gemini, MiniMax | No feature yet; MiniMax task adapter implemented, Veo catalog only |
 | 3D | Tripo AI | none yet (catalog only) |
@@ -50,7 +50,9 @@ any model call that is not registered. See AGENTS.md.
 | `HARNESS_GENERATION_MODELS` | Models pinned ahead of the catalog |
 | `*_DEFAULT_MODEL` | Default model per surface (otherwise Gemini 3.1 Flash Lite) |
 | `ELEVENLABS_API_KEY`, `ELEVENLABS_MODEL_ID` | TTS |
-| `FAMILIAR_LIVE_MODEL`, `FAMILIAR_LIVE_VOICE` | Live voice (default Gemini 3.8 Live, voice Puck); uses `GEMINI_API_KEY` |
+| `FAMILIAR_LIVE_MODEL` | Live voice model; by default the first listed whose key is set (GPT-Live 1 with `OPENAI_API_KEY`, else Gemini 3.8 Live with `GEMINI_API_KEY`) |
+| `FAMILIAR_LIVE_OPENAI_VOICE`, `FAMILIAR_LIVE_OPENAI_BACKEND` | GPT-Live's voice (default `ballad`) and its delegated model (default `gpt-5.4-mini`) |
+| `FAMILIAR_LIVE_VOICE` | Gemini Live's voice (default Puck) |
 | `TRIPO_API_KEY` | Tripo 3D model provider status |
 
 `GET /api/model-router` returns the read-only status (never key values).
@@ -149,6 +151,7 @@ read it.
 
 ## Workshop history
 
+- 2026-11-01 — Live voice adds OpenAI GPT-Live 1, serving first when `OPENAI_API_KEY` is set.
 - **2026-10-31** — A Blueprint the model leaves incomplete now says which
   parts are missing ("left out the factions"), in place of "could not produce
   a complete World Blueprint", and no longer names Gemini whatever the model

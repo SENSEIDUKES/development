@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import type { FamiliarLive, FamiliarLiveCall } from '@seihouse/library/familiar';
 import { createSavedAccessToken } from '../generation/accessToken';
 
@@ -62,8 +61,11 @@ export function liveCall(name: unknown, args: unknown): FamiliarLiveCall | undef
 
 /** What went wrong, in the words the phone or the server gave, short enough for a note. */
 export function describeFailure(why: unknown): string {
-  const text = why instanceof Error
-    ? (why.name && why.name !== 'Error' ? `${why.name}: ${why.message}` : why.message)
+  // A phone's microphone refusal is a DOMException, an Error in some browsers and not in others.
+  const error = why && typeof why === 'object' && 'message' in why ? why as { name?: unknown; message?: unknown } : undefined;
+  const name = typeof error?.name === 'string' && error.name !== 'Error' ? error.name : '';
+  const text = error
+    ? (name ? `${name}: ${String(error.message)}` : String(error.message))
     : typeof why === 'string' ? why : JSON.stringify(why);
   return (text || 'unknown').slice(0, 200);
 }
@@ -292,27 +294,4 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
       };
     },
   };
-}
-
-/** Whether the server can start live talk. Any failure reads as no, so the device voice stays. */
-export async function familiarLiveConfigured(request: typeof fetch = fetch): Promise<boolean> {
-  try {
-    const response = await request(ENDPOINT, { headers: { Accept: 'application/json' } });
-    if (!response.ok) return false;
-    const body = await response.json() as { configured?: unknown };
-    return body.configured === true;
-  } catch {
-    return false;
-  }
-}
-
-/** Live talk once the server says it can; until then (or without it), the device voice. */
-export function useFamiliarGeminiLive(): FamiliarLive | undefined {
-  const [live, setLive] = useState<FamiliarLive>();
-  useEffect(() => {
-    let current = true;
-    void familiarLiveConfigured().then(configured => { if (current && configured) setLive(createFamiliarGeminiLive()); });
-    return () => { current = false; };
-  }, []);
-  return live;
 }

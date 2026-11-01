@@ -4,7 +4,7 @@ import type { UserProfile } from '@seihouse/library/profile';
 import { WorkspaceHeaderAccessoryProvider, useLibraryBottomClearance } from '@seihouse/library/shell';
 import { defaultFamiliar, familiarCatalogueEntry } from '../host/familiar/catalogue';
 import { createFamiliarBrowserVoice } from '../host/familiar/voice';
-import { useFamiliarGeminiLive } from '../host/familiar/live';
+import { useFamiliarLive } from '../host/familiar/liveTalk';
 
 /** The space the Familiar keeps above the bottom bar and the music note floating over it. */
 const BOTTOM_GAP = 8;
@@ -32,7 +32,7 @@ export function AppFamiliar({ profile, present, reading = false, place, boundary
   // Changing the setting moves it at once.
   useEffect(() => { setMinimized(inHeader); }, [inHeader]);
   const [voice] = useState(createFamiliarBrowserVoice);
-  const live = useFamiliarGeminiLive();
+  const live = useFamiliarLive();
   const familiar = (familiarCatalogueEntry(profile.familiarId) ?? defaultFamiliar).definition;
   const clearance = useLibraryBottomClearance();
   const bottomInset = reading ? READER_BOTTOM : clearance ? clearance + BOTTOM_GAP : 0;

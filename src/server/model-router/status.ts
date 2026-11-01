@@ -79,11 +79,19 @@ const modelStatus = (
   isDefault: model.id === defaultModel,
 }));
 
-/** The live voice model: the server's choice (`FAMILIAR_LIVE_MODEL`) when the Router lists it. */
+/**
+ * The live voice model: the server's choice (`FAMILIAR_LIVE_MODEL`) when the
+ * Router lists it, otherwise the first listed whose provider key is set.
+ */
 export const liveModel = (environment: ModelEnvironment): string => {
   const configured = environment.FAMILIAR_LIVE_MODEL?.trim();
-  return LIVE_MODELS.some(model => model.id === configured) ? configured! : DEFAULT_LIVE_MODEL;
+  if (LIVE_MODELS.some(model => model.id === configured)) return configured!;
+  return LIVE_MODELS.find(model => providerKey(environment, model.provider))?.id ?? DEFAULT_LIVE_MODEL;
 };
+
+/** The provider that serves a live model. */
+export const liveModelProvider = (model: string): ModelProviderId =>
+  LIVE_MODELS.find(option => option.id === model)?.provider ?? 'gemini';
 
 /** Read-only view of the Model Router for the Workshop. Never includes a key value. */
 export function modelRouterStatus(environment: ModelEnvironment): ModelRouterStatus {
@@ -142,7 +150,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         description: 'Models that hear and answer in one stream, for the Familiar\'s live conversations.',
         consumers: consumersFor('live'),
         defaultModel: liveModel(environment),
-        providers: providerStatus(environment, ['gemini']),
+        providers: providerStatus(environment, ['openai', 'gemini']),
         models: modelStatus(environment, LIVE_MODELS, liveModel(environment), true),
       },
       {

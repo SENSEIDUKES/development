@@ -190,7 +190,7 @@ function TaggerSettings({ models, chapterModel }: { models: RouterModel[]; chapt
   };
   const providers = [...new Set(offered.map(model => model.provider))];
   const providerLabel: Record<RouterModel['provider'], string> = {
-    gemini: 'Google Gemini', openrouter: 'OpenRouter', minimax: 'MiniMax', anthropic: 'Anthropic', lmstudio: 'Local (LM Studio)', elevenlabs: 'ElevenLabs', tripo: 'Tripo AI',
+    gemini: 'Google Gemini', openrouter: 'OpenRouter', minimax: 'MiniMax', anthropic: 'Anthropic', lmstudio: 'Local (LM Studio)', elevenlabs: 'ElevenLabs', tripo: 'Tripo AI', openai: 'OpenAI',
   };
   return (
     <section aria-label="Chapter Tagger" className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-2">

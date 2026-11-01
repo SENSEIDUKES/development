@@ -17,7 +17,7 @@
 
 export type ModelEnvironment = Record<string, string | undefined>;
 export type ModelCapability = 'chapters' | 'images' | 'tts' | 'live' | 'audio' | 'video' | '3d';
-export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo' | 'lmstudio' | 'minimax' | 'anthropic';
+export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo' | 'lmstudio' | 'minimax' | 'anthropic' | 'openai';
 /** Providers that serve chapter-capable text models. */
 export type TextProviderId = 'gemini' | 'openrouter' | 'lmstudio' | 'minimax' | 'anthropic';
 export type ModelStage = 'current' | 'preview' | 'legacy';
@@ -82,6 +82,7 @@ export const MODEL_PROVIDERS: Record<ModelProviderId, { label: string; keyVariab
   openrouter: { label: 'OpenRouter', keyVariable: 'OPENROUTER_API_KEY', keyVariables: ['OPENROUTER_API_KEY'] },
   elevenlabs: { label: 'ElevenLabs', keyVariable: 'ELEVENLABS_API_KEY', keyVariables: ['ELEVENLABS_API_KEY'] },
   tripo: { label: 'Tripo AI', keyVariable: 'TRIPO_API_KEY', keyVariables: ['TRIPO_API_KEY'] },
+  openai: { label: 'OpenAI', keyVariable: 'OPENAI_API_KEY', keyVariables: ['OPENAI_API_KEY'] },
 };
 
 const OPENROUTER_PREFIX = 'openrouter/';
@@ -159,8 +160,12 @@ export const TTS_MODELS: readonly RoutedModel[] = [
   { id: 'eleven_flash_v2_5', label: 'Eleven Flash v2.5', provider: 'elevenlabs', stage: 'current' },
 ];
 
-/** Live voice: models that hear and answer in one stream, for conversation (the Familiar's live talk). */
+/**
+ * Live voice: models that hear and answer in one stream, for conversation (the
+ * Familiar's live talk). The first whose provider key is set serves by default.
+ */
 export const LIVE_MODELS: readonly RoutedModel[] = [
+  { id: 'openai/gpt-live-1', label: 'GPT-Live 1', provider: 'openai', stage: 'current' },
   { id: 'google/gemini-3.8-live', label: 'Gemini 3.8 Live', provider: 'gemini', stage: 'current' },
 ];
 
@@ -219,7 +224,7 @@ export const textModelProvider = (model: string): TextProviderId | undefined => 
 
 /** The provider-facing model name: `google/gemini-3.8-flash` → `gemini-3.8-flash`, `openrouter/openai/gpt-6-luna` → `openai/gpt-6-luna`. */
 export const providerModelName = (model: string): string =>
-  model.startsWith(OPENROUTER_PREFIX) ? model.slice(OPENROUTER_PREFIX.length) : model.replace(/^(?:google|minimax|anthropic)\//, '');
+  model.startsWith(OPENROUTER_PREFIX) ? model.slice(OPENROUTER_PREFIX.length) : model.replace(/^(?:google|minimax|anthropic|openai)\//, '');
 
 const titleCase = (value: string) => value
   .split('-')

@@ -43,8 +43,10 @@ projected generation schedule is chapter 2, image 5, short cue 3, long cue 15, s
 and video 30–50 Energy; video requires a trusted whole-number quote in that range.
 `narration.generate` and `translation.generate` exist but are unpriced and cannot be reserved.
 A model's grade (Mortal, Immortal, Heaven; `energyGrades.ts`) follows what it costs to run, and
-each grade has its own whole Energy price (owner's decision, 2026-11-01). The price a reader pays
-is the grade's, never a provider's amount; `settle` may record provider cost as internal
+each grade has its own whole Energy price (owner's decision, 2026-11-01). The Model Router, the
+prices shown before generating and the Usage page show the grade's price. The ledger still
+reserves and settles the catalog (Mortal) price: no reservation carries a model yet. The price a
+reader pays is never a provider's amount; `settle` may record provider cost as internal
 transaction metadata that no snapshot exposes.
 
 ## Identity and authorization

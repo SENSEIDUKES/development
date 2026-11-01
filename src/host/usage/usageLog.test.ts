@@ -40,6 +40,10 @@ describe('the usage record', () => {
       { kind: 'chapter', model: 'google/gemini-3.8-flash', inputTokens: 1_200, outputTokens: 300 },
       { kind: 'story-upkeep', task: 'Tagging', model: 'google/gemini-3.8-flash', inputTokens: 1_200, outputTokens: 300 },
     ]);
+    // A count the server estimated stays marked as an estimate.
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ ...receipt('google/gemini-3.8-flash'), providerReceipt: { ...receipt('google/gemini-3.8-flash').providerReceipt, usage: { source: 'estimated', inputTokens: 900, outputTokens: 200 } } }), { status: 200 })));
+    await client.generate({ model: 'google/gemini-3.8-flash' } as never);
+    expect(readUsage().at(-1)).toMatchObject({ kind: 'chapter', inputTokens: 900, outputTokens: 200, tokensEstimated: true });
   });
 
   it('records a live conversation from when it connected until it ended, once', () => {

@@ -103,6 +103,8 @@ export class HarnessGenerationHttpClient implements HarnessGenerationModelAdapte
     recordUsage({
       kind: upkeep ? 'story-upkeep' : 'chapter', task: upkeep, model: typeof model === 'string' ? model : request.model,
       inputTokens: usage?.inputTokens, outputTokens: usage?.outputTokens,
+      // The server estimates from the text when a provider reports no count.
+      tokensEstimated: usage?.source === 'estimated' ? true : undefined,
     });
     return answer;
   }

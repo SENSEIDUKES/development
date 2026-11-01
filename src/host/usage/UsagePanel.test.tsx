@@ -83,6 +83,29 @@ it('shows a long model name short, with its id beneath', async () => {
   expect(card.textContent).toContain('google/gemini-3.1-flash-lite-image');
 });
 
+it('marks estimated token counts', async () => {
+  recordUsage({ kind: 'chapter', model: 'openrouter/openai/gpt-6-luna', inputTokens: 900, outputTokens: 200, tokensEstimated: true, at: NOW - HOUR });
+  recordUsage({ kind: 'chapter', model: 'google/gemini-3.8-flash', inputTokens: 1_000, outputTokens: 300, at: NOW - HOUR });
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(modelRouterStatus({})), { status: 200 })));
+  await render();
+  await click('Behind the scenes');
+  const tokens = (id: string) => container.querySelector(`[data-usage-model="${id}"] [data-usage-tokens]`)?.textContent;
+  expect(tokens('openrouter/openai/gpt-6-luna')).toBe('≈ 900 tokens in · 200 out');
+  expect(tokens('google/gemini-3.8-flash')).toBe('1,000 tokens in · 300 out');
+  expect(container.textContent).toContain('≈ marks an estimate where a provider gave none');
+});
+
+it('counts a whole day across a daylight-saving change', async () => {
+  // A day whose local length is not 24 hours still holds everything made in it.
+  const lateToday = new Date(NOW); lateToday.setHours(23, 30, 0, 0);
+  const earlyToday = new Date(NOW); earlyToday.setHours(0, 30, 0, 0);
+  recordUsage({ kind: 'chapter', model: 'openrouter/openai/gpt-6-luna', at: earlyToday.getTime() });
+  recordUsage({ kind: 'chapter', model: 'openrouter/openai/gpt-6-luna', at: lateToday.getTime() });
+  await act(async () => root.render(<UsagePanel now={lateToday.getTime()} />));
+  const label = container.querySelector('[role="img"]')!.getAttribute('aria-label')!;
+  expect(label.endsWith(', 4')).toBe(true);
+});
+
 it('says when nothing was made', async () => {
   await render();
   expect(container.textContent).toContain('Nothing made in the last 7 days');

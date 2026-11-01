@@ -58,8 +58,8 @@ const plural = (count: number, one: string, many: string) => `${number.format(co
 /** "4 min 20 s": the exact time, the same in both views. */
 const talkTime = (seconds: number) => (seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min${seconds % 60 ? ` ${seconds % 60} s` : ''}`);
 
-const startOfDay = (time: number) => { const day = new Date(time); day.setHours(0, 0, 0, 0); return day.getTime(); };
-const DAY_MS = 24 * 60 * 60 * 1_000;
+/** Local midnight `offset` calendar days from `time`'s day. Calendar arithmetic, so a 23- or 25-hour day (daylight saving) is still one whole day. */
+const midnight = (time: number, offset = 0) => { const day = new Date(time); day.setHours(0, 0, 0, 0); day.setDate(day.getDate() + offset); return day.getTime(); };
 
 /** "8 chapters written", in the reader's words. */
 function describe(group: Group, entries: UsageEntry[]): string {
@@ -74,8 +74,9 @@ function EnergyView({ entries, range, now }: { entries: UsageEntry[]; range: typ
   const byGroup = GROUPS.map(group => ({ ...group, entries: entries.filter(entry => GROUP_OF[entry.kind] === group.id) }))
     .filter(group => group.entries.some(entry => entry.kind !== 'story-upkeep'));
   const days = range.days > 1 ? Array.from({ length: range.days }, (_, index) => {
-    const start = startOfDay(now) - (range.days - 1 - index) * DAY_MS;
-    const dayEntries = entries.filter(entry => entry.at >= start && entry.at < start + DAY_MS);
+    const start = midnight(now, index - (range.days - 1));
+    const end = midnight(now, index - (range.days - 1) + 1);
+    const dayEntries = entries.filter(entry => entry.at >= start && entry.at < end);
     return { start, parts: GROUPS.map(group => ({ group, energy: dayEntries.filter(entry => GROUP_OF[entry.kind] === group.id).reduce((sum, entry) => sum + usageEnergy(entry), 0) })) };
   }) : [];
   const highest = Math.max(1, ...days.map(day => day.parts.reduce((sum, part) => sum + part.energy, 0)));
@@ -152,6 +153,7 @@ function BehindTheScenes({ entries }: { entries: UsageEntry[] }) {
         {models.map(([model, calls]) => {
           const grade = modelEnergyGrade(model || undefined);
           const tokensIn = calls.reduce((sum, entry) => sum + (entry.inputTokens ?? 0), 0);
+          const about = calls.some(entry => entry.tokensEstimated) ? '≈ ' : '';
           const tokensOut = calls.reduce((sum, entry) => sum + (entry.outputTokens ?? 0), 0);
           const chapters = calls.filter(entry => entry.kind === 'chapter').length;
           const upkeep = calls.filter(entry => entry.kind === 'story-upkeep');
@@ -180,13 +182,15 @@ function BehindTheScenes({ entries }: { entries: UsageEntry[] }) {
               </div>
               <p className="text-[11px] text-white/55">{parts.join(' · ')}</p>
               {(tokensIn > 0 || tokensOut > 0) && (
-                <p className="font-mono text-[10px] text-white/40">{number.format(tokensIn)} tokens in · {number.format(tokensOut)} out</p>
+                <p data-usage-tokens className="font-mono text-[10px] text-white/40">{about}{number.format(tokensIn)} tokens in · {number.format(tokensOut)} out</p>
               )}
             </li>
           );
         })}
       </ul>
-      <p className="text-[11px] leading-snug text-white/40">Token counts are each provider's own. A token is about three quarters of a word.</p>
+      <p className="text-[11px] leading-snug text-white/40">
+        Token counts are each provider's own{entries.some(entry => entry.tokensEstimated) ? '; ≈ marks an estimate where a provider gave none' : ''}. A token is about three quarters of a word.
+      </p>
     </div>
   );
 }
@@ -198,7 +202,7 @@ export function UsagePanel({ now: fixedNow }: { now?: number }) {
   const [view, setView] = useState<View>('energy');
   const [rangeId, setRangeId] = useState<Range>('week');
   const range = RANGES.find(item => item.id === rangeId)!;
-  const since = startOfDay(now) - (range.days - 1) * DAY_MS;
+  const since = midnight(now, -(range.days - 1));
   const entries = useMemo(() => log.filter(entry => entry.at >= since), [log, since]);
   const pill = (active: boolean) => `host-touch rounded-md px-2.5 py-1.5 text-[12px] transition-colors ${active ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white/85'}`;
   return (

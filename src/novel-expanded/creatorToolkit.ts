@@ -10,7 +10,8 @@ import type {
 import type { LibraryStories } from '@seihouse/library/stories';
 import { OFFICIAL_STYLE_REFERENCES } from '../host/generation/capa/officialCapaSkills';
 import { SEN_ATMOSPHERES, SEN_SCENE_ATMOSPHERES } from '../host/media/atmosphereCatalog';
-import { LIBRARY_BASE_MEDIA, LIBRARY_SOUND_WORDS, TRACK_LIBRARY } from '../host/media/libraryCatalog';
+import { LIBRARY_BASE_MEDIA, LIBRARY_SOUND_WORDS } from '../host/media/libraryCatalog';
+import { SEN_SOUNDSCAPES, SEN_SOUNDSCAPES_PROVENANCE } from '../host/media/soundscapeCatalog';
 
 const styles = STORY_STYLE_OPTIONS.map(option => option.label);
 
@@ -71,39 +72,40 @@ function readableCueTitle(filePath: string): string {
   return titleCaseWords(withoutExt);
 }
 
-const SOUNDSCAPE_PRIORITY_ORDER = ['adventure', 'ambient', 'fighting', 'tension', 'war'];
+const SOUNDSCAPE_PRIORITY_ORDER = ['adventure', 'ambient', 'emotions', 'fighting', 'war'];
 
 function groupSoundscapeTracks(tracks: ReadonlyArray<{
   id: string;
   label?: string;
+  group?: string;
   mood: string;
   tags: readonly string[];
 }>): CreatorPluginGroup[] {
-  const byMood = new Map<string, CreatorPluginFile[]>();
+  const byGroup = new Map<string, CreatorPluginFile[]>();
   for (const track of tracks) {
-    const key = track.mood || 'other';
-    const list = byMood.get(key) ?? [];
+    const key = track.group?.trim() || track.mood || 'other';
+    const list = byGroup.get(key) ?? [];
     list.push({
       id: track.id,
       title: readableTrackTitle(track.id, track.label),
       ...(track.tags.length > 0 ? { detail: track.tags.join(' · ') } : {}),
     });
-    byMood.set(key, list);
+    byGroup.set(key, list);
   }
-  return Array.from(byMood.entries())
-    .sort(([moodA, filesA], [moodB, filesB]) => {
-      const priA = SOUNDSCAPE_PRIORITY_ORDER.indexOf(moodA);
-      const priB = SOUNDSCAPE_PRIORITY_ORDER.indexOf(moodB);
+  return Array.from(byGroup.entries())
+    .sort(([groupA, filesA], [groupB, filesB]) => {
+      const priA = SOUNDSCAPE_PRIORITY_ORDER.indexOf(groupA.toLowerCase());
+      const priB = SOUNDSCAPE_PRIORITY_ORDER.indexOf(groupB.toLowerCase());
       if (priA !== -1 || priB !== -1) {
         if (priA === -1) return 1;
         if (priB === -1) return -1;
         return priA - priB;
       }
-      return filesB.length - filesA.length || moodA.localeCompare(moodB);
+      return filesB.length - filesA.length || groupA.localeCompare(groupB);
     })
-    .map(([mood, files]) => ({
-      id: mood,
-      label: titleCaseWords(mood),
+    .map(([group, files]) => ({
+      id: group.toLowerCase().replace(/\s+/g, '-'),
+      label: titleCaseWords(group),
       files,
     }));
 }
@@ -191,15 +193,15 @@ const BUILTIN_STYLE_PACKAGES: readonly CreatorPluginPackage[] = STORY_STYLE_OPTI
 });
 
 const BUILTIN_SOUNDSCAPE_PACKAGE: CreatorPluginPackage = {
-  id: 'ne-soundscapes-vol-1',
+  id: SEN_SOUNDSCAPES_PROVENANCE.catalogId,
   kind: 'soundscape',
   title: 'NovelExpanded Soundscapes Vol. 1',
   description: 'Composed ambient scores matched to each chapter’s opening mood.',
-  version: '1.0.0',
+  version: SEN_SOUNDSCAPES_PROVENANCE.version,
   builtIn: true,
   unitSingular: 'score',
   unitPlural: 'scores',
-  groups: groupSoundscapeTracks(TRACK_LIBRARY),
+  groups: groupSoundscapeTracks(SEN_SOUNDSCAPES),
 };
 
 const BUILTIN_CUES_PACKAGE: CreatorPluginPackage = {
@@ -330,7 +332,7 @@ export const CREATOR_TOOLKIT: readonly CreatorToolkitItem[] = [
     description: `${styles.slice(0, -1).join(', ')} and ${styles.at(-1)} writing styles.`,
     imageUrl: '/manifest-backdrops/immortal-land-2.jpg' },
   { id: 'soundscapes', kind: 'soundscape', title: 'Soundscapes',
-    description: `${TRACK_LIBRARY.length} ambient scores for your scenes.`,
+    description: `${SEN_SOUNDSCAPES.length} ambient scores for your scenes.`,
     imageUrl: '/manifest-backdrops/immortal-land-4.jpg' },
   { id: 'cues', kind: 'cue', title: 'Cues',
     description: `${LIBRARY_BASE_MEDIA.soundCues.length} sound effects for story moments.`,

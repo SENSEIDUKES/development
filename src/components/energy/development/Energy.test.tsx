@@ -2,7 +2,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ENERGY_PRICE_CATALOG } from '@seihouse/library/energy';
+import { ENERGY_PRICE_CATALOG, EnergyModelsProvider } from '@seihouse/library/energy';
 import { EnergyClientProvider, createHttpEnergyClient, type EnergyClient } from '@seihouse/library/energy';
 import { useEnergyAccount, type EnergyAccountState } from '@seihouse/library/energy';
 import { ENERGY_ITEM_PRICES, ENERGY_PACKS, QI_ITEM_PRICES, QI_PACKS, QiAmount, type QiAccountState } from '@seihouse/library/cultivation';
@@ -146,6 +146,20 @@ describe('Reusable Energy pieces', () => {
     await render(<QiAmount amount={2_600} label="QI balance 2,600" />);
     expect(container.querySelector('[data-qi-status]')).toBe(status);
     expect(status?.textContent).toBe('QI balance 2,600');
+  });
+
+  it('prices a chapter or image by the grade of the host\'s model, and floats that price', async () => {
+    const heaven = { chapter: 'anthropic/claude-opus-5-5', image: 'google/gemini-3-pro-image' };
+    await render(<EnergyModelsProvider models={heaven}><EnergyActionCost actionId="chapter.generate" /><EnergyActionCost actionId="image.generate" /><EnergyActionCost actionId="short-cue.generate" /></EnergyModelsProvider>);
+    const costs = Array.from(container.querySelectorAll('.energy-action-cost'));
+    expect(costs.map(cost => cost.textContent)).toEqual(['8', '20', '3']);
+    expect(costs[0].getAttribute('aria-label')).toBe('Costs 8 Energy (projected)');
+    await render(<EnergyModelsProvider models={heaven}><EnergyCostMeter actionId="chapter.generate" made={1} /></EnergyModelsProvider>);
+    await render(<EnergyModelsProvider models={heaven}><EnergyCostMeter actionId="chapter.generate" made={2} /></EnergyModelsProvider>);
+    expect(container.querySelector('[data-energy-spend]')?.getAttribute('data-energy-spend')).toBe('8');
+    // The server's default model (none chosen) is Mortal: the catalog price.
+    await render(<EnergyModelsProvider models={{}}><EnergyActionCost actionId="chapter.generate" /></EnergyModelsProvider>);
+    expect(container.querySelector('.energy-action-cost')?.textContent).toBe('2');
   });
 
   it('renders the configured action cost from the shared catalog', async () => {

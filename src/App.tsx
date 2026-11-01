@@ -1,3 +1,4 @@
+import { RouterEnergyModels } from './host/generation/RouterEnergyModels';
 import { lazy, type ComponentType, type ReactNode } from 'react';
 import { WorkshopHome } from './workshop/WorkshopHome';
 import { ModelRouterGear } from './host/model-router/ModelRouterSettings';
@@ -177,7 +178,8 @@ function PreviewLayout({ children }: { children: ReactNode }) {
         </a>
         <ModelRouterGear />
       </div>
-      {children}
+      {/* Previews show Energy prices for the Router's models, as the app does. */}
+      <RouterEnergyModels>{children}</RouterEnergyModels>
     </>
   );
 }

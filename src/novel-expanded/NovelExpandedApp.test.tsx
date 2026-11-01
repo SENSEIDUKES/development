@@ -527,6 +527,9 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     // Create, on the creator's last step, wears the Energy badge with the World Blueprint's price (a chapter's, for now).
     await click(document.querySelector('[data-seed-creator-strip] button[data-step="manifest"]'), 'the Manifest step', 20);
     expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('2');
+    // Its price follows the Router: a Heaven writer costs a Heaven chapter's Energy.
+    await act(async () => writeModelPreference('chapters', 'anthropic/claude-opus-5-5'));
+    expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('8');
     // Story Seed's own task bar stands where the global strip was; the note floats above it.
     expect(strip()).toBeNull();
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;

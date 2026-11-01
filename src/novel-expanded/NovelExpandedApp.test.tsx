@@ -15,6 +15,7 @@ import { createMockStorySeedRecord } from '../workshop/previews/story-seed/previ
 import { createOfficialCapaDefaultLoadout, installOfficialCapaSkillsInMemory, OFFICIAL_CAPA_DEFAULT_REFERENCES } from '../host/generation/capa/officialCapaSkills';
 import { HarnessGenerationRequestError } from '../host/generation/httpClient';
 import { writeModelPreference } from '../host/generation/modelPreference';
+import { modelRouterStatus } from '../server/model-router/status';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
 import { StoryCoverRequestError } from '../host/media/storyCoverClient';
 import { createLocalStorySeedRepository } from '../host/story-seed/localStorySeedRepository';
@@ -1127,11 +1128,19 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(cave()!.querySelector('[data-cave-settings]')).toBeTruthy();
     // Account and server pieces still show, each disabled with the note.
     const notes = [...cave()!.querySelectorAll('[data-cave-not-yet-built]')].map(note => note.textContent);
-    expect(notes.length).toBeGreaterThanOrEqual(6);
+    expect(notes.length).toBeGreaterThanOrEqual(5);
     expect(new Set(notes)).toEqual(new Set(['Not in the app yet.']));
-    for (const name of ['Sever Link', 'Redeem Code', 'Shortcuts', 'Aether Router', 'Import Scroll']) {
+    for (const name of ['Sever Link', 'Redeem Code', 'Shortcuts', 'Import Scroll']) {
       expect(buttonByText(name, cave()!)?.disabled, name).toBe(true);
     }
+    // Advanced Tools › Model Router opens the Router itself, over the Cave.
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(modelRouterStatus({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' })), { status: 200 })));
+    await click(buttonByText('Model Router', cave()!), 'Model Router', 20);
+    const router = document.body.querySelector('[role="dialog"][aria-modal="true"]')!;
+    expect(router.textContent).toContain('Live speech');
+    expect(router.textContent).toContain('Text to speech');
+    await click(router.querySelector('[aria-label="Close Model Router"]'), 'Close Model Router', 10);
+    expect(document.body.querySelector('[aria-label="Close Model Router"]')).toBeNull();
     // Every Familiar is unlocked on the practice account; choosing one equips it everywhere at once.
     await click(buttonByText('Select Phoenix', cave()!), 'Select Phoenix', 20);
     expect(services.profile.read().familiarId).toBe('phoenix');

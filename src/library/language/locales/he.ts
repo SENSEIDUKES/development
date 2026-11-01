@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "כלים מתקדמים",
       "Model presets and routing overrides.": "הגדרות מודל מראש ועקיפות ניתוב.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "הגדר תצורות מודל מותאמות, עקיפות ניתוב או נקודות קצה של הרשאות API.",
-      "Aether Router": "נתב אתר",
+      "Model Router": "נתב מודלים",
       "Cultivator": "מטפח",
       "Mortal": "בן תמותה",
       "Daily Dao Pillar": "עמוד הדאו היומי",

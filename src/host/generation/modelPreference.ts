@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
  * starting model and write it back when their own selector changes, so there
  * is one choice everywhere. The server still validates every model it is sent.
  */
-export type ModelPreferenceCapability = 'chapters' | 'images';
+export type ModelPreferenceCapability = 'chapters' | 'images' | 'live';
 
 /** Browser convenience only; the server independently enforces the local-development gate. */
 export const isLocalDevelopmentModel = (model?: string): boolean =>

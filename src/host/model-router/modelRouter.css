@@ -1,0 +1,7 @@
+/* The Model Router's buttons are easy to tap on phones, in the app and the Workshop alike. */
+@media (pointer: coarse) {
+  .model-router-touch {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

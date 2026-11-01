@@ -137,7 +137,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
       },
       {
         id: 'tts',
-        label: 'TTS',
+        label: 'Text to speech',
         description: 'Text-to-speech models that voice characters and Codex quotes.',
         consumers: consumersFor('tts'),
         defaultModel: ttsDefault,
@@ -146,7 +146,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
       },
       {
         id: 'live',
-        label: 'Live voice',
+        label: 'Live speech',
         description: 'Models that hear and answer in one stream, for the Familiar\'s live conversations.',
         consumers: consumersFor('live'),
         defaultModel: liveModel(environment),

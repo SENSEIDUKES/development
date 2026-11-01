@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "進階工具",
       "Model presets and routing overrides.": "模型預設與路由覆寫設定。",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "設定自訂模型預設、路由覆寫或 API 憑證端點。",
-      "Aether Router": "以太路由器",
+      "Model Router": "模型路由器",
       "Cultivator": "修士",
       "Mortal": "凡人",
       "Daily Dao Pillar": "每日道柱",

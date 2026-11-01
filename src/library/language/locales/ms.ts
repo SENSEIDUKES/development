@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "Alatan Lanjutan",
       "Model presets and routing overrides.": "Pratetap model dan penggantian penghalaan.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "Konfigurasikan pratetap model tersuai, penggantian penghalaan atau titik akhir kelayakan API.",
-      "Aether Router": "Penghala Aether",
+      "Model Router": "Penghala Model",
       "Cultivator": "Pertapa",
       "Mortal": "Insan Fana",
       "Daily Dao Pillar": "Tiang Dao Harian",

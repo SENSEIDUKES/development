@@ -166,7 +166,7 @@ export interface UserProfileController {
  * The account and server pieces of the Cave a host may not have built yet:
  * portrait generation (the profile picture), Keyboard Shortcuts, code
  * redemption, signing out (Sever Link), Harmony sync, library backup and
- * import, the Aether Router, and the Inbox.
+ * import, the Model Router, and the Inbox.
  */
 export type UserProfileFeature =
   | 'portrait-generation'

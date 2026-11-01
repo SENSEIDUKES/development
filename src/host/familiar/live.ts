@@ -92,6 +92,8 @@ export interface FamiliarLiveDependencies {
   getUserMedia?: (constraints: MediaStreamConstraints) => Promise<MediaStream>;
   /** The owner's Development token lifts the visitor's daily count. */
   accessToken?: () => string | undefined;
+  /** The reader's Router choice of live model; the server runs it when it can. */
+  model?: string;
 }
 
 /**
@@ -247,7 +249,7 @@ export function createFamiliarGeminiLive(dependencies: FamiliarLiveDependencies 
           const response = await (dependencies.fetch ?? fetch)(ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-            body: JSON.stringify({ brief }),
+            body: JSON.stringify({ brief, ...(dependencies.model ? { model: dependencies.model } : {}) }),
           });
           const body: unknown = await response.json().catch(() => ({}));
           if (over) return;

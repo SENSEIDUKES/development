@@ -2153,9 +2153,9 @@ describe('Cave pieces a host has not built yet', () => {
     await renderCave({ notYetBuilt: { note: NOTE, features: ['portrait-generation', 'shortcuts', 'redeem-code', 'sign-out', 'sync', 'backup', 'model-router', 'inbox'] } });
     await navigateTo('/settings');
     const notes = [...document.body.querySelectorAll('[data-cave-not-yet-built]')].map(note => note.textContent);
-    // Shortcuts, Redeem Code, Sever Link, Harmony, Backup and the Aether Router.
+    // Shortcuts, Redeem Code, Sever Link, Harmony, Backup and the Model Router.
     expect(notes).toEqual(Array(6).fill(NOTE));
-    for (const label of ['Shortcuts', 'Redeem Code', 'Sever Link', 'Import Scroll', 'Backup All', 'Aether Router']) {
+    for (const label of ['Shortcuts', 'Redeem Code', 'Sever Link', 'Import Scroll', 'Backup All', 'Model Router']) {
       expect(button(label)?.disabled, label).toBe(true);
     }
     const harmony = document.body.querySelector<HTMLButtonElement>('button[aria-label^="Harmony"]')!;
@@ -2178,7 +2178,7 @@ describe('Cave pieces a host has not built yet', () => {
     await renderCave();
     await navigateTo('/settings');
     expect(document.body.querySelectorAll('[data-cave-not-yet-built]')).toHaveLength(0);
-    for (const label of ['Shortcuts', 'Redeem Code', 'Sever Link', 'Import Scroll', 'Aether Router']) {
+    for (const label of ['Shortcuts', 'Redeem Code', 'Sever Link', 'Import Scroll', 'Model Router']) {
       expect(button(label)?.disabled, label).toBe(false);
     }
   });

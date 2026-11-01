@@ -7,7 +7,7 @@
  */
 import { GoogleGenAI, Modality, type LiveConnectConfig } from '@google/genai';
 import type { FamiliarLiveBrief } from '@seihouse/library/familiar';
-import { providerKey, providerModelName } from '../model-router/catalog';
+import { LIVE_MODELS, providerKey, providerModelName } from '../model-router/catalog';
 import { liveModel, liveModelProvider } from '../model-router/status';
 import { FAMILIAR_LIVE_SESSION_MS } from './limits';
 import { familiarLiveInstruction } from './prompt';
@@ -144,12 +144,18 @@ export const handleFamiliarLiveHttp = async (
 ): Promise<FamiliarLiveHttpResponse> => {
   const method = request.method?.toUpperCase() ?? 'GET';
   if (method !== 'GET' && method !== 'POST') return { ...reply(405, { error: 'Method not allowed.' }), headers: { ...noStore, Allow: 'GET, POST' } };
-  // The Router's live model decides the provider, and so how the browser connects.
-  const routed = liveModel(dependencies.environment);
-  const provider = liveModelProvider(routed);
-  const apiKey = providerKey(dependencies.environment, provider);
-  if (method === 'GET') return reply(200, { configured: Boolean(apiKey), provider });
-  if (!apiKey) return reply(503, { error: 'Live talk is not configured on this server.', code: 'unavailable' });
+  const environment = dependencies.environment;
+  // The live models this server can run: those whose provider key is set.
+  const offered = LIVE_MODELS.filter(model => providerKey(environment, model.provider));
+  if (method === 'GET') {
+    const routed = liveModel(environment);
+    return reply(200, {
+      configured: offered.length > 0,
+      provider: liveModelProvider(routed),
+      model: routed,
+      models: offered.map(model => ({ id: model.id, provider: model.provider })),
+    });
+  }
 
   let brief: FamiliarLiveBrief;
   let body: unknown;
@@ -159,6 +165,12 @@ export const handleFamiliarLiveHttp = async (
   } catch (error) {
     return reply(400, { error: error instanceof Error ? error.message : 'Invalid live talk request.' });
   }
+  // The reader's Router choice when this server can run it; otherwise the server's own.
+  const requested = isRecord(body) && typeof body.model === 'string' ? body.model : undefined;
+  const routed = offered.find(model => model.id === requested)?.id ?? liveModel(environment);
+  const provider = liveModelProvider(routed);
+  const apiKey = providerKey(environment, provider);
+  if (!apiKey) return reply(503, { error: 'Live talk is not configured on this server.', code: 'unavailable' });
   const model = providerModelName(routed);
   if (provider === 'openai') {
     const sdp = isRecord(body) ? body.sdp : undefined;

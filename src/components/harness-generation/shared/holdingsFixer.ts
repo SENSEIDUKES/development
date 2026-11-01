@@ -288,7 +288,8 @@ export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName,
   const firstNamed = (entryId: string) => {
     for (const saved of [...storyChapters].sort((left, right) => left.chapterNumber - right.chapterNumber)) {
       const change = saved.appearances?.find(entry => entry.payload.subject.entryId === entryId)
-        ?? saved.holdingChanges?.find(entry => entry.payload.target?.entryId === entryId || entry.payload.holder.entryId === entryId);
+        ?? saved.holdingChanges?.find(entry => entry.payload.target?.entryId === entryId || entry.payload.holder.entryId === entryId)
+        ?? saved.statuses?.find(entry => entry.payload.subject.entryId === entryId);
       if (change) return `Chapter ${saved.chapterNumber}: “${change.anchor.selectedText}”`;
     }
     return 'not yet in any chapter';

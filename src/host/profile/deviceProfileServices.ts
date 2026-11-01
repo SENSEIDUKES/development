@@ -289,6 +289,11 @@ export function useDeviceProfileController(
     commit({ familiarLiveTalk: liveTalk || undefined });
   }, [commit, profile]);
 
+  const handleFamiliarWakeWordChange = useCallback((wakeWord: boolean) => {
+    if (!profile) return;
+    commit({ familiarWakeWord: wakeWord || undefined });
+  }, [commit, profile]);
+
   // The profile picture: the photo stays in the page; portraits are shown through object URLs until one is kept.
   const releasePortraits = useCallback(() => {
     portraitUrls.current.forEach(url => URL.revokeObjectURL(url));
@@ -391,6 +396,7 @@ export function useDeviceProfileController(
     handleFamiliarSizeChange,
     handleFamiliarInHeaderChange,
     handleFamiliarLiveTalkChange,
+    handleFamiliarWakeWordChange,
     syncStatus: 'idle',
     lastSavedTime: profile ? new Date(profile.updatedAt) : null,
     setIsSettingsOpen: open => { if (open) openModelRouter?.(); },

@@ -19,13 +19,15 @@ export const ENERGY_GRADE_LABELS: Record<EnergyGrade, string> = {
   heaven: 'Heaven',
 };
 
-/** The kinds of generation that cost Energy by grade. `live-minute` is charged per started minute. */
+/** The kinds of generation that cost Energy by grade. `live-minute` is the price a minute, charged by the started 20 seconds. */
 export type GradedEnergyKind = 'chapter' | 'image' | 'live-minute';
 
 export const GRADED_ENERGY_PRICES: Record<GradedEnergyKind, Record<EnergyGrade, number>> = {
   chapter: { mortal: 2, immortal: 4, heaven: 8 },
   image: { mortal: 5, immortal: 10, heaven: 20 },
-  'live-minute': { mortal: 1, immortal: 2, heaven: 3 },
+  // At least twice the provider's price a minute (1 Energy = $0.02): Gemini 3.8 Live is at most
+  // $0.023 a minute talking both ways; GPT-Live 1 is $0.05 a minute plus its backend model (2026-11-01).
+  'live-minute': { mortal: 3, immortal: 6, heaven: 9 },
 };
 
 /** Each model's grade, by the Model Router's model id. */
@@ -79,6 +81,9 @@ export const modelEnergyGrade = (model: string | undefined): EnergyGrade =>
 export const gradedEnergyPrice = (kind: GradedEnergyKind, model: string | undefined): number =>
   GRADED_ENERGY_PRICES[kind][modelEnergyGrade(model)];
 
-/** Live talk is charged per started minute: 61 seconds is two minutes. */
+/** Live talk is billed in 20-second steps. Each minute price divides by 3, so a step is whole Energy. */
+export const LIVE_TALK_STEP_SECONDS = 20;
+
+/** Live talk is charged per started 20 seconds, a third of the minute price: a 15-second call on a 3-a-minute model is 1. */
 export const liveTalkEnergy = (model: string | undefined, seconds: number): number =>
-  seconds <= 0 ? 0 : Math.ceil(seconds / 60) * gradedEnergyPrice('live-minute', model);
+  seconds <= 0 ? 0 : Math.ceil(seconds / LIVE_TALK_STEP_SECONDS) * (gradedEnergyPrice('live-minute', model) / 3);

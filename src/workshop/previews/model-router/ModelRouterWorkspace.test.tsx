@@ -79,7 +79,7 @@ it('shows each model\'s grade and its Energy price', async () => {
   expect(grade('google/gemini-3.1-pro-preview')).toBe('Heaven · 8');
   const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
   await click(tabs.find(tab => tab.textContent === 'Live speech')!);
-  expect(grade('openai/gpt-live-1')).toBe('Immortal · 2/min');
+  expect(grade('openai/gpt-live-1')).toBe('Immortal · 6/min');
   // Text to speech is not priced by grade.
   await click(tabs.find(tab => tab.textContent === 'Text to speech')!);
   expect(document.querySelector('[data-energy-grade]')).toBeNull();

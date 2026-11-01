@@ -366,6 +366,7 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-11-01: Alexa-style live talk. Settings › Familiar › Say “Familiar” (beta) listens for the word with the device's own speech recognition while the Familiar is idle and the page is in view (`src/host/familiar/wakeWord.ts`, `FamiliarWakeWord`); hearing it calls the Familiar as its microphone does. A live conversation hangs up by itself after 10 seconds with nothing said (60 seconds when typed), leaving the note “Hung up after a quiet moment.” (`FAMILIAR_LIVE_QUIET_MS`).
 - 2026-11-01: On iPhone, live talk and the device voice asked for the microphone while music had Safari in playback-only mode, and the phone refused it ("AudioSession category is not compatible with audio capture"). Listening now switches to play-and-record at the tap and puts the earlier mode back when it ends (`src/host/familiar/audioSession.ts`).
 - 2026-11-01: Live talk on OpenAI GPT-Live, which the Router serves first when
   its key is set: the phone connects over WebRTC (it captures the microphone

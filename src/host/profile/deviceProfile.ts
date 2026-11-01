@@ -59,6 +59,7 @@ function restore(raw: string | null, fresh: UserProfile): UserProfile {
     familiarSize: typeof saved.familiarSize === 'number' && Number.isFinite(saved.familiarSize) ? saved.familiarSize : undefined,
     familiarInHeader: saved.familiarInHeader === true ? true : undefined,
     familiarLiveTalk: saved.familiarLiveTalk === true ? true : undefined,
+    familiarWakeWord: saved.familiarWakeWord === true ? true : undefined,
     activeStories: Array.isArray(saved.activeStories) ? record.activeStories : [],
     inactiveStories: Array.isArray(saved.inactiveStories) ? record.inactiveStories : [],
     joinedDate: text(saved.joinedDate, fresh.joinedDate),

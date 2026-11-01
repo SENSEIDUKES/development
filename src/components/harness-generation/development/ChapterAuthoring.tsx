@@ -16,6 +16,7 @@ import { chapterTitleText } from '../../../narrative/chapterTitle';
 import { SPEAKER_KIND, type SpeakerAttachment } from '../../../narrative/speech';
 import { HOLDING_CHANGE_KIND, type HoldingChangeAttachment } from '../../../narrative/holdings';
 import { APPEARANCE_KIND, type AppearanceAttachment } from '../../../narrative/appearances';
+import { STATUS_KIND, type StatusAttachment } from '../../../narrative/statuses';
 import { harnessParagraphBlockId } from '../shared/chapterBody';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { ReaderChapter } from './readerChapterBody';
@@ -46,7 +47,7 @@ function chapterState(chapter: ReaderChapter, locale: string): ChapterState {
     createId: kind => kind === 'paragraph' ? harnessParagraphBlockId(chapter.chapterNumber, paragraph++) : createManuscriptId(kind),
   });
   return { manuscript, attachments: [
-    ...chapter.soundCues ?? [], ...chapter.speakers ?? [], ...chapter.holdingChanges ?? [], ...chapter.appearances ?? [], ...chapter.soundtrackChanges ?? [],
+    ...chapter.soundCues ?? [], ...chapter.speakers ?? [], ...chapter.holdingChanges ?? [], ...chapter.appearances ?? [], ...chapter.statuses ?? [], ...chapter.soundtrackChanges ?? [],
     // Effects still waiting for a new spot from an earlier visit: off the page, so flagged.
     ...chapter.authoring?.waiting ?? [],
   ] };
@@ -67,6 +68,10 @@ function describeWaiting(attachment: ManuscriptAttachment<unknown>): { title: st
     const appearance = (attachment as AppearanceAttachment).payload;
     return { title: `${appearance.event === 'appears' ? 'Appearance' : 'Change of look'} · ${appearance.subject.name}`, detail: `${was}. It waits here until the chapter is sealed.` };
   }
+  if (attachment.kind === STATUS_KIND) {
+    const status = (attachment as StatusAttachment).payload;
+    return { title: `Status · ${status.subject.name} ${status.status}`, detail: `${was}. It waits here until the chapter is sealed.` };
+  }
   const holding = (attachment as HoldingChangeAttachment).payload;
   return { title: `Holding change · ${holding.holder.name} ${holding.verb}${holding.target ? ` ${holding.target.name}` : ''}`, detail: `${was}. It waits here until the chapter is sealed.` };
 }
@@ -75,7 +80,7 @@ const placed = (state: ChapterState) => (attachment: ManuscriptAttachment<unknow
 
 const KIND_NAMES: Record<string, [string, string]> = {
   [SOUND_CUE_KIND]: ['Sound Cue', 'Sound Cues'], [SPEAKER_KIND]: ['speaker', 'speakers'], [HOLDING_CHANGE_KIND]: ['holding change', 'holding changes'],
-  [APPEARANCE_KIND]: ['appearance', 'appearances'],
+  [APPEARANCE_KIND]: ['appearance', 'appearances'], [STATUS_KIND]: ['status', 'statuses'],
   [SOUNDSCAPE_CHANGE_KIND]: ['soundscape change', 'soundscape changes'], [ATMOSPHERE_CHANGE_KIND]: ['atmosphere change', 'atmosphere changes'],
 };
 
@@ -174,6 +179,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       speakers: kept.filter(attachment => attachment.kind === SPEAKER_KIND) as SpeakerAttachment[],
       holdingChanges: kept.filter(attachment => attachment.kind === HOLDING_CHANGE_KIND) as HoldingChangeAttachment[],
       appearances: kept.filter(attachment => attachment.kind === APPEARANCE_KIND) as AppearanceAttachment[],
+      statuses: kept.filter(attachment => attachment.kind === STATUS_KIND) as StatusAttachment[],
       soundtrackChanges: kept.filter(isSoundtrackChange) as SoundtrackChangeAttachment[],
       openingSound: nextOpening,
       waiting: waiting as Waiting[],

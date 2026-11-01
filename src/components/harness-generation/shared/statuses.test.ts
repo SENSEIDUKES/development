@@ -139,5 +139,19 @@ describe('status in the chapter flow', () => {
     expect(codex.characters.find(character => character.name === 'Elder Qin')?.status).toEqual({
       text: 'dead', passage: { chapterNumber: 2, blockId: 'c2-p1', text: TWO },
     });
+
+    // Create mode keeps a status on its words, and an edit that drops it keeps the chapter's list, empty.
+    await controller.authorChapter(second.id, { paragraphs: second.paragraphs, statuses: second.statuses });
+    expect(controller.snapshot().chapters[1].statuses).toEqual(second.statuses);
+    await controller.authorChapter(second.id, { paragraphs: second.paragraphs });
+    expect(controller.snapshot().chapters[1].statuses).toEqual([]);
+    await expect(controller.authorChapter(second.id, { paragraphs: ['Elder Qin rose again, unharmed.', ...second.paragraphs.slice(1)], statuses: second.statuses }))
+      .rejects.toThrow(/must sit on its words/);
+
+    // Rewriting the newest chapter: its tagger reads the status from the chapters before it, never the one it replaces.
+    generate.mockResolvedValueOnce({ rawProviderResponse: reply([TWO]), providerReceipt: receipt });
+    await controller.rewriteLatestChapter(story.id, 'fixture', 'Again.');
+    const rewriteRequest = tagChapter.mock.calls.at(-1)![0];
+    expect(rewriteRequest.subjects.find(subject => subject.name === 'Elder Qin')).toMatchObject({ status: 'wounded' });
   });
 });

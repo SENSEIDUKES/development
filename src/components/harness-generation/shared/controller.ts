@@ -489,7 +489,7 @@ export class HarnessGenerationController {
    * change replaced wait in `waiting`, off the page, until the chapter is
    * sealed. The chapter is marked as changed, so it is read again at its seal.
    */
-  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'openingSound' | 'soundtrackChanges'>
+  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'openingSound' | 'soundtrackChanges'>
     & { waiting?: NonNullable<HarnessChapter['authoring']>['waiting'] }): Promise<void> {
     this.assertHydrated();
     if (this.generating) throw new Error('Wait for the active Harness operation before changing a chapter.');
@@ -507,8 +507,8 @@ export class HarnessGenerationController {
       const text = blocks.get(attachment.anchor.blockId);
       return !attachment.anchor.detached && text?.slice(attachment.anchor.startOffset, attachment.anchor.endOffset) === attachment.anchor.selectedText;
     };
-    for (const attachment of [...changes.soundCues ?? [], ...changes.speakers ?? [], ...changes.holdingChanges ?? [], ...changes.appearances ?? [], ...changes.soundtrackChanges ?? []]) {
-      if (!onItsWords(attachment)) throw new Error('Every Sound Cue, speaker, holding change, appearance and soundtrack change must sit on its words before the chapter is saved.');
+    for (const attachment of [...changes.soundCues ?? [], ...changes.speakers ?? [], ...changes.holdingChanges ?? [], ...changes.appearances ?? [], ...changes.statuses ?? [], ...changes.soundtrackChanges ?? []]) {
+      if (!onItsWords(attachment)) throw new Error('Every Sound Cue, speaker, holding change, appearance, status and soundtrack change must sit on its words before the chapter is saved.');
     }
     // The opening is one of each kind's two: a chapter changes its music once, and its atmosphere once, after it.
     for (const kind of [SOUNDSCAPE_CHANGE_KIND, ATMOSPHERE_CHANGE_KIND]) {
@@ -519,11 +519,12 @@ export class HarnessGenerationController {
     chapter.paragraphs = paragraphs;
     chapter.prose = paragraphs.join('\n\n');
     chapter.metrics = { ...chapter.metrics, wordCount: paragraphs.reduce((total, paragraph) => total + paragraph.split(/\s+/u).length, 0), paragraphCount: paragraphs.length };
-    for (const key of ['soundCues', 'speakers', 'holdingChanges', 'appearances', 'soundtrackChanges'] as const) {
+    for (const key of ['soundCues', 'speakers', 'holdingChanges', 'appearances', 'statuses', 'soundtrackChanges'] as const) {
       const list = changes[key];
       if (list?.length) (chapter as Record<typeof key, unknown>)[key] = cloneHarnessValue(list);
-      // A chapter written with the Appearance skill keeps its list, even empty, so it is still known to have been asked.
+      // A chapter the tagger read for appearances or statuses keeps its list, even empty, so it is still known to have been asked.
       else if (key === 'appearances' && chapter.appearances) chapter.appearances = [];
+      else if (key === 'statuses' && chapter.statuses) chapter.statuses = [];
       else delete chapter[key];
     }
     const opening = changes.openingSound;
@@ -1503,7 +1504,8 @@ export class HarnessGenerationController {
       entries: this.state.codexEntries.filter(entry => entry.storyId === story.id),
       world,
       holdings: before,
-      statuses: deriveStatuses(this.state.chapters.filter(chapter => chapter.storyId === story.id)),
+      // Only the chapters before this one: a rewrite's replaced chapter is still saved, and its statuses are not this chapter's past.
+      statuses: deriveStatuses(this.state.chapters.filter(chapter => chapter.storyId === story.id && chapter.chapterNumber < attempt.chapterNumber)),
       soundWords: soundVocabulary(attempt.mediaLoadout),
       soundtrack: soundtrackVocabulary(attempt.mediaLoadout),
       language: story.originalLanguage,

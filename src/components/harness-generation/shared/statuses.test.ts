@@ -84,6 +84,26 @@ describe('a character\'s status now', () => {
   });
 });
 
+describe('a character met only by a status tag', () => {
+  it('has a Codex card, first seen where the tag was, with that status', () => {
+    const entries = [{ id: 'e-guard', storyId: 's', kind: 'character' as const, name: 'Guard Captain Mo', origin: { source: 'tag' as const, chapterId: 'c1', chapterNumber: 1 }, createdAt: 'now' }];
+    const text = 'Guard Captain Mo fell from the wall.';
+    const codex = deriveStoryCodex({ entries, chapters: [{
+      id: 'c1', chapterNumber: 1, paragraphs: [text],
+      statuses: [{
+        id: 'status:c1-p1:0', kind: 'status', anchor: { level: 'span', blockId: 'c1-p1', startOffset: 0, endOffset: text.length, selectedText: text },
+        payload: { origin: 'harness', subject: { name: 'Guard Captain Mo', entryId: 'e-guard' }, status: 'dead' },
+      }],
+    }] });
+    expect(codex.characters).toHaveLength(1);
+    expect(codex.characters[0]).toMatchObject({
+      key: 'e-guard', name: 'Guard Captain Mo',
+      firstSeen: { chapterNumber: 1, blockId: 'c1-p1', text },
+      status: { text: 'dead', passage: { chapterNumber: 1, blockId: 'c1-p1', text } },
+    });
+  });
+});
+
 describe('status in the chapter flow', () => {
   const receipt = { provider: 'fixture', model: 'fixture', generatedAt: '2026-10-31T12:00:00.000Z', usage: { source: 'unavailable' as const } };
   const reply = (paragraphs: string[]) => writtenChapterReply(JSON.stringify({

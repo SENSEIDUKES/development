@@ -340,6 +340,27 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     if (!character.firstSeen || comesBefore(first, character.firstSeen) < 0) character.firstSeen = first;
   }
 
+  // Someone met only by a status tag (a guard who falls, never tagged
+  // otherwise) is still met there: the tag's sentence is where the record
+  // first sees them. A group is never a character.
+  for (const chapter of ordered) {
+    for (const record of chapter.statuses ?? []) {
+      const { subject } = record.payload;
+      const entry = subject.entryId ? entries.find(candidate => candidate.id === subject.entryId) : undefined;
+      if ((entry && entry.kind !== 'character') || factionNamed(subject.name, declaredFactions)) continue;
+      const names = [entry?.name ?? subject.name, subject.name, ...(entry?.aliases ?? [])].map(normalizeIdentityLabel);
+      const character = (subject.entryId ? characters.get(subject.entryId) : undefined)
+        ?? (entry?.mainCharacter ? main() : undefined)
+        ?? [...characters.values()].find(candidate => names.some(name => candidate.names.has(name)))
+        ?? add({
+          key: subject.entryId ?? `character:${names[0]}`, name: entry?.name ?? subject.name, mainCharacter: Boolean(entry?.mainCharacter),
+          things: [], abilities: [], chronicle: [], names: new Set(names),
+        });
+      const passage = { chapterNumber: chapter.chapterNumber, blockId: record.anchor.blockId, text: record.anchor.selectedText };
+      if (!character.firstSeen || comesBefore(passage, character.firstSeen) < 0) character.firstSeen = passage;
+    }
+  }
+
   // A faction: one the world opened with, one the story declares (by name or
   // alias), or a name whose last word names a body of people.
   const factions = new Map<string, CodexFaction>();

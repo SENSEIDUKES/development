@@ -1,11 +1,17 @@
-import { useEffect, useState } from 'react';
-import { CreatorSpace, type CreatorWorld, type CreatorWorldsState } from '@seihouse/library/creator-space';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  CreatorPlugins,
+  CreatorSpace,
+  type CreatorToolkitFilter,
+  type CreatorWorld,
+  type CreatorWorldsState,
+} from '@seihouse/library/creator-space';
 import { useEnergyAccount } from '@seihouse/library/energy';
 import { type LibraryLocation } from '@seihouse/library/shell';
 import { SparksButton, type SparkHost } from '@seihouse/sen/story-seed';
 import type { HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
-import { CREATOR_TOOLKIT, SAMPLE_CREATOR_WORLDS } from './previewData';
+import { CREATOR_TOOLKIT, SAMPLE_CREATOR_WORLDS, buildCreatorPluginCatalog } from './previewData';
 
 export type CreatorWorldsSource = 'local' | 'sample';
 
@@ -50,7 +56,7 @@ function openChapterWorkspace(storyId: string, focusNextChapter: boolean) {
 /**
  * Workshop host for the Create page: this browser's written worlds (or the
  * sample set), the live Energy account the shell already mounts, the Toolkit
- * previews, and the existing destinations. Production supplies its own.
+ * plugins, and the existing destinations. Production supplies its own.
  */
 export function CreatorSpaceHost({ onNavigate, onOpenWorld, sparks, source = readCreatorWorldsSource() }: {
   onNavigate: (location: LibraryLocation) => void;
@@ -63,6 +69,8 @@ export function CreatorSpaceHost({ onNavigate, onOpenWorld, sparks, source = rea
     ? { status: 'ready', items: SAMPLE_CREATOR_WORLDS } : { status: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const [sampleNotice, setSampleNotice] = useState('');
+  const [pluginsFilter, setPluginsFilter] = useState<CreatorToolkitFilter | null>(null);
+  const catalog = useMemo(() => buildCreatorPluginCatalog(), []);
   const energy = useEnergyAccount();
 
   useEffect(() => {
@@ -90,14 +98,22 @@ export function CreatorSpaceHost({ onNavigate, onOpenWorld, sparks, source = rea
     beginSpark: async spark => { setSampleNotice(`Spark: with the app, “${spark.title || spark.genre}” opens as a new Story Seed in Create.`); },
   };
   return <>
-    <CreatorSpace worlds={worlds} energy={energy} toolkit={CREATOR_TOOLKIT}
-      sparks={<SparksButton host={sparkHost} />}
-      onCreate={() => onNavigate({ screen: 'creator' })}
-      onOpenEnergy={() => onNavigate({ screen: 'profile', cave: '/home/energy' })}
-      onContinueWorld={id => act(id, true)}
-      onOpenWorld={onOpenWorld}
-      onOpenStudio={id => act(id, false)}
-      onRetryWorlds={() => setAttempt(value => value + 1)} />
+    {pluginsFilter
+      ? <CreatorPlugins
+          catalog={catalog}
+          initialFilter={pluginsFilter}
+          onFilterChange={setPluginsFilter}
+          onBack={() => setPluginsFilter(null)}
+        />
+      : <CreatorSpace worlds={worlds} energy={energy} toolkit={CREATOR_TOOLKIT}
+          sparks={<SparksButton host={sparkHost} />}
+          onCreate={() => onNavigate({ screen: 'creator' })}
+          onOpenEnergy={() => onNavigate({ screen: 'profile', cave: '/home/energy' })}
+          onBrowseToolkit={kind => setPluginsFilter(kind ?? 'all')}
+          onContinueWorld={id => act(id, true)}
+          onOpenWorld={onOpenWorld}
+          onOpenStudio={id => act(id, false)}
+          onRetryWorlds={() => setAttempt(value => value + 1)} />}
     <p role="status" className="mt-3 font-sans text-xs text-neutral-400 empty:hidden">{sampleNotice}</p>
   </>;
 }

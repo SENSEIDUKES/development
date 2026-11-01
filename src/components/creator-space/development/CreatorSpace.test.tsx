@@ -4,7 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import type { EnergyAccountState } from '../../energy/shared/useEnergyAccount';
-import type { CreatorSpaceProps, CreatorWorld } from '../shared/creatorSpaceContracts';
+import type { CreatorPluginCatalog, CreatorSpaceProps, CreatorWorld } from '../shared/creatorSpaceContracts';
+import { CreatorPlugins } from './CreatorPlugins';
 import { CreatorSpace } from './CreatorSpace';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -27,7 +28,12 @@ function renderPage(overrides: Partial<CreatorSpaceProps> = {}) {
   const props: CreatorSpaceProps = {
     worlds: { status: 'ready', items: WORLDS },
     energy: readyEnergy(320),
-    toolkit: [{ id: 'style', kind: 'style', title: 'Style Packs', description: 'Writing styles.' }],
+    toolkit: [
+      { id: 'style', kind: 'style', title: 'Style Packs', description: 'Writing styles.' },
+      { id: 'soundscape', kind: 'soundscape', title: 'Soundscapes', description: 'Ambient scores.' },
+      { id: 'cue', kind: 'cue', title: 'Cues', description: 'Sound effects.' },
+      { id: 'atmosphere', kind: 'atmosphere', title: 'Atmospheres', description: 'Place sounds.' },
+    ],
     onCreate: vi.fn(), onOpenEnergy: vi.fn(), onContinueWorld: vi.fn(), onOpenWorld: vi.fn(), onOpenStudio: vi.fn(),
     ...overrides,
   };
@@ -108,7 +114,117 @@ it('says honestly that the plugin browser is not open yet, unless the host suppl
   renderPage({ onBrowseToolkit: browse });
   click(button(/^Browse plugins/));
   click(button(/^Style Packs/));
-  expect(browse).toHaveBeenCalledTimes(2);
+  click(button(/^Cues/));
+  click(button(/^Atmospheres/));
+  expect(browse.mock.calls).toEqual([[undefined], ['style'], ['cue'], ['atmosphere']]);
+});
+
+it('lists parent .spp packs first and reveals individual files only when a parent .spp is clicked', () => {
+  const catalog: CreatorPluginCatalog = {
+    packages: [
+      {
+        id: 'ne-style-chinese',
+        kind: 'style',
+        title: 'NovelExpanded Chinese Style',
+        description: 'Cultivation prose.',
+        version: '1.0.0',
+        builtIn: true,
+        unitSingular: 'guide',
+        unitPlural: 'guides',
+        groups: [{ id: 'chinese', label: 'Xianxia · Xuanhuan', files: [{ id: 'g1', title: 'Chinese Prose Guide' }] }],
+      },
+      {
+        id: 'ne-soundscapes-vol-1',
+        kind: 'soundscape',
+        title: 'NovelExpanded Soundscapes Vol. 1',
+        description: 'Composed ambient scores.',
+        version: '1.0.0',
+        builtIn: true,
+        unitSingular: 'score',
+        unitPlural: 'scores',
+        groups: [
+          {
+            id: 'adventure',
+            label: 'Adventure',
+            files: [
+              { id: 't1', title: 'Adventure 4 Banished' },
+              { id: 't2', title: 'Adventure Leveling Up' },
+              { id: 't3', title: 'Adventure Market' },
+            ],
+          },
+          {
+            id: 'ambient',
+            label: 'Ambient',
+            files: [
+              { id: 't4', title: 'Ambient Night' },
+              { id: 't5', title: 'Ambient Starter' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'ne-cues-vol-1',
+        kind: 'cue',
+        title: 'NovelExpanded Cues Vol. 1',
+        description: 'Inline sound effects.',
+        version: '1.0.0',
+        builtIn: true,
+        unitSingular: 'effect',
+        unitPlural: 'effects',
+        groups: [{ id: 'weapons', label: 'Weapons', files: [{ id: 'c1', title: 'Blade Unsheathe 1', badge: 'blade drawn' }] }],
+      },
+      {
+        id: 'ne-atmospheres-vol-1',
+        kind: 'atmosphere',
+        title: 'NovelExpanded Atmospheres Vol. 1',
+        description: 'Weather beds.',
+        version: '1.0.0',
+        builtIn: true,
+        unitSingular: 'bed',
+        unitPlural: 'beds',
+        groups: [{ id: 'rain', label: 'Rain', files: [{ id: 'a1', title: 'Gentle Rain 1', badge: 'gentle rain' }] }],
+      },
+    ],
+  };
+  const onBack = vi.fn();
+  const onFilterChange = vi.fn();
+  act(() => root.render(
+    <LibraryPresentationProvider>
+      <CreatorPlugins catalog={catalog} initialFilter="all" onFilterChange={onFilterChange} onBack={onBack} />
+    </LibraryPresentationProvider>,
+  ));
+
+  // Top level shows parent .spp packages and group counts, NOT individual files.
+  expect(container.querySelector('h1')?.textContent).toBe('Creator Plugins');
+  expect(container.textContent).toContain('NovelExpanded Soundscapes Vol. 1');
+  expect(container.textContent).toContain('Adventure (3)');
+  expect(container.textContent).toContain('Ambient (2)');
+  expect(container.textContent).not.toContain('Adventure 4 Banished');
+  expect(container.textContent).not.toContain('Blade Unsheathe 1');
+
+  // Clicking the parent .spp opens it and reveals its groups and individual files.
+  click(container.querySelector<HTMLElement>('[data-testid="plugin-spp-ne-soundscapes-vol-1"]') ?? undefined);
+  expect(container.querySelector('h1')?.textContent).toBe('NovelExpanded Soundscapes Vol. 1');
+  expect(container.textContent).toContain('Adventure 4 Banished');
+  expect(container.textContent).toContain('Ambient Night');
+
+  // Filtering by a group inside the .spp narrows to that group's files.
+  click(button('Ambient (2)'));
+  expect(container.textContent).toContain('Ambient Night');
+  expect(container.textContent).not.toContain('Adventure 4 Banished');
+
+  // Back returns to the parent .spp list, and Back again returns to Create.
+  click(button('Back to Creator Plugins'));
+  expect(container.querySelector('h1')?.textContent).toBe('Creator Plugins');
+  expect(container.textContent).not.toContain('Ambient Night');
+
+  click(button('Cues'));
+  expect(onFilterChange).toHaveBeenCalledWith('cue');
+  expect(container.textContent).toContain('NovelExpanded Cues Vol. 1');
+  expect(container.textContent).not.toContain('NovelExpanded Chinese Style');
+
+  click(button('Back to Create'));
+  expect(onBack).toHaveBeenCalledTimes(1);
 });
 
 it('distinguishes loading, empty and failed worlds without inventing numbers', () => {

@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { ArrowRight, AudioLines, ChevronRight, FileText, Landmark, Paintbrush, Play } from 'lucide-react';
+import { ArrowRight, AudioLines, ChevronRight, FileText, Landmark, Paintbrush, Play, Volume2, Wind } from 'lucide-react';
 import {
   LibraryButton, LibraryCard, LibraryCardMedia, LibraryCardTitle, LibraryPanel, ManifestButton,
   LibraryManifestingIcon as SENManifestingIcon, LibraryNavigationIcon as SENNavigationIcon,
@@ -7,12 +7,12 @@ import {
 import { SEIEmptyState, SEIErrorState, SEISkeleton } from '@seihouse/ui';
 import { useLibraryAssets } from '../../../library/assets';
 import { formatEnergy } from '../../energy/development/EnergyAmount';
-import type { CreatorSpaceProps, CreatorToolkitItem, CreatorWorld, CreatorWorldStatus } from '../shared/creatorSpaceContracts';
+import type { CreatorSpaceProps, CreatorToolkitItem, CreatorToolkitKind, CreatorWorld, CreatorWorldStatus } from '../shared/creatorSpaceContracts';
 import { WorldCard, WORLD_STATUS_LABELS } from '../../world-card/development/WorldCard';
 import './creator-space.css';
 
-const TOOLKIT_ICONS = { style: Paintbrush, soundscape: AudioLines } as const;
-const TOOLKIT_PREVIEW_NOTICE = 'The plugin browser is still being built. For now, each world’s styles and soundscapes are chosen in its Studio.';
+const TOOLKIT_ICONS = { style: Paintbrush, soundscape: AudioLines, cue: Volume2, atmosphere: Wind } as const;
+const TOOLKIT_PREVIEW_NOTICE = 'The plugin browser is still being built. For now, each world’s styles, soundscapes, cues and atmospheres are chosen in its Studio.';
 
 export const creatorWorldMeta = (world: CreatorWorld) =>
   `Ch. ${world.chapterCount} · ${WORLD_STATUS_LABELS[world.status]}`;
@@ -103,9 +103,9 @@ function CreatorStat({ icon, label, value, note, onSelect }: {
     : <div className="creator-space-stat">{body}</div>;
 }
 
-function CreatorToolkit({ items, onBrowse }: { items: readonly CreatorToolkitItem[]; onBrowse?: () => void }) {
+function CreatorToolkit({ items, onBrowse }: { items: readonly CreatorToolkitItem[]; onBrowse?: (kind?: CreatorToolkitKind) => void }) {
   const [notice, setNotice] = useState(false);
-  const browse = onBrowse ?? (() => setNotice(true));
+  const browse = (kind?: CreatorToolkitKind) => { if (onBrowse) onBrowse(kind); else setNotice(true); };
   if (!items.length && !onBrowse) return null;
   return <section aria-labelledby="creator-toolkit-title" className="space-y-3">
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -113,15 +113,15 @@ function CreatorToolkit({ items, onBrowse }: { items: readonly CreatorToolkitIte
         <h2 id="creator-toolkit-title" className="font-display text-xl font-bold text-signal sm:text-2xl">Creator Toolkit</h2>
         {!onBrowse && <span className="creator-space-tag">Preview</span>}
       </div>
-      <button type="button" className="creator-space-link" onClick={browse}>
+      <button type="button" className="creator-space-link" onClick={() => browse()}>
         Browse plugins <ArrowRight size={16} aria-hidden="true" />
       </button>
     </div>
-    {items.length > 0 && <ul className="creator-space-rail creator-space-toolkit" aria-label="Creator Toolkit">
+    {items.length > 0 && <ul className="creator-space-toolkit" aria-label="Creator Toolkit">
       {items.map(item => {
         const Icon = TOOLKIT_ICONS[item.kind];
         return <li key={item.id}>
-          <button type="button" className="creator-space-tool" onClick={browse}>
+          <button type="button" className="creator-space-tool" onClick={() => browse(item.kind)}>
             {item.imageUrl && <img src={item.imageUrl} alt="" className="creator-space-tool-art" loading="lazy" referrerPolicy="no-referrer" />}
             <span className="relative z-[1] flex h-full flex-col items-start gap-1 text-left">
               <span className="creator-space-tool-icon mb-1"><Icon size={16} aria-hidden="true" /></span>

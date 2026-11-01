@@ -8,9 +8,10 @@
 import { GoogleGenAI, Modality, type LiveConnectConfig } from '@google/genai';
 import type { FamiliarLiveBrief } from '@seihouse/library/familiar';
 import { providerKey, providerModelName } from '../model-router/catalog';
-import { liveModel } from '../model-router/status';
+import { liveModel, liveModelProvider } from '../model-router/status';
 import { FAMILIAR_LIVE_SESSION_MS } from './limits';
-import { docsCategories } from '../../workshop/docs/catalog';
+import { familiarLiveInstruction } from './prompt';
+import { startOpenAiLive } from './openai';
 
 export interface FamiliarLiveHttpRequest {
   method?: string;
@@ -32,6 +33,8 @@ export interface LiveTokenMinter {
 export interface FamiliarLiveHttpDependencies {
   environment: Record<string, string | undefined>;
   tokens?: (apiKey: string) => LiveTokenMinter;
+  /** OpenAI's endpoint, for tests. */
+  openAiFetch?: typeof fetch;
   now?: () => number;
   onError?: (error: unknown) => void;
 }
@@ -89,39 +92,6 @@ export function parseFamiliarLiveBrief(value: unknown): FamiliarLiveBrief {
   };
 }
 
-/**
- * The NovelExpanded Docs (`src/workshop/docs/catalog.ts`): the product's own
- * explanations, the Familiar's facts beyond the page. Only explained topics.
- */
-export const familiarLiveDocs = (): string => docsCategories
-  .flatMap(category => category.topics.filter(topic => topic.definition)
-    .map(topic => `- ${topic.title} (${category.title}): ${topic.definition}${topic.howItFits ? ` ${topic.howItFits}` : ''}`))
-  .join('\n');
-
-/** Who the Familiar is and what it may say and do: its only facts are the page's topics and the NovelExpanded Docs. */
-export function familiarLiveInstruction(brief: FamiliarLiveBrief): string {
-  const docs = familiarLiveDocs();
-  const { familiar, topics, actions } = brief;
-  return [
-    `You are ${familiar.name}, the reader's Familiar: a small spirit companion who lives in the Celestial Library, the reading app Expanded Novels.${familiar.description ? ` ${familiar.description}` : ''}`,
-    `You talk with the reader out loud, like a friend beside them: warm, quick and natural. Keep answers to two or three short sentences unless they ask for more. Speak the reader's language (${brief.language}).`,
-    `The reader is on: ${brief.place}.`,
-    'Your only facts about the app are this page\'s topics and the NovelExpanded Docs below. Never invent features, prices or rules beyond them, and say plainly when you do not know. The docs are written by the people who build the app: explain them to a reader in plain words, and never talk about code, packages, the Workshop or development.',
-    topics.length
-      ? ['This page\'s topics:',
-        ...topics.map(topic => `- ${topic.label} (${topic.id}): ${topic.explanation}`),
-        'When showing a topic would help, call show_topic so it appears on their screen.'].join('\n')
-      : 'This page has no topics of its own.',
-    ...(docs ? [`The NovelExpanded Docs:\n${docs}`] : []),
-    actions.length
-      ? ['What you can do here, only through propose_action:',
-        ...actions.map(action => `- ${action.id}: ${action.label}${action.detail ? `. ${action.detail}` : ''}${action.input ? `. Needs their words for "${action.input.label}", at most ${action.input.maxLength} characters, in input.` : ''}`),
-        'propose_action never changes anything: it shows the change on the reader\'s screen to confirm. Never say you did something before it is confirmed.',
-        'Call answer_proposal with confirm only when the reader clearly tells you to confirm or go ahead; with cancel when they decline; with hear when they want to hear it first.'].join('\n')
-      : 'You cannot change anything on this page. If asked to, say so kindly.',
-  ].join('\n\n');
-}
-
 const declarations = (brief: FamiliarLiveBrief) => [
   ...(brief.topics.length ? [{
     name: 'show_topic',
@@ -174,17 +144,36 @@ export const handleFamiliarLiveHttp = async (
 ): Promise<FamiliarLiveHttpResponse> => {
   const method = request.method?.toUpperCase() ?? 'GET';
   if (method !== 'GET' && method !== 'POST') return { ...reply(405, { error: 'Method not allowed.' }), headers: { ...noStore, Allow: 'GET, POST' } };
-  const apiKey = providerKey(dependencies.environment, 'gemini');
-  if (method === 'GET') return reply(200, { configured: Boolean(apiKey) });
+  // The Router's live model decides the provider, and so how the browser connects.
+  const routed = liveModel(dependencies.environment);
+  const provider = liveModelProvider(routed);
+  const apiKey = providerKey(dependencies.environment, provider);
+  if (method === 'GET') return reply(200, { configured: Boolean(apiKey), provider });
   if (!apiKey) return reply(503, { error: 'Live talk is not configured on this server.', code: 'unavailable' });
 
   let brief: FamiliarLiveBrief;
+  let body: unknown;
   try {
-    brief = parseFamiliarLiveBrief(typeof request.body === 'string' ? JSON.parse(request.body) : request.body);
+    body = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;
+    brief = parseFamiliarLiveBrief(body);
   } catch (error) {
     return reply(400, { error: error instanceof Error ? error.message : 'Invalid live talk request.' });
   }
-  const model = providerModelName(liveModel(dependencies.environment));
+  const model = providerModelName(routed);
+  if (provider === 'openai') {
+    const sdp = isRecord(body) ? body.sdp : undefined;
+    if (typeof sdp !== 'string' || !sdp.trim() || sdp.length > 64_000) return reply(400, { error: 'A live talk request on OpenAI needs the browser\'s connection offer (sdp).' });
+    try {
+      const started = await startOpenAiLive({ apiKey, brief, sdp, environment: dependencies.environment, model }, dependencies.openAiFetch);
+      if (started.ok) return reply(201, { provider, ...started.body });
+      dependencies.onError?.(new Error(`OpenAI ${started.status}: ${started.detail}`));
+      return reply(502, { error: 'Your Familiar could not start talking. Try again.', detail: `OpenAI ${started.status}: ${started.detail}` });
+    } catch (error) {
+      dependencies.onError?.(error);
+      const detail = (error instanceof Error ? error.message : String(error)).replaceAll(apiKey, '[key]').slice(0, 300);
+      return reply(502, { error: 'Your Familiar could not start talking. Try again.', detail });
+    }
+  }
   const voice = dependencies.environment.FAMILIAR_LIVE_VOICE?.trim() || DEFAULT_VOICE;
   const { config, setup } = familiarLiveSetup(brief, model, voice);
   const now = dependencies.now?.() ?? Date.now();
@@ -200,7 +189,7 @@ export const handleFamiliarLiveHttp = async (
       httpOptions: { apiVersion: 'v1alpha' },
     } });
     if (!token.name) throw new Error('Gemini returned no token.');
-    return reply(200, { token: token.name, setup, expiresAt });
+    return reply(200, { provider, token: token.name, setup, expiresAt });
   } catch (error) {
     dependencies.onError?.(error);
     // Gemini's own words, so the reader's note says exactly why (this is the Development server).

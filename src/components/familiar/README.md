@@ -366,6 +366,12 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-11-01: Live talk on OpenAI GPT-Live, which the Router serves first when
+  its key is set: the phone connects over WebRTC (it captures the microphone
+  and plays the voice itself), GPT-Live speaks as the Familiar from its facts,
+  and a delegated Responses model runs its functions; the screen still confirms
+  every change. Typing goes to that model, and the Familiar says the answer.
+  Gemini Live remains the other provider.
 - 2026-10-30: Matched the verified Codex companion cadence: sixfold idle holds,
   three-cycle reactions and mouse-directed still poses, with raw inspection and
   generation one-shots preserved. Checked all twelve atlases, 30-second idle samples

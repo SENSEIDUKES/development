@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { familiarLiveDocs, handleFamiliarLiveHttp, parseFamiliarLiveBrief } from './http';
+import { handleFamiliarLiveHttp, parseFamiliarLiveBrief } from './http';
+import { familiarLiveDocs } from './prompt';
 
 const brief = {
   familiar: { name: 'Celestial Guardian', description: 'A loyal fox spirit.' },
@@ -12,8 +13,11 @@ const NOW = Date.parse('2026-10-29T12:00:00Z');
 
 describe('Familiar live talk route', () => {
   it('reports whether live talk is configured, without revealing the key', async () => {
-    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: { GEMINI_API_KEY: 'secret' } })).body).toEqual({ configured: true });
-    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: {} })).body).toEqual({ configured: false });
+    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: { GEMINI_API_KEY: 'secret' } })).body).toEqual({ configured: true, provider: 'gemini' });
+    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: {} })).body).toEqual({ configured: false, provider: 'gemini' });
+    // With an OpenAI key, GPT-Live serves first; FAMILIAR_LIVE_MODEL chooses another.
+    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: { GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' } })).body).toEqual({ configured: true, provider: 'openai' });
+    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment: { GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o', FAMILIAR_LIVE_MODEL: 'google/gemini-3.8-live' } })).body).toEqual({ configured: true, provider: 'gemini' });
     expect(await handleFamiliarLiveHttp({ method: 'POST', body: { brief } }, { environment: {} })).toMatchObject({ status: 503, body: { code: 'unavailable' } });
   });
 
@@ -44,6 +48,7 @@ describe('Familiar live talk route', () => {
     expect(tools[1].parameters.properties.action_id.enum).toEqual(['custom']);
     // The browser opens the same setup the token locks.
     expect(result.body).toEqual({
+      provider: 'gemini',
       token: 'auth_tokens/abc',
       expiresAt: '2026-10-29T12:10:00.000Z',
       setup: expect.objectContaining({
@@ -87,5 +92,38 @@ describe('Familiar live talk route', () => {
     } });
     expect(JSON.stringify(result.body)).not.toContain('sk-live-123');
     expect(onError).toHaveBeenCalledOnce();
+  });
+
+  it('starts a GPT-Live conversation from the browser\'s offer: the voice speaks as the Familiar, the backend runs its functions', async () => {
+    const fetch = vi.fn(async () => new Response(JSON.stringify({ session: { id: 'live_1' }, transport: { type: 'webrtc', sdp: 'v=0 answer' } }), { status: 201 }));
+    const result = await handleFamiliarLiveHttp({ method: 'POST', body: { brief, sdp: 'v=0 offer' } },
+      { environment: { OPENAI_API_KEY: 'sk-test' }, openAiFetch: fetch as unknown as typeof globalThis.fetch });
+    expect(result).toMatchObject({ status: 201, body: { provider: 'openai', session: { id: 'live_1' }, transport: { sdp: 'v=0 answer' } } });
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('https://api.openai.com/v1/live/sessions');
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer sk-test');
+    const sent = JSON.parse(String(init.body));
+    expect(sent.transport).toEqual({ type: 'webrtc', sdp: 'v=0 offer' });
+    expect(sent.session).toMatchObject({ model: 'gpt-live-1', audio: { output: { voice: 'ballad' } } });
+    expect(sent.session.instructions).toContain('You are Celestial Guardian');
+    expect(sent.session.instructions).toContain('- Energy (energy): Energy is the currency used for manifesting.');
+    expect(sent.session.instructions).toContain('delegate to the backend');
+    expect(sent.session.delegation).toMatchObject({ type: 'responses', responses: {
+      model: 'gpt-5.4-mini', tool_choice: 'auto', parallel_tool_calls: false, reasoning: { effort: 'low' },
+    } });
+    expect(sent.session.delegation.responses.instructions).toContain('- custom: Custom. Your own direction.');
+    expect(sent.session.delegation.responses.tools.map((tool: { name: string }) => tool.name)).toEqual(['show_topic', 'propose_action', 'answer_proposal']);
+    expect(sent.session.delegation.responses.tools[0]).toMatchObject({ type: 'function', parameters: { type: 'object', properties: { topic_id: { enum: ['energy'] } } } });
+  });
+
+  it('needs the browser\'s offer for OpenAI, and passes on OpenAI\'s reason without the key', async () => {
+    expect((await handleFamiliarLiveHttp({ method: 'POST', body: { brief } }, { environment: { OPENAI_API_KEY: 'sk-test' } })).status).toBe(400);
+    const fetch = vi.fn(async () => new Response(JSON.stringify({ error: { code: 'model_not_found', message: 'gpt-live-1 is not available to sk-test' } }), { status: 403 }));
+    const result = await handleFamiliarLiveHttp({ method: 'POST', body: { brief, sdp: 'v=0 offer' } },
+      { environment: { OPENAI_API_KEY: 'sk-test', FAMILIAR_LIVE_OPENAI_VOICE: 'marin', FAMILIAR_LIVE_OPENAI_BACKEND: 'gpt-5.4-nano' }, openAiFetch: fetch as unknown as typeof globalThis.fetch, onError: vi.fn() });
+    expect(result).toMatchObject({ status: 502, body: { detail: 'OpenAI 403: model_not_found: gpt-live-1 is not available to [key]' } });
+    const sent = JSON.parse(String((fetch.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    expect(sent.session.audio.output.voice).toBe('marin');
+    expect(sent.session.delegation.responses.model).toBe('gpt-5.4-nano');
   });
 });

@@ -5,7 +5,7 @@ import { LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/
 import { EnergyClientProvider, createHttpEnergyClient } from '@seihouse/library/energy';
 import { defaultFamiliar, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
 import { createFamiliarBrowserVoice } from '../../../host/familiar/voice';
-import { useFamiliarGeminiLive } from '../../../host/familiar/live';
+import { useFamiliarLive } from '../../../host/familiar/liveTalk';
 import { developmentIdentityToken } from '../../../server/identity/authentication';
 import { getPreviewScenario } from '../user-profile/previewData';
 import { DEFAULT_USER_PROFILE_PREVIEW_STATE, type UserProfilePreviewState } from '../user-profile/previewStates';
@@ -25,7 +25,7 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
   const [minimized, setMinimized] = useState(initiallyMinimized);
   const [voice] = useState(createFamiliarBrowserVoice);
   // As in the app: live talk when the profile turns it on and the server offers it (real provider credit), the device voice otherwise.
-  const live = useFamiliarGeminiLive();
+  const live = useFamiliarLive();
   const [selection, reportProfile] = useState<Selection>(() => ({
     uid: getPreviewScenario(initialState).currentUser?.uid ?? null,
     familiarId: initialFamiliarId,

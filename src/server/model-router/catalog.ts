@@ -80,4 +80,6 @@ export const PROVIDER_ADAPTERS: readonly string[] = [
   'src/server/audio/codexVoiceQuote.ts',
   // The browser end of Familiar Live Talk: it opens the conversation the server's token allows.
   'src/host/familiar/live.ts',
+  // Familiar Live Talk on OpenAI GPT-Live: the server exchanges the browser's connection offer.
+  'src/server/familiar-live/openai.ts',
 ];

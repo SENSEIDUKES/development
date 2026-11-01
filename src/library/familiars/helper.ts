@@ -101,6 +101,8 @@ export interface FamiliarLiveEvents {
   call(call: FamiliarLiveCall): Promise<string>;
   /** `unavailable`: live talk cannot start here, so the device voice listens instead. */
   ended(problem?: string, unavailable?: boolean): void;
+  /** Something the reader should know mid-conversation, in exact words (a refused setting, a blocked voice). */
+  notice?(text: string): void;
 }
 
 /** One live conversation: ended by the reader, or sent a typed message. */
@@ -521,6 +523,7 @@ export class FamiliarHelperController {
         for (const text of typed) this.liveSession?.send(text);
       },
       caption: (speaker, text) => { if (current()) this.caption(speaker, text); },
+      notice: text => { if (current()) this.addLine({ speaker: 'note', text }); },
       call: call => current() ? this.answerLive(call) : Promise.resolve('The conversation has ended.'),
       ended: (problem, unavailable) => {
         if (!current()) return;

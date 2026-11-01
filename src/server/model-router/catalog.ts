@@ -82,4 +82,7 @@ export const PROVIDER_ADAPTERS: readonly string[] = [
   'src/host/familiar/live.ts',
   // Familiar Live Talk on OpenAI GPT-Live: the server exchanges the browser's connection offer.
   'src/server/familiar-live/openai.ts',
+  // Familiar Live Talk on ElevenLabs Realtime: the server mints the client secret; the browser talks.
+  'src/server/familiar-live/elevenlabs.ts',
+  'src/host/familiar/realtimeLive.ts',
 ];

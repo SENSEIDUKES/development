@@ -72,18 +72,21 @@ export const MODEL_ENERGY_GRADES: Readonly<Record<string, EnergyGrade>> = {
   // Live speech, per minute.
   'google/gemini-3.8-live': 'mortal',
   'openai/gpt-live-1': 'immortal',
+  // ElevenLabs Realtime: $0.08 a minute plus its model's tokens.
+  'elevenlabs/eleven_realtime_v1_mini': 'heaven',
+  'elevenlabs/eleven_realtime_v1_max': 'heaven',
 };
 
 /**
  * The team's model behind each tier, per kind: what a reader who chooses a
  * tier gets. Readers never see these unless they open the Model Router; one
  * who picks an exact model there pays that model's own grade. A tier with no
- * model yet (live Heaven) cannot be chosen.
+ * model cannot be chosen.
  */
 export const ENERGY_TIER_MODELS: Record<GradedEnergyKind, Record<EnergyGrade, string | undefined>> = {
   chapter: { mortal: 'google/gemini-3.1-flash-lite', immortal: 'google/gemini-3.8-flash', heaven: 'anthropic/claude-opus-5-5' },
   image: { mortal: 'google/gemini-3.1-flash-lite-image', immortal: 'google/gemini-3.1-flash-image', heaven: 'google/gemini-3-pro-image' },
-  'live-minute': { mortal: 'google/gemini-3.8-live', immortal: 'openai/gpt-live-1', heaven: undefined },
+  'live-minute': { mortal: 'google/gemini-3.8-live', immortal: 'openai/gpt-live-1', heaven: 'elevenlabs/eleven_realtime_v1_mini' },
 };
 
 /** Whether a model costs more to run than `tier` charges for: placing it there would lose money. */

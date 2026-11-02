@@ -74,6 +74,22 @@ export const MODEL_ENERGY_GRADES: Readonly<Record<string, EnergyGrade>> = {
   'openai/gpt-live-1': 'immortal',
 };
 
+/**
+ * The team's model behind each tier, per kind: what a reader who chooses a
+ * tier gets. Readers never see these unless they open the Model Router; one
+ * who picks an exact model there pays that model's own grade. A tier with no
+ * model yet (live Heaven) cannot be chosen.
+ */
+export const ENERGY_TIER_MODELS: Record<GradedEnergyKind, Record<EnergyGrade, string | undefined>> = {
+  chapter: { mortal: 'google/gemini-3.1-flash-lite', immortal: 'google/gemini-3.8-flash', heaven: 'anthropic/claude-opus-5-5' },
+  image: { mortal: 'google/gemini-3.1-flash-lite-image', immortal: 'google/gemini-3.1-flash-image', heaven: 'google/gemini-3-pro-image' },
+  'live-minute': { mortal: 'google/gemini-3.8-live', immortal: 'openai/gpt-live-1', heaven: undefined },
+};
+
+/** Whether a model costs more to run than `tier` charges for: placing it there would lose money. */
+export const costsMoreThanTier = (model: string | undefined, tier: EnergyGrade): boolean =>
+  ENERGY_GRADES.indexOf(modelEnergyGrade(model)) > ENERGY_GRADES.indexOf(tier);
+
 export const modelEnergyGrade = (model: string | undefined): EnergyGrade =>
   (model && Object.hasOwn(MODEL_ENERGY_GRADES, model) ? MODEL_ENERGY_GRADES[model] : undefined) ?? 'mortal';
 

@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { getEnergyPriceEntry, type EnergyActionId } from './energyContracts';
-import { gradedEnergyPrice, type GradedEnergyKind } from './energyGrades';
+import { GRADED_ENERGY_PRICES, modelEnergyGrade, type EnergyGrade, type GradedEnergyKind } from './energyGrades';
 
 /**
  * The models a host will generate with, by kind (its Model Router choice),
@@ -9,11 +9,13 @@ import { gradedEnergyPrice, type GradedEnergyKind } from './energyGrades';
  * catalog's (Mortal).
  */
 export type EnergyModels = Partial<Record<GradedEnergyKind, string | undefined>>;
+/** The grade a kind is priced at when the reader chose a tier, which can differ from its model's own. */
+export type EnergyGrades = Partial<Record<GradedEnergyKind, EnergyGrade>>;
 
-const EnergyModelsContext = createContext<EnergyModels | null>(null);
+const EnergyModelsContext = createContext<{ models: EnergyModels; grades: EnergyGrades } | null>(null);
 
-export function EnergyModelsProvider({ models, children }: { models: EnergyModels; children: ReactNode }) {
-  return <EnergyModelsContext.Provider value={models}>{children}</EnergyModelsContext.Provider>;
+export function EnergyModelsProvider({ models, grades = {}, children }: { models: EnergyModels; grades?: EnergyGrades; children: ReactNode }) {
+  return <EnergyModelsContext.Provider value={{ models, grades }}>{children}</EnergyModelsContext.Provider>;
 }
 
 const GRADED_ACTIONS: Partial<Record<EnergyActionId, GradedEnergyKind>> = {
@@ -21,11 +23,11 @@ const GRADED_ACTIONS: Partial<Record<EnergyActionId, GradedEnergyKind>> = {
   'image.generate': 'image',
 };
 
-/** One action's price: its grade's price for the host's model, or the catalog price. `null` when unpriced. */
+/** One action's price: the reader's tier, else its model's grade, or the catalog price. `null` when unpriced. */
 export function useActionEnergyPrice(actionId: EnergyActionId): number | null {
-  const models = useContext(EnergyModelsContext);
+  const host = useContext(EnergyModelsContext);
   const kind = GRADED_ACTIONS[actionId];
   const catalog = getEnergyPriceEntry(actionId).price;
-  if (!models || !kind || catalog === null) return catalog;
-  return gradedEnergyPrice(kind, models[kind]);
+  if (!host || !kind || catalog === null) return catalog;
+  return GRADED_ENERGY_PRICES[kind][host.grades[kind] ?? modelEnergyGrade(host.models[kind])];
 }

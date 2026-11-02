@@ -1,6 +1,7 @@
 import { type BlueprintGenerationPayload, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { isLocalDevelopmentModel, readReasoningPreference } from '../generation/modelPreference';
 import { recordUsage } from '../usage/usageLog';
+import { chosenEnergyGrade } from '../generation/modelPreference';
 
 const ENDPOINT = '/api/generate-blueprint';
 /** Longer than the server's 180-second route, so the server's own answer, a deadline included, arrives first. */
@@ -112,6 +113,6 @@ export const requestWorldBlueprint = async (
     failed: status => `World Blueprint generation failed with status ${status}.`,
     timedOut: 'World Blueprint generation timed out. No Story Seed data was changed; please retry.',
   }, signal);
-  recordUsage({ kind: 'blueprint', model });
+  recordUsage({ kind: 'blueprint', model, grade: chosenEnergyGrade('chapters', model) });
   return blueprint as unknown as WorldBlueprint;
 };

@@ -151,6 +151,7 @@ read it.
 
 ## Workshop history
 
+- 2026-11-01 — Tiers: Chapters, Images and Live speech open on three tiers (Mortal, Immortal, Heaven, with Story Seed's Fate Pressure flames). Readers choose a tier; the team sets the model behind each (`ENERGY_TIER_MODELS`; a model set here applies on this device), and the Router flags a tier model that costs more to run than the tier brings in. An exact model picked in the list wins over the tier, at its own grade. Prices and Usage follow the tier chosen.
 - 2026-11-01 — Each chapter, image and live model shows its Energy grade (Mortal, Immortal, Heaven) and price, from `src/components/energy/shared/energyGrades.ts`. Every model in those tabs must have a grade (`energyGrades.test.ts`).
 - 2026-11-01 — Text to speech and Live speech are separate tabs. Live speech is chosen in the Router (`live` preference); the server runs that choice when its key is set. The Router opens from the app's Settings › Advanced Tools › Model Router.
 - 2026-11-01 — Live voice adds OpenAI GPT-Live 1, serving first when `OPENAI_API_KEY` is set.

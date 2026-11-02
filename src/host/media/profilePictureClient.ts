@@ -1,5 +1,6 @@
 import { base64ToBlob, blobToBase64, shrinkImage } from './imageFiles';
 import { recordUsage } from '../usage/usageLog';
+import { chosenEnergyGrade } from '../generation/modelPreference';
 
 export const PROFILE_PICTURE_ENDPOINT = '/api/profile-picture';
 
@@ -64,6 +65,7 @@ export async function requestProfilePicture(photo: ProfilePhoto, options: {
   if (typeof body?.image !== 'string' || typeof body.mimeType !== 'string' || !body.mimeType.startsWith('image/')) {
     throw new ProfilePictureRequestError('The portrait server answered without an image.', 502);
   }
-  recordUsage({ kind: 'image', model: typeof body.model === 'string' ? body.model : options.model });
+  const used = typeof body.model === 'string' ? body.model : options.model;
+  recordUsage({ kind: 'image', model: used, grade: chosenEnergyGrade('images', used) });
   return base64ToBlob(body.image, body.mimeType);
 }

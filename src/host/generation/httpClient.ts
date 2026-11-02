@@ -1,6 +1,7 @@
 import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessGenerationServerInfo, type HarnessArcRequest, type HarnessHoldingsFixRequest, type HarnessLookRequest, type HarnessTagRequest } from '@seihouse/sen/harness-generation';
 import { readReasoningPreference } from './modelPreference';
 import { recordUsage } from '../usage/usageLog';
+import { chosenEnergyGrade } from './modelPreference';
 
 const withReasoningLevel = <T extends { model: string }>(request: T): T & { reasoningLevel?: string } => {
   const reasoningLevel = typeof window === 'undefined' ? undefined : readReasoningPreference(request.model);
@@ -100,8 +101,10 @@ export class HarnessGenerationHttpClient implements HarnessGenerationModelAdapte
     if (!response.ok) throw new HarnessGenerationRequestError(await responseError(response), response.status);
     const answer = parseGenerationResponse(await response.json());
     const { model, usage } = answer.providerReceipt;
+    const used = typeof model === 'string' ? model : request.model;
     recordUsage({
-      kind: upkeep ? 'story-upkeep' : 'chapter', task: upkeep, model: typeof model === 'string' ? model : request.model,
+      grade: upkeep ? undefined : chosenEnergyGrade('chapters', used),
+      kind: upkeep ? 'story-upkeep' : 'chapter', task: upkeep, model: used,
       inputTokens: usage?.inputTokens, outputTokens: usage?.outputTokens,
       // The server estimates from the text when a provider reports no count.
       tokensEstimated: usage?.source === 'estimated' ? true : undefined,

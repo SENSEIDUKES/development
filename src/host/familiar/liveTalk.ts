@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { FamiliarLive } from '@seihouse/library/familiar';
-import { useModelPreference } from '../generation/modelPreference';
+import { chosenEnergyGrade, useModelPreference } from '../generation/modelPreference';
 import { recordUsage } from '../usage/usageLog';
 import { createFamiliarGeminiLive } from './live';
 import { createFamiliarOpenAiLive } from './openaiLive';
@@ -50,7 +50,7 @@ export function withLiveUsage(live: FamiliarLive, model: string, now: () => numb
       const record = () => {
         if (recorded || connectedAt === undefined) return;
         recorded = true;
-        recordUsage({ kind: 'live', model, seconds: Math.max(0, Math.round((now() - connectedAt) / 1_000)) });
+        recordUsage({ kind: 'live', model, grade: chosenEnergyGrade('live', model), seconds: Math.max(0, Math.round((now() - connectedAt) / 1_000)) });
       };
       const session = live.start(brief, {
         ...events,

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { gradedEnergyPrice, liveTalkEnergy } from '@seihouse/library/energy';
+import { GRADED_ENERGY_PRICES, LIVE_TALK_STEP_SECONDS, modelEnergyGrade, type EnergyGrade } from '@seihouse/library/energy';
 
 /**
  * What this device asked the models to make: one entry per chapter, story
@@ -24,6 +24,8 @@ export interface UsageEntry {
   tokensEstimated?: true;
   /** Live talk: how long the conversation lasted. */
   seconds?: number;
+  /** The tier it was priced at, when the reader chose one; otherwise its model's own grade. */
+  grade?: EnergyGrade;
 }
 
 export const USAGE_STORAGE_KEY = 'seihouse.usage.v1';
@@ -88,11 +90,18 @@ export const useUsageLog = (): UsageEntry[] => useSyncExternalStore(subscribe, r
  * shows on its button.
  */
 export function usageEnergy(entry: UsageEntry): number {
+  const grade = entry.grade ?? modelEnergyGrade(entry.model);
   switch (entry.kind) {
     case 'chapter':
-    case 'blueprint': return gradedEnergyPrice('chapter', entry.model);
-    case 'image': return gradedEnergyPrice('image', entry.model);
-    case 'live': return liveTalkEnergy(entry.model, entry.seconds ?? 0);
+    case 'blueprint': return GRADED_ENERGY_PRICES.chapter[grade];
+    case 'image': return GRADED_ENERGY_PRICES.image[grade];
+    case 'live': {
+      const seconds = entry.seconds ?? 0;
+      return seconds <= 0 ? 0 : Math.ceil(seconds / LIVE_TALK_STEP_SECONDS) * (GRADED_ENERGY_PRICES['live-minute'][grade] / 3);
+    }
     case 'story-upkeep': return 0;
   }
 }
+
+/** The grade a recorded entry was made at (for Behind the scenes). */
+export const usageGrade = (entry: UsageEntry): EnergyGrade => entry.grade ?? modelEnergyGrade(entry.model);

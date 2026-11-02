@@ -11,6 +11,7 @@ export * from '../../library/familiars/familiarsClient';
 export * from '../../components/familiar-training/development';
 export * from '../../library/familiars/helper';
 export * from '../../library/familiars/actionList';
+export * from '../../library/familiars/spokenCodes';
 export { FamiliarHelperProvider, FamiliarHelperAction, useFamiliarHelperContext } from '../../components/familiar/development/FamiliarHelper';
 export * from '../../library/familiars/helpTopics';
 export { FamiliarPlace } from '../../library/familiars/FamiliarPlace';

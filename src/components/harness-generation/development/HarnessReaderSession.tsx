@@ -71,6 +71,8 @@ export interface ReaderHostTools {
   interruptPlayback(): (resume: boolean) => void;
   /** Create mode's tools, only while Create mode is open on the newest chapter. */
   createMode?: { sounds: ReaderSoundAuthoring };
+  /** Opens a chapter of this story by its number; false when the story has no such chapter. */
+  openChapter?(chapterNumber: number): boolean;
 }
 
 /**
@@ -495,7 +497,8 @@ export function HarnessReaderSession({
 
   const panel = layer?.kind === 'panel' ? layer.id : undefined;
   return <>
-    {renderHostTools?.({ chapterId: chapter?.id ?? 'no-chapter', busy: covered, interruptPlayback: readAloud.interrupt, createMode: sounds && { sounds } })}
+    {renderHostTools?.({ chapterId: chapter?.id ?? 'no-chapter', busy: covered, interruptPlayback: readAloud.interrupt, createMode: sounds && { sounds },
+      openChapter: number => { if (!chapters.some(entry => entry.chapterNumber === number)) return false; openChapter(number); return true; } })}
     {/* The frame fills the screen; on laptops a panel sits at the right and the frame shrinks beside it.
         A right-to-left story mirrors the frame: its text, the chapter arrows and the bars' ends. */}
     <div dir={direction} className={`reader-frame transition-[padding] duration-200 motion-reduce:transition-none ${panel ? 'lg:pr-[28rem]' : ''}`} data-panel={panel}>

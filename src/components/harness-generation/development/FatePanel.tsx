@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ArcPlanView } from '../../arc-goals/development/ArcPlanView';
 import { ARC_LENGTH, createArcChapterPosition } from '../../arc-goals/shared/arcGoals';
 import { CHAPTER_FUNCTIONS, type ChapterFunction } from '../../../narrative/storyDirection';
+import { SpokenCode } from '@seihouse/sen/presentation';
 import {
   CHAPTER_DIRECTION_TEXT_LIMIT,
   type ChapterDirectionChoice,
@@ -225,12 +226,14 @@ export function FatePathChooser({ story, foundation, chapters, busy = false, foc
     finally { setSaving(false); }
   };
   const disabled = busy || saving;
+  // Spoken codes, in the order shown: the writer's three directions, then your own.
+  const spokenCode = (value: PathOption) => value === 'reader' ? 'F4' : (CHAPTER_FUNCTIONS as readonly string[]).includes(value) ? `F${(CHAPTER_FUNCTIONS as readonly string[]).indexOf(value) + 1}` : undefined;
   const radio = (value: PathOption, title: string, body: ReactNode, badge?: string, focus = false) => (
     <label key={value} className={`flex min-h-11 cursor-pointer gap-3 rounded-lg border p-3 text-sm ${option === value ? 'border-(--reader-accent-bright)/50 bg-(--reader-accent)/[0.08]' : 'border-(--reader-light)/10 hover:border-(--reader-light)/25'}`}>
       <input type="radio" name={`fate-path-${story.id}`} value={value} checked={option === value} disabled={disabled}
         onChange={() => setOption(value)} autoFocus={focus} className="mt-1 shrink-0" />
       <span className="min-w-0">
-        <span className="flex flex-wrap items-center gap-2 font-semibold text-(--reader-light)">{title}{badge && <span className="rounded-full border border-(--reader-accent-bright)/30 px-2 py-0.5 font-mono text-[10px] font-normal uppercase tracking-[0.12em] text-(--reader-accent-pale)">{badge}</span>}</span>
+        <span className="flex flex-wrap items-center gap-2 font-semibold text-(--reader-light)">{spokenCode(value) && <SpokenCode code={spokenCode(value)!} />}{title}{badge && <span className="rounded-full border border-(--reader-accent-bright)/30 px-2 py-0.5 font-mono text-[10px] font-normal uppercase tracking-[0.12em] text-(--reader-accent-pale)">{badge}</span>}</span>
         <span className="mt-1 block break-words text-xs leading-relaxed text-(--reader-text-muted)">{body}</span>
       </span>
     </label>

@@ -29,6 +29,9 @@ export const FAMILIAR_ACTION_LIST: readonly FamiliarActionEntry[] = [
   { id: 'go-energy', label: 'My Energy', where: 'anywhere', instant: true },
   { id: 'go-settings', label: 'Settings', where: 'anywhere', instant: true },
   { id: 'go-store', label: 'Store', where: 'anywhere', instant: true },
+  // Spoken codes (N3, C12): said, never shown as tiles. Going somewhere, so at once.
+  { id: 'open-novel', label: 'Open a story by its code', where: ['home'], instant: true },
+  { id: 'open-chapter', label: 'Open a chapter by its code', where: ['reader'], instant: true },
   // The Reader: Fate, how the reader directs the next chapter.
   { id: 'worldBuilding', label: 'World Building', where: ['reader'] },
   { id: 'progression', label: 'Progression', where: ['reader'] },
@@ -45,7 +48,8 @@ export const FAMILIAR_FRONT_ACTIONS: Readonly<Record<FamiliarPage, readonly stri
   create: ['go-energy', 'go-home', 'go-store'],
   'world-info': ['go-home', 'go-create', 'go-energy'],
   profile: ['go-energy', 'go-store', 'go-settings', 'go-home'],
-  reader: ['worldBuilding', 'progression', 'conflict', 'custom'],
+  // The Fate panel's order, so F1–F4 read the same on the card and the panel.
+  reader: ['progression', 'worldBuilding', 'conflict', 'custom'],
   'create-mode': ['sound'],
 };
 

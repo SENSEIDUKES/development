@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NarrativeAudioProvider, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FamiliarHelperAction, FamiliarHelperProvider, useFamiliarHelperContext } from './FamiliarHelper';
+import { SpokenCode } from '@seihouse/sen/presentation';
 import type { FamiliarHelperContext, FamiliarLive, FamiliarLiveEvents, FamiliarVoice, FamiliarWakeWord } from '../../../library/familiars/helper';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -34,6 +35,16 @@ function setup() {
 }
 
 describe('Familiar helper surface', () => {
+  it('shows spoken codes on the page only while the Familiar is in use', async () => {
+    const voice: FamiliarVoice = { available: true, listen: vi.fn(() => ({ stop: vi.fn(), cancel: vi.fn() })), speak: vi.fn(() => () => {}) };
+    act(() => root.render(<FamiliarHelperProvider voice={voice}><SpokenCode code="N1" /><FamiliarHelperAction /></FamiliarHelperProvider>));
+    expect(document.querySelector('[data-spoken-code="N1"]')).toBeNull();
+    await click('Talk to Familiar');
+    expect(document.querySelector('[data-spoken-code="N1"]')?.textContent).toBe('N1');
+    await click('Close Familiar');
+    expect(document.querySelector('[data-spoken-code="N1"]')).toBeNull();
+  });
+
   it('shows a page\'s front suggestions first, the rest behind See all, and its first topics with the rest behind More', async () => {
     const t = setup();
     const go = (id: string, label: string) => ({ id, label, phrases: [label.toLowerCase()], describe: () => label, success: `Opened ${label}.`, run: vi.fn(async () => {}) });

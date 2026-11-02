@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useOverlayScrollbar } from '@seihouse/ui';
+import { SpokenCode, SpokenCodesProvider } from '@seihouse/sen/presentation';
 import { Check, GripVertical, Info, Keyboard, Lightbulb, MessagesSquare, Mic, Pause, Play, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FAMILIAR_WAKE_WORD, FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice, type FamiliarWakeWord } from '../../../library/familiars/helper';
@@ -80,8 +81,18 @@ export function FamiliarHelperProvider({ voice, live, wake, familiar, language =
     document.addEventListener('visibilitychange', hide);
     return () => { document.removeEventListener('visibilitychange', hide); helper.suspend(); };
   }, [helper]);
-  return <Helper.Provider value={helper}><FocusReturn.Provider value={returnFocus}>{children}<FamiliarHelperPanel helper={helper} bottomInset={Math.max(16, bottomInset)} />
+  return <Helper.Provider value={helper}><FocusReturn.Provider value={returnFocus}><FamiliarCodes helper={helper}>{children}<FamiliarHelperPanel helper={helper} bottomInset={Math.max(16, bottomInset)} /></FamiliarCodes>
     {wake?.available && <FamiliarWakeListener helper={helper} wake={wake} language={language} />}</FocusReturn.Provider></Helper.Provider>;
+}
+
+/**
+ * Spoken codes (N3, C12, F2) show on the page only while the Familiar is in
+ * use: its card open or a live conversation on. The rest of the time the page
+ * stays as it is.
+ */
+function FamiliarCodes({ helper, children }: { helper: FamiliarHelperController; children: ReactNode }) {
+  const inUse = useSyncExternalStore(helper.subscribe, () => { const state = helper.getSnapshot(); return state.open || Boolean(state.live); }, () => false);
+  return <SpokenCodesProvider visible={inUse}>{children}</SpokenCodesProvider>;
 }
 
 /**
@@ -207,8 +218,10 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   const proposed = state.proposal && context?.actions.find(action => action.id === state.proposal!.actionId);
   const topic = state.mode === 'explain' ? context?.topics.find(entry => entry.id === state.topicId) : undefined;
   // What this page needs most first: its front suggestions, everything else behind See all / More.
-  const frontActions = context?.front || FRONT;
-  const shownActions = allActions ? context?.actions ?? [] : context?.actions.slice(0, frontActions) ?? [];
+  // Actions said by a numbered code (N3, C12) are never tiles.
+  const tiles = context?.actions.filter(action => !(action.code && action.code.number === undefined)) ?? [];
+  const frontActions = Math.min(context?.front || FRONT, FRONT);
+  const shownActions = allActions ? tiles : tiles.slice(0, frontActions);
   const topicAt = context?.topics.findIndex(entry => entry.id === state.topicId) ?? -1;
   const shownTopics = allTopics || topicAt >= FRONT ? context?.topics ?? [] : context?.topics.slice(0, FRONT) ?? [];
   const type = (prefill = '') => { helper.useText(); setInfo(false); setChat(false); setTyping(true); setText(prefill); setTimeout(() => input.current?.focus(), 0); };
@@ -243,6 +256,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
         ? <p><Mic size={16} aria-hidden /> Tap the microphone and talk with your Familiar like a friend; tap it again to hang up. <MessagesSquare size={16} aria-hidden /> shows the conversation, where you can type to it too.</p>
         : <p><Mic size={16} aria-hidden /> Tap the microphone and talk, or <Keyboard size={16} aria-hidden /> type. Say “Explain” or “Action” to switch.</p>}
       {context?.actions.length ? <p>{context.hint}</p> : null}
+      {context?.actions.some(action => action.code) ? <p>Say a code you see on screen, like N2 or C5.</p> : null}
       <p className="familiar-helper-quiet">Voice commands are in English for now.</p>
     </div>
 
@@ -291,14 +305,14 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
       </div> : null}
     </>
 
-    : context?.actions.length ? <div className="familiar-helper-actions">
+    : tiles.length ? <div className="familiar-helper-actions">
       {shownActions.map(action => { const Icon = action.icon ?? Zap; const detail = `familiar-action-${action.id}-detail`;
         // Named by its label; the short line under it describes it.
         return <button type="button" key={action.id} disabled={busy} aria-label={action.label} aria-describedby={action.detail ? detail : undefined}
         onClick={() => { if (action.input) type(`${action.phrases[0]}: `); else { helper.useText(); helper.submit(action.phrases[0]); } }}>
-        <Icon size={22} aria-hidden /><span className="familiar-helper-tile-text"><span>{action.label}</span>
+        <Icon size={22} aria-hidden /><span className="familiar-helper-tile-text"><span>{action.label}{action.code?.number !== undefined && <SpokenCode code={`${action.code.letter}${action.code.number}`} className="ms-2 align-middle" />}</span>
           {action.detail && <small id={detail}>{action.detail}</small>}</span></button>; })}
-      {context.actions.length > frontActions && <ShowMore open={allActions} more={context.actions.length - frontActions} label="See all" onToggle={() => setAllActions(value => !value)} />}
+      {tiles.length > frontActions && <ShowMore open={allActions} more={tiles.length - frontActions} label="See all" onToggle={() => setAllActions(value => !value)} />}
     </div> : null}
 
     <p role="status" aria-live="polite" className="familiar-helper-status">{message}</p>

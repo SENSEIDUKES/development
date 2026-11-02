@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ComponentType, 
 import { SEIOverlayScrollbar, SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
 import { BookOpen, Check, ChevronDown, ChevronLeft, ChevronRight, Compass, ListOrdered, LocateFixed, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal, Zap } from 'lucide-react';
 import { READ_ALOUD_RATES, type ReadAloud, type ReadAloudRole } from '@seihouse/sen/reader-runtime';
+import { SpokenCode, useSpokenCodesVisible } from '@seihouse/sen/presentation';
 import { controlFeedback, pickerHeading, pickerList, pickerRow, pickerSelected, pickerSurface } from './readerPicker';
 import './reader-colors.css';
 
@@ -109,6 +110,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
   direction?: 'ltr' | 'rtl';
 }) {
   const [picker, setPicker] = useState<'speed' | 'chapters'>();
+  const codesVisible = useSpokenCodesVisible();
   const compact = useSyncExternalStore(subscribeCompact, compactSnapshot, fullLayout);
   const [group, setGroup] = useState<'playback' | 'chapters' | 'actions'>();
   const chapterTrigger = useRef<HTMLButtonElement>(null);
@@ -148,7 +150,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
           aria-label={`Chapter ${entry.number}: ${entry.title}`} aria-current={entry.number === chapterSelection.current ? 'page' : undefined}
           onClick={() => { setPicker(undefined); setGroup(undefined); chapterTrigger.current?.focus({ preventScroll: true }); chapterSelection.onSelect(entry.number); }}
           className={`${pickerRow} ${entry.number === chapterSelection.current ? pickerSelected : 'text-(--reader-text-muted)'}`}>
-          <span className="min-w-6 font-mono text-xs tabular-nums text-(--reader-text-dim)">{entry.number}</span>
+          {codesVisible ? <SpokenCode code={`C${entry.number}`} /> : <span className="min-w-6 font-mono text-xs tabular-nums text-(--reader-text-dim)">{entry.number}</span>}
           <span className="min-w-0 flex-1 break-words">{entry.title}</span>
           {entry.number === chapterSelection.current && <Check className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
         </button>)}

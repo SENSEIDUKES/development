@@ -34,6 +34,27 @@ function setup() {
 }
 
 describe('Familiar helper surface', () => {
+  it('shows a page\'s front suggestions first, the rest behind See all, and its first topics with the rest behind More', async () => {
+    const t = setup();
+    const go = (id: string, label: string) => ({ id, label, phrases: [label.toLowerCase()], describe: () => label, success: `Opened ${label}.`, run: vi.fn(async () => {}) });
+    const topic = (id: string) => ({ id, label: id, phrases: [id], explanation: `${id} explained.` });
+    t.render({ key: 'place:home', title: 'Home', hint: '', page: 'home', topics: ['a', 'b', 'c', 'd', 'e', 'f'].map(topic),
+      actions: [go('go-home', 'Home'), go('go-profile', 'Profile'), go('go-settings', 'Settings'), go('go-store', 'Store'), go('go-energy', 'My Energy'), go('go-create', 'Create')] });
+    await click('Talk to Familiar');
+    const tiles = () => [...document.querySelectorAll('.familiar-helper-actions button[aria-label]')].map(element => element.getAttribute('aria-label'));
+    // Home's front four in their order; Home itself is not offered on Home.
+    expect(tiles()).toEqual(['Create', 'My Energy', 'Store', 'Settings']);
+    await click('See all (1 more)');
+    expect(tiles()).toEqual(['Create', 'My Energy', 'Store', 'Settings', 'Profile']);
+    await click('Fewer');
+    expect(tiles()).toHaveLength(4);
+    await click('Explain');
+    const chips = () => [...document.querySelectorAll('.familiar-helper-topics button[aria-pressed]')].map(element => element.textContent);
+    expect(chips()).toEqual(['a', 'b', 'c', 'd']);
+    await click('More (2 more)');
+    expect(chips()).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
+  });
+
   it('handles a queued size measurement when the card closes and reopens', async () => {
     let resize = () => {};
     vi.stubGlobal('ResizeObserver', class {

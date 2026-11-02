@@ -1,4 +1,7 @@
 import type { ComponentType } from 'react';
+import { familiarActionEntry, familiarActionsFor, familiarFrontCount, type FamiliarPage } from './actionList';
+
+export type { FamiliarPage } from './actionList';
 
 /** A choice's picture in the Familiar's panel, so it reads at a glance. */
 export type FamiliarIcon = ComponentType<{ size?: number; 'aria-hidden'?: boolean }>;
@@ -57,6 +60,37 @@ export interface FamiliarHelperContext {
   hint: string;
   /** Release only the playback this interaction interrupted. False means do not resume. */
   interrupt?(): (resume: boolean) => void;
+  /**
+   * Which page this is, for the master action list (`actionList.ts`): with it,
+   * the Familiar gets only the actions the list allows here, the app's
+   * anywhere actions included, and never another page's.
+   */
+  page?: FamiliarPage;
+  /** How many leading actions are this page's front suggestions; the card shows the rest under See all. Set by the controller. */
+  front?: number;
+}
+
+/**
+ * The context the Familiar works in: the page's own place over the app's.
+ * With a `page`, actions are the page's and the app's anywhere actions,
+ * filtered by the master list for that page, front suggestions first; topics
+ * are the page's, or the app's where the page has none. Without one, the
+ * page's place covers the app's entirely.
+ */
+export function composeFamiliarContext(base?: FamiliarHelperContext, page?: FamiliarHelperContext): FamiliarHelperContext | undefined {
+  const top = page ?? base;
+  if (!top) return undefined;
+  const where = page ? page.page : base?.page;
+  if (!where) return top;
+  const actions = familiarActionsFor(where, [...(page?.actions ?? []), ...(base?.actions ?? [])]);
+  return {
+    ...top,
+    key: [base?.key, page?.key].filter(Boolean).join(' | '),
+    topics: page?.topics.length ? page.topics : base?.topics ?? [],
+    actions,
+    page: where,
+    front: familiarFrontCount(where, actions),
+  };
 }
 
 export interface FamiliarListening { stop(): void; cancel(): void }
@@ -96,7 +130,8 @@ export interface FamiliarLiveBrief {
   place: string;
   language: string;
   topics: { id: string; label: string; explanation: string }[];
-  actions: { id: string; label: string; detail?: string; input?: { label: string; maxLength: number } }[];
+  /** `instant`: it only goes somewhere, so it happens at once without confirmation. */
+  actions: { id: string; label: string; detail?: string; input?: { label: string; maxLength: number }; instant?: true }[];
 }
 
 /** What the Familiar asks the screen for mid-conversation; the screen still confirms every change. */
@@ -195,8 +230,18 @@ export class FamiliarHelperController {
   private state: FamiliarHelperState = { open: false, mode: 'action', phase: 'ready', message: '', chat: [] };
   private listeners = new Set<() => void>();
   private places: Partial<Record<FamiliarPlaceLevel, FamiliarPlace>> = {};
-  private get place() { return this.places.page ?? this.places.base; }
-  private get context() { return this.place?.context; }
+  private composed?: { base?: FamiliarHelperContext; page?: FamiliarHelperContext; context?: FamiliarHelperContext };
+  /** The page's place over the app's, composed once per change. */
+  private get context() {
+    const base = this.places.base?.context;
+    const page = this.places.page?.context;
+    if (this.composed?.base !== base || this.composed?.page !== page || !this.composed) this.composed = { base, page, context: composeFamiliarContext(base, page) };
+    return this.composed.context;
+  }
+  /** Who holds each level, and the place's key: what `moved` compares. */
+  private where() { return { page: this.places.page?.owner, base: this.places.base?.owner, key: this.context?.key }; }
+  /** An action that only goes somewhere: it happens at once, without confirmation. Only where the master list applies. */
+  private instant(action: FamiliarHelperAction) { return Boolean(this.context?.page && familiarActionEntry(action.id)?.instant); }
   private cancelVoice?: () => void;
   private listening?: FamiliarListening;
   private releasePlayback?: (resume: boolean) => void;
@@ -260,24 +305,37 @@ export class FamiliarHelperController {
   }
   /** Registration is scoped to the mounted screen, including when no helper UI is open. A page's place covers the app's. */
   setContext(owner: symbol, context: FamiliarHelperContext, level: FamiliarPlaceLevel = 'page') {
-    const before = this.place;
+    const before = this.where();
     this.places[level] = { owner, context };
     this.moved(before);
   }
   clearContext(owner: symbol) {
-    const before = this.place;
+    const before = this.where();
     for (const level of ['page', 'base'] as const) if (this.places[level]?.owner === owner) delete this.places[level];
     this.moved(before);
   }
   /** Moving to another place, or its choices changing, ends whatever was under way in the old one. */
-  private moved(before?: FamiliarPlace) {
-    const after = this.place;
-    if (before?.owner === after?.owner && before?.context.key === after?.context.key) return;
+  private moved(before: ReturnType<FamiliarHelperController['where']>) {
+    const after = this.where();
+    const sameOwners = before.page === after.page && before.base === after.base;
+    if (sameOwners && before.key === after.key) return;
     // A conversation knows the page it began on; the same page with new choices keeps it going.
-    if (before?.owner !== after?.owner) this.hangUp();
+    if (!sameOwners) this.hangUp();
     this.silence();
     this.release(false);
-    this.update({ context: after?.context, proposal: undefined, topicId: undefined, phase: 'ready', message: this.state.open ? this.empty() : '' });
+    this.update({ context: this.context, proposal: undefined, topicId: undefined, phase: 'ready', message: this.state.open ? this.empty() : '' });
+  }
+  /** Goes where an instant action leads: at once, then the panel closes so the reader sees where they are. */
+  private async go(action: FamiliarHelperAction) {
+    this.silence();
+    this.update({ proposal: undefined });
+    try {
+      await action.run('');
+    } catch (error) {
+      this.respond(error instanceof Error ? error.message : 'That did not work. Try again.', 'ready');
+      return;
+    }
+    this.close();
   }
   /** What a mode shows where it has nothing yet; empty where it has choices, which speak for themselves. */
   private empty(mode = this.state.mode) {
@@ -429,6 +487,7 @@ export class FamiliarHelperController {
     const match = matchFamiliarCommand(this.context.actions, text);
     const action = this.context.actions.find(entry => entry.id === match?.actionId);
     if (!match || !action) { this.respond(this.hint(), 'ready'); return; }
+    if (this.instant(action)) { void this.go(action); return; }
     const problem = this.propose(action, match.input);
     if (problem) { this.respond(problem, 'ready'); return; }
     const proposal = this.state.proposal!;
@@ -537,7 +596,8 @@ export class FamiliarHelperController {
       place: context.title,
       language: this.language,
       topics: context.topics.map(({ id, label, explanation }) => ({ id, label, explanation })),
-      actions: context.actions.map(({ id, label, detail, input }) => ({ id, label, ...(detail ? { detail } : {}), ...(input ? { input } : {}) })),
+      actions: context.actions.map(action => ({ id: action.id, label: action.label, ...(action.detail ? { detail: action.detail } : {}),
+        ...(action.input ? { input: action.input } : {}), ...(this.instant(action) ? { instant: true as const } : {}) })),
     };
     // Every word from either side, a typed message or a step on the screen keeps the conversation open.
     const stillTalking = () => {
@@ -632,6 +692,11 @@ export class FamiliarHelperController {
       if (this.state.phase === 'saving') return 'A change is still being saved.';
       const action = context.actions.find(entry => entry.id === call.actionId);
       if (!action) return 'That choice is not on this page.';
+      if (this.instant(action)) {
+        try { await action.run(''); } catch { return 'That did not work.'; }
+        this.addLine({ speaker: 'note', text: action.success });
+        return `Done: ${action.success}`;
+      }
       const problem = this.propose(action, action.input ? call.input.trim() : '');
       if (problem) return problem;
       this.update({ mode: 'action', topicId: undefined });

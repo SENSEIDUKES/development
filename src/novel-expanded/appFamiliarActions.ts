@@ -1,0 +1,44 @@
+import { Home, PenLine, Settings, Store, UserRound, Zap } from 'lucide-react';
+import type { FamiliarHelperContext, FamiliarPage } from '@seihouse/library/familiar';
+import { HOME_ROUTE, type Navigate, type NovelExpandedRoute } from './routes';
+
+/** One of the Familiar's actions (the package's name for it also names its tray button). */
+type FamiliarHelperAction = FamiliarHelperContext['actions'][number];
+
+/** Which page each route is, for the Familiar's master action list. */
+export function familiarPage(page: NovelExpandedRoute['page']): FamiliarPage {
+  switch (page) {
+    case 'home': return 'home';
+    case 'discover': return 'discover';
+    case 'create':
+    case 'world': return 'create';
+    case 'story':
+    case 'blueprint': return 'world-info';
+    case 'profile': return 'profile';
+    case 'read': return 'reader';
+  }
+}
+
+const go = (id: string, label: string, icon: FamiliarHelperAction['icon'], phrases: readonly string[], to: NovelExpandedRoute, navigate: Navigate): FamiliarHelperAction => ({
+  id, label, icon, phrases,
+  describe: () => `Go to ${label}.`,
+  success: `Opened ${label}.`,
+  run: async () => { navigate(to); },
+});
+
+/**
+ * The app's anywhere actions: where the Familiar can take the reader from any
+ * page. Each goes to exactly one place. They are in the master action list
+ * (`@seihouse/library/familiar` `FAMILIAR_ACTION_LIST`), which decides where
+ * they are offered; going somewhere changes nothing, so none asks to confirm.
+ */
+export function appFamiliarActions(navigate: Navigate): FamiliarHelperAction[] {
+  return [
+    go('go-home', 'Home', Home, ['home', 'go home', 'take me home', 'open home', 'my stories'], HOME_ROUTE, navigate),
+    go('go-create', 'Create', PenLine, ['create', 'go to create', 'open create', 'new story', 'create a story'], { page: 'create' }, navigate),
+    go('go-profile', 'Profile', UserRound, ['profile', 'my profile', 'open profile', 'go to profile', 'my cave'], { page: 'profile' }, navigate),
+    go('go-energy', 'My Energy', Zap, ['my energy', 'energy', 'check energy', 'check my energy', 'open energy', 'qi', 'my qi'], { page: 'profile', cave: '/home/energy' }, navigate),
+    go('go-settings', 'Settings', Settings, ['settings', 'open settings', 'go to settings'], { page: 'profile', cave: '/settings' }, navigate),
+    go('go-store', 'Store', Store, ['store', 'open store', 'go to store', 'shop', 'celestial store'], { page: 'profile', cave: '/home/store' }, navigate),
+  ];
+}

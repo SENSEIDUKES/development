@@ -7,6 +7,8 @@ import { defaultFamiliar, familiarCatalogueEntry } from '../../../host/familiar/
 import { createFamiliarBrowserVoice } from '../../../host/familiar/voice';
 import { useFamiliarLive } from '../../../host/familiar/liveTalk';
 import { createFamiliarWakeWord } from '../../../host/familiar/wakeWord';
+import { appFamiliarActions } from '../../../novel-expanded/appFamiliarActions';
+import { routeSearch } from '../../../novel-expanded/routes';
 import { developmentIdentityToken } from '../../../server/identity/authentication';
 import { getPreviewScenario } from '../user-profile/previewData';
 import { DEFAULT_USER_PROFILE_PREVIEW_STATE, type UserProfilePreviewState } from '../user-profile/previewStates';
@@ -16,6 +18,11 @@ type Selection = { uid: string | null; familiarId?: string; familiarSize?: numbe
 const SelectionContext = createContext<{ selection: Selection; reportProfile: (selection: Selection) => void; minimized: boolean; setMinimized: (minimized: boolean) => void } | null>(null);
 const SurfaceContext = createContext(false);
 export const PREVIEW_FAMILIAR_ID = defaultFamiliar.definition.id;
+/**
+ * The app's anywhere actions, as on its Home. Going somewhere opens that page
+ * of the real app (`/app/`), since the Workshop has none of its own.
+ */
+const PREVIEW_FAMILIAR_ACTIONS = appFamiliarActions(route => { window.location.assign(`/app/${routeSearch(route)}`); });
 
 /**
  * Preview-only projection of the active profile, never a second profile/ledger store.
@@ -45,9 +52,9 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
   return <SelectionContext.Provider value={value}>
     <LoadingFamiliarProvider value={loadingFamiliar}>
       <EnergyClientProvider client={client}>
-        {/* The app's Familiar panel (Explain and Action), with Home's topics, as in the app. */}
+        {/* The app's Familiar panel (Explain and Action), with Home's topics and actions, as in the app. */}
         <FamiliarHelperProvider voice={voice} live={selection.familiarLiveTalk ? live : undefined} wake={selection.familiarWakeWord ? wake : undefined} familiar={{ name: loadingFamiliar.familiar.displayName, description: loadingFamiliar.familiar.description }}>
-          <FamiliarPlace title="Home" help="library" />
+          <FamiliarPlace title="Home" help="library" page="home" actions={PREVIEW_FAMILIAR_ACTIONS} />
           <WorkspaceHeaderAccessoryProvider accessory={<ProductFamiliarRecall />}>{children}</WorkspaceHeaderAccessoryProvider>
         </FamiliarHelperProvider>
       </EnergyClientProvider>

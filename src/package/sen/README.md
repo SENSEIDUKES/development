@@ -1,5 +1,13 @@
 # `@seihouse/sen`
 
+**Unreleased (2026-11-02, narration-timed cues):** `./reader-runtime` accepts
+placed Sound Cues in `buildReadAloudScript`; `useReadAloud` provides
+`onSoundCue`, `onStopSoundCues` and `scriptRevision`. The shared Reader plays
+cues from actual speech starts and stops them on pause/seek, with per-chapter
+deduplication and 500 ms between starts. `./inline-audio` exports the existing
+`soundCueVolume` rule. Requires `@seihouse/audio-player` **^5.2.0** for
+`ReaderMixer.stopCues()`; the tested source build is in `vendor/` until release.
+
 **Unreleased (2026-10-30, Sparks ownership):** `./story-seed` now exports
 `SparksButton`, `Sparks`, `SparkHost`, `StorySparkUsage`, `StorySparkStatus`
 and the shared genre picker. Import Sparks from SEN instead of Library's shell.

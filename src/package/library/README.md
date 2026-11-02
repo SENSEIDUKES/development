@@ -1,5 +1,9 @@
 # `@seihouse/library`
 
+**Unreleased (2026-11-02):** The shared Reader plays placed Sound Cues when
+narration reaches their words and cuts them off on pause/seek. Requires
+`@seihouse/audio-player` **^5.2.0**, matching SEN's new cue-stop contract.
+
 **Unreleased (2026-10-30, breaking):** The header reads `Logo | Search | Familiar |
 Sound | Profile Portrait`. `./shell` exports `WorkspaceHeaderSearch` (the wide
 field-style Search trigger, replacing `WorkspaceHeaderUtilities`),

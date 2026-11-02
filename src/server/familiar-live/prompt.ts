@@ -38,8 +38,9 @@ export function familiarLiveActions(brief: FamiliarLiveBrief): string {
     ...(topics.length ? ['When showing a topic would help, call show_topic so it appears on their screen.'] : []),
     ...(actions.length
       ? ['What you can do here, only through propose_action:',
-        ...actions.map(action => `- ${action.id}: ${action.label}${action.detail ? `. ${action.detail}` : ''}${action.input ? `. Needs their words for "${action.input.label}", at most ${action.input.maxLength} characters, in input.` : ''}`),
-        'propose_action never changes anything: it shows the change on the reader\'s screen to confirm. Never say you did something before it is confirmed.',
+        ...actions.map(action => `- ${action.id}: ${action.label}${action.detail ? `. ${action.detail}` : ''}${action.instant ? '. Takes them there at once, no confirmation.' : ''}${action.input ? `. Needs their words for "${action.input.label}", at most ${action.input.maxLength} characters, in input.` : ''}`),
+        ...(actions.some(action => action.instant) ? ['An action that takes them somewhere happens as soon as you call propose_action; say where you took them.'] : []),
+        `${actions.some(action => action.instant) ? 'Every other' : ''} propose_action never changes anything: it shows the change on the reader's screen to confirm. Never say you did something before it is confirmed.`.trim(),
         'Call answer_proposal with confirm only when the reader clearly tells you to confirm or go ahead; with cancel when they decline; with hear when they want to hear it first.']
       : ['You cannot change anything on this page. If asked to, say so kindly.']),
   ].join('\n');

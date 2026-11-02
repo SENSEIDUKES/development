@@ -301,8 +301,16 @@ card wear it.
 context is the Reader's four existing Fate choices: tap Talk to Familiar, say a
 choice or `Custom: <direction>`, review, then Confirm or Cancel. Touch and typing
 are equivalent paths. This saves the next chapter's direction through the same
-controller as Fate; the ordinary Fate panel remains available. Other screens
-can register their own context later. They currently show no helper actions.
+controller as Fate; the ordinary Fate panel remains available.
+
+Every page also gets the app's anywhere actions (`appFamiliarActions.ts`): Home,
+Create, Profile, My Energy, Settings and Store, each going to exactly one place,
+at once and without a confirmation (going somewhere changes nothing). Which
+actions the Familiar gets on a page is decided by the master action list
+(`@seihouse/library/familiar` `FAMILIAR_ACTION_LIST`): a page's own actions plus
+the anywhere ones, never another page's. The card shows the page's front
+suggestions (at most four) and keeps the rest behind See all.
+`appFamiliarActions.test.ts` pins every page's actions.
 See the [Familiar helper contract and device checks](../components/familiar/README.md#contextual-helper--2026-10-16).
 
 `AppFamiliar.tsx` gives the app one Familiar, the profile's equipped one:
@@ -462,6 +470,8 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs (a stand-in cover among them) and a stand-in for the browser's speech (headless Chromium has no voices): Create's Story Settings, Story View's Story Settings, and Manifest on the cover (three to choose from, the picker) to World Info and Home.
 
 ## History
+
+- **2026-11-02** — The Familiar can take the reader anywhere in the app (Home, Create, Profile, My Energy, Settings, Store) from every page, at once. A master action list decides what it can do on each page: that page's own actions plus these, never another page's. Its card shows the page's top suggestions first, with the rest behind See all.
 
 - **2026-10-30** — The internal chapter-tagging UI module is named `ChapterTaggingControls.tsx` so Windows can distinguish it from the `chapterTagging.ts` helper. Package exports and tagging behavior are unchanged.
 

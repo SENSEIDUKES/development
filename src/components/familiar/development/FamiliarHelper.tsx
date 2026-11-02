@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronLeft, ChevronRight, GripVertical, Info, Keyboard, Lightbulb, MessagesSquare, Mic, Pause, Play, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
+import { Check, GripVertical, Info, Keyboard, Lightbulb, MessagesSquare, Mic, Pause, Play, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FAMILIAR_WAKE_WORD, FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice, type FamiliarWakeWord } from '../../../library/familiars/helper';
 import { useFamiliarPanelDrag } from './useFamiliarPanelDrag';
@@ -143,37 +143,13 @@ export function FamiliarHelperAction({ onOpen, focusTarget }: { onOpen?: () => v
     }}><Mic aria-hidden size={20} /></button>;
 }
 
-/** Native scrolling for touch and keyboard, with explicit controls for mouse users. */
-function FamiliarTopics({ children }: { children: ReactNode }) {
-  const row = useRef<HTMLDivElement>(null);
-  const id = useId();
-  const [edges, setEdges] = useState({ overflow: false, start: true, end: true });
-  useLayoutEffect(() => {
-    const element = row.current!;
-    const measure = () => {
-      const maximum = element.scrollWidth - element.clientWidth;
-      // Measure overflow against the whole row so arrows disappear again when
-      // resizing leaves enough room for every topic without the controls.
-      setEdges({ overflow: element.scrollWidth > element.parentElement!.clientWidth + 1, start: element.scrollLeft <= 1, end: element.scrollLeft >= maximum - 1 });
-    };
-    measure();
-    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measure);
-    observer?.observe(element);
-    observer?.observe(element.parentElement!);
-    for (const child of element.children) observer?.observe(child);
-    element.addEventListener('scroll', measure, { passive: true });
-    window.addEventListener('resize', measure);
-    return () => { observer?.disconnect(); element.removeEventListener('scroll', measure); window.removeEventListener('resize', measure); };
-  }, [children]);
-  const scroll = (direction: number) => {
-    const element = row.current!;
-    element.scrollBy({ left: direction * element.clientWidth * .8, behavior: 'auto' });
-  };
-  return <div className="familiar-helper-topic-navigation">
-    {edges.overflow && <button type="button" className="familiar-helper-scroll" aria-label="Previous topics" aria-controls={id} disabled={edges.start} onClick={() => scroll(-1)}><ChevronLeft size={18} aria-hidden /></button>}
-    <div ref={row} id={id} className="familiar-helper-topics" role="group" aria-label="Familiar topics" tabIndex={0}>{children}</div>
-    {edges.overflow && <button type="button" className="familiar-helper-scroll" aria-label="More topics" aria-controls={id} disabled={edges.end} onClick={() => scroll(1)}><ChevronRight size={18} aria-hidden /></button>}
-  </div>;
+/** The card shows this many topics or actions first; the rest wait behind More / See all, never in a scrolling row. */
+const FRONT = 4;
+
+/** A More / See all / Fewer toggle under a short list. */
+function ShowMore({ open, more, label, onToggle }: { open: boolean; more: number; label: string; onToggle(): void }) {
+  return <button type="button" className="familiar-helper-more" aria-expanded={open} onClick={onToggle}>
+    {open ? 'Fewer' : `${label} (${more} more)`}</button>;
 }
 
 /**
@@ -214,6 +190,10 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   useEffect(() => { if (state.unsent !== undefined) { const unsent = helper.takeUnsent(); if (unsent) { setSaid(unsent); setChat(true); } } }, [helper, state.unsent]);
   // The newest line stays in view as the conversation goes on.
   useLayoutEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [chat, state.chat]);
+  const [allTopics, setAllTopics] = useState(false);
+  const [allActions, setAllActions] = useState(false);
+  const placeKey = state.context?.key;
+  useEffect(() => { setAllTopics(false); setAllActions(false); }, [placeKey]);
   if (!state.open) return null;
   const busy = state.phase === 'saving';
   const context = state.context;
@@ -222,6 +202,11 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
     ? Math.max(longest ?? 0, action.input.maxLength + action.phrases[0].length + 2) : longest, undefined);
   const proposed = state.proposal && context?.actions.find(action => action.id === state.proposal!.actionId);
   const topic = state.mode === 'explain' ? context?.topics.find(entry => entry.id === state.topicId) : undefined;
+  // What this page needs most first: its front suggestions, everything else behind See all / More.
+  const frontActions = context?.front || FRONT;
+  const shownActions = allActions ? context?.actions ?? [] : context?.actions.slice(0, frontActions) ?? [];
+  const topicAt = context?.topics.findIndex(entry => entry.id === state.topicId) ?? -1;
+  const shownTopics = allTopics || topicAt >= FRONT ? context?.topics ?? [] : context?.topics.slice(0, FRONT) ?? [];
   const type = (prefill = '') => { helper.useText(); setInfo(false); setChat(false); setTyping(true); setText(prefill); setTimeout(() => input.current?.focus(), 0); };
   // Listening and speaking show on the microphone, not in words.
   const message = state.live?.status === 'connecting' ? 'Connecting…' : state.phase === 'listening' ? '' : state.message;
@@ -294,19 +279,21 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
             {state.phase === 'speaking' ? <Square size={16} aria-hidden /> : <Volume2 size={18} aria-hidden />}</button>
         </div>
       </div>}
-      {context?.topics.length ? <FamiliarTopics>
-        {context.topics.map(entry => { const Icon = entry.icon ?? Lightbulb; return <button type="button" key={entry.id} aria-pressed={entry.id === state.topicId}
+      {context?.topics.length ? <div className="familiar-helper-topics" role="group" aria-label="Familiar topics">
+        {shownTopics.map(entry => { const Icon = entry.icon ?? Lightbulb; return <button type="button" key={entry.id} aria-pressed={entry.id === state.topicId}
           onClick={() => { helper.useText(); helper.explain(entry.id); }}><Icon size={16} aria-hidden />{entry.label}</button>; })}
-      </FamiliarTopics> : null}
+        {context.topics.length > FRONT && <ShowMore open={allTopics} more={context.topics.length - FRONT} label="More" onToggle={() => setAllTopics(value => !value)} />}
+      </div> : null}
     </>
 
     : context?.actions.length ? <div className="familiar-helper-actions">
-      {context.actions.map(action => { const Icon = action.icon ?? Zap; const detail = `familiar-action-${action.id}-detail`;
+      {shownActions.map(action => { const Icon = action.icon ?? Zap; const detail = `familiar-action-${action.id}-detail`;
         // Named by its label; the short line under it describes it.
         return <button type="button" key={action.id} disabled={busy} aria-label={action.label} aria-describedby={action.detail ? detail : undefined}
         onClick={() => { if (action.input) type(`${action.phrases[0]}: `); else { helper.useText(); helper.submit(action.phrases[0]); } }}>
         <Icon size={22} aria-hidden /><span className="familiar-helper-tile-text"><span>{action.label}</span>
           {action.detail && <small id={detail}>{action.detail}</small>}</span></button>; })}
+      {context.actions.length > frontActions && <ShowMore open={allActions} more={context.actions.length - frontActions} label="See all" onToggle={() => setAllActions(value => !value)} />}
     </div> : null}
 
     <p role="status" aria-live="polite" className="familiar-helper-status">{message}</p>

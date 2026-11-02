@@ -25,6 +25,13 @@ Image. `./styles.css` imports `look.css` from `library-presentation`.
 `--reader-glass-*` custom properties on `:root` in `reader-glass.css`, beside the
 existing glass recipe, which stays literal for Palette & Materials. Values are unchanged.
 
+**Unreleased (2026-11-02):** `./familiar` exports the master action list
+(`FAMILIAR_ACTION_LIST`, `FAMILIAR_FRONT_ACTIONS`, `familiarActionsFor`,
+`composeFamiliarContext`, `FamiliarPage`). A context with a `page` gets only the
+actions the list allows there, the host's anywhere actions included (registered on
+`FamiliarPlace` with `page` and `actions`); listed `instant` actions run without
+confirmation. A context without a `page` behaves as before.
+
 **0.35.0 (2026-10-26):** Presentation exports 12 individually named reusable icons
 and includes them in the 54-icon catalog. Requires SEN 0.40.0 for the shared artwork.
 

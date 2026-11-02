@@ -90,6 +90,7 @@ export function parseFamiliarLiveBrief(value: unknown): FamiliarLiveBrief {
         label: text(action.label, `actions[${index}].label`, 60),
         ...(detail ? { detail } : {}),
         ...(input ? { input: { label: text(input.label, `actions[${index}].input.label`, 60), maxLength: maxLength as number } } : {}),
+        ...(action.instant === true && !input ? { instant: true as const } : {}),
       };
     }),
   };

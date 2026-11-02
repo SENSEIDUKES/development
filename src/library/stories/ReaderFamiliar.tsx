@@ -55,6 +55,7 @@ export function createModeFamiliarContext(sounds: ReaderSoundAuthoring, interrup
     actions: [soundAction(sounds, playCue)],
     hint: `To add a sound, say “Add ${example} on” and its words, or “Add ${example} right there” while listening.`,
     interrupt,
+    page: 'create-mode',
   };
 }
 
@@ -98,7 +99,7 @@ export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: str
     },
   ];
   return {
-    key, title: 'Reader', topics, actions,
+    key, title: 'Reader', topics, actions, page: 'reader',
     hint: blocked ? 'Fate is unavailable while writing or after the story ends.'
       : 'Say World Building, Progression, Conflict, or Custom followed by your direction.',
     interrupt: tools.interruptPlayback,

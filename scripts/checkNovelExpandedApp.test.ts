@@ -74,7 +74,11 @@ describe('the NovelExpanded app guard', () => {
     expect(violations).toEqual(['THE_OLDER_READER src/novel-expanded/main.tsx → src/host/reader/webSpeechNarration.ts']);
   });
 
-  it('passes the real app', () => {
+  // Walking the real app's import graph reads every file it reaches, so it
+  // takes about two seconds on its own and longer still when the whole suite
+  // runs in parallel. It gets a timeout of its own so that load does not read
+  // as a failure.
+  it('passes the real app', { timeout: 30_000 }, () => {
     const { entry, violations, reached } = checkNovelExpandedApp();
     expect(entry).toBe(MAIN);
     expect(violations).toEqual([]);

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { normalizeSenLanguageCode } from '../lib/language';
 import type { ReaderPreferenceStorage } from './readerRuntime';
+import type { SoundCueAttachment } from '../audio/inlineAudio';
+import { createReadAloudCuePlayback } from './readAloudCues';
 import {
   READ_ALOUD_ROLES,
   estimateSpeechMs,
@@ -121,9 +123,11 @@ const usableVoices = (voices: readonly ReadAloudVoice[], failed: ReadonlyMap<str
 export type ReadAloudStatus = 'idle' | 'playing' | 'paused' | 'ended';
 
 export interface UseReadAloudOptions {
-  /** Changes whenever the text to read changes: another chapter, or new speaker records. */
+  /** The chapter's identity, also the scope of its once-per-visit cue history. */
   scriptKey: string;
-  /** Builds the script for `scriptKey`. Called at the first Listen, never on every render. */
+  /** Text/attachment revision within that chapter; cue history survives edits. */
+  scriptRevision?: string;
+  /** Builds on first Listen or a changed revision, never on every render. */
   buildScript: () => ReadAloudScript;
   /** The story's language (a SEN language code). */
   language?: string;
@@ -138,6 +142,8 @@ export interface UseReadAloudOptions {
    */
   suspended?: boolean;
   engine?: SpeechEngine;
+  /** Plays a placed sound through the host's existing audio owner. */
+  onSoundCue?: (cue: SoundCueAttachment) => void;
 }
 
 export interface ReadAloud {
@@ -194,6 +200,7 @@ interface PlayerState {
   token: number;
   notice?: string;
   scriptKey: string;
+  scriptRevision?: string;
   script?: ReadAloudScript;
   started: boolean;
   firstLine: boolean;
@@ -219,7 +226,7 @@ const sameVoices = (left: readonly ReadAloudVoice[], right: readonly ReadAloudVo
  * never silently the narrator's.
  */
 export function useReadAloud({
-  scriptKey, buildScript, language = 'en', preferences, picks, suspended = false, engine: suppliedEngine,
+  scriptKey, scriptRevision, buildScript, language = 'en', preferences, picks, suspended = false, engine: suppliedEngine, onSoundCue,
 }: UseReadAloudOptions): ReadAloud {
   const engine = useMemo(() => suppliedEngine ?? createWebSpeechEngine(), [suppliedEngine]);
   const [voices, setVoices] = useState<readonly ReadAloudVoice[]>(() => engine.getVoices());
@@ -233,12 +240,17 @@ export function useReadAloud({
   const languageVoices = useMemo(() => voicesForLanguage(voices, language), [voices, language]);
 
   const live = useRef<PlayerState>({
-    status: 'idle', listening: false, index: 0, token: 0, scriptKey, started: false, firstLine: true,
+    status: 'idle', listening: false, index: 0, token: 0, scriptKey, scriptRevision, started: false, firstLine: true,
     suspended, lastEventAt: 0, hiddenAt: 0, timers: new Set(),
   });
   // Speech callbacks outlive renders: they read the latest values from here.
-  const latest = useRef({ voices, prefs, picks, rate: prefs.rate, language, buildScript });
-  latest.current = { voices, prefs, picks, rate: prefs.rate, language, buildScript };
+  const latest = useRef({ voices, prefs, picks, rate: prefs.rate, language, buildScript, onSoundCue });
+  latest.current = { voices, prefs, picks, rate: prefs.rate, language, buildScript, onSoundCue };
+  const [cues] = useState(() => {
+    const playback = createReadAloudCuePlayback(cue => latest.current.onSoundCue?.(cue));
+    playback.chapter(scriptKey);
+    return playback;
+  });
 
   /** The voice each role reads with right now, without the voices that failed (even before the next render). */
   const castNow = useCallback((): ReadAloudVoiceChoice => {
@@ -277,8 +289,9 @@ export function useReadAloud({
   const halt = useCallback(() => {
     live.current.token += 1;
     clearTimers();
+    cues.cancel();
     engine.cancel();
-  }, [clearTimers, engine]);
+  }, [clearTimers, cues, engine]);
 
   const scriptFor = useCallback((): ReadAloudScript => {
     const state = live.current;
@@ -290,14 +303,12 @@ export function useReadAloud({
 
   const pauseForTap = useCallback(() => {
     const state = live.current;
-    state.token += 1;
-    clearTimers();
-    engine.cancel();
+    halt();
     state.status = 'paused';
     state.listening = false;
     state.notice = TAP_AGAIN;
     publish();
-  }, [clearTimers, engine, publish]);
+  }, [halt, publish]);
 
   /** Speaks a line now, or after `wait` ms: after a cancellation, or production's gap between lines. */
   const speakAt = useCallback(function speakAt(index: number, wait?: number) {
@@ -336,6 +347,7 @@ export function useReadAloud({
           if (token !== state.token) return;
           state.started = true;
           state.lastEventAt = Date.now();
+          cues.start(scriptFor(), index);
           watch(0);
         },
         onProgress: () => { if (token === state.token) state.lastEventAt = Date.now(); },
@@ -364,7 +376,7 @@ export function useReadAloud({
     // A line spoken right after a cancellation can be dropped by Chrome; the first one is spoken at once (iOS).
     if (wait === undefined) begin();
     else later(begin, wait);
-  }, [castNow, clearTimers, engine, later, pauseForTap, publish, scriptFor, setAside]);
+  }, [castNow, clearTimers, cues, engine, later, pauseForTap, publish, scriptFor, setAside]);
 
   const play = useCallback((fromLine = 0) => {
     if (!engine.supported) return;
@@ -375,8 +387,10 @@ export function useReadAloud({
     if (busy) halt();
     state.listening = true;
     state.firstLine = true;
-    speakAt(Math.max(0, Math.min(Math.trunc(fromLine), lines.length - 1)), busy ? 0 : undefined);
-  }, [engine, halt, scriptFor, speakAt]);
+    const target = Math.max(0, Math.min(Math.trunc(fromLine), lines.length - 1));
+    cues.seek(scriptFor(), target);
+    speakAt(target, busy ? 0 : undefined);
+  }, [cues, engine, halt, scriptFor, speakAt]);
 
   const pause = useCallback(() => {
     const state = live.current;
@@ -444,6 +458,7 @@ export function useReadAloud({
         target = start > 0 ? sentenceStart(start - 1) : 0;
       }
     }
+    cues.seek(scriptFor(), target);
     if (state.status === 'playing') {
       halt();
       speakAt(target, 0);
@@ -453,7 +468,7 @@ export function useReadAloud({
     state.index = target;
     state.status = 'paused';
     publish();
-  }, [engine, halt, publish, scriptFor, speakAt]);
+  }, [cues, engine, halt, publish, scriptFor, speakAt]);
 
   const updateVoices = useCallback((role: ReadAloudRole | undefined, voice: ReadAloudVoice | undefined) => {
     setPrefs(current => {
@@ -543,12 +558,27 @@ export function useReadAloud({
     const state = live.current;
     state.suspended = suspended;
     if (state.scriptKey !== scriptKey) {
+      cues.chapter(scriptKey);
       state.scriptKey = scriptKey;
+      state.scriptRevision = scriptRevision;
       state.script = undefined;
       if (state.status !== 'idle') {
         halt();
         state.index = 0;
         state.status = 'paused';
+      }
+    } else if (state.scriptRevision !== scriptRevision) {
+      const previous = state.script?.lines[state.index];
+      state.scriptRevision = scriptRevision;
+      state.script = undefined;
+      if (state.status !== 'idle') {
+        halt();
+        // An edit keeps the current passage instead of restarting at the title.
+        const lines = scriptFor().lines;
+        const index = previous && lines.findIndex(line => line.blockId === previous.blockId && line.end > previous.start);
+        state.index = typeof index === 'number' && index >= 0 ? index : Math.min(state.index, lines.length);
+        state.status = 'paused';
+        cues.seek(scriptFor(), state.index);
       }
     }
     if (suspended) {
@@ -560,7 +590,7 @@ export function useReadAloud({
       return;
     }
     publish();
-  }, [halt, publish, scriptFor, scriptKey, speakAt, suspended]);
+  }, [cues, halt, publish, scriptFor, scriptKey, scriptRevision, speakAt, suspended]);
 
   // A locked phone stops speaking without a word: read the line again on return.
   useEffect(() => {
@@ -583,11 +613,12 @@ export function useReadAloud({
 
   // Leaving the Reader silences it.
   useEffect(() => () => {
+    cues.cancel();
     live.current.token += 1;
     live.current.timers.forEach(clearTimeout);
     live.current.timers.clear();
     engine.cancel();
-  }, [engine]);
+  }, [cues, engine]);
 
   const script = live.current.script;
   const line = view.status === 'playing' || view.status === 'paused' ? script?.lines[view.index] : undefined;

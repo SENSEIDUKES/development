@@ -37,6 +37,26 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-11-02 (narration-timed Sound Cues):** Listen is the cinematic scroll:
+  the existing sentence light and follow-along remain, and every valid placed
+  cue starts when the voice begins its pinned words. The script cuts at those
+  words rather than estimating word timing or requiring browser boundary
+  events. Cue starts are spaced by 500 ms, with no category filter or
+  three-cue budget. Seeking consumes skipped cues without playing them;
+  played/skipped cues stay consumed for that chapter during this Reader visit.
+  Pause, interruptions, covering/leaving the Reader and chapter changes cancel
+  pending cues. Silent reading still requires a tap. Create-mode edits refresh
+  the script at the current passage without clearing cue history. Both app and
+  Workshop use the same session. **Player limitation:** the installed
+  `@seihouse/audio-player` mixer has no public way to stop an individual cue or
+  its cue layer; an already-started sound finishes after Pause. Its `stopAll`
+  explicitly leaves cues playing. Cutting those tails requires an audio-player
+  package change; this implementation does not mutate reader preferences or
+  access that package's private playback engine to simulate cancellation.
+  Focused checks: `readAloudCues.test.tsx`, `HarnessReaderSession.test.tsx`,
+  and `scripts/verifyNarrationCues.browser.mjs` (controlled speech and silent
+  media at phone/desktop sizes, not an audible device-voice check).
+
 - **2026-10-31 (Status, the second information tag):** SENSEI: finish the
   information tags before name colors link to the Codex, and build each the
   way the others work, simply. Status is the appearance tag's twin: the

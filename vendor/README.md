@@ -80,7 +80,7 @@ release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm c
 ## Reader cue cancellation — 2026-11-02
 
 `seihouse-audio-player-5.2.0.tgz` is built with `npm pack` from AUDIO-PLAYER
-commit `8cc0f94d0d20b1c9e0f9ab240e05b5159243fc3a` on
+commit `6d6ada74e2df1e2d52ecad31c9fc160d11ceb94c` on
 `feat/stop-reader-cues`. It adds `ReaderMixer.stopCues()`, which stops playing
 and loading one-shots without changing the soundtrack or saved preferences.
 The Reader calls it when narration pauses, seeks, is interrupted, or leaves.
@@ -91,7 +91,7 @@ the mixer and its settings panel had no intervening source changes. The app
 uses none of the player faces removed in 5.0.0. Both SEN and Library now
 require the 5.2.0 peer. The existing scoped UI override remains necessary.
 This replaces the old 4.0.0 artifact and does not publish to the registry.
-SHA-512: `fc023474f06c45a804c6a6196a1efde99d9097a41a15e2564b86ba1c39669eddf564890c7c3dcf7bfe1162f8c8d326300e89cd82ff205fb50eaab664bd6c6e8f`.
+SHA-512: `68d9ec39090f8e0ba4a1076595971f0c98d78982a018677df53d2443eebb4e4810479d7b40c416d0ad693afa614da051853844f8a7bafc3135fc0a12354db172`.
 The lockfile records npm integrity.
 
 ## Reader steady-pitch build — 2026-10-11 (replaced above)

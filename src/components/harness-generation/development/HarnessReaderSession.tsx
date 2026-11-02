@@ -393,6 +393,7 @@ export function HarnessReaderSession({
       const playable = resolvePlayableSoundCue(cue);
       if (playable.ok) mixer?.playCue(playable.publicUrl, { volume: soundCueVolume(cue.payload.energy) });
     },
+    onStopSoundCues: () => mixer?.stopCues(),
   });
   const reading = readAloud.status === 'playing' || readAloud.status === 'paused';
   const spoken = reading ? readAloud.line : undefined;

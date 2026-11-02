@@ -45,14 +45,12 @@ existing Chapter Generation feature.
   three-cue budget. Seeking consumes skipped cues without playing them;
   played/skipped cues stay consumed for that chapter during this Reader visit.
   Pause, interruptions, covering/leaving the Reader and chapter changes cancel
-  pending cues. Silent reading still requires a tap. Create-mode edits refresh
+  pending cues and cut off playing/loading cues through `ReaderMixer.stopCues()`.
+  Silent reading still requires a tap. Create-mode edits refresh
   the script at the current passage without clearing cue history. Both app and
-  Workshop use the same session. **Player limitation:** the installed
-  `@seihouse/audio-player` mixer has no public way to stop an individual cue or
-  its cue layer; an already-started sound finishes after Pause. Its `stopAll`
-  explicitly leaves cues playing. Cutting those tails requires an audio-player
-  package change; this implementation does not mutate reader preferences or
-  access that package's private playback engine to simulate cancellation.
+  Workshop use the same session. Audio-player 5.2.0 exposes cue cancellation
+  without stopping music/atmosphere or changing the reader's saved mix; the
+  app vendors the verified source build, with both package peers updated.
   Focused checks: `readAloudCues.test.tsx`, `HarnessReaderSession.test.tsx`,
   and `scripts/verifyNarrationCues.browser.mjs` (controlled speech and silent
   media at phone/desktop sizes, not an audible device-voice check).

@@ -144,6 +144,8 @@ export interface UseReadAloudOptions {
   engine?: SpeechEngine;
   /** Plays a placed sound through the host's existing audio owner. */
   onSoundCue?: (cue: SoundCueAttachment) => void;
+  /** Cancels sounding/loading cues on pause, seek, interruption or departure. */
+  onStopSoundCues?: () => void;
 }
 
 export interface ReadAloud {
@@ -226,7 +228,7 @@ const sameVoices = (left: readonly ReadAloudVoice[], right: readonly ReadAloudVo
  * never silently the narrator's.
  */
 export function useReadAloud({
-  scriptKey, scriptRevision, buildScript, language = 'en', preferences, picks, suspended = false, engine: suppliedEngine, onSoundCue,
+  scriptKey, scriptRevision, buildScript, language = 'en', preferences, picks, suspended = false, engine: suppliedEngine, onSoundCue, onStopSoundCues,
 }: UseReadAloudOptions): ReadAloud {
   const engine = useMemo(() => suppliedEngine ?? createWebSpeechEngine(), [suppliedEngine]);
   const [voices, setVoices] = useState<readonly ReadAloudVoice[]>(() => engine.getVoices());
@@ -244,10 +246,10 @@ export function useReadAloud({
     suspended, lastEventAt: 0, hiddenAt: 0, timers: new Set(),
   });
   // Speech callbacks outlive renders: they read the latest values from here.
-  const latest = useRef({ voices, prefs, picks, rate: prefs.rate, language, buildScript, onSoundCue });
-  latest.current = { voices, prefs, picks, rate: prefs.rate, language, buildScript, onSoundCue };
+  const latest = useRef({ voices, prefs, picks, rate: prefs.rate, language, buildScript, onSoundCue, onStopSoundCues });
+  latest.current = { voices, prefs, picks, rate: prefs.rate, language, buildScript, onSoundCue, onStopSoundCues };
   const [cues] = useState(() => {
-    const playback = createReadAloudCuePlayback(cue => latest.current.onSoundCue?.(cue));
+    const playback = createReadAloudCuePlayback(cue => latest.current.onSoundCue?.(cue), () => latest.current.onStopSoundCues?.());
     playback.chapter(scriptKey);
     return playback;
   });

@@ -21,8 +21,8 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **2026-11-02:** Development shares the app's narration-timed Sound Cues:
   Listen follows the spoken sentence and triggers cues at their exact words,
   once per chapter per Reader visit, with 500 ms between cue starts. Silent
-  reading stays tap-only. Pause/seek cancel pending cues; already-started cues
-  still finish because the shared audio player exposes no cue cancellation.
+  reading stays tap-only. Pause/seek cancel pending and already-started cues
+  through audio-player 5.2.0's public cue-stop control.
   The Original Reference remains unchanged. See the Harness Generation
   README and `scripts/verifyNarrationCues.browser.mjs`.
 

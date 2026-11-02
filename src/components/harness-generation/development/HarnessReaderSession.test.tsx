@@ -690,6 +690,33 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
+  it('cuts off an active narration cue on Pause without muting the soundtrack or replaying on Resume', async () => {
+    vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+    Range.prototype.getClientRects = () => [{ left: 10, top: 20, right: 90, bottom: 40, width: 80, height: 20 }] as unknown as DOMRectList;
+    const { fake: speech, uninstall } = installFakeSpeechSynthesis();
+    const { controller, storyId } = await story({ written: 1 });
+    const { mixer } = mixerFor();
+    const playCue = vi.spyOn(mixer, 'playCue');
+    try {
+      await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} />);
+      await click(button => button.textContent?.trim() === 'Listen', 'Listen');
+      for (let index = 0; index < 10 && !speech.current?.text.startsWith('the beast roared'); index++) {
+        await act(async () => { speech.start(); speech.finish(); });
+        await flush(60);
+      }
+      await act(async () => speech.start());
+      expect(mixer.getState().activeCues).toBe(1);
+      const preferences = mixer.getPreferences();
+      await click(byLabel('Pause'), 'Pause');
+      expect(mixer.getState().activeCues).toBe(0);
+      expect(mixer.getPreferences()).toBe(preferences);
+      await click(byLabel('Resume'), 'Resume');
+      await act(async () => speech.start());
+      expect(playCue).toHaveBeenCalledTimes(1);
+      expect(mixer.getState().activeCues).toBe(0);
+    } finally { uninstall(); act(() => mixer.dispose()); }
+  });
+
   it('plays a pinned cue from narration through the same mixer as a manual tap, respecting mute', async () => {
     vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
     Range.prototype.getClientRects = () => [{ left: 10, top: 20, right: 90, bottom: 40, width: 80, height: 20 }] as unknown as DOMRectList;

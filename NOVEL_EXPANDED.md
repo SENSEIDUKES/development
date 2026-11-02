@@ -349,10 +349,9 @@ Update it whenever it changes.
     everyone else's. The sentence being spoken is lit and the page follows it.
     Listen starts each placed Sound Cue once at its exact words, with 500 ms
     between cue starts and no old automatic-cue category or three-cue limit.
-    Seeking skips cues without a catch-up burst; Pause cancels pending cues.
-    Silent reading remains tap-to-play. Already-started cue sounds finish
-    after Pause: cutting them off still needs a public cue-stop control in
-    the shared audio player.
+    Seeking skips cues without a catch-up burst; Pause cancels pending cues
+    and cuts off sounds already playing through the shared audio player's
+    cue-stop control. Silent reading remains tap-to-play.
     **The soundtrack is SEIHouse's own audio player** (its reader mixer), and
     each chapter has its own scene: **music** (pieces of one mood from SEN
     Soundscapes, Volume 1, one after another) and one **atmosphere** (a bed from

@@ -35,9 +35,11 @@ let fake: FakeSpeechSynthesis;
 let engine: SpeechEngine;
 let player: ReadAloud;
 let playCue: ReturnType<typeof vi.fn<(cue: SoundCueAttachment) => void>>;
+let stopCues: ReturnType<typeof vi.fn<() => void>>;
 interface Props { chapter?: string; suspended?: boolean; cues?: SoundCueAttachment[] }
 function Harness({ chapter = 'one', suspended, cues = placed }: Props) {
-  player = useReadAloud({ scriptKey: chapter, scriptRevision: JSON.stringify(cues), buildScript: () => scriptWith(cues), engine, suspended, onSoundCue: playCue });
+  player = useReadAloud({ scriptKey: chapter, scriptRevision: JSON.stringify(cues), buildScript: () => scriptWith(cues), engine, suspended,
+    onSoundCue: playCue, onStopSoundCues: stopCues });
   return null;
 }
 const render = (props: Props = {}) => act(() => root.render(<Harness {...props} />));
@@ -54,6 +56,7 @@ beforeEach(() => {
   fake = createFakeSpeechSynthesis();
   engine = createWebSpeechEngine({ speechSynthesis: fake.speechSynthesis, SpeechSynthesisUtterance: fake.SpeechSynthesisUtterance });
   playCue = vi.fn();
+  stopCues = vi.fn();
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
@@ -91,6 +94,7 @@ describe('narration and placed sounds', () => {
     render();
     act(() => window.dispatchEvent(new Event('scroll')));
     expect(heard()).toEqual([]);
+    expect(stopCues).not.toHaveBeenCalled();
     playAt(0); start(); next(); start();
     expect(player.line?.text).toBe('Before the');
     expect(heard()).toEqual([]);
@@ -134,6 +138,7 @@ describe('narration and placed sounds', () => {
     act(() => lateStart?.({}));
     tick(1000);
     expect(heard()).toEqual([placed[0].id]);
+    expect(stopCues).toHaveBeenCalledTimes(1);
     if (action === 'pause') {
       act(() => player.resume()); start(); tick(1000);
       expect(heard()).toEqual([placed[0].id]);
@@ -143,6 +148,7 @@ describe('narration and placed sounds', () => {
   it('seeks ahead without a catch-up burst and never replays passed cues after seeking back', () => {
     render(); playAt(lineFor(placed[0].id)); start();
     playAt(lineFor(placed[4].id)); start(); tick(600);
+    expect(stopCues).toHaveBeenCalledTimes(1);
     expect(heard()).toEqual([placed[0].id, placed[4].id]);
     playAt(lineFor(placed[1].id)); start(); tick(600);
     expect(heard()).toHaveLength(2);
@@ -162,6 +168,7 @@ describe('narration and placed sounds', () => {
   it('switches chapter without leaking a pending cue and remembers cues on a return visit', () => {
     render(); playAt(lineFor(placed[0].id)); start(); next(); start();
     render({ chapter: 'two' }); tick(600);
+    expect(stopCues).toHaveBeenCalledTimes(1);
     expect(heard()).toEqual([placed[0].id]);
     playAt(lineFor(placed[0].id)); start();
     expect(heard()).toHaveLength(2);

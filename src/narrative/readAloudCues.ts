@@ -9,17 +9,22 @@ export const READ_ALOUD_CUE_COOLDOWN_MS = 500;
  * the cues before its destination without playing them. Pause/seek discard
  * pending sounds, so neither a resume nor a backwards jump replays them.
  */
-export function createReadAloudCuePlayback(play: (cue: SoundCueAttachment) => void) {
+export function createReadAloudCuePlayback(play: (cue: SoundCueAttachment) => void, stop: () => void) {
   const chapters = new Map<string, Set<string>>();
   let seen = new Set<string>();
   let pending: SoundCueAttachment[] = [];
   let timer: ReturnType<typeof setTimeout> | undefined;
   let lastPlayed = -Infinity;
+  let sounding = false;
 
   const cancel = () => {
     clearTimeout(timer);
     timer = undefined;
     pending = [];
+    if (sounding) {
+      sounding = false;
+      stop();
+    }
   };
   const drain = () => {
     timer = undefined;
@@ -28,6 +33,7 @@ export function createReadAloudCuePlayback(play: (cue: SoundCueAttachment) => vo
     if (wait > 0) { timer = setTimeout(drain, wait); return; }
     const cue = pending.shift()!;
     lastPlayed = Date.now();
+    sounding = true;
     play(cue);
     if (pending.length) timer = setTimeout(drain, READ_ALOUD_CUE_COOLDOWN_MS);
   };

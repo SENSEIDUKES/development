@@ -18,11 +18,12 @@ const speech = stripTypeScriptTypes(readFileSync('src/test-utils/fakeSpeechSynth
 window.__speech = createFakeSpeechSynthesis();
 Object.defineProperty(window, 'speechSynthesis', { value: window.__speech.speechSynthesis, configurable: true });
 Object.defineProperty(window, 'SpeechSynthesisUtterance', { value: window.__speech.SpeechSynthesisUtterance, configurable: true });`;
-const silence = Buffer.alloc(44 + 8000, 128);
+// Long enough to prove Pause stops a sound that has not finished naturally.
+const silence = Buffer.alloc(44 + 8000 * 30, 128);
 silence.write('RIFF', 0); silence.writeUInt32LE(silence.length - 8, 4); silence.write('WAVE', 8);
 silence.write('fmt ', 12); silence.writeUInt32LE(16, 16); silence.writeUInt16LE(1, 20); silence.writeUInt16LE(1, 22);
 silence.writeUInt32LE(8000, 24); silence.writeUInt32LE(8000, 28); silence.writeUInt16LE(1, 32); silence.writeUInt16LE(8, 34);
-silence.write('data', 36); silence.writeUInt32LE(8000, 40);
+silence.write('data', 36); silence.writeUInt32LE(silence.length - 44, 40);
 
 const browser = await chromium.launch();
 try {
@@ -49,7 +50,7 @@ try {
         window.__mediaPlays = [];
         const play = HTMLMediaElement.prototype.play;
         HTMLMediaElement.prototype.play = function () {
-          window.__mediaPlays.push({ url: this.currentSrc || this.src, words: window.__speech.current?.text });
+          window.__mediaPlays.push({ url: this.currentSrc || this.src, words: window.__speech.current?.text, element: this });
           return play.call(this);
         };
       });
@@ -73,7 +74,7 @@ try {
         throw error;
       });
       await page.evaluate(() => document.fonts.ready);
-      const heard = () => page.evaluate(urls => window.__mediaPlays.filter(play => urls.includes(play.url)), cueUrls);
+      const heard = () => page.evaluate(urls => window.__mediaPlays.filter(play => urls.includes(play.url)).map(({ url, words }) => ({ url, words })), cueUrls);
       assert.equal((await heard()).length, 0, `${label}: silent opening`);
       await page.evaluate(() => window.scrollTo(0, 800));
       await page.waitForTimeout(100);
@@ -116,7 +117,9 @@ try {
       assert(bounds && bounds.y >= 0 && bounds.y < viewport.height, `${label}: narration back in view`);
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${label}: no horizontal overflow`);
       await page.screenshot({ path: `${output}/${label}-listening.png` });
+      await page.waitForFunction(url => window.__mediaPlays.some(play => play.url === url && !play.element.paused && !play.element.ended), firstCue.payload.cue.publicUrl);
       await page.getByRole('button', { name: 'Pause', exact: true }).click();
+      assert(await page.evaluate(urls => window.__mediaPlays.filter(play => urls.includes(play.url)).every(play => play.element.paused), cueUrls), `${label}: Pause cuts off active cue audio`);
       await page.getByRole('button', { name: 'Resume', exact: true }).click();
       await page.evaluate(() => window.__speech.start());
       await page.waitForTimeout(550);
@@ -125,7 +128,7 @@ try {
       await reader.locator(`[data-sound-cue-id="${firstCue.id}"]`).click();
       assert.equal((await heard()).length, 2, `${label}: manual replay still works`);
       assert.deepEqual(errors, [], `${label}: no page errors`);
-      console.log(`${label}: cue timing, pause/resume, manual tap, follow-along and layout passed`);
+      console.log(`${label}: cue timing, active-sound cutoff, pause/resume, manual tap, follow-along and layout passed`);
       await context.close();
     }
   }

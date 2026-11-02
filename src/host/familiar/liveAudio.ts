@@ -2,7 +2,8 @@
  * The microphone and speaker for live talk over a WebSocket (Gemini Live,
  * ElevenLabs Realtime): the microphone in 16-bit mono pieces at the model's
  * rate, and the Familiar's 16-bit mono voice played back in order. Shared by
- * every WebSocket provider; WebRTC providers (GPT-Live) use the phone's own.
+ * every WebSocket translator of the live engine (`liveEngine.ts`); WebRTC
+ * translators (GPT-Live) use the phone's own.
  */
 
 /** The microphone is sent in pieces this long. */
@@ -109,5 +110,37 @@ export function captureMicrophone(audio: AudioContext, stream: MediaStream, toRa
     node.port.onmessage = null;
     node.disconnect();
     microphone.disconnect();
+  };
+}
+
+/** The browser's AudioContext (the older Safari name included), or the one given. */
+export function audioContextClass(given?: typeof AudioContext): typeof AudioContext | undefined {
+  const scope = globalThis as Partial<typeof globalThis> & { webkitAudioContext?: typeof AudioContext };
+  return given ?? scope.AudioContext ?? scope.webkitAudioContext;
+}
+
+/**
+ * The speaker and microphone of one WebSocket conversation. Made during the
+ * reader's tap, so a phone lets it play; `rate` is the model's voice, and
+ * `setRate` changes it before the first word when the server says otherwise.
+ */
+export function openSpeaker(Context: typeof AudioContext, rate: number) {
+  const audio = new Context();
+  void audio.resume().catch(() => {});
+  let player = createPcmPlayer(audio, rate);
+  let stopCapture: (() => void) | undefined;
+  return {
+    audio,
+    get player() { return player; },
+    setRate(next: number) { if (next > 0 && next !== rate) { rate = next; player.stop(); player = createPcmPlayer(audio, rate); } },
+    /** Whether this browser can capture the microphone this way. */
+    ready: () => loadMicrophoneCapture(audio),
+    /** Sends the microphone on at `toRate`. */
+    listen(stream: MediaStream, toRate: number, send: (base64: string) => void) { stopCapture = captureMicrophone(audio, stream, toRate, send); },
+    close() {
+      player.stop();
+      stopCapture?.();
+      void audio.close().catch(() => {});
+    },
   };
 }

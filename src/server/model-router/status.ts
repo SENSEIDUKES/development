@@ -150,7 +150,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         description: 'Models that hear and answer in one stream, for the Familiar\'s live conversations.',
         consumers: consumersFor('live'),
         defaultModel: liveModel(environment),
-        providers: providerStatus(environment, ['openai', 'gemini']),
+        providers: providerStatus(environment, ['openai', 'gemini', 'elevenlabs']),
         models: modelStatus(environment, LIVE_MODELS, liveModel(environment), true),
       },
       {

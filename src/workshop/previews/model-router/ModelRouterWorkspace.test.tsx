@@ -125,6 +125,16 @@ it('lets the reader choose a tier and the team set the model behind each, warnin
   expect(readModelPreference('live')).toBe('elevenlabs/eleven_realtime_v1_mini');
 });
 
+it('lets an ElevenLabs live model be picked exactly, once its key is set', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g', ELEVENLABS_API_KEY: 'e' });
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
+  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
+  await click(provider('elevenlabs'));
+  expect(listedModels()).toEqual(['elevenlabs/eleven_realtime_v1_mini', 'elevenlabs/eleven_realtime_v1_max']);
+  await click(row('elevenlabs/eleven_realtime_v1_max')!);
+  expect(readModelPreference('live')).toBe('elevenlabs/eleven_realtime_v1_max');
+});
+
 it('shows one provider at a time, starting with the provider of the selected model', async () => {
   await openRouter({ GEMINI_API_KEY: 'g', 'OpenRouter-Dev': 'o' });
   expect(provider('gemini').getAttribute('aria-selected')).toBe('true');

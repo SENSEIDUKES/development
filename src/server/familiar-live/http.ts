@@ -12,6 +12,7 @@ import { liveModel, liveModelProvider } from '../model-router/status';
 import { FAMILIAR_LIVE_SESSION_MS } from './limits';
 import { familiarLiveInstruction } from './prompt';
 import { startOpenAiLive } from './openai';
+import { ELEVENLABS_LIVE_RATE, startElevenLabsLive } from './elevenlabs';
 
 export interface FamiliarLiveHttpRequest {
   method?: string;
@@ -35,6 +36,8 @@ export interface FamiliarLiveHttpDependencies {
   tokens?: (apiKey: string) => LiveTokenMinter;
   /** OpenAI's endpoint, for tests. */
   openAiFetch?: typeof fetch;
+  /** ElevenLabs' endpoint, for tests. */
+  elevenLabsFetch?: typeof fetch;
   now?: () => number;
   onError?: (error: unknown) => void;
 }
@@ -180,6 +183,18 @@ export const handleFamiliarLiveHttp = async (
       if (started.ok) return reply(201, { provider, ...started.body });
       dependencies.onError?.(new Error(`OpenAI ${started.status}: ${started.detail}`));
       return reply(502, { error: 'Your Familiar could not start talking. Try again.', detail: `OpenAI ${started.status}: ${started.detail}` });
+    } catch (error) {
+      dependencies.onError?.(error);
+      const detail = (error instanceof Error ? error.message : String(error)).replaceAll(apiKey, '[key]').slice(0, 300);
+      return reply(502, { error: 'Your Familiar could not start talking. Try again.', detail });
+    }
+  }
+  if (provider === 'elevenlabs') {
+    try {
+      const started = await startElevenLabsLive({ apiKey, brief, environment: dependencies.environment, model }, dependencies.elevenLabsFetch);
+      if (started.ok) return reply(201, { provider, secret: started.secret, rate: ELEVENLABS_LIVE_RATE, ...(started.expiresAt ? { expiresAt: started.expiresAt } : {}) });
+      dependencies.onError?.(new Error(`ElevenLabs ${started.status}: ${started.detail}`));
+      return reply(502, { error: 'Your Familiar could not start talking. Try again.', detail: `ElevenLabs ${started.status}: ${started.detail}` });
     } catch (error) {
       dependencies.onError?.(error);
       const detail = (error instanceof Error ? error.message : String(error)).replaceAll(apiKey, '[key]').slice(0, 300);

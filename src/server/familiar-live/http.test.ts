@@ -151,3 +151,42 @@ describe('Familiar live talk route', () => {
     expect(noKey.body).toMatchObject({ provider: 'gemini' });
   });
 });
+
+describe('Familiar live talk on ElevenLabs Realtime', () => {
+  const environment = { GEMINI_API_KEY: 'g', ELEVENLABS_API_KEY: 'el-secret', FAMILIAR_LIVE_ELEVENLABS_VOICE: 'quill-fox' };
+  it('is offered once its key is set, after the others, so it never serves by default', async () => {
+    expect((await handleFamiliarLiveHttp({ method: 'GET' }, { environment })).body).toEqual({
+      configured: true, provider: 'gemini', model: 'google/gemini-3.8-live',
+      models: [
+        { id: 'google/gemini-3.8-live', provider: 'gemini' },
+        { id: 'elevenlabs/eleven_realtime_v1_mini', provider: 'elevenlabs' },
+        { id: 'elevenlabs/eleven_realtime_v1_max', provider: 'elevenlabs' },
+      ],
+    });
+  });
+
+  it('mints a client secret locked to the Familiar, its functions and its voice, and keeps the key on the server', async () => {
+    const elevenLabsFetch = vi.fn(async () => new Response(JSON.stringify({ value: 'ek_live', expires_at: 1_800_000_000 }), { status: 200 }));
+    const result = await handleFamiliarLiveHttp({ method: 'POST', body: { brief, model: 'elevenlabs/eleven_realtime_v1_mini' } }, { environment, elevenLabsFetch });
+    expect(result).toMatchObject({ status: 201, body: { provider: 'elevenlabs', secret: 'ek_live', rate: 24_000, expiresAt: 1_800_000_000 } });
+    expect(JSON.stringify(result.body)).not.toContain('el-secret');
+    const [url, init] = elevenLabsFetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('https://api.elevenlabs.io/v1/convai/realtime/client_secrets');
+    expect(init.headers).toMatchObject({ 'xi-api-key': 'el-secret' });
+    const { session, expires_after } = JSON.parse(init.body as string);
+    expect(expires_after).toEqual({ anchor: 'created_at', seconds: 600 });
+    expect(session).toMatchObject({
+      type: 'realtime', model: 'eleven_realtime_v1_mini', output_modalities: ['audio'], max_duration_seconds: 600,
+      audio: { input: { format: { type: 'audio/pcm', rate: 24_000 }, turn_detection: { type: 'semantic_vad' } }, output: { voice: 'quill-fox' } },
+      tool_choice: 'auto', parallel_tool_calls: false,
+    });
+    expect(session.instructions).toContain('You are Celestial Guardian');
+    expect(session.tools.map((tool: { name: string }) => tool.name)).toEqual(['show_topic', 'propose_action', 'answer_proposal']);
+  });
+
+  it('says exactly why ElevenLabs refused, without the key', async () => {
+    const elevenLabsFetch = vi.fn(async () => new Response(JSON.stringify({ detail: 'Realtime models are not available for this workspace. el-secret' }), { status: 403 }));
+    const result = await handleFamiliarLiveHttp({ method: 'POST', body: { brief, model: 'elevenlabs/eleven_realtime_v1_max' } }, { environment, elevenLabsFetch, onError: () => {} });
+    expect(result).toMatchObject({ status: 502, body: { detail: 'ElevenLabs 403: Realtime models are not available for this workspace. [key]' } });
+  });
+});

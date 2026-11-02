@@ -574,12 +574,14 @@ export function useReadAloud({
       state.scriptRevision = scriptRevision;
       state.script = undefined;
       if (state.status !== 'idle') {
+        const ended = state.status === 'ended';
         halt();
-        // An edit keeps the current passage instead of restarting at the title.
+        // An edit keeps the current passage, or the finished position after Listen ends.
         const lines = scriptFor().lines;
         const index = previous && lines.findIndex(line => line.blockId === previous.blockId && line.end > previous.start);
-        state.index = typeof index === 'number' && index >= 0 ? index : Math.min(state.index, lines.length);
-        state.status = 'paused';
+        state.index = ended ? lines.length
+          : typeof index === 'number' && index >= 0 ? index : Math.min(state.index, lines.length);
+        state.status = ended ? 'ended' : 'paused';
         cues.seek(scriptFor(), state.index);
       }
     }

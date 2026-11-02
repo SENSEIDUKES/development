@@ -184,4 +184,14 @@ describe('narration and placed sounds', () => {
     next(); start(); tick(600);
     expect(heard()).toEqual([placed[0].id, placed[1].id]);
   });
+
+  it('stays ended when adding cues changes the script after narration has finished', () => {
+    render({ cues: [placed[0]] }); playAt(0); readToEnd();
+    expect(player.status).toBe('ended');
+    const spoken = fake.spoken.length;
+    render({ cues: placed }); tick(1000);
+    expect(player.status).toBe('ended');
+    expect(fake.spoken).toHaveLength(spoken);
+    expect(heard()).toEqual([placed[0].id]);
+  });
 });

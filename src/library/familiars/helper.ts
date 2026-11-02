@@ -401,7 +401,12 @@ export class FamiliarHelperController {
   /** The reader's second tap: they have finished speaking, so the Familiar answers what it heard. */
   doneTalking = () => {
     if (this.state.phase !== 'listening') return;
+    // Keep the final transcript, but a second tap must never re-arm listening
+    // after a readback. A fresh microphone tap is needed for the next command.
+    this.spoken = false;
+    this.update({ phase: this.state.proposal ? 'review' : 'ready', message: '' });
     this.listening?.stop();
+    this.release(true);
   };
   submit = (text: string) => {
     if (!this.state.open || !this.context || this.state.phase === 'saving') return;

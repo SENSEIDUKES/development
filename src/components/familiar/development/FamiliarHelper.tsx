@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
+import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Info, Keyboard, Lightbulb, MessagesSquare, Mic, Pause, Play, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, GripVertical, Info, Keyboard, Lightbulb, MessagesSquare, Mic, Pause, Play, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FAMILIAR_WAKE_WORD, FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice, type FamiliarWakeWord } from '../../../library/familiars/helper';
+import { useFamiliarPanelDrag } from './useFamiliarPanelDrag';
 
 const Helper = createContext<FamiliarHelperController | null>(null);
 const FocusReturn = createContext<RefObject<HTMLElement | null> | null>(null);
@@ -138,8 +139,41 @@ export function FamiliarHelperAction({ onOpen, focusTarget }: { onOpen?: () => v
   return <button type="button" className="familiar-action" aria-label="Talk to Familiar" title="Talk or type to Familiar"
     onClick={event => {
       if (returnFocus) returnFocus.current = focusTarget?.() ?? event.currentTarget;
-      onOpen?.(); helper.open(true);
+      onOpen?.(); helper.open();
     }}><Mic aria-hidden size={20} /></button>;
+}
+
+/** Native scrolling for touch and keyboard, with explicit controls for mouse users. */
+function FamiliarTopics({ children }: { children: ReactNode }) {
+  const row = useRef<HTMLDivElement>(null);
+  const id = useId();
+  const [edges, setEdges] = useState({ overflow: false, start: true, end: true });
+  useLayoutEffect(() => {
+    const element = row.current!;
+    const measure = () => {
+      const maximum = element.scrollWidth - element.clientWidth;
+      // Measure overflow against the whole row so arrows disappear again when
+      // resizing leaves enough room for every topic without the controls.
+      setEdges({ overflow: element.scrollWidth > element.parentElement!.clientWidth + 1, start: element.scrollLeft <= 1, end: element.scrollLeft >= maximum - 1 });
+    };
+    measure();
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measure);
+    observer?.observe(element);
+    observer?.observe(element.parentElement!);
+    for (const child of element.children) observer?.observe(child);
+    element.addEventListener('scroll', measure, { passive: true });
+    window.addEventListener('resize', measure);
+    return () => { observer?.disconnect(); element.removeEventListener('scroll', measure); window.removeEventListener('resize', measure); };
+  }, [children]);
+  const scroll = (direction: number) => {
+    const element = row.current!;
+    element.scrollBy({ left: direction * element.clientWidth * .8, behavior: 'auto' });
+  };
+  return <div className="familiar-helper-topic-navigation">
+    {edges.overflow && <button type="button" className="familiar-helper-scroll" aria-label="Previous topics" aria-controls={id} disabled={edges.start} onClick={() => scroll(-1)}><ChevronLeft size={18} aria-hidden /></button>}
+    <div ref={row} id={id} className="familiar-helper-topics" role="group" aria-label="Familiar topics" tabIndex={0}>{children}</div>
+    {edges.overflow && <button type="button" className="familiar-helper-scroll" aria-label="More topics" aria-controls={id} disabled={edges.end} onClick={() => scroll(1)}><ChevronRight size={18} aria-hidden /></button>}
+  </div>;
 }
 
 /**
@@ -158,6 +192,8 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   const [said, setSaid] = useState('');
   const log = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const drag = useFamiliarPanelDrag(panel, state.open, bottomInset);
+  const dragInstructions = useId();
   const confirm = useRef<HTMLButtonElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const clip = useRef<HTMLVideoElement>(null);
@@ -191,20 +227,22 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   const message = state.live?.status === 'connecting' ? 'Connecting…' : state.phase === 'listening' ? '' : state.message;
   // A typed conversation is not listening: its microphone starts listening.
   const micLabel = state.live ? (!state.live.listening ? 'Talk out loud' : state.live.status === 'connecting' ? 'Connecting… tap to stop' : 'Hang up')
-    : helper.live ? 'Talk with your Familiar'
-    : state.phase === 'listening' ? 'Done talking' : state.phase === 'speaking' ? 'Speaking' : state.proposal ? 'Speak Confirm or Cancel' : 'Speak';
+    : state.phase === 'listening' ? 'Done talking' : helper.live ? 'Talk with your Familiar'
+    : state.phase === 'speaking' ? 'Speaking' : state.proposal ? 'Speak Confirm or Cancel' : 'Speak';
 
   return createPortal(<div ref={panel} role="dialog" aria-modal="false" aria-label="Familiar" tabIndex={-1}
-    style={{ bottom: `max(${bottomInset}px, env(safe-area-inset-bottom))`, maxHeight: `min(70dvh, calc(100dvh - ${bottomInset + 16}px))` }}
-    className="familiar-helper" onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); helper.close(); } }}>
-    <div className="familiar-helper-top">
+    style={{ bottom: `max(${bottomInset}px, env(safe-area-inset-bottom))`, maxHeight: `min(70dvh, calc(100dvh - ${bottomInset + 16}px))`, ...drag.style }}
+    className="familiar-helper" data-dragging={drag.dragging || undefined} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); helper.close(); } }}>
+    <span id={dragInstructions} className="familiar-helper-sr">Drag the top bar to move this card. When focused, use arrow keys to move; hold Shift for larger steps.</span>
+    <div className="familiar-helper-top" {...drag.headerProps}>
       <div className="familiar-helper-modes" role="group" aria-label="Familiar mode">
         {([['explain', 'Explain', Lightbulb], ['action', 'Action', Zap]] as const).map(([mode, label, Icon]) =>
           <button type="button" key={mode} aria-pressed={state.mode === mode && !info} aria-label={label} title={label}
             disabled={busy || Boolean(state.proposal)} onClick={() => { helper.useText(); setTyping(false); setInfo(false); setChat(false); helper.setMode(mode); }}>
             <Icon size={20} aria-hidden /></button>)}
       </div>
-      <span className="familiar-helper-place">{context?.title}</span>
+      <button type="button" className="familiar-helper-drag-handle" aria-label="Move Familiar card" aria-describedby={dragInstructions}
+        title="Drag to move" onKeyDown={drag.onKeyDown}><GripVertical size={16} aria-hidden /><span className="familiar-helper-place">{context?.title}</span></button>
       <button type="button" className="familiar-helper-icon" aria-label="Close Familiar" title="Close" disabled={busy} onClick={helper.close}><X size={20} aria-hidden /></button>
     </div>
 
@@ -256,10 +294,10 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
             {state.phase === 'speaking' ? <Square size={16} aria-hidden /> : <Volume2 size={18} aria-hidden />}</button>
         </div>
       </div>}
-      {context?.topics.length ? <div className="familiar-helper-topics">
+      {context?.topics.length ? <FamiliarTopics>
         {context.topics.map(entry => { const Icon = entry.icon ?? Lightbulb; return <button type="button" key={entry.id} aria-pressed={entry.id === state.topicId}
           onClick={() => { helper.useText(); helper.explain(entry.id); }}><Icon size={16} aria-hidden />{entry.label}</button>; })}
-      </div> : null}
+      </FamiliarTopics> : null}
     </>
 
     : context?.actions.length ? <div className="familiar-helper-actions">
@@ -286,8 +324,9 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
         aria-label={micLabel} title={micLabel} aria-pressed={Boolean(state.live?.listening) || state.phase === 'listening'} disabled={busy && !state.live}
         onClick={() => {
           setInfo(false);
+          if (state.phase === 'listening') { helper.doneTalking(); return; }
           if (helper.live) { if (state.phase === 'speaking') helper.quiet(); helper.talk(); return; }
-          if (state.phase === 'listening') { helper.doneTalking(); return; } if (state.phase === 'speaking') helper.quiet(); helper.listen();
+          if (state.phase === 'speaking') helper.quiet(); helper.listen();
         }}>
         {state.live?.listening && state.live.status === 'on' ? <Square size={22} aria-hidden /> : <Mic size={26} aria-hidden />}</button>
       {helper.live

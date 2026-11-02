@@ -9,10 +9,27 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - Source: supplied `Familiars/Packages/` collection (not a Git repository), containing twelve validated Familiar packages.
 - Preview: Workshop **Customization → Familiar** and `?preview=familiar`.
 - First Workshop record: 2026-09-20.
-- Last recorded Workshop update: 2026-10-30.
+- Last recorded Workshop update: 2026-11-01.
 - Historical source inspection: 2026-10-06.
 - Lifecycle: supplied source packages retained; the reusable renderer, host catalogue, and Energy interaction remain in Development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
+
+## Local refinement — 2026-11-01
+
+The floating Familiar and its card sit above app menus and panels. Opening the
+card does not start listening or a paid conversation; tap its microphone to
+start, then tap again or close to stop. The separately enabled wake-word setting
+keeps its existing behavior. Opening Conversation is idle too; sending starts
+typed-only talk.
+Explain topics have overflow arrows alongside native scrolling, and Action
+labels wrap inside the viewport-constrained, vertically scrolling card. The app
+and existing Workshop preview share these controls.
+
+The card can also be dragged by its top bar with mouse or touch, or moved with
+arrow keys on its grip (Shift takes larger steps). Its position lasts for the
+visit, including closing and reopening; resizing the screen or card keeps it
+inside the visible viewport and above the host's bottom navigation. The action
+buttons and scrolling content do not start a drag.
 
 ## Source interpretation
 

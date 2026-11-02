@@ -11,7 +11,7 @@ let root: Root;
 let container: HTMLDivElement;
 beforeEach(() => { container = document.createElement('div'); document.body.append(container); root = createRoot(container); });
 afterEach(() => { act(() => root.unmount()); container.remove(); });
-const button = (label: string) => [...document.querySelectorAll('button')].find(element => element.textContent === label || element.getAttribute('aria-label') === label)!;
+const button = (label: string) => [...document.querySelectorAll('button')].find(element => (element.getAttribute('aria-label') ?? element.textContent) === label)!;
 const click = async (label: string) => { await act(async () => button(label).click()); };
 function Screen({ context }: { context: FamiliarHelperContext }) { useFamiliarHelperContext(context); return null; }
 function setup() {
@@ -34,6 +34,159 @@ function setup() {
 }
 
 describe('Familiar helper surface', () => {
+  it('handles a queued size measurement when the card closes and reopens', async () => {
+    let resize = () => {};
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: () => void) { resize = callback; }
+      observe() {}
+      disconnect() {}
+    });
+    try {
+      const t = setup();
+      await click('Talk to Familiar');
+      act(() => resize());
+      await click('Close Familiar');
+      act(() => resize());
+      await click('Talk to Familiar');
+      expect(document.querySelector('.familiar-helper')).not.toBeNull();
+      expect(button('Move Familiar card')).toBeTruthy();
+      expect(t.voice.listen).not.toHaveBeenCalled();
+    } finally { vi.unstubAllGlobals(); }
+  });
+  it.each(['mouse', 'touch'])('moves the card by its header with %s, clamps it, and keeps its placement on reopen', async pointerType => {
+    const t = setup();
+    await click('Talk to Familiar');
+    const panel = document.querySelector<HTMLElement>('.familiar-helper')!;
+    const handle = button('Move Familiar card');
+    const bounds = () => ({ left: parseFloat(panel.style.left), top: parseFloat(panel.style.top), width: 360, height: 200 } as DOMRect);
+    vi.spyOn(panel, 'getBoundingClientRect').mockImplementation(bounds);
+    const pointer = (type: string, x: number, y: number, target: HTMLElement = handle, id = 1) => {
+      const event = new Event(type, { bubbles: true });
+      Object.assign(event, { clientX: x, clientY: y, pointerId: id, pointerType, button: 0, isPrimary: id === 1 });
+      act(() => target.dispatchEvent(event));
+    };
+    const start = bounds();
+    pointer('pointerdown', 100, 100);
+    pointer('pointermove', 200, 180, handle, 2);
+    expect(bounds().left).toBe(start.left);
+    pointer('pointermove', 200, 180);
+    expect(bounds()).toMatchObject({ left: start.left + 100, top: start.top + 80 });
+    expect(panel.dataset.dragging).toBe('true');
+    pointer('pointermove', 5000, 5000);
+    expect(bounds()).toMatchObject({ left: window.innerWidth - 376, top: window.innerHeight - 288 });
+    pointer('pointercancel', 5000, 5000);
+    expect(panel.dataset.dragging).toBeUndefined();
+    pointer('pointermove', 100, 100);
+    expect(bounds().left).toBe(window.innerWidth - 376);
+    pointer('pointerdown', 500, 500);
+    pointer('pointermove', -5000, -5000);
+    pointer('pointerup', -5000, -5000);
+    expect(bounds()).toMatchObject({ left: 16, top: 16 });
+    pointer('pointerdown', 100, 100);
+    pointer('pointermove', 200, 180);
+    pointer('pointerup', 200, 180);
+    const placed = { left: panel.style.left, top: panel.style.top };
+    // Mode and close controls remain buttons, not drag handles.
+    pointer('pointerdown', 100, 100, button('Explain'));
+    pointer('pointermove', 300, 300, button('Explain'));
+    expect(panel.style.left).toBe(placed.left);
+    await click('Close Familiar');
+    await click('Talk to Familiar');
+    const reopened = document.querySelector<HTMLElement>('.familiar-helper')!;
+    expect(reopened.style.left).toBe(placed.left);
+    expect(reopened.style.top).toBe(placed.top);
+    expect(t.voice.listen).not.toHaveBeenCalled();
+  });
+  it('supports keyboard movement and keeps the card in view after resize', async () => {
+    setup();
+    await click('Talk to Familiar');
+    const panel = document.querySelector<HTMLElement>('.familiar-helper')!;
+    vi.spyOn(panel, 'getBoundingClientRect').mockImplementation(() => ({ left: parseFloat(panel.style.left), top: parseFloat(panel.style.top), width: 360, height: 200 } as DOMRect));
+    const move = (key: string, shiftKey = false) => act(() => button('Move Familiar card').dispatchEvent(new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true })));
+    move('ArrowRight'); move('ArrowDown', true);
+    expect(panel.style.left).toBe('26px');
+    expect(panel.style.top).toBe('56px');
+    for (let i = 0; i < 20; i++) { move('ArrowRight', true); move('ArrowDown', true); }
+    const width = window.innerWidth; const height = window.innerHeight;
+    try {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 500 });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: 400 });
+      act(() => window.dispatchEvent(new Event('resize')));
+      expect(panel.style.left).toBe('124px');
+      expect(panel.style.top).toBe('112px');
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: height });
+    }
+  });
+  it('stops device listening after live talk fails instead of starting another paid session', async () => {
+    const t = setup();
+    let events: FamiliarLiveEvents | undefined;
+    const live: FamiliarLive = { start: vi.fn((_brief, handlers) => { events = handlers; return { end: vi.fn(), send: vi.fn() }; }) };
+    act(() => root.render(<StrictMode><FamiliarHelperProvider voice={t.voice} live={live}>
+      <Screen context={t.context} /><FamiliarHelperAction />
+    </FamiliarHelperProvider></StrictMode>));
+    await click('Talk to Familiar');
+    await click('Talk with your Familiar');
+    act(() => events!.ended('Connection failed', true));
+    expect(t.voice.listen).toHaveBeenCalledOnce();
+    await click('Done talking');
+    act(() => t.heard('conflict'));
+    expect(live.start).toHaveBeenCalledOnce();
+    expect(t.voice.listen).toHaveBeenCalledOnce();
+    expect(button('Talk with your Familiar').getAttribute('aria-pressed')).toBe('false');
+    expect(button('Confirm')).toBeTruthy();
+  });
+  it('opens and reopens idle, and only the card microphone starts device speech', async () => {
+    const t = setup();
+    await click('Talk to Familiar');
+    expect(t.voice.listen).not.toHaveBeenCalled();
+    expect(t.voice.speak).not.toHaveBeenCalled();
+    await click('Close Familiar');
+    await click('Talk to Familiar');
+    expect(t.voice.listen).not.toHaveBeenCalled();
+    await click('Speak');
+    expect(t.voice.listen).toHaveBeenCalledOnce();
+    await click('Done talking');
+    expect(button('Speak').getAttribute('aria-pressed')).toBe('false');
+    await click('Close Familiar');
+    act(() => t.heard('conflict'));
+    await click('Talk to Familiar');
+    expect(button('Confirm')).toBeUndefined();
+    expect(t.voice.listen).toHaveBeenCalledOnce();
+  });
+  it.each(['stop', 'close', 'hide', 'unmount'] as const)('ends connecting live talk on %s and ignores late provider callbacks', async action => {
+    const t = setup();
+    let events: FamiliarLiveEvents | undefined;
+    const end = vi.fn();
+    const live: FamiliarLive = { start: vi.fn((_brief, handlers) => { events = handlers; return { end, send: vi.fn() }; }) };
+    act(() => root.render(<StrictMode><FamiliarHelperProvider voice={t.voice} live={live}>
+      <Screen context={t.context} /><FamiliarHelperAction />
+    </FamiliarHelperProvider></StrictMode>));
+    await click('Talk to Familiar');
+    await click('Conversation');
+    expect(live.start).not.toHaveBeenCalled();
+    await click('Talk with your Familiar');
+    if (action === 'stop') await click('Connecting… tap to stop');
+    else if (action === 'close') await click('Close Familiar');
+    else if (action === 'unmount') act(() => root.render(null));
+    else {
+      vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      vi.restoreAllMocks();
+    }
+    expect(end).toHaveBeenCalledOnce();
+    act(() => { events!.connected(); events!.caption('familiar', 'Late reply'); events!.ended('Unavailable', true); });
+    expect(t.voice.listen).not.toHaveBeenCalled();
+    expect(live.start).toHaveBeenCalledOnce();
+    expect(document.body.textContent).not.toContain('Late reply');
+    expect(document.querySelector('[data-phase="live"]')).toBeNull();
+    if (action === 'close' || action === 'hide') {
+      await click('Talk to Familiar');
+      expect(live.start).toHaveBeenCalledOnce();
+    }
+  });
+
   it('focuses a nonmodal panel and returns focus on Escape without saving', async () => {
     const t = setup();
     await click('Talk to Familiar');
@@ -42,7 +195,7 @@ describe('Familiar helper surface', () => {
     expect(document.activeElement).toBe(panel);
     await click('Conflict');
     expect(document.activeElement).toBe(button('Confirm'));
-    expect(t.abort).toHaveBeenCalled();
+    expect(t.abort).not.toHaveBeenCalled();
     expect(t.voice.speak).not.toHaveBeenCalled();
     expect(t.run).not.toHaveBeenCalled();
     act(() => panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
@@ -166,6 +319,8 @@ describe('Familiar helper surface', () => {
       <Screen context={t.context} /><FamiliarHelperAction />
     </FamiliarHelperProvider></StrictMode>));
     await click('Talk to Familiar');
+    expect(live.start).not.toHaveBeenCalled();
+    await click('Talk with your Familiar');
     expect(live.start).toHaveBeenCalledWith(expect.objectContaining({ familiar: { name: 'Celestial Guardian', description: 'A fox.' }, place: 'Fate' }), expect.anything(), { microphone: true });
     expect(t.voice.listen).not.toHaveBeenCalled();
     expect(document.body.textContent).toContain('Connecting…');
@@ -236,12 +391,13 @@ describe('Familiar helper surface', () => {
       <Screen context={t.context} /><FamiliarHelperAction />
     </FamiliarHelperProvider></StrictMode>));
     await click('Talk to Familiar');
-    await click('Connecting… tap to stop');
     await click('Conversation');
+    expect(live.start).not.toHaveBeenCalled();
     const input = () => document.querySelector<HTMLInputElement>('input[aria-label="Message Quill"]')!;
     act(() => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input(), 'What is energy?'); input().dispatchEvent(new Event('input', { bubbles: true })); });
     await click('Send');
     expect(input().value).toBe('');
+    expect(live.start).toHaveBeenCalledWith(expect.anything(), expect.anything(), { microphone: false });
     act(() => events!.ended(undefined, true));
     expect(input().value).toBe('What is energy?');
     expect(document.querySelector('[role="log"]')!.textContent).toContain('Not sent: your Familiar could not connect.');

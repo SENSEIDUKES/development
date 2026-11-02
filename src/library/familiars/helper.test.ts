@@ -220,9 +220,13 @@ describe('global Familiar interaction', () => {
     expect(t.helper.getSnapshot().phase).toBe('listening');
     t.helper.doneTalking();
     expect(t.stopListen).toHaveBeenCalledOnce();
+    expect(t.helper.getSnapshot().phase).toBe('ready');
     expect(t.cancelListen).not.toHaveBeenCalled();
     t.heard('conflict');
     expect(t.helper.getSnapshot().proposal?.actionId).toBe('conflict');
+    t.spoken();
+    expect(t.voice.listen).toHaveBeenCalledOnce();
+    expect(t.helper.getSnapshot().phase).toBe('review');
   });
   it('applies what was reviewed, even when the screen changes before Confirm', async () => {
     const t = setup();

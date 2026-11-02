@@ -81,12 +81,13 @@ const modelStatus = (
 
 /**
  * The live voice model: the server's choice (`FAMILIAR_LIVE_MODEL`) when the
- * Router lists it, otherwise the first listed whose provider key is set.
+ * Router lists it, otherwise the first listed whose provider key is set. A
+ * model served only when chosen (ElevenLabs Realtime, Heaven) is never the default.
  */
 export const liveModel = (environment: ModelEnvironment): string => {
   const configured = environment.FAMILIAR_LIVE_MODEL?.trim();
   if (LIVE_MODELS.some(model => model.id === configured)) return configured!;
-  return LIVE_MODELS.find(model => providerKey(environment, model.provider))?.id ?? DEFAULT_LIVE_MODEL;
+  return LIVE_MODELS.find(model => !model.chosenOnly && providerKey(environment, model.provider))?.id ?? DEFAULT_LIVE_MODEL;
 };
 
 /** The provider that serves a live model. */

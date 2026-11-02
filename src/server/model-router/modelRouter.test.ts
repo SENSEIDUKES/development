@@ -10,7 +10,7 @@ import {
 import { generateOpenRouterText } from './openRouter';
 import { resolveHarnessGenerationConfig } from '../harness-generation/config';
 import { createHarnessTextProvider } from '../harness-generation/provider';
-import { modelRouterStatus } from './status';
+import { liveModel, modelRouterStatus } from './status';
 import { resolveReasoningLevel } from './catalog';
 import { geminiThinkingConfig } from '@seihouse/library/model-router-server';
 
@@ -127,6 +127,14 @@ describe('Model Router status', () => {
     expect(status.capabilities.find(capability => capability.id === 'images')?.consumers).toEqual([{ name: 'Story Cover', modelChoice: 'router' }, { name: 'Codex Picture', modelChoice: 'router' }, { name: 'Image Lab', modelChoice: 'router' }, { name: 'Profile Picture', modelChoice: 'router' }]);
     expect(status.capabilities.find(capability => capability.id === 'tts')?.models[0].implemented).toBe(true);
     expect(status.capabilities[2].defaultModel).toBe('eleven_multilingual_v2');
+  });
+});
+
+describe('Model Router live voice', () => {
+  it('never serves ElevenLabs Realtime (Heaven) by default, only when chosen', () => {
+    expect(liveModel({ ELEVENLABS_API_KEY: 'e' })).toBe('google/gemini-3.8-live');
+    expect(liveModel({ ELEVENLABS_API_KEY: 'e', GEMINI_API_KEY: 'g' })).toBe('google/gemini-3.8-live');
+    expect(liveModel({ ELEVENLABS_API_KEY: 'e', FAMILIAR_LIVE_MODEL: 'elevenlabs/eleven_realtime_v1_max' })).toBe('elevenlabs/eleven_realtime_v1_max');
   });
 });
 

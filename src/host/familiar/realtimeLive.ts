@@ -87,6 +87,8 @@ export function createFamiliarRealtimeLive(dependencies: FamiliarRealtimeLiveDep
       const answered = new Set<string>();
       /** The Familiar's reply being played: its item, and when its audio starts and ends on the audio clock. */
       let speaking: { itemId: string; contentIndex: number; start: number; end: number } | undefined;
+      /** Replies the reader spoke over: audio still in flight for them is never played. */
+      const cutOff = new Set<string>();
       /**
        * The reader spoke over the Familiar: its voice stops, and the model is
        * told how much of the reply was heard, so it never assumes the rest was.
@@ -94,6 +96,7 @@ export function createFamiliarRealtimeLive(dependencies: FamiliarRealtimeLiveDep
       const interrupted = () => {
         const reply = speaking;
         speaking = undefined;
+        if (reply) cutOff.add(reply.itemId);
         player.stop();
         if (!reply || audio.currentTime >= reply.end) return;
         const heardMs = Math.max(0, Math.floor((audio.currentTime - reply.start) * 1_000));
@@ -168,7 +171,7 @@ export function createFamiliarRealtimeLive(dependencies: FamiliarRealtimeLiveDep
             readerHeardThisTurn = false;
             return;
           case 'response.output_audio.delta': {
-            if (!event.delta) return;
+            if (!event.delta || (event.item_id && cutOff.has(event.item_id))) return;
             const piece = player.play(event.delta);
             if (!piece || !event.item_id) return;
             if (speaking?.itemId === event.item_id) speaking.end = piece.at + piece.duration;

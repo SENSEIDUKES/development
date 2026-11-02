@@ -72,6 +72,9 @@ describe('Familiar live talk on ElevenLabs Realtime', () => {
     Socket.last.event({ type: 'input_audio_buffer.speech_started' });
     expect(played[0].stop).toHaveBeenCalled();
     expect(Socket.last.sent.at(-1)).toEqual({ type: 'conversation.item.truncate', item_id: 'item_1', content_index: 0, audio_end_ms: 250 });
+    // Audio of the cut-off reply still in flight is never played.
+    Socket.last.event({ type: 'response.output_audio.delta', item_id: 'item_1', content_index: 0, delta: pcm });
+    expect(played).toHaveLength(2);
     // A reply already heard in full is not cut short.
     Socket.last.event({ type: 'response.output_audio.delta', item_id: 'item_2', delta: pcm });
     Audio.last.currentTime = 5;

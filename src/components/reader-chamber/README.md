@@ -18,6 +18,13 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 ## Workshop history
 
+- **2026-11-02 (the snapshot lock reads the same on every platform):** The
+  Original Reference's snapshot test now canonicalizes line endings and
+  normalizes path separators before it compares. Git stores the copy with LF
+  endings, and a Windows checkout rewrites them to CRLF on the way out, so the
+  same untouched copy used to fail there while passing on CI. The guard still
+  catches any real edit to a copied file. The copy itself is unchanged.
+
 - **2026-11-02:** Development shares the app's narration-timed Sound Cues:
   Listen follows the spoken sentence and triggers cues at their exact words,
   once per chapter per Reader visit, with 500 ms between cue starts. Silent

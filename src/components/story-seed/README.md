@@ -10,7 +10,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **First Workshop record:** 2026-08-01
-- **Last recorded Workshop update:** 2026-10-27
+- **Last recorded Workshop update:** 2026-11-02
 - **Historical source inspection:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and active implementation built here
 
@@ -225,6 +225,11 @@ harness:
   render without loading-boundary, console, or page errors.
 
 ## Concise Workshop history
+
+- **2026-11-02 (the Blueprint review test keeps its own timeout):** The Arc
+  workspace test that drives the whole Blueprint review surface in one pass
+  takes a timeout of its own, so a loaded machine does not read it as a
+  failure. No behavior, storage, or schema changed.
 
 - **2026-10-30 (Sparks in the Origin; sign-in when asked):** From SENSEI's header
   redesign. `CreationModal` takes `originSparks`: the host's Sparks button (formerly

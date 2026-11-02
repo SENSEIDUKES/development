@@ -21,6 +21,8 @@ class WorkletNode { static last: WorkletNode; port = new Port(); connect = vi.fn
 const node = () => ({ connect: vi.fn((next: unknown) => next), disconnect: vi.fn() });
 const played: { start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn> }[] = [];
 class Audio {
+  static last: Audio;
+  constructor() { Audio.last = this; }
   sampleRate = 48_000;
   currentTime = 0;
   destination = {};
@@ -41,7 +43,8 @@ const respond = (status: number, body: unknown) => vi.fn(async () => new Respons
 const live = (fetch: typeof globalThis.fetch) => createFamiliarRealtimeLive({
   fetch, WebSocket: Socket as unknown as typeof WebSocket, AudioContext: Audio as unknown as typeof AudioContext, getUserMedia: microphone, accessToken: () => 'owner', model: 'elevenlabs/eleven_realtime_v1_mini',
 });
-const pcm = btoa(String.fromCharCode(0, 64, 0, 192));
+// 0.2 s of 24 kHz 16-bit audio.
+const pcm = btoa(String.fromCharCode(...new Array(9_600).fill(0)));
 
 afterEach(() => { vi.unstubAllGlobals(); played.length = 0; track.stop.mockClear(); Socket.last = undefined as unknown as Socket; });
 
@@ -60,11 +63,21 @@ describe('Familiar live talk on ElevenLabs Realtime', () => {
     // The microphone goes out as 24 kHz 16-bit pieces.
     WorkletNode.last.port.onmessage?.({ data: new Float32Array(4_800).fill(0.5) });
     expect(Socket.last.sent.at(-1)).toMatchObject({ type: 'input_audio_buffer.append' });
-    // The Familiar's voice plays; the reader speaking over it stops it at once.
-    Socket.last.event({ type: 'response.output_audio.delta', delta: pcm });
-    expect(played).toHaveLength(1);
+    // The Familiar's voice plays (two pieces of 0.2 s each); the reader speaking over it stops it at once,
+    // and the model is told how much of the reply was heard.
+    Socket.last.event({ type: 'response.output_audio.delta', item_id: 'item_1', content_index: 0, delta: pcm });
+    Socket.last.event({ type: 'response.output_audio.delta', item_id: 'item_1', content_index: 0, delta: pcm });
+    expect(played).toHaveLength(2);
+    Audio.last.currentTime = 0.25;
     Socket.last.event({ type: 'input_audio_buffer.speech_started' });
     expect(played[0].stop).toHaveBeenCalled();
+    expect(Socket.last.sent.at(-1)).toEqual({ type: 'conversation.item.truncate', item_id: 'item_1', content_index: 0, audio_end_ms: 250 });
+    // A reply already heard in full is not cut short.
+    Socket.last.event({ type: 'response.output_audio.delta', item_id: 'item_2', delta: pcm });
+    Audio.last.currentTime = 5;
+    const sent = Socket.last.sent.length;
+    Socket.last.event({ type: 'input_audio_buffer.speech_started' });
+    expect(Socket.last.sent).toHaveLength(sent);
   });
 
   it('captions both sides, runs the Familiar\'s functions on the screen and continues, and sends typed messages', async () => {

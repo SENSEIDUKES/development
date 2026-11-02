@@ -16,6 +16,8 @@ const CONNECT_MS = 15_000;
 
 interface RealtimeEvent {
   type?: string;
+  item_id?: string;
+  content_index?: number;
   delta?: string;
   transcript?: string;
   item?: { type?: string; call_id?: string; name?: string; arguments?: string };
@@ -83,6 +85,20 @@ export function createFamiliarRealtimeLive(dependencies: FamiliarRealtimeLiveDep
       let lastSpeaker: 'reader' | 'familiar' | undefined;
       let readerHeardThisTurn = false;
       const answered = new Set<string>();
+      /** The Familiar's reply being played: its item, and when its audio starts and ends on the audio clock. */
+      let speaking: { itemId: string; contentIndex: number; start: number; end: number } | undefined;
+      /**
+       * The reader spoke over the Familiar: its voice stops, and the model is
+       * told how much of the reply was heard, so it never assumes the rest was.
+       */
+      const interrupted = () => {
+        const reply = speaking;
+        speaking = undefined;
+        player.stop();
+        if (!reply || audio.currentTime >= reply.end) return;
+        const heardMs = Math.max(0, Math.floor((audio.currentTime - reply.start) * 1_000));
+        send({ type: 'conversation.item.truncate', item_id: reply.itemId, content_index: reply.contentIndex, audio_end_ms: heardMs });
+      };
       const cleanup = () => {
         over = true;
         clearTimeout(limit);
@@ -141,8 +157,7 @@ export function createFamiliarRealtimeLive(dependencies: FamiliarRealtimeLiveDep
             events.connected();
             return;
           case 'input_audio_buffer.speech_started':
-            // The reader spoke over the Familiar: it stops at once.
-            player.stop();
+            interrupted();
             readerHeardThisTurn = false;
             return;
           case 'conversation.item.input_audio_transcription.delta':
@@ -152,9 +167,14 @@ export function createFamiliarRealtimeLive(dependencies: FamiliarRealtimeLiveDep
             if (event.transcript && !readerHeardThisTurn) caption('reader', event.transcript, true);
             readerHeardThisTurn = false;
             return;
-          case 'response.output_audio.delta':
-            if (event.delta) player.play(event.delta);
+          case 'response.output_audio.delta': {
+            if (!event.delta) return;
+            const piece = player.play(event.delta);
+            if (!piece || !event.item_id) return;
+            if (speaking?.itemId === event.item_id) speaking.end = piece.at + piece.duration;
+            else speaking = { itemId: event.item_id, contentIndex: event.content_index ?? 0, start: piece.at, end: piece.at + piece.duration };
             return;
+          }
           case 'response.output_audio_transcript.delta':
             if (event.delta) caption('familiar', event.delta);
             return;

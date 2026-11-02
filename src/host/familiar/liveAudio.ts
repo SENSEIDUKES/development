@@ -44,14 +44,18 @@ export function base64ToFloat32(data: string): Float32Array<ArrayBuffer> {
   return out;
 }
 
-/** Plays the model's voice pieces one after another; `stop` cuts it off (the reader spoke over it). */
+/**
+ * Plays the model's voice pieces one after another; `stop` cuts it off (the
+ * reader spoke over it). `play` says when the piece starts and how long it
+ * lasts, on the audio clock, so a provider can be told how much was heard.
+ */
 export function createPcmPlayer(audio: AudioContext, rate: number) {
   const playing = new Set<AudioBufferSourceNode>();
   let playhead = 0;
   return {
-    play(data: string) {
+    play(data: string): { at: number; duration: number } | undefined {
       const samples = base64ToFloat32(data);
-      if (!samples.length) return;
+      if (!samples.length) return undefined;
       const buffer = audio.createBuffer(1, samples.length, rate);
       buffer.copyToChannel(samples, 0);
       const node = audio.createBufferSource();
@@ -62,6 +66,7 @@ export function createPcmPlayer(audio: AudioContext, rate: number) {
       playhead = at + buffer.duration;
       playing.add(node);
       node.onended = () => playing.delete(node);
+      return { at, duration: buffer.duration };
     },
     stop() {
       for (const node of playing) { try { node.stop(); } catch { /* already ended */ } }

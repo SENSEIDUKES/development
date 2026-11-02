@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createFamiliarBrowserVoice } from './voice';
+import { FAMILIAR_PAUSE_MS, createFamiliarBrowserVoice } from './voice';
 
 class Recognition {
   static last: Recognition;
@@ -15,7 +15,27 @@ class Recognition {
 }
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 describe('Familiar browser speech', () => {
-  it('keeps listening through pauses until stopped, then delivers everything heard, and cancels late events', () => {
+  it('answers by itself once the reader pauses after speaking, like a smart speaker', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('webkitSpeechRecognition', Recognition);
+    const result = vi.fn();
+    createFamiliarBrowserVoice().listen('en-US', result, vi.fn());
+    const recognition = Recognition.last;
+    expect(recognition.interimResults).toBe(true);
+    // Still speaking: words in progress keep it listening.
+    recognition.onresult!({ results: [{ isFinal: false, 0: { transcript: 'my' } }] });
+    vi.advanceTimersByTime(FAMILIAR_PAUSE_MS - 100);
+    recognition.onresult!({ results: [{ isFinal: true, 0: { transcript: 'my energy' } }] });
+    vi.advanceTimersByTime(FAMILIAR_PAUSE_MS - 100);
+    expect(recognition.stop).not.toHaveBeenCalled();
+    // A pause: it stops and answers.
+    vi.advanceTimersByTime(100);
+    expect(recognition.stop).toHaveBeenCalled();
+    recognition.onend!();
+    expect(result).toHaveBeenCalledExactlyOnceWith('my energy');
+  });
+  it('keeps listening through a short pause and a browser restart, answers at once on a tap, and cancels late events', () => {
+    vi.useFakeTimers();
     vi.stubGlobal('webkitSpeechRecognition', Recognition);
     const result = vi.fn();
     const failure = vi.fn();
@@ -24,7 +44,8 @@ describe('Familiar browser speech', () => {
     expect(first.lang).toBe('en-US');
     expect(first.continuous).toBe(true);
     first.onresult!({ results: [{ isFinal: true, 0: { transcript: 'Custom: Leave the sect' } }] });
-    // The browser ends on a pause by itself: the Familiar listens on, keeping what it heard.
+    // The browser ends on a short pause by itself: the Familiar listens on, keeping what it heard.
+    vi.advanceTimersByTime(500);
     first.onend!();
     expect(result).not.toHaveBeenCalled();
     const second = Recognition.last;
@@ -52,14 +73,17 @@ describe('Familiar browser speech', () => {
     expect(fail).toHaveBeenCalledOnce();
     expect(Recognition.last.abort).toHaveBeenCalled();
   });
-  it('stops by itself after 30 seconds and answers what it heard', () => {
+  it('stops by itself after 30 seconds of talking and answers what it heard', () => {
     vi.useFakeTimers();
     vi.stubGlobal('SpeechRecognition', Recognition);
     const result = vi.fn();
     createFamiliarBrowserVoice().listen('en-US', result, vi.fn());
     const recognition = Recognition.last;
-    recognition.onresult!({ results: [{ isFinal: true, 0: { transcript: 'Conflict' } }] });
-    vi.advanceTimersByTime(29_000);
+    // The reader never pauses long enough.
+    for (let second = 0; second < 29; second++) {
+      recognition.onresult!({ results: [{ isFinal: true, 0: { transcript: 'Conflict' } }, { isFinal: false, 0: { transcript: 'and more' } }] });
+      vi.advanceTimersByTime(1_000);
+    }
     expect(recognition.stop).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1_000);
     expect(recognition.stop).toHaveBeenCalled();

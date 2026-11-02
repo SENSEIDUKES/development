@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
+import { useOverlayScrollbar } from '@seihouse/ui';
 import { Check, GripVertical, Info, Keyboard, Lightbulb, MessagesSquare, Mic, Pause, Play, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FAMILIAR_WAKE_WORD, FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice, type FamiliarWakeWord } from '../../../library/familiars/helper';
@@ -192,6 +193,9 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   useLayoutEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [chat, state.chat]);
   const [allTopics, setAllTopics] = useState(false);
   const [allActions, setAllActions] = useState(false);
+  // Only the middle scrolls, with the Library's own scrollbar; the top bar and the microphone stay put.
+  const body = useOverlayScrollbar<HTMLDivElement>({ fades: true });
+  const chatLog = useOverlayScrollbar<HTMLDivElement>({ fades: true }, log);
   const placeKey = state.context?.key;
   useEffect(() => { setAllTopics(false); setAllActions(false); }, [placeKey]);
   if (!state.open) return null;
@@ -231,6 +235,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
       <button type="button" className="familiar-helper-icon" aria-label="Close Familiar" title="Close" disabled={busy} onClick={helper.close}><X size={20} aria-hidden /></button>
     </div>
 
+    <div ref={body} className="familiar-helper-body">
     {info ? <div className="familiar-helper-info">
       <p><Lightbulb size={16} aria-hidden /> <strong>Explain</strong> shows and tells you how things work here.</p>
       <p><Zap size={16} aria-hidden /> <strong>Action</strong> does things for you. It always asks before it changes anything.</p>
@@ -252,7 +257,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
     </div>
 
     : chat ? <div className="familiar-helper-conversation">
-      <div ref={log} className="familiar-helper-chat" role="log" aria-label={`Conversation with ${helper.name}`}>
+      <div ref={chatLog} className="familiar-helper-chat" role="log" aria-label={`Conversation with ${helper.name}`}>
         {state.chat.length ? state.chat.map((line, index) => <p key={index} className={`familiar-helper-line-${line.speaker}`}>
           {line.speaker !== 'note' && <span className="familiar-helper-sr">{line.speaker === 'reader' ? 'You' : helper.name}: </span>}{line.text}</p>)
           : <p className="familiar-helper-line-note">Nothing said yet. Tap the microphone to talk, or type below.</p>}
@@ -297,6 +302,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
     </div> : null}
 
     <p role="status" aria-live="polite" className="familiar-helper-status">{message}</p>
+    </div>
 
     {typing && !state.proposal && !info && <form onSubmit={event => { event.preventDefault(); helper.submit(text); }}>
       <input ref={input} aria-label="Type to your Familiar" id="familiar-command" value={text} maxLength={typedLimit} disabled={busy}

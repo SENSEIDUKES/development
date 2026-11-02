@@ -14,8 +14,13 @@ interface Recognition {
 }
 type SpeechWindow = Window & { SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition };
 
-/** Listening stops on its own after this long, in case the reader never taps to stop. */
+/** Listening stops on its own after this long, in case the reader never pauses or taps to stop. */
 const LISTEN_LIMIT_MS = 30_000;
+/**
+ * Like a smart speaker: once something was heard, this long with nothing new
+ * means the reader has finished, and the Familiar answers. A tap answers at once.
+ */
+export const FAMILIAR_PAUSE_MS = 1_500;
 /** How many times a browser that ends recognition by itself is started again in one session. */
 const MAX_RESTARTS = 20;
 /** After the reader taps to stop, a browser that never reports the end is answered anyway after this long. */
@@ -29,8 +34,8 @@ export function createFamiliarBrowserVoice(): FamiliarVoice {
     available: Boolean(Recognizer),
     listen(language, result, failure) {
       if (!Recognizer) { failure('Voice input is unavailable here. Type or choose an action.'); return { stop() {}, cancel() {} }; }
-      // Listening stays open until the reader taps to stop, so a pause never ends it;
-      // a browser that ends recognition on its own is started again, keeping what it heard.
+      // Listening ends when the reader pauses after speaking (or taps to stop); a
+      // browser that ends recognition on its own sooner is started again, keeping what it heard.
       let recognition: Recognition;
       let heardBefore = '';
       let heardNow = '';
@@ -38,6 +43,7 @@ export function createFamiliarBrowserVoice(): FamiliarVoice {
       let finished = false;
       let restarts = 0;
       let grace: ReturnType<typeof setTimeout> | undefined;
+      let pause: ReturnType<typeof setTimeout> | undefined;
       // On an iPhone, music's playback-only mode would refuse the microphone.
       const releaseSession = openMicrophoneSession();
       const heard = () => `${heardBefore} ${heardNow}`.trim();
@@ -46,6 +52,7 @@ export function createFamiliarBrowserVoice(): FamiliarVoice {
         releaseSession();
         clearTimeout(limit);
         clearTimeout(grace);
+        clearTimeout(pause);
         recognition.onresult = recognition.onerror = recognition.onend = null;
         try { recognition.abort(); } catch { /* Already stopped. */ }
       };
@@ -60,6 +67,7 @@ export function createFamiliarBrowserVoice(): FamiliarVoice {
       const stop = () => {
         if (finished || stopping) return;
         stopping = true;
+        clearTimeout(pause);
         grace = setTimeout(deliver, STOP_GRACE_MS);
         try { recognition.stop(); } catch { deliver(); }
       };
@@ -67,9 +75,12 @@ export function createFamiliarBrowserVoice(): FamiliarVoice {
         recognition = new Recognizer();
         recognition.lang = language;
         recognition.continuous = true;
-        recognition.interimResults = false;
+        // Words still being spoken arrive too, so a pause is only counted once the reader stops talking.
+        recognition.interimResults = true;
         recognition.onresult = event => {
           heardNow = Array.from(event.results).filter(entry => entry.isFinal).map(entry => entry[0].transcript).join(' ').trim();
+          clearTimeout(pause);
+          pause = setTimeout(() => { if (heard()) stop(); }, FAMILIAR_PAUSE_MS);
         };
         recognition.onerror = event => {
           if (event.error === 'not-allowed' || event.error === 'service-not-allowed') fail('Microphone or speech access was denied. Allow access in your browser, or type.');

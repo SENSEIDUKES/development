@@ -57,6 +57,8 @@ export interface RoutedModel {
    * finish a chapter inside the deadline.
    */
   fastestProvider?: true;
+  /** Served only when chosen (Router or server setting), never as the automatic default. */
+  chosenOnly?: true;
 }
 
 // Levels from the Gemini thinking docs and OpenRouter's model catalog (2026-09-23).
@@ -162,15 +164,16 @@ export const TTS_MODELS: readonly RoutedModel[] = [
 
 /**
  * Live voice: models that hear and answer in one stream, for conversation (the
- * Familiar's live talk). The first whose provider key is set serves by default.
+ * Familiar's live talk). The first whose provider key is set serves by default,
+ * skipping those marked `chosenOnly`.
  */
 export const LIVE_MODELS: readonly RoutedModel[] = [
   { id: 'openai/gpt-live-1', label: 'GPT-Live 1', provider: 'openai', stage: 'current' },
   { id: 'google/gemini-3.8-live', label: 'Gemini 3.8 Live', provider: 'gemini', stage: 'current' },
   // ElevenLabs Realtime (OpenAI's Realtime protocol over a WebSocket): its voices, and voices
-  // designed there. Last, so it never serves by default; it is chosen in the Router (Heaven tier).
-  { id: 'elevenlabs/eleven_realtime_v1_mini', label: 'Eleven Realtime v1 Mini', provider: 'elevenlabs', stage: 'current' },
-  { id: 'elevenlabs/eleven_realtime_v1_max', label: 'Eleven Realtime v1 Max', provider: 'elevenlabs', stage: 'current' },
+  // designed there. Heaven grade, so it never serves by default; it is chosen in the Router (Heaven tier).
+  { id: 'elevenlabs/eleven_realtime_v1_mini', label: 'Eleven Realtime v1 Mini', provider: 'elevenlabs', stage: 'current', chosenOnly: true },
+  { id: 'elevenlabs/eleven_realtime_v1_max', label: 'Eleven Realtime v1 Max', provider: 'elevenlabs', stage: 'current', chosenOnly: true },
 ];
 
 /** The live voice model used when the server names none (`FAMILIAR_LIVE_MODEL`). */

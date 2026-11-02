@@ -17,13 +17,13 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 | Chapters | Gemini, OpenRouter, MiniMax, Anthropic, local LM Studio | Harness Generation, Holdings Fixer, Look Describer, Chapter Tagger (its own choice, else the chapter model), Story Seed Blueprint, Story Spark, Reader Translation |
 | Images | Gemini, OpenRouter, MiniMax | Story Cover, Image Lab, Profile Picture |
 | TTS | ElevenLabs | Codex Voice Quote |
-| Live voice | OpenAI, Gemini | Familiar Live Talk |
+| Live voice | OpenAI, Gemini, ElevenLabs | Familiar Live Talk |
 | Audio | Gemini | none yet (catalog only) |
 | Video | Gemini, MiniMax | No feature yet; MiniMax task adapter implemented, Veo catalog only |
 | 3D | Tripo AI | none yet (catalog only) |
 
 Model ids carry their route: `google/<model>` → Gemini, `openrouter/<vendor>/<model>`
-→ OpenRouter, `minimax/<model>` → MiniMax, `anthropic/<model>` → Anthropic, `eleven_*` → ElevenLabs, and `tripo-*` → Tripo AI.
+→ OpenRouter, `minimax/<model>` → MiniMax, `anthropic/<model>` → Anthropic, `eleven_*` (TTS) or `elevenlabs/<model>` (live) → ElevenLabs, and `tripo-*` → Tripo AI.
 
 The audio catalog lists Lyria 3.5 and Lyria 3 Clip Preview. The video catalog lists
 Veo 3.1, Veo 3.1 Fast, and Veo 3.1 Lite Preview. The 3D catalog lists Tripo V3.1
@@ -49,10 +49,12 @@ any model call that is not registered. See AGENTS.md.
 | `OPENROUTER_REASONING_EFFORT` | Optional server fallback reasoning effort for OpenRouter models (the Router's Advanced setting wins; models that send their own default, below, never use it) |
 | `HARNESS_GENERATION_MODELS` | Models pinned ahead of the catalog |
 | `*_DEFAULT_MODEL` | Default model per surface (otherwise Gemini 3.1 Flash Lite) |
-| `ELEVENLABS_API_KEY`, `ELEVENLABS_MODEL_ID` | TTS |
-| `FAMILIAR_LIVE_MODEL` | Live voice model; by default the first listed whose key is set (GPT-Live 1 with `OPENAI_API_KEY`, else Gemini 3.8 Live with `GEMINI_API_KEY`) |
+| `ELEVENLABS_API_KEY` | ElevenLabs TTS and live voice |
+| `ELEVENLABS_MODEL_ID` | TTS model |
+| `FAMILIAR_LIVE_MODEL` | Live voice model; by default the first listed whose key is set (GPT-Live 1 with `OPENAI_API_KEY`, else Gemini 3.8 Live with `GEMINI_API_KEY`); ElevenLabs Realtime is never the default, only chosen |
 | `FAMILIAR_LIVE_OPENAI_VOICE`, `FAMILIAR_LIVE_OPENAI_BACKEND` | GPT-Live's voice (default `ballad`) and its delegated model (default `gpt-5.4-mini`) |
 | `FAMILIAR_LIVE_VOICE` | Gemini Live's voice (default Puck) |
+| `FAMILIAR_LIVE_ELEVENLABS_VOICE` | ElevenLabs Realtime's voice (default `brian`) |
 | `TRIPO_API_KEY` | Tripo 3D model provider status |
 
 `GET /api/model-router` returns the read-only status (never key values).

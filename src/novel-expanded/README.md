@@ -471,6 +471,8 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-02** — Spoken codes: while the Familiar is open, Home's story cards show N1, N2…, the Reader's chapter list C1, C2… and Fate's paths F1–F4. Saying a code opens that story or chapter, or picks that path to confirm. The badges disappear when the Familiar closes.
+
 - **2026-11-02** — The Familiar can take the reader anywhere in the app (Home, Create, Profile, My Energy, Settings, Store) from every page, at once. A master action list decides what it can do on each page: that page's own actions plus these, never another page's. Its card shows the page's top suggestions first, with the rest behind See all.
 
 - **2026-10-30** — The internal chapter-tagging UI module is named `ChapterTaggingControls.tsx` so Windows can distinguish it from the `chapterTagging.ts` helper. Package exports and tagging behavior are unchanged.

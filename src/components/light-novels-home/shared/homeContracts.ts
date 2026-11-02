@@ -38,6 +38,8 @@ export interface LightNovelsHomeProps {
   worlds: readonly HomeWorld[];
   onCreateStory: () => void;
   onOpenWorld: (id: string) => void;
+  /** The worlds in the order shown (after sorting and filtering), for spoken codes: N1 is the first. */
+  onVisibleWorldsChange?: (ids: readonly string[]) => void;
   /** What the list says while it has no worlds. Without it, Home keeps the catalog's wording. */
   emptyState?: { title: string; description: string };
   /**

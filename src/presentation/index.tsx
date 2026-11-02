@@ -4,6 +4,7 @@ import * as D from './defaults';
 import type * as P from './contracts';
 export type * from './contracts';
 export * from './narrativeArt';
+export * from './spokenCodes';
 
 /** Stable host presentation slots. The defaults use only universal SEIHouse UI. */
 export interface NarrativePresentation {

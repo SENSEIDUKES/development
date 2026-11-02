@@ -25,6 +25,8 @@ Image. `./styles.css` imports `look.css` from `library-presentation`.
 `--reader-glass-*` custom properties on `:root` in `reader-glass.css`, beside the
 existing glass recipe, which stays literal for Palette & Materials. Values are unchanged.
 
+**Unreleased (2026-11-02, spoken codes):** `./familiar` reads spoken codes (`parseSpokenCode`: N3, C12, F2, and speech recognition's spellings of them). An action's `code` names the badge that runs it; a numbered code's number becomes its input. `FamiliarHelperProvider` shows SEN's `SpokenCode` badges while the Familiar is in use.
+
 **Unreleased (2026-11-02):** `./familiar` exports the master action list
 (`FAMILIAR_ACTION_LIST`, `FAMILIAR_FRONT_ACTIONS`, `familiarActionsFor`,
 `composeFamiliarContext`, `FamiliarPage`). A context with a `page` gets only the

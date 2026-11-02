@@ -8,6 +8,7 @@ import { WorldCard } from '../../world-card/development/WorldCard';
 import { WorldCardFeature } from '../../world-card/development/WorldCardFeature';
 import { HomeEvents } from './HomeEvents';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { SpokenCode } from '@seihouse/sen/presentation';
 import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import '../shared/home.css';
 /** Existing LibraryScreen Home presentation. Data and navigation belong to the host. */
@@ -16,7 +17,7 @@ const FEATURE_SLIDE_MS = 8000;
 /** How far a finger must travel sideways before Featured turns. */
 const SWIPE_PX = 40;
 
-export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, emptyState, featuredWorlds = [], events = [], children }: LightNovelsHomeProps) {
+export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, onVisibleWorldsChange, emptyState, featuredWorlds = [], events = [], children }: LightNovelsHomeProps) {
   // Featured: the Carve New Destiny slide first, then each featured world's Feature card.
   const slideCount = 1 + featuredWorlds.length;
   const [slide, setSlide] = useState(0);
@@ -93,6 +94,9 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
     }
     return 0;
   });
+  // The order shown is what spoken codes count: N1 is the first card.
+  const visibleIds = filteredAndSortedWorlds.map(world => world.id).join('\n');
+  useEffect(() => { onVisibleWorldsChange?.(visibleIds ? visibleIds.split('\n') : []); }, [visibleIds, onVisibleWorldsChange]);
 
   return (
     <motion.div
@@ -302,13 +306,15 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
                 </LibraryPanel>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-6">
-                  {filteredAndSortedWorlds.map((world) => (
-                    <WorldCard
-                      key={world.id}
-                      world={world}
-                      displayStatus={world.publicationStatus ? { view: 'public', value: world.publicationStatus } : undefined}
-                      onOpen={() => onOpenWorld(world.id)}
-                    />
+                  {filteredAndSortedWorlds.map((world, index) => (
+                    <div key={world.id} className="relative">
+                      <WorldCard
+                        world={world}
+                        displayStatus={world.publicationStatus ? { view: 'public', value: world.publicationStatus } : undefined}
+                        onOpen={() => onOpenWorld(world.id)}
+                      />
+                      <SpokenCode code={`N${index + 1}`} className="pointer-events-none absolute start-2 top-2 z-10" />
+                    </div>
                   ))}
                 </div>
               )}

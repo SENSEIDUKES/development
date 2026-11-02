@@ -4,6 +4,8 @@ import { FAMILIAR_ACTION_LIST, FamiliarHelperController, composeFamiliarContext,
 import { InMemoryHarnessGenerationRepository } from '../test-utils/InMemoryHarnessGenerationRepository';
 import { createModeFamiliarContext, readerFamiliarContext } from '../library/stories/ReaderFamiliar';
 import { appFamiliarActions, familiarPage } from './appFamiliarActions';
+import { homeCodeAction } from './HomePage';
+import { chapterCodeAction } from '../library/stories/ReaderFamiliar';
 import type { NovelExpandedRoute } from './routes';
 
 const ANYWHERE = ['go-home', 'go-create', 'go-profile', 'go-energy', 'go-settings', 'go-store'];
@@ -33,7 +35,7 @@ describe('the Familiar\'s actions, page by page', () => {
     // The Reader: Fate first, then going anywhere. Never Create mode's sound.
     const fate = await reader();
     const inReader = composeFamiliarContext(base('reader'), fate)!;
-    expect(ids(inReader)).toEqual(['worldBuilding', 'progression', 'conflict', 'custom', ...ANYWHERE]);
+    expect(ids(inReader)).toEqual(['progression', 'worldBuilding', 'conflict', 'custom', ...ANYWHERE]);
     expect(inReader.front).toBe(4);
     // Create mode: its sound, then going anywhere. Never Fate.
     const sounds = { chapterNumber: 2, soundWords: ['wind'], resolve: vi.fn(), place: vi.fn(async () => {}) };
@@ -90,5 +92,46 @@ describe('the Familiar\'s actions, page by page', () => {
     await expect(call!({ name: 'propose_action', actionId: 'go-store', input: '' })).resolves.toBe('Done: Opened Store.');
     expect(navigate).toHaveBeenLastCalledWith({ page: 'profile', cave: '/home/store' });
     await expect(call!({ name: 'propose_action', actionId: 'sound', input: 'wind on x' })).resolves.toBe('That choice is not on this page.');
+  });
+
+  it('opens the story on a Home card by its spoken code, in the order shown, and only on Home', async () => {
+    const navigate = vi.fn();
+    const order = { current: ['story-b', 'story-a'] };
+    const helper = new FamiliarHelperController(voice);
+    helper.setContext(Symbol(), base('home', navigate), 'base');
+    helper.setContext(Symbol(), { key: 'home:codes', title: 'Home', topics: [], hint: '', page: 'home', actions: [homeCodeAction(navigate, order)] });
+    helper.open();
+    helper.submit('and two');
+    expect(navigate).toHaveBeenCalledExactlyOnceWith({ page: 'story', storyId: 'story-a' });
+    await vi.waitFor(() => expect(helper.getSnapshot().open).toBe(false));
+    helper.open();
+    helper.submit('N9');
+    await vi.waitFor(() => expect(helper.getSnapshot().message).toBe('There is no N9 on Home.'));
+    // A chapter code means nothing on Home.
+    helper.submit('C3');
+    expect(helper.getSnapshot().message).toBe('C3 is not on this page.');
+  });
+
+  it('opens a chapter by its code in the Reader and picks Fate by the code on its option, still confirmed', async () => {
+    const opened: number[] = [];
+    const openChapter = (number: number) => { if (number > 5) return false; opened.push(number); return true; };
+    const helper = new FamiliarHelperController(voice);
+    helper.setContext(Symbol(), base('reader'), 'base');
+    const fate = await reader();
+    helper.setContext(Symbol(), { ...fate, actions: [...fate.actions, chapterCodeAction(openChapter)] });
+    helper.open();
+    helper.submit('chapter three');
+    expect(opened).toEqual([3]);
+    await vi.waitFor(() => expect(helper.getSnapshot().open).toBe(false));
+    helper.open();
+    // The Fate panel shows Progression first, then World Building.
+    helper.submit('F2');
+    expect(helper.getSnapshot().proposal?.actionId).toBe('worldBuilding');
+    helper.change();
+    helper.submit('fate one');
+    expect(helper.getSnapshot().proposal?.actionId).toBe('progression');
+    helper.change();
+    helper.submit('N1');
+    expect(helper.getSnapshot().message).toBe('N1 is not on this page.');
   });
 });

@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import { familiarActionEntry, familiarActionsFor, familiarFrontCount, type FamiliarPage } from './actionList';
+import { parseSpokenCode, type SpokenCode, type SpokenCodeLetter } from './spokenCodes';
 
 export type { FamiliarPage } from './actionList';
 
@@ -28,6 +29,12 @@ export interface FamiliarHelperAction {
   preview?(input: string, prepared?: unknown): void;
   success: string;
   run(input: string, prepared?: unknown): Promise<void>;
+  /**
+   * The spoken code that runs it, as its badge shows on screen: a fixed code
+   * (`F2`), or a letter whose number becomes the input (`N` for N1, N2…).
+   * An action with a numbered code is said, never shown as a tile.
+   */
+  code?: { letter: SpokenCodeLetter; number?: number };
 }
 
 /** Something the Familiar explains where the reader is: choose or say its name to hear it. */
@@ -87,6 +94,7 @@ export function composeFamiliarContext(base?: FamiliarHelperContext, page?: Fami
     ...top,
     key: [base?.key, page?.key].filter(Boolean).join(' | '),
     topics: page?.topics.length ? page.topics : base?.topics ?? [],
+    hint: page?.hint || base?.hint || '',
     actions,
     page: where,
     front: familiarFrontCount(where, actions),
@@ -326,11 +334,11 @@ export class FamiliarHelperController {
     this.update({ context: this.context, proposal: undefined, topicId: undefined, phase: 'ready', message: this.state.open ? this.empty() : '' });
   }
   /** Goes where an instant action leads: at once, then the panel closes so the reader sees where they are. */
-  private async go(action: FamiliarHelperAction) {
+  private async go(action: FamiliarHelperAction, input = '') {
     this.silence();
     this.update({ proposal: undefined });
     try {
-      await action.run('');
+      await action.run(input);
     } catch (error) {
       this.respond(error instanceof Error ? error.message : 'That did not work. Try again.', 'ready');
       return;
@@ -478,6 +486,9 @@ export class FamiliarHelperController {
     }
     const mode = MODE_WORDS[normalize(text)];
     if (mode) { this.setMode(mode); return; }
+    // A code on screen (N3, C12, F2) works in either mode.
+    const code = parseSpokenCode(text);
+    if (code) { this.useCode(code); return; }
     if (this.state.mode === 'explain') {
       const topic = this.context.topics.find(entry => entry.phrases.some(phrase => normalize(phrase) === normalize(text)));
       if (topic) this.explain(topic.id);
@@ -487,8 +498,26 @@ export class FamiliarHelperController {
     const match = matchFamiliarCommand(this.context.actions, text);
     const action = this.context.actions.find(entry => entry.id === match?.actionId);
     if (!match || !action) { this.respond(this.hint(), 'ready'); return; }
-    if (this.instant(action)) { void this.go(action); return; }
-    const problem = this.propose(action, match.input);
+    this.act(action, match.input);
+  };
+  /** The action a spoken code names on this page, and its input. */
+  private codeAction(code: SpokenCode) {
+    const actions = this.context?.actions ?? [];
+    const fixed = actions.find(action => action.code?.letter === code.letter && action.code.number === code.number);
+    if (fixed) return { action: fixed, input: '' };
+    const numbered = actions.find(action => action.code?.letter === code.letter && action.code.number === undefined);
+    return numbered ? { action: numbered, input: String(code.number) } : undefined;
+  }
+  private useCode(code: SpokenCode) {
+    const found = this.codeAction(code);
+    if (!found) { this.respond(`${code.letter}${code.number} is not on this page.`, 'ready'); return; }
+    if (this.state.mode !== 'action') this.update({ mode: 'action', topicId: undefined });
+    this.act(found.action, found.input);
+  }
+  /** Runs an instant action, or shows any other for review (read back to a voice session). */
+  private act(action: FamiliarHelperAction, input: string) {
+    if (this.instant(action)) { void this.go(action, input); return; }
+    const problem = this.propose(action, input);
     if (problem) { this.respond(problem, 'ready'); return; }
     const proposal = this.state.proposal!;
     if (this.spoken) {
@@ -500,7 +529,7 @@ export class FamiliarHelperController {
         message => { if (epoch === this.epoch) this.update({ phase: 'review', message }); });
       if (epoch === this.epoch) this.cancelVoice = cancel; else cancel();
     }
-  };
+  }
   /** Shows an action's change for review, or says why it cannot be applied as asked. */
   private propose(action: FamiliarHelperAction, input: string): string | undefined {
     if (action.input && (!input || input.length > action.input.maxLength)) return `${action.input.label}: enter 1–${action.input.maxLength} characters.`;
@@ -693,7 +722,7 @@ export class FamiliarHelperController {
       const action = context.actions.find(entry => entry.id === call.actionId);
       if (!action) return 'That choice is not on this page.';
       if (this.instant(action)) {
-        try { await action.run(''); } catch { return 'That did not work.'; }
+        try { await action.run(action.input ? call.input.trim() : ''); } catch (error) { return error instanceof Error ? error.message : 'That did not work.'; }
         this.addLine({ speaker: 'note', text: action.success });
         return `Done: ${action.success}`;
       }

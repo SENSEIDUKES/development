@@ -13,18 +13,28 @@ afterEach(() => { act(() => root.unmount()); container.remove(); });
 
 const world = (index: number): WorldCardCompactWorld => ({ id: `w${index}`, title: `World ${index}`, genre: 'Xianxia', imageUrl: `/w${index}.png` });
 
-it('shows the cover, title and one line with nothing on the art, and opens on one tap', () => {
+it('shows the cover with only the Information mark, then title, creator and one line, and opens on a tap', () => {
   const onOpen = vi.fn();
-  act(() => root.render(<WorldCardCompactTile world={world(1)} onOpen={onOpen} />));
-  const tile = container.querySelector<HTMLButtonElement>('[data-world-card="compact-tile"]')!;
+  act(() => root.render(<WorldCardCompactTile world={{ ...world(1), creatorName: 'SENSEI', format: 'Novel',
+    creatorTitle: { element: 'lightning', intensity: 'rare' } }} onOpen={onOpen} />));
+  const tile = container.querySelector<HTMLElement>('[data-world-card="compact-tile"]')!;
   expect(tile.querySelector('img')?.getAttribute('src')).toBe('/w1.png');
   expect(tile.querySelector('.world-card-compact-tile-title')?.textContent).toBe('World 1');
+  // The creator wears their animated title lettering (its layers each repeat the name).
+  const creator = tile.querySelector('.world-card-compact-tile-creator')!;
+  expect(creator.textContent).toContain('SENSEI');
+  expect(creator.firstElementChild).not.toBeNull();
   expect(tile.querySelector('.world-card-compact-tile-detail')?.textContent).toBe('Xianxia');
-  expect(tile.getAttribute('aria-label')).toBe('Open World 1, Xianxia');
-  // No badges, buttons or motion on the art: the tile is a single door.
-  expect(tile.querySelectorAll('button, video, .world-card-base-format')).toHaveLength(0);
-  act(() => tile.click());
-  expect(onOpen).toHaveBeenCalledOnce();
+  const open = tile.querySelector<HTMLButtonElement>('.world-card-compact-tile-open')!;
+  expect(open.getAttribute('aria-label')).toBe('Open World 1, creator SENSEI, Xianxia');
+  // The art carries only the small Information mark: no motion, no other badges.
+  const info = tile.querySelector('.world-card-compact-tile-info')!;
+  expect(info.getAttribute('aria-label')).toBe('Story information for World 1, Novel');
+  expect(info.querySelector('svg.lucide-info')).not.toBeNull();
+  expect(tile.querySelectorAll('video, .world-card-ribbon, .world-card-feature')).toHaveLength(0);
+  act(() => open.click());
+  act(() => tile.querySelector<HTMLElement>('.world-card-compact-tile-title')!.click());
+  expect(onOpen).toHaveBeenCalledTimes(2);
 
   // The host can say something else on that line, or nothing.
   act(() => root.render(<WorldCardCompactTile world={world(1)} detail="442 / 1373" onOpen={() => {}} />));

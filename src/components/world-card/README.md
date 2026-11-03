@@ -25,6 +25,11 @@ folder; the Info page composes its cover face.
 - **Historical source inspection:** 2026-09-27
 - **Status:** active
 
+World Card faces are styled only in `world-card.css`. The app's Library Look
+skin does not restyle them (no gold rim, fill or badge changes), so the app and
+the Workshop render one card. A Novel's corner badge is the Information mark (ⓘ);
+other formats keep their label.
+
 The Workshop shows one card type at a time. A sticky card-type switcher above
 the stage (chips plus previous/next arrows, remembered per browser) picks World
 Card, Info, Feature, Grid, Compact, Menu or All. The Workshop Pages controls include a viewport switcher: current browser,

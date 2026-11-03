@@ -33,7 +33,8 @@ it('keeps the format mark and an awarded SEN sash on the 2:3 art, with the title
   const media = card.querySelector('.world-card-base-media')!;
   // On the art: the format mark and the SEN sash only. The title and creator live in the caption.
   expect(media.querySelector(':scope > .world-card-base-format .sr-only')?.textContent).toBe('Novel');
-  expect(card.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
+  expect(card.querySelector(':scope .world-card-base-format svg.lucide-info')).not.toBeNull();
+  expect(card.querySelector('[data-sen-icon="story-scroll"]')).toBeNull();
   expect(media.textContent).not.toContain('SENSEI');
   expect(media.querySelector('.world-card-ribbon')?.textContent).toBe('SEN');
   expect(media.querySelectorAll('.world-card-ribbon-star')).toHaveLength(2);

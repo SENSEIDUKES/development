@@ -4,7 +4,10 @@
    Plain surface roles share violet; control faces remain black.
    The Reader stylesheet owns the shared rim; ManifestButton owns its rainbow.
    Keep original text colors and navigation effects; only navigation icons turn white.
-   Artwork and video never receive the glass blur. */
+   Artwork and video never receive the glass blur.
+   World Card faces (Full, Compact, Feature, Menu, the Info cover) are not
+   skinned here: their look lives only in world-card.css, so the app and the
+   Workshop render one card. */
 
 .library-look {
   /* V2 edits Midnight violet to 90% / 40px; preserve the Workshop's relative
@@ -18,7 +21,7 @@
 }
 /* Keep the artwork behind the content; the plain footer shares the chrome tint. */
 .library-look .workspace-shell { background: transparent; }
-.library-look :is([data-home-panel], .world-card-banner, [data-home-events]) {
+.library-look :is([data-home-panel], [data-home-events]) {
   background: var(--library-material-card-fill);
   border: 1px solid var(--reader-glass-edge);
   box-shadow: var(--library-material-card-shadow);
@@ -27,8 +30,8 @@
 }
 .library-look :is([data-home-events], .home-event, [data-slot='empty-state']) { position: relative; }
 .library-look [data-home-events] { border-radius: 1.35rem; padding: .5rem 1rem; }
-.library-look :is([data-home-panel], .world-card-base)::before { display: none; }
-.library-look :is([data-slot='empty-state'], .world-card-base, .home-event) {
+.library-look [data-home-panel]::before { display: none; }
+.library-look :is([data-slot='empty-state'], .home-event) {
   background: var(--library-material-shell-fill);
   color: var(--library-material-text);
   border-color: var(--reader-glass-edge);
@@ -37,15 +40,14 @@
   backdrop-filter: var(--library-look-blur);
 }
 /* Media keeps the original clear backing; tint applies to the surrounding glass. */
-.library-look .home-featured [data-home-panel],
-.library-look .world-card-banner { background: var(--library-material-archived-blue-fill); }
-.library-look :is(.world-card-base:has(img, video), .home-event:has(.home-event-art)) {
+.library-look .home-featured [data-home-panel] { background: var(--library-material-archived-blue-fill); }
+.library-look .home-event:has(.home-event-art) {
   background: var(--library-material-archived-smoked-fill);
 }
 /* Media cards keep their artwork clear, including still images. Text uses
    the original contrast gradients, with no glass sheet over the media. */
 .library-look .home-featured [data-home-panel],
-.library-look :is(.home-event, .world-card-base, .world-card-banner) {
+.library-look .home-event {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -80,9 +82,6 @@
   padding-bottom: calc(.75rem + var(--library-bottom-clearance, 0px));
 }
 .library-look .library-footer::before { display: none; }
-.library-look .world-card-banner-backdrop { filter: none; }
-.library-look .world-card-cover-fallback { background: var(--library-material-card-fill); }
-.library-look :is(.world-card-base-format, .world-card-base-motion .motion-picture-control) { background: var(--library-material-control-fill); border-color: var(--reader-glass-edge); }
 /* Only the face changes. Never replace Manifest's ::before/::after spectrum. */
 .library-look .library-glass-button {
   --glass-fill: var(--library-material-control-fill);
@@ -136,13 +135,6 @@ body:has(.library-look) :is(.familiar-helper-place, .familiar-helper-quiet) { co
   backdrop-filter: var(--library-material-control-blur);
 }
 .library-look .discover-view-rail button[aria-pressed='true'] { border-color: var(--reader-glass-edge); }
-/* The catalogue's covers are the public shelf: they keep the World Card's own
-   edge and shadow, with no gold rim. The story's own cover on World Info keeps its rim. */
-.library-look [data-discover] .world-card-base {
-  border-color: rgba(235, 243, 255, 0.42);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 3px 9px rgba(0, 0, 0, 0.32), 0 18px 38px rgba(0, 0, 0, 0.42);
-}
-.library-look [data-discover] .world-card-base::after { display: none; }
 
 /* ── World Info ───────────────────────────────────────────────────────────
    The story's page is a media panel (its own cover stands behind the hero), so

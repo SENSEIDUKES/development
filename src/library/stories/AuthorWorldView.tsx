@@ -143,7 +143,7 @@ function WorldHeader({ stories, storyId, title, onRead }: {
     {/* Fixed row: two even buttons on a phone, side by side on wider screens. Publish's question opens from it. */}
     <div className="mt-4 grid grid-cols-2 gap-3 sm:flex sm:max-w-md" data-testid="author-world-actions">
       {onRead && <LibraryButton variant="primary" fullWidth icon={BookOpen} onClick={() => onRead()} data-testid="author-world-read" className="sm:flex-1">Read</LibraryButton>}
-      <PublishControl key={storyId} stories={stories} storyId={storyId} published={published} />
+      <PublishControl key={storyId} stories={stories} storyId={storyId} published={published} hasChapters={chapters > 0} />
     </div>
   </header>;
 }
@@ -153,9 +153,10 @@ function WorldHeader({ stories, storyId, title, onRead }: {
  * it; then readers find it on Home and in Search. The question opens from the
  * button, so nothing on the page moves, and a published world can return to a
  * draft the same way. It changes who may read the world, never its chapters or
- * its Codex.
+ * its Codex. A world with no chapter yet cannot be published: its readers could
+ * not begin it, since only its creator writes chapters.
  */
-function PublishControl({ stories, storyId, published }: { stories: LibraryStories; storyId: string; published: boolean }) {
+function PublishControl({ stories, storyId, published, hasChapters }: { stories: LibraryStories; storyId: string; published: boolean; hasChapters: boolean }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string>();
@@ -180,13 +181,14 @@ function PublishControl({ stories, storyId, published }: { stories: LibraryStori
       <SEIPopoverTitle className="font-display text-base text-white">{published ? 'Readers can find this world' : 'Publish this world?'}</SEIPopoverTitle>
       <p className="mt-1.5 text-sm text-neutral-300">{published
         ? 'It is on Home and in Search. Return it to a draft to keep it in Create only.'
-        : 'Readers will find it on Home and in Search. You can return it to a draft later.'}</p>
+        : hasChapters ? 'Readers will find it on Home and in Search. You can return it to a draft later.'
+        : 'Write Chapter 1 first: readers can only read what is written.'}</p>
       {problem && <p role="alert" className="mt-2 text-xs text-amber-200">{problem}</p>}
       <div className="mt-4 grid grid-cols-2 gap-2">
         <LibraryButton variant="ghost" size="sm" fullWidth disabled={busy} onClick={() => setOpen(false)}>{published ? 'Keep it' : 'Not yet'}</LibraryButton>
         {published
           ? <LibraryButton variant="secondary" size="sm" fullWidth disabled={busy} onClick={() => void change('private')}>Return to draft</LibraryButton>
-          : <LibraryButton variant="primary" size="sm" fullWidth disabled={busy} onClick={() => void change('public')}>Publish</LibraryButton>}
+          : <LibraryButton variant="primary" size="sm" fullWidth disabled={busy || !hasChapters} onClick={() => void change('public')}>Publish</LibraryButton>}
       </div>
     </SEIPopoverContent>
   </SEIPopover>;

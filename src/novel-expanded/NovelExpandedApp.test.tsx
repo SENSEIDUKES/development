@@ -921,10 +921,22 @@ describe('NovelExpanded: publishing, and the creator\'s and the reader\'s Reader
     await flush(30);
   };
 
-  it('Home and Search offer only published stories: a draft appears there once its creator publishes it from Create', async () => {
+  it('a draft with no chapter yet cannot be published: readers could not begin it', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer, regularSeedRecord(), { draft: true });
+    await render(services, `/app/?page=create&world=${created.id}`);
+    await click(document.querySelector('[data-testid="author-world-publish"]'), 'Publish', 20);
+    const sheet = document.querySelector<HTMLElement>('[data-testid="author-world-publish-sheet"]')!;
+    expect(sheet.textContent).toContain('Write Chapter 1 first');
+    expect(buttonByText('Publish', sheet)!.disabled).toBe(true);
+    expect(findStory((services.stories as InMemoryHarnessGenerationRepository).snapshot(), created.id)!.visibility ?? 'private').toBe('private');
+  });
+
+  it('Home and Search offer only published stories: a draft appears there once its creator publishes it from Create', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository, { draft: true });
     await render(services);
 
     // Home: the draft is not offered, so Home is still empty.

@@ -14,7 +14,7 @@ import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/c
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { downloadStorySeed, downloadStorySeedCollection, reconcileStorySeedBlueprint, type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/story-seed';
 import { getDaoRankData, resolvePermanentDaoXp } from '@seihouse/library/cultivation';
-import { normalizeFamiliarSize, updateFamiliarPersonalizations, type FamiliarOption } from '@seihouse/library/familiar';
+import { normalizeFamiliarSize, updateFamiliarPersonalizations, type FamiliarGuide, type FamiliarOption } from '@seihouse/library/familiar';
 import type { CelestialStoreAccountServices } from '@seihouse/library/celestial-store';
 import type {
   ChapterWritingStyle, UserProfile, UserProfileController, UserProfileControllerProps, UserProfileNotYetBuilt, UserProfileServices,
@@ -41,6 +41,8 @@ export interface DeviceProfileServicesOptions {
   store: DeviceProfileStore;
   /** The host's Familiar catalogue. Which ones the reader owns comes from the Store account. */
   familiars: readonly FamiliarOption[];
+  /** The how-tos the Familiar teaches, for the Familiar page's Guides tab. */
+  familiarGuides?: readonly FamiliarGuide[];
   celestialStore?: CelestialStoreAccountServices;
   /** The host's device preferences, for Settings › Sound (Menu music). */
   soundPreferences?: ReaderPreferenceStorage;
@@ -65,12 +67,13 @@ export interface DevicePortraitMaker {
   keep(portrait: Blob): Promise<string>;
 }
 
-export function createDeviceProfileServices({ store, familiars, celestialStore, soundPreferences, menuMusic, storySeeds, notYetBuilt, portraits, openModelRouter, openUsage }: DeviceProfileServicesOptions): UserProfileServices {
+export function createDeviceProfileServices({ store, familiars, familiarGuides, celestialStore, soundPreferences, menuMusic, storySeeds, notYetBuilt, portraits, openModelRouter, openUsage }: DeviceProfileServicesOptions): UserProfileServices {
   const records = async () => storySeeds ? storySeeds.repository.list(storySeeds.ownerId) : [];
   const generationNote = notYetBuilt?.features.includes('portrait-generation') ? notYetBuilt.note : undefined;
   return {
     notYetBuilt,
     familiars,
+    familiarGuides,
     celestialStore,
     soundPreferences,
     menuMusic,
@@ -299,6 +302,16 @@ export function useDeviceProfileController(
     commit({ familiarPersonal: updateFamiliarPersonalizations(profile.familiarPersonal, familiarId, changes) });
   }, [commit, profile]);
 
+  const handleFamiliarGuideSeen = useCallback((guideId: string) => {
+    if (!profile || profile.familiarGuidesSeen?.includes(guideId)) return;
+    commit({ familiarGuidesSeen: [...(profile.familiarGuidesSeen ?? []), guideId] });
+  }, [commit, profile]);
+
+  const handleFamiliarWelcomeReplay = useCallback(() => {
+    if (!profile) return;
+    commit({ familiarWelcomed: undefined });
+  }, [commit, profile]);
+
   // The profile picture: the photo stays in the page; portraits are shown through object URLs until one is kept.
   const releasePortraits = useCallback(() => {
     portraitUrls.current.forEach(url => URL.revokeObjectURL(url));
@@ -403,6 +416,8 @@ export function useDeviceProfileController(
     handleFamiliarLiveTalkChange,
     handleFamiliarWakeWordChange,
     handleFamiliarPersonalChange,
+    handleFamiliarGuideSeen,
+    handleFamiliarWelcomeReplay,
     syncStatus: 'idle',
     lastSavedTime: profile ? new Date(profile.updatedAt) : null,
     setIsSettingsOpen: open => { if (open) openModelRouter?.(); },

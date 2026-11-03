@@ -51,7 +51,7 @@ const collect = () => {
 async function read(browser, language, path) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await context.addInitScript(([key, code]) => {
-    try { localStorage.setItem(key, JSON.stringify({ interfaceLanguage: code, defaultReadingLanguage: code })); } catch { /* private window */ }
+    try { localStorage.setItem(key, JSON.stringify({ interfaceLanguage: code, defaultReadingLanguage: code, familiarWelcomed: true })); } catch { /* private window */ }
   }, [PROFILE_KEY, language]);
   const page = await context.newPage();
   await page.goto(base + path, { waitUntil: 'networkidle' });

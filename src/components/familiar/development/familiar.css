@@ -13,9 +13,6 @@
 .familiar-companion[data-dragging] .familiar-trigger { cursor: grabbing; }
 .familiar-companion .familiar-image-status[data-failed] { font-size: 11px; }
 .familiar-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.familiar-energy-panel { left: 50vw; top: 50dvh; width: min(360px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; background: #101c2c; color: #eef7ff; border: 1px solid #668698; border-radius: 20px; z-index: 10040; box-shadow: 0 24px 80px #0008; }
-.familiar-energy-backdrop { z-index: 10030; background: #02060c99; }
-.familiar-energy-body { padding: 20px; overflow-wrap: anywhere; }
 .familiar-interaction { position: relative; }
 .familiar-dock { position: relative; left: 50%; transform: translateX(-50%); width: 104px; height: 48px; display: grid; place-items: center; }
 .familiar-shadow { width: 104px; height: 44px; display: grid; place-items: center; cursor: pointer; }
@@ -71,9 +68,15 @@
 .familiar-helper-actions svg, .familiar-helper-topics svg { flex-shrink: 0; }
 /* Explain: a clip (only when the topic has one), its words, then the first few topics; the rest behind More. */
 .familiar-helper-topic { margin-top: 10px; padding: 10px; border-radius: 18px; background: #ffffff0d; }
-.familiar-helper-clip-frame { position: relative; margin-bottom: 8px; }
-.familiar-helper-clip { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; background: #000; }
-.familiar-helper .familiar-helper-clip-toggle { position: absolute; inset-inline-end: 6px; bottom: 6px; background: #000a; }
+.familiar-helper .familiar-clip-frame { margin-bottom: 8px; }
+.familiar-helper .familiar-clip-frame[data-shape="tall"] { height: min(36dvh, 18rem); }
+/* A Familiar's clip shows the whole recording: wide fills the width, tall is held to a phone's height and centred. */
+.familiar-clip-frame { position: relative; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #000; overflow: hidden; aspect-ratio: 16 / 9; }
+.familiar-clip-frame[data-shape="tall"] { aspect-ratio: auto; height: min(38dvh, 22rem); }
+.familiar-clip { display: block; width: 100%; height: 100%; object-fit: contain; background: #000; }
+.familiar-clip-frame[data-shape="tall"] .familiar-clip { width: auto; max-width: 100%; }
+.familiar-clip-toggle { position: absolute; inset-inline-end: 6px; bottom: 6px; display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; color: #fff; background: #000a; }
+.familiar-clip-toggle:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
 .familiar-helper-topic-text { display: flex; align-items: flex-start; gap: 6px; }
 .familiar-helper-topic-text p { flex: 1; margin: 0; font-size: 14px; }
 .familiar-helper-topics { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
@@ -117,9 +120,6 @@
 @media (forced-colors: active) {
   .familiar-recall-container .familiar-recall:focus-visible { outline: 2px solid Highlight; outline-offset: 3px; }
 }
-.familiar-energy-values { margin-top: 16px; }
-.familiar-energy-values > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 6px 0; }
-.familiar-energy-values dd { font-weight: 600; }
 .familiar-option-hero { display: block; width: 100%; max-height: 400px; aspect-ratio: 16 / 9; object-fit: contain; background: #080f1c; }
 .familiar-option-rarity, .familiar-option-equipped, .familiar-option-default {
   border: 1px solid color-mix(in srgb, #b5d7eb 45%, transparent);
@@ -143,3 +143,71 @@
   .familiar-actions { background: linear-gradient(145deg, #29495aeb, #0c1c32eb); backdrop-filter: none; -webkit-backdrop-filter: none; }
   .familiar-shadow span { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
+
+/* A tip from the Familiar: the screen dims a little and its small card pops up beside it, never over the whole page. */
+.familiar-tip-dim { position: fixed; inset: 0; z-index: 10005; background: rgba(3, 6, 12, 0.45); animation: familiar-tip-fade 200ms ease-out both; }
+.familiar-tip {
+  position: fixed; z-index: 10020; right: max(12px, env(safe-area-inset-right)); width: min(21rem, calc(100vw - 24px));
+  max-height: calc(100dvh - var(--workspace-header-height, 72px) - 24px); overflow-y: auto; overscroll-behavior: contain;
+  padding: 0.85rem 0.95rem 0.95rem; border-radius: 1.25rem; border: 1px solid rgba(226, 196, 106, 0.35);
+  background: radial-gradient(120% 60% at 15% 0%, rgba(226, 196, 106, 0.14), transparent 60%), #070c18;
+  color: rgb(229 229 229); box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  transform-origin: bottom right; animation: familiar-tip-pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.familiar-tip[data-anchor="top"] { transform-origin: top right; }
+.familiar-tip[data-touring] { width: min(24rem, calc(100vw - 24px)); }
+/* The thought bubble's tail points at the Familiar: down to it floating, up to it in the header. */
+.familiar-tip::after {
+  content: ''; position: absolute; right: 2.6rem; bottom: -0.45rem; width: 0.9rem; height: 0.9rem; transform: rotate(45deg);
+  background: #070c18; border-right: 1px solid rgba(226, 196, 106, 0.35); border-bottom: 1px solid rgba(226, 196, 106, 0.35);
+}
+.familiar-tip[data-anchor="below"] { transform-origin: top right; }
+.familiar-tip[data-anchor="dropped"]::after { display: none; }
+.familiar-tip[data-anchor="below"]::after { bottom: auto; top: -0.45rem; border: 0; border-left: 1px solid rgba(226, 196, 106, 0.35); border-top: 1px solid rgba(226, 196, 106, 0.35); }
+.familiar-tip[data-anchor="top"]::after { bottom: auto; top: -0.45rem; right: 6.5rem; border: 0; border-left: 1px solid rgba(226, 196, 106, 0.35); border-top: 1px solid rgba(226, 196, 106, 0.35); }
+.familiar-tip-head { display: flex; align-items: center; gap: 0.6rem; }
+.familiar-tip-face { flex-shrink: 0; width: 2.75rem; height: 2.75rem; border-radius: 9999px; overflow: hidden; border: 1px solid rgba(226, 196, 106, 0.4); background: #0b1324; }
+.familiar-tip-face img, .familiar-tip-hero { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.familiar-tip-title { flex: 1; min-width: 0; font-family: var(--font-display, serif); font-style: italic; font-size: 1.15rem; line-height: 1.2; color: #f4f4f5; }
+.familiar-tip-title:focus { outline: none; }
+.familiar-tip-close { display: inline-grid; place-items: center; width: 2.75rem; height: 2.75rem; margin: -0.4rem -0.5rem -0.4rem 0; border-radius: 9999px; color: rgb(163 163 163); }
+.familiar-tip-line { margin-top: 0.6rem; font-family: var(--font-serif, serif); font-size: 0.95rem; line-height: 1.5; color: rgb(229 229 229); }
+.familiar-tip-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+.familiar-tip-actions > button, .familiar-tip-done {
+  flex: 1; min-height: 2.75rem; padding: 0 0.9rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.85rem; font-weight: 600; color: rgb(229 229 229);
+}
+.familiar-tip-actions > button.is-primary, .familiar-tip-done { border-color: transparent; background: linear-gradient(180deg, #f3dc94, #e2c46a); color: #0b1220; }
+.familiar-tip-done { width: 100%; }
+.familiar-tip button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
+.familiar-tip-note { margin-top: 0.5rem; font-size: 0.7rem; color: rgb(140 140 140); }
+.familiar-tip-body { margin-top: 0.5rem; }
+.familiar-tip .familiar-guide-title { font-size: 1.05rem; }
+.familiar-tip .familiar-guide-line > p { font-size: 0.9rem; line-height: 1.5; }
+.familiar-tip .familiar-clip-frame { max-height: min(24dvh, 12rem); margin-inline: auto; }
+.familiar-tip .familiar-clip-frame[data-shape="tall"] { height: min(24dvh, 12rem); }
+.familiar-tip .familiar-guide { gap: 0.45rem; }
+.familiar-tip .familiar-guide-head { margin-bottom: -0.35rem; }
+.familiar-guide-steps.is-compact { align-items: center; }
+.familiar-guide-steps.is-compact > button:not(.familiar-tip-done) { width: 2.75rem; padding: 0; justify-content: center; flex-shrink: 0; }
+.familiar-tip .familiar-guide-steps.is-compact > .familiar-tip-done { flex: 1; width: auto; justify-content: center; color: #0b1220; font-weight: 700; }
+@keyframes familiar-tip-fade { from { opacity: 0; } }
+@keyframes familiar-tip-pop { from { opacity: 0; transform: scale(0.85); } }
+@media (prefers-reduced-motion: reduce) {
+  .familiar-tip, .familiar-tip-dim { animation: none; }
+}
+
+/* One guide, wherever it is watched (FamiliarGuideView): the Familiar page's Guides and the Familiar's own card. */
+.familiar-guide { display: grid; gap: 0.6rem; touch-action: pan-y; }
+.familiar-guide-head { display: flex; align-items: center; justify-content: space-between; }
+.familiar-guide-count { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.72rem; color: rgb(163 163 163); }
+.familiar-guide-title { font-family: var(--font-display, serif); font-style: italic; font-size: 1.2rem; line-height: 1.25; color: #f4f4f5; }
+.familiar-guide-title:focus { outline: none; }
+.familiar-guide-soon { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 1.1rem 0.9rem; border-radius: 12px; border: 1px dashed rgba(255, 255, 255, 0.14); font-size: 0.8rem; color: rgb(163 163 163); }
+.familiar-guide-line { display: flex; align-items: flex-start; gap: 0.5rem; }
+.familiar-guide-line > p { flex: 1; font-family: var(--font-serif, serif); font-size: 0.98rem; line-height: 1.6; color: rgb(229 229 229); }
+.familiar-guide-hear { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.18); color: rgb(229 229 229); }
+.familiar-guide-steps { display: flex; justify-content: space-between; gap: 0.5rem; }
+.familiar-guide-steps > button { display: inline-flex; align-items: center; gap: 0.25rem; min-height: 2.75rem; padding: 0 0.85rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.16); font-size: 0.8rem; color: rgb(229 229 229); }
+.familiar-guide-hear:focus-visible, .familiar-guide-steps > button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
+.familiar-guide-soon-badge { padding: 0.2rem 0.5rem; border-radius: 9999px; border: 1px dashed rgba(226, 196, 106, 0.5); font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: #e2c46a; }

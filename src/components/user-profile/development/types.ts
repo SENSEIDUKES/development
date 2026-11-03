@@ -60,6 +60,10 @@ export interface UserProfile {
   familiarWakeWord?: boolean;
   /** What the cultivator has renamed or rewritten about each Familiar, keyed by Familiar id. */
   familiarPersonal?: FamiliarPersonalizations;
+  /** The Familiar's guides this reader has watched, by guide id. */
+  familiarGuidesSeen?: string[];
+  /** The reader has met their Familiar: its first-meeting welcome has been shown and answered. */
+  familiarWelcomed?: boolean;
   /** The account's UI language. Distinct from the reading language. */
   interfaceLanguage: SenLanguageCode;
   /** The language Reader Chamber displays by default; never story canon. */

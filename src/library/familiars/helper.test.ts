@@ -35,6 +35,31 @@ describe('global Familiar interaction', () => {
     expect(matchFamiliarCommand(context.actions, 'avoid conflict')).toBeUndefined();
     expect(matchFamiliarCommand(context.actions, 'customary behavior')).toBeUndefined();
   });
+  it('gives back the story playback a page’s own reading paused, when the line ends or is stopped, with the card closed', () => {
+    const t = setup();
+    t.helper.read('Every story begins as a seed.');
+    expect(t.voice.speak).toHaveBeenCalledWith('Every story begins as a seed.', 'en-US', expect.any(Function), expect.any(Function));
+    expect(t.release).not.toHaveBeenCalled();
+    t.spoken();
+    expect(t.release).toHaveBeenCalledExactlyOnceWith(true);
+    t.helper.read('Highlight a line.');
+    t.helper.quiet();
+    expect(t.cancelSpeak).toHaveBeenCalled();
+    expect(t.release).toHaveBeenCalledTimes(2);
+    expect(t.helper.getSnapshot().phase).toBe('ready');
+  });
+  it('never starts listening after a page’s own reading, even after an earlier voice session', () => {
+    const t = setup();
+    t.helper.open(true);
+    t.helper.close();
+    const listened = vi.mocked(t.voice.listen).mock.calls.length;
+    const released = t.release.mock.calls.length;
+    t.helper.read('Every story begins as a seed.');
+    t.spoken();
+    expect(t.voice.listen).toHaveBeenCalledTimes(listened);
+    expect(t.helper.getSnapshot()).toMatchObject({ open: false, phase: 'ready' });
+    expect(t.release.mock.calls.length).toBe(released + 1);
+  });
   it('reads back a proposal and accepts a separate spoken confirmation before saving', async () => {
     const t = setup();
     t.helper.open(true);

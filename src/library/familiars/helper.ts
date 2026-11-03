@@ -375,14 +375,30 @@ export class FamiliarHelperController {
     if (!topic || this.state.phase === 'saving') return;
     // In a live conversation the Familiar speaks for itself: the topic is only shown.
     if (this.liveRun) { this.update({ topicId, message: '' }); return; }
+    this.update({ topicId });
+    this.readLine(topic.explanation, topic.audioUrl);
+  };
+  /**
+   * Reads a line aloud without opening the card, as a page's own guide does:
+   * the recording where there is one, the device voice otherwise. Never while
+   * a live conversation or a save is under way.
+   */
+  read = (text: string, audioUrl?: string) => {
+    if (this.liveRun || this.state.phase === 'saving' || !text.trim()) return;
+    // With the card closed, nothing else gives back what the reading paused (the Reader's narration): it is given back as the line ends.
+    // A page's reading is not a voice session: it never starts listening for commands when it ends.
+    this.readLine(text, audioUrl, () => { if (!this.state.open) this.release(true); }, false);
+  };
+  private readLine(text: string, audioUrl?: string, after?: () => void, listenAfter = true) {
     this.silence();
     this.interrupt();
-    this.update({ topicId, phase: 'speaking', message: '' });
+    this.update({ phase: 'speaking', message: '' });
     const epoch = this.epoch;
     const done = () => {
       if (epoch !== this.epoch) return;
       this.update({ phase: 'ready' });
-      if (this.spoken) this.listen();
+      after?.();
+      if (this.spoken && listenAfter) this.listen();
     };
     // One handle stops whichever voice is reading: the recording, or the device voice that took over from it.
     let stop: () => void = () => {};
@@ -390,21 +406,23 @@ export class FamiliarHelperController {
     this.cancelVoice = () => stop();
     const speak = () => {
       readAloud = true;
-      stop = this.voice.speak(topic.explanation, this.language, done, () => { if (epoch === this.epoch) this.update({ phase: 'ready' }); });
+      stop = this.voice.speak(text, this.language, done, () => { if (epoch === this.epoch) { this.update({ phase: 'ready' }); after?.(); } });
       if (epoch !== this.epoch) stop();
     };
-    if (!topic.audioUrl || !this.voice.play) { speak(); return; }
-    const cancelLine = this.voice.play(topic.audioUrl, done, () => { if (epoch === this.epoch) speak(); });
+    if (!audioUrl || !this.voice.play) { speak(); return; }
+    const cancelLine = this.voice.play(audioUrl, done, () => { if (epoch === this.epoch) speak(); });
     // A recording that failed at once already handed over to the device voice; keep that one stoppable.
     if (readAloud) return;
     stop = cancelLine;
     if (epoch !== this.epoch) cancelLine();
-  };
+  }
   /** Stops the Familiar mid-sentence; what it was showing stays. */
   quiet = () => {
     if (this.state.phase !== 'speaking') return;
     this.silence();
     this.update({ phase: this.state.proposal ? 'review' : 'ready' });
+    // Stopped with the card closed (a page's own reading): give back what it paused.
+    if (!this.state.open) this.release(true);
   };
   /** A user gesture opens a session; only voice sessions speak their confirmation. */
   open = (withVoice = false) => {

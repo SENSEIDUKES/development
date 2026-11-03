@@ -63,6 +63,10 @@ for (const [name, engine, device] of [
   const browser = await engine.launch();
   try {
     const context = await browser.newContext({ ...device, reducedMotion: 'reduce' });
+    // A reader who has met their Familiar: its first-meeting welcome has its own tests.
+    await context.addInitScript(() => {
+      if (!localStorage.getItem('novelexpanded-reader-profile')) localStorage.setItem('novelexpanded-reader-profile', JSON.stringify({ familiarWelcomed: true }));
+    });
     const page = await context.newPage();
     await page.goto(`${base}/app/`);
     for (const width of [320, 360, 393, 430, 640, 768, 1024, 1440]) {

@@ -246,7 +246,8 @@ async function walk(browser, viewport, sample) {
   // The Familiar floats by default; this walk keeps it in the header (Settings → Familiar), where its recall is checked.
   // Settings turns the choice off and on again below.
   await context.addInitScript(() => {
-    if (!localStorage.getItem('novelexpanded-reader-profile')) localStorage.setItem('novelexpanded-reader-profile', JSON.stringify({ familiarInHeader: true }));
+    // This reader has met their Familiar already; its first-meeting welcome has its own tests.
+    if (!localStorage.getItem('novelexpanded-reader-profile')) localStorage.setItem('novelexpanded-reader-profile', JSON.stringify({ familiarInHeader: true, familiarWelcomed: true }));
   });
   const page = await context.newPage();
   const problems = [];
@@ -1159,6 +1160,24 @@ async function walk(browser, viewport, sample) {
   check(address() === '/app/?page=profile&cave=%2Fhome%2Ffamiliar', `Open the Familiar page should open the Cave's Familiar page, got ${address()}`);
   check(!(await page.evaluate(slidesSideways)), 'The Familiar page must never scroll sideways.');
   await shot('8d-familiar-page');
+  // The Familiar teaches the app from its Guides tab: one guide at a time, a dot for each, swiped or stepped through.
+  await stage.locator('[data-familiar-tab="guides"]').click();
+  const dots = stage.locator('[data-familiar-guides] [data-familiar-guide]');
+  await stage.locator('[data-familiar-guide-open]').waitFor();
+  check(await dots.count() >= 3, `The Guides tab should show a dot for each of the Familiar's guides, saw ${await dots.count()}.`);
+  check(Boolean((await stage.locator('[data-familiar-guide-line]').textContent())?.trim()), 'An open guide should show what the Familiar says.');
+  const firstGuide = await stage.locator('[data-familiar-guide-open]').getAttribute('data-familiar-guide-open');
+  await stage.locator('[data-familiar-guide-step="next"]').click();
+  check(await stage.locator('[data-familiar-guide-open]').getAttribute('data-familiar-guide-open') !== firstGuide, 'Next should show the next guide.');
+  check(!(await page.evaluate(slidesSideways)), 'The Guides tab must never scroll sideways.');
+  await shot('8d-familiar-guides');
+  await stage.locator('[data-familiar-tab="bond"]').click();
+  // Closed again on a phone, where the open sheet covers the stage swiped next (wider screens show both side by side).
+  const sheetToggle = stage.locator('[data-familiar-sheet-toggle]');
+  if (await sheetToggle.isVisible()) {
+    await sheetToggle.click();
+    await page.waitForFunction(() => !document.querySelector('[data-familiar-stage]')?.hasAttribute('data-sheet-open'));
+  }
   // Swipe (here, the Next button) to Phoenix and make it the Active Familiar.
   const slide = () => stage.locator('[data-familiar-slide]').getAttribute('data-familiar-slide');
   for (let step = 0; step < 13 && (await slide()) !== 'phoenix'; step++) await stage.getByRole('button', { name: 'Next Familiar' }).click();
@@ -1212,6 +1231,10 @@ async function walk(browser, viewport, sample) {
 async function soundRules(strict, viewport) {
   const touch = viewport.width < 1024;
   const context = await strict.newContext({ viewport: { width: viewport.width, height: viewport.height }, hasTouch: touch });
+  // A reader who has met their Familiar: the welcome would take the first tap.
+  await context.addInitScript(() => {
+    if (!localStorage.getItem('novelexpanded-reader-profile')) localStorage.setItem('novelexpanded-reader-profile', JSON.stringify({ familiarWelcomed: true }));
+  });
   // Every media element the app plays, so the walk can tell what is sounding.
   await context.addInitScript(() => {
     const play = HTMLMediaElement.prototype.play;

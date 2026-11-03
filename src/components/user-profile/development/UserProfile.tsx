@@ -106,7 +106,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   // directly. Both arrive through the injected services port here, so this file
   // carries no Firebase, PostgreSQL, or generation dependency of its own.
   const services = useUserProfileServices();
-  const { useController: useUserProfile, localOnlyMode, authenticate, familiars = [], celestialStore, soundPreferences } = services;
+  const { useController: useUserProfile, localOnlyMode, authenticate, familiars = [], familiarGuides, celestialStore, soundPreferences } = services;
   // The header's music note shows while the reader's Menu music is on, where the host has sound.
   const [menuMusic, setMenuMusic] = useMenuMusic(soundPreferences);
   const hostController = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
@@ -447,6 +447,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
               onPreviewPublicView={openPublicView}
               onRedeemCode={accountControls?.onRedeemCode ?? (() => navigate('/settings/redeem-code'))}
               onOpenFamiliar={() => navigate('/home/familiar')}
+              onReplayFamiliarWelcome={controller.handleFamiliarWelcomeReplay}
             />
           </UserProfileCaveDestination>
         );
@@ -501,6 +502,9 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             }}
             personal={profile?.familiarPersonal}
             onPersonalChange={controller.handleFamiliarPersonalChange}
+            guides={familiarGuides}
+            guidesSeen={profile?.familiarGuidesSeen}
+            onGuideSeen={controller.handleFamiliarGuideSeen}
           />
         );
       case 'switchboard':

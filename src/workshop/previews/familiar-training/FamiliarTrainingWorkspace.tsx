@@ -1,6 +1,6 @@
 /**
  * Workshop preview for the Familiar page: bonds, element mastery, lore,
- * companion settings and personalisation, on the same `FamiliarStage` the
+ * guides, companion settings and personalisation, on the same `FamiliarStage` the
  * Cave's Familiar page renders.
  *
  * There is no production original. Familiar rarity (catalogue content) and
@@ -14,6 +14,8 @@
 import { useState } from 'react';
 import { FamiliarStage, updateFamiliarPersonalizations, type FamiliarPersonalizations } from '@seihouse/library/familiar';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
+import { FAMILIAR_GUIDES } from '../../../host/familiar/guides';
+import { ProductFamiliarSession } from '../familiar/ProductFamiliarPreview';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { QUILL, type WorkshopAccountSeed } from '../rewards/rewardScenarios';
@@ -50,6 +52,8 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
   // Companion settings and personalisation are host profile state; this tab keeps its own.
   const [companion, setCompanion] = useState({ size: 1, inHeader: false, liveTalk: false, wakeWord: false });
   const [personal, setPersonal] = useState<FamiliarPersonalizations | undefined>(undefined);
+  // The guides and the first meeting are profile state in the Cave; this tab keeps its own.
+  const [guidesSeen, setGuidesSeen] = useState<string[]>([]);
   const owned = account.familiars.snapshot?.ownedFamiliarIds ?? [];
   const nameOf = (id: string) => allFamiliarOptions.find(option => option.id === id)?.name ?? id;
   const grantQi = async () => {
@@ -69,6 +73,7 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
         description="A QI faucet for testing (the real faucets are the Dao Pillar and Mystery Scrolls), ownership as if bought in the Celestial Store, and which Familiar is the Active Familiar (host profile state).">
         <div className="flex flex-wrap gap-2">
           <WorkshopActionButton onClick={() => void grantQi()}>Grant 1,000 QI</WorkshopActionButton>
+          {guidesSeen.length ? <WorkshopActionButton onClick={() => setGuidesSeen([])}>Forget watched guides</WorkshopActionButton> : null}
           {!owned.includes('phoenix') && <WorkshopActionButton onClick={() => void bringHome('phoenix')}>Bring Phoenix home</WorkshopActionButton>}
           {!owned.includes('galaxy-octopus') && <WorkshopActionButton onClick={() => void bringHome('galaxy-octopus')}>Bring Galaxy Octopus home</WorkshopActionButton>}
         </div>
@@ -83,7 +88,12 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
         {note ? <p role="status" className="mt-3 text-xs text-white/70">{note}</p> : null}
       </WorkshopCard>
       <div className="overflow-hidden rounded-2xl border border-white/10" style={{ ['--familiar-stage-height' as string]: 'min(52rem, calc(100dvh - 6rem))' }}>
+        {/* The app's Familiar session, so the guides read aloud in its voice here as in the app. */}
+        <ProductFamiliarSession>
         <FamiliarStage
+          guides={FAMILIAR_GUIDES}
+          guidesSeen={guidesSeen}
+          onGuideSeen={id => setGuidesSeen(previous => previous.includes(id) ? previous : [...previous, id])}
           familiars={account.familiars}
           options={allFamiliarOptions}
           qiBalance={account.qi.snapshot?.balance ?? null}
@@ -100,6 +110,7 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
           personal={personal}
           onPersonalChange={(id, changes) => setPersonal(previous => updateFamiliarPersonalizations(previous, id, changes))}
         />
+        </ProductFamiliarSession>
       </div>
       <LedgerFeed />
     </div>

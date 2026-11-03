@@ -12,12 +12,13 @@ import {
 import { LibraryGlobalIcon } from '@seihouse/library-ui';
 import { useOverlayScrollbar } from '@seihouse/ui';
 import { BalancePills } from '../../energy/development/BalancePill';
-import { familiarRarityLabel, type FamiliarOption, type FamiliarPersonalizations } from '../../familiar/shared/familiar';
+import { familiarRarityLabel, type FamiliarGuide, type FamiliarOption, type FamiliarPersonalizations } from '../../familiar/shared/familiar';
 import { FamiliarHero } from '../../familiar/development/FamiliarHero';
 import { FamiliarNameEffect } from './FamiliarNameEffect';
 import { bondProgress, FamiliarBondTab, formatWhole } from './FamiliarBondTab';
 import { FamiliarElementsTab } from './FamiliarElementsTab';
 import { FamiliarLoreTab } from './FamiliarLoreTab';
+import { FamiliarGuidesTab } from './FamiliarGuidesTab';
 import { FamiliarSettingsMenu, type FamiliarCompanionSettings } from './FamiliarSettingsMenu';
 import type { FamiliarsAccount } from './familiarsAccount';
 import './familiarTraining.css';
@@ -26,11 +27,13 @@ import './familiarStage.css';
 const DEFAULT_OFFERS = [100, 500, 1_000] as const;
 const SWIPE_DISTANCE = 48;
 const RANK_NUMERALS = ['I', 'II', 'III', 'IV'] as const;
-type StageTab = 'bond' | 'elements' | 'lore';
+export type FamiliarStageTab = 'bond' | 'elements' | 'lore' | 'guides';
+type StageTab = FamiliarStageTab;
 const TABS: readonly { id: StageTab; label: string }[] = [
   { id: 'bond', label: 'Bond' },
   { id: 'elements', label: 'Elements' },
   { id: 'lore', label: 'Lore' },
+  { id: 'guides', label: 'Guides' },
 ];
 const CREATE_SLIDE = 'create-your-own';
 
@@ -63,6 +66,11 @@ export interface FamiliarStageProps {
   /** The cultivator's own names and stories for their Familiars. */
   personal?: FamiliarPersonalizations;
   onPersonalChange?: (familiarId: string, changes: { name?: string | null; backstory?: string | null }) => void;
+  /** How-tos the Familiar teaches, in the Guides tab; without them the tab is not shown. */
+  guides?: readonly FamiliarGuide[];
+  /** Guide ids already watched on this profile. */
+  guidesSeen?: readonly string[];
+  onGuideSeen?: (guideId: string) => void;
 }
 
 /**
@@ -80,8 +88,9 @@ export interface FamiliarStageProps {
 export function FamiliarStage({
   familiars, options, qiBalance, qiState, energyBalance, activeFamiliarId, displayName, onBack, backLabel = 'Return to cave',
   onActivate, activating = false, onOpenStore, onOffered, offerAmounts = DEFAULT_OFFERS,
-  settings, personal, onPersonalChange,
+  settings, personal, onPersonalChange, guides, guidesSeen, onGuideSeen,
 }: FamiliarStageProps) {
+  const tabs = guides ? TABS : TABS.filter(entry => entry.id !== 'guides');
   const slideIds = useMemo(() => [...options.map(option => option.id), CREATE_SLIDE], [options]);
   const startIndex = Math.max(0, options.findIndex(option => option.id === activeFamiliarId));
   const [index, setIndex] = useState(startIndex);
@@ -348,7 +357,7 @@ export function FamiliarStage({
         {/* Whose details these are, shown when the sheet fills a phone screen. */}
         <p className="familiar-stage-sheet-title" aria-hidden={!fullSheet || undefined}>{name}</p>
         <div className="familiar-stage-tabs" role="tablist" aria-label="Familiar details">
-          {TABS.map(entry => (
+          {tabs.map(entry => (
             <button key={entry.id} type="button" role="tab" id={`familiar-tab-${entry.id}`} aria-controls="familiar-stage-panel"
               aria-selected={tab === entry.id} onClick={() => openTab(entry.id)} data-familiar-tab={entry.id}>
               {entry.label}
@@ -365,6 +374,10 @@ export function FamiliarStage({
               <FamiliarBondTab familiars={familiars} view={view} name={name} owned={owned} focusedRank={focusedRank} onChooseForm={formId => void chooseForm(formId)} />
             ) : tab === 'elements' ? (
               <FamiliarElementsTab familiars={familiars} activeFamiliarId={activeFamiliarId} nameOf={nameOf} displayName={displayName} />
+            ) : tab === 'guides' && guides ? (
+              // On a phone the closed sheet is only hidden: the guide goes with it, so its clip and its reading stop.
+              !sheetOpen && narrow ? null :
+              <FamiliarGuidesTab guides={guides} name={activeFamiliarId ? nameOf(activeFamiliarId) : name} seen={guidesSeen} onSeen={onGuideSeen} />
             ) : (
               <FamiliarLoreTab option={option} name={name} element={element} backstory={personal?.[option.id]?.backstory} editRequest={storyRequest} onEditRequestHandled={() => setStoryRequest(0)}
                 onBackstoryChange={canPersonalize ? backstory => onPersonalChange!(option.id, { backstory }) : undefined} />

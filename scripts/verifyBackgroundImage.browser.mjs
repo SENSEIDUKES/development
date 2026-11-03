@@ -18,6 +18,10 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
  try {
   for (const width of [390, 768, 834, 1023]) {
    const page = await browser.newPage({ viewport: { width, height: 1100 } });
+   // A reader who has met their Familiar: its first-meeting welcome has its own tests.
+   await page.addInitScript(() => {
+     if (!localStorage.getItem('novelexpanded-reader-profile')) localStorage.setItem('novelexpanded-reader-profile', JSON.stringify({ familiarWelcomed: true }));
+   });
    const errors = []; page.on('pageerror', error => errors.push(error.message));
    await page.goto(`${base}/app/`); await page.getByTestId('novel-expanded-home').waitFor();
    await dockBounds(page);

@@ -1,27 +1,9 @@
-import { SEIDialog, SEIDialogTrigger, SEIDialogContent, SEIDialogTitle, SEIDialogDescription, SEIDialogClose } from '@seihouse/ui';
-import { ChevronDown, Zap, X } from 'lucide-react';
-import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
+import { ChevronDown } from 'lucide-react';
 import { FamiliarSprite, type FamiliarSpriteProps } from './FamiliarSprite';
 import { familiarActivityAnimation } from '../shared/familiar';
 import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
-import { FamiliarHelperAction } from './FamiliarHelper';
+import { FamiliarGuidesAction, FamiliarHelperAction } from './FamiliarHelper';
 
-/** Read the active host account whenever the Energy panel mounts. */
-function FamiliarEnergy() {
-  // Mount on each open: re-read the same server ledger used by the profile.
-  const account = useEnergyAccount();
-  return <div aria-live="polite">
-    {account.status === 'ready' && account.snapshot ? <dl className="familiar-energy-values">
-      <div><dt>Current Energy</dt><dd>{account.snapshot.balance.toLocaleString()}</dd></div>
-      <div><dt>Maximum</dt><dd>Not configured</dd></div>
-      {account.snapshot.held > 0 && <div><dt>Available</dt><dd>{account.snapshot.available.toLocaleString()}</dd></div>}
-    </dl> : account.status === 'loading' ? <p>Loading Energy…</p>
-      : account.status === 'unavailable' ? <p>Sign in to see your Energy.</p>
-        : <><p role="alert">{account.error}</p><button className="familiar-panel-button" onClick={() => void account.refresh()}>Retry Energy</button></>}
-  </div>;
-}
-
-/** Uses the host's EnergyClientProvider. No account identity or ledger is created here. */
 export interface FamiliarProps extends FamiliarSpriteProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -32,23 +14,7 @@ export interface FamiliarProps extends FamiliarSpriteProps {
   children?: ReactNode;
 }
 
-/** Share the authoritative Energy action and centered dialog across floating and header trays. */
-export function FamiliarEnergyAction({ open, onOpenChange, children }: Pick<FamiliarProps, 'open' | 'onOpenChange' | 'children'>) {
-  return <SEIDialog open={open} onOpenChange={onOpenChange}>
-    <SEIDialogTrigger className="familiar-action" aria-label="Show Energy" title="Energy"><Zap aria-hidden="true" size={21} /></SEIDialogTrigger>
-    <SEIDialogContent variant="dark" hideClose className="familiar-energy-panel" backdropClassName="familiar-energy-backdrop" bodyClassName="familiar-energy-body">
-      <div className="familiar-panel-heading">
-        <SEIDialogTitle>Energy</SEIDialogTitle>
-        <SEIDialogClose className="familiar-panel-button" aria-label="Close Energy panel"><X aria-hidden="true" size={20} /></SEIDialogClose>
-      </div>
-      <SEIDialogDescription>Your current account balance.</SEIDialogDescription>
-      <FamiliarEnergy />
-      {children}
-    </SEIDialogContent>
-  </SEIDialog>;
-}
-
-/** Reveal compact pet actions, then present Energy in a viewport-centered dialog. */
+/** Reveal compact pet actions: its Guides, its card (Explain and Action) and Minimize. Energy is not the Familiar's (SENSEI, 2026-11-03). */
 export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onMinimize, dragging = false, children, ...props }: FamiliarProps) {
   const generatedStatusId = useId();
   const statusId = props.statusId ?? generatedStatusId;
@@ -86,7 +52,7 @@ export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onM
     <div className="familiar-dock">
       <button type="button" className="familiar-shadow" hidden={expanded} aria-label="Show Familiar actions" aria-expanded={expanded} aria-controls={actionsId} onClick={() => setPinned(true)}><span /></button>
       <div id={actionsId} className="familiar-actions" role="group" aria-label="Familiar actions" hidden={!expanded}>
-        <FamiliarEnergyAction open={open} onOpenChange={setOpen}>{children}</FamiliarEnergyAction>
+        <FamiliarGuidesAction onOpen={() => setOpen(false)} />
         <FamiliarHelperAction />
         {onMinimize && <button type="button" className="familiar-action" aria-label="Minimize Familiar" title="Minimize Familiar" onClick={onMinimize}><ChevronDown aria-hidden="true" size={21} /></button>}
       </div>

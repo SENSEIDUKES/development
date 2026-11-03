@@ -44,6 +44,10 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       const canvas = page.frames().find(child => child.url().includes('source=palette-materials'));
       const previewWidth = await canvas.evaluate(() => innerWidth);
       const actual = await browser.newPage({ viewport: { width: previewWidth, height: 800 } });
+      // A reader who has met their Familiar: its first-meeting welcome has its own tests.
+      await actual.addInitScript(() => {
+        if (!localStorage.getItem('novelexpanded-reader-profile')) localStorage.setItem('novelexpanded-reader-profile', JSON.stringify({ familiarWelcomed: true }));
+      });
       await actual.goto(`${base}/app/`);
       await actual.getByTestId('novel-expanded-home').waitFor();
       for (const selector of ['[data-home-events]', '[data-home-panel]:not(.home-featured [data-home-panel])', '[data-slot="empty-state"]', '.workspace-header', '.library-footer']) {

@@ -284,6 +284,14 @@
 .familiar-stage-textarea { width: 100%; padding: 0.7rem 0.8rem; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(3, 6, 12, 0.7); color: rgb(245 245 245); font-size: 1rem; line-height: 1.5; resize: vertical; }
 .familiar-stage-textarea:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
 
+/* Guides: the Familiar teaches the app, one short clip at a time; the dots show where you are. */
+.familiar-guide-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; }
+.familiar-guide-dots > li { width: 0.55rem; height: 0.55rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.3); }
+.familiar-guide-dots > li[data-soon] { border-style: dashed; }
+.familiar-guide-dots > li[data-seen] { background: color-mix(in srgb, var(--stage-glow, #e2c46a) 70%, transparent); border-color: transparent; }
+.familiar-guide-dots > li[data-current] { width: 1.4rem; background: #f1ead8; border-color: transparent; }
+.familiar-guide-badge { flex-shrink: 0; padding: 0.2rem 0.55rem; border-radius: 9999px; background: #f1ead8; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #0b1220; }
+
 /* Settings: a console-style options list. */
 .familiar-settings {
   position: fixed; inset: 0; z-index: 200; display: flex; justify-content: center;

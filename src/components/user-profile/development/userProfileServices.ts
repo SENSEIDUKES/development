@@ -20,7 +20,7 @@ import React, { createContext, createElement, useContext } from 'react';
 import { type SenLanguageCode } from '@seihouse/sen/contracts';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import type { DaoRankData } from '../../../library/cultivation/progression';
-import type { FamiliarOption } from '../../familiar/shared/familiar';
+import type { FamiliarGuide, FamiliarOption } from '../../familiar/shared/familiar';
 import type { CelestialStoreAccountServices } from '../../celestial-store/shared/storeAccount';
 import type {
   AccountRole,
@@ -62,6 +62,10 @@ export interface UserProfileController {
   handleFamiliarWakeWordChange?: (wakeWord: boolean) => void;
   /** Renames a Familiar or rewrites its backstory; an empty value or null returns to the catalogue's own. */
   handleFamiliarPersonalChange?: (familiarId: string, changes: { name?: string | null; backstory?: string | null }) => void;
+  /** Marks one of the Familiar's guides as watched. */
+  handleFamiliarGuideSeen?: (guideId: string) => void;
+  /** Shows the Familiar's first-meeting welcome again. */
+  handleFamiliarWelcomeReplay?: () => void;
   // Library / app-shell state (production: `useAppStore`)
   syncStatus: string;
   lastSavedTime: Date | null;
@@ -198,6 +202,8 @@ export interface UserProfileServices {
   notYetBuilt?: UserProfileNotYetBuilt;
   /** The host's Familiar catalogue. Which ones the cultivator owns comes from the Store account. */
   familiars?: readonly FamiliarOption[];
+  /** The how-tos the Familiar teaches, shown in the Familiar page's Guides tab. Without them the tab is not shown. */
+  familiarGuides?: readonly FamiliarGuide[];
   /**
    * Celestial Store account access: Familiar ownership and the purchase call,
    * both server-owned. Without it the Store shows purchases as not connected.

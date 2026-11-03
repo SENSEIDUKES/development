@@ -89,10 +89,11 @@ unknown Familiar, or gives one Familiar two.
 | Contracts | `src/library/familiars/contracts.ts` | Bond ranks and labels, effect kinds (elemental title, signature), unlocks, views, snapshot with `masteredElements` and `activeEffect`, `activeNameEffect`. |
 | Client | `src/library/familiars/familiarsClient.tsx` | `useFamiliars` (`offerQi`, `selectForm`, `selectElementalEffect`), `FamiliarsClientProvider`, the Celestial Store account. |
 | Rarity label | `src/components/familiar/shared/familiar.ts` | `FamiliarRarity`, `familiarRarityLabel`. |
-| Familiar page | `development/FamiliarStage.tsx`, `familiarStage.css` | The phone-first page: swipe between every Familiar (and a closing Create your own card, coming soon), the bond rail, identity, Make active, the name wearing its effect, Bond · Elements · Lore in a sheet, one Offer button by the Familiar. From 768px the sheet stands beside the stage. |
+| Familiar page | `development/FamiliarStage.tsx`, `familiarStage.css` | The phone-first page: swipe between every Familiar (and a closing Create your own card, coming soon), the bond rail, identity, Make active, the name wearing its effect, Bond · Elements · Lore · Guides in a sheet, one Offer button by the Familiar. From 768px the sheet stands beside the stage. |
 | Bond tab | `development/FamiliarBondTab.tsx` | Each rank as what it does to the element, forms, account states. |
 | Elements tab | `development/FamiliarElementsTab.tsx` | The Active Elemental Effect choice, a live name preview, the mastered collection of twelve; SEIHouse Signatures shown apart. |
 | Lore tab | `development/FamiliarLoreTab.tsx` | The Familiar's own clip through SEN's `MotionPicture`, its facts, and its story, which the cultivator may rewrite or reset. |
+| Guides tab | `development/FamiliarGuidesTab.tsx` | The Familiar's how-tos, one at a time (swipe, arrows, keyboard), opening on the first unwatched (Start here); a dot per guide shows where you are, which are watched and which are coming soon. |
 | Settings menu | `development/FamiliarSettingsMenu.tsx` | Console-style options list over the whole app: companion size, Keep in the header, Live talk, Say “Familiar”, Restore defaults; Personalise: name, story, and Voice and Instructions marked Coming soon. |
 | Name renderer | `development/FamiliarNameEffect.tsx` | Letters a name with any resolved effect: `LibraryElementalTitle` for elements (mastered outlined), the registered piece for a signature. Used by the Cave, Reward Loop and panels. |
 | Signature pieces | `development/signaturePieces.tsx` | Client registry of hand-built signature animations. Empty. |
@@ -142,6 +143,19 @@ Workshop previews and the account service remain separate.
 
 ## Workshop history
 
+- **2026-11-03 (review):** Guides follow the mobile-first rule for choosing one of many: no column of
+  cards. The tab opens on the first guide not yet watched and is swiped (or stepped with the arrows
+  and arrow keys); a row of dots shows the place, watched guides and those coming soon. A reading the
+  guide started stops when the guide goes away.
+- **2026-11-03:** The Familiar teaches the app (SENSEI: it is one of the first things a reader
+  sees). A fourth tab, **Guides**, lists the how-tos the host supplies (`guides`): each a short
+  silent screen recording with the Familiar's line under it, read aloud by the Familiar (its
+  recorded line, or the device voice, through `useFamiliarReadAloud`). Previous/Next, swipe and
+  arrow keys step through; a guide not recorded yet stays listed as Coming soon; the first
+  unwatched one says Start here; watched guides keep a check (`familiarGuidesSeen` on the
+  profile). Clips show whole, wide or tall (`FamiliarClip`, shared with the Familiar's card).
+  The app's list, and where SENSEI pastes each
+  video link, is `src/host/familiar/guides.ts`.
 - **2026-11-03:** From SENSEI's iPhone review: on a phone, opening Bond, Elements or Lore
   fills the page under the top bar (the Familiar's name, the tabs and Close details;
   Escape closes it too), and the sheet is a finished card on every side, ending above the

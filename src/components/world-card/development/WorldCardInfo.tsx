@@ -1,5 +1,5 @@
 import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { BookOpen, ChevronDown, ChevronRight, ChevronUp, DraftingCompass, Film, Flower2, Info, Orbit, Settings2, Sparkles, Square } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight, ChevronUp, Film, Flower2, Info, Orbit, Settings2, Sparkles, Square } from 'lucide-react';
 import { ElementalTitle, SEIBadge } from '@seihouse/ui';
 import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, ManifestButton, type LibraryIconName } from '@seihouse/library-ui';
 import { getTagMetadata, normalizeStoryTagIdentity, STORY_TAG_COLOR_ACCENTS, type StoryTagMetadata } from '@seihouse/sen/story-seed';
@@ -14,6 +14,7 @@ import { WorldCardFormatSymbol } from './WorldCardFormatSymbol';
 import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
 import './world-card.css';
 import { authorText, creatorLanguageOf, useWorldTitle } from './worldCardText';
+import { WorldCardChapters } from './WorldCardChapters';
 
 /**
  * Info page: the world's full overview, presented the way Audible presents a
@@ -28,7 +29,7 @@ import { authorText, creatorLanguageOf, useWorldTitle } from './worldCardText';
  * This is the public view a reader sees. It shows no owner or library states
  * (visibility, draft, acquisition); the owner's view is a separate Story View.
  */
-export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBlueprint, portal, settings, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
+export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, chapters, arcs, branch, onOpenChapter, portal, settings, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
   const videoUrl = 'videoUrl' in story ? story.videoUrl?.trim() || undefined : undefined;
@@ -73,11 +74,9 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
             <div className="world-card-info-buttons">
               <ReadingAction title={infoTitle.text} count={count} countLabel={countLabel} currentArc={currentArc}
                 onRead={onRead} onStart={onStart} readingPosition={readingPosition} />
-              {/* The world's Blueprint, a small companion to the reading pill. */}
-              {onOpenBlueprint && <LibraryButton variant="secondary" size="lg" icon={DraftingCompass}
-                className="world-card-info-blueprint" aria-label={`Blueprint: ${infoTitle.text}`} title="Blueprint" onClick={() => onOpenBlueprint()}>
-                <span className="world-card-info-blueprint-label">Blueprint</span>
-              </LibraryButton>}
+              {/* The whole book, a small companion to the reading pill. (The Blueprint lives in Create.) */}
+              {onOpenChapter && chapters && chapters.length > 0 && <WorldCardChapters title={infoTitle.text} chapters={chapters} arcs={arcs} branch={branch}
+                readingChapter={readingPosition?.chapterNumber} language={'originalLanguage' in story ? story.originalLanguage : undefined} onOpenChapter={onOpenChapter} />}
             </div>
             {(publicationLabel || detail?.recentlyRead) && <div className="world-card-info-pills world-card-info-states" role="group" aria-label="Story status">
               {publicationLabel && <SEIBadge size="lg" variant={publicationLabel === 'On Going' ? 'success' : 'neutral'}

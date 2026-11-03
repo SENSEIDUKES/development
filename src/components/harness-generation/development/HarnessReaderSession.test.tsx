@@ -161,6 +161,8 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     expect(chapterOnScreen(2)!.textContent).toContain('A keeper waited on the causeway with a lantern.');
     await flush();
     expect(readerState.records.get(storyId)?.lastReadChapter).toBe(2);
+    // Every chapter the Reader shows counts as opened, the first one too: World Info's chapter map reads it.
+    expect(readerState.records.get(storyId)?.readChapters).toEqual([1, 2]);
     // Reader state never enters the HARNESS workspace.
     expect(harness.snapshot()).toEqual(canonBefore);
 

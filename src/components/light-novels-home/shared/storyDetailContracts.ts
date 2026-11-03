@@ -2,6 +2,47 @@ import type { ReactNode } from 'react';
 import type { HomeWorld } from './homeContracts';
 import type { WorldExpansionPreview } from '../development/WorldExpressions';
 
+/** One chapter in World Info's chapter selector. */
+export interface WorldInfoChapter {
+  number: number;
+  /** The chapter's own title, in the world's original language; omit when it has none. */
+  title?: string;
+  /** The reader marked or finished this chapter. Chapters before the reader's place count as read too. */
+  read?: boolean;
+}
+
+/**
+ * One goal of an arc, where the story placed it. `resolved` is the story's own record of the
+ * chapter that reached (or missed) it; the chapter selector reveals it only once the reader has
+ * read that chapter, so the map never spoils what is ahead of them.
+ */
+export interface WorldInfoArcGoal {
+  text: string;
+  startChapter: number;
+  endChapter: number;
+  resolved?: { chapterNumber: number; outcome: 'reached' | 'missed' };
+}
+
+/** One arc of the book: its chapter range and its goals, in order. */
+export interface WorldInfoArc {
+  number: number;
+  firstChapter: number;
+  lastChapter: number;
+  goals: readonly WorldInfoArcGoal[];
+}
+
+/**
+ * Where this world branched from another: the chapters before `atChapter` are the shared
+ * history it was branched from, and from `atChapter` on it is its own path.
+ */
+export interface WorldInfoBranch {
+  /** The world it branched from, as its readers know it. */
+  fromTitle: string;
+  atChapter: number;
+  /** True when the viewer made this branch. */
+  yours?: boolean;
+}
+
 export type { WorldActivityStatus } from './homeContracts';
 
 /** Presentation extraction of StoryDetailScreen, supplied entirely by its host. */
@@ -52,8 +93,14 @@ export interface StoryDetailScreenProps {
   /** Starts a story that has no chapters yet; see `WorldCardInfoProps.onStart`. */
   onStart?: () => void;
   onOpenCodex?: () => void;
-  /** See `WorldCardInfoProps.onOpenBlueprint`. */
-  onOpenBlueprint?: () => void;
+  /** See `WorldCardInfoProps.chapters`. */
+  chapters?: readonly WorldInfoChapter[];
+  /** See `WorldCardInfoProps.arcs`. */
+  arcs?: readonly WorldInfoArc[];
+  /** See `WorldCardInfoProps.branch`. */
+  branch?: WorldInfoBranch;
+  /** See `WorldCardInfoProps.onOpenChapter`. */
+  onOpenChapter?: (chapterNumber: number) => void;
   /** See `WorldCardInfoProps.portal`. */
   portal?: { expansions: readonly WorldExpansionPreview[] };
   /** See `WorldCardInfoProps.settings`. */

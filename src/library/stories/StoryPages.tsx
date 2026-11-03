@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 import { findStory, HarnessReaderSession } from '@seihouse/sen/harness-generation';
-import type { ReaderPreferenceStorage, ReaderStateRepository } from '@seihouse/sen/reader-runtime';
+import { applyReaderStatePatch, createReaderStoryState, type ReaderPreferenceStorage, type ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
 import GenerationOverlay from '../../components/chapter-manifestation/development/GenerationOverlay';
 import { StoryDetailScreen } from '../../components/light-novels-home/development/StoryDetailScreen';
@@ -12,6 +12,7 @@ import { useStoryCoverManifest } from './StoryCoverManifest';
 import { codexPictureRequest, storyCoverRequest, type CodexPictureService, type StoryCoverService } from './storyCover';
 import { downloadHarnessStory } from './storyExport';
 import { harnessStoryDisplay } from './storyView';
+import { worldInfoChapterMap } from './worldInfoChapterMap';
 import { StoryBlueprintPage, type StoryBlueprintAccess, type StoryBlueprintViewProps } from './StoryBlueprint';
 import type { LibraryStories } from './useLibraryStories';
 import { EnergyCostMeter } from '../../components/energy/development/EnergyCostMeter';
@@ -26,11 +27,6 @@ export interface StoryPagesProps {
   storyId: string;
   /** Which of the story's pages shows: its World Info page, the Reader, or its Blueprint. */
   page: 'info' | 'read' | 'blueprint';
-  /**
-   * World Info's Blueprint button: show the Blueprint page. Without it, World
-   * Info has no Blueprint button.
-   */
-  onOpenBlueprint?: () => void;
   /** Who views the Blueprint page; a host that owns every story on the device passes the creator. */
   blueprintAccess?: StoryBlueprintAccess;
   /** The Blueprint page's Copy, for a reader the creator allows to copy. */
@@ -78,22 +74,26 @@ const keepVeilOpen = () => undefined;
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, onOpenBlueprint, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(false);
   // The Familiar's recall, from the app's header, rides in the Reader's top bar beside Reader Settings.
   const familiar = useWorkspaceHeaderAccessory();
   const [readingPosition, setReadingPosition] = useState<{ chapterNumber: number }>();
+  const [readChapters, setReadChapters] = useState<readonly number[]>([]);
   const [exportProblem, setExportProblem] = useState<string>();
 
   // World Info says Continue for a returning reader; the place is the host's Reader state.
   useEffect(() => {
     setReadingPosition(undefined);
+    setReadChapters([]);
     if (page !== 'info' || !readerStateRepository) return;
     let active = true;
     readerStateRepository.load(storyId).then(saved => {
-      if (active && saved?.lastReadChapter) setReadingPosition({ chapterNumber: saved.lastReadChapter });
+      if (!active || !saved) return;
+      if (saved.lastReadChapter) setReadingPosition({ chapterNumber: saved.lastReadChapter });
+      setReadChapters(saved.readChapters);
     }, () => undefined);
     return () => { active = false; };
   }, [page, storyId, readerStateRepository]);
@@ -143,6 +143,20 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     }
   };
 
+  // World Info's chapter selector: the whole book by arc, with its goals and the reader's progress,
+  // and a tap opens that chapter. The Reader opens at the reader's saved place, so the chosen
+  // chapter becomes that place first.
+  const { chapters, arcs } = worldInfoChapterMap(state, storyId, readChapters);
+  const openChapter = async (chapterNumber: number) => {
+    if (readerStateRepository) {
+      try {
+        const saved = await readerStateRepository.load(storyId);
+        await readerStateRepository.save(applyReaderStatePatch(saved ?? createReaderStoryState(storyId), { lastReadChapter: chapterNumber }));
+      } catch { /* The Reader still opens, at the reader's last saved place. */ }
+    }
+    setStartOnOpen(false);
+    onOpenReader();
+  };
   // Story Settings live in World Info's Settings card.
   const settings = <StorySettings stories={stories} storyId={storyId} />;
   // Inside a host's frame, World Info is the frame's content, not a second <main>.
@@ -163,11 +177,11 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       {covers
         ? <CoveredStoryDetail key={storyId} covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent}
             story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
-            onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET} settings={settings}
+            chapters={chapters} arcs={arcs} onOpenChapter={chapterNumber => void openChapter(chapterNumber)} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />
         : <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
-            onBack={onBack} onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET} settings={settings}
+            onBack={onBack} chapters={chapters} arcs={arcs} onOpenChapter={chapterNumber => void openChapter(chapterNumber)} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />}
       {/* For testing: the whole story as one file, so a test can be shared. */}

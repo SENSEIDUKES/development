@@ -10,7 +10,7 @@ import type { WorldCardPreviewState } from './previewData';
 
 const state: WorldCardPreviewState = {
   recentlyRead: 'no', titleLength: 'standard', cover: 'art', sash: 'hidden',
-  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'start', blueprint: 'creator', hero: 'wide', catalogue: 'sample', readerLanguage: 'en',
+  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'start', chapterMap: 'arcs', blueprint: 'creator', hero: 'wide', catalogue: 'sample', readerLanguage: 'en',
 };
 
 it('shows chapter and ranking menu cards in the existing workspace and opens World Info', () => {
@@ -103,48 +103,31 @@ it('keeps connected media closed in the Portal until opened and reports each sup
   container.remove();
 });
 
-it('opens the Blueprint from World Info in each view: creator edits, a reader views and copies only when allowed', async () => {
+it('offers the whole book from World Info: the chapter selector reports the chosen chapter', () => {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
   const onAction = vi.fn();
-  const render = (blueprint: WorldCardPreviewState['blueprint']) => act(() => root.render(<LibraryPresentationProvider>
-    <WorldCardStage key={blueprint} view="info" state={{ ...state, blueprint }} onAction={onAction} />
+  act(() => root.render(<LibraryPresentationProvider>
+    <WorldCardStage view="info" state={{ ...state, reading: 'chapter-7' }} onAction={onAction} />
   </LibraryPresentationProvider>));
-  const openBlueprint = () => act(() => container.querySelector<HTMLButtonElement>('.world-card-info-blueprint')!.click());
-
-  render('creator');
-  openBlueprint();
-  const page = container.querySelector<HTMLElement>('[data-story-blueprint]')!;
-  expect(page.getAttribute('data-blueprint-editable')).toBe('true');
-  expect(page.querySelector('[data-testid="novel-blueprint-editor"]')?.getAttribute('data-read-only')).toBeNull();
-  expect([...page.querySelectorAll('button')].some(button => button.textContent?.includes('Save Blueprint'))).toBe(true);
-
-  render('creator-shared');
-  openBlueprint();
-  expect(container.querySelector('[data-story-blueprint]')?.getAttribute('data-blueprint-editable')).toBe('false');
-  expect(container.querySelector('[data-testid="story-blueprint-access"]')?.textContent).toContain('no longer private');
-
-  render('reader-view');
-  openBlueprint();
-  expect(container.querySelector('[data-testid="novel-blueprint-editor"]')?.getAttribute('data-read-only')).toBe('true');
-  expect(container.querySelector('[data-testid="story-blueprint-access"]')?.textContent).toContain('has not allowed copying');
-  expect([...container.querySelectorAll('button')].some(button => button.textContent?.includes('Copy Blueprint'))).toBe(false);
-
-  // Sharing turned off: a reader sees no Blueprint button at all.
-  render('reader-off');
-  expect(container.querySelector('[data-world-card="info"]')).not.toBeNull();
   expect(container.querySelector('.world-card-info-blueprint')).toBeNull();
+  act(() => container.querySelector<HTMLButtonElement>('button.world-card-info-chapters-button')!.click());
+  // One page of ten at a time, opening on the reader's page (Chapter 7).
+  let rows = [...document.querySelectorAll<HTMLButtonElement>('.world-card-chapters-row')];
+  expect(rows).toHaveLength(10);
+  expect(rows[6].getAttribute('aria-current')).toBe('true');
+  act(() => document.querySelector<HTMLButtonElement>('button[aria-label="Next page"]')!.click());
+  rows = [...document.querySelectorAll<HTMLButtonElement>('.world-card-chapters-row')];
+  expect(rows[1].getAttribute('aria-label')).toMatch(/^Chapter 12/);
+  act(() => rows[1].click());
+  expect(onAction).toHaveBeenLastCalledWith('Open Chapter 12 of The Last Lotus of the Jade Empire');
 
-  render('reader-copy');
-  openBlueprint();
-  const copy = [...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Copy Blueprint'))!;
-  await act(async () => copy.click());
-  expect(onAction).toHaveBeenLastCalledWith('Blueprint copied from The Last Lotus of the Jade Empire to your Story Seeds');
-  expect(container.querySelector('[data-story-blueprint] [role="status"]')?.textContent).toContain('waiting in Create');
-  // Back returns to World Info.
-  act(() => container.querySelector<HTMLButtonElement>('[aria-label="Back to World Info"]')!.click());
-  expect(container.querySelector('[data-world-card="info"]')).not.toBeNull();
+  // With no destinations supplied, there is no selector.
+  act(() => root.render(<LibraryPresentationProvider>
+    <WorldCardStage view="info" state={{ ...state, destinations: 'none' }} onAction={onAction} />
+  </LibraryPresentationProvider>));
+  expect(container.querySelector('.world-card-info-chapters-button')).toBeNull();
 
   act(() => root.unmount());
   container.remove();

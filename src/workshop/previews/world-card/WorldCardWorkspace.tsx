@@ -9,13 +9,11 @@ import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { featuredExpansions } from '../light-novels-home/previewData';
 import {
-  previewBrowseWorlds, previewCreatorWorlds, previewStory,
-  type WorldCardBlueprintPreview, type WorldCardCover, type WorldCardSashPreview, type WorldCardDestinations, type WorldCardPreviewState,
+  previewArcs, previewBrowseWorlds, previewChapters, previewReadingChapter, PREVIEW_BRANCH, previewCreatorWorlds, previewStory,
+  type WorldCardBlueprintPreview, type WorldCardChapterMapPreview, type WorldCardCover, type WorldCardSashPreview, type WorldCardDestinations, type WorldCardPreviewState,
   type WorldCardCataloguePreview, type WorldCardHeroPreview, type WorldCardReaderLanguage, WORLD_CARD_READER_LANGUAGES, type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
 import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/home';
-import { StoryBlueprintView, type StoryBlueprintAccess } from '@seihouse/library/stories';
-import { createFilledStorySeedInput, createMockBlueprint } from '../story-seed/previewData';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 
@@ -41,14 +39,7 @@ type Viewport = keyof typeof VIEWPORTS;
 
 const DEFAULT_STATE: WorldCardPreviewState = {
   recentlyRead: 'no', titleLength: 'standard', cover: 'art', sash: 'shown',
-  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', blueprint: 'creator', hero: 'wide', catalogue: 'multilingual', readerLanguage: 'en',
-};
-
-const BLUEPRINT_ACCESS: Record<Exclude<WorldCardBlueprintPreview, 'reader-off'>, StoryBlueprintAccess> = {
-  creator: { view: 'creator' },
-  'creator-shared': { view: 'creator' },
-  'reader-copy': { view: 'reader', creatorName: 'SENSEI', copy: true },
-  'reader-view': { view: 'reader', creatorName: 'SENSEI', copy: false },
+  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', chapterMap: 'arcs', blueprint: 'creator', hero: 'wide', catalogue: 'multilingual', readerLanguage: 'en',
 };
 
 const CARD_STATUS_PREVIEW: Record<WorldCardStatusPreview, WorldCardDisplayStatus> = {
@@ -104,31 +95,24 @@ function WorldCardStageCards({ view, state, onAction }: {
   const story = previewStory(state);
   const worlds = previewCreatorWorlds(state);
   const [openedWorld, setOpenedWorld] = useState<CreatorWorld | typeof story | null>(null);
-  const [blueprintOpen, setBlueprintOpen] = useState(false);
-  // The Workshop's sample Seed and Blueprint stand in for the world's own.
-  const [blueprintSnapshot] = useState(() => ({ seed: createFilledStorySeedInput(), blueprint: createMockBlueprint() }));
   const infoWorld = openedWorld?.id === story.id ? story : openedWorld ?? story;
   const show = (candidate: View) => view === 'all' || view === candidate;
 
-  if (blueprintOpen && state.blueprint !== 'reader-off') return <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8" data-world-card-stage="development">
-    <StoryBlueprintView title={infoWorld.title} snapshot={blueprintSnapshot} destinedEnding="Ye Chen restores the last lotus and ends the empire's oath."
-      access={BLUEPRINT_ACCESS[state.blueprint]} isPrivate={state.blueprint !== 'creator-shared'}
-      onBack={() => setBlueprintOpen(false)}
-      onSave={async () => onAction(`Blueprint saved for ${infoWorld.title}`)}
-      onCopy={async () => onAction(`Blueprint copied from ${infoWorld.title} to your Story Seeds`)} />
-  </div>;
 
   return <div className="mx-auto max-w-5xl space-y-12 px-4 py-6 sm:px-8" data-world-card-stage="development">
     {(openedWorld || show('info')) && <Stage title="Info page">
       <StoryDetailScreen story={infoWorld}
             backLabel={openedWorld ? 'Back to cards' : 'Back to novels'}
             onBack={openedWorld ? () => setOpenedWorld(null) : () => onAction('Back to novels')}
-            readingPosition={state.reading === 'chapter-7' ? { chapterNumber: 7 } : undefined}
+            readingPosition={state.reading === 'chapter-7' ? { chapterNumber: previewReadingChapter(state.chapterMap) } : undefined}
             onRead={state.destinations === 'none' ? undefined : () => onAction(`${state.reading === 'chapter-7' ? 'Continue' : 'Start'} reading ${infoWorld.title}`)}
             onStart={state.destinations === 'none' ? undefined : () => onAction(`Start story ${infoWorld.title}`)}
             onOpenCodex={state.destinations === 'all' ? () => onAction(`Open Codex for ${infoWorld.title}`) : undefined}
-            // A reader of a creator with sharing off gets no Blueprint button at all.
-            onOpenBlueprint={state.destinations === 'all' && state.blueprint !== 'reader-off' ? () => setBlueprintOpen(true) : undefined}
+            // The whole book: the chapter selector beside Continue, mapped by arc and branch. (The Blueprint lives in Create.)
+            chapters={state.destinations === 'all' ? previewChapters(infoWorld.chapterCount, state.reading === 'chapter-7' ? previewReadingChapter(state.chapterMap) : 0) : undefined}
+            arcs={state.chapterMap === 'plain' ? undefined : previewArcs(state.chapterMap)}
+            branch={state.chapterMap === 'branched' ? PREVIEW_BRANCH : undefined}
+            onOpenChapter={chapterNumber => onAction(`Open Chapter ${chapterNumber} of ${infoWorld.title}`)}
             readingLanguage={{ onChange: language => onAction(`Read ${infoWorld.title} in ${languageName(language)}`) }}
             // The Portal: the sample novel's manga and game, or the novel alone with every destination off.
             portal={{ expansions: state.destinations === 'all' ? featuredExpansions : [] }}
@@ -201,6 +185,7 @@ function readCanvasState(params: URLSearchParams): WorldCardPreviewState {
     cardStatus: pick(params.get('cardStatus'), Object.keys(CARD_STATUS_PREVIEW) as WorldCardStatusPreview[], DEFAULT_STATE.cardStatus),
     destinations: pick(params.get('destinations'), ['all', 'reading-only', 'none'], DEFAULT_STATE.destinations),
     reading: pick(params.get('reading'), ['start', 'chapter-7', 'new-story'], DEFAULT_STATE.reading),
+    chapterMap: pick(params.get('chapterMap'), ['arcs', 'branched', 'plain'], DEFAULT_STATE.chapterMap),
     blueprint: pick(params.get('blueprint'), ['creator', 'creator-shared', 'reader-copy', 'reader-view', 'reader-off'], DEFAULT_STATE.blueprint),
     hero: pick(params.get('hero'), ['wide', 'cover-clip', 'still'], DEFAULT_STATE.hero),
     catalogue: pick(params.get('catalogue'), ['multilingual', 'sample'], DEFAULT_STATE.catalogue),
@@ -398,13 +383,20 @@ function WorldCardWorkspaceShell() {
               <option value="new-story">New story, no chapters (Begin Story)</option>
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-xs">Blueprint view
+          <label className="flex flex-col gap-1 text-xs">Chapter map
+            <select className={selectClass} value={state.chapterMap} onChange={event => update({ chapterMap: event.target.value as WorldCardChapterMapPreview })}>
+              <option value="arcs">Arcs and goals</option>
+              <option value="branched">Your branch, from Chapter 44</option>
+              <option value="plain">Plain list, no arcs</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs">Blueprint sharing (Information panel)
             <select className={selectClass} value={state.blueprint} onChange={event => update({ blueprint: event.target.value as WorldCardBlueprintPreview })}>
-              <option value="creator">Creator, private novel (edit)</option>
-              <option value="creator-shared">Creator, shared novel (view)</option>
-              <option value="reader-copy">Reader, copy allowed</option>
-              <option value="reader-view">Reader, view only</option>
-              <option value="reader-off">Reader, sharing off (no button)</option>
+              <option value="creator">Private novel</option>
+              <option value="creator-shared">Shared novel, view only</option>
+              <option value="reader-copy">Public, copy allowed</option>
+              <option value="reader-view">Public, view only</option>
+              <option value="reader-off">Public, sharing off</option>
             </select>
           </label>
         </div>,

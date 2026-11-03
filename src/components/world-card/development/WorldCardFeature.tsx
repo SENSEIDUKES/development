@@ -3,7 +3,7 @@ import { GitBranch } from 'lucide-react';
 import { ElementalTitle } from '@seihouse/ui';
 import { useDominantColor } from '@seihouse/sen/motion-picture';
 import type { WorldCardFeatureProps } from '../shared/worldCardContracts';
-import { WorldCardBackdropVideo, type WorldCardBackdropVideoHandle } from './WorldCardBackdropVideo';
+import { prefersReducedMotion, WorldCardBackdropVideo, type WorldCardBackdropVideoHandle } from './WorldCardBackdropVideo';
 import { WorldCardRibbon } from './WorldCardRibbon';
 import { WORLD_STATUS_LABELS } from './worldCardStatus';
 import { authorText, useLanguagePeek, useWorldTitle } from './worldCardText';
@@ -25,7 +25,12 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
   const video = useRef<WorldCardBackdropVideoHandle>(null);
   const title = useWorldTitle(world);
   const language = useLanguagePeek(title, 'top');
-  useEffect(() => { if (active) video.current?.play(); else video.current?.pause(); }, [active]);
+  // A slide coming on screen starts its loop on its own, so it honours reduced motion (the still stays);
+  // a slide leaving the screen always pauses.
+  useEffect(() => {
+    if (!active) video.current?.pause();
+    else if (!prefersReducedMotion()) video.current?.play();
+  }, [active]);
 
   const statusLabel = displayStatus?.view === 'public'
     ? displayStatus.value === 'ongoing' ? 'On Going' : 'Completed'

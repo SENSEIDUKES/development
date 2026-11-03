@@ -637,6 +637,19 @@ it('spotlights a world in the living Feature hero with its art, sash, details, s
   expect(container.querySelector('.world-card-banner-action')).toBeNull();
 });
 
+it('keeps the Feature card’s loop still for a reader who prefers reduced motion, even as its slide comes on screen', () => {
+  const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce'), media: query, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }));
+  try {
+    act(() => root.render(<WorldCardFeature key="still" world={{ ...world, heroVideoUrl: '/lotus-hero.mp4' }} active={false} onOpen={() => {}} />));
+    act(() => root.render(<WorldCardFeature key="still" world={{ ...world, heroVideoUrl: '/lotus-hero.mp4' }} active onOpen={() => {}} />));
+    expect(play).not.toHaveBeenCalled();
+  } finally {
+    vi.unstubAllGlobals();
+    play.mockRestore();
+  }
+});
+
 it('loops the world’s own motion picture, muted, behind the Feature card', () => {
   const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
   act(() => root.render(<WorldCardFeature world={{ ...world, videoUrl: '/lotus.mp4' }} onOpen={() => {}} />));

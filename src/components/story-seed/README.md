@@ -48,12 +48,11 @@ Story Seed is one creation flow with these visible destinations:
   **Create Story** are pinned in equal cells on the workspace bar. Every page
   stays mounted, so field ids hold.
 
-- **Mobile and tablet navigation (2026-11-02).** One 56px row plus the safe
-  area holds Back, Next/Create, and More below 1024px. More opens the existing
-  drawer with Save Draft, Story Preview, Story Bank, Blueprint, Settings and
-  Home. The same bar holds Blueprint review's Refine Details/Create Story
-  actions. The story preview no longer sits above the mobile form; it opens
-  in a sheet and remains shown in full on Create and beside the desktop form.
+- **Mobile and tablet navigation (2026-11-03).** The Library's styled navigation
+  retains Sections, Story Bank, Blueprint, Settings and Back. Creator Back/Next
+  and Blueprint actions sit with the form, outside the bottom navigation.
+  Sections includes Save Draft and Story Preview. The preview remains on Create
+  and beside the desktop form without taking space above mobile questions.
 - **Phones.** Below 640px Origin shows Style, Fun Settings, Synopsis, Fate,
   and Tags one at a time; ARC shows Ending and Hard Pins. Compact text tabs
   keep 44px touch targets. Back/Next walks Origin, World's eight kinds, ARC,
@@ -653,3 +652,10 @@ checks include saved confirmations of defaults and intentional blanks.
 768, 1280 and 1440px, menu/sheet focus, short viewports, long titles and saved progress
 without generation calls. The app and preview use the same package surface;
 Workshop scenarios use their isolated fixture/local storage, not app storage.
+
+## 2026-11-03 — Restore the Library navigation
+
+Removed the combined Back/Next/More bar after owner review. Restored the existing
+Library navigation and placed the compact step actions in the form rather than
+in another fixed bar. Completion, authoring order, Fun Settings and the mobile
+preview changes remain. Save Draft and Story Preview use the Sections drawer.

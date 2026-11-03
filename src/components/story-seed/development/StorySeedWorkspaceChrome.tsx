@@ -63,8 +63,8 @@ interface StorySeedWorkspaceChromeProps {
   children: ReactNode;
   layout?: 'complete' | 'header' | 'mobile';
   headerSaveOnly?: boolean;
-  /** The creator and Blueprint share one compact mobile bar with the shell. */
-  compactNavigation?: boolean;
+  /** Include mobile Save and Preview utilities in the existing Sections drawer. */
+  mobileUtilities?: boolean;
 }
 
 /** The drawer's custom-content slot retains the existing native disabled Save action. */
@@ -80,7 +80,7 @@ function MenuSaveDraft({ savedFeedback, isGenerating, onSaveDraft }: Pick<StoryS
  * Feature adapter: all Story Seed labels, eligibility and schema knowledge stay
  * here. Story Seed runs in the Library Shell's workspace mode: it describes its
  * sections and tools, and the shell draws the Sections drawer, the desktop rail
- * and the mobile task bar. The creator shares Back/Next with More in one row;
+ * and the mobile task bar. The creator keeps Back/Next inside its form;
  * standalone hosts retain the shell's tool bar. Secondary actions stay in the
  * existing drawer, desktop rail and Search.
  */
@@ -90,7 +90,7 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
   const desktop = useDesktopNavigation();
   const settingsReturnFocusRef = useRef<HTMLElement | null>(null);
   const rememberFocus = useCallback(() => {
-    settingsReturnFocusRef.current = (!desktop && document.querySelector<HTMLElement>('.library-workspace-more')) || document.activeElement as HTMLElement;
+    settingsReturnFocusRef.current = (!desktop && document.querySelector<HTMLElement>('.library-workspace-navigation button')) || document.activeElement as HTMLElement;
   }, [desktop]);
   const openSettings = useCallback(() => {
     rememberFocus();
@@ -98,7 +98,7 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
     setSettingsOpen(true);
   }, [rememberFocus]);
   const openPreview = useCallback(() => { rememberFocus(); setSettingsOpen(false); setPreviewOpen(true); }, [rememberFocus]);
-  const mobileMenu = Boolean(props.compactNavigation) && !desktop;
+  const mobileMenu = Boolean(props.mobileUtilities) && !desktop;
   const { onToggleStoryBank, showStoryBank, onNavigateHome, onOpenBlueprint, blueprintActive = false } = props;
   const workspace = useMemo<LibraryWorkspaceDefinition>(() => ({
     label: 'Story Seed sections', closeLabel: 'Close sections', barLabel: 'Story Seed navigation',
@@ -127,11 +127,11 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
       { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={20} />, active: settingsOpen, onSelect: openSettings },
     ],
     back: { onBack: () => { setSettingsOpen(false); onNavigateHome(); } },
-    // The creator supplies its own steps and puts its footer beside More.
-    sectionsOnPhoneBar: false,
-    compactBar: props.compactNavigation,
+    // Keep Library navigation visible; step actions belong to the form.
+    sectionsOnPhoneBar: true,
+
   }), [props.seed, props.activeSection, props.onSelectSection, showStoryBank, onToggleStoryBank, onOpenBlueprint, blueprintActive, openSettings, settingsOpen, onNavigateHome,
-    mobileMenu, props.compactNavigation, props.savedFeedback, props.isGenerating, props.onSaveDraft, openPreview]);
+    mobileMenu, props.mobileUtilities, props.savedFeedback, props.isGenerating, props.onSaveDraft, openPreview]);
   const content = <StorySeedChromeContent {...props} workspace={workspace} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen}
     settingsReturnFocusRef={settingsReturnFocusRef} />;
   // A host mounting only the standalone header gets no task bar or drawer.

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { List, MoreHorizontal } from 'lucide-react';
+import { List } from 'lucide-react';
 import {
   LibraryBottomNavigation, LibraryNavigationDrawer, LibraryNavigationDrawerPanel,
   type LibraryNavigationDrawerSection, type LibraryNavigationDrawerPanelProps,
@@ -54,8 +54,6 @@ export interface LibraryWorkspaceDefinition {
    * its room to the tools. Tablets keep Sections; the desktop has the rail.
    */
   sectionsOnPhoneBar?: boolean;
-  /** One compact mobile row: the page's footer actions share a slot beside More. */
-  compactBar?: boolean;
   /** Leaves the workspace through the host, never browser history. */
   back: { label?: string; onBack: () => void };
 }
@@ -96,7 +94,6 @@ interface WorkspaceState {
   drawerOpen: boolean;
   openDrawer: () => void;
   closeDrawer: () => void;
-  actionSlot: HTMLElement | null;
 }
 type LibraryPlace = typeof LIBRARY_DESTINATIONS[number];
 interface MainState {
@@ -279,11 +276,6 @@ export function useLibraryWorkspace() {
   return workspace;
 }
 
-/** A page footer can use the shell's mobile action slot instead of stacking another bar. */
-export function useLibraryWorkspaceActionSlot() {
-  return useContext(Context).workspace?.actionSlot ?? null;
-}
-
 /**
  * The Library's one navigation system. Main mode is Home, Create, Discover,
  * Profile, or the subset a host has built (`destinations`): the bottom strip
@@ -365,10 +357,8 @@ function MainNavigation({ location, onNavigate, places, onSoundSlot, children }:
 
 function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorkspaceDefinition; children: ReactNode }) {
   const { navigationArtwork } = useLibraryAssets();
-  const desktop = useDesktopNavigation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [soundSlot, setSoundSlot] = useState<HTMLElement | null>(null);
-  const [actionSlot, setActionSlot] = useState<HTMLDivElement | null>(null);
   // The rail replaces the drawer from the desktop breakpoint; never leave one open behind it.
   useEffect(() => {
     const desktop = window.matchMedia(DESKTOP_NAVIGATION_QUERY);
@@ -387,8 +377,8 @@ function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorksp
   } : undefined, [workspace.footer]);
   const artwork = useMemo(() => navigationArtwork ? { type: 'image' as const, src: navigationArtwork } : undefined, [navigationArtwork]);
   const state = useMemo<WorkspaceState>(() => ({
-    label: workspace.label, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer, actionSlot: desktop ? null : actionSlot,
-  }), [workspace.label, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer, actionSlot, desktop]);
+    label: workspace.label, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer,
+  }), [workspace.label, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer]);
   const { back, tools = [], sectionsOnPhoneBar = true } = workspace;
   const phone = usePhone();
   const items = [
@@ -398,21 +388,13 @@ function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorksp
       onSelect: () => { setDrawerOpen(false); back.onBack(); } },
   ];
   return <Context.Provider value={{ menu: null, workspace: state, main: null, soundSlot }}>
-    <div className="library-navigation-layout" data-library-mode="workspace" data-compact-bar={workspace.compactBar || undefined}>
+    <div className="library-navigation-layout" data-library-mode="workspace">
       {children}
       <LibrarySoundSlot onSlot={setSoundSlot} />
       {/* The same bar and placement as the global strip; only the items differ.
           From the desktop breakpoint the rail and the header take over. */}
-      {workspace.compactBar ? (
-        <nav aria-label={workspace.barLabel} className="library-global-navigation library-workspace-navigation library-compact-bar">
-          <div className="library-workspace-actions" ref={setActionSlot} />
-          <button type="button" className="library-workspace-more" aria-label="More actions" aria-expanded={drawerOpen}
-            aria-haspopup="dialog" onClick={openDrawer}>
-            <MoreHorizontal size={20} aria-hidden="true" /><span>More</span>
-          </button>
-        </nav>
-      ) : <LibraryBottomNavigation aria-label={workspace.barLabel} className="library-global-navigation library-workspace-navigation"
-        showLabels items={items} />}
+      <LibraryBottomNavigation aria-label={workspace.barLabel} className="library-global-navigation library-workspace-navigation"
+        showLabels items={items} />
     </div>
     <LibraryNavigationDrawer variant="pathways" open={drawerOpen} onClose={closeDrawer} aria-label={workspace.label}
       closeLabel={workspace.closeLabel} sections={sections} footer={footer} artwork={artwork} />

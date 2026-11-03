@@ -8,7 +8,7 @@ const engine = process.env.BROWSER_ENGINE === 'webkit' ? 'webkit' : 'chromium';
 const browser = await (engine === 'webkit' ? webkit : chromium).launch();
 await mkdir('output/playwright', { recursive: true });
 const failures = [];
-const openMore = page => page.getByRole('button', { name: 'More actions', exact: true }).click();
+const openMore = page => page.getByRole('button', { name: 'Sections', exact: true }).click();
 const utility = (page, name) => page.locator('[data-slot="navigation-footer"]').filter({ visible: true }).getByRole('button', { name, exact: true });
 const next = page => page.locator('.seed-creator-footer-next');
 const tab = (page, name) => page.locator(`[data-part="${name}"]`);
@@ -49,11 +49,12 @@ try {
       const phone = width < 640;
       const compact = width < 1024;
       if (compact) {
-        const bar = page.locator('.library-compact-bar');
-        await bar.locator('[data-seed-creator-footer]').waitFor();
+        const bar = page.locator('.library-workspace-navigation');
+        await next(page).waitFor();
         const box = await bar.boundingBox();
-        assert(box.height <= 57, `${surface} ${width}: one 56px bar`);
-        assert.equal(await bar.getByRole('button').count(), 3);
+        assert(box.height < 110, 'Library navigation remains compact');
+        assert.equal(await bar.getByRole('button').count(), 5);
+        assert.equal(await bar.locator('[data-seed-creator-footer]').count(), 0);
         assert.equal(await page.locator('.seed-creator-card-slot').count(), 0, 'no story card above the form');
         const targets = await bar.getByRole('button').evaluateAll(elements => elements.map(element => ({ height: element.getBoundingClientRect().height, minimum: parseFloat(getComputedStyle(element).minHeight) })));
         assert(targets.every(target => target.minimum >= 44 && target.height >= 43.9), '44px bar touch targets, allowing subpixel rounding');
@@ -68,7 +69,7 @@ try {
         assert(await preview.locator('[data-seed-live-card]').isVisible());
         await page.getByRole('button', { name: 'Close story preview', exact: true }).click();
         await preview.waitFor({ state: 'hidden' });
-        await page.waitForFunction(() => document.activeElement?.classList.contains('library-workspace-more'));
+        await page.waitForFunction(() => document.activeElement?.textContent?.trim() === 'Sections');
         await openMore(page);
         await utility(page, 'Settings').click();
         const settings = page.getByRole('dialog', { name: 'Story Seed settings', exact: true });
@@ -134,8 +135,8 @@ try {
   await page.locator('#core-premise-input').fill('A courier returns to an island that has forgotten her.');
   await resize(page, 390, 480);
   await page.evaluate(() => document.documentElement.style.setProperty('--sh-safe-bottom', '34px'));
-  const safeBar = await page.locator('.library-compact-bar').boundingBox();
-  assert(safeBar.height >= 89.9 && safeBar.height <= 90.1, 'safe area is included exactly once');
+  const safeBar = await page.locator('.library-workspace-navigation').boundingBox();
+  assert(safeBar.y + safeBar.height <= 481, 'navigation fits safe-area viewport');
   await openMore(page);
   await utility(page, 'Story Preview').click();
   const preview = page.getByRole('dialog', { name: 'Story preview', exact: true });

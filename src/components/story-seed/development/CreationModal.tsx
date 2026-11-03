@@ -790,7 +790,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   }, [initialSeedId, seedOwnerId, runtime.repository, openInitialSeed]);
   const requestSaveDraft = useLatestCallback(handleSaveDraft);
   // A phone gives the page heading and its action row back to the questions:
-  // the shell header already names Story Seed, and More holds Save Draft and
+  // the shell header already names Story Seed, and Sections holds Save Draft and
   // the story preview.
   const phone = usePhone();
   const desktop = useDesktopNavigation();
@@ -827,7 +827,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     // and the scrolling main region; Story Seed's creator and its World
     // Blueprint both sit inside it, so the page never loses its frame.
     <SeedConfirmationContext.Provider value={confirmTab}><StorySeedWorkspaceChrome
-        compactNavigation
+        mobileUtilities
         onNavigateHome={onNavigateHome}
         seed={seed} updateSeed={updateSeed} activeSection={showingBlueprint || showStoryBank || activeSection === 'manifest' ? null : activeSection}
         authorName={authorName}

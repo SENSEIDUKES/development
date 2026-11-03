@@ -63,11 +63,11 @@ describe('Story Seed on a phone', () => {
     // The page keeps its name for screen readers.
     expect(Array.from(container.querySelectorAll('h1')).map(heading => heading.textContent)).toEqual(['Story Seed']);
     expect(container.querySelector('.seed-creator-card-slot')).toBeNull();
-    const bar = container.querySelector('.library-compact-bar')!;
-    expect(bar.querySelectorAll('button')).toHaveLength(3);
-    expect(bar.contains(next())).toBe(true);
-    expect(bar.contains(back())).toBe(true);
-    expect(bar.querySelector('.library-workspace-more')).not.toBeNull();
+    const bar = container.querySelector('.library-workspace-navigation')!;
+    expect(bar.querySelectorAll('button')).toHaveLength(5);
+    expect(bar.contains(next())).toBe(false);
+    expect(bar.contains(back())).toBe(false);
+    expect(bar.querySelector('.library-workspace-navigation button')).not.toBeNull();
   });
 
   it('shows one part of Origin at a time, keeping every part mounted', () => {
@@ -112,7 +112,7 @@ describe('Story Seed on a phone', () => {
     renderCreator();
     act(() => next().click());
     act(() => next().click());
-    act(() => container.querySelector<HTMLButtonElement>('.library-workspace-more')!.click());
+    act(() => container.querySelector<HTMLButtonElement>('.library-workspace-navigation button')!.click());
     const save = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-slot="navigation-footer"] button')).find(button => button.textContent?.trim() === 'Save Draft')!;
     expect(save).toBeTruthy();
     await act(async () => { save.click(); });
@@ -137,7 +137,7 @@ describe('Story Seed on a phone', () => {
 
   it('keeps Save Draft natively disabled while generating', () => {
     renderCreator(undefined, true);
-    act(() => container.querySelector<HTMLButtonElement>('.library-workspace-more')!.click());
+    act(() => container.querySelector<HTMLButtonElement>('.library-workspace-navigation button')!.click());
     const save = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-slot="navigation-footer"] button')).find(button => button.textContent?.trim() === 'Save Draft')!;
     expect(save.disabled).toBe(true);
   });
@@ -148,7 +148,7 @@ describe('Story Seed on a phone', () => {
     const second = createMockStorySeedRecord({ id: 'seed-b', title: 'Seed B', userId: LOCAL_WORKSHOP_STORY_SEED_OWNER_ID, editorProgress: { confirmedTabs: ['origin.fate'] } });
     resetStorySeedRepository([first, second]);
     await act(async () => { renderCreator(first.id); });
-    act(() => container.querySelector<HTMLButtonElement>('.library-workspace-more')!.click());
+    act(() => container.querySelector<HTMLButtonElement>('.library-workspace-navigation button')!.click());
     const bank = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-slot="navigation-footer"] button')).find(button => button.textContent?.trim() === 'Story Bank')!;
     await act(async () => { bank.click(); });
     const card = Array.from(container.querySelectorAll('.story-bank-card')).find(card => card.querySelector('h3')?.textContent?.trim() === 'Seed B')!;

@@ -412,7 +412,7 @@ async function walk(browser, viewport, sample) {
   // Story Settings in Create: Story Seed's Settings holds the language and Reading Mode, then the CAPA skill
   // slots and media the story will start with.
   const seedUtility = async name => {
-    const more = page.getByRole('button', { name: 'More actions', exact: true });
+    const more = page.getByRole('button', { name: 'Sections', exact: true });
     if (await more.isVisible()) await more.click();
     await visibleButton(name).click();
   };

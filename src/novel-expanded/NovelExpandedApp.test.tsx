@@ -139,7 +139,7 @@ const manifestWorldBlueprint = async (wait = 0) => {
 };
 const buttonByText = (text: string, scope: ParentNode = document) => [...scope.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === text);
 const chooseSeedUtility = async (name: string) => {
-  await click(document.querySelector('.library-workspace-more'), 'More on Story Seed', 20);
+  await click(document.querySelector('.library-workspace-navigation button'), 'More on Story Seed', 20);
   const menu = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Story Seed sections"]')!;
   expect(menu).toBeTruthy();
   await click(buttonByText(name, menu), `${name} in More`, 50);
@@ -539,10 +539,10 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     // Story Seed's own task bar stands where the global strip was; the note floats above it.
     expect(strip()).toBeNull();
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
-    expect(bar.querySelectorAll('button')).toHaveLength(3);
-    expect(bar.querySelector('.seed-creator-footer-back')).not.toBeNull();
-    expect(bar.querySelector('.seed-creator-footer-create')).not.toBeNull();
-    expect(bar.querySelector('.library-workspace-more')).not.toBeNull();
+    expect(bar.querySelectorAll('button')).toHaveLength(5);
+    expect(bar.querySelector('.seed-creator-footer-back')).toBeNull();
+    expect(bar.querySelector('.seed-creator-footer-create')).toBeNull();
+    expect(bar.querySelector('.library-workspace-navigation button')).not.toBeNull();
     expect(floatingNote()).toBeTruthy();
     expect(headerNote()).toBeNull();
     // More's Home leaves the creator; Back now walks to the previous seed tab.

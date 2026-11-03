@@ -1,6 +1,4 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
-import { useLibraryWorkspaceActionSlot } from '../../../library-shell/development/LibraryNavigation';
 
 /**
  * The workspace bar's real height, the safe area included, while the bar is
@@ -26,9 +24,8 @@ function useWorkspaceBarHeight(anchor: React.RefObject<HTMLElement | null>) {
 }
 
 /**
- * Back / Next or Create. The compact workspace slot puts these actions in
- * the shell bar itself on phones and tablets. Without that slot it retains
- * its standalone placement above the workspace bar,
+ * Back / Next or Create, pinned at the bottom of the Seed creator and the
+ * World Blueprint. On phones and tablets it rests on the workspace bar,
  * placed by the bar's measured height, so it never floats above the bar or
  * slips under it whatever the device's safe area. On a laptop, where the
  * rail replaces the bar, it pins to the bottom of the page.
@@ -36,10 +33,6 @@ function useWorkspaceBarHeight(anchor: React.RefObject<HTMLElement | null>) {
 export function PinnedFooter({ children, ...data }: { children: ReactNode } & Record<`data-${string}`, string | boolean>) {
   const ref = useRef<HTMLDivElement>(null);
   const barHeight = useWorkspaceBarHeight(ref);
-  const slot = useLibraryWorkspaceActionSlot();
-  if (slot) return createPortal(
-    <div className="seed-creator-footer" data-compact="true" {...data}>{children}</div>, slot,
-  );
   return (
     <div ref={ref} className="seed-creator-footer" style={{ '--seed-bar-height': `${barHeight}px` } as CSSProperties} {...data}>
       {children}

@@ -1525,14 +1525,34 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(cave()!.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(services.profile.read().avatarUrl);
   });
 
-  it('World Info\'s Blueprint opens the story\'s own Blueprint at its address; its creator edits and saves it, and Back returns', async () => {
+  it('World Info\'s chapter selector shows the whole book and opens the Reader at the chosen chapter', async () => {
+    const story = scriptedWriter();
+    story.release();
+    const services = appServices(story.writer);
+    const repository = services.stories as InMemoryHarnessGenerationRepository;
+    const created = await startedStory(repository, story.writer);
+    const controller = new HarnessGenerationController({ repository, modelAdapter: story.writer, installedSkills: officialSkills });
+    await controller.hydrate();
+    await controller.generateNextChapter(created.id, 'fixture');
+    await controller.generateNextChapter(created.id, 'fixture');
+    await render(services, `/app/?story=${created.id}`);
+    // The Blueprint lives in Create; World Info offers the book instead.
+    expect(worldInfo()!.querySelector('.world-card-info-blueprint')).toBeNull();
+    await click(worldInfo()!.querySelector('button.world-card-info-chapters-button'), 'Chapters', 20);
+    const rows = [...document.querySelectorAll<HTMLButtonElement>('.world-card-chapters-row')];
+    expect(rows.map(row => row.getAttribute('aria-label'))).toEqual(['Chapter 1: Low Tide', 'Chapter 2: Low Tide']);
+    await click(rows[1], 'Chapter 2', 50);
+    expect(address()).toBe(`/app/?story=${created.id}&read=1`);
+    expect((await services.readerState.load(created.id))?.lastReadChapter).toBe(2);
+  });
+
+  it('A story\'s Blueprint still opens at its own address; its creator edits and saves it, and Back returns', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     // Unpublished: its creator may still edit its Blueprint.
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer, regularSeedRecord(), { draft: true });
-    await render(services, `/app/?story=${created.id}`);
-    await click(worldInfo()!.querySelector('button.world-card-info-blueprint'), 'Blueprint', 20);
-    expect(address()).toBe(`/app/?story=${created.id}&blueprint=1`);
+    await render(services, `/app/?story=${created.id}&blueprint=1`);
+    await flush(20);
     const page = document.querySelector<HTMLElement>('[data-story-blueprint]')!;
     expect(page.getAttribute('data-blueprint-view')).toBe('creator');
     expect(page.getAttribute('data-blueprint-editable')).toBe('true');

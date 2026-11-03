@@ -171,6 +171,137 @@
   overflow-wrap: anywhere;
 }
 .world-card-story-panel-body { padding: 1rem; }
+/* World Info's chapter selector: the whole book, one row per chapter, the reader's place marked. */
+.world-card-chapters {
+  /*
+   * The chapter map's colors, one meaning each: the main story's path, a branch's path, where
+   * the reader is (and the goal they are heading for), what is done, and what is quiet (missed,
+   * or not reached yet).
+   */
+  --map-main: #04acff;
+  --map-main-soft: rgba(4, 172, 255, 0.42);
+  --map-branch: #b77cff;
+  --map-branch-soft: rgba(183, 124, 255, 0.5);
+  --map-you: #e2bf4f;
+  --map-done: #5fd3a0;
+  --map-quiet: #8b93a3;
+  /* One fixed size, so turning a page never moves the card. */
+  width: min(28rem, calc(100vw - 24px)); height: min(52rem, calc(100dvh - 1.5rem));
+  /* Its glass, rim and shadow are the Library's Violet inset material (data-library-material);
+     the dialog keeps its own place on screen, so only the material's edge is repeated here. */
+  border: 1px solid var(--reader-glass-edge); border-radius: 1.5rem; color: var(--library-material-text, #fff);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.world-card-chapters-body { display: flex; flex: 1; flex-direction: column; min-height: 0; padding: 1rem 0 0; }
+/* The card never scrolls: its pages turn. */
+.world-card-chapters > .world-card-chapters-body { overflow: hidden; }
+.world-card-chapters-title { margin: 0 4rem 0.75rem 1rem; color: #f8f6f1; font-family: var(--font-display, serif); font-size: 1.25rem; font-weight: 700; }
+.world-card-chapters-count { margin: 0.1rem 1rem 0.6rem; color: #aeb7c6; font-size: 0.8125rem; }
+.world-card-chapters-lineage {
+  display: flex; align-items: center; gap: 0.4rem; margin: -0.35rem 1rem 0.75rem; color: #d4b5ff; font-size: 0.8125rem; line-height: 1.35;
+}
+.world-card-chapters-lineage svg { width: 0.875rem; height: 0.875rem; flex: none; }
+.world-card-chapters-lineage cite, .world-card-chapters-fork cite { font-style: italic; }
+/*
+ * One page at a time: the arc's header, a fixed run of chapters, and the page turner at the foot.
+ * A page fits without scrolling; one crowded with goals scrolls inside itself rather than growing.
+ */
+.world-card-chapters-arc { display: flex; flex: 1; flex-direction: column; min-height: 0; border-top: 1px solid #ffffff14; }
+.world-card-chapters-list { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+.world-card-chapters-list > .world-card-chapters-rows { margin: 0; padding: 0.25rem 0.5rem 0.5rem; list-style: none; }
+.world-card-chapters-list:focus { outline: none; }
+.world-card-chapters-arc-header {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.15rem 0.5rem; padding: 0.55rem 0.5rem 0.4rem 1rem;
+  border-bottom: 1px solid #ffffff10;
+}
+.world-card-chapters-place-range { color: #f3f4f6; font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.world-card-chapters-arc-title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin: 0; }
+.world-card-chapters-arc-step { grid-column: 2; grid-row: 1; display: flex; }
+.world-card-chapters-arc-step button, .world-card-chapters-turn {
+  display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 999px; color: #c9d0dc; cursor: pointer;
+}
+.world-card-chapters-arc-step svg { width: 1.1rem; height: 1.1rem; }
+.world-card-chapters-turn svg { width: 1.35rem; height: 1.35rem; }
+.world-card-chapters-arc-step button:hover:not(:disabled), .world-card-chapters-turn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.world-card-chapters-arc-step button:disabled, .world-card-chapters-turn:disabled { opacity: 0.3; cursor: default; }
+.world-card-chapters-arc-step button:focus-visible, .world-card-chapters-turn:focus-visible { outline: 2px solid #04acff; outline-offset: -2px; }
+
+/* The page turner: back, one bar filling as the pages turn, forward. The bar is the Familiar's
+   bond bar (familiarTraining.css, .familiar-training-track): the same track, height and fill. */
+.world-card-chapters-pager {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid #ffffff14;
+}
+.world-card-chapters-progress { position: relative; flex: 1; max-width: 16rem; height: 0.4rem; overflow: hidden; border-radius: 9999px; background: rgba(255, 255, 255, 0.08); }
+.world-card-chapters-progress > span {
+  position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: linear-gradient(90deg, #04acff, #7c5cff, #d4af37); transition: width 0.4s ease;
+}
+@media (prefers-reduced-motion: reduce) { .world-card-chapters-progress > span { transition: none; } }
+.world-card-chapters-arc-name { color: #f8f6f1; font-family: var(--font-display, serif); font-size: 1rem; font-weight: 700; }
+.world-card-chapters-arc-state {
+  justify-self: start; display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.05rem 0.45rem; border-radius: 999px;
+  font-size: 0.625rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+}
+.world-card-chapters-arc-state svg { width: 0.7rem; height: 0.7rem; }
+.world-card-chapters-arc-state[data-state='complete'] { border: 1px solid color-mix(in srgb, var(--map-done) 50%, transparent); color: var(--map-done); background: color-mix(in srgb, var(--map-done) 10%, transparent); }
+.world-card-chapters-arc-state[data-state='reading'] { border: 1px solid color-mix(in srgb, var(--map-you) 50%, transparent); color: var(--map-you); }
+
+/*
+ * The path: one rail down the chapters in its path's color, a dot per chapter (hollow until
+ * opened, filled once opened, gold where the reader is). Every chapter is the main story's blue
+ * until a branch begins; from the fork on, the branch's purple.
+ */
+.world-card-chapters-rows > li { --chapter-rail: var(--map-main-soft); --chapter-dot: var(--map-main); position: relative; }
+.world-card-chapters-rows > li[data-path='branch'] { --chapter-rail: var(--map-branch-soft); --chapter-dot: var(--map-branch); }
+.world-card-chapters-rows > li::before {
+  content: ''; position: absolute; inset-block: 0; inset-inline-start: calc(0.5rem + 0.625rem - 1px); width: 2px; background: var(--chapter-rail);
+}
+.world-card-chapters-rows > li.world-card-chapters-fork::before { background: linear-gradient(180deg, var(--map-main-soft) 0 35%, var(--map-branch-soft) 65%); }
+.world-card-chapters-rail { position: relative; z-index: 1; flex: none; display: grid; place-items: center; width: 1.25rem; }
+.world-card-chapters-dot { width: 0.55rem; height: 0.55rem; border: 2px solid var(--chapter-dot); border-radius: 50%; background: #0d121b; }
+
+.world-card-chapters-row {
+  display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 2.75rem; padding: 0.4rem 0.5rem;
+  border-radius: 0.6rem; color: #e5e7eb; text-align: start; font-size: 0.9375rem; line-height: 1.3; cursor: pointer;
+}
+.world-card-chapters-row:hover { background: rgba(255, 255, 255, 0.05); }
+.world-card-chapters-row:focus-visible { outline: 2px solid #04acff; outline-offset: -2px; }
+.world-card-chapters-row[data-read='true'] .world-card-chapters-dot { background: var(--chapter-dot); }
+.world-card-chapters-row[data-read='true'] .world-card-chapters-name { color: #aeb7c6; }
+.world-card-chapters-row[aria-current='true'] { background: rgba(212, 175, 55, 0.1); }
+.world-card-chapters-row[aria-current='true'] .world-card-chapters-dot {
+  width: 0.75rem; height: 0.75rem; border-color: var(--map-you); background: var(--map-you); box-shadow: 0 0 0 3px color-mix(in srgb, var(--map-you) 25%, transparent);
+}
+.world-card-chapters-number { flex: none; min-width: 1.75rem; color: #8b93a3; font-variant-numeric: tabular-nums; text-align: end; font-size: 0.8125rem; }
+.world-card-chapters-untitled { color: var(--map-quiet); font-style: italic; }
+.world-card-chapters-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-serif, serif); }
+.world-card-chapters-reading {
+  flex: none; padding: 0.1rem 0.5rem; border: 1px solid color-mix(in srgb, var(--map-you) 50%, transparent); border-radius: 999px;
+  color: var(--map-you); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+/* A goal sits on the path where the story placed it: after the chapter that reached it, or at its deadline. */
+.world-card-chapters-goal, .world-card-chapters-fork { display: flex; align-items: center; gap: 0.75rem; padding: 0.15rem 0.5rem; }
+.world-card-chapters-goal .world-card-chapters-rail svg, .world-card-chapters-fork .world-card-chapters-rail svg {
+  width: 1.1rem; height: 1.1rem; padding: 0.15rem; border-radius: 50%; background: #0d121b; color: var(--chapter-goal, #8b93a3);
+}
+.world-card-chapters-goal { --chapter-goal: var(--map-quiet); }
+.world-card-chapters-goal[data-status='reached'] { --chapter-goal: var(--map-done); }
+.world-card-chapters-goal[data-status='current'] { --chapter-goal: var(--map-you); }
+.world-card-chapters-goal-hidden { color: var(--map-quiet); font-family: var(--font-sans, sans-serif); font-size: 0.75rem; font-style: italic; }
+.world-card-chapters-goal-text, .world-card-chapters-fork-text {
+  display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 0; padding: 0.25rem 0.6rem;
+  border-inline-start: 2px solid var(--chapter-goal, #04acff); border-radius: 0.5rem; background: rgba(255, 255, 255, 0.035);
+  color: #d6dae2; font-family: var(--font-serif, serif); font-size: 0.875rem; line-height: 1.35;
+}
+.world-card-chapters-goal[data-status='ahead'] .world-card-chapters-goal-text, .world-card-chapters-goal[data-status='missed'] .world-card-chapters-goal-text { color: #aeb7c6; }
+.world-card-chapters-goal-label {
+  color: var(--chapter-goal); font-family: var(--font-sans, sans-serif); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.world-card-chapters-fork .world-card-chapters-rail svg { color: var(--map-branch); box-shadow: 0 0 0 1px var(--map-branch-soft); }
+.world-card-chapters-fork-text { --chapter-goal: var(--map-branch); font-family: var(--font-sans, sans-serif); font-size: 0.75rem; color: #aeb7c6; }
+.world-card-chapters-fork-text strong { color: #d4b5ff; font-size: 0.8125rem; }
+.world-card-chapters-fork-text > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .world-card-story-panel-standing { float: right; display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; width: 8.5rem; max-width: 100%; margin: 1.5rem 0 0.75rem 0.75rem; padding: 0.6rem; border: 1px solid rgba(140, 160, 184, 0.2); border-radius: 0.75rem; background: rgba(255, 255, 255, 0.035); }
 .world-card-story-panel-standing-label { color: #aeb7c6; font-size: 0.5625rem; font-weight: 700; letter-spacing: 0.08em; line-height: 1.2; text-transform: uppercase; }
 .world-card-story-panel-verified { display: inline-flex; align-items: center; gap: 0.25rem; width: max-content; max-width: 100%; border-color: rgba(97, 207, 255, 0.45); background: rgba(4, 172, 255, 0.12); color: #b7eaff; font-size: 0.625rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
@@ -258,8 +389,10 @@
 
 /* The format mark sits on the cover's top-left corner, above the host's cover controls. */
 .world-card-info-cover .world-card-info-format { z-index: 7; top: 0.65rem; left: 0.65rem; }
-/* MP on the top-right corner, as on the Full card; it drives the backdrop clip. */
+/* MP on the top-right corner, as on the Full card; it drives the backdrop clip. Its glass stays small,
+   but its touch target reaches 44px. */
 .world-card-info-cover .world-card-info-motion { z-index: 7; top: 0.65rem; right: 0.65rem; left: auto; }
+.world-card-info-cover .world-card-info-motion::after { content: ''; position: absolute; inset: -0.5rem; }
 
 /*
  * Hero, as Audible presents a title: on a phone everything is one centered
@@ -316,14 +449,14 @@
 /* The one reading action, in the Library's night glass (library-presentation/night-glass.css). */
 .world-card-info .library-glass-button.world-card-info-read { min-width: 11rem; border-radius: 999px; }
 @media (min-width: 768px) { .world-card-info .library-glass-button.world-card-info-read { min-width: 14rem; } }
-/* The reading pill and Blueprint, a small round-ended companion, side by side. */
+/* The reading pill and the chapter selector, a small round-ended companion, side by side. */
 .world-card-info-buttons { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6rem; }
-.world-card-info .world-card-info-blueprint { border-radius: 999px; padding-inline: 1.1rem; }
+.world-card-info .world-card-info-chapters-button { border-radius: 999px; padding-inline: 1.1rem; }
 /* On a phone it stays beside Continue as a round icon button; its name is still spoken. */
 @media (max-width: 767.98px) {
   .world-card-info-buttons { flex-wrap: nowrap; }
-  .world-card-info .world-card-info-blueprint { flex: none; width: 3rem; padding-inline: 0; }
-  .world-card-info-blueprint-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .world-card-info .world-card-info-chapters-button { flex: none; width: 3rem; padding-inline: 0; }
+  .world-card-info-chapters-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
 /* Beside the cover the buttons follow the title and tags, as the last line of the column. */
 @media (min-width: 768px) { .world-card-info-buttons { order: 10; justify-content: flex-start; margin-top: 0.4rem; } }
@@ -365,6 +498,15 @@
 .world-card-info-pill svg { width: 0.75rem; height: 0.75rem; }
 /* Story tags in their Story Seed catalog category color. */
 .world-card-info-tags > li { min-width: 0; max-width: 100%; }
+/* On a phone the tags keep one tidy row, scrolling sideways within it rather than piling up. */
+@media (max-width: 767.98px) {
+  .world-card-info-tags { flex-wrap: nowrap; justify-content: safe center; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain;
+    scrollbar-width: none; padding-block: 0.1rem; -webkit-mask-image: linear-gradient(90deg, transparent, #000 0.75rem, #000 calc(100% - 0.75rem), transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 0.75rem, #000 calc(100% - 0.75rem), transparent); padding-inline: 0.75rem; }
+  .world-card-info-tags::-webkit-scrollbar { display: none; }
+  .world-card-info-tags > li { flex: none; max-width: none; }
+  .world-card-info-tags .world-card-info-tag { white-space: nowrap; }
+}
 /* Long tags (for example one outside the catalog) wrap inside their chip instead of overflowing the column. */
 .world-card-info-tag { max-width: 100%; border-color: color-mix(in srgb, var(--world-info-tag-accent, #8c90e6) 45%, transparent); white-space: normal; overflow-wrap: anywhere; line-height: 1.2; padding-block: 0.15rem; }
 .world-card-info-tag-dot { width: 0.4rem; height: 0.4rem; flex: none; border-radius: 999px; background: var(--world-info-tag-accent, #8c90e6); }

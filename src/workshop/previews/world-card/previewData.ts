@@ -14,6 +14,11 @@ export type WorldCardDestinations = 'all' | 'reading-only' | 'none';
 /** `new-story`: a story with no chapters yet, whose host can start it (Begin Story). */
 export type WorldCardReadingPreview = 'start' | 'chapter-7' | 'new-story';
 /**
+ * The chapter selector's map: the book grouped by arcs with their goals, a branched world (its
+ * shared history, the chapter it branched at, its own path), or a plain list without arcs.
+ */
+export type WorldCardChapterMapPreview = 'arcs' | 'branched' | 'plain';
+/**
  * Who opens the Blueprint: its creator (private or shared novel) or a reader (copy allowed, view
  * only, or the creator's sharing turned off, when World Info offers no Blueprint button at all).
  */
@@ -40,6 +45,7 @@ export interface WorldCardPreviewState {
   cardStatus: WorldCardStatusPreview;
   destinations: WorldCardDestinations;
   reading: WorldCardReadingPreview;
+  chapterMap: WorldCardChapterMapPreview;
   blueprint: WorldCardBlueprintPreview;
   hero: WorldCardHeroPreview;
   catalogue: WorldCardCataloguePreview;
@@ -66,9 +72,10 @@ const BLUEPRINT_PERMISSIONS: Record<WorldCardBlueprintPreview, WorldPermissions>
   'reader-off': { visibility: 'public', blueprint: 'off' },
 };
 
-export function previewStory({ recentlyRead, titleLength, cover, activity, reading, blueprint, hero }: WorldCardPreviewState): StoryDetailDisplay {
+export function previewStory({ recentlyRead, titleLength, cover, activity, reading, chapterMap, blueprint, hero }: WorldCardPreviewState): StoryDetailDisplay {
   return {
     ...featuredNovel,
+    ...(chapterMap === 'branched' ? { chapterCount: BRANCHED_CHAPTERS } : {}),
     ...(reading === 'new-story' ? { chapterCount: 0, currentArc: '' } : {}),
     title: titleLength === 'long' ? LONG_TITLE : featuredNovel.title,
     imageUrl: cover === 'missing' ? '' : featuredNovel.imageUrl,
@@ -173,4 +180,59 @@ export function previewBrowseWorlds(state: WorldCardPreviewState): HomeWorld[] {
       creatorTitle: { element: source.element, intensity: source.intensity },
     };
   });
+}
+
+/** Sample chapter titles for World Info's chapter selector, in order; every fifth chapter is untitled. */
+const SAMPLE_CHAPTER_TITLES = ['The Silent Lotus', 'Ashes on Dead Water', 'The Pavilion Remembers', 'A Promise Older Than Empire',
+  'Roots Beneath the Sect', 'The First Trial', 'Skybound Ruins', 'What the Oath Wants', 'Lanterns Over the Lake', 'The Elder’s Debt',
+  'Jade and Iron', 'A Door of Petals', 'The Outer Court', 'Rain on the Training Stones', 'The Poisoned Pond', 'Whispers in the Archive',
+  'The Tournament Bell', 'Blood on White Silk', 'A Seat Among the Inner Disciples', 'Moonlit Duel', 'The Broken Seal', 'Mist Over the Peaks',
+  'The Silent Pavilion', 'Elder Mo Waits', 'Return of the Lotus Seal', 'The Jade Court', 'Two Thrones', 'A Choice of Sides',
+  'Ink and Ash', 'The Oath Breaks', 'Beyond the Empire', 'Salt Roads', 'The Last Gate'];
+
+/**
+ * The sample world's chapters, so the chapter selector has a whole book to show. The reader has
+ * opened every chapter before `readingChapter` except Chapter 3, which they skipped: read means
+ * opened, never only "before the reader's place".
+ */
+export function previewChapters(count: number, readingChapter = 0) {
+  return Array.from({ length: Math.max(0, count) }, (_, index) => ({
+    number: index + 1, title: (index + 1) % 5 === 0 ? undefined : SAMPLE_CHAPTER_TITLES[index % SAMPLE_CHAPTER_TITLES.length],
+    ...(index + 1 < readingChapter && index + 1 !== 3 ? { read: true } : {}),
+  }));
+}
+
+/** The branched sample: the reader's own branch, from Chapter 44 of the sample world. */
+const BRANCHED_CHAPTERS = 52;
+export const PREVIEW_BRANCH = { fromTitle: 'The Last Lotus of the Jade Empire', atChapter: 44, yours: true } as const;
+
+/** Where the reader is in each sample map: Chapter 7 of the book, or Chapter 47 of the branch. */
+export function previewReadingChapter(chapterMap: WorldCardChapterMapPreview) {
+  return chapterMap === 'branched' ? 47 : 7;
+}
+
+/**
+ * The sample world's arcs and goals, with the story's own record of where each was reached. The
+ * chapter selector reveals a reached goal only once the reader has read that chapter.
+ */
+export function previewArcs(chapterMap: WorldCardChapterMapPreview) {
+  const arcOne = {
+    number: 1, firstChapter: 1, lastChapter: 30, goals: [
+      { text: 'Ye Chen survives the outer sect’s trials', startChapter: 1, endChapter: 6, resolved: { chapterNumber: 5, outcome: 'reached' as const } },
+      { text: 'Earn a place among the inner disciples', startChapter: 7, endChapter: 12, resolved: { chapterNumber: 11, outcome: 'reached' as const } },
+      { text: 'Find who poisoned the lotus pond', startChapter: 13, endChapter: 19, resolved: { chapterNumber: 19, outcome: 'missed' as const } },
+      { text: 'Win the Jade Tournament', startChapter: 20, endChapter: 26, ...(chapterMap === 'branched' ? { resolved: { chapterNumber: 25, outcome: 'reached' as const } } : {}) },
+      { text: 'Face Elder Mo at the Silent Pavilion', startChapter: 27, endChapter: 30, ...(chapterMap === 'branched' ? { resolved: { chapterNumber: 30, outcome: 'reached' as const } } : {}) },
+    ],
+  };
+  if (chapterMap !== 'branched') return [arcOne];
+  return [arcOne, {
+    number: 2, firstChapter: 31, lastChapter: 60, goals: [
+      { text: 'Reclaim the Lotus Seal', startChapter: 31, endChapter: 37, resolved: { chapterNumber: 36, outcome: 'reached' as const } },
+      { text: 'Choose a side in the Jade Court', startChapter: 38, endChapter: 44, resolved: { chapterNumber: 43, outcome: 'reached' as const } },
+      { text: 'Break the Thousand-Year Oath', startChapter: 45, endChapter: 52 },
+      { text: 'Carry the seal beyond the empire', startChapter: 53, endChapter: 57 },
+      { text: 'Open the last lotus', startChapter: 58, endChapter: 60 },
+    ],
+  }];
 }

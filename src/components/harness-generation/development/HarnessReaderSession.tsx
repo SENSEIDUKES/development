@@ -16,6 +16,7 @@ import {
   readReaderTextSettings,
   readSoundtrackChoice,
   resolveReaderOpeningChapter,
+  setReaderChapterRead,
   resolveReaderText,
   useReadAloud,
   writeReaderTextSettings,
@@ -294,13 +295,7 @@ export function HarnessReaderSession({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storyId, readerStateRepository]);
 
-  const openChapter = useCallback((chapterNumber: number) => {
-    setSelectedChapter(chapterNumber);
-    setCreating(false);
-    topRef.current?.scrollIntoView?.({ block: 'start' });
-    const current = readerStateRef.current;
-    if (!current) return;
-    const next = applyReaderStatePatch(current, { lastReadChapter: chapterNumber });
+  const keepReaderState = useCallback((next: ReaderStoryState) => {
     readerStateRef.current = next;
     setReaderState(next);
     if (!readerStateRepository || !persistEnabled.current) return;
@@ -310,6 +305,15 @@ export function HarnessReaderSession({
       () => setStorageError('Your reading place could not be saved. It will be retried when you turn the page.'),
     );
   }, [readerStateRepository]);
+
+  const openChapter = useCallback((chapterNumber: number) => {
+    setSelectedChapter(chapterNumber);
+    setCreating(false);
+    topRef.current?.scrollIntoView?.({ block: 'start' });
+    const current = readerStateRef.current;
+    if (!current) return;
+    keepReaderState(applyReaderStatePatch(current, { lastReadChapter: chapterNumber }));
+  }, [keepReaderState]);
 
   const upcoming = story?.head.nextChapterNumber ?? 1;
   // A page takes the screen, so the reader's place is kept and given back when it closes.
@@ -385,6 +389,14 @@ export function HarnessReaderSession({
   // chapter is back. The soundtrack plays on under all of them; only leaving the
   // Reader stops it.
   const chapter = chapters.find(entry => entry.chapterNumber === selectedChapter) ?? chapters.at(-1);
+  // A chapter the Reader has shown counts as read: World Info's chapter map marks it, and reveals
+  // what the story reached in it. However the reader got here (opening, a page turn, a jump).
+  const shownChapter = chapter?.chapterNumber;
+  useEffect(() => {
+    const current = readerStateRef.current;
+    if (shownChapter === undefined || !current || current.readChapters.includes(shownChapter)) return;
+    keepReaderState(setReaderChapterRead(current, shownChapter, true));
+  }, [shownChapter, readerState, keepReaderState]);
   const covered = pageOpen || writer.writing;
   const language = story?.originalLanguage ?? 'en';
   // The story's language sets the frame's direction: a right-to-left story reads, and is steered, right to left.

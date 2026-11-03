@@ -38,6 +38,7 @@ import {
 } from "../../../library/cultivation/progression";
 import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/library-ui';
 import { LibraryProfileIcon as SENProfileIcon, LibraryQiYinYangIcon as SENQiYinYangIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
+import { EnergySunIcon } from '../../energy/development/EnergySunIcon';
 
 const tiers: Record<PremiumTier, string> = {
   mortal: "Mortal",
@@ -329,7 +330,7 @@ export function UserProfileHome({
                 data-cave-energy-status={energy?.account.status ?? 'unavailable'}
                 onClick={energy?.onOpen} disabled={!energy}
                 aria-label={energy?.account.snapshot ? `Energy, ${energy.account.snapshot.available} available` : 'Energy'}>
-                <SENNavigationIcon name="energy" size={24} />
+                <EnergySunIcon size={24} />
                 <span>Energy</span>
                 {energy ? <EnergyBalanceIndicator account={energy.account} size="sm" /> : null}
               </button>

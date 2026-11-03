@@ -1439,7 +1439,9 @@ describe('Cave workspace shell', () => {
     expect(CAVE_PUBLIC_DESTINATIONS.map(item => item.icon)).toEqual(['home', 'scroll', 'relic']);
     const icons = Array.from(container.querySelectorAll<HTMLElement>('[data-sen-navigation-icon]'))
       .map(icon => icon.dataset.senNavigationIcon);
-    expect(icons).toEqual(expect.arrayContaining(['home', 'book', 'discovery', 'scroll', 'relic', 'energy', 'store']));
+    expect(icons).toEqual(expect.arrayContaining(['home', 'book', 'discovery', 'scroll', 'relic', 'store']));
+    // Energy wears the Energy sun, drawn in the app, so it is not a navigation icon.
+    expect(container.querySelector('[data-cave-energy] [data-energy-sun]')).not.toBeNull();
   });
 
   it('keeps the decorative backdrop behind the interactive shell', async () => {

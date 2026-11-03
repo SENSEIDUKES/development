@@ -1,0 +1,18 @@
+/* The official balance pill (QI and Energy). One look on every page. */
+.balance-pill {
+  /* One width for every pill, whatever its number (it fits 9,999,999; larger shortens). */
+  display: inline-flex; flex: none; align-items: center; gap: 0.4rem; width: 7.75rem; min-height: 2.25rem;
+  padding: 0.25rem 0.8rem 0.25rem 0.55rem; border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(3, 6, 12, 0.6); backdrop-filter: blur(8px);
+  font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.8rem; line-height: 1; color: rgb(245 245 245);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.balance-pill[data-balance="qi"] .balance-pill-mark { color: #b78cff; filter: drop-shadow(0 0 6px #7a4fd966); }
+.balance-pill[data-balance="energy"] .balance-pill-mark { color: #f1dc93; filter: drop-shadow(0 0 6px #d4af3766); }
+.balance-pill[data-balance-state="loading"], .balance-pill[data-balance-state="unavailable"] { color: rgb(229 229 229 / 0.55); }
+.balance-pill-number { margin-inline-start: auto; }
+.balance-pills { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 0.35rem; min-width: 0; }
+/* On the narrowest phones the pills tighten instead of wrapping. */
+@media (max-width: 380px) {
+  .balance-pills .balance-pill { width: 7rem; padding-inline: 0.45rem 0.6rem; gap: 0.3rem; font-size: 0.74rem; }
+}

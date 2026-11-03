@@ -10,7 +10,7 @@ import {
   type OfferQiResponse,
 } from '../../../library/familiars/contracts';
 import { LibraryGlobalIcon } from '@seihouse/library-ui';
-import { QiAmount } from '../../../library/cultivation/QiAmount';
+import { BalancePills } from '../../energy/development/BalancePill';
 import { familiarRarityLabel, type FamiliarOption, type FamiliarPersonalizations } from '../../familiar/shared/familiar';
 import { FamiliarHero } from '../../familiar/development/FamiliarHero';
 import { FamiliarNameEffect } from './FamiliarNameEffect';
@@ -39,6 +39,8 @@ export interface FamiliarStageProps {
   options: readonly FamiliarOption[];
   /** The cultivator's spendable QI, from the QI ledger; null while unknown. */
   qiBalance: number | null;
+  /** The cultivator's available Energy; null while unknown. Omit where Energy is not connected. */
+  energyBalance?: number | null;
   /** The Active Familiar: the companion that follows the cultivator (host profile state). */
   activeFamiliarId?: string | null;
   /** The name the elemental effect letters. */
@@ -73,7 +75,7 @@ export interface FamiliarStageProps {
  * advantage.
  */
 export function FamiliarStage({
-  familiars, options, qiBalance, activeFamiliarId, displayName, onBack, backLabel = 'Return to cave',
+  familiars, options, qiBalance, energyBalance, activeFamiliarId, displayName, onBack, backLabel = 'Return to cave',
   onActivate, activating = false, onOpenStore, onOffered, offerAmounts = DEFAULT_OFFERS,
   settings, personal, onPersonalChange,
 }: FamiliarStageProps) {
@@ -203,10 +205,9 @@ export function FamiliarStage({
         ) : <span />}
         <h2 id="familiar-stage-title" tabIndex={-1} className="familiar-stage-title">Familiar</h2>
         <div className="familiar-stage-topbar-end">
-          <span className="familiar-stage-qi" data-familiar-qi-balance>
-            <QiAmount amount={qiBalance} state={qiBalance === null ? 'unavailable' : 'ready'}
-              label={qiBalance === null ? 'QI balance unavailable' : `${formatWhole(qiBalance)} QI available`} />
-          </span>
+          <BalancePills
+            qi={{ amount: qiBalance, state: qiBalance === null ? 'unavailable' : 'ready' }}
+            energy={energyBalance === undefined ? undefined : { amount: energyBalance, state: energyBalance === null ? 'loading' : 'ready' }} />
           {settings || onPersonalChange ? (
             <button ref={settingsButton} type="button" className="familiar-stage-icon-button" aria-label="Familiar settings" aria-haspopup="dialog"
               onClick={() => setSettingsOpen(true)} data-familiar-settings-open><Settings size={20} aria-hidden /></button>

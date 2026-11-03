@@ -102,6 +102,7 @@ or verified against a production deployment.
 
 ## Workshop history
 
+- 2026-11-03: Added the official balance pill (`BalancePill`, `BalancePills` in `development/BalancePill.tsx`): a balance's own mark and number in one rounded pill, QI with the yin-yang mark in violet and Energy with the Energy mark in gold, always QI then Energy. First used in the Familiar page's top bar (SENSEI: one look for every balance users see).
 - **2026-11-01 tiers** — `ENERGY_TIER_MODELS` is the team's model behind each tier per kind
   (chapters: Gemini 3.1 Flash Lite, Gemini 3.8 Flash, Claude Opus 5.5; images: Nano Banana 2 Lite, Nano
   Banana 2, Nano Banana Pro; live: Gemini 3.8 Live, GPT-Live 1, Heaven not yet). A generation made by

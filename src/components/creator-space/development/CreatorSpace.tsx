@@ -10,6 +10,7 @@ import { formatEnergy } from '../../energy/development/EnergyAmount';
 import type { CreatorSpaceProps, CreatorToolkitItem, CreatorToolkitKind, CreatorWorld, CreatorWorldStatus } from '../shared/creatorSpaceContracts';
 import { WorldCard, WORLD_STATUS_LABELS } from '../../world-card/development/WorldCard';
 import './creator-space.css';
+import { EnergySunIcon } from '../../energy/development/EnergySunIcon';
 
 const TOOLKIT_ICONS = { style: Paintbrush, soundscape: AudioLines, cue: Volume2, atmosphere: Wind } as const;
 const TOOLKIT_PREVIEW_NOTICE = 'The plugin browser is still being built. For now, each world’s styles, soundscapes, cues and atmospheres are chosen in its Studio.';
@@ -50,7 +51,7 @@ export function CreatorSpace({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <CreatorStat label="Energy" value={energyValue} note={energyNote} onSelect={onOpenEnergy}
-          icon={<SENNavigationIcon name="energy" size={26} className="text-portal" aria-hidden="true" />} />
+          icon={<EnergySunIcon size={26} className="text-portal" />} />
         <CreatorStat label="In progress" value={inProgress === null ? '—' : String(inProgress)}
           icon={<SENNavigationIcon name="scroll" size={26} className="text-portal" aria-hidden="true" />} />
       </div>

@@ -71,6 +71,7 @@ import { AchievementsPanel } from '../../rewards/development/AchievementsPanel';
 import { FateSurvivalRelicsPanel } from '../../relics/development/FateSurvivalRelicsPanel';
 import { FamiliarStage } from '../../familiar-training/development/FamiliarStage';
 import { useInterfaceLanguageTranslation } from '../../../library/language/interfaceTranslation';
+import { EnergySunIcon } from '../../energy/development/EnergySunIcon';
 
 interface UserProfileProps {
   currentUser: AppUser | null;
@@ -423,7 +424,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         );
       case 'energy':
         return (
-          <UserProfileCaveDestination id="energy" title="Energy, QI & DAO XP" subtitle="Live balances, the current price schedule, and permanent progression" icon={<SENNavigationIcon name="energy" size={18} />} onBack={returnHome}>
+          <UserProfileCaveDestination id="energy" title="Energy, QI & DAO XP" subtitle="Live balances, the current price schedule, and permanent progression" icon={<EnergySunIcon size={18} />} onBack={returnHome}>
             <EnergyPanel account={energyAccount} qi={cultivation} daoXp={daoXp} />
           </UserProfileCaveDestination>
         );
@@ -483,6 +484,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             familiars={familiarAccount}
             options={familiarOptions}
             qiBalance={cultivation.snapshot?.balance ?? null}
+            energyBalance={energyAccount.status === 'unavailable' ? undefined : energyAccount.snapshot?.available ?? null}
             activeFamiliarId={equippedOption?.id}
             displayName={profile?.displayName?.trim() || 'Cultivator'}
             onBack={returnHome}

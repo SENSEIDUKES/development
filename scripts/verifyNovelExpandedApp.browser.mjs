@@ -411,7 +411,12 @@ async function walk(browser, viewport, sample) {
   check(address() === '/app/?page=create&seed=new', `Carve New Destiny should open a new Story Seed, got ${address()}`);
   // Story Settings in Create: Story Seed's Settings holds the language and Reading Mode, then the CAPA skill
   // slots and media the story will start with.
-  await visibleButton(/^Settings$/).click();
+  const seedUtility = async name => {
+    const more = page.getByRole('button', { name: 'More actions', exact: true });
+    if (await more.isVisible()) await more.click();
+    await visibleButton(name).click();
+  };
+  await seedUtility(/^Settings$/);
   const createSettings = page.getByTestId('create-story-settings').filter({ visible: true }).first();
   await createSettings.waitFor();
   check(await createSettings.locator('#harness-skill-author').count() === 1, 'Create\'s Story Settings should offer the Author skill slot.');
@@ -421,11 +426,11 @@ async function walk(browser, viewport, sample) {
   await shot('2a-create-story-settings');
   await page.keyboard.press('Escape');
   await createSettings.waitFor({ state: 'hidden' });
-  await visibleButton(/^Story Bank$/).click();
+  await seedUtility(/^Story Bank$/);
   await visibleButton(/^Use Seed$/).click();
   await visibleButton(/^Refine Details$/).click();
   // Every Create step scrolls up and down only, never sideways, as an app does.
-  for (const step of ['origin', 'arc', 'world']) {
+  for (const step of ['origin', 'world', 'arc']) {
     await page.locator(`[data-seed-creator-strip] button[data-step="${step}"]`).click();
     await page.waitForTimeout(300);
     check(!(await page.evaluate(slidesSideways)), `Create's ${step} step must never scroll sideways.`);

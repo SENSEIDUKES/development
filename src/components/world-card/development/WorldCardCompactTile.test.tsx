@@ -27,7 +27,7 @@ it('shows the cover with nothing on it, then title, creator and one line, and op
   expect(tile.querySelector('.world-card-compact-tile-detail')?.textContent).toBe('Xianxia');
   const open = tile.querySelector<HTMLButtonElement>('.world-card-compact-tile-open')!;
   expect(open.getAttribute('aria-label')).toBe('Open World 1, creator SENSEI, Xianxia');
-  // Nothing on the art: no badges, no motion. The tile is one door.
+  // Nothing else on the art: no badges, no motion. The tile is one door.
   expect(tile.querySelectorAll('video, svg.lucide-info, .world-card-base-format, .world-card-ribbon')).toHaveLength(0);
   expect(tile.querySelectorAll('button')).toHaveLength(1);
   act(() => open.click());
@@ -41,9 +41,9 @@ it('shows the cover with nothing on it, then title, creator and one line, and op
   expect(container.querySelector('.world-card-compact-tile-detail')).toBeNull();
 });
 
-it('shows a still activity dot for a living world, and none for a quiet one', () => {
+it('shows a still activity dot on the cover for a living world, and none for a quiet one', () => {
   act(() => root.render(<WorldCardCompactTile world={{ ...world(1), activityStatus: 'active-now' }} onOpen={() => {}} />));
-  const dot = container.querySelector('.world-card-compact-tile-activity')!;
+  const dot = container.querySelector('.world-card-compact-tile-cover .world-card-compact-tile-activity')!;
   expect(dot.getAttribute('data-activity')).toBe('active-now');
   expect(dot.getAttribute('title')).toBe('Active now');
   expect(container.querySelector('.world-card-compact-tile-open')?.getAttribute('aria-label')).toBe('Open World 1, Xianxia, Active now');

@@ -35,13 +35,14 @@ export function WorldCardCompactTile({ world, detail, onOpen, senSash = false }:
   const creatorTitle = world.creatorTitle;
   const title = useWorldTitle(world);
   const language = useLanguagePeek(title);
-  // A living world shows a still dot on its last line; a quiet one shows nothing, so a grid never
-  // marks a creator's world as dead.
+  // A living world shows a still dot in the cover's top corner; a quiet one shows nothing, so a
+  // grid never marks a creator's world as dead.
   const activity = world.activityStatus && world.activityStatus !== 'quiet' ? WORLD_ACTIVITY_DISPLAY[world.activityStatus] : undefined;
   return <div className="world-card-compact-tile" data-world-card="compact-tile">
     <span className="world-card-compact-tile-cover">
       <WorldCardCover src={world.imageUrl} title={world.title} decorative />
       {senSash && <WorldCardRibbon />}
+      {activity && <span className={`world-card-compact-tile-activity ${activity.color}`} title={activity.label} data-activity={world.activityStatus} />}
       <button type="button" className="world-card-compact-tile-open" onClick={onOpen}
         aria-label={`Open ${title.text}${language.spokenLanguage ? `, in ${language.spokenLanguage}` : ''}${creatorName ? `, creator ${creatorName}` : ''}${line ? `, ${line}` : ''}${activity ? `, ${activity.label}` : ''}`} />
     </span>
@@ -56,10 +57,7 @@ export function WorldCardCompactTile({ world, detail, onOpen, senSash = false }:
               intensity={creatorTitle.intensity} color={creatorTitle.color}>{creatorName}</ElementalTitle>
           : creatorName}
       </span>}
-      {(line || activity) && <span className="world-card-compact-tile-detail">
-        {activity && <span className={`world-card-compact-tile-activity ${activity.color}`} title={activity.label} data-activity={world.activityStatus} />}
-        {line}
-      </span>}
+      {line && <span className="world-card-compact-tile-detail">{line}</span>}
     </span>
   </div>;
 }

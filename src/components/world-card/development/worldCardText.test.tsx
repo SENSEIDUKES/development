@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { resolveWorldTitle, WorldCardLanguageProvider } from './worldCardText';
 import { WorldCardCompactTile } from './WorldCardCompactTile';
 
@@ -38,13 +38,38 @@ it('marks titles and creator names as the author’s words, in their own languag
   const creator = container.querySelector('.world-card-compact-tile-creator')!;
   expect(creator.getAttribute('lang')).toBe('ar');
   expect(creator.hasAttribute('data-no-interface-translate')).toBe(true);
-  expect(container.querySelector('.world-card-language-tag')?.textContent).toBe('AR');
-  expect(container.querySelector('.world-card-compact-tile-detail')?.textContent).toBe('ARFantasy');
+  // The card stays clean: the language waits in a pop-up and in the card's accessible name.
+  expect(container.querySelector('.world-card-compact-tile-detail')?.textContent).toBe('Fantasy');
+  expect(container.querySelector('.world-card-language-peek')?.textContent).toBe('ARアラビア語');
+  expect(container.querySelector('.world-card-compact-tile-open')?.getAttribute('aria-label')).toBe('Open المحنة التاسعة, in アラビア語, creator المُتعبِّد, Fantasy');
 
   // Without a provider, the card follows the language the interface translator set on the page.
   act(() => root.render(<WorldCardCompactTile world={world} onOpen={() => {}} />));
-  expect(container.querySelector('.world-card-language-tag')).toBeNull();
+  expect(container.querySelector('.world-card-language-peek')).toBeNull();
   await act(async () => { document.documentElement.dataset.interfaceLanguage = 'en'; });
   expect(container.querySelector('.world-card-compact-tile-title')?.textContent).toBe('The Ninth Trial');
   expect(container.querySelector('.world-card-compact-tile-title')?.getAttribute('lang')).toBe('en');
+});
+
+it('shows the language when a finger rests on the title, without opening the world', () => {
+  vi.useFakeTimers();
+  try {
+    const onOpen = vi.fn();
+    const world = { id: 'w', imageUrl: '', genre: 'Fantasy', ...ninth };
+    act(() => root.render(<WorldCardLanguageProvider language="ja"><WorldCardCompactTile world={world} onOpen={onOpen} /></WorldCardLanguageProvider>));
+    const caption = container.querySelector<HTMLElement>('.world-card-compact-tile-caption')!;
+    const title = container.querySelector<HTMLElement>('.world-card-compact-tile-title')!;
+    expect(caption.getAttribute('data-language-peek')).toBeNull();
+    act(() => { title.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: 10, clientY: 10 })); });
+    act(() => { vi.advanceTimersByTime(450); });
+    expect(caption.getAttribute('data-language-peek')).toBe('true');
+    act(() => { title.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' })); title.click(); });
+    expect(onOpen).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(1800); });
+    expect(caption.getAttribute('data-language-peek')).toBeNull();
+    // A quick tap still opens the world.
+    act(() => { title.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: 10, clientY: 10 })); });
+    act(() => { title.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' })); title.click(); });
+    expect(onOpen).toHaveBeenCalledOnce();
+  } finally { vi.useRealTimers(); }
 });

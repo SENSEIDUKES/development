@@ -1,4 +1,4 @@
-import { createContext, useContext, useSyncExternalStore, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore, type PointerEvent, type ReactNode } from 'react';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 
 /**
@@ -6,9 +6,10 @@ import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
  *
  * - The creator's name is never translated. It is identity, shown as the creator wrote it.
  * - The title shows in the reader's language only when the world has a real translation of it
- *   (the creator's own, or one made for reading). Otherwise it stays in its original language,
- *   with a small language tag so the reader knows the story is in another language. A card
- *   never machine-translates a title.
+ *   (the creator's own, or one made for reading). Otherwise it stays in its original language.
+ *   The card stays clean: the language appears only in a small pop-up when the reader hovers the
+ *   title (or holds a finger on it), and in the card's accessible name. A card never
+ *   machine-translates a title.
  * - The details (genre, chapters, status) are interface words, so the interface translates them.
  *
  * Titles and names are marked as the author's words, so the interface translator never rewrites
@@ -90,10 +91,62 @@ export function authorText(lang?: string) {
   return { 'data-no-interface-translate': '', ...(lang?.trim() ? { lang: lang.trim() } : {}) };
 }
 
-/** The small tag beside a story's details when its title is in another language. */
-export function WorldLanguageTag({ title }: { title: WorldTitleText }) {
-  if (!title.foreignTag) return null;
-  let name = title.foreignLanguage;
-  try { name = new Intl.DisplayNames(undefined, { type: 'language' }).of(title.foreignLanguage!) ?? name; } catch { /* keep the code */ }
-  return <abbr className="world-card-language-tag" title={name} aria-label={`In ${name}`} data-no-interface-translate="">{title.foreignTag}</abbr>;
+/** A language's name, in the reader's language when the browser knows it: `ko` → "Korean". */
+export function languageDisplayName(code: string, inLanguage?: string) {
+  try { return new Intl.DisplayNames(inLanguage ? [inLanguage, 'en'] : undefined, { type: 'language' }).of(code) ?? code; } catch { return code; }
+}
+
+/** How long a finger rests on a title before its language shows, and how long it stays. */
+const PEEK_HOLD_MS = 450;
+const PEEK_SHOW_MS = 1800;
+
+/**
+ * The language pop-up for a title in another language. The host element (a card's caption, or
+ * the whole Feature card) shows it while hovered or focused; a finger held on it for a moment
+ * shows it on touch screens, and that hold does not also open the world. Nothing shows for a
+ * title in the reader's own language.
+ */
+export function useLanguagePeek(title: WorldTitleText, placement: 'above' | 'top' = 'above') {
+  const reader = useWorldCardReaderLanguage();
+  const [held, setHeld] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const peeked = useRef(false);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  if (!title.foreignTag) return { hostProps: {}, peek: null, spokenLanguage: undefined };
+
+  const name = languageDisplayName(title.foreignLanguage!, reader);
+  const cancel = () => { clearTimeout(timer.current); start.current = null; };
+  const hostProps = {
+    'data-language-host': placement,
+    'data-language-peek': held ? 'true' : undefined,
+    onPointerDown: (event: PointerEvent) => {
+      if (event.pointerType === 'mouse') return;
+      peeked.current = false;
+      start.current = { x: event.clientX, y: event.clientY };
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => {
+        peeked.current = true;
+        setHeld(true);
+        timer.current = setTimeout(() => setHeld(false), PEEK_SHOW_MS);
+      }, PEEK_HOLD_MS);
+    },
+    // A finger that moves is scrolling, not holding.
+    onPointerMove: (event: PointerEvent) => {
+      if (start.current && Math.hypot(event.clientX - start.current.x, event.clientY - start.current.y) > 10) cancel();
+    },
+    onPointerUp: () => { if (!peeked.current) cancel(); start.current = null; },
+    onPointerCancel: cancel,
+    // The hold that showed the language does not also open the world.
+    onClickCapture: (event: { preventDefault(): void; stopPropagation(): void }) => {
+      if (!peeked.current) return;
+      peeked.current = false;
+      event.preventDefault();
+      event.stopPropagation();
+    },
+  };
+  const peek = <span className="world-card-language-peek" aria-hidden="true" data-no-interface-translate="">
+    <span className="world-card-language-peek-tag">{title.foreignTag}</span>{name}
+  </span>;
+  return { hostProps, peek, spokenLanguage: name };
 }

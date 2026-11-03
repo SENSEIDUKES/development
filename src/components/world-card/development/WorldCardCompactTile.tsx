@@ -3,7 +3,7 @@ import { RefreshCw } from 'lucide-react';
 import { ElementalTitle } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldCardCover } from './WorldCardCover';
-import { authorText, useWorldTitle, WorldLanguageTag } from './worldCardText';
+import { authorText, useLanguagePeek, useWorldTitle } from './worldCardText';
 import './world-card.css';
 
 /** What a Compact tile reads from a world; a Home world supplies it. */
@@ -30,14 +30,16 @@ export function WorldCardCompactTile({ world, detail, onOpen }: {
   const creatorName = world.creatorName?.trim();
   const creatorTitle = world.creatorTitle;
   const title = useWorldTitle(world);
+  const language = useLanguagePeek(title);
   return <div className="world-card-compact-tile" data-world-card="compact-tile">
     <span className="world-card-compact-tile-cover">
       <WorldCardCover src={world.imageUrl} title={world.title} decorative />
       <button type="button" className="world-card-compact-tile-open" onClick={onOpen}
-        aria-label={`Open ${title.text}${creatorName ? `, creator ${creatorName}` : ''}${line ? `, ${line}` : ''}`} />
+        aria-label={`Open ${title.text}${language.spokenLanguage ? `, in ${language.spokenLanguage}` : ''}${creatorName ? `, creator ${creatorName}` : ''}${line ? `, ${line}` : ''}`} />
     </span>
     {/* The words repeat the art's open action for pointers; keyboards use the art's own control. */}
-    <span className="world-card-compact-tile-caption" onClick={onOpen}>
+    <span className="world-card-compact-tile-caption" onClick={onOpen} {...language.hostProps}>
+      {language.peek}
       <span className="world-card-compact-tile-title font-display" {...authorText(title.lang)}>{title.text}</span>
       {creatorName && <span className="world-card-compact-tile-creator" {...authorText(world.creatorLanguage)}>
         {creatorTitle
@@ -46,9 +48,7 @@ export function WorldCardCompactTile({ world, detail, onOpen }: {
               intensity={creatorTitle.intensity} color={creatorTitle.color}>{creatorName}</ElementalTitle>
           : creatorName}
       </span>}
-      {(line || title.foreignTag) && <span className="world-card-compact-tile-detail">
-        <WorldLanguageTag title={title} />{line}
-      </span>}
+      {line && <span className="world-card-compact-tile-detail">{line}</span>}
     </span>
   </div>;
 }

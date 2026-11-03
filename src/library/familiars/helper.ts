@@ -386,9 +386,10 @@ export class FamiliarHelperController {
   read = (text: string, audioUrl?: string) => {
     if (this.liveRun || this.state.phase === 'saving' || !text.trim()) return;
     // With the card closed, nothing else gives back what the reading paused (the Reader's narration): it is given back as the line ends.
-    this.readLine(text, audioUrl, () => { if (!this.state.open) this.release(true); });
+    // A page's reading is not a voice session: it never starts listening for commands when it ends.
+    this.readLine(text, audioUrl, () => { if (!this.state.open) this.release(true); }, false);
   };
-  private readLine(text: string, audioUrl?: string, after?: () => void) {
+  private readLine(text: string, audioUrl?: string, after?: () => void, listenAfter = true) {
     this.silence();
     this.interrupt();
     this.update({ phase: 'speaking', message: '' });
@@ -397,7 +398,7 @@ export class FamiliarHelperController {
       if (epoch !== this.epoch) return;
       this.update({ phase: 'ready' });
       after?.();
-      if (this.spoken) this.listen();
+      if (this.spoken && listenAfter) this.listen();
     };
     // One handle stops whichever voice is reading: the recording, or the device voice that took over from it.
     let stop: () => void = () => {};

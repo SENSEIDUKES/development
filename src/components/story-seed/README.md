@@ -10,7 +10,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **First Workshop record:** 2026-08-01
-- **Last recorded Workshop update:** 2026-10-27
+- **Last recorded Workshop update:** 2026-11-02
 - **Historical source inspection:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and active implementation built here
 
@@ -22,9 +22,9 @@ cleaner, and canonical production Blueprint fields were verified against
 
 Story Seed is one creation flow with these visible destinations:
 
-- **Origin** presents Style, Genre, Title, Synopsis, Pressure, Survival, and Tags, in that order on every viewport.
-- **ARC** presents Destined Ending, Story Length (arcs), up to three optional Hard Pins, one initial Active Arc Goal, and Fun Settings, in that order.
+- **Origin** presents Style, Genre, Fun Settings (Face Slap, Plot Armor, Recognition), Title, Synopsis, Pressure, Survival, and Tags, in that order on every viewport.
 - **World** owns the world as it stands at Chapter 0, in the Codex's own card kinds: World Identity (including Make It Work and Main Opposition), Characters, Factions, Things, Places, Bestiary, Abilities, and World Rules. Every slot is optional; what the author leaves blank the World Blueprint fills before Chapter 1.
+- **ARC** follows World and presents Destined Ending, Story Length (arcs), up to three optional Hard Pins, and one initial Active Arc Goal.
 - **Story Seed Settings** owns the story's reader-experience defaults: Story Language (the seed's saved Original Language), Reading Mode (Standard, Clear Reading, Easy Read, Literal Reading), and mature-audience metadata.
 - **Help** owns searchable written guidance and translated audio playback.
 - **Story Bank** is the only home for saved seeds, import/export, Blueprint
@@ -33,7 +33,7 @@ Story Seed is one creation flow with these visible destinations:
   the portable Creator / Story / World seed.
 - **The Blueprint (2026-10-27).** Inside the shell the Blueprint has four
   pages on a pinned tab strip: **Story** (cover, Origin, Style Bible, Story
-  Settings, Keep a Copy), **Cast** (the cast as a row of Codex cards, the
+  Fun Settings, Settings, Keep a Copy), **Cast** (the cast as a row of Codex cards, the
   chosen character's large Codex card with Power and Holds/Knows beside it,
   then Character Stats and When the Story Opens stat tables, Biography and the
   Generated Background), **World** (World Setting, then Factions, Things,
@@ -48,16 +48,27 @@ Story Seed is one creation flow with these visible destinations:
   **Create Story** are pinned in equal cells on the workspace bar. Every page
   stays mounted, so field ids hold.
 
-- **Phones (2026-10-27).** Below 640px the questions come first. The page
-  heading and its action row are not rendered (the shell header names Story
-  Seed); Save Draft is a square button beside the one-line story card; the
-  step strip is one inline row; the section heading drops its breadcrumb.
-  Origin (Style, Synopsis, Fate, Tags) and ARC (Ending, Hard Pins, Fun
-  Settings) show one part at a time from a row of part tabs, and Back / Next
-  walk the parts (`SECTION_PARTS`, `SeedPart`); every part stays mounted.
-  Characters, Factions, Things, Places, the Bestiary and the starting
-  abilities show as Codex cards (`CastCardGrid`, `WorldListGrid`) whose fields
-  open in a sheet. Tablets and laptops keep each page whole.
+- **Mobile and tablet navigation (2026-11-02).** One 56px row plus the safe
+  area holds Back, Next/Create, and More below 1024px. More opens the existing
+  drawer with Save Draft, Story Preview, Story Bank, Blueprint, Settings and
+  Home. The same bar holds Blueprint review's Refine Details/Create Story
+  actions. The story preview no longer sits above the mobile form; it opens
+  in a sheet and remains shown in full on Create and beside the desktop form.
+- **Phones.** Below 640px Origin shows Style, Fun Settings, Synopsis, Fate,
+  and Tags one at a time; ARC shows Ending and Hard Pins. Compact text tabs
+  keep 44px touch targets. Back/Next walks Origin, World's eight kinds, ARC,
+  then Create. Hidden parts stay mounted. World collections retain their
+  Codex cards and editing sheets. Tablets and laptops show whole pages.
+- **Completion.** Required checks follow Style + Genre and Synopsis. Optional
+  tabs check when filled, when a setting is chosen, or when Next confirms
+  defaults/blank answers; jumping tabs confirms nothing. A parent checks when
+  all children are complete, even while active. Next confirms all displayed
+  parts on wider screens. This never adds a generation requirement.
+- **Saved confirmations.** Optional `StorySeedRecord.editorProgress.confirmedTabs`
+  travels through the existing repository's optional final write argument.
+  It is separate from creative input, model requests and portable exports.
+  Reopening a draft restores confirmations, while another seed starts with
+  its own progress. Missing/damaged editor metadata never resets creative data.
 
 The canonical Story Seed shape is `creator / story / world`. Title has
 one owner at `world.optional.worldIdentity.title`; Blueprint title editing
@@ -622,3 +633,16 @@ Verification: `scripts/verifyStorySeedArc.browser.mjs` exercises the canonical
 preview at 390 and 1440 pixels, complete navigation, Arc/World edits, save/reload,
 Blueprint review/export, and the active capture route. Focused tests cover the
 schema, Blueprint provider boundary, persistence, and frozen HARNESS handoff.
+
+## 2026-11-02 — Story Seed mobile space and completion
+
+Replaced the stacked creator/workspace bars with one compact bar using the
+Library Shell's optional action slot, moved the mobile live card into More,
+and removed the superseded square Save button. World now precedes ARC; Fun
+Settings belongs to Origin and the Blueprint's Story page. Parent and child
+checks include saved confirmations of defaults and intentional blanks.
+
+`verifyStorySeedUi.browser.mjs` checks the app and Workshop at 320, 390, 430,
+768 and 1440px, menu/sheet focus, short viewports, long titles and saved progress
+without generation calls. The app and preview use the same package surface;
+Workshop scenarios use their isolated fixture/local storage, not app storage.

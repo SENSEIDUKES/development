@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { ARC_LENGTH, STORY_LENGTH_ARCS } from '@seihouse/sen/arc-goals';
 import { Hourglass, Milestone, Target, Pin } from 'lucide-react';
-import { HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, type StorySeedInput, type FunSettingLevel } from '@seihouse/sen/story-seed';
+import { HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
-import { patchFunSettings, patchWorldFoundations, funSettings, worldFoundations, type UpdateSeed } from '../seedState';
+import { patchWorldFoundations, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { SeedPart } from '../creator/SeedPart';
-import { SeedNote, SeedSectionFrame, SeedSegmented } from './SeedSectionFrame';
+import { SeedNote, SeedSectionFrame } from './SeedSectionFrame';
 
 interface ArcWorkspaceProps {
   seed: StorySeedInput;
@@ -27,67 +27,8 @@ const readStoryLength = (value: string): number | undefined | null => {
   return Number.isInteger(count) && count >= STORY_LENGTH_ARCS.min && count <= STORY_LENGTH_ARCS.max ? count : null;
 };
 
-type FunSettingKey = 'faceSlap' | 'plotArmor' | 'recognition';
-
-const FUN_LEVELS: ReadonlyArray<{
-  value: FunSettingLevel;
-  label: string;
-}> = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-];
-
-const FUN_SETTINGS: ReadonlyArray<{
-  key: FunSettingKey;
-  id: string;
-  label: string;
-  /** The one line always shown; `help` is the full explanation behind the info toggle. */
-  short: string;
-  help: string;
-  levelCopy: Record<FunSettingLevel, string>;
-}> = [
-  {
-    key: 'faceSlap',
-    id: 'face-slap',
-    label: 'Face Slap',
-    short: 'How often arrogant rivals get humbled.',
-    help: 'Controls how often arrogant rivals, elites, young masters, nobles, rankers, or social superiors underestimate the protagonist and get humbled.',
-    levelCopy: {
-      low: 'Rare and meaningful. Face-slaps happen only when the story earns them.',
-      medium: 'Classic webnovel rhythm. Regular disrespect, rivalry, and payoff.',
-      high: 'Frequent arrogant challengers, public humiliation, status reversals, and revenge satisfaction.',
-    },
-  },
-  {
-    key: 'plotArmor',
-    id: 'plot-armor',
-    label: 'Plot Armor',
-    short: 'How often fortune bends around the protagonist.',
-    help: 'Controls how often fortune bends around the protagonist.',
-    levelCopy: {
-      low: 'The protagonist survives through cost, sacrifice, and hard consequences.',
-      medium: 'Balanced luck. The protagonist gets chances, but still pays for mistakes.',
-      high: 'Fate often opens doors: lucky breaks, timely escapes, hidden opportunities, and impossible survival moments.',
-    },
-  },
-  {
-    key: 'recognition',
-    id: 'recognition',
-    label: 'Recognition',
-    short: 'How much the world notices the protagonist.',
-    help: 'Controls how much the world notices, remembers, and reacts to the protagonist\'s achievements.',
-    levelCopy: {
-      low: 'Achievements stay hidden, misunderstood, suppressed, or known only by a few.',
-      medium: 'Major wins build reputation gradually, region by region.',
-      high: 'The protagonist\'s name spreads fast. Wins create fear, respect, enemies, invitations, and status shifts.',
-    },
-  },
-];
-
 export const ArcWorkspace = ({ seed, updateSeed, showActiveArcGoal = true, showStoryLength = true }: ArcWorkspaceProps) => {
   const section = getSeedSection('arc');
-  const settings = funSettings(seed);
   const savedLength = seed.story.optional.arcCount;
   const [lengthText, setLengthText] = useState(() => savedLength === undefined ? '' : String(savedLength));
   // A length saved elsewhere (the Blueprint review, an import) replaces the
@@ -165,33 +106,7 @@ export const ArcWorkspace = ({ seed, updateSeed, showActiveArcGoal = true, showS
             ...current.story.optional, activeArcGoal: text.trim() ? { id: current.story.optional.activeArcGoal?.id ?? 'arc-1-initial', text, chapters: ARC_LENGTH } : undefined,
           } } }))} />
       </SeedPart>}
-      <SeedPart id="fun">
-        <section className="glass-panel p-4 sm:p-5" aria-labelledby="arc-fun-settings-title">
-          <h3 id="arc-fun-settings-title" className="font-sc text-xs font-bold uppercase tracking-[0.18em] text-[#DDC58A]">
-            Fun Settings
-          </h3>
-          <p className="mt-1 font-sans text-xs leading-relaxed text-neutral-400">
-            Ingredients the story makes room for because they make it more enjoyable.
-          </p>
-          <div className="mt-3 grid grid-cols-1 divide-y divide-neutral-800/70 md:grid-cols-3 md:gap-4 md:divide-y-0">
-            {FUN_SETTINGS.map(setting => (
-              <fieldset key={setting.key} className="min-w-0 py-3 first:pt-0 last:pb-0 md:py-0">
-                <legend className="mb-1.5 flex items-center font-display text-base font-bold tracking-wide text-[#F3EDE0]">
-                  {setting.label}
-                </legend>
-                <p id={`arc-${setting.id}-summary`} className="mb-2 font-sans text-[11px] leading-relaxed text-neutral-400">
-                  {setting.short === setting.help ? setting.help : <SeedNote moreLabel={`More about ${setting.label}`} more={setting.help}>{setting.short}</SeedNote>}
-                </p>
-                <SeedSegmented label={`${setting.label} level`} idPrefix={`arc-${setting.id}`}
-                  describedBy={`arc-${setting.id}-summary`}
-                  value={settings[setting.key] || 'medium'}
-                  options={FUN_LEVELS.map(level => ({ ...level, description: setting.levelCopy[level.value] }))}
-                  onSelect={level => updateSeed(patchFunSettings({ [setting.key]: level }))} />
-              </fieldset>
-            ))}
-          </div>
-        </section>
-      </SeedPart>
+
     </SeedSectionFrame>
   );
 };

@@ -20,6 +20,7 @@ import {
   BlueprintOriginSection,
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
+import { FunSettingsPanel } from './workspaces/FunSettingsPanel';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
 import { BlueprintArcGoalsSection } from './blueprint/BlueprintArcGoalsSection';
 import { createBlueprintMarkdown } from './blueprint/createBlueprintMarkdown';
@@ -247,6 +248,7 @@ export const BlueprintReview = ({
             onUpdateOrigin={updateOrigin}
             onUpdateStoryTags={updateStoryTags}
           />
+          <FunSettingsPanel seed={seed} updateSeed={updateSeed} />
 
           <BlueprintNotesSection styleBible={blueprint.styleBible} setBlueprint={setBlueprint} />
 

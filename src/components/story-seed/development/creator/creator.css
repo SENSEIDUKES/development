@@ -1,7 +1,5 @@
-/* Story Seed's character-creator frame: a step strip pinned to the top of the
-   scrolling page, the live story card, and Back / Next pinned above the
-   workspace bar. The shell's <main> is the scroller, so both pins are sticky
-   inside it rather than fixed to the screen. */
+/* Story Seed's creator frame: compact tabs above the form, a desktop live
+   card, and page actions in the Library Shell's single mobile bar. */
 
 .seed-creator {
   position: relative;
@@ -144,7 +142,6 @@
   background: rgba(205, 178, 113, 0.1);
   color: #f3ede0;
 }
-.seed-creator-kind-dot { width: 6px; height: 6px; border-radius: 999px; background: rgba(4, 172, 255, 0.8); }
 @media (hover: none) and (pointer: coarse) {
   .seed-creator-kind { min-height: 44px; }
 }
@@ -253,6 +250,8 @@
   font-family: var(--font-serif);
 }
 .seed-live-card[data-variant='full'] .seed-live-card-premise { -webkit-line-clamp: unset; }
+.seed-live-card[data-variant='full'] .seed-live-card-titles { flex-direction: column; align-items: flex-start; gap: 4px; }
+.seed-live-card[data-variant='full'] :is(.seed-live-card-title, .seed-live-card-lineage) { white-space: normal; overflow-wrap: anywhere; flex: none; }
 .seed-live-card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .seed-live-card-tags > span {
   padding: 1px 8px;
@@ -331,28 +330,67 @@
   white-space: nowrap;
   color: var(--color-neutral-400);
 }
+.seed-bank-return { display: none; }
+.seed-manifest-price { display: none; }
+.seed-menu-save button { width: 100%; min-height: 44px; }
+@media (max-width: 1023px) {
+  .library-navigation-layout[data-compact-bar='true'] :is(.seed-creator, .bp-dossier) { padding-bottom: 16px; }
+  .library-navigation-layout[data-compact-bar='true'] .seed-creator-card-slot { display: none; }
+  .seed-bank-return, .seed-manifest-price { display: block; }
+  .seed-manifest-price { margin-bottom: 12px; }
+  .seed-creator-footer[data-compact='true'] {
+    position: static;
+    padding: 0;
+    border: 0;
+    background: none !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .seed-creator-footer[data-compact='true'] .seed-creator-footer-inner {
+    grid-template-columns: minmax(64px, .55fr) minmax(0, 1fr);
+    gap: 8px;
+    max-width: none;
+  }
+  .seed-creator-footer[data-compact='true'] .seed-creator-footer-progress { display: none; }
+  .seed-creator-footer[data-compact='true'] button {
+    min-height: 44px;
+    border-radius: 8px;
+    box-shadow: none;
+    letter-spacing: .04em;
+  }
+  .seed-creator-footer[data-compact='true'] .seed-creator-footer-back { border-color: transparent; background: transparent; }
+  .seed-save-feedback {
+    position: fixed;
+    z-index: 90;
+    inset-inline: 0;
+    bottom: calc(64px + var(--sh-safe-bottom, env(safe-area-inset-bottom, 0px)));
+    width: fit-content;
+    margin: 0 auto;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: #0b0e1e;
+    color: #f3ede0;
+    font-size: 12px;
+  }
+}
 @media (max-width: 419px) {
   .seed-creator-footer-next-prefix,
   .seed-creator-footer-progress-word { display: none; }
 }
 
-/* ── Phones: the questions come first ─────────────────────────────────────
-   Below 640px every piece of frame above the questions takes one short line:
-   the steps sit inline in a single row, the story card is one line with Save
-   Draft beside it, and the section heading drops its breadcrumb (the strip
-   already says where you are). The page heading and action row are not
-   rendered on a phone at all (CreationModal). */
-.seed-creator-save {
-  display: none;
-}
+/* Phones keep compact text tabs above the questions; preview and Save live in More. */
 @media (max-width: 639px) {
-  .seed-creator-strip { padding: 4px 12px; }
+  .seed-creator-strip { padding: 2px 12px; }
   .seed-creator-step { flex-direction: row; justify-content: center; gap: 6px; }
   .seed-creator-step-marker { width: 22px; height: 22px; font-size: 10px; }
   .seed-creator-step-item:not(:last-child)::after { display: none; }
   .seed-creator-step-label { font-size: 9.5px; letter-spacing: 0.1em; }
   /* The row bleeds to the strip's own 12px edge, never past the screen. */
-  .seed-creator-kinds { margin: 4px -12px 0; padding-inline: 12px; scroll-padding-inline: 12px; }
+  .seed-creator-kinds { margin: 0 -12px; padding: 0 12px; scroll-padding-inline: 12px; gap: 4px; }
+  .seed-creator-kind { min-height: 44px; padding-inline: 9px; border: 0; border-radius: 0; background: transparent; font-size: 10px; }
+  .seed-creator-kind[aria-current='page'] { background: transparent; box-shadow: inset 0 -2px #cdb271; }
+  .seed-creator-kind[data-filled='true'] > svg:last-child { color: var(--color-portal); }
 
   .seed-creator-body { gap: 10px; padding-top: 10px; }
   .seed-creator-card-slot { display: flex; align-items: stretch; justify-content: flex-end; gap: 8px; }
@@ -363,19 +401,6 @@
   .seed-live-card-title { flex: 0 1 auto; min-width: 0; font-size: 15px; }
   .seed-live-card-lineage { flex: 1 1 0; min-width: 0; font-size: 11px; }
 
-  .seed-creator-save {
-    display: grid;
-    flex: 0 0 44px;
-    min-height: 44px;
-    place-items: center;
-    border: 1px solid rgba(205, 178, 113, 0.3);
-    border-radius: 12px;
-    background: rgba(11, 14, 30, 0.8);
-    color: #ddc58a;
-  }
-  .seed-creator-save[data-saved='true'] { border-color: rgba(4, 172, 255, 0.5); color: var(--color-portal); }
-  .seed-creator-save:disabled { opacity: 0.5; }
-  .seed-creator-save:focus-visible { outline: 2px solid rgba(205, 178, 113, 0.7); outline-offset: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -397,7 +422,7 @@
    Blueprint's pinned footer is there, the note rises above it instead of
    covering it. */
 @media (max-width: 1023px) {
-  .library-navigation-layout:has(.seed-creator-footer) .library-sound-slot {
+  .library-navigation-layout:not([data-compact-bar='true']):has(.seed-creator-footer) .library-sound-slot {
     inset-block-end: calc(var(--library-bar-height, 5.125rem) + 4.625rem);
   }
 }

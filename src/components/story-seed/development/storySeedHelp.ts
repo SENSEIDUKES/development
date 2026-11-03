@@ -175,7 +175,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
     contexts: ["story-seed"],
     translations: {
       en: {
-        line: "ARC guides the path of the story, including plot, tropes, even Face-Slaps, Use ARC to shape the Novels Destiny.",
+        line: "ARC shapes the novel's destination, story length, opening goal, and the Hard Pins it must honor. Build the World first, then plan the ARC.",
       },
     },
   },
@@ -186,7 +186,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
     contexts: ["story-seed"],
     translations: {
       en: {
-        line: "Origin holds the required heart of your story, the title, premise, genre, style and tags.",
+        line: "Origin holds your style, genre, synopsis, title, Fate choices, tags, and Fun Settings: Face Slap, Plot Armor, and Recognition.",
       },
     },
   },

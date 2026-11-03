@@ -18,7 +18,8 @@ import { OriginPremiseAndTags } from './origin/OriginPremiseAndTags';
 import { OriginFateControls } from './origin/OriginFateControls';
 import { OriginStyleSelector } from './origin/OriginStyleSelector';
 import { OriginSparksContext } from './origin/OriginSparksContext';
-import { SeedPart } from '../creator/SeedPart';
+import { SeedPart, SeedConfirmationContext } from '../creator/SeedPart';
+import { FunSettingsPanel } from './FunSettingsPanel';
 
 interface OriginWorkspaceProps {
   seed: StorySeedInput;
@@ -34,6 +35,7 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
   const selectedStyle = normalizeStoryStyle(style);
   const originComplete = ORIGIN_SECTION.isFilled(seed);
   const sparks = useContext(OriginSparksContext);
+  const confirm = useContext(SeedConfirmationContext);
   const updateTitle = useCallback(
     (title: string) => updateSeed(patchWorldIdentity({ title })),
     [updateSeed],
@@ -77,6 +79,8 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
         </div>
       </SeedPart>
 
+      <SeedPart id="fun"><FunSettingsPanel seed={seed} updateSeed={updateSeed} /></SeedPart>
+
       <SeedPart id="synopsis">{titleField}</SeedPart>
 
       <OriginPremiseAndTags
@@ -88,7 +92,7 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
         updateSeed={updateSeed}
         beforeTags={<SeedPart id="fate"><OriginFateControls
           settings={seed.story.optional.fateSurvival}
-          onChange={patch => updateSeed(patchFateSurvival(patch))}
+          onChange={patch => { updateSeed(patchFateSurvival(patch)); confirm('origin.fate'); }}
         /></SeedPart>}
       />
     </SeedSectionFrame>

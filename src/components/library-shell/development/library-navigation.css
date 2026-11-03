@@ -89,3 +89,40 @@
   inset-block-end: calc(var(--library-bar-height, 5.125rem) + .5rem);
 }
 .library-sound-slot:empty { display: none; }
+
+/* A focused workspace can put its page actions beside More in one slim row. */
+.library-navigation-layout[data-compact-bar='true'] {
+  --library-bottom-clearance: calc(64px + var(--sh-safe-bottom, env(safe-area-inset-bottom, 0px)));
+}
+.library-compact-bar.library-global-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: none;
+  min-height: 56px;
+  padding: 6px max(12px, var(--sh-safe-right, env(safe-area-inset-right, 0px))) calc(6px + var(--sh-safe-bottom, env(safe-area-inset-bottom, 0px))) max(12px, var(--sh-safe-left, env(safe-area-inset-left, 0px))) !important;
+  border-top: 1px solid var(--reader-glass-edge, rgba(205, 178, 113, 0.2));
+  background: var(--library-material-shell-fill, #0b0e1e);
+}
+.library-workspace-actions { flex: 1 1 auto; min-width: 0; }
+.library-compact-bar button {
+  min-height: 44px;
+  width: auto;
+  flex: none;
+  padding-inline: 10px !important;
+  font-size: 12px !important;
+}
+.library-compact-bar .library-workspace-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  color: var(--library-material-text, #f3ede0);
+}
+.library-workspace-more:focus-visible { outline: 2px solid #cdb271; outline-offset: -2px; }
+@media (min-width: 1024px) {
+  .library-navigation-layout[data-compact-bar='true'] { --library-bottom-clearance: 0px; }
+}

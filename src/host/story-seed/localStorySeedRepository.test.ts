@@ -52,4 +52,28 @@ describe('Local Story Seeds', () => {
     const repository = createLocalStorySeedRepository({ storageKey: 'app-seeds' });
     await expect(repository.list('reader')).rejects.toThrow('Saved Story Seed data is unreadable.');
   });
+
+  it('keeps draft confirmations across save, update, and a later visit, isolated per seed', async () => {
+    const repository = createLocalStorySeedRepository({ storageKey: 'app-seeds' });
+    const progress = { confirmedTabs: ['origin.fun', 'origin.fate', 'factions'] };
+    const first = await repository.create('reader', seed('First story'), undefined, 'en', progress);
+    const second = await repository.create('reader', seed('Second story'), undefined, 'en');
+    await repository.update('reader', first, first.seed, undefined, 'en');
+    const reopened = await createLocalStorySeedRepository({ storageKey: 'app-seeds' }).list('reader');
+    expect(reopened.find(record => record.id === first.id)?.editorProgress).toEqual(progress);
+    expect(reopened.find(record => record.id === second.id)?.editorProgress).toBeUndefined();
+    await repository.update('reader', first, first.seed, undefined, 'en', { confirmedTabs: [] });
+    expect((await repository.list('reader')).find(record => record.id === first.id)?.editorProgress?.confirmedTabs).toEqual([]);
+  });
+
+  it('ignores damaged editor metadata without resetting creative content or older records', async () => {
+    const repository = createLocalStorySeedRepository({ storageKey: 'app-seeds' });
+    const first = await repository.create('reader', seed('Keep this story'), undefined, 'en');
+    const second = { ...first, id: 'second', editorProgress: { confirmedTabs: [null, 'origin.fun', 'origin.fun', 15] } };
+    window.localStorage.setItem('app-seeds', JSON.stringify([{ ...first, editorProgress: false }, second]));
+    const reopened = await repository.list('reader');
+    expect(reopened).toHaveLength(2);
+    expect(reopened[1].editorProgress).toEqual({ confirmedTabs: ['origin.fun'] });
+    expect(reopened[0].seed.story.required.premise).toBe('Keep this story');
+  });
 });

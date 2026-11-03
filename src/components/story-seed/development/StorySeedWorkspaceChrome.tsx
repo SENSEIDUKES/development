@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Bookmark, Check, ScrollText as SENBlueprintIcon } from 'lucide-react';
+import { Bookmark, Check, Eye, Home, ScrollText as SENBlueprintIcon } from 'lucide-react';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import type { ChapterWritingStyle, SenLanguageCode } from '@seihouse/sen/contracts';
 import type { SeedUpdate } from './seedState';
@@ -9,10 +9,12 @@ import { StorySeedSettings } from './StorySeedSettings';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
 import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
 import { HeaderActionButton, type HeaderAction } from '../../library-shell/development/WorkspaceHeaderActions';
-import { LibraryNavigation, LibrarySectionSidebar, type LibraryWorkspaceDefinition } from '../../library-shell/development/LibraryNavigation';
+import { LibraryNavigation, LibrarySectionSidebar, useLibraryWorkspace, type LibraryWorkspaceDefinition } from '../../library-shell/development/LibraryNavigation';
 import { LIBRARY_EMBLEM } from '../../library-shell/development/libraryBrand';
 import { WorkspaceSheet } from '../../library-shell/development/WorkspaceSheet';
 import { SENStorySeedIcon } from './SENStorySeedIcon';
+import { StorySeedLiveCard } from './creator/StorySeedLiveCard';
+import { useDesktopNavigation } from '../../library-shell/development/workspaceMedia';
 import { LibraryBankIcon as SENBankIcon, LibraryHelpIcon as SENHelpIcon, LibraryManifestingIcon as SENManifestingIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
 import './story-seed.css';
 
@@ -61,6 +63,17 @@ interface StorySeedWorkspaceChromeProps {
   children: ReactNode;
   layout?: 'complete' | 'header' | 'mobile';
   headerSaveOnly?: boolean;
+  /** The creator and Blueprint share one compact mobile bar with the shell. */
+  compactNavigation?: boolean;
+}
+
+/** The drawer's custom-content slot retains the existing native disabled Save action. */
+function MenuSaveDraft({ savedFeedback, isGenerating, onSaveDraft }: Pick<StorySeedWorkspaceChromeProps, 'savedFeedback' | 'isGenerating' | 'onSaveDraft'>) {
+  const { closeDrawer } = useLibraryWorkspace();
+  return <div className="seed-menu-save"><HeaderActionButton action={{
+    id: 'save', label: savedFeedback ? 'Draft saved' : 'Save Draft', icon: savedFeedback ? Check : Bookmark,
+    disabled: isGenerating, onAction: () => { closeDrawer(); onSaveDraft(); },
+  }} /></div>;
 }
 
 /**
@@ -73,24 +86,37 @@ interface StorySeedWorkspaceChromeProps {
  */
 export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const desktop = useDesktopNavigation();
   const settingsReturnFocusRef = useRef<HTMLElement | null>(null);
-  const openSettings = useCallback(() => {
-    settingsReturnFocusRef.current = document.activeElement as HTMLElement;
-    setSettingsOpen(true);
+  const rememberFocus = useCallback(() => {
+    settingsReturnFocusRef.current = document.querySelector<HTMLElement>('.library-workspace-more') ?? document.activeElement as HTMLElement;
   }, []);
+  const openSettings = useCallback(() => {
+    rememberFocus();
+    setPreviewOpen(false);
+    setSettingsOpen(true);
+  }, [rememberFocus]);
+  const openPreview = useCallback(() => { rememberFocus(); setSettingsOpen(false); setPreviewOpen(true); }, [rememberFocus]);
+  const mobileMenu = Boolean(props.compactNavigation) && !desktop;
   const { onToggleStoryBank, showStoryBank, onNavigateHome, onOpenBlueprint, blueprintActive = false } = props;
   const workspace = useMemo<LibraryWorkspaceDefinition>(() => ({
     label: 'Story Seed sections', closeLabel: 'Close sections', barLabel: 'Story Seed navigation',
     sections: buildStorySeedDrawerSections(props.seed, props.activeSection, props.onSelectSection),
     footer: {
       divider: true,
+      content: mobileMenu ? <MenuSaveDraft savedFeedback={props.savedFeedback} isGenerating={props.isGenerating} onSaveDraft={props.onSaveDraft} /> : undefined,
       items: [
+        ...(mobileMenu ? [
+          { id: 'story-preview', label: 'Story Preview', icon: <Eye size={16} aria-hidden="true" />, onSelect: openPreview },
+        ] : []),
         { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={16} aria-hidden="true" className="text-neutral-400" />,
           active: showStoryBank, onSelect: onToggleStoryBank },
         ...(onOpenBlueprint ? [{ id: 'blueprint', label: 'Blueprint', icon: <SENBlueprintIcon size={16} aria-hidden="true" className="text-neutral-400" />,
           active: blueprintActive, onSelect: onOpenBlueprint }] : []),
         { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={16} aria-hidden="true" className="text-neutral-400" />,
           onSelect: openSettings },
+        ...(mobileMenu ? [{ id: 'home', label: 'Home', icon: <Home size={16} aria-hidden="true" />, onSelect: onNavigateHome }] : []),
       ],
     },
     tools: [
@@ -101,14 +127,21 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
       { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={20} />, active: settingsOpen, onSelect: openSettings },
     ],
     back: { onBack: () => { setSettingsOpen(false); onNavigateHome(); } },
-    // The creator's step strip is the phone's section navigation, so the phone
-    // bar keeps its room for Story Bank, Blueprint, Settings and Back.
+    // The creator supplies its own steps and puts its footer beside More.
     sectionsOnPhoneBar: false,
-  }), [props.seed, props.activeSection, props.onSelectSection, showStoryBank, onToggleStoryBank, onOpenBlueprint, blueprintActive, openSettings, settingsOpen, onNavigateHome]);
+    compactBar: props.compactNavigation,
+  }), [props.seed, props.activeSection, props.onSelectSection, showStoryBank, onToggleStoryBank, onOpenBlueprint, blueprintActive, openSettings, settingsOpen, onNavigateHome,
+    mobileMenu, props.compactNavigation, props.savedFeedback, props.isGenerating, props.onSaveDraft, openPreview]);
   const content = <StorySeedChromeContent {...props} workspace={workspace} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen}
     settingsReturnFocusRef={settingsReturnFocusRef} />;
   // A host mounting only the standalone header gets no task bar or drawer.
-  return props.layout === 'header' ? content : <LibraryNavigation mode="workspace" workspace={workspace}>{content}</LibraryNavigation>;
+  const preview = <WorkspaceSheet open={previewOpen} onOpenChange={setPreviewOpen} title="Story preview" closeLabel="Close story preview" returnFocusRef={settingsReturnFocusRef}>
+    <StorySeedLiveCard seed={props.seed} variant="full" />
+  </WorkspaceSheet>;
+  return props.layout === 'header' ? <>{content}{preview}</> : <LibraryNavigation mode="workspace" workspace={workspace}>
+    {content}{preview}
+    {mobileMenu && props.savedFeedback && <p className="seed-save-feedback" role="status">Draft saved</p>}
+  </LibraryNavigation>;
 }
 
 interface StorySeedChromeContentProps extends StorySeedWorkspaceChromeProps {

@@ -12,11 +12,12 @@ import { PinnedFooter } from './PinnedFooter';
  * and Next/Create sit in equal fixed cells and fill them, so a button never
  * grows or shrinks with its label.
  */
-export function CreatorStepFooter({ position, withParts = false, onMove, progress, manifest, manifestAside }: {
+export function CreatorStepFooter({ position, withParts = false, onMove, onConfirm, progress, manifest, manifestAside }: {
   position: CreatorPosition;
   /** True on a phone, where Origin and Arc are walked part by part. */
   withParts?: boolean;
   onMove: (position: CreatorPosition) => void;
+  onConfirm?: () => void;
   progress: ReactNode;
   manifest: ReactNode;
   manifestAside?: ReactNode;
@@ -39,7 +40,7 @@ export function CreatorStepFooter({ position, withParts = false, onMove, progres
         <div className="seed-creator-footer-cell">
           {next ? (
             <LibraryButton variant="secondary" size="md" fullWidth iconRight={<ArrowRight size={14} aria-hidden="true" />}
-              aria-label={`Next: ${positionLabel(next)}`} onClick={() => onMove(next)} className="seed-creator-footer-next">
+              aria-label={`Next: ${positionLabel(next)}`} onClick={() => { onConfirm?.(); onMove(next); }} className="seed-creator-footer-next">
               <span className="seed-creator-footer-next-label"><span className="seed-creator-footer-next-prefix">Next: </span>{positionLabel(next)}</span>
             </LibraryButton>
           ) : manifest}

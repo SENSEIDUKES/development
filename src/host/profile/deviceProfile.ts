@@ -133,6 +133,7 @@ export function createDeviceProfileStore({ storage, uid, now = () => new Date() 
         if (editable.accentColor !== undefined && !normalizeAccentColor(editable.accentColor)) delete editable.accentColor;
         else editable.accentColor = normalizeAccentColor(editable.accentColor);
       }
+      if ('familiarPersonal' in editable) editable.familiarPersonal = normalizeFamiliarPersonalizations(editable.familiarPersonal);
       const next = { ...read(), ...editable, updatedAt: now().toISOString() };
       write(next);
       listeners.forEach(listener => listener());

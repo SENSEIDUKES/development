@@ -484,6 +484,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             familiars={familiarAccount}
             options={familiarOptions}
             qiBalance={cultivation.snapshot?.balance ?? null}
+            qiState={cultivation.snapshot ? 'ready' : cultivation.status === 'loading' ? 'loading' : 'unavailable'}
             energyBalance={energyAccount.status === 'unavailable' ? undefined : energyAccount.snapshot?.available ?? null}
             activeFamiliarId={equippedOption?.id}
             displayName={profile?.displayName?.trim() || 'Cultivator'}

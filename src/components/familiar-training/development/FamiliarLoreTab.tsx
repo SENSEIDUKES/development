@@ -12,8 +12,10 @@ export interface FamiliarLoreTabProps {
   backstory?: string;
   /** Saves a rewritten backstory; null returns to SEIHouse's own. Omit where it cannot be personalized. */
   onBackstoryChange?: (backstory: string | null) => void;
-  /** Opens the editor at once (from the settings menu's Backstory row). */
+  /** Opens the editor at once (from the settings menu's Story row). */
   editRequest?: number;
+  /** Called once a request has opened the editor, so returning to this tab does not reopen it. */
+  onEditRequestHandled?: () => void;
 }
 
 /**
@@ -21,14 +23,17 @@ export interface FamiliarLoreTabProps {
  * SEIHouse supplies a one-line description; the cultivator may rewrite it as
  * their own, and can always return to the original.
  */
-export function FamiliarLoreTab({ option, name, element, backstory, onBackstoryChange, editRequest }: FamiliarLoreTabProps) {
+export function FamiliarLoreTab({ option, name, element, backstory, onBackstoryChange, editRequest, onEditRequestHandled }: FamiliarLoreTabProps) {
   const fieldId = useId();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const story = backstory ?? option.description;
   const startEditing = () => { setDraft(story); setEditing(true); };
   useEffect(() => {
-    if (editRequest && onBackstoryChange) startEditing();
+    if (editRequest && onBackstoryChange) {
+      startEditing();
+      onEditRequestHandled?.();
+    }
     // Only a new request opens the editor; the story itself changing must not.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editRequest]);
@@ -46,7 +51,8 @@ export function FamiliarLoreTab({ option, name, element, backstory, onBackstoryC
 
   return (
     <div className="space-y-4" data-familiar-lore={option.id}>
-      <MotionPicture className="familiar-lore-picture" stillUrl={option.portraitUrl ?? option.stillUrl} videoUrl={option.videoUrl} alt={`${name}, ${option.name} Familiar`} />
+      <MotionPicture className="familiar-lore-picture" stillUrl={option.portraitUrl ?? option.stillUrl} videoUrl={option.videoUrl} alt={`${name}, ${option.name} Familiar`}
+        stillFallback={option.portraitUrl ? <img src={option.stillUrl} alt="" className="motion-picture-still" /> : undefined} />
       {!option.videoUrl ? <p className="familiar-stage-fineprint" data-familiar-lore-video="none">{name}’s video is still being made.</p> : null}
       <dl className="familiar-lore-facts">
         <div><dt>Rarity</dt><dd>{familiarRarityLabel(option.rarity)}</dd></div>

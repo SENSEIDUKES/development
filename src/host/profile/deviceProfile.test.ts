@@ -76,6 +76,9 @@ describe('The reader\'s profile on this device', () => {
   it('keeps each Familiar\'s own name and story across reloads, trimmed and capped, dropping damaged entries', () => {
     const { storage } = memory();
     const store = createDeviceProfileStore({ storage, uid: 'reader' });
+    // A name past the cap is trimmed when saved, not only after a reload.
+    store.save({ familiarPersonal: { phoenix: { name: 'P'.repeat(55) } } });
+    expect(store.read().familiarPersonal).toEqual({ phoenix: { name: 'P'.repeat(40) } });
     store.save({ familiarPersonal: { quill: { name: 'Inkling', backstory: 'Found in my first novel.' } } });
     expect(createDeviceProfileStore({ storage, uid: 'reader' }).read().familiarPersonal).toEqual({ quill: { name: 'Inkling', backstory: 'Found in my first novel.' } });
     const damaged = JSON.stringify({ familiarPersonal: { quill: { name: `  ${'N'.repeat(60)}  `, backstory: 7 }, phoenix: { name: '   ' }, golem: 'nope' } });

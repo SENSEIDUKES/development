@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import FocusLock from 'react-focus-lock';
 import { useOverlayScrollbar } from '@seihouse/ui';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
@@ -100,7 +101,9 @@ export function FamiliarSettingsMenu({ settings, familiar, onNameChange, onRewri
   };
 
   // Above the whole app, header and bottom navigation included, like a console's options screen.
+  // Focus stays inside the menu while it is open (Tab and Shift+Tab wrap); it opens on its first control itself.
   return createPortal(
+    <FocusLock autoFocus={false}>
     <div className="familiar-settings library-scrollbars" role="dialog" aria-modal="true" aria-labelledby={titleId} data-familiar-settings>
       <div className="familiar-settings-panel" ref={scroller}>
         <h2 id={titleId} className="familiar-settings-title">Familiar settings</h2>
@@ -162,7 +165,8 @@ export function FamiliarSettingsMenu({ settings, familiar, onNameChange, onRewri
           <button type="button" onClick={onClose} data-familiar-settings-back>Back</button>
         </div>
       </div>
-    </div>,
+    </div>
+    </FocusLock>,
     document.body,
   );
 }

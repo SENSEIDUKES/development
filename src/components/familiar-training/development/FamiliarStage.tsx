@@ -40,6 +40,8 @@ export interface FamiliarStageProps {
   options: readonly FamiliarOption[];
   /** The cultivator's spendable QI, from the QI ledger; null while unknown. */
   qiBalance: number | null;
+  /** Whether the QI balance is still being read, or cannot be; defaults from `qiBalance` (null reads as loading). */
+  qiState?: 'ready' | 'loading' | 'unavailable';
   /** The cultivator's available Energy; null while unknown. Omit where Energy is not connected. */
   energyBalance?: number | null;
   /** The Active Familiar: the companion that follows the cultivator (host profile state). */
@@ -76,7 +78,7 @@ export interface FamiliarStageProps {
  * advantage.
  */
 export function FamiliarStage({
-  familiars, options, qiBalance, energyBalance, activeFamiliarId, displayName, onBack, backLabel = 'Return to cave',
+  familiars, options, qiBalance, qiState, energyBalance, activeFamiliarId, displayName, onBack, backLabel = 'Return to cave',
   onActivate, activating = false, onOpenStore, onOffered, offerAmounts = DEFAULT_OFFERS,
   settings, personal, onPersonalChange,
 }: FamiliarStageProps) {
@@ -94,8 +96,11 @@ export function FamiliarStage({
   const [focusedRank, setFocusedRank] = useState<FamiliarBondRank | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [storyRequest, setStoryRequest] = useState(0);
-  const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+  // Each result belongs to the Familiar it was asked for; it shows only while that Familiar is on the stage.
+  const [message, setMessage] = useState<{ familiarId: string; tone: 'success' | 'error'; text: string } | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
+  // A portrait that fails to load gives way to the animated hero and its still.
+  const [failedPortraits, setFailedPortraits] = useState<ReadonlySet<string>>(() => new Set());
   const offerRef = useRef<HTMLDivElement>(null);
   const settingsButton = useRef<HTMLButtonElement>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
@@ -113,13 +118,12 @@ export function FamiliarStage({
   const element = view?.element ?? null;
   const form = view?.unlockedForms.find(entry => entry.id === view.selection.formId) ?? null;
   const progress = view && owned ? bondProgress(view) : null;
-  // What bonding lends the name: the Active Familiar's live effect, or what this one would lend.
-  const resolvedActive = isActive ? activeNameEffect(snapshot, activeFamiliarId) : null;
-  const nameEffect = isActive ? resolvedActive?.effect ?? null : view && owned ? view.bondEffect : null;
+  // The effect the name wears once this Familiar is active, resolved against the account's own selection
+  // (its bond effect, its signature, a mastered element, or none).
+  const resolvedName = option && view && owned ? activeNameEffect(snapshot, option.id) : null;
+  const nameEffect = resolvedName?.effect ?? null;
   const nameCaption = !option || !view || !owned ? null
-    : isActive
-      ? resolvedActive ? `Your name wears ${resolvedActive.effect.label}` : 'Your name keeps your rank colours'
-      : `Make ${name} active and your name wears ${view.bondEffect.label}`;
+    : `${isActive ? 'Your name' : `Make ${name} active and your name`} ${resolvedName ? `wears ${resolvedName.effect.label}` : 'keeps your rank colours'}`;
 
   const go = (step: 1 | -1) => {
     swiped.current = true;
@@ -172,9 +176,9 @@ export function FamiliarStage({
     try {
       const response = await familiars.offerQi(option.id, amount);
       onOffered?.(response);
-      setMessage({ tone: 'success', text: response.message });
+      setMessage({ familiarId: option.id, tone: 'success', text: response.message });
     } catch (error) {
-      setMessage({ tone: 'error', text: error instanceof Error ? error.message : 'The offering could not be made. No QI was spent.' });
+      setMessage({ familiarId: option.id, tone: 'error', text: error instanceof Error ? error.message : 'The offering could not be made. No QI was spent.' });
     }
   };
   const chooseForm = async (formId: string | null) => {
@@ -183,7 +187,7 @@ export function FamiliarStage({
     try {
       await familiars.selectForm({ familiarId: option.id, formId });
     } catch (error) {
-      setMessage({ tone: 'error', text: error instanceof Error ? error.message : 'That form could not be chosen.' });
+      setMessage({ familiarId: option.id, tone: 'error', text: error instanceof Error ? error.message : 'That form could not be chosen.' });
     }
   };
   const closeSettings = () => {
@@ -208,7 +212,7 @@ export function FamiliarStage({
         <h2 id="familiar-stage-title" tabIndex={-1} className="familiar-stage-title">Familiar</h2>
         <div className="familiar-stage-topbar-end">
           <BalancePills
-            qi={{ amount: qiBalance, state: qiBalance === null ? 'unavailable' : 'ready' }}
+            qi={{ amount: qiBalance, state: qiState ?? (qiBalance === null ? 'loading' : 'ready') }}
             energy={energyBalance === undefined ? undefined : { amount: energyBalance, state: energyBalance === null ? 'loading' : 'ready' }} />
           {settings || onPersonalChange ? (
             <button ref={settingsButton} type="button" className="familiar-stage-icon-button" aria-label="Familiar settings" aria-haspopup="dialog"
@@ -224,8 +228,8 @@ export function FamiliarStage({
           data-familiar-slide={slideIds[current]} data-owned={owned || undefined}>
           {option ? (
             <div className="familiar-stage-art-frame" style={{ filter: familiarFormFilter(form) } as CSSProperties}>
-              {option.portraitUrl
-                ? <img src={option.portraitUrl} alt={`${option.name} Familiar`} className="familiar-stage-hero-image" decoding="async" data-familiar-portrait />
+              {option.portraitUrl && !failedPortraits.has(option.id)
+                ? <img src={option.portraitUrl} onError={() => setFailedPortraits(previous => new Set(previous).add(option.id))} alt={`${option.name} Familiar`} className="familiar-stage-hero-image" decoding="async" data-familiar-portrait />
                 : <FamiliarHero option={option} active className="familiar-stage-hero-image" />}
             </div>
           ) : (
@@ -287,7 +291,7 @@ export function FamiliarStage({
 
       <div className="familiar-stage-identity">
         {/* Offering and form results show here, on the stage, whether or not the details sheet is open. */}
-        {message ? (
+        {message && message.familiarId === option?.id ? (
           <p role={message.tone === 'error' ? 'alert' : 'status'} aria-live="polite" className="familiar-stage-message"
             data-tone={message.tone} data-familiar-message>{message.text}</p>
         ) : null}
@@ -346,7 +350,7 @@ export function FamiliarStage({
             ) : tab === 'elements' ? (
               <FamiliarElementsTab familiars={familiars} activeFamiliarId={activeFamiliarId} nameOf={nameOf} displayName={displayName} />
             ) : (
-              <FamiliarLoreTab option={option} name={name} element={element} backstory={personal?.[option.id]?.backstory} editRequest={storyRequest}
+              <FamiliarLoreTab option={option} name={name} element={element} backstory={personal?.[option.id]?.backstory} editRequest={storyRequest} onEditRequestHandled={() => setStoryRequest(0)}
                 onBackstoryChange={canPersonalize ? backstory => onPersonalChange!(option.id, { backstory }) : undefined} />
             )}
           </div>

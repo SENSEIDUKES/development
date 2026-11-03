@@ -87,7 +87,11 @@ export const FAMILIAR_BACKSTORY_MAX_LENGTH = 600;
 
 const personalText = (value: unknown, max: number) => {
   if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim().slice(0, max).trim();
+  let capped = value.trim().slice(0, max);
+  // Never keep half of an emoji (a lone high surrogate) when the cap cuts through one.
+  const last = capped.charCodeAt(capped.length - 1);
+  if (last >= 0xd800 && last <= 0xdbff) capped = capped.slice(0, -1);
+  const trimmed = capped.trim();
   return trimmed || undefined;
 };
 

@@ -30,7 +30,7 @@ export function BalancePill({ kind, amount, state = 'ready', className = '' }: B
   const known = state === 'ready' && amount !== null;
   const label = known ? `${formatter.format(amount)} ${NAMES[kind]} available` : `${NAMES[kind]} balance ${state === 'loading' ? 'loading' : 'unavailable'}`;
   return (
-    <span className={`balance-pill ${className}`.trim()} data-balance={kind} data-balance-state={known ? 'ready' : state} role="img" aria-label={label}>
+    <span className={`balance-pill ${className}`.trim()} data-balance={kind} data-balance-state={known ? 'ready' : state === 'loading' ? 'loading' : 'unavailable'} role="img" aria-label={label}>
       {kind === 'qi'
         ? <LibraryGlobalIcon name="qi-yin-yang" size="1.2em" className="balance-pill-mark" aria-hidden="true" />
         : <EnergySunIcon size="1.2em" className="balance-pill-mark" />}

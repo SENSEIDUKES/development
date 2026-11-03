@@ -433,6 +433,8 @@ export function createMockUserProfileServices({
       const next = { ...profileRef.current, familiarPersonal, updatedAt: new Date().toISOString() };
       profileRef.current = next;
       setProfile(next);
+      // Keep the draft in step, so a later identity save never writes an older map back.
+      setFormData(previous => ({ ...previous, familiarPersonal }));
     }, []);
 
     const handleLanguageChangeDirect = useCallback(

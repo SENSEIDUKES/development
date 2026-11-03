@@ -201,10 +201,26 @@
 /* The sheet: tabs always; details when opened. */
 .familiar-stage-sheet {
   grid-area: sheet; display: flex; flex-direction: column; min-height: 0;
-  margin: 0 max(0.5rem, env(safe-area-inset-right)) 0 max(0.5rem, env(safe-area-inset-left));
-  border-radius: 1.25rem 1.25rem 0 0; border: 1px solid rgba(255, 255, 255, 0.1); border-bottom: 0;
-  background: linear-gradient(180deg, rgba(10, 18, 32, 0.92), rgba(5, 9, 18, 0.96)); backdrop-filter: blur(14px);
+  /* A finished card on every side, clear of the navigation below: never a flat cut-off edge. */
+  margin: 0 max(0.5rem, env(safe-area-inset-right)) 0.5rem max(0.5rem, env(safe-area-inset-left));
+  border-radius: 1.25rem; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(10, 18, 32, 0.94), rgba(5, 9, 18, 0.97)); backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
 }
+.familiar-stage-sheet-title { display: none; }
+/* On a phone an opened sheet fills the page under the top bar: the stage steps aside until it closes. */
+.familiar-stage[data-sheet-full] { grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "top" "sheet"; }
+.familiar-stage[data-sheet-full] .familiar-stage-hero,
+.familiar-stage[data-sheet-full] .familiar-stage-identity,
+.familiar-stage[data-sheet-full] .familiar-stage-actions { display: none; }
+.familiar-stage[data-sheet-full] .familiar-stage-sheet { margin-top: 0.25rem; animation: familiar-stage-sheet-in 0.22s ease-out; }
+@keyframes familiar-stage-sheet-in { from { opacity: 0; transform: translateY(1.5rem); } }
+.familiar-stage[data-sheet-full] .familiar-stage-sheet-title {
+  display: block; padding: 0.7rem 1rem 0; text-align: center;
+  font-family: var(--font-display, serif); font-size: 1.05rem; color: #f4e5bd; overflow-wrap: anywhere;
+}
+.familiar-stage[data-sheet-full] .familiar-lore-picture { max-width: min(22rem, 100%); }
 .familiar-stage-tabs { display: flex; align-items: stretch; gap: 0.25rem; padding: 0.35rem; }
 .familiar-stage-tabs [role="tab"] {
   flex: 1; min-height: 2.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; color: rgb(212 212 212);
@@ -212,7 +228,12 @@
 .familiar-stage[data-sheet-open] .familiar-stage-tabs [role="tab"][aria-selected="true"] { background: #f1ead8; color: #0b1220; }
 .familiar-stage-tabs [role="tab"]:disabled, .familiar-stage-sheet-toggle:disabled { opacity: 0.4; }
 .familiar-stage-sheet-toggle { display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; border-radius: 9999px; color: rgb(212 212 212); }
-.familiar-stage-panel { display: none; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 0.5rem 1rem 1rem; }
+.familiar-stage-panel {
+  display: none; flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 0.5rem 1rem 2rem;
+  /* The last row fades into the card's edge instead of being sliced by it. */
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 1.75rem), transparent);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 1.75rem), transparent);
+}
 .familiar-stage[data-sheet-open] .familiar-stage-panel { display: block; }
 
 /* The thumb zone: the page's one main action. */
@@ -355,7 +376,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .familiar-stage-sky > span { animation: none !important; }
-  .familiar-stage-art[data-direction], .familiar-stage-offer-amounts { animation: none; }
+  .familiar-stage-art[data-direction], .familiar-stage-offer-amounts, .familiar-stage[data-sheet-full] .familiar-stage-sheet { animation: none; }
   .familiar-stage-art-frame, .familiar-stage-sky > span:nth-child(1) { transition: none; }
 }
 /* The page title takes focus when the page opens, for screen readers; it is not a control. */

@@ -142,6 +142,11 @@ Workshop previews and the account service remain separate.
 
 ## Workshop history
 
+- **2026-11-03:** From SENSEI's iPhone review: on a phone, opening Bond, Elements or Lore
+  fills the page under the top bar (the Familiar's name, the tabs and Close details;
+  Escape closes it too), and the sheet is a finished card on every side, ending above the
+  navigation with its content fading at the edge instead of being sliced. From 768px the
+  sheet still stands beside the stage.
 - **2026-11-02:** Remade as the Familiar page, phone first (SENSEI, after Genshin's talent
   screen for layout and Zelda's options list for settings). It is now the one home for
   everything Familiar: choosing the companion and its settings moved here from Settings,

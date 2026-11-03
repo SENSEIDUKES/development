@@ -15,7 +15,7 @@ folder; the Info page composes its cover face.
 | Info page | `WorldCardInfo` with `WorldCard face="info"` | The world detail (`light-novels-home` `StoryDetailScreen`) |
 | Full card | `WorldCard` | Home's discovery grid (`light-novels-home` `LightNovelsHome`) |
 | Compact | `WorldCard face="compact"` | Create's "Your worlds" row (`creator-space` `CreatorSpace`) |
-| Feature | `WorldCardFeature` in `WorldCardFeatureCarousel` | Home's Featured and Discover's featured spotlight |
+| Feature | `WorldCardFeature` in `WorldCardFeatureCarousel` | Home's Featured |
 | Menu | `WorldCardMenu` | Discover chapter updates and ranking rows |
 
 ## The four cards and how each one moves

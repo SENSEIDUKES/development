@@ -153,6 +153,8 @@ export const MULTILINGUAL_WORLDS: readonly {
 export function previewBrowseWorlds(state: WorldCardPreviewState): HomeWorld[] {
   const worlds = [...previewHomeGrid(state), ...BROWSE_EXTRA.map(([title, genre, imageUrl], index): HomeWorld => ({
     ...featuredNovel, id: `browse-${index}`, title, genre, imageUrl, videoUrl: undefined, chapterCount: 9 + index * 7,
+    // The sample extras are English worlds by SENSEI, with no synopsis of their own yet.
+    originalLanguage: 'en', creatorLanguage: 'en', titleTranslations: undefined, synopsis: undefined,
   }))];
   // Mixed activity, so the Compact dots can be judged side by side (a quiet world shows none).
   const ACTIVITY: (HomeWorld['activityStatus'])[] = ['active-now', 'active-this-week', 'quiet', 'active-now', undefined, 'active-this-week', 'quiet'];
@@ -160,10 +162,12 @@ export function previewBrowseWorlds(state: WorldCardPreviewState): HomeWorld[] {
   if (state.catalogue !== 'multilingual') return worlds;
   // The lead world stays the English sample; every other world comes from another language.
   return worlds.map((world, index) => {
-    if (index === 0) return { ...world, creatorName: 'Cultivator', creatorLanguage: 'en', creatorTitle: { element: 'fire', intensity: 'legendary' } };
+    // The lead world stays exactly the sample story, so every view shows the same creator.
+    if (index === 0) return world;
     const source = MULTILINGUAL_WORLDS[(index - 1) % MULTILINGUAL_WORLDS.length];
     return {
-      ...world, title: source.title, originalLanguage: source.language,
+      // Each world is its own story: it carries no other world's synopsis.
+      ...world, title: source.title, originalLanguage: source.language, synopsis: undefined,
       titleTranslations: source.english ? { en: source.english } : undefined,
       creatorName: source.creator, creatorLanguage: source.language,
       creatorTitle: { element: source.element, intensity: source.intensity },

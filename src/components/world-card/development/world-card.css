@@ -571,6 +571,16 @@
 }
 .world-card-carousel[data-moving='true'] .world-card-carousel-segment[data-state='current'] .world-card-carousel-fill { animation-play-state: running; }
 @keyframes world-card-carousel-fill { from { width: 0; } to { width: 100%; } }
+.world-card-carousel-pause {
+  position: absolute; z-index: 20; bottom: 0.45rem; inset-inline-start: 0.75rem; display: inline-grid; place-items: center;
+  width: 1.9rem; height: 1.9rem; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px;
+  background: rgba(5, 11, 18, 0.35); color: #f5f5f5; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.world-card-carousel-pause::after { content: ''; position: absolute; inset: -8px; }
+.world-card-carousel-pause svg { width: 0.85rem; height: 0.85rem; }
+.world-card-carousel-pause:hover { background: rgba(5, 11, 18, 0.55); }
+.world-card-carousel-pause:focus-visible { outline: 2px solid #04acff; outline-offset: 2px; }
+@media (min-width: 640px) { .world-card-carousel-pause { bottom: 0.8rem; inset-inline-start: 1rem; } }
 .world-card-carousel-step {
   position: absolute; z-index: 20; top: 50%; display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; transform: translateY(-50%);
   border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px; background: rgba(5, 11, 18, 0.25); color: #f5f5f5;
@@ -631,6 +641,10 @@
   white-space: nowrap; overflow-wrap: normal; word-break: keep-all;
   -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 0.9rem), transparent);
   mask-image: linear-gradient(90deg, #000 calc(100% - 0.9rem), transparent);
+}
+.world-card-compact-tile-creator:dir(rtl) {
+  -webkit-mask-image: linear-gradient(270deg, #000 calc(100% - 0.9rem), transparent);
+  mask-image: linear-gradient(270deg, #000 calc(100% - 0.9rem), transparent);
 }
 .world-card-compact-tile-creator > * { white-space: nowrap; overflow-wrap: normal; word-break: keep-all; unicode-bidi: isolate; }
 /* On the art's top-left corner (the sash keeps the bottom-right), with a soft glow of its own color. */
@@ -695,6 +709,7 @@
 .world-card-menu[data-language-host='top'] > .world-card-language-peek { top: 0.35rem; inset-inline-start: auto; inset-inline-end: 0; translate: none; }
 @media (hover: hover) { [data-language-host]:hover > .world-card-language-peek { opacity: 1; transform: none; } }
 [data-language-host]:focus-within > .world-card-language-peek,
+.world-card-compact-tile:has(.world-card-compact-tile-open:focus-visible) [data-language-host] > .world-card-language-peek,
 [data-language-peek='true'] > .world-card-language-peek { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .world-card-language-peek { transition: none; transform: none; } }
 :is(.world-card-compact-tile-title, .world-card-caption-title, .world-card-banner-title, .world-card-menu-title,

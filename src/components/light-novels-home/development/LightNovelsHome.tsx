@@ -7,6 +7,7 @@ import type { LightNovelsHomeProps } from '../shared/homeContracts';
 import { WorldCard } from '../../world-card/development/WorldCard';
 import { WorldCardFeature } from '../../world-card/development/WorldCardFeature';
 import { WorldCardFeatureCarousel, type WorldCardFeatureSlide } from '../../world-card/development/WorldCardFeatureCarousel';
+import { resolveWorldTitle, useWorldCardReaderLanguage } from '../../world-card/development/worldCardText';
 import { HomeEvents } from './HomeEvents';
 import { SpokenCode } from '@seihouse/sen/presentation';
 import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
@@ -17,6 +18,8 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
   // moving the way every Feature card moves (the shared World Card carousel).
   const [currentSlide, setCurrentSlide] = useState(0);
   const heroActive = active && currentSlide === 0;
+  // Each world's segment is named with the title its Feature card shows the reader.
+  const readerLanguage = useWorldCardReaderLanguage();
 
   const { homeVideos: HERO_VIDEOS = [], homeImages: CELESTIAL_FALLBACK_IMAGES = [] } = useLibraryAssets();
   const [currentVideoIdx, setCurrentVideoIdx] = useState(0);
@@ -189,7 +192,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
           </LibraryPanel>
           </>,
         }, ...featuredWorlds.map((world): WorldCardFeatureSlide => ({
-          id: world.id, label: world.title,
+          id: world.id, label: resolveWorldTitle(world, readerLanguage).text,
           render: onScreen => <WorldCardFeature world={world} active={onScreen}
             displayStatus={world.publicationStatus ? { view: 'public', value: world.publicationStatus } : undefined}
             onOpen={() => onOpenWorld(world.id)} />,

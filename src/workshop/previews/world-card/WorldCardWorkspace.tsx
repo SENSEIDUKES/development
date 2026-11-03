@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
 import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
-import { WorldCard, WorldCardCompactGrid, WorldCardCompactPicks, WorldCardCompactTile, WorldCardFeature, WorldCardFeatureCarousel, WorldCardLanguageProvider, WorldCardMenu, languageName } from '@seihouse/library/world-card';
+import { WorldCard, WorldCardCompactGrid, WorldCardCompactPicks, WorldCardCompactTile, WorldCardFeature, WorldCardFeatureCarousel, WorldCardLanguageProvider, WorldCardMenu, languageName, resolveWorldTitle } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
@@ -134,10 +134,10 @@ function WorldCardStageCards({ view, state, onAction }: {
             portal={{ expansions: state.destinations === 'all' ? featuredExpansions : [] }}
             />
     </Stage>}
-    {!openedWorld && show('feature') && <Stage title="Feature card" note="Home's and Discover's spotlight. The world plays behind its name; touch and hold to pause, swipe to turn, tap to enter.">
+    {!openedWorld && show('feature') && <Stage title="Feature card" note="Home's spotlight row. The world plays behind its name; touch and hold to pause, swipe to turn, tap to enter.">
       <WorldCardFeatureCarousel label="Featured"
         slides={previewBrowseWorlds(state).slice(0, 3).map(world => ({
-          id: world.id, label: world.title,
+          id: world.id, label: resolveWorldTitle(world, state.readerLanguage).text,
           render: (onScreen: boolean) => <WorldCardFeature world={world} active={onScreen}
             senSash={world.id === story.id && state.sash === 'shown'} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]}
             onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />,

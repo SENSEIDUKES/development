@@ -68,12 +68,17 @@ export interface WorldTitleText {
 export function resolveWorldTitle(world: WorldTextWorld, readerLanguage?: string): WorldTitleText {
   const original = world.originalLanguage?.trim() || undefined;
   const reader = readerLanguage?.trim() || undefined;
-  if (!reader || !original || base(original) === base(reader)) return { text: world.title, lang: original };
-  const translations = world.titleTranslations ?? {};
-  const key = Object.keys(translations).find(code => code === reader)
-    ?? Object.keys(translations).find(code => base(code) === base(reader));
-  const translated = key ? translations[key]?.trim() : undefined;
-  if (translated) return { text: translated, lang: key };
+  if (!reader || !original) return { text: world.title, lang: original };
+  // Only real translations count: a blank entry never hides a usable one.
+  const translations = Object.entries(world.titleTranslations ?? {})
+    .map(([code, text]) => [code, text?.trim()] as const).filter(([, text]) => Boolean(text));
+  // The reader's exact language first (a zh-TW reader of a zh-CN world gets its zh-TW title),
+  // then the original when it already shares the reader's base language, then any regional match.
+  const exact = translations.find(([code]) => code.toLowerCase() === reader.toLowerCase());
+  if (exact) return { text: exact[1]!, lang: exact[0] };
+  if (base(original) === base(reader)) return { text: world.title, lang: original };
+  const regional = translations.find(([code]) => base(code) === base(reader));
+  if (regional) return { text: regional[1]!, lang: regional[0] };
   return { text: world.title, lang: original, foreignTag: languageTag(original), foreignLanguage: original };
 }
 
@@ -122,7 +127,9 @@ export function useLanguagePeek(title: WorldTitleText, placement: 'above' | 'top
     'data-language-peek': held ? 'true' : undefined,
     onPointerDown: (event: PointerEvent) => {
       if (event.pointerType === 'mouse') return;
+      // A new press starts clean: a pop-up left from an earlier hold closes.
       peeked.current = false;
+      setHeld(false);
       start.current = { x: event.clientX, y: event.clientY };
       clearTimeout(timer.current);
       timer.current = setTimeout(() => {

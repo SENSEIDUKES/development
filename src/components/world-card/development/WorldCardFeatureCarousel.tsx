@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import './world-card.css';
 
 /** One slide of the Feature carousel. `render` learns whether it is the slide on screen. */
@@ -25,7 +25,8 @@ function prefersReducedMotion() {
  * The Feature card's one way of moving: sideways, one slide at a time. It advances on its own,
  * and a segmented bar along the bottom fills for the slide on screen, like a story. Pointing at
  * it, focusing in it or resting a finger on it holds the slide (the bar pauses where it is); a
- * sideways swipe turns it, and a tap on a segment jumps to that slide. It is the only thing on a
+ * sideways swipe turns it, a tap on a segment jumps to that slide, and a pause button stops it until
+ * the reader plays it again. It is the only thing on a
  * page that moves by itself. Home, Discover and the Workshop all use this one carousel.
  */
 export function WorldCardFeatureCarousel({ slides, active = true, label = 'Featured', slideMs = FEATURE_SLIDE_MS, onSlideChange, className = '', style, ...rest }: {
@@ -39,6 +40,8 @@ export function WorldCardFeatureCarousel({ slides, active = true, label = 'Featu
   const count = slides.length;
   const [slide, setSlide] = useState(0);
   const [held, setHeld] = useState(false);
+  // The reader's own pause stays until they play again; a hold clears on its own.
+  const [paused, setPaused] = useState(false);
   const current = count ? slide % count : 0;
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
@@ -50,7 +53,8 @@ export function WorldCardFeatureCarousel({ slides, active = true, label = 'Featu
   useEffect(() => { onChange.current?.(current); }, [current]);
   // A new slide gets its full time; a held one keeps what it had left, as its bar does.
   useEffect(() => { remaining.current = slideMs; }, [current, slideMs]);
-  const moving = active && count > 1 && !held && !prefersReducedMotion();
+  const reducedMotion = prefersReducedMotion();
+  const moving = active && count > 1 && !held && !paused && !reducedMotion;
   useEffect(() => {
     if (!moving) return;
     const startedAt = Date.now();
@@ -59,7 +63,7 @@ export function WorldCardFeatureCarousel({ slides, active = true, label = 'Featu
       clearTimeout(timer);
       remaining.current = Math.max(0, remaining.current - (Date.now() - startedAt));
     };
-  }, [moving, current, count]);
+  }, [moving, current, count, slideMs]);
 
   if (!count) return null;
   return <section aria-roledescription="carousel" aria-label={label} {...rest}
@@ -67,7 +71,8 @@ export function WorldCardFeatureCarousel({ slides, active = true, label = 'Featu
     style={{ '--world-card-carousel-ms': `${slideMs}ms`, ...style } as CSSProperties}
     onPointerEnter={event => { if (event.pointerType === 'mouse') setHeld(true); }}
     onPointerLeave={event => { if (event.pointerType === 'mouse') setHeld(false); }}
-    onFocus={() => setHeld(true)}
+    // Focus holds the slide, except on the pause button, so Play takes effect at once.
+    onFocus={event => { if (!(event.target as Element).closest('.world-card-carousel-pause')) setHeld(true); }}
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHeld(false); }}
     onPointerDown={event => {
       swiped.current = false;
@@ -106,6 +111,11 @@ export function WorldCardFeatureCarousel({ slides, active = true, label = 'Featu
           <span key={index === current ? `on-${current}` : 'off'} className="world-card-carousel-fill" />
         </button>)}
       </div>
+      {/* A visible pause for anything that moves on its own (WCAG 2.2.2); none when nothing moves. */}
+      {!reducedMotion && <button type="button" className="world-card-carousel-pause" aria-pressed={paused}
+        aria-label={paused ? `Play ${label.toLowerCase()}` : `Pause ${label.toLowerCase()}`} onClick={() => setPaused(value => !value)}>
+        {paused ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
+      </button>}
       {/* Small glass arrows on the edges for pointers; touch swipes instead. */}
       <button type="button" className="world-card-carousel-step" data-side="previous" aria-label={`Previous ${label.toLowerCase()}`} onClick={() => show(current - 1)}>
         <ChevronLeft aria-hidden="true" />

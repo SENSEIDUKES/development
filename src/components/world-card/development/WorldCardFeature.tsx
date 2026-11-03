@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { GitBranch } from 'lucide-react';
 import { ElementalTitle } from '@seihouse/ui';
 import { useDominantColor } from '@seihouse/sen/motion-picture';
@@ -19,7 +19,9 @@ import './world-card.css';
 export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featured', senSash = false, active = true, actionLabel = 'Enter World' }: WorldCardFeatureProps) {
   const imageUrl = world.imageUrl?.trim() || undefined;
   const heroImageUrl = world.heroImageUrl?.trim() || undefined;
-  const stillUrl = heroImageUrl ?? imageUrl;
+  // A wide still that fails to load gives way to the cover, as a cover gives way to its fallback.
+  const [failedStill, setFailedStill] = useState<string>();
+  const stillUrl = heroImageUrl && heroImageUrl !== failedStill ? heroImageUrl : imageUrl;
   const videoUrl = world.heroVideoUrl?.trim() || world.videoUrl?.trim() || undefined;
   const glowColor = useDominantColor(stillUrl);
   const video = useRef<WorldCardBackdropVideoHandle>(null);
@@ -43,11 +45,12 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
   const openLabel = `Open ${title.text}${language.spokenLanguage ? `, in ${language.spokenLanguage}` : ''}, ${world.chapterCount} chapters${world.creatorName ? `, creator ${world.creatorName}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
 
   return <article className="world-card-banner" data-world-card="feature" id={`feature-world-${world.id}`}
-    data-hero={heroImageUrl || world.heroVideoUrl?.trim() ? 'wide' : 'cover'}
+    data-hero={(heroImageUrl && heroImageUrl !== failedStill) || world.heroVideoUrl?.trim() ? 'wide' : 'cover'}
     style={{ '--world-card-glow': glowColor } as CSSProperties} {...language.hostProps}>
     {language.peek}
     {stillUrl
-      ? <img className="world-card-banner-still" src={stillUrl} alt="" aria-hidden="true" draggable={false} />
+      ? <img className="world-card-banner-still" src={stillUrl} alt="" aria-hidden="true" draggable={false}
+          onError={() => { if (stillUrl === heroImageUrl) setFailedStill(heroImageUrl); }} />
       : <span className="world-card-banner-still" data-empty="true" aria-hidden="true" />}
     {/* The world's hero loop plays silently over its still while this slide is on screen. */}
     <WorldCardBackdropVideo ref={video} src={videoUrl} className="world-card-banner-video" autoStart={active} />

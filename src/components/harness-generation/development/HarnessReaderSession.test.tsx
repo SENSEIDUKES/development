@@ -81,18 +81,20 @@ const story = async ({ written = 0, replies, language }: { written?: number; rep
 };
 
 /** A host like the Library workspace: it follows the controller and writes chapters with its model. */
-function Host({ controller, storyId, readerState, renderWriting, renderWriteAside, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices, readerFonts, chapterBody, renderHostTools }: {
+function Host({ controller, storyId, readerState, renderWriting, renderWriteAside, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices, readerFonts, chapterBody, renderHostTools, creator, openAtChapter }: {
   controller: HarnessGenerationController; storyId: string; readerState?: ReaderStateRepository;
   renderWriting?: (writing: HarnessReaderWriting) => React.ReactNode; renderWriteAside?: (written: number) => React.ReactNode;
   startOnOpen?: boolean; canWrite?: boolean; canRewrite?: boolean;
   readerPreferences?: ReaderPreferenceStorage; readAloudVoices?: ReadAloudVoicePicks;
   readerFonts?: ReaderFonts; chapterBody?: ReaderChapterBody; renderHostTools?: (tools: ReaderHostTools) => React.ReactNode;
+  creator?: boolean; openAtChapter?: number;
 }) {
   const [state, setState] = useState(controller.snapshot());
   useEffect(() => { const stop = controller.subscribe(setState); return () => { stop(); }; }, [controller]);
   return <HarnessReaderSession state={state} storyId={storyId} controller={controller} onClose={() => undefined}
     readerStateRepository={readerState} renderWriting={renderWriting} renderWriteAside={renderWriteAside} startOnOpen={startOnOpen}
     readerPreferences={readerPreferences} readAloudVoices={readAloudVoices} readerFonts={readerFonts} chapterBody={chapterBody} renderHostTools={renderHostTools}
+    creator={creator} openAtChapter={openAtChapter}
     onGenerateNextChapter={canWrite ? async () => { await controller.generateNextChapter(storyId, 'test-model'); } : undefined}
     onRewriteChapter={canRewrite ? async note => { await controller.rewriteLatestChapter(storyId, 'test-model', note); } : undefined} />;
 }
@@ -346,6 +348,27 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     await mount(<Host controller={controller} storyId={storyId} canWrite={false} />);
     expect(chapterOnScreen(1)).toBeTruthy();
     expect(buttonBy(button => button.textContent === 'Rewrite this chapter')).toBeUndefined();
+  });
+
+  it('a reader who does not control the novel has Fate alone: one tap, no Create mode and no rewrite', async () => {
+    const { controller, storyId } = await story({ written: 1 });
+    await mount(<Host controller={controller} storyId={storyId} canRewrite creator={false} />);
+    expect(chapterOnScreen(1)).toBeTruthy();
+    expect(buttonBy(byLabel('Fate and Create'))).toBeUndefined();
+    expect(buttonBy(byLabel('Create mode'))).toBeUndefined();
+    expect(buttonBy(button => button.textContent === 'Rewrite this chapter')).toBeUndefined();
+    await click(byLabel('Open Fate'), 'Open Fate');
+    expect(document.querySelector('[data-testid="reader-panel-fate"] [data-testid="fate-page"]')).toBeTruthy();
+  });
+
+  it('the creator\'s Reader keeps Fate and Create together, and opens at the chapter it was asked for', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    await mount(<Host controller={controller} storyId={storyId} openAtChapter={1} />);
+    expect(chapterOnScreen(1)).toBeTruthy();
+    expect(chapterOnScreen(2)).toBeNull();
+    await click(byLabel('Fate and Create'), 'Fate and Create');
+    expect(buttonBy(byLabel('Create mode'))).toBeTruthy();
+    expect(buttonBy(byLabel('Open Fate'))).toBeTruthy();
   });
 
   it('Start Story begins Chapter 1 as the Reader opens, once', async () => {

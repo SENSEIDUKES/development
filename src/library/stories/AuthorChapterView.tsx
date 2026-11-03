@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft, LoaderCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, BookOpen, LoaderCircle, Sparkles } from 'lucide-react';
 import { findStory } from '@seihouse/sen/harness-generation';
 import { HighlightEngine } from '@seihouse/sen/highlight-engine';
 import { LibraryButton, ManifestButton } from '@seihouse/library-ui';
@@ -12,18 +12,21 @@ import type { LibraryStories } from './useLibraryStories';
  * they landed, the tagger's findings beside it, one kind per line, and Tag
  * this chapter. Each finding is a switch that lights its kind alone, so a
  * Sound Cue, a speaker or a holding is found at a glance. The prose is never
- * editable here. Only the author ever sees it.
+ * editable here. Only the author ever sees it. Read it opens the chapter in
+ * the creator's Reader, as a reader will read it, with Fate and Create beside it.
  */
 
 const keepProse = () => undefined;
 const ALL_KINDS: ReadonlySet<ChapterTaggingKind> = new Set(CHAPTER_TAGGING_KINDS.map(entry => entry.kind));
 
-export function AuthorChapterView({ stories, storyId, chapterNumber, onBack }: {
+export function AuthorChapterView({ stories, storyId, chapterNumber, onBack, onRead }: {
   stories: LibraryStories;
   storyId: string;
   chapterNumber: number;
   /** Back to the world's chapters. */
   onBack: () => void;
+  /** Read it: this chapter in the creator's Reader. Without it, there is no Read it. */
+  onRead?: () => void;
 }) {
   const { state, controller, canGenerate } = stories;
   const [shown, setShown] = useState<ReadonlySet<ChapterTaggingKind>>(ALL_KINDS);
@@ -64,7 +67,10 @@ export function AuthorChapterView({ stories, storyId, chapterNumber, onBack }: {
     : account.status === 'failed' ? 'The tagger could not read this chapter' : 'Not tagged yet';
 
   return <div data-testid="author-chapter" data-chapter-number={chapter.chapterNumber} data-tagging-status={account.status}>
-    <LibraryButton variant="ghost" size="sm" icon={ArrowLeft} onClick={onBack}>Chapters</LibraryButton>
+    <div className="flex items-center justify-between gap-3">
+      <LibraryButton variant="ghost" size="sm" icon={ArrowLeft} onClick={onBack}>Chapters</LibraryButton>
+      {onRead && <LibraryButton variant="secondary" size="sm" icon={BookOpen} onClick={onRead} data-testid="author-chapter-read">Read it</LibraryButton>}
+    </div>
 
     <header className="mt-4">
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/60">Chapter {chapter.chapterNumber} of {chapters.length}</p>

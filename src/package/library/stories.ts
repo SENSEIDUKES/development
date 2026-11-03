@@ -18,7 +18,7 @@ export {
   type StoryBlueprintAccess,
   type StoryBlueprintViewProps,
 } from '../../library/stories/StoryBlueprint';
-export { harnessStoryDisplay, storyHomeWorlds } from '../../library/stories/storyView';
+export { harnessStoryDisplay, isStoryPublished, storyHomeWorlds } from '../../library/stories/storyView';
 export { LIBRARY_READ_ALOUD_VOICES } from '../../library/stories/readAloudVoices';
 export { LIBRARY_READER_FONTS } from '../../library/stories/readerFonts';
 export { StorySettings } from '../../library/stories/settings/StorySettings';

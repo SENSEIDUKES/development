@@ -1,5 +1,16 @@
 # NovelExpanded app
 
+- **2026-11-03** — **A book stays in Create until its creator publishes it** (SENSEI). Start Story no longer
+  puts a new book in front of readers: it opens the creator's Reader in Create
+  (`?page=create&world=<id>&read=1`), where Chapter 1 arrives and Fate and Create sit
+  together as before; its Back returns to the book in Create. Home, Search and Discover
+  list only published books (`visibility: 'public'`); the Creator Space lists every
+  book with its Draft or Public badge. The author's world view has **Read** and
+  **Publish** (asked once; a published book can return to a draft), and a chapter
+  there has **Read it**, which opens that chapter in the creator's Reader. A reader's
+  Reader (`?story=<id>&read=1`) has **Fate alone**: no Create mode, no Rewrite, and it
+  never writes a chapter. A draft opened there goes to the creator's Reader. The
+  Creator Space's Continue opens the creator's Reader. Sealing is unchanged.
 - **2026-11-01** — Model Router tiers: readers choose Mortal, Immortal or Heaven; the team sets the model behind each.
 - **2026-11-01** — Settings › Familiar › Say “Familiar” (beta) calls the Familiar by voice; live talk hangs up after a quiet moment and is charged by the started 20 seconds (3 / 6 / 9 Energy a minute).
 - **2026-11-01** — Settings › Advanced Tools › Usage: what this device made (chapters, pictures, Familiar talk, worlds) and its Energy, with a Behind the scenes view of models and token counts. Recorded in this browser for 90 days (`src/host/usage/`). Chapters cost 2 Energy.
@@ -144,14 +155,15 @@ rewrites and every page survives a reload.
 | Create | `/app/?page=create` | The Library's Creator Space: the reader's worlds (Continue, Studio), Energy, the Creator Toolkit previews and Create |
 | A world, for its author | `/app/?page=create&world=<id>` (`&chapter=<n>` for one chapter) | What a world opens to when its author taps it under Your worlds: the author's worlds as mini world cards, Novel (Sequential Art later), and Blueprint, Chapters, Codex (coming) and Assets (`AuthorWorldView`). Chapters is the iTunes list where chapters are checked and tagged a few at a time; a chapter opens with its tags lit. The only place in the app where tagging is seen |
 | Story Seed | `/app/?page=create&seed=new` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story; `&seed=<id>` opens a saved seed |
+| The creator's Reader | `/app/?page=create&world=<id>&read=1` (`&chapter=<n>` to open at a chapter) | The Reader with Fate and Create together, where the creator writes the next chapter; opened by Start Story, Continue, the world view's Read and a chapter's Read it. Back returns to the book in Create |
 | Story View | `/app/?story=<id>` | The story's World Info page: Begin Story or Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
-| Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
+| Reader | `/app/?story=<id>&read=1` | A reader's Reader for a published book: Fate alone, never writing. A draft opened here goes to the creator's Reader |
 | Blueprint | `/app/?story=<id>&blueprint=1` | The story's own World Blueprint, opened from World Info's Blueprint button. Every story on the device is the reader's own, so it opens for its creator: editable while the novel is private, saved as a new Foundation revision the next chapter uses |
 | Profile | `/app/?page=profile` | The Library's Cultivator Cave; its own pages in `cave` (Settings: `&cave=/settings`). |
 
 - Home, Discover, the Creator Space and Story View sit in the Library Shell; Story Seed runs in the shell's workspace mode; Profile is the Cave, which draws the same shell itself; the Reader is full-screen (below).
 - Moving inside the app adds a browser history entry, so Back and Forward walk the same pages.
-- Manifest Story replaces Create with the new story, so Back from it goes Home.
+- Manifest Story replaces Create with the new story's creator's Reader, so Back from it goes to the book in Create.
 - `/app` without the slash redirects to `/app/` (the Vite dev and preview servers, and `vercel.json`).
 - A story id the app does not have goes Home.
 

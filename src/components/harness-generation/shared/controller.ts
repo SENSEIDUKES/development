@@ -680,6 +680,25 @@ export class HarnessGenerationController {
   }
 
   /**
+   * Publishes the story or returns it to a draft. A story begins private and
+   * stays in Create until its creator publishes it; only a public story is
+   * offered to readers. Publishing changes who may read it, never its chapters
+   * or its Codex, so a chapter waiting on the reader does not hold it back.
+   */
+  async setStoryVisibility(storyId: string, visibility: HarnessStoryVisibility): Promise<HarnessStory> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the chapter being written before publishing.');
+    const candidate = cloneHarnessValue(this.state);
+    const story = findStory(candidate, storyId);
+    if (!story) throw new Error('Open a Harness story before publishing it.');
+    if ((story.visibility ?? 'private') === visibility) return cloneHarnessValue(story);
+    story.visibility = visibility;
+    story.updatedAt = this.runtime.now();
+    await this.persist(candidate);
+    return cloneHarnessValue(story);
+  }
+
+  /**
    * Changes the story's Reading Mode, a Story Setting owned by the story's
    * owner. It applies to chapters written from now on; committed chapters keep
    * the mode they were written in. The HARNESS resolves the matching

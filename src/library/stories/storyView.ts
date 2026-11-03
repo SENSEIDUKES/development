@@ -56,3 +56,12 @@ export function storyHomeWorlds(state: HarnessWorkspaceState, covers?: Pick<Stor
       return display ? [display] : [];
     });
 }
+
+/**
+ * Whether a story has been published: a story stays in its creator's Create
+ * until they publish it, and only a published story is offered to readers
+ * (Home, Search and the public Reader).
+ */
+export function isStoryPublished(story: Pick<HarnessWorkspaceState['stories'][number], 'visibility'>): boolean {
+  return story.visibility === 'public';
+}

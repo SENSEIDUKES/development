@@ -41,6 +41,16 @@ it('shows the cover with nothing on it, then title, creator and one line, and op
   expect(container.querySelector('.world-card-compact-tile-detail')).toBeNull();
 });
 
+it('shows a still activity dot for a living world, and none for a quiet one', () => {
+  act(() => root.render(<WorldCardCompactTile world={{ ...world(1), activityStatus: 'active-now' }} onOpen={() => {}} />));
+  const dot = container.querySelector('.world-card-compact-tile-activity')!;
+  expect(dot.getAttribute('data-activity')).toBe('active-now');
+  expect(dot.getAttribute('title')).toBe('Active now');
+  expect(container.querySelector('.world-card-compact-tile-open')?.getAttribute('aria-label')).toBe('Open World 1, Xianxia, Active now');
+  act(() => root.render(<WorldCardCompactTile world={{ ...world(1), activityStatus: 'quiet' }} onOpen={() => {}} />));
+  expect(container.querySelector('.world-card-compact-tile-activity')).toBeNull();
+});
+
 it('deals a fixed set of eight and switches to the next set, wrapping around', () => {
   const worlds = Array.from({ length: 10 }, (_, index) => world(index));
   act(() => root.render(<WorldCardCompactPicks title="Cheering Reads" worlds={worlds} onOpenWorld={() => {}} />));

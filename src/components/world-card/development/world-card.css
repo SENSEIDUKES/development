@@ -633,6 +633,19 @@
   mask-image: linear-gradient(90deg, #000 calc(100% - 0.9rem), transparent);
 }
 .world-card-compact-tile-creator > * { white-space: nowrap; overflow-wrap: normal; word-break: keep-all; unicode-bidi: isolate; }
+.world-card-compact-tile-activity {
+  display: inline-block; width: 0.42rem; height: 0.42rem; margin-inline-end: 0.35em; border-radius: 50%; vertical-align: 0.06em;
+  box-shadow: 0 0 0 2px rgba(4, 6, 13, 0.9), 0 0 6px currentColor;
+}
+.world-card-compact-tile-activity[data-activity='active-now'] { color: rgba(52, 211, 153, 0.7); }
+.world-card-compact-tile-activity[data-activity='active-this-week'] { color: rgba(251, 191, 36, 0.45); }
+/* A small cover: the sash takes a larger share of the corner and smaller lettering, so SEN and
+   both stars stay inside the band. */
+.world-card-compact-tile-cover .world-card-ribbon { width: 56cqw; height: 56cqw; }
+.world-card-compact-tile-cover .world-card-ribbon > span {
+  width: 96cqw; gap: 0.3em; font-size: clamp(0.4375rem, 7.4cqw, 0.625rem); letter-spacing: 0.16em; padding-left: 0.16em;
+  transform: translate(-50%, -50%) translate(10cqw, 10cqw) rotate(-45deg);
+}
 .world-card-compact-tile-detail {
   color: rgba(229, 231, 235, 0.55); font-family: sans-serif; font-size: 0.6875rem; line-height: 1.2;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;

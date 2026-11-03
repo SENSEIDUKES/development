@@ -154,6 +154,9 @@ export function previewBrowseWorlds(state: WorldCardPreviewState): HomeWorld[] {
   const worlds = [...previewHomeGrid(state), ...BROWSE_EXTRA.map(([title, genre, imageUrl], index): HomeWorld => ({
     ...featuredNovel, id: `browse-${index}`, title, genre, imageUrl, videoUrl: undefined, chapterCount: 9 + index * 7,
   }))];
+  // Mixed activity, so the Compact dots can be judged side by side (a quiet world shows none).
+  const ACTIVITY: (HomeWorld['activityStatus'])[] = ['active-now', 'active-this-week', 'quiet', 'active-now', undefined, 'active-this-week', 'quiet'];
+  worlds.forEach((world, index) => { if (index > 0) world.activityStatus = ACTIVITY[index % ACTIVITY.length]; });
   if (state.catalogue !== 'multilingual') return worlds;
   // The lead world stays the English sample; every other world comes from another language.
   return worlds.map((world, index) => {

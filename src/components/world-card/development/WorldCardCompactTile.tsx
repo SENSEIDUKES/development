@@ -4,12 +4,13 @@ import { ElementalTitle } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldCardCover } from './WorldCardCover';
 import { WorldCardRibbon } from './WorldCardRibbon';
+import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
 import { authorText, useLanguagePeek, useWorldTitle } from './worldCardText';
 import './world-card.css';
 
 /** What a Compact tile reads from a world; a Home world supplies it. */
 export type WorldCardCompactWorld = Pick<HomeWorld, 'id' | 'title' | 'imageUrl' | 'genre' | 'creatorName' | 'creatorTitle'
-  | 'creatorLanguage' | 'originalLanguage' | 'titleTranslations'>;
+  | 'creatorLanguage' | 'originalLanguage' | 'titleTranslations' | 'activityStatus'>;
 
 /**
  * Compact: the dense browsing tile for pages that show many worlds at once (Discover, search,
@@ -34,12 +35,15 @@ export function WorldCardCompactTile({ world, detail, onOpen, senSash = false }:
   const creatorTitle = world.creatorTitle;
   const title = useWorldTitle(world);
   const language = useLanguagePeek(title);
+  // A living world shows a still dot on its last line; a quiet one shows nothing, so a grid never
+  // marks a creator's world as dead.
+  const activity = world.activityStatus && world.activityStatus !== 'quiet' ? WORLD_ACTIVITY_DISPLAY[world.activityStatus] : undefined;
   return <div className="world-card-compact-tile" data-world-card="compact-tile">
     <span className="world-card-compact-tile-cover">
       <WorldCardCover src={world.imageUrl} title={world.title} decorative />
       {senSash && <WorldCardRibbon />}
       <button type="button" className="world-card-compact-tile-open" onClick={onOpen}
-        aria-label={`Open ${title.text}${language.spokenLanguage ? `, in ${language.spokenLanguage}` : ''}${creatorName ? `, creator ${creatorName}` : ''}${line ? `, ${line}` : ''}`} />
+        aria-label={`Open ${title.text}${language.spokenLanguage ? `, in ${language.spokenLanguage}` : ''}${creatorName ? `, creator ${creatorName}` : ''}${line ? `, ${line}` : ''}${activity ? `, ${activity.label}` : ''}`} />
     </span>
     {/* The words repeat the art's open action for pointers; keyboards use the art's own control. */}
     <span className="world-card-compact-tile-caption" onClick={onOpen} {...language.hostProps}>
@@ -52,7 +56,10 @@ export function WorldCardCompactTile({ world, detail, onOpen, senSash = false }:
               intensity={creatorTitle.intensity} color={creatorTitle.color}>{creatorName}</ElementalTitle>
           : creatorName}
       </span>}
-      {line && <span className="world-card-compact-tile-detail">{line}</span>}
+      {(line || activity) && <span className="world-card-compact-tile-detail">
+        {activity && <span className={`world-card-compact-tile-activity ${activity.color}`} title={activity.label} data-activity={world.activityStatus} />}
+        {line}
+      </span>}
     </span>
   </div>;
 }

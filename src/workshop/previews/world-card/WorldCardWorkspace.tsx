@@ -10,7 +10,7 @@ import { featuredExpansions } from '../light-novels-home/previewData';
 import {
   previewBrowseWorlds, previewCreatorWorlds, previewHomeGrid, previewStory,
   type WorldCardBlueprintPreview, type WorldCardCover, type WorldCardSashPreview, type WorldCardDestinations, type WorldCardPreviewState,
-  type WorldCardHeroPreview, type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
+  type WorldCardCreatorsPreview, type WorldCardHeroPreview, type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
 import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/home';
 import { StoryBlueprintView, type StoryBlueprintAccess } from '@seihouse/library/stories';
@@ -40,7 +40,7 @@ type Viewport = keyof typeof VIEWPORTS;
 
 const DEFAULT_STATE: WorldCardPreviewState = {
   recentlyRead: 'no', titleLength: 'standard', cover: 'art', sash: 'hidden',
-  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', blueprint: 'creator', hero: 'wide',
+  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', blueprint: 'creator', hero: 'wide', creators: 'multilingual',
 };
 
 const BLUEPRINT_ACCESS: Record<Exclude<WorldCardBlueprintPreview, 'reader-off'>, StoryBlueprintAccess> = {
@@ -192,6 +192,7 @@ function readCanvasState(params: URLSearchParams): WorldCardPreviewState {
     reading: pick(params.get('reading'), ['start', 'chapter-7', 'new-story'], DEFAULT_STATE.reading),
     blueprint: pick(params.get('blueprint'), ['creator', 'creator-shared', 'reader-copy', 'reader-view', 'reader-off'], DEFAULT_STATE.blueprint),
     hero: pick(params.get('hero'), ['wide', 'cover-clip', 'still'], DEFAULT_STATE.hero),
+    creators: pick(params.get('creators'), ['multilingual', 'sample'], DEFAULT_STATE.creators),
   };
 }
 
@@ -319,6 +320,12 @@ function WorldCardWorkspaceShell() {
                 <option value="library-public">Public</option>
                 <option value="library-complete">Complete</option>
               </optgroup>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs">Compact creator names
+            <select className={selectClass} value={state.creators} onChange={event => update({ creators: event.target.value as WorldCardCreatorsPreview })}>
+              <option value="multilingual">Experiment: “Cultivator” in 12 languages and elements</option>
+              <option value="sample">Sample (SENSEI)</option>
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">Feature hero

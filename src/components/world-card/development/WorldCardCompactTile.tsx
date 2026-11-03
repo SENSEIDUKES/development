@@ -3,20 +3,17 @@ import { RefreshCw } from 'lucide-react';
 import { ElementalTitle } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldCardCover } from './WorldCardCover';
-import { WorldCardStoryPanel } from './WorldCardStoryPanel';
 import './world-card.css';
 
 /** What a Compact tile reads from a world; a Home world supplies it. */
-export type WorldCardCompactWorld = Pick<HomeWorld, 'id' | 'title' | 'imageUrl' | 'genre' | 'creatorName' | 'creatorTitle'
-  | 'format' | 'synopsis' | 'tags' | 'senVerified' | 'activityStatus' | 'branchingEnabled'>;
+export type WorldCardCompactWorld = Pick<HomeWorld, 'id' | 'title' | 'imageUrl' | 'genre' | 'creatorName' | 'creatorTitle'>;
 
 /**
  * Compact: the dense browsing tile for pages that show many worlds at once (Discover, search,
- * genres). The 2:3 cover with only the small Information mark in its corner, then the title on up
- * to two lines, the creator in their own lettering, and one quiet line. That line is the genre
- * unless the host supplies its own (reading progress on a library shelf, "Draft · Ch. 6" for a
- * creator). A tap on the art or words enters the world; the Information mark opens the story's
- * details. The world's motion picture waits for its Info page.
+ * genres). The 2:3 cover with nothing on it, then the title on up to two lines, the creator in
+ * their own lettering, and one quiet line. That line is the genre unless the host supplies its
+ * own (reading progress on a library shelf, "Draft · Ch. 6" for a creator). A tap on the art or
+ * words enters the world; its details and motion picture wait for its Info page.
  */
 export function WorldCardCompactTile({ world, detail, onOpen }: {
   world: WorldCardCompactWorld;
@@ -32,7 +29,6 @@ export function WorldCardCompactTile({ world, detail, onOpen }: {
       <WorldCardCover src={world.imageUrl} title={world.title} decorative />
       <button type="button" className="world-card-compact-tile-open" onClick={onOpen}
         aria-label={`Open ${world.title}${creatorName ? `, creator ${creatorName}` : ''}${line ? `, ${line}` : ''}`} />
-      <WorldCardStoryPanel key={world.id} world={world} triggerClassName="world-card-base-format world-card-compact-tile-info" />
     </span>
     {/* The words repeat the art's open action for pointers; keyboards use the art's own control. */}
     <span className="world-card-compact-tile-caption" onClick={onOpen}>

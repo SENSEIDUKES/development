@@ -23,6 +23,8 @@ export type WorldCardBlueprintPreview = 'creator' | 'creator-shared' | 'reader-c
  * cover clip, or its cover alone (a phone that will not play video).
  */
 export type WorldCardHeroPreview = 'wide' | 'cover-clip' | 'still';
+/** Compact's creator names: the sample's own, or the multilingual lettering experiment. */
+export type WorldCardCreatorsPreview = 'multilingual' | 'sample';
 export type WorldCardStatusPreview = 'public-ongoing' | 'public-completed'
   | 'library-draft' | 'library-shared' | 'library-public' | 'library-complete';
 
@@ -37,6 +39,7 @@ export interface WorldCardPreviewState {
   reading: WorldCardReadingPreview;
   blueprint: WorldCardBlueprintPreview;
   hero: WorldCardHeroPreview;
+  creators: WorldCardCreatorsPreview;
 }
 
 const LONG_TITLE = 'The Last Lotus of the Jade Empire and the Thousand-Year Oath Beneath the Silent Pavilion';
@@ -108,9 +111,34 @@ const BROWSE_EXTRA: readonly [string, string, string][] = [
   ['The Hollow Pine Accord', 'Wuxia', ''],
 ];
 
+/**
+ * The lettering experiment: every creator is "cultivator" in another language and script, each
+ * in a different element and strength, to see how names in many languages sit on small cards.
+ * Includes right-to-left Arabic and a long Thai word.
+ */
+export const MULTILINGUAL_CREATORS: readonly { name: string; language: string; title: NonNullable<HomeWorld['creatorTitle']> }[] = [
+  { name: 'Cultivator', language: 'en', title: { element: 'fire', intensity: 'legendary' } },
+  { name: '修仙者', language: 'zh', title: { element: 'lightning', intensity: 'epic' } },
+  { name: '修行者', language: 'ja', title: { element: 'water', intensity: 'rare' } },
+  { name: '수련자', language: 'ko', title: { element: 'poison', intensity: 'common' } },
+  { name: 'Tu Sĩ', language: 'vi', title: { element: 'frost', intensity: 'active' } },
+  { name: 'Культиватор', language: 'ru', title: { element: 'celestial', intensity: 'legendary' } },
+  { name: 'المُتعبِّد', language: 'ar', title: { element: 'void', intensity: 'epic' } },
+  { name: 'साधक', language: 'hi', title: { element: 'fire', intensity: 'subtle' } },
+  { name: 'ผู้บำเพ็ญเพียร', language: 'th', title: { element: 'lightning', intensity: 'rare' } },
+  { name: 'Cultivador', language: 'es', title: { element: 'water', intensity: 'legendary' } },
+  { name: 'Καλλιεργητής', language: 'el', title: { element: 'poison', intensity: 'epic' } },
+  { name: 'Pertapa', language: 'id', title: { element: 'frost', intensity: 'common' } },
+];
+
 /** Every world a browse page might list: the Home grid, then the extra catalogue (one with no cover yet). */
 export function previewBrowseWorlds(state: WorldCardPreviewState): HomeWorld[] {
-  return [...previewHomeGrid(state), ...BROWSE_EXTRA.map(([title, genre, imageUrl], index): HomeWorld => ({
+  const worlds = [...previewHomeGrid(state), ...BROWSE_EXTRA.map(([title, genre, imageUrl], index): HomeWorld => ({
     ...featuredNovel, id: `browse-${index}`, title, genre, imageUrl, videoUrl: undefined, chapterCount: 9 + index * 7,
   }))];
+  if (state.creators !== 'multilingual') return worlds;
+  return worlds.map((world, index) => {
+    const creator = MULTILINGUAL_CREATORS[index % MULTILINGUAL_CREATORS.length];
+    return { ...world, creatorName: creator.name, creatorTitle: creator.title };
+  });
 }

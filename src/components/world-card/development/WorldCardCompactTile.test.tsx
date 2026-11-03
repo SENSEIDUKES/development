@@ -13,9 +13,9 @@ afterEach(() => { act(() => root.unmount()); container.remove(); });
 
 const world = (index: number): WorldCardCompactWorld => ({ id: `w${index}`, title: `World ${index}`, genre: 'Xianxia', imageUrl: `/w${index}.png` });
 
-it('shows the cover with only the Information mark, then title, creator and one line, and opens on a tap', () => {
+it('shows the cover with nothing on it, then title, creator and one line, and opens on a tap', () => {
   const onOpen = vi.fn();
-  act(() => root.render(<WorldCardCompactTile world={{ ...world(1), creatorName: 'SENSEI', format: 'Novel',
+  act(() => root.render(<WorldCardCompactTile world={{ ...world(1), creatorName: 'SENSEI',
     creatorTitle: { element: 'lightning', intensity: 'rare' } }} onOpen={onOpen} />));
   const tile = container.querySelector<HTMLElement>('[data-world-card="compact-tile"]')!;
   expect(tile.querySelector('img')?.getAttribute('src')).toBe('/w1.png');
@@ -27,11 +27,9 @@ it('shows the cover with only the Information mark, then title, creator and one 
   expect(tile.querySelector('.world-card-compact-tile-detail')?.textContent).toBe('Xianxia');
   const open = tile.querySelector<HTMLButtonElement>('.world-card-compact-tile-open')!;
   expect(open.getAttribute('aria-label')).toBe('Open World 1, creator SENSEI, Xianxia');
-  // The art carries only the small Information mark: no motion, no other badges.
-  const info = tile.querySelector('.world-card-compact-tile-info')!;
-  expect(info.getAttribute('aria-label')).toBe('Story information for World 1, Novel');
-  expect(info.querySelector('svg.lucide-info')).not.toBeNull();
-  expect(tile.querySelectorAll('video, .world-card-ribbon, .world-card-feature')).toHaveLength(0);
+  // Nothing on the art: no badges, no motion. The tile is one door.
+  expect(tile.querySelectorAll('video, svg.lucide-info, .world-card-base-format, .world-card-ribbon')).toHaveLength(0);
+  expect(tile.querySelectorAll('button')).toHaveLength(1);
   act(() => open.click());
   act(() => tile.querySelector<HTMLElement>('.world-card-compact-tile-title')!.click());
   expect(onOpen).toHaveBeenCalledTimes(2);

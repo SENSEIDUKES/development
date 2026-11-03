@@ -3,6 +3,7 @@ import { RefreshCw } from 'lucide-react';
 import { ElementalTitle } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldCardCover } from './WorldCardCover';
+import { WorldCardRibbon } from './WorldCardRibbon';
 import { authorText, useLanguagePeek, useWorldTitle } from './worldCardText';
 import './world-card.css';
 
@@ -20,8 +21,10 @@ export type WorldCardCompactWorld = Pick<HomeWorld, 'id' | 'title' | 'imageUrl' 
  * title follows the card language rules (worldCardText): the reader's language when the world
  * has a real translation, otherwise the original with a small language tag.
  */
-export function WorldCardCompactTile({ world, detail, onOpen }: {
+export function WorldCardCompactTile({ world, detail, onOpen, senSash = false }: {
   world: WorldCardCompactWorld;
+  /** The SEN sash across the cover's corner, only when the host awards it (as on the other faces). */
+  senSash?: boolean;
   /** The one line under the creator; defaults to the genre. `null` leaves it out. */
   detail?: string | null;
   onOpen: () => void;
@@ -34,6 +37,7 @@ export function WorldCardCompactTile({ world, detail, onOpen }: {
   return <div className="world-card-compact-tile" data-world-card="compact-tile">
     <span className="world-card-compact-tile-cover">
       <WorldCardCover src={world.imageUrl} title={world.title} decorative />
+      {senSash && <WorldCardRibbon />}
       <button type="button" className="world-card-compact-tile-open" onClick={onOpen}
         aria-label={`Open ${title.text}${language.spokenLanguage ? `, in ${language.spokenLanguage}` : ''}${creatorName ? `, creator ${creatorName}` : ''}${line ? `, ${line}` : ''}`} />
     </span>
@@ -65,11 +69,13 @@ export function WorldCardCompactGrid({ label, children }: { label: string; child
  * A curated Compact box: a fixed set of worlds (two rows of four) and a Switch button that
  * deals the next set, so browsing becomes a quick choice rather than an endless scroll.
  */
-export function WorldCardCompactPicks({ title, worlds, onOpenWorld, size = 8 }: {
+export function WorldCardCompactPicks({ title, worlds, onOpenWorld, size = 8, senSashWorldIds }: {
   title: string;
   worlds: readonly WorldCardCompactWorld[];
   onOpenWorld: (id: string) => void;
   size?: number;
+  /** Worlds the host has awarded the SEN sash. */
+  senSashWorldIds?: readonly string[];
 }) {
   const [start, setStart] = useState(0);
   if (!worlds.length) return null;
@@ -79,7 +85,7 @@ export function WorldCardCompactPicks({ title, worlds, onOpenWorld, size = 8 }: 
   return <section className="world-card-compact-picks" aria-label={title}>
     <h2 className="world-card-compact-picks-title font-display">{title}</h2>
     <WorldCardCompactGrid label={title}>
-      {shown.map(world => <li key={world.id}><WorldCardCompactTile world={world} onOpen={() => onOpenWorld(world.id)} /></li>)}
+      {shown.map(world => <li key={world.id}><WorldCardCompactTile world={world} senSash={senSashWorldIds?.includes(world.id)} onOpen={() => onOpenWorld(world.id)} /></li>)}
     </WorldCardCompactGrid>
     {canSwitch && <button type="button" className="world-card-compact-picks-switch"
       onClick={() => setStart(value => (value + size) % worlds.length)}>

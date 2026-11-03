@@ -40,7 +40,7 @@ const VIEWPORTS = {
 type Viewport = keyof typeof VIEWPORTS;
 
 const DEFAULT_STATE: WorldCardPreviewState = {
-  recentlyRead: 'no', titleLength: 'standard', cover: 'art', sash: 'hidden',
+  recentlyRead: 'no', titleLength: 'standard', cover: 'art', sash: 'shown',
   activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', blueprint: 'creator', hero: 'wide', catalogue: 'multilingual', readerLanguage: 'en',
 };
 
@@ -151,7 +151,7 @@ function WorldCardStageCards({ view, state, onAction }: {
     </Stage>}
     {!openedWorld && show('grid') && <Stage title="Home grid" note="Two across on a phone, more on wider screens.">
       <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5">
-        {previewBrowseWorlds(state).slice(0, 6).map(world => <WorldCard key={world.id} world={world} senSash={state.sash === 'shown'}
+        {previewBrowseWorlds(state).slice(0, 6).map(world => <WorldCard key={world.id} world={world} senSash={world.id === story.id && state.sash === 'shown'}
           displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]} onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />)}
       </div>
     </Stage>}
@@ -165,12 +165,13 @@ function WorldCardStageCards({ view, state, onAction }: {
     {!openedWorld && show('compact') && <>
       <Stage title="Compact · Picks" note="A fixed set of eight with a Switch button for the next set, like WebNovel's Cheering Reads.">
         <WorldCardCompactPicks title="Cheering Reads" worlds={previewBrowseWorlds(state)}
+          senSashWorldIds={state.sash === 'shown' ? [story.id] : []}
           onOpenWorld={id => id === story.id ? setOpenedWorld(story) : onAction(`Open ${id}`)} />
       </Stage>
       <Stage title="Compact · Browse grid" note="Discover's All stories. As many columns as fit; it only scrolls down.">
         <WorldCardCompactGrid label="Stories">
           {previewBrowseWorlds(state).map(world => <li key={world.id}>
-            <WorldCardCompactTile world={world} onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />
+            <WorldCardCompactTile world={world} senSash={world.id === story.id && state.sash === 'shown'} onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />
           </li>)}
         </WorldCardCompactGrid>
       </Stage>
@@ -353,8 +354,8 @@ function WorldCardWorkspaceShell() {
           </label>
           <label className="flex flex-col gap-1 text-xs">SEN sash
             <select className={selectClass} value={state.sash} onChange={event => update({ sash: event.target.value as WorldCardSashPreview })}>
-              <option value="hidden">Not awarded (default)</option>
-              <option value="shown">Awarded</option>
+              <option value="shown">Awarded to The Last Lotus (default)</option>
+              <option value="hidden">Not awarded</option>
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">Reader history

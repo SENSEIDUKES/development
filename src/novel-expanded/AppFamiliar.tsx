@@ -31,17 +31,16 @@ const READER_BOTTOM = 136;
  * With Say “Familiar” (beta) on, saying the word calls it as its microphone does.
  * With `navigate`, it can take the reader anywhere in the app (Home, My Energy,
  * Settings…), as the master action list allows on `place.page`.
- * With `onWelcomed`, a reader who has not met their Familiar yet is greeted
- * by the Familiar's own card beside it (the screen dims a little; nothing
- * navigates). The same card opens from its Guides button, on any page, and
- * plays `guides` there.
- * once (outside the Reader): Show me around opens the Familiar page's Guides.
- * Either answer calls `onWelcomed`, so it never shows again.
+ * Its Guides button opens its own card beside it, on any page, and plays
+ * `guides` there (the screen dims a little; nothing navigates). It does not
+ * greet a new reader by itself: the app's welcome (the System voice, then
+ * Create and Discover) comes first and hands over to the Familiar
+ * (SENSEI, 2026-11-03).
  * `tucked` (the Familiar page, where it already stands on the stage) sends a
  * floating Familiar to the header until the reader calls it; leaving the page
  * returns it to the reader's choice.
  */
-export function AppFamiliar({ profile, present, reading = false, place, navigate, onWelcomed, guides, onGuideSeen, tucked = false, boundaryRef, children }: { profile: UserProfile; present: boolean; reading?: boolean; tucked?: boolean; guides?: readonly FamiliarGuide[]; onGuideSeen?: (guideId: string) => void; place: { title: string; help: FamiliarHelpPlace; page?: FamiliarPage }; navigate?: Navigate; onWelcomed?: () => void; boundaryRef?: RefObject<HTMLElement | null>; children: ReactNode }) {
+export function AppFamiliar({ profile, present, reading = false, place, navigate, guides, onGuideSeen, tucked = false, boundaryRef, children }: { profile: UserProfile; present: boolean; reading?: boolean; tucked?: boolean; guides?: readonly FamiliarGuide[]; onGuideSeen?: (guideId: string) => void; place: { title: string; help: FamiliarHelpPlace; page?: FamiliarPage }; navigate?: Navigate; boundaryRef?: RefObject<HTMLElement | null>; children: ReactNode }) {
   const inHeader = profile.familiarInHeader ?? false;
   const [minimized, setMinimized] = useState(inHeader);
   // Changing the setting moves it at once, on the Familiar page too.
@@ -57,13 +56,11 @@ export function AppFamiliar({ profile, present, reading = false, place, navigate
   const bottomInset = reading ? READER_BOTTOM : clearance ? clearance + BOTTOM_GAP : 0;
   const actions = useMemo(() => navigate ? appFamiliarActions(navigate) : undefined, [navigate]);
   const welcomeOption = allFamiliarOptions.find(option => option.id === familiar.id);
-  const welcoming = Boolean(present && !reading && onWelcomed && !profile.familiarWelcomed && welcomeOption);
   const recall = present && minimized ? <FamiliarRecall key={familiar.id} familiar={familiar} onRecall={() => setMinimized(false)} /> : null;
   // The Familiar's guides: its Guides button opens its card anywhere; a reader who has not met it is greeted once.
   const familiarGuides = useMemo(() => welcomeOption && guides?.length ? {
     guides, familiar: welcomeOption, name: profile.familiarPersonal?.[familiar.id]?.name, onSeen: onGuideSeen,
-    welcome: welcoming, onWelcomed,
-  } : undefined, [guides, welcomeOption, profile.familiarPersonal, familiar.id, onGuideSeen, welcoming, onWelcomed]);
+  } : undefined, [guides, welcomeOption, profile.familiarPersonal, familiar.id, onGuideSeen]);
   return <FamiliarHelperProvider voice={voice} live={profile.familiarLiveTalk ? live : undefined} wake={profile.familiarWakeWord ? wake : undefined} familiar={{ name: familiar.displayName, description: familiar.description }} guides={familiarGuides} bottomInset={bottomInset}><WorkspaceHeaderAccessoryProvider accessory={recall}>
     <FamiliarPlace title={place.title} help={place.help} page={place.page} actions={actions} />
     {children}

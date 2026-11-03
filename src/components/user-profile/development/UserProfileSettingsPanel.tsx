@@ -89,8 +89,6 @@ interface UserProfileSettingsPanelProps {
   onRedeemCode: () => void;
   /** Opens the Familiar page, where every Familiar setting now lives. */
   onOpenFamiliar?: () => void;
-  /** Shows the Familiar's first-meeting welcome again. */
-  onReplayFamiliarWelcome?: () => void;
 }
 
 /**
@@ -118,7 +116,6 @@ export function UserProfileSettingsPanel({
   onPreviewPublicView,
   onRedeemCode,
   onOpenFamiliar,
-  onReplayFamiliarWelcome,
 }: UserProfileSettingsPanelProps) {
   // Production reads the local-only flag and its setter from `lib/firebase` and
   // calls the deep library sync on `lib/storage`. All three arrive through the
@@ -501,11 +498,6 @@ export function UserProfileSettingsPanel({
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4" data-cave-familiar-moved>
                 <p className="font-serif text-sm text-neutral-300">Choosing your Familiar, its size and voice settings, and making it your own now all live on the Familiar page.</p>
                 <LibraryButton className="mt-3 !min-h-11" variant="secondary" disabled={!onOpenFamiliar} onClick={onOpenFamiliar}>Open the Familiar page</LibraryButton>
-                {onReplayFamiliarWelcome ? (
-                  <button type="button" className="mt-2 block min-h-11 text-sm text-sky-300 underline-offset-4 hover:underline" onClick={onReplayFamiliarWelcome} data-familiar-welcome-replay>
-                    Meet your Familiar again
-                  </button>
-                ) : null}
               </div>
             </SEITabsPanel>
           </SEITabs>

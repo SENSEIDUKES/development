@@ -447,7 +447,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
               onPreviewPublicView={openPublicView}
               onRedeemCode={accountControls?.onRedeemCode ?? (() => navigate('/settings/redeem-code'))}
               onOpenFamiliar={() => navigate('/home/familiar')}
-              onReplayFamiliarWelcome={controller.handleFamiliarWelcomeReplay}
             />
           </UserProfileCaveDestination>
         );

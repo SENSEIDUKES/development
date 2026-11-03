@@ -375,6 +375,8 @@ export function FamiliarStage({
             ) : tab === 'elements' ? (
               <FamiliarElementsTab familiars={familiars} activeFamiliarId={activeFamiliarId} nameOf={nameOf} displayName={displayName} />
             ) : tab === 'guides' && guides ? (
+              // On a phone the closed sheet is only hidden: the guide goes with it, so its clip and its reading stop.
+              !sheetOpen && narrow ? null :
               <FamiliarGuidesTab guides={guides} name={activeFamiliarId ? nameOf(activeFamiliarId) : name} seen={guidesSeen} onSeen={onGuideSeen} />
             ) : (
               <FamiliarLoreTab option={option} name={name} element={element} backstory={personal?.[option.id]?.backstory} editRequest={storyRequest} onEditRequestHandled={() => setStoryRequest(0)}

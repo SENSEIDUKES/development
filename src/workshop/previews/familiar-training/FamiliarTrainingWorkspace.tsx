@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { FamiliarStage, updateFamiliarPersonalizations, type FamiliarPersonalizations } from '@seihouse/library/familiar';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
 import { FAMILIAR_GUIDES } from '../../../host/familiar/guides';
+import { ProductFamiliarSession } from '../familiar/ProductFamiliarPreview';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { QUILL, type WorkshopAccountSeed } from '../rewards/rewardScenarios';
@@ -87,6 +88,8 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
         {note ? <p role="status" className="mt-3 text-xs text-white/70">{note}</p> : null}
       </WorkshopCard>
       <div className="overflow-hidden rounded-2xl border border-white/10" style={{ ['--familiar-stage-height' as string]: 'min(52rem, calc(100dvh - 6rem))' }}>
+        {/* The app's Familiar session, so the guides read aloud in its voice here as in the app. */}
+        <ProductFamiliarSession>
         <FamiliarStage
           guides={FAMILIAR_GUIDES}
           guidesSeen={guidesSeen}
@@ -107,6 +110,7 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
           personal={personal}
           onPersonalChange={(id, changes) => setPersonal(previous => updateFamiliarPersonalizations(previous, id, changes))}
         />
+        </ProductFamiliarSession>
       </div>
       <LedgerFeed />
     </div>

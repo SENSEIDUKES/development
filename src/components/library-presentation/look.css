@@ -90,7 +90,7 @@
   --glass-backdrop-dim: none;
   background-image: none;
 }
-.library-look :is(select, .home-featured-step, .library-footer-language) {
+.library-look :is(select, .world-card-carousel-step, .library-footer-language) {
   background: var(--library-material-control-fill);
   color: var(--library-material-text);
   border-color: var(--reader-glass-edge);

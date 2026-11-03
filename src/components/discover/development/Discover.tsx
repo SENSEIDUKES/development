@@ -18,6 +18,7 @@ import { SEIEmptyState } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldCard } from '../../world-card/development/WorldCard';
 import { WorldCardFeature } from '../../world-card/development/WorldCardFeature';
+import { WorldCardFeatureCarousel } from '../../world-card/development/WorldCardFeatureCarousel';
 import { WorldCardMenu } from '../../world-card/development/WorldCardMenu';
 import type { DiscoverCodexEntry, DiscoverCreator, DiscoverProps } from '../shared/discoverContracts';
 import './discover.css';
@@ -539,19 +540,12 @@ function DiscoverContent({
                     )}
                   </Shelf>
                   {featured.length > 0 && (
-                    <section aria-label="Featured" className="discover-shelf">
-                      <ul className="discover-rail discover-rail--featured" aria-label="Featured worlds">
-                        {featured.map((world) => (
-                          <li key={world.id}>
-                            <WorldCardFeature
-                              world={world}
-                              displayStatus={publicStatus(world)}
-                              onOpen={() => onOpenWorld(world.id)}
-                            />
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
+                    <WorldCardFeatureCarousel className="discover-shelf" label="Featured"
+                      slides={featured.map((world) => ({
+                        id: world.id, label: world.title,
+                        render: (onScreen: boolean) => <WorldCardFeature world={world} active={onScreen}
+                          displayStatus={publicStatus(world)} onOpen={() => onOpenWorld(world.id)} />,
+                      }))} />
                   )}
                   {fate.length > 0 && (
                     <section aria-labelledby={`${ids}-fate`} className="discover-fate">

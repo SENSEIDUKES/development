@@ -116,7 +116,7 @@ it('shows only the section\'s board, in the host\'s order, and retains ranks whi
 
 it('puts the catalogue before features and filters Browse by genre', () => {
   renderPage({ featuredWorldIds: ['moon'] });
-  const featured = container.querySelector('ul[aria-label="Featured worlds"]')!;
+  const featured = container.querySelector('section[aria-roledescription="carousel"][aria-label="Featured"]')!;
   const catalogue = container.querySelector('ul[aria-label="Stories"]')!;
   expect(featured.textContent).toContain('Drowned Moon');
   expect(catalogue.compareDocumentPosition(featured) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

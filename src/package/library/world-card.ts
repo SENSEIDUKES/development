@@ -10,6 +10,7 @@ export * from '../../components/world-card/shared/worldCardContracts';
 export * from '../../components/world-card/development/WorldCardInfo';
 export { WorldCard, WORLD_STATUS_LABELS } from '../../components/world-card/development/WorldCard';
 export { WorldCardFeature } from '../../components/world-card/development/WorldCardFeature';
+export { WorldCardFeatureCarousel, FEATURE_SLIDE_MS, type WorldCardFeatureSlide } from '../../components/world-card/development/WorldCardFeatureCarousel';
 export { WorldCardMenu } from '../../components/world-card/development/WorldCardMenu';
 export { WorldCardInformationPanel, languageName, worldInformationSummary, type WorldInformation } from '../../components/world-card/development/WorldCardInformationPanel';
 export { WorldCardSettings } from '../../components/world-card/development/WorldCardSettings';

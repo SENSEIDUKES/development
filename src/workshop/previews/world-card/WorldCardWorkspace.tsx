@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { WorldCard, WorldCardFeature, WorldCardMenu, languageName } from '@seihouse/library/world-card';
+import { WorldCard, WorldCardFeature, WorldCardFeatureCarousel, WorldCardMenu, languageName } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
@@ -10,7 +10,7 @@ import { featuredExpansions } from '../light-novels-home/previewData';
 import {
   previewCreatorWorlds, previewHomeGrid, previewStory,
   type WorldCardBlueprintPreview, type WorldCardCover, type WorldCardSashPreview, type WorldCardDestinations, type WorldCardPreviewState,
-  type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
+  type WorldCardHeroPreview, type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
 import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/home';
 import { StoryBlueprintView, type StoryBlueprintAccess } from '@seihouse/library/stories';
@@ -21,7 +21,7 @@ const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 const VIEWS = {
   full: { label: 'World Card', short: 'World Card', description: 'The 2:3 discovery card at its Home grid width, with the title and details beneath.' },
   info: { label: 'Info page', short: 'Info', description: 'The full world overview a reader lands on when they open a world.' },
-  feature: { label: 'Feature card', short: 'Feature', description: 'The wide banner for a spotlighted world, at the stage’s full width.' },
+  feature: { label: 'Feature card', short: 'Feature', description: 'The living hero: the world plays behind its name, and the carousel turns on its own with a story-style bar.' },
   grid: { label: 'Home grid', short: 'Grid', description: 'Several World Cards side by side, as Home lays them out.' },
   compact: { label: 'Compact', short: 'Compact', description: 'Create’s square “Your worlds” tile. Tap a tile to open that world’s Info page.' },
   menu: { label: 'Menu card', short: 'Menu', description: 'Discover chapter and ranking rows, rendered by the shared World Card menu.' },
@@ -40,7 +40,7 @@ type Viewport = keyof typeof VIEWPORTS;
 
 const DEFAULT_STATE: WorldCardPreviewState = {
   recentlyRead: 'no', titleLength: 'standard', cover: 'art', sash: 'hidden',
-  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', blueprint: 'creator',
+  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', blueprint: 'creator', hero: 'wide',
 };
 
 const BLUEPRINT_ACCESS: Record<Exclude<WorldCardBlueprintPreview, 'reader-off'>, StoryBlueprintAccess> = {
@@ -124,8 +124,14 @@ export function WorldCardStage({ view, state, onAction }: {
             portal={{ expansions: state.destinations === 'all' ? featuredExpansions : [] }}
             />
     </Stage>}
-    {!openedWorld && show('feature') && <Stage title="Feature card" note="Home's spotlight row. The cover stands on the right; the band is that cover, blurred, in its own color.">
-      <WorldCardFeature world={story} senSash={state.sash === 'shown'} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]} onOpen={() => setOpenedWorld(story)} />
+    {!openedWorld && show('feature') && <Stage title="Feature card" note="Home's and Discover's spotlight. The world plays behind its name; touch and hold to pause, swipe to turn, tap to enter.">
+      <WorldCardFeatureCarousel label="Featured"
+        slides={previewHomeGrid(state).slice(0, 3).map(world => ({
+          id: world.id, label: world.title,
+          render: (onScreen: boolean) => <WorldCardFeature world={world} active={onScreen}
+            senSash={world.id === story.id && state.sash === 'shown'} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]}
+            onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />,
+        }))} />
     </Stage>}
     {!openedWorld && show('full') && <Stage title="World Card" note="Home grid width.">
       <div className="w-[min(100%,13rem)]">
@@ -172,6 +178,7 @@ function readCanvasState(params: URLSearchParams): WorldCardPreviewState {
     destinations: pick(params.get('destinations'), ['all', 'reading-only', 'none'], DEFAULT_STATE.destinations),
     reading: pick(params.get('reading'), ['start', 'chapter-7', 'new-story'], DEFAULT_STATE.reading),
     blueprint: pick(params.get('blueprint'), ['creator', 'creator-shared', 'reader-copy', 'reader-view', 'reader-off'], DEFAULT_STATE.blueprint),
+    hero: pick(params.get('hero'), ['wide', 'cover-clip', 'still'], DEFAULT_STATE.hero),
   };
 }
 
@@ -299,6 +306,13 @@ function WorldCardWorkspaceShell() {
                 <option value="library-public">Public</option>
                 <option value="library-complete">Complete</option>
               </optgroup>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs">Feature hero
+            <select className={selectClass} value={state.hero} onChange={event => update({ hero: event.target.value as WorldCardHeroPreview })}>
+              <option value="wide">Wide hero loop (default)</option>
+              <option value="cover-clip">Cover with its motion clip</option>
+              <option value="still">Cover still, no video</option>
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">SEN sash

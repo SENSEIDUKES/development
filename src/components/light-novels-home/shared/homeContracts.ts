@@ -17,6 +17,12 @@ export interface HomeWorld {
   senVerified?: boolean;
   /** This world's own optional motion cover clip; never use another world's clip as fallback. */
   videoUrl?: string;
+  /**
+   * This world's own wide (16:9) hero still and silent loop for the Feature card. The card
+   * falls back to the cover and its motion cover clip; never use another world's hero.
+   */
+  heroImageUrl?: string;
+  heroVideoUrl?: string;
   /** Optional, viewer-authorized information for the format icon's story panel. */
   synopsis?: string;
   tags?: readonly string[];

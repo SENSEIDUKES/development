@@ -22,9 +22,11 @@ export interface WorldCardBackdropVideoHandle {
 export const WorldCardBackdropVideo = forwardRef<WorldCardBackdropVideoHandle, {
   src?: string;
   className: string;
+  /** False keeps the clip still until the surface plays it (a Feature slide that is off screen). Defaults to true. */
+  autoStart?: boolean;
   /** Told whenever the clip starts or stops truly playing. */
   onPlayingChange?: (playing: boolean) => void;
-}>(function WorldCardBackdropVideo({ src, className, onPlayingChange }, ref) {
+}>(function WorldCardBackdropVideo({ src, className, autoStart = true, onPlayingChange }, ref) {
   const videoUrl = src?.trim() || undefined;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlayingState] = useState(false);
@@ -44,14 +46,18 @@ export const WorldCardBackdropVideo = forwardRef<WorldCardBackdropVideoHandle, {
     void video.play()?.then(() => { if (!video.paused) setPlaying(true); })
       .catch(() => { /* Refused (Low Power Mode): the still backdrop stays. */ });
   };
-  useImperativeHandle(ref, () => ({ play: start, pause: () => videoRef.current?.pause() }));
+  useImperativeHandle(ref, () => ({
+    // A surface's own play() still honours reduced motion unless the reader tapped it.
+    play: start,
+    pause: () => videoRef.current?.pause(),
+  }));
   useEffect(() => {
     setPlaying(false);
-    if (videoUrl && !prefersReducedMotion()) start();
+    if (videoUrl && autoStart && !prefersReducedMotion()) start();
   }, [videoUrl]);
 
   if (!videoUrl) return null;
-  const autoPlay = !prefersReducedMotion();
+  const autoPlay = autoStart && !prefersReducedMotion();
   return <video ref={videoRef} className={`world-card-backdrop-video ${className}`} src={videoUrl}
     muted loop playsInline autoPlay={autoPlay} preload="metadata" aria-hidden="true" tabIndex={-1}
     data-playing={playing ? 'true' : undefined} onPlaying={() => setPlaying(true)} onPause={() => setPlaying(false)}

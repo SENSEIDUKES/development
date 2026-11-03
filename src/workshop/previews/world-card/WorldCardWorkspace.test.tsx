@@ -10,7 +10,7 @@ import type { WorldCardPreviewState } from './previewData';
 
 const state: WorldCardPreviewState = {
   recentlyRead: 'no', titleLength: 'standard', cover: 'art', sash: 'hidden',
-  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'start', blueprint: 'creator',
+  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'start', blueprint: 'creator', hero: 'wide',
 };
 
 it('shows chapter and ranking menu cards in the existing workspace and opens World Info', () => {

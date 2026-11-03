@@ -15,8 +15,31 @@ folder; the Info page composes its cover face.
 | Info page | `WorldCardInfo` with `WorldCard face="info"` | The world detail (`light-novels-home` `StoryDetailScreen`) |
 | Full card | `WorldCard` | Home's discovery grid (`light-novels-home` `LightNovelsHome`) |
 | Compact | `WorldCard face="compact"` | Create's "Your worlds" row (`creator-space` `CreatorSpace`) |
-| Feature | `WorldCardFeature` | Home spotlight and Discover featured shelf |
+| Feature | `WorldCardFeature` in `WorldCardFeatureCarousel` | Home's Featured and Discover's featured spotlight |
 | Menu | `WorldCardMenu` | Discover chapter updates and ranking rows |
+
+## The four cards and how each one moves
+
+The family is settling on four cards (Feature, Show, Compact, Menu) plus the Info page.
+Big cards show a world; small cards show many worlds.
+
+| Card | Job | How the reader moves | Motion |
+| --- | --- | --- | --- |
+| Feature | One spotlighted world at the top of a page | Sideways, one slide at a time, auto-advancing with a story-style segmented bar (3 to 5 slides) | The world's hero loop plays on its own |
+| Show | The main card on Home and most rows (2 across) | A sideways row with the next card peeking in; "See all" is a 2-across grid you scroll down | Tap a still: it comes alive for a moment, then enters the world |
+| Compact | Many worlds at once (4 across) | Scroll down, never sideways; curated boxes show a fixed set with a Switch button | None; the Info page carries it |
+| Menu | Lists: updates, rankings, your library | A short paged block on Home; "View all" is a long list you scroll down | None |
+
+Rules: up and down moves between categories, left and right moves within one. Never nest a
+sideways row inside another. Every sideways row shows a clue that there is more (a peeking card
+or a bar). Rows snap. Coming back from a world restores the page and row position. Only one
+thing on a screen moves by itself: the Feature carousel.
+
+The Feature card is the living hero: the world fills it edge to edge (its wide `heroImageUrl`,
+or its cover) with its `heroVideoUrl` loop (or its motion cover clip) playing silently behind
+the words. Only the slide on screen plays; Reduce Motion and Low Power Mode keep the still. The
+whole card is one door into the world. The sample world's hero lives at
+`public/world-card/last-lotus-hero.{jpg,mp4}`.
 
 - **Workshop preview:** `?preview=world-card` (Components → World Card)
 - **Package:** `@seihouse/library/world-card` (owner `library`)

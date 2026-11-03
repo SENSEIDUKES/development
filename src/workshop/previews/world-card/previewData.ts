@@ -18,6 +18,11 @@ export type WorldCardReadingPreview = 'start' | 'chapter-7' | 'new-story';
  * only, or the creator's sharing turned off, when World Info offers no Blueprint button at all).
  */
 export type WorldCardBlueprintPreview = 'creator' | 'creator-shared' | 'reader-copy' | 'reader-view' | 'reader-off';
+/**
+ * The Feature card's hero: the world's own wide still and loop, its cover with its motion
+ * cover clip, or its cover alone (a phone that will not play video).
+ */
+export type WorldCardHeroPreview = 'wide' | 'cover-clip' | 'still';
 export type WorldCardStatusPreview = 'public-ongoing' | 'public-completed'
   | 'library-draft' | 'library-shared' | 'library-public' | 'library-complete';
 
@@ -31,6 +36,7 @@ export interface WorldCardPreviewState {
   destinations: WorldCardDestinations;
   reading: WorldCardReadingPreview;
   blueprint: WorldCardBlueprintPreview;
+  hero: WorldCardHeroPreview;
 }
 
 const LONG_TITLE = 'The Last Lotus of the Jade Empire and the Thousand-Year Oath Beneath the Silent Pavilion';
@@ -45,12 +51,15 @@ const BLUEPRINT_PERMISSIONS: Record<WorldCardBlueprintPreview, WorldPermissions>
   'reader-off': { visibility: 'public', blueprint: 'off' },
 };
 
-export function previewStory({ recentlyRead, titleLength, cover, activity, reading, blueprint }: WorldCardPreviewState): StoryDetailDisplay {
+export function previewStory({ recentlyRead, titleLength, cover, activity, reading, blueprint, hero }: WorldCardPreviewState): StoryDetailDisplay {
   return {
     ...featuredNovel,
     ...(reading === 'new-story' ? { chapterCount: 0, currentArc: '' } : {}),
     title: titleLength === 'long' ? LONG_TITLE : featuredNovel.title,
     imageUrl: cover === 'missing' ? '' : featuredNovel.imageUrl,
+    // The sample world's own wide hero still and loop (Workshop-local assets).
+    ...(hero === 'wide' ? { heroImageUrl: '/world-card/last-lotus-hero.jpg', heroVideoUrl: '/world-card/last-lotus-hero.mp4' } : {}),
+    ...(hero === 'still' ? { videoUrl: undefined } : {}),
     recentlyRead: recentlyRead === 'yes',
     activityStatus: activity === 'hidden' ? undefined : activity,
     // Information and Verification panels: sample language, rating, permissions and provenance.

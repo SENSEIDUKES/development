@@ -101,6 +101,10 @@ export interface WorldCardFeatureProps {
    * reserved for a distinction the host defines (for example, a completed novel).
    */
   senSash?: boolean;
+  /** False while the card is an off-screen slide, so its hero loop waits. Defaults to true. */
+  active?: boolean;
+  /** The pill under the words; the whole card is the door. `null` leaves it out. Defaults to "Enter World". */
+  actionLabel?: string | null;
 }
 
 /** Compact card: the creator's world tile on Create, square art with its caption beneath. */

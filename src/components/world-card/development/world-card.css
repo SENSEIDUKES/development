@@ -461,93 +461,245 @@
 }
 
 /*
- * Feature card — a wide banner for one spotlighted world, the size of Home's Featured hero
- * (15rem tall on phones, 20rem from 640px, full width, words along the bottom left). Its own
- * cover stands on the right; the band behind the words is that cover, blurred, in its own color.
+ * Feature card — the living hero. The world fills the card edge to edge: its wide hero still
+ * (or its cover), with its hero loop playing silently over it. The words sit centered along the
+ * bottom and the art fades into the page beneath them, leaving room for the carousel's bar.
+ * Home's Carve New Destiny slide shares the height through .world-card-feature-frame.
  */
+.world-card-banner, .world-card-feature-frame { height: clamp(24rem, 112vw, 28rem); }
+@media (min-width: 640px) { .world-card-banner, .world-card-feature-frame { height: 26rem; } }
+@media (min-width: 1024px) { .world-card-banner, .world-card-feature-frame { height: 30rem; } }
 .world-card-banner {
   --world-card-glow: rgba(4, 172, 255, 0.6);
-  position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: minmax(0, 1fr); align-items: end;
-  gap: 1rem; width: 100%; height: 15rem; overflow: hidden; container-type: inline-size;
-  padding: 1.25rem; border: 1px solid rgba(235, 243, 255, 0.22); border-radius: 1.5rem;
-  background: #07111d; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
-  transition: border-color 200ms cubic-bezier(0, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0, 0, 0.2, 1);
+  --world-card-banner-floor: #04060d;
+  position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+  width: 100%; overflow: hidden; container-type: inline-size;
+  padding: 1.25rem 1.25rem 3rem; border-radius: 1.5rem; text-align: center;
+  background: var(--world-card-banner-floor); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+  transition: box-shadow 200ms cubic-bezier(0, 0, 0.2, 1);
 }
-@media (min-width: 640px) {
-  .world-card-banner { height: 20rem; padding: 2.5rem; gap: 2rem; }
-}
+@media (min-width: 640px) { .world-card-banner { padding: 2rem 2.5rem 3.5rem; } }
 .world-card-banner:hover, .world-card-banner:focus-within {
-  border-color: color-mix(in srgb, var(--world-card-glow) 70%, white);
-  box-shadow: 0 0 28px 2px color-mix(in srgb, var(--world-card-glow) 45%, transparent), 0 18px 48px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--world-card-glow) 55%, transparent),
+    0 0 28px 2px color-mix(in srgb, var(--world-card-glow) 35%, transparent), 0 18px 48px rgba(0, 0, 0, 0.5);
 }
-.world-card-banner-backdrop {
-  position: absolute; inset: -12%; z-index: -2; background-image: var(--world-card-banner-art, none);
-  background-size: cover; background-position: center 25%; filter: blur(18px) saturate(1.15) brightness(0.65); transform: scale(1.05);
+.world-card-banner-still, .world-card-banner-video {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 35%;
+  pointer-events: none; user-select: none;
 }
-.world-card-banner-video { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-position: center 30%; }
+.world-card-banner-still { z-index: -3; }
+.world-card-banner-video { z-index: -2; }
+/* A cover standing in for a wide still keeps the face and title area in frame. */
+.world-card-banner[data-hero='cover'] .world-card-banner-still { object-position: center 18%; }
+.world-card-banner-still[data-empty='true'] {
+  background: radial-gradient(120% 80% at 50% 20%, color-mix(in srgb, var(--world-card-glow) 35%, #0b1626), var(--world-card-banner-floor));
+}
 /* A world's motion picture behind a surface: hidden until it actually plays, so a phone that will
-   not start it (Low Power Mode) keeps the soft backdrop, never a still frame with a play button. */
+   not start it (Low Power Mode) keeps the still, never a frozen frame with a play button. */
 .world-card-backdrop-video { object-fit: cover; pointer-events: none; opacity: 0; transition: opacity 600ms ease-out; }
 .world-card-backdrop-video[data-playing='true'] { opacity: 1; }
 .world-card-backdrop-video::-webkit-media-controls,
 .world-card-backdrop-video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
+/* Clear in the middle where the world is; a little shade at the top for the page's header, and a
+   long fall into the page's own color under the words. */
 .world-card-banner-wash {
-  position: absolute; inset: 0; z-index: -1;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--world-card-glow) 40%, #05070f) 0%, color-mix(in srgb, var(--world-card-glow) 24%, rgba(5, 7, 15, 0.85)) 50%, rgba(5, 7, 15, 0.2) 85%),
-    linear-gradient(0deg, rgba(5, 7, 15, 0.6), transparent 60%);
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(4, 6, 13, 0.45) 0%, rgba(4, 6, 13, 0) 20%, rgba(4, 6, 13, 0) 38%,
+    rgba(4, 6, 13, 0.62) 62%, rgba(4, 6, 13, 0.92) 84%, var(--world-card-banner-floor) 100%);
 }
-/* The words follow Home's hero: gold eyebrow, display title, serif line. */
-.world-card-banner-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; max-width: 42rem; pointer-events: none; }
-.world-card-banner-eyebrow { margin: 0; color: #d4af37; font-family: var(--font-sc, serif); font-size: 0.625rem; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; }
+.world-card-banner-sash { position: absolute; z-index: 1; right: 0; bottom: 0; width: 12rem; height: 12rem; container-type: inline-size; pointer-events: none; }
+.world-card-banner-body {
+  --world-card-banner-outline: 0 0 1px rgba(0, 0, 0, 0.95), 0 0 1px rgba(0, 0, 0, 0.95), 0 1px 2px rgba(0, 0, 0, 0.85);
+  position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+  min-width: 0; width: 100%; max-width: 40rem; pointer-events: none;
+}
+/* A soft dim behind the words only, so they read over bright art while the world stays clear above. */
+.world-card-banner-body::before {
+  content: ''; position: absolute; z-index: -1; inset: -3rem -2.5rem -1.5rem; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(4, 6, 13, 0.62), rgba(4, 6, 13, 0.38) 55%, transparent);
+}
+.world-card-banner-eyebrow { margin: 0; color: #e2bf4f; font-family: var(--font-sc, serif); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; text-shadow: var(--world-card-banner-outline), 0 1px 8px rgba(0, 0, 0, 0.8); }
 .world-card-banner-title {
-  margin: 0; color: #f5f5f5; font-size: 1.5rem; font-weight: 700; line-height: 1.15; letter-spacing: -0.01em; overflow-wrap: anywhere;
+  margin: 0; color: #f8f6f1; font-size: clamp(1.75rem, 8.5cqw, 3.25rem); font-weight: 700; line-height: 1.08; letter-spacing: -0.01em; overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+  /* A thin dark outline, then a soft shadow, so the title holds on any art. */
+  text-shadow: var(--world-card-banner-outline), 0 2px 18px rgba(0, 0, 0, 0.7);
 }
-.world-card-banner-byline { margin: 0; color: #eef0f6; font-size: 0.8125rem; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.world-card-banner-byline { margin: 0; max-width: 100%; color: #eef0f6; text-shadow: var(--world-card-banner-outline); font-size: 0.875rem; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .world-card-banner-by { margin-right: 0.3em; color: #b9b8f0; font-family: var(--font-serif, serif); }
 .world-card-banner-creator { font-family: var(--font-sc, serif); font-weight: 700; letter-spacing: 0.1em; }
-.world-card-banner-details { margin: 0; color: #d4d4d4; font-family: sans-serif; font-size: 0.75rem; line-height: 1.3; }
+.world-card-banner-details { margin: 0; color: #e2e2e2; font-family: sans-serif; font-size: 0.8125rem; line-height: 1.3; text-shadow: var(--world-card-banner-outline); }
 .world-card-banner-synopsis {
-  margin: 0; color: #d4d4d4; font-family: var(--font-serif, serif); font-size: 0.75rem; line-height: 1.6;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  margin: 0.15rem 0 0; color: #d4d4d4; font-family: var(--font-serif, serif); font-size: 0.875rem; line-height: 1.55;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
 }
-@media (max-width: 479px) { .world-card-banner-synopsis { display: none; } }
-@media (min-width: 640px) {
-  .world-card-banner-eyebrow { font-size: 0.75rem; }
-  .world-card-banner-title { font-size: 2.25rem; }
-  .world-card-banner-byline { font-size: 1rem; }
-  .world-card-banner-details, .world-card-banner-synopsis { font-size: 0.875rem; }
+/* A phone keeps the hero to the world, its name and the door. */
+@container (max-width: 36rem) { .world-card-banner-synopsis { display: none; } }
+.world-card-banner .world-card-caption-features { min-height: 0; justify-content: center; }
+.world-card-banner-action {
+  display: inline-flex; align-items: center; justify-content: center; margin-top: 0.65rem; min-height: 2.5rem; padding: 0 1.4rem;
+  border-radius: 999px; background: #f8f6f1; color: #05070f; font-family: var(--font-sc, serif); font-size: 0.8125rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out;
 }
-/* Only a wide card gets the hero's large single-line title. */
-@container (min-width: 60rem) { .world-card-banner-title { font-size: 3rem; -webkit-line-clamp: 1; line-clamp: 1; } }
-.world-card-banner .world-card-caption-features { min-height: 0; }
-/* The cover's size is set outright (the band's inner height, at 2:3): iOS Safari sizes an
-   auto grid column for a stretched aspect-ratio item at nothing and lets the cover spill out. */
-.world-card-banner-cover {
-  --world-card-banner-cover-height: calc(15rem - 2.5rem);
-  position: relative; z-index: 1; align-self: center; flex: none; overflow: hidden;
-  width: min(calc(var(--world-card-banner-cover-height) * 2 / 3), 44cqw);
-  height: min(var(--world-card-banner-cover-height), 66cqw);
-  border: 1px solid rgba(235, 243, 255, 0.4); border-radius: 0.9rem; background: #07111d;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 0 26px color-mix(in srgb, var(--world-card-glow) 40%, transparent), 0 14px 32px rgba(0, 0, 0, 0.55);
-}
-@media (min-width: 640px) {
-  .world-card-banner-cover { --world-card-banner-cover-height: calc(20rem - 5rem); }
-}
-.world-card-banner-cover-frame { position: absolute; inset: 0; container-type: inline-size; }
+.world-card-banner:hover .world-card-banner-action { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 0 22px color-mix(in srgb, var(--world-card-glow) 55%, transparent); }
+.world-card-banner:has(.world-card-banner-open:active) .world-card-banner-action { transform: scale(0.97); }
 .world-card-banner-open { position: absolute; inset: 0; z-index: 2; width: 100%; cursor: pointer; border-radius: inherit; }
 .world-card-banner-open:focus-visible { outline: 2px solid #04acff; outline-offset: -2px; }
-@media (prefers-reduced-motion: reduce) { .world-card-banner { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .world-card-banner, .world-card-banner-action { transition: none; } }
 
-/* Size the lettering to the card, including narrow rails inside a desktop page. */
-@container (max-width: 30rem) {
-  .world-card-banner-title { font-size: 1.5rem; -webkit-line-clamp: 2; line-clamp: 2; }
-  .world-card-banner-eyebrow { font-size: 0.625rem; }
-  .world-card-banner-byline { font-size: 0.8125rem; white-space: normal; overflow-wrap: anywhere; }
-  .world-card-banner-details { font-size: 0.75rem; }
-  .world-card-banner-synopsis { display: none; }
+/*
+ * Feature carousel — the Feature card's one way of moving: sideways, one slide at a time, with a
+ * story-style segmented bar along the bottom that fills for the slide on screen.
+ */
+.world-card-carousel { position: relative; touch-action: pan-y; }
+.world-card-carousel-slide[hidden] { display: none; }
+.world-card-carousel-progress {
+  position: absolute; z-index: 20; left: 50%; bottom: 0.65rem; display: flex; gap: 0.3rem; transform: translateX(-50%);
+  max-width: calc(100% - 2rem);
+}
+@media (min-width: 640px) { .world-card-carousel-progress { bottom: 1rem; } }
+/* Each segment keeps a 1.75rem-tall tap target around its thin bar. */
+.world-card-carousel-segment { position: relative; width: 2.25rem; height: 1.75rem; flex: 0 1 2.25rem; }
+.world-card-carousel-segment::before,
+.world-card-carousel-fill { position: absolute; left: 0; top: 50%; height: 3px; border-radius: 999px; transform: translateY(-50%); }
+.world-card-carousel-segment::before { content: ''; right: 0; background: rgba(229, 231, 235, 0.3); }
+.world-card-carousel-fill { width: 0; background: #f8f6f1; box-shadow: 0 0 6px rgba(255, 255, 255, 0.35); }
+.world-card-carousel-segment[data-state='done'] .world-card-carousel-fill { width: 100%; }
+.world-card-carousel-segment[data-state='current'] .world-card-carousel-fill {
+  width: 100%; animation: world-card-carousel-fill var(--world-card-carousel-ms, 8s) linear both; animation-play-state: paused;
+}
+.world-card-carousel[data-moving='true'] .world-card-carousel-segment[data-state='current'] .world-card-carousel-fill { animation-play-state: running; }
+@keyframes world-card-carousel-fill { from { width: 0; } to { width: 100%; } }
+.world-card-carousel-step {
+  position: absolute; z-index: 20; top: 50%; display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; transform: translateY(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px; background: rgba(5, 11, 18, 0.25); color: #f5f5f5;
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity: 0; transition: opacity 150ms ease-out, background-color 150ms ease-out;
+}
+.world-card-carousel-step[data-side='previous'] { inset-inline-start: 0.5rem; }
+.world-card-carousel-step[data-side='next'] { inset-inline-end: 0.5rem; }
+@media (hover: hover) { .world-card-carousel:hover .world-card-carousel-step { opacity: 1; } }
+.world-card-carousel-step:focus-visible { opacity: 1; }
+.world-card-carousel-step:hover { background: rgba(5, 11, 18, 0.45); }
+.world-card-carousel-step svg { width: 1rem; height: 1rem; }
+/* Touch swipes; the arrows are for pointers and keyboards only. */
+@media (hover: none) { .world-card-carousel-step:not(:focus-visible) { pointer-events: none; } }
+.world-card-carousel :is(.world-card-carousel-step, .world-card-carousel-segment):focus-visible { outline: 2px solid #04acff; outline-offset: 2px; border-radius: 999px; }
+@media (prefers-reduced-motion: reduce) {
+  .world-card-carousel-segment[data-state='current'] .world-card-carousel-fill { animation: none; width: 100%; }
+  .world-card-carousel-step { transition: none; }
+}
+
+/*
+ * Compact tile — the dense browsing tile (WebNovel's density): the 2:3 cover with nothing on it,
+ * the title on up to two lines and one quiet line beneath. The grid fits as many columns as the
+ * space allows (four across a phone) and only scrolls down.
+ */
+.world-card-compact-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr)); align-items: start;
+  gap: 1rem 0.6rem; margin: 0; padding: 0; list-style: none;
+}
+@media (min-width: 640px) { .world-card-compact-grid { grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: 1.25rem 0.9rem; } }
+.world-card-compact-grid > li { min-width: 0; }
+.world-card-compact-tile { display: flex; flex-direction: column; gap: 0.35rem; width: 100%; min-width: 0; color: #f3eee7; -webkit-tap-highlight-color: transparent; }
+.world-card-compact-tile-cover {
+  position: relative; display: block; width: 100%; aspect-ratio: 2 / 3; overflow: hidden; container-type: inline-size;
+  border: 1px solid rgba(235, 243, 255, 0.16); border-radius: 0.45rem; background: #07111d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 150ms ease-out, border-color 150ms ease-out;
+}
+.world-card-compact-tile-cover .world-card-cover-fallback { gap: 0; padding: 0.25rem; font-size: 0; }
+.world-card-compact-tile-cover .world-card-cover-fallback svg { width: 1.25rem; height: 1.25rem; }
+.world-card-compact-tile-open { position: absolute; inset: 0; z-index: 2; width: 100%; cursor: pointer; }
+.world-card-compact-tile-open:focus-visible { outline: none; }
+.world-card-compact-tile-cover:has(.world-card-compact-tile-open:focus-visible) { outline: 2px solid #04acff; outline-offset: 2px; }
+.world-card-compact-tile:hover .world-card-compact-tile-cover { border-color: rgba(235, 243, 255, 0.4); }
+.world-card-compact-tile-cover:has(.world-card-compact-tile-open:active),
+.world-card-compact-tile:has(.world-card-compact-tile-caption:active) .world-card-compact-tile-cover { transform: scale(0.97); }
+.world-card-compact-tile-caption { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; cursor: pointer; }
+.world-card-compact-tile-title {
+  color: #f3eee7; font-size: 0.8125rem; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+/* One line in any script: never wraps, leaves room for tone marks and diacritics above and below
+   (Thai, Vietnamese, Hindi), keeps a right-to-left name reading correctly while it sits on the
+   page's side like every other name, and fades out at the edge when a name is longer than the
+   card (an animated title is one piece, so it cannot end in an ellipsis). */
+.world-card-compact-tile-creator {
+  display: block; min-width: 0; max-width: 100%; overflow: hidden; padding-block: 0.1em; color: #e5e5e5;
+  font-family: var(--font-sc, serif); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em; line-height: 1.45;
+  white-space: nowrap; overflow-wrap: normal; word-break: keep-all;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 0.9rem), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 0.9rem), transparent);
+}
+.world-card-compact-tile-creator > * { white-space: nowrap; overflow-wrap: normal; word-break: keep-all; unicode-bidi: isolate; }
+/* On the art's top-left corner (the sash keeps the bottom-right), with a soft glow of its own color. */
+.world-card-compact-tile-activity {
+  position: absolute; z-index: 3; top: 0.4rem; inset-inline-start: 0.4rem; width: 0.5rem; height: 0.5rem; border-radius: 50%;
+  box-shadow: 0 0 8px currentColor, 0 1px 3px rgba(0, 0, 0, 0.45); pointer-events: none;
+}
+.world-card-compact-tile-activity[data-activity='active-now'] { color: rgba(52, 211, 153, 0.7); }
+.world-card-compact-tile-activity[data-activity='active-this-week'] { color: rgba(251, 191, 36, 0.45); }
+/* A small cover: the sash takes a larger share of the corner and smaller lettering, so SEN and
+   both stars stay inside the band. */
+.world-card-compact-tile-cover .world-card-ribbon { width: 56cqw; height: 56cqw; }
+.world-card-compact-tile-cover .world-card-ribbon > span {
+  width: 96cqw; gap: 0.3em; font-size: clamp(0.4375rem, 7.4cqw, 0.625rem); letter-spacing: 0.16em; padding-left: 0.16em;
+  transform: translate(-50%, -50%) translate(10cqw, 10cqw) rotate(-45deg);
+}
+.world-card-compact-tile-detail {
+  color: rgba(229, 231, 235, 0.55); font-family: sans-serif; font-size: 0.6875rem; line-height: 1.2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (min-width: 640px) {
+  .world-card-compact-tile-title { font-size: 0.9375rem; }
+  .world-card-compact-tile-detail, .world-card-compact-tile-creator { font-size: 0.75rem; }
+}
+.world-card-compact-picks {
+  display: flex; flex-direction: column; gap: 0.9rem; padding: 1.1rem 1rem 1rem; border-radius: 1.25rem;
+  border: 1px solid rgba(235, 243, 255, 0.08); background: rgba(255, 255, 255, 0.035);
+}
+.world-card-compact-picks-title { margin: 0; color: #f8f6f1; font-size: 1.375rem; font-weight: 700; line-height: 1.1; }
+.world-card-compact-picks-switch {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.75rem; width: 100%;
+  border-radius: 0.9rem; background: rgba(0, 0, 0, 0.45); color: #f8f6f1; font-size: 0.9375rem; font-weight: 700;
+}
+.world-card-compact-picks-switch svg { width: 1rem; height: 1rem; }
+.world-card-compact-picks-switch:active svg { transform: rotate(90deg); }
+.world-card-compact-picks-switch:focus-visible { outline: 2px solid #04acff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .world-card-compact-tile-cover { transition: none; }
+  .world-card-compact-tile-cover:has(.world-card-compact-tile-open:active), .world-card-compact-tile:has(.world-card-compact-tile-caption:active) .world-card-compact-tile-cover, .world-card-compact-picks-switch:active svg { transform: none; }
+}
+
+/*
+ * Card language rules (worldCardText.tsx). The language of a title in another language than the
+ * reader's shows only in a small pop-up, on hover, focus, or a finger held on the title. Scripts with marks above and below the letters get taller lines,
+ * so a two-line title never clips them.
+ */
+[data-language-host] { position: relative; -webkit-touch-callout: none; }
+.world-card-language-peek {
+  position: absolute; z-index: 6; display: inline-flex; align-items: center; gap: 0.4em; max-width: calc(100% + 1rem);
+  padding: 0.3rem 0.55rem; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 0.6rem;
+  background: rgba(8, 12, 22, 0.88); color: #f3eee7; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  font-family: sans-serif; font-size: 0.6875rem; font-weight: 600; line-height: 1.2; white-space: nowrap; pointer-events: none;
+  opacity: 0; transform: translateY(4px); transition: opacity 140ms ease-out, transform 140ms ease-out;
+}
+.world-card-language-peek-tag {
+  padding: 0 0.3em; border: 1px solid currentColor; border-radius: 0.25rem; font-size: 0.85em; font-weight: 700; letter-spacing: 0.04em; opacity: 0.85;
+}
+/* Above the words, over the bottom of the cover; the Feature card and Menu rows show it at their top. */
+[data-language-host='above'] > .world-card-language-peek { bottom: calc(100% + 0.35rem); inset-inline-start: 0; }
+[data-language-host='top'] > .world-card-language-peek { top: 0.75rem; inset-inline-start: 50%; translate: -50% 0; }
+.world-card-menu[data-language-host='top'] > .world-card-language-peek { top: 0.35rem; inset-inline-start: auto; inset-inline-end: 0; translate: none; }
+@media (hover: hover) { [data-language-host]:hover > .world-card-language-peek { opacity: 1; transform: none; } }
+[data-language-host]:focus-within > .world-card-language-peek,
+[data-language-peek='true'] > .world-card-language-peek { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .world-card-language-peek { transition: none; transform: none; } }
+:is(.world-card-compact-tile-title, .world-card-caption-title, .world-card-banner-title, .world-card-menu-title,
+  .world-card-info-title):is(:lang(th), :lang(hi), :lang(vi), :lang(ar), :lang(fa), :lang(ur), :lang(am), :lang(my), :lang(km), :lang(lo)) {
+  line-height: 1.45;
 }
 
 /* Menu face: the same row in Discover and the World Card workspace. */

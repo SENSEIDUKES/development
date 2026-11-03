@@ -15,6 +15,8 @@ export const DISCOVER_SAMPLE_WORLDS: readonly HomeWorld[] = [
   sample({ id: 'sample-last-lotus', title: 'The Last Lotus of the Jade Empire', genre: 'Xianxia', createdAt: '2026-09-09T12:00:00Z',
     imageUrl: '/card-workshop/test-images/ye_chen_portrait.png', chapterCount: 42, creatorName: 'SENSEI', senVerified: true,
     publicationStatus: 'ongoing', tags: ['inheritance trials', 'sect politics'],
+    // The sample world's wide hero still and loop for its Feature card.
+    heroImageUrl: '/world-card/last-lotus-hero.jpg', heroVideoUrl: '/world-card/last-lotus-hero.mp4',
     synopsis: 'When the last lotus blooms beneath an abandoned pavilion, a young cultivator inherits a promise the empire tried to erase.' }),
   sample({ id: 'sample-meadowlight', title: 'Meadowlight Requiem', genre: 'Fantasy', createdAt: '2026-09-21T08:00:00Z',
     imageUrl: '/card-workshop/test-images/lyra_meadowlight_portrait.png', chapterCount: 18, creatorName: 'SEIHouse',
@@ -66,8 +68,6 @@ export const DISCOVER_SAMPLE_RELEASES: readonly DiscoverRelease[] = [
 /** The sample reader tracks two series, so My updates has something to show. */
 export const DISCOVER_SAMPLE_TRACKED: readonly string[] = ['sample-last-lotus', 'sample-ember-sect'];
 
-/** The worlds the page features at its top. */
-export const DISCOVER_SAMPLE_FEATURED: readonly string[] = ['sample-last-lotus', 'sample-ninth-trial', 'sample-moon-archive'];
 
 export const DISCOVER_SAMPLE_FATE_SURVIVAL: readonly string[] = ['sample-ninth-trial', 'sample-sky-ruins', 'sample-grey-tide'];
 

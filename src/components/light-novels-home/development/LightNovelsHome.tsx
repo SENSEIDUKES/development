@@ -6,33 +6,17 @@ import { SEIFilterChip, SEISelect, SEIEmptyState } from '@seihouse/ui';
 import type { LightNovelsHomeProps } from '../shared/homeContracts';
 import { WorldCard } from '../../world-card/development/WorldCard';
 import { WorldCardFeature } from '../../world-card/development/WorldCardFeature';
+import { WorldCardFeatureCarousel, type WorldCardFeatureSlide } from '../../world-card/development/WorldCardFeatureCarousel';
 import { HomeEvents } from './HomeEvents';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SpokenCode } from '@seihouse/sen/presentation';
 import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import '../shared/home.css';
 /** Existing LibraryScreen Home presentation. Data and navigation belong to the host. */
-/** How long each Featured slide stays before the next, unless the reader is pointing at or focused in it. */
-const FEATURE_SLIDE_MS = 8000;
-/** How far a finger must travel sideways before Featured turns. */
-const SWIPE_PX = 40;
-
 export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, onVisibleWorldsChange, emptyState, featuredWorlds = [], events = [], children }: LightNovelsHomeProps) {
-  // Featured: the Carve New Destiny slide first, then each featured world's Feature card.
-  const slideCount = 1 + featuredWorlds.length;
-  const [slide, setSlide] = useState(0);
-  const [slidesHeld, setSlidesHeld] = useState(false);
-  const swipeStart = useRef<{ x: number; y: number } | null>(null);
-  const swiped = useRef(false);
-  const currentSlide = slide % slideCount;
+  // Featured: the Carve New Destiny slide first, then each featured world's Feature card,
+  // moving the way every Feature card moves (the shared World Card carousel).
+  const [currentSlide, setCurrentSlide] = useState(0);
   const heroActive = active && currentSlide === 0;
-  const showSlide = (next: number) => setSlide(((next % slideCount) + slideCount) % slideCount);
-  useEffect(() => {
-    if (!active || slideCount < 2 || slidesHeld) return;
-    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-    const timer = setTimeout(() => setSlide(current => (current + 1) % slideCount), FEATURE_SLIDE_MS);
-    return () => clearTimeout(timer);
-  }, [active, slideCount, slidesHeld, slide]);
 
   const { homeVideos: HERO_VIDEOS = [], homeImages: CELESTIAL_FALLBACK_IMAGES = [] } = useLibraryAssets();
   const [currentVideoIdx, setCurrentVideoIdx] = useState(0);
@@ -109,137 +93,107 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
       className="space-y-12 pb-10"
     >
       <HomeEvents events={events} />
-      <section aria-roledescription="carousel" aria-label="Featured" className="home-featured" data-home-featured
-        onPointerEnter={() => setSlidesHeld(true)} onPointerLeave={() => setSlidesHeld(false)}
-        onFocus={() => setSlidesHeld(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setSlidesHeld(false); }}
-        onPointerDown={event => { swipeStart.current = event.pointerType === 'mouse' ? null : { x: event.clientX, y: event.clientY }; swiped.current = false; }}
-        onPointerUp={event => {
-          const start = swipeStart.current;
-          swipeStart.current = null;
-          if (!start || slideCount < 2) return;
-          const dx = event.clientX - start.x;
-          // A sideways swipe turns the slide; a mostly vertical one is the page scrolling.
-          if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(event.clientY - start.y)) return;
-          swiped.current = true;
-          // Slides run in the page's reading direction, so a right-to-left page swipes the other way.
-          const forward = getComputedStyle(event.currentTarget).direction === 'rtl' ? dx > 0 : dx < 0;
-          showSlide(currentSlide + (forward ? 1 : -1));
-        }}
-        onPointerCancel={() => { swipeStart.current = null; }}
-        // A swipe ends on the card; it must not also open it.
-        onClickCapture={event => { if (swiped.current) { swiped.current = false; event.preventDefault(); event.stopPropagation(); } }}>
-      {/* The section's own name stays put while the slides change beneath it, with one dot per slide. */}
-      <div className="home-featured-label">
-        <span>Featured</span>
-        {slideCount > 1 && <span className="home-featured-dots" role="group" aria-label="Featured slides">
-          {Array.from({ length: slideCount }, (_, index) => <button key={index} type="button" className="home-featured-dot"
-            aria-label={index === 0 ? 'Defying the Heavens' : featuredWorlds[index - 1].title}
-            aria-current={index === currentSlide ? 'true' : undefined} onClick={() => showSlide(index)} />)}
-        </span>}
-      </div>
-      {/* The first slide stays mounted while another shows, so its video resumes where it was. */}
-      <LibraryPanel data-home-panel
-        padding="none"
-        className={`relative overflow-hidden h-60 sm:h-80 items-end ${currentSlide === 0 ? 'flex' : 'hidden'}`}
-        aria-hidden={currentSlide === 0 ? undefined : true}
-      >
-        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
-          {heroActive && <ParticleEffect accent="#cffafe" />}
-        </div>
-        {/* Layer 1: Rotating Celestial Backdrops (Constantly visible behind the video, or fully displayed if video fails to play) */}
-        <AnimatePresence initial={false}>
-          <motion.div
-            key={`fallback-img-${currentImageIdx}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="absolute inset-0 z-0 bg-black"
+      <WorldCardFeatureCarousel data-home-featured className="home-featured" active={active} onSlideChange={setCurrentSlide}
+        slides={[{
+          id: 'carve-new-destiny', label: 'Defying the Heavens',
+          // Stays mounted while a world shows, so its video resumes where it was.
+          keepMounted: true,
+          render: () => <>
+          <LibraryPanel data-home-panel
+            padding="none"
+            className="world-card-feature-frame relative flex overflow-hidden items-end"
           >
-            <img
-              src={CELESTIAL_FALLBACK_IMAGES[currentImageIdx]}
-              alt="Celestial Library Backdrop"
-              className="w-full h-full object-cover opacity-50 sm:opacity-60 select-none pointer-events-none"
-              referrerPolicy="no-referrer"
-            />
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Layer 2: Primary Celestial Videos (Always attempted as primary layer overlaying the backdrops) */}
-        {!videoError && HERO_VIDEOS.length > 0 && (
-          <div className="absolute inset-0 z-10 overflow-hidden bg-transparent">
-            <video
-              ref={heroVideoRef}
-              id={`hero-banner-video-${currentVideoIdx}`}
-              src={HERO_VIDEOS[currentVideoIdx]}
-              autoPlay={active}
-              muted={true}
-              playsInline={true}
-              preload="metadata"
-              poster={CELESTIAL_FALLBACK_IMAGES[0]}
-              onPlay={() => {
-                setVideoPlaying(true);
-                setVideoError(false);
-              }}
-              onPlaying={() => {
-                setVideoPlaying(true);
-                setVideoError(false);
-              }}
-              onCanPlay={() => {
-                setVideoPlaying(true);
-                setVideoError(false);
-              }}
-              onError={() => {
-                setVideoError(true);
-                setVideoPlaying(false);
-              }}
-              onEnded={() => {
-                setCurrentVideoIdx((prev) => ((prev + 1) % HERO_VIDEOS.length));
-              }}
-              className={`w-full h-full object-cover transition-opacity duration-1000 ease-in-out select-none pointer-events-none ${
-                videoPlaying ? "opacity-50 sm:opacity-60" : "opacity-0"
-              }`}
-            />
-          </div>
-        )}
-        <div className="absolute inset-0 ink-gradient z-10 pointer-events-none"></div>
-
-        <div className="relative z-10 p-5 sm:p-12 w-full flex justify-between items-end">
-          <div className="max-w-2xl space-y-2 sm:space-y-3">
-            <h2 className="font-display font-bold text-2xl sm:text-4xl md:text-5xl text-signal leading-tight tracking-tight drop-shadow-lg">
-              Defying the Heavens
-            </h2>
-            <p className="text-neutral-300 font-serif text-xs sm:text-sm leading-relaxed max-w-xl shadow-black drop-shadow-md hidden xs:block">
-              A mortal rises. The sects tremble. Write your own destiny and
-              shatter the limitations of the mortal coil in your customized
-              light novel universe.
-            </p>
-            <div className="pt-2 sm:pt-4 flex flex-wrap gap-4">
-              <ManifestButton
-                aria-label="Carve New Destiny"
-                icon={SENManifestingIcon}
-                size="md"
-                onClick={() => onCreateStory()}
-              >
-                Carve New Destiny
-              </ManifestButton>
+            <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
+              {heroActive && <ParticleEffect accent="#cffafe" />}
             </div>
-          </div>
-        </div>
-      </LibraryPanel>
-      {currentSlide > 0 && <WorldCardFeature key={featuredWorlds[currentSlide - 1].id} world={featuredWorlds[currentSlide - 1]} label={null}
-        displayStatus={featuredWorlds[currentSlide - 1].publicationStatus ? { view: 'public', value: featuredWorlds[currentSlide - 1].publicationStatus! } : undefined}
-        onOpen={() => onOpenWorld(featuredWorlds[currentSlide - 1].id)} />}
-      {/* Small glass arrows on the slide's edges for pointers; touch swipes instead. */}
-      {slideCount > 1 && <>
-        <button type="button" className="home-featured-step" data-side="previous" aria-label="Previous featured" onClick={() => showSlide(currentSlide - 1)}>
-          <ChevronLeft aria-hidden="true" />
-        </button>
-        <button type="button" className="home-featured-step" data-side="next" aria-label="Next featured" onClick={() => showSlide(currentSlide + 1)}>
-          <ChevronRight aria-hidden="true" />
-        </button>
-      </>}
-      </section>
+            {/* Layer 1: Rotating Celestial Backdrops (Constantly visible behind the video, or fully displayed if video fails to play) */}
+            <AnimatePresence initial={false}>
+              <motion.div
+                key={`fallback-img-${currentImageIdx}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.5, ease: "easeInOut" }}
+                className="absolute inset-0 z-0 bg-black"
+              >
+                <img
+                  src={CELESTIAL_FALLBACK_IMAGES[currentImageIdx]}
+                  alt="Celestial Library Backdrop"
+                  className="w-full h-full object-cover opacity-50 sm:opacity-60 select-none pointer-events-none"
+                  referrerPolicy="no-referrer"
+                />
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Layer 2: Primary Celestial Videos (Always attempted as primary layer overlaying the backdrops) */}
+            {!videoError && HERO_VIDEOS.length > 0 && (
+              <div className="absolute inset-0 z-10 overflow-hidden bg-transparent">
+                <video
+                  ref={heroVideoRef}
+                  id={`hero-banner-video-${currentVideoIdx}`}
+                  src={HERO_VIDEOS[currentVideoIdx]}
+                  autoPlay={active}
+                  muted={true}
+                  playsInline={true}
+                  preload="metadata"
+                  poster={CELESTIAL_FALLBACK_IMAGES[0]}
+                  onPlay={() => {
+                    setVideoPlaying(true);
+                    setVideoError(false);
+                  }}
+                  onPlaying={() => {
+                    setVideoPlaying(true);
+                    setVideoError(false);
+                  }}
+                  onCanPlay={() => {
+                    setVideoPlaying(true);
+                    setVideoError(false);
+                  }}
+                  onError={() => {
+                    setVideoError(true);
+                    setVideoPlaying(false);
+                  }}
+                  onEnded={() => {
+                    setCurrentVideoIdx((prev) => ((prev + 1) % HERO_VIDEOS.length));
+                  }}
+                  className={`w-full h-full object-cover transition-opacity duration-1000 ease-in-out select-none pointer-events-none ${
+                    videoPlaying ? "opacity-50 sm:opacity-60" : "opacity-0"
+                  }`}
+                />
+              </div>
+            )}
+            <div className="absolute inset-0 ink-gradient z-10 pointer-events-none"></div>
+
+            <div className="relative z-10 px-5 pt-5 pb-12 sm:px-12 sm:pt-12 sm:pb-14 w-full flex justify-between items-end">
+              <div className="max-w-2xl space-y-2 sm:space-y-3">
+                <h2 className="font-display font-bold text-2xl sm:text-4xl md:text-5xl text-signal leading-tight tracking-tight drop-shadow-lg">
+                  Defying the Heavens
+                </h2>
+                <p className="text-neutral-300 font-serif text-xs sm:text-sm leading-relaxed max-w-xl shadow-black drop-shadow-md hidden xs:block">
+                  A mortal rises. The sects tremble. Write your own destiny and
+                  shatter the limitations of the mortal coil in your customized
+                  light novel universe.
+                </p>
+                <div className="pt-2 sm:pt-4 flex flex-wrap gap-4">
+                  <ManifestButton
+                    aria-label="Carve New Destiny"
+                    icon={SENManifestingIcon}
+                    size="md"
+                    onClick={() => onCreateStory()}
+                  >
+                    Carve New Destiny
+                  </ManifestButton>
+                </div>
+              </div>
+            </div>
+          </LibraryPanel>
+          </>,
+        }, ...featuredWorlds.map((world): WorldCardFeatureSlide => ({
+          id: world.id, label: world.title,
+          render: onScreen => <WorldCardFeature world={world} active={onScreen}
+            displayStatus={world.publicationStatus ? { view: 'public', value: world.publicationStatus } : undefined}
+            onOpen={() => onOpenWorld(world.id)} />,
+        }))]} />
 
       {children}
       <div className="space-y-6 motion-safe:animate-fadeIn">

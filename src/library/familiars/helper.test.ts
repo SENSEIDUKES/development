@@ -35,6 +35,19 @@ describe('global Familiar interaction', () => {
     expect(matchFamiliarCommand(context.actions, 'avoid conflict')).toBeUndefined();
     expect(matchFamiliarCommand(context.actions, 'customary behavior')).toBeUndefined();
   });
+  it('gives back the story playback a page’s own reading paused, when the line ends or is stopped, with the card closed', () => {
+    const t = setup();
+    t.helper.read('Every story begins as a seed.');
+    expect(t.voice.speak).toHaveBeenCalledWith('Every story begins as a seed.', 'en-US', expect.any(Function), expect.any(Function));
+    expect(t.release).not.toHaveBeenCalled();
+    t.spoken();
+    expect(t.release).toHaveBeenCalledExactlyOnceWith(true);
+    t.helper.read('Highlight a line.');
+    t.helper.quiet();
+    expect(t.cancelSpeak).toHaveBeenCalled();
+    expect(t.release).toHaveBeenCalledTimes(2);
+    expect(t.helper.getSnapshot().phase).toBe('ready');
+  });
   it('reads back a proposal and accepts a separate spoken confirmation before saving', async () => {
     const t = setup();
     t.helper.open(true);

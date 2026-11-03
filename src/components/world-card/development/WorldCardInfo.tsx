@@ -62,7 +62,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
           {coverAction && <div className="world-card-info-cover-action">{coverAction}</div>}
           {/* MP: plays or stops the clip behind the page, so a reader whose phone would not start it (Low Power Mode) can. */}
           {videoUrl && <button type="button" className="world-card-base-format world-card-info-motion" aria-pressed={clipPlaying}
-            aria-label={`${clipPlaying ? 'Stop' : 'Play'} motion for ${story.title}`}
+            aria-label={`${clipPlaying ? 'Stop' : 'Play'} motion for ${infoTitle.text}`}
             onClick={() => clipPlaying ? backdropVideo.current?.pause() : backdropVideo.current?.play()}>
             {clipPlaying ? <Square size={14} aria-hidden="true" /> : <Film size={17} aria-hidden="true" />}
           </button>}
@@ -71,11 +71,11 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
           {/* On a phone the reading pill and the story's states share one row; beside the cover the states lead the column. */}
           <div className="world-card-info-actions">
             <div className="world-card-info-buttons">
-              <ReadingAction title={story.title} count={count} countLabel={countLabel} currentArc={currentArc}
+              <ReadingAction title={infoTitle.text} count={count} countLabel={countLabel} currentArc={currentArc}
                 onRead={onRead} onStart={onStart} readingPosition={readingPosition} />
               {/* The world's Blueprint, a small companion to the reading pill. */}
               {onOpenBlueprint && <LibraryButton variant="secondary" size="lg" icon={DraftingCompass}
-                className="world-card-info-blueprint" aria-label={`Blueprint: ${story.title}`} title="Blueprint" onClick={() => onOpenBlueprint()}>
+                className="world-card-info-blueprint" aria-label={`Blueprint: ${infoTitle.text}`} title="Blueprint" onClick={() => onOpenBlueprint()}>
                 <span className="world-card-info-blueprint-label">Blueprint</span>
               </LibraryButton>}
             </div>

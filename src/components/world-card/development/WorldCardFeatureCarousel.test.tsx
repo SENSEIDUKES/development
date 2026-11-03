@@ -56,10 +56,26 @@ it('holds the slide while a finger rests on it, then gives it only the time it h
   expect(shown()).toBe('Moons');
 });
 
+it('stops for good when the reader pauses it, and moves again when they play it', () => {
+  act(() => root.render(<WorldCardFeatureCarousel slides={slides} slideMs={1000} />));
+  const pause = container.querySelector<HTMLButtonElement>('.world-card-carousel-pause')!;
+  expect(pause.getAttribute('aria-label')).toBe('Pause featured');
+  act(() => pause.click());
+  expect(pause.getAttribute('aria-pressed')).toBe('true');
+  expect(pause.getAttribute('aria-label')).toBe('Play featured');
+  act(() => { vi.advanceTimersByTime(5000); });
+  expect(shown()).toBe('Lotus');
+  // Play works at once, even while the button keeps keyboard focus.
+  act(() => { pause.focus(); pause.click(); });
+  act(() => { vi.advanceTimersByTime(1000); });
+  expect(shown()).toBe('Moons');
+});
+
 it('stays still with one slide, and while the page is inactive', () => {
   act(() => root.render(<WorldCardFeatureCarousel slides={slides.slice(0, 1)} slideMs={1000} />));
   expect(segments()).toHaveLength(0);
   expect(container.querySelector('.world-card-carousel-step')).toBeNull();
+  expect(container.querySelector('.world-card-carousel-pause')).toBeNull();
   act(() => root.render(<WorldCardFeatureCarousel slides={slides} slideMs={1000} active={false} />));
   act(() => { vi.advanceTimersByTime(5000); });
   expect(shown()).toBe('Lotus');

@@ -156,7 +156,7 @@ function DiscoverContent({
   const trackedEntries = new Set(trackedCodexIds ?? []);
   const worldMatches = (world: HomeWorld, genreFilter = genre) =>
     (!genreFilter || world.genre === genreFilter) &&
-    matchesText(search, world.title, world.creatorName, world.genre, ...(world.tags ?? []));
+    matchesText(search, world.title, ...Object.values(world.titleTranslations ?? {}), world.creatorName, world.genre, ...(world.tags ?? []));
   const storyMatches = (world: HomeWorld) => worldMatches(world) && (feed === 'all' || tracked.has(world.id));
   const creatorWorlds = (creator: DiscoverCreator) =>
     creator.worldIds.flatMap((id) => (worldById.get(id) ? [worldById.get(id)!] : []));

@@ -84,7 +84,7 @@ export function WorldCardCompactPicks({ title, worlds, onOpenWorld, size = 8, se
   senSashWorldIds?: readonly string[];
 }) {
   const [start, setStart] = useState(0);
-  if (!worlds.length) return null;
+  if (!worlds.length || size < 1) return null;
   const count = Math.min(size, worlds.length);
   const shown = Array.from({ length: count }, (_, index) => worlds[(start + index) % worlds.length]);
   const canSwitch = worlds.length > size;

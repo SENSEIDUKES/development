@@ -635,6 +635,11 @@ it('spotlights a world in the living Feature hero with its art, sash, details, s
   expect(container.querySelector('[data-world-card="feature"]')?.getAttribute('data-hero')).toBe('wide');
   expect(container.querySelector('.world-card-banner-still')?.getAttribute('src')).toBe('/lotus-wide.jpg');
   expect(container.querySelector('.world-card-banner-action')).toBeNull();
+
+  // A wide still that fails to load gives way to the cover.
+  act(() => { container.querySelector('.world-card-banner-still')!.dispatchEvent(new Event('error')); });
+  expect(container.querySelector('.world-card-banner-still')?.getAttribute('src')).toBe('/lotus.png');
+  expect(container.querySelector('[data-world-card="feature"]')?.getAttribute('data-hero')).toBe('cover');
 });
 
 it('keeps the Feature card’s loop still for a reader who prefers reduced motion, even as its slide comes on screen', () => {

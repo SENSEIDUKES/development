@@ -15,9 +15,9 @@ export function WorldCardMenu({ world, onOpen, chapter, age, tracked = false, ra
     <span className="world-card-menu-cover"><WorldCardCover src={world.imageUrl} title={world.title} decorative /></span>
     <span className="world-card-menu-body">
       <span className="world-card-menu-title" {...authorText(title.lang)}>{title.text}</span>
-      {/* "Chapter" is an interface word; the chapter's own title is the author's. */}
+      {/* "Chapter" is an interface word; the chapter's own title is the author's, in the world's original language. */}
       {chapter && <span className="world-card-menu-chapter">
-        <span>Chapter {chapter.number}</span>{chapter.title && <> · <span {...authorText(title.lang)}>{chapter.title}</span></>}
+        <span>Chapter {chapter.number}</span>{chapter.title && <> · <span {...authorText(world.originalLanguage)}>{chapter.title}</span></>}
       </span>}
       <span className="world-card-menu-meta">
         <span>{world.creatorName && <span {...authorText(world.creatorLanguage)}>{world.creatorName}</span>}

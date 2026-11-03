@@ -25,6 +25,12 @@ it('shows a real translation in the reader’s language, else the original with 
   // Unknown language or no reader language: the title as written, with no tag.
   expect(resolveWorldTitle({ title: 'Untitled' }, 'ja')).toEqual({ text: 'Untitled', lang: undefined });
   expect(resolveWorldTitle(ninth)).toEqual({ text: 'المحنة التاسعة', lang: 'ar' });
+  // The reader's exact translation wins even when the original shares its base language.
+  expect(resolveWorldTitle({ title: '九月之烬', originalLanguage: 'zh-CN', titleTranslations: { 'zh-TW': '九月之燼' } }, 'zh-TW'))
+    .toEqual({ text: '九月之燼', lang: 'zh-TW' });
+  // A blank translation never hides a usable one.
+  expect(resolveWorldTitle({ ...ninth, titleTranslations: { 'en-GB': ' ', en: 'The Ninth Trial' } }, 'en-GB'))
+    .toEqual({ text: 'The Ninth Trial', lang: 'en' });
 });
 
 it('marks titles and creator names as the author’s words, in their own language, and follows the page language', async () => {
@@ -67,6 +73,14 @@ it('shows the language when a finger rests on the title, without opening the wor
     expect(onOpen).not.toHaveBeenCalled();
     act(() => { vi.advanceTimersByTime(1800); });
     expect(caption.getAttribute('data-language-peek')).toBeNull();
+    // A new press clears a pop-up left showing by an earlier hold.
+    act(() => { title.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: 10, clientY: 10 })); });
+    act(() => { vi.advanceTimersByTime(450); });
+    expect(caption.getAttribute('data-language-peek')).toBe('true');
+    act(() => { title.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' })); title.click(); });
+    act(() => { title.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: 10, clientY: 10 })); });
+    expect(caption.getAttribute('data-language-peek')).toBeNull();
+    act(() => { title.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' })); });
     // A quick tap still opens the world.
     act(() => { title.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: 10, clientY: 10 })); });
     act(() => { title.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' })); title.click(); });

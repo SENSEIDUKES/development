@@ -301,8 +301,6 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     // World Info sits in the Library Shell; the Reader never does.
     frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds}
       readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}
-    // Every story on this device is the reader's own, so its Blueprint opens for its creator.
-    onOpenBlueprint={() => navigate({ page: 'blueprint', storyId })}
     onCloseBlueprint={() => navigate({ page: 'story', storyId })}
     onOpenReader={() => navigate({ page: 'read', storyId })}
     onCloseReader={() => navigate({ page: 'story', storyId })}

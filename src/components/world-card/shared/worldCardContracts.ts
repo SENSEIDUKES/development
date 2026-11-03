@@ -1,7 +1,8 @@
 import type { WorldExpansionPreview } from '../../light-novels-home/development/WorldExpressions';
 import type { ReactNode } from 'react';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
-import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
+import type { StoryDetailDisplay, WorldInfoArc, WorldInfoBranch, WorldInfoChapter } from '../../light-novels-home/shared/storyDetailContracts';
+export type { WorldInfoArc, WorldInfoArcGoal, WorldInfoBranch, WorldInfoChapter } from '../../light-novels-home/shared/storyDetailContracts';
 import type { CreatorWorld, CreatorWorldStatus } from '../../creator-space/shared/creatorSpaceContracts';
 
 /** Menu row: a world with optional host-supplied chapter, release age, tracking and rank. */
@@ -30,12 +31,19 @@ export interface WorldCardInfoProps {
   onStart?: () => void;
   onOpenCodex?: () => void;
   /**
-   * Opens this world's Blueprint: editable for its creator while the novel is
-   * private, view-only (with copy when the creator allows) for anyone else.
-   * The host owns the page and decides the view; without it, no button shows,
-   * so a host leaves it out for a reader when the creator has sharing turned off.
+   * The book's chapters for World Info's chapter selector, beside the reading pill: the whole
+   * table of contents, with the reader's place marked. A tap opens that chapter. Without
+   * chapters or `onOpenChapter`, there is no selector.
    */
-  onOpenBlueprint?: () => void;
+  chapters?: readonly WorldInfoChapter[];
+  /**
+   * The book's arcs, so the chapter selector groups chapters by arc and shows each arc's goals
+   * where they fall, with the reader's own progress through it. Without arcs it is one list.
+   */
+  arcs?: readonly WorldInfoArc[];
+  /** Where this world branched from another, drawn on the chapter selector's path. */
+  branch?: WorldInfoBranch;
+  onOpenChapter?: (chapterNumber: number) => void;
   /**
    * World Info's Portal: the world's connected media (the novel, and its
    * manga, game and other adaptations). Opening it shows them on the page.

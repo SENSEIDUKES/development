@@ -578,19 +578,118 @@ it('keeps an MP control on the Info cover that starts or stops the backdrop clip
   vi.restoreAllMocks();
 });
 
-it('puts a small Blueprint button beside the reading pill only when the host supplies one', () => {
-  const onOpenBlueprint = vi.fn();
-  act(() => root.render(<WorldCardInfo story={infoStory} onRead={() => {}} onOpenBlueprint={onOpenBlueprint} />));
+it('puts the chapter selector beside the reading pill, opening the whole book at the reader\'s place', () => {
+  const onOpenChapter = vi.fn();
+  const chapters = [{ number: 2, title: 'Ashes on Dead Water' }, { number: 1, title: 'The Silent Lotus' }, { number: 3, read: true }];
+  act(() => root.render(<WorldCardInfo story={infoStory} onRead={() => {}} readingPosition={{ chapterNumber: 2 }}
+    chapters={chapters} onOpenChapter={onOpenChapter} />));
   const buttons = container.querySelector('.world-card-info-buttons')!;
   expect(buttons.querySelector('[data-world-info-chapters="action"]')).not.toBeNull();
-  const blueprint = buttons.querySelector<HTMLButtonElement>('button.world-card-info-blueprint')!;
-  expect(blueprint.textContent).toContain('Blueprint');
-  expect(blueprint.getAttribute('aria-label')).toBe('Blueprint: The Last Lotus');
-  act(() => blueprint.click());
-  expect(onOpenBlueprint).toHaveBeenCalledTimes(1);
-
-  act(() => root.render(<WorldCardInfo story={infoStory} onRead={() => {}} />));
+  // The Blueprint lives in Create; World Info offers the book instead.
   expect(container.querySelector('.world-card-info-blueprint')).toBeNull();
+  const selector = buttons.querySelector<HTMLButtonElement>('button.world-card-info-chapters-button')!;
+  expect(selector.getAttribute('aria-label')).toBe('Chapters: The Last Lotus');
+  act(() => selector.click());
+  const rows = [...document.querySelectorAll<HTMLButtonElement>('.world-card-chapters-row')];
+  // Every chapter, in order; an untitled one reads as its number; the reader's place is marked.
+  expect(rows.map(row => row.getAttribute('aria-label'))).toEqual([
+    // Read means opened: Chapter 1 is before the reader's place but was never opened; Chapter 3 was.
+    'Chapter 1: The Silent Lotus', 'Chapter 2: Ashes on Dead Water, where you are reading', 'Chapter 3, read']);
+  expect(rows[1].getAttribute('aria-current')).toBe('true');
+  // Without arcs the header names only the page's chapters, with no arc.
+  expect(document.querySelector('.world-card-chapters-arc-name')).toBeNull();
+  expect(document.querySelector('.world-card-chapters-place-range')?.textContent).toBe('Ch. 1–3');
+  expect(document.querySelector('.world-card-chapters-count')?.textContent).toBe('3 chapters');
+  act(() => rows[2].click());
+  expect(onOpenChapter).toHaveBeenCalledWith(3);
+  expect(document.querySelector('.world-card-chapters-row')).toBeNull();
+
+  // Without chapters, or a way to open one, there is no selector.
+  act(() => root.render(<WorldCardInfo story={infoStory} onRead={() => {}} chapters={[]} onOpenChapter={onOpenChapter} />));
+  expect(container.querySelector('.world-card-info-chapters-button')).toBeNull();
+  act(() => root.render(<WorldCardInfo story={infoStory} onRead={() => {}} chapters={chapters} />));
+  expect(container.querySelector('.world-card-info-chapters-button')).toBeNull();
+});
+
+it('maps the book by arc, in pages: progress, a finished arc, and goals revealed only once read', () => {
+  // The reader has opened Chapters 1–31 and is on 32.
+  const chapters = Array.from({ length: 34 }, (_, index) => ({ number: index + 1, title: `Chapter title ${index + 1}`, ...(index < 31 ? { read: true } : {}) }));
+  const arcs = [
+    { number: 1, firstChapter: 1, lastChapter: 30, goals: [
+      { text: 'Survive the trials', startChapter: 1, endChapter: 15, resolved: { chapterNumber: 12, outcome: 'reached' as const } },
+      { text: 'Win the tournament', startChapter: 16, endChapter: 30, resolved: { chapterNumber: 29, outcome: 'missed' as const } },
+    ] },
+    { number: 2, firstChapter: 31, lastChapter: 60, goals: [
+      { text: 'Reclaim the seal', startChapter: 31, endChapter: 33, resolved: { chapterNumber: 33, outcome: 'reached' as const } },
+      { text: 'Open the last lotus', startChapter: 34, endChapter: 60 },
+    ] },
+  ];
+  act(() => root.render(<WorldCardInfo story={infoStory} onRead={() => {}} readingPosition={{ chapterNumber: 32 }}
+    chapters={chapters} arcs={arcs} onOpenChapter={() => {}} />));
+  act(() => container.querySelector<HTMLButtonElement>('button.world-card-info-chapters-button')!.click());
+  expect(document.querySelector('.world-card-chapters-count')?.textContent).toBe('34 chapters · 2 arcs');
+  const header = () => document.querySelector('.world-card-chapters-arc-header')!.textContent;
+  const range = () => document.querySelector('.world-card-chapters-place-range')!.textContent;
+  const rows = () => [...document.querySelectorAll('.world-card-chapters-row')].map(row => row.querySelector('.world-card-chapters-number')!.textContent);
+  const goals = () => [...document.querySelectorAll('.world-card-chapters-goal')].map(goal => goal.getAttribute('data-status') + ': ' + goal.textContent);
+  const button = (label: string) => document.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
+  // It opens on the reader's page: Arc 2, Chapters 31–40, nothing to scroll.
+  expect(header()).toContain('Arc 2');
+  expect(header()).toContain('Reading');
+  expect(range()).toBe('Ch. 31–40');
+  expect(rows()).toEqual(['31', '32', '33', '34']);
+  // The story reached the seal at Chapter 33, but the reader is at 32: it is their current goal, not a spoiler.
+  // A goal ahead keeps its words, and waits after the last written chapter.
+  // Only words on screen; where each goal falls is its place on the path (and spoken to screen readers).
+  expect(goals()).toEqual(['current: Current goal, by Chapter 33Reclaim the seal', 'ahead: Goal ahead, Chapters 34 to 60Revealed when you get there']);
+  expect(document.body.textContent).not.toContain('Open the last lotus');
+  expect(button('Next page').disabled).toBe(true);
+  // A step back through the arcs: Arc 1 is read through, complete, both goals resolved.
+  act(() => button('Previous arc').click());
+  expect(header()).toContain('Complete');
+  expect(header()).toContain('30 of 30 chapters read, 2 of 2 goals');
+  expect(range()).toBe('Ch. 1–10');
+  expect(rows()).toHaveLength(10);
+  expect(goals()).toEqual([]);
+  // The page turns: Chapter 12 is where the first goal was reached.
+  act(() => button('Next page').click());
+  expect(range()).toBe('Ch. 11–20');
+  expect(goals()).toEqual(['reached: Goal reached, Chapter 12Survive the trials']);
+  const goalAfter = document.querySelector('.world-card-chapters-goal')!.previousElementSibling!;
+  expect(goalAfter.querySelector('button')?.getAttribute('aria-label')).toBe('Chapter 12: Chapter title 12, read');
+  // A swipe turns it on, and the arrow keys turn it back.
+  const list = document.querySelector<HTMLElement>('.world-card-chapters-list')!;
+  act(() => {
+    list.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: 300, clientY: 200 }));
+    list.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch', clientX: 200, clientY: 205 }));
+  });
+  expect(range()).toBe('Ch. 21–30');
+  expect(goals()).toEqual(['missed: Goal missed, Chapter 29Win the tournament']);
+  // The new page holds focus, so the keys keep turning it.
+  const page = document.querySelector<HTMLElement>('.world-card-chapters-list')!;
+  expect(document.activeElement).toBe(page);
+  act(() => { page.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })); });
+  expect(range()).toBe('Ch. 11–20');
+  // One bar at the foot fills as the arc's pages turn.
+  const bar = document.querySelector('.world-card-chapters-progress')!;
+  expect(bar.getAttribute('aria-label')).toBe('Page 2 of 3 of Arc 1');
+  expect(bar.querySelector('span')!.style.width).toBe('67%');
+  act(() => button('Previous page').click());
+  expect(range()).toBe('Ch. 1–10');
+  expect(document.querySelector('.world-card-chapters-progress span')!.getAttribute('style')).toContain('33%');
+  expect(button('Previous page').disabled).toBe(true);
+});
+
+it('draws a branched world\'s path: the shared history, the chapter it branched at, and its own chapters', () => {
+  const chapters = Array.from({ length: 6 }, (_, index) => ({ number: index + 1 }));
+  act(() => root.render(<WorldCardInfo story={infoStory} onRead={() => {}} readingPosition={{ chapterNumber: 5 }}
+    chapters={chapters} branch={{ fromTitle: 'The First Lotus', atChapter: 4, yours: true }} onOpenChapter={() => {}} />));
+  act(() => container.querySelector<HTMLButtonElement>('button.world-card-info-chapters-button')!.click());
+  expect(document.querySelector('.world-card-chapters-lineage')?.textContent).toBe('Your branch of The First Lotus');
+  const items = [...document.querySelectorAll('.world-card-chapters-rows > li')];
+  expect(items.map(item => item.classList.contains('world-card-chapters-fork') ? 'fork' : item.getAttribute('data-path')))
+    .toEqual(['main', 'main', 'main', 'fork', 'branch', 'branch', 'branch']);
+  expect(items[3].textContent).toContain('You branched here');
 });
 
 it('shows each trimmed tag once', () => {

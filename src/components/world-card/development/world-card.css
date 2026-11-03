@@ -472,9 +472,9 @@
 .world-card-banner {
   --world-card-glow: rgba(4, 172, 255, 0.6);
   --world-card-banner-floor: #04060d;
-  position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+  position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start;
   width: 100%; overflow: hidden; container-type: inline-size;
-  padding: 1.25rem 1.25rem 3rem; border-radius: 1.5rem; text-align: center;
+  padding: 1.25rem 1.25rem 3rem; border-radius: 1.5rem; text-align: start;
   background: var(--world-card-banner-floor); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
   transition: box-shadow 200ms cubic-bezier(0, 0, 0.2, 1);
 }
@@ -500,45 +500,74 @@
 .world-card-backdrop-video[data-playing='true'] { opacity: 1; }
 .world-card-backdrop-video::-webkit-media-controls,
 .world-card-backdrop-video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
-/* Clear in the middle where the world is; a little shade at the top for the page's header, and a
-   long fall into the page's own color under the words. */
+/* The art stays clear above; the shade gathers only where the words sit: along the bottom, and on
+   a wide card also along the start edge behind the word column. */
 .world-card-banner-wash {
   position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(180deg, rgba(4, 6, 13, 0.45) 0%, rgba(4, 6, 13, 0) 20%, rgba(4, 6, 13, 0) 38%,
-    rgba(4, 6, 13, 0.62) 62%, rgba(4, 6, 13, 0.92) 84%, var(--world-card-banner-floor) 100%);
+  background: linear-gradient(180deg, rgba(4, 6, 13, 0.4) 0%, rgba(4, 6, 13, 0) 18%, rgba(4, 6, 13, 0) 42%,
+    rgba(4, 6, 13, 0.6) 66%, rgba(4, 6, 13, 0.9) 86%, var(--world-card-banner-floor) 100%);
+}
+@container (min-width: 40rem) {
+  .world-card-banner-wash {
+    background: linear-gradient(90deg, rgba(4, 6, 13, 0.7) 0%, rgba(4, 6, 13, 0.35) 38%, rgba(4, 6, 13, 0) 62%),
+      linear-gradient(180deg, rgba(4, 6, 13, 0.35) 0%, rgba(4, 6, 13, 0) 22%, rgba(4, 6, 13, 0) 55%, rgba(4, 6, 13, 0.75) 88%, var(--world-card-banner-floor) 100%);
+  }
+  :dir(rtl) .world-card-banner-wash {
+    background: linear-gradient(270deg, rgba(4, 6, 13, 0.7) 0%, rgba(4, 6, 13, 0.35) 38%, rgba(4, 6, 13, 0) 62%),
+      linear-gradient(180deg, rgba(4, 6, 13, 0.35) 0%, rgba(4, 6, 13, 0) 22%, rgba(4, 6, 13, 0) 55%, rgba(4, 6, 13, 0.75) 88%, var(--world-card-banner-floor) 100%);
+  }
 }
 .world-card-banner-sash { position: absolute; z-index: 1; right: 0; bottom: 0; width: 12rem; height: 12rem; container-type: inline-size; pointer-events: none; }
+/*
+ * The words keep fixed places, so every slide of a carousel lines up: the title always holds two
+ * lines (a one-line title sits on the second line's baseline), then one line each for creator and
+ * details, two lines of synopsis where there is room, then the door. A row a world leaves empty
+ * still keeps its height.
+ */
 .world-card-banner-body {
   --world-card-banner-outline: 0 0 1px rgba(0, 0, 0, 0.95), 0 0 1px rgba(0, 0, 0, 0.95), 0 1px 2px rgba(0, 0, 0, 0.85);
-  position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
-  min-width: 0; width: 100%; max-width: 40rem; pointer-events: none;
+  --world-card-banner-title-size: clamp(1.6rem, 8cqw, 2.75rem);
+  --world-card-banner-synopsis-rows: 0rem;
+  position: relative; z-index: 1; display: grid; width: 100%; max-width: 40rem; min-width: 0; pointer-events: none;
+  grid-template-areas: 'title' 'byline' 'details' 'synopsis' 'action';
+  grid-template-rows: calc(2 * 1.08 * var(--world-card-banner-title-size)) 1.45rem 1.45rem var(--world-card-banner-synopsis-rows) 3rem;
+  row-gap: 0.2rem; align-items: center; justify-items: start;
 }
-/* A soft dim behind the words only, so they read over bright art while the world stays clear above. */
-.world-card-banner-body::before {
-  content: ''; position: absolute; z-index: -1; inset: -3rem -2.5rem -1.5rem; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(4, 6, 13, 0.62), rgba(4, 6, 13, 0.38) 55%, transparent);
+@container (min-width: 36rem) { .world-card-banner-body { --world-card-banner-synopsis-rows: calc(2 * 1.55 * 0.875rem); } }
+@container (min-width: 40rem) { .world-card-banner-body { --world-card-banner-title-size: clamp(2rem, 5.5cqw, 3rem); max-width: min(34rem, 52%); } }
+/* The section's name, in the corner of the art rather than over it. */
+.world-card-banner-eyebrow {
+  position: absolute; z-index: 1; top: 0.9rem; inset-inline-start: 0.9rem; margin: 0; padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(226, 191, 79, 0.35); border-radius: 999px; background: rgba(5, 8, 16, 0.5);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); pointer-events: none;
+  color: #e2bf4f; font-family: var(--font-sc, serif); font-size: 0.625rem; font-weight: 700; letter-spacing: 0.25em; line-height: 1; text-transform: uppercase;
 }
-.world-card-banner-eyebrow { margin: 0; color: #e2bf4f; font-family: var(--font-sc, serif); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; text-shadow: var(--world-card-banner-outline), 0 1px 8px rgba(0, 0, 0, 0.8); }
+@media (min-width: 640px) { .world-card-banner-eyebrow { top: 1.25rem; inset-inline-start: 1.25rem; font-size: 0.6875rem; } }
 .world-card-banner-title {
-  margin: 0; color: #f8f6f1; font-size: clamp(1.75rem, 8.5cqw, 3.25rem); font-weight: 700; line-height: 1.08; letter-spacing: -0.01em; overflow-wrap: anywhere;
+  grid-area: title; align-self: end; margin: 0; color: #f8f6f1; font-size: var(--world-card-banner-title-size); font-weight: 700; line-height: 1.08;
+  letter-spacing: -0.01em; overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
   /* A thin dark outline, then a soft shadow, so the title holds on any art. */
   text-shadow: var(--world-card-banner-outline), 0 2px 18px rgba(0, 0, 0, 0.7);
 }
-.world-card-banner-byline { margin: 0; max-width: 100%; color: #eef0f6; text-shadow: var(--world-card-banner-outline); font-size: 0.875rem; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.world-card-banner-by { margin-right: 0.3em; color: #b9b8f0; font-family: var(--font-serif, serif); }
+.world-card-banner-byline { grid-area: byline; margin: 0; max-width: 100%; color: #eef0f6; text-shadow: var(--world-card-banner-outline); font-size: 0.875rem; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.world-card-banner-by { margin-inline-end: 0.3em; color: #b9b8f0; font-family: var(--font-serif, serif); }
 .world-card-banner-creator { font-family: var(--font-sc, serif); font-weight: 700; letter-spacing: 0.1em; }
-.world-card-banner-details { margin: 0; color: #e2e2e2; font-family: sans-serif; font-size: 0.8125rem; line-height: 1.3; text-shadow: var(--world-card-banner-outline); }
+.world-card-banner-details {
+  grid-area: details; align-self: stretch; display: flex; align-items: center; gap: 0; max-width: 100%; margin: 0; overflow: hidden; white-space: nowrap;
+  color: #e2e2e2; font-family: sans-serif; font-size: 0.8125rem; line-height: 1.3; text-shadow: var(--world-card-banner-outline);
+}
+.world-card-banner-details > span:not(.world-card-banner-branching) { flex: none; white-space: pre; }
+.world-card-banner-branching { flex: none; margin-inline-start: 0.6rem; padding: 0.1rem 0.4rem; font-size: 0.625rem; }
 .world-card-banner-synopsis {
-  margin: 0.15rem 0 0; color: #d4d4d4; font-family: var(--font-serif, serif); font-size: 0.875rem; line-height: 1.55;
+  grid-area: synopsis; align-self: start; margin: 0; color: #d4d4d4; font-family: var(--font-serif, serif); font-size: 0.875rem; line-height: 1.55;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
 }
 /* A phone keeps the hero to the world, its name and the door. */
 @container (max-width: 36rem) { .world-card-banner-synopsis { display: none; } }
-.world-card-banner .world-card-caption-features { min-height: 0; justify-content: center; }
 .world-card-banner-action {
-  display: inline-flex; align-items: center; justify-content: center; margin-top: 0.65rem; min-height: 2.5rem; padding: 0 1.4rem;
-  border-radius: 999px; background: #f8f6f1; color: #05070f; font-family: var(--font-sc, serif); font-size: 0.8125rem; font-weight: 700;
+  grid-area: action; align-self: end; display: inline-flex; align-items: center; justify-content: center; min-height: 2.25rem; padding: 0 1.1rem;
+  border-radius: 999px; background: #f8f6f1; color: #05070f; font-family: var(--font-sc, serif); font-size: 0.75rem; font-weight: 700;
   letter-spacing: 0.12em; text-transform: uppercase; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
   transition: transform 150ms ease-out, box-shadow 150ms ease-out;
 }

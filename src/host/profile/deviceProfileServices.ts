@@ -14,7 +14,7 @@ import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/c
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { downloadStorySeed, downloadStorySeedCollection, reconcileStorySeedBlueprint, type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/story-seed';
 import { getDaoRankData, resolvePermanentDaoXp } from '@seihouse/library/cultivation';
-import { normalizeFamiliarSize, type FamiliarOption } from '@seihouse/library/familiar';
+import { normalizeFamiliarSize, updateFamiliarPersonalizations, type FamiliarOption } from '@seihouse/library/familiar';
 import type { CelestialStoreAccountServices } from '@seihouse/library/celestial-store';
 import type {
   ChapterWritingStyle, UserProfile, UserProfileController, UserProfileControllerProps, UserProfileNotYetBuilt, UserProfileServices,
@@ -294,6 +294,11 @@ export function useDeviceProfileController(
     commit({ familiarWakeWord: wakeWord || undefined });
   }, [commit, profile]);
 
+  const handleFamiliarPersonalChange = useCallback((familiarId: string, changes: { name?: string | null; backstory?: string | null }) => {
+    if (!profile) return;
+    commit({ familiarPersonal: updateFamiliarPersonalizations(profile.familiarPersonal, familiarId, changes) });
+  }, [commit, profile]);
+
   // The profile picture: the photo stays in the page; portraits are shown through object URLs until one is kept.
   const releasePortraits = useCallback(() => {
     portraitUrls.current.forEach(url => URL.revokeObjectURL(url));
@@ -397,6 +402,7 @@ export function useDeviceProfileController(
     handleFamiliarInHeaderChange,
     handleFamiliarLiveTalkChange,
     handleFamiliarWakeWordChange,
+    handleFamiliarPersonalChange,
     syncStatus: 'idle',
     lastSavedTime: profile ? new Date(profile.updatedAt) : null,
     setIsSettingsOpen: open => { if (open) openModelRouter?.(); },

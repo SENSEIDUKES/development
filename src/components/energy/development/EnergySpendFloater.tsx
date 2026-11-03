@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { LibraryNavigationIcon } from '@seihouse/library-ui';
 import { formatEnergy } from './EnergyAmount';
 import './energy.css';
+import { EnergySunIcon } from './EnergySunIcon';
 
 export interface EnergySpendBurst {
   /** A new burst each time this changes. */
@@ -40,7 +40,7 @@ export function EnergySpendFloater({ burst, note }: { burst?: EnergySpendBurst; 
         <span key={`${shown.key}-${index}`} className="energy-spend-floater__item" aria-hidden="true"
           style={{ animationDelay: `${index * STAGGER_MS}ms`, left: `${50 + (index - (shown.count - 1) / 2) * 22}%` }}>
           −{formatEnergy(shown.amount)}
-          <LibraryNavigationIcon name="energy" size="1em" className="energy-glyph" aria-hidden="true" />
+          <EnergySunIcon className="energy-glyph" />
         </span>
       ))}
     </span>

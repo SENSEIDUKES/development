@@ -83,7 +83,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/presentation': ['LibraryPresentationProvider'],
       '@seihouse/library/profile': ['LibraryProfile', 'UserProfileServicesProvider', 'notYetBuiltNote'],
       '@seihouse/library/energy': ['EnergyPanel', 'EnergyClientProvider', 'createHttpEnergyClient'],
-      '@seihouse/library/familiar': ['Familiar', 'FamiliarSprite', 'FamiliarSelection', 'FamiliarCompanion', 'FamiliarRecall', 'FamiliarTrainingPanel', 'FamiliarsClientProvider', 'createHttpFamiliarsClient', 'activeNameEffect', 'ElementalEffectPanel', 'FamiliarNameEffect'],
+      '@seihouse/library/familiar': ['Familiar', 'FamiliarSprite', 'FamiliarHero', 'FamiliarCompanion', 'FamiliarRecall', 'FamiliarStage', 'FamiliarSettingsMenu', 'FamiliarsClientProvider', 'createHttpFamiliarsClient', 'activeNameEffect', 'FamiliarNameEffect'],
       '@seihouse/library/cultivation': ['ClosedDoorCultivationModal', 'QiClientProvider', 'createHttpQiClient', 'DaoXpClientProvider', 'createHttpDaoXpClient', 'getDaoRankData'],
       '@seihouse/library/dao-pillar': ['DaoPillarView', 'DaoPillarClientProvider'],
       '@seihouse/library/relics': ['RelicReveal', 'FateSurvivalRelicsPanel', 'RelicsClientProvider', 'createHttpRelicsClient'],
@@ -101,7 +101,7 @@ export const PACKAGE_TARGETS = {
     smokeTypes: `
       import type { UserProfileFeature, UserProfileNotYetBuilt, UserProfileServices } from '@seihouse/library/profile';
       import type { EnergyClient } from '@seihouse/library/energy';
-      import type { FamiliarDefinition, FamiliarSelectionProps } from '@seihouse/library/familiar';
+      import type { FamiliarDefinition, FamiliarStageProps } from '@seihouse/library/familiar';
       import type { QiClient } from '@seihouse/library/cultivation';
       import type { FateSurvivalRelicView, RelicsClient } from '@seihouse/library/relics';
       import type { AchievementsClient, MysteryScrollView, RewardGrant } from '@seihouse/library/rewards';
@@ -110,7 +110,7 @@ export const PACKAGE_TARGETS = {
       import type { HarnessGenerationWorkspaceProps } from '@seihouse/library/generation';
       import type { LibraryStories, LibraryStoriesOptions, StoryPagesProps, StoryCoverRequest, StoryCoverService, StorySettingsDraft } from '@seihouse/library/stories';
       import type { ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, ImageGenerationRequest, GenerationResult } from '@seihouse/library/model-router-server';
-      type All = [UserProfileServices, UserProfileFeature, UserProfileNotYetBuilt, EnergyClient, FamiliarDefinition, FamiliarSelectionProps, QiClient, DaoXpClient, FateSurvivalRelicView, RelicsClient, AchievementsClient, MysteryScrollView, RewardGrant, FamiliarsClient, FamiliarTrainingSnapshot, HarnessGenerationWorkspaceProps, LibraryStories, LibraryStoriesOptions, StoryPagesProps, StoryCoverRequest, StoryCoverService, StorySettingsDraft, ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, ImageGenerationRequest, GenerationResult];
+      type All = [UserProfileServices, UserProfileFeature, UserProfileNotYetBuilt, EnergyClient, FamiliarDefinition, FamiliarStageProps, QiClient, DaoXpClient, FateSurvivalRelicView, RelicsClient, AchievementsClient, MysteryScrollView, RewardGrant, FamiliarsClient, FamiliarTrainingSnapshot, HarnessGenerationWorkspaceProps, LibraryStories, LibraryStoriesOptions, StoryPagesProps, StoryCoverRequest, StoryCoverService, StorySettingsDraft, ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, ImageGenerationRequest, GenerationResult];
     `,
   },
 };

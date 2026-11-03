@@ -343,10 +343,10 @@ export const workshopEntries: WorkshopEntry[] = [
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/rewards/; src/server/achievements/', lastCompared: '2026-09-23' },
   },
   {
-    id: 'familiar-training', section: 'rewards', group: 'spending', owner: 'library', status: 'active', title: 'Familiar Bonds',
-    description: 'Familiar rarity says how rare a Familiar is; Bond Rank says how far you have cultivated it with QI, so an Epic familiar can reach a Legendary bond. Common, Rare and Epic bond letter your name in the Active Familiar’s element, growing stronger; Legendary bond masters the element for good, to wear with any Familiar. Signatures are SEIHouse-written pieces for one Familiar. Nothing grants an advantage.',
-    category: 'rewards', version: 'v1.1',
-    source: { repository: 'SENSEIDUKES/development', path: 'src/components/familiar-training/; src/server/familiars/', lastCompared: '2026-09-23' },
+    id: 'familiar-training', section: 'rewards', group: 'spending', owner: 'library', status: 'active', title: 'Familiar Page',
+    description: 'The Familiar page, phone first: swipe between Familiars, cultivate bonds, choose what your name wears, watch each Familiar’s clip and rewrite its story, and change companion settings from a console-style menu. Familiar rarity says how rare a Familiar is; Bond Rank says how far you have cultivated it with QI, so an Epic familiar can reach a Legendary bond. Common, Rare and Epic bond letter your name in the Active Familiar’s element, growing stronger; Legendary bond masters the element for good, to wear with any Familiar. Signatures are SEIHouse-written pieces for one Familiar. Nothing grants an advantage.',
+    category: 'rewards', version: 'v2.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/components/familiar-training/; src/server/familiars/', lastCompared: '2026-11-02' },
   },
   {
     id: 'familiar', section: 'customization', owner: 'library', status: 'active', title: 'Familiar',

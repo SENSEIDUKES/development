@@ -1,9 +1,9 @@
 import React from 'react';
-import { LibraryNavigationIcon } from '@seihouse/library-ui';
 import { formatEnergyPriceRange, getEnergyPriceEntry, type EnergyActionId } from '../shared/energyContracts';
 import { useActionEnergyPrice } from '../shared/energyModels';
 import { formatEnergy } from './EnergyAmount';
 import './energy.css';
+import { EnergySunIcon } from './EnergySunIcon';
 
 export type EnergyActionCostProps = {
   className?: string;
@@ -24,7 +24,7 @@ export function EnergyActionCost({ actionId, price, className = '' }: EnergyActi
   const label = `Costs ${display} Energy${entry?.projected ? ' (projected)' : ''}`;
   return (
     <span className={`energy-action-cost energy-badge ${className}`.trim()} data-energy-action={actionId ?? undefined} title={label} aria-label={label} role="img">
-      <LibraryNavigationIcon name="energy" size="1em" className="energy-glyph" aria-hidden="true" />
+      <EnergySunIcon className="energy-glyph" />
       <span aria-hidden="true">{display}</span>
     </span>
   );

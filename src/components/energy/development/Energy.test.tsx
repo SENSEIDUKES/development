@@ -167,7 +167,7 @@ describe('Reusable Energy pieces', () => {
     const costs = Array.from(container.querySelectorAll('.energy-action-cost'));
     // The Energy mark is drawn artwork now, so only the number is text.
     expect(costs.map(cost => cost.textContent)).toEqual(['2', '5', '7']);
-    expect(costs.every(cost => cost.querySelector('[data-sen-navigation-icon="energy"]'))).toBe(true);
+    expect(costs.every(cost => cost.querySelector('[data-energy-sun]'))).toBe(true);
     expect(costs[0].getAttribute('aria-label')).toBe('Costs 2 Energy (projected)');
     expect(ENERGY_PRICE_CATALOG.find(entry => entry.actionId === 'narration.generate')?.price).toBeNull();
   });
@@ -231,7 +231,7 @@ describe('Reusable Energy pieces', () => {
     expect(container.querySelectorAll('.energy-amount')).toHaveLength(2);
     const indicator = container.querySelector('[aria-label="Energy balance 1,234"]')!;
     expect(indicator.textContent).toBe('1,234');
-    expect(indicator.querySelector('[data-sen-navigation-icon="energy"]')).not.toBeNull();
+    expect(indicator.querySelector('[data-energy-sun]')).not.toBeNull();
   });
 
   it('describes a successful deduction and an insufficient balance without triggering them', async () => {

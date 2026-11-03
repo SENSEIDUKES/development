@@ -60,6 +60,8 @@ export interface UserProfileController {
   handleFamiliarInHeaderChange?: (inHeader: boolean) => void;
   handleFamiliarLiveTalkChange?: (liveTalk: boolean) => void;
   handleFamiliarWakeWordChange?: (wakeWord: boolean) => void;
+  /** Renames a Familiar or rewrites its backstory; an empty value or null returns to the catalogue's own. */
+  handleFamiliarPersonalChange?: (familiarId: string, changes: { name?: string | null; backstory?: string | null }) => void;
   // Library / app-shell state (production: `useAppStore`)
   syncStatus: string;
   lastSavedTime: Date | null;

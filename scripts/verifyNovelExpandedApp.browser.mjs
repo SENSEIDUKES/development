@@ -1147,23 +1147,40 @@ async function walk(browser, viewport, sample) {
   await shot('8c-settings-account');
   await page.getByRole('tab', { name: 'Customization' }).click();
   await page.getByRole('tab', { name: 'Familiar' }).click();
-  await visibleButton('Select Phoenix').click();
+  // Familiar settings live on the Familiar page now; Settings leads there.
+  await visibleButton('Open the Familiar page').click();
+  const stage = page.locator('[data-familiar-stage]');
+  await stage.waitFor();
+  check(address() === '/app/?page=profile&cave=%2Fhome%2Ffamiliar', `Open the Familiar page should open the Cave's Familiar page, got ${address()}`);
+  check(!(await page.evaluate(slidesSideways)), 'The Familiar page must never scroll sideways.');
+  await shot('8d-familiar-page');
+  // Swipe (here, the Next button) to Phoenix and make it the Active Familiar.
+  const slide = () => stage.locator('[data-familiar-slide]').getAttribute('data-familiar-slide');
+  for (let step = 0; step < 13 && (await slide()) !== 'phoenix'; step++) await stage.getByRole('button', { name: 'Next Familiar' }).click();
+  check((await slide()) === 'phoenix', `The Familiar page should reach Phoenix, got ${await slide()}.`);
+  await stage.locator('[data-familiar-activate]').click();
   await page.waitForFunction(() => JSON.parse(localStorage.getItem('novelexpanded-reader-profile') ?? '{}').familiarId === 'phoenix', null, { timeout: 5_000 })
-    .catch(() => check(false, 'A Familiar chosen in Settings should be kept on this device.'));
+    .catch(() => check(false, 'A Familiar made active on the Familiar page should be kept on this device.'));
   // The app's one Familiar becomes the one just chosen, and a new visit keeps it.
   await page.locator('.workspace-header [aria-label="Show Phoenix actions"]').filter({ visible: true }).waitFor({ timeout: 5_000 });
-  await shot('8d-settings-familiar');
+  // The companion's settings open over the whole app from the page's settings button.
+  await stage.locator('[data-familiar-settings-open]').click();
+  const menu = page.locator('[data-familiar-settings]');
+  await menu.waitFor();
+  await shot('8e-familiar-settings');
   // Keep in the header: off, the Familiar floats over the page; on, it waits in the header again.
-  const keepInHeader = page.getByRole('switch', { name: 'Keep in the header' }).filter({ visible: true });
-  check(await keepInHeader.isChecked(), 'Keep in the header should show the reader\'s choice.');
+  const keepInHeader = menu.getByRole('switch', { name: 'Keep in the header' });
+  check(await keepInHeader.getAttribute('aria-checked') === 'true', 'Keep in the header should show the reader\'s choice.');
   await keepInHeader.click();
   await page.locator('.familiar-companion').waitFor({ timeout: 5_000 });
   check(await page.locator('.workspace-header [aria-label="Show Phoenix actions"]').filter({ visible: true }).count() === 0,
     'With Keep in the header off, the Familiar should float instead of sitting in the header.');
   await keepInHeader.click();
   await page.locator('.workspace-header [aria-label="Show Phoenix actions"]').filter({ visible: true }).waitFor({ timeout: 5_000 });
+  await menu.locator('[data-familiar-settings-back]').click();
+  await menu.waitFor({ state: 'detached' });
   await page.reload();
-  await page.locator('[data-cave-settings]').waitFor();
+  await page.locator('[data-familiar-stage]').waitFor();
   check(await page.locator('.workspace-header [aria-label="Show Phoenix actions"]').filter({ visible: true }).count() === 1,
     'After a reload the header should recall the Phoenix the reader chose.');
   // On laptops the Cave's own pages (its Home among them) nest under Profile; the Library's Home comes first.

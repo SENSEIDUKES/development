@@ -54,6 +54,30 @@ removed every other old production copy on 2026-10-28. Clearly identify previews
 real browser storage and actions instead of isolated fixtures. Verify the app and
 its Workshop preview at mobile and desktop sizes before claiming completion.
 
+### Mobile-first pages
+
+NovelExpanded is a phone app first (SENSEI, 2026-11-02). Design every page for a
+390×844 phone, then let larger screens rearrange it; never design for a laptop and
+squeeze it down. The Familiar page (`src/components/familiar-training/development/FamiliarStage.tsx`)
+is the model to follow.
+
+- Base styles are the phone layout. `sm:`/`md:`/`lg:` (or a `min-width` media query)
+  only rearrange it for wider screens.
+- Size full-screen pages with `dvh` and keep clear of the floating header and bottom
+  navigation (`--workspace-header-height`, `--library-bottom-clearance`) and the safe
+  areas (`env(safe-area-inset-*)`). Nothing may sit under the bottom navigation.
+- A page's main action is one control next to what it acts on, in the thumb's reach; its
+  choices open from it (the Familiar page's Offer button opens its QI amounts) instead of
+  a row of buttons.
+- Every touch target is at least 44px. Nothing works only on hover.
+- Choosing one of many is a swipe (with arrow buttons and keyboard arrows), not a
+  wrapping pile of chips or a long column of cards.
+- Settings read like a console options list: one row per setting, name on the left,
+  control on the right (`◀ value ▶` steppers, `ON | OFF` switches), a help line for the
+  row in focus, and Restore defaults · Back at the foot (`FamiliarSettingsMenu`).
+- Nothing scrolls the page sideways.
+- Before calling a page done, screenshot it at 390×844 and at 1280×800 and look at both.
+
 ### Major system reconstruction
 
 For tasks that rebuild a real product system rather than only refining a visual Workshop component, read [`DEVELOPMENT_RECONSTRUCTION.md`](./DEVELOPMENT_RECONSTRUCTION.md) before implementation.

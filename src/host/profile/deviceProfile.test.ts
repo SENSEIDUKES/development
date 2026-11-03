@@ -73,6 +73,19 @@ describe('The reader\'s profile on this device', () => {
     expect(createDeviceProfileStore({ storage: memory(JSON.stringify({ backgroundImageId: 'bad' })).storage, uid: 'reader' }).read().backgroundImageId).toBeUndefined();
   });
 
+  it('keeps each Familiar\'s own name and story across reloads, trimmed and capped, dropping damaged entries', () => {
+    const { storage } = memory();
+    const store = createDeviceProfileStore({ storage, uid: 'reader' });
+    // A name past the cap is trimmed when saved, not only after a reload.
+    store.save({ familiarPersonal: { phoenix: { name: 'P'.repeat(55) } } });
+    expect(store.read().familiarPersonal).toEqual({ phoenix: { name: 'P'.repeat(40) } });
+    store.save({ familiarPersonal: { quill: { name: 'Inkling', backstory: 'Found in my first novel.' } } });
+    expect(createDeviceProfileStore({ storage, uid: 'reader' }).read().familiarPersonal).toEqual({ quill: { name: 'Inkling', backstory: 'Found in my first novel.' } });
+    const damaged = JSON.stringify({ familiarPersonal: { quill: { name: `  ${'N'.repeat(60)}  `, backstory: 7 }, phoenix: { name: '   ' }, golem: 'nope' } });
+    expect(createDeviceProfileStore({ storage: memory(damaged).storage, uid: 'reader' }).read().familiarPersonal).toEqual({ quill: { name: 'N'.repeat(40) } });
+    expect(createDeviceProfileStore({ storage: memory(JSON.stringify({ familiarPersonal: [] })).storage, uid: 'reader' }).read().familiarPersonal).toBeUndefined();
+  });
+
   it('never lets a save change who the reader is or what authority they have', () => {
     const { storage } = memory();
     const store = createDeviceProfileStore({ storage, uid: 'reader' });

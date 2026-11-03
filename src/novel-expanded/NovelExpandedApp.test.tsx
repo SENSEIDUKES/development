@@ -1152,31 +1152,38 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(usage.querySelector('[data-usage-group="chapters"]')?.textContent).toBe('1 chapter written4 Energy');
     await click(usage.querySelector('[aria-label="Close Usage"]'), 'Close Usage', 10);
     expect(document.body.querySelector('[aria-label="Close Usage"]')).toBeNull();
-    // Every Familiar is unlocked on the practice account; choosing one equips it everywhere at once.
-    await click(buttonByText('Select Phoenix', cave()!), 'Select Phoenix', 20);
+    // Familiar settings live on the Familiar page; Settings leads there.
+    await click(buttonByText('Open the Familiar page', cave()!), 'Open the Familiar page', 20);
+    expect(cave()!.querySelector('[data-familiar-stage]')).toBeTruthy();
+    // Every Familiar is unlocked on the practice account; making one active equips it everywhere at once.
+    const slide = () => cave()!.querySelector('[data-familiar-slide]')?.getAttribute('data-familiar-slide');
+    for (let step = 0; step < 13 && slide() !== 'phoenix'; step++) {
+      await click(cave()!.querySelector('[aria-label="Next Familiar"]'), 'Next Familiar', 5);
+    }
+    expect(slide()).toBe('phoenix');
+    await click(cave()!.querySelector('[data-familiar-activate]'), 'Make active', 20);
     expect(services.profile.read().familiarId).toBe('phoenix');
     expect(companion()!.querySelector('[aria-label="Phoenix: show actions"]')).toBeTruthy();
+    // The companion's settings open from the page's settings button, over the whole app.
+    await click(cave()!.querySelector('[data-familiar-settings-open]'), 'Familiar settings', 10);
+    const setting = (label: string) => document.body.querySelector<HTMLButtonElement>(`[data-familiar-settings] [role="switch"][aria-label="${label}"]`)!;
     // Keep in the header: off by default, the Familiar floats; on, it waits in the header until called.
-    const keepInHeader = () => cave()!.querySelector<HTMLInputElement>('.familiar-header-switch')!;
-    expect(keepInHeader().checked).toBe(false);
-    await act(async () => { keepInHeader().click(); });
+    expect(setting('Keep in the header').getAttribute('aria-checked')).toBe('false');
+    await act(async () => { setting('Keep in the header').click(); });
     await flush(10);
     expect(services.profile.read().familiarInHeader).toBe(true);
     expect(companion()).toBeNull();
     expect(recall('Phoenix')).toBeTruthy();
     expect(recall('Quill')).toBeNull();
     // Live talk (beta): off by default, so the Familiar listens the usual way; on, it is kept on the device.
-    const liveTalk = () => cave()!.querySelectorAll<HTMLInputElement>('.familiar-header-switch')[1];
-    expect(liveTalk().closest('.familiar-size-control')!.textContent).toContain('Live talk (beta)');
-    expect(liveTalk().checked).toBe(false);
-    await act(async () => { liveTalk().click(); });
+    expect(setting('Live talk').closest('[data-familiar-setting]')!.textContent).toContain('Beta');
+    expect(setting('Live talk').getAttribute('aria-checked')).toBe('false');
+    await act(async () => { setting('Live talk').click(); });
     await flush(10);
     expect(services.profile.read().familiarLiveTalk).toBe(true);
     // Say "Familiar" (beta): off by default; on, it is kept on the device.
-    const wakeWord = () => cave()!.querySelectorAll<HTMLInputElement>('.familiar-header-switch')[2];
-    expect(wakeWord().closest('.familiar-size-control')!.textContent).toContain('Say “Familiar” (beta)');
-    expect(wakeWord().checked).toBe(false);
-    await act(async () => { wakeWord().click(); });
+    expect(setting('Say “Familiar”').getAttribute('aria-checked')).toBe('false');
+    await act(async () => { setting('Say “Familiar”').click(); });
     await flush(10);
     expect(services.profile.read().familiarWakeWord).toBe(true);
   });

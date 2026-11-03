@@ -1,5 +1,7 @@
 export { EnergyActionCost, type EnergyActionCostProps } from './EnergyActionCost';
 export { EnergyAmount, formatEnergy } from './EnergyAmount';
+export { EnergySunIcon } from './EnergySunIcon';
+export { BalancePill, BalancePills, type BalanceKind, type BalancePillProps, type BalancePillsProps } from './BalancePill';
 export { EnergyBalanceIndicator, type EnergyBalanceIndicatorProps } from './EnergyBalanceIndicator';
 export {
   EnergyDeductionNotice,

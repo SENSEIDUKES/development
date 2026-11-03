@@ -68,8 +68,6 @@ export const DISCOVER_SAMPLE_RELEASES: readonly DiscoverRelease[] = [
 /** The sample reader tracks two series, so My updates has something to show. */
 export const DISCOVER_SAMPLE_TRACKED: readonly string[] = ['sample-last-lotus', 'sample-ember-sect'];
 
-/** The worlds the page features at its top. */
-export const DISCOVER_SAMPLE_FEATURED: readonly string[] = ['sample-last-lotus', 'sample-ninth-trial', 'sample-moon-archive'];
 
 export const DISCOVER_SAMPLE_FATE_SURVIVAL: readonly string[] = ['sample-ninth-trial', 'sample-sky-ruins', 'sample-grey-tide'];
 

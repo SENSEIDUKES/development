@@ -96,3 +96,21 @@ export function previewHomeGrid(state: WorldCardPreviewState): HomeWorld[] {
     branchingEnabled: index % 2 === 1,
   }))];
 }
+
+/** Browse-page worlds beyond the Home grid, so a Compact grid and its Switch box have enough to deal. */
+const BROWSE_EXTRA: readonly [string, string, string][] = [
+  ['The Ninth Trial', 'Fate Survival', '/manifest-backdrops/immortal-land-5.jpg'],
+  ['Ruins Beyond the Ninth Sky', 'Fate Survival', '/manifest-backdrops/immortal-land-1.jpg'],
+  ['Ember Sect Outcast', 'Xianxia', '/manifest-backdrops/immortal-land-2.jpg'],
+  ['The Grey Tide Wager', 'Fate Survival', '/manifest-backdrops/immortal-land-3.jpg'],
+  ['Archive of the Drowned Moon', 'Dark Fantasy', '/manifest-backdrops/immortal-land-4.jpg'],
+  ['Mysteries of Lotus Lake', 'Mystery', '/card-workshop/test-images/lotus_lake_pavilion_portrait.jpg'],
+  ['The Hollow Pine Accord', 'Wuxia', ''],
+];
+
+/** Every world a browse page might list: the Home grid, then the extra catalogue (one with no cover yet). */
+export function previewBrowseWorlds(state: WorldCardPreviewState): HomeWorld[] {
+  return [...previewHomeGrid(state), ...BROWSE_EXTRA.map(([title, genre, imageUrl], index): HomeWorld => ({
+    ...featuredNovel, id: `browse-${index}`, title, genre, imageUrl, videoUrl: undefined, chapterCount: 9 + index * 7,
+  }))];
+}

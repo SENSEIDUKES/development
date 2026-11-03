@@ -12,7 +12,6 @@ import { AppShell } from './AppShell';
 import {
   DISCOVER_RANKING_BOARDS,
   DISCOVER_SAMPLE_FATE_SURVIVAL,
-  DISCOVER_SAMPLE_FEATURED,
   DISCOVER_SAMPLE_RELEASES,
   DISCOVER_SAMPLE_TRACKED,
   DISCOVER_SAMPLE_WORLDS,
@@ -95,7 +94,6 @@ export function DiscoverPage({
             />
           )}
           worlds={DISCOVER_SAMPLE_WORLDS}
-          featuredWorldIds={DISCOVER_SAMPLE_FEATURED}
           releases={DISCOVER_SAMPLE_RELEASES}
           trackedWorldIds={DISCOVER_SAMPLE_TRACKED}
           fateSurvivalWorldIds={DISCOVER_SAMPLE_FATE_SURVIVAL}

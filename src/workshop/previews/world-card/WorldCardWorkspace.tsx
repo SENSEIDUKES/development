@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { WorldCard, WorldCardFeature, WorldCardFeatureCarousel, WorldCardMenu, languageName } from '@seihouse/library/world-card';
+import { WorldCard, WorldCardCompactGrid, WorldCardCompactPicks, WorldCardCompactTile, WorldCardFeature, WorldCardFeatureCarousel, WorldCardMenu, languageName } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { featuredExpansions } from '../light-novels-home/previewData';
 import {
-  previewCreatorWorlds, previewHomeGrid, previewStory,
+  previewBrowseWorlds, previewCreatorWorlds, previewHomeGrid, previewStory,
   type WorldCardBlueprintPreview, type WorldCardCover, type WorldCardSashPreview, type WorldCardDestinations, type WorldCardPreviewState,
   type WorldCardHeroPreview, type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
@@ -23,7 +23,7 @@ const VIEWS = {
   info: { label: 'Info page', short: 'Info', description: 'The full world overview a reader lands on when they open a world.' },
   feature: { label: 'Feature card', short: 'Feature', description: 'The living hero: the world plays behind its name, and the carousel turns on its own with a story-style bar.' },
   grid: { label: 'Home grid', short: 'Grid', description: 'Several World Cards side by side, as Home lays them out.' },
-  compact: { label: 'Compact', short: 'Compact', description: 'Create’s square “Your worlds” tile. Tap a tile to open that world’s Info page.' },
+  compact: { label: 'Compact', short: 'Compact', description: 'The dense browsing tile: four across a phone, scrolling down only, with a Switch box for curated picks.' },
   menu: { label: 'Menu card', short: 'Menu', description: 'Discover chapter and ranking rows, rendered by the shared World Card menu.' },
   all: { label: 'All views', short: 'All', description: 'The Info page, Feature card, Full card, Home grid, Compact and Menu cards together.' },
 } as const;
@@ -152,9 +152,22 @@ export function WorldCardStage({ view, state, onAction }: {
         <WorldCardMenu world={story} rank={1} onOpen={() => setOpenedWorld(story)} />
       </div>
     </Stage>}
-    {!openedWorld && show('compact') && <Stage title="Compact" note="Create · Your worlds.">
-      <CompactRow key={`${state.titleLength}-${state.cover}`} worlds={worlds} senSash={state.sash === 'shown'} onOpen={setOpenedWorld} />
-    </Stage>}
+    {!openedWorld && show('compact') && <>
+      <Stage title="Compact · Picks" note="A fixed set of eight with a Switch button for the next set, like WebNovel's Cheering Reads.">
+        <WorldCardCompactPicks title="Cheering Reads" worlds={previewBrowseWorlds(state)}
+          onOpenWorld={id => id === story.id ? setOpenedWorld(story) : onAction(`Open ${id}`)} />
+      </Stage>
+      <Stage title="Compact · Browse grid" note="Discover's All stories. As many columns as fit; it only scrolls down.">
+        <WorldCardCompactGrid label="Stories">
+          {previewBrowseWorlds(state).map(world => <li key={world.id}>
+            <WorldCardCompactTile world={world} onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />
+          </li>)}
+        </WorldCardCompactGrid>
+      </Stage>
+      <Stage title="Create tile (retiring)" note="Create · Your worlds. Becomes the Show card when Create moves to it.">
+        <CompactRow key={`${state.titleLength}-${state.cover}`} worlds={worlds} senSash={state.sash === 'shown'} onOpen={setOpenedWorld} />
+      </Stage>
+    </>}
   </div>;
 }
 

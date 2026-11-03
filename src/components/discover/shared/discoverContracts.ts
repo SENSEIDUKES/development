@@ -59,8 +59,6 @@ export interface DiscoverProps {
   trackedCodexIds?: readonly string[];
   /** Every world the page may show, public and SEIHouse-backed. */
   worlds: readonly HomeWorld[];
-  /** Worlds the host features at the top of the page, in its order. */
-  featuredWorldIds?: readonly string[];
   /** New chapters. New Chapters shows them newest first, nothing else deciding the order. */
   releases: readonly DiscoverRelease[];
   /** Worlds the reader tracks, for My updates. Omitted means the Tracker is not available yet. */

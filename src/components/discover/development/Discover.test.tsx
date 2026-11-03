@@ -114,12 +114,11 @@ it('shows only the section\'s board, in the host\'s order, and retains ranks whi
   expect(container.querySelector('ol[aria-label="Worlds ranking"]')).toBeNull();
 });
 
-it('puts the catalogue before features and filters Browse by genre', () => {
-  renderPage({ featuredWorldIds: ['moon'] });
-  const featured = container.querySelector('section[aria-roledescription="carousel"][aria-label="Featured"]')!;
-  const catalogue = container.querySelector('ul[aria-label="Stories"]')!;
-  expect(featured.textContent).toContain('Drowned Moon');
-  expect(catalogue.compareDocumentPosition(featured) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+it('browses the catalogue as Compact tiles with no Feature card, and filters Browse by genre', () => {
+  renderPage();
+  // Discover is a browse page: Compact tiles only; the Feature carousel belongs to Home.
+  expect(container.querySelector('[aria-roledescription="carousel"]')).toBeNull();
+  expect(container.querySelectorAll('ul[aria-label="Stories"] [data-world-card="compact-tile"]').length).toBeGreaterThan(1);
   chooseGenre('Xianxia');
   expect(container.querySelector('ul[aria-label="Stories"]')?.textContent).toContain('Last Lotus');
   expect(container.querySelector('ul[aria-label="Stories"]')?.textContent).not.toContain('Drowned Moon');

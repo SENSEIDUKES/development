@@ -331,87 +331,45 @@
   }
 }
 
-/* Story Seed's page-owned action row.
-
-   Save Draft, Manifest and the small save/generation status used to sit in a
-   shared toolbar directly under the top header, which read as a second header
-   above the form. They belong to the page now: an ordinary content row at the
-   top of the Story Seed column, with no banner landmark, no sticky behaviour,
-   no full-bleed surface and no border of its own. */
-.story-seed-page-heading {
-  margin-inline: auto;
-  max-width: 80rem;
-  padding: 16px 16px 4px;
-}
-@media (min-width: 640px) {
-  .story-seed-page-heading { padding: 20px 24px 4px; }
-}
-.story-seed-page-eyebrow {
-  margin: 0 0 4px;
-  font: 600 11px/1.4 var(--font-sc, serif);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(223, 216, 207, 0.62);
-}
-.story-seed-page-title {
-  margin: 0;
-  color: var(--color-sen-signal, #f3eee7);
-  font-size: clamp(1.75rem, 6vw, 2.5rem);
-  line-height: 1.08;
-  letter-spacing: -0.01em;
-}
+/* A compact page identity beside its actions, never a hero above the form. */
 .story-seed-action-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
   flex-wrap: wrap;
+  gap: 8px 16px;
   margin-inline: auto;
   max-width: 80rem;
-  padding: 8px 16px 0;
+  padding: 8px 16px;
 }
-@media (min-width: 640px) {
-  .story-seed-action-row { padding-inline: 24px; }
+.story-seed-page-heading { min-width: 0; flex: 1 1 12rem; }
+.story-seed-page-title {
+  margin: 0;
+  color: var(--color-sen-signal, #f3eee7);
+  font-size: 20px;
+  line-height: 1.2;
 }
 .story-seed-action-status {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  min-width: 0;
-  flex: 1 1 8rem;
-  font-size: 12px;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
   color: var(--color-neutral-400);
 }
 .story-seed-action-status > span:first-child {
-  width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: currentColor;
+  width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: currentColor;
 }
-.story-seed-action-status-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.story-seed-action-status-label { min-width: 0; overflow-wrap: anywhere; }
 .story-seed-action-status[data-tone='success'] { color: var(--color-sen-portal); }
 .story-seed-action-status[data-tone='busy'] { color: var(--color-sen-gold-accent); }
 .story-seed-action-status[data-tone='error'] { color: var(--color-sen-human); }
-.story-seed-action-controls { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex: 1 1 auto; min-width: 0; }
-/* Each control keeps its 44px target and gives up label width instead. In this
-   page row the label wraps rather than ellipsizing: the row can grow taller,
-   so "Manifest World Blueprint" stays readable where the old header strip had
-   to hide it behind an icon. */
-.story-seed-action-controls :is(button, a) { flex: 0 1 auto; min-width: 44px; min-height: 44px; max-width: 100%; }
-.story-seed-action-controls .workspace-action-label {
-  overflow: visible; text-overflow: clip; white-space: normal;
-}
-@media (max-width: 639px) {
-  /* On a phone the status takes its own line, then Save Draft keeps its
-     natural width and Manifest takes the rest, wrapping onto a second line
-     instead of being reduced to an unlabeled icon. */
-  .story-seed-action-row { align-items: flex-start; gap: 8px; }
-  .story-seed-action-status { flex: 1 1 100%; }
-  .story-seed-action-controls { flex: 1 1 100%; }
-  .story-seed-action-controls > :last-child { flex: 1 1 auto; }
-  /* With Save Draft alone (Create's Manifest lives on its step footer), the
-     row stays one line: the status shrinks beside the button. */
-  .story-seed-action-row:not(:has(.story-seed-action-controls > :nth-child(2))) { align-items: center; flex-wrap: nowrap; }
-  .story-seed-action-row:not(:has(.story-seed-action-controls > :nth-child(2))) .story-seed-action-status { flex: 1 1 auto; }
-  .story-seed-action-row:not(:has(.story-seed-action-controls > :nth-child(2))) .story-seed-action-controls { flex: 0 0 auto; }
-  .story-seed-action-row:not(:has(.story-seed-action-controls > :nth-child(2))) .story-seed-action-controls > :last-child { flex: 0 0 auto; }
+.story-seed-action-controls { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
+.story-seed-action-controls :is(button, a) { min-width: 44px; min-height: 44px; max-width: 100%; }
+.story-seed-action-controls .workspace-action-label { overflow: visible; text-overflow: clip; white-space: normal; }
+@media (min-width: 640px) {
+  .story-seed-action-row { padding-inline: 24px; }
 }
 
 /* A view-only Blueprint (NovelBlueprintEditor readOnly): fields read as text, and edit controls step aside. */

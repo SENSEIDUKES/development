@@ -40,7 +40,6 @@ import { PlacesWorkspace, SpeciesWorkspace, ThingsWorkspace } from './workspaces
 import { CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { CreatorStepStrip } from './creator/CreatorStepStrip';
 import { CreatorStepFooter } from './creator/CreatorStepFooter';
-import { StorySeedLiveCard } from './creator/StorySeedLiveCard';
 import { ManifestStep } from './creator/ManifestStep';
 import { partsOf, tabsToConfirm, type CreatorPageId, type CreatorPosition } from './creator/creatorSteps';
 import { SeedPartContext, SeedConfirmationContext } from './creator/SeedPart';
@@ -896,18 +895,12 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         </div>
       )}
 
-      {/* The character creator: steps across the top, the live story card
-          beside (or above) the open step, and Back / Next pinned at the
-          bottom. The Story Bank view replaces it while the bank is open. */}
+      {/* The form follows its step navigation directly. Story Preview opens
+          from the existing navigation instead of pushing the fields down. */}
       {!showStoryBank && (<>
         <CreatorStepStrip seed={seed} page={activeSection} onSelect={selectPage} confirmedTabs={confirmedTabs}
           parts={phoneParts} part={shownPart} onSelectPart={part => moveTo({ page: activeSection, part })} />
         <div className="seed-creator-body">
-          {activeSection !== 'manifest' && desktop && (
-            <div className="seed-creator-card-slot">
-              <StorySeedLiveCard seed={seed} />
-            </div>
-          )}
           <div className="seed-creator-content relative">
             {/* Restrained celestial ambience the glass fields float over —
                 gradients only, no blur, so mobile scrolling stays cheap. */}

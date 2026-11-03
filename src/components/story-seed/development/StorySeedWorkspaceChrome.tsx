@@ -107,9 +107,7 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
       divider: true,
       content: mobileMenu ? <MenuSaveDraft savedFeedback={props.savedFeedback} isGenerating={props.isGenerating} onSaveDraft={props.onSaveDraft} /> : undefined,
       items: [
-        ...(mobileMenu ? [
-          { id: 'story-preview', label: 'Story Preview', icon: <Eye size={16} aria-hidden="true" />, onSelect: openPreview },
-        ] : []),
+        { id: 'story-preview', label: 'Story Preview', icon: <Eye size={16} aria-hidden="true" />, onSelect: openPreview },
         { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={16} aria-hidden="true" className="text-neutral-400" />,
           active: showStoryBank, onSelect: onToggleStoryBank },
         ...(onOpenBlueprint ? [{ id: 'blueprint', label: 'Blueprint', icon: <SENBlueprintIcon size={16} aria-hidden="true" className="text-neutral-400" />,
@@ -179,24 +177,17 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
       onAction: () => item.onSelect?.(item.id),
     }))} />;
   const manifestAvailable = Boolean(props.onManifest) && !props.showStoryBank && !props.headerSaveOnly;
-  /**
-   * The page's own action row: Save Draft, Manifest and the small save and
-   * generation status, sitting at the top of Story Seed's content above the
-   * form. It is content, not chrome — no banner landmark, no sticky row, no
-   * surface of its own — so it can never read as a second header. Every
-   * callback, eligibility rule, disabled reason, loading indicator and saved
-   * feedback is the same one the header toolbar carried.
-   */
-  const pageHeading = <div className="story-seed-page-heading" data-story-seed-page-heading data-page-heading>
-    <p className="story-seed-page-eyebrow">Grow Your Universe</p>
-    <h1 className="story-seed-page-title font-display font-bold" data-page-title>Story Seed</h1>
-  </div>;
+  // One compact content row holds the page name, status and existing actions.
+  // The standalone header slot keeps its action-only contract.
   const actionRow = <div className="story-seed-action-row" data-story-seed-action-row>
-    <p role="status" className="story-seed-action-status"
-      data-tone={props.error ? 'error' : props.isGenerating ? 'busy' : props.savedFeedback ? 'success' : 'neutral'}
-      title={props.error || props.status}>
-      <span aria-hidden="true" /><span className="story-seed-action-status-label">{props.error || props.status}</span>
-    </p>
+    <div className="story-seed-page-heading" data-story-seed-page-heading data-page-heading>
+      {props.layout !== 'header' && <h1 className="story-seed-page-title font-display font-bold" data-page-title>Story Seed</h1>}
+      <p role="status" className="story-seed-action-status"
+        data-tone={props.error ? 'error' : props.isGenerating ? 'busy' : props.savedFeedback ? 'success' : 'neutral'}
+        title={props.error || props.status}>
+        <span aria-hidden="true" /><span className="story-seed-action-status-label">{props.error || props.status}</span>
+      </p>
+    </div>
     <div className="story-seed-action-controls">
       <HeaderActionButton action={save} />
       {manifestAvailable && <HeaderActionButton action={manifest} primary />}
@@ -217,7 +208,7 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
   if (props.layout === 'mobile') return settingsSheet;
   return <>
     <WorkspaceShell header={header} sidebar={<LibrarySectionSidebar />} sidebarLabel="Story Seed sections">
-      {props.showActionRow !== false && <>{pageHeading}{actionRow}</>}
+      {props.showActionRow !== false && actionRow}
       {props.children}
     </WorkspaceShell>
     {settingsSheet}

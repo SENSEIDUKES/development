@@ -52,7 +52,7 @@ Story Seed is one creation flow with these visible destinations:
   retains Sections, Story Bank, Blueprint, Settings and Back. Creator Back/Next
   and Blueprint actions sit with the form, outside the bottom navigation.
   Sections includes Save Draft and Story Preview. The preview remains on Create
-  and beside the desktop form without taking space above mobile questions.
+  and opens from Story Preview in the desktop rail or phone Sections drawer.
 - **Phones.** Below 640px Origin shows Style, Fun Settings, Synopsis, Fate,
   and Tags one at a time; ARC shows Ending and Hard Pins. Compact text tabs
   keep 44px touch targets. Back/Next walks Origin, World's eight kinds, ARC,
@@ -659,3 +659,13 @@ Removed the combined Back/Next/More bar after owner review. Restored the existin
 Library navigation and placed the compact step actions in the form rather than
 in another fixed bar. Completion, authoring order, Fun Settings and the mobile
 preview changes remain. Save Draft and Story Preview use the Sections drawer.
+
+## 2026-11-03 — Put the form before page decoration
+
+Consolidated the desktop/tablet title, status and Save Draft into one compact row,
+removed the repeated tagline and section breadcrumb, and kept the numbered steps
+on one line. The live summary now opens from Story Preview at every width instead
+of occupying the form column. Section titles retain their Library typography and
+guidance at a smaller scale. Phone navigation and inline Back/Next are unchanged.
+The app and Workshop share this surface; browser checks include 1024px and assert
+that the first choices fit fully in the upper half of the viewport.

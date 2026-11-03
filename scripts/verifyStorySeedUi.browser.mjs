@@ -33,7 +33,7 @@ const resize = async (page, width, height) => {
 };
 try {
   for (const surface of ['app', 'workshop']) {
-    for (const width of [320, 390, 430, 768, 1280, 1440]) {
+    for (const width of [320, 390, 430, 768, 1024, 1280, 1440]) {
       const height = width >= 1024 ? 800 : 844;
       const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce', hasTouch: width < 1024 });
       const page = await context.newPage();
@@ -48,6 +48,16 @@ try {
       assert.deepEqual(await page.locator('[data-seed-creator-strip] [data-step]').evaluateAll(elements => elements.map(element => element.dataset.step)), ['origin', 'world', 'arc', 'manifest']);
       const phone = width < 640;
       const compact = width < 1024;
+      assert.equal(await page.locator('.seed-creator-card-slot').count(), 0, 'story summary never precedes the form');
+      const firstChoice = await page.locator('#story-style-chinese').boundingBox();
+      // Workshop adds its inspection controls above the product viewport.
+      const workspace = await page.locator('.workspace-shell').boundingBox();
+      assert(firstChoice.y + firstChoice.height - workspace.y < workspace.height / 2, 'first choices fully visible in the upper half of the product viewport');
+      if (!phone) {
+        const heading = await page.locator('[data-story-seed-action-row]').boundingBox();
+        assert(heading.height <= 80, 'title, status and Save share a compact row');
+        assert((await page.locator('.seed-creator-strip').boundingBox()).height <= 52, 'desktop steps stay on one line');
+      }
       if (compact) {
         const bar = page.locator('.library-workspace-navigation');
         await next(page).waitFor();
@@ -80,7 +90,15 @@ try {
         await settings.waitFor({ state: 'hidden' });
       } else {
         assert.equal(await page.locator('.library-workspace-navigation:visible').count(), 0);
-        assert(await page.locator('.seed-creator-card-slot').isVisible());
+        const previewButton = page.locator('aside').getByRole('button', { name: 'Story Preview', exact: true });
+        await previewButton.focus();
+        await previewButton.press('Enter');
+        const preview = page.getByRole('dialog', { name: 'Story preview', exact: true });
+        await preview.waitFor();
+        assert(await preview.locator('[data-seed-live-card]').isVisible());
+        await page.getByRole('button', { name: 'Close story preview', exact: true }).click();
+        await preview.waitFor({ state: 'hidden' });
+        await page.waitForFunction(() => document.activeElement?.textContent?.trim() === 'Story Preview');
         const panel = page.locator('#origin-fun-settings-title');
         assert(await panel.isVisible());
         assert(await page.locator('#origin-genre-title').evaluate((node, id) => Boolean(node.compareDocumentPosition(document.getElementById(id)) & Node.DOCUMENT_POSITION_FOLLOWING), 'origin-fun-settings-title'));

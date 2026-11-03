@@ -9,6 +9,15 @@ export interface HomeWorld {
   mcName: string; powerStage: string; acquired?: boolean; recentlyRead?: boolean; draft?: boolean;
   /** Card identity fields; omit either one when the host has no verified value. */
   creatorName?: string; format?: string;
+  /**
+   * The story's original language (BCP 47, e.g. `ja`, `zh-CN`), which is also the language of
+   * `title`. Omit when unknown: cards then show the title as written, with no language tag.
+   */
+  originalLanguage?: string;
+  /** Real translations of the title (the creator's own, or made for reading), by language. Never machine-made for a card. */
+  titleTranslations?: Readonly<Record<string, string>>;
+  /** The language the creator's name is written in, so it gets the right lettering. Names are never translated. */
+  creatorLanguage?: string;
   /** Host-resolved creator lettering; the card never infers an element from the name or world. */
   creatorTitle?: { element: ElementalTitleEffect; intensity?: ElementalTitleIntensity; color?: string };
   /** Host-reported progress for a publicly visible world; omit when unknown. */

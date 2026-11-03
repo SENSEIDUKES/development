@@ -3,17 +3,22 @@ import { RefreshCw } from 'lucide-react';
 import { ElementalTitle } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldCardCover } from './WorldCardCover';
+import { authorText, useWorldTitle, WorldLanguageTag } from './worldCardText';
 import './world-card.css';
 
 /** What a Compact tile reads from a world; a Home world supplies it. */
-export type WorldCardCompactWorld = Pick<HomeWorld, 'id' | 'title' | 'imageUrl' | 'genre' | 'creatorName' | 'creatorTitle'>;
+export type WorldCardCompactWorld = Pick<HomeWorld, 'id' | 'title' | 'imageUrl' | 'genre' | 'creatorName' | 'creatorTitle'
+  | 'creatorLanguage' | 'originalLanguage' | 'titleTranslations'>;
 
 /**
  * Compact: the dense browsing tile for pages that show many worlds at once (Discover, search,
  * genres). The 2:3 cover with nothing on it, then the title on up to two lines, the creator in
  * their own lettering, and one quiet line. That line is the genre unless the host supplies its
  * own (reading progress on a library shelf, "Draft · Ch. 6" for a creator). A tap on the art or
- * words enters the world; its details and motion picture wait for its Info page.
+ * words enters the world; its details and motion picture wait for its Info page. The creator's
+ * lettering shows its element still here; it moves on the bigger cards, where it has room. The
+ * title follows the card language rules (worldCardText): the reader's language when the world
+ * has a real translation, otherwise the original with a small language tag.
  */
 export function WorldCardCompactTile({ world, detail, onOpen }: {
   world: WorldCardCompactWorld;
@@ -24,22 +29,26 @@ export function WorldCardCompactTile({ world, detail, onOpen }: {
   const line = detail === undefined ? world.genre?.trim() || undefined : detail ?? undefined;
   const creatorName = world.creatorName?.trim();
   const creatorTitle = world.creatorTitle;
+  const title = useWorldTitle(world);
   return <div className="world-card-compact-tile" data-world-card="compact-tile">
     <span className="world-card-compact-tile-cover">
       <WorldCardCover src={world.imageUrl} title={world.title} decorative />
       <button type="button" className="world-card-compact-tile-open" onClick={onOpen}
-        aria-label={`Open ${world.title}${creatorName ? `, creator ${creatorName}` : ''}${line ? `, ${line}` : ''}`} />
+        aria-label={`Open ${title.text}${creatorName ? `, creator ${creatorName}` : ''}${line ? `, ${line}` : ''}`} />
     </span>
     {/* The words repeat the art's open action for pointers; keyboards use the art's own control. */}
     <span className="world-card-compact-tile-caption" onClick={onOpen}>
-      <span className="world-card-compact-tile-title font-display">{world.title}</span>
-      {creatorName && <span className="world-card-compact-tile-creator">
+      <span className="world-card-compact-tile-title font-display" {...authorText(title.lang)}>{title.text}</span>
+      {creatorName && <span className="world-card-compact-tile-creator" {...authorText(world.creatorLanguage)}>
         {creatorTitle
-          ? <ElementalTitle as="span" element={creatorTitle.element}
+          // Still on a small card (it moves only under a pointer); the bigger cards animate it.
+          ? <ElementalTitle as="span" element={creatorTitle.element} motion="hover"
               intensity={creatorTitle.intensity} color={creatorTitle.color}>{creatorName}</ElementalTitle>
           : creatorName}
       </span>}
-      {line && <span className="world-card-compact-tile-detail">{line}</span>}
+      {(line || title.foreignTag) && <span className="world-card-compact-tile-detail">
+        <WorldLanguageTag title={title} />{line}
+      </span>}
     </span>
   </div>;
 }

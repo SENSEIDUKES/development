@@ -1,19 +1,25 @@
 import type { WorldCardMenuProps } from '../shared/worldCardContracts';
 import { WorldCardCover } from './WorldCardCover';
+import { authorText, useWorldTitle, WorldLanguageTag } from './worldCardText';
 import './world-card.css';
 
 /** The shared world row for chapter menus and ranking lists. Navigation belongs to the host. */
 export function WorldCardMenu({ world, onOpen, chapter, age, tracked = false, rank }: WorldCardMenuProps) {
+  const title = useWorldTitle(world);
   const chapterLabel = chapter ? `Chapter ${chapter.number}${chapter.title ? ` · ${chapter.title}` : ''}` : undefined;
-  const label = [rank ? `${rank}. ${world.title}` : world.title, chapterLabel, age?.label].filter(Boolean).join(', ');
+  const label = [rank ? `${rank}. ${title.text}` : title.text, chapterLabel, age?.label].filter(Boolean).join(', ');
   return <button type="button" className="world-card-menu" data-world-card="menu" onClick={onOpen} aria-label={label}>
     {rank != null && <span className="world-card-menu-rank" aria-hidden="true">{rank}</span>}
     <span className="world-card-menu-cover"><WorldCardCover src={world.imageUrl} title={world.title} decorative /></span>
     <span className="world-card-menu-body">
-      <span className="world-card-menu-title">{world.title}</span>
-      {chapterLabel && <span className="world-card-menu-chapter">{chapterLabel}</span>}
+      <span className="world-card-menu-title" {...authorText(title.lang)}>{title.text}</span>
+      {/* "Chapter" is an interface word; the chapter's own title is the author's. */}
+      {chapter && <span className="world-card-menu-chapter">
+        <span>Chapter {chapter.number}</span>{chapter.title && <> · <span {...authorText(title.lang)}>{chapter.title}</span></>}
+      </span>}
       <span className="world-card-menu-meta">
-        <span>{[world.creatorName, world.genre].filter(Boolean).join(' · ')}</span>
+        <span><WorldLanguageTag title={title} />{world.creatorName && <span {...authorText(world.creatorLanguage)}>{world.creatorName}</span>}
+          {world.creatorName && world.genre ? ' · ' : ''}{world.genre}</span>
         {tracked && <span className="world-card-menu-tracked">Tracking</span>}
       </span>
     </span>

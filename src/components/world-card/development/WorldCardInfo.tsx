@@ -13,6 +13,7 @@ import { WorldCardSettings } from './WorldCardSettings';
 import { WorldCardFormatSymbol } from './WorldCardFormatSymbol';
 import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
 import './world-card.css';
+import { authorText, creatorLanguageOf, useWorldTitle } from './worldCardText';
 
 /**
  * Info page: the world's full overview, presented the way Audible presents a
@@ -35,6 +36,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
   const [clipPlaying, setClipPlaying] = useState(false);
   const glowColor = useDominantColor(coverUrl);
   const creatorName = story.creatorName?.trim() || detail?.author?.trim();
+  const infoTitle = useWorldTitle(story);
   const publicationLabel = detail?.publicationStatus === 'ongoing' ? 'On Going'
     : detail?.publicationStatus === 'completed' ? 'Completed' : undefined;
   const genre = detail?.genre?.trim();
@@ -87,10 +89,10 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
             </div>}
           </div>
           <header>
-            <h1 id={`world-info-title-${story.id}`} className="world-card-info-title font-display">{story.title}</h1>
+            <h1 id={`world-info-title-${story.id}`} className="world-card-info-title font-display" {...authorText(infoTitle.lang)}>{infoTitle.text}</h1>
             {creatorName && <p className="world-card-info-byline">
               <span className="world-card-info-byline-by">by</span>{' '}
-              <span className="world-card-info-creator">
+              <span className="world-card-info-creator" {...authorText(creatorLanguageOf(story))}>
                 {story.creatorTitle
                   ? <ElementalTitle as="span" element={story.creatorTitle.element}
                       intensity={story.creatorTitle.intensity} color={story.creatorTitle.color}>{creatorName}</ElementalTitle>

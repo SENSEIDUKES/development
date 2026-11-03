@@ -8,6 +8,7 @@ import { WorldCardCover } from './WorldCardCover';
 import { WorldCardRibbon } from './WorldCardRibbon';
 import { WorldCardStoryPanel } from './WorldCardStoryPanel';
 import { WORLD_STATUS_LABELS } from './worldCardStatus';
+import { authorText, creatorLanguageOf, useWorldTitle, WorldLanguageTag } from './worldCardText';
 import './world-card.css';
 
 export { WORLD_STATUS_LABELS } from './worldCardStatus';
@@ -37,6 +38,7 @@ export function WorldCard(props: WorldCardFaceProps) {
   const creatorName = world.creatorName?.trim();
   const creatorTitle = world.creatorTitle;
   const [motionPlaying, setMotionPlaying] = useState(false);
+  const title = useWorldTitle(world);
   const imageUrl = compact ? props.cover ?? world.imageUrl : world.imageUrl;
   const glowColor = useDominantColor(imageUrl?.trim() || undefined);
   const videoUrl = motionWorld && 'videoUrl' in motionWorld ? motionWorld.videoUrl : undefined;
@@ -51,7 +53,7 @@ export function WorldCard(props: WorldCardFaceProps) {
   // One text per part, so the genre and status each show in the reader's language.
   const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean)
     .map((part, index) => <span key={part}>{index > 0 && ' | '}{part}</span>);
-  const openLabel = `Open ${world.title}, ${world.chapterCount} chapters${creatorName ? `, creator ${creatorName}` : ''}${format ? `, format ${format}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
+  const openLabel = `Open ${title.text}, ${world.chapterCount} chapters${creatorName ? `, creator ${creatorName}` : ''}${format ? `, format ${format}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
   const card = <LibraryCard
     interactive={false}
     padding="none"
@@ -86,14 +88,14 @@ export function WorldCard(props: WorldCardFaceProps) {
   return <div className="world-card-tile" data-cover-shape={compact ? 'square' : 'tall'} data-world-card-tile={compact ? 'compact' : 'full'}>
     {card}
     <div className="world-card-caption" onClick={props.onOpen}>
-      <h3 className="world-card-caption-title font-display">{world.title}</h3>
-      {creatorName && <p className="world-card-caption-creator">
+      <h3 className="world-card-caption-title font-display" {...authorText(title.lang)}>{title.text}</h3>
+      {creatorName && <p className="world-card-caption-creator" {...authorText(creatorLanguageOf(world))}>
         {creatorTitle
           ? <ElementalTitle as="span" element={creatorTitle.element}
               intensity={creatorTitle.intensity} color={creatorTitle.color}>{creatorName}</ElementalTitle>
           : creatorName}
       </p>}
-      <p className="world-card-caption-details">{details}</p>
+      <p className="world-card-caption-details"><WorldLanguageTag title={title} />{details}</p>
       <ul className="world-card-caption-features" aria-label="Features">
         {tileWorld?.branchingEnabled === true && <li className="world-card-feature">
           <GitBranch aria-hidden="true" />Branching

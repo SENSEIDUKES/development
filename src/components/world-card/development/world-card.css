@@ -651,6 +651,21 @@
   .world-card-compact-tile-cover:has(.world-card-compact-tile-open:active), .world-card-compact-tile:has(.world-card-compact-tile-caption:active) .world-card-compact-tile-cover, .world-card-compact-picks-switch:active svg { transform: none; }
 }
 
+/*
+ * Card language rules (worldCardText.tsx). The tag marks a story whose title is in another
+ * language than the reader's. Scripts with marks above and below the letters get taller lines,
+ * so a two-line title never clips them.
+ */
+.world-card-language-tag {
+  display: inline-flex; align-items: center; justify-content: center; margin-inline-end: 0.35em; padding: 0 0.3em;
+  border: 1px solid currentColor; border-radius: 0.25rem; font-family: sans-serif; font-size: 0.85em; font-weight: 700;
+  line-height: 1.25; letter-spacing: 0.04em; text-decoration: none; vertical-align: 0.05em; opacity: 0.8;
+}
+:is(.world-card-compact-tile-title, .world-card-caption-title, .world-card-banner-title, .world-card-menu-title,
+  .world-card-info-title):is(:lang(th), :lang(hi), :lang(vi), :lang(ar), :lang(fa), :lang(ur), :lang(am), :lang(my), :lang(km), :lang(lo)) {
+  line-height: 1.45;
+}
+
 /* Menu face: the same row in Discover and the World Card workspace. */
 .world-card-menu {
   display: flex; align-items: center; gap: 0.75rem; width: 100%; min-width: 0;

@@ -23,8 +23,11 @@ export type WorldCardBlueprintPreview = 'creator' | 'creator-shared' | 'reader-c
  * cover clip, or its cover alone (a phone that will not play video).
  */
 export type WorldCardHeroPreview = 'wide' | 'cover-clip' | 'still';
-/** Compact's creator names: the sample's own, or the multilingual lettering experiment. */
-export type WorldCardCreatorsPreview = 'multilingual' | 'sample';
+/** The browse catalogue: worlds from twelve languages, or the sample's own English worlds. */
+export type WorldCardCataloguePreview = 'multilingual' | 'sample';
+/** The reader's language: the interface translates its words, and cards follow the card language rules. */
+export const WORLD_CARD_READER_LANGUAGES = ['en', 'zh-CN', 'ja', 'ko', 'ar', 'th', 'hi', 'ru', 'vi', 'es'] as const;
+export type WorldCardReaderLanguage = typeof WORLD_CARD_READER_LANGUAGES[number];
 export type WorldCardStatusPreview = 'public-ongoing' | 'public-completed'
   | 'library-draft' | 'library-shared' | 'library-public' | 'library-complete';
 
@@ -39,8 +42,17 @@ export interface WorldCardPreviewState {
   reading: WorldCardReadingPreview;
   blueprint: WorldCardBlueprintPreview;
   hero: WorldCardHeroPreview;
-  creators: WorldCardCreatorsPreview;
+  catalogue: WorldCardCataloguePreview;
+  readerLanguage: WorldCardReaderLanguage;
 }
+
+/** The sample world's title as translated for readers of these languages. */
+const LEAD_TITLE_TRANSLATIONS = {
+  ja: '翡翠帝国最後の蓮',
+  'zh-CN': '翡翠帝国的最后一朵莲',
+  ar: 'آخر زهرة لوتس في إمبراطورية اليشم',
+  ru: 'Последний лотос Нефритовой империи',
+};
 
 const LONG_TITLE = 'The Last Lotus of the Jade Empire and the Thousand-Year Oath Beneath the Silent Pavilion';
 
@@ -60,13 +72,15 @@ export function previewStory({ recentlyRead, titleLength, cover, activity, readi
     ...(reading === 'new-story' ? { chapterCount: 0, currentArc: '' } : {}),
     title: titleLength === 'long' ? LONG_TITLE : featuredNovel.title,
     imageUrl: cover === 'missing' ? '' : featuredNovel.imageUrl,
+    // Written in English, with real translations of its title in four languages.
+    originalLanguage: 'en',
+    ...(titleLength === 'long' ? {} : { titleTranslations: LEAD_TITLE_TRANSLATIONS }),
     // The sample world's own wide hero still and loop (Workshop-local assets).
     ...(hero === 'wide' ? { heroImageUrl: '/world-card/last-lotus-hero.jpg', heroVideoUrl: '/world-card/last-lotus-hero.mp4' } : {}),
     ...(hero === 'still' ? { videoUrl: undefined } : {}),
     recentlyRead: recentlyRead === 'yes',
     activityStatus: activity === 'hidden' ? undefined : activity,
     // Information and Verification panels: sample language, rating, permissions and provenance.
-    originalLanguage: 'en',
     readingLanguages: ['ja'],
     matureContent: true,
     permissions: { ...BLUEPRINT_PERMISSIONS[blueprint], branching: featuredNovel.branchingEnabled },
@@ -112,23 +126,27 @@ const BROWSE_EXTRA: readonly [string, string, string][] = [
 ];
 
 /**
- * The lettering experiment: every creator is "cultivator" in another language and script, each
- * in a different element and strength, to see how names in many languages sit on small cards.
- * Includes right-to-left Arabic and a long Thai word.
+ * The multilingual catalogue: each world was written in another language, so its title and its
+ * creator's name are in that language and script, and the creator wears a different element.
+ * Half have a real English translation of the title; the rest show the original with a tag.
+ * Includes right-to-left Arabic, Thai and Hindi with marks above and below, and long Greek and
+ * Russian words.
  */
-export const MULTILINGUAL_CREATORS: readonly { name: string; language: string; title: NonNullable<HomeWorld['creatorTitle']> }[] = [
-  { name: 'Cultivator', language: 'en', title: { element: 'fire', intensity: 'legendary' } },
-  { name: '修仙者', language: 'zh', title: { element: 'lightning', intensity: 'epic' } },
-  { name: '修行者', language: 'ja', title: { element: 'water', intensity: 'rare' } },
-  { name: '수련자', language: 'ko', title: { element: 'poison', intensity: 'common' } },
-  { name: 'Tu Sĩ', language: 'vi', title: { element: 'frost', intensity: 'active' } },
-  { name: 'Культиватор', language: 'ru', title: { element: 'celestial', intensity: 'legendary' } },
-  { name: 'المُتعبِّد', language: 'ar', title: { element: 'void', intensity: 'epic' } },
-  { name: 'साधक', language: 'hi', title: { element: 'fire', intensity: 'subtle' } },
-  { name: 'ผู้บำเพ็ญเพียร', language: 'th', title: { element: 'lightning', intensity: 'rare' } },
-  { name: 'Cultivador', language: 'es', title: { element: 'water', intensity: 'legendary' } },
-  { name: 'Καλλιεργητής', language: 'el', title: { element: 'poison', intensity: 'epic' } },
-  { name: 'Pertapa', language: 'id', title: { element: 'frost', intensity: 'common' } },
+export const MULTILINGUAL_WORLDS: readonly {
+  language: string; title: string; english?: string; creator: string;
+  element: NonNullable<HomeWorld['creatorTitle']>['element']; intensity: NonNullable<HomeWorld['creatorTitle']>['intensity'];
+}[] = [
+  { language: 'zh-CN', title: '九月之烬', english: 'Ashes of the Nine Moons', creator: '修仙者', element: 'lightning', intensity: 'epic' },
+  { language: 'ja', title: '血絹の誓い', english: 'The Blood-Silk Oath', creator: '修行者', element: 'water', intensity: 'rare' },
+  { language: 'ko', title: '북방의 철의 맹세', creator: '수련자', element: 'poison', intensity: 'common' },
+  { language: 'vi', title: 'Đình Đài Dưới Hồ Sen', english: 'The Pavilion Beneath the Lotus Lake', creator: 'Tu Sĩ', element: 'frost', intensity: 'active' },
+  { language: 'ru', title: 'Где реки забывают', creator: 'Культиватор', element: 'celestial', intensity: 'legendary' },
+  { language: 'ar', title: 'المحنة التاسعة', english: 'The Ninth Trial', creator: 'المُتعبِّد', element: 'void', intensity: 'epic' },
+  { language: 'hi', title: 'नौवें आकाश के खंडहर', creator: 'साधक', element: 'fire', intensity: 'subtle' },
+  { language: 'th', title: 'ศิษย์นอกรีตแห่งนิกายอัคคี', english: 'Ember Sect Outcast', creator: 'ผู้บำเพ็ญเพียร', element: 'lightning', intensity: 'rare' },
+  { language: 'es', title: 'La apuesta de la marea gris', creator: 'Cultivador', element: 'water', intensity: 'legendary' },
+  { language: 'el', title: 'Το Αρχείο της Πνιγμένης Σελήνης', english: 'Archive of the Drowned Moon', creator: 'Καλλιεργητής', element: 'poison', intensity: 'epic' },
+  { language: 'id', title: 'Misteri Danau Teratai', creator: 'Pertapa', element: 'frost', intensity: 'common' },
 ];
 
 /** Every world a browse page might list: the Home grid, then the extra catalogue (one with no cover yet). */
@@ -136,9 +154,16 @@ export function previewBrowseWorlds(state: WorldCardPreviewState): HomeWorld[] {
   const worlds = [...previewHomeGrid(state), ...BROWSE_EXTRA.map(([title, genre, imageUrl], index): HomeWorld => ({
     ...featuredNovel, id: `browse-${index}`, title, genre, imageUrl, videoUrl: undefined, chapterCount: 9 + index * 7,
   }))];
-  if (state.creators !== 'multilingual') return worlds;
+  if (state.catalogue !== 'multilingual') return worlds;
+  // The lead world stays the English sample; every other world comes from another language.
   return worlds.map((world, index) => {
-    const creator = MULTILINGUAL_CREATORS[index % MULTILINGUAL_CREATORS.length];
-    return { ...world, creatorName: creator.name, creatorTitle: creator.title };
+    if (index === 0) return { ...world, creatorName: 'Cultivator', creatorLanguage: 'en', creatorTitle: { element: 'fire', intensity: 'legendary' } };
+    const source = MULTILINGUAL_WORLDS[(index - 1) % MULTILINGUAL_WORLDS.length];
+    return {
+      ...world, title: source.title, originalLanguage: source.language,
+      titleTranslations: source.english ? { en: source.english } : undefined,
+      creatorName: source.creator, creatorLanguage: source.language,
+      creatorTitle: { element: source.element, intensity: source.intensity },
+    };
   });
 }

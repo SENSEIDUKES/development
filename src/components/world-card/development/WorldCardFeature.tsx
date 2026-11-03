@@ -6,6 +6,7 @@ import type { WorldCardFeatureProps } from '../shared/worldCardContracts';
 import { WorldCardBackdropVideo, type WorldCardBackdropVideoHandle } from './WorldCardBackdropVideo';
 import { WorldCardRibbon } from './WorldCardRibbon';
 import { WORLD_STATUS_LABELS } from './worldCardStatus';
+import { authorText, useWorldTitle, WorldLanguageTag } from './worldCardText';
 import './world-card.css';
 
 /**
@@ -22,6 +23,7 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
   const videoUrl = world.heroVideoUrl?.trim() || world.videoUrl?.trim() || undefined;
   const glowColor = useDominantColor(stillUrl);
   const video = useRef<WorldCardBackdropVideoHandle>(null);
+  const title = useWorldTitle(world);
   useEffect(() => { if (active) video.current?.play(); else video.current?.pause(); }, [active]);
 
   const statusLabel = displayStatus?.view === 'public'
@@ -32,7 +34,7 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
   // One text per part, so the genre and status each show in the reader's language.
   const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean)
     .map((part, index) => <span key={part}>{index > 0 && ' | '}{part}</span>);
-  const openLabel = `Open ${world.title}, ${world.chapterCount} chapters${world.creatorName ? `, creator ${world.creatorName}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
+  const openLabel = `Open ${title.text}, ${world.chapterCount} chapters${world.creatorName ? `, creator ${world.creatorName}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
 
   return <article className="world-card-banner" data-world-card="feature" id={`feature-world-${world.id}`}
     data-hero={heroImageUrl || world.heroVideoUrl?.trim() ? 'wide' : 'cover'}
@@ -46,15 +48,15 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
     {senSash && <span className="world-card-banner-sash" aria-hidden="true"><WorldCardRibbon /></span>}
     <div className="world-card-banner-body">
       {label && <p className="world-card-banner-eyebrow">{label}</p>}
-      <h3 className="world-card-banner-title font-display">{world.title}</h3>
+      <h3 className="world-card-banner-title font-display" {...authorText(title.lang)}>{title.text}</h3>
       {world.creatorName && <p className="world-card-banner-byline">
         <span className="world-card-banner-by">by</span>
-        {world.creatorTitle
+        <span {...authorText(world.creatorLanguage)}>{world.creatorTitle
           ? <ElementalTitle as="span" element={world.creatorTitle.element}
               intensity={world.creatorTitle.intensity} color={world.creatorTitle.color}>{world.creatorName}</ElementalTitle>
-          : <span className="world-card-banner-creator">{world.creatorName}</span>}
+          : <span className="world-card-banner-creator">{world.creatorName}</span>}</span>
       </p>}
-      <p className="world-card-banner-details">{details}</p>
+      <p className="world-card-banner-details"><WorldLanguageTag title={title} />{details}</p>
       {synopsis && <p className="world-card-banner-synopsis">{synopsis}</p>}
       {world.branchingEnabled === true && <ul className="world-card-caption-features" aria-label="Features">
         <li className="world-card-feature"><GitBranch aria-hidden="true" />Branching</li>

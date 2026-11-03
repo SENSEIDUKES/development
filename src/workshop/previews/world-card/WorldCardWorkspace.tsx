@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { WorldCard, WorldCardCompactGrid, WorldCardCompactPicks, WorldCardCompactTile, WorldCardFeature, WorldCardFeatureCarousel, WorldCardMenu, languageName } from '@seihouse/library/world-card';
+import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
+import { WorldCard, WorldCardCompactGrid, WorldCardCompactPicks, WorldCardCompactTile, WorldCardFeature, WorldCardFeatureCarousel, WorldCardLanguageProvider, WorldCardMenu, languageName } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { featuredExpansions } from '../light-novels-home/previewData';
 import {
-  previewBrowseWorlds, previewCreatorWorlds, previewHomeGrid, previewStory,
+  previewBrowseWorlds, previewCreatorWorlds, previewStory,
   type WorldCardBlueprintPreview, type WorldCardCover, type WorldCardSashPreview, type WorldCardDestinations, type WorldCardPreviewState,
-  type WorldCardCreatorsPreview, type WorldCardHeroPreview, type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
+  type WorldCardCataloguePreview, type WorldCardHeroPreview, type WorldCardReaderLanguage, WORLD_CARD_READER_LANGUAGES, type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
 import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/home';
 import { StoryBlueprintView, type StoryBlueprintAccess } from '@seihouse/library/stories';
@@ -40,7 +41,7 @@ type Viewport = keyof typeof VIEWPORTS;
 
 const DEFAULT_STATE: WorldCardPreviewState = {
   recentlyRead: 'no', titleLength: 'standard', cover: 'art', sash: 'hidden',
-  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', blueprint: 'creator', hero: 'wide', creators: 'multilingual',
+  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', blueprint: 'creator', hero: 'wide', catalogue: 'multilingual', readerLanguage: 'en',
 };
 
 const BLUEPRINT_ACCESS: Record<Exclude<WorldCardBlueprintPreview, 'reader-off'>, StoryBlueprintAccess> = {
@@ -88,7 +89,16 @@ function CompactRow({ worlds, senSash, onOpen }: { worlds: readonly CreatorWorld
   </ul>;
 }
 
-export function WorldCardStage({ view, state, onAction }: {
+/**
+ * The stage in the reader's language: the interface translates its own words (as the app does),
+ * and every card follows the card language rules for titles and creator names.
+ */
+export function WorldCardStage(props: { view: View; state: WorldCardPreviewState; onAction: (message: string) => void }) {
+  useInterfaceLanguageTranslation(props.state.readerLanguage, true);
+  return <WorldCardLanguageProvider language={props.state.readerLanguage}><WorldCardStageCards {...props} /></WorldCardLanguageProvider>;
+}
+
+function WorldCardStageCards({ view, state, onAction }: {
   view: View; state: WorldCardPreviewState; onAction: (message: string) => void;
 }) {
   const story = previewStory(state);
@@ -126,7 +136,7 @@ export function WorldCardStage({ view, state, onAction }: {
     </Stage>}
     {!openedWorld && show('feature') && <Stage title="Feature card" note="Home's and Discover's spotlight. The world plays behind its name; touch and hold to pause, swipe to turn, tap to enter.">
       <WorldCardFeatureCarousel label="Featured"
-        slides={previewHomeGrid(state).slice(0, 3).map(world => ({
+        slides={previewBrowseWorlds(state).slice(0, 3).map(world => ({
           id: world.id, label: world.title,
           render: (onScreen: boolean) => <WorldCardFeature world={world} active={onScreen}
             senSash={world.id === story.id && state.sash === 'shown'} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]}
@@ -141,7 +151,7 @@ export function WorldCardStage({ view, state, onAction }: {
     </Stage>}
     {!openedWorld && show('grid') && <Stage title="Home grid" note="Two across on a phone, more on wider screens.">
       <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5">
-        {previewHomeGrid(state).map(world => <WorldCard key={world.id} world={world} senSash={state.sash === 'shown'}
+        {previewBrowseWorlds(state).slice(0, 6).map(world => <WorldCard key={world.id} world={world} senSash={state.sash === 'shown'}
           displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]} onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />)}
       </div>
     </Stage>}
@@ -192,7 +202,8 @@ function readCanvasState(params: URLSearchParams): WorldCardPreviewState {
     reading: pick(params.get('reading'), ['start', 'chapter-7', 'new-story'], DEFAULT_STATE.reading),
     blueprint: pick(params.get('blueprint'), ['creator', 'creator-shared', 'reader-copy', 'reader-view', 'reader-off'], DEFAULT_STATE.blueprint),
     hero: pick(params.get('hero'), ['wide', 'cover-clip', 'still'], DEFAULT_STATE.hero),
-    creators: pick(params.get('creators'), ['multilingual', 'sample'], DEFAULT_STATE.creators),
+    catalogue: pick(params.get('catalogue'), ['multilingual', 'sample'], DEFAULT_STATE.catalogue),
+    readerLanguage: pick(params.get('readerLanguage'), WORLD_CARD_READER_LANGUAGES, DEFAULT_STATE.readerLanguage),
   };
 }
 
@@ -294,8 +305,13 @@ function WorldCardWorkspaceShell() {
       defaultSection: 'pages',
       sections: [{
         id: 'pages',
-        description: 'Pick the card type from the switcher above the stage. Viewport renders it at a fixed device width.',
+        description: 'Pick the card type from the switcher above the stage. Reader language shows every card as a reader of that language sees it. Viewport renders it at a fixed device width.',
         content: <div className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1 text-xs">Reader language
+            <select className={selectClass} value={state.readerLanguage} onChange={event => update({ readerLanguage: event.target.value as WorldCardReaderLanguage })}>
+              {WORLD_CARD_READER_LANGUAGES.map(code => <option key={code} value={code}>{languageName(code)} ({code})</option>)}
+            </select>
+          </label>
           <label className="flex flex-col gap-1 text-xs">Viewport
             <select className={selectClass} value={viewport} onChange={event => setViewport(event.target.value as Viewport)}>
               {Object.entries(VIEWPORTS).map(([value, size]) => <option key={value} value={value}>
@@ -322,10 +338,10 @@ function WorldCardWorkspaceShell() {
               </optgroup>
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-xs">Compact creator names
-            <select className={selectClass} value={state.creators} onChange={event => update({ creators: event.target.value as WorldCardCreatorsPreview })}>
-              <option value="multilingual">Experiment: “Cultivator” in 12 languages and elements</option>
-              <option value="sample">Sample (SENSEI)</option>
+          <label className="flex flex-col gap-1 text-xs">Catalogue
+            <select className={selectClass} value={state.catalogue} onChange={event => update({ catalogue: event.target.value as WorldCardCataloguePreview })}>
+              <option value="multilingual">Multilingual: worlds written in 12 languages</option>
+              <option value="sample">Sample: English worlds by SENSEI</option>
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">Feature hero

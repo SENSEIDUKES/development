@@ -20,8 +20,6 @@ export interface StoryDetailDisplay extends HomeWorld {
    * comes from the host and is left out when unknown; the panel shows only
    * what it is given.
    */
-  /** The language the world is written in (a SEN language code, e.g. `en`). */
-  originalLanguage?: string;
   /** Languages readers can already read it in, besides the original (translations already made). */
   readingLanguages?: readonly string[];
   /** True when the creator marked the world for mature audiences (Rated 18+); false for all ages. */

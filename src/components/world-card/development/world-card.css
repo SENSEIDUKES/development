@@ -633,9 +633,9 @@
   mask-image: linear-gradient(90deg, #000 calc(100% - 0.9rem), transparent);
 }
 .world-card-compact-tile-creator > * { white-space: nowrap; overflow-wrap: normal; word-break: keep-all; unicode-bidi: isolate; }
-/* On the art's top corner (the sash keeps the bottom one), ringed dark so it reads on any cover. */
+/* On the art's top-left corner (the sash keeps the bottom-right), ringed dark so it reads on any cover. */
 .world-card-compact-tile-activity {
-  position: absolute; z-index: 3; top: 0.4rem; inset-inline-end: 0.4rem; width: 0.5rem; height: 0.5rem; border-radius: 50%;
+  position: absolute; z-index: 3; top: 0.4rem; inset-inline-start: 0.4rem; width: 0.5rem; height: 0.5rem; border-radius: 50%;
   box-shadow: 0 0 0 2px rgba(4, 6, 13, 0.85), 0 0 8px currentColor; pointer-events: none;
 }
 .world-card-compact-tile-activity[data-activity='active-now'] { color: rgba(52, 211, 153, 0.7); }

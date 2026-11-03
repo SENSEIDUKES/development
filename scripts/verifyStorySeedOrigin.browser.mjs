@@ -63,7 +63,7 @@ try {
     await part('Style');
     await page.locator('#origin-style-title').scrollIntoViewIfNeeded();
     await page.screenshot({ path: `output/playwright/story-seed-origin-${width}.png`, fullPage: true });
-    if (width < 1024) await page.locator('.library-workspace-navigation button').click();
+    if (width < 1024) await page.getByRole('button', { name: 'Sections', exact: true }).click();
     const settings = page.getByRole('button', { name: 'Settings', exact: true });
     await settings.filter({ visible: true }).first().click();
     const dialog = page.getByRole('dialog', { name: 'Story Seed settings', exact: true });

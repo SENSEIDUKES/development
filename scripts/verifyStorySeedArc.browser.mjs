@@ -14,7 +14,7 @@ try {
     const button = name => page.getByRole('button', { name, exact: true }).filter({ visible: true }).first();
     const tool = async name => {
       if (width < 1024) {
-        await page.locator('.library-workspace-navigation button').click();
+        await page.getByRole('button', { name: 'Sections', exact: true }).click();
         await page.locator('[data-slot="navigation-footer"]').filter({ visible: true }).getByRole('button', { name, exact: true }).click();
       } else await button(name).click();
     };

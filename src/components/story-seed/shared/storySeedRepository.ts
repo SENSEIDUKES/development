@@ -12,11 +12,19 @@ export interface StorySeedEditorProgress {
   confirmedTabs: string[];
 }
 
+/** Canonical persisted editor keys; the host's creator positions must match this contract. */
+export const STORY_SEED_EDITOR_TAB_KEYS = [
+  'origin.style', 'origin.fun', 'origin.synopsis', 'origin.fate', 'origin.tags',
+  'world-identity', 'characters', 'factions', 'things', 'places', 'species', 'abilities', 'power-system',
+  'arc.ending', 'arc.pins',
+] as const;
+const editorTabKeys = new Set<string>(STORY_SEED_EDITOR_TAB_KEYS);
+
 /** Ignore damaged editor-only metadata without discarding a usable saved seed. */
 export const normalizeStorySeedEditorProgress = (value: unknown): StorySeedEditorProgress => {
   const tabs = value && typeof value === 'object' && 'confirmedTabs' in value ? value.confirmedTabs : undefined;
   return { confirmedTabs: Array.isArray(tabs)
-    ? [...new Set(tabs.filter((tab): tab is string => typeof tab === 'string' && tab.length > 0 && tab.length <= 80))].slice(0, 40)
+    ? [...new Set(tabs.filter((tab): tab is string => typeof tab === 'string' && editorTabKeys.has(tab)))].slice(0, 40)
     : [] };
 };
 

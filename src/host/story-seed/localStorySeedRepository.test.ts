@@ -69,7 +69,7 @@ describe('Local Story Seeds', () => {
   it('ignores damaged editor metadata without resetting creative content or older records', async () => {
     const repository = createLocalStorySeedRepository({ storageKey: 'app-seeds' });
     const first = await repository.create('reader', seed('Keep this story'), undefined, 'en');
-    const second = { ...first, id: 'second', editorProgress: { confirmedTabs: [null, 'origin.fun', 'origin.fun', 15] } };
+    const second = { ...first, id: 'second', editorProgress: { confirmedTabs: [...Array.from({ length: 45 }, (_, index) => `unknown-${index}`), null, 'origin.fun', 'origin.fun', 15] } };
     window.localStorage.setItem('app-seeds', JSON.stringify([{ ...first, editorProgress: false }, second]));
     const reopened = await repository.list('reader');
     expect(reopened).toHaveLength(2);

@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
+import { STORY_SEED_EDITOR_TAB_KEYS, createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
 import { SEED_SECTIONS } from '../seedSections';
 import { patchStoryRequired } from '../seedState';
-import { CREATOR_PAGE_ORDER, nextPage, previousPage, partComplete, pageComplete, stepOfPage, stepStatus, tabsToConfirm } from './creatorSteps';
+import { creatorPositions, tabKey, CREATOR_PAGE_ORDER, nextPage, previousPage, partComplete, pageComplete, stepOfPage, stepStatus, tabsToConfirm } from './creatorSteps';
 
 describe('Story Seed creator steps', () => {
+  it('uses the persistence contract tab keys', () => {
+    expect(creatorPositions(true).filter(position => position.page !== 'manifest').map(tabKey).sort()).toEqual([...STORY_SEED_EDITOR_TAB_KEYS].sort());
+  });
   it('walks Origin, every World section, Arc, then Create', () => {
     expect(CREATOR_PAGE_ORDER).toEqual(['origin', ...SEED_SECTIONS.filter(section => section.family === 'world').map(section => section.id), 'arc', 'manifest']);
     expect(nextPage('origin')).toBe('world-identity');
@@ -46,6 +49,8 @@ describe('Story Seed creator steps', () => {
     expect(partComplete('origin', 'style', seed)).toBe(false);
     seed.story.required.genre = 'Fantasy';
     expect(partComplete('origin', 'style', seed)).toBe(true);
+    seed.story.required.style = 'Unsupported style' as typeof seed.story.required.style;
+    expect(partComplete('origin', 'style', seed)).toBe(false);
     seed.story.required.genre = '';
     expect(partComplete('origin', 'style', seed)).toBe(false);
   });

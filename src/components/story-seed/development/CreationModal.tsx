@@ -42,7 +42,7 @@ import { CreatorStepStrip } from './creator/CreatorStepStrip';
 import { CreatorStepFooter } from './creator/CreatorStepFooter';
 import { StorySeedLiveCard } from './creator/StorySeedLiveCard';
 import { ManifestStep } from './creator/ManifestStep';
-import { creatorPositions, partsOf, tabKey, tabsToConfirm, type CreatorPageId, type CreatorPosition } from './creator/creatorSteps';
+import { partsOf, tabsToConfirm, type CreatorPageId, type CreatorPosition } from './creator/creatorSteps';
 import { SeedPartContext, SeedConfirmationContext } from './creator/SeedPart';
 import { PinnedFooter } from './creator/PinnedFooter';
 import './creator/creator.css';
@@ -470,8 +470,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const selected = reconciled?.seed ?? normalizeStorySeedInput(record.seed);
     setActiveSeed(record);
     setSeed(selected);
-    const knownTabs = new Set(creatorPositions(true).map(tabKey));
-    setConfirmedTabs(normalizeStorySeedEditorProgress(record.editorProgress).confirmedTabs.filter(tab => knownTabs.has(tab)));
+    setConfirmedTabs(normalizeStorySeedEditorProgress(record.editorProgress).confirmedTabs);
     // Each seed restores its own Original Language and Reading Mode; the
     // previously opened seed's choices must never carry over into this one.
     resolveOriginalLanguage(record.originalLanguage);

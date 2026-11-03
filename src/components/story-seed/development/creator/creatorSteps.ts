@@ -1,4 +1,4 @@
-import { type StorySeedInput } from '@seihouse/sen/story-seed';
+import { normalizeStoryStyle, type StorySeedInput } from '@seihouse/sen/story-seed';
 import {
   FAMILY_SECTIONS,
   SEED_SECTIONS,
@@ -103,7 +103,7 @@ const hasText = (value?: string) => Boolean(value?.trim());
 /** Required answers always come from content; confirmations only complete optional tabs. */
 export const partComplete = (page: CreatorPageId, part: string, seed: StorySeedInput, confirmed: readonly string[] = []): boolean => {
   const required = seed.story.required;
-  if (page === 'origin' && part === 'style') return Boolean(required.style && hasText(required.genre));
+  if (page === 'origin' && part === 'style') return Boolean(normalizeStoryStyle(required.style) && hasText(required.genre));
   if (page === 'origin' && part === 'synopsis') return hasText(required.premise);
   if (confirmed.includes(tabKey({ page, part }))) return true;
   if (page === 'origin') {

@@ -56,3 +56,21 @@ export function storyHomeWorlds(state: HarnessWorkspaceState, covers?: Pick<Stor
       return display ? [display] : [];
     });
 }
+
+/**
+ * Whether a story has been published: a story stays in its creator's Create
+ * until they publish it, and only a published story is offered to readers
+ * (Home, Search and the public Reader).
+ */
+export function isStoryPublished(story: Pick<HarnessWorkspaceState['stories'][number], 'visibility'>): boolean {
+  return story.visibility === 'public';
+}
+
+/**
+ * Where a story's chapters come from: made in SEN (its chapters seal as the
+ * story moves on, for the Codex's sake) or imported (any chapter may reopen).
+ * Every story without a recorded origin was made in SEN.
+ */
+export function storyOrigin(story: Pick<HarnessWorkspaceState['stories'][number], 'origin'>): 'sen' | 'imported' {
+  return story.origin === 'imported' ? 'imported' : 'sen';
+}

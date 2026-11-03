@@ -80,7 +80,7 @@ function IconButton({ label, icon: Icon, onClick, disabled, className = round }:
  * The Reader frame's bottom bar, across the bottom of the screen, holds what
  * the reader acts with: Listen and sentence navigation on the left, Codex in
  * the middle, the chapter picker between its arrows, and a shared Fate/Create
- * chooser at the far right. Below 640px, Playback and Chapters
+ * chooser at the far right (Fate alone, one tap, in a Reader without Create). Below 640px, Playback and Chapters
  * open compact popovers instead of squeezing their individual controls into the bar.
  * Wider screens expose both groups inline, with 44px targets. Back to narration floats above the left end
  * only when needed; the story audio note floats above the right. A
@@ -90,7 +90,7 @@ function IconButton({ label, icon: Icon, onClick, disabled, className = round }:
  * browser can't read aloud, Codex stays available and the skip controls are
  * disabled. The chapter list opens upward from the chapter pill.
  */
-export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarration, barRef, note, onOpenCodex, fate, create, chapterSelection, previous, next, direction = 'ltr' }: {
+export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarration, barRef, note, onOpenCodex, fate, create, chapterSelection, previous, next, direction = 'ltr', fateOnly = false }: {
   readAloud: ReadAloud;
   /** Starts reading where the reader is on the page. Absent before the story has a chapter. */
   onListen?: () => void;
@@ -103,6 +103,8 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
   fate: ReaderFateStep;
   /** Absent before the story has a chapter, or where the host cannot save one. */
   create?: ReaderCreateStep;
+  /** A Reader without Create at all (anyone not in control of the novel): the rightmost action is Fate alone, one tap. */
+  fateOnly?: boolean;
   chapterSelection?: ReaderChapterSelection;
   previous?: ReaderChapterStep;
   next?: ReaderChapterStep;
@@ -258,7 +260,13 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
           {/* Fate and Create share the rightmost action; the story audio note floats above it. */}
           <div className="relative h-12 w-12 shrink-0" data-testid="reader-create-slot">
           {note && <div hidden={Boolean(group)} className="pointer-events-none absolute bottom-full left-1/2 mb-4 -translate-x-1/2 [&>*]:pointer-events-auto" data-testid="story-audio-note">{note}</div>}
-          <SEIPopover modal={false} open={group === 'actions'} onOpenChange={open => setGroup(open ? 'actions' : undefined)}>
+          {/* A Reader without Create (anyone not in control of the novel) has Fate alone, one tap away. */}
+          {fateOnly ? <button type="button" aria-label="Open Fate" title={fate.disabled ? 'Fate opens when you reach the end of the chapter' : 'Fate'}
+              data-testid="reader-fate-button" data-attention={fate.attention || undefined} disabled={fate.disabled} onClick={fate.run}
+              className={`${secondary} disabled:opacity-35 ${fate.attention ? fateCalling : ''}`}>
+              <Compass className="h-6 w-6" aria-hidden /><span className={actionLabel}>Fate</span>
+            </button>
+          : <SEIPopover modal={false} open={group === 'actions'} onOpenChange={open => setGroup(open ? 'actions' : undefined)}>
             <SEIPopoverTrigger render={<button type="button" ref={actionTrigger} />} aria-label="Fate and Create" title="Fate and Create"
               aria-pressed={create?.active ?? false} data-testid="reader-actions-button" data-attention={fate.attention || undefined}
               className={`${create?.active ? primary : secondary} ${fate.attention ? fateCalling : ''}`}>
@@ -284,7 +292,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
                 </button>}
               </div>
             </SEIPopoverContent>
-          </SEIPopover>
+          </SEIPopover>}
           </div>
         </div>
       </div>

@@ -55,7 +55,7 @@ describe('the Familiar\'s actions, page by page', () => {
 
   it('maps every route to its page', () => {
     const pages: Record<NovelExpandedRoute['page'], FamiliarPage> = {
-      home: 'home', discover: 'discover', create: 'create', world: 'create', story: 'world-info', blueprint: 'world-info', profile: 'profile', read: 'reader',
+      home: 'home', discover: 'discover', create: 'create', world: 'create', story: 'world-info', blueprint: 'world-info', profile: 'profile', read: 'reader', write: 'reader',
     };
     for (const [route, page] of Object.entries(pages)) expect(familiarPage(route as NovelExpandedRoute['page'])).toBe(page);
   });

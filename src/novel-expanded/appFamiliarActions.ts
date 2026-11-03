@@ -15,7 +15,8 @@ export function familiarPage(page: NovelExpandedRoute['page']): FamiliarPage {
     case 'story':
     case 'blueprint': return 'world-info';
     case 'profile': return 'profile';
-    case 'read': return 'reader';
+    case 'read':
+    case 'write': return 'reader';
   }
 }
 

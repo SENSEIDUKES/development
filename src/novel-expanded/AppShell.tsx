@@ -54,7 +54,7 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
   const profile = () => navigate({ page: 'profile' });
   const settings = () => navigate({ page: 'profile', cave: '/settings' });
   const searchItems: HeaderSearchItem[] = [
-    { id: 'home', label: 'Your stories', description: 'Home: every story you have started', icon: LibraryStoriesIcon, onAction: home },
+    { id: 'home', label: 'Your stories', description: 'Home: your published stories', icon: LibraryStoriesIcon, onAction: home },
     { id: 'create', label: 'Create a story', description: 'Plant a Story Seed and shape its World Blueprint', icon: LibraryBookIcon, onAction: create },
     { id: 'discover', label: 'Discover', description: 'Latest releases, Fate Survival and worlds to browse', icon: LibraryDiscoveryIcon, onAction: discover },
     { id: 'profile', label: 'Profile', description: 'Your Cultivator Cave: rank, QI, Familiars and rewards', icon: LibraryProfileIcon, onAction: profile },

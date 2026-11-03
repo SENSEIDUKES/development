@@ -62,6 +62,19 @@ export interface StoryPagesProps {
   covers?: StoryCoverService;
   /** The host's Codex pictures: the Reader's Codex shows them and offers Manifest. Without it, cards show their aura. */
   codexPictures?: CodexPictureService;
+  /**
+   * Whether the Reader is the creator's: Fate and Create together, and the
+   * story's next chapter written from it. Anyone else's Reader has Fate alone
+   * and never writes. Defaults to the creator.
+   */
+  creator?: boolean;
+  /** The Reader opens at this chapter instead of the reader's place (a chapter opened from Create). */
+  openAtChapter?: number;
+  /**
+   * The Reader begins a story with no chapters as it opens, as World Info's
+   * Start Story does: the creator's Reader, opened as a story is made.
+   */
+  beginOnOpen?: boolean;
 }
 
 /** The veil stays open while a chapter is written; there is no minimized state here. */
@@ -74,10 +87,10 @@ const keepVeilOpen = () => undefined;
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint, creator = true, openAtChapter, beginOnOpen = false }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
-  const [startOnOpen, setStartOnOpen] = useState(false);
+  const [startOnOpen, setStartOnOpen] = useState(beginOnOpen);
   // The Familiar's recall, from the app's header, rides in the Reader's top bar beside Reader Settings.
   const familiar = useWorkspaceHeaderAccessory();
   const [readingPosition, setReadingPosition] = useState<{ chapterNumber: number }>();
@@ -110,18 +123,20 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
   // The stories are open but the writer did not answer: reading still works.
   const writerAlert = loadError && <div className="mx-auto max-w-3xl px-4 pt-4"><LoadAlert message={loadError} onRetry={stories.retry} /></div>;
 
+  // Only the creator's Reader writes: a reader who does not control the novel never generates in it.
+  const writes = creator && stories.canGenerate;
   if (page === 'read') return <>
     {writerAlert}
     <HarnessReaderSession state={state} storyId={storyId} controller={controller}
-      readerStateRepository={readerStateRepository} startOnOpen={startOnOpen}
+      readerStateRepository={readerStateRepository} startOnOpen={startOnOpen} creator={creator} openAtChapter={openAtChapter}
       codexPictures={codexPictures && {
         pictureOf: key => codexPictures.pictureOf(storyId, key),
         manifest: card => codexPictures.manifest(storyId, card.key, codexPictureRequest(state, storyId, card)),
       }}
       readerPreferences={readerPreferences} readAloudVoices={LIBRARY_READ_ALOUD_VOICES} readerFonts={LIBRARY_READER_FONTS} soundscapes={soundscapes}
-      onGenerateNextChapter={stories.canGenerate ? () => stories.generateNextChapter(storyId) : undefined}
-      onRewriteChapter={stories.canGenerate ? note => stories.rewriteLatestChapter(storyId, note) : undefined}
-      onPlanArc={stories.canGenerate ? () => stories.planArc(storyId) : undefined}
+      onGenerateNextChapter={writes ? () => stories.generateNextChapter(storyId) : undefined}
+      onRewriteChapter={writes ? note => stories.rewriteLatestChapter(storyId, note) : undefined}
+      onPlanArc={writes ? () => stories.planArc(storyId) : undefined}
       renderWriting={writingAgent ? writing => <GenerationOverlay agent={writingAgent} isGenerating={writing.active}
         completed={state.chapters.some(chapter => chapter.storyId === storyId && chapter.chapterNumber === writing.chapterNumber)}
         generationPhase="chapter" generatingChapterNum={writing.chapterNumber} progress={null}

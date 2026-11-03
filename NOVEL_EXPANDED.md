@@ -347,10 +347,11 @@ Update it whenever it changes.
     2026-10-14, after 2,500 read too long) in exactly 35 paragraphs for now, so
     the writer's accuracy can be measured; the range to return to is 30 to 55.
   - **The way in works end to end in the Workshop:** Story Seed → World
-    Blueprint → **Start Story** → the story's **World Info** page → **Begin
-    Story** → the **Reader Chamber**, where Chapter 1 is written under the Aura
-    Veil and opens when it is saved. Once a story has chapters the button says
-    **Continue**.
+    Blueprint → **Start Story** → the **creator's Reader** in Create, where
+    Chapter 1 is written under the Aura Veil and opens when it is saved. The
+    book stays in Create, its creator's alone, until they **Publish** it from
+    the author's world view; only then do readers find it, and a reader's
+    Reader has Fate alone (SENSEI, 2026-11-03).
   - **The Reader Chamber is reading and listening:** chapters sit on the Text
     Highlight Engine (read-only), with Sound Cues active. Next writes the next
     chapter; Fate directs it. **Listen** reads the chapter aloud with the

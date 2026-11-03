@@ -20,7 +20,8 @@ export function appLibraryLocation(route: NovelExpandedRoute): LibraryLocation {
     case 'world': return { screen: 'creator-space' };
     case 'story':
     case 'blueprint': return { screen: 'detail' };
-    case 'read': return { screen: 'reader' };
+    case 'read':
+    case 'write': return { screen: 'reader' };
     case 'profile': return { screen: 'profile', cave: route.cave };
   }
 }

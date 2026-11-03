@@ -8,7 +8,7 @@ import { familiarPage } from './appFamiliarActions';
 import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
 import { HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderProfileProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode } from '@seihouse/library/shell';
 import { SparksButton } from '@seihouse/sen/story-seed';
-import { AuthorWorldView, CreateStorySettings, StoryPages, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
+import { AuthorWorldView, CreateStorySettings, StoryPages, isStoryPublished, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { createOfficialCapaDefaultLoadout } from '../host/generation/capa/officialCapaSkills';
 import { NarrativeButton } from '@seihouse/sen/presentation';
@@ -102,7 +102,8 @@ function familiarPlace(page: ReturnType<typeof useAppRoute>[0]['page']): { title
   switch (page) {
     case 'create': return { title: 'Create', help: 'story-seed', page: where };
     case 'world': return { title: 'Create', help: 'library', page: where };
-    case 'read': return { title: 'Reader', help: 'reader', page: where };
+    case 'read':
+    case 'write': return { title: 'Reader', help: 'reader', page: where };
     case 'discover': return { title: 'Discover', help: 'library', page: where };
     case 'profile': return { title: 'Profile', help: 'library', page: where };
     case 'story':
@@ -192,15 +193,26 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   // Story Settings chosen in Create, kept on this device until Manifest applies them.
   const [settingsDraft, setSettingsDraft] = useStorySettingsDraft(services.readerPreferences);
   const sparks = useDaoSparks(services, profile, navigate);
-  const worlds = useMemo(() => state ? storyHomeWorlds(state, covers) : [], [state, covers]);
+  // Every story on this device, as its creator sees them in Create.
+  const allWorlds = useMemo(() => state ? storyHomeWorlds(state, covers) : [], [state, covers]);
+  // What readers are offered (Home, Search, Discover): published stories only. A story stays in
+  // Create, its creator's alone, until they publish it.
+  const worlds = useMemo(() => state ? allWorlds.filter(world => {
+    const story = findStory(state, world.id);
+    return Boolean(story && isStoryPublished(story));
+  }) : [], [state, allWorlds]);
   const seedIds = useMemo(() => state ? startedSeedIds(state) : [], [state]);
   // The Creator Space's worlds: the same stories as Home's cards, with where each stands.
-  const creatorWorlds = useMemo(() => state ? creatorWorldsOf(state, worlds) : [], [state, worlds]);
+  const creatorWorlds = useMemo(() => state ? creatorWorldsOf(state, allWorlds) : [], [state, allWorlds]);
   // The Cave's Stories page: each story, and the Story Seed it started from.
   const caveStories = useMemo(() => state ? state.stories.map(story => ({
     id: story.id, title: story.title, userId: NOVEL_EXPANDED_READER_ID, sourceSeedId: storySourceSeedId(state, story),
   })) : [], [state]);
-  const storyId = route.page === 'story' || route.page === 'read' || route.page === 'blueprint' ? route.storyId : undefined;
+  // The creator's Reader ('write', opened from Create) and a reader's Reader ('read') are the same story pages.
+  const storyId = route.page === 'story' || route.page === 'read' || route.page === 'write' || route.page === 'blueprint' ? route.storyId : undefined;
+  const draft = Boolean(state && storyId && findStory(state, storyId) && !isStoryPublished(findStory(state, storyId)!));
+  // A story not yet published has no reader but its creator: its Reader is the creator's, in Create.
+  useEffect(() => { if (route.page === 'read' && draft) navigate({ page: 'write', storyId: route.storyId }, { replace: true }); }, [route, draft, navigate]);
   const worldId = route.page === 'world' ? route.storyId : undefined;
   const missing = Boolean(state && storyId && !findStory(state, storyId));
   // A world that is not here (an old link, another browser) goes back to Create.
@@ -234,7 +246,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   );
   // One Familiar around every page, at the same place in the tree, so it keeps its
   // place as the reader moves; in the Reader its recall sits in the top bar beside Reader Settings.
-  const withFamiliar = (page: ReactNode) => <WorkspaceHeaderProfileProvider profile={headerProfile}><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'} place={familiarPlace(route.page)} navigate={navigate} guides={FAMILIAR_GUIDES} onGuideSeen={id => { const seen = services.profile.read().familiarGuidesSeen ?? []; if (!seen.includes(id)) services.profile.save({ familiarGuidesSeen: [...seen, id] }); }} tucked={route.page === 'profile' && Boolean(route.cave?.startsWith('/home/familiar'))}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider>
+  const withFamiliar = (page: ReactNode) => <WorkspaceHeaderProfileProvider profile={headerProfile}><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read' || route.page === 'write'} place={familiarPlace(route.page)} navigate={navigate} guides={FAMILIAR_GUIDES} onGuideSeen={id => { const seen = services.profile.read().familiarGuidesSeen ?? []; if (!seen.includes(id)) services.profile.save({ familiarGuidesSeen: [...seen, id] }); }} tucked={route.page === 'profile' && Boolean(route.cave?.startsWith('/home/familiar'))}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider>
     {signInOpen && <AppSignIn accentColor={profile.accentColor} onClose={() => setSignInOpen(false)} />}
   </WorkspaceHeaderProfileProvider>;
 
@@ -260,7 +272,9 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
         onChooseWorld={id => navigate({ page: 'world', storyId: id }, { replace: true })}
         onOpenChapter={chapterNumber => navigate({ page: 'world', storyId: route.storyId, chapterNumber })}
         onCloseChapter={() => navigate({ page: 'world', storyId: route.storyId })}
-        onBack={() => navigate({ page: 'create' })} />
+        onBack={() => navigate({ page: 'create' })}
+        // Read: the world in its creator's Reader, at the chapter when Read it was tapped on one.
+        onRead={chapterNumber => navigate({ page: 'write', storyId: route.storyId, ...(chapterNumber ? { chapterNumber } : {}) })} />
     </div>
   </AppShell>);
 
@@ -290,20 +304,28 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
       // (Fate Survival's first direction) waits; a failed start is simply tried again by
       // Start Story, which shows any reason.
       if (!nextChapterWaitsOnReader(stories.controller.snapshot(), story.id)) void stories.generateNextChapter(story.id).catch(() => undefined);
-      // The new story replaces Create, so Back from it goes Home.
-      navigate({ page: 'story', storyId: story.id }, { replace: true });
+      // The new story stays in Create: its creator reads Chapter 1 in their Reader as it arrives,
+      // and Back from it goes to the story's chapters in Create. Nothing is published until they publish it.
+      navigate({ page: 'write', storyId: story.id }, { replace: true });
     }} />);
 
   if (storyId) return withFamiliar(missing ? null : <StoryPages key={storyId} stories={stories} storyId={storyId}
-    page={route.page === 'read' ? 'read' : route.page === 'blueprint' ? 'blueprint' : 'info'} readerStateRepository={services.readerState}
+    page={route.page === 'read' || route.page === 'write' ? 'read' : route.page === 'blueprint' ? 'blueprint' : 'info'}
+    // Fate and Create together only in the creator's Reader, opened from Create; anyone else's Reader has Fate alone.
+    creator={route.page === 'write'} beginOnOpen={route.page === 'write'}
+    openAtChapter={route.page === 'write' ? route.chapterNumber : undefined} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
     writingAgent={AGENTS.VERSA} backLabel="Back to your stories" covers={covers} codexPictures={codexPictures}
     // World Info sits in the Library Shell; the Reader never does.
     frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds}
       readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}
     onCloseBlueprint={() => navigate({ page: 'story', storyId })}
-    onOpenReader={() => navigate({ page: 'read', storyId })}
-    onCloseReader={() => navigate({ page: 'story', storyId })}
+    // World Info's Start or Continue: a published story opens the reader's Reader; a draft, its creator's.
+    onOpenReader={() => navigate({ page: draft ? 'write' : 'read', storyId })}
+    // Back from the creator's Reader returns to the story in Create (at the chapter it was opened from).
+    onCloseReader={() => navigate(route.page === 'write'
+      ? { page: 'world', storyId, ...(route.chapterNumber ? { chapterNumber: route.chapterNumber } : {}) }
+      : { page: 'story', storyId })}
     onBack={() => navigate(HOME_ROUTE)} />);
 
   if (route.page === 'discover') return withFamiliar(<DiscoverPage route={route} navigate={navigate} stories={worlds} readerProfile={profile} />);

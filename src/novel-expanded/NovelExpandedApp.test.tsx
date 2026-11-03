@@ -5,7 +5,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MotionGlobalConfig } from 'motion/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
-import { HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { findStory, HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import type { ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, type StorySeedRecord } from '@seihouse/sen/story-seed';
 import { InMemoryHarnessGenerationRepository } from '../test-utils/InMemoryHarnessGenerationRepository';
@@ -26,6 +26,8 @@ import { createHostReaderMixer } from '../host/reader/readerMixer';
 import { SEN_SOUNDSCAPES } from '../host/media/soundscapeCatalog';
 import { LIBRARY_SOUND_WORDS_PRESET } from '../host/media/soundWordPacks';
 import { createMemoryDeviceMediaPackStore, DeviceMediaUrls } from '../host/media/deviceMediaPacks';
+import { LIBRARY_BASE_MEDIA } from '../host/media/libraryCatalog';
+import { createLibraryMediaPort } from '@seihouse/library/media';
 import { createPack } from 'seihouse-productions-package';
 import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
 import { MENU_MUSIC_PIECES } from '../host/media/menuMusicCatalog';
@@ -120,14 +122,41 @@ const regularSeedRecord = (): StorySeedRecord => {
   return record;
 };
 
-/** A story started from a Story Seed the way Create starts one. */
-const startedStory = async (repository: InMemoryHarnessGenerationRepository, writer: HarnessGenerationModelAdapter, record: StorySeedRecord = regularSeedRecord()) => {
+/**
+ * A story started from a Story Seed the way Create starts one, then published
+ * (as its creator does from Create) so readers find it on Home. `draft` keeps
+ * it in Create, unpublished, as a new story is.
+ */
+const startedStory = async (repository: InMemoryHarnessGenerationRepository, writer: HarnessGenerationModelAdapter, record: StorySeedRecord = regularSeedRecord(), { draft = false } = {}) => {
   const controller = new HarnessGenerationController({ repository, modelAdapter: writer, installedSkills: officialSkills });
   await controller.hydrate();
-  return startHarnessStoryFromSeed(controller, buildInitialStoryGenerationPayload(record.seed, createStoryAdministrativeMetadata({
+  const story = await startHarnessStoryFromSeed(controller, buildInitialStoryGenerationPayload(record.seed, createStoryAdministrativeMetadata({
     storyId: 'story-1', creatorId: record.userId, sourceSeedId: record.id, originalLanguage: 'en',
   }), record.blueprint!, 10));
+  return draft ? story : controller.setStoryVisibility(story.id, 'public');
 };
+
+/**
+ * A published story whose creator has already written its first chapters (in
+ * their own Reader, before publishing), so a reader opens it from Home; `draft`
+ * leaves it unpublished. Written with its own writer, so the app's writer has
+ * written nothing yet.
+ */
+const publishedStoryWithChapter = async (repository: InMemoryHarnessGenerationRepository, { chapters = 1, draft = false } = {}) => {
+  const author = scriptedWriter();
+  author.release();
+  const story = await startedStory(repository, author.writer, regularSeedRecord(), { draft: true });
+  // Written with the Library's own media, as the app writes a chapter.
+  const controller = new HarnessGenerationController({ repository, modelAdapter: author.writer, installedSkills: officialSkills,
+    media: createLibraryMediaPort({ registered: [], entitlements: [], base: LIBRARY_BASE_MEDIA }) });
+  await controller.hydrate();
+  for (let written = 0; written < chapters; written++) await controller.generateNextChapter(story.id, 'fixture');
+  expect(controller.snapshot().chapters.filter(chapter => chapter.storyId === story.id).map(chapter => chapter.chapterNumber))
+    .toEqual(Array.from({ length: chapters }, (_, index) => index + 1));
+  return draft ? findStory(controller.snapshot(), story.id)! : controller.setStoryVisibility(story.id, 'public');
+};
+/** The creator's Reader of a world, opened from Create. */
+const writeAddress = (storyId: string, chapterNumber?: number) => `/app/?page=create&world=${storyId}&read=1${chapterNumber ? `&chapter=${chapterNumber}` : ''}`;
 
 let container: HTMLDivElement;
 let root: Root;
@@ -206,23 +235,22 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(container.textContent).not.toContain('Curated worlds');
   });
 
-  it.each([undefined, 'phoenix'])('opens a story under the equipped Familiar (%s) and walks back with the app and browser', async equippedFamiliarId => {
+  it.each([undefined, 'phoenix'])('writes a new story\'s Chapter 1 in its creator\'s Reader under the equipped Familiar (%s) and walks back with the app and browser', async equippedFamiliarId => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
-    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    // A new story stays in Create, unpublished, until its creator publishes it.
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer, regularSeedRecord(), { draft: true });
     // The Model Router's chapter model is the one choice shared with the Workshop.
     writeModelPreference('chapters', 'remembered');
     // The reader's profile on this device is where the equipped Familiar is kept.
     if (equippedFamiliarId) services.profile.save({ familiarId: equippedFamiliarId });
-    await render(services, '/app/');
+    await render(services, '/app/?page=create');
+    const hub = () => document.querySelector<HTMLElement>('[data-testid="novel-expanded-create-hub"]')!;
+    expect(hub().querySelector(`button[aria-label^="Open ${created.title}"]`)).toBeTruthy();
 
-    await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
-    expect(address()).toBe(`/app/?story=${created.id}`);
-    expect(worldInfo()!.querySelector('h1')!.textContent).toBe(created.title);
-
-    // Start Story opens the Reader and writes Chapter 1 under the equipped Familiar's veil.
-    await click(chaptersAction(), 'Start Story', 10);
-    expect(address()).toBe(`/app/?story=${created.id}&read=1`);
+    // Continue opens the creator's Reader, which writes Chapter 1 under the equipped Familiar's veil.
+    await click(buttonByText('Continue', hub()), 'Continue', 10);
+    expect(address()).toBe(writeAddress(created.id));
     expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
     const veil = document.querySelector<HTMLElement>('[data-testid="generation-overlay"]')!;
     expect(veil.dataset.familiarId).toBe(equippedFamiliarId ?? 'quill');
@@ -241,29 +269,30 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');
     expect(story.recoverMemory).not.toHaveBeenCalled();
 
-    // The Reader's Back returns to Story View, which now continues where the reader is.
+    // The Reader's Back returns to the world in Create, whose chapters now hold Chapter 1.
     await click(buttonByText('Back'), 'Back', 10);
-    expect(address()).toBe(`/app/?story=${created.id}`);
-    expect(chaptersAction()!.textContent).toBe('Continue');
+    expect(address()).toBe(`/app/?page=create&world=${created.id}`);
+    const world = () => document.querySelector<HTMLElement>('[data-testid="author-world"]')!;
+    expect([...world().querySelectorAll('[data-testid="author-world-chapter"]')].map(row => row.getAttribute('data-chapter-number'))).toEqual(['1']);
 
-    // Story View's Back goes Home, where the story's card now has its chapter.
-    await click(worldInfo()!.querySelector('button[aria-label="Back to your stories"]'), 'Back to your stories');
-    expect(address()).toBe('/app/');
-    expect(container.querySelector(`button[aria-label^="Open ${created.title}, 1 chapters"]`)).toBeTruthy();
+    // The world's Back goes to Create, where the world now has its chapter.
+    await click(world().querySelector('button[aria-label="Back to Create"]'), 'Back to Create', 20);
+    expect(address()).toBe('/app/?page=create');
+    expect(hub().querySelector(`button[aria-label^="Open ${created.title}"]`)).toBeTruthy();
 
     // The browser's Back walks the same pages; nothing is written again.
     await act(async () => { window.history.back(); });
     await flush(30);
-    expect(address()).toBe(`/app/?story=${created.id}`);
-    expect(worldInfo()).toBeTruthy();
+    expect(address()).toBe(`/app/?page=create&world=${created.id}`);
+    expect(world()).toBeTruthy();
     await act(async () => { window.history.back(); });
     await flush(30);
-    expect(address()).toBe(`/app/?story=${created.id}&read=1`);
+    expect(address()).toBe(writeAddress(created.id));
     expect(document.querySelector('[data-chapter-number="1"]')).toBeTruthy();
     expect(story.generate).toHaveBeenCalledTimes(1);
   });
 
-  it('asks for the access token when a chapter reaches the visitor limit, then writes it with the token', async () => {
+  it('asks for the access token when a chapter in the creator\'s Reader reaches the visitor limit, then writes it with the token', async () => {
     const story = scriptedWriter();
     const accessToken = { current: undefined as string | undefined };
     const sentWith: Array<string | undefined> = [];
@@ -278,9 +307,10 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
       },
     };
     const services = appServices(writer, { accessToken });
-    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
-    await render(services, `/app/?story=${created.id}`);
-    await click(chaptersAction(), 'Start Story', 10);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer, regularSeedRecord(), { draft: true });
+    // The creator's Reader begins Chapter 1 as it opens.
+    await render(services, writeAddress(created.id));
+    await flush(10);
 
     const sheet = () => document.querySelector<HTMLFormElement>('[data-testid="access-token-sheet"]');
     expect(sheet(), 'Expected the access token sheet').toBeTruthy();
@@ -305,11 +335,11 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
   it('offers the restored reading fonts, keeps Sans as default, and saves the selected face', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
-    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository);
+    // A reader opens the published story from World Info.
     await render(services, `/app/?story=${created.id}`);
-    await click(chaptersAction(), 'Start Story', 10);
-    await act(async () => { story.release(); });
-    await flush(10);
+    await click(chaptersAction(), 'Continue', 10);
+    expect(address()).toBe(`/app/?story=${created.id}&read=1`);
     const article = () => document.querySelector<HTMLElement>('[data-chapter-number="1"]')!;
     expect(article().style.fontFamily).toContain('SEIHouse Sans');
     await click(document.querySelector('button[aria-label="Reader Settings"]'), 'Reader Settings');
@@ -337,11 +367,11 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     try {
       const story = scriptedWriter();
       const services = appServices(story.writer);
-      const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+      const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository);
+      // A reader opens the published story from World Info.
       await render(services, `/app/?story=${created.id}`);
-      await click(chaptersAction(), 'Start Story', 10);
-      await act(async () => { story.release(); });
-      await flush(10);
+      await click(chaptersAction(), 'Continue', 10);
+      expect(document.querySelector('[data-chapter-number="1"]')).toBeTruthy();
 
       await click(buttonByText('Listen'), 'Listen');
       expect(speech.spoken.map(utterance => [utterance.text, utterance.voice?.name])).toEqual([['Chapter 1. Low Tide', 'Daniel']]);
@@ -365,7 +395,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
   it('plays the theme songs on its menus, with no model, and never into the Reader', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
-    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository);
     const mixer = await render(services);
     const soundtrack = storySoundtrack(mixer);
     const themes = MENU_MUSIC_PIECES.map(piece => piece.id);
@@ -376,14 +406,12 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     // The same piece plays on through World Info.
     await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
     expect(soundtrack.piece()).toBe(first);
-    // The Reader never opens to it: the veil while Chapter 1 is written plays the Reader's own music.
-    await click(chaptersAction(), 'Start Story', 10);
-    expect(document.querySelector('[data-testid="generation-overlay"]')?.textContent).toContain('Chapter 1');
+    // The Reader never opens to it: Chapter 1, which chose no music, plays the Reader's own.
+    await click(chaptersAction(), 'Continue', 10);
+    expect(document.querySelector('[data-chapter-number="1"]')).toBeTruthy();
     expect(soundtrack.piece()).not.toBe(first);
     expect(piecesForMood(READER_MUSIC_MOOD, SEN_SOUNDSCAPES).map(piece => piece.id)).toContain(soundtrack.piece()?.id);
-    expect(story.generate).toHaveBeenCalledTimes(1);
-    story.release();
-    await flush(50);
+    expect(story.generate).not.toHaveBeenCalled();
   });
 
   it('floats the music note above Home\'s bar while Menu music is on; off, the menus are silent and the note goes', async () => {
@@ -439,7 +467,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
   it('holds Home and World Info with the app\'s places, and leaves the Reader full-screen', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
-    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository);
     await render(services);
 
     // Home: the Library header, the navigation and the footer around the reader's stories.
@@ -474,38 +502,43 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(footer()).toBeTruthy();
     expect(document.querySelectorAll('main')).toHaveLength(1);
 
-    // The Reader: immersive, outside the shell, and Start Story still writes Chapter 1.
-    await click(chaptersAction(), 'Start Story', 10);
+    // The Reader: immersive, outside the shell, opened at Chapter 1; a reader's Reader writes nothing.
+    await click(chaptersAction(), 'Continue', 10);
     expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    expect(document.querySelector('[data-chapter-number="1"]')).toBeTruthy();
     expect(shell()).toBeNull();
     expect(strip()).toBeNull();
     expect(footer()).toBeNull();
     // The Reader keeps its own note above its Listen bar.
     expect(floatingNote()).toBeNull();
-    expect(story.generate).toHaveBeenCalledTimes(1);
-    await act(async () => { story.release(); });
-    await flush(10);
+    expect(story.generate).not.toHaveBeenCalled();
 
     // Back in World Info, Home in the navigation goes Home.
     await click(buttonByText('Back'), 'Back', 10);
+    expect(address()).toBe(`/app/?story=${created.id}`);
     await click(buttonByText('Home', strip()!), 'Home in the navigation');
     expect(address()).toBe('/app/');
     expect(document.querySelector('[data-testid="novel-expanded-home"]')).toBeTruthy();
   });
 
-  it('the Creator Space lists the reader\'s worlds: Continue opens the Reader, the card opens the world for its author, Studio opens World Info, Energy opens the Cave', async () => {
+  it('the Creator Space lists the reader\'s worlds, drafts too: Continue opens the creator\'s Reader, the card opens the world for its author, Studio opens World Info, Energy opens the Cave', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
-    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    // Not yet published: Create still lists it, though Home does not.
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer, regularSeedRecord(), { draft: true });
     await render(services, '/app/?page=create');
     const hub = () => document.querySelector<HTMLElement>('[data-testid="novel-expanded-create-hub"]')!;
     expect(hub().textContent).toContain('1 world');
     expect(hub().querySelector(`button[aria-label^="Open ${created.title}"]`)).toBeTruthy();
     // The browser's Back returns to the Creator Space each time.
     const back = async () => { await act(async () => { window.history.back(); window.dispatchEvent(new PopStateEvent('popstate')); }); await flush(20); };
+    // Continue: the creator's Reader, Fate and Create together, which begins the world's Chapter 1.
     await click(buttonByText('Continue', hub()), 'Continue', 20);
-    expect(address()).toBe(`/app/?story=${created.id}&read=1`);
+    expect(address()).toBe(writeAddress(created.id));
+    expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    expect(story.generate).toHaveBeenCalledTimes(1);
     await back();
+    expect(address()).toBe('/app/?page=create');
     await click(buttonByText('Studio', hub()), 'Studio', 20);
     expect(address()).toBe(`/app/?story=${created.id}`);
     expect(worldInfo()).toBeTruthy();
@@ -518,11 +551,16 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     const world = document.querySelector<HTMLElement>('[data-testid="author-world"]')!;
     expect(world.querySelector('h1')!.textContent).toBe(created.title);
     expect([...world.querySelectorAll('[role="tab"]')].map(entry => entry.textContent)).toEqual(['Blueprint', 'Chapters', 'Codex', 'Assets']);
+    // Chapter 1 is still being written, so the world has no chapters yet.
     expect(world.querySelector('[data-testid="author-world-no-chapters"]')).toBeTruthy();
     await click(world.querySelector('button[aria-label="Back to Create"]'), 'Back to Create', 20);
     expect(address()).toBe('/app/?page=create');
     await click(hub().querySelector('button.creator-space-stat'), 'Energy', 20);
     expect(address()).toBe('/app/?page=profile&cave=%2Fhome%2Fenergy');
+    // Nothing above wrote Chapter 1 a second time.
+    expect(story.generate).toHaveBeenCalledTimes(1);
+    await act(async () => { story.release(); });
+    await flush(20);
   });
 
   it('Create in the navigation opens the Creator Space; its Create opens Story Seed in the shell\'s workspace mode, with the music note', async () => {
@@ -761,7 +799,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     expect(services.accessToken.current).toBe('visit-token');
   });
 
-  it('asks for the access token before a Blueprint, asks again when it is refused, and starts the story on Story View', async () => {
+  it('asks for the access token before a Blueprint, asks again when it is refused, and starts the story, unpublished, in its creator\'s Reader', async () => {
     const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
     const { blueprint, ...withoutBlueprint } = record;
     const seeds = createLocalStorySeedRepository({ storageKey: 'test-novelexpanded-seeds' });
@@ -794,12 +832,16 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     expect(requestWorldBlueprint.mock.calls.map(call => call[1])).toEqual(['wrong-token', 'right-token']);
     expect(sheet()).toBeNull();
 
-    // Create Story starts it with the official CAPA skills and shows its Story View.
+    // Create Story starts it with the official CAPA skills, unpublished, and opens its creator's Reader.
     await click(buttonByText('Create Story', container), 'Create Story', 50);
     const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
     expect(started.skillLoadout).toEqual(createOfficialCapaDefaultLoadout(record.seed.story.required.style));
-    expect(address()).toBe(`/app/?story=${started.id}`);
-    expect(worldInfo()!.querySelector('h1')!.textContent).toBe(started.title);
+    expect(started.visibility ?? 'private').toBe('private');
+    expect(address()).toBe(writeAddress(started.id));
+    expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    // The creator's Reader: Fate and Create together.
+    expect(document.querySelector('[data-testid="reader-actions-button"]')).toBeTruthy();
+    expect(document.querySelector('[data-testid="reader-fate-button"]')).toBeNull();
     // A Fate Survival story's Chapter 1 waits on the reader's direction, so nothing is written early.
     await flush(20);
     expect(writer.generate).not.toHaveBeenCalled();
@@ -808,9 +850,11 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await act(async () => { window.history.back(); });
     await flush(30);
     expect(address()).toBe('/app/');
+    // Home offers readers only published stories: the new one is not there yet.
+    expect(container.querySelector(`#home-world-${started.id}`)).toBeNull();
   });
 
-  it('a Regular story: Create Story begins Chapter 1 at once, and Start Story opens it without writing it twice', async () => {
+  it('a Regular story: Create Story begins Chapter 1 at once and opens it in the creator\'s Reader without writing it twice', async () => {
     const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
     record.seed.story.optional.fateSurvival = { ...record.seed.story.optional.fateSurvival, enabled: false };
     const { blueprint, ...withoutBlueprint } = record;
@@ -827,13 +871,15 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await manifestWorldBlueprint(300);
     await click(buttonByText('Create Story', container), 'Create Story', 50);
     const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
-    expect(address()).toBe(`/app/?story=${started.id}`);
-    // Chapter 1 is already being written while the reader looks over the World Card.
+    expect(address()).toBe(writeAddress(started.id));
+    // Chapter 1 is already being written as the creator's Reader opens.
     expect(writer.generate).toHaveBeenCalledTimes(1);
 
-    // Start Story finds it still being written: the veil, never a second write; it opens when saved.
-    await click(chaptersAction(), 'Start Story', 10);
+    // The Reader, which begins a story with no chapters, finds it still being written:
+    // the veil, never a second write; it opens when saved.
+    await flush(10);
     expect(document.querySelector('[data-testid="generation-overlay"]')?.textContent).toContain('Chapter 1');
+    expect(writer.generate).toHaveBeenCalledTimes(1);
     await act(async () => { writer.release(); });
     await flush(20);
     expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');
@@ -843,21 +889,195 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
   it('a chapter keeps writing when the reader leaves the Reader, and is there when they come back', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
-    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
-    await render(services);
-    await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
-    await click(chaptersAction(), 'Start Story', 10);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer, regularSeedRecord(), { draft: true });
+    await render(services, '/app/?page=create');
+    // Continue opens the creator's Reader, which begins Chapter 1.
+    await click(buttonByText('Continue', document.querySelector<HTMLElement>('[data-testid="novel-expanded-create-hub"]')!), 'Continue', 10);
+    expect(address()).toBe(writeAddress(created.id));
     expect(story.generate).toHaveBeenCalledTimes(1);
 
-    // Back out mid-write: the chapter is still being written.
+    // Back out mid-write, to the world in Create: the chapter is still being written.
     await click(buttonByText('Back'), 'Back', 10);
-    expect(address()).toBe(`/app/?story=${created.id}`);
+    expect(address()).toBe(`/app/?page=create&world=${created.id}`);
+    expect(document.querySelector('[data-testid="author-world-no-chapters"]')).toBeTruthy();
     await act(async () => { story.release(); });
     await flush(20);
-    // Come back: Chapter 1 is there, written once.
-    await click(chaptersAction(), 'Continue', 10);
+    expect(document.querySelector('[data-testid="author-world-chapter"][data-chapter-number="1"]')).toBeTruthy();
+    // Come back through the world's Read: Chapter 1 is there, written once.
+    await click(document.querySelector('[data-testid="author-world-read"]'), 'Read', 10);
+    expect(address()).toBe(writeAddress(created.id));
     expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');
     expect(story.generate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('NovelExpanded: publishing, and the creator\'s and the reader\'s Readers', { timeout: 30_000 }, () => {
+  const searchResults = async () => {
+    await click(shell()!.querySelector('header button[aria-label="Search for stories"]'), 'Search', 20);
+    return document.querySelector<HTMLElement>('[role="dialog"]')!;
+  };
+  const closeSearch = async () => {
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
+    await flush(30);
+  };
+
+  it('a draft with no chapter yet cannot be published: readers could not begin it', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer, regularSeedRecord(), { draft: true });
+    await render(services, `/app/?page=create&world=${created.id}`);
+    await click(document.querySelector('[data-testid="author-world-publish"]'), 'Publish', 20);
+    const sheet = document.querySelector<HTMLElement>('[data-testid="author-world-publish-sheet"]')!;
+    expect(sheet.textContent).toContain('Write Chapter 1 first');
+    expect(buttonByText('Publish', sheet)!.disabled).toBe(true);
+    expect(findStory((services.stories as InMemoryHarnessGenerationRepository).snapshot(), created.id)!.visibility ?? 'private').toBe('private');
+  });
+
+  it('Home and Search offer only published stories: a draft appears there once its creator publishes it from Create', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository, { draft: true });
+    await render(services);
+
+    // Home: the draft is not offered, so Home is still empty.
+    expect(container.querySelector(`#home-world-${created.id}`)).toBeNull();
+    expect(container.textContent).toContain('Your stories appear here');
+    // Search: its places, but not the draft.
+    let results = await searchResults();
+    expect(results.querySelector('button[aria-label="Your stories"]')).toBeTruthy();
+    expect(results.querySelector(`button[aria-label="${created.title}"]`)).toBeNull();
+    await closeSearch();
+
+    // Create lists it; its world view publishes it, asking once.
+    await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
+    const hub = document.querySelector<HTMLElement>('[data-testid="novel-expanded-create-hub"]')!;
+    await click(hub.querySelector(`button[aria-label^="Open ${created.title}"]`), 'the world card', 40);
+    expect(address()).toBe(`/app/?page=create&world=${created.id}`);
+    const publish = () => document.querySelector<HTMLElement>('[data-testid="author-world-publish"]')!;
+    expect(publish().getAttribute('data-published')).toBeNull();
+    expect(publish().textContent).toBe('Publish');
+    await click(publish(), 'Publish', 20);
+    const confirm = () => document.querySelector<HTMLElement>('[data-testid="author-world-publish-sheet"]');
+    expect(confirm(), 'Expected Publish to ask first').toBeTruthy();
+    expect(confirm()!.textContent).toContain('Publish this world?');
+    expect(confirm()!.textContent).toContain('Readers will find it on Home and in Search.');
+    // Nothing is published until the creator confirms.
+    expect(findStory((services.stories as InMemoryHarnessGenerationRepository).snapshot(), created.id)!.visibility ?? 'private').toBe('private');
+    expect(container.querySelector('[data-testid="author-world-standing"]')?.textContent).toContain('Draft');
+    await click(buttonByText('Publish', confirm()!), 'Publish in the confirmation', 20);
+    expect(confirm()).toBeNull();
+    expect(publish().getAttribute('data-published')).toBe('true');
+    expect(publish().textContent).toBe('Published');
+    expect(container.querySelector('[data-testid="author-world-standing"]')?.textContent).toContain('Published');
+    expect(findStory((services.stories as InMemoryHarnessGenerationRepository).snapshot(), created.id)!.visibility).toBe('public');
+
+    // Search, from here, now offers it; so does Home.
+    results = await searchResults();
+    expect(results.querySelector(`button[aria-label="${created.title}"]`)).toBeTruthy();
+    await closeSearch();
+    await click(buttonByText('Home', strip()!), 'Home in the navigation', 20);
+    expect(address()).toBe('/app/');
+    expect(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`)).toBeTruthy();
+    // Publishing changed who may read it, nothing else: no chapter was written.
+    expect(story.generate).not.toHaveBeenCalled();
+  });
+
+  it('a published story\'s Reader is Fate alone and never writes; the creator\'s Reader from Create keeps Fate and Create', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    // Published before its creator wrote a chapter: a reader's Start Story must not write one.
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    await render(services, `/app/?story=${created.id}`);
+    await click(chaptersAction(), 'Start Story', 20);
+    expect(address()).toBe(`/app/?story=${created.id}&read=1`);
+    expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    expect(document.querySelector('[data-testid="generation-overlay"]')).toBeNull();
+    expect(story.generate).not.toHaveBeenCalled();
+    // Its rightmost action is Fate alone: no Fate and Create, no Create.
+    const fate = document.querySelector<HTMLButtonElement>('[data-testid="reader-fate-button"]')!;
+    expect(fate).toBeTruthy();
+    expect(fate.getAttribute('aria-label')).toBe('Open Fate');
+    expect(document.querySelector('[data-testid="reader-actions-button"]')).toBeNull();
+    expect(document.querySelector('[aria-label="Fate and Create"]')).toBeNull();
+    expect(buttonByText('Create')).toBeUndefined();
+
+    // The creator's Reader of the same world, from Create's Continue: Fate and Create together.
+    await click(buttonByText('Back'), 'Back', 10);
+    await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
+    await click(buttonByText('Continue', document.querySelector<HTMLElement>('[data-testid="novel-expanded-create-hub"]')!), 'Continue', 20);
+    expect(address()).toBe(writeAddress(created.id));
+    expect(document.querySelector('[data-testid="reader-actions-button"]')?.getAttribute('aria-label')).toBe('Fate and Create');
+    expect(document.querySelector('[data-testid="reader-fate-button"]')).toBeNull();
+    // The creator's Reader is where the story's Chapter 1 is written.
+    expect(story.generate).toHaveBeenCalledTimes(1);
+    await act(async () => { story.release(); });
+    await flush(20);
+    expect(document.querySelector('[data-chapter-number="1"]')).toBeTruthy();
+    // Its creator may rewrite the newest chapter, and Fate and Create offers Create mode.
+    await click(buttonByText('Rewrite this chapter'), 'Rewrite this chapter', 10);
+    expect(document.querySelector('form[aria-label="Rewrite Chapter 1"]')).toBeTruthy();
+    await click(document.querySelector('[data-testid="reader-actions-button"]'), 'Fate and Create', 20);
+    expect(document.querySelector('[data-testid="reader-actions-picker"] [data-testid="reader-create-button"]')).toBeTruthy();
+
+    // A reader of the published story, from Home, reads that chapter with Fate alone: no Rewrite, no Create.
+    await click(buttonByText('Back'), 'Back', 20);
+    expect(address()).toBe(`/app/?page=create&world=${created.id}`);
+    await click(buttonByText('Home', strip()!), 'Home in the navigation', 20);
+    await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card', 20);
+    await click(chaptersAction(), 'Continue', 20);
+    expect(address()).toBe(`/app/?story=${created.id}&read=1`);
+    expect(document.querySelector('[data-chapter-number="1"]')).toBeTruthy();
+    expect(document.querySelector('[data-testid="reader-fate-button"]')?.getAttribute('aria-label')).toBe('Open Fate');
+    expect(document.querySelector('[data-testid="reader-actions-button"]')).toBeNull();
+    expect(document.querySelector('[data-testid="reader-create-button"]')).toBeNull();
+    expect(buttonByText('Rewrite this chapter')).toBeUndefined();
+    expect(document.querySelector('form[aria-label^="Rewrite Chapter"]')).toBeNull();
+    expect(story.generate).toHaveBeenCalledTimes(1);
+  });
+
+  it('a reader\'s link to a draft opens its creator\'s Reader in its place', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository, { draft: true });
+    await render(services, '/app/');
+    const entries = window.history.length;
+    await act(async () => {
+      window.history.pushState(null, '', `/app/?story=${created.id}&read=1`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    await flush(30);
+    // Replaced, not added to: the draft's reader address is gone from the history.
+    expect(address()).toBe(writeAddress(created.id));
+    expect(window.history.length).toBe(entries + 1);
+    expect(document.querySelector('[data-testid="reader-actions-button"]')?.getAttribute('aria-label')).toBe('Fate and Create');
+    expect(document.querySelector('[data-testid="reader-fate-button"]')).toBeNull();
+    expect(document.querySelector('[data-chapter-number="1"]')).toBeTruthy();
+    expect(story.generate).not.toHaveBeenCalled();
+    await act(async () => { window.history.back(); });
+    await flush(30);
+    expect(address()).toBe('/app/');
+  });
+
+  it('a chapter\'s Read it opens that chapter in the creator\'s Reader, whose Back returns to the chapter', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository, { chapters: 2, draft: true });
+    await render(services, `/app/?page=create&world=${created.id}`);
+    await click(document.querySelector('[data-testid="author-world"] button[aria-label="Open Chapter 2"]'), 'Open Chapter 2', 20);
+    expect(address()).toBe(`/app/?page=create&world=${created.id}&chapter=2`);
+    expect(document.querySelector('[data-testid="author-chapter"]')?.getAttribute('data-chapter-number')).toBe('2');
+
+    await click(document.querySelector('[data-testid="author-chapter-read"]'), 'Read it', 20);
+    expect(address()).toBe(writeAddress(created.id, 2));
+    expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    // It opens at that chapter, not where the reader left off.
+    expect(document.querySelector('article[data-chapter-number]')?.getAttribute('data-chapter-number')).toBe('2');
+    expect(document.querySelector('[data-testid="reader-actions-button"]')?.getAttribute('aria-label')).toBe('Fate and Create');
+
+    await click(buttonByText('Back'), 'Back', 20);
+    expect(address()).toBe(`/app/?page=create&world=${created.id}&chapter=2`);
+    expect(document.querySelector('[data-testid="author-chapter"]')?.getAttribute('data-chapter-number')).toBe('2');
+    expect(story.generate).not.toHaveBeenCalled();
   });
 });
 
@@ -1329,7 +1549,8 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
   it('A story\'s Blueprint still opens at its own address; its creator edits and saves it, and Back returns', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
-    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    // Unpublished: its creator may still edit its Blueprint.
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer, regularSeedRecord(), { draft: true });
     await render(services, `/app/?story=${created.id}&blueprint=1`);
     await flush(20);
     const page = document.querySelector<HTMLElement>('[data-story-blueprint]')!;
@@ -1448,7 +1669,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
   it('one Familiar for the app: summoned once, it stays from page to page, into the Reader, whose top bar holds its recall', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
-    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository);
     services.profile.save({ familiarInHeader: true });
     await render(services);
     // Kept in the header, it starts minimized, its recall in the header.
@@ -1463,14 +1684,12 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(buttonByText('Home', strip()!), 'Home in the navigation');
     // The Reader keeps the same Familiar; minimized, its recall sits in the Reader's top bar beside Reader Settings.
     await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
-    await click(chaptersAction(), 'Start Story', 10);
+    await click(chaptersAction(), 'Continue', 10);
     expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
     expect(companion()).toBe(summoned);
     await click(document.querySelector('[aria-label="Minimize Familiar"]'), 'Minimize Familiar');
     expect(companion()).toBeNull();
     const bar = document.querySelector<HTMLElement>('[data-testid="reader-top-bar"]')!;
     expect(bar.querySelector('[data-testid="reader-companion"] [aria-label="Show Quill actions"]')).toBeTruthy();
-    await act(async () => { story.release(); });
-    await flush(10);
   });
 });

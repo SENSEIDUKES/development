@@ -162,6 +162,7 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
   readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
+  creator = true, openAtChapter,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
@@ -226,6 +227,16 @@ export function HarnessReaderSession({
   /** The host's pictures for this story's Codex cards, with Manifest. Without them, cards show their aura. */
   /** The host's picture maker. The Reader writes a card's look first when it has none, so the host only pictures a written look. */
   codexPictures?: CodexPictureMaker;
+  /**
+   * Whether the person reading is in control of the novel. The creator's Reader
+   * keeps Fate and Create together in its rightmost action; anyone else's
+   * Reader has Fate alone: no Create mode and no Rewrite. The host decides who
+   * is the creator. Defaults to the creator, so a host that owns every story
+   * keeps both.
+   */
+  creator?: boolean;
+  /** Opens at this chapter instead of where the reader left off, when the story has it (a chapter opened from Create). */
+  openAtChapter?: number;
 }) {
   const story = state.stories.find(entry => entry.id === storyId);
   const chapters = useMemo(() => state.chapters
@@ -270,7 +281,8 @@ export function HarnessReaderSession({
       const initial = saved ?? createReaderStoryState(storyId);
       readerStateRef.current = initial;
       setReaderState(initial);
-      setSelectedChapter(resolveReaderOpeningChapter(initial, chaptersRef.current.map(chapter => chapter.chapterNumber)));
+      const numbers = chaptersRef.current.map(chapter => chapter.chapterNumber);
+      setSelectedChapter(openAtChapter && numbers.includes(openAtChapter) ? openAtChapter : resolveReaderOpeningChapter(initial, numbers));
     };
     if (!readerStateRepository) { open(undefined); return () => { active = false; }; }
     readerStateRepository.load(storyId).then(open, () => {
@@ -279,6 +291,8 @@ export function HarnessReaderSession({
       open(undefined);
     });
     return () => { active = false; };
+    // The opening chapter is read once, as the story opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storyId, readerStateRepository]);
 
   const keepReaderState = useCallback((next: ReaderStoryState) => {
@@ -507,10 +521,10 @@ export function HarnessReaderSession({
   const later = index >= 0 && index < chapters.length - 1 ? chapters[index + 1] : undefined;
   // Rewrite this chapter: only the newest chapter, and only while nothing is built on it yet. It
   // stays in place while its own rewrite is written, so a failed one keeps the reader's note.
-  const rewritable = Boolean(onRewriteChapter && chapter && !later && latestStoryChapter(state, storyId)?.id === chapter.id
+  const rewritable = Boolean(creator && onRewriteChapter && chapter && !later && latestStoryChapter(state, storyId)?.id === chapter.id
     && (writer.writing || !chapterRewriteGap(state, storyId)));
   // Only the newest chapter, before anything is built on it, can be changed: moving on seals it.
-  const authorable = Boolean(chapter && !later && latestStoryChapter(state, storyId)?.id === chapter.id && !writer.writing && !chapterRewriteGap(state, storyId));
+  const authorable = Boolean(creator && chapter && !later && latestStoryChapter(state, storyId)?.id === chapter.id && !writer.writing && !chapterRewriteGap(state, storyId));
   const authoring = creating && authorable && chapter;
   const rewriteChapter = async (note?: string) => {
     const rewritten = await writer.rewrite(note);
@@ -559,9 +573,9 @@ export function HarnessReaderSession({
       <ReaderBottomBar readAloud={readAloud} onListen={chapter ? listen : undefined} offscreen={follow.offscreen} direction={direction}
         onBackToNarration={follow.backToNarration} barRef={playerRef}
         note={mixer && <ReaderAudioNote mixer={mixer} />}
-        onOpenCodex={openCodex} fate={{ run: () => openFate(fateCalls), disabled: fateLocked, attention: fateCalls }}
+        onOpenCodex={openCodex} fateOnly={!creator} fate={{ run: () => openFate(fateCalls), disabled: fateLocked, attention: fateCalls }}
         chapterSelection={chapter ? { current: chapter.chapterNumber, entries: chapters.map(entry => ({ number: entry.chapterNumber, title: entry.title })), onSelect: openChapter } : undefined}
-        create={chapter ? {
+        create={creator && chapter ? {
           active: Boolean(authoring), onToggle: () => setCreating(!authoring),
           unavailable: authorable ? undefined : later ? 'Only the newest chapter can be changed' : 'This chapter is sealed: the story has moved on from it',
         } : undefined}

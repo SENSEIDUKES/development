@@ -19,7 +19,7 @@
  * kept on the device) → Holdings → Rewrite this chapter with a note (the new
  * version under the veil, the Holdings fixer's one quiet call settling its
  * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
- * Back → Continue → World Info's Settings card (closed until opened: language, Reading Mode, CAPA skills, media) →
+ * Back (to the book in Create, Made in SEN, a draft) → Publish (asked once) → Back to Create → Studio → World Info's Settings card (closed until opened: language, Reading Mode, CAPA skills, media) →
  * Manifest on the cover (one or three; three unseal, then the picker; the kept cover on World Info and on Home's card) → Export story (the whole story as one file) → Back
  * → Home card, its music note, the Reader's own (tap mutes; hold or ArrowUp opens the quick Master volume) → browser Back and Forward →
  * Create from the navigation (on laptops, a minimized sidebar stays minimized after a reload) → a missing story goes Home.
@@ -477,15 +477,14 @@ async function walk(browser, viewport, sample) {
   check(screenText.includes('Born as the son of a fallen patriarch'), "The creator's own Biography must stay.");
   check(!screenText.includes('A laborer in the outer quarry'), "The model's Biography must not replace the creator's.");
   await shot('3-blueprint');
+  // Create Story keeps the new book in Create: its creator's Reader opens and writes Chapter 1 under the veil.
   await visibleButton(/^Create Story/).click();
-  await page.getByTestId('harness-world-info').waitFor();
-  const storyAddress = address();
-  check(/^\/app\/\?story=[^&]+$/.test(storyAddress), `Create Story should open Story View, got ${storyAddress}`);
-  check(await page.locator('[data-testid="novel-expanded-shell"] [data-testid="harness-world-info"]').count() === 1, 'World Info should sit in the Library Shell.');
-  await shot('4-story-view');
-  await page.locator('[data-world-info-chapters="action"]').click();
   await page.locator('[data-testid="generation-overlay"][data-familiar-id="quill"] [aria-label="Quill, Waving"]').waitFor();
-  check(address() === `${storyAddress}&read=1`, `Start Story should open the Reader, got ${address()}`);
+  const writeAddress = address();
+  check(/^\/app\/\?page=create&world=[^&]+&read=1$/.test(writeAddress), `Create Story should open the creator's Reader in Create, got ${writeAddress}`);
+  const storyId = new URLSearchParams(writeAddress.split('?')[1]).get('world');
+  const worldAddress = `/app/?page=create&world=${storyId}`;
+  const storyAddress = `/app/?story=${storyId}`;
   check(await page.getByTestId('novel-expanded-shell').count() === 0, 'The Reader must stay outside the Library Shell.');
   const veil = page.getByTestId('generation-overlay');
   const familiarStyle = await veil.evaluate(element => {
@@ -918,13 +917,32 @@ async function walk(browser, viewport, sample) {
   check(await page.locator('input[name="read-aloud-rate"][value="1.25"]').isChecked(), 'The saved speed should come back after a reload.');
   await page.keyboard.press('Escape');
 
-  // 5. Back to Story View (Continue), then Home with the story's card.
+  // 5. Back to the book in Create; Publish it (asked once); then its Story View (Studio), and Home with the story's card.
   const beforeLeaving = audioAsked.length;
   await visibleButton(/^Back$/).click();
-  await page.getByTestId('harness-world-info').waitFor();
+  await page.getByTestId('author-world').waitFor();
   // Leaving the Reader brings the app's theme songs back.
   await musicOf('menu', beforeLeaving);
-  check(address() === storyAddress, `Back from the Reader should open Story View, got ${address()}`);
+  check(address() === worldAddress, `Back from the creator's Reader should return to the book in Create, got ${address()}`);
+  check((await page.getByTestId('author-world-origin').textContent()) === 'Made in SEN', 'The book should be marked Made in SEN.');
+  // A draft is offered to no reader until its creator publishes it.
+  check((await page.getByTestId('author-world-standing').textContent()).includes('Draft'), 'A new book should be a draft.');
+  await page.getByTestId('author-world-publish').evaluate(button => button.click());
+  const publishSheet = page.getByTestId('author-world-publish-sheet');
+  await publishSheet.waitFor();
+  await page.waitForTimeout(300);
+  await shot('4-publish');
+  await publishSheet.getByRole('button', { name: 'Publish', exact: true }).click();
+  await publishSheet.waitFor({ state: 'detached' });
+  check((await page.getByTestId('author-world-standing').textContent()).includes('Published'), 'Publish should publish the book.');
+  check(!(await page.evaluate(slidesSideways)), 'The world view must never scroll sideways.');
+  // The world view's Back returns to the Creator Space, whose Studio opens the book's Story View.
+  await page.getByRole('button', { name: 'Back to Create' }).click();
+  await page.getByTestId('novel-expanded-create-hub').waitFor();
+  await visibleButton(/^Studio$/).click();
+  await page.getByTestId('harness-world-info').waitFor();
+  check(address() === storyAddress, `Studio should open Story View, got ${address()}`);
+  check(await page.locator('[data-testid="novel-expanded-shell"] [data-testid="harness-world-info"]').count() === 1, 'World Info should sit in the Library Shell.');
   check((await page.locator('[data-world-info-chapters="action"]').textContent()).trim() === 'Continue', 'Story View should say Continue.');
   check((await page.locator('[data-world-info-chapters="action"]').getAttribute('aria-label')).startsWith('Continue at Chapter 1'), 'Story View should continue at Chapter 1.');
   // World Info's four cards, then Settings: closed until opened, it holds the story's language, Reading Mode, CAPA skills and media.

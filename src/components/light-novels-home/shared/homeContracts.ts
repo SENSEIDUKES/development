@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/ui';
-/** Host-computed and viewer-authorized; omit hidden, stale, or unavailable activity. */
+/**
+ * How busy a world is with its people: readers reading, branching and continuing it in a recent
+ * window. It is not the original creator's publishing pace; on SEN a world carries on wherever its
+ * creator stopped. The host counts distinct people (not repeat actions) and keeps small counts from
+ * revealing individuals. Host-computed and viewer-authorized; omit hidden, stale, or unavailable activity.
+ */
 export type WorldActivityStatus = 'active-now' | 'active-this-week' | 'quiet';
 /** Display data only; account acquisition and story opening remain host actions. */
 export interface HomeWorld {

@@ -35,8 +35,9 @@ export function WorldCardCompactTile({ world, detail, onOpen, senSash = false }:
   const creatorTitle = world.creatorTitle;
   const title = useWorldTitle(world);
   const language = useLanguagePeek(title);
-  // A living world shows a still dot in the cover's top-left corner; a quiet one shows nothing, so a
-  // grid never marks a creator's world as dead.
+  // A world busy with its people (reading, branching, continuing it) shows a still dot in the
+  // cover's top-left corner. A quiet one shows nothing: quiet is an opening to take the world on,
+  // never a mark against it.
   const activity = world.activityStatus && world.activityStatus !== 'quiet' ? WORLD_ACTIVITY_DISPLAY[world.activityStatus] : undefined;
   return <div className="world-card-compact-tile" data-world-card="compact-tile">
     <span className="world-card-compact-tile-cover">

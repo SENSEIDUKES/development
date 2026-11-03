@@ -404,7 +404,7 @@ async function walk(browser, viewport, sample) {
   await page.evaluate(record => localStorage.setItem('novelexpanded-story-seeds-v1', JSON.stringify([record])), sample.record);
   await visibleButton('Carve New Destiny').click();
   await page.getByTestId('novel-expanded-create').waitFor();
-  await noteInPlace('Story Seed', '[data-seed-creator-footer]');
+  await noteInPlace('Story Seed');
   // The app's theme songs start with the first tap, with no model.
   await musicOf('menu');
   check(pieces().every(path => piecesOf('menu').has(path)), `The app's menu music should use its theme songs, got ${JSON.stringify(pieces())}.`);

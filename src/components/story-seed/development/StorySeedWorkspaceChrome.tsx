@@ -90,8 +90,8 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
   const desktop = useDesktopNavigation();
   const settingsReturnFocusRef = useRef<HTMLElement | null>(null);
   const rememberFocus = useCallback(() => {
-    settingsReturnFocusRef.current = (!desktop && document.querySelector<HTMLElement>('.library-workspace-navigation button')) || document.activeElement as HTMLElement;
-  }, [desktop]);
+    settingsReturnFocusRef.current = (!desktop && props.mobileUtilities && document.querySelector<HTMLElement>('.library-workspace-navigation button')) || document.activeElement as HTMLElement;
+  }, [desktop, props.mobileUtilities]);
   const openSettings = useCallback(() => {
     rememberFocus();
     setPreviewOpen(false);

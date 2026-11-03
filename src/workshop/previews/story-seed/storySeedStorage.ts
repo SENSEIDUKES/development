@@ -1,5 +1,5 @@
 import type { SenLanguageCode } from '@seihouse/sen/contracts';
-import type { StorySeedInput, StorySeedArtifact, StorySeedRecord, StorySeedRepository, WorldBlueprint } from '@seihouse/sen/story-seed';
+import type { StorySeedInput, StorySeedArtifact, StorySeedEditorProgress, StorySeedRecord, StorySeedRepository, WorldBlueprint } from '@seihouse/sen/story-seed';
 import { resetWorkshopStorySeedStorage, workshopStorySeedStorage } from '../../../components/story-seed/shared/workshopStorySeedStorage';
 export const LOCAL_WORKSHOP_STORY_SEED_OWNER_ID = 'local-workshop-creator';
 let repository: StorySeedRepository = workshopStorySeedStorage;
@@ -18,7 +18,8 @@ export const createStorySeed = (
   input: StorySeedInput,
   blueprint: WorldBlueprint | undefined,
   originalLanguage: SenLanguageCode,
-): Promise<StorySeedRecord> => repository.create(userId, input, blueprint, originalLanguage);
+  editorProgress?: StorySeedEditorProgress,
+): Promise<StorySeedRecord> => repository.create(userId, input, blueprint, originalLanguage, editorProgress);
 
 export const updateStorySeed = (
   userId: string,
@@ -26,7 +27,8 @@ export const updateStorySeed = (
   input: StorySeedInput,
   blueprint: WorldBlueprint | undefined,
   originalLanguage: SenLanguageCode,
-): Promise<StorySeedRecord> => repository.update(userId, existing, input, blueprint, originalLanguage);
+  editorProgress?: StorySeedEditorProgress,
+): Promise<StorySeedRecord> => repository.update(userId, existing, input, blueprint, originalLanguage, editorProgress);
 
 export const listStorySeeds = (userId: string): Promise<StorySeedRecord[]> => repository.list(userId);
 

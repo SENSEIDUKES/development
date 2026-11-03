@@ -1,18 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
+import { STORY_SEED_EDITOR_TAB_KEYS, createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
 import { SEED_SECTIONS } from '../seedSections';
 import { patchStoryRequired } from '../seedState';
-import { CREATOR_PAGE_ORDER, nextPage, previousPage, stepOfPage, stepStatus } from './creatorSteps';
+import { creatorPositions, tabKey, CREATOR_PAGE_ORDER, nextPage, previousPage, partComplete, pageComplete, stepOfPage, stepStatus, tabsToConfirm } from './creatorSteps';
 
 describe('Story Seed creator steps', () => {
-  it('walks every section in the section list, then Manifest', () => {
-    expect(CREATOR_PAGE_ORDER).toEqual([...SEED_SECTIONS.map(section => section.id), 'manifest']);
-    expect(nextPage('origin')).toBe('arc');
-    expect(nextPage('arc')).toBe('world-identity');
-    expect(nextPage('power-system')).toBe('manifest');
+  it('uses the persistence contract tab keys', () => {
+    expect(creatorPositions(true).filter(position => position.page !== 'manifest').map(tabKey).sort()).toEqual([...STORY_SEED_EDITOR_TAB_KEYS].sort());
+  });
+  it('walks Origin, every World section, Arc, then Create', () => {
+    expect(CREATOR_PAGE_ORDER).toEqual(['origin', ...SEED_SECTIONS.filter(section => section.family === 'world').map(section => section.id), 'arc', 'manifest']);
+    expect(nextPage('origin')).toBe('world-identity');
+    expect(nextPage('arc')).toBe('manifest');
+    expect(nextPage('power-system')).toBe('arc');
     expect(nextPage('manifest')).toBeNull();
     expect(previousPage('origin')).toBeNull();
-    expect(previousPage('manifest')).toBe('power-system');
+    expect(previousPage('manifest')).toBe('arc');
   });
 
   it('groups the eight World kinds under the World step', () => {
@@ -30,7 +33,43 @@ describe('Story Seed creator steps', () => {
     expect(stepStatus('world', empty)).toBe('empty');
 
     const ready = patchStoryRequired({ style: 'chinese', genre: 'Xianxia', premise: 'A courier crosses the sea.' })(empty);
-    expect(stepStatus('origin', ready)).toBe('filled');
+    expect(stepStatus('origin', ready)).toBe('empty');
+    expect(stepStatus('origin', ready, ['origin.fun', 'origin.fate', 'origin.tags'])).toBe('filled');
     expect(stepStatus('manifest', ready)).toBe('filled');
+  });
+
+  it('never treats untouched defaults as reviewed or lets confirmations replace required answers', () => {
+    const seed = createEmptyStorySeedInput();
+    expect(partComplete('origin', 'fun', seed)).toBe(false);
+    expect(partComplete('origin', 'fate', seed)).toBe(false);
+    expect(partComplete('origin', 'fun', seed, ['origin.fun'])).toBe(true);
+    expect(partComplete('origin', 'style', seed, ['origin.style'])).toBe(false);
+    expect(partComplete('origin', 'synopsis', seed, ['origin.synopsis'])).toBe(false);
+    seed.story.required.style = 'chinese';
+    expect(partComplete('origin', 'style', seed)).toBe(false);
+    seed.story.required.genre = 'Fantasy';
+    expect(partComplete('origin', 'style', seed)).toBe(true);
+    seed.story.required.style = 'Unsupported style' as typeof seed.story.required.style;
+    expect(partComplete('origin', 'style', seed)).toBe(false);
+    seed.story.required.genre = '';
+    expect(partComplete('origin', 'style', seed)).toBe(false);
+  });
+
+  it('completes parents only when every child has content or confirmation', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.world.optional.worldIdentity.worldType = 'An island';
+    expect(pageComplete('world-identity', seed)).toBe(true);
+    expect(stepStatus('world', seed)).toBe('empty');
+    const world = SEED_SECTIONS.filter(section => section.family === 'world').map(section => section.id);
+    expect(stepStatus('world', seed, world)).toBe('filled');
+    expect(stepStatus('arc', seed, ['arc.ending'])).toBe('empty');
+    expect(stepStatus('arc', seed, ['arc.ending', 'arc.pins'])).toBe('filled');
+  });
+
+  it('confirms only the displayed phone part or the displayed whole desktop page', () => {
+    expect(tabsToConfirm({ page: 'origin', part: 'fun' }, true)).toEqual(['origin.fun']);
+    expect(tabsToConfirm({ page: 'arc' }, false)).toEqual(['arc.ending', 'arc.pins']);
+    expect(tabsToConfirm({ page: 'characters' }, true)).toEqual(['characters']);
+    expect(tabsToConfirm({ page: 'manifest' }, true)).toEqual([]);
   });
 });

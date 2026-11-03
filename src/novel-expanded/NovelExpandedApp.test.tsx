@@ -138,6 +138,12 @@ const manifestWorldBlueprint = async (wait = 0) => {
   await click([...container.querySelectorAll<HTMLButtonElement>('[data-seed-creator-footer] button')].find(button => button.getAttribute('aria-label') === 'Create World Blueprint' && !button.disabled), 'Create World Blueprint', wait);
 };
 const buttonByText = (text: string, scope: ParentNode = document) => [...scope.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === text);
+const chooseSeedUtility = async (name: string) => {
+  await click(document.querySelector('.library-workspace-navigation button'), 'More on Story Seed', 20);
+  const menu = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Story Seed sections"]')!;
+  expect(menu).toBeTruthy();
+  await click(buttonByText(name, menu), `${name} in More`, 50);
+};
 const worldInfo = () => document.querySelector<HTMLElement>('[data-testid="harness-world-info"]');
 const chaptersAction = () => worldInfo()?.querySelector<HTMLElement>('[data-world-info-chapters="action"]');
 const address = () => `${window.location.pathname}${window.location.search}`;
@@ -533,11 +539,14 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     // Story Seed's own task bar stands where the global strip was; the note floats above it.
     expect(strip()).toBeNull();
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
-    expect([...bar.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Blueprint', 'Settings', 'Back']);
+    expect(bar.querySelectorAll('button')).toHaveLength(5);
+    expect(bar.querySelector('.seed-creator-footer-back')).toBeNull();
+    expect(bar.querySelector('.seed-creator-footer-create')).toBeNull();
+    expect(bar.querySelector('.library-workspace-navigation button')).not.toBeNull();
     expect(floatingNote()).toBeTruthy();
     expect(headerNote()).toBeNull();
-    // Back from Story Seed returns to the Creator Space.
-    await click(buttonByText('Back', bar), 'Back on the task bar', 20);
+    // More's Home leaves the creator; Back now walks to the previous seed tab.
+    await chooseSeedUtility('Home');
     expect(address()).toBe('/app/?page=create');
     expect(document.querySelector('[data-testid="novel-expanded-create-hub"]')).toBeTruthy();
   });
@@ -657,7 +666,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     await click(buttonByText('Create', document.querySelector<HTMLElement>('[data-testid="novel-expanded-create-hub"]')!), 'Create on the Creator Space', 20);
     assertHeaderOrder();
     expect(document.querySelector('[data-story-seed-page-heading] [data-page-title]')?.textContent).toBe('Story Seed');
-    await click(buttonByText('Back', document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!), 'Back on Story Seed', 20);
+    await chooseSeedUtility('Home');
     expect(document.querySelector('[data-testid="novel-expanded-create-hub"]')).toBeTruthy();
 
     // Discover: Discover heading sits at the top of the page below the header.
@@ -859,8 +868,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     await render(services, '/app/?page=create&seed=new');
 
     // Story Seed's Settings: the language and Reading Mode, then the skills and media the story starts with.
-    const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
-    await click(buttonByText('Settings', bar), 'Settings on the task bar', 50);
+    await chooseSeedUtility('Settings');
     const settings = document.querySelector<HTMLElement>('[data-testid="create-story-settings"]');
     expect(settings, 'Expected Story Settings in Create').toBeTruthy();
     const pacing = settings!.querySelector<HTMLSelectElement>('#harness-skill-pacing')!;
@@ -896,8 +904,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
   it('Create\'s Settings installs a skill package into a slot and keeps it on the device for the new story', async () => {
     const services = appServices(scriptedWriter().writer);
     await render(services, '/app/?page=create&seed=new');
-    const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
-    await click(buttonByText('Settings', bar), 'Settings on the task bar', 50);
+    await chooseSeedUtility('Settings');
     const settings = document.querySelector<HTMLElement>('[data-testid="create-story-settings"]')!;
     // The Library's own media counts as equipped.
     expect(settings.querySelector('[data-testid="media-loadout-count"]')?.textContent).toBe('3/3 equipped');

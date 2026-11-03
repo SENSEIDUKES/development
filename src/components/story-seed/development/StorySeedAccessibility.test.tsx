@@ -20,7 +20,7 @@ import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 import { StorySeedHelpMenu } from '@seihouse/library/story-seed';
 import { StorySeedSettings } from '@seihouse/library/story-seed';
 import { useStoryBankRecords } from './useStoryBankRecords';
-import { ArcWorkspace } from './workspaces/ArcWorkspace';
+import { FunSettingsPanel } from './workspaces/FunSettingsPanel';
 import { FactionsWorkspace } from './workspaces/FactionsWorkspace';
 import { OriginWorkspace } from './workspaces/OriginWorkspace';
 import { OriginGenrePicker } from '@seihouse/sen/story-seed';
@@ -416,14 +416,14 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(document.activeElement).toBe(radios[radios.length - 1]);
     expect(onGenreChange).toHaveBeenLastCalledWith('Mystery Cultivation');
 
-    const arcUpdate = vi.fn();
-    act(() => root.render(<LibraryPresentationProvider>{<ArcWorkspace seed={createEmptyStorySeedInput()} updateSeed={arcUpdate} />}</LibraryPresentationProvider>));
-    radios = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="radiogroup"]')[0].querySelectorAll('[role="radio"]'));
-    expect(radios.map(radio => radio.tabIndex)).toEqual([-1, 0, -1]);
-    radios[1].focus();
-    act(() => radios[1].dispatchEvent(keyboardEvent('ArrowDown')));
-    expect(document.activeElement).toBe(radios[2]);
-    expect(arcUpdate).toHaveBeenCalledTimes(1);
+    const funUpdate = vi.fn();
+    act(() => root.render(<LibraryPresentationProvider>{<FunSettingsPanel seed={createEmptyStorySeedInput()} updateSeed={funUpdate} />}</LibraryPresentationProvider>));
+    const stepper = container.querySelector<HTMLElement>('[role="group"][aria-label="Face Slap level"]')!;
+    const increase = stepper.querySelector<HTMLButtonElement>('[aria-label="Increase Face Slap"]')!;
+    increase.focus();
+    act(() => increase.dispatchEvent(keyboardEvent('ArrowDown')));
+    expect(document.activeElement).toBe(increase);
+    expect(funUpdate).toHaveBeenCalledTimes(1);
 
     const settingsSeed = createEmptyStorySeedInput();
     settingsSeed.story.optional.fateSurvival.enabled = true;

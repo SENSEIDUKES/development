@@ -14,7 +14,7 @@ import { motion } from 'motion/react';
 import { type StorySpark, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { generateUUID } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore, type StoryCreationSnapshot } from '../../../library/story-seed/runtime';
-import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
+import { normalizeStorySeedEditorProgress, type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
 import { applyInferredStoryTags, buildBlueprintGenerationPayload, describeBlueprintArcPlanProblem, describeStoryLengthProblem, fillBlankSeedSlots, type GeneratedWorldBlueprint, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeChapterWritingStyle, normalizeSenLanguageCode, type ChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
@@ -40,15 +40,14 @@ import { PlacesWorkspace, SpeciesWorkspace, ThingsWorkspace } from './workspaces
 import { CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { CreatorStepStrip } from './creator/CreatorStepStrip';
 import { CreatorStepFooter } from './creator/CreatorStepFooter';
-import { StorySeedLiveCard } from './creator/StorySeedLiveCard';
 import { ManifestStep } from './creator/ManifestStep';
-import { partsOf, type CreatorPageId, type CreatorPosition } from './creator/creatorSteps';
-import { SeedPartContext } from './creator/SeedPart';
+import { partsOf, tabsToConfirm, type CreatorPageId, type CreatorPosition } from './creator/creatorSteps';
+import { SeedPartContext, SeedConfirmationContext } from './creator/SeedPart';
+import { PinnedFooter } from './creator/PinnedFooter';
 import './creator/creator.css';
 import { DeferredStorySeedView } from './DeferredStorySeedView';
 import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
-import { usePhone } from '../../library-shell/development/workspaceMedia';
-import { SeedSaveButton } from './creator/SeedSaveButton';
+import { useDesktopNavigation, usePhone } from '../../library-shell/development/workspaceMedia';
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import { useStoryBankRecords } from './useStoryBankRecords';
 import { downloadStorySeed, downloadStorySeedCollection } from '@seihouse/sen/story-seed';
@@ -231,6 +230,16 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   // Bank tab (mobile) and the header's Story Bank button (desktop).
   const [showStoryBank, setShowStoryBank] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
+  const [confirmedTabs, setConfirmedTabsState] = useState<string[]>([]);
+  const confirmedTabsRef = useRef<string[]>([]);
+  const setConfirmedTabs = useCallback((tabs: string[]) => {
+    confirmedTabsRef.current = tabs;
+    setConfirmedTabsState(tabs);
+  }, []);
+  const confirmTabs = useCallback((tabs: readonly string[]) => {
+    setConfirmedTabs([...new Set([...confirmedTabsRef.current, ...tabs])]);
+  }, [setConfirmedTabs]);
+  const confirmTab = useCallback((tab: string) => confirmTabs([tab]), [confirmTabs]);
   const savedFeedbackTimer = useRef<number | null>(null);
   // The `?` Help menu — one clean home for section guidance, opened from the
   // bottom navigation on mobile and the header Help button on desktop.
@@ -256,6 +265,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     if (ownerChanged) {
       setActiveSeed(null);
       setSeed(createEmptyStorySeedInput());
+      setConfirmedTabs([]);
       setBlueprint(null);
       setSeedError(null);
       // The new account's own defaults decide this workspace's language and
@@ -266,7 +276,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     if (!seedOwnerId) {
       setActiveSeed(null);
     }
-  }, [seedOwnerId, setActiveSeed]);
+  }, [seedOwnerId, setActiveSeed, setConfirmedTabs]);
 
   /**
    * A genuinely new seed follows the active account's Default Reading Language.
@@ -358,8 +368,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const activeRecord = currentSeedRef.current;
     const requestId = ++persistRequestIdRef.current;
     const saved = activeRecord && activeRecord.userId === ownerAtStart
-      ? await runtime.repository.update(ownerAtStart, activeRecord, payload, blueprintArtifact, language)
-      : await runtime.repository.create(seedOwnerId, payload, blueprintArtifact, language);
+      ? await runtime.repository.update(ownerAtStart, activeRecord, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsRef.current })
+      : await runtime.repository.create(seedOwnerId, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsRef.current });
     const currentRecord = currentSeedRef.current;
     const stillActive = requestId === persistRequestIdRef.current
       && seedOwnerIdRef.current === ownerAtStart
@@ -437,6 +447,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       : undefined;
     const selected = reconciled?.seed ?? normalizeStorySeedInput(selectedArtifact.seed);
     setSeed(selected);
+    setConfirmedTabs([]);
     // An imported seed keeps its own Reading Mode (Standard when it has none).
     resolveReadingMode();
     // An imported artifact keeps the Original Language its file recorded; the
@@ -458,6 +469,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const selected = reconciled?.seed ?? normalizeStorySeedInput(record.seed);
     setActiveSeed(record);
     setSeed(selected);
+    setConfirmedTabs(normalizeStorySeedEditorProgress(record.editorProgress).confirmedTabs);
     // Each seed restores its own Original Language and Reading Mode; the
     // previously opened seed's choices must never carry over into this one.
     resolveOriginalLanguage(record.originalLanguage);
@@ -776,9 +788,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   }, [initialSeedId, seedOwnerId, runtime.repository, openInitialSeed]);
   const requestSaveDraft = useLatestCallback(handleSaveDraft);
   // A phone gives the page heading and its action row back to the questions:
-  // the shell header already names Story Seed, and Save Draft sits beside the
-  // story card instead.
+  // the shell header already names Story Seed, and Sections holds Save Draft and
+  // the story preview.
   const phone = usePhone();
+  const desktop = useDesktopNavigation();
   const moveTo = useCallback((position: CreatorPosition) => {
     selectWorkspaceSection(position.page);
     setActivePart(position.part);
@@ -811,7 +824,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     // The shared workspace shell owns the header row, the desktop section rail
     // and the scrolling main region; Story Seed's creator and its World
     // Blueprint both sit inside it, so the page never loses its frame.
-    <StorySeedWorkspaceChrome
+    <SeedConfirmationContext.Provider value={confirmTab}><StorySeedWorkspaceChrome
+        mobileUtilities
         onNavigateHome={onNavigateHome}
         seed={seed} updateSeed={updateSeed} activeSection={showingBlueprint || showStoryBank || activeSection === 'manifest' ? null : activeSection}
         authorName={authorName}
@@ -875,27 +889,24 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
           />
         </DeferredStorySeedView>
         {errorBanner}
+        <div className="seed-bank-return"><PinnedFooter data-seed-bank-footer>
+          <button type="button" className="seed-creator-footer-back" onClick={() => setShowStoryBank(false)}>Back to seed</button>
+        </PinnedFooter></div>
         </div>
       )}
 
-      {/* The character creator: steps across the top, the live story card
-          beside (or above) the open step, and Back / Next pinned at the
-          bottom. The Story Bank view replaces it while the bank is open. */}
+      {/* The form follows its step navigation directly. Story Preview opens
+          from the existing navigation instead of pushing the fields down. */}
       {!showStoryBank && (<>
-        <CreatorStepStrip seed={seed} page={activeSection} onSelect={selectPage}
+        <CreatorStepStrip seed={seed} page={activeSection} onSelect={selectPage} confirmedTabs={confirmedTabs}
           parts={phoneParts} part={shownPart} onSelectPart={part => moveTo({ page: activeSection, part })} />
         <div className="seed-creator-body">
-          {(activeSection !== 'manifest' || phone) && (
-            <div className="seed-creator-card-slot">
-              {activeSection !== 'manifest' && <StorySeedLiveCard seed={seed} />}
-              {phone && <SeedSaveButton saved={savedFeedback} disabled={isGenerating} onSave={requestSaveDraft} />}
-            </div>
-          )}
           <div className="seed-creator-content relative">
             {/* Restrained celestial ambience the glass fields float over —
                 gradients only, no blur, so mobile scrolling stays cheap. */}
             <div aria-hidden="true" className="seed-workspace-ambience" />
             {errorBanner}
+            {activeSection === 'manifest' && !desktop && manifestAside && <div className="seed-manifest-price">{manifestAside}</div>}
             <motion.div
               key={activeSection}
               className="relative"
@@ -916,10 +927,11 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
           position={{ page: activeSection, part: shownPart }}
           withParts={phone}
           onMove={moveTo}
+          onConfirm={() => confirmTabs(tabsToConfirm({ page: activeSection, part: shownPart }, phone))}
           progress={<span aria-label={`${requiredComplete} of ${REQUIRED_STORY_SECTIONS.length} required Story inputs complete`}>
             {requiredComplete}/{REQUIRED_STORY_SECTIONS.length}<span className="seed-creator-footer-progress-word"> required</span>
           </span>}
-          manifestAside={manifestAside}
+          manifestAside={desktop ? manifestAside : undefined}
           manifest={<>
             <ManifestButton
               size="md"
@@ -964,6 +976,6 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
           />
         </DeferredStorySeedView>
       )}
-    </StorySeedWorkspaceChrome>
+    </StorySeedWorkspaceChrome></SeedConfirmationContext.Provider>
   );
 }

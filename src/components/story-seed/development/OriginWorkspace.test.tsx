@@ -31,7 +31,7 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove(); resetWorkshopStorySeedStorage(); });
 
 describe('Origin hierarchy and canonical Fate controls', () => {
-  it('renders Style, Genre, Title, Synopsis, Pressure, Survival, Tags in one reading and keyboard order', () => {
+  it('brings Fun Settings immediately after Style and Genre in the reading and keyboard order', () => {
     render(createEmptyStorySeedInput());
     const selectors = ['#origin-style-title', '#origin-genre-title', 'label[for="origin-story-title-input"]', 'label[for="core-premise-input"]', '[role="radiogroup"][aria-label="Pressure"]', '[role="switch"][aria-label="Survival"]', '#origin-tags-title'];
     const nodes = selectors.map(selector => container.querySelector(selector)!);
@@ -42,6 +42,12 @@ describe('Origin hierarchy and canonical Fate controls', () => {
     expect(nodes[6].textContent).toBe('Tags');
     expect(container.textContent).not.toMatch(/Story Title|Core Premise|Survival Pressure/);
     expect(container.querySelectorAll('[role="switch"][aria-label="Survival"]')).toHaveLength(1);
+    const fun = container.querySelector('#origin-fun-settings-title')!;
+    expect(nodes[1].compareDocumentPosition(fun) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(fun.compareDocumentPosition(nodes[2]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.textContent).toContain('Classic webnovel rhythm.');
+    expect(container.textContent).not.toContain('Rare and meaningful.');
+    expect(container.querySelectorAll('[aria-label="Face Slap level"]')).toHaveLength(1);
     act(() => root.render(<StorySeedSettings seed={current} updateSeed={vi.fn()} />));
     expect(container.querySelector('[aria-label="Survival"], [aria-label="Pressure"]')).toBeNull();
   });
@@ -75,6 +81,23 @@ describe('Origin hierarchy and canonical Fate controls', () => {
     click('[role="switch"][aria-label="Survival"]');
     expect(current.story.optional.fateSurvival.enabled).toBe(true);
     expect(current.story.optional.fateSurvival.pressure).toBe('heaven');
+  });
+
+  it('edits Fun Settings with stepper and keyboard controls and restores their defaults alone', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.story.optional.fateSurvival.enabled = true;
+    render(seed);
+    click('#origin-face-slap-decrease');
+    expect(current.story.optional.funSettings.faceSlap).toBe('low');
+    expect(container.querySelector('#origin-face-slap-value')?.textContent).toBe('Low');
+    const stepper = container.querySelector('[aria-label="Face Slap level"]')!;
+    act(() => stepper.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true })));
+    expect(current.story.optional.funSettings.faceSlap).toBe('high');
+    expect(container.querySelector<HTMLButtonElement>('#origin-face-slap-increase')?.disabled).toBe(true);
+    const restore = Array.from(container.querySelectorAll<HTMLButtonElement>('button')).find(button => button.textContent === 'Restore defaults')!;
+    act(() => restore.click());
+    expect(current.story.optional.funSettings).toEqual({ faceSlap: 'medium', plotArmor: 'medium', recognition: 'medium' });
+    expect(current.story.optional.fateSurvival.enabled).toBe(true);
   });
 
   it('shows side characters and factions without the retired Fate Survival mystery panel', () => {

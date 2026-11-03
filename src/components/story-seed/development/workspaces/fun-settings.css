@@ -1,0 +1,13 @@
+.seed-fun-settings { padding: 12px; }
+.seed-fun-settings > h3 { margin: 0 0 8px; font-family: var(--font-sc); font-size: 13px; color: #ddc58a; }
+.seed-fun-list { display: grid; }
+.seed-fun-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 60px; border-bottom: 1px solid rgba(172, 166, 214, .16); }
+.seed-fun-row > span { font-family: var(--font-display); font-size: 15px; color: #f3ede0; }
+.seed-fun-stepper { display: flex; align-items: center; touch-action: pan-y; }
+.seed-fun-stepper > button { display: grid; place-items: center; min-width: 44px; min-height: 44px; border-radius: 8px; color: #ddc58a; }
+.seed-fun-stepper > button:disabled { opacity: .3; }
+.seed-fun-stepper > output { min-width: 54px; font-size: 12px; text-align: center; color: #f3ede0; }
+.seed-fun-help { min-height: 5em; margin: 12px 0 4px; font-size: 12px; line-height: 1.5; color: var(--color-neutral-300); }
+.seed-fun-restore { min-height: 44px; padding-inline: 8px; font-size: 12px; color: #ddc58a; }
+.seed-fun-settings button:focus-visible { outline: 2px solid #cdb271; outline-offset: -2px; }
+@media (min-width: 640px) { .seed-fun-settings { padding: 20px; } .seed-fun-row > span { font-size: 17px; } }

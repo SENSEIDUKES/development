@@ -15,7 +15,7 @@ import type { StorySeedIconName } from './SENStorySeedIcon';
  * The visible navigation hierarchy and its canonical Story Seed ownership.
  * Origin is the single editor for required Story inputs; ARC owns optional
  * direction and the destined ending; World owns the optional foundations.
- * Origin also owns Pressure and Survival; Settings owns mature-audience metadata.
+ * Origin also owns Fun Settings, Pressure and Survival; Settings owns mature-audience metadata.
  */
 export type SeedFamily = 'story' | 'world';
 

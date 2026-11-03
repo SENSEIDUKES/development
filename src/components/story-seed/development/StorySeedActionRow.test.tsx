@@ -68,7 +68,8 @@ it('regression: puts Save Draft, Manifest and the status in a page action row ab
   // Content, not chrome: no banner landmark and no header element of its own.
   expect(row.closest('header')).toBeNull();
   expect(row.getAttribute('role')).toBeNull();
-  expect(row.querySelector('h1, h2')).toBeNull();
+  expect(row.querySelector('h1')?.textContent).toBe('Story Seed');
+  expect(container.querySelector('.story-seed-page-eyebrow')).toBeNull();
   expect(row.closest('main')).not.toBeNull();
   const form = container.querySelector('[data-story-seed-form]')!;
   expect(row.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

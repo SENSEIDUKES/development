@@ -1,4 +1,4 @@
-import { type StorySeedInput } from '@seihouse/sen/story-seed';
+import { normalizeStoryStyle, type StorySeedInput } from '@seihouse/sen/story-seed';
 import {
   FAMILY_SECTIONS,
   SEED_SECTIONS,
@@ -9,10 +9,10 @@ import {
 
 /**
  * The character-creator step model over Story Seed's sections. The strip shows
- * four steps — Origin, ARC, World, Create (the Manifest step, `'manifest'`) —
+ * four steps — Origin, World, ARC, Create (the Manifest step, `'manifest'`) —
  * and World holds its eight kinds
- * as sub-tabs. Next and Back walk every section in `SEED_SECTIONS` order, then
- * the Manifest step, so the order has one owner: the section list itself.
+ * as sub-tabs. Next and Back walk `CREATOR_PAGE_ORDER`, with World available
+ * before the author plans the arc, then finish on the Manifest step.
  */
 export type CreatorPageId = SeedSectionId | 'manifest';
 export type CreatorStepId = 'origin' | 'arc' | 'world' | 'manifest';
@@ -26,15 +26,15 @@ export interface CreatorStep {
 
 export const CREATOR_STEPS: readonly CreatorStep[] = [
   { id: 'origin', label: 'Origin', page: 'origin' },
-  { id: 'arc', label: 'ARC', page: 'arc' },
   { id: 'world', label: 'World', page: FAMILY_SECTIONS.world[0].id },
+  { id: 'arc', label: 'ARC', page: 'arc' },
   { id: 'manifest', label: 'Create', page: 'manifest' },
 ];
 
 export const WORLD_KINDS: readonly SeedSection[] = FAMILY_SECTIONS.world;
 
 /** Every page in walking order: each section, then the Manifest step. */
-export const CREATOR_PAGE_ORDER: readonly CreatorPageId[] = [...SEED_SECTIONS.map(section => section.id), 'manifest'];
+export const CREATOR_PAGE_ORDER: readonly CreatorPageId[] = ['origin', ...WORLD_KINDS.map(section => section.id), 'arc', 'manifest'];
 
 export const stepOfPage = (page: CreatorPageId): CreatorStepId => {
   if (page === 'manifest') return 'manifest';
@@ -57,6 +57,7 @@ export interface CreatorPart { id: string; label: string }
 export const SECTION_PARTS: Partial<Record<SeedSectionId, readonly CreatorPart[]>> = {
   origin: [
     { id: 'style', label: 'Style' },
+    { id: 'fun', label: 'Fun Settings' },
     { id: 'synopsis', label: 'Synopsis' },
     { id: 'fate', label: 'Fate' },
     { id: 'tags', label: 'Tags' },
@@ -64,7 +65,6 @@ export const SECTION_PARTS: Partial<Record<SeedSectionId, readonly CreatorPart[]
   arc: [
     { id: 'ending', label: 'Ending' },
     { id: 'pins', label: 'Hard Pins' },
-    { id: 'fun', label: 'Fun Settings' },
   ],
 };
 
@@ -89,13 +89,49 @@ export const pageLabel = (page: CreatorPageId): string =>
 
 export type CreatorStepStatus = 'missing' | 'filled' | 'empty';
 
+export const tabKey = ({ page, part }: CreatorPosition): string => part ? `${page}.${part}` : page;
+
+/** All parts visible on this screen; Next confirms only these, never skipped tabs. */
+export const tabsToConfirm = (position: CreatorPosition, withParts: boolean): string[] => {
+  if (position.page === 'manifest') return [];
+  const parts = partsOf(position.page);
+  return parts && !withParts ? parts.map(part => tabKey({ page: position.page, part: part.id })) : [tabKey(position)];
+};
+
+const hasText = (value?: string) => Boolean(value?.trim());
+
+/** Required answers always come from content; confirmations only complete optional tabs. */
+export const partComplete = (page: CreatorPageId, part: string, seed: StorySeedInput, confirmed: readonly string[] = []): boolean => {
+  const required = seed.story.required;
+  if (page === 'origin' && part === 'style') return Boolean(normalizeStoryStyle(required.style) && hasText(required.genre));
+  if (page === 'origin' && part === 'synopsis') return hasText(required.premise);
+  if (confirmed.includes(tabKey({ page, part }))) return true;
+  if (page === 'origin') {
+    if (part === 'tags') return required.storyTags.some(hasText);
+    if (part === 'fate') return seed.story.optional.fateSurvival.enabled || seed.story.optional.fateSurvival.pressure !== 'immortal';
+    if (part === 'fun') return Object.values(seed.story.optional.funSettings).some(level => level !== 'medium');
+  }
+  if (page === 'arc') {
+    if (part === 'pins') return Boolean(seed.story.optional.hardPins?.some(pin => hasText(pin.text)));
+    if (part === 'ending') return hasText(seed.world.optional.worldFoundations.destinedEnding)
+      || hasText(seed.story.optional.activeArcGoal?.text) || seed.story.optional.arcCount !== undefined;
+  }
+  return false;
+};
+
+export const pageComplete = (page: CreatorPageId, seed: StorySeedInput, confirmed: readonly string[] = []): boolean => {
+  const parts = partsOf(page);
+  if (parts) return parts.every(part => partComplete(page, part.id, seed, confirmed));
+  return confirmed.includes(page) || Boolean(SEED_SECTIONS.find(section => section.id === page)?.isFilled(seed));
+};
+
 /**
  * What a step's marker shows. Origin is the only step with required inputs;
  * Manifest is ready once nothing required is missing.
  */
-export const stepStatus = (step: CreatorStepId, seed: StorySeedInput): CreatorStepStatus => {
+export const stepStatus = (step: CreatorStepId, seed: StorySeedInput, confirmed: readonly string[] = []): CreatorStepStatus => {
   if (step === 'manifest') return missingRequiredSections(seed).length ? 'empty' : 'filled';
   const sections = step === 'world' ? WORLD_KINDS : SEED_SECTIONS.filter(section => section.id === step);
   if (sections.some(section => section.required && !section.isFilled(seed))) return 'missing';
-  return sections.some(section => section.isFilled(seed)) ? 'filled' : 'empty';
+  return sections.every(section => pageComplete(section.id, seed, confirmed)) ? 'filled' : 'empty';
 };

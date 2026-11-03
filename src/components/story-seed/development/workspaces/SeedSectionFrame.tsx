@@ -1,7 +1,7 @@
 import React, { useContext, useId, useState } from 'react';
 import { Check, Info, Sparkle, Sparkles } from 'lucide-react';
 import { handleRadioGroupKeyDown, radioGroupTabIndex } from '@seihouse/sen/story-seed';
-import { SEED_FAMILIES, type SeedSection } from '../seedSections';
+import { type SeedSection } from '../seedSections';
 import { SENStorySeedIcon } from '../SENStorySeedIcon';
 import { SeedPartContext } from '../creator/SeedPart';
 import { SECTION_PARTS } from '../creator/creatorSteps';
@@ -26,7 +26,7 @@ const familyAccentText = (section: SeedSection) =>
   section.family === 'story' ? 'text-[#CDB271]' : 'text-gold-accent';
 
 /**
- * Family / section breadcrumb + title + tagline every Story Seed section opens
+ * Compact title and guidance every Story Seed section opens
  * with. Section content, not a shell: the Library Shell's `WorkspaceShell` owns
  * the page frame and its workspace mode owns the navigation.
  */
@@ -45,7 +45,6 @@ export const SeedSectionFrame = ({
   headerAction?: React.ReactNode;
   children: React.ReactNode;
 }) => {
-  const family = SEED_FAMILIES[section.family];
   // On a phone, a long step's later parts keep the heading but not the tagline,
   // which its first part already showed.
   const part = useContext(SeedPartContext);
@@ -59,22 +58,14 @@ export const SeedSectionFrame = ({
     })();
   return (
     <section aria-labelledby={`seed-workspace-${section.id}-title`} className="seed-field-scope max-w-3xl">
-      {/* The step strip already says where a phone is, so the breadcrumb is for wider screens. */}
-      <p className="hidden font-sc text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400 sm:block">
-        <span className={section.family === 'story' ? 'text-[#CDB271]/90' : 'text-gold-accent/80'}>
-          {family.label}
-        </span>
-        <span className="mx-2 text-neutral-700">/</span>
-        <span className="text-neutral-400">{section.label}</span>
-      </p>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:mt-2.5">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <h2
           id={`seed-workspace-${section.id}-title`}
-          className="flex items-center gap-2.5 font-display font-bold text-lg sm:gap-3 sm:text-3xl uppercase tracking-[0.12em] sm:tracking-[0.14em] text-[#F3EDE0]"
+          className="flex items-center gap-2 font-display font-bold text-lg sm:text-xl uppercase tracking-[0.08em] text-[#F3EDE0]"
         >
           <span
             aria-hidden="true"
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[rgba(205,178,113,0.38)] bg-[radial-gradient(circle_at_32%_28%,rgba(205,178,113,0.14),rgba(11,14,30,0.55)_68%)] shadow-[0_0_16px_rgba(205,178,113,0.12),inset_0_0_10px_rgba(205,178,113,0.08)] sm:h-11 sm:w-11 ${familyAccentText(section)}`}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[rgba(205,178,113,0.38)] bg-[radial-gradient(circle_at_32%_28%,rgba(205,178,113,0.14),rgba(11,14,30,0.55)_68%)] ${familyAccentText(section)}`}
           >
             {sectionIcon}
           </span>
@@ -105,10 +96,10 @@ export const SeedSectionFrame = ({
         )}
         {headerAction != null && headerAction !== false && <div className="ms-auto flex shrink-0 items-center">{headerAction}</div>}
       </div>
-      <p hidden={!showTagline} className="mt-1.5 max-w-xl font-serif text-[13px] leading-snug text-[#B0A99B] sm:mt-2 sm:text-[15px] sm:leading-relaxed">
+      <p hidden={!showTagline} className="mt-1 max-w-xl font-serif text-[13px] leading-snug text-[#B0A99B]">
         {section.tagline}
       </p>
-      <div className="mt-4 space-y-4 sm:mt-5 sm:space-y-6">{children}</div>
+      <div className="mt-3 space-y-4 sm:space-y-6">{children}</div>
     </section>
   );
 };

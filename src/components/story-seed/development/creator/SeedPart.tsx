@@ -2,10 +2,13 @@ import { createContext, useContext, type ReactNode } from 'react';
 
 /**
  * The part of a long step a phone is showing (Origin's Style, Synopsis, Fate
- * and Tags; Arc's Ending, Hard Pins and Fun Settings), or null where the whole
+ * and Tags, with Fun Settings after Style; Arc's Ending and Hard Pins), or null where the whole
  * step shows at once: tablets, laptops, and the World Blueprint's Arcs page.
  */
 export const SeedPartContext = createContext<string | null>(null);
+
+/** Explicit setting choices also confirm an unchanged default. */
+export const SeedConfirmationContext = createContext<(tab: string) => void>(() => undefined);
 
 /**
  * One part of a step. Every part stays mounted, so a half-typed field or an

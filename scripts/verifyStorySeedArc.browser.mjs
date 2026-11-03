@@ -12,6 +12,12 @@ try {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     const button = name => page.getByRole('button', { name, exact: true }).filter({ visible: true }).first();
+    const tool = async name => {
+      if (width < 1024) {
+        await page.getByRole('button', { name: 'Sections', exact: true }).click();
+        await page.locator('[data-slot="navigation-footer"]').filter({ visible: true }).getByRole('button', { name, exact: true }).click();
+      } else await button(name).click();
+    };
     const section = async label => {
       await page.waitForTimeout(300);
       const name = label === 'Origin' ? /^Origin(?!al)/ : new RegExp(`^${label}`);
@@ -47,14 +53,16 @@ try {
     await page.getByRole('radio', { name: 'Japanese', exact: true }).click();
     await button('Pick a path').click();
     await page.getByRole('radio', { name: 'Xianxia', exact: true }).click();
+    await part('Fun Settings');
+    await page.locator('#origin-face-slap-increase').click();
     await part('Synopsis');
     await page.getByLabel('Title', { exact: true }).fill('Arc browser verification');
     await page.locator('#core-premise-input').fill('A traveler returns to the mountain gate.');
     await section('ARC');
     const parts = phone
       ? [['Ending', ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', 'label[for="active-arc-goal-input"]']],
-        ['Hard Pins', ['#arc-hard-pins-title']], ['Fun Settings', ['#arc-fun-settings-title']]]
-      : [[null, ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]', '#arc-fun-settings-title']]];
+        ['Hard Pins', ['#arc-hard-pins-title']]]
+      : [[null, ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]']]];
     for (const [name, selectors] of parts) {
       if (name) await part(name);
       const boxes = [];
@@ -84,18 +92,16 @@ try {
     for (let i = 1; i <= 3; i++) await page.locator(`#hard-pin-${i}`).fill(`Keep promise ${i}.`);
     await part('Ending');
     await page.locator('#active-arc-goal-input').fill('Open the mountain gate.');
-    await part('Fun Settings');
-    await page.locator('#arc-face-slap-high').click();
     await page.screenshot({ path: `output/playwright/story-seed-arc-${width}.png`, fullPage: true });
     await section('World Identity');
     await page.locator('#make-it-work-instruction-input').fill('The mountain walks.');
     await page.locator('#main-opposition-input').fill('The gate keeper.');
     await page.screenshot({ path: `output/playwright/story-seed-world-${width}.png`, fullPage: true });
     for (const name of ['Characters', 'Factions', 'Abilities', 'World Rules', 'Origin']) await section(name);
-    await button('Save Draft').click();
+    await tool('Save Draft');
     await page.waitForFunction(() => JSON.parse(localStorage.getItem('seihouse-workshop-story-seeds-v4') ?? '[]').some(record => record.seed.story.optional.hardPins?.length === 3));
     await page.reload();
-    await button('Story Bank').click();
+    await tool('Story Bank');
     await button('Use Seed').click();
     await button('Refine Details').click();
     await section('ARC');

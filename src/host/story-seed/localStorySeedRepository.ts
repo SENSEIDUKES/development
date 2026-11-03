@@ -9,7 +9,7 @@ import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode, type SenLanguageCo
 import { generateUUID } from '@seihouse/sen/story-seed';
 import { STORY_SEED_SCHEMA_VERSION, normalizeStorySeedInput, reconcileStorySeedBlueprint, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
-import { type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/story-seed';
+import { normalizeStorySeedEditorProgress, type StorySeedEditorProgress, type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/story-seed';
 
 /** A local repository that can also be reset to known records (tests, previews). */
 export interface LocalStorySeedRepository extends StorySeedRepository {
@@ -55,6 +55,7 @@ const normalizeRecord = (value: unknown): StorySeedRecord | null => {
       updatedAt: source.updatedAt,
       originalLanguage: normalizeSenLanguageCode(source.originalLanguage),
       seed,
+      ...(source.editorProgress ? { editorProgress: normalizeStorySeedEditorProgress(source.editorProgress) } : {}),
       ...(blueprint ? { blueprint } : {}),
     };
   } catch {
@@ -69,6 +70,7 @@ const buildRecord = (
   originalLanguage: SenLanguageCode,
   createdAt = new Date().toISOString(),
   blueprint?: WorldBlueprint,
+  editorProgress?: StorySeedEditorProgress,
 ): StorySeedRecord => {
   if (!userId) throw new Error('Sign in to save story seeds to your account.');
   const reconciled = blueprint ? reconcileStorySeedBlueprint(normalizeStorySeedInput(input), blueprint) : undefined;
@@ -82,6 +84,7 @@ const buildRecord = (
     updatedAt: new Date().toISOString(),
     originalLanguage,
     seed,
+    ...(editorProgress ? { editorProgress: normalizeStorySeedEditorProgress(editorProgress) } : {}),
     ...(reconciled ? { blueprint: reconciled.blueprint } : {}),
   };
 };
@@ -142,8 +145,8 @@ export function createLocalStorySeedRepository({ storageKey }: { storageKey: str
   };
 
   const repository: LocalStorySeedRepository = {
-    async create(userId, input, blueprint, originalLanguage) {
-      const record = buildRecord(userId, `seed-${generateUUID()}`, input, originalLanguage, undefined, blueprint);
+    async create(userId, input, blueprint, originalLanguage, editorProgress) {
+      const record = buildRecord(userId, `seed-${generateUUID()}`, input, originalLanguage, undefined, blueprint, editorProgress);
       saveRecords(
         [record, ...readRecords()],
         'The Story Seed could not be saved. Free browser storage space and try again.',
@@ -151,7 +154,7 @@ export function createLocalStorySeedRepository({ storageKey }: { storageKey: str
       return record;
     },
 
-    async update(userId, existing, input, blueprint, originalLanguage) {
+    async update(userId, existing, input, blueprint, originalLanguage, editorProgress) {
       if (existing.userId !== userId) throw new Error('Cannot update a story seed owned by another account.');
       const record = buildRecord(
         userId,
@@ -160,6 +163,7 @@ export function createLocalStorySeedRepository({ storageKey }: { storageKey: str
         originalLanguage,
         existing.createdAt,
         blueprint === undefined ? existing.blueprint : blueprint,
+        editorProgress ?? existing.editorProgress,
       );
       saveRecords(
         readRecords().map(seed => (seed.id === record.id ? record : seed)),

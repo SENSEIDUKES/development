@@ -5,6 +5,7 @@ import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createBlueprintDraftFromSeed, mirrorSeedIntoBlueprint, reconcileStorySeedBlueprint, createEmptyStorySeedInput, createStorySeedExport, parseStorySeedJson, normalizeStorySeedInput, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { workshopStorySeedStorage, resetWorkshopStorySeedStorage } from '../shared/workshopStorySeedStorage';
+import { OriginWorkspace } from './workspaces/OriginWorkspace';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
 import { WorldIdentityWorkspace } from './workspaces/WorldIdentityWorkspace';
 import { BlueprintReview } from './BlueprintReview';
@@ -19,16 +20,17 @@ const initial = () => {
   seed.story.required = { premise: 'A traveler returns.', genre: 'Fantasy', style: 'japanese', storyTags: ['exile'] };
   return seed;
 };
-const Editor = ({ seed: input, view, initialBlueprint }: { seed: StorySeedInput; view: 'arc' | 'world' | 'blueprint'; initialBlueprint?: WorldBlueprint }) => {
+const Editor = ({ seed: input, view, initialBlueprint }: { seed: StorySeedInput; view: 'arc' | 'origin' | 'world' | 'blueprint'; initialBlueprint?: WorldBlueprint }) => {
   const [seed, setSeed] = useState(input);
   const [bp, setBlueprint] = useState(() => initialBlueprint ?? createBlueprintDraftFromSeed(input));
   // The host (CreationModal) keeps the Blueprint mirroring the Seed.
   useEffect(() => setBlueprint(previous => mirrorSeedIntoBlueprint(previous, normalizeStorySeedInput(seed))), [seed]);
   current = seed; blueprint = bp;
   if (view === 'blueprint') return <BlueprintReview seed={seed} updateSeed={setSeed} blueprint={bp} setBlueprint={setBlueprint} originalLanguage="ja" onBack={vi.fn()} onStartStory={vi.fn()} onExportSeed={vi.fn()} isGenerating={false} />;
+  if (view === 'origin') return <OriginWorkspace seed={seed} updateSeed={setSeed} />;
   return view === 'arc' ? <ArcWorkspace seed={seed} updateSeed={setSeed} /> : <WorldIdentityWorkspace seed={seed} updateSeed={setSeed} />;
 };
-const render = (seed: StorySeedInput, view: 'arc' | 'world' | 'blueprint' = 'arc', initialBlueprint?: WorldBlueprint) => act(() => root.render(<Editor key={initialBlueprint ? `${view}-generated` : view} seed={seed} view={view} initialBlueprint={initialBlueprint} />));
+const render = (seed: StorySeedInput, view: 'arc' | 'origin' | 'world' | 'blueprint' = 'arc', initialBlueprint?: WorldBlueprint) => act(() => root.render(<Editor key={initialBlueprint ? `${view}-generated` : view} seed={seed} view={view} initialBlueprint={initialBlueprint} />));
 const button = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(item => item.textContent?.trim() === text);
 const press = (selector: string) => act(() => document.querySelector<HTMLButtonElement>(selector)!.click());
 /** Closes the open Blueprint card sheet. */
@@ -54,7 +56,7 @@ afterEach(() => { act(() => root.unmount()); container.remove(); resetWorkshopSt
 describe('Story Seed Arc and World ownership', () => {
   it('renders the approved order, reveals up to three optional pins one at a time, and one goal without a full plan editor', () => {
     render(initial());
-    const nodes = ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]', '#arc-fun-settings-title'].map(selector => container.querySelector(selector)!);
+    const nodes = ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]'].map(selector => container.querySelector(selector)!);
     nodes.forEach(node => expect(node).not.toBeNull());
     nodes.slice(1).forEach((node, i) => expect(nodes[i].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy());
     const pinCount = () => container.querySelectorAll('input[id^="hard-pin-"]').length;
@@ -82,9 +84,7 @@ describe('Story Seed Arc and World ownership', () => {
     act(() => more.click());
     expect(more.getAttribute('aria-expanded')).toBe('true');
     expect(container.textContent).toContain('You can alter this outcome later.');
-    // Only the selected Fun Setting level's description shows.
-    expect(container.textContent).toContain('Classic webnovel rhythm.');
-    expect(container.textContent).not.toContain('Rare and meaningful.');
+    expect(container.textContent).not.toContain('Fun Settings');
   });
 
   it('preserves edits through World, Blueprint review, persistence, export/import, and story creation', async () => {
@@ -92,7 +92,8 @@ describe('Story Seed Arc and World ownership', () => {
     fill('destined-ending-input', 'Free the valley.');
     ['Protect the master.', 'Restore the temple.', 'Keep the vow.'].forEach((text, i) => fill(`hard-pin-${i + 1}`, text));
     fill('active-arc-goal-input', 'Reach the mountain gate.');
-    act(() => container.querySelector<HTMLButtonElement>('#arc-face-slap-high')!.click());
+    render(current, 'origin');
+    act(() => container.querySelector<HTMLButtonElement>('#origin-face-slap-increase')!.click());
     render(current, 'world');
     fill('make-it-work-instruction-input', 'The mountain walks. Make it believable.');
     fill('main-opposition-input', 'The gate keeper.');

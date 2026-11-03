@@ -22,9 +22,9 @@ cleaner, and canonical production Blueprint fields were verified against
 
 Story Seed is one creation flow with these visible destinations:
 
-- **Origin** presents Style, Genre, Title, Synopsis, Pressure, Survival, and Tags, in that order on every viewport.
-- **ARC** presents Destined Ending, Story Length (arcs), up to three optional Hard Pins, one initial Active Arc Goal, and Fun Settings, in that order.
+- **Origin** presents Style, Genre, Fun Settings (Face Slap, Plot Armor, Recognition), Title, Synopsis, Pressure, Survival, and Tags, in that order on every viewport.
 - **World** owns the world as it stands at Chapter 0, in the Codex's own card kinds: World Identity (including Make It Work and Main Opposition), Characters, Factions, Things, Places, Bestiary, Abilities, and World Rules. Every slot is optional; what the author leaves blank the World Blueprint fills before Chapter 1.
+- **ARC** follows World and presents Destined Ending, Story Length (arcs), up to three optional Hard Pins, and one initial Active Arc Goal.
 - **Story Seed Settings** owns the story's reader-experience defaults: Story Language (the seed's saved Original Language), Reading Mode (Standard, Clear Reading, Easy Read, Literal Reading), and mature-audience metadata.
 - **Help** owns searchable written guidance and translated audio playback.
 - **Story Bank** is the only home for saved seeds, import/export, Blueprint
@@ -33,7 +33,7 @@ Story Seed is one creation flow with these visible destinations:
   the portable Creator / Story / World seed.
 - **The Blueprint (2026-10-27).** Inside the shell the Blueprint has four
   pages on a pinned tab strip: **Story** (cover, Origin, Style Bible, Story
-  Settings, Keep a Copy), **Cast** (the cast as a row of Codex cards, the
+  Fun Settings, Settings, Keep a Copy), **Cast** (the cast as a row of Codex cards, the
   chosen character's large Codex card with Power and Holds/Knows beside it,
   then Character Stats and When the Story Opens stat tables, Biography and the
   Generated Background), **World** (World Setting, then Factions, Things,
@@ -48,16 +48,28 @@ Story Seed is one creation flow with these visible destinations:
   **Create Story** are pinned in equal cells on the workspace bar. Every page
   stays mounted, so field ids hold.
 
-- **Phones (2026-10-27).** Below 640px the questions come first. The page
-  heading and its action row are not rendered (the shell header names Story
-  Seed); Save Draft is a square button beside the one-line story card; the
-  step strip is one inline row; the section heading drops its breadcrumb.
-  Origin (Style, Synopsis, Fate, Tags) and ARC (Ending, Hard Pins, Fun
-  Settings) show one part at a time from a row of part tabs, and Back / Next
-  walk the parts (`SECTION_PARTS`, `SeedPart`); every part stays mounted.
-  Characters, Factions, Things, Places, the Bestiary and the starting
-  abilities show as Codex cards (`CastCardGrid`, `WorldListGrid`) whose fields
-  open in a sheet. Tablets and laptops keep each page whole.
+- **Mobile and tablet navigation (2026-11-03).** The Library's styled navigation
+  retains Sections, Story Bank, Blueprint, Settings and Back. Creator Back/Next
+  and Blueprint actions sit with the form, outside the bottom navigation.
+  Sections includes Save Draft and Story Preview. The preview remains on Create
+  and opens from Story Preview in the desktop rail or phone Sections drawer.
+- **Phones.** Below 640px Origin shows Style, Fun Settings, Synopsis, Fate,
+  and Tags one at a time; ARC shows Ending and Hard Pins. Compact text tabs
+  keep 44px touch targets. Back/Next walks Origin, World's eight kinds, ARC,
+  then Create. Hidden parts stay mounted. World collections retain their
+  Codex cards and editing sheets. Tablets and laptops show whole pages.
+- **Fun Settings.** Console rows place each name beside a Low/Medium/High
+  stepper, with swipe and keyboard controls, focused help, and Restore defaults.
+- **Completion.** Required checks follow Style + Genre and Synopsis. Optional
+  tabs check when filled, when a setting is chosen, or when Next confirms
+  defaults/blank answers; jumping tabs confirms nothing. A parent checks when
+  all children are complete, even while active. Next confirms all displayed
+  parts on wider screens. This never adds a generation requirement.
+- **Saved confirmations.** Optional `StorySeedRecord.editorProgress.confirmedTabs`
+  travels through the existing repository's optional final write argument.
+  It is separate from creative input, model requests and portable exports.
+  Reopening a draft restores confirmations, while another seed starts with
+  its own progress. Missing/damaged editor metadata never resets creative data.
 
 The canonical Story Seed shape is `creator / story / world`. Title has
 one owner at `world.optional.worldIdentity.title`; Blueprint title editing
@@ -627,3 +639,33 @@ Verification: `scripts/verifyStorySeedArc.browser.mjs` exercises the canonical
 preview at 390 and 1440 pixels, complete navigation, Arc/World edits, save/reload,
 Blueprint review/export, and the active capture route. Focused tests cover the
 schema, Blueprint provider boundary, persistence, and frozen HARNESS handoff.
+
+## 2026-11-02 — Story Seed mobile space and completion
+
+Replaced the stacked creator/workspace bars with one compact bar using the
+Library Shell's optional action slot, moved the mobile live card into More,
+and removed the superseded square Save button. World now precedes ARC; Fun
+Settings belongs to Origin and the Blueprint's Story page. Parent and child
+checks include saved confirmations of defaults and intentional blanks.
+
+`verifyStorySeedUi.browser.mjs` checks the app and Workshop at 320, 390, 430,
+768, 1280 and 1440px, menu/sheet focus, short viewports, long titles and saved progress
+without generation calls. The app and preview use the same package surface;
+Workshop scenarios use their isolated fixture/local storage, not app storage.
+
+## 2026-11-03 — Restore the Library navigation
+
+Removed the combined Back/Next/More bar after owner review. Restored the existing
+Library navigation and placed the compact step actions in the form rather than
+in another fixed bar. Completion, authoring order, Fun Settings and the mobile
+preview changes remain. Save Draft and Story Preview use the Sections drawer.
+
+## 2026-11-03 — Put the form before page decoration
+
+Consolidated the desktop/tablet title, status and Save Draft into one compact row,
+removed the repeated tagline and section breadcrumb, and kept the numbered steps
+on one line. The live summary now opens from Story Preview at every width instead
+of occupying the form column. Section titles retain their Library typography and
+guidance at a smaller scale. Phone navigation and inline Back/Next are unchanged.
+The app and Workshop share this surface; browser checks include 1024px and assert
+that the first choices fit fully in the upper half of the viewport.

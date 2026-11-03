@@ -45,6 +45,10 @@ try {
     for (const surface of ['app', 'workshop']) {
       const label = `${surface}-${viewport.width}`;
       const context = await browser.newContext({ viewport, reducedMotion: 'reduce' });
+      // A reader who has met their Familiar: its first-meeting welcome has its own tests.
+      await context.addInitScript(() => {
+        if (!localStorage.getItem('novelexpanded-reader-profile')) localStorage.setItem('novelexpanded-reader-profile', JSON.stringify({ familiarWelcomed: true }));
+      });
       await context.addInitScript({ content: speech });
       await context.addInitScript(() => {
         window.__mediaPlays = [];

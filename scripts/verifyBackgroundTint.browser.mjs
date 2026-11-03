@@ -25,6 +25,10 @@ const browser = await chromium.launch();
 try {
   for (const width of [320, 390, 1440]) {
     const context = await browser.newContext({ viewport: { width, height: 900 } });
+    // A reader who has met their Familiar: its first-meeting welcome has its own tests.
+    await context.addInitScript(() => {
+      if (!localStorage.getItem('novelexpanded-reader-profile')) localStorage.setItem('novelexpanded-reader-profile', JSON.stringify({ familiarWelcomed: true }));
+    });
     const page = await context.newPage();
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${base}/app/`);

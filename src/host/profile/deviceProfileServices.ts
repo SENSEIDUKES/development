@@ -3,7 +3,7 @@
  * app, until its database). The profile record lives on this device
  * (`deviceProfile.ts`); balances, rewards and Familiar ownership come from the
  * Library economy's own clients, mounted by the host; and the account and
- * server pieces (sign-out, sync, backup, the Aether Router, code redemption,
+ * server pieces (sign-out, sync, backup, the Model Router, code redemption,
  * the Inbox) still show, each with the host's note. The profile picture is
  * made by the host's portrait maker when it gives one.
  */
@@ -14,7 +14,7 @@ import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/c
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { downloadStorySeed, downloadStorySeedCollection, reconcileStorySeedBlueprint, type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/story-seed';
 import { getDaoRankData, resolvePermanentDaoXp } from '@seihouse/library/cultivation';
-import { normalizeFamiliarSize, type FamiliarOption } from '@seihouse/library/familiar';
+import { normalizeFamiliarSize, updateFamiliarPersonalizations, type FamiliarOption } from '@seihouse/library/familiar';
 import type { CelestialStoreAccountServices } from '@seihouse/library/celestial-store';
 import type {
   ChapterWritingStyle, UserProfile, UserProfileController, UserProfileControllerProps, UserProfileNotYetBuilt, UserProfileServices,
@@ -51,6 +51,10 @@ export interface DeviceProfileServicesOptions {
   notYetBuilt?: UserProfileNotYetBuilt;
   /** Makes the profile picture: portraits from the reader's photo, and the chosen one made ready to keep. */
   portraits?: DevicePortraitMaker;
+  /** Opens the host's Model Router (Settings › Advanced Tools). */
+  openModelRouter?: () => void;
+  /** Opens the host's Usage page (Settings › Advanced Tools). */
+  openUsage?: () => void;
 }
 
 /** The host's profile picture maker. */
@@ -61,7 +65,7 @@ export interface DevicePortraitMaker {
   keep(portrait: Blob): Promise<string>;
 }
 
-export function createDeviceProfileServices({ store, familiars, celestialStore, soundPreferences, menuMusic, storySeeds, notYetBuilt, portraits }: DeviceProfileServicesOptions): UserProfileServices {
+export function createDeviceProfileServices({ store, familiars, celestialStore, soundPreferences, menuMusic, storySeeds, notYetBuilt, portraits, openModelRouter, openUsage }: DeviceProfileServicesOptions): UserProfileServices {
   const records = async () => storySeeds ? storySeeds.repository.list(storySeeds.ownerId) : [];
   const generationNote = notYetBuilt?.features.includes('portrait-generation') ? notYetBuilt.note : undefined;
   return {
@@ -70,7 +74,7 @@ export function createDeviceProfileServices({ store, familiars, celestialStore, 
     celestialStore,
     soundPreferences,
     menuMusic,
-    useController: props => useDeviceProfileController(store, props, { familiars, generationNote, portraits }),
+    useController: props => useDeviceProfileController(store, props, { familiars, generationNote, portraits, openModelRouter, openUsage }),
     // The host signs its one device reader in; the Spirit Link gate never shows.
     authenticate: noop,
     localOnlyMode: false,
@@ -100,7 +104,7 @@ export function createDeviceProfileServices({ store, familiars, celestialStore, 
 export function useDeviceProfileController(
   store: DeviceProfileStore,
   { currentUser, stories }: UserProfileControllerProps,
-  { familiars, generationNote, portraits }: { familiars: readonly FamiliarOption[]; generationNote?: string; portraits?: DevicePortraitMaker },
+  { familiars, generationNote, portraits, openModelRouter, openUsage }: { familiars: readonly FamiliarOption[]; generationNote?: string; portraits?: DevicePortraitMaker; openModelRouter?: () => void; openUsage?: () => void },
 ): UserProfileController {
   const record = useDeviceProfile(store);
   const profile = currentUser ? record : null;
@@ -285,6 +289,16 @@ export function useDeviceProfileController(
     commit({ familiarLiveTalk: liveTalk || undefined });
   }, [commit, profile]);
 
+  const handleFamiliarWakeWordChange = useCallback((wakeWord: boolean) => {
+    if (!profile) return;
+    commit({ familiarWakeWord: wakeWord || undefined });
+  }, [commit, profile]);
+
+  const handleFamiliarPersonalChange = useCallback((familiarId: string, changes: { name?: string | null; backstory?: string | null }) => {
+    if (!profile) return;
+    commit({ familiarPersonal: updateFamiliarPersonalizations(profile.familiarPersonal, familiarId, changes) });
+  }, [commit, profile]);
+
   // The profile picture: the photo stays in the page; portraits are shown through object URLs until one is kept.
   const releasePortraits = useCallback(() => {
     portraitUrls.current.forEach(url => URL.revokeObjectURL(url));
@@ -387,9 +401,12 @@ export function useDeviceProfileController(
     handleFamiliarSizeChange,
     handleFamiliarInHeaderChange,
     handleFamiliarLiveTalkChange,
+    handleFamiliarWakeWordChange,
+    handleFamiliarPersonalChange,
     syncStatus: 'idle',
     lastSavedTime: profile ? new Date(profile.updatedAt) : null,
-    setIsSettingsOpen: noop,
+    setIsSettingsOpen: open => { if (open) openModelRouter?.(); },
+    setIsUsageOpen: openUsage ? open => { if (open) openUsage(); } : undefined,
     setIsShortcutsOpen: noop,
     handleExportLibrary: noop,
     handleImportLibrary: noop,

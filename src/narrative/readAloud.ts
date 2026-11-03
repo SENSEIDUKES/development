@@ -4,6 +4,7 @@ import type { ReaderPreferenceStorage } from './readerRuntime';
 import { chapterTitleText } from './chapterTitle';
 import { findSpokenLines, isSpeakerOnText, narratedSpeaker, type MainCharacterNames, type SpeakerAttachment } from './speech';
 import { wordRanges } from './words';
+import { resolvePlayableSoundCue, type SoundCueAttachment } from '../audio/inlineAudio';
 
 /**
  * Read Aloud: a chapter read by three voices, sentence by sentence.
@@ -28,7 +29,7 @@ export const READ_ALOUD_ROLES: readonly ReadAloudRole[] = ['narrator', 'protagon
 export const UNTAGGED_SPEECH_ROLE: ReadAloudRole = 'protagonist';
 
 /** Bumped whenever the same chapter would produce different lines (stored audio keys on them later). */
-export const READ_ALOUD_SCRIPT_VERSION = 1;
+export const READ_ALOUD_SCRIPT_VERSION = 2;
 
 /**
  * One line's limits, so no browser voice cuts it off: Chrome's network voices
@@ -63,6 +64,8 @@ export interface ReadAloudLine {
   role: ReadAloudRole;
   /** Who speaks it, when a speaker record names them. */
   speaker?: string;
+  /** Placed sounds whose exact words begin this line. Never inferred from the prose. */
+  soundCues?: readonly SoundCueAttachment[];
 }
 
 export interface ReadAloudScript {
@@ -80,6 +83,7 @@ export interface ReadAloudChapter {
   language?: string;
   /** Who the main character is, for speech nobody tagged: its narration says who speaks it. */
   mainCharacter?: MainCharacterNames;
+  soundCues?: readonly SoundCueAttachment[];
 }
 
 const SPEAKABLE = /[\p{L}\p{N}]/u;
@@ -239,14 +243,24 @@ export function buildReadAloudScript(chapter: ReadAloudChapter): ReadAloudScript
   for (const { id, text } of chapter.paragraphs) {
     if (!text.trim()) continue;
     const spoken = spokenParts(id, text, chapter.speakers ?? [], cast);
+    const cues = (chapter.soundCues ?? []).filter(cue => resolvePlayableSoundCue(cue).ok
+      && cue.anchor.blockId === id && cue.anchor.startOffset >= 0 && cue.anchor.endOffset <= text.length
+      && text.slice(cue.anchor.startOffset, cue.anchor.endOffset) === cue.anchor.selectedText);
     for (const sentence of splitSentences(text, language)) {
       for (const part of sentenceParts(sentence, spoken)) {
-        for (const range of boundSpeechRanges(text, part.start, part.end, language)) {
+        // A cue's words begin an utterance, even on voices without word-boundary
+        // events. The sentence light and the voice stay the same across this cut.
+        const cuts = [...new Set([part.start, ...cues.map(cue => cue.anchor.startOffset)
+          .filter(offset => offset > part.start && offset < part.end), part.end])].sort((a, b) => a - b);
+        const ranges = cuts.slice(0, -1).flatMap((start, index) => boundSpeechRanges(text, start, cuts[index + 1], language));
+        for (const range of ranges) {
           const words = text.slice(range.start, range.end);
           if (!isSpeakable(words)) continue;
+          const soundCues = cues.filter(cue => cue.anchor.startOffset === range.start);
           lines.push({
             key: `${id}:${range.start}-${range.end}`, blockId: id, sentence: { start: sentence.start, end: sentence.end },
             start: range.start, end: range.end, text: words, role: part.role, ...(part.speaker ? { speaker: part.speaker } : {}),
+            ...(soundCues.length ? { soundCues } : {}),
           });
         }
       }

@@ -75,7 +75,7 @@ provider call and durably records the provider result before settlement. An
 unknown provider outcome keeps the hold and fails closed on retry instead of
 calling the provider twice. There is no client-authorized refund. Any future
 settled-charge refund must be an append-only server adjustment that preserves
-  the original charge. The current catalog labels chapter (1), image (3), short cue (3), long cue
+  the original charge. The current catalog labels chapter (2), image (5), short cue (3), long cue
   (15), soundscape (20), and video (30–50) as **projected**. A variable video reservation requires
   a trusted whole-number quote in that range; no current generation owner calls this boundary.
 
@@ -102,6 +102,22 @@ or verified against a production deployment.
 
 ## Workshop history
 
+- 2026-11-03: Added the official balance pill (`BalancePill`, `BalancePills` in `development/BalancePill.tsx`): a balance's own mark and number in one rounded pill, QI with the yin-yang mark in violet and Energy with the Energy mark in gold, always QI then Energy. First used in the Familiar page's top bar (SENSEI: one look for every balance users see).
+- **2026-11-01 tiers** — `ENERGY_TIER_MODELS` is the team's model behind each tier per kind
+  (chapters: Gemini 3.1 Flash Lite, Gemini 3.8 Flash, Claude Opus 5.5; images: Nano Banana 2 Lite, Nano
+  Banana 2, Nano Banana Pro; live: Gemini 3.8 Live, GPT-Live 1, Heaven not yet). A generation made by
+  tier is priced at that tier (`EnergyModelsProvider` `grades`), whatever its model's own grade.
+- **2026-11-01 live talk repriced** — Live talk costs 3 / 6 / 9 Energy a minute (Mortal, Immortal,
+  Heaven), at least twice the provider's price: Gemini 3.8 Live is at most $0.023 a minute, GPT-Live 1
+  is $0.05 a minute plus its backend model. It is charged by the started 20 seconds (1 / 2 / 3 a
+  step), so a quick call costs one step.
+- **2026-11-01 grades** — Chapters cost 2 Energy. `shared/energyGrades.ts` sorts each chapter,
+  image and live model into Mortal, Immortal or Heaven, with one Energy price per grade: chapter
+  2 / 4 / 8, image 5 / 10 / 20, live talk 3 / 6 / 9 a minute, by the started 20 seconds. Mortal equals the catalog
+  price. Chapter narration is not priced yet. The Model Router shows each model's grade and price;
+  every price shown before generating (`EnergyActionCost`, `EnergyCostMeter`, portraits, covers)
+  is the grade's price for the host's model (`EnergyModelsProvider`; the app passes the Router's choice);
+  the Usage page prices what this device made.
 - **2026-10-09 the Energy badge** — Every Energy number wears one badge: the Energy mark and
   the number in a gold-outlined pill, a balance (`EnergyAmount`, so the Profile home, the
   Store and the Energy page) or a cost (`EnergyActionCost`). `EnergyCostMeter` puts an

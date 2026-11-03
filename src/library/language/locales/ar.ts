@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "أدوات متقدمة",
       "Model presets and routing overrides.": "إعدادات النماذج المسبقة وتجاوزات التوجيه.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "قم بتهيئة إعدادات النماذج المخصصة أو تجاوزات التوجيه أو نقاط نهاية بيانات اعتماد API.",
-      "Aether Router": "موجه الأثير",
+      "Model Router": "موجه النماذج",
       "Cultivator": "ممارس",
       "Mortal": "فانٍ",
       "Daily Dao Pillar": "عمود الداو اليومي",

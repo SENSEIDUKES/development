@@ -15,6 +15,8 @@ import { createMockStorySeedRecord } from '../workshop/previews/story-seed/previ
 import { createOfficialCapaDefaultLoadout, installOfficialCapaSkillsInMemory, OFFICIAL_CAPA_DEFAULT_REFERENCES } from '../host/generation/capa/officialCapaSkills';
 import { HarnessGenerationRequestError } from '../host/generation/httpClient';
 import { writeModelPreference } from '../host/generation/modelPreference';
+import { modelRouterStatus } from '../server/model-router/status';
+import { recordUsage } from '../host/usage/usageLog';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
 import { StoryCoverRequestError } from '../host/media/storyCoverClient';
 import { createLocalStorySeedRepository } from '../host/story-seed/localStorySeedRepository';
@@ -530,7 +532,10 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(document.querySelector('[data-testid="novel-expanded-create"]')).toBeTruthy();
     // Create, on the creator's last step, wears the Energy badge with the World Blueprint's price (a chapter's, for now).
     await click(document.querySelector('[data-seed-creator-strip] button[data-step="manifest"]'), 'the Manifest step', 20);
-    expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('1');
+    expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('2');
+    // Its price follows the Router: a Heaven writer costs a Heaven chapter's Energy.
+    await act(async () => writeModelPreference('chapters', 'anthropic/claude-opus-5-5'));
+    expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('8');
     // Story Seed's own task bar stands where the global strip was; the note floats above it.
     expect(strip()).toBeNull();
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
@@ -1134,31 +1139,60 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(cave()!.querySelector('[data-cave-settings]')).toBeTruthy();
     // Account and server pieces still show, each disabled with the note.
     const notes = [...cave()!.querySelectorAll('[data-cave-not-yet-built]')].map(note => note.textContent);
-    expect(notes.length).toBeGreaterThanOrEqual(6);
+    expect(notes.length).toBeGreaterThanOrEqual(5);
     expect(new Set(notes)).toEqual(new Set(['Not in the app yet.']));
-    for (const name of ['Sever Link', 'Redeem Code', 'Shortcuts', 'Aether Router', 'Import Scroll']) {
+    for (const name of ['Sever Link', 'Redeem Code', 'Shortcuts', 'Import Scroll']) {
       expect(buttonByText(name, cave()!)?.disabled, name).toBe(true);
     }
-    // Every Familiar is unlocked on the practice account; choosing one equips it everywhere at once.
-    await click(buttonByText('Select Phoenix', cave()!), 'Select Phoenix', 20);
+    // Advanced Tools › Model Router opens the Router itself, over the Cave.
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(modelRouterStatus({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' })), { status: 200 })));
+    await click(buttonByText('Model Router', cave()!), 'Model Router', 20);
+    const router = document.body.querySelector('[role="dialog"][aria-modal="true"]')!;
+    expect(router.textContent).toContain('Live speech');
+    expect(router.textContent).toContain('Text to speech');
+    await click(router.querySelector('[aria-label="Close Model Router"]'), 'Close Model Router', 10);
+    expect(document.body.querySelector('[aria-label="Close Model Router"]')).toBeNull();
+    // Usage beside it: what this device made, in Energy.
+    recordUsage({ kind: 'chapter', model: 'google/gemini-3.8-flash' });
+    await click(buttonByText('Usage', cave()!), 'Usage', 20);
+    const usage = document.body.querySelector('[role="dialog"][aria-modal="true"]')!;
+    expect(usage.querySelector('[data-usage-group="chapters"]')?.textContent).toBe('1 chapter written4 Energy');
+    await click(usage.querySelector('[aria-label="Close Usage"]'), 'Close Usage', 10);
+    expect(document.body.querySelector('[aria-label="Close Usage"]')).toBeNull();
+    // Familiar settings live on the Familiar page; Settings leads there.
+    await click(buttonByText('Open the Familiar page', cave()!), 'Open the Familiar page', 20);
+    expect(cave()!.querySelector('[data-familiar-stage]')).toBeTruthy();
+    // Every Familiar is unlocked on the practice account; making one active equips it everywhere at once.
+    const slide = () => cave()!.querySelector('[data-familiar-slide]')?.getAttribute('data-familiar-slide');
+    for (let step = 0; step < 13 && slide() !== 'phoenix'; step++) {
+      await click(cave()!.querySelector('[aria-label="Next Familiar"]'), 'Next Familiar', 5);
+    }
+    expect(slide()).toBe('phoenix');
+    await click(cave()!.querySelector('[data-familiar-activate]'), 'Make active', 20);
     expect(services.profile.read().familiarId).toBe('phoenix');
     expect(companion()!.querySelector('[aria-label="Phoenix: show actions"]')).toBeTruthy();
+    // The companion's settings open from the page's settings button, over the whole app.
+    await click(cave()!.querySelector('[data-familiar-settings-open]'), 'Familiar settings', 10);
+    const setting = (label: string) => document.body.querySelector<HTMLButtonElement>(`[data-familiar-settings] [role="switch"][aria-label="${label}"]`)!;
     // Keep in the header: off by default, the Familiar floats; on, it waits in the header until called.
-    const keepInHeader = () => cave()!.querySelector<HTMLInputElement>('.familiar-header-switch')!;
-    expect(keepInHeader().checked).toBe(false);
-    await act(async () => { keepInHeader().click(); });
+    expect(setting('Keep in the header').getAttribute('aria-checked')).toBe('false');
+    await act(async () => { setting('Keep in the header').click(); });
     await flush(10);
     expect(services.profile.read().familiarInHeader).toBe(true);
     expect(companion()).toBeNull();
     expect(recall('Phoenix')).toBeTruthy();
     expect(recall('Quill')).toBeNull();
     // Live talk (beta): off by default, so the Familiar listens the usual way; on, it is kept on the device.
-    const liveTalk = () => cave()!.querySelectorAll<HTMLInputElement>('.familiar-header-switch')[1];
-    expect(liveTalk().closest('.familiar-size-control')!.textContent).toContain('Live talk (beta)');
-    expect(liveTalk().checked).toBe(false);
-    await act(async () => { liveTalk().click(); });
+    expect(setting('Live talk').closest('[data-familiar-setting]')!.textContent).toContain('Beta');
+    expect(setting('Live talk').getAttribute('aria-checked')).toBe('false');
+    await act(async () => { setting('Live talk').click(); });
     await flush(10);
     expect(services.profile.read().familiarLiveTalk).toBe(true);
+    // Say "Familiar" (beta): off by default; on, it is kept on the device.
+    expect(setting('Say “Familiar”').getAttribute('aria-checked')).toBe('false');
+    await act(async () => { setting('Say “Familiar”').click(); });
+    await flush(10);
+    expect(services.profile.read().familiarWakeWord).toBe(true);
   });
 
   it('translates the interface across all 30 languages in Settings, previews during confirmation, reverts on cancel, and persists when kept', async () => {

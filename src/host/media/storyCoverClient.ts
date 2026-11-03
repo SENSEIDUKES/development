@@ -1,5 +1,7 @@
 import type { CodexPictureRequest, StoryCoverRequest } from '@seihouse/library/stories';
 import { base64ToBlob } from './imageFiles';
+import { recordUsage } from '../usage/usageLog';
+import { chosenEnergyGrade } from '../generation/modelPreference';
 
 export const STORY_COVER_ENDPOINT = '/api/story-cover';
 
@@ -27,13 +29,15 @@ async function requestImage(body: Record<string, unknown>, options: ImageRequest
     },
     body: JSON.stringify({ ...body, ...(options.model ? { model: options.model } : {}) }),
   });
-  const answer = await response.json().catch(() => undefined) as { image?: unknown; mimeType?: unknown; error?: unknown } | undefined;
+  const answer = await response.json().catch(() => undefined) as { image?: unknown; mimeType?: unknown; model?: unknown; error?: unknown } | undefined;
   if (!response.ok) {
     throw new StoryCoverRequestError(typeof answer?.error === 'string' ? answer.error : `The cover server answered ${response.status}.`, response.status);
   }
   if (typeof answer?.image !== 'string' || typeof answer.mimeType !== 'string' || !answer.mimeType.startsWith('image/')) {
     throw new StoryCoverRequestError('The cover server answered without an image.', 502);
   }
+  const used = typeof answer.model === 'string' ? answer.model : options.model;
+  recordUsage({ kind: 'image', model: used, grade: chosenEnergyGrade('images', used) });
   return base64ToBlob(answer.image, answer.mimeType);
 }
 

@@ -59,7 +59,9 @@ beforeEach(() => {
       media,
       // The Cave rail is mounted from the desktop breakpoint only; every other
       // query stays unmatched, so the default fixture is a phone.
-      matches: media.includes('min-width: 1024px') ? desktopViewport : false,
+      matches: media.includes('min-width: 1024px') ? desktopViewport
+        // The Familiar page's own phone query: a phone unless the desktop viewport is set.
+        : media === '(max-width: 767px)' ? !desktopViewport : false,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       addListener: vi.fn(),
@@ -489,7 +491,7 @@ describe('Cultivator Cave home', () => {
     expect(panel.querySelector('[data-economy-section="energy"]')?.textContent).toContain('1 Energy = $0.02');
     expect(panel.querySelector('[data-economy-section="qi"]')?.textContent).toContain('1 QI = $0.002');
     expect(panel.querySelector('[data-economy-section="dao-xp"]')?.textContent).toContain('Master50,000 DAO XP');
-    expect(panel.querySelector('[data-energy-action="chapter.generate"]')?.textContent).toContain('1');
+    expect(panel.querySelector('[data-energy-action="chapter.generate"]')?.textContent).toContain('2 Energy');
     expect(panel.querySelector('[data-energy-action="image.generate"]')?.textContent).toContain('5');
     expect(panel.querySelector('[data-energy-action="short-cue.generate"]')?.textContent).toContain('3');
     expect(panel.querySelector('[data-energy-action="long-cue.generate"]')?.textContent).toContain('15');
@@ -776,6 +778,28 @@ describe('Cultivator Cave destinations', () => {
     expect(daoTile(13).dataset.state).toBe('available');
   });
 
+  it('opens the Familiar details full screen on a phone, and closes them with the close control or Escape', async () => {
+    await renderCave({ rewards: { openingDaoXp: 13_480, qiGrant: 2_000 } });
+    await click(open('familiar'));
+    const stage = () => container.querySelector<HTMLElement>('[data-familiar-stage]')!;
+    expect(stage().hasAttribute('data-sheet-full')).toBe(false);
+    await click(container.querySelector('[data-familiar-tab="elements"]')!);
+    // The details take the page under the top bar; the stage steps aside for assistive technology too.
+    expect(stage().hasAttribute('data-sheet-full')).toBe(true);
+    expect(stage().querySelector('.familiar-stage-hero')?.getAttribute('aria-hidden')).toBe('true');
+    expect(stage().querySelector('.familiar-stage-sheet-title')?.textContent).toBe('Quill');
+    const toggle = () => stage().querySelector<HTMLButtonElement>('[data-familiar-sheet-toggle]')!;
+    expect(toggle().getAttribute('aria-label')).toBe('Close details');
+    await click(toggle());
+    expect(stage().hasAttribute('data-sheet-full')).toBe(false);
+    expect(stage().querySelector('.familiar-stage-hero')?.hasAttribute('aria-hidden')).toBe(false);
+    await click(container.querySelector('[data-familiar-tab="lore"]')!);
+    expect(stage().hasAttribute('data-sheet-full')).toBe(true);
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); });
+    expect(stage().hasAttribute('data-sheet-open')).toBe(false);
+    expect(document.activeElement).toBe(toggle());
+  });
+
   it('letters the name with the Active Familiar’s bond effect, which grows as QI cultivates the bond', async () => {
     await renderCave({ rewards: { openingDaoXp: 13_480, qiGrant: 2_000 } });
     const name = () => container.querySelector('[data-cave-name]')!;
@@ -785,12 +809,25 @@ describe('Cultivator Cave destinations', () => {
     expect(name().getAttribute('data-cave-name-effect')).toBe('elemental-title:lightning:subtle');
     await click(open('familiar'));
     expect(caveRoute()).toBe('/home/familiar');
-    expect(container.querySelector('[data-familiar-identity]')?.textContent).toBe('Common familiar · Lightning element · Active Familiar');
-    await click(byText('button', 'Offer 1,000 QI'));
+    // The page opens on the Active Familiar.
+    expect(container.querySelector('[data-familiar-slide]')?.getAttribute('data-familiar-slide')).toBe('quill');
+    expect(container.querySelector('[data-familiar-identity]')?.textContent).toBe('Common familiar · Lightning element');
+    expect(container.querySelector('[data-familiar-active]')?.textContent).toBe('Active');
+    expect(container.querySelector('[data-familiar-name-preview]')?.getAttribute('data-familiar-name-preview')).toBe('elemental-title:lightning:subtle');
+    // One Offer button by the Familiar; its amounts open beside it.
+    expect(container.querySelector('[data-familiar-offer]')).toBeNull();
+    await click(container.querySelector('[data-familiar-offer-open]')!);
+    await click(container.querySelector('[data-familiar-offer="1000"]')!);
+    expect(container.querySelector('[data-familiar-offer]')).toBeNull();
     await settle();
     expect(text()).toContain('Quill reached Rare bond: Lightning Title · Blaze.');
+    // The result shows on the stage itself, visible while the details sheet stays closed.
+    expect(container.querySelector('[data-familiar-stage]')?.hasAttribute('data-sheet-open')).toBe(false);
+    expect(container.querySelector('[data-familiar-message]')?.closest('[data-familiar-sheet]')).toBeNull();
     expect(container.querySelector('[data-familiar-bond]')?.textContent).toBe('Rare bond');
+    expect(container.querySelector('[data-familiar-rail="rare"]')?.hasAttribute('data-reached')).toBe(true);
     // Nothing is mastered yet, so the name effect can only follow Quill or be turned off.
+    await click(container.querySelector('[data-familiar-tab="elements"]')!);
     expect(container.querySelectorAll('[data-elemental-effect-panel] [role="radio"]')).toHaveLength(2);
     await click(container.querySelector('[aria-label="Return to cave"]')!);
     await settle();
@@ -802,6 +839,7 @@ describe('Cultivator Cave destinations', () => {
     expect(valueText()).toBe('13,480 DAO XP of 25,000');
 
     await click(open('familiar'));
+    await click(container.querySelector('[data-familiar-tab="elements"]')!);
     await click(byText('[data-elemental-effect-panel] [role="radio"]', 'None'));
     await settle();
     await click(container.querySelector('[aria-label="Return to cave"]')!);
@@ -924,53 +962,86 @@ describe('Cultivator Cave settings', () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
-  it('presents the full ranked Familiar catalogue and selects its default through the profile owner without saving unrelated edits', async () => {
-    const onFamiliarProfile = vi.fn();
-    const { controller } = await renderCave({ adapter: { onFamiliarProfile } });
-    expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: undefined });
+  it('moves Familiar settings to the Familiar page and leaves Settings a way there', async () => {
+    await renderCave();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
-    await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Draft Name' })));
     await click(byText('[aria-label="Customization sections"] [role="tab"]', 'Familiar'));
-    const selection = document.querySelector('[aria-label="Familiar selection"]')!;
-    expect(selection.closest('[role="tabpanel"]')?.hasAttribute('hidden')).toBe(false);
-    expect(selection.querySelectorAll('article')).toHaveLength(12);
-    expect(selection.querySelector('img')?.getAttribute('src')).toBe('/familiars/celestial-guardian/neutral.png');
-    expect(selection.querySelectorAll('[data-rarity="epic"]')).toHaveLength(3);
-    const quill = [...selection.querySelectorAll<HTMLElement>('article')].find(article => article.textContent?.includes('Quill'))!;
-    expect(quill.querySelector('[data-rarity]')?.textContent).toBe('common');
-    expect(quill.textContent).toContain('Default');
-    await click(byText('button', 'Select Quill'));
-    expect(controller().isSavingFamiliar).toBe(true);
-    expect(onFamiliarProfile).not.toHaveBeenCalledWith({ uid: 'workshop-cultivator', familiarId: 'quill' });
-    await act(async () => { await vi.advanceTimersByTimeAsync(700); });
-    expect(controller().profile?.familiarId).toBe('quill');
-    expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: 'quill' });
-    expect(controller().profile?.displayName).not.toBe('Draft Name');
-    expect(controller().formData.displayName).toBe('Draft Name');
-    expect(quill.querySelector('button')?.getAttribute('aria-pressed')).toBe('true');
-    expect(selection.textContent).toContain('Current Familiar: Quill');
-    await act(async () => { await controller().handleFamiliarChange?.('not-unlocked'); });
-    expect(controller().profile?.familiarId).toBe('quill');
-    expect(controller().error).toBe('This Familiar is not available for selection.');
+    expect(document.querySelector('[aria-label="Familiar selection"]')).toBeNull();
+    await click(byText('[data-cave-familiar-moved] button', 'Open the Familiar page'));
+    expect(caveRoute()).toBe('/home/familiar');
+    expect(container.querySelector('[data-familiar-stage]')).not.toBeNull();
   });
 
-  it('resizes and resets the selected Familiar without saving unrelated drafts', async () => {
+  it('swipes through the whole ranked catalogue, ending on Create your own, and saves the Active Familiar through the profile owner', async () => {
     const onFamiliarProfile = vi.fn();
-    const { controller } = await renderCave({ adapter: { profileOverride: { familiarId: 'celestial-guardian' }, onFamiliarProfile } });
-    await click(byText('[data-cave-account-actions] button', 'Settings'));
-    await click(byText('[aria-label="Customization sections"] [role="tab"]', 'Familiar'));
+    const { controller } = await renderCave({ rewards: { openingDaoXp: 13_480, qiGrant: 2_000 }, adapter: { onFamiliarProfile } });
+    expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: undefined });
+    await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Draft Name' })));
+    await click(open('familiar'));
+    const slide = () => container.querySelector('[data-familiar-slide]')!.getAttribute('data-familiar-slide');
+    const next = () => click(container.querySelector('[aria-label="Next Familiar"]')!);
+    // Quill is the catalogue default and the twelfth Familiar of twelve; Create your own comes last.
+    expect(slide()).toBe('quill');
+    expect(container.querySelector('[data-familiar-stage] [aria-roledescription="slide"]')?.getAttribute('aria-label')).toBe('12 of 13: Quill');
+    await next();
+    expect(slide()).toBe('create-your-own');
+    expect(container.querySelector<HTMLButtonElement>('[data-familiar-create-action]')?.disabled).toBe(true);
+    await next();
+    // Not yet owned: offered from the Celestial Store, never activated here.
+    expect(slide()).toBe('celestial-guardian');
+    expect(container.querySelector('[data-familiar-identity]')?.textContent).toBe('Epic familiar · Celestial element');
+    expect(container.querySelector('[data-familiar-activate]')).toBeNull();
+    await click(container.querySelector('[data-familiar-store]')!);
+    expect(caveRoute()).toBe('/home/store');
+    // The profile owner still refuses a Familiar that is not available.
+    await act(async () => { await controller().handleFamiliarChange?.('not-unlocked'); });
+    expect(controller().error).toBe('This Familiar is not available for selection.');
+    expect(controller().profile?.displayName).not.toBe('Draft Name');
+  });
+
+  it('changes companion settings and personalises a Familiar from the settings menu', async () => {
+    const onFamiliarProfile = vi.fn();
+    const { controller } = await renderCave({ rewards: { openingDaoXp: 13_480, qiGrant: 2_000 }, adapter: { profileOverride: { familiarId: 'quill' }, onFamiliarProfile } });
     await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Unsaved draft' })));
-    const slider = container.querySelector<HTMLInputElement>('.familiar-size-slider input')!;
-    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
-    await act(async () => { setter.call(slider, '180'); slider.dispatchEvent(new Event('input', { bubbles: true })); });
-    expect(controller().profile?.familiarSize).toBe(1.8);
-    expect(controller().formData.displayName).toBe('Unsaved draft');
+    await click(open('familiar'));
+    await click(container.querySelector('[data-familiar-settings-open]')!);
+    const menu = document.querySelector('[data-familiar-settings]')!;
+    expect(menu.getAttribute('role')).toBe('dialog');
+    await click(menu.querySelector('[aria-label="Larger"]')!);
+    expect(controller().profile?.familiarSize).toBe(1.1);
     expect(controller().profile?.displayName).not.toBe('Unsaved draft');
-    expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: 'celestial-guardian', familiarSize: 1.8 });
-    await click(container.querySelector('.familiar-size-slider button')!);
+    expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: 'quill', familiarSize: 1.1 });
+    const header = menu.querySelector<HTMLButtonElement>('[aria-label="Keep in the header"]')!;
+    expect(header.getAttribute('aria-checked')).toBe('false');
+    await click(header);
+    expect(controller().profile?.familiarInHeader).toBe(true);
+    await click(byText('.familiar-settings-footer button', 'Restore defaults'));
     expect(controller().profile?.familiarSize).toBe(1);
-    expect(slider.value).toBe('100');
-    expect(slider.getAttribute('aria-valuetext')).toBe('100%');
+    expect(controller().profile?.familiarInHeader).toBeUndefined();
+    // Voice and Instructions are visible, waiting for the Live talk service.
+    expect(menu.querySelectorAll('[data-familiar-coming-soon]')).toHaveLength(2);
+
+    // A name of the cultivator's own, shown on the page and the Cave card.
+    const name = menu.querySelector<HTMLInputElement>('[data-familiar-name-field]')!;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+    await act(async () => { setter.call(name, '  Inkling  '); name.dispatchEvent(new Event('input', { bubbles: true })); });
+    await act(async () => { name.dispatchEvent(new FocusEvent('focusout', { bubbles: true })); });
+    expect(controller().profile?.familiarPersonal).toEqual({ quill: { name: 'Inkling' } });
+    // The story row opens the Lore tab's editor.
+    await click(byText('[data-familiar-setting="story"] button', 'Rewrite'));
+    expect(document.querySelector('[data-familiar-settings]')).toBeNull();
+    expect(container.querySelector('[data-familiar-name]')?.textContent).toBe('Inkling');
+    const story = container.querySelector<HTMLTextAreaElement>('[data-familiar-backstory-field]')!;
+    const areaSetter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!;
+    await act(async () => { areaSetter.call(story, 'Found in the margins of my first novel.'); story.dispatchEvent(new Event('input', { bubbles: true })); });
+    await click(byText('[data-familiar-lore] button', 'Save story'));
+    expect(controller().profile?.familiarPersonal).toEqual({ quill: { name: 'Inkling', backstory: 'Found in the margins of my first novel.' } });
+    expect(container.querySelector('[data-familiar-backstory]')?.getAttribute('data-familiar-backstory')).toBe('own');
+    await click(container.querySelector('[data-familiar-backstory-edit]')!);
+    await click(byText('[data-familiar-lore] button', 'Reset to original'));
+    expect(controller().profile?.familiarPersonal).toEqual({ quill: { name: 'Inkling' } });
+    await click(container.querySelector('[aria-label="Return to cave"]')!);
+    expect(open('familiar').getAttribute('aria-label')).toContain('Inkling');
   });
 
   it('keeps custom radio groups to one tab stop and supports native radio keys', async () => {
@@ -1395,7 +1466,9 @@ describe('Cave workspace shell', () => {
     expect(CAVE_PUBLIC_DESTINATIONS.map(item => item.icon)).toEqual(['home', 'scroll', 'relic']);
     const icons = Array.from(container.querySelectorAll<HTMLElement>('[data-sen-navigation-icon]'))
       .map(icon => icon.dataset.senNavigationIcon);
-    expect(icons).toEqual(expect.arrayContaining(['home', 'book', 'discovery', 'scroll', 'relic', 'energy', 'store']));
+    expect(icons).toEqual(expect.arrayContaining(['home', 'book', 'discovery', 'scroll', 'relic', 'store']));
+    // Energy wears the Energy sun, drawn in the app, so it is not a navigation icon.
+    expect(container.querySelector('[data-cave-energy] [data-energy-sun]')).not.toBeNull();
   });
 
   it('keeps the decorative backdrop behind the interactive shell', async () => {
@@ -2153,9 +2226,9 @@ describe('Cave pieces a host has not built yet', () => {
     await renderCave({ notYetBuilt: { note: NOTE, features: ['portrait-generation', 'shortcuts', 'redeem-code', 'sign-out', 'sync', 'backup', 'model-router', 'inbox'] } });
     await navigateTo('/settings');
     const notes = [...document.body.querySelectorAll('[data-cave-not-yet-built]')].map(note => note.textContent);
-    // Shortcuts, Redeem Code, Sever Link, Harmony, Backup and the Aether Router.
+    // Shortcuts, Redeem Code, Sever Link, Harmony, Backup and the Model Router.
     expect(notes).toEqual(Array(6).fill(NOTE));
-    for (const label of ['Shortcuts', 'Redeem Code', 'Sever Link', 'Import Scroll', 'Backup All', 'Aether Router']) {
+    for (const label of ['Shortcuts', 'Redeem Code', 'Sever Link', 'Import Scroll', 'Backup All', 'Model Router']) {
       expect(button(label)?.disabled, label).toBe(true);
     }
     const harmony = document.body.querySelector<HTMLButtonElement>('button[aria-label^="Harmony"]')!;
@@ -2178,7 +2251,7 @@ describe('Cave pieces a host has not built yet', () => {
     await renderCave();
     await navigateTo('/settings');
     expect(document.body.querySelectorAll('[data-cave-not-yet-built]')).toHaveLength(0);
-    for (const label of ['Shortcuts', 'Redeem Code', 'Sever Link', 'Import Scroll', 'Aether Router']) {
+    for (const label of ['Shortcuts', 'Redeem Code', 'Sever Link', 'Import Scroll', 'Model Router']) {
       expect(button(label)?.disabled, label).toBe(false);
     }
   });

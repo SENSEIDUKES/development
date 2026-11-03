@@ -1,5 +1,5 @@
 import React from 'react';
-import { LibraryNavigationIcon } from '@seihouse/library-ui';
+import { EnergySunIcon } from './EnergySunIcon';
 import './energy.css';
 
 export type EnergyAmountSize = 'sm' | 'md' | 'lg';
@@ -20,7 +20,7 @@ export const formatEnergy = (amount: number) => formatter.format(amount);
 export function EnergyAmount({ amount, size = 'md', state = 'ready', className = '', label }: EnergyAmountProps) {
   return (
     <span className={`energy-amount energy-badge ${className}`.trim()} data-energy-size={size} data-energy-state={state} aria-label={label} role="img">
-      <LibraryNavigationIcon name="energy" size="1em" className="energy-glyph" aria-hidden="true" />
+      <EnergySunIcon className="energy-glyph" />
       <span aria-hidden="true">{state === 'ready' && amount !== null ? formatEnergy(amount) : '—'}</span>
     </span>
   );

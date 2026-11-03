@@ -237,6 +237,11 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-11-02 (the Blueprint review test keeps its own timeout):** The Arc
+  workspace test that drives the whole Blueprint review surface in one pass
+  takes a timeout of its own, so a loaded machine does not read it as a
+  failure. No behavior, storage, or schema changed.
+
 - **2026-10-30 (Sparks in the Origin; sign-in when asked):** From SENSEI's header
   redesign. `CreationModal` takes `originSparks`: the host's Sparks button (formerly
   Dao Insights) sits at the end of the Origin heading (`SeedSectionFrame`

@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "Erweiterte Werkzeuge",
       "Model presets and routing overrides.": "Modellvoreinstellungen und Routing-Überschreibungen.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "Konfiguriere benutzerdefinierte Modellvoreinstellungen, Routing-Überschreibungen oder API-Zugangspunkte.",
-      "Aether Router": "Äther-Router",
+      "Model Router": "Modell-Router",
       "Cultivator": "Kultivierender",
       "Mortal": "Sterblicher",
       "Daily Dao Pillar": "Tägliche Dao-Säule",

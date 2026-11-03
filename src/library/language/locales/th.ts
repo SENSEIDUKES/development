@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "เครื่องมือขั้นสูง",
       "Model presets and routing overrides.": "ค่าที่ตั้งไว้ล่วงหน้าของโมเดลและการกำหนดเส้นทาง",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "กำหนดค่าพรีเซ็ตโมเดลแบบกำหนดเอง การแทนที่เส้นทาง หรือเอนด์พอยต์ข้อมูลรับรอง API",
-      "Aether Router": "เราเตอร์อีเธอร์",
+      "Model Router": "เราเตอร์โมเดล",
       "Cultivator": "ผู้บำเพ็ญเพียร",
       "Mortal": "ปุถุชน",
       "Daily Dao Pillar": "เสาแห่งเต๋ารายวัน",

@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/ui';
-/** Host-computed and viewer-authorized; omit hidden, stale, or unavailable activity. */
+/**
+ * How busy a world is with its people: readers reading, branching and continuing it in a recent
+ * window. It is not the original creator's publishing pace; on SEN a world carries on wherever its
+ * creator stopped. The host counts distinct people (not repeat actions) and keeps small counts from
+ * revealing individuals. Host-computed and viewer-authorized; omit hidden, stale, or unavailable activity.
+ */
 export type WorldActivityStatus = 'active-now' | 'active-this-week' | 'quiet';
 /** Display data only; account acquisition and story opening remain host actions. */
 export interface HomeWorld {
@@ -9,6 +14,15 @@ export interface HomeWorld {
   mcName: string; powerStage: string; acquired?: boolean; recentlyRead?: boolean; draft?: boolean;
   /** Card identity fields; omit either one when the host has no verified value. */
   creatorName?: string; format?: string;
+  /**
+   * The story's original language (BCP 47, e.g. `ja`, `zh-CN`), which is also the language of
+   * `title`. Omit when unknown: cards then show the title as written, with no language tag.
+   */
+  originalLanguage?: string;
+  /** Real translations of the title (the creator's own, or made for reading), by language. Never machine-made for a card. */
+  titleTranslations?: Readonly<Record<string, string>>;
+  /** The language the creator's name is written in, so it gets the right lettering. Names are never translated. */
+  creatorLanguage?: string;
   /** Host-resolved creator lettering; the card never infers an element from the name or world. */
   creatorTitle?: { element: ElementalTitleEffect; intensity?: ElementalTitleIntensity; color?: string };
   /** Host-reported progress for a publicly visible world; omit when unknown. */
@@ -17,6 +31,12 @@ export interface HomeWorld {
   senVerified?: boolean;
   /** This world's own optional motion cover clip; never use another world's clip as fallback. */
   videoUrl?: string;
+  /**
+   * This world's own wide (16:9) hero still and silent loop for the Feature card. The card
+   * falls back to the cover and its motion cover clip; never use another world's hero.
+   */
+  heroImageUrl?: string;
+  heroVideoUrl?: string;
   /** Optional, viewer-authorized information for the format icon's story panel. */
   synopsis?: string;
   tags?: readonly string[];
@@ -38,6 +58,8 @@ export interface LightNovelsHomeProps {
   worlds: readonly HomeWorld[];
   onCreateStory: () => void;
   onOpenWorld: (id: string) => void;
+  /** The worlds in the order shown (after sorting and filtering), for spoken codes: N1 is the first. */
+  onVisibleWorldsChange?: (ids: readonly string[]) => void;
   /** What the list says while it has no worlds. Without it, Home keeps the catalog's wording. */
   emptyState?: { title: string; description: string };
   /**

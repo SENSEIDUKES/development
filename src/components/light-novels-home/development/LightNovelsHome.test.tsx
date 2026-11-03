@@ -16,7 +16,7 @@ const world = (id: string, title: string): HomeWorld => ({
   mcName: 'Ye Chen', powerStage: 'Foundation', synopsis: `${title} begins.`,
 });
 
-it('keeps the Carve New Destiny slide and cycles to each featured world, under one fixed Featured name', () => {
+it('keeps the Carve New Destiny slide and cycles to each featured world in the shared Feature carousel', () => {
   const onOpenWorld = vi.fn();
   const featured = [world('lotus', 'The Last Lotus'), world('moons', 'Nine Moons')];
   // Inactive: the slides do not advance on their own and the hero's motion stays off.
@@ -24,10 +24,10 @@ it('keeps the Carve New Destiny slide and cycles to each featured world, under o
     onCreateStory={() => {}} onOpenWorld={onOpenWorld} />));
 
   const hero = () => container.querySelector('[data-home-featured] > [aria-hidden]') ;
-  const dots = () => [...container.querySelectorAll<HTMLButtonElement>('.home-featured-dot')];
+  const dots = () => [...container.querySelectorAll<HTMLButtonElement>('.world-card-carousel-segment')];
   expect(dots().map(dot => dot.getAttribute('aria-label'))).toEqual(['Defying the Heavens', 'The Last Lotus', 'Nine Moons']);
   expect(dots()[0].getAttribute('aria-current')).toBe('true');
-  expect(container.querySelector('.home-featured-label')?.textContent).toBe('Featured');
+  expect(container.querySelector('[data-home-featured]')?.getAttribute('aria-label')).toBe('Featured');
   expect(container.textContent).not.toContain('Featured Ascension');
   expect(container.textContent).toContain('Carve New Destiny');
   expect(container.querySelector('[data-world-card="feature"]')).toBeNull();
@@ -36,9 +36,8 @@ it('keeps the Carve New Destiny slide and cycles to each featured world, under o
   expect(hero()).not.toBeNull();
   expect(container.querySelector('[data-world-card="feature"] h3')?.textContent).toBe('The Last Lotus');
   expect(dots()[1].getAttribute('aria-current')).toBe('true');
-  // The name stays where it was; the card does not repeat it.
-  expect(container.querySelector('.home-featured-label')?.textContent).toBe('Featured');
-  expect(container.querySelector('.world-card-banner-eyebrow')).toBeNull();
+  // Each world's hero names itself Featured; the Carve New Destiny slide carries its own heading.
+  expect(container.querySelector('.world-card-banner-eyebrow')?.textContent).toBe('Featured');
 
   act(() => dots()[2].click());
   expect(container.querySelector('[data-world-card="feature"] h3')?.textContent).toBe('Nine Moons');
@@ -55,9 +54,9 @@ it('keeps the Carve New Destiny slide and cycles to each featured world, under o
 
 it('leaves the Carve New Destiny slide alone without featured worlds', () => {
   act(() => root.render(<LightNovelsHome active={false} worlds={[]} onCreateStory={() => {}} onOpenWorld={() => {}} />));
-  expect(container.querySelector('.home-featured-label')?.textContent).toBe('Featured');
-  expect(container.querySelector('.home-featured-dot')).toBeNull();
-  expect(container.querySelector('.home-featured-step')).toBeNull();
+  expect(container.querySelector('[data-home-featured]')?.getAttribute('aria-label')).toBe('Featured');
+  expect(container.querySelector('.world-card-carousel-segment')).toBeNull();
+  expect(container.querySelector('.world-card-carousel-step')).toBeNull();
 });
 
 it('turns with a sideways swipe, and the swipe does not open the card', () => {
@@ -93,7 +92,7 @@ it('advances on its own while active, and holds while the reader points at it', 
     act(() => { vi.advanceTimersByTime(8000); });
     expect(container.querySelector('[data-world-card="feature"] h3')?.textContent).toBe('The Last Lotus');
     const section = container.querySelector<HTMLElement>('[data-home-featured]')!;
-    act(() => { section.dispatchEvent(new PointerEvent('pointerover', { bubbles: true })); });
+    act(() => { section.dispatchEvent(new PointerEvent('pointerover', { bubbles: true, pointerType: 'mouse' })); });
     act(() => { vi.advanceTimersByTime(16000); });
     expect(container.querySelector('[data-world-card="feature"] h3')?.textContent).toBe('The Last Lotus');
   } finally {

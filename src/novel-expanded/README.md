@@ -1,5 +1,9 @@
 # NovelExpanded app
 
+- **2026-11-01** — Model Router tiers: readers choose Mortal, Immortal or Heaven; the team sets the model behind each.
+- **2026-11-01** — Settings › Familiar › Say “Familiar” (beta) calls the Familiar by voice; live talk hangs up after a quiet moment and is charged by the started 20 seconds (3 / 6 / 9 Energy a minute).
+- **2026-11-01** — Settings › Advanced Tools › Usage: what this device made (chapters, pictures, Familiar talk, worlds) and its Energy, with a Behind the scenes view of models and token counts. Recorded in this browser for 90 days (`src/host/usage/`). Chapters cost 2 Energy.
+- **2026-11-01** — Settings › Advanced Tools › Model Router (was Aether Router) opens the Model Router.
 - **2026-10-30** — **The author's world view.** Tapping a world under Your
   worlds in Create opens it as its author sees it (`AuthorWorldView`,
   `?page=create&world=<id>`), iTunes-plain, SENSEI's design: the author's worlds
@@ -297,8 +301,16 @@ card wear it.
 context is the Reader's four existing Fate choices: tap Talk to Familiar, say a
 choice or `Custom: <direction>`, review, then Confirm or Cancel. Touch and typing
 are equivalent paths. This saves the next chapter's direction through the same
-controller as Fate; the ordinary Fate panel remains available. Other screens
-can register their own context later. They currently show no helper actions.
+controller as Fate; the ordinary Fate panel remains available.
+
+Every page also gets the app's anywhere actions (`appFamiliarActions.ts`): Home,
+Create, Profile, My Energy, Settings and Store, each going to exactly one place,
+at once and without a confirmation (going somewhere changes nothing). Which
+actions the Familiar gets on a page is decided by the master action list
+(`@seihouse/library/familiar` `FAMILIAR_ACTION_LIST`): a page's own actions plus
+the anywhere ones, never another page's. The card shows the page's front
+suggestions (at most four) and keeps the rest behind See all.
+`appFamiliarActions.test.ts` pins every page's actions.
 See the [Familiar helper contract and device checks](../components/familiar/README.md#contextual-helper--2026-10-16).
 
 `AppFamiliar.tsx` gives the app one Familiar, the profile's equipped one:
@@ -458,6 +470,10 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs (a stand-in cover among them) and a stand-in for the browser's speech (headless Chromium has no voices): Create's Story Settings, Story View's Story Settings, and Manifest on the cover (three to choose from, the picker) to World Info and Home.
 
 ## History
+
+- **2026-11-02** — Spoken codes: while the Familiar is open, Home's story cards show N1, N2…, the Reader's chapter list C1, C2… and Fate's paths F1–F4. Saying a code opens that story or chapter, or picks that path to confirm. The badges disappear when the Familiar closes.
+
+- **2026-11-02** — The Familiar can take the reader anywhere in the app (Home, Create, Profile, My Energy, Settings, Store) from every page, at once. A master action list decides what it can do on each page: that page's own actions plus these, never another page's. Its card shows the page's top suggestions first, with the rest behind See all.
 
 - **2026-10-30** — The internal chapter-tagging UI module is named `ChapterTaggingControls.tsx` so Windows can distinguish it from the `chapterTagging.ts` helper. Package exports and tagging behavior are unchanged.
 

@@ -17,13 +17,13 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 | Chapters | Gemini, OpenRouter, MiniMax, Anthropic, local LM Studio | Harness Generation, Holdings Fixer, Look Describer, Chapter Tagger (its own choice, else the chapter model), Story Seed Blueprint, Story Spark, Reader Translation |
 | Images | Gemini, OpenRouter, MiniMax | Story Cover, Image Lab, Profile Picture |
 | TTS | ElevenLabs | Codex Voice Quote |
-| Live voice | Gemini | Familiar Live Talk |
+| Live voice | OpenAI, Gemini, ElevenLabs | Familiar Live Talk |
 | Audio | Gemini | none yet (catalog only) |
 | Video | Gemini, MiniMax | No feature yet; MiniMax task adapter implemented, Veo catalog only |
 | 3D | Tripo AI | none yet (catalog only) |
 
 Model ids carry their route: `google/<model>` → Gemini, `openrouter/<vendor>/<model>`
-→ OpenRouter, `minimax/<model>` → MiniMax, `anthropic/<model>` → Anthropic, `eleven_*` → ElevenLabs, and `tripo-*` → Tripo AI.
+→ OpenRouter, `minimax/<model>` → MiniMax, `anthropic/<model>` → Anthropic, `eleven_*` (TTS) or `elevenlabs/<model>` (live) → ElevenLabs, and `tripo-*` → Tripo AI.
 
 The audio catalog lists Lyria 3.5 and Lyria 3 Clip Preview. The video catalog lists
 Veo 3.1, Veo 3.1 Fast, and Veo 3.1 Lite Preview. The 3D catalog lists Tripo V3.1
@@ -49,8 +49,12 @@ any model call that is not registered. See AGENTS.md.
 | `OPENROUTER_REASONING_EFFORT` | Optional server fallback reasoning effort for OpenRouter models (the Router's Advanced setting wins; models that send their own default, below, never use it) |
 | `HARNESS_GENERATION_MODELS` | Models pinned ahead of the catalog |
 | `*_DEFAULT_MODEL` | Default model per surface (otherwise Gemini 3.1 Flash Lite) |
-| `ELEVENLABS_API_KEY`, `ELEVENLABS_MODEL_ID` | TTS |
-| `FAMILIAR_LIVE_MODEL`, `FAMILIAR_LIVE_VOICE` | Live voice (default Gemini 3.8 Live, voice Puck); uses `GEMINI_API_KEY` |
+| `ELEVENLABS_API_KEY` | ElevenLabs TTS and live voice |
+| `ELEVENLABS_MODEL_ID` | TTS model |
+| `FAMILIAR_LIVE_MODEL` | Live voice model; by default the first listed whose key is set (GPT-Live 1 with `OPENAI_API_KEY`, else Gemini 3.8 Live with `GEMINI_API_KEY`); ElevenLabs Realtime is never the default, only chosen |
+| `FAMILIAR_LIVE_OPENAI_VOICE`, `FAMILIAR_LIVE_OPENAI_BACKEND` | GPT-Live's voice (default `ballad`) and its delegated model (default `gpt-5.4-mini`) |
+| `FAMILIAR_LIVE_VOICE` | Gemini Live's voice (default Puck) |
+| `FAMILIAR_LIVE_ELEVENLABS_VOICE` | ElevenLabs Realtime's voice (default `brian`) |
 | `TRIPO_API_KEY` | Tripo 3D model provider status |
 
 `GET /api/model-router` returns the read-only status (never key values).
@@ -149,6 +153,11 @@ read it.
 
 ## Workshop history
 
+- 2026-11-01 — Live speech adds ElevenLabs Realtime (Eleven Realtime v1 Mini and Max), Heaven grade, the live Heaven tier's model (Mini). The server mints a client secret locked to the Familiar's session (`src/server/familiar-live/elevenlabs.ts`, `ELEVENLABS_API_KEY`, voice `FAMILIAR_LIVE_ELEVENLABS_VOICE`, default brian); the browser talks over OpenAI's Realtime protocol (`src/host/familiar/realtimeLive.ts`). Listed after the others, so it serves only when chosen.
+- 2026-11-01 — Tiers: Chapters, Images and Live speech open on three tiers (Mortal, Immortal, Heaven, with Story Seed's Fate Pressure flames). Readers choose a tier; the team sets the model behind each (`ENERGY_TIER_MODELS`; a model set here applies on this device), and the Router flags a tier model that costs more to run than the tier brings in. An exact model picked in the list wins over the tier, at its own grade. Prices and Usage follow the tier chosen.
+- 2026-11-01 — Each chapter, image and live model shows its Energy grade (Mortal, Immortal, Heaven) and price, from `src/components/energy/shared/energyGrades.ts`. Every model in those tabs must have a grade (`energyGrades.test.ts`).
+- 2026-11-01 — Text to speech and Live speech are separate tabs. Live speech is chosen in the Router (`live` preference); the server runs that choice when its key is set. The Router opens from the app's Settings › Advanced Tools › Model Router.
+- 2026-11-01 — Live voice adds OpenAI GPT-Live 1, serving first when `OPENAI_API_KEY` is set.
 - **2026-10-31** — A Blueprint the model leaves incomplete now says which
   parts are missing ("left out the factions"), in place of "could not produce
   a complete World Blueprint", and no longer names Gemini whatever the model

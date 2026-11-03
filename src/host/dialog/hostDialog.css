@@ -1,0 +1,7 @@
+/* Host pages' buttons (Model Router, Usage) are easy to tap on phones, in the app and the Workshop alike. */
+@media (pointer: coarse) {
+  .host-touch {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

@@ -12,11 +12,26 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Workshop preview:** `?preview=reader-chamber`. Original Reference is production's Reader; Development is the NovelExpanded app's own Reader (since 2026-10-09)
 - **Development view:** the app's Reader, `HarnessReaderSession` (SEN, `src/components/harness-generation/development/`), hosted exactly as the app hosts it by Library's `StoryPages` on its read page. The older development Reader in `development/` is no longer on this card; its code stays for the Card Workshop, Reader Codex and Character Voice previews that use parts of it
 - **First Workshop record:** 2026-07-31
-- **Last recorded Workshop update:** 2026-10-30
+- **Last recorded Workshop update:** 2026-11-02
 - **Historical source inspection:** 2026-08-22 (the older copy), 2026-10-07 (the current Original Reference)
 - **Implementation status:** under refinement
 
 ## Workshop history
+
+- **2026-11-02 (the snapshot lock reads the same on every platform):** The
+  Original Reference's snapshot test now canonicalizes line endings and
+  normalizes path separators before it compares. Git stores the copy with LF
+  endings, and a Windows checkout rewrites them to CRLF on the way out, so the
+  same untouched copy used to fail there while passing on CI. The guard still
+  catches any real edit to a copied file. The copy itself is unchanged.
+
+- **2026-11-02:** Development shares the app's narration-timed Sound Cues:
+  Listen follows the spoken sentence and triggers cues at their exact words,
+  once per chapter per Reader visit, with 500 ms between cue starts. Silent
+  reading stays tap-only. Pause/seek cancel pending and already-started cues
+  through audio-player 5.2.0's public cue-stop control.
+  The Original Reference remains unchanged. See the Harness Generation
+  README and `scripts/verifyNarrationCues.browser.mjs`.
 
 - **2026-10-30:** Fate/Create uses the same vertical glass menu rows as the bottom pickers, with a compact inset panel above Create on phones and laptops. Create keeps the same circular button dimensions and icon size as Listen and Codex. The app and Development preview share this presentation.
 

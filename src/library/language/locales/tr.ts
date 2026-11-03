@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "Gelişmiş Araçlar",
       "Model presets and routing overrides.": "Model ön ayarları ve yönlendirme geçersiz kılmaları.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "Özel model ön ayarlarını, yönlendirme kurallarını veya API uç noktalarını yapılandırın.",
-      "Aether Router": "Esir Yönlendirici",
+      "Model Router": "Model Yönlendirici",
       "Cultivator": "Gelişimci",
       "Mortal": "Ölümlü",
       "Daily Dao Pillar": "Günlük Dao Sütunu",

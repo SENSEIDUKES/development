@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useOptionalReaderMixer } from '@seihouse/audio-player';
+import { soundCueVolume } from '@seihouse/sen/inline-audio';
 import { ReaderAudioNote } from './ReaderAudioNote';
 import { useSoundtrackChanges } from './useSoundtrackChanges';
 import { useReaderDocumentScrollbar } from './useReaderDocumentScrollbar';
 import { resolveSpokenSoundCue, type SpokenCueTarget, type SpokenSoundCueResult, type TextHighlightBlock } from '@seihouse/sen/highlight-engine';
-import { soundVocabulary, type SceneAudioTrack, type SoundCueAttachment } from '@seihouse/sen/audio';
+import { resolvePlayableSoundCue, soundVocabulary, type SceneAudioTrack, type SoundCueAttachment } from '@seihouse/sen/audio';
 import { getSenTextDirection } from '@seihouse/sen/contracts';
 import {
   DEFAULT_READER_FONTS,
@@ -71,6 +73,8 @@ export interface ReaderHostTools {
   interruptPlayback(): (resume: boolean) => void;
   /** Create mode's tools, only while Create mode is open on the newest chapter. */
   createMode?: { sounds: ReaderSoundAuthoring };
+  /** Opens a chapter of this story by its number; false when the story has no such chapter. */
+  openChapter?(chapterNumber: number): boolean;
 }
 
 /**
@@ -376,13 +380,22 @@ export function HarnessReaderSession({
   const attempt = chapter && state.attempts.find(item => item.id === chapter.attemptId);
   const mainCharacter = useMemo(() => (attempt
     ? protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters) : undefined), [attempt]);
+  const mixer = useOptionalReaderMixer();
+  const scriptRevision = useMemo(() => JSON.stringify([chapter?.paragraphs, chapter?.speakers, chapter?.soundCues]),
+    [chapter?.paragraphs, chapter?.speakers, chapter?.soundCues]);
   const readAloud = useReadAloud({
     scriptKey: chapter?.id ?? 'no-chapter',
+    scriptRevision,
     buildScript: () => (chapter ? buildReadAloudScript({
-      chapterNumber: chapter.chapterNumber, title: chapter.title, language, paragraphs: blocks, speakers: chapter.speakers, mainCharacter,
+      chapterNumber: chapter.chapterNumber, title: chapter.title, language, paragraphs: blocks, speakers: chapter.speakers, mainCharacter, soundCues: chapter.soundCues,
     }) : NO_SCRIPT),
     language, preferences: readerPreferences, picks: readAloudVoices,
     suspended: covered,
+    onSoundCue: cue => {
+      const playable = resolvePlayableSoundCue(cue);
+      if (playable.ok) mixer?.playCue(playable.publicUrl, { volume: soundCueVolume(cue.payload.energy) });
+    },
+    onStopSoundCues: () => mixer?.stopCues(),
   });
   const reading = readAloud.status === 'playing' || readAloud.status === 'paused';
   const spoken = reading ? readAloud.line : undefined;
@@ -412,7 +425,7 @@ export function HarnessReaderSession({
   // The chapter's soundscapes; before the story has a chapter, the newest one's or the host's.
   const loadout = chapter?.mediaLoadout ?? chapters.at(-1)?.mediaLoadout;
   const pieces = useMemo(() => loadout?.soundscapes.map(entry => entry.track) ?? soundscapes, [loadout, soundscapes]);
-  const mixer = useReaderSoundtrack({
+  useReaderSoundtrack({
     active: Boolean(story && readerState),
     chapterId: chapter?.id, soundCues: chapter?.soundCues, scene, pieces, atmospheres: loadout?.atmospheres, choice: soundtrackChoice,
     speaking: readAloud.status === 'playing', listenEnded: readAloud.status === 'ended',
@@ -495,7 +508,8 @@ export function HarnessReaderSession({
 
   const panel = layer?.kind === 'panel' ? layer.id : undefined;
   return <>
-    {renderHostTools?.({ chapterId: chapter?.id ?? 'no-chapter', busy: covered, interruptPlayback: readAloud.interrupt, createMode: sounds && { sounds } })}
+    {renderHostTools?.({ chapterId: chapter?.id ?? 'no-chapter', busy: covered, interruptPlayback: readAloud.interrupt, createMode: sounds && { sounds },
+      openChapter: number => { if (!chapters.some(entry => entry.chapterNumber === number)) return false; openChapter(number); return true; } })}
     {/* The frame fills the screen; on laptops a panel sits at the right and the frame shrinks beside it.
         A right-to-left story mirrors the frame: its text, the chapter arrows and the bars' ends. */}
     <div dir={direction} className={`reader-frame transition-[padding] duration-200 motion-reduce:transition-none ${panel ? 'lg:pr-[28rem]' : ''}`} data-panel={panel}>

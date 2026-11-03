@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "ایڈوانسڈ ٹولز",
       "Model presets and routing overrides.": "ماڈل پری سیٹس اور راؤٹنگ اوور رائیڈز۔",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "مخصوص ماڈل پری سیٹس، راؤٹنگ اوور رائیڈز، یا API اسناد کے اینڈ پوائنٹس ترتیب دیں۔",
-      "Aether Router": "ایتھر راؤٹر",
+      "Model Router": "ماڈل راؤٹر",
       "Cultivator": "کلٹیویٹر",
       "Mortal": "فانی",
       "Daily Dao Pillar": "روزانہ داؤ ستون",

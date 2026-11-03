@@ -17,7 +17,7 @@ import { LibraryPanel, LibraryDiscoveryIcon } from '@seihouse/library-ui';
 import { SEIEmptyState } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldCard } from '../../world-card/development/WorldCard';
-import { WorldCardFeature } from '../../world-card/development/WorldCardFeature';
+import { WorldCardCompactGrid, WorldCardCompactTile } from '../../world-card/development/WorldCardCompactTile';
 import { WorldCardMenu } from '../../world-card/development/WorldCardMenu';
 import type { DiscoverCodexEntry, DiscoverCreator, DiscoverProps } from '../shared/discoverContracts';
 import './discover.css';
@@ -127,7 +127,6 @@ function DiscoverContent({
   trackedWorldIds,
   followedCreatorIds,
   trackedCodexIds,
-  featuredWorldIds = [],
   fateSurvivalWorldIds = [],
   rankingBoards = [],
   onOpenWorld,
@@ -191,7 +190,6 @@ function DiscoverContent({
   const catalogue = worlds.filter(storyMatches);
   const people = creators.filter((creator) => creatorMatches(creator));
   const entries = codexEntries.filter((entry) => entry.kind === codexKind && entryMatches(entry));
-  const featured = pick(featuredWorldIds);
   const fate = pick(fateSurvivalWorldIds);
   const feedReleases = releases
     .flatMap((release) => {
@@ -486,17 +484,14 @@ function DiscoverContent({
                     subtitle={`${catalogue.length} ${catalogue.length === 1 ? 'story' : 'stories'}${genre ? ` · ${genre}` : ''}`}
                   >
                     {catalogue.length ? (
-                      <ul className="discover-grid" aria-label="Stories">
+                      // A browse page shows many worlds: the Compact grid, scrolling down only.
+                      <WorldCardCompactGrid label="Stories">
                         {catalogue.map((world) => (
                           <li key={world.id}>
-                            <WorldCard
-                              world={world}
-                              displayStatus={publicStatus(world)}
-                              onOpen={() => onOpenWorld(world.id)}
-                            />
+                            <WorldCardCompactTile world={world} onOpen={() => onOpenWorld(world.id)} />
                           </li>
                         ))}
-                      </ul>
+                      </WorldCardCompactGrid>
                     ) : (
                       <Empty title={emptyTitle} description={emptyDescription} />
                     )}
@@ -538,21 +533,6 @@ function DiscoverContent({
                       />
                     )}
                   </Shelf>
-                  {featured.length > 0 && (
-                    <section aria-label="Featured" className="discover-shelf">
-                      <ul className="discover-rail discover-rail--featured" aria-label="Featured worlds">
-                        {featured.map((world) => (
-                          <li key={world.id}>
-                            <WorldCardFeature
-                              world={world}
-                              displayStatus={publicStatus(world)}
-                              onOpen={() => onOpenWorld(world.id)}
-                            />
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  )}
                   {fate.length > 0 && (
                     <section aria-labelledby={`${ids}-fate`} className="discover-fate">
                       <div className="discover-fate-copy">

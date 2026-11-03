@@ -59,10 +59,15 @@ export interface UserProfileController {
   handleFamiliarSizeChange?: (size: number) => void;
   handleFamiliarInHeaderChange?: (inHeader: boolean) => void;
   handleFamiliarLiveTalkChange?: (liveTalk: boolean) => void;
+  handleFamiliarWakeWordChange?: (wakeWord: boolean) => void;
+  /** Renames a Familiar or rewrites its backstory; an empty value or null returns to the catalogue's own. */
+  handleFamiliarPersonalChange?: (familiarId: string, changes: { name?: string | null; backstory?: string | null }) => void;
   // Library / app-shell state (production: `useAppStore`)
   syncStatus: string;
   lastSavedTime: Date | null;
   setIsSettingsOpen: (open: boolean) => void;
+  /** Opens the host's Usage page (Settings › Advanced Tools). Without it, no Usage button shows. */
+  setIsUsageOpen?: (open: boolean) => void;
   setIsShortcutsOpen: (open: boolean) => void;
   handleExportLibrary: () => void;
   handleImportLibrary: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -166,7 +171,7 @@ export interface UserProfileController {
  * The account and server pieces of the Cave a host may not have built yet:
  * portrait generation (the profile picture), Keyboard Shortcuts, code
  * redemption, signing out (Sever Link), Harmony sync, library backup and
- * import, the Aether Router, and the Inbox.
+ * import, the Model Router, and the Inbox.
  */
 export type UserProfileFeature =
   | 'portrait-generation'

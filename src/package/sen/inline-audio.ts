@@ -13,6 +13,7 @@ export {
   InlineAudioText,
   MixerCueControl,
   SOUND_CUE_ENERGY_VOLUME,
+  soundCueVolume,
 } from '../../audio/InlineAudioView';
 export type {
   InlineAudioControlProps,

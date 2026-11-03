@@ -2,7 +2,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ENERGY_PRICE_CATALOG } from '@seihouse/library/energy';
+import { ENERGY_PRICE_CATALOG, EnergyModelsProvider } from '@seihouse/library/energy';
 import { EnergyClientProvider, createHttpEnergyClient, type EnergyClient } from '@seihouse/library/energy';
 import { useEnergyAccount, type EnergyAccountState } from '@seihouse/library/energy';
 import { ENERGY_ITEM_PRICES, ENERGY_PACKS, QI_ITEM_PRICES, QI_PACKS, QiAmount, type QiAccountState } from '@seihouse/library/cultivation';
@@ -127,10 +127,10 @@ describe('Reusable Energy pieces', () => {
 
   it('floats the price up as each new result arrives, never for those already there', async () => {
     await render(<EnergyCostMeter actionId="chapter.generate" made={3} />);
-    expect(container.querySelector('.energy-action-cost')?.textContent).toBe('1');
+    expect(container.querySelector('.energy-action-cost')?.textContent).toBe('2');
     expect(container.querySelector('[data-energy-spend]')).toBeNull();
     await render(<EnergyCostMeter actionId="chapter.generate" made={4} />);
-    expect(container.querySelector('[data-energy-spend]')?.getAttribute('data-energy-spend')).toBe('1');
+    expect(container.querySelector('[data-energy-spend]')?.getAttribute('data-energy-spend')).toBe('2');
     expect(container.querySelectorAll('.energy-spend-floater__item')).toHaveLength(1);
   });
 
@@ -148,13 +148,27 @@ describe('Reusable Energy pieces', () => {
     expect(status?.textContent).toBe('QI balance 2,600');
   });
 
+  it('prices a chapter or image by the grade of the host\'s model, and floats that price', async () => {
+    const heaven = { chapter: 'anthropic/claude-opus-5-5', image: 'google/gemini-3-pro-image' };
+    await render(<EnergyModelsProvider models={heaven}><EnergyActionCost actionId="chapter.generate" /><EnergyActionCost actionId="image.generate" /><EnergyActionCost actionId="short-cue.generate" /></EnergyModelsProvider>);
+    const costs = Array.from(container.querySelectorAll('.energy-action-cost'));
+    expect(costs.map(cost => cost.textContent)).toEqual(['8', '20', '3']);
+    expect(costs[0].getAttribute('aria-label')).toBe('Costs 8 Energy (projected)');
+    await render(<EnergyModelsProvider models={heaven}><EnergyCostMeter actionId="chapter.generate" made={1} /></EnergyModelsProvider>);
+    await render(<EnergyModelsProvider models={heaven}><EnergyCostMeter actionId="chapter.generate" made={2} /></EnergyModelsProvider>);
+    expect(container.querySelector('[data-energy-spend]')?.getAttribute('data-energy-spend')).toBe('8');
+    // The server's default model (none chosen) is Mortal: the catalog price.
+    await render(<EnergyModelsProvider models={{}}><EnergyActionCost actionId="chapter.generate" /></EnergyModelsProvider>);
+    expect(container.querySelector('.energy-action-cost')?.textContent).toBe('2');
+  });
+
   it('renders the configured action cost from the shared catalog', async () => {
     await render(<><EnergyActionCost actionId="chapter.generate" /><EnergyActionCost actionId="image.generate" /><EnergyActionCost actionId="narration.generate" /><EnergyActionCost price={7} /></>);
     const costs = Array.from(container.querySelectorAll('.energy-action-cost'));
     // The Energy mark is drawn artwork now, so only the number is text.
-    expect(costs.map(cost => cost.textContent)).toEqual(['1', '5', '7']);
-    expect(costs.every(cost => cost.querySelector('[data-sen-navigation-icon="energy"]'))).toBe(true);
-    expect(costs[0].getAttribute('aria-label')).toBe('Costs 1 Energy (projected)');
+    expect(costs.map(cost => cost.textContent)).toEqual(['2', '5', '7']);
+    expect(costs.every(cost => cost.querySelector('[data-energy-sun]'))).toBe(true);
+    expect(costs[0].getAttribute('aria-label')).toBe('Costs 2 Energy (projected)');
     expect(ENERGY_PRICE_CATALOG.find(entry => entry.actionId === 'narration.generate')?.price).toBeNull();
   });
 
@@ -217,7 +231,7 @@ describe('Reusable Energy pieces', () => {
     expect(container.querySelectorAll('.energy-amount')).toHaveLength(2);
     const indicator = container.querySelector('[aria-label="Energy balance 1,234"]')!;
     expect(indicator.textContent).toBe('1,234');
-    expect(indicator.querySelector('[data-sen-navigation-icon="energy"]')).not.toBeNull();
+    expect(indicator.querySelector('[data-energy-sun]')).not.toBeNull();
   });
 
   it('describes a successful deduction and an insufficient balance without triggering them', async () => {

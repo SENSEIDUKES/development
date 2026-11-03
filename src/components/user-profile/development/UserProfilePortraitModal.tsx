@@ -7,7 +7,7 @@ import './portraitBuilder.css';
 import { UserProfile } from './types';
 import { EnergyActionCost } from '../../energy/development/EnergyActionCost';
 import { EnergySpendFloater, type EnergySpendBurst } from '../../energy/development/EnergySpendFloater';
-import { getEnergyPriceEntry } from '../../energy/shared/energyContracts';
+import { useActionEnergyPrice } from '../../energy/shared/energyModels';
 
 /** The builder offers three portraits for each photo. */
 export const PORTRAIT_CHOICES = 3;
@@ -57,7 +57,7 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [spent, setSpent] = useState<EnergySpendBurst>();
-  const imagePrice = getEnergyPriceEntry('image.generate').price ?? 0;
+  const imagePrice = useActionEnergyPrice('image.generate') ?? 0;
   // Each set of portraits shows its Energy leaving: one "−5" per portrait made.
   useEffect(() => {
     if (generatedPortraitUrls.length && imagePrice) setSpent(previous => ({ key: (previous?.key ?? 0) + 1, amount: imagePrice, count: generatedPortraitUrls.length }));

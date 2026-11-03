@@ -33,7 +33,8 @@ it('keeps the format mark and an awarded SEN sash on the 2:3 art, with the title
   const media = card.querySelector('.world-card-base-media')!;
   // On the art: the format mark and the SEN sash only. The title and creator live in the caption.
   expect(media.querySelector(':scope > .world-card-base-format .sr-only')?.textContent).toBe('Novel');
-  expect(card.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
+  expect(card.querySelector(':scope .world-card-base-format svg.lucide-info')).not.toBeNull();
+  expect(card.querySelector('[data-sen-icon="story-scroll"]')).toBeNull();
   expect(media.textContent).not.toContain('SENSEI');
   expect(media.querySelector('.world-card-ribbon')?.textContent).toBe('SEN');
   expect(media.querySelectorAll('.world-card-ribbon-star')).toHaveLength(2);
@@ -601,7 +602,7 @@ it('shows each trimmed tag once', () => {
   error.mockRestore();
 });
 
-it('spotlights a world in the wide Feature card with its cover, sash, details and synopsis', () => {
+it('spotlights a world in the living Feature hero with its art, sash, details, synopsis and door', () => {
   const onOpen = vi.fn();
   act(() => root.render(<WorldCardFeature world={{ ...world, synopsis: 'A lotus blooms.', branchingEnabled: true }}
     displayStatus={{ view: 'public', value: 'ongoing' }} senSash onOpen={onOpen} />));
@@ -612,9 +613,11 @@ it('spotlights a world in the wide Feature card with its cover, sash, details an
   expect(card.querySelector('.world-card-banner-details')?.textContent).toBe('Xianxia | Ch. 24 | On Going');
   expect(card.querySelector('.world-card-banner-synopsis')?.textContent).toBe('A lotus blooms.');
   expect(card.querySelector('.world-card-feature')?.textContent).toBe('Branching');
-  expect(card.querySelector('.world-card-banner-cover img')?.getAttribute('src')).toBe('/lotus.png');
-  expect(card.querySelector('.world-card-banner-cover .world-card-ribbon')).not.toBeNull();
-  expect(card.style.getPropertyValue('--world-card-banner-art')).toBe('url("/lotus.png")');
+  // Without a wide hero, the cover fills the card edge to edge.
+  expect(card.getAttribute('data-hero')).toBe('cover');
+  expect(card.querySelector('.world-card-banner-still')?.getAttribute('src')).toBe('/lotus.png');
+  expect(card.querySelector('.world-card-banner-sash .world-card-ribbon')).not.toBeNull();
+  expect(card.querySelector('.world-card-banner-action')?.textContent).toBe('Enter World');
   const open = card.querySelector<HTMLButtonElement>('.world-card-banner-open')!;
   expect(open.getAttribute('aria-label')).toBe('Open The Last Lotus, 24 chapters, creator SENSEI, On Going');
   act(() => open.click());
@@ -626,6 +629,25 @@ it('spotlights a world in the wide Feature card with its cover, sash, details an
   expect(container.querySelector('.world-card-banner-byline')).toBeNull();
   expect(container.querySelector('.world-card-ribbon')).toBeNull();
   expect(container.querySelector('video')).toBeNull();
+
+  // A wide hero still takes the cover's place.
+  act(() => root.render(<WorldCardFeature world={{ ...world, heroImageUrl: '/lotus-wide.jpg' }} actionLabel={null} onOpen={() => {}} />));
+  expect(container.querySelector('[data-world-card="feature"]')?.getAttribute('data-hero')).toBe('wide');
+  expect(container.querySelector('.world-card-banner-still')?.getAttribute('src')).toBe('/lotus-wide.jpg');
+  expect(container.querySelector('.world-card-banner-action')).toBeNull();
+});
+
+it('keeps the Feature card’s loop still for a reader who prefers reduced motion, even as its slide comes on screen', () => {
+  const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce'), media: query, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }));
+  try {
+    act(() => root.render(<WorldCardFeature key="still" world={{ ...world, heroVideoUrl: '/lotus-hero.mp4' }} active={false} onOpen={() => {}} />));
+    act(() => root.render(<WorldCardFeature key="still" world={{ ...world, heroVideoUrl: '/lotus-hero.mp4' }} active onOpen={() => {}} />));
+    expect(play).not.toHaveBeenCalled();
+  } finally {
+    vi.unstubAllGlobals();
+    play.mockRestore();
+  }
 });
 
 it('loops the world’s own motion picture, muted, behind the Feature card', () => {
@@ -642,7 +664,15 @@ it('loops the world’s own motion picture, muted, behind the Feature card', () 
   expect(video.muted).toBe(true);
   expect(video.getAttribute('aria-hidden')).toBe('true');
   expect(play).toHaveBeenCalled();
-  // The still cover stays on the right.
-  expect(container.querySelector('.world-card-banner-cover img')?.getAttribute('src')).toBe('/lotus.png');
+  // The still stays beneath the loop.
+  expect(container.querySelector('.world-card-banner-still')?.getAttribute('src')).toBe('/lotus.png');
+
+  // The world's wide hero loop wins over its cover clip, and an off-screen slide waits.
+  play.mockClear();
+  act(() => root.render(<WorldCardFeature key="hero" world={{ ...world, videoUrl: '/lotus.mp4', heroVideoUrl: '/lotus-hero.mp4' }} active={false} onOpen={() => {}} />));
+  expect(container.querySelector('.world-card-banner-video')?.getAttribute('src')).toBe('/lotus-hero.mp4');
+  expect(play).not.toHaveBeenCalled();
+  act(() => root.render(<WorldCardFeature key="hero" world={{ ...world, videoUrl: '/lotus.mp4', heroVideoUrl: '/lotus-hero.mp4' }} active onOpen={() => {}} />));
+  expect(play).toHaveBeenCalled();
   play.mockRestore();
 });

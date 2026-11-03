@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "Расширенные инструменты",
       "Model presets and routing overrides.": "Пресеты моделей и переопределение маршрутизации.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "Настройте пользовательские пресеты моделей, маршрутизацию или точки доступа API.",
-      "Aether Router": "Маршрутизатор Эфира",
+      "Model Router": "Маршрутизатор моделей",
       "Cultivator": "Культиватор",
       "Mortal": "Смертный",
       "Daily Dao Pillar": "Ежедневный Столп Дао",

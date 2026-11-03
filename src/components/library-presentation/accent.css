@@ -16,12 +16,12 @@
   --sh-nav-active-border: var(--library-accent);
   --sh-nav-active-shadow: 0 0 18px -7px color-mix(in srgb, var(--library-accent) 60%, transparent), inset 0 -12px 22px -18px color-mix(in srgb, var(--library-accent) 60%, white);
 }
-.library-custom-accent [data-light-novels-home] :is(.home-featured-label, .home-filter-label, .text-gold-accent),
+.library-custom-accent [data-light-novels-home] :is(.home-filter-label, .text-gold-accent),
 .library-custom-accent [data-home-events] .home-events-label,
 .library-custom-accent .dao-sparks-trigger {
   color: var(--library-accent);
 }
-.library-custom-accent [data-light-novels-home] .home-featured-dot[aria-current='true']::after {
+.library-custom-accent [data-light-novels-home] .world-card-carousel-fill {
   background: var(--library-accent);
   box-shadow: 0 0 6px color-mix(in srgb, var(--library-accent) 40%, transparent);
 }

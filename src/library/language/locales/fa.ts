@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "ابزارهای پیشرفته",
       "Model presets and routing overrides.": "پیش‌تنظیم‌های مدل و بازنویسی‌های مسیریابی.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "پیش‌تنظیم‌های سفارشی مدل، بازنویسی‌های مسیریابی یا نقاط پایانی اعتبارنامه API را پیکربندی کنید.",
-      "Aether Router": "مسیریاب اتر",
+      "Model Router": "مسیریاب مدل",
       "Cultivator": "تهذیب‌گر",
       "Mortal": "فانی",
       "Daily Dao Pillar": "ستون دائوی روزانه",

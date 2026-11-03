@@ -1,8 +1,10 @@
+import { RouterEnergyModels } from '../host/generation/RouterEnergyModels';
 import { DEFAULT_BACKGROUND_IMAGE_ID } from '@seihouse/library/presentation';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderMixerProvider, useOptionalReaderMixer, type ReaderMixer } from '@seihouse/audio-player';
 import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seihouse/library/presentation';
-import type { FamiliarHelpPlace } from '@seihouse/library/familiar';
+import type { FamiliarHelpPlace, FamiliarPage } from '@seihouse/library/familiar';
+import { familiarPage } from './appFamiliarActions';
 import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
 import { HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderProfileProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode } from '@seihouse/library/shell';
 import { SparksButton } from '@seihouse/sen/story-seed';
@@ -76,7 +78,7 @@ export function NovelExpandedApp({ services, readerMixer }: {
   const [menuMusic] = useMenuMusic(services.readerPreferences);
   // The laptop sidebar opens the way the reader last left it, on this device.
   const [sidebarMode, setSidebarMode] = useStoredLibrarySidebarMode(services.readerPreferences);
-  return <ReaderMixerProvider mixer={readerMixer}><DevAudioPlaybackProvider>
+  return <RouterEnergyModels><ReaderMixerProvider mixer={readerMixer}><DevAudioPlaybackProvider>
     <LibraryPresentationProvider backgroundImageId={profile.backgroundImageId ?? DEFAULT_BACKGROUND_IMAGE_ID} accentColor={profile.accentColor} backgroundTint={profile.backgroundTint} assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS} loadingFamiliar={loadingFamiliar}>
       <LibraryDesktopNavigationProvider value="sidebar" sidebarMode={sidebarMode} onSidebarModeChange={setSidebarMode}>
         {/* The app's places in every Library navigation, the Cave's included. */}
@@ -90,20 +92,21 @@ export function NovelExpandedApp({ services, readerMixer }: {
         </LibraryDestinationsProvider>
       </LibraryDesktopNavigationProvider>
     </LibraryPresentationProvider>
-  </DevAudioPlaybackProvider></ReaderMixerProvider>;
+  </DevAudioPlaybackProvider></ReaderMixerProvider></RouterEnergyModels>;
 }
 
-/** Each page, for the Familiar: its name, and which help topics it explains. */
-function familiarPlace(page: ReturnType<typeof useAppRoute>[0]['page']): { title: string; help: FamiliarHelpPlace } {
+/** Each page, for the Familiar: its name, which help topics it explains, and which page it is for the master action list. */
+function familiarPlace(page: ReturnType<typeof useAppRoute>[0]['page']): { title: string; help: FamiliarHelpPlace; page: FamiliarPage } {
+  const where = familiarPage(page);
   switch (page) {
-    case 'create': return { title: 'Create', help: 'story-seed' };
-    case 'world': return { title: 'Create', help: 'library' };
-    case 'read': return { title: 'Reader', help: 'reader' };
-    case 'discover': return { title: 'Discover', help: 'library' };
-    case 'profile': return { title: 'Profile', help: 'library' };
+    case 'create': return { title: 'Create', help: 'story-seed', page: where };
+    case 'world': return { title: 'Create', help: 'library', page: where };
+    case 'read': return { title: 'Reader', help: 'reader', page: where };
+    case 'discover': return { title: 'Discover', help: 'library', page: where };
+    case 'profile': return { title: 'Profile', help: 'library', page: where };
     case 'story':
-    case 'blueprint': return { title: 'World Info', help: 'library' };
-    case 'home': return { title: 'Home', help: 'library' };
+    case 'blueprint': return { title: 'World Info', help: 'library', page: where };
+    case 'home': return { title: 'Home', help: 'library', page: where };
   }
 }
 
@@ -230,7 +233,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   );
   // One Familiar around every page, at the same place in the tree, so it keeps its
   // place as the reader moves; in the Reader its recall sits in the top bar beside Reader Settings.
-  const withFamiliar = (page: ReactNode) => <WorkspaceHeaderProfileProvider profile={headerProfile}><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'} place={familiarPlace(route.page)}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider>
+  const withFamiliar = (page: ReactNode) => <WorkspaceHeaderProfileProvider profile={headerProfile}><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'} place={familiarPlace(route.page)} navigate={navigate}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider>
     {signInOpen && <AppSignIn accentColor={profile.accentColor} onClose={() => setSignInOpen(false)} />}
   </WorkspaceHeaderProfileProvider>;
 

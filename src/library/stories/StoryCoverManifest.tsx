@@ -8,7 +8,7 @@ import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { STORY_COVER_CHOICES, type StoryCoverChoice, type StoryCoverRequest, type StoryCoverService } from './storyCover';
 import { EnergyActionCost } from '../../components/energy/development/EnergyActionCost';
 import { EnergySpendFloater, type EnergySpendBurst } from '../../components/energy/development/EnergySpendFloater';
-import { getEnergyPriceEntry } from '../../components/energy/shared/energyContracts';
+import { useActionEnergyPrice } from '../../components/energy/shared/energyModels';
 import './story-cover.css';
 
 /** How long the revealed cover stays on the veil before World Info shows it. */
@@ -62,7 +62,7 @@ export function useStoryCoverManifest({ covers, storyId, request, agent }: {
   const [spent, setSpent] = useState<EnergySpendBurst>();
   const madeRef = useRef<string[]>([]);
   const coverUrl = covers.coverUrl(storyId);
-  const imagePrice = getEnergyPriceEntry('image.generate').price ?? 0;
+  const imagePrice = useActionEnergyPrice('image.generate') ?? 0;
 
   // The revealed cover holds a moment, then the veil leaves and World Info wears it.
   useEffect(() => {

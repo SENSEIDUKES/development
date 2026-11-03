@@ -2,8 +2,8 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { ModelRouterGear } from '../../ModelRouterSettings';
-import { readModelPreference, readReasoningPreference, readTaggerPreference } from '../../../host/generation/modelPreference';
+import { ModelRouterGear } from '../../../host/model-router/ModelRouterSettings';
+import { chosenEnergyGrade, readExactModel, readModelPreference, readReasoningPreference, readTaggerPreference, readTierPreference } from '../../../host/generation/modelPreference';
 import { modelRouterStatus } from '../../../server/model-router/status';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -29,7 +29,7 @@ it('opens from the gear with tabs for each model capability', async () => {
   await openRouter({ GEMINI_API_KEY: 'g' });
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
   const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
-  expect(tabs.map(tab => tab.textContent)).toEqual(['Chapters', 'Images', 'TTS', 'Audio', 'Video', '3D']);
+  expect(tabs.map(tab => tab.textContent)).toEqual(['Chapters', 'Images', 'Text to speech', 'Live speech', 'Audio', 'Video', '3D']);
   await click(tabs[2]);
   expect(document.querySelector('[data-model="eleven_multilingual_v2"] [aria-label="Selected"]')).not.toBeNull();
   expect(row('eleven_v3')).toBeNull();
@@ -46,12 +46,93 @@ it('selects and remembers direct MiniMax writing and image models, and shows exe
   await click(provider('minimax'));
   await click(row('minimax/image-01')!);
   expect(readModelPreference('images')).toBe('minimax/image-01');
-  await click(tabs[4]);
+  await click(tabs[5]);
   await click(provider('minimax'));
   expect(listedModels()).toHaveLength(11);
   expect(document.querySelector('[data-model="minimax/MiniMax-H3"]')!.textContent).not.toContain('Catalog only');
   expect(document.body.textContent).toContain('No Workshop feature generates video yet');
   expect(document.body.textContent).not.toContain('secret');
+});
+
+it('chooses the live speech model the Familiar\'s live talk uses, from the providers with a key', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' });
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
+  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
+  // GPT-Live serves by default when its key is set.
+  expect(provider('openai').getAttribute('aria-selected')).toBe('true');
+  expect(row('openai/gpt-live-1')!.getAttribute('aria-checked')).toBe('true');
+  expect(document.body.textContent).toContain('Familiar\'s live talk');
+  await click(provider('gemini'));
+  await click(row('google/gemini-3.8-live')!);
+  expect(readModelPreference('live')).toBe('google/gemini-3.8-live');
+  // Read aloud is its own tab, set on the server.
+  await click(tabs.find(tab => tab.textContent === 'Text to speech')!);
+  expect(document.querySelector('[data-model="eleven_v3"] button')).toBeNull();
+});
+
+it('shows each model\'s grade and its Energy price', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' });
+  const grade = (id: string) => document.querySelector(`[data-model="${id}"] [data-energy-grade]`)?.textContent;
+  expect(grade('google/gemini-3.1-flash-lite')).toBe('Mortal · 2');
+  expect(grade('google/gemini-3.8-flash')).toBe('Immortal · 4');
+  expect(grade('google/gemini-3.1-pro-preview')).toBe('Heaven · 8');
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
+  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
+  expect(grade('openai/gpt-live-1')).toBe('Immortal · 6/min');
+  // Text to speech is not priced by grade.
+  await click(tabs.find(tab => tab.textContent === 'Text to speech')!);
+  expect(document.querySelector('[data-energy-grade]')).toBeNull();
+});
+
+it('lets the reader choose a tier and the team set the model behind each, warning when a tier would lose money', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g', ANTHROPIC_API_KEY: 'a' });
+  const tiers = document.querySelector('[aria-label="Tiers"]')!;
+  const tier = (grade: string) => tiers.querySelector<HTMLButtonElement>(`[data-tier="${grade}"] [role="radio"]`)!;
+  const slot = (grade: string) => tiers.querySelector<HTMLSelectElement>(`[data-tier="${grade}"] select`)!;
+  // The tiers wear Story Seed's Fate Pressure flames, with their price.
+  expect(tier('mortal').textContent).toBe('Mortal · 2');
+  expect(tier('heaven').textContent).toBe('Heaven · 8');
+  expect(tier('heaven').querySelector('svg')).not.toBeNull();
+  // Nothing chosen: Mortal, the server's default model.
+  expect(tier('mortal').getAttribute('aria-checked')).toBe('true');
+  expect(readModelPreference('chapters')).toBeUndefined();
+  expect(slot('heaven').options[0].textContent).toBe('Team: Claude Opus 5.5');
+  // Heaven: the team's Heaven model writes, at Heaven's price.
+  await click(tier('heaven'));
+  expect(readTierPreference('chapters')).toBe('heaven');
+  expect(readModelPreference('chapters')).toBe('anthropic/claude-opus-5-5');
+  expect(row('anthropic/claude-opus-5-5')).toBeNull(); // another provider's list
+  // The team tries another model behind Heaven on this device; its price stays Heaven's.
+  await act(async () => { slot('heaven').value = 'google/gemini-3.1-flash-lite'; slot('heaven').dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(readModelPreference('chapters')).toBe('google/gemini-3.1-flash-lite');
+  expect(chosenEnergyGrade('chapters', 'google/gemini-3.1-flash-lite')).toBe('heaven');
+  // A model that costs more than its tier brings in is flagged.
+  await act(async () => { slot('mortal').value = 'anthropic/claude-opus-5-5'; slot('mortal').dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(tiers.querySelector('[data-tier="mortal"] [data-tier-warning]')?.textContent).toBe('Claude Opus 5.5 costs more to run than Mortal brings in.');
+  // An exact pick wins over the tier, at its own grade, until the reader goes back to tiers.
+  await click(row('google/gemini-3.8-flash')!);
+  expect(readExactModel('chapters')).toBe('google/gemini-3.8-flash');
+  expect(chosenEnergyGrade('chapters', 'google/gemini-3.8-flash')).toBe('immortal');
+  expect(tier('heaven').getAttribute('aria-checked')).toBe('false');
+  await click([...tiers.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'Use tiers')!);
+  expect(readExactModel('chapters')).toBeUndefined();
+  expect(readModelPreference('chapters')).toBe('google/gemini-3.1-flash-lite');
+  // Live speech: Heaven is ElevenLabs Realtime.
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
+  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
+  expect(document.querySelector<HTMLSelectElement>('[aria-label="Tiers"] [data-tier="heaven"] select')!.options[0].textContent).toBe('Team: Eleven Realtime v1 Mini');
+  await click(document.querySelector<HTMLButtonElement>('[aria-label="Tiers"] [data-tier="heaven"] [role="radio"]')!);
+  expect(readModelPreference('live')).toBe('elevenlabs/eleven_realtime_v1_mini');
+});
+
+it('lets an ElevenLabs live model be picked exactly, once its key is set', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g', ELEVENLABS_API_KEY: 'e' });
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
+  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
+  await click(provider('elevenlabs'));
+  expect(listedModels()).toEqual(['elevenlabs/eleven_realtime_v1_mini', 'elevenlabs/eleven_realtime_v1_max']);
+  await click(row('elevenlabs/eleven_realtime_v1_max')!);
+  expect(readModelPreference('live')).toBe('elevenlabs/eleven_realtime_v1_max');
 });
 
 it('shows one provider at a time, starting with the provider of the selected model', async () => {

@@ -2,7 +2,7 @@
  * Archived standalone route for the Model Router. The router now opens from
  * the Workshop gear (`ModelRouterGear`); this link keeps working.
  */
-import { ModelRouterPanel } from '../../ModelRouterSettings';
+import { ModelRouterPanel } from '../../../host/model-router/ModelRouterSettings';
 
 export function ModelRouterWorkspace({ endpoint }: { endpoint?: string }) {
   return (

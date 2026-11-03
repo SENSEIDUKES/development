@@ -1,5 +1,13 @@
 # `@seihouse/sen`
 
+**Unreleased (2026-11-02, narration-timed cues):** `./reader-runtime` accepts
+placed Sound Cues in `buildReadAloudScript`; `useReadAloud` provides
+`onSoundCue`, `onStopSoundCues` and `scriptRevision`. The shared Reader plays
+cues from actual speech starts and stops them on pause/seek, with per-chapter
+deduplication and 500 ms between starts. `./inline-audio` exports the existing
+`soundCueVolume` rule. Requires `@seihouse/audio-player` **^5.2.0** for
+`ReaderMixer.stopCues()`; the tested source build is in `vendor/` until release.
+
 **Unreleased (2026-10-30, Sparks ownership):** `./story-seed` now exports
 `SparksButton`, `Sparks`, `SparkHost`, `StorySparkUsage`, `StorySparkStatus`
 and the shared genre picker. Import Sparks from SEN instead of Library's shell.
@@ -365,7 +373,7 @@ palette checks alone do not establish accessibility for a finished surface.
 | `./highlight-engine` | Single-block selection, nested actions, local editing, host-approved manual cue placement, and the manuscript page (permanent paragraph/sentence IDs, paragraph/sentence/span anchors, one edit rule, draft/sealed); no chapter dependency |
 | `@seihouse/sen` | Neutral presentation contracts/defaults and version |
 | `./contracts` | Story, chapter, block, identity, voice, usage and language contracts |
-| `./presentation` | Product-neutral presentation provider and slots |
+| `./presentation` | Product-neutral presentation provider and slots; `SpokenCode` badges and `SpokenCodesProvider` (a host shows spoken codes such as N3, C12, F2 while its voice helper is in use) |
 | `./reader-runtime` | Required host ports for Reader/Codex state and services, Read Aloud (spoken lines and speaker records, the three-voice script, voice choice, device preferences through `ReaderPreferenceStorage`, and the `useReadAloud` player over the browser's speech), and the story's soundtrack: `StorySoundtrack` on the host's reader mixer and the reader's Automatic or own choice of music and atmosphere |
 | `./reader-chamber` | Portable Reader behavior and UI, including the anchored Mind Palace |
 | `./reader-codex` | Portable Codex behavior and UI |

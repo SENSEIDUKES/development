@@ -1,5 +1,9 @@
 # `@seihouse/library`
 
+**Unreleased (2026-11-02):** The shared Reader plays placed Sound Cues when
+narration reaches their words and cuts them off on pause/seek. Requires
+`@seihouse/audio-player` **^5.2.0**, matching SEN's new cue-stop contract.
+
 **Unreleased (2026-10-30, breaking):** The header reads `Logo | Search | Familiar |
 Sound | Profile Portrait`. `./shell` exports `WorkspaceHeaderSearch` (the wide
 field-style Search trigger, replacing `WorkspaceHeaderUtilities`),
@@ -24,6 +28,15 @@ Image. `./styles.css` imports `look.css` from `library-presentation`.
 (control faces, ink, hover and press washes, focus, settings fields) are named
 `--reader-glass-*` custom properties on `:root` in `reader-glass.css`, beside the
 existing glass recipe, which stays literal for Palette & Materials. Values are unchanged.
+
+**Unreleased (2026-11-02, spoken codes):** `./familiar` reads spoken codes (`parseSpokenCode`: N3, C12, F2, and speech recognition's spellings of them). An action's `code` names the badge that runs it; a numbered code's number becomes its input. `FamiliarHelperProvider` shows SEN's `SpokenCode` badges while the Familiar is in use.
+
+**Unreleased (2026-11-02):** `./familiar` exports the master action list
+(`FAMILIAR_ACTION_LIST`, `FAMILIAR_FRONT_ACTIONS`, `familiarActionsFor`,
+`composeFamiliarContext`, `FamiliarPage`). A context with a `page` gets only the
+actions the list allows there, the host's anywhere actions included (registered on
+`FamiliarPlace` with `page` and `actions`); listed `instant` actions run without
+confirmation. A context without a `page` behaves as before.
 
 **0.35.0 (2026-10-26):** Presentation exports 12 individually named reusable icons
 and includes them in the 54-icon catalog. Requires SEN 0.40.0 for the shared artwork.
@@ -321,7 +334,7 @@ removed; a real Mini face can be designed later. The Info cover uses
 | `./presentation` | Library-to-SEN presentation composition and host asset-location provider |
 | `./profile` | Cave/Profile behavior, public views, settings, admin host ports |
 | `./energy` | Client-safe Energy contracts, read projections and provider |
-| `./familiar` | Sprite animation, draggable/resizable companion, minimize/recall, profile selection, and the Familiar account: ownership, Bond Rank cultivated with QI, element mastery, and the Active Elemental Effect (`FamiliarTrainingPanel`, `ElementalEffectPanel`, `FamiliarNameEffect`, `activeNameEffect`) |
+| `./familiar` | Sprite animation, draggable/resizable companion, minimize/recall, profile selection, and the Familiar account: ownership, Bond Rank cultivated with QI, element mastery, and the Active Elemental Effect (`FamiliarStage`, the Familiar page; `FamiliarSettingsMenu`; `FamiliarHero`; `FamiliarNameEffect`, `activeNameEffect`) and per-Familiar personalization (`updateFamiliarPersonalizations`) |
 | `./celestial-store` | Official Familiar Store page and the reusable `ShopCard`: offer configuration, deterministic daily rotation, and the account port for host-owned ownership and purchases |
 | `./cultivation` | Spendable-QI and permanent DAO XP read projections (DAO XP alone sets Cultivator Rank, which only chooses colours), economy standards, and cultivation surfaces |
 | `./dao-pillar` | Calendar/reward contracts and server-result-driven UI |

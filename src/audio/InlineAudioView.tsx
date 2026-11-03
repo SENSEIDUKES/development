@@ -142,7 +142,7 @@ export function InlineAudioControl({ cue, playback }: InlineAudioControlProps) {
 export const SOUND_CUE_ENERGY_VOLUME: Readonly<Record<AudioEnergy, number>> = Object.freeze({ low: 0.8, medium: 0.9, high: 1 });
 
 /** A saved cue's Energy as a volume; anything other than low, medium or high plays as medium. */
-function soundCueVolume(energy: unknown): number {
+export function soundCueVolume(energy: unknown): number {
   return (AUDIO_ENERGIES as readonly unknown[]).includes(energy) ? SOUND_CUE_ENERGY_VOLUME[energy as AudioEnergy] : SOUND_CUE_ENERGY_VOLUME.medium;
 }
 

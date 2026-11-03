@@ -40,7 +40,7 @@ import { normalizeAccentColor } from '@seihouse/library/profile';
 import { createLocalReaderPreferenceStorage } from '../../../host/reader/readerPreferenceStorage';
 import type React from 'react';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
-import { normalizeFamiliarSize } from '@seihouse/library/familiar';
+import { normalizeFamiliarSize, updateFamiliarPersonalizations } from '@seihouse/library/familiar';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { CelestialStorePurchase, CelestialStorePurchaseResult } from '@seihouse/library/celestial-store';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/contracts';
@@ -81,7 +81,7 @@ export interface MockUserProfileServicesOptions {
   claimMode?: 'success' | 'failed' | 'unresolved';
   repairMode?: 'success' | 'failed';
   profileOverride?: Partial<UserProfile>;
-  onFamiliarProfile?: (selection: { uid: string | null; familiarId?: string; familiarSize?: number; familiarInHeader?: boolean; familiarLiveTalk?: boolean }) => void;
+  onFamiliarProfile?: (selection: { uid: string | null; familiarId?: string; familiarSize?: number; familiarInHeader?: boolean; familiarLiveTalk?: boolean; familiarWakeWord?: boolean }) => void;
   unlockedSpecialQi?: readonly SpecialQiId[];
   /**
    * The Store account to use instead of the in-memory grant — the development
@@ -96,6 +96,10 @@ export interface MockUserProfileServicesOptions {
    * Firebase Auth.
    */
   onSignIn: (account: AppUser) => void;
+  /** Opens the Model Router, as the app's Settings › Advanced Tools does. */
+  onOpenModelRouter?: () => void;
+  /** Opens the Usage page, as the app's Settings › Advanced Tools does. */
+  onOpenUsage?: () => void;
 }
 
 export const WORKSHOP_SOUND_PREFERENCES = createLocalReaderPreferenceStorage('workshop.reader.');
@@ -110,6 +114,8 @@ export function createMockUserProfileServices({
   celestialStore,
   logExcludedAction,
   onSignIn,
+  onOpenModelRouter,
+  onOpenUsage,
 }: MockUserProfileServicesOptions): UserProfileServices {
   const scenario = getPreviewScenario(state);
 
@@ -216,7 +222,7 @@ export function createMockUserProfileServices({
           return;
         }
         profileRef.current = scenario.profile ? { ...scenario.profile, ...profileOverride } : null;
-        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: profileRef.current?.familiarId, familiarSize: profileRef.current?.familiarSize, familiarInHeader: profileRef.current?.familiarInHeader, familiarLiveTalk: profileRef.current?.familiarLiveTalk });
+        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: profileRef.current?.familiarId, familiarSize: profileRef.current?.familiarSize, familiarInHeader: profileRef.current?.familiarInHeader, familiarLiveTalk: profileRef.current?.familiarLiveTalk, familiarWakeWord: profileRef.current?.familiarWakeWord });
         setProfile(profileRef.current);
         setFormData(profileRef.current ?? {});
         setIsLoading(false);
@@ -376,7 +382,7 @@ export function createMockUserProfileServices({
         setProfile(next);
         // Preserve unrelated identity/language drafts while committing this field.
         setFormData(previous => ({ ...previous, familiarId: id }));
-        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: id, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: next.familiarLiveTalk });
+        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: id, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: next.familiarLiveTalk, familiarWakeWord: next.familiarWakeWord });
       } catch (failure) {
         if (mounted.current && epoch === accountEpoch.current) setError(failure instanceof Error ? failure.message : 'Familiar selection failed.');
       } finally {
@@ -394,7 +400,7 @@ export function createMockUserProfileServices({
       profileRef.current = next;
       setProfile(next);
       setFormData(previous => ({ ...previous, familiarSize }));
-      onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: next.familiarLiveTalk });
+      onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: next.familiarLiveTalk, familiarWakeWord: next.familiarWakeWord });
     }, [currentUser]);
 
     const handleFamiliarInHeaderChange = useCallback((inHeader: boolean) => {
@@ -402,7 +408,15 @@ export function createMockUserProfileServices({
       const next = { ...profileRef.current, familiarInHeader: inHeader || undefined, updatedAt: new Date().toISOString() };
       profileRef.current = next;
       setProfile(next);
-      if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: inHeader, familiarLiveTalk: next.familiarLiveTalk });
+      if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: inHeader, familiarLiveTalk: next.familiarLiveTalk, familiarWakeWord: next.familiarWakeWord });
+    }, [currentUser]);
+
+    const handleFamiliarWakeWordChange = useCallback((wakeWord: boolean) => {
+      if (!profileRef.current) return;
+      const next = { ...profileRef.current, familiarWakeWord: wakeWord || undefined, updatedAt: new Date().toISOString() };
+      profileRef.current = next;
+      setProfile(next);
+      if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: next.familiarLiveTalk, familiarWakeWord: wakeWord });
     }, [currentUser]);
 
     const handleFamiliarLiveTalkChange = useCallback((liveTalk: boolean) => {
@@ -410,8 +424,18 @@ export function createMockUserProfileServices({
       const next = { ...profileRef.current, familiarLiveTalk: liveTalk || undefined, updatedAt: new Date().toISOString() };
       profileRef.current = next;
       setProfile(next);
-      if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: liveTalk });
+      if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: liveTalk, familiarWakeWord: next.familiarWakeWord });
     }, [currentUser]);
+
+    const handleFamiliarPersonalChange = useCallback((familiarId: string, changes: { name?: string | null; backstory?: string | null }) => {
+      if (!profileRef.current) return;
+      const familiarPersonal = updateFamiliarPersonalizations(profileRef.current.familiarPersonal, familiarId, changes);
+      const next = { ...profileRef.current, familiarPersonal, updatedAt: new Date().toISOString() };
+      profileRef.current = next;
+      setProfile(next);
+      // Keep the draft in step, so a later identity save never writes an older map back.
+      setFormData(previous => ({ ...previous, familiarPersonal }));
+    }, []);
 
     const handleLanguageChangeDirect = useCallback(
       (name: 'interfaceLanguage' | 'defaultReadingLanguage', value: SenLanguageCode) => {
@@ -854,8 +878,11 @@ export function createMockUserProfileServices({
       syncStatus: scenario.servicesFail ? 'error' : 'idle',
       lastSavedTime: profile ? new Date(profile.updatedAt) : null,
       setIsSettingsOpen: open => {
-        if (open) logExcludedAction('Aether Router settings modal (production app shell)');
+        if (!open) return;
+        if (onOpenModelRouter) onOpenModelRouter();
+        else logExcludedAction('Model Router (no router in this preview)');
       },
+      setIsUsageOpen: onOpenUsage ? open => { if (open) onOpenUsage(); } : undefined,
       setIsShortcutsOpen: open => {
         if (open) logExcludedAction('Shortcuts manual modal (production app shell)');
       },
@@ -879,6 +906,8 @@ export function createMockUserProfileServices({
       handleFamiliarSizeChange,
       handleFamiliarInHeaderChange,
       handleFamiliarLiveTalkChange,
+      handleFamiliarWakeWordChange,
+      handleFamiliarPersonalChange,
       isSavingFamiliar,
 
       showAdvanced,

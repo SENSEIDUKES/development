@@ -1,15 +1,17 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { WorldCard, WorldCardFeature, WorldCardMenu, languageName } from '@seihouse/library/world-card';
+import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
+import { WorldCard, WorldCardCompactGrid, WorldCardCompactPicks, WorldCardCompactTile, WorldCardFeature, WorldCardFeatureCarousel, WorldCardLanguageProvider, WorldCardMenu, languageName } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { featuredExpansions } from '../light-novels-home/previewData';
 import {
-  previewCreatorWorlds, previewHomeGrid, previewStory,
+  previewBrowseWorlds, previewCreatorWorlds, previewStory,
   type WorldCardBlueprintPreview, type WorldCardCover, type WorldCardSashPreview, type WorldCardDestinations, type WorldCardPreviewState,
-  type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
+  type WorldCardCataloguePreview, type WorldCardHeroPreview, type WorldCardReaderLanguage, WORLD_CARD_READER_LANGUAGES, type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
 import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/home';
 import { StoryBlueprintView, type StoryBlueprintAccess } from '@seihouse/library/stories';
@@ -18,13 +20,13 @@ import { createFilledStorySeedInput, createMockBlueprint } from '../story-seed/p
 const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 
 const VIEWS = {
-  all: { label: 'All views', description: 'The Info page, Feature card, Full card, Home grid, Compact and Menu cards together.' },
-  feature: { label: 'Feature card', description: 'The wide banner for a spotlighted world, at the stage’s full width.' },
-  info: { label: 'Info page', description: 'The full world overview a reader lands on when they open a world.' },
-  full: { label: 'World Card', description: 'The 2:3 discovery card at its Home grid width, with the title and details beneath.' },
-  grid: { label: 'Home grid', description: 'Several World Cards side by side, as Home lays them out.' },
-  menu: { label: 'Menu card', description: 'Discover chapter and ranking rows, rendered by the shared World Card menu.' },
-  compact: { label: 'Compact', description: 'Create’s square “Your worlds” tile. Tap a tile to open that world’s Info page.' },
+  full: { label: 'World Card', short: 'World Card', description: 'The 2:3 discovery card at its Home grid width, with the title and details beneath.' },
+  info: { label: 'Info page', short: 'Info', description: 'The full world overview a reader lands on when they open a world.' },
+  feature: { label: 'Feature card', short: 'Feature', description: 'The living hero: the world plays behind its name, and the carousel turns on its own with a story-style bar.' },
+  grid: { label: 'Home grid', short: 'Grid', description: 'Several World Cards side by side, as Home lays them out.' },
+  compact: { label: 'Compact', short: 'Compact', description: 'The dense browsing tile: four across a phone, scrolling down only, with a Switch box for curated picks.' },
+  menu: { label: 'Menu card', short: 'Menu', description: 'Discover chapter and ranking rows, rendered by the shared World Card menu.' },
+  all: { label: 'All views', short: 'All', description: 'The Info page, Feature card, Full card, Home grid, Compact and Menu cards together.' },
 } as const;
 type View = keyof typeof VIEWS;
 
@@ -38,8 +40,8 @@ const VIEWPORTS = {
 type Viewport = keyof typeof VIEWPORTS;
 
 const DEFAULT_STATE: WorldCardPreviewState = {
-  recentlyRead: 'no', titleLength: 'standard', cover: 'art', sash: 'hidden',
-  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', blueprint: 'creator',
+  recentlyRead: 'no', titleLength: 'standard', cover: 'art', sash: 'shown',
+  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', blueprint: 'creator', hero: 'wide', catalogue: 'multilingual', readerLanguage: 'en',
 };
 
 const BLUEPRINT_ACCESS: Record<Exclude<WorldCardBlueprintPreview, 'reader-off'>, StoryBlueprintAccess> = {
@@ -87,7 +89,16 @@ function CompactRow({ worlds, senSash, onOpen }: { worlds: readonly CreatorWorld
   </ul>;
 }
 
-export function WorldCardStage({ view, state, onAction }: {
+/**
+ * The stage in the reader's language: the interface translates its own words (as the app does),
+ * and every card follows the card language rules for titles and creator names.
+ */
+export function WorldCardStage(props: { view: View; state: WorldCardPreviewState; onAction: (message: string) => void }) {
+  useInterfaceLanguageTranslation(props.state.readerLanguage, true);
+  return <WorldCardLanguageProvider language={props.state.readerLanguage}><WorldCardStageCards {...props} /></WorldCardLanguageProvider>;
+}
+
+function WorldCardStageCards({ view, state, onAction }: {
   view: View; state: WorldCardPreviewState; onAction: (message: string) => void;
 }) {
   const story = previewStory(state);
@@ -123,8 +134,14 @@ export function WorldCardStage({ view, state, onAction }: {
             portal={{ expansions: state.destinations === 'all' ? featuredExpansions : [] }}
             />
     </Stage>}
-    {!openedWorld && show('feature') && <Stage title="Feature card" note="Home's spotlight row. The cover stands on the right; the band is that cover, blurred, in its own color.">
-      <WorldCardFeature world={story} senSash={state.sash === 'shown'} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]} onOpen={() => setOpenedWorld(story)} />
+    {!openedWorld && show('feature') && <Stage title="Feature card" note="Home's and Discover's spotlight. The world plays behind its name; touch and hold to pause, swipe to turn, tap to enter.">
+      <WorldCardFeatureCarousel label="Featured"
+        slides={previewBrowseWorlds(state).slice(0, 3).map(world => ({
+          id: world.id, label: world.title,
+          render: (onScreen: boolean) => <WorldCardFeature world={world} active={onScreen}
+            senSash={world.id === story.id && state.sash === 'shown'} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]}
+            onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />,
+        }))} />
     </Stage>}
     {!openedWorld && show('full') && <Stage title="World Card" note="Home grid width.">
       <div className="w-[min(100%,13rem)]">
@@ -134,7 +151,7 @@ export function WorldCardStage({ view, state, onAction }: {
     </Stage>}
     {!openedWorld && show('grid') && <Stage title="Home grid" note="Two across on a phone, more on wider screens.">
       <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5">
-        {previewHomeGrid(state).map(world => <WorldCard key={world.id} world={world} senSash={state.sash === 'shown'}
+        {previewBrowseWorlds(state).slice(0, 6).map(world => <WorldCard key={world.id} world={world} senSash={world.id === story.id && state.sash === 'shown'}
           displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]} onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />)}
       </div>
     </Stage>}
@@ -145,9 +162,23 @@ export function WorldCardStage({ view, state, onAction }: {
         <WorldCardMenu world={story} rank={1} onOpen={() => setOpenedWorld(story)} />
       </div>
     </Stage>}
-    {!openedWorld && show('compact') && <Stage title="Compact" note="Create · Your worlds.">
-      <CompactRow key={`${state.titleLength}-${state.cover}`} worlds={worlds} senSash={state.sash === 'shown'} onOpen={setOpenedWorld} />
-    </Stage>}
+    {!openedWorld && show('compact') && <>
+      <Stage title="Compact · Picks" note="A fixed set of eight with a Switch button for the next set, like WebNovel's Cheering Reads.">
+        <WorldCardCompactPicks title="Cheering Reads" worlds={previewBrowseWorlds(state)}
+          senSashWorldIds={state.sash === 'shown' ? [story.id] : []}
+          onOpenWorld={id => id === story.id ? setOpenedWorld(story) : onAction(`Open ${id}`)} />
+      </Stage>
+      <Stage title="Compact · Browse grid" note="Discover's All stories. As many columns as fit; it only scrolls down.">
+        <WorldCardCompactGrid label="Stories">
+          {previewBrowseWorlds(state).map(world => <li key={world.id}>
+            <WorldCardCompactTile world={world} senSash={world.id === story.id && state.sash === 'shown'} onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />
+          </li>)}
+        </WorldCardCompactGrid>
+      </Stage>
+      <Stage title="Create tile (retiring)" note="Create · Your worlds. Becomes the Show card when Create moves to it.">
+        <CompactRow key={`${state.titleLength}-${state.cover}`} worlds={worlds} senSash={state.sash === 'shown'} onOpen={setOpenedWorld} />
+      </Stage>
+    </>}
   </div>;
 }
 
@@ -171,6 +202,9 @@ function readCanvasState(params: URLSearchParams): WorldCardPreviewState {
     destinations: pick(params.get('destinations'), ['all', 'reading-only', 'none'], DEFAULT_STATE.destinations),
     reading: pick(params.get('reading'), ['start', 'chapter-7', 'new-story'], DEFAULT_STATE.reading),
     blueprint: pick(params.get('blueprint'), ['creator', 'creator-shared', 'reader-copy', 'reader-view', 'reader-off'], DEFAULT_STATE.blueprint),
+    hero: pick(params.get('hero'), ['wide', 'cover-clip', 'still'], DEFAULT_STATE.hero),
+    catalogue: pick(params.get('catalogue'), ['multilingual', 'sample'], DEFAULT_STATE.catalogue),
+    readerLanguage: pick(params.get('readerLanguage'), WORLD_CARD_READER_LANGUAGES, DEFAULT_STATE.readerLanguage),
   };
 }
 
@@ -186,19 +220,69 @@ function WorldCardCanvas() {
   </div>;
 }
 
-function pickView(value: string | null): View {
-  return value && Object.hasOwn(VIEWS, value) ? value as View : 'all';
+function pickView(value: string | null, fallback: View = 'all'): View {
+  return value && Object.hasOwn(VIEWS, value) ? value as View : fallback;
+}
+
+const VIEW_ORDER = Object.keys(VIEWS) as View[];
+const VIEW_STORAGE_KEY = 'workshop:world-card:view';
+
+function readStoredView(): View {
+  try { return pickView(window.localStorage.getItem(VIEW_STORAGE_KEY), 'full'); } catch { return 'full'; }
+}
+
+/**
+ * One card type at a time: a sticky row of chips plus previous/next arrows,
+ * so a phone can step through the card types with a thumb.
+ */
+function CardTypeSwitcher({ view, onChange }: { view: View; onChange: (view: View) => void }) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const index = VIEW_ORDER.indexOf(view);
+  const step = (delta: number) => onChange(VIEW_ORDER[(index + delta + VIEW_ORDER.length) % VIEW_ORDER.length]);
+
+  useEffect(() => {
+    listRef.current?.querySelector<HTMLElement>('[aria-pressed="true"]')
+      ?.scrollIntoView?.({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  }, [view]);
+
+  const arrow = 'flex size-10 flex-none items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 active:bg-white/15';
+  return <nav aria-label="Card type" data-world-card-switcher
+    className="sticky top-0 z-30 border-b border-white/10 bg-[#04060d]/95 px-2 py-2 backdrop-blur sm:px-6">
+    <div className="mx-auto flex max-w-5xl items-center gap-2">
+      <button type="button" className={arrow} aria-label="Previous card type" onClick={() => step(-1)}><ChevronLeft size={18} /></button>
+      <div ref={listRef} className="flex flex-1 gap-1.5 overflow-x-auto px-3 [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {VIEW_ORDER.map(value => <button key={value} type="button" aria-pressed={value === view} onClick={() => onChange(value)}
+          className={`min-h-10 flex-none whitespace-nowrap rounded-full border px-3.5 text-[13px] font-medium transition-colors ${
+            value === view ? 'border-portal/70 bg-portal/20 text-white' : 'border-white/10 bg-white/[0.03] text-white/60'}`}>
+          {VIEWS[value].short}
+        </button>)}
+      </div>
+      <button type="button" className={arrow} aria-label="Next card type" onClick={() => step(1)}><ChevronRight size={18} /></button>
+    </div>
+    <p className="mx-auto mt-1.5 max-w-5xl px-1 text-[11px] leading-snug text-white/50">
+      <span className="text-white/75">{index + 1}/{VIEW_ORDER.length} · {VIEWS[view].label}</span> — {VIEWS[view].description}
+    </p>
+  </nav>;
 }
 
 /** The Info page, Full card, and Compact face in one Workshop. */
 function WorldCardWorkspaceShell() {
-  const [view, setView] = useState<View>('all');
+  const [view, setViewState] = useState<View>(readStoredView);
+  const setView = (next: View) => {
+    setViewState(next);
+    try { window.localStorage.setItem(VIEW_STORAGE_KEY, next); } catch { /* per-viewer convenience only */ }
+  };
   const [viewport, setViewport] = useState<Viewport>('current');
   const [state, setState] = useState<WorldCardPreviewState>(DEFAULT_STATE);
   const [action, setAction] = useState('');
   const update = (patch: Partial<WorldCardPreviewState>) => setState(current => ({ ...current, ...patch }));
 
-  const render = () => {
+  const render = () => <>
+    <CardTypeSwitcher view={view} onChange={setView} />
+    {renderStage()}
+  </>;
+
+  const renderStage = () => {
     if (viewport !== 'current') {
       const { label, width, height } = VIEWPORTS[viewport];
       return <div className="overflow-x-auto py-4 sm:px-4" data-world-card-viewport={viewport}>
@@ -210,7 +294,7 @@ function WorldCardWorkspaceShell() {
       </div>;
     }
     return <>
-      <WorldCardStage view={view} state={state} onAction={message => setAction(`${message} · mock preview`)} />
+      <WorldCardStage key={view} view={view} state={state} onAction={message => setAction(`${message} · mock preview`)} />
       <p className="px-4 pb-6 font-sans text-xs text-neutral-400 sm:px-8" role="status">{action}</p>
     </>;
   };
@@ -222,11 +306,11 @@ function WorldCardWorkspaceShell() {
       defaultSection: 'pages',
       sections: [{
         id: 'pages',
-        description: VIEWS[view].description,
+        description: 'Pick the card type from the switcher above the stage. Reader language shows every card as a reader of that language sees it. Viewport renders it at a fixed device width.',
         content: <div className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-xs">View
-            <select className={selectClass} value={view} onChange={event => setView(event.target.value as View)}>
-              {Object.entries(VIEWS).map(([value, option]) => <option key={value} value={value}>{option.label}</option>)}
+          <label className="flex flex-col gap-1 text-xs">Reader language
+            <select className={selectClass} value={state.readerLanguage} onChange={event => update({ readerLanguage: event.target.value as WorldCardReaderLanguage })}>
+              {WORLD_CARD_READER_LANGUAGES.map(code => <option key={code} value={code}>{languageName(code)} ({code})</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">Viewport
@@ -255,10 +339,23 @@ function WorldCardWorkspaceShell() {
               </optgroup>
             </select>
           </label>
+          <label className="flex flex-col gap-1 text-xs">Catalogue
+            <select className={selectClass} value={state.catalogue} onChange={event => update({ catalogue: event.target.value as WorldCardCataloguePreview })}>
+              <option value="multilingual">Multilingual: worlds written in 12 languages</option>
+              <option value="sample">Sample: English worlds by SENSEI</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs">Feature hero
+            <select className={selectClass} value={state.hero} onChange={event => update({ hero: event.target.value as WorldCardHeroPreview })}>
+              <option value="wide">Wide hero loop (default)</option>
+              <option value="cover-clip">Cover with its motion clip</option>
+              <option value="still">Cover still, no video</option>
+            </select>
+          </label>
           <label className="flex flex-col gap-1 text-xs">SEN sash
             <select className={selectClass} value={state.sash} onChange={event => update({ sash: event.target.value as WorldCardSashPreview })}>
-              <option value="hidden">Not awarded (default)</option>
-              <option value="shown">Awarded</option>
+              <option value="shown">Awarded to The Last Lotus (default)</option>
+              <option value="hidden">Not awarded</option>
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">Reader history

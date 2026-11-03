@@ -7,7 +7,7 @@ import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
 
 /**
  * A read-only preview of host-authorized story information opened from its format.
- * The Full card opens it from its corner format mark; the Info page supplies its own Information row as the trigger.
+ * The Full card opens it from its corner Information badge; the Info page supplies its own Information row as the trigger.
  */
 /** What the story information dialog reads; a Home world and a creator's world both supply it. */
 export type WorldCardStoryPanelWorld = Pick<HomeWorld, 'title' | 'format' | 'synopsis' | 'tags' | 'senVerified' | 'activityStatus' | 'branchingEnabled'>
@@ -22,7 +22,10 @@ export function WorldCardStoryPanel({ world, trigger, triggerClassName = 'world-
   const activity = world.activityStatus ? WORLD_ACTIVITY_DISPLAY[world.activityStatus] : undefined;
   return <SEIDialog>
     <SEIDialogTrigger className={triggerClassName} aria-label={`Story information for ${world.title}${format ? `, ${format}` : ''}`}>
-      {trigger ?? (format ? <WorldCardFormatSymbol format={format} /> : <Info size={17} aria-hidden="true" />)}
+      {/* A Novel (or a world with no format) wears the Information badge; other formats keep their label. */}
+      {trigger ?? (format && format.toLowerCase() !== 'novel'
+        ? <WorldCardFormatSymbol format={format} />
+        : <><Info size={17} aria-hidden="true" />{format && <span className="sr-only">{format}</span>}</>)}
     </SEIDialogTrigger>
     <SEIDialogContent variant="dark" aria-modal="true" className="world-card-story-panel"
       backdropClassName="world-card-story-backdrop" bodyClassName="world-card-story-panel-body">

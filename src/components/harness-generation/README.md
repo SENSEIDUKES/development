@@ -37,6 +37,24 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-11-02 (narration-timed Sound Cues):** Listen is the cinematic scroll:
+  the existing sentence light and follow-along remain, and every valid placed
+  cue starts when the voice begins its pinned words. The script cuts at those
+  words rather than estimating word timing or requiring browser boundary
+  events. Cue starts are spaced by 500 ms, with no category filter or
+  three-cue budget. Seeking consumes skipped cues without playing them;
+  played/skipped cues stay consumed for that chapter during this Reader visit.
+  Pause, interruptions, covering/leaving the Reader and chapter changes cancel
+  pending cues and cut off playing/loading cues through `ReaderMixer.stopCues()`.
+  Silent reading still requires a tap. Create-mode edits refresh
+  the script at the current passage without clearing cue history. Both app and
+  Workshop use the same session. Audio-player 5.2.0 exposes cue cancellation
+  without stopping music/atmosphere or changing the reader's saved mix; the
+  app vendors the verified source build, with both package peers updated.
+  Focused checks: `readAloudCues.test.tsx`, `HarnessReaderSession.test.tsx`,
+  and `scripts/verifyNarrationCues.browser.mjs` (controlled speech and silent
+  media at phone/desktop sizes, not an audible device-voice check).
+
 - **2026-10-31 (Status, the second information tag):** SENSEI: finish the
   information tags before name colors link to the Codex, and build each the
   way the others work, simply. Status is the appearance tag's twin: the

@@ -55,10 +55,26 @@ export function createModeFamiliarContext(sounds: ReaderSoundAuthoring, interrup
     actions: [soundAction(sounds, playCue)],
     hint: `To add a sound, say “Add ${example} on” and its words, or “Add ${example} right there” while listening.`,
     interrupt,
+    page: 'create-mode',
   };
 }
 
 const FATE_ICONS: Record<'worldBuilding' | 'progression' | 'conflict', FamiliarIcon> = { worldBuilding: Globe, progression: TrendingUp, conflict: Swords };
+/** Fate's spoken codes, in the order the Fate panel shows them: the writer's three directions, then your own. */
+const FATE_CODES = { progression: 1, worldBuilding: 2, conflict: 3, custom: 4 } as const;
+
+/** The Reader's chapter code: C12 opens Chapter 12 of this story. */
+export function chapterCodeAction(openChapter: (chapterNumber: number) => boolean): FamiliarHelperAction {
+  return {
+    id: 'open-chapter', label: 'Open a chapter', code: { letter: 'C' },
+    detail: 'The reader says C and the chapter number: C1, C12…',
+    phrases: ['open chapter', 'go to chapter'],
+    input: { label: 'Chapter number', maxLength: 4 },
+    describe: number => `Open Chapter ${number}.`,
+    success: 'Opened the chapter.',
+    run: async number => { if (!openChapter(Number(number))) throw new Error(`This story has no Chapter ${number}.`); },
+  };
+}
 
 /** The Reader: what it explains, and Fate as its actions (saving still belongs to SEN). */
 export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: string, controller: HarnessGenerationController, tools: ReaderHostTools, topics: readonly FamiliarTopic[] = []): FamiliarHelperContext {
@@ -86,19 +102,22 @@ export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: str
       icon: FATE_ICONS[chapterFunction],
       ...(ideas[chapterFunction] ? { detail: ideas[chapterFunction] } : {}),
       phrases: chapterFunction === 'worldBuilding' ? ['world building', 'world-building', 'worldbuilding'] : [chapterFunction],
+      code: { letter: 'F' as const, number: FATE_CODES[chapterFunction] },
       describe: () => `Chapter ${next}: ${CHAPTER_FUNCTION_LABELS[chapterFunction]}${ideas[chapterFunction] ? ` — ${ideas[chapterFunction]}` : '.'}`,
       success,
       run: () => save({ kind: 'chapter-function', chapterFunction, ...(ideas[chapterFunction] ? { suggestion: ideas[chapterFunction] } : {}) }),
     })),
     {
-      id: 'custom', label: 'Custom', icon: PenLine, detail: 'Your own direction', phrases: ['custom'],
+      id: 'custom', label: 'Custom', icon: PenLine, detail: 'Your own direction', phrases: ['custom'], code: { letter: 'F', number: FATE_CODES.custom },
       input: { label: 'Your direction', maxLength: CHAPTER_DIRECTION_TEXT_LIMIT },
       describe: text => `Chapter ${next}: ${text}`,
       success, run: text => save({ kind: 'reader', text }),
     },
   ];
+  // Going to a chapter works even while Fate is unavailable.
+  if (tools.openChapter) actions.push(chapterCodeAction(tools.openChapter));
   return {
-    key, title: 'Reader', topics, actions,
+    key, title: 'Reader', topics, actions, page: 'reader',
     hint: blocked ? 'Fate is unavailable while writing or after the story ends.'
       : 'Say World Building, Progression, Conflict, or Custom followed by your direction.',
     interrupt: tools.interruptPlayback,

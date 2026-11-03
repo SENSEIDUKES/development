@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "Kayayyakin Aiki na Gaba",
       "Model presets and routing overrides.": "Saitunan samfur da sauye-sauyen hanya.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "Saita samfuran musamman, sauye-sauyen hanya ko maƙallan API.",
-      "Aether Router": "Mai Rarraba Aether",
+      "Model Router": "Mai Rarraba Samfur",
       "Cultivator": "Mai Koyon Ruhu",
       "Mortal": "Ɗan Adam",
       "Daily Dao Pillar": "Ginshiƙin Dao na Kullum",

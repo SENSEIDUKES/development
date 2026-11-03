@@ -14,7 +14,7 @@ import { useRef, useState } from 'react';
 import { CelestialStorePanel, type CelestialStorePurchase } from '@seihouse/library/celestial-store';
 import { getAuraTextStyle, getDaoRankData, getRankForDaoXp, rankBackground } from '@seihouse/library/cultivation';
 import { DaoPillarView, useDaoPillarCalendar } from '@seihouse/library/dao-pillar';
-import { activeNameEffect, ElementalEffectPanel, FamiliarNameEffect, FamiliarTrainingPanel, useFamiliarStoreAccount } from '@seihouse/library/familiar';
+import { activeNameEffect, FamiliarNameEffect, FamiliarStage, useFamiliarStoreAccount } from '@seihouse/library/familiar';
 import { FateSurvivalRelicsPanel, RelicReveal, type FateSurvivalOutcome, type FateSurvivalRelicView } from '@seihouse/library/relics';
 import { AchievementsPanel } from '@seihouse/library/rewards';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
@@ -172,10 +172,10 @@ function RewardLoop() {
             </div>
           )}
           {tab === 'familiar' && (
-            <div className="space-y-4">
-              <ElementalEffectPanel familiars={account.familiars} options={allFamiliarOptions} activeFamiliarId={equippedId} displayName={DISPLAY_NAME} />
-              <FamiliarTrainingPanel familiars={account.familiars} options={allFamiliarOptions} qiBalance={account.qi.snapshot?.balance ?? null}
-                activeFamiliarId={equippedId} onOffered={() => void account.refreshBalances()} />
+            <div className="overflow-hidden rounded-2xl border border-white/10" style={{ ['--familiar-stage-height' as string]: '44rem' }}>
+              <FamiliarStage familiars={account.familiars} options={allFamiliarOptions} qiBalance={account.qi.snapshot?.balance ?? null}
+                activeFamiliarId={equippedId} displayName={DISPLAY_NAME} onActivate={setEquippedId} onOpenStore={() => setTab('store')}
+                onOffered={() => void account.refreshBalances()} />
             </div>
           )}
           {tab === 'store' && <StoreTab equippedId={equippedId} onEquip={setEquippedId} />}

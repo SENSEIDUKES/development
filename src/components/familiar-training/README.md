@@ -1,4 +1,4 @@
-# Familiar Bonds
+# Familiar Page and Bonds
 
 Where `reference/` exists, it holds the old production version, kept as reference
 material for the remake; it is not edited or refreshed. New features do not get a
@@ -13,7 +13,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Workshop previews:** `?preview=familiar-training` (in the Workshop's Rewards section);
   `?preview=reward-loop` (Familiar tab); `?preview=user-profile&cave=/home/familiar`
 - **Created:** 2026-09-23
-- **Last recorded Workshop update:** 2026-09-25
+- **Last recorded Workshop update:** 2026-11-02
 - **Historical source inspection:** 2026-09-23 (this repository; there is no production original)
 - **Status:** approved reconstruction (Workshop Replica Mode B), development skeleton
 - **Package:** `@seihouse/library/familiar`
@@ -89,8 +89,11 @@ unknown Familiar, or gives one Familiar two.
 | Contracts | `src/library/familiars/contracts.ts` | Bond ranks and labels, effect kinds (elemental title, signature), unlocks, views, snapshot with `masteredElements` and `activeEffect`, `activeNameEffect`. |
 | Client | `src/library/familiars/familiarsClient.tsx` | `useFamiliars` (`offerQi`, `selectForm`, `selectElementalEffect`), `FamiliarsClientProvider`, the Celestial Store account. |
 | Rarity label | `src/components/familiar/shared/familiar.ts` | `FamiliarRarity`, `familiarRarityLabel`. |
-| Bond panel | `development/FamiliarTrainingPanel.tsx` | Owned Familiars with rarity and Bond Rank, the bond ladder, QI offerings, the companion's form. |
-| Name-effect panel | `development/ElementalEffectPanel.tsx` | The Active Elemental Effect choice, a live name preview, and the mastered-elements collection. |
+| Familiar page | `development/FamiliarStage.tsx`, `familiarStage.css` | The phone-first page: swipe between every Familiar (and a closing Create your own card, coming soon), the bond rail, identity, Make active, the name wearing its effect, Bond · Elements · Lore in a sheet, one Offer button by the Familiar. From 768px the sheet stands beside the stage. |
+| Bond tab | `development/FamiliarBondTab.tsx` | Each rank as what it does to the element, forms, account states. |
+| Elements tab | `development/FamiliarElementsTab.tsx` | The Active Elemental Effect choice, a live name preview, the mastered collection of twelve; SEIHouse Signatures shown apart. |
+| Lore tab | `development/FamiliarLoreTab.tsx` | The Familiar's own clip through SEN's `MotionPicture`, its facts, and its story, which the cultivator may rewrite or reset. |
+| Settings menu | `development/FamiliarSettingsMenu.tsx` | Console-style options list over the whole app: companion size, Keep in the header, Live talk, Say “Familiar”, Restore defaults; Personalise: name, story, and Voice and Instructions marked Coming soon. |
 | Name renderer | `development/FamiliarNameEffect.tsx` | Letters a name with any resolved effect: `LibraryElementalTitle` for elements (mastered outlined), the registered piece for a signature. Used by the Cave, Reward Loop and panels. |
 | Signature pieces | `development/signaturePieces.tsx` | Client registry of hand-built signature animations. Empty. |
 | Server | `src/server/familiars/` | `FamiliarService`: per-account serialized writes; offers spend only what the bond still needs; Legendary bond records mastery in the same write; form and effect choices validated; Store purchases at today's server-resolved price. |
@@ -139,6 +142,23 @@ Workshop previews and the account service remain separate.
 
 ## Workshop history
 
+- **2026-11-03:** From SENSEI's iPhone review: on a phone, opening Bond, Elements or Lore
+  fills the page under the top bar (the Familiar's name, the tabs and Close details;
+  Escape closes it too), and the sheet is a finished card on every side, ending above the
+  navigation with its content fading at the edge instead of being sliced. From 768px the
+  sheet still stands beside the stage.
+- **2026-11-02:** Remade as the Familiar page, phone first (SENSEI, after Genshin's talent
+  screen for layout and Zelda's options list for settings). It is now the one home for
+  everything Familiar: choosing the companion and its settings moved here from Settings,
+  each Familiar's clip and story joined as the Lore tab, and a cultivator may name a
+  Familiar and rewrite its story (saved on the profile as `familiarPersonal`). Voice,
+  Instructions and Create your own show as Coming soon: they need Live talk and catalogue
+  work first. `FamiliarTrainingPanel` and `ElementalEffectPanel` were replaced and removed.
+  Same day, from SENSEI's review: one Offer button (the Library's parent `qi` icon) by the
+  Familiar opens its QI amounts instead of a row of three; the balance pill uses `QiAmount`
+  (the child `qi-yin-yang` mark); and the stage shows each Familiar's high-definition art
+  (`public/familiars/<id>/portrait.webp`, trimmed from Dropbox `LIBRARY CORE/Familiars/images`,
+  v2 for Quill and Judgmental Jiangshi) instead of its GIF.
 - **2026-09-23:** Created. Active effects moved from Relic attunement and timed status effects to
   Familiars: QI training unlocks forms and elemental titles, the equipped Familiar's chosen
   effect letters the cultivator's name, and nothing grants an advantage.

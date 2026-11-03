@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "Qalabka Horumarsan",
       "Model presets and routing overrides.": "Dejinta hore ee moodellada iyo beddelka marinka.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "Habee dejinta moodellada gaarka ah, beddelka marinka ama furayaasha API.",
-      "Aether Router": "Hagaha Aether",
+      "Model Router": "Hagaha Moodellada",
       "Cultivator": "Barbaariye Ruux",
       "Mortal": "Bini'aadam",
       "Daily Dao Pillar": "Tiirka Dao ee Maalinlaha ah",

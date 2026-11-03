@@ -20,6 +20,7 @@
  * SEN language codes rather than production's display names.
  */
 import type { BackgroundTint } from '../../library-presentation/backgroundTint';
+import type { FamiliarPersonalizations } from '../../familiar/shared/familiar';
 import { type ChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 
 /** SEN owns the Reading Mode values; the profile stores the account's default. */
@@ -55,6 +56,10 @@ export interface UserProfile {
   familiarInHeader?: boolean;
   /** Live talk with the Familiar (beta); off (the default), it listens with the device voice. */
   familiarLiveTalk?: boolean;
+  /** Saying "Familiar" calls it, as tapping its microphone does (device speech recognition). */
+  familiarWakeWord?: boolean;
+  /** What the cultivator has renamed or rewritten about each Familiar, keyed by Familiar id. */
+  familiarPersonal?: FamiliarPersonalizations;
   /** The account's UI language. Distinct from the reading language. */
   interfaceLanguage: SenLanguageCode;
   /** The language Reader Chamber displays by default; never story canon. */

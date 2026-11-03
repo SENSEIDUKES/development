@@ -79,7 +79,6 @@
 [data-discover] .discover-grid > li { min-width: 0; }
 [data-discover] .discover-rail { display: grid; grid-auto-flow: column; gap: .875rem; padding: .125rem 0 .5rem; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: rgba(233,211,139,.2) transparent; list-style: none; }
 [data-discover] .discover-rail > li { min-width: 0; scroll-snap-align: start; }
-[data-discover] .discover-rail--featured { grid-auto-columns: 100%; }
 [data-discover] .discover-rail--cards { grid-auto-columns: min(10.5rem,75%); }
 [data-discover] .discover-list, [data-discover] .discover-ranking-list { display: grid; grid-template-columns: minmax(0,1fr); list-style: none; }
 [data-discover] :is(.discover-list,.discover-ranking-list) > li { min-width: 0; border-bottom: 1px solid var(--discover-hairline); }
@@ -117,7 +116,6 @@
 @container (min-width: 440px) {
   [data-discover] .discover-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
   [data-discover] .discover-directory-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  [data-discover] .discover-rail--featured { grid-auto-columns: min(36rem,85%); }
 }
 @container (min-width: 720px) {
   [data-discover] .discover-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }

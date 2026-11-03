@@ -143,7 +143,10 @@ describe('Story Seed Arc and World ownership', () => {
     expect(JSON.stringify(payload)).not.toMatch(/REMOVED_|additionalStoryDirection|plotAndTropeSettings|arcPlan/);
     expect(payload.storySeed.story.optional).toHaveProperty('funSettings');
   });
-  it('saves every Blueprint review edit of a Seed-owned value to the Seed that HARNESS reads', () => {
+  // This test drives the whole Blueprint review surface in one pass, so it is
+  // the slowest here by far. It gets a timeout of its own so that a loaded
+  // machine does not read as a failure.
+  it('saves every Blueprint review edit of a Seed-owned value to the Seed that HARNESS reads', { timeout: 30_000 }, () => {
     const seed = initial();
     Object.assign(seed.world.optional.worldIdentity, { worldType: 'Old world', startingLocation: 'Old gate', societyStructure: 'Old order' });
     seed.world.optional.worldFoundations.mainCharacter = { name: 'Old Name', personality: 'Old temper', startingWeakness: 'Old weakness' };

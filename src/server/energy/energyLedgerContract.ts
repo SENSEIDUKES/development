@@ -121,8 +121,8 @@ export function describeEnergyLedgerContract(
       const image = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'img-1' });
       expect(image.reservation.amount).toBe(5);
       const chapters = await service.reserve(principal, { actionId: 'chapter.generate', idempotencyKey: 'ch-1', quantity: 5 });
-      expect(chapters.reservation.amount).toBe(5);
-      expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 10, available: 490 });
+      expect(chapters.reservation.amount).toBe(10);
+      expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 15, available: 485 });
       await expect(service.reserve(principal, { actionId: 'narration.generate', idempotencyKey: 'nar-1' })).rejects.toThrow(/no price yet/);
     });
 
@@ -147,7 +147,7 @@ export function describeEnergyLedgerContract(
 
     it('never lets reservations exceed the available balance', async () => {
       const { service, principal } = await setup();
-      await service.reserve(principal, { actionId: 'chapter.generate', idempotencyKey: 'a', quantity: 498 });
+      await service.reserve(principal, { actionId: 'chapter.generate', idempotencyKey: 'a', quantity: 249 });
       await expect(service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'b' })).rejects.toBeInstanceOf(InsufficientEnergyError);
       await expect(service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'b' })).rejects.toMatchObject({ required: 5, available: 2 });
       expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 498, available: 2 });
@@ -179,9 +179,9 @@ export function describeEnergyLedgerContract(
       expect(settled.replayed).toBe(false);
       expect(settled.transaction.kind).toBe('charge');
       expect(settled.transaction.metadata).toEqual({ providerCost: { amount: 0.0042, currency: 'USD', provider: 'gemini' } });
-      expect(await service.getBalance(principal)).toEqual({ balance: 499, held: 0, available: 499 });
+      expect(await service.getBalance(principal)).toEqual({ balance: 498, held: 0, available: 498 });
       const snapshot = await service.getSnapshot(principal);
-      expect(snapshot.activity[0]).toMatchObject({ kind: 'charge', amount: 1, description: 'Chapter generated' });
+      expect(snapshot.activity[0]).toMatchObject({ kind: 'charge', amount: 2, description: 'Chapter generated' });
       expect(JSON.stringify(snapshot)).not.toContain('providerCost');
       await expect(service.release(principal, { reservationId: reservation.id })).rejects.toThrow(/already charged/);
     });
@@ -223,7 +223,7 @@ export function describeEnergyLedgerContract(
 
     it('never spends held Energy or reuses a key for a different spend', async () => {
       const { service, principal } = await setup();
-      await service.reserve(principal, { actionId: 'chapter.generate', idempotencyKey: 'hold', quantity: 400 });
+      await service.reserve(principal, { actionId: 'chapter.generate', idempotencyKey: 'hold', quantity: 200 });
       await expect(service.spend(principal, { amount: 101, idempotencyKey: 'store:fox', description: 'Fox' })).rejects.toMatchObject({ required: 101, available: 100 });
       await expect(service.spend(principal, { amount: 101, idempotencyKey: 'store:fox', description: 'Fox' })).rejects.toBeInstanceOf(InsufficientEnergyError);
       await service.spend(principal, { amount: 100, idempotencyKey: 'store:fox', description: 'Fox' });
@@ -245,7 +245,7 @@ export function describeEnergyLedgerContract(
       expect(history.map(entry => entry.kind)).toEqual(['reserve', 'spend', 'grant', 'release', 'charge', 'reserve', 'reserve', 'grant']);
       const account = (await repository.getAccount(principal.uid))!;
       expect(replayLedger(history)).toEqual({ balance: account.balance, held: account.held });
-      expect(account).toMatchObject({ balance: 500, held: c.reservation.amount });
+      expect(account).toMatchObject({ balance: 499, held: c.reservation.amount });
     });
 
     it('resets a development account to a fresh initial grant', async () => {
@@ -313,15 +313,15 @@ export function describeEnergyLedgerContract(
       const history = await service.listTransactions(principal);
       expect(history.filter(entry => entry.kind === 'charge')).toHaveLength(1);
       expect(history.filter(entry => entry.kind === 'release')).toHaveLength(1);
-      expect(await service.getBalance(principal)).toEqual({ balance: 499, held: 0, available: 499 });
-      expect(replayLedger(history)).toEqual({ balance: 499, held: 0 });
+      expect(await service.getBalance(principal)).toEqual({ balance: 498, held: 0, available: 498 });
+      expect(replayLedger(history)).toEqual({ balance: 498, held: 0 });
     });
 
     it('scopes reservations to their owner', async () => {
       const { service, principal } = await setup();
       const { reservation } = await service.reserve(principal, { actionId: 'chapter.generate', idempotencyKey: 'mine' });
       await expect(service.settle(developer('someone-else'), { reservationId: reservation.id })).rejects.toThrow(/not found/);
-      expect((await service.getBalance(principal)).held).toBe(1);
+      expect((await service.getBalance(principal)).held).toBe(2);
     });
   });
 }

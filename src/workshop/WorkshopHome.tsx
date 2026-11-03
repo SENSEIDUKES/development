@@ -11,7 +11,7 @@ import {
   type WorkshopSection,
 } from './manifest';
 import { defaultFamiliar } from '../host/familiar/catalogue';
-import { ModelRouterGear } from './ModelRouterSettings';
+import { ModelRouterGear } from '../host/model-router/ModelRouterSettings';
 
 const activeEntries = workshopEntries.filter((entry) => entry.status !== 'archived');
 const archivedEntries = workshopEntries.filter((entry) => entry.status === 'archived');

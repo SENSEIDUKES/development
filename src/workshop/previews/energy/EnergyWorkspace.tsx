@@ -12,7 +12,7 @@ import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { type EnergyClient } from '@seihouse/library/energy';
 import { useEnergyAccount } from '@seihouse/library/energy';
-import { EnergyActionCost, EnergyBalanceIndicator, EnergyDeductionNotice, EnergyInsufficientState, EnergyPanel, energyDeductionToast } from '@seihouse/library/energy';
+import { BalancePills, EnergyActionCost, EnergyBalanceIndicator, EnergyDeductionNotice, EnergyInsufficientState, EnergyPanel, energyDeductionToast } from '@seihouse/library/energy';
 import type { QiAccountState } from '@seihouse/library/cultivation';
 import { createLocalEnergyClient } from './localEnergyClient';
 
@@ -59,6 +59,13 @@ function EnergyPieces({ client }: { client: EnergyClient }) {
     : { status: 'ready', snapshot: { uid: 'workshop-cultivator', balance: 2_150, transactions: [] }, error: null };
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 pb-16 pt-6 text-neutral-200 sm:px-8">
+      <Section title="Balance pills · the official QI and Energy look for page headers">
+        <div className="flex flex-wrap items-center gap-4">
+          <BalancePills
+            qi={{ amount: qi.snapshot?.balance ?? null, state: qi.status === 'ready' ? 'ready' : 'unavailable' }}
+            energy={{ amount: account.snapshot?.available ?? null, state: account.status === 'ready' ? 'ready' : account.status === 'error' ? 'unavailable' : 'loading' }} />
+        </div>
+      </Section>
       <Section title="Balance indicator · lives inside other surfaces">
         <div className="flex flex-wrap items-center gap-4">
           <EnergyBalanceIndicator account={account} size="sm" />

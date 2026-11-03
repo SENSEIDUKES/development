@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { getEnergyPriceEntry, type EnergyActionId } from '../shared/energyContracts';
+import type { EnergyActionId } from '../shared/energyContracts';
+import { useActionEnergyPrice } from '../shared/energyModels';
 import { EnergyActionCost } from './EnergyActionCost';
 import { EnergySpendFloater, type EnergySpendBurst } from './EnergySpendFloater';
 
@@ -17,7 +18,7 @@ export function EnergyCostMeter({ actionId, made, note }: {
   /** Added to the spoken line, such as "practice: nothing is taken yet". */
   note?: string;
 }) {
-  const price = getEnergyPriceEntry(actionId).price;
+  const price = useActionEnergyPrice(actionId);
   const seen = useRef(made);
   const [spent, setSpent] = useState<EnergySpendBurst>();
   useEffect(() => {

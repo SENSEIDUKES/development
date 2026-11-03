@@ -15,6 +15,7 @@ import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { normalizeBackgroundTint, normalizeBackgroundImageId } from '@seihouse/library/presentation';
 import { normalizeAccentColor, type UserProfile } from '@seihouse/library/profile';
 import { getDaoRankData, useDaoXpAccount } from '@seihouse/library/cultivation';
+import { normalizeFamiliarPersonalizations } from '@seihouse/library/familiar';
 import { defaultFamiliar } from '../familiar/catalogue';
 
 /** Where the record is kept among the host's device preferences. */
@@ -59,6 +60,8 @@ function restore(raw: string | null, fresh: UserProfile): UserProfile {
     familiarSize: typeof saved.familiarSize === 'number' && Number.isFinite(saved.familiarSize) ? saved.familiarSize : undefined,
     familiarInHeader: saved.familiarInHeader === true ? true : undefined,
     familiarLiveTalk: saved.familiarLiveTalk === true ? true : undefined,
+    familiarWakeWord: saved.familiarWakeWord === true ? true : undefined,
+    familiarPersonal: normalizeFamiliarPersonalizations(saved.familiarPersonal),
     activeStories: Array.isArray(saved.activeStories) ? record.activeStories : [],
     inactiveStories: Array.isArray(saved.inactiveStories) ? record.inactiveStories : [],
     joinedDate: text(saved.joinedDate, fresh.joinedDate),
@@ -130,6 +133,7 @@ export function createDeviceProfileStore({ storage, uid, now = () => new Date() 
         if (editable.accentColor !== undefined && !normalizeAccentColor(editable.accentColor)) delete editable.accentColor;
         else editable.accentColor = normalizeAccentColor(editable.accentColor);
       }
+      if ('familiarPersonal' in editable) editable.familiarPersonal = normalizeFamiliarPersonalizations(editable.familiarPersonal);
       const next = { ...read(), ...editable, updatedAt: now().toISOString() };
       write(next);
       listeners.forEach(listener => listener());

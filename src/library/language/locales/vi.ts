@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "Công cụ nâng cao",
       "Model presets and routing overrides.": "Cấu hình mẫu mô hình và ghi đè định tuyến.",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "Cấu hình các mẫu mô hình tùy chỉnh, ghi đè định tuyến hoặc điểm cuối thông tin xác thực API.",
-      "Aether Router": "Bộ định tuyến Aether",
+      "Model Router": "Bộ định tuyến mô hình",
       "Cultivator": "Tu sĩ",
       "Mortal": "Phàm nhân",
       "Daily Dao Pillar": "Đạo Trụ Hằng Ngày",

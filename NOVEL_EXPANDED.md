@@ -11,8 +11,18 @@
 > context.
 
 - **Created:** 2026-09-29
-- **Last updated:** 2026-10-13
+- **Last updated:** 2026-11-02
 - **Owner:** SENSEI, SEIHouse Productions
+
+## The two rules everything follows
+
+1. **Enhance reading without ever making it worse.** Every feature (voices, sound,
+   effects, cinematic read-aloud, the Familiar) must make the reading experience
+   better and never get in its way. If a feature makes reading worse for the people
+   it reaches, it does not ship.
+2. **AI augments the reader and the creator; it never replaces them.** AI helps
+   people understand, create and direct; their intent, curation and choices lead.
+   Whatever AI adds sits around the reader's and creator's work, never in place of it.
 
 ## Vision and build state
 
@@ -347,6 +357,11 @@ Update it whenever it changes.
     browser's own voices in three parts: the Narrator for the prose, the
     Protagonist voice for the main character's spoken lines, the Side voice for
     everyone else's. The sentence being spoken is lit and the page follows it.
+    Listen starts each placed Sound Cue once at its exact words, with 500 ms
+    between cue starts and no old automatic-cue category or three-cue limit.
+    Seeking skips cues without a catch-up burst; Pause cancels pending cues
+    and cuts off sounds already playing through the shared audio player's
+    cue-stop control. Silent reading remains tap-to-play.
     **The soundtrack is SEIHouse's own audio player** (its reader mixer), and
     each chapter has its own scene: **music** (pieces of one mood from SEN
     Soundscapes, Volume 1, one after another) and one **atmosphere** (a bed from

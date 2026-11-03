@@ -9,10 +9,27 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - Source: supplied `Familiars/Packages/` collection (not a Git repository), containing twelve validated Familiar packages.
 - Preview: Workshop **Customization → Familiar** and `?preview=familiar`.
 - First Workshop record: 2026-09-20.
-- Last recorded Workshop update: 2026-10-30.
+- Last recorded Workshop update: 2026-11-01.
 - Historical source inspection: 2026-10-06.
 - Lifecycle: supplied source packages retained; the reusable renderer, host catalogue, and Energy interaction remain in Development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
+
+## Local refinement — 2026-11-01
+
+The floating Familiar and its card sit above app menus and panels. Opening the
+card does not start listening or a paid conversation; tap its microphone to
+start, then tap again or close to stop. The separately enabled wake-word setting
+keeps its existing behavior. Opening Conversation is idle too; sending starts
+typed-only talk.
+Explain topics have overflow arrows alongside native scrolling, and Action
+labels wrap inside the viewport-constrained, vertically scrolling card. The app
+and existing Workshop preview share these controls.
+
+The card can also be dragged by its top bar with mouse or touch, or moved with
+arrow keys on its grip (Shift takes larger steps). Its position lasts for the
+visit, including closing and reopening; resizing the screen or card keeps it
+inside the visible viewport and above the host's bottom navigation. The action
+buttons and scrolling content do not start a drag.
 
 ## Source interpretation
 
@@ -298,8 +315,11 @@ Development supplies that provider at the product session boundary.
 
 ## Host boundary
 
-Profile Settings → Customization → Familiar uses the reusable `FamiliarSelection`
-with host-supplied `UserProfileServices.familiars`. Development passes all twelve
+The Familiar page (`FamiliarStage` in `src/components/familiar-training/`, the Cave's
+`/home/familiar`) is where a Familiar is chosen and its companion settings live, with
+host-supplied `UserProfileServices.familiars`; Settings → Customization → Familiar only
+links there. Its art is `FamiliarHero` (also the Celestial Store's), and its ⚙ menu
+(`FamiliarSettingsMenu`) carries size, Keep in the header, Live talk and Say “Familiar”. Development passes all twelve
 catalogue entries for inspection, including their host-supplied rarity and Quill's
 `isDefault` status. Reduced motion or an image-load failure uses the local neutral crop.
 Hosted GIF URLs belong in the host catalogue and can be replaced without changing the
@@ -366,6 +386,20 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-11-02: Selection and companion settings moved to the Familiar page. `FamiliarSelection` was removed; `FamiliarHero` became its own file, shared by the Familiar page and the Celestial Store. The catalogue may carry a Familiar's own clip (`videoUrl`; Celestial Guardian's today), and the profile keeps the cultivator's own name and story per Familiar (`familiarPersonal`, capped at 40 and 600 characters, `normalizeFamiliarPersonalizations`).
+- 2026-11-02: Spoken codes for voice-only readers, like a phone's "show numbers": while the Familiar is in use (card open or a live conversation on), small badges name what can be said. N1, N2… on Home's story cards (in the order shown), C1, C2… on the Reader's chapter list, F1–F4 on Fate's four paths (Progression, World Building, Conflict, your own direction). Saying or typing a code acts at once (a story or chapter opens) or, for Fate, shows the change to confirm. Speech recognition's spellings count too ("and three", "chapter twelve", "fate two"): `src/library/familiars/spokenCodes.ts`. A code only works where its badge shows (`open-novel` on Home, `open-chapter` in the Reader, in the master action list). Badges are SEN's `SpokenCode` (`@seihouse/sen/presentation`), shown by `SpokenCodesProvider`, which `FamiliarHelperProvider` sets while the Familiar is in use.
+- 2026-11-02: The card never scrolls as a whole: its top bar and microphone row stay put and its rim stays whole; only the middle (and the conversation log) scrolls, with the Library's overlay scrollbar (`useOverlayScrollbar`). The device voice answers once the reader pauses after speaking (`FAMILIAR_PAUSE_MS`, 1.5 s), like a smart speaker; a second tap still answers at once.
+- 2026-11-02: One master action list (`src/library/familiars/actionList.ts`): every action the Familiar can do, one line each, with where it may do it. On each page the Familiar gets that page's actions plus the app's anywhere actions (Home, Create, Profile, My Energy, Settings, Store), never another page's; anything not on the list is dropped. Going somewhere happens at once (no confirmation); every change still asks first. The card shows the page's front suggestions (at most four) with the rest behind See all, and the first four topics with the rest behind More, instead of a sideways-scrolling row. The app's place now carries its page, which also fixes Create and World Info keeping the previous page's topics.
+- 2026-11-02: Live talk runs on one engine (`src/host/familiar/liveEngine.ts`) with each model plugged in as a small translator: Gemini Live (`live.ts`), GPT-Live (`openaiLive.ts`) and ElevenLabs Realtime (`realtimeLive.ts`, any provider that speaks OpenAI's Realtime protocol over a WebSocket). The engine does the microphone, the phone's audio mode, the server request, the ten-minute limit and connection deadline, captions, the Familiar's functions, hanging up and the reasons a talk could not start, once for every model. Readers see no change; a new model is a new translator.
+- 2026-11-01: Live talk on ElevenLabs Realtime (`realtimeLive.ts`), chosen in the Model Router (Live speech, Heaven). Its microphone and speaker are shared with Gemini Live (`liveAudio.ts`).
+- 2026-11-01: Alexa-style live talk. Settings › Familiar › Say “Familiar” (beta) listens for the word with the device's own speech recognition while the Familiar is idle and the page is in view (`src/host/familiar/wakeWord.ts`, `FamiliarWakeWord`); hearing it calls the Familiar as its microphone does. A live conversation hangs up by itself after 10 seconds with nothing said (60 seconds when typed), leaving the note “Hung up after a quiet moment.” (`FAMILIAR_LIVE_QUIET_MS`).
+- 2026-11-01: On iPhone, live talk and the device voice asked for the microphone while music had Safari in playback-only mode, and the phone refused it ("AudioSession category is not compatible with audio capture"). Listening now switches to play-and-record at the tap and puts the earlier mode back when it ends (`src/host/familiar/audioSession.ts`).
+- 2026-11-01: Live talk on OpenAI GPT-Live, which the Router serves first when
+  its key is set: the phone connects over WebRTC (it captures the microphone
+  and plays the voice itself), GPT-Live speaks as the Familiar from its facts,
+  and a delegated Responses model runs its functions; the screen still confirms
+  every change. Typing goes to that model, and the Familiar says the answer.
+  Gemini Live remains the other provider.
 - 2026-10-30: Matched the verified Codex companion cadence: sixfold idle holds,
   three-cycle reactions and mouse-directed still poses, with raw inspection and
   generation one-shots preserved. Checked all twelve atlases, 30-second idle samples

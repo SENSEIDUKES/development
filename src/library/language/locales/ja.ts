@@ -128,7 +128,7 @@ const pack: LanguagePack = {
       "Advanced Tools": "高度なツール",
       "Model presets and routing overrides.": "モデルプリセットとルーティングのオーバーライド。",
       "Configure custom model presets, routing overrides, or API credential endpoints.": "カスタムモデルプリセット、ルーティングの上書き、またはAPI認証エンドポイントを設定します。",
-      "Aether Router": "エーテルルーター",
+      "Model Router": "モデルルーター",
       "Cultivator": "修士",
       "Mortal": "凡人",
       "Daily Dao Pillar": "日次道柱",

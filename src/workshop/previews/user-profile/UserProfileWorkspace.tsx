@@ -31,6 +31,8 @@ import { createInProcessEconomyFetch, createWorkshopEconomy, createWorkshopEcono
 import { EconomyClientProviders } from '../rewards/WorkshopEconomyProvider';
 import { DEVELOPED_CULTIVATOR_SEED, seedWorkshopAccount, type WorkshopAccountSeed } from '../rewards/rewardScenarios';
 import { LibraryLook } from '@seihouse/library/presentation';
+import { ModelRouterDialog } from '../../../host/model-router/ModelRouterSettings';
+import { UsageDialog } from '../../../host/usage/UsagePanel';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'user-profile')!;
 
@@ -89,12 +91,17 @@ function UserProfileContent({ embedded, initialState }: { embedded: boolean; ini
 
   const mediaPacks = useDeviceMediaPacks(WORKSHOP_MEDIA_PACK_STORE, WORKSHOP_DEVICE_MEDIA);
   const { slot: menuMusic } = useMenuMusicSlot(WORKSHOP_SOUND_PREFERENCES, mediaPacks);
+  // Settings › Advanced Tools › Model Router and Usage open the real ones, as in the app (this device's own usage record).
+  const [routerOpen, setRouterOpen] = useState(false);
+  const [usageOpen, setUsageOpen] = useState(false);
+  const openModelRouter = useCallback(() => setRouterOpen(true), []);
+  const openUsage = useCallback(() => setUsageOpen(true), []);
   const developmentServices = useMemo(() => ({ ...createMockUserProfileServices({
-    state: previewState, logExcludedAction, onSignIn: setLinkedAccount,
+    state: previewState, logExcludedAction, onSignIn: setLinkedAccount, onOpenModelRouter: openModelRouter, onOpenUsage: openUsage,
     profileOverride: { familiarId: PREVIEW_FAMILIAR_ID },
     onFamiliarProfile: reportProfile,
     celestialStore: FAMILIAR_STORE_ACCOUNT,
-  }), menuMusic }), [previewState, logExcludedAction, reportProfile, menuMusic]);
+  }), menuMusic }), [previewState, logExcludedAction, reportProfile, menuMusic, openModelRouter, openUsage]);
 
   const currentUser = scenario.currentUser ?? linkedAccount;
   const currentUid = currentUser?.uid ?? null;
@@ -182,6 +189,8 @@ function UserProfileContent({ embedded, initialState }: { embedded: boolean; ini
     <EconomyClientProviders key={economyKey} clients={clients}>
       {/* The app's Profile wears the Library's look around the Cave; so does its preview. */}
       <ProductFamiliarSurface headerRecall bottomInset={72}><LibraryLook>{renderPane('development')}</LibraryLook></ProductFamiliarSurface>
+      <ModelRouterDialog open={routerOpen} onClose={() => setRouterOpen(false)} />
+      <UsageDialog open={usageOpen} onClose={() => setUsageOpen(false)} />
     </EconomyClientProviders>
   ) : <p role="status" className="mx-auto max-w-4xl px-4 py-10 text-sm text-neutral-400">Preparing this scenario’s development economy…</p>;
 

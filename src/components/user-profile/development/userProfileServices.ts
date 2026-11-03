@@ -64,8 +64,6 @@ export interface UserProfileController {
   handleFamiliarPersonalChange?: (familiarId: string, changes: { name?: string | null; backstory?: string | null }) => void;
   /** Marks one of the Familiar's guides as watched. */
   handleFamiliarGuideSeen?: (guideId: string) => void;
-  /** Shows the Familiar's first-meeting welcome again. */
-  handleFamiliarWelcomeReplay?: () => void;
   // Library / app-shell state (production: `useAppStore`)
   syncStatus: string;
   lastSavedTime: Date | null;

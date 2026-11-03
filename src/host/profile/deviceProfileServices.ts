@@ -307,11 +307,6 @@ export function useDeviceProfileController(
     commit({ familiarGuidesSeen: [...(profile.familiarGuidesSeen ?? []), guideId] });
   }, [commit, profile]);
 
-  const handleFamiliarWelcomeReplay = useCallback(() => {
-    if (!profile) return;
-    commit({ familiarWelcomed: undefined });
-  }, [commit, profile]);
-
   // The profile picture: the photo stays in the page; portraits are shown through object URLs until one is kept.
   const releasePortraits = useCallback(() => {
     portraitUrls.current.forEach(url => URL.revokeObjectURL(url));
@@ -417,7 +412,6 @@ export function useDeviceProfileController(
     handleFamiliarWakeWordChange,
     handleFamiliarPersonalChange,
     handleFamiliarGuideSeen,
-    handleFamiliarWelcomeReplay,
     syncStatus: 'idle',
     lastSavedTime: profile ? new Date(profile.updatedAt) : null,
     setIsSettingsOpen: open => { if (open) openModelRouter?.(); },

@@ -1015,48 +1015,21 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(document.querySelector('[aria-label="Expand Familiar"]'), 'Expand Familiar');
   };
 
-  it('greets a new reader once with a small card from their Familiar; its guides play right there, never elsewhere', async () => {
+  it('does not have the Familiar greet a new reader by itself; its Guides button plays guides right there', async () => {
     const readerPreferences = createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences);
     const profile = createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID });
     await render(appServices(scriptedWriter().writer, { readerPreferences, profile }));
-    const welcome = () => document.querySelector<HTMLElement>('[data-familiar-welcome]');
-    for (let tries = 0; !welcome() && tries < 20; tries++) await flush(20);
-    expect(welcome()?.textContent).toContain('I’m Quill.');
-    // A tip beside the Familiar, not a page: the Familiar stays on screen and the page stays where it is.
-    expect(document.querySelector('[data-familiar-welcome-dim]')).toBeTruthy();
-    expect(document.querySelector('.familiar-companion')).toBeTruthy();
-    await click(welcome()!.querySelector('[data-familiar-welcome-tour]'), 'Show me around', 20);
+    const card = () => document.querySelector<HTMLElement>('[data-familiar-welcome]');
+    for (let tries = 0; !document.querySelector('.familiar-companion') && tries < 20; tries++) await flush(20);
+    // The app's own welcome comes first (to be built); the Familiar waits its turn.
+    await flush(100);
+    expect(card()).toBeNull();
+    await click(document.querySelector('.familiar-companion .familiar-trigger'), 'the Familiar');
+    await click(document.querySelector('[data-familiar-guides-open]'), 'Guides', 20);
+    expect(card()?.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet-your-familiar');
+    await click(card()!.querySelector('[data-familiar-welcome-done]'), 'Done', 20);
+    expect(card()).toBeNull();
     expect(address()).toBe('/app/');
-    expect(welcome()?.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet-your-familiar');
-    await click(welcome()!.querySelector('[data-familiar-guide-step="next"]'), 'the next guide');
-    expect(welcome()?.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('start-a-story-seed');
-    expect(profile.read().familiarWelcomed).toBeUndefined();
-    await click(welcome()!.querySelector('[data-familiar-welcome-done]'), 'Done', 20);
-    expect(welcome()).toBeNull();
-    expect(profile.read().familiarWelcomed).toBe(true);
-    expect(address()).toBe('/app/');
-    // It never greets again, even after the app opens anew.
-    act(() => root.unmount());
-    root = createRoot(container);
-    await render(appServices(scriptedWriter().writer, { readerPreferences, profile }));
-    expect(welcome()).toBeNull();
-  });
-
-  it('lets a new reader meet their Familiar later, and again from Settings', async () => {
-    const readerPreferences = createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences);
-    const profile = createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID });
-    await render(appServices(scriptedWriter().writer, { readerPreferences, profile }));
-    const welcome = () => document.querySelector<HTMLElement>('[data-familiar-welcome]');
-    for (let tries = 0; !welcome() && tries < 20; tries++) await flush(20);
-    expect(welcome()).toBeTruthy();
-    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
-    expect(welcome()).toBeNull();
-    expect(profile.read().familiarWelcomed).toBe(true);
-    expect(address()).toBe('/app/');
-    act(() => { profile.save({ familiarWelcomed: undefined }); });
-    for (let tries = 0; !welcome() && tries < 20; tries++) await flush(20);
-    await click(welcome()?.querySelector('[data-familiar-welcome-later]'), 'Later');
-    expect(welcome()).toBeNull();
   });
 
   it('opens Discover from the navigation, with its sample worlds', async () => {

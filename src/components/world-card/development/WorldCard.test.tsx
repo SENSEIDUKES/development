@@ -610,7 +610,9 @@ it('spotlights a world in the living Feature hero with its art, sash, details, s
   expect(card.querySelector('.world-card-banner-eyebrow')?.textContent).toBe('Featured');
   expect(card.querySelector('h3')?.textContent).toBe('The Last Lotus');
   expect(card.querySelector('.world-card-banner-byline')?.textContent).toBe('bySENSEI');
-  expect(card.querySelector('.world-card-banner-details')?.textContent).toBe('Xianxia | Ch. 24 | On Going');
+  // Branching rides the details line, so the words keep fixed places.
+  expect(card.querySelector('.world-card-banner-details')?.textContent).toBe('Xianxia | Ch. 24 | On GoingBranching');
+  expect(card.querySelector('.world-card-banner-details .world-card-feature')?.textContent).toBe('Branching');
   expect(card.querySelector('.world-card-banner-synopsis')?.textContent).toBe('A lotus blooms.');
   expect(card.querySelector('.world-card-feature')?.textContent).toBe('Branching');
   // Without a wide hero, the cover fills the card edge to edge.

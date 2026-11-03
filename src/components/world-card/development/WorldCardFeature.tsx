@@ -13,8 +13,10 @@ import './world-card.css';
  * Feature card: the living hero for one world the host spotlights. The world fills the card
  * edge to edge (its wide hero still, or its cover when it has none) and its hero loop plays
  * silently behind the words, so the world is already alive when the reader arrives. The words
- * sit centered along the bottom and the art fades into the page beneath them. The whole card is
- * one door into the world: a tap anywhere opens it. Only the slide on screen plays its loop.
+ * sit along the bottom start of the card, each in a fixed place (title, creator, details,
+ * synopsis, door), so every slide of a carousel puts them at the same height whatever a world
+ * supplies; the section's name sits in the corner. The whole card is one door into the world: a
+ * tap anywhere opens it. Only the slide on screen plays its loop.
  */
 export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featured', senSash = false, active = true, actionLabel = 'Enter World' }: WorldCardFeatureProps) {
   const imageUrl = world.imageUrl?.trim() || undefined;
@@ -56,8 +58,9 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
     <WorldCardBackdropVideo ref={video} src={videoUrl} className="world-card-banner-video" autoStart={active} />
     <span className="world-card-banner-wash" aria-hidden="true" />
     {senSash && <span className="world-card-banner-sash" aria-hidden="true"><WorldCardRibbon /></span>}
+    {/* The section's name sits in the corner, off the art; the words below keep fixed places. */}
+    {label && <p className="world-card-banner-eyebrow">{label}</p>}
     <div className="world-card-banner-body">
-      {label && <p className="world-card-banner-eyebrow">{label}</p>}
       <h3 className="world-card-banner-title font-display" {...authorText(title.lang)}>{title.text}</h3>
       {world.creatorName && <p className="world-card-banner-byline">
         <span className="world-card-banner-by">by</span>
@@ -66,11 +69,10 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
               intensity={world.creatorTitle.intensity} color={world.creatorTitle.color}>{world.creatorName}</ElementalTitle>
           : <span className="world-card-banner-creator">{world.creatorName}</span>}</span>
       </p>}
-      <p className="world-card-banner-details">{details}</p>
+      <p className="world-card-banner-details">{details}
+        {world.branchingEnabled === true && <span className="world-card-feature world-card-banner-branching"><GitBranch aria-hidden="true" />Branching</span>}
+      </p>
       {synopsis && <p className="world-card-banner-synopsis">{synopsis}</p>}
-      {world.branchingEnabled === true && <ul className="world-card-caption-features" aria-label="Features">
-        <li className="world-card-feature"><GitBranch aria-hidden="true" />Branching</li>
-      </ul>}
       {actionLabel && <span className="world-card-banner-action" aria-hidden="true">{actionLabel}</span>}
     </div>
     <button type="button" className="world-card-banner-open" onClick={onOpen} aria-label={openLabel} />

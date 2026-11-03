@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 import { findStory, HarnessReaderSession } from '@seihouse/sen/harness-generation';
-import { applyReaderStatePatch, createReaderStoryState, type ReaderPreferenceStorage, type ReaderStateRepository } from '@seihouse/sen/reader-runtime';
+import { type ReaderPreferenceStorage, type ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
 import GenerationOverlay from '../../components/chapter-manifestation/development/GenerationOverlay';
 import { StoryDetailScreen } from '../../components/light-novels-home/development/StoryDetailScreen';
@@ -89,6 +89,11 @@ const keepVeilOpen = () => undefined;
  */
 export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint, creator = true, openAtChapter, beginOnOpen = false }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
+  /** Set by World Info's chapter map: the Reader opens at that chapter, which becomes the reader's place. */
+  const [chosenChapter, setChosenChapter] = useState<number>();
+  // The choice is for one visit to the Reader: leaving it any way (its Back, or the browser's) forgets it,
+  // so Continue then opens at the latest saved place.
+  useEffect(() => { if (page !== 'read') setChosenChapter(undefined); }, [page]);
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(beginOnOpen);
   // The Familiar's recall, from the app's header, rides in the Reader's top bar beside Reader Settings.
@@ -128,7 +133,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
   if (page === 'read') return <>
     {writerAlert}
     <HarnessReaderSession state={state} storyId={storyId} controller={controller}
-      readerStateRepository={readerStateRepository} startOnOpen={startOnOpen} creator={creator} openAtChapter={openAtChapter}
+      readerStateRepository={readerStateRepository} startOnOpen={startOnOpen} creator={creator} openAtChapter={chosenChapter ?? openAtChapter}
       codexPictures={codexPictures && {
         pictureOf: key => codexPictures.pictureOf(storyId, key),
         manifest: card => codexPictures.manifest(storyId, card.key, codexPictureRequest(state, storyId, card)),
@@ -146,7 +151,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       companion={familiar}
       renderHostTools={tools => <ReaderFamiliar state={state} storyId={storyId} controller={controller} tools={tools} />}
       renderWriteAside={written => <EnergyCostMeter actionId="chapter.generate" made={written} note="practice: nothing is taken yet" />}
-      onClose={() => { setStartOnOpen(false); onCloseReader(); }} />
+      onClose={() => { setStartOnOpen(false); setChosenChapter(undefined); onCloseReader(); }} />
   </>;
 
   const exportStory = () => {
@@ -159,16 +164,10 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
   };
 
   // World Info's chapter selector: the whole book by arc, with its goals and the reader's progress,
-  // and a tap opens that chapter. The Reader opens at the reader's saved place, so the chosen
-  // chapter becomes that place first.
+  // and a tap opens the Reader at that chapter.
   const { chapters, arcs } = worldInfoChapterMap(state, storyId, readChapters);
-  const openChapter = async (chapterNumber: number) => {
-    if (readerStateRepository) {
-      try {
-        const saved = await readerStateRepository.load(storyId);
-        await readerStateRepository.save(applyReaderStatePatch(saved ?? createReaderStoryState(storyId), { lastReadChapter: chapterNumber }));
-      } catch { /* The Reader still opens, at the reader's last saved place. */ }
-    }
+  const openChapter = (chapterNumber: number) => {
+    setChosenChapter(chapterNumber);
     setStartOnOpen(false);
     onOpenReader();
   };
@@ -192,11 +191,11 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       {covers
         ? <CoveredStoryDetail key={storyId} covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent}
             story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
-            chapters={chapters} arcs={arcs} onOpenChapter={chapterNumber => void openChapter(chapterNumber)} portal={NO_ADAPTATIONS_YET} settings={settings}
+            chapters={chapters} arcs={arcs} onOpenChapter={openChapter} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />
         : <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
-            onBack={onBack} chapters={chapters} arcs={arcs} onOpenChapter={chapterNumber => void openChapter(chapterNumber)} portal={NO_ADAPTATIONS_YET} settings={settings}
+            onBack={onBack} chapters={chapters} arcs={arcs} onOpenChapter={openChapter} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />}
       {/* For testing: the whole story as one file, so a test can be shared. */}

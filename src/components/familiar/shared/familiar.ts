@@ -82,6 +82,36 @@ export interface FamiliarPersonalization {
 /** Per-Familiar personalization, keyed by Familiar id. */
 export type FamiliarPersonalizations = Readonly<Record<string, FamiliarPersonalization>>;
 
+/**
+ * One how-to the Familiar teaches: a short silent screen recording of the app
+ * that the Familiar reads its line over. The host supplies the list; a guide
+ * without a video is still listed, as coming soon.
+ */
+export interface FamiliarGuide {
+  id: string;
+  title: string;
+  /** What the Familiar says over the clip, in its own voice. */
+  line: string;
+  /** The 6–60 second recording, wide or tall; absent until it is recorded. */
+  videoUrl?: string;
+  /** A recorded reading of `line`; without it the device voice reads it. */
+  audioUrl?: string;
+}
+
+/** Guides kept per profile: at most one entry for each guide a host could list. */
+export const FAMILIAR_GUIDES_SEEN_MAX = 100;
+
+/** The guide ids a profile has watched, deduplicated, valid and capped. */
+export function normalizeFamiliarGuidesSeen(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  for (const entry of value) {
+    if (typeof entry === 'string' && entry.trim() && entry.length <= 80) seen.add(entry.trim());
+    if (seen.size >= FAMILIAR_GUIDES_SEEN_MAX) break;
+  }
+  return [...seen];
+}
+
 export const FAMILIAR_NAME_MAX_LENGTH = 40;
 export const FAMILIAR_BACKSTORY_MAX_LENGTH = 600;
 

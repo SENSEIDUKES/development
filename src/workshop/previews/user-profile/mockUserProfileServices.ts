@@ -40,6 +40,7 @@ import { normalizeAccentColor } from '@seihouse/library/profile';
 import { createLocalReaderPreferenceStorage } from '../../../host/reader/readerPreferenceStorage';
 import type React from 'react';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
+import { FAMILIAR_GUIDES } from '../../../host/familiar/guides';
 import { normalizeFamiliarSize, updateFamiliarPersonalizations } from '@seihouse/library/familiar';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { CelestialStorePurchase, CelestialStorePurchaseResult } from '@seihouse/library/celestial-store';
@@ -435,6 +436,16 @@ export function createMockUserProfileServices({
       setProfile(next);
       // Keep the draft in step, so a later identity save never writes an older map back.
       setFormData(previous => ({ ...previous, familiarPersonal }));
+    }, []);
+
+    const handleFamiliarGuideSeen = useCallback((guideId: string) => {
+      const current = profileRef.current;
+      if (!current || current.familiarGuidesSeen?.includes(guideId)) return;
+      const familiarGuidesSeen = [...(current.familiarGuidesSeen ?? []), guideId];
+      const next = { ...current, familiarGuidesSeen, updatedAt: new Date().toISOString() };
+      profileRef.current = next;
+      setProfile(next);
+      setFormData(previous => ({ ...previous, familiarGuidesSeen }));
     }, []);
 
     const handleLanguageChangeDirect = useCallback(
@@ -908,6 +919,7 @@ export function createMockUserProfileServices({
       handleFamiliarLiveTalkChange,
       handleFamiliarWakeWordChange,
       handleFamiliarPersonalChange,
+      handleFamiliarGuideSeen,
       isSavingFamiliar,
 
       showAdvanced,
@@ -1038,6 +1050,7 @@ export function createMockUserProfileServices({
     },
     useController,
     familiars: allFamiliarOptions,
+    familiarGuides: FAMILIAR_GUIDES,
     celestialStore: celestialStore ?? { useStoreAccount },
     // The Workshop's own reader preferences: Menu music and the header's note share them with its reader mixer.
     soundPreferences: WORKSHOP_SOUND_PREFERENCES,

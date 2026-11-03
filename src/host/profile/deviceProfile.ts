@@ -15,7 +15,7 @@ import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { normalizeBackgroundTint, normalizeBackgroundImageId } from '@seihouse/library/presentation';
 import { normalizeAccentColor, type UserProfile } from '@seihouse/library/profile';
 import { getDaoRankData, useDaoXpAccount } from '@seihouse/library/cultivation';
-import { normalizeFamiliarPersonalizations } from '@seihouse/library/familiar';
+import { normalizeFamiliarGuidesSeen, normalizeFamiliarPersonalizations } from '@seihouse/library/familiar';
 import { defaultFamiliar } from '../familiar/catalogue';
 
 /** Where the record is kept among the host's device preferences. */
@@ -62,6 +62,8 @@ function restore(raw: string | null, fresh: UserProfile): UserProfile {
     familiarLiveTalk: saved.familiarLiveTalk === true ? true : undefined,
     familiarWakeWord: saved.familiarWakeWord === true ? true : undefined,
     familiarPersonal: normalizeFamiliarPersonalizations(saved.familiarPersonal),
+    familiarGuidesSeen: normalizeFamiliarGuidesSeen(saved.familiarGuidesSeen),
+    familiarWelcomed: saved.familiarWelcomed === true ? true : undefined,
     activeStories: Array.isArray(saved.activeStories) ? record.activeStories : [],
     inactiveStories: Array.isArray(saved.inactiveStories) ? record.inactiveStories : [],
     joinedDate: text(saved.joinedDate, fresh.joinedDate),
@@ -134,6 +136,8 @@ export function createDeviceProfileStore({ storage, uid, now = () => new Date() 
         else editable.accentColor = normalizeAccentColor(editable.accentColor);
       }
       if ('familiarPersonal' in editable) editable.familiarPersonal = normalizeFamiliarPersonalizations(editable.familiarPersonal);
+      if ('familiarGuidesSeen' in editable) editable.familiarGuidesSeen = normalizeFamiliarGuidesSeen(editable.familiarGuidesSeen);
+      if ('familiarWelcomed' in editable) editable.familiarWelcomed = editable.familiarWelcomed === true ? true : undefined;
       const next = { ...read(), ...editable, updatedAt: now().toISOString() };
       write(next);
       listeners.forEach(listener => listener());

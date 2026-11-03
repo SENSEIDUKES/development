@@ -3,6 +3,7 @@ import { useFamiliarStoreAccount } from '@seihouse/library/familiar';
 import { LibraryProfile, UserProfileServicesProvider, type AppUser, type Story, type UserProfileFeature } from '@seihouse/library/profile';
 import { LibraryLook } from '@seihouse/library/presentation';
 import { allFamiliarOptions } from '../host/familiar/catalogue';
+import { FAMILIAR_GUIDES } from '../host/familiar/guides';
 import { createDeviceProfileServices, type DevicePortraitMaker } from '../host/profile/deviceProfileServices';
 import { ModelRouterDialog } from '../host/model-router/ModelRouterSettings';
 import { UsageDialog } from '../host/usage/UsagePanel';
@@ -52,6 +53,7 @@ export function ProfilePage({ services, stories, navigate, portraits, menuMusic,
   const profileServices = useMemo(() => createDeviceProfileServices({
     store: services.profile,
     familiars: allFamiliarOptions,
+    familiarGuides: FAMILIAR_GUIDES,
     celestialStore: FAMILIAR_STORE,
     soundPreferences: services.readerPreferences,
     menuMusic,

@@ -86,6 +86,20 @@ describe('The reader\'s profile on this device', () => {
     expect(createDeviceProfileStore({ storage: memory(JSON.stringify({ familiarPersonal: [] })).storage, uid: 'reader' }).read().familiarPersonal).toBeUndefined();
   });
 
+  it('remembers the Familiar\'s welcome and the guides watched across reloads, dropping damaged entries', () => {
+    const { storage } = memory();
+    const store = createDeviceProfileStore({ storage, uid: 'reader' });
+    expect(store.read().familiarGuidesSeen ?? []).toEqual([]);
+    expect(store.read().familiarWelcomed).toBeUndefined();
+    store.save({ familiarWelcomed: true, familiarGuidesSeen: ['meet-your-familiar', 'meet-your-familiar', 'start-a-story-seed'] });
+    expect(createDeviceProfileStore({ storage, uid: 'reader' }).read()).toMatchObject({ familiarWelcomed: true, familiarGuidesSeen: ['meet-your-familiar', 'start-a-story-seed'] });
+    // Meeting the Familiar again clears the flag.
+    store.save({ familiarWelcomed: undefined });
+    expect(createDeviceProfileStore({ storage, uid: 'reader' }).read().familiarWelcomed).toBeUndefined();
+    const damaged = JSON.stringify({ familiarWelcomed: 'yes', familiarGuidesSeen: ['meet', 7, null, ''] });
+    expect(createDeviceProfileStore({ storage: memory(damaged).storage, uid: 'reader' }).read()).toMatchObject({ familiarWelcomed: undefined, familiarGuidesSeen: ['meet'] });
+  });
+
   it('never lets a save change who the reader is or what authority they have', () => {
     const { storage } = memory();
     const store = createDeviceProfileStore({ storage, uid: 'reader' });

@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useOverlayScrollbar } from '@seihouse/ui';
+import { FamiliarClip } from './FamiliarClip';
 import { SpokenCode, SpokenCodesProvider } from '@seihouse/sen/presentation';
-import { Check, GripVertical, Info, Keyboard, Lightbulb, MessagesSquare, Mic, Pause, Play, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
+import { Check, GripVertical, Info, Keyboard, Lightbulb, MessagesSquare, Mic, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FAMILIAR_WAKE_WORD, FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice, type FamiliarWakeWord } from '../../../library/familiars/helper';
 import { useFamiliarPanelDrag } from './useFamiliarPanelDrag';
@@ -11,6 +12,22 @@ const Helper = createContext<FamiliarHelperController | null>(null);
 const FocusReturn = createContext<RefObject<HTMLElement | null> | null>(null);
 /** Hosts without the helper retain the Familiar's original two-action tray. */
 export const useFamiliarHelperAvailable = () => Boolean(useContext(Helper));
+
+/**
+ * The Familiar's voice for a page's own words (a guide's line): `read` speaks
+ * in the recorded voice where there is one, the device voice otherwise;
+ * `speaking` is true while it talks. Null where no Familiar is present.
+ */
+export function useFamiliarReadAloud() {
+  const helper = useContext(Helper);
+  const speaking = useSyncExternalStore(
+    helper?.subscribe ?? noSubscribe,
+    () => helper?.getSnapshot().phase === 'speaking',
+    () => false,
+  );
+  return useMemo(() => helper ? { speaking, read: helper.read, stop: helper.quiet } : null, [helper, speaking]);
+}
+const noSubscribe = () => () => {};
 
 /** A recorded line has this long to start before the device voice reads it instead. */
 const LINE_START_MS = 8_000;
@@ -184,10 +201,6 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   const dragInstructions = useId();
   const confirm = useRef<HTMLButtonElement>(null);
   const input = useRef<HTMLInputElement>(null);
-  const clip = useRef<HTMLVideoElement>(null);
-  // A clip waits for a tap where the reader asked for less motion, and can always be paused from the keyboard.
-  const [reducedMotion] = useState(() => typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches));
-  const [clipPlaying, setClipPlaying] = useState(false);
   const returnFocus = useContext(FocusReturn);
   useEffect(() => {
     if (!state.open) return;
@@ -284,13 +297,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
 
     : state.mode === 'explain' ? <>
       {topic && <div className="familiar-helper-topic">
-        {topic.videoUrl && <div className="familiar-helper-clip-frame">
-          <video ref={clip} className="familiar-helper-clip" src={topic.videoUrl} autoPlay={!reducedMotion} muted loop playsInline
-            aria-label={`${topic.label}, shown`} onPlay={() => setClipPlaying(true)} onPause={() => setClipPlaying(false)} />
-          <button type="button" className="familiar-helper-icon familiar-helper-clip-toggle" aria-label={clipPlaying ? 'Pause the clip' : 'Play the clip'}
-            onClick={() => { const video = clip.current; if (!video) return; if (video.paused) void video.play(); else video.pause(); }}>
-            {clipPlaying ? <Pause size={18} aria-hidden /> : <Play size={18} aria-hidden />}</button>
-        </div>}
+        {topic.videoUrl && <FamiliarClip src={topic.videoUrl} label={`${topic.label}, shown`} />}
         <div className="familiar-helper-topic-text">
           <p>{topic.explanation}</p>
           <button type="button" className="familiar-helper-icon" aria-label={state.phase === 'speaking' ? 'Stop' : 'Hear it again'}

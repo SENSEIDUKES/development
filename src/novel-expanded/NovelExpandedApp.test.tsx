@@ -96,7 +96,8 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
     requestStorySpark: vi.fn(),
     getStorySparkStatus: vi.fn(async () => ({ configured: false })),
     accessToken: { current: undefined },
-    profile: createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID }),
+    // A reader who has met their Familiar: the first-meeting welcome has its own test.
+    profile: overrides.profile ?? metFamiliar(createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID })),
     economy: createPracticeEconomy({ uid: NOVEL_EXPANDED_READER_ID }).clients,
     storyCovers: createMemoryStoryCoverStore(),
     requestStoryCover: vi.fn(async () => new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })),
@@ -106,6 +107,11 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
     ...overrides,
   };
 };
+
+function metFamiliar(store: ReturnType<typeof createDeviceProfileStore>) {
+  store.save({ familiarWelcomed: true });
+  return store;
+}
 
 /** A Regular Reader story's seed: Next writes the next chapter (Fate Survival waits on the reader's direction). */
 const regularSeedRecord = (): StorySeedRecord => {
@@ -1001,6 +1007,45 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(recall(name), `the ${name} recall`);
     await click(document.querySelector('[aria-label="Expand Familiar"]'), 'Expand Familiar');
   };
+
+  it('greets a new reader once with their Familiar; Show me around opens its Guides', async () => {
+    const readerPreferences = createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences);
+    const profile = createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID });
+    await render(appServices(scriptedWriter().writer, { readerPreferences, profile }));
+    const welcome = () => document.querySelector<HTMLElement>('[data-familiar-welcome]');
+    for (let tries = 0; !welcome() && tries < 20; tries++) await flush(20);
+    expect(welcome()?.textContent).toContain('I’m Quill.');
+    expect(welcome()?.getAttribute('aria-modal')).toBe('true');
+    await click(welcome()!.querySelector('[data-familiar-welcome-tour]'), 'Show me around', 40);
+    expect(welcome()).toBeNull();
+    expect(profile.read().familiarWelcomed).toBe(true);
+    expect(address()).toBe(`/app/?page=profile&cave=${encodeURIComponent('/home/familiar/guides')}`);
+    // The Familiar page opens on its Guides, at the first one.
+    expect(document.querySelector('[data-familiar-tab="guides"]')?.getAttribute('aria-selected')).toBe('true');
+    expect(document.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet-your-familiar');
+    // It never greets again, even after the app opens anew.
+    act(() => root.unmount());
+    root = createRoot(container);
+    await render(appServices(scriptedWriter().writer, { readerPreferences, profile }));
+    expect(welcome()).toBeNull();
+  });
+
+  it('lets a new reader meet their Familiar later, and again from Settings', async () => {
+    const readerPreferences = createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences);
+    const profile = createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID });
+    await render(appServices(scriptedWriter().writer, { readerPreferences, profile }));
+    const welcome = () => document.querySelector<HTMLElement>('[data-familiar-welcome]');
+    for (let tries = 0; !welcome() && tries < 20; tries++) await flush(20);
+    expect(welcome()).toBeTruthy();
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
+    expect(welcome()).toBeNull();
+    expect(profile.read().familiarWelcomed).toBe(true);
+    expect(address()).toBe('/app/');
+    act(() => { profile.save({ familiarWelcomed: undefined }); });
+    for (let tries = 0; !welcome() && tries < 20; tries++) await flush(20);
+    await click(welcome()?.querySelector('[data-familiar-welcome-later]'), 'Later');
+    expect(welcome()).toBeNull();
+  });
 
   it('opens Discover from the navigation, with its sample worlds', async () => {
     await render(appServices(scriptedWriter().writer));

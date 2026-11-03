@@ -231,6 +231,15 @@ export interface HarnessStory {
   /** Who may read the novel. Arc Goals stay editable in Regular Reader mode only while it is private. Absent means private. */
   visibility?: HarnessStoryVisibility;
   /**
+   * Where the novel's chapters come from (SENSEI, 2026-11-03). A novel made in
+   * SEN is written chapter by chapter on its Codex, so a chapter seals once the
+   * story moves on from it and never reopens: the Codex's continuity depends on
+   * it. An imported novel brings chapters already written, so any of its
+   * chapters may be reopened. Its media (soundscapes, Sound Cues, voices) stays
+   * changeable either way. Absent means made in SEN: importing is not built yet.
+   */
+  origin?: HarnessStoryOrigin;
+  /**
    * The creator's notes to readers, shown with the world's information. Never
    * sent to the chapter writer. Absent means none.
    */
@@ -251,6 +260,9 @@ export interface HarnessStory {
 }
 
 export type HarnessStoryVisibility = 'private' | 'shared' | 'public';
+
+/** Where a novel's chapters come from: written in SEN on its Codex, or imported already written. */
+export type HarnessStoryOrigin = 'sen' | 'imported';
 
 export interface HarnessArcGoalReview {
   arcNumber: number;

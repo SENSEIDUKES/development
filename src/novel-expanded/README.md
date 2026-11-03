@@ -11,6 +11,11 @@
   Reader (`?story=<id>&read=1`) has **Fate alone**: no Create mode, no Rewrite, and it
   never writes a chapter. A draft opened there goes to the creator's Reader. The
   Creator Space's Continue opens the creator's Reader. Sealing is unchanged.
+  The world view's header says where the book stands (Draft or Published) and where it
+  came from: **Made in SEN** (chapters seal as the story moves on, for the Codex) or
+  **Imported** (any chapter can reopen; `HarnessStory.origin`, absent means Made in
+  SEN since importing is not built yet). Read and Publish sit in one fixed row; the
+  Publish question opens from its button, so nothing on the page moves.
 - **2026-11-01** — Model Router tiers: readers choose Mortal, Immortal or Heaven; the team sets the model behind each.
 - **2026-11-01** — Settings › Familiar › Say “Familiar” (beta) calls the Familiar by voice; live talk hangs up after a quiet moment and is charged by the started 20 seconds (3 / 6 / 9 Energy a minute).
 - **2026-11-01** — Settings › Advanced Tools › Usage: what this device made (chapters, pictures, Familiar talk, worlds) and its Energy, with a Behind the scenes view of models and token counts. Recorded in this browser for 90 days (`src/host/usage/`). Chapters cost 2 Energy.

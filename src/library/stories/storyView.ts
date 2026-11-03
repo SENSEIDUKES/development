@@ -65,3 +65,12 @@ export function storyHomeWorlds(state: HarnessWorkspaceState, covers?: Pick<Stor
 export function isStoryPublished(story: Pick<HarnessWorkspaceState['stories'][number], 'visibility'>): boolean {
   return story.visibility === 'public';
 }
+
+/**
+ * Where a story's chapters come from: made in SEN (its chapters seal as the
+ * story moves on, for the Codex's sake) or imported (any chapter may reopen).
+ * Every story without a recorded origin was made in SEN.
+ */
+export function storyOrigin(story: Pick<HarnessWorkspaceState['stories'][number], 'origin'>): 'sen' | 'imported' {
+  return story.origin === 'imported' ? 'imported' : 'sen';
+}

@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
-import { ArrowLeft, BookOpen, ChevronRight, LoaderCircle, Sparkles, Square } from 'lucide-react';
+import { ArrowLeft, BookOpen, Check, ChevronRight, Globe, LoaderCircle, Sparkles, Square } from 'lucide-react';
+import { SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
 import { findStory, type HarnessChapter } from '@seihouse/sen/harness-generation';
 import { LibraryButton, ManifestButton } from '@seihouse/library-ui';
 import type { CreatorWorld } from '../../components/creator-space/shared/creatorSpaceContracts';
@@ -9,6 +10,7 @@ import { AuthorChapterView } from './AuthorChapterView';
 import { describeChapterTagging, storyTaggingSummary } from './chapterTagging';
 import { StoryBlueprintPage } from './StoryBlueprint';
 import { StorySettings } from './settings/StorySettings';
+import { isStoryPublished, storyOrigin } from './storyView';
 import type { LibraryStories } from './useLibraryStories';
 
 /**
@@ -87,14 +89,8 @@ export function AuthorWorldView({ stories, worlds, storyId, chapterNumber, onCho
       </nav>
 
       <section className="mt-4 min-w-0 lg:mt-0" aria-label={world?.title ?? 'World'}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="min-w-0 font-display text-2xl text-white sm:text-3xl">{world?.title}</h1>
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            {onRead && <LibraryButton variant="secondary" size="sm" icon={BookOpen} onClick={() => onRead()} data-testid="author-world-read">Read</LibraryButton>}
-            <PublishControl key={storyId} stories={stories} storyId={storyId} />
-          </div>
-        </div>
-        <div role="tablist" aria-label="This world" className="mt-3 flex gap-1 overflow-x-auto border-b border-white/10" data-testid="author-world-tabs">
+        <WorldHeader stories={stories} storyId={storyId} title={world?.title} onRead={onRead} />
+        <div role="tablist" aria-label="This world" className="mt-5 flex gap-1 overflow-x-auto border-b border-white/10" data-testid="author-world-tabs">
           {TABS.map(entry => <button key={entry.id} type="button" role="tab" aria-selected={shown === entry.id}
             onClick={() => { setTab(entry.id); if (chapterNumber) onCloseChapter(); }}
             className={`min-h-11 shrink-0 border-b-2 px-4 text-sm transition-colors ${shown === entry.id ? 'border-[#d4af37] text-white' : 'border-transparent text-neutral-400 hover:text-neutral-200'}`}>
@@ -118,45 +114,82 @@ export function AuthorWorldView({ stories, worlds, storyId, chapterNumber, onCho
 }
 
 /**
- * Publish: a world stays in Create, its creator's alone, until they publish
- * it; then readers find it on Home and in Search. Publishing asks once, and a
- * published world can return to a draft. It changes who may read the world,
- * never its chapters or its Codex.
+ * The top of the author's world view: the title, one line saying where the
+ * world stands (Draft or Published, Made in SEN or Imported, its chapters) and
+ * what that origin means for its chapters, then the two actions in a fixed
+ * row that never moves: Read (the creator's Reader) and Publish.
  */
-function PublishControl({ stories, storyId }: { stories: LibraryStories; storyId: string }) {
+function WorldHeader({ stories, storyId, title, onRead }: {
+  stories: LibraryStories; storyId: string; title?: string; onRead?: (chapterNumber?: number) => void;
+}) {
   const story = stories.state ? findStory(stories.state, storyId) : undefined;
-  const [asking, setAsking] = useState(false);
+  if (!story) return <h1 className="font-display text-2xl text-white sm:text-3xl">{title}</h1>;
+  const published = isStoryPublished(story);
+  const origin = storyOrigin(story);
+  const chapters = stories.state!.chapters.filter(entry => entry.storyId === storyId).length;
+  return <header data-testid="author-world-header" data-origin={origin}>
+    <h1 className="font-display text-2xl text-white sm:text-3xl">{title}</h1>
+    <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-neutral-400" data-testid="author-world-standing">
+      <span className={`rounded-full border px-2.5 py-0.5 font-semibold uppercase tracking-[0.15em] ${published ? 'border-[#d4af37]/50 text-[#d4af37]' : 'border-white/20 text-neutral-200'}`}>{published ? 'Published' : 'Draft'}</span>
+      <span className={`rounded-full border px-2.5 py-0.5 font-semibold uppercase tracking-[0.15em] ${origin === 'sen' ? 'border-cyan-300/40 text-cyan-200' : 'border-violet-300/40 text-violet-200'}`}
+        data-testid="author-world-origin">{origin === 'sen' ? 'Made in SEN' : 'Imported'}</span>
+      <span>{chapters === 1 ? '1 chapter' : `${chapters} chapters`}</span>
+    </p>
+    <p className="mt-1.5 text-xs text-neutral-500" data-testid="author-world-origin-rule">
+      {origin === 'sen'
+        ? 'Each chapter seals once the next one is written, so the Codex stays true. Sounds and media can still change.'
+        : 'Already written, so any chapter can be reopened. Sounds and media can change too.'}
+    </p>
+    {/* Fixed row: two even buttons on a phone, side by side on wider screens. Publish's question opens from it. */}
+    <div className="mt-4 grid grid-cols-2 gap-3 sm:flex sm:max-w-md" data-testid="author-world-actions">
+      {onRead && <LibraryButton variant="primary" fullWidth icon={BookOpen} onClick={() => onRead()} data-testid="author-world-read" className="sm:flex-1">Read</LibraryButton>}
+      <PublishControl key={storyId} stories={stories} storyId={storyId} published={published} />
+    </div>
+  </header>;
+}
+
+/**
+ * Publish: a world stays in Create, its creator's alone, until they publish
+ * it; then readers find it on Home and in Search. The question opens from the
+ * button, so nothing on the page moves, and a published world can return to a
+ * draft the same way. It changes who may read the world, never its chapters or
+ * its Codex.
+ */
+function PublishControl({ stories, storyId, published }: { stories: LibraryStories; storyId: string; published: boolean }) {
+  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string>();
-  if (!story) return null;
-  const published = story.visibility === 'public';
   const change = async (visibility: 'public' | 'private') => {
     setBusy(true);
     setProblem(undefined);
     try {
       await stories.controller.setStoryVisibility(storyId, visibility);
-      setAsking(false);
+      setOpen(false);
     } catch (error) {
       setProblem(error instanceof Error ? error.message : 'The world could not be changed.');
     } finally {
       setBusy(false);
     }
   };
-  return <div className="flex min-w-0 flex-col items-start gap-1" data-testid="author-world-publish" data-published={published || undefined}>
-    {published
-      ? <div className="flex items-center gap-2">
-          <span className="rounded-full border border-[#d4af37]/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-[#d4af37]">Published</span>
-          <LibraryButton variant="ghost" size="sm" disabled={busy} onClick={() => void change('private')}>Return to draft</LibraryButton>
-        </div>
-      : asking
-        ? <div role="group" aria-label="Publish this world" className="flex min-w-0 flex-wrap items-center gap-2">
-            <span className="w-full text-xs text-neutral-300 sm:w-auto">Readers will find it on Home.</span>
-            <LibraryButton variant="secondary" size="sm" disabled={busy} onClick={() => void change('public')}>Publish</LibraryButton>
-            <LibraryButton variant="ghost" size="sm" disabled={busy} onClick={() => setAsking(false)}>Not yet</LibraryButton>
-          </div>
-        : <LibraryButton variant="secondary" size="sm" onClick={() => setAsking(true)}>Publish</LibraryButton>}
-    {problem && <p role="alert" className="text-xs text-amber-200">{problem}</p>}
-  </div>;
+  return <SEIPopover modal={false} open={open} onOpenChange={next => { setOpen(next); if (!next) setProblem(undefined); }}>
+    <SEIPopoverTrigger render={<LibraryButton variant="secondary" fullWidth icon={published ? Check : Globe} className="sm:flex-1" aria-label={published ? 'Published: change who can read it' : 'Publish'} />}
+      data-testid="author-world-publish" data-published={published || undefined}>
+      {published ? 'Published' : 'Publish'}
+    </SEIPopoverTrigger>
+    <SEIPopoverContent side="bottom" align="end" sideOffset={10} collisionPadding={16} variant="dark" className="w-72 p-4" data-testid="author-world-publish-sheet">
+      <SEIPopoverTitle className="font-display text-base text-white">{published ? 'Readers can find this world' : 'Publish this world?'}</SEIPopoverTitle>
+      <p className="mt-1.5 text-sm text-neutral-300">{published
+        ? 'It is on Home and in Search. Return it to a draft to keep it in Create only.'
+        : 'Readers will find it on Home and in Search. You can return it to a draft later.'}</p>
+      {problem && <p role="alert" className="mt-2 text-xs text-amber-200">{problem}</p>}
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <LibraryButton variant="ghost" size="sm" fullWidth disabled={busy} onClick={() => setOpen(false)}>{published ? 'Keep it' : 'Not yet'}</LibraryButton>
+        {published
+          ? <LibraryButton variant="secondary" size="sm" fullWidth disabled={busy} onClick={() => void change('private')}>Return to draft</LibraryButton>
+          : <LibraryButton variant="primary" size="sm" fullWidth disabled={busy} onClick={() => void change('public')}>Publish</LibraryButton>}
+      </div>
+    </SEIPopoverContent>
+  </SEIPopover>;
 }
 
 /** The world's Blueprint, or a plain note when the world has none (an imported novel, or one begun from a premise). */

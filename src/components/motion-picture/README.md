@@ -128,6 +128,9 @@ inspection-only.
 
 ## Workshop history
 
+- **2026-11-02** — First Familiar host: the Familiar page's Lore tab plays a Familiar's own
+  clip (`videoUrl` on the host catalogue; Celestial Guardian's today) and shows the still
+  alone where no clip exists yet.
 - **2026-10-28** — With the owner's approval, the old production copy
   (`reference/MotionCoverReference.tsx`), its Workshop wrapper
   `MotionCoverReferencePreview.tsx` and its Original Reference and Compare panes were

@@ -334,7 +334,7 @@ removed; a real Mini face can be designed later. The Info cover uses
 | `./presentation` | Library-to-SEN presentation composition and host asset-location provider |
 | `./profile` | Cave/Profile behavior, public views, settings, admin host ports |
 | `./energy` | Client-safe Energy contracts, read projections and provider |
-| `./familiar` | Sprite animation, draggable/resizable companion, minimize/recall, profile selection, and the Familiar account: ownership, Bond Rank cultivated with QI, element mastery, and the Active Elemental Effect (`FamiliarTrainingPanel`, `ElementalEffectPanel`, `FamiliarNameEffect`, `activeNameEffect`) |
+| `./familiar` | Sprite animation, draggable/resizable companion, minimize/recall, profile selection, and the Familiar account: ownership, Bond Rank cultivated with QI, element mastery, and the Active Elemental Effect (`FamiliarStage`, the Familiar page; `FamiliarSettingsMenu`; `FamiliarHero`; `FamiliarNameEffect`, `activeNameEffect`) and per-Familiar personalization (`updateFamiliarPersonalizations`) |
 | `./celestial-store` | Official Familiar Store page and the reusable `ShopCard`: offer configuration, deterministic daily rotation, and the account port for host-owned ownership and purchases |
 | `./cultivation` | Spendable-QI and permanent DAO XP read projections (DAO XP alone sets Cultivator Rank, which only chooses colours), economy standards, and cultivation surfaces |
 | `./dao-pillar` | Calendar/reward contracts and server-result-driven UI |

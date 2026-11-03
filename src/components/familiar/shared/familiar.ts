@@ -63,7 +63,72 @@ export interface FamiliarOption {
   isDefault?: boolean;
   heroUrl: string;
   stillUrl: string;
+  /** High-definition artwork for the Familiar page's stage; without it the stage shows the animated hero. */
+  portraitUrl?: string;
+  /** The Familiar's own motion clip, played on its page; absent until one is made. */
+  videoUrl?: string;
   available: boolean;
+}
+
+/**
+ * What a cultivator has made their own about one Familiar. Both are optional:
+ * without them the Familiar keeps its catalogue name and description.
+ */
+export interface FamiliarPersonalization {
+  name?: string;
+  backstory?: string;
+}
+
+/** Per-Familiar personalization, keyed by Familiar id. */
+export type FamiliarPersonalizations = Readonly<Record<string, FamiliarPersonalization>>;
+
+export const FAMILIAR_NAME_MAX_LENGTH = 40;
+export const FAMILIAR_BACKSTORY_MAX_LENGTH = 600;
+
+const personalText = (value: unknown, max: number) => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim().slice(0, max).trim();
+  return trimmed || undefined;
+};
+
+/** One Familiar's personalization, trimmed and capped; empty fields are dropped. */
+export function normalizeFamiliarPersonalization(value: unknown): FamiliarPersonalization | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
+  const record = value as Record<string, unknown>;
+  const name = personalText(record.name, FAMILIAR_NAME_MAX_LENGTH);
+  const backstory = personalText(record.backstory, FAMILIAR_BACKSTORY_MAX_LENGTH);
+  if (!name && !backstory) return undefined;
+  return { ...(name ? { name } : {}), ...(backstory ? { backstory } : {}) };
+}
+
+/** A saved personalization map, read defensively; undefined when nothing is personalized. */
+export function normalizeFamiliarPersonalizations(value: unknown): FamiliarPersonalizations | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
+  const entries = Object.entries(value as Record<string, unknown>)
+    .map(([id, entry]) => [id, normalizeFamiliarPersonalization(entry)] as const)
+    .filter((entry): entry is readonly [string, FamiliarPersonalization] => Boolean(entry[1]));
+  return entries.length ? Object.fromEntries(entries) : undefined;
+}
+
+/**
+ * Apply a change to one Familiar's personalization. A field set to an empty
+ * string or null returns to the catalogue's own; undefined leaves it alone.
+ */
+export function updateFamiliarPersonalizations(
+  current: FamiliarPersonalizations | undefined,
+  familiarId: string,
+  changes: { name?: string | null; backstory?: string | null },
+): FamiliarPersonalizations | undefined {
+  const previous = current?.[familiarId] ?? {};
+  const merged: Record<string, unknown> = { ...previous };
+  for (const key of ['name', 'backstory'] as const) {
+    if (changes[key] === undefined) continue;
+    merged[key] = changes[key] ?? undefined;
+  }
+  const next = normalizeFamiliarPersonalization(merged);
+  const rest = Object.fromEntries(Object.entries(current ?? {}).filter(([id]) => id !== familiarId));
+  const result = next ? { ...rest, [familiarId]: next } : rest;
+  return Object.keys(result).length ? result : undefined;
 }
 
 export const FAMILIAR_DEFAULT_SIZE = 1;

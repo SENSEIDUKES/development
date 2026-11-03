@@ -40,7 +40,7 @@ import { normalizeAccentColor } from '@seihouse/library/profile';
 import { createLocalReaderPreferenceStorage } from '../../../host/reader/readerPreferenceStorage';
 import type React from 'react';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
-import { normalizeFamiliarSize } from '@seihouse/library/familiar';
+import { normalizeFamiliarSize, updateFamiliarPersonalizations } from '@seihouse/library/familiar';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { CelestialStorePurchase, CelestialStorePurchaseResult } from '@seihouse/library/celestial-store';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/contracts';
@@ -426,6 +426,14 @@ export function createMockUserProfileServices({
       setProfile(next);
       if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: next.familiarInHeader, familiarLiveTalk: liveTalk, familiarWakeWord: next.familiarWakeWord });
     }, [currentUser]);
+
+    const handleFamiliarPersonalChange = useCallback((familiarId: string, changes: { name?: string | null; backstory?: string | null }) => {
+      if (!profileRef.current) return;
+      const familiarPersonal = updateFamiliarPersonalizations(profileRef.current.familiarPersonal, familiarId, changes);
+      const next = { ...profileRef.current, familiarPersonal, updatedAt: new Date().toISOString() };
+      profileRef.current = next;
+      setProfile(next);
+    }, []);
 
     const handleLanguageChangeDirect = useCallback(
       (name: 'interfaceLanguage' | 'defaultReadingLanguage', value: SenLanguageCode) => {
@@ -897,6 +905,7 @@ export function createMockUserProfileServices({
       handleFamiliarInHeaderChange,
       handleFamiliarLiveTalkChange,
       handleFamiliarWakeWordChange,
+      handleFamiliarPersonalChange,
       isSavingFamiliar,
 
       showAdvanced,

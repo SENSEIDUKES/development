@@ -69,8 +69,7 @@ import { useFamiliars } from '../../../library/familiars/familiarsClient';
 import { activeNameEffect, bondRankLabel, familiarTraining } from '../../../library/familiars/contracts';
 import { AchievementsPanel } from '../../rewards/development/AchievementsPanel';
 import { FateSurvivalRelicsPanel } from '../../relics/development/FateSurvivalRelicsPanel';
-import { FamiliarTrainingPanel } from '../../familiar-training/development/FamiliarTrainingPanel';
-import { ElementalEffectPanel } from '../../familiar-training/development/ElementalEffectPanel';
+import { FamiliarStage } from '../../familiar-training/development/FamiliarStage';
 import { useInterfaceLanguageTranslation } from '../../../library/language/interfaceTranslation';
 
 interface UserProfileProps {
@@ -446,7 +445,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
               onPublicVisibilityChange={setPublicVisibility}
               onPreviewPublicView={openPublicView}
               onRedeemCode={accountControls?.onRedeemCode ?? (() => navigate('/settings/redeem-code'))}
-              familiarOptions={familiarOptions}
+              onOpenFamiliar={() => navigate('/home/familiar')}
             />
           </UserProfileCaveDestination>
         );
@@ -476,23 +475,30 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </UserProfileCaveDestination>
         );
       case 'familiar':
+        // Everything Familiar lives here: choosing the companion, its bond and
+        // elements, its lore, and its settings. It fills the space between the
+        // header and the bottom navigation instead of the Cave's column.
         return (
-          <UserProfileCaveDestination id="familiar" title="Familiar" subtitle="Cultivate bonds with QI and master their elements" icon={<Sparkles size={18} />} onBack={returnHome}>
-            <div className="space-y-4">
-              <ElementalEffectPanel
-                familiars={familiarAccount}
-                options={familiars}
-                activeFamiliarId={equippedOption?.id}
-                displayName={profile?.displayName?.trim() || 'Cultivator'}
-              />
-              <FamiliarTrainingPanel
-                familiars={familiarAccount}
-                options={familiars}
-                qiBalance={cultivation.snapshot?.balance ?? null}
-                activeFamiliarId={equippedOption?.id}
-              />
-            </div>
-          </UserProfileCaveDestination>
+          <FamiliarStage
+            familiars={familiarAccount}
+            options={familiarOptions}
+            qiBalance={cultivation.snapshot?.balance ?? null}
+            activeFamiliarId={equippedOption?.id}
+            displayName={profile?.displayName?.trim() || 'Cultivator'}
+            onBack={returnHome}
+            onActivate={controller.handleFamiliarChange ? id => void controller.handleFamiliarChange?.(id) : undefined}
+            activating={controller.isSavingFamiliar}
+            onOpenStore={() => navigate('/home/store')}
+            settings={{
+              size: profile?.familiarSize, onSizeChange: controller.handleFamiliarSizeChange,
+              inHeader: profile?.familiarInHeader ?? false, onInHeaderChange: controller.handleFamiliarInHeaderChange,
+              liveTalk: profile?.familiarLiveTalk ?? false, onLiveTalkChange: controller.handleFamiliarLiveTalkChange,
+              wakeWord: profile?.familiarWakeWord ?? false, onWakeWordChange: controller.handleFamiliarWakeWordChange,
+              disabled: !profile || !profile.familiarId,
+            }}
+            personal={profile?.familiarPersonal}
+            onPersonalChange={controller.handleFamiliarPersonalChange}
+          />
         );
       case 'switchboard':
         return (
@@ -526,7 +532,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           onOpenSettings={() => navigate('/settings')} energy={energy} daoPillar={daoPillar} onOpenDaoPillar={() => navigate('/home/dao-pillar')}
           qi={cultivation.status === 'unavailable' ? undefined : { balance: cultivation.snapshot?.balance ?? null, onOpen: () => navigate('/home/energy') }}
           familiar={familiarAccount.connected && equippedOption ? {
-            name: equippedOption.name,
+            name: profile?.familiarPersonal?.[equippedOption.id]?.name ?? equippedOption.name,
             bondLabel: equippedTraining ? bondRankLabel(equippedTraining.bondRank) : null,
             effect: nameEffect?.effect ?? null,
             onOpen: () => navigate('/home/familiar'),
@@ -544,6 +550,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     }
   };
 
+  // The Familiar page is a stage of its own, signed in and out of the public view only.
+  const stagePage = view === 'familiar' && !isPublicView && !isSignedOut;
   const caveSidebarMounted = isPublicView || (!isSignedOut && !spiritLinkGateMounted);
   // On laptops the Pathways sidebar is the Library's navigation, so it is always
   // present; the Cave's own pages nest under Profile only once the Cave is open.
@@ -586,6 +594,17 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           sound={soundPreferences && menuMusic ? <HeaderSoundControl /> : undefined}
         />}
       >
+        {stagePage ? (
+          // A full-bleed page: no column, rule or padding of the Cave's own.
+          <div className="cave-workspace-body cave-workspace-stage w-full">
+            {error ? (
+              <SEIInlineAlert tone="danger" role="alert" className="mx-4 mt-2">
+                {error}
+              </SEIInlineAlert>
+            ) : null}
+            <div ref={mainRef} className="min-w-0" data-cave-page={route.destination ?? 'unavailable'} data-cave-audience={route.audience}>{renderView()}</div>
+          </div>
+        ) : (
         <div className="cave-workspace-body mx-auto w-full max-w-7xl px-4 pb-12 pt-3 sm:px-6 sm:pt-5">
           <div className="cave-rule" aria-hidden="true" />
 
@@ -597,6 +616,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
 
           <div ref={mainRef} className="mt-5 min-w-0 sm:mt-6" data-cave-page={route.destination ?? 'unavailable'} data-cave-audience={route.audience}>{renderView()}</div>
         </div>
+        )}
       </WorkspaceShell>
 
       {!isPublicView && (isSignedOut || spiritLinkGateMounted) ? (

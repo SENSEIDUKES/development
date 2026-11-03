@@ -10,7 +10,7 @@ import type { QiAccountState } from '../../../library/cultivation/contracts';
 import { formatQi, QiAmount } from '../../../library/cultivation/QiAmount';
 import type { EnergyAccountState } from '../../energy/shared/useEnergyAccount';
 import { EnergyAmount } from '../../energy/development/EnergyAmount';
-import { FamiliarHero } from '../../familiar/development/FamiliarSelection';
+import { FamiliarHero } from '../../familiar/development/FamiliarHero';
 import type { FamiliarOption } from '../../familiar/shared/familiar';
 import { ShopCard } from './ShopCard';
 import { dailyStoreRotation, rotationDayKey, type CelestialStoreOffer } from '../shared/rotation';

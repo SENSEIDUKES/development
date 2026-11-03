@@ -59,6 +59,7 @@ it('carries one account from reading to an opened scroll to Familiar training, m
   await click(button('Continue'));
 
   await click(step('Familiar'));
+  await click(document.querySelector<HTMLButtonElement>('[data-familiar-offer-open]')!);
   await click(document.querySelector<HTMLButtonElement>('[data-familiar-offer]:not([disabled])')!);
   expect(balance('qi')).toBe(0);
   // Training spends QI and never touches DAO XP or rank.

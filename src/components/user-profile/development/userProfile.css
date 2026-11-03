@@ -220,3 +220,9 @@
   background: #7dd3ff;
   box-shadow: 0 0 0 2px #061022;
 }
+
+/* A stage page (the Familiar page) fills the space between the floating
+   header and the bottom navigation, which the shell already leaves clear. */
+.cave-workspace-stage .familiar-stage {
+  --familiar-stage-height: calc(100dvh - var(--workspace-header-height, 0px) - var(--library-bottom-clearance, 0px));
+}

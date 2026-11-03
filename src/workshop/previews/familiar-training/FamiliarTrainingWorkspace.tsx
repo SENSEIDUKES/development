@@ -1,5 +1,7 @@
 /**
- * Workshop preview for Familiar bonds and element mastery.
+ * Workshop preview for the Familiar page: bonds, element mastery, lore,
+ * companion settings and personalisation, on the same `FamiliarStage` the
+ * Cave's Familiar page renders.
  *
  * There is no production original. Familiar rarity (catalogue content) and
  * Bond Rank (how far the cultivator has cultivated a Familiar) are shown side
@@ -10,7 +12,7 @@
  * Familiar (host profile state) are simulated.
  */
 import { useState } from 'react';
-import { ElementalEffectPanel, FamiliarTrainingPanel } from '@seihouse/library/familiar';
+import { FamiliarStage, updateFamiliarPersonalizations, type FamiliarPersonalizations } from '@seihouse/library/familiar';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
@@ -45,6 +47,9 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
   const account = useRewardAccount();
   const { simulators } = useWorkshopEconomy();
   const [note, setNote] = useState<string | null>(null);
+  // Companion settings and personalisation are host profile state; this tab keeps its own.
+  const [companion, setCompanion] = useState({ size: 1, inHeader: false, liveTalk: false, wakeWord: false });
+  const [personal, setPersonal] = useState<FamiliarPersonalizations | undefined>(undefined);
   const owned = account.familiars.snapshot?.ownedFamiliarIds ?? [];
   const nameOf = (id: string) => allFamiliarOptions.find(option => option.id === id)?.name ?? id;
   const grantQi = async () => {
@@ -58,7 +63,7 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
     setNote(`${nameOf(id)} joined the cave (as if bought).`);
   };
   return (
-    <div className="mx-auto max-w-3xl space-y-4 px-4 pb-16 pt-6 text-neutral-200 sm:px-8">
+    <div className="mx-auto max-w-5xl space-y-4 px-4 pb-16 pt-6 text-neutral-200 sm:px-8">
       <BalanceStrip />
       <WorkshopCard title="Workshop controls" badge={<SimulatedBadge />}
         description="A QI faucet for testing (the real faucets are the Dao Pillar and Mystery Scrolls), ownership as if bought in the Celestial Store, and which Familiar is the Active Familiar (host profile state).">
@@ -77,14 +82,25 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
         )}
         {note ? <p role="status" className="mt-3 text-xs text-white/70">{note}</p> : null}
       </WorkshopCard>
-      <ElementalEffectPanel familiars={account.familiars} options={allFamiliarOptions} activeFamiliarId={activeId} displayName={DISPLAY_NAME} />
-      <FamiliarTrainingPanel
-        familiars={account.familiars}
-        options={allFamiliarOptions}
-        qiBalance={account.qi.snapshot?.balance ?? null}
-        activeFamiliarId={activeId}
-        onOffered={() => void account.refreshBalances()}
-      />
+      <div className="overflow-hidden rounded-2xl border border-white/10" style={{ ['--familiar-stage-height' as string]: 'min(52rem, calc(100dvh - 6rem))' }}>
+        <FamiliarStage
+          familiars={account.familiars}
+          options={allFamiliarOptions}
+          qiBalance={account.qi.snapshot?.balance ?? null}
+          activeFamiliarId={activeId}
+          displayName={DISPLAY_NAME}
+          onActivate={onActivate}
+          onOffered={() => void account.refreshBalances()}
+          settings={{
+            size: companion.size, onSizeChange: size => setCompanion(previous => ({ ...previous, size })),
+            inHeader: companion.inHeader, onInHeaderChange: inHeader => setCompanion(previous => ({ ...previous, inHeader })),
+            liveTalk: companion.liveTalk, onLiveTalkChange: liveTalk => setCompanion(previous => ({ ...previous, liveTalk })),
+            wakeWord: companion.wakeWord, onWakeWordChange: wakeWord => setCompanion(previous => ({ ...previous, wakeWord })),
+          }}
+          personal={personal}
+          onPersonalChange={(id, changes) => setPersonal(previous => updateFamiliarPersonalizations(previous, id, changes))}
+        />
+      </div>
       <LedgerFeed />
     </div>
   );
@@ -99,7 +115,7 @@ export function FamiliarTrainingWorkspace() {
     <FeatureWorkspace
       entry={entry}
       workshopControls={{
-        description: 'Bonds, mastery and every QI spend run on the development economy in this tab. The QI grant, Familiar ownership grants and the Active Familiar are Workshop simulations.',
+        description: 'Bonds, mastery and every QI spend run on the development economy in this tab. The QI grant, Familiar ownership grants, the Active Familiar, companion settings and personalisation are Workshop simulations; the Cave saves the last three on the profile.',
         defaultSection: 'states',
         sections: [{
           id: 'states',

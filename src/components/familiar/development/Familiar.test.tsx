@@ -8,7 +8,8 @@ import { allFamiliarOptions, familiarCatalogue } from '../../../host/familiar/ca
 import { familiarLookAnimation } from './useFamiliarLook';
 import { Familiar } from './Familiar';
 import { FamiliarSprite } from './FamiliarSprite';
-import { FamiliarSelection } from './FamiliarSelection';
+import { FamiliarHero } from './FamiliarHero';
+import { FamiliarSettingsMenu } from '../../familiar-training/development/FamiliarSettingsMenu';
 import { FamiliarCompanion } from './FamiliarCompanion';
 import { FamiliarRecall } from './FamiliarRecall';
 import { FAMILIAR_MOBILE_QUERY } from './useFamiliarMobile';
@@ -423,76 +424,25 @@ describe('Familiar Energy interaction', () => {
   });
 });
 
-describe('Familiar selection', () => {
-  it('renders ranks and the catalogue default without inferring either in the selection component', async () => {
-    await act(async () => root.render(<FamiliarSelection options={allFamiliarOptions} onSelect={vi.fn()} />));
-    const articles = Array.from(container.querySelectorAll<HTMLElement>('article'));
-    expect(articles).toHaveLength(12);
-    expect(articles.find(article => article.textContent?.includes('Celestial Guardian'))?.querySelector('[data-rarity]')?.textContent).toBe('epic');
-    const quill = articles.find(article => article.textContent?.includes('Quill'))!;
-    expect(quill.querySelector('[data-rarity]')?.textContent).toBe('common');
-    expect(quill.textContent).toContain('Default');
+describe('Familiar hero', () => {
+  it('keeps the catalogue rarity and default on the options it is given', () => {
+    expect(allFamiliarOptions).toHaveLength(12);
+    expect(allFamiliarOptions.find(option => option.id === 'celestial-guardian')?.rarity).toBe('epic');
+    const quill = allFamiliarOptions.find(option => option.id === 'quill')!;
+    expect([quill.rarity, quill.isDefault]).toEqual(['common', true]);
+    // Only a Familiar with its own clip carries one.
+    expect(allFamiliarOptions.filter(option => option.videoUrl).map(option => option.id)).toEqual(['celestial-guardian']);
   });
 
-  it('marks only the equipped card, next to its rank, without touching selection elsewhere', async () => {
-    await act(async () => root.render(<FamiliarSelection options={[celestialGuardianOption, { ...celestialGuardianOption, id: 'other', name: 'Other' }]} selectedId="celestial-guardian" onSelect={vi.fn()} />));
-    const articles = Array.from(container.querySelectorAll<HTMLElement>('article'));
-    const equipped = articles.find(article => article.textContent?.includes('Celestial Guardian'))!;
-    const other = articles.find(article => article.textContent?.includes('Other'))!;
-    expect(equipped.querySelector('[data-rarity]')!.nextElementSibling?.textContent).toBe('Equipped');
-    expect(other.textContent).not.toContain('Equipped');
-  });
-
-  it('uses host availability and pending state, and never offers an unlock action', async () => {
-    const select = vi.fn();
-    await act(async () => root.render(<FamiliarSelection options={[{ ...celestialGuardianOption, available: false }]} onSelect={select} />));
-    expect(container.querySelector('button')!.disabled).toBe(true);
-    expect(container.querySelector('button')!.textContent).toBe('Locked');
-    await click(container.querySelector('button')!);
-    expect(select).not.toHaveBeenCalled();
-    await act(async () => root.render(<FamiliarSelection options={[celestialGuardianOption]} pending onSelect={select} />));
-    expect(container.querySelector('button')!.disabled).toBe(true);
-    expect(container.textContent).toContain('Saving your Familiar');
-  });
-
-  it('falls back to the host still image when the requested hero is unavailable', async () => {
-    await act(async () => root.render(<FamiliarSelection options={[celestialGuardianOption]} onSelect={vi.fn()} />));
+  it('plays only while active, and falls back to the host still image when the hero is unavailable', () => {
+    act(() => root.render(<FamiliarHero option={celestialGuardianOption} active={false} />));
     const img = container.querySelector('img')!;
-    hover(container.querySelector('article')!, true);
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
+    act(() => root.render(<FamiliarHero option={celestialGuardianOption} active />));
     expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
     act(() => img.dispatchEvent(new Event('error')));
     expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
-    act(() => img.dispatchEvent(new Event('error')));
     expect(img.dataset.fallback).toBe('true');
-  });
-
-  it('only plays the hero on mouse hover, a touch press, or keyboard focus, leaving it still by default', () => {
-    act(() => root.render(<FamiliarSelection options={[celestialGuardianOption]} onSelect={vi.fn()} />));
-    const img = container.querySelector('img')!;
-    const article = container.querySelector('article')!;
-    const button = container.querySelector('button')!;
-    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
-    hover(article, true);
-    expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
-    hover(article, false);
-    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
-    touch(article, 'pointerdown');
-    expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
-    touch(article, 'pointerup');
-    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
-    touch(article, 'pointerdown');
-    expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
-    touch(article, 'pointercancel');
-    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
-    act(() => button.focus());
-    expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
-    act(() => button.blur());
-    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
-    // A touch pointer entering/leaving never counts as hover, so it can't get the hero stuck on.
-    const touchoverEvent = new Event('pointerover', { bubbles: true });
-    Object.assign(touchoverEvent, { pointerType: 'touch' });
-    act(() => article.dispatchEvent(touchoverEvent));
-    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
   });
 });
 
@@ -747,26 +697,28 @@ describe('Mobile sizing and inactive work', () => {
     mobile = true;
     const change = vi.fn();
     const render = (size?: number) => act(() => root.render(<>
-      <FamiliarSelection options={[celestialGuardianOption]} selectedId={celestialGuardian.id} size={size} onSizeChange={change} onSelect={vi.fn()} />
+      <FamiliarSettingsMenu settings={{ size, onSizeChange: change }} familiar={{ id: celestialGuardian.id, catalogueName: 'Celestial Guardian', owned: true }} onClose={vi.fn()} />
       <FamiliarCompanion familiar={celestialGuardian} size={size} />
     </>));
+    const value = () => document.querySelector('[data-familiar-size-value]')!.textContent;
+    const step = (label: 'Smaller' | 'Larger') => document.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)!;
     render();
-    const slider = container.querySelector('input')!;
-    expect([slider.min, slider.max, slider.value]).toEqual(['10', '100', '50']);
+    expect(value()).toBe('50%');
     expect(document.querySelector<HTMLElement>('.familiar-companion')!.style.width).toBe('104px');
-    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
-    for (const [value, expected] of [['10', 0.6], ['100', 1.5]] as const) {
-      act(() => { setter.call(slider, value); slider.dispatchEvent(new Event('input', { bubbles: true })); });
-      expect(change).toHaveBeenLastCalledWith(expected);
-    }
+    await click(step('Larger'));
+    expect(change).toHaveBeenLastCalledWith(1.1);
+    render(0.6);
+    expect(value()).toBe('10%');
+    expect(step('Smaller').disabled).toBe(true);
     render(2);
-    expect(slider.value).toBe('100');
+    expect(value()).toBe('100%');
+    expect(step('Larger').disabled).toBe(true);
     expect(document.querySelector<HTMLElement>('.familiar-companion')!.style.width).toBe('156px');
-    await click(container.querySelector('.familiar-size-slider button')!);
+    await click([...document.querySelectorAll<HTMLButtonElement>('.familiar-settings-footer button')].find(button => button.textContent === 'Restore defaults')!);
     expect(change).toHaveBeenLastCalledWith(1);
     change.mockClear();
     act(() => { mobile = false; mediaListeners.forEach(update => update()); });
-    expect([slider.min, slider.max, slider.value]).toEqual(['60', '200', '200']);
+    expect(value()).toBe('200%');
     expect(document.querySelector<HTMLElement>('.familiar-companion')!.style.width).toBe('208px');
     expect(change).not.toHaveBeenCalled();
   });
@@ -815,9 +767,8 @@ describe('Mobile sizing and inactive work', () => {
   it('releases the animated hero when offscreen and resumes the supplied GIF on return', () => {
     let intersect!: IntersectionObserverCallback;
     vi.stubGlobal('IntersectionObserver', class { constructor(callback: IntersectionObserverCallback) { intersect = callback; } observe() {} disconnect() {} });
-    act(() => root.render(<FamiliarSelection options={[celestialGuardianOption]} onSelect={vi.fn()} />));
+    act(() => root.render(<FamiliarHero option={celestialGuardianOption} active />));
     const img = container.querySelector('img')!;
-    hover(container.querySelector('article')!, true);
     expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
     act(() => intersect([{ isIntersecting: true }] as IntersectionObserverEntry[], {} as IntersectionObserver));
     expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);

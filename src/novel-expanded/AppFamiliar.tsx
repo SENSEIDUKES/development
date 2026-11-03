@@ -17,7 +17,7 @@ const READER_BOTTOM = 136;
 /**
  * The reader's equipped Familiar: one companion for the whole app, so it keeps
  * its place from page to page. It floats over the page unless the reader keeps
- * it in the header (Settings → Familiar → Keep in the header): minimized, its
+ * it in the header (Familiar page → settings → Keep in the header): minimized, its
  * recall in every Library header (beside the music note on laptops).
  * Floating, it starts at the bottom right above the bottom bar and the music
  * note on phones and tablets, and above the page's corner on laptops. It
@@ -26,7 +26,7 @@ const READER_BOTTOM = 136;
  * Reader Settings (the Library hands it over), and summoned it floats above the Reader's
  * bottom bar. It sits under the economy's providers: its Energy panel reads
  * the reader's account. `place` is the page, for the Familiar's Explain.
- * With Settings → Familiar → Live talk (beta) on, and where the server offers
+ * With Familiar page → settings → Live talk (beta) on, and where the server offers
  * it, its microphone starts a live conversation with the equipped Familiar.
  * With Say “Familiar” (beta) on, saying the word calls it as its microphone does.
  * With `navigate`, it can take the reader anywhere in the app (Home, My Energy,

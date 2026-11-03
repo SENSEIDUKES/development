@@ -1,7 +1,5 @@
 import { BackgroundTintControls } from '../../library-presentation/BackgroundTintControls';
 import { useLibraryAssets } from '../../../library/assets';
-import { FamiliarSelection } from '../../familiar/development/FamiliarSelection';
-import type { FamiliarOption } from '../../familiar/shared/familiar';
 import React, { useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -89,11 +87,8 @@ interface UserProfileSettingsPanelProps {
   onPublicVisibilityChange: (next: PublicProfileVisibility) => void;
   onPreviewPublicView: () => void;
   onRedeemCode: () => void;
-  /**
-   * The Familiar catalogue with availability from the account's ownership.
-   * Defaults to the host catalogue as supplied.
-   */
-  familiarOptions?: readonly FamiliarOption[];
+  /** Opens the Familiar page, where every Familiar setting now lives. */
+  onOpenFamiliar?: () => void;
 }
 
 /**
@@ -120,7 +115,7 @@ export function UserProfileSettingsPanel({
   onPublicVisibilityChange,
   onPreviewPublicView,
   onRedeemCode,
-  familiarOptions,
+  onOpenFamiliar,
 }: UserProfileSettingsPanelProps) {
   // Production reads the local-only flag and its setter from `lib/firebase` and
   // calls the deep library sync on `lib/storage`. All three arrive through the
@@ -130,7 +125,6 @@ export function UserProfileSettingsPanel({
     localOnlyMode: LOCAL_ONLY_MODE,
     setLocalOnlyMode,
     requestLibrarySync,
-    familiars = [],
     soundPreferences,
   } = services;
   // A piece the host has not built yet still shows, disabled, with its note.
@@ -501,13 +495,10 @@ export function UserProfileSettingsPanel({
           </SEIDisclosureGroup>
             </SEITabsPanel>
             <SEITabsPanel value="familiar" keepMounted className="pt-4">
-              <FamiliarSelection options={familiarOptions ?? familiars} selectedId={profile?.familiarId}
-                size={profile?.familiarSize} onSizeChange={controller.handleFamiliarSizeChange}
-                inHeader={profile?.familiarInHeader ?? false} onInHeaderChange={controller.handleFamiliarInHeaderChange}
-                liveTalk={profile?.familiarLiveTalk ?? false} onLiveTalkChange={controller.handleFamiliarLiveTalkChange}
-                wakeWord={profile?.familiarWakeWord ?? false} onWakeWordChange={controller.handleFamiliarWakeWordChange}
-                pending={controller.isSavingFamiliar} disabled={!profile || !controller.handleFamiliarChange}
-                onSelect={id => void controller.handleFamiliarChange?.(id)} />
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-4" data-cave-familiar-moved>
+                <p className="font-serif text-sm text-neutral-300">Choosing your Familiar, its size and voice settings, and making it your own now all live on the Familiar page.</p>
+                <LibraryButton className="mt-3 !min-h-11" variant="secondary" disabled={!onOpenFamiliar} onClick={onOpenFamiliar}>Open the Familiar page</LibraryButton>
+              </div>
             </SEITabsPanel>
           </SEITabs>
         </SEITabsPanel>

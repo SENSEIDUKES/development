@@ -246,7 +246,7 @@ function TaggerSettings({ models, chapterModel }: { models: RouterModel[]; chapt
 const SELECTABLE: Partial<Record<ModelRouterCapabilityStatus['id'], { preference: ModelPreferenceCapability; noun: string; note?: string }>> = {
   chapters: { preference: 'chapters', noun: 'chapter' },
   images: { preference: 'images', noun: 'image' },
-  live: { preference: 'live', noun: 'live speech', note: 'Hears and answers in one conversation: the Familiar\'s live talk (Settings → Familiar → Live talk) uses the model chosen here.' },
+  live: { preference: 'live', noun: 'live speech', note: 'Hears and answers in one conversation: the Familiar\'s live talk (Familiar page → settings → Live talk) uses the model chosen here.' },
 };
 
 /**

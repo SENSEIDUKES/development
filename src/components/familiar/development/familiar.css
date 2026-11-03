@@ -114,29 +114,13 @@
 /* Focus follows the Familiar's silhouette, without the header's blue box. */
 .familiar-recall-container .familiar-recall:focus-visible { outline: none; box-shadow: none; }
 .familiar-recall:focus-visible > span { filter: drop-shadow(0 0 3px #d6bd87); }
-.familiar-size-control :focus-visible { outline: 2px solid #96ddf9; outline-offset: 3px; }
 @media (forced-colors: active) {
   .familiar-recall-container .familiar-recall:focus-visible { outline: 2px solid Highlight; outline-offset: 3px; }
 }
-.familiar-size-control { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin: 20px 0; padding: 16px; border: 1px solid #d6bd8744; border-radius: 12px; }
-.familiar-size-control label { color: #f0e2bf; font-weight: 600; }
-.familiar-header-switch { width: 44px; height: 44px; accent-color: #d6bd87; }
-.familiar-size-slider { display: flex; align-items: center; flex: 1 1 240px; gap: 12px; min-width: 0; }
-.familiar-size-slider input { flex: 1; min-width: 40px; min-height: 44px; accent-color: #d6bd87; }
-.familiar-size-slider output { min-width: 4ch; font-size: 13px; }
-.familiar-size-slider button { min-height: 44px; padding: 0 8px; cursor: pointer; }
-.familiar-size-slider button:disabled { opacity: .4; cursor: default; }
 .familiar-energy-values { margin-top: 16px; }
 .familiar-energy-values > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 6px 0; }
 .familiar-energy-values dd { font-weight: 600; }
-.familiar-selection > h3 { font-family: Georgia, serif; font-size: 22px; color: #f4e5bd; }
-.familiar-selection p { font-size: 13px; line-height: 1.6; color: #b9c7d6; }
-.familiar-selection-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; margin: 20px 0; }
-.familiar-option { border: 1px solid #d6bd8744; border-radius: 16px; overflow: hidden; background: #0b1726; }
 .familiar-option-hero { display: block; width: 100%; max-height: 400px; aspect-ratio: 16 / 9; object-fit: contain; background: #080f1c; }
-.familiar-option-details { padding: 16px; }
-.familiar-option-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
-.familiar-option-heading h4 { margin: 0; font-family: Georgia, serif; font-size: 20px; color: #f0e2bf; }
 .familiar-option-rarity, .familiar-option-equipped, .familiar-option-default {
   border: 1px solid color-mix(in srgb, #b5d7eb 45%, transparent);
   border-radius: 999px;

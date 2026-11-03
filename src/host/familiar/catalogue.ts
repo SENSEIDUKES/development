@@ -60,6 +60,8 @@ type FamiliarSource = {
   request: PetRequest;
   timing: Readonly<Record<string, readonly number[]>>;
   heroUrl: string;
+  /** The Familiar's own motion clip, where one has been made. */
+  videoUrl?: string;
   rarity: FamiliarRarity;
   isDefault?: boolean;
   /** Preserve a supplied character-specific animation name where one exists. */
@@ -74,6 +76,8 @@ type FamiliarSource = {
 export interface FamiliarCatalogueEntry {
   readonly definition: FamiliarDefinition;
   readonly heroUrl: string;
+  readonly videoUrl?: string;
+  readonly portraitUrl?: string;
 }
 
 const animationLabels: Readonly<Record<string, string>> = {
@@ -114,6 +118,9 @@ function defineFamiliar(source: FamiliarSource): FamiliarCatalogueEntry {
   );
   return {
     heroUrl: source.heroUrl,
+    videoUrl: source.videoUrl,
+    // The high-definition artwork from LIBRARY CORE/Familiars/images, trimmed to its figure.
+    portraitUrl: `${base}/portrait.webp`,
     definition: {
       id: source.pet.id,
       displayName: source.pet.displayName,
@@ -142,6 +149,7 @@ function defineFamiliar(source: FamiliarSource): FamiliarCatalogueEntry {
 export const familiarCatalogue: readonly FamiliarCatalogueEntry[] = [
   defineFamiliar({ pet: celestialGuardianPet, request: celestialGuardianRequest, timing: celestialGuardianTiming,
     heroUrl: 'https://media.seihouse.org/SEN/GIF/celestial%20Guardian.gif', rarity: 'epic', neutralColumn: 6,
+    videoUrl: 'https://media.seihouse.org/SEN/VIDEO/Familiar/Celestial%20Guardian%20Canva.mp4',
     animationLabels: { running: 'Working with timepiece' } }),
   defineFamiliar({ pet: celestialMoonMothPet, request: celestialMoonMothRequest, timing: celestialMoonMothTiming,
     heroUrl: 'https://media.seihouse.org/SEN/GIF/Celestial%20Moon%20Moth.gif', rarity: 'epic', neutralColumn: 0 }),
@@ -186,6 +194,8 @@ export function familiarOptions(isAvailable: (entry: FamiliarCatalogueEntry) => 
     isDefault: entry.definition.isDefault,
     heroUrl: entry.heroUrl,
     stillUrl: entry.definition.placeholderUrl!,
+    ...(entry.videoUrl ? { videoUrl: entry.videoUrl } : {}),
+    ...(entry.portraitUrl ? { portraitUrl: entry.portraitUrl } : {}),
     available: isAvailable(entry),
   }));
 }

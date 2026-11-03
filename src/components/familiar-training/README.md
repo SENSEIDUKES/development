@@ -93,7 +93,7 @@ unknown Familiar, or gives one Familiar two.
 | Bond tab | `development/FamiliarBondTab.tsx` | Each rank as what it does to the element, forms, account states. |
 | Elements tab | `development/FamiliarElementsTab.tsx` | The Active Elemental Effect choice, a live name preview, the mastered collection of twelve; SEIHouse Signatures shown apart. |
 | Lore tab | `development/FamiliarLoreTab.tsx` | The Familiar's own clip through SEN's `MotionPicture`, its facts, and its story, which the cultivator may rewrite or reset. |
-| Guides tab | `development/FamiliarGuidesTab.tsx` | The Familiar's how-tos: a list (Start here, Coming soon, watched), then one guide at a time with its clip, its line read aloud, and Previous/Next. |
+| Guides tab | `development/FamiliarGuidesTab.tsx` | The Familiar's how-tos, one at a time (swipe, arrows, keyboard), opening on the first unwatched (Start here); a dot per guide shows where you are, which are watched and which are coming soon. |
 | Settings menu | `development/FamiliarSettingsMenu.tsx` | Console-style options list over the whole app: companion size, Keep in the header, Live talk, Say “Familiar”, Restore defaults; Personalise: name, story, and Voice and Instructions marked Coming soon. |
 | Name renderer | `development/FamiliarNameEffect.tsx` | Letters a name with any resolved effect: `LibraryElementalTitle` for elements (mastered outlined), the registered piece for a signature. Used by the Cave, Reward Loop and panels. |
 | Signature pieces | `development/signaturePieces.tsx` | Client registry of hand-built signature animations. Empty. |
@@ -143,6 +143,10 @@ Workshop previews and the account service remain separate.
 
 ## Workshop history
 
+- **2026-11-03 (review):** Guides follow the mobile-first rule for choosing one of many: no column of
+  cards. The tab opens on the first guide not yet watched and is swiped (or stepped with the arrows
+  and arrow keys); a row of dots shows the place, watched guides and those coming soon. A reading the
+  guide started stops when the guide goes away.
 - **2026-11-03:** The Familiar teaches the app (SENSEI: it is one of the first things a reader
   sees). A fourth tab, **Guides**, lists the how-tos the host supplies (`guides`): each a short
   silent screen recording with the Familiar's line under it, read aloud by the Familiar (its

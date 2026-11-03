@@ -284,24 +284,13 @@
 .familiar-stage-textarea { width: 100%; padding: 0.7rem 0.8rem; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(3, 6, 12, 0.7); color: rgb(245 245 245); font-size: 1rem; line-height: 1.5; resize: vertical; }
 .familiar-stage-textarea:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
 
-/* Guides: the Familiar teaches the app, one short clip at a time. */
-.familiar-guide-list { display: grid; gap: 0.35rem; }
-.familiar-guide-list button {
-  display: flex; width: 100%; align-items: center; gap: 0.65rem; min-height: 3rem; padding: 0.45rem 0.7rem; border-radius: 0.9rem;
-  border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); text-align: start;
-}
-.familiar-guide-list button:hover { border-color: rgba(226, 196, 106, 0.35); }
-.familiar-guide-list button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
-.familiar-guide-mark {
-  display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 1.6rem; height: 1.6rem; border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.18); font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.72rem; color: rgb(163 163 163);
-}
-.familiar-guide-list button[data-seen] .familiar-guide-mark { border-color: color-mix(in srgb, var(--stage-glow, #e2c46a) 60%, transparent); color: color-mix(in srgb, var(--stage-glow, #e2c46a) 80%, white); }
-.familiar-guide-name { flex: 1; min-width: 0; font-size: 0.9rem; line-height: 1.3; color: rgb(245 245 245); }
-.familiar-guide-badges { display: flex; flex-shrink: 0; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
+/* Guides: the Familiar teaches the app, one short clip at a time; the dots show where you are. */
+.familiar-guide-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; }
+.familiar-guide-dots > li { width: 0.55rem; height: 0.55rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.3); }
+.familiar-guide-dots > li[data-soon] { border-style: dashed; }
+.familiar-guide-dots > li[data-seen] { background: color-mix(in srgb, var(--stage-glow, #e2c46a) 70%, transparent); border-color: transparent; }
+.familiar-guide-dots > li[data-current] { width: 1.4rem; background: #f1ead8; border-color: transparent; }
 .familiar-guide-badge { flex-shrink: 0; padding: 0.2rem 0.55rem; border-radius: 9999px; background: #f1ead8; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #0b1220; }
-.familiar-guide-list .familiar-settings-soon { flex-shrink: 0; padding: 0.2rem 0.5rem; font-size: 0.6rem; }
-.familiar-guide-back { display: inline-flex; align-items: center; gap: 0.35rem; }
 
 /* Settings: a console-style options list. */
 .familiar-settings {

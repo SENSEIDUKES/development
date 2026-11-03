@@ -2,7 +2,7 @@ import { useEffect, useRef, type KeyboardEvent, type PointerEvent, type ReactNod
 import { ChevronLeft, ChevronRight, Square, Volume2 } from 'lucide-react';
 import type { FamiliarGuide } from '../shared/familiar';
 import { FamiliarClip } from './FamiliarClip';
-import { useFamiliarReadAloud } from './FamiliarHelper';
+import { useFamiliarReadAloud } from './familiarHelperContext';
 import './familiar.css';
 
 const SWIPE_DISTANCE = 48;
@@ -38,6 +38,12 @@ export function FamiliarGuideView({ guides, at, onStep, name, onSeen, head, foot
   const voice = useFamiliarReadAloud();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
+  // A reading this view started stops when the view goes (All guides, another tab, Done), not only on the next guide.
+  const voiceRef = useRef(voice);
+  voiceRef.current = voice;
+  const readingHere = useRef(false);
+  useEffect(() => () => { if (readingHere.current && voiceRef.current?.speaking) voiceRef.current.stop(); }, []);
+  useEffect(() => { if (!voice?.speaking) readingHere.current = false; }, [voice?.speaking]);
   // Watching a recorded guide counts it as seen; one still coming soon is only read.
   useEffect(() => {
     if (guide?.videoUrl) onSeen?.(guide.id);
@@ -82,7 +88,7 @@ export function FamiliarGuideView({ guides, at, onStep, name, onSeen, head, foot
         <p data-familiar-guide-line>{guide.line}</p>
         {voice ? (
           <button type="button" className="familiar-guide-hear" aria-label={voice.speaking ? 'Stop' : `Hear ${name} say it`}
-            onClick={() => voice.speaking ? voice.stop() : voice.read(guide.line, guide.audioUrl)} data-familiar-guide-hear>
+            onClick={() => { if (voice.speaking) voice.stop(); else { readingHere.current = true; voice.read(guide.line, guide.audioUrl); } }} data-familiar-guide-hear>
             {voice.speaking ? <Square size={16} aria-hidden /> : <Volume2 size={18} aria-hidden />}
           </button>
         ) : null}

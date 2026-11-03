@@ -83,7 +83,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/presentation': ['LibraryPresentationProvider'],
       '@seihouse/library/profile': ['LibraryProfile', 'UserProfileServicesProvider', 'notYetBuiltNote'],
       '@seihouse/library/energy': ['EnergyPanel', 'EnergyClientProvider', 'createHttpEnergyClient'],
-      '@seihouse/library/familiar': ['Familiar', 'FamiliarSprite', 'FamiliarHero', 'FamiliarCompanion', 'FamiliarRecall', 'FamiliarStage', 'FamiliarSettingsMenu', 'FamiliarGuidesTab', 'FamiliarWelcome', 'FamiliarClip', 'FamiliarGuideView', 'normalizeFamiliarGuidesSeen', 'useFamiliarReadAloud', 'FamiliarsClientProvider', 'createHttpFamiliarsClient', 'activeNameEffect', 'FamiliarNameEffect'],
+      '@seihouse/library/familiar': ['Familiar', 'FamiliarSprite', 'FamiliarHero', 'FamiliarCompanion', 'FamiliarRecall', 'FamiliarStage', 'FamiliarSettingsMenu', 'FamiliarGuidesTab', 'FamiliarWelcome', 'FamiliarClip', 'FamiliarGuideView', 'FamiliarGuidesAction', 'normalizeFamiliarGuidesSeen', 'useFamiliarReadAloud', 'FamiliarsClientProvider', 'createHttpFamiliarsClient', 'activeNameEffect', 'FamiliarNameEffect'],
       '@seihouse/library/cultivation': ['ClosedDoorCultivationModal', 'QiClientProvider', 'createHttpQiClient', 'DaoXpClientProvider', 'createHttpDaoXpClient', 'getDaoRankData'],
       '@seihouse/library/dao-pillar': ['DaoPillarView', 'DaoPillarClientProvider'],
       '@seihouse/library/relics': ['RelicReveal', 'FateSurvivalRelicsPanel', 'RelicsClientProvider', 'createHttpRelicsClient'],

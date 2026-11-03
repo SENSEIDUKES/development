@@ -1155,17 +1155,17 @@ async function walk(browser, viewport, sample) {
   check(address() === '/app/?page=profile&cave=%2Fhome%2Ffamiliar', `Open the Familiar page should open the Cave's Familiar page, got ${address()}`);
   check(!(await page.evaluate(slidesSideways)), 'The Familiar page must never scroll sideways.');
   await shot('8d-familiar-page');
-  // The Familiar teaches the app from its Guides tab: every guide listed, one open with its line and steps.
+  // The Familiar teaches the app from its Guides tab: one guide at a time, a dot for each, swiped or stepped through.
   await stage.locator('[data-familiar-tab="guides"]').click();
-  const guides = stage.locator('[data-familiar-guides] [data-familiar-guide]');
-  await guides.first().waitFor();
-  check(await guides.count() >= 3, `The Guides tab should list the Familiar's guides, saw ${await guides.count()}.`);
-  await guides.first().click();
+  const dots = stage.locator('[data-familiar-guides] [data-familiar-guide]');
   await stage.locator('[data-familiar-guide-open]').waitFor();
+  check(await dots.count() >= 3, `The Guides tab should show a dot for each of the Familiar's guides, saw ${await dots.count()}.`);
   check(Boolean((await stage.locator('[data-familiar-guide-line]').textContent())?.trim()), 'An open guide should show what the Familiar says.');
+  const firstGuide = await stage.locator('[data-familiar-guide-open]').getAttribute('data-familiar-guide-open');
+  await stage.locator('[data-familiar-guide-step="next"]').click();
+  check(await stage.locator('[data-familiar-guide-open]').getAttribute('data-familiar-guide-open') !== firstGuide, 'Next should show the next guide.');
   check(!(await page.evaluate(slidesSideways)), 'The Guides tab must never scroll sideways.');
   await shot('8d-familiar-guides');
-  await stage.locator('[data-familiar-guides-list]').click();
   await stage.locator('[data-familiar-tab="bond"]').click();
   // Closed again on a phone, where the open sheet covers the stage swiped next (wider screens show both side by side).
   const sheetToggle = stage.locator('[data-familiar-sheet-toggle]');

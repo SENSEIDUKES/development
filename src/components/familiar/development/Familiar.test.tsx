@@ -2,7 +2,8 @@
 import { act, Profiler, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { EnergyClientProvider, type EnergyClient, type EnergyAccountSnapshot } from '@seihouse/library/energy';
+import { FamiliarHelperProvider } from './FamiliarHelper';
+import type { FamiliarVoice } from '../../../library/familiars/helper';
 import { celestialGuardian, celestialGuardianOption } from '../../../host/familiar/celestialGuardian';
 import { allFamiliarOptions, familiarCatalogue } from '../../../host/familiar/catalogue';
 import { familiarLookAnimation } from './useFamiliarLook';
@@ -49,7 +50,7 @@ afterEach(() => {
 const atlas = () => container.querySelector<HTMLImageElement>('.familiar-sprite-atlas')!;
 const imageLoaded = () => act(() => atlas().dispatchEvent(new Event('load')));
 const frame = () => container.querySelector('[data-familiar-frame]')?.getAttribute('data-familiar-frame');
-const click = async (element: Element) => { await act(async () => (element as HTMLElement).click()); };
+const click = async (element: Element | null | undefined) => { expect(element).toBeTruthy(); await act(async () => (element as HTMLElement).click()); };
 const hover = (element: Element, entering: boolean) => {
   const event = new Event(entering ? 'pointerover' : 'pointerout', { bubbles: true });
   Object.assign(event, { pointerType: 'mouse' });
@@ -60,11 +61,13 @@ const touch = (element: Element, type: string) => {
   Object.assign(event, { pointerType: 'touch' });
   act(() => element.dispatchEvent(event));
 };
-const open = async () => {
-  await click(container.querySelector('button')!);
-  await click(document.querySelector('[aria-label="Show Energy"]')!);
-};
-const snapshot = (balance: number): EnergyAccountSnapshot => ({ uid: 'test-account', balance, held: 3, available: balance - 3, prices: [], activity: [], developmentControls: { initialGrant: 500, defaultGrant: 100, maxGrant: 10000 }, updatedAt: '2026-09-20T00:00:00Z' });
+const voice = (): FamiliarVoice => ({ available: true, listen: vi.fn(() => ({ stop: vi.fn(), cancel: vi.fn() })), speak: vi.fn(() => () => {}) });
+const GUIDES = [
+  { id: 'meet', title: 'Meet your Familiar', line: 'I go everywhere you go.' },
+  { id: 'seed', title: 'Start a story seed', line: 'Every story begins as a seed.' },
+];
+const guidesButton = () => document.querySelector<HTMLButtonElement>('[aria-label="Guides"]');
+const card = () => document.querySelector<HTMLElement>('[data-familiar-welcome]');
 
 describe('Familiar sprite playback', () => {
   it.each(familiarCatalogue.map(entry => entry.definition))('holds every $displayName idle frame six times longer in companion mode', familiar => {
@@ -369,7 +372,7 @@ describe('Familiar sprite playback', () => {
   });
 });
 
-describe('Familiar Energy interaction', () => {
+describe('Familiar tray', () => {
   it('announces artwork status outside the image semantics and describes the trigger', () => {
     act(() => root.render(<Familiar familiar={celestialGuardian} />));
     const status = container.querySelector('[role="status"]')!;
@@ -385,42 +388,46 @@ describe('Familiar Energy interaction', () => {
     expect(status.textContent).toBe('Familiar artwork could not load.');
   });
 
-  it('reads on tap, distinguishes held Energy, refreshes on reopen, and never treats maxGrant as capacity', async () => {
-    const client: EnergyClient = { getSnapshot: vi.fn().mockResolvedValueOnce(snapshot(73)).mockResolvedValue(snapshot(91)), grantDevelopment: vi.fn(), resetDevelopment: vi.fn() };
-    await act(async () => root.render(<EnergyClientProvider client={client}><Familiar familiar={celestialGuardian} /></EnergyClientProvider>));
-    expect(client.getSnapshot).not.toHaveBeenCalled();
-    await open();
-    expect(document.body.textContent).toContain('Current Energy73');
-    expect(document.body.textContent).toContain('Available70');
-    expect(document.body.textContent).toContain('MaximumNot configured');
-    expect(document.body.textContent).not.toContain('10,000');
-    await click(document.querySelector('[aria-label="Close Energy panel"]')!);
-    await open();
-    expect(document.body.textContent).toContain('Current Energy91');
-    expect(client.getSnapshot).toHaveBeenCalledTimes(2);
-    expect(client.grantDevelopment).not.toHaveBeenCalled();
-    expect(client.resetDevelopment).not.toHaveBeenCalled();
+  it('carries the Familiar’s Guides in its tray, not Energy; they open its own card beside it, and nothing navigates', async () => {
+    const before = window.location.href;
+    await act(async () => root.render(<FamiliarHelperProvider voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption }}>
+      <FamiliarCompanion familiar={celestialGuardian} />
+    </FamiliarHelperProvider>));
+    const pet = () => document.querySelector<HTMLElement>('.familiar-companion .familiar-trigger')!;
+    await click(pet());
+    expect(document.querySelector('[aria-label="Show Energy"]')).toBeNull();
+    expect(card()).toBeNull();
+    await click(guidesButton());
+    expect(card()).toBeTruthy();
+    expect(card()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet');
+    await click(card()!.querySelector('[data-familiar-guide-step="next"]'));
+    expect(card()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('seed');
+    await click(card()!.querySelector('[data-familiar-welcome-done]'));
+    expect(card()).toBeNull();
+    expect(window.location.href).toBe(before);
+    // It can always be opened again.
+    await click(pet());
+    await click(guidesButton());
+    expect(card()).toBeTruthy();
   });
 
-  it('shows loading then error without a made-up balance, and retries through the same client', async () => {
-    let reject!: (error: Error) => void;
-    const client: EnergyClient = { getSnapshot: vi.fn().mockImplementationOnce(() => new Promise((_, fail) => { reject = fail; })).mockResolvedValue(snapshot(0)), grantDevelopment: vi.fn(), resetDevelopment: vi.fn() };
-    await act(async () => root.render(<EnergyClientProvider client={client}><Familiar familiar={celestialGuardian} /></EnergyClientProvider>));
-    await open();
-    expect(document.body.textContent).toContain('Loading Energy');
-    await act(async () => reject(new Error('Connection interrupted')));
-    expect(document.querySelector('[role="alert"]')?.textContent).toBe('Connection interrupted');
-    expect(document.body.textContent).not.toContain('Current Energy');
-    await click([...document.querySelectorAll('button')].find(button => button.textContent === 'Retry Energy')!);
-    expect(document.body.textContent).toContain('Current Energy0');
+  it('greets a reader who has not met it once, from its own card; either answer is remembered', async () => {
+    const onWelcomed = vi.fn();
+    await act(async () => root.render(<FamiliarHelperProvider voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption, welcome: true, onWelcomed }}>
+      <FamiliarCompanion familiar={celestialGuardian} />
+    </FamiliarHelperProvider>));
+    expect(card()?.textContent).toContain('I’m Celestial Guardian.');
+    await click(card()!.querySelector('[data-familiar-welcome-tour]'));
+    expect(card()!.querySelector('[data-familiar-guide-open]')).toBeTruthy();
+    expect(onWelcomed).not.toHaveBeenCalled();
+    await click(card()!.querySelector('[data-familiar-welcome-done]'));
+    expect(onWelcomed).toHaveBeenCalledOnce();
   });
 
-  it('has an honest unconnected state and dismisses on Escape', async () => {
+  it('has no Guides button where the host gives it no guides', async () => {
     await act(async () => root.render(<Familiar familiar={celestialGuardian} />));
-    await open();
-    expect(document.body.textContent).toContain('Sign in to see your Energy.');
-    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
-    expect(document.querySelector('[aria-label="Show Energy"]')?.getAttribute('aria-expanded')).toBe('false');
+    await click(container.querySelector('button'));
+    expect(guidesButton()).toBeNull();
   });
 });
 
@@ -521,9 +528,8 @@ describe('Floating companion', () => {
     expect(mediaListeners.size).toBe(0);
   });
 
-  it.each(['mouse', 'touch'])('distinguishes %s drag from tap and only reads Energy after choosing the action', async pointerType => {
-    const client: EnergyClient = { getSnapshot: vi.fn().mockResolvedValue(snapshot(81)), grantDevelopment: vi.fn(), resetDevelopment: vi.fn() };
-    await act(async () => root.render(<EnergyClientProvider client={client}><FamiliarCompanion familiar={celestialGuardian} /></EnergyClientProvider>));
+  it.each(['mouse', 'touch'])('distinguishes %s drag from tap and only shows its actions after a tap', async pointerType => {
+    await act(async () => root.render(<FamiliarCompanion familiar={celestialGuardian} />));
     pointer('pointerdown', 900, 600, 1, pointerType);
     pointer('pointermove', 100, 100, 2, pointerType);
     expect(document.querySelector('[data-dragging]')).toBeNull();
@@ -531,16 +537,12 @@ describe('Floating companion', () => {
     expect(location()).toEqual({ x: 12, y: 12 });
     pointer('pointerup', -2000, -2000, 1, pointerType);
     mouseClick();
-    expect(client.getSnapshot).not.toHaveBeenCalled();
+    expect(pet().getAttribute('aria-expanded')).toBe('false');
     pointer('pointerdown', 50, 50, 1, pointerType);
     pointer('pointermove', 52, 51, 1, pointerType);
     pointer('pointerup', 52, 51, 1, pointerType);
     await act(async () => mouseClick());
-    expect(client.getSnapshot).not.toHaveBeenCalled();
     expect(pet().getAttribute('aria-expanded')).toBe('true');
-    await click(document.querySelector('[aria-label="Show Energy"]')!);
-    expect(client.getSnapshot).toHaveBeenCalledOnce();
-    expect(document.body.textContent).toContain('Current Energy81');
   });
 
   it('cleans up cancelled gestures, supports keyboard movement, and reclamps after resizing', async () => {
@@ -565,8 +567,8 @@ describe('Floating companion', () => {
       expect(location().x).toBeLessThanOrEqual(204);
       expect(location().y).toBeLessThanOrEqual(300 - 12 - 104 * 208 / 192 + 0.001);
       await click(pet()); // Keyboard-style activation still works after a cancelled pointer.
-      await click(document.querySelector('[aria-label="Show Energy"]')!);
-      expect(document.body.textContent).toContain('Sign in to see your Energy');
+      expect(pet().getAttribute('aria-expanded')).toBe('true');
+      expect(document.querySelector('[aria-label="Minimize Familiar"], [aria-label="Talk to Familiar"]')).toBeDefined();
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
       Object.defineProperty(window, 'innerHeight', { configurable: true, value: originalHeight });
@@ -674,21 +676,21 @@ describe('Floating companion', () => {
 });
 
 describe('Header Familiar actions', () => {
-  it('reads the same Energy account without restoring the floating pet until Expand is chosen', async () => {
+  it('opens the Familiar’s guides from the header without restoring the floating pet until Expand is chosen', async () => {
     const onRecall = vi.fn();
-    const client: EnergyClient = { getSnapshot: vi.fn().mockResolvedValue(snapshot(64)), grantDevelopment: vi.fn(), resetDevelopment: vi.fn() };
-    await act(async () => root.render(<EnergyClientProvider client={client}><FamiliarRecall familiar={celestialGuardian} onRecall={onRecall} /></EnergyClientProvider>));
+    await act(async () => root.render(<FamiliarHelperProvider voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption }}><FamiliarRecall familiar={celestialGuardian} onRecall={onRecall} /></FamiliarHelperProvider>));
     await click(container.querySelector('.familiar-recall')!);
     expect(container.querySelector('[role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Waving');
+    expect(document.querySelector('[aria-label="Show Energy"]')).toBeNull();
+    await click(guidesButton());
+    expect(card()).toBeTruthy();
+    // With no floating Familiar, the card waits under the header.
+    expect(card()!.getAttribute('data-anchor')).toBe('top');
     expect(onRecall).not.toHaveBeenCalled();
-    expect(client.getSnapshot).not.toHaveBeenCalled();
-    await click(document.querySelector('[aria-label="Show Energy"]')!);
-    expect(document.body.textContent).toContain('Current Energy64');
-    expect(onRecall).not.toHaveBeenCalled();
-    await click(document.querySelector('[aria-label="Close Energy panel"]')!);
+    await click(card()!.querySelector('[data-familiar-welcome-done]'));
+    await click(container.querySelector('.familiar-recall')!);
     await click(document.querySelector('[aria-label="Expand Familiar"]')!);
     expect(onRecall).toHaveBeenCalledOnce();
-    expect(client.getSnapshot).toHaveBeenCalledOnce();
   });
 });
 

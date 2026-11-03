@@ -3,7 +3,8 @@ import { FamiliarCompanion, FamiliarHelperProvider, FamiliarPlace, FamiliarRecal
 import { WorkspaceHeaderAccessoryProvider, useLibraryBottomClearance } from '@seihouse/library/shell';
 import { LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/library/manifestations';
 import { EnergyClientProvider, createHttpEnergyClient } from '@seihouse/library/energy';
-import { defaultFamiliar, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
+import { allFamiliarOptions, defaultFamiliar, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
+import { FAMILIAR_GUIDES } from '../../../host/familiar/guides';
 import { createFamiliarBrowserVoice } from '../../../host/familiar/voice';
 import { useFamiliarLive } from '../../../host/familiar/liveTalk';
 import { createFamiliarWakeWord } from '../../../host/familiar/wakeWord';
@@ -48,12 +49,17 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
     const familiar = selection.uid ? familiarCatalogueEntry(selection.familiarId)?.definition : undefined;
     return loadingFamiliarPresentation(familiar ?? defaultFamiliar.definition);
   }, [selection.uid, selection.familiarId]);
+  // The Familiar's guides, as in the app: its Guides button opens its card here too.
+  const guides = useMemo(() => {
+    const option = allFamiliarOptions.find(entry => entry.id === loadingFamiliar.familiar.id);
+    return option ? { guides: FAMILIAR_GUIDES, familiar: option } : undefined;
+  }, [loadingFamiliar.familiar.id]);
   if (parent) return <>{children}</>;
   return <SelectionContext.Provider value={value}>
     <LoadingFamiliarProvider value={loadingFamiliar}>
       <EnergyClientProvider client={client}>
         {/* The app's Familiar panel (Explain and Action), with Home's topics and actions, as in the app. */}
-        <FamiliarHelperProvider voice={voice} live={selection.familiarLiveTalk ? live : undefined} wake={selection.familiarWakeWord ? wake : undefined} familiar={{ name: loadingFamiliar.familiar.displayName, description: loadingFamiliar.familiar.description }}>
+        <FamiliarHelperProvider voice={voice} live={selection.familiarLiveTalk ? live : undefined} wake={selection.familiarWakeWord ? wake : undefined} familiar={{ name: loadingFamiliar.familiar.displayName, description: loadingFamiliar.familiar.description }} guides={guides}>
           <FamiliarPlace title="Home" help="library" page="home" actions={PREVIEW_FAMILIAR_ACTIONS} />
           <WorkspaceHeaderAccessoryProvider accessory={<ProductFamiliarRecall />}>{children}</WorkspaceHeaderAccessoryProvider>
         </FamiliarHelperProvider>

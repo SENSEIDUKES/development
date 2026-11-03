@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 import type { FamiliarGuide, FamiliarOption } from '../shared/familiar';
 import { FamiliarHero } from './FamiliarHero';
 import { FamiliarGuideView } from './FamiliarGuideView';
-import { useFamiliarReadAloud } from './FamiliarHelper';
+import { useFamiliarReadAloud } from './familiarHelperContext';
 import './familiar.css';
 
 export interface FamiliarWelcomeProps {
@@ -23,10 +23,13 @@ export interface FamiliarWelcomeProps {
   /** Called once a recorded guide has been shown, so it is counted as watched. */
   onGuideSeen?: (guideId: string) => void;
   /**
-   * Where the Familiar is: floating at the bottom of the screen (the card
-   * rises above it), or waiting in the header (the card drops below it).
+   * Where the Familiar is: floating (the card rises above it, or drops below
+   * it where there is more room), or waiting in the header (the card drops
+   * below the header). Found on the page when not given.
    */
   anchor?: 'bottom' | 'top';
+  /** Open on the greeting (the first meeting) or straight on the guides (its Guides button). */
+  startWith?: 'greeting' | 'guides';
   /** Space kept clear at the bottom (the navigation), when anchored there. */
   bottomInset?: number;
   /** The reader is done: Later, Done, Escape or a tap outside. Nothing navigates. */
@@ -37,17 +40,20 @@ export interface FamiliarWelcomeProps {
 const ABOVE_FAMILIAR = 176;
 
 /**
- * The first meeting, as a tip from the Familiar rather than a page: the
- * screen dims a little and the Familiar's small card pops up beside it.
- * Show me around plays its guides inside that same card, on the page the
- * reader is on; Done (or Later, Escape, a tap outside) closes it and the
- * reader carries on where they were. It never takes them anywhere.
+ * The Familiar's own card, a tip rather than a page: the screen dims a
+ * little and the card pops up beside the Familiar. Its Guides button opens
+ * it on the guides; the first meeting opens it once on a greeting, whose
+ * Show me around plays the guides in the same card. Done (or Later, Escape,
+ * a tap outside) closes it and the reader carries on where they were. It
+ * never takes them anywhere.
  */
-export function FamiliarWelcome({ familiar, name = familiar.name, greeting, guides = [], onGuideSeen, anchor = 'bottom', bottomInset = 0, onClose }: FamiliarWelcomeProps) {
+export function FamiliarWelcome({ familiar, name = familiar.name, greeting, guides = [], onGuideSeen, anchor: anchorProp, startWith = 'greeting', bottomInset = 0, onClose }: FamiliarWelcomeProps) {
+  // Floating, the card perches by the Familiar; with no floating Familiar, it waits in the header.
+  const [anchor] = useState<'bottom' | 'top'>(() => anchorProp ?? (typeof document !== 'undefined' && document.querySelector('.familiar-companion') ? 'bottom' : 'top'));
   const titleId = useId();
   const lineId = useId();
   const [portraitFailed, setPortraitFailed] = useState(false);
-  const [touring, setTouring] = useState<number | null>(null);
+  const [touring, setTouring] = useState<number | null>(startWith === 'guides' && guides.length ? 0 : null);
   const card = useRef<HTMLDivElement>(null);
   const voice = useFamiliarReadAloud();
   const close = () => { if (voice?.speaking) voice.stop(); onClose(); };
@@ -91,7 +97,12 @@ export function FamiliarWelcome({ familiar, name = familiar.name, greeting, guid
   useLayoutEffect(() => {
     const element = card.current;
     if (!element) return;
-    const check = () => setCrowded(previous => previous || element.scrollHeight > element.clientHeight + 2);
+    // Compare the card's whole height with the room above the Familiar, so the answer holds once it moves.
+    const check = () => {
+      if (!perch?.bottom) { setCrowded(false); return; }
+      const header = document.querySelector<HTMLElement>('.workspace-header')?.getBoundingClientRect().bottom ?? 72;
+      setCrowded(element.scrollHeight > window.innerHeight - perch.bottom - header - 8);
+    };
     check();
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check);
     observer?.observe(element.firstElementChild ?? element);

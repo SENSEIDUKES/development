@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { Check, List } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { FamiliarGuide } from '../../familiar/shared/familiar';
 import { FamiliarGuideView } from '../../familiar/development/FamiliarGuideView';
 
@@ -16,63 +15,43 @@ export interface FamiliarGuidesTabProps {
 }
 
 /**
- * The Guides tab: every how-to the Familiar teaches, in one list. Each guide
- * is a short silent screen recording with the Familiar's line under it, read
- * aloud on request (`FamiliarGuideView`, the same player as the Familiar's own
- * card). A guide whose video is not recorded yet stays listed as coming soon,
- * so the list is the plan of what the Familiar will teach.
+ * The Guides tab: the Familiar teaches the app, one guide at a time. It opens
+ * on the first guide the reader has not watched; swipe, the arrows or the
+ * keyboard's arrow keys move between them (choosing one of many is a swipe,
+ * per the mobile-first rule, not a column of cards). A row of dots shows where
+ * the reader is and which guides are watched. Each guide is a short silent
+ * recording with the Familiar's line under it, read aloud on request
+ * (`FamiliarGuideView`, the same player as the Familiar's own card); one not
+ * recorded yet says coming soon.
  */
 export function FamiliarGuidesTab({ guides, name, seen = [], onSeen, openGuideId }: FamiliarGuidesTabProps) {
-  const [openId, setOpenId] = useState<string | null>(() => guides.some(guide => guide.id === openGuideId) ? openGuideId! : null);
-  useEffect(() => { if (openGuideId && guides.some(guide => guide.id === openGuideId)) setOpenId(openGuideId); }, [openGuideId, guides]);
-  const listRef = useRef<HTMLOListElement>(null);
   const seenSet = new Set(seen);
-  const startHere = guides.find(guide => !seenSet.has(guide.id))?.id;
-  const at = guides.findIndex(guide => guide.id === openId);
-  // Back to the list, focus returns to the guide just watched.
-  const lastOpen = useRef(openId);
+  const firstUnwatched = Math.max(0, guides.findIndex(guide => !seenSet.has(guide.id)));
+  const [at, setAt] = useState(() => {
+    const asked = guides.findIndex(guide => guide.id === openGuideId);
+    return asked >= 0 ? asked : firstUnwatched;
+  });
   useEffect(() => {
-    if (!openId && lastOpen.current) listRef.current?.querySelector<HTMLButtonElement>(`[data-familiar-guide="${lastOpen.current}"]`)?.focus({ preventScroll: true });
-    lastOpen.current = openId;
-  }, [openId]);
+    const asked = guides.findIndex(guide => guide.id === openGuideId);
+    if (asked >= 0) setAt(asked);
+  }, [openGuideId, guides]);
 
   if (!guides.length) return <p className="familiar-stage-note">{name} has nothing to show you yet.</p>;
-
-  if (at >= 0) {
-    return (
-      <FamiliarGuideView guides={guides} at={at} name={name}
-        onStep={by => setOpenId(guides[(at + by + guides.length) % guides.length].id)}
-        onSeen={id => { if (!seen.includes(id)) onSeen?.(id); }}
-        head={(
-          <button type="button" className="familiar-stage-link familiar-guide-back" onClick={() => setOpenId(null)} data-familiar-guides-list>
-            <List size={16} aria-hidden /> All guides
-          </button>
-        )} />
-    );
-  }
-
+  const shown = Math.min(at, guides.length - 1);
   return (
     <div className="space-y-3" data-familiar-guides>
-      <p className="familiar-stage-note">{name} shows you around: short clips of how things work, with {name} talking you through each one.</p>
-      <ol ref={listRef} className="familiar-guide-list" aria-label={`${name}’s guides`}>
-        {guides.map((entry, index) => {
-          const watched = seenSet.has(entry.id);
-          return (
-            <li key={entry.id}>
-              <button type="button" onClick={() => setOpenId(entry.id)} data-familiar-guide={entry.id} data-seen={watched || undefined}>
-                <span className="familiar-guide-mark" aria-hidden>{watched ? <Check size={14} /> : index + 1}</span>
-                <span className="familiar-guide-name">{entry.title}{watched ? <span className="sr-only"> (watched)</span> : null}</span>
-                {entry.id === startHere || !entry.videoUrl ? (
-                  <span className="familiar-guide-badges">
-                    {entry.id === startHere ? <span className="familiar-guide-badge" data-familiar-guide-start>Start here</span> : null}
-                    {!entry.videoUrl ? <span className="familiar-settings-soon" data-familiar-coming-soon>Coming soon</span> : null}
-                  </span>
-                ) : null}
-              </button>
-            </li>
-          );
-        })}
+      <ol className="familiar-guide-dots" aria-label={`${name}’s guides: ${seen.filter(id => guides.some(guide => guide.id === id)).length} of ${guides.length} watched`}>
+        {guides.map((guide, index) => (
+          <li key={guide.id} data-familiar-guide={guide.id} data-current={index === shown || undefined} data-seen={seenSet.has(guide.id) || undefined}
+            data-soon={!guide.videoUrl || undefined} aria-current={index === shown ? 'step' : undefined}>
+            <span className="sr-only">{guide.title}{seenSet.has(guide.id) ? ', watched' : ''}{guide.videoUrl ? '' : ', coming soon'}</span>
+          </li>
+        ))}
       </ol>
+      <FamiliarGuideView guides={guides} at={shown} name={name} focusOnChange={false}
+        onStep={by => setAt((shown + by + guides.length) % guides.length)}
+        onSeen={id => { if (!seen.includes(id)) onSeen?.(id); }}
+        head={shown === firstUnwatched && !seenSet.has(guides[shown].id) ? <span className="familiar-guide-badge" data-familiar-guide-start>Start here</span> : undefined} />
     </div>
   );
 }

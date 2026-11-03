@@ -1,6 +1,6 @@
 /**
  * Workshop preview for the Familiar page: bonds, element mastery, lore,
- * guides, the first-meeting welcome, companion settings and personalisation, on the same `FamiliarStage` the
+ * guides, companion settings and personalisation, on the same `FamiliarStage` the
  * Cave's Familiar page renders.
  *
  * There is no production original. Familiar rarity (catalogue content) and
@@ -12,7 +12,7 @@
  * Familiar (host profile state) are simulated.
  */
 import { useState } from 'react';
-import { FamiliarStage, FamiliarWelcome, updateFamiliarPersonalizations, type FamiliarPersonalizations } from '@seihouse/library/familiar';
+import { FamiliarStage, updateFamiliarPersonalizations, type FamiliarPersonalizations } from '@seihouse/library/familiar';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
 import { FAMILIAR_GUIDES } from '../../../host/familiar/guides';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
@@ -53,7 +53,6 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
   const [personal, setPersonal] = useState<FamiliarPersonalizations | undefined>(undefined);
   // The guides and the first meeting are profile state in the Cave; this tab keeps its own.
   const [guidesSeen, setGuidesSeen] = useState<string[]>([]);
-  const [welcome, setWelcome] = useState(false);
   const owned = account.familiars.snapshot?.ownedFamiliarIds ?? [];
   const nameOf = (id: string) => allFamiliarOptions.find(option => option.id === id)?.name ?? id;
   const grantQi = async () => {
@@ -73,7 +72,6 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
         description="A QI faucet for testing (the real faucets are the Dao Pillar and Mystery Scrolls), ownership as if bought in the Celestial Store, and which Familiar is the Active Familiar (host profile state).">
         <div className="flex flex-wrap gap-2">
           <WorkshopActionButton onClick={() => void grantQi()}>Grant 1,000 QI</WorkshopActionButton>
-          <WorkshopActionButton onClick={() => setWelcome(true)}>Show the first meeting</WorkshopActionButton>
           {guidesSeen.length ? <WorkshopActionButton onClick={() => setGuidesSeen([])}>Forget watched guides</WorkshopActionButton> : null}
           {!owned.includes('phoenix') && <WorkshopActionButton onClick={() => void bringHome('phoenix')}>Bring Phoenix home</WorkshopActionButton>}
           {!owned.includes('galaxy-octopus') && <WorkshopActionButton onClick={() => void bringHome('galaxy-octopus')}>Bring Galaxy Octopus home</WorkshopActionButton>}
@@ -111,11 +109,6 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
         />
       </div>
       <LedgerFeed />
-      {welcome ? (
-        <FamiliarWelcome familiar={allFamiliarOptions.find(option => option.id === activeId) ?? allFamiliarOptions[0]} name={personal?.[activeId]?.name}
-          guides={FAMILIAR_GUIDES} onGuideSeen={id => setGuidesSeen(previous => previous.includes(id) ? previous : [...previous, id])}
-          onClose={() => setWelcome(false)} />
-      ) : null}
     </div>
   );
 }

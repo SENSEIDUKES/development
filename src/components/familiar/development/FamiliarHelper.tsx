@@ -2,32 +2,40 @@ import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, 
 import { createPortal } from 'react-dom';
 import { useOverlayScrollbar } from '@seihouse/ui';
 import { FamiliarClip } from './FamiliarClip';
+import { FamiliarWelcome } from './FamiliarWelcome';
+import type { FamiliarGuide, FamiliarOption } from '../shared/familiar';
 import { SpokenCode, SpokenCodesProvider } from '@seihouse/sen/presentation';
-import { Check, GripVertical, Info, Keyboard, Lightbulb, MessagesSquare, Mic, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
+import { Check, Compass, GripVertical, Info, Keyboard, Lightbulb, MessagesSquare, Mic, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { FAMILIAR_WAKE_WORD, FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice, type FamiliarWakeWord } from '../../../library/familiars/helper';
 import { useFamiliarPanelDrag } from './useFamiliarPanelDrag';
 
-const Helper = createContext<FamiliarHelperController | null>(null);
+import { FamiliarHelperContextValue as Helper } from './familiarHelperContext';
+/** The Familiar's guides: its Guides button opens its card, wherever the reader is. */
+const Guides = createContext<{ open(): void } | null>(null);
+
+/**
+ * What the Familiar teaches, and who is teaching. The card is the Familiar's
+ * own: its Guides button opens it on any page, and a reader who has not met
+ * it yet sees it once, greeting them (`welcome`). Nothing navigates.
+ */
+export interface FamiliarGuidesConfig {
+  guides: readonly FamiliarGuide[];
+  /** The Familiar teaching, as the catalogue shows it. */
+  familiar: FamiliarOption;
+  /** The reader's own name for it. */
+  name?: string;
+  onSeen?: (guideId: string) => void;
+  /** The reader has not met it yet: its card opens once, with its greeting. */
+  welcome?: boolean;
+  /** The greeting was answered (Show me around or Later): it never opens by itself again. */
+  onWelcomed?: () => void;
+}
 const FocusReturn = createContext<RefObject<HTMLElement | null> | null>(null);
 /** Hosts without the helper retain the Familiar's original two-action tray. */
 export const useFamiliarHelperAvailable = () => Boolean(useContext(Helper));
 
-/**
- * The Familiar's voice for a page's own words (a guide's line): `read` speaks
- * in the recorded voice where there is one, the device voice otherwise;
- * `speaking` is true while it talks. Null where no Familiar is present.
- */
-export function useFamiliarReadAloud() {
-  const helper = useContext(Helper);
-  const speaking = useSyncExternalStore(
-    helper?.subscribe ?? noSubscribe,
-    () => helper?.getSnapshot().phase === 'speaking',
-    () => false,
-  );
-  return useMemo(() => helper ? { speaking, read: helper.read, stop: helper.quiet } : null, [helper, speaking]);
-}
-const noSubscribe = () => () => {};
+export { useFamiliarReadAloud } from './familiarHelperContext';
 
 /** A recorded line has this long to start before the device voice reads it instead. */
 const LINE_START_MS = 8_000;
@@ -75,8 +83,10 @@ function playLine(currentPlayback: () => NarrativeAudioPlayback | null, url: str
  * Reader page. With `live`, the microphone starts a live conversation with the
  * equipped `familiar` instead of the device voice.
  */
-export function FamiliarHelperProvider({ voice, live, wake, familiar, language = 'en-US', bottomInset = 88, children }: {
+export function FamiliarHelperProvider({ voice, live, wake, familiar, guides, language = 'en-US', bottomInset = 88, children }: {
   voice: FamiliarVoice; live?: FamiliarLive;
+  /** The Familiar's guides, opened from its Guides button (and once, as its greeting). */
+  guides?: FamiliarGuidesConfig;
   /** With a wake word, saying "Familiar" calls it as tapping its microphone does. */
   wake?: FamiliarWakeWord;
   familiar?: { name: string; description: string }; language?: string; bottomInset?: number; children: ReactNode;
@@ -98,8 +108,17 @@ export function FamiliarHelperProvider({ voice, live, wake, familiar, language =
     document.addEventListener('visibilitychange', hide);
     return () => { document.removeEventListener('visibilitychange', hide); helper.suspend(); };
   }, [helper]);
-  return <Helper.Provider value={helper}><FocusReturn.Provider value={returnFocus}><FamiliarCodes helper={helper}>{children}<FamiliarHelperPanel helper={helper} bottomInset={Math.max(16, bottomInset)} /></FamiliarCodes>
-    {wake?.available && <FamiliarWakeListener helper={helper} wake={wake} language={language} />}</FocusReturn.Provider></Helper.Provider>;
+  // The guide card: closed, greeting (once, for a reader who has not met the Familiar) or showing guides.
+  const [card, setCard] = useState<'hello' | 'guides' | null>(null);
+  const welcome = Boolean(guides?.welcome);
+  useEffect(() => { if (welcome) setCard(current => current ?? 'hello'); }, [welcome]);
+  const guideControl = useMemo(() => guides?.guides.length ? { open: () => setCard('guides') } : null, [guides?.guides.length]);
+  const closeCard = () => { if (guides?.welcome) guides.onWelcomed?.(); setCard(null); };
+  return <Helper.Provider value={helper}><Guides.Provider value={guideControl}><FocusReturn.Provider value={returnFocus}><FamiliarCodes helper={helper}>{children}<FamiliarHelperPanel helper={helper} bottomInset={Math.max(16, bottomInset)} /></FamiliarCodes>
+    {wake?.available && <FamiliarWakeListener helper={helper} wake={wake} language={language} />}
+    {card && guides ? <FamiliarWelcome key={card === 'hello' ? 'hello' : 'guides'} familiar={guides.familiar} name={guides.name} guides={guides.guides} onGuideSeen={guides.onSeen}
+      startWith={card === 'hello' ? 'greeting' : 'guides'} bottomInset={bottomInset} onClose={closeCard} /> : null}
+    </FocusReturn.Provider></Guides.Provider></Helper.Provider>;
 }
 
 /**
@@ -158,6 +177,17 @@ export function useFamiliarHelperContext(context: FamiliarHelperContext, level: 
     const token = owner.current;
     return () => helper?.clearContext(token);
   }, [helper]);
+}
+
+/**
+ * The Familiar's Guides button, in its tray (floating) and its header actions:
+ * its card of guides opens beside it, on the page the reader is on.
+ */
+export function FamiliarGuidesAction({ onOpen }: { onOpen?: () => void }) {
+  const guides = useContext(Guides);
+  if (!guides) return null;
+  return <button type="button" className="familiar-action" aria-label="Guides" title="Guides" data-familiar-guides-open
+    onClick={() => { onOpen?.(); guides.open(); }}><Compass aria-hidden size={21} /></button>;
 }
 
 /** The same action appears in the header tray and floating Familiar. */

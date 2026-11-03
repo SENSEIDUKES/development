@@ -32,25 +32,25 @@ const voice = (): FamiliarVoice & { speak: ReturnType<typeof vi.fn>; play: Retur
   play: vi.fn(() => () => {}),
 });
 const click = (element: Element | null | undefined) => { expect(element).toBeTruthy(); act(() => { (element as HTMLElement).click(); }); };
-const guideButton = (id: string) => container.querySelector(`[data-familiar-guide="${id}"]`);
 const step = (which: 'next' | 'previous') => container.querySelector(`[data-familiar-guide-step="${which}"]`);
 const openId = () => container.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open');
 
 describe('Familiar Guides tab', () => {
-  it('lists every guide, marks the first unwatched one, and keeps guides without a video as coming soon', () => {
+  it('opens on the first guide not yet watched, one at a time, with a dot for each guide (no column of cards)', () => {
     act(() => root.render(<FamiliarGuidesTab guides={GUIDES} name="Quill" seen={['meet']} />));
+    expect(openId()).toBe('seed');
+    expect(container.querySelector('[data-familiar-guide-start]')).toBeTruthy();
     expect([...container.querySelectorAll('[data-familiar-guide]')].map(entry => entry.getAttribute('data-familiar-guide'))).toEqual(['meet', 'seed', 'highlight']);
-    expect(guideButton('meet')!.hasAttribute('data-seen')).toBe(true);
-    expect(guideButton('meet')!.textContent).toContain('(watched)');
-    expect(guideButton('seed')!.querySelector('[data-familiar-guide-start]')).toBeTruthy();
-    expect(guideButton('seed')!.querySelector('[data-familiar-coming-soon]')).toBeTruthy();
-    expect(guideButton('highlight')!.querySelector('[data-familiar-coming-soon]')).toBeNull();
+    expect(container.querySelector('[data-familiar-guide="meet"]')!.hasAttribute('data-seen')).toBe(true);
+    expect(container.querySelector('[data-familiar-guide="seed"]')!.getAttribute('aria-current')).toBe('step');
+    expect(container.querySelector('[data-familiar-guide="seed"]')!.hasAttribute('data-soon')).toBe(true);
+    expect(container.querySelector('[data-familiar-guide-video="none"]')!.textContent).toContain('Coming soon');
+    expect(container.querySelectorAll('button[data-familiar-guide]')).toHaveLength(0);
   });
 
   it('plays a guide’s clip with its line, steps through the guides, and marks a watched guide seen', () => {
     const onSeen = vi.fn();
     act(() => root.render(<FamiliarGuidesTab guides={GUIDES} name="Quill" onSeen={onSeen} />));
-    click(guideButton('meet'));
     expect(openId()).toBe('meet');
     expect(container.querySelector('video')!.getAttribute('src')).toBe('https://cdn.example/meet.mp4');
     expect(container.querySelector('video')!.muted).toBe(true);
@@ -60,7 +60,6 @@ describe('Familiar Guides tab', () => {
     click(step('next'));
     expect(openId()).toBe('seed');
     expect(container.querySelector('video')).toBeNull();
-    expect(container.querySelector('[data-familiar-guide-video="none"]')!.textContent).toContain('Coming soon');
     expect(onSeen).toHaveBeenCalledTimes(1);
     // Steps wrap, and the keyboard's arrows step too.
     click(step('previous'));
@@ -68,9 +67,6 @@ describe('Familiar Guides tab', () => {
     expect(openId()).toBe('highlight');
     act(() => { container.querySelector('[data-familiar-guide-open]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
     expect(openId()).toBe('meet');
-    click(container.querySelector('[data-familiar-guides-list]'));
-    expect(openId()).toBeUndefined();
-    expect(document.activeElement).toBe(guideButton('meet'));
   });
 
   it('frames a tall recording whole instead of cropping it to a wide shape', () => {
@@ -91,6 +87,16 @@ describe('Familiar Guides tab', () => {
     click(step('next'));
     click(container.querySelector('[data-familiar-guide-hear]'));
     expect(familiarVoice.play).toHaveBeenCalledWith('https://cdn.example/highlight.mp3', expect.any(Function), expect.any(Function));
+  });
+
+  it('stops the Familiar reading a guide when the guide goes away', () => {
+    const stop = vi.fn();
+    const familiarVoice = { ...voice(), speak: vi.fn(() => stop) };
+    act(() => root.render(<FamiliarHelperProvider voice={familiarVoice}><FamiliarGuidesTab guides={GUIDES} name="Quill" openGuideId="seed" /></FamiliarHelperProvider>));
+    click(container.querySelector('[data-familiar-guide-hear]'));
+    expect(familiarVoice.speak).toHaveBeenCalledOnce();
+    act(() => root.render(<FamiliarHelperProvider voice={familiarVoice}><p>Bond</p></FamiliarHelperProvider>));
+    expect(stop).toHaveBeenCalled();
   });
 
   it('hides Hear it where no Familiar is present to speak', () => {

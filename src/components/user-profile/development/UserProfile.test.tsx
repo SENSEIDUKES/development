@@ -59,7 +59,9 @@ beforeEach(() => {
       media,
       // The Cave rail is mounted from the desktop breakpoint only; every other
       // query stays unmatched, so the default fixture is a phone.
-      matches: media.includes('min-width: 1024px') ? desktopViewport : false,
+      matches: media.includes('min-width: 1024px') ? desktopViewport
+        // The Familiar page's own phone query: a phone unless the desktop viewport is set.
+        : media === '(max-width: 767px)' ? !desktopViewport : false,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       addListener: vi.fn(),
@@ -774,6 +776,28 @@ describe('Cultivator Cave destinations', () => {
     await click(open('dao-pillar'));
     expect(daoTileStates().filter(state => state === 'collected')).toHaveLength(0);
     expect(daoTile(13).dataset.state).toBe('available');
+  });
+
+  it('opens the Familiar details full screen on a phone, and closes them with the close control or Escape', async () => {
+    await renderCave({ rewards: { openingDaoXp: 13_480, qiGrant: 2_000 } });
+    await click(open('familiar'));
+    const stage = () => container.querySelector<HTMLElement>('[data-familiar-stage]')!;
+    expect(stage().hasAttribute('data-sheet-full')).toBe(false);
+    await click(container.querySelector('[data-familiar-tab="elements"]')!);
+    // The details take the page under the top bar; the stage steps aside for assistive technology too.
+    expect(stage().hasAttribute('data-sheet-full')).toBe(true);
+    expect(stage().querySelector('.familiar-stage-hero')?.getAttribute('aria-hidden')).toBe('true');
+    expect(stage().querySelector('.familiar-stage-sheet-title')?.textContent).toBe('Quill');
+    const toggle = () => stage().querySelector<HTMLButtonElement>('[data-familiar-sheet-toggle]')!;
+    expect(toggle().getAttribute('aria-label')).toBe('Close details');
+    await click(toggle());
+    expect(stage().hasAttribute('data-sheet-full')).toBe(false);
+    expect(stage().querySelector('.familiar-stage-hero')?.hasAttribute('aria-hidden')).toBe(false);
+    await click(container.querySelector('[data-familiar-tab="lore"]')!);
+    expect(stage().hasAttribute('data-sheet-full')).toBe(true);
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); });
+    expect(stage().hasAttribute('data-sheet-open')).toBe(false);
+    expect(document.activeElement).toBe(toggle());
   });
 
   it('letters the name with the Active Familiar’s bond effect, which grows as QI cultivates the bond', async () => {

@@ -93,6 +93,10 @@ export function FamiliarStage({
   }, [startIndex]);
   const [tab, setTab] = useState<StageTab>('bond');
   const [sheetOpen, setSheetOpen] = useState(false);
+  // On a phone an opened sheet takes the whole page under the top bar; wider screens show it beside the stage.
+  const narrow = useNarrowStage();
+  const fullSheet = sheetOpen && narrow;
+  const sheetToggle = useRef<HTMLButtonElement>(null);
   const [focusedRank, setFocusedRank] = useState<FamiliarBondRank | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [storyRequest, setStoryRequest] = useState(0);
@@ -145,6 +149,16 @@ export function FamiliarStage({
     if (event.key === 'ArrowRight') { event.preventDefault(); go(1); }
     if (event.key === 'ArrowLeft') { event.preventDefault(); go(-1); }
   };
+  useEffect(() => {
+    if (!fullSheet || settingsOpen) return;
+    const escape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setSheetOpen(false);
+      sheetToggle.current?.focus();
+    };
+    document.addEventListener('keydown', escape);
+    return () => document.removeEventListener('keydown', escape);
+  }, [fullSheet, settingsOpen]);
   const openTab = (next: StageTab) => {
     setTab(next);
     setSheetOpen(true);
@@ -201,7 +215,7 @@ export function FamiliarStage({
   const canPersonalize = Boolean(option && owned && onPersonalChange);
 
   return (
-    <section className="familiar-stage library-scrollbars" data-familiar-stage data-element={element ?? undefined} data-sheet-open={sheetOpen || undefined}
+    <section className="familiar-stage library-scrollbars" data-familiar-stage data-element={element ?? undefined} data-sheet-open={sheetOpen || undefined} data-sheet-full={fullSheet || undefined}
       aria-labelledby="familiar-stage-title">
       <div className="familiar-stage-sky" aria-hidden="true"><span /><span /><span /></div>
 
@@ -221,7 +235,7 @@ export function FamiliarStage({
         </div>
       </header>
 
-      <div className="familiar-stage-hero" role="group" aria-roledescription="carousel" aria-label="Your Familiars"
+      <div className="familiar-stage-hero" aria-hidden={fullSheet || undefined} inert={fullSheet || undefined} role="group" aria-roledescription="carousel" aria-label="Your Familiars"
         tabIndex={0} onKeyDown={onKeyDown} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={() => { pointer.current = null; }}>
         <div key={slideIds[current]} className="familiar-stage-art" data-direction={direction ?? undefined}
           role="group" aria-roledescription="slide" aria-label={`${current + 1} of ${slideIds.length}: ${name}`}
@@ -289,7 +303,7 @@ export function FamiliarStage({
         <p className="familiar-stage-count" aria-hidden>{current + 1} / {slideIds.length}</p>
       </div>
 
-      <div className="familiar-stage-identity">
+      <div className="familiar-stage-identity" aria-hidden={fullSheet || undefined} inert={fullSheet || undefined}>
         {/* Offering and form results show here, on the stage, whether or not the details sheet is open. */}
         {message && message.familiarId === option?.id ? (
           <p role={message.tone === 'error' ? 'alert' : 'status'} aria-live="polite" className="familiar-stage-message"
@@ -331,6 +345,8 @@ export function FamiliarStage({
       </div>
 
       {option ? <div className="familiar-stage-sheet" data-familiar-sheet>
+        {/* Whose details these are, shown when the sheet fills a phone screen. */}
+        <p className="familiar-stage-sheet-title" aria-hidden={!fullSheet || undefined}>{name}</p>
         <div className="familiar-stage-tabs" role="tablist" aria-label="Familiar details">
           {TABS.map(entry => (
             <button key={entry.id} type="button" role="tab" id={`familiar-tab-${entry.id}`} aria-controls="familiar-stage-panel"
@@ -338,8 +354,8 @@ export function FamiliarStage({
               {entry.label}
             </button>
           ))}
-          <button type="button" className="familiar-stage-sheet-toggle" aria-expanded={sheetOpen} aria-controls="familiar-stage-panel"
-            aria-label={sheetOpen ? 'Show less' : 'Show details'} onClick={() => setSheetOpen(open => !open)}>
+          <button ref={sheetToggle} type="button" className="familiar-stage-sheet-toggle" aria-expanded={sheetOpen} aria-controls="familiar-stage-panel"
+            aria-label={sheetOpen ? 'Close details' : 'Show details'} onClick={() => setSheetOpen(open => !open)} data-familiar-sheet-toggle>
             {sheetOpen ? <ChevronDown size={18} aria-hidden /> : <ChevronUp size={18} aria-hidden />}
           </button>
         </div>
@@ -357,7 +373,7 @@ export function FamiliarStage({
         ) : null}
       </div> : null}
 
-      {isCreate || !owned || (view && !view.nextBondRank) ? <div className="familiar-stage-actions" data-familiar-actions>
+      {isCreate || !owned || (view && !view.nextBondRank) ? <div className="familiar-stage-actions" data-familiar-actions aria-hidden={fullSheet || undefined} inert={fullSheet || undefined}>
         {isCreate ? (
           <button type="button" className="familiar-stage-action" disabled data-familiar-create-action>
             <Sparkles size={16} aria-hidden /> Create your own · Coming soon
@@ -381,4 +397,19 @@ export function FamiliarStage({
       ) : null}
     </section>
   );
+}
+
+/** Below 768px the stage is a phone layout (the same breakpoint its stylesheet uses). */
+const NARROW_STAGE_QUERY = '(max-width: 767px)';
+function useNarrowStage() {
+  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(NARROW_STAGE_QUERY).matches);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const query = window.matchMedia(NARROW_STAGE_QUERY);
+    const update = () => setNarrow(query.matches);
+    update();
+    query.addEventListener?.('change', update);
+    return () => query.removeEventListener?.('change', update);
+  }, []);
+  return narrow;
 }

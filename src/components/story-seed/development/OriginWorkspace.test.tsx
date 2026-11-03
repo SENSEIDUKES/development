@@ -83,6 +83,23 @@ describe('Origin hierarchy and canonical Fate controls', () => {
     expect(current.story.optional.fateSurvival.pressure).toBe('heaven');
   });
 
+  it('edits Fun Settings with stepper and keyboard controls and restores their defaults alone', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.story.optional.fateSurvival.enabled = true;
+    render(seed);
+    click('#origin-face-slap-decrease');
+    expect(current.story.optional.funSettings.faceSlap).toBe('low');
+    expect(container.querySelector('#origin-face-slap-value')?.textContent).toBe('Low');
+    const stepper = container.querySelector('[aria-label="Face Slap level"]')!;
+    act(() => stepper.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true })));
+    expect(current.story.optional.funSettings.faceSlap).toBe('high');
+    expect(container.querySelector<HTMLButtonElement>('#origin-face-slap-increase')?.disabled).toBe(true);
+    const restore = Array.from(container.querySelectorAll<HTMLButtonElement>('button')).find(button => button.textContent === 'Restore defaults')!;
+    act(() => restore.click());
+    expect(current.story.optional.funSettings).toEqual({ faceSlap: 'medium', plotArmor: 'medium', recognition: 'medium' });
+    expect(current.story.optional.fateSurvival.enabled).toBe(true);
+  });
+
   it('shows side characters and factions without the retired Fate Survival mystery panel', () => {
     act(() => root.render(<LibraryPresentationProvider>
       <CastScreen seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} backgroundProfile="" onBackgroundProfileChange={vi.fn()} />

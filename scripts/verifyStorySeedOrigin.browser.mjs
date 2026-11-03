@@ -13,6 +13,7 @@ try {
   for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(`${origin}/?preview=story-seed&state=empty-intake`);
+    await page.locator('#origin-style-title').waitFor();
     const phone = width < 640;
     const part = async label => { if (phone) await page.locator('[data-part]').getByText(label, { exact: true }).click(); };
     const groups = [

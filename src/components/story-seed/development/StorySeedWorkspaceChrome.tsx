@@ -80,9 +80,9 @@ function MenuSaveDraft({ savedFeedback, isGenerating, onSaveDraft }: Pick<StoryS
  * Feature adapter: all Story Seed labels, eligibility and schema knowledge stay
  * here. Story Seed runs in the Library Shell's workspace mode: it describes its
  * sections and tools, and the shell draws the Sections drawer, the desktop rail
- * and the bottom task bar (Sections, Story Bank, Settings, Back). Settings and
- * Story Bank are navigation, reachable from the rail, the drawer, the bar and
- * Search, rather than a second row of header commands.
+ * and the mobile task bar. The creator shares Back/Next with More in one row;
+ * standalone hosts retain the shell's tool bar. Secondary actions stay in the
+ * existing drawer, desktop rail and Search.
  */
 export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -90,8 +90,8 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
   const desktop = useDesktopNavigation();
   const settingsReturnFocusRef = useRef<HTMLElement | null>(null);
   const rememberFocus = useCallback(() => {
-    settingsReturnFocusRef.current = document.querySelector<HTMLElement>('.library-workspace-more') ?? document.activeElement as HTMLElement;
-  }, []);
+    settingsReturnFocusRef.current = (!desktop && document.querySelector<HTMLElement>('.library-workspace-more')) || document.activeElement as HTMLElement;
+  }, [desktop]);
   const openSettings = useCallback(() => {
     rememberFocus();
     setPreviewOpen(false);

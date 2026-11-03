@@ -418,11 +418,11 @@ describe('Story Seed keyboard and mobile navigation', () => {
 
     const funUpdate = vi.fn();
     act(() => root.render(<LibraryPresentationProvider>{<FunSettingsPanel seed={createEmptyStorySeedInput()} updateSeed={funUpdate} />}</LibraryPresentationProvider>));
-    radios = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="radiogroup"]')[0].querySelectorAll('[role="radio"]'));
-    expect(radios.map(radio => radio.tabIndex)).toEqual([-1, 0, -1]);
-    radios[1].focus();
-    act(() => radios[1].dispatchEvent(keyboardEvent('ArrowDown')));
-    expect(document.activeElement).toBe(radios[2]);
+    const stepper = container.querySelector<HTMLElement>('[role="group"][aria-label="Face Slap level"]')!;
+    const increase = stepper.querySelector<HTMLButtonElement>('[aria-label="Increase Face Slap"]')!;
+    increase.focus();
+    act(() => increase.dispatchEvent(keyboardEvent('ArrowDown')));
+    expect(document.activeElement).toBe(increase);
     expect(funUpdate).toHaveBeenCalledTimes(1);
 
     const settingsSeed = createEmptyStorySeedInput();

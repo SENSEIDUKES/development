@@ -130,9 +130,9 @@ async function runDevelopmentFillScenario(isCancelled: () => boolean) {
 
   // Casual story preferences belong to Origin, before the deeper World and Arc editors.
   if (!mutateRoots('development', isCancelled, root => {
-    (root.querySelector('[id="origin-face-slap-high"]') as HTMLElement | null)?.click();
-    (root.querySelector('[id="origin-plot-armor-low"]') as HTMLElement | null)?.click();
-    (root.querySelector('[id="origin-recognition-high"]') as HTMLElement | null)?.click();
+    (root.querySelector('[id="origin-face-slap-increase"]') as HTMLElement | null)?.click();
+    (root.querySelector('[id="origin-plot-armor-decrease"]') as HTMLElement | null)?.click();
+    (root.querySelector('[id="origin-recognition-increase"]') as HTMLElement | null)?.click();
   })) return;
 
   // Premise remains the dominant Origin field.

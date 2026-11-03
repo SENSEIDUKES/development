@@ -93,7 +93,7 @@ describe('Story Seed Arc and World ownership', () => {
     ['Protect the master.', 'Restore the temple.', 'Keep the vow.'].forEach((text, i) => fill(`hard-pin-${i + 1}`, text));
     fill('active-arc-goal-input', 'Reach the mountain gate.');
     render(current, 'origin');
-    act(() => container.querySelector<HTMLButtonElement>('#origin-face-slap-high')!.click());
+    act(() => container.querySelector<HTMLButtonElement>('#origin-face-slap-increase')!.click());
     render(current, 'world');
     fill('make-it-work-instruction-input', 'The mountain walks. Make it believable.');
     fill('main-opposition-input', 'The gate keeper.');

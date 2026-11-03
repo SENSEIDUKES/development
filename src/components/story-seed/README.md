@@ -59,6 +59,8 @@ Story Seed is one creation flow with these visible destinations:
   keep 44px touch targets. Back/Next walks Origin, World's eight kinds, ARC,
   then Create. Hidden parts stay mounted. World collections retain their
   Codex cards and editing sheets. Tablets and laptops show whole pages.
+- **Fun Settings.** Console rows place each name beside a Low/Medium/High
+  stepper, with swipe and keyboard controls, focused help, and Restore defaults.
 - **Completion.** Required checks follow Style + Genre and Synopsis. Optional
   tabs check when filled, when a setting is chosen, or when Next confirms
   defaults/blank answers; jumping tabs confirms nothing. A parent checks when
@@ -648,6 +650,6 @@ Settings belongs to Origin and the Blueprint's Story page. Parent and child
 checks include saved confirmations of defaults and intentional blanks.
 
 `verifyStorySeedUi.browser.mjs` checks the app and Workshop at 320, 390, 430,
-768 and 1440px, menu/sheet focus, short viewports, long titles and saved progress
+768, 1280 and 1440px, menu/sheet focus, short viewports, long titles and saved progress
 without generation calls. The app and preview use the same package surface;
 Workshop scenarios use their isolated fixture/local storage, not app storage.

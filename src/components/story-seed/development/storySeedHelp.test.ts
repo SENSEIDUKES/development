@@ -12,7 +12,7 @@ const expectedLibraryTopics = [
   ['Genre', 'Genre tells the Library what kind of story this should feel like.', `${helpLinesBase}/GENRE%20ENG.mp3`, ['story-seed']],
   ['Story Tags', 'Story Tags are powerful signals. For the best results, use a few strong ones instead of flooding the story.', `${helpLinesBase}/STORY%20TAGS%20ENG.mp3`, ['story-seed']],
   ['World', 'World details shape the setting, powers, factions, and rules around your story, Choose wisely disciple.', `${helpLinesBase}/WORLD%20ENG.mp3`, ['story-seed']],
-  ['ARC', 'ARC shapes the novel's destination, story length, opening goal, and the Hard Pins it must honor. Build the World first, then plan the ARC.', `${helpLinesBase}/ARC%20ENG.mp3`, ['story-seed']],
+  ['ARC', 'ARC shapes the novel\'s destination, story length, opening goal, and the Hard Pins it must honor. Build the World first, then plan the ARC.', `${helpLinesBase}/ARC%20ENG.mp3`, ['story-seed']],
   ['Origin', 'Origin holds your style, genre, synopsis, title, Fate choices, tags, and Fun Settings: Face Slap, Plot Armor, and Recognition.', `${helpLinesBase}/ORIGIN%20ENG.mp3`, ['story-seed']],
   // Rewritten for the Phase 2 Fate model; their earlier recordings described
   // the retired design, so they have no audio until new lines are recorded.

@@ -11,8 +11,8 @@ import {
  * The character-creator step model over Story Seed's sections. The strip shows
  * four steps — Origin, World, ARC, Create (the Manifest step, `'manifest'`) —
  * and World holds its eight kinds
- * as sub-tabs. Next and Back walk every section in `SEED_SECTIONS` order, then
- * the Manifest step, with World available before the author plans the arc.
+ * as sub-tabs. Next and Back walk `CREATOR_PAGE_ORDER`, with World available
+ * before the author plans the arc, then finish on the Manifest step.
  */
 export type CreatorPageId = SeedSectionId | 'manifest';
 export type CreatorStepId = 'origin' | 'arc' | 'world' | 'manifest';

@@ -54,7 +54,7 @@ try {
     await button('Pick a path').click();
     await page.getByRole('radio', { name: 'Xianxia', exact: true }).click();
     await part('Fun Settings');
-    await page.locator('#origin-face-slap-high').click();
+    await page.locator('#origin-face-slap-increase').click();
     await part('Synopsis');
     await page.getByLabel('Title', { exact: true }).fill('Arc browser verification');
     await page.locator('#core-premise-input').fill('A traveler returns to the mountain gate.');

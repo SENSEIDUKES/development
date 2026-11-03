@@ -12,6 +12,15 @@ const openMore = page => page.getByRole('button', { name: 'More actions', exact:
 const utility = (page, name) => page.locator('[data-slot="navigation-footer"]').filter({ visible: true }).getByRole('button', { name, exact: true });
 const next = page => page.locator('.seed-creator-footer-next');
 const tab = (page, name) => page.locator(`[data-part="${name}"]`);
+// The app's movable Familiar intentionally sits above panels. Use its existing
+// minimize action so these checks exercise the Seed controls at every width.
+const minimizeFamiliar = async page => {
+  const familiar = page.locator('.familiar-companion .familiar-trigger');
+  if (await familiar.isVisible()) {
+    await familiar.click();
+    await page.getByRole('button', { name: 'Minimize Familiar', exact: true }).click();
+  }
+};
 // Windows WebKit can apply the OS display scale to its viewport despite the requested size.
 // Measure the CSS viewport and correct it, so each check actually exercises its named breakpoint.
 const resize = async (page, width, height) => {
@@ -24,16 +33,18 @@ const resize = async (page, width, height) => {
 };
 try {
   for (const surface of ['app', 'workshop']) {
-    for (const width of [320, 390, 430, 768, 1440]) {
-      const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce', hasTouch: width < 1024 });
+    for (const width of [320, 390, 430, 768, 1280, 1440]) {
+      const height = width >= 1024 ? 800 : 844;
+      const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce', hasTouch: width < 1024 });
       const page = await context.newPage();
       page.on('pageerror', error => failures.push(`${surface} ${width}: ${error.message}`));
       await page.route('**/api/generate-blueprint', route => { failures.push('Unexpected Blueprint request'); return route.abort(); });
       const address = surface === 'app' ? '/app/?page=create&seed=new' : '/?preview=story-seed&state=empty-intake';
       await page.goto(`${origin}${address}`);
-      await resize(page, width, 844);
+      await resize(page, width, height);
       await page.locator('[data-seed-creator-strip]').waitFor();
       await page.evaluate(() => document.fonts.ready);
+      await minimizeFamiliar(page);
       assert.deepEqual(await page.locator('[data-seed-creator-strip] [data-step]').evaluateAll(elements => elements.map(element => element.dataset.step)), ['origin', 'world', 'arc', 'manifest']);
       const phone = width < 640;
       const compact = width < 1024;
@@ -72,9 +83,15 @@ try {
         const panel = page.locator('#origin-fun-settings-title');
         assert(await panel.isVisible());
         assert(await page.locator('#origin-genre-title').evaluate((node, id) => Boolean(node.compareDocumentPosition(document.getElementById(id)) & Node.DOCUMENT_POSITION_FOLLOWING), 'origin-fun-settings-title'));
+        const settingsButton = page.locator('aside').getByRole('button', { name: 'Settings', exact: true });
+        await settingsButton.focus();
+        await settingsButton.press('Enter');
+        await page.getByRole('dialog', { name: 'Story Seed settings', exact: true }).waitFor();
+        await page.getByRole('button', { name: 'Close settings', exact: true }).click();
+        await page.waitForFunction(() => document.activeElement?.textContent?.trim() === 'Settings');
       }
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'no horizontal overflow');
-      if (width === 390 || width === 1440) await page.screenshot({ path: `output/playwright/story-seed-${surface}-${width}-${engine}.png` });
+      if (width === 390 || width === 1280 || width === 1440) await page.screenshot({ path: `output/playwright/story-seed-${surface}-${width}-${engine}.png` });
 
       if (phone) {
         assert.equal(await tab(page, 'fun').getAttribute('data-filled'), 'false');
@@ -87,7 +104,11 @@ try {
         assert.equal(await tab(page, 'fate').getAttribute('data-filled'), 'false', 'jumping to Fun never confirms Fate');
       }
       await page.locator('[data-step="world"]').click();
-      for (let index = 0; index < 8; index++) await next(page).click();
+      for (let index = 0; index < 8; index++) {
+        const previousLabel = await next(page).getAttribute('aria-label');
+        await next(page).click();
+        await page.waitForFunction(label => document.querySelector('.seed-creator-footer-next')?.getAttribute('aria-label') !== label, previousLabel);
+      }
       assert.equal(await page.locator('[data-step="arc"]').getAttribute('aria-current'), 'step');
       assert.match(await page.locator('[data-step="world"]').getAttribute('aria-label'), /complete/);
       assert.equal(await page.locator('[data-part="fun"]').count(), 0, 'Fun Settings removed from Arc');
@@ -103,8 +124,10 @@ try {
   await page.goto(`${origin}/app/?page=create&seed=new`);
   await resize(page, 390, 844);
   await tab(page, 'fun').waitFor();
+  await minimizeFamiliar(page);
   await tab(page, 'fun').click();
-  await page.locator('#origin-face-slap-medium').click();
+  await page.locator('#origin-face-slap-decrease').click();
+  await page.locator('#origin-face-slap-increase').click();
   assert.equal(await tab(page, 'fun').getAttribute('data-filled'), 'true', 'explicit unchanged choice confirms default');
   await next(page).click();
   await page.locator('#origin-story-title-input').fill('A very long title that must wrap comfortably inside the story preview on a small phone without widening the page');

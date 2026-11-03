@@ -10,6 +10,7 @@ import {
   type OfferQiResponse,
 } from '../../../library/familiars/contracts';
 import { LibraryGlobalIcon } from '@seihouse/library-ui';
+import { useOverlayScrollbar } from '@seihouse/ui';
 import { BalancePills } from '../../energy/development/BalancePill';
 import { familiarRarityLabel, type FamiliarOption, type FamiliarPersonalizations } from '../../familiar/shared/familiar';
 import { FamiliarHero } from '../../familiar/development/FamiliarHero';
@@ -98,6 +99,7 @@ export function FamiliarStage({
   const offerRef = useRef<HTMLDivElement>(null);
   const settingsButton = useRef<HTMLButtonElement>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
+  const panelScroller = useOverlayScrollbar<HTMLDivElement>({ fades: true });
 
   const current = Math.min(index, slideIds.length - 1);
   const option = options[current] as FamiliarOption | undefined;
@@ -195,7 +197,7 @@ export function FamiliarStage({
   const canPersonalize = Boolean(option && owned && onPersonalChange);
 
   return (
-    <section className="familiar-stage" data-familiar-stage data-element={element ?? undefined} data-sheet-open={sheetOpen || undefined}
+    <section className="familiar-stage library-scrollbars" data-familiar-stage data-element={element ?? undefined} data-sheet-open={sheetOpen || undefined}
       aria-labelledby="familiar-stage-title">
       <div className="familiar-stage-sky" aria-hidden="true"><span /><span /><span /></div>
 
@@ -284,6 +286,11 @@ export function FamiliarStage({
       </div>
 
       <div className="familiar-stage-identity">
+        {/* Offering and form results show here, on the stage, whether or not the details sheet is open. */}
+        {message ? (
+          <p role={message.tone === 'error' ? 'alert' : 'status'} aria-live="polite" className="familiar-stage-message"
+            data-tone={message.tone} data-familiar-message>{message.text}</p>
+        ) : null}
         <p className="familiar-stage-kicker" data-familiar-identity>{identity}</p>
         <div className="familiar-stage-name-row">
           <h3 className="familiar-stage-name" data-familiar-name>{name}</h3>
@@ -333,9 +340,9 @@ export function FamiliarStage({
           </button>
         </div>
         {option ? (
-          <div id="familiar-stage-panel" role="tabpanel" aria-labelledby={`familiar-tab-${tab}`} className="familiar-stage-panel familiar-training">
+          <div ref={panelScroller} id="familiar-stage-panel" role="tabpanel" aria-labelledby={`familiar-tab-${tab}`} className="familiar-stage-panel familiar-training">
             {tab === 'bond' ? (
-              <FamiliarBondTab familiars={familiars} view={view} name={name} owned={owned} focusedRank={focusedRank} message={message} onChooseForm={formId => void chooseForm(formId)} />
+              <FamiliarBondTab familiars={familiars} view={view} name={name} owned={owned} focusedRank={focusedRank} onChooseForm={formId => void chooseForm(formId)} />
             ) : tab === 'elements' ? (
               <FamiliarElementsTab familiars={familiars} activeFamiliarId={activeFamiliarId} nameOf={nameOf} displayName={displayName} />
             ) : (

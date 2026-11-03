@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useOverlayScrollbar } from '@seihouse/ui';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   FAMILIAR_DEFAULT_SIZE,
@@ -50,6 +51,8 @@ export function FamiliarSettingsMenu({ settings, familiar, onNameChange, onRewri
   const titleId = useId();
   const mobile = useFamiliarMobile();
   const panel = useRef<HTMLDivElement>(null);
+  // The Library's own gold overlay scrollbar, used only if the list cannot fit.
+  const scroller = useOverlayScrollbar<HTMLDivElement>({ fades: true }, panel);
   const [focused, setFocused] = useState<string>('size');
   const [nameDraft, setNameDraft] = useState(familiar.name ?? '');
   useEffect(() => { setNameDraft(familiar.name ?? ''); }, [familiar.id, familiar.name]);
@@ -98,8 +101,8 @@ export function FamiliarSettingsMenu({ settings, familiar, onNameChange, onRewri
 
   // Above the whole app, header and bottom navigation included, like a console's options screen.
   return createPortal(
-    <div className="familiar-settings" role="dialog" aria-modal="true" aria-labelledby={titleId} data-familiar-settings>
-      <div className="familiar-settings-panel" ref={panel}>
+    <div className="familiar-settings library-scrollbars" role="dialog" aria-modal="true" aria-labelledby={titleId} data-familiar-settings>
+      <div className="familiar-settings-panel" ref={scroller}>
         <h2 id={titleId} className="familiar-settings-title">Familiar settings</h2>
 
         <h3 className="familiar-settings-section">Companion</h3>

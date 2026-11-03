@@ -38,7 +38,6 @@ export interface FamiliarBondTabProps {
   owned: boolean;
   /** The rank picked on the stage's bond rail, shown highlighted. */
   focusedRank?: FamiliarBondRank | null;
-  message?: { tone: 'success' | 'error'; text: string } | null;
   onChooseForm: (formId: string | null) => void;
 }
 
@@ -47,7 +46,7 @@ export interface FamiliarBondTabProps {
  * its forms, and the account states. Offering QI lives in the stage's action
  * bar, in the thumb's reach; this tab explains what the offering buys.
  */
-export function FamiliarBondTab({ familiars, view, name, owned, focusedRank, message, onChooseForm }: FamiliarBondTabProps) {
+export function FamiliarBondTab({ familiars, view, name, owned, focusedRank, onChooseForm }: FamiliarBondTabProps) {
   if (familiars.status === 'unavailable') {
     return <SEIInlineAlert tone="info" title="Familiar bonds not connected">Familiar ownership and bonds are not connected here.</SEIInlineAlert>;
   }
@@ -68,10 +67,6 @@ export function FamiliarBondTab({ familiars, view, name, owned, focusedRank, mes
           ? `Offer QI to deepen your bond. Each rank strengthens ${name}’s ${element} effect on your name; Legendary bond masters ${element} for good.`
           : `Bring ${name} home to start a bond. Bonding grows its ${element} effect on your name and, at Legendary bond, masters ${element} for good.`}
       </p>
-      {message ? (
-        <p role={message.tone === 'error' ? 'alert' : 'status'} aria-live="polite"
-          className={`text-sm ${message.tone === 'error' ? 'text-red-300' : 'text-emerald-200'}`} data-familiar-message>{message.text}</p>
-      ) : null}
       <ol className="familiar-bond-ladder" aria-label={`${name} bond ranks`}>
         {view.bondRanks.map(rank => (
           <li key={rank.rank} id={`familiar-bond-rank-${rank.rank}`} data-familiar-bond-row={rank.rank} data-reached={rank.reached}

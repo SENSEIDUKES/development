@@ -10,10 +10,13 @@
   isolation: isolate;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(11rem, 1fr) auto auto auto;
+  grid-template-rows: auto minmax(7rem, 1fr) auto auto auto;
   grid-template-areas: "top" "hero" "identity" "sheet" "actions";
   height: var(--familiar-stage-height, 100dvh);
-  min-height: 34rem;
+  /* No minimum: the stage fits the real screen (a phone browser's bars included) and never runs under the navigation. */
+  min-height: 0;
+  container-type: size;
+  container-name: familiar-stage;
   /* clip, not hidden: nothing inside (the drifting sky) may scroll the stage itself. */
   overflow: hidden;
   overflow: clip;
@@ -36,7 +39,7 @@
 .familiar-stage[data-element="space"] { --stage-glow: #8a6cff; }
 .familiar-stage[data-element="celestial"] { --stage-glow: #f4d58d; }
 .familiar-stage[data-element="void"] { --stage-glow: #a77bff; }
-.familiar-stage[data-sheet-open] { grid-template-rows: auto minmax(6.5rem, 0.75fr) auto minmax(0, 1.7fr) auto; }
+.familiar-stage[data-sheet-open] { grid-template-rows: auto minmax(5rem, 0.75fr) auto minmax(0, 1.7fr) auto; }
 
 /* The sky: a glow in the Familiar's element and slow drifting motes. */
 .familiar-stage-sky { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
@@ -75,11 +78,16 @@
 /* On a phone the balances need the room; the title stays for screen readers. */
 @media (max-width: 479px) {
   .familiar-stage-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .familiar-stage-topbar { grid-template-columns: 2.75rem minmax(0, 1fr); }
+  .familiar-stage-topbar { grid-template-columns: 2.75rem minmax(0, 1fr); gap: 0.4rem; }
   .familiar-stage-topbar-end { justify-content: flex-end; }
+  .familiar-stage-topbar-end .balance-pills { flex: 1 1 auto; min-width: 0; justify-content: flex-end; }
+  /* On a phone the pills share the room left beside back and settings: always equal, never under a button. */
+  .familiar-stage-topbar-end .balance-pill { flex: 1 1 0; width: auto; max-width: 7.75rem; min-width: 0; overflow: hidden; }
+  .familiar-stage-topbar-end .balance-pill { padding-inline: 0.45rem 0.6rem; gap: 0.3rem; font-size: 0.74rem; }
 }
 .familiar-stage-title { font-family: var(--font-sc, inherit); font-size: 0.7rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--stage-gold); text-align: center; outline: none; }
 .familiar-stage-topbar-end { display: flex; align-items: center; gap: 0.4rem; }
+
 .familiar-stage-icon-button {
   display: inline-flex; align-items: center; justify-content: center;
   width: 2.75rem; height: 2.75rem; border-radius: 9999px;
@@ -90,7 +98,7 @@
 .familiar-stage-offer-amounts .qi-glyph { color: #b78cff; }
 
 /* One Offer button by the Familiar; its amounts open beside it. */
-.familiar-stage-offer { position: absolute; z-index: 3; top: 50%; left: max(0.5rem, env(safe-area-inset-left)); translate: 0 -60%; display: flex; align-items: center; gap: 0.5rem; }
+.familiar-stage-offer { position: absolute; z-index: 3; top: calc(50% - 1.5rem); left: max(0.5rem, env(safe-area-inset-left)); translate: 0 -50%; display: flex; align-items: center; gap: 0.5rem; }
 .familiar-stage-offer-button {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1rem;
   width: 3.5rem; height: 3.5rem; border-radius: 9999px;
@@ -116,7 +124,7 @@
 .familiar-stage-offer-amounts > p { max-width: 7rem; font-size: 0.62rem; line-height: 1.35; color: rgb(163 163 163); }
 
 /* Hero: the Familiar, its bond rail, and the pager. Swipes stay horizontal. */
-.familiar-stage-hero { grid-area: hero; position: relative; min-height: 0; touch-action: pan-y; outline: none; user-select: none; }
+.familiar-stage-hero { grid-area: hero; position: relative; min-height: 0; container-type: size; touch-action: pan-y; outline: none; user-select: none; }
 .familiar-stage-hero:focus-visible { box-shadow: inset 0 0 0 2px #7dd3ff; border-radius: 1rem; }
 .familiar-stage-art { position: absolute; inset: 0.25rem 3.75rem 2.75rem; display: flex; align-items: center; justify-content: center; }
 .familiar-stage-art[data-direction="next"] { animation: familiar-stage-in-next 0.32s ease-out; }
@@ -151,10 +159,11 @@
 .familiar-stage-nav.is-previous { left: calc(50% - 5.5rem); }
 .familiar-stage-nav.is-next { right: calc(50% - 5.5rem); }
 .familiar-stage-count { position: absolute; bottom: 0; left: 50%; translate: -50% 0; height: 2.75rem; display: flex; align-items: center; font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.72rem; color: rgb(163 163 163); }
-.familiar-stage-rail { position: absolute; z-index: 2; top: 50%; right: max(0.5rem, env(safe-area-inset-right)); translate: 0 -55%; display: flex; flex-direction: column; gap: 0.4rem; }
-.familiar-stage-rail button { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; min-width: 2.75rem; }
+.familiar-stage-rail { position: absolute; z-index: 2; top: 0.25rem; bottom: 3rem; right: max(0.5rem, env(safe-area-inset-right)); display: flex; flex-direction: column; justify-content: center; gap: clamp(0.15rem, 2cqh, 0.4rem); }
+.familiar-stage-rail button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1rem; min-width: 2.75rem; min-height: 2.75rem; }
 .familiar-stage-rail-mark {
-  display: inline-flex; align-items: center; justify-content: center; width: 2.6rem; height: 2.6rem; border-radius: 9999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: clamp(1.9rem, 13cqh, 2.6rem); height: clamp(1.9rem, 13cqh, 2.6rem); border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(3, 6, 12, 0.6); color: rgb(115 115 115);
   font-family: var(--font-display, serif); font-size: 0.85rem; backdrop-filter: blur(6px);
 }
@@ -166,12 +175,17 @@
 
 /* Who it is, its bond, and what bonding lends your name. */
 .familiar-stage-identity { grid-area: identity; padding: 0.4rem 1rem 0.5rem; text-align: center; }
+.familiar-stage-message {
+  margin: 0 auto 0.4rem; max-width: 22rem; padding: 0.45rem 0.8rem; border-radius: 0.9rem;
+  font-size: 0.8rem; line-height: 1.4; color: #bbf7d0; background: rgba(6, 40, 26, 0.75); border: 1px solid rgba(74, 222, 128, 0.35);
+}
+.familiar-stage-message[data-tone="error"] { color: #fecaca; background: rgba(60, 10, 14, 0.8); border-color: rgba(248, 113, 113, 0.4); }
 .familiar-stage-kicker { font-family: var(--font-sc, inherit); font-size: 0.62rem; letter-spacing: 0.24em; text-transform: uppercase; color: rgb(163 163 163); }
 .familiar-stage-name-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.15rem; }
 .familiar-stage-name { font-family: var(--font-display, serif); font-size: 1.6rem; line-height: 1.15; color: #f4e5bd; overflow-wrap: anywhere; }
 .familiar-stage-kind { font-size: 0.72rem; color: rgb(163 163 163); }
 .familiar-stage-activate {
-  min-height: 2.25rem; padding: 0.2rem 0.85rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;
+  min-height: 2.75rem; padding: 0.2rem 0.95rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;
   color: var(--stage-ink); background: linear-gradient(180deg, #f3dc94, var(--stage-gold)); border: 0;
 }
 .familiar-stage-activate:disabled { opacity: 0.6; }
@@ -258,12 +272,12 @@
   display: flex; flex-direction: column; width: 100%; max-width: 40rem; height: 100%; overflow-y: auto; overscroll-behavior: contain;
   padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left));
 }
-.familiar-settings-title { padding: 0.75rem 0 0.5rem; text-align: center; font-family: var(--font-display, serif); font-style: italic; font-size: 1.35rem; color: #f4f4f5; }
-.familiar-settings-section { margin: 1rem 0 0.35rem; font-family: var(--font-sc, inherit); font-size: 0.62rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--stage-gold, #e2c46a); }
+.familiar-settings-title { padding: 0.25rem 0 0.25rem; text-align: center; font-family: var(--font-display, serif); font-style: italic; font-size: 1.35rem; color: #f4f4f5; }
+.familiar-settings-section { margin: 0.6rem 0 0.25rem; font-family: var(--font-sc, inherit); font-size: 0.62rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--stage-gold, #e2c46a); }
 .familiar-settings-list { border-top: 1px solid rgba(255, 255, 255, 0.08); }
 .familiar-settings-row {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.75rem;
-  min-height: 3.5rem; padding: 0.35rem 0.6rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  min-height: 3rem; padding: 0.15rem 0.6rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 .familiar-settings-row[data-focused] { background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03)); box-shadow: inset 3px 0 0 #e2c46a; }
 .familiar-settings-label { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; font-size: 0.95rem; color: rgb(229 229 229); }
@@ -284,7 +298,7 @@
 .familiar-settings-soon { padding: 0.3rem 0.6rem; border-radius: 9999px; border: 1px dashed rgba(226, 196, 106, 0.5); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: #e2c46a; }
 .familiar-settings-note { margin-top: 0.5rem; font-size: 0.75rem; color: rgb(163 163 163); }
 .familiar-settings-help {
-  position: sticky; bottom: 4.25rem; margin-top: auto; padding: 0.85rem 0.25rem 0.5rem; min-height: 3.5rem;
+  position: sticky; bottom: 4rem; margin-top: auto; padding: 0.5rem 0.25rem 0.4rem; min-height: 3rem;
   font-size: 0.82rem; line-height: 1.45; color: rgb(212 212 212); text-align: center;
   background: linear-gradient(180deg, transparent, rgba(3, 6, 12, 0.96) 30%);
 }
@@ -316,6 +330,27 @@
   .familiar-stage[data-sheet-open] .familiar-stage-kicker { display: block; }
   .familiar-stage-actions { background: transparent; border-top: 0; padding-bottom: 1rem; }
   .familiar-stage-name { font-size: 2rem; }
+}
+
+/* Short hero (a phone with its browser bars): the rail drops its words, and the Offer button shrinks. */
+@container (max-height: 340px) {
+  .familiar-stage-rail-label { display: none; }
+  .familiar-stage-offer-button { width: 3rem; height: 3rem; }
+  .familiar-stage-offer-label { display: none; }
+}
+
+/* Short stage: keep everything on one screen by folding away what the tabs already show. */
+@container familiar-stage (max-height: 640px) {
+  .familiar-stage-name-effect, .familiar-stage-kicker { display: none; }
+  .familiar-stage-identity { padding-block: 0.15rem 0.35rem; }
+  .familiar-stage-name { font-size: 1.35rem; }
+  .familiar-stage-bond { margin-top: 0; font-size: 0.95rem; }
+  .familiar-stage-qi-line { margin-top: 0.15rem; }
+  .familiar-stage-tabs [role="tab"] { min-height: 2.75rem; }
+}
+@container familiar-stage (max-height: 520px) {
+  .familiar-stage-qi-line { display: none; }
+  .familiar-stage-topbar { padding-block: 0.3rem 0.1rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

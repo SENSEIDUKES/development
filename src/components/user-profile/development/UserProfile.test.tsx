@@ -797,6 +797,9 @@ describe('Cultivator Cave destinations', () => {
     expect(container.querySelector('[data-familiar-offer]')).toBeNull();
     await settle();
     expect(text()).toContain('Quill reached Rare bond: Lightning Title · Blaze.');
+    // The result shows on the stage itself, visible while the details sheet stays closed.
+    expect(container.querySelector('[data-familiar-stage]')?.hasAttribute('data-sheet-open')).toBe(false);
+    expect(container.querySelector('[data-familiar-message]')?.closest('[data-familiar-sheet]')).toBeNull();
     expect(container.querySelector('[data-familiar-bond]')?.textContent).toBe('Rare bond');
     expect(container.querySelector('[data-familiar-rail="rare"]')?.hasAttribute('data-reached')).toBe(true);
     // Nothing is mastered yet, so the name effect can only follow Quill or be turned off.

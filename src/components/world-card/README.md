@@ -25,7 +25,9 @@ folder; the Info page composes its cover face.
 - **Historical source inspection:** 2026-09-27
 - **Status:** active
 
-The Workshop Pages controls include a viewport switcher: current browser,
+The Workshop shows one card type at a time. A sticky card-type switcher above
+the stage (chips plus previous/next arrows, remembered per browser) picks World
+Card, Info, Feature, Grid, Compact, Menu or All. The Workshop Pages controls include a viewport switcher: current browser,
 320px small phone, 390px phone, 768px tablet and 1280px desktop. Fixed sizes
 render the same preview stage in an iframe so its media queries see the chosen
 width. `canvas=1` is an internal frame mode of the existing preview route, not

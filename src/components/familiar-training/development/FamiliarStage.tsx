@@ -71,10 +71,6 @@ export interface FamiliarStageProps {
   /** Guide ids already watched on this profile. */
   guidesSeen?: readonly string[];
   onGuideSeen?: (guideId: string) => void;
-  /** Opens the details sheet on this tab (a deep link, or the first-meeting welcome). */
-  initialTab?: FamiliarStageTab;
-  /** With the Guides tab: opens this guide at once. */
-  initialGuideId?: string;
 }
 
 /**
@@ -92,7 +88,7 @@ export interface FamiliarStageProps {
 export function FamiliarStage({
   familiars, options, qiBalance, qiState, energyBalance, activeFamiliarId, displayName, onBack, backLabel = 'Return to cave',
   onActivate, activating = false, onOpenStore, onOffered, offerAmounts = DEFAULT_OFFERS,
-  settings, personal, onPersonalChange, guides, guidesSeen, onGuideSeen, initialTab, initialGuideId,
+  settings, personal, onPersonalChange, guides, guidesSeen, onGuideSeen,
 }: FamiliarStageProps) {
   const tabs = guides ? TABS : TABS.filter(entry => entry.id !== 'guides');
   const slideIds = useMemo(() => [...options.map(option => option.id), CREATE_SLIDE], [options]);
@@ -104,11 +100,8 @@ export function FamiliarStage({
   useEffect(() => {
     if (!swiped.current) setIndex(startIndex);
   }, [startIndex]);
-  const startTab = initialTab && tabs.some(entry => entry.id === initialTab) ? initialTab : null;
-  const [tab, setTab] = useState<StageTab>(startTab ?? 'bond');
-  const [sheetOpen, setSheetOpen] = useState(Boolean(startTab));
-  // A later deep link (the welcome's Show me around on an open page) opens its tab too.
-  useEffect(() => { if (startTab) { setTab(startTab); setSheetOpen(true); } }, [startTab]);
+  const [tab, setTab] = useState<StageTab>('bond');
+  const [sheetOpen, setSheetOpen] = useState(false);
   // On a phone an opened sheet takes the whole page under the top bar; wider screens show it beside the stage.
   const narrow = useNarrowStage();
   const fullSheet = sheetOpen && narrow;
@@ -382,7 +375,7 @@ export function FamiliarStage({
             ) : tab === 'elements' ? (
               <FamiliarElementsTab familiars={familiars} activeFamiliarId={activeFamiliarId} nameOf={nameOf} displayName={displayName} />
             ) : tab === 'guides' && guides ? (
-              <FamiliarGuidesTab guides={guides} name={activeFamiliarId ? nameOf(activeFamiliarId) : name} seen={guidesSeen} onSeen={onGuideSeen} openGuideId={initialTab === 'guides' ? initialGuideId : undefined} />
+              <FamiliarGuidesTab guides={guides} name={activeFamiliarId ? nameOf(activeFamiliarId) : name} seen={guidesSeen} onSeen={onGuideSeen} />
             ) : (
               <FamiliarLoreTab option={option} name={name} element={element} backstory={personal?.[option.id]?.backstory} editRequest={storyRequest} onEditRequestHandled={() => setStoryRequest(0)}
                 onBackstoryChange={canPersonalize ? backstory => onPersonalChange!(option.id, { backstory }) : undefined} />

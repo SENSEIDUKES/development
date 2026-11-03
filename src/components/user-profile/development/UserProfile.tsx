@@ -505,9 +505,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             guides={familiarGuides}
             guidesSeen={profile?.familiarGuidesSeen}
             onGuideSeen={controller.handleFamiliarGuideSeen}
-            // `/home/familiar/guides` opens the page on its Guides (the first-meeting welcome's Show me around).
-            initialTab={route.child === 'familiar/guides' ? 'guides' : undefined}
-            initialGuideId={route.child === 'familiar/guides' ? familiarGuides?.[0]?.id : undefined}
           />
         );
       case 'switchboard':

@@ -28,6 +28,7 @@ import { defaultFamiliar, familiarCatalogueEntry } from '../host/familiar/catalo
 import { useDeviceProfile, useDeviceProfileRank } from '../host/profile/deviceProfile';
 import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
 import { AppFamiliar } from './AppFamiliar';
+import { FAMILIAR_GUIDES } from '../host/familiar/guides';
 import { AppSignIn } from './AppSignIn';
 import { APP_DESTINATIONS } from './appPlaces';
 import { AppShell } from './AppShell';
@@ -233,7 +234,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   );
   // One Familiar around every page, at the same place in the tree, so it keeps its
   // place as the reader moves; in the Reader its recall sits in the top bar beside Reader Settings.
-  const withFamiliar = (page: ReactNode) => <WorkspaceHeaderProfileProvider profile={headerProfile}><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'} place={familiarPlace(route.page)} navigate={navigate} onWelcomed={() => services.profile.save({ familiarWelcomed: true })} tucked={route.page === 'profile' && Boolean(route.cave?.startsWith('/home/familiar'))}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider>
+  const withFamiliar = (page: ReactNode) => <WorkspaceHeaderProfileProvider profile={headerProfile}><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'} place={familiarPlace(route.page)} navigate={navigate} onWelcomed={() => services.profile.save({ familiarWelcomed: true })} guides={FAMILIAR_GUIDES} onGuideSeen={id => { const seen = services.profile.read().familiarGuidesSeen ?? []; if (!seen.includes(id)) services.profile.save({ familiarGuidesSeen: [...seen, id] }); }} tucked={route.page === 'profile' && Boolean(route.cave?.startsWith('/home/familiar'))}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider>
     {signInOpen && <AppSignIn accentColor={profile.accentColor} onClose={() => setSignInOpen(false)} />}
   </WorkspaceHeaderProfileProvider>;
 

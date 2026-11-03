@@ -60,6 +60,3 @@ export const FAMILIAR_GUIDES: readonly FamiliarGuide[] = [
     line: 'Tap my microphone and talk, or type. Say Explain to learn, or Action to have me do it for you.',
   },
 ];
-
-/** The guide the first-meeting welcome opens on. */
-export const FAMILIAR_FIRST_GUIDE_ID = FAMILIAR_GUIDES[0].id;

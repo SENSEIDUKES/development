@@ -1008,21 +1008,26 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(document.querySelector('[aria-label="Expand Familiar"]'), 'Expand Familiar');
   };
 
-  it('greets a new reader once with their Familiar; Show me around opens its Guides', async () => {
+  it('greets a new reader once with a small card from their Familiar; its guides play right there, never elsewhere', async () => {
     const readerPreferences = createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences);
     const profile = createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID });
     await render(appServices(scriptedWriter().writer, { readerPreferences, profile }));
     const welcome = () => document.querySelector<HTMLElement>('[data-familiar-welcome]');
     for (let tries = 0; !welcome() && tries < 20; tries++) await flush(20);
     expect(welcome()?.textContent).toContain('I’m Quill.');
-    expect(welcome()?.getAttribute('aria-modal')).toBe('true');
-    await click(welcome()!.querySelector('[data-familiar-welcome-tour]'), 'Show me around', 40);
+    // A tip beside the Familiar, not a page: the Familiar stays on screen and the page stays where it is.
+    expect(document.querySelector('[data-familiar-welcome-dim]')).toBeTruthy();
+    expect(document.querySelector('.familiar-companion')).toBeTruthy();
+    await click(welcome()!.querySelector('[data-familiar-welcome-tour]'), 'Show me around', 20);
+    expect(address()).toBe('/app/');
+    expect(welcome()?.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet-your-familiar');
+    await click(welcome()!.querySelector('[data-familiar-guide-step="next"]'), 'the next guide');
+    expect(welcome()?.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('start-a-story-seed');
+    expect(profile.read().familiarWelcomed).toBeUndefined();
+    await click(welcome()!.querySelector('[data-familiar-welcome-done]'), 'Done', 20);
     expect(welcome()).toBeNull();
     expect(profile.read().familiarWelcomed).toBe(true);
-    expect(address()).toBe(`/app/?page=profile&cave=${encodeURIComponent('/home/familiar/guides')}`);
-    // The Familiar page opens on its Guides, at the first one.
-    expect(document.querySelector('[data-familiar-tab="guides"]')?.getAttribute('aria-selected')).toBe('true');
-    expect(document.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet-your-familiar');
+    expect(address()).toBe('/app/');
     // It never greets again, even after the app opens anew.
     act(() => root.unmount());
     root = createRoot(container);

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode, type RefObject } from 'react';
-import { FamiliarCompanion, FamiliarPlace, FamiliarRecall, FamiliarHelperProvider, FamiliarWelcome, type FamiliarHelpPlace, type FamiliarPage } from '@seihouse/library/familiar';
+import { FamiliarCompanion, FamiliarPlace, FamiliarRecall, FamiliarHelperProvider, FamiliarWelcome, type FamiliarGuide, type FamiliarHelpPlace, type FamiliarPage } from '@seihouse/library/familiar';
 import type { UserProfile } from '@seihouse/library/profile';
 import { WorkspaceHeaderAccessoryProvider, useLibraryBottomClearance } from '@seihouse/library/shell';
 import { allFamiliarOptions, defaultFamiliar, familiarCatalogueEntry } from '../host/familiar/catalogue';
@@ -32,13 +32,15 @@ const READER_BOTTOM = 136;
  * With `navigate`, it can take the reader anywhere in the app (Home, My Energy,
  * Settings…), as the master action list allows on `place.page`.
  * With `onWelcomed`, a reader who has not met their Familiar yet is greeted
+ * by a small card beside it (the screen dims a little; nothing navigates).
+ * Show me around plays `guides` in that card, on the page the reader is on.
  * once (outside the Reader): Show me around opens the Familiar page's Guides.
  * Either answer calls `onWelcomed`, so it never shows again.
  * `tucked` (the Familiar page, where it already stands on the stage) sends a
  * floating Familiar to the header until the reader calls it; leaving the page
  * returns it to the reader's choice.
  */
-export function AppFamiliar({ profile, present, reading = false, place, navigate, onWelcomed, tucked = false, boundaryRef, children }: { profile: UserProfile; present: boolean; reading?: boolean; tucked?: boolean; place: { title: string; help: FamiliarHelpPlace; page?: FamiliarPage }; navigate?: Navigate; onWelcomed?: () => void; boundaryRef?: RefObject<HTMLElement | null>; children: ReactNode }) {
+export function AppFamiliar({ profile, present, reading = false, place, navigate, onWelcomed, guides, onGuideSeen, tucked = false, boundaryRef, children }: { profile: UserProfile; present: boolean; reading?: boolean; tucked?: boolean; guides?: readonly FamiliarGuide[]; onGuideSeen?: (guideId: string) => void; place: { title: string; help: FamiliarHelpPlace; page?: FamiliarPage }; navigate?: Navigate; onWelcomed?: () => void; boundaryRef?: RefObject<HTMLElement | null>; children: ReactNode }) {
   const inHeader = profile.familiarInHeader ?? false;
   const [minimized, setMinimized] = useState(inHeader);
   // Changing the setting moves it at once, on the Familiar page too.
@@ -60,9 +62,8 @@ export function AppFamiliar({ profile, present, reading = false, place, navigate
     <FamiliarPlace title={place.title} help={place.help} page={place.page} actions={actions} />
     {children}
     {welcoming && <FamiliarWelcome familiar={welcomeOption!} name={profile.familiarPersonal?.[familiar.id]?.name}
-      onLater={onWelcomed!}
-      onShowAround={() => { onWelcomed!(); navigate?.({ page: 'profile', cave: '/home/familiar/guides' }); }} />}
-    {present && !welcoming && <FamiliarCompanion key={familiar.id} familiar={familiar} size={profile.familiarSize}
+      guides={guides} onGuideSeen={onGuideSeen} anchor={minimized ? 'top' : 'bottom'} bottomInset={bottomInset} onClose={onWelcomed!} />}
+    {present && <FamiliarCompanion key={familiar.id} familiar={familiar} size={profile.familiarSize}
       boundaryRef={boundaryRef} minimized={minimized} onMinimize={() => setMinimized(true)} bottomInset={bottomInset} />}
   </WorkspaceHeaderAccessoryProvider></FamiliarHelperProvider>;
 }

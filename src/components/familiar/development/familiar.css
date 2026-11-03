@@ -150,39 +150,70 @@
   .familiar-shadow span { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
-/* The first meeting: once, over the app. A bottom sheet on a phone, a centred card wider. */
-.familiar-welcome {
-  position: fixed; inset: 0; z-index: 210; display: flex; align-items: flex-end; justify-content: center;
-  background: rgba(3, 6, 12, 0.72); backdrop-filter: blur(6px);
-  animation: familiar-welcome-fade 240ms ease-out both;
+/* A tip from the Familiar: the screen dims a little and its small card pops up beside it, never over the whole page. */
+.familiar-tip-dim { position: fixed; inset: 0; z-index: 10005; background: rgba(3, 6, 12, 0.45); animation: familiar-tip-fade 200ms ease-out both; }
+.familiar-tip {
+  position: fixed; z-index: 10020; right: max(12px, env(safe-area-inset-right)); width: min(21rem, calc(100vw - 24px));
+  max-height: calc(100dvh - var(--workspace-header-height, 72px) - 24px); overflow-y: auto; overscroll-behavior: contain;
+  padding: 0.85rem 0.95rem 0.95rem; border-radius: 1.25rem; border: 1px solid rgba(226, 196, 106, 0.35);
+  background: radial-gradient(120% 60% at 15% 0%, rgba(226, 196, 106, 0.14), transparent 60%), #070c18;
+  color: rgb(229 229 229); box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  transform-origin: bottom right; animation: familiar-tip-pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
-.familiar-welcome-card {
-  display: grid; justify-items: center; gap: 0.5rem; width: 100%; max-width: 28rem;
-  padding: 1.25rem max(1.25rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left));
-  border-radius: 1.5rem 1.5rem 0 0; border: 1px solid rgba(226, 196, 106, 0.3); border-bottom: 0;
-  background: radial-gradient(120% 70% at 50% 0%, rgba(226, 196, 106, 0.16), transparent 60%), #070c18;
-  color: rgb(229 229 229); text-align: center; box-shadow: 0 -18px 60px rgba(0, 0, 0, 0.5);
-  animation: familiar-welcome-rise 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+.familiar-tip[data-anchor="top"] { transform-origin: top right; }
+.familiar-tip[data-touring] { width: min(24rem, calc(100vw - 24px)); }
+/* The thought bubble's tail points at the Familiar: down to it floating, up to it in the header. */
+.familiar-tip::after {
+  content: ''; position: absolute; right: 2.6rem; bottom: -0.45rem; width: 0.9rem; height: 0.9rem; transform: rotate(45deg);
+  background: #070c18; border-right: 1px solid rgba(226, 196, 106, 0.35); border-bottom: 1px solid rgba(226, 196, 106, 0.35);
 }
-.familiar-welcome-art { width: min(11rem, 42vw); aspect-ratio: 1; margin-top: -0.25rem; }
-.familiar-welcome-art img, .familiar-welcome-hero { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 8px 24px rgba(226, 196, 106, 0.25)); }
-.familiar-welcome-kicker { font-family: var(--font-sc, inherit); font-size: 0.62rem; letter-spacing: 0.24em; text-transform: uppercase; color: #e2c46a; }
-.familiar-welcome-title { font-family: var(--font-display, serif); font-style: italic; font-size: 1.6rem; line-height: 1.2; color: #f4f4f5; }
-.familiar-welcome-line { max-width: 22rem; font-family: var(--font-serif, serif); font-size: 1rem; line-height: 1.55; color: rgb(229 229 229); }
-.familiar-welcome-actions { display: grid; width: 100%; gap: 0.5rem; margin-top: 0.5rem; }
-.familiar-welcome-actions > button {
-  min-height: 2.9rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.2);
-  font-size: 0.9rem; font-weight: 600; color: rgb(229 229 229);
+.familiar-tip[data-anchor="below"] { transform-origin: top right; }
+.familiar-tip[data-anchor="dropped"]::after { display: none; }
+.familiar-tip[data-anchor="below"]::after { bottom: auto; top: -0.45rem; border: 0; border-left: 1px solid rgba(226, 196, 106, 0.35); border-top: 1px solid rgba(226, 196, 106, 0.35); }
+.familiar-tip[data-anchor="top"]::after { bottom: auto; top: -0.45rem; right: 6.5rem; border: 0; border-left: 1px solid rgba(226, 196, 106, 0.35); border-top: 1px solid rgba(226, 196, 106, 0.35); }
+.familiar-tip-head { display: flex; align-items: center; gap: 0.6rem; }
+.familiar-tip-face { flex-shrink: 0; width: 2.75rem; height: 2.75rem; border-radius: 9999px; overflow: hidden; border: 1px solid rgba(226, 196, 106, 0.4); background: #0b1324; }
+.familiar-tip-face img, .familiar-tip-hero { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.familiar-tip-title { flex: 1; min-width: 0; font-family: var(--font-display, serif); font-style: italic; font-size: 1.15rem; line-height: 1.2; color: #f4f4f5; }
+.familiar-tip-title:focus { outline: none; }
+.familiar-tip-close { display: inline-grid; place-items: center; width: 2.75rem; height: 2.75rem; margin: -0.4rem -0.5rem -0.4rem 0; border-radius: 9999px; color: rgb(163 163 163); }
+.familiar-tip-line { margin-top: 0.6rem; font-family: var(--font-serif, serif); font-size: 0.95rem; line-height: 1.5; color: rgb(229 229 229); }
+.familiar-tip-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+.familiar-tip-actions > button, .familiar-tip-done {
+  flex: 1; min-height: 2.75rem; padding: 0 0.9rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.85rem; font-weight: 600; color: rgb(229 229 229);
 }
-.familiar-welcome-actions > button.is-primary { border-color: transparent; background: linear-gradient(180deg, #f3dc94, #e2c46a); color: #0b1220; }
-.familiar-welcome-actions > button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
-.familiar-welcome-note { font-size: 0.72rem; color: rgb(140 140 140); }
-@media (min-width: 640px) {
-  .familiar-welcome { align-items: center; }
-  .familiar-welcome-card { border-radius: 1.5rem; border-bottom: 1px solid rgba(226, 196, 106, 0.3); padding-bottom: 1.5rem; }
-}
-@keyframes familiar-welcome-fade { from { opacity: 0; } }
-@keyframes familiar-welcome-rise { from { opacity: 0; transform: translateY(24px); } }
+.familiar-tip-actions > button.is-primary, .familiar-tip-done { border-color: transparent; background: linear-gradient(180deg, #f3dc94, #e2c46a); color: #0b1220; }
+.familiar-tip-done { width: 100%; }
+.familiar-tip button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
+.familiar-tip-note { margin-top: 0.5rem; font-size: 0.7rem; color: rgb(140 140 140); }
+.familiar-tip-body { margin-top: 0.5rem; }
+.familiar-tip .familiar-guide-title { font-size: 1.05rem; }
+.familiar-tip .familiar-guide-line > p { font-size: 0.9rem; line-height: 1.5; }
+.familiar-tip .familiar-clip-frame { max-height: min(24dvh, 12rem); margin-inline: auto; }
+.familiar-tip .familiar-clip-frame[data-shape="tall"] { height: min(24dvh, 12rem); }
+.familiar-tip .familiar-guide { gap: 0.45rem; }
+.familiar-tip .familiar-guide-head { margin-bottom: -0.35rem; }
+.familiar-guide-steps.is-compact { align-items: center; }
+.familiar-guide-steps.is-compact > button:not(.familiar-tip-done) { width: 2.75rem; padding: 0; justify-content: center; flex-shrink: 0; }
+.familiar-tip .familiar-guide-steps.is-compact > .familiar-tip-done { flex: 1; width: auto; justify-content: center; color: #0b1220; font-weight: 700; }
+@keyframes familiar-tip-fade { from { opacity: 0; } }
+@keyframes familiar-tip-pop { from { opacity: 0; transform: scale(0.85); } }
 @media (prefers-reduced-motion: reduce) {
-  .familiar-welcome, .familiar-welcome-card { animation: none; }
+  .familiar-tip, .familiar-tip-dim { animation: none; }
 }
+
+/* One guide, wherever it is watched (FamiliarGuideView): the Familiar page's Guides and the Familiar's own card. */
+.familiar-guide { display: grid; gap: 0.6rem; touch-action: pan-y; }
+.familiar-guide-head { display: flex; align-items: center; justify-content: space-between; }
+.familiar-guide-count { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.72rem; color: rgb(163 163 163); }
+.familiar-guide-title { font-family: var(--font-display, serif); font-style: italic; font-size: 1.2rem; line-height: 1.25; color: #f4f4f5; }
+.familiar-guide-title:focus { outline: none; }
+.familiar-guide-soon { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 1.1rem 0.9rem; border-radius: 12px; border: 1px dashed rgba(255, 255, 255, 0.14); font-size: 0.8rem; color: rgb(163 163 163); }
+.familiar-guide-line { display: flex; align-items: flex-start; gap: 0.5rem; }
+.familiar-guide-line > p { flex: 1; font-family: var(--font-serif, serif); font-size: 0.98rem; line-height: 1.6; color: rgb(229 229 229); }
+.familiar-guide-hear { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.18); color: rgb(229 229 229); }
+.familiar-guide-steps { display: flex; justify-content: space-between; gap: 0.5rem; }
+.familiar-guide-steps > button { display: inline-flex; align-items: center; gap: 0.25rem; min-height: 2.75rem; padding: 0 0.85rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.16); font-size: 0.8rem; color: rgb(229 229 229); }
+.familiar-guide-hear:focus-visible, .familiar-guide-steps > button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
+.familiar-guide-soon-badge { padding: 0.2rem 0.5rem; border-radius: 9999px; border: 1px dashed rgba(226, 196, 106, 0.5); font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: #e2c46a; }

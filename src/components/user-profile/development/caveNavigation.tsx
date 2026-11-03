@@ -72,8 +72,6 @@ export function resolveCaveRoute(path: string) {
   const view = scoped && !creatorId ? 'unavailable' : creatorView ?? (!destination ? 'unavailable'
     : audience === 'public' ? (child ? 'unavailable' : destination)
     : !child ? destination
-    // The Familiar page opened on its Guides tab.
-    : destination === 'home' && child === 'familiar/guides' ? 'familiar'
     : destination === 'home' && (child === 'dao-pillar' || child === 'familiar' || child === 'inbox' || child === 'store' || child === 'energy') ? child
     : destination === 'settings' && (child === 'switchboard' || child === 'redeem-code') ? child
     : 'unavailable');

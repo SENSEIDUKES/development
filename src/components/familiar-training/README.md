@@ -150,7 +150,7 @@ Workshop previews and the account service remain separate.
   arrow keys step through; a guide not recorded yet stays listed as Coming soon; the first
   unwatched one says Start here; watched guides keep a check (`familiarGuidesSeen` on the
   profile). Clips show whole, wide or tall (`FamiliarClip`, shared with the Familiar's card).
-  `/home/familiar/guides` opens the page on Guides. The app's list, and where SENSEI pastes each
+  The app's list, and where SENSEI pastes each
   video link, is `src/host/familiar/guides.ts`.
 - **2026-11-03:** From SENSEI's iPhone review: on a phone, opening Bond, Elements or Lore
   fills the page under the top bar (the Familiar's name, the tabs and Close details;

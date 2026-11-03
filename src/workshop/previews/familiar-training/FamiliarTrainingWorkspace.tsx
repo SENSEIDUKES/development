@@ -12,9 +12,9 @@
  * Familiar (host profile state) are simulated.
  */
 import { useState } from 'react';
-import { FamiliarStage, FamiliarWelcome, updateFamiliarPersonalizations, type FamiliarPersonalizations, type FamiliarStageTab } from '@seihouse/library/familiar';
+import { FamiliarStage, FamiliarWelcome, updateFamiliarPersonalizations, type FamiliarPersonalizations } from '@seihouse/library/familiar';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
-import { FAMILIAR_FIRST_GUIDE_ID, FAMILIAR_GUIDES } from '../../../host/familiar/guides';
+import { FAMILIAR_GUIDES } from '../../../host/familiar/guides';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { QUILL, type WorkshopAccountSeed } from '../rewards/rewardScenarios';
@@ -54,7 +54,6 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
   // The guides and the first meeting are profile state in the Cave; this tab keeps its own.
   const [guidesSeen, setGuidesSeen] = useState<string[]>([]);
   const [welcome, setWelcome] = useState(false);
-  const [tour, setTour] = useState<{ tab: FamiliarStageTab; guide: string; key: number } | null>(null);
   const owned = account.familiars.snapshot?.ownedFamiliarIds ?? [];
   const nameOf = (id: string) => allFamiliarOptions.find(option => option.id === id)?.name ?? id;
   const grantQi = async () => {
@@ -91,9 +90,6 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
       </WorkshopCard>
       <div className="overflow-hidden rounded-2xl border border-white/10" style={{ ['--familiar-stage-height' as string]: 'min(52rem, calc(100dvh - 6rem))' }}>
         <FamiliarStage
-          key={tour?.key}
-          initialTab={tour?.tab}
-          initialGuideId={tour?.guide}
           guides={FAMILIAR_GUIDES}
           guidesSeen={guidesSeen}
           onGuideSeen={id => setGuidesSeen(previous => previous.includes(id) ? previous : [...previous, id])}
@@ -117,8 +113,8 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
       <LedgerFeed />
       {welcome ? (
         <FamiliarWelcome familiar={allFamiliarOptions.find(option => option.id === activeId) ?? allFamiliarOptions[0]} name={personal?.[activeId]?.name}
-          onLater={() => setWelcome(false)}
-          onShowAround={() => { setWelcome(false); setTour({ tab: 'guides', guide: FAMILIAR_FIRST_GUIDE_ID, key: Date.now() }); }} />
+          guides={FAMILIAR_GUIDES} onGuideSeen={id => setGuidesSeen(previous => previous.includes(id) ? previous : [...previous, id])}
+          onClose={() => setWelcome(false)} />
       ) : null}
     </div>
   );

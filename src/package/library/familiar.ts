@@ -7,6 +7,7 @@ export { FamiliarCompanion, type FamiliarCompanionProps } from '../../components
 export { FamiliarHero } from '../../components/familiar/development/FamiliarHero';
 export { FamiliarWelcome, type FamiliarWelcomeProps } from '../../components/familiar/development/FamiliarWelcome';
 export { FamiliarClip } from '../../components/familiar/development/FamiliarClip';
+export { FamiliarGuideView, type FamiliarGuideViewProps } from '../../components/familiar/development/FamiliarGuideView';
 export * from '../../library/familiars/contracts';
 export * from '../../library/familiars/appearance';
 export * from '../../library/familiars/familiarsClient';

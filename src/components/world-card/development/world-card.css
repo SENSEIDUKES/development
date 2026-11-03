@@ -571,11 +571,12 @@
 }
 .world-card-carousel-step[data-side='previous'] { inset-inline-start: 0.5rem; }
 .world-card-carousel-step[data-side='next'] { inset-inline-end: 0.5rem; }
-.world-card-carousel:hover .world-card-carousel-step, .world-card-carousel-step:focus-visible { opacity: 1; }
+@media (hover: hover) { .world-card-carousel:hover .world-card-carousel-step { opacity: 1; } }
+.world-card-carousel-step:focus-visible { opacity: 1; }
 .world-card-carousel-step:hover { background: rgba(5, 11, 18, 0.45); }
 .world-card-carousel-step svg { width: 1rem; height: 1rem; }
 /* Touch swipes; the arrows are for pointers and keyboards only. */
-@media (hover: none) { .world-card-carousel-step:not(:focus-visible) { opacity: 0; pointer-events: none; } }
+@media (hover: none) { .world-card-carousel-step:not(:focus-visible) { pointer-events: none; } }
 .world-card-carousel :is(.world-card-carousel-step, .world-card-carousel-segment):focus-visible { outline: 2px solid #04acff; outline-offset: 2px; border-radius: 999px; }
 @media (prefers-reduced-motion: reduce) {
   .world-card-carousel-segment[data-state='current'] .world-card-carousel-fill { animation: none; width: 100%; }

@@ -134,10 +134,10 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   /** Tag this chapter (again); absent where this Reader cannot tag. */
   tagging?: {
     gap?: string;
-    /** Why the media cannot be read again on its own, when it cannot. */
-    mediaGap?: string;
-    /** Reads the whole chapter again, or with `media` its sound alone. */
-    run: (focus?: HarnessTagFocus) => Promise<void>;
+    /** Reads the whole chapter again. */
+    run: () => Promise<void>;
+    /** Reads its media alone again (Tag media again), where the host offers it; `gap` says why it cannot, when it cannot. */
+    media?: { gap?: string; run: () => Promise<void> };
     /** The host's Energy price for a read. */
     cost?: ReactNode;
   };
@@ -339,7 +339,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     setRetagging(focus ?? 'all');
     setTagProblem(undefined);
     try {
-      await tagging.run(focus);
+      await (focus === 'media' ? tagging.media!.run() : tagging.run());
     } catch (error) {
       setTagProblem(error instanceof Error ? error.message : 'The chapter could not be tagged.');
     } finally {
@@ -348,7 +348,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     }
   };
   const tag = tagging && !tagging.gap ? read() : undefined;
-  const tagMedia = tagging && !tagging.mediaGap ? read('media') : undefined;
+  const tagMedia = tagging?.media && !tagging.media.gap ? read('media') : undefined;
   const prose = useMemo((): CSSProperties => ({
     fontFamily: text.font.family, fontSize: `calc(${text.fontSize} * var(--reader-scale, 1))`, fontWeight: text.fontWeight,
     fontSynthesis: 'none', fontKerning: 'normal', '--sen-text-line-height': text.lineHeight,

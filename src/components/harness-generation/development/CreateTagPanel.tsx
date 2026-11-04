@@ -112,13 +112,13 @@ export function CreateTagPanel({ rows, lit, onLight, saving, editable, sealedNot
         <SEIPopoverTitle className={pickerHeading}>{editable ? 'Select words to edit them or add media.' : sealedNote ?? 'This chapter is sealed.'}</SEIPopoverTitle>
         {tagging && <button type="button" onClick={tagging.onTag} disabled={busy || tagging.disabled} aria-busy={tagging.busy === 'all' || undefined}
           data-testid="create-mode-tag" className={`${pickerRow} disabled:opacity-50`}>
-          {tagging.busy === 'all' ? <LoaderCircle className="h-4 w-4 shrink-0 animate-spin text-(--reader-accent-soft)" aria-hidden /> : <Sparkles className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
+          {tagging.busy === 'all' ? <LoaderCircle className="h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none text-(--reader-accent-soft)" aria-hidden /> : <Sparkles className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
           <span className="min-w-0 flex-1">{tagging.busy === 'all' ? 'Reading the chapter…' : account.status === 'untagged' ? 'Tag this chapter' : 'Tag this chapter again'}</span>
           {tagging.cost}
         </button>}
         {tagging?.onTagMedia && <button type="button" onClick={tagging.onTagMedia} disabled={busy || tagging.disabled} aria-busy={tagging.busy === 'media' || undefined}
           data-testid="create-mode-tag-media" className={`${pickerRow} disabled:opacity-50`}>
-          {tagging.busy === 'media' ? <LoaderCircle className="h-4 w-4 shrink-0 animate-spin text-(--reader-accent-soft)" aria-hidden /> : <Sparkles className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
+          {tagging.busy === 'media' ? <LoaderCircle className="h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none text-(--reader-accent-soft)" aria-hidden /> : <Sparkles className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
           <span className="min-w-0 flex-1">{tagging.busy === 'media' ? 'Reading its media…' : 'Tag media again'}</span>
           {tagging.cost}
         </button>}
@@ -162,7 +162,7 @@ export function CreateTagPanel({ rows, lit, onLight, saving, editable, sealedNot
       <button type="button" onClick={mediaAction.onTagMedia} disabled={busy || mediaAction.disabled} aria-busy={mediaAction.busy === 'media' || undefined}
         data-testid="create-tag-media-inline"
         className={`inline-flex min-h-11 items-center gap-2 rounded-full border border-(--reader-light)/12 px-4 text-xs font-medium text-(--reader-text) hover:bg-(--reader-light)/8 disabled:opacity-50 ${controlFeedback}`}>
-        {mediaAction.busy === 'media' ? <LoaderCircle className="h-4 w-4 animate-spin text-(--reader-accent-soft)" aria-hidden /> : <Sparkles className="h-4 w-4 text-(--reader-accent-soft)" aria-hidden />}
+        {mediaAction.busy === 'media' ? <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none text-(--reader-accent-soft)" aria-hidden /> : <Sparkles className="h-4 w-4 text-(--reader-accent-soft)" aria-hidden />}
         {mediaAction.busy === 'media' ? 'Reading its media…' : 'Tag media again'}
         {mediaAction.busy !== 'media' && mediaAction.cost}
       </button>

@@ -1274,6 +1274,8 @@ export interface HarnessChapterTagging {
     model?: string;
     notes?: { written: number; placed: number };
     providerReceipt?: HarnessProviderReceipt;
+    /** The tagger's reply as it came back, for inspection. */
+    rawProviderResponse?: string;
   };
 }
 

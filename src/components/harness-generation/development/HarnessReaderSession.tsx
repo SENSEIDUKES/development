@@ -57,7 +57,7 @@ import { readingScene, useReaderSoundtrack } from './useReaderSoundtrack';
 import { useChapterFinished } from './useChapterFinished';
 import './reader-frame.css';
 import type { HarnessGenerationController } from '../shared/controller';
-import type { HarnessChapter, HarnessTagFocus, HarnessWorkspaceState } from '../../../narrative/generation';
+import type { HarnessChapter, HarnessWorkspaceState } from '../../../narrative/generation';
 import './reader-colors.css';
 
 /** What the host's writing screen shows. */
@@ -166,7 +166,7 @@ export type ReaderGenerationCost = 'chapter' | 'tag' | 'picture';
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
   readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
-  creator = true, openAtChapter, openInCreate = false, onTagChapter, renderCost,
+  creator = true, openAtChapter, openInCreate = false, onTagChapter, onTagChapterMedia, renderCost,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
@@ -251,7 +251,14 @@ export function HarnessReaderSession({
    * Tags a chapter again with the host's tagger, from Create mode. Absent when
    * the host cannot tag here; Create mode then shows the tags without Tag this chapter.
    */
-  onTagChapter?: (chapterId: string, focus?: HarnessTagFocus) => Promise<void>;
+  onTagChapter?: (chapterId: string) => Promise<void>;
+  /**
+   * Reads a chapter's media again on its own (Tag media again): its sound
+   * replaced, every other tag and the Codex untouched. Its own capability, so a
+   * host that has not taken it up never offers it; with only `onTagChapter`
+   * the Reader offers the whole read alone.
+   */
+  onTagChapterMedia?: (chapterId: string) => Promise<void>;
   /**
    * The host's Energy price for a generation action, shown on its button: a
    * chapter (Rewrite, Fate's Write, Accept and write), tagging a chapter with
@@ -561,7 +568,7 @@ export function HarnessReaderSession({
     : writer.writing ? 'A chapter is being written. Changes wait until it is done.'
     : 'This chapter cannot be changed right now.';
   const tagGap = chapter && onTagChapter ? controller.retagChapterGap(storyId, chapter.id) : undefined;
-  const mediaTagGap = chapter && onTagChapter ? controller.retagChapterGap(storyId, chapter.id, 'media') : undefined;
+  const mediaTagGap = chapter && onTagChapterMedia ? controller.retagChapterGap(storyId, chapter.id, 'media') : undefined;
   const rewriteChapter = async (note?: string) => {
     const rewritten = await writer.rewrite(note);
     if (rewritten) openChapter(rewritten);
@@ -588,7 +595,10 @@ export function HarnessReaderSession({
         // opens with its new tags and no edit saves the tags it had before over them.
         ? <ChapterAuthoring key={`${chapter.id}:${chapter.tagging?.at ?? ''}:${chapter.tagging?.media?.at ?? ''}:${authorable}`} handle={authorable ? authoringHandle : undefined} chapter={chapter} controller={controller}
             locale={story.originalLanguage} text={text} articleRef={articleRef} editable={authorable} sealedNote={authorable ? undefined : sealedNote}
-            entries={entries} tagging={onTagChapter && { gap: tagGap, mediaGap: mediaTagGap, run: focus => onTagChapter(chapter.id, focus), cost: renderCost?.('tag') }}
+            entries={entries} tagging={onTagChapter && {
+              gap: tagGap, run: () => onTagChapter(chapter.id), cost: renderCost?.('tag'),
+              ...(onTagChapterMedia ? { media: { gap: mediaTagGap, run: () => onTagChapterMedia(chapter.id) } } : {}),
+            }}
             highlight={highlight} reading={reading} lit={createLit} onLight={setCreateLit} />
         : chapter
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}

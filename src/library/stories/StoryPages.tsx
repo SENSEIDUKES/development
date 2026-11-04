@@ -149,7 +149,8 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       onGenerateNextChapter={writes ? () => stories.generateNextChapter(storyId) : undefined}
       onRewriteChapter={writes ? note => stories.rewriteLatestChapter(storyId, note) : undefined}
       onPlanArc={writes ? () => stories.planArc(storyId) : undefined}
-      onTagChapter={writes ? (chapterId, focus) => controller.retagChapter(storyId, chapterId, focus ? { focus } : {}) : undefined}
+      onTagChapter={writes ? chapterId => controller.retagChapter(storyId, chapterId) : undefined}
+      onTagChapterMedia={writes ? chapterId => controller.retagChapter(storyId, chapterId, { focus: 'media' }) : undefined}
       // Every generation shows its Energy: a chapter, tagging with the tagger (tagging by hand is free), a Codex picture.
       renderCost={action => <EnergyActionCost actionId={action === 'tag' ? 'chapter.tag' : action === 'picture' ? 'image.generate' : 'chapter.generate'} />}
       renderWriting={writingAgent ? writing => <GenerationOverlay agent={writingAgent} isGenerating={writing.active}

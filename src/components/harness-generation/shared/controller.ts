@@ -57,7 +57,7 @@ import {
   type HarnessGenerationRepository,
 } from './repository';
 import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
-import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessTaggerChoice, HarnessTagFocus, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessTaggerChoice, HarnessTagFocus, HarnessTagRequest, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export interface HarnessGenerationControllerOptions {
   repository: HarnessGenerationRepository;
@@ -1522,16 +1522,25 @@ export class HarnessGenerationController {
       focus: 'media',
       ...this.taggerFor(attempt.model),
     });
-    let response: HarnessGenerationResponse;
+    // Busy from the call until its result is saved: a write started meanwhile would save the
+    // workspace as it was before, and with it the old sound, over this read.
     const previous = this.generating;
     this.generating = true;
     try {
-      response = await this.modelAdapter.tagChapter(request);
-    } catch (caught) {
-      throw new Error(errorMessage(caught, 'The tagger could not be reached.'));
+      let response: HarnessGenerationResponse;
+      try {
+        response = await this.modelAdapter.tagChapter(request);
+      } catch (caught) {
+        throw new Error(errorMessage(caught, 'The tagger could not be reached.'));
+      }
+      await this.saveMediaRead(chapter, story.originalLanguage, request, response);
     } finally {
       this.generating = previous;
     }
+  }
+
+  /** A media read's answer, read and saved on the chapter: its sound replaced, everything else kept. */
+  private async saveMediaRead(chapter: HarnessChapter, language: string, request: HarnessTagRequest, response: HarnessGenerationResponse): Promise<void> {
     const at = this.runtime.now();
     const read = readChapterTagging({
       raw: response.rawProviderResponse,
@@ -1541,7 +1550,7 @@ export class HarnessGenerationController {
       model: request.model,
       options: {
         soundVocabulary: soundVocabulary(chapter.mediaLoadout),
-        locale: story.originalLanguage,
+        locale: language,
         media: chapter.mediaLoadout,
         speakersExpected: false,
         appearancesExpected: false,
@@ -1564,7 +1573,12 @@ export class HarnessGenerationController {
     saved.tagging = {
       ...saved.tagging,
       ...(kept.length + fresh.length ? { warnings: [...kept, ...fresh] } : {}),
-      media: { at, model: request.model, ...(read.record.notes ? { notes: read.record.notes } : {}), ...(response.providerReceipt ? { providerReceipt: response.providerReceipt } : {}) },
+      media: {
+        at, model: request.model, ...(read.record.notes ? { notes: read.record.notes } : {}),
+        // Its receipt and its answer as it came back, as a full read keeps them.
+        ...(response.providerReceipt ? { providerReceipt: response.providerReceipt } : {}),
+        ...(response.rawProviderResponse ? { rawProviderResponse: response.rawProviderResponse } : {}),
+      },
     };
     if (!kept.length && !fresh.length) delete saved.tagging.warnings;
     await this.persist(candidate);

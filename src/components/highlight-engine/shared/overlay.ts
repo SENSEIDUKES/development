@@ -11,7 +11,23 @@ export interface OverlayMark {
    * tone and gains a dashed underline in `--sen-overlay-attention` (amber).
    */
   attention?: boolean;
+  /**
+   * How the range is drawn: `fill` (the default) tints behind the words, like
+   * a highlighter; `underline` draws a line in the tone under them, quieter, so
+   * two families of marks read apart on one page. (A third, colored words, is
+   * planned.)
+   */
+  style?: OverlayMarkStyle;
 }
+
+export type OverlayMarkStyle = 'fill' | 'underline';
+
+/**
+ * A tone at full strength for a line: a tint is kept translucent so words stay
+ * readable over it, but a 2px line that faint disappears. An rgba() tone keeps
+ * its color and gains opacity; any other color is used as given.
+ */
+export const lineTone = (tone: string) => tone.replace(/^rgba\(([^,]+),([^,]+),([^,]+),[^)]+\)$/, 'rgba($1,$2,$3, .95)');
 
 /** One quiet number beside the words, never on them: a paragraph's ¶2 or a sentence's 8. */
 export interface OverlayPin {

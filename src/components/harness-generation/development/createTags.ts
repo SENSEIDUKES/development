@@ -1,5 +1,5 @@
 import { ATMOSPHERE_CHANGE_KIND, SOUNDSCAPE_CHANGE_KIND, SOUND_CUE_KIND } from '@seihouse/sen/audio';
-import { ATTACHMENT_COLORS } from '@seihouse/sen/highlight-engine';
+import { ATTACHMENT_COLORS, type OverlayMarkStyle } from '@seihouse/sen/highlight-engine';
 import { SPEAKER_KIND } from '../../../narrative/speech';
 import { HOLDING_CHANGE_KIND } from '../../../narrative/holdings';
 import { APPEARANCE_KIND } from '../../../narrative/appearances';
@@ -31,10 +31,20 @@ export const CREATE_TAG_KINDS: Readonly<Record<CreateTagKind, { label: string; a
   place: { label: 'Place', attachment: PLACE_KIND, tagger: 'Place', finding: 'places' },
 };
 
-export const CREATE_TAG_GROUPS: ReadonlyArray<{ id: CreateTagGroupId; label: string; kinds: readonly CreateTagKind[] }> = [
-  { id: 'media', label: 'Media', kinds: ['soundscape', 'atmosphere', 'cues'] },
-  { id: 'info', label: 'Story info', kinds: ['speakers', 'holdings', 'appearances', 'status', 'place'] },
+/**
+ * Each group is drawn its own way, so the two read apart at a glance before
+ * any color is learned (SENSEI, 2026-11-04): Media is a full highlight, what
+ * the reader will hear lit behind the words; Story info is a colored
+ * underline, quieter, the facts the Codex is built from. Colors then tell the
+ * kinds inside a group apart.
+ */
+export const CREATE_TAG_GROUPS: ReadonlyArray<{ id: CreateTagGroupId; label: string; style: OverlayMarkStyle; kinds: readonly CreateTagKind[] }> = [
+  { id: 'media', label: 'Media', style: 'fill', kinds: ['soundscape', 'atmosphere', 'cues'] },
+  { id: 'info', label: 'Story info', style: 'underline', kinds: ['speakers', 'holdings', 'appearances', 'status', 'place'] },
 ];
+
+/** How a kind's marks are drawn: its group's style. */
+export const createTagStyle = (kind: CreateTagKind): OverlayMarkStyle => CREATE_TAG_GROUPS.find(group => group.kinds.includes(kind))!.style;
 
 /** The color a kind's marks wear on the page. */
 export const createTagTone = (kind: CreateTagKind) => ATTACHMENT_COLORS[CREATE_TAG_KINDS[kind].attachment].tone;

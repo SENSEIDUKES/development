@@ -1,6 +1,6 @@
 import { soundtrackChangeWord, type SoundtrackChangeKind } from '../../../audio/soundtrackChanges';
 import { resolveAnchor, type Manuscript, type ManuscriptState } from './manuscript';
-import type { OverlayMark, OverlayPin } from './overlay';
+import type { OverlayMark, OverlayMarkStyle, OverlayPin } from './overlay';
 import type { PassageSelection } from './selection';
 
 /**
@@ -116,13 +116,13 @@ export function openingSoundMark(manuscript: Manuscript, kind: SoundtrackChangeK
  * found with its kind. A span whose words an edit replaced has no place left on
  * the page; the inspector lists it instead.
  */
-export function attachmentMarks<Payload>(state: ManuscriptState<Payload>, kinds: readonly string[]): OverlayMark[] {
+export function attachmentMarks<Payload>(state: ManuscriptState<Payload>, kinds: readonly string[], { style }: { style?: OverlayMarkStyle } = {}): OverlayMark[] {
   return state.attachments.filter(attachment => kinds.includes(attachment.kind)).flatMap(attachment => {
     const color = ATTACHMENT_COLORS[attachment.kind];
     const resolution = resolveAnchor(state.manuscript, attachment.anchor);
     const selection = resolution.status === 'placed' ? resolution.selection : resolution.status === 'changed' ? resolution.current : undefined;
     if (!color || !selection) return [];
-    const mark: OverlayMark = { id: `mark:${attachment.id}`, selection, tone: color.tone };
+    const mark: OverlayMark = { id: `mark:${attachment.id}`, selection, tone: color.tone, ...(style && style !== 'fill' ? { style } : {}) };
     return [resolution.status === 'changed' ? { ...mark, attention: true } : mark];
   });
 }

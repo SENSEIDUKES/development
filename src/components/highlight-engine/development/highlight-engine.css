@@ -61,6 +61,10 @@
 .sen-overlay-mark { position: absolute; border-radius: 3px; }
 /* A range that needs a decision keeps its tint and gains a dashed underline, like a spelling mark. */
 .sen-overlay-mark[data-attention] { border-bottom: 2px dashed var(--sen-overlay-attention, #fbbf24); }
+/* An underline mark is the line itself; one that needs a decision gains the dashed amber line just below it. */
+.sen-overlay-mark[data-style="underline"] { border-radius: 1px; }
+.sen-overlay-mark[data-style="underline"][data-attention] { border-bottom: 0; }
+.sen-overlay-mark[data-style="underline"][data-attention]::after { content: ''; position: absolute; inset-inline: 0; top: 4px; border-bottom: 2px dashed var(--sen-overlay-attention, #fbbf24); }
 /* Secondary text: the prose's own color at reduced strength, in the system face, with no box. */
 .sen-overlay-pin { position: absolute; color: inherit; opacity: .6; white-space: nowrap; letter-spacing: 0;
   font: 600 10px/10px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-variant-numeric: tabular-nums; }

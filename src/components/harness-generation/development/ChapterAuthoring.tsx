@@ -25,7 +25,7 @@ import type { HarnessTagFocus } from '../../../narrative/generation';
 import { CreateTagPanel } from './CreateTagPanel';
 import { READ_ALOUD_TONE } from './ProseChapterBody';
 import type { NarrationHighlight } from './useFollowNarration';
-import { CREATE_TAG_KINDS, createTagRows, litKinds, type CreateTagKind, type CreateTagLit } from './createTags';
+import { CREATE_TAG_GROUPS, CREATE_TAG_KINDS, createTagRows, litKinds, type CreateTagKind, type CreateTagLit } from './createTags';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { ReaderChapter } from './readerChapterBody';
 import './reader-colors.css';
@@ -297,7 +297,12 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     const starts = ([['soundscape', SOUNDSCAPE_CHANGE_KIND], ['atmosphere', ATMOSPHERE_CHANGE_KIND]] as const)
       .flatMap(([kind, change]) => kinds.includes(kind) && opens[change] ? [openingSoundMark(state.manuscript, change)].filter(mark => mark !== undefined) : []);
     // One kind alone shows the page's numbering, the way the model addresses it.
-    return { marks: [...starts, ...attachmentMarks(state, kinds.map(kind => CREATE_TAG_KINDS[kind].attachment))], ...(kinds.length === 1 ? { pins: structurePins(state.manuscript) } : {}) };
+    // Each group in its own style: Media as highlights, Story info as underlines.
+    const marks = CREATE_TAG_GROUPS.flatMap(group => {
+      const shown = group.kinds.filter(kind => kinds.includes(kind));
+      return shown.length ? attachmentMarks(state, shown.map(kind => CREATE_TAG_KINDS[kind].attachment), { style: group.style }) : [];
+    });
+    return { marks: [...starts, ...marks], ...(kinds.length === 1 ? { pins: structurePins(state.manuscript) } : {}) };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- opens is read from the chapter and its opening, both deps through state and opening
   }, [lit, state, opening]);
   const overlay = useMemo(() => !spoken ? tags : { ...tags, marks: [spoken, ...tags?.marks ?? []] },

@@ -1204,6 +1204,9 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect([...panel()!.querySelectorAll('[data-tag-kind]')].map(kind => kind.getAttribute('data-tag-kind')))
       .toEqual(['soundscape', 'atmosphere', 'cues', 'speakers', 'holdings', 'appearances', 'status', 'place']);
     expect(panel()!.getAttribute('data-lit')).toBe('all');
+    // Each group is drawn its own way, and the legend's swatch shows which: Media highlighted, Story info underlined.
+    expect([...panel()!.querySelectorAll('[data-tag-kind] [data-swatch]')].map(swatch => swatch.getAttribute('data-swatch')))
+      .toEqual(['fill', 'fill', 'fill', 'underline', 'underline', 'underline', 'underline', 'underline']);
     // Create mode stays on from chapter to chapter: the newest can be changed.
     await click(byLabel('Next Chapter'), 'Next Chapter');
     expect(create().getAttribute('aria-pressed')).toBe('true');
@@ -1227,6 +1230,26 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     await chooseAction('Create mode');
     expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
     expect(chapterOnScreen(2)).toBeTruthy();
+  });
+  it('draws Media as highlights and Story info as underlines', async () => {
+    const { controller, storyId } = await story({ written: 1, replies: [reply('Low Tide', [
+      '[[gained: MC | Bell Key]] Mara found the bell key under the drowned gate.',
+      'Mara froze as [[sound: beast roar | the beast roared | high]] beyond the seawall. Nothing answered it.',
+    ])] });
+    await mount(<Host controller={controller} storyId={storyId} openAtChapter={1} openInCreate />);
+    const marks = () => [...container.querySelectorAll<HTMLElement>('[data-testid="chapter-authoring"] .sen-overlay-mark')];
+    const cue = controller.snapshot().chapters[0].soundCues![0];
+    // Every tag lit: the Sound Cue is a highlight behind its words, the holding a line under its own.
+    expect(marks().find(mark => mark.dataset.overlayId === `mark:${cue.id}`)!.dataset.style).toBeUndefined();
+    expect(marks().filter(mark => mark.dataset.style === 'underline').length).toBeGreaterThan(0);
+    // Holdings lit alone: only underlines.
+    await click(button => button.getAttribute('data-tag-kind') === 'holdings', 'Holdings');
+    expect(marks().length).toBeGreaterThan(0);
+    marks().forEach(mark => expect(mark.dataset.style).toBe('underline'));
+    // Sound Cues lit alone: only highlights.
+    await click(button => button.getAttribute('data-tag-kind') === 'cues', 'Sound Cues');
+    expect(marks().length).toBeGreaterThan(0);
+    marks().forEach(mark => expect(mark.dataset.style).toBeUndefined());
   });
   it('opens in Create mode when asked, and tags the chapter again from it', async () => {
     const { controller, storyId } = await story({ written: 2 });

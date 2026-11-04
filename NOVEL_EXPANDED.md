@@ -785,6 +785,13 @@ Update it whenever it changes.
     export, and the fixer's instructions are on the Writer Instructions page.
     The Library sets how far it may go (records only, or off), which is where
     the Familiar will control it.
+    **One fixer for the whole record (2026-11-04):** the same call now also
+    checks who appeared, the names they go by and how they are: someone who
+    speaks for the first time but never appeared, a name no card has that
+    shares a word with a character's (Inspector Wei, while his card said
+    Summit Inspector), and someone dead who speaks or acts. Plain rules find
+    each, so a chapter they do not flag still makes no call. Each information
+    tag still to come brings its own checks to this one fixer.
   - **First appearance, with its look (2026-10-14, Stage E1 step 1):** the
     writer tags each character or named thing the moment it first steps onto
     the page (`[[appears: Name | character]]`, `[[appears: Thing | thing]]`)

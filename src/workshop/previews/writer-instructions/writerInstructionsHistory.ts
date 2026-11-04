@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-11-04',
+    summary: 'One fixer for the whole record (SENSEI, 2026-11-04, from The Echo of Forgotten Blades: the Dean, Qin Dazhao, spoke eight lines in Chapter 6 and was on no card, and the inspector was named Inspector Wei in Chapter 4 while his card still said Summit Inspector; "this was what the whole fixer call is for… expand what the fixer is able to fix", keeping it to the small cases it already reads). The story runs on three calls: the writer, the tagger, and the fixer only when needed. Three more plain rules now find problems with no model, and only what they find goes to the same one short call: someone who speaks for the first time but never appeared, a name in the prose no card has that shares a word with one character\'s, and someone dead who speaks or acts. The fixer\'s opening line now says it keeps the record true (who has appeared, the names they go by and how they are, beside what they have, use and know); its tags line adds the status tag; and a new part, THE REST OF THE RECORD, says what record, fine and major mean for each of the three. A name case may also say which name the card should go by from now on.',
+    changed: { 'holdings-fixer': '099a72be7366a9' },
+  },
+  {
     date: '2026-10-31',
     summary: 'The Status tag, the second information tag (SENSEI, 2026-10-31: finish the information tags before linking names to their colors). The tagger is taught one more tag, built like the appearance tag: on the sentence where the prose shows a character\'s condition change, [[status: Name | how they are now]] (wounded, healed, poisoned, captured, freed, sealed, transformed, dead), in a few plain words, never a mood, a plan or a rumour; rank stays the Holdings rank tag. Beside each character\'s name the tagger now also reads their status so far. Its role line names "how someone is now" among what a tag marks.',
     changed: { tagger: '1e48f05a725f60', status: '1f01efa2b91f6a' },
@@ -132,7 +137,7 @@ export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = 
   {
     date: '2026-10-06',
     summary: 'Phase 3. The Holdings fixer begins: after a chapter is saved, a separate small call with the chapter\'s model settles the holdings problems the checks found (a tag that says something was gained twice, a count that does not match, two names for one thing) and keeps a record on the chapter. It reads only small cases, never the chapter, and may correct a tag or one sentence; a bigger contradiction is only recorded. The chapter request (not a recorded block) gains a rewrite section: when the reader asks for the latest chapter again, the writer sees the set-aside version\'s title and recap and the reader\'s note, and never reuses its wording.',
-    changed: { 'holdings-fixer': '0053e52b28b7b1' },
+    changed: { 'holdings-fixer': '099a72be7366a9' },
   },
   {
     date: '2026-10-06',

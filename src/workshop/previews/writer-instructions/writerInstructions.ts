@@ -152,8 +152,8 @@ export const BEFORE_THE_STORY: readonly WriterInstruction[] = [
 /** Read after a chapter, by a separate small call: never by the chapter writer. */
 export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
   {
-    id: 'holdings-fixer', title: 'Holdings fixer', source: 'HARNESS',
-    when: 'After a chapter is saved, only when its holdings checks found problems that need a model: one short call with the chapter\'s model, which reads these instructions and the small cases (a sentence, its tags, what the record shows), never the whole chapter.',
+    id: 'holdings-fixer', title: 'Fixer', source: 'HARNESS',
+    when: 'After a chapter is saved, only when its checks found problems that need a model (its holdings; someone who speaks but never appeared; a name no card has that shares a word with a character\'s; someone dead who speaks or acts): one short call with the chapter\'s model, which reads these instructions and the small cases (a sentence, its tags, what the record shows), never the whole chapter.',
     text: HOLDINGS_FIXER_INSTRUCTIONS,
   },
   {

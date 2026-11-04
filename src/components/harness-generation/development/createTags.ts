@@ -1,5 +1,5 @@
 import { ATMOSPHERE_CHANGE_KIND, SOUNDSCAPE_CHANGE_KIND, SOUND_CUE_KIND } from '@seihouse/sen/audio';
-import { ATTACHMENT_COLORS } from '@seihouse/sen/highlight-engine';
+import { ATTACHMENT_COLORS, type OverlayMarkLine, type OverlayMarkStyle } from '@seihouse/sen/highlight-engine';
 import { SPEAKER_KIND } from '../../../narrative/speech';
 import { HOLDING_CHANGE_KIND } from '../../../narrative/holdings';
 import { APPEARANCE_KIND } from '../../../narrative/appearances';
@@ -20,21 +20,39 @@ export type CreateTagGroupId = 'media' | 'info';
 /** What the page lights: every tag, none, or one kind. */
 export type CreateTagLit = 'all' | 'off' | CreateTagKind;
 
-export const CREATE_TAG_KINDS: Readonly<Record<CreateTagKind, { label: string; attachment: string; tagger: ChapterTaggingKind; finding: keyof ChapterTagFindings }>> = {
+export const CREATE_TAG_KINDS: Readonly<Record<CreateTagKind, { label: string; attachment: string; tagger: ChapterTaggingKind; finding: keyof ChapterTagFindings; line?: OverlayMarkLine }>> = {
   soundscape: { label: 'Soundscape', attachment: SOUNDSCAPE_CHANGE_KIND, tagger: 'Soundscape and atmosphere', finding: 'music' },
   atmosphere: { label: 'Atmosphere', attachment: ATMOSPHERE_CHANGE_KIND, tagger: 'Soundscape and atmosphere', finding: 'atmosphere' },
   cues: { label: 'Sound Cues', attachment: SOUND_CUE_KIND, tagger: 'Sound Cues', finding: 'cues' },
   speakers: { label: 'Speakers', attachment: SPEAKER_KIND, tagger: 'Speakers', finding: 'speakers' },
   holdings: { label: 'Holdings', attachment: HOLDING_CHANGE_KIND, tagger: 'Holdings', finding: 'holdings' },
   appearances: { label: 'Appearances', attachment: APPEARANCE_KIND, tagger: 'Appearances', finding: 'appearances' },
-  status: { label: 'Status', attachment: STATUS_KIND, tagger: 'Status', finding: 'statuses' },
+  // A dotted underline (SENSEI, 2026-11-04): Status reads apart from the other Story info lines.
+  status: { label: 'Status', attachment: STATUS_KIND, tagger: 'Status', finding: 'statuses', line: 'dotted' },
   place: { label: 'Place', attachment: PLACE_KIND, tagger: 'Place', finding: 'places' },
 };
 
-export const CREATE_TAG_GROUPS: ReadonlyArray<{ id: CreateTagGroupId; label: string; kinds: readonly CreateTagKind[] }> = [
-  { id: 'media', label: 'Media', kinds: ['soundscape', 'atmosphere', 'cues'] },
-  { id: 'info', label: 'Story info', kinds: ['speakers', 'holdings', 'appearances', 'status', 'place'] },
+/**
+ * Each group is drawn its own way, so the two read apart at a glance before
+ * any color is learned (SENSEI, 2026-11-04): Media is a full highlight, what
+ * the reader will hear lit behind the words; Story info is a colored
+ * underline, quieter, the facts the Codex is built from. Colors then tell the
+ * kinds inside a group apart.
+ */
+export const CREATE_TAG_GROUPS: ReadonlyArray<{ id: CreateTagGroupId; label: string; style: OverlayMarkStyle; kinds: readonly CreateTagKind[] }> = [
+  { id: 'media', label: 'Media', style: 'fill', kinds: ['soundscape', 'atmosphere', 'cues'] },
+  { id: 'info', label: 'Story info', style: 'underline', kinds: ['speakers', 'holdings', 'appearances', 'status', 'place'] },
 ];
+
+/** How a kind's marks are drawn: its group's style. */
+export const createTagStyle = (kind: CreateTagKind): OverlayMarkStyle => CREATE_TAG_GROUPS.find(group => group.kinds.includes(kind))!.style;
+
+/**
+ * A kind's variation inside its group's style: an underline is solid unless
+ * the kind says otherwise (Status is dotted). Highlights and underlines are
+ * the parent styles; this is the customization within one.
+ */
+export const createTagLine = (kind: CreateTagKind): OverlayMarkLine => CREATE_TAG_KINDS[kind].line ?? 'solid';
 
 /** The color a kind's marks wear on the page. */
 export const createTagTone = (kind: CreateTagKind) => ATTACHMENT_COLORS[CREATE_TAG_KINDS[kind].attachment].tone;

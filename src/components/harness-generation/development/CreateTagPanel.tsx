@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from 'react';
 import { Eye, EyeOff, LoaderCircle, MoreHorizontal, Sparkles } from 'lucide-react';
 import { SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
+import { lineTone } from '@seihouse/sen/highlight-engine';
 import type { ChapterTaggingAccount } from '../shared/chapterTagging';
-import { CREATE_TAG_GROUPS, CREATE_TAG_KINDS, createTagTone, nextLit, type CreateTagGroupId, type CreateTagLit, type CreateTagRow } from './createTags';
+import { CREATE_TAG_GROUPS, CREATE_TAG_KINDS, createTagLine, createTagStyle, createTagTone, nextLit, type CreateTagGroupId, type CreateTagLit, type CreateTagRow } from './createTags';
 import { controlFeedback, pickerHeading, pickerRow, pickerSurface } from './readerPicker';
 import './reader-colors.css';
 
@@ -77,9 +78,18 @@ export function CreateTagPanel({ rows, lit, onLight, saving, editable, sealedNot
             className={`flex min-h-13 w-full min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1.5 text-center motion-safe:transition-[background-color,opacity] motion-safe:duration-200 motion-safe:ease-out sm:min-h-11 sm:flex-row sm:items-start sm:gap-2.5 sm:rounded-xl sm:px-2 sm:py-2.5 sm:text-left ${controlFeedback} ${solo
               ? 'bg-(--reader-light)/10 text-(--reader-light)' : row.found ? 'text-(--reader-text) hover:bg-(--reader-light)/5' : 'text-(--reader-text-faint) hover:bg-(--reader-light)/5'} ${faded ? 'opacity-45' : ''}`}>
             <span className="flex h-4 items-center gap-1.5 sm:mt-0.5">
-              {/* A kind with tags is a filled dot; a kind with none, a hollow ring in its color. */}
-              <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full"
-                style={row.found ? { background: createTagTone(kind) } : { boxShadow: `inset 0 0 0 1.5px ${createTagTone(kind)}`, opacity: 0.5 }} />
+              {/* The swatch is drawn the way the page draws the kind: a dot for a highlight, a short line for an underline.
+                  A kind with tags is solid; a kind with none, hollow and faint. */}
+              {createTagStyle(kind) === 'underline'
+                ? createTagLine(kind) === 'dotted'
+                  // A dotted line is three dots, solid with tags and faint without.
+                  ? <span aria-hidden="true" data-swatch="underline-dotted" className="flex w-3.5 shrink-0 justify-between" style={row.found ? undefined : { opacity: 0.5 }}>
+                    {[0, 1, 2].map(dot => <span key={dot} className="h-[3px] w-[3px] rounded-full" style={{ background: lineTone(createTagTone(kind)) }} />)}
+                  </span>
+                  : <span aria-hidden="true" data-swatch="underline" className="h-[3px] w-3.5 shrink-0 rounded-full"
+                    style={row.found ? { background: lineTone(createTagTone(kind)) } : { boxShadow: `inset 0 0 0 1px ${lineTone(createTagTone(kind))}`, opacity: 0.5 }} />
+                : <span aria-hidden="true" data-swatch="fill" className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={row.found ? { background: createTagTone(kind) } : { boxShadow: `inset 0 0 0 1.5px ${createTagTone(kind)}`, opacity: 0.5 }} />}
               {row.count > 0 && <span className="text-[11px] tabular-nums text-(--reader-text-dim) sm:hidden">{row.count.toLocaleString()}</span>}
             </span>
             <span className="block w-full min-w-0">

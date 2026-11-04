@@ -1,5 +1,11 @@
 # NovelExpanded app
 
+- **2026-11-04** — **Each tag group its own style** (SENSEI). In Create mode, Media tags
+  (Soundscape, Atmosphere, Sound Cues) keep the full highlight and Story info tags (Speakers,
+  Holdings, Appearances, Status, Place) are drawn as a colored underline, so the two groups read
+  apart at a glance. The legend shows a dot for a highlight and a short line for an underline.
+  Status is a dotted underline, the first variation inside a style (SENSEI: three parent styles,
+  customizable within). Create mode only for now; the Reader does not light tags yet.
 - **2026-11-04** — **Tag media again** (SENSEI). In Create mode, tapping Soundscape, Atmosphere or
   Sound Cues offers "Tag media again ⚡1" under the legend (and in the ⋯ menu): the tagger reads
   the chapter's sound alone, and only its cues, soundscape and atmosphere are replaced. Speakers,

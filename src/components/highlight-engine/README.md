@@ -79,7 +79,15 @@ The optional `overlay` draws a host's map-mode view with the prose, never on
 top of a letter. `marks` are translucent tints behind exact words; a mark with
 `attention` keeps its tint and gains a dashed underline in
 `--sen-overlay-attention` (amber by default) for a range that needs a decision.
-The host chooses each tint's color. `pins` are
+A mark's `style` is how it is drawn: `fill` (the default) is the tint behind the
+words; `underline` is a 2px line in the mark's color (at full strength,
+`lineTone`) on the bottom of the words' glyph box, so descenders cross it like
+a printed underline. An underline's `line` is `solid` (the default) or `dotted`,
+a row of round dots like an e-reader's linked word: a variation inside the
+underline family. A host gives two families of marks different styles so
+they read apart before any color is learned; an underline that needs a decision
+gains the dashed amber line just below it. Colored words, a third style, is
+planned. The host chooses each tint's color. `pins` are
 quiet numbers in the white space: `margin` sits in the start margin level with
 a line's baseline (paragraph numbers, e.g. ¶2); `raised` sits in the line
 spacing just above a character, like a verse number (sentence numbers). They
@@ -328,6 +336,8 @@ package peers. Keep Workshop hosting, dummy prose and
 browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
+
+- **2026-11-04:** Overlay marks gained a `style`: `fill` (the tint, unchanged) or `underline`, a colored line under the words. Create mode draws Media as highlights and Story info as underlines (SENSEI: each group gets its own style; the three planned styles are full highlight, colored words and colored underline). The Reader does not show tags yet, so the styles live in Create mode for now. Underlines gained a `line`, `solid` or `dotted` (SENSEI: three parent styles, with customization inside each; dotted first, for Status).
 
 - **2026-10-28:** With the owner's approval, removed the placeholder `reference/README.md` and the Original Reference note pane (this primitive never had a production copy). The workspace now shows Development alone.
 

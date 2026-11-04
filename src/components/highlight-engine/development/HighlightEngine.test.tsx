@@ -472,6 +472,8 @@ describe('Highlight Engine', () => {
       marks: [
         { id: 'cue', selection: { blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 }, tone: 'rgba(59, 130, 246, .38)', attention: true },
         { id: 'stale', selection: { blockId: 'a', selectedText: 'missing', startOffset: 0, endOffset: 7 }, tone: 'red' },
+        { id: 'fact', selection: { blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 }, tone: 'rgba(45, 212, 191, .4)', style: 'underline' as const },
+        { id: 'dots', selection: { blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 }, tone: 'rgba(251, 146, 60, .45)', style: 'underline' as const, line: 'dotted' as const },
       ],
       pins: [
         { id: 'p1', blockId: 'a', offset: 0, label: '¶1', placement: 'margin' as const },
@@ -486,9 +488,20 @@ describe('Highlight Engine', () => {
     const layers = extra.querySelectorAll('.sen-text-highlight-overlay');
     expect(layers).toHaveLength(2);
     layers.forEach(layer => expect(layer.getAttribute('aria-hidden')).toBe('true'));
-    expect(extra.querySelectorAll('.sen-overlay-mark')).toHaveLength(1);
+    expect(extra.querySelectorAll('.sen-overlay-mark')).toHaveLength(3);
     // A range that needs a decision keeps its tint and is marked for its dashed underline.
-    expect(extra.querySelector('.sen-overlay-mark')!.hasAttribute('data-attention')).toBe(true);
+    expect(extra.querySelector('[data-overlay-id="cue"]')!.hasAttribute('data-attention')).toBe(true);
+    // An underline mark is a 2px line on the bottom of the glyph box (top 200, 22px tall), in its tone at full strength.
+    const line = extra.querySelector<HTMLElement>('[data-overlay-id="fact"]')!;
+    expect(line.dataset.style).toBe('underline');
+    expect([parseFloat(line.style.top), parseFloat(line.style.height)]).toEqual([200 + 22 - 2, 2]);
+    expect(line.style.background).toContain('0.95');
+    expect(extra.querySelector<HTMLElement>('[data-overlay-id="cue"]')!.dataset.style).toBeUndefined();
+    // A dotted underline is the same line drawn as a row of round dots.
+    const dots = extra.querySelector<HTMLElement>('[data-overlay-id="dots"]')!;
+    expect([dots.dataset.style, dots.dataset.line, parseFloat(dots.style.height)]).toEqual(['underline', 'dotted', 2]);
+    expect(dots.style.background).toContain('radial-gradient');
+    expect(line.dataset.line).toBeUndefined();
     const pins = Array.from(extra.querySelectorAll<HTMLElement>('.sen-overlay-pin'));
     expect(pins.map(pin => [pin.textContent, pin.dataset.placement])).toEqual([['¶1', 'margin'], ['1', 'raised'], ['12', 'raised']]);
     // The stubbed glyph box starts at top 200, left 100 and is 22px tall.

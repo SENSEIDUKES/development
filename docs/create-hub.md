@@ -341,6 +341,13 @@ chapters first, until the tagging is right):
   at the foot; phone first. Sealing is unchanged (SENSEI: "I don't really need
   you to work on the sealing shit right now"): the newest chapter can be
   changed, a sealed one shows its tags.
+- **2026-11-04 (each group its own style):** SENSEI agreed each tag group
+  gets its own style. Create mode now draws Media as a full highlight and
+  Story info as a colored underline, and the legend's swatches show which
+  (a dot, a short line). Only in Create mode for now: the Reader does not light
+  tags yet. Of the three planned styles, colored words comes later. Inside a
+  style, a kind can vary it: Status is a dotted underline (SENSEI's example: an
+  e-reader's dotted linked word, but colored).
 - **2026-11-04 (Tag media again):** SENSEI: a re-tag should be able to read
   one group on its own instead of everything. First the media: Create mode's
   Tag media again teaches the tagger only the sound tags and replaces only the

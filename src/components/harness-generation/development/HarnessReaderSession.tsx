@@ -162,7 +162,7 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
   readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
-  creator = true, openAtChapter,
+  creator = true, openAtChapter, openInCreate = false, onTagChapter,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
@@ -241,11 +241,20 @@ export function HarnessReaderSession({
    * with or without durable storage.
    */
   openAtChapter?: number;
+  /** Opens in Create mode, the chapter's tags lit (a chapter opened from the world's Chapters in Create). */
+  openInCreate?: boolean;
+  /**
+   * Tags a chapter again with the host's tagger, from Create mode. Absent when
+   * the host cannot tag here; Create mode then shows the tags without Tag this chapter.
+   */
+  onTagChapter?: (chapterId: string) => Promise<void>;
 }) {
   const story = state.stories.find(entry => entry.id === storyId);
   const chapters = useMemo(() => state.chapters
     .filter(chapter => chapter.storyId === storyId)
     .sort((left, right) => left.chapterNumber - right.chapterNumber), [state.chapters, storyId]);
+  // The story's Codex entries, so Create mode's tags read by the names the Codex knows.
+  const entries = useMemo(() => state.codexEntries.filter(entry => entry.storyId === storyId), [state.codexEntries, storyId]);
   const [readerState, setReaderState] = useState<ReaderStoryState>();
   const [selectedChapter, setSelectedChapter] = useState(1);
   useReaderDocumentScrollbar();
@@ -314,8 +323,8 @@ export function HarnessReaderSession({
   }, [readerStateRepository]);
 
   const openChapter = useCallback((chapterNumber: number) => {
+    // Create mode stays on from chapter to chapter, so an author goes through the chapters' tags one after another.
     setSelectedChapter(chapterNumber);
-    setCreating(false);
     topRef.current?.scrollIntoView?.({ block: 'start' });
     const current = readerStateRef.current;
     if (!current) return;
@@ -345,7 +354,7 @@ export function HarnessReaderSession({
   };
   const pageOpen = layer?.kind === 'page';
   // Create mode: the reader authors the chapter on screen in place. It closes when another chapter opens.
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(openInCreate && creator);
   // Create mode's page, for Sound Cues asked for in words: they read and join it, never a separate save.
   const authoringHandle = useRef<ChapterAuthoringHandle>(null);
   useLayoutEffect(() => {
@@ -532,7 +541,13 @@ export function HarnessReaderSession({
     && (writer.writing || !chapterRewriteGap(state, storyId)));
   // Only the newest chapter, before anything is built on it, can be changed: moving on seals it.
   const authorable = Boolean(creator && chapter && !later && latestStoryChapter(state, storyId)?.id === chapter.id && !writer.writing && !chapterRewriteGap(state, storyId));
-  const authoring = creating && authorable && chapter;
+  // Create mode opens on any chapter: the newest, before anything is built on it, can be changed;
+  // any other shows its tags and nothing changes.
+  const authoring = creating && creator && chapter;
+  const sealedNote = later ? 'The story has moved on from this chapter, so it is sealed: its tags show here, and nothing on it changes.'
+    : writer.writing ? 'A chapter is being written. Changes wait until it is done.'
+    : 'This chapter cannot be changed right now.';
+  const tagGap = chapter && onTagChapter ? controller.retagChapterGap(storyId, chapter.id) : undefined;
   const rewriteChapter = async (note?: string) => {
     const rewritten = await writer.rewrite(note);
     if (rewritten) openChapter(rewritten);
@@ -555,7 +570,10 @@ export function HarnessReaderSession({
       {storageError && <p role="alert" className="mt-3 text-sm text-(--reader-warning-bright)">{storageError}</p>}
 
       {authoring
-        ? <ChapterAuthoring key={chapter.id} handle={authoringHandle} chapter={chapter} controller={controller} locale={story.originalLanguage} text={text} articleRef={articleRef} />
+        // Keyed by its tagging too, so a chapter tagged again opens with its new tags.
+        ? <ChapterAuthoring key={`${chapter.id}:${chapter.tagging?.at ?? ''}:${authorable}`} handle={authorable ? authoringHandle : undefined} chapter={chapter} controller={controller}
+            locale={story.originalLanguage} text={text} articleRef={articleRef} editable={authorable} sealedNote={authorable ? undefined : sealedNote}
+            entries={entries} tagging={onTagChapter && { gap: tagGap, run: () => onTagChapter(chapter.id) }} />
         : chapter
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
             highlight={highlight} reading={reading} text={text} />
@@ -582,10 +600,7 @@ export function HarnessReaderSession({
         note={mixer && <ReaderAudioNote mixer={mixer} />}
         onOpenCodex={openCodex} fateOnly={!creator} fate={{ run: () => openFate(fateCalls), disabled: fateLocked, attention: fateCalls }}
         chapterSelection={chapter ? { current: chapter.chapterNumber, entries: chapters.map(entry => ({ number: entry.chapterNumber, title: entry.title })), onSelect: openChapter } : undefined}
-        create={creator && chapter ? {
-          active: Boolean(authoring), onToggle: () => setCreating(!authoring),
-          unavailable: authorable ? undefined : later ? 'Only the newest chapter can be changed' : 'This chapter is sealed: the story has moved on from it',
-        } : undefined}
+        create={creator && chapter ? { active: Boolean(authoring), onToggle: () => setCreating(!authoring) } : undefined}
         previous={previous ? { label: 'Previous Chapter', run: () => openChapter(previous.chapterNumber) } : undefined}
         next={later ? { label: 'Next Chapter', run: () => openChapter(later.chapterNumber) }
           : continueAfterLatest ? {

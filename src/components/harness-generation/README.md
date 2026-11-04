@@ -37,6 +37,19 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-11-04 (Create mode is the tagger's page):** SENSEI: the Chapter
+  Tagger's page and Create mode's overlays are two sides of one coin. Create
+  mode (`ChapterAuthoring`) now opens with every tag lit, through
+  `CreateTagPanel`: Media (Soundscape, Atmosphere, Sound Cues) and Story info
+  (Speakers, Holdings, Appearances, Status) apart, a kind lit alone by a tap
+  (with the P2 S6 numbering), All and Off, Tag this chapter (again)
+  (`onTagChapter`) and the tagger's record. Each kind says what the page holds
+  as it stands (`chapterTagFindings`, moved with `describeChapterTagging` into
+  `shared/chapterTagging.ts` from the Library) or, where nothing, what the
+  record says. It opens on any chapter (`openInCreate` opens the Reader in it)
+  and stays on from chapter to chapter; only the newest is editable, as
+  before, and a sealed one is shown with its tags. The Workshop's Highlight
+  Engine lab keeps its Overlays switch.
 - **2026-11-02 (narration-timed Sound Cues):** Listen is the cinematic scroll:
   the existing sentence light and follow-along remain, and every valid placed
   cue starts when the voice begins its pinned words. The script cuts at those

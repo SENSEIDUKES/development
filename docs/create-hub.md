@@ -108,8 +108,9 @@ and phase B closes on SENSEI's run in it."
 - **Create is the hub.** The manuscript way in, the author's world view (its
   own section below) with its chapters and their tagging, and the Toolkit are
   one page family, not a developer surface.
-- **Tagging is an author's tool, seen only in the author's world view.** Never
-  on World Info, the Reader or Story Settings. (SENSEI, 2026-10-30: "99% of all
+- **Tagging is an author's tool, seen only by the author.** Never on World
+  Info, a reader's Reader or Story Settings. Since 2026-11-04 a chapter's tags
+  are seen in the creator's Reader, in Create mode (below). (SENSEI, 2026-10-30: "99% of all
   the users could give less of a fuck about this... nobody wants to see that
   on the regular.")
 - **One tagging path.** Nothing is forked for imported novels. A generated
@@ -182,8 +183,8 @@ Not built yet. It has no name of its own: it is what a world opens to in Create.
     **Tag** reads the checked chapters in order, one call each, with its cost
     shown before it runs and Stop while it runs; each row changes as its
     chapter lands. A footer line counts them ("42 chapters · 30 tagged · 12 not
-    yet"). Opening a chapter shows it with its tags lit and the findings per
-    kind (the view #487 built, moved here and nowhere else).
+    yet"). Opening a chapter opens it in the creator's Reader in Create mode,
+    its tags lit (SENSEI, 2026-11-04; the History says why).
   - **Codex:** where the world's pictures and every card live, the author's
     Codex that shows every card ahead of the reader (phase E). Marked as coming
     until that is built.
@@ -327,3 +328,14 @@ chapters first, until the tagging is right):
   Novel | Sequential Art switcher, Blueprint | Chapters | Codex | Assets),
   authors only. Phase B is rewritten to build it; #487's World Info additions
   come off in the same change. The engine work from #487 stands.
+- **2026-11-04 (Create mode is the tagger's page):** SENSEI: the chapter page
+  had "quietly became my favorite page in the entire app", the first place to
+  see the guts of a novel without code, but it was drawn apart from the Reader,
+  so it was not one-to-one with what a reader gets, and Create mode in the
+  Reader did the same job with its own overlays. They are one now: a chapter
+  opens from Chapters in the creator's Reader, in Create mode, every tag lit in
+  the Reader's own look, in two groups (Media; Story info), each kind lit alone
+  by a tap, Off for the reader's page, Tag this chapter again and the record
+  at the foot; phone first. Sealing is unchanged (SENSEI: "I don't really need
+  you to work on the sealing shit right now"): the newest chapter can be
+  changed, a sealed one shows its tags.

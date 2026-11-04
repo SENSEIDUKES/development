@@ -1131,25 +1131,23 @@ describe('NovelExpanded: publishing, and the creator\'s and the reader\'s Reader
     expect(address()).toBe('/app/');
   });
 
-  it('a chapter\'s Read it opens that chapter in the creator\'s Reader, whose Back returns to the chapter', async () => {
+  it('a chapter from the world\'s Chapters opens in the creator\'s Reader in Create mode, whose Back returns to Chapters', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository, { chapters: 2, draft: true });
     await render(services, `/app/?page=create&world=${created.id}`);
     await click(document.querySelector('[data-testid="author-world"] button[aria-label="Open Chapter 2"]'), 'Open Chapter 2', 20);
-    expect(address()).toBe(`/app/?page=create&world=${created.id}&chapter=2`);
-    expect(document.querySelector('[data-testid="author-chapter"]')?.getAttribute('data-chapter-number')).toBe('2');
-
-    await click(document.querySelector('[data-testid="author-chapter-read"]'), 'Read it', 20);
-    expect(address()).toBe(writeAddress(created.id, 2));
+    expect(address()).toBe(`${writeAddress(created.id, 2)}&create=1`);
     expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
-    // It opens at that chapter, not where the reader left off.
-    expect(document.querySelector('article[data-chapter-number]')?.getAttribute('data-chapter-number')).toBe('2');
+    // It opens at that chapter, not where the reader left off, in Create mode with every tag lit.
+    const authoring = document.querySelector('[data-testid="chapter-authoring"]');
+    expect(authoring?.getAttribute('data-chapter-number')).toBe('2');
+    expect(document.querySelector('[data-testid="create-mode-panel"]')?.getAttribute('data-lit')).toBe('all');
     expect(document.querySelector('[data-testid="reader-actions-button"]')?.getAttribute('aria-label')).toBe('Fate and Create');
 
     await click(buttonByText('Back'), 'Back', 20);
-    expect(address()).toBe(`/app/?page=create&world=${created.id}&chapter=2`);
-    expect(document.querySelector('[data-testid="author-chapter"]')?.getAttribute('data-chapter-number')).toBe('2');
+    expect(address()).toBe(`/app/?page=create&world=${created.id}`);
+    expect(document.querySelector('[data-testid="author-world-chapter"][data-chapter-number="2"]')).toBeTruthy();
     expect(story.generate).not.toHaveBeenCalled();
   });
 });

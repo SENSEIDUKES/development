@@ -274,16 +274,13 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   if (route.page === 'world') return withFamiliar(missingWorld ? null : <AppShell route={{ page: 'create' }} navigate={navigate} stories={worlds}
     readerProfile={profile} mainLabel="Create">
     <div className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6">
-      <AuthorWorldView stories={stories} worlds={creatorWorlds} storyId={route.storyId} chapterNumber={route.chapterNumber}
+      <AuthorWorldView stories={stories} worlds={creatorWorlds} storyId={route.storyId}
         onChooseWorld={id => navigate({ page: 'world', storyId: id }, { replace: true })}
-        onOpenChapter={chapterNumber => navigate({ page: 'world', storyId: route.storyId, chapterNumber })}
-        onCloseChapter={() => navigate({ page: 'world', storyId: route.storyId })}
+        // A chapter opens in the creator's Reader, in Create mode with its tags lit: what a reader will get, with every tag on it.
+        onOpenChapter={chapterNumber => navigate({ page: 'write', storyId: route.storyId, chapterNumber, create: true })}
         onBack={() => navigate({ page: 'create' })}
-        // Read: the world in its creator's Reader, at the chapter when Read it was tapped on one.
-        // Read: the book's World Info first (its cover, Start or Continue); a chapter's Read it opens that chapter in the creator's Reader.
-        onRead={chapterNumber => navigate(chapterNumber
-          ? { page: 'write', storyId: route.storyId, chapterNumber }
-          : { page: 'story', storyId: route.storyId, inCreate: true })} />
+        // Read: the book's World Info first (its cover, Start or Continue).
+        onRead={() => navigate({ page: 'story', storyId: route.storyId, inCreate: true })} />
     </div>
   </AppShell>);
 
@@ -322,7 +319,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     page={route.page === 'read' || route.page === 'write' ? 'read' : route.page === 'blueprint' ? 'blueprint' : 'info'}
     // Fate and Create together only in the creator's Reader, opened from Create; anyone else's Reader has Fate alone.
     creator={route.page === 'write'} beginOnOpen={route.page === 'write'}
-    openAtChapter={route.page === 'write' ? route.chapterNumber : undefined} readerStateRepository={services.readerState}
+    openAtChapter={route.page === 'write' ? route.chapterNumber : undefined} openInCreate={route.page === 'write' && route.create} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
     writingAgent={AGENTS.VERSA} covers={covers} codexPictures={codexPictures}
     // World Info sits in the Library Shell; the Reader never does.
@@ -331,9 +328,9 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     onCloseBlueprint={() => navigate({ page: 'story', storyId })}
     // World Info's Start or Continue: the creator's World Info (or a draft's) opens the creator's Reader; a reader's, the reader's.
     onOpenReader={() => navigate({ page: creatorInfo || draft ? 'write' : 'read', storyId })}
-    // Back from the creator's Reader: to the chapter in Create it was opened from, otherwise to the creator's World Info.
+    // Back from the creator's Reader: to the world's Chapters a chapter was opened from, otherwise to the creator's World Info.
     onCloseReader={() => navigate(route.page === 'write'
-      ? route.chapterNumber ? { page: 'world', storyId, chapterNumber: route.chapterNumber } : { page: 'story', storyId, inCreate: true }
+      ? route.create ? { page: 'world', storyId } : { page: 'story', storyId, inCreate: true }
       : { page: 'story', storyId })}
     // World Info's Back: the creator's returns to the book in Create; a reader's goes Home.
     backLabel={creatorInfo ? 'Back to the book in Create' : 'Back to your stories'}

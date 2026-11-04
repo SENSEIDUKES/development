@@ -70,6 +70,8 @@ export interface StoryPagesProps {
   creator?: boolean;
   /** The Reader opens at this chapter instead of the reader's place (a chapter opened from Create). */
   openAtChapter?: number;
+  /** The creator's Reader opens in Create mode, the chapter's tags lit (a chapter opened from the world's Chapters). */
+  openInCreate?: boolean;
   /**
    * The Reader begins a story with no chapters as it opens, as World Info's
    * Start Story does: the creator's Reader, opened as a story is made.
@@ -87,7 +89,7 @@ const keepVeilOpen = () => undefined;
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint, creator = true, openAtChapter, beginOnOpen = false }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint, creator = true, openAtChapter, openInCreate = false, beginOnOpen = false }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   /** Set by World Info's chapter map: the Reader opens at that chapter, which becomes the reader's place. */
   const [chosenChapter, setChosenChapter] = useState<number>();
@@ -134,6 +136,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     {writerAlert}
     <HarnessReaderSession state={state} storyId={storyId} controller={controller}
       readerStateRepository={readerStateRepository} startOnOpen={startOnOpen} creator={creator} openAtChapter={chosenChapter ?? openAtChapter}
+      openInCreate={openInCreate && chosenChapter === undefined}
       codexPictures={codexPictures && {
         pictureOf: key => codexPictures.pictureOf(storyId, key),
         manifest: card => codexPictures.manifest(storyId, card.key, codexPictureRequest(state, storyId, card)),
@@ -142,6 +145,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       onGenerateNextChapter={writes ? () => stories.generateNextChapter(storyId) : undefined}
       onRewriteChapter={writes ? note => stories.rewriteLatestChapter(storyId, note) : undefined}
       onPlanArc={writes ? () => stories.planArc(storyId) : undefined}
+      onTagChapter={writes ? chapterId => controller.retagChapter(storyId, chapterId) : undefined}
       renderWriting={writingAgent ? writing => <GenerationOverlay agent={writingAgent} isGenerating={writing.active}
         completed={state.chapters.some(chapter => chapter.storyId === storyId && chapter.chapterNumber === writing.chapterNumber)}
         generationPhase="chapter" generatingChapterNum={writing.chapterNumber} progress={null}

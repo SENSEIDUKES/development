@@ -17,11 +17,11 @@ const isToolkitFilter = (value: string | null): value is CreatorToolkitFilter =>
  *   `&seed=new` opens Story Seed (and its World Blueprint) for a new story,
  *   `&seed=<id>` a saved Story Seed (a Sparks spark begun from Home)
  * - A world as its author sees it (Blueprint, Chapters, Codex, Assets), opened
- *   from Your worlds in Create: `/app/?page=create&world=<id>`, with
- *   `&chapter=<n>` for a chapter opened from its Chapters
+ *   from Your worlds in Create: `/app/?page=create&world=<id>`
  * - The creator's Reader, opened from Create (Fate and Create together; the
  *   next chapter is written here): `/app/?page=create&world=<id>&read=1`, with
- *   `&chapter=<n>` to open at a chapter
+ *   `&chapter=<n>` to open at a chapter, and `&create=1` for a chapter opened
+ *   from the world's Chapters, in Create mode with its tags lit
  * - Story View (World Info): `/app/?story=<id>`; opened from Create, its
  *   creator's: `/app/?page=create&world=<id>&info=1`
  * - Reader: `/app/?story=<id>&read=1`, a reader's Reader: Fate alone
@@ -34,10 +34,13 @@ export type NovelExpandedRoute =
   | { page: 'home' }
   | { page: 'discover'; section?: 'creators' | 'codex'; medium?: DiscoverMedium; lore?: string; query?: string; category?: string }
   | { page: 'create'; seedId?: string; newSeed?: boolean; plugins?: CreatorToolkitFilter; pluginPack?: string }
-  /** A world as its author sees it in Create: its Blueprint, Chapters, Codex and Assets; a chapter opened from Chapters. */
-  | { page: 'world'; storyId: string; chapterNumber?: number }
-  /** The creator's Reader, opened from Create: Fate and Create together, at a chapter when one is named. */
-  | { page: 'write'; storyId: string; chapterNumber?: number }
+  /** A world as its author sees it in Create: its Blueprint, Chapters, Codex, Assets and Info. */
+  | { page: 'world'; storyId: string }
+  /**
+   * The creator's Reader, opened from Create: Fate and Create together, at a
+   * chapter when one is named; in Create mode (`create`) when the chapter was opened from Chapters.
+   */
+  | { page: 'write'; storyId: string; chapterNumber?: number; create?: boolean }
   /**
    * A story's World Info. Opened from Create (`inCreate`), it is its creator's:
    * Start and Continue open the creator's Reader and Back returns to the book in Create.
@@ -67,8 +70,9 @@ export function parseRoute(search: string): NovelExpandedRoute {
     if (worldId) {
       const chapterNumber = Number(query.get('chapter'));
       if (query.get('info') === '1') return { page: 'story', storyId: worldId, inCreate: true };
-      const page = query.get('read') === '1' ? 'write' : 'world';
-      return Number.isInteger(chapterNumber) && chapterNumber > 0 ? { page, storyId: worldId, chapterNumber } : { page, storyId: worldId };
+      if (query.get('read') !== '1') return { page: 'world', storyId: worldId };
+      const create = query.get('create') === '1' ? { create: true } : {};
+      return Number.isInteger(chapterNumber) && chapterNumber > 0 ? { page: 'write', storyId: worldId, chapterNumber, ...create } : { page: 'write', storyId: worldId, ...create };
     }
     const seedId = query.get('seed')?.trim();
     if (seedId === 'new') return { page: 'create', newSeed: true };
@@ -95,8 +99,8 @@ export function routeSearch(route: NovelExpandedRoute): string {
       : route.newSeed ? '?page=create&seed=new'
       : route.plugins ? `?${new URLSearchParams({ page: 'create', plugins: route.plugins, ...(route.pluginPack ? { pack: route.pluginPack } : {}) })}`
       : '?page=create';
-    case 'write': return `?${new URLSearchParams({ page: 'create', world: route.storyId, read: '1', ...(route.chapterNumber ? { chapter: String(route.chapterNumber) } : {}) })}`;
-    case 'world': return `?${new URLSearchParams({ page: 'create', world: route.storyId, ...(route.chapterNumber ? { chapter: String(route.chapterNumber) } : {}) })}`;
+    case 'write': return `?${new URLSearchParams({ page: 'create', world: route.storyId, read: '1', ...(route.chapterNumber ? { chapter: String(route.chapterNumber) } : {}), ...(route.create ? { create: '1' } : {}) })}`;
+    case 'world': return `?${new URLSearchParams({ page: 'create', world: route.storyId })}`;
     case 'story': return route.inCreate ? `?${new URLSearchParams({ page: 'create', world: route.storyId, info: '1' })}` : `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;
     case 'blueprint': return `?story=${encodeURIComponent(route.storyId)}&blueprint=1`;

@@ -245,3 +245,12 @@ export { findStory, findFoundationRevision, findActiveFoundationRevision, storyW
 export * from '../../components/harness-generation/shared/chapterSignals';
 export * from '../../components/harness-generation/shared/chapterBody';
 export { chapterTitleText } from '../../narrative/chapterTitle';
+export {
+  chapterTagFindings,
+  describeChapterTagging,
+  storyTaggingSummary,
+  type ChapterTagFindings,
+  type ChapterTaggingAccount,
+  type ChapterTaggingKind,
+  type ChapterTaggingKindLine,
+} from '../../components/harness-generation/shared/chapterTagging';

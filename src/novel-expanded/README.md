@@ -1,5 +1,18 @@
 # NovelExpanded app
 
+- **2026-11-04** — **Create mode is the tagger's page** (SENSEI). The Chapter Tagger's page and
+  the Reader's Create mode are one: a chapter tapped in the world view's Chapters opens in the
+  creator's Reader (`?page=create&world=<id>&read=1&chapter=<n>&create=1`) in Create mode,
+  in the Reader's own look, so what the author sees is what a reader gets. Every tag is lit as
+  it opens, in two groups, **Media** (Soundscape, Atmosphere, Sound Cues) and **Story info**
+  (Speakers, Holdings, Appearances, Status); tapping a kind lights it alone with the page's
+  numbering, tapping it again lights them all, and **Off** is the page as a reader sees it. On a
+  phone the kinds are a fixed palette of tiles above the chapter; on a wider page each says what
+  it holds. Tag this chapter (again) and the tagger's record sit at the panel's foot. Create
+  mode now opens on any chapter and stays on from chapter to chapter: the newest can be
+  changed as before, a sealed one shows its tags and nothing changes (sealing itself is
+  unchanged). The world view's separate chapter page is gone; Back from the Reader returns to
+  Chapters.
 - **2026-11-04** — **World Info first, and Info in the author's world view** (SENSEI). Create Story,
   the world view's **Read** and the Creator Space's Studio now open the book's **World Info**
   (cover, Start or Continue, Settings, Export) before the Reader. World Info opened from Create

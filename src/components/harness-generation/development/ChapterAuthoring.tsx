@@ -6,10 +6,10 @@ import {
 } from '@seihouse/sen/audio';
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import {
-  ManuscriptOverlaySwitch, OVERLAY_KINDS, OVERLAY_SOUNDTRACK_KIND, HighlightEngine, SOUNDTRACK_KIND_WORDS, WRITER_OPENING,
+  HighlightEngine, SOUNDTRACK_KIND_WORDS, WRITER_OPENING,
   applyPassageEdit, attachmentMarks, createManuscript, openingSoundMark, createManuscriptId, flaggedAttachments, placedSoundCues, removeAttachment, resolveAnchor,
   audioActions, soundtrackOptionLabel, structurePins,
-  type ManuscriptAttachment, type ManuscriptOverlayMode, type ManuscriptState, type PassageEdit, type SoundtrackChoices, type TextHighlightBlock,
+  type ManuscriptAttachment, type ManuscriptState, type PassageEdit, type SoundtrackChoices, type TextHighlightBlock,
 } from '@seihouse/sen/highlight-engine';
 import { storySoundtrack, type ResolvedReaderText } from '@seihouse/sen/reader-runtime';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
@@ -18,6 +18,10 @@ import { HOLDING_CHANGE_KIND, type HoldingChangeAttachment } from '../../../narr
 import { APPEARANCE_KIND, type AppearanceAttachment } from '../../../narrative/appearances';
 import { STATUS_KIND, type StatusAttachment } from '../../../narrative/statuses';
 import { harnessParagraphBlockId } from '../shared/chapterBody';
+import { chapterTagFindings, describeChapterTagging } from '../shared/chapterTagging';
+import type { CodexEntry } from '../../../narrative/holdings';
+import { CreateTagPanel } from './CreateTagPanel';
+import { CREATE_TAG_KINDS, createTagRows, litKinds, type CreateTagKind, type CreateTagLit } from './createTags';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { ReaderChapter } from './readerChapterBody';
 import './reader-colors.css';
@@ -35,6 +39,9 @@ export interface ChapterAuthoringHandle {
   /** Saved with the page; rejects when its words now hold a cue, the chapter is full, or the save fails. */
   addSoundCue(cue: SoundCueAttachment): Promise<void>;
 }
+
+/** A sealed chapter is shown, never changed. */
+const keepProse = () => undefined;
 
 /** A chapter is longer than the lab's 500-word page; Create mode never limits its length. */
 const NO_WORD_LIMIT = Number.POSITIVE_INFINITY;
@@ -85,32 +92,48 @@ const KIND_NAMES: Record<string, [string, string]> = {
 };
 
 /**
- * Create mode: the reader authors the chapter in place, on the Highlight
- * Engine with its overlays. Highlight words to change them (Edit), to place a
- * Sound Cue, or to change the soundscape or atmosphere there (Media → Audio);
- * in the chapter's first sentence the soundscape or atmosphere is its opening,
- * locked at the start. The Overlays switch shows one kind at a time (Sound
- * Cues, Soundscapes or Atmospheres) and the page's numbering (P2 S6). Every change is saved as it is made, so there is no
+ * Create mode: the creator's chapter with every tag lit, in the Reader's own
+ * look, so what they see is what a reader gets (SENSEI, 2026-11-04: the
+ * Chapter Tagger's page and Create mode's overlays made one). The panel above
+ * the chapter holds every tag in two groups, Media and Story info; a kind
+ * lights alone with the page's numbering (P2 S6), Off shows the page as a
+ * reader sees it, and Tag this chapter (again) reads it again.
+ *
+ * On a chapter that can be changed (`editable`), highlight words to change
+ * them (Edit), to place a Sound Cue, or to change the soundscape or
+ * atmosphere there (Media → Audio); in the chapter's first sentence the
+ * soundscape or atmosphere is its opening, locked at the start. On a sealed
+ * chapter the tags show and nothing changes. Every change is saved as it is made, so there is no
  * seal step: moving on to the next chapter seals this one. An effect whose
  * words a change replaced (a cue, a speaker, a holding change or an appearance) has nothing
  * left to sit on, so it waits in "Needs a new spot" until the reader places it
  * again or removes it, or the chapter is sealed. A changed chapter is marked
  * as changed, so it is read again at its seal.
  */
-export function ChapterAuthoring({ chapter, controller, locale, text, articleRef, handle }: {
+export function ChapterAuthoring({ chapter, controller, locale, text, articleRef, handle, editable = true, sealedNote, entries, tagging }: {
   chapter: ReaderChapter;
   controller: HarnessGenerationController;
   locale: string;
   text: ResolvedReaderText;
   articleRef?: Ref<HTMLElement>;
   handle?: Ref<ChapterAuthoringHandle>;
+  /** Whether the chapter can be changed here; a sealed chapter shows its tags and nothing changes. */
+  editable?: boolean;
+  /** Why it cannot be changed, when it cannot. */
+  sealedNote?: string;
+  /** The story's Codex entries, so a tag reads by the name the Codex knows. */
+  entries?: readonly CodexEntry[];
+  /** Tag this chapter (again); absent where this Reader cannot tag. */
+  tagging?: { gap?: string; run: () => Promise<void> };
 }) {
   const [state, setState] = useState<ChapterState>(() => chapterState(chapter, locale));
   // The page as last set, for a cue added in words between renders.
   const latest = useRef(state);
   latest.current = state;
   const [opening, setOpening] = useState<ChapterOpeningSound | undefined>(chapter.openingSound);
-  const [overlayMode, setOverlayMode] = useState<ManuscriptOverlayMode>('cues');
+  const [lit, setLit] = useState<CreateTagLit>('all');
+  const [retagging, setRetagging] = useState(false);
+  const [tagProblem, setTagProblem] = useState<string>();
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState<'saved' | 'saving' | 'failed'>('saved');
   const saves = useRef<Promise<void>>(Promise.resolve());
@@ -230,14 +253,55 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   const { actions, removeActions } = audioActions({ state, update, catalog, onNotice: setNotice, soundtrack: choices });
   // The Soundscapes and Atmospheres overlays mark where the opening begins: the reader's own, or the writer's.
   const opens = { [SOUNDSCAPE_CHANGE_KIND]: Boolean(opening?.soundscape ?? chapter.scene?.music ?? chapter.scene?.soundscape), [ATMOSPHERE_CHANGE_KIND]: Boolean(opening?.atmosphere ?? chapter.scene?.atmosphere) };
-  const opensWith = OVERLAY_SOUNDTRACK_KIND[overlayMode];
-  const showsOpening = Boolean(opensWith && opens[opensWith]);
   const overlay = useMemo(() => {
-    if (overlayMode === 'off') return undefined;
-    const start = showsOpening && opensWith ? openingSoundMark(state.manuscript, opensWith) : undefined;
-    return { marks: [...start ? [start] : [], ...attachmentMarks(state, OVERLAY_KINDS[overlayMode])], pins: structurePins(state.manuscript) };
-  }, [overlayMode, state, opensWith, showsOpening]);
+    if (lit === 'off') return undefined;
+    const kinds = litKinds(lit);
+    const starts = ([['soundscape', SOUNDSCAPE_CHANGE_KIND], ['atmosphere', ATMOSPHERE_CHANGE_KIND]] as const)
+      .flatMap(([kind, change]) => kinds.includes(kind) && opens[change] ? [openingSoundMark(state.manuscript, change)].filter(mark => mark !== undefined) : []);
+    // One kind alone shows the page's numbering, the way the model addresses it.
+    return { marks: [...starts, ...attachmentMarks(state, kinds.map(kind => CREATE_TAG_KINDS[kind].attachment))], ...(kinds.length === 1 ? { pins: structurePins(state.manuscript) } : {}) };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- opens is read from the chapter and its opening, both deps through state and opening
+  }, [lit, state, opening]);
   const cues = useMemo(() => placedSoundCues(state), [state]);
+  // Every tag on the page as it stands (edits included), each kind counted and said.
+  const account = useMemo(() => describeChapterTagging(chapter, { entries, locale }), [chapter, entries, locale]);
+  const rows = useMemo(() => {
+    const on = (kind: string) => state.attachments.filter(attachment => attachment.kind === kind && placed(state)(attachment));
+    const live = {
+      ...chapter, soundCues: on(SOUND_CUE_KIND) as SoundCueAttachment[], speakers: on(SPEAKER_KIND) as SpeakerAttachment[],
+      holdingChanges: on(HOLDING_CHANGE_KIND) as HoldingChangeAttachment[], appearances: on(APPEARANCE_KIND) as AppearanceAttachment[],
+      statuses: chapter.statuses ? on(STATUS_KIND) as StatusAttachment[] : undefined,
+    };
+    const findings = chapterTagFindings(live, { entries });
+    const changes = (kind: SoundtrackChangeKind) => on(kind).length;
+    const soundtrackSaid = (kind: SoundtrackChangeKind, chosen: string | undefined, writer: string | undefined) => {
+      const base = chosen ? soundtrackOptionLabel(kind, chosen, soundtrack) : writer;
+      const changed = changes(kind);
+      const parts = [base, changed ? `${changed === 1 ? 'changes once' : `changes ${changed} times`} in the chapter` : undefined].filter(Boolean);
+      return parts.length ? parts.join(' · ') : undefined;
+    };
+    findings.music = soundtrackSaid(SOUNDSCAPE_CHANGE_KIND, opening?.soundscape?.pieceId, findings.music);
+    findings.atmosphere = soundtrackSaid(ATMOSPHERE_CHANGE_KIND, opening?.atmosphere?.atmosphereId, findings.atmosphere);
+    const counts: Record<CreateTagKind, number> = {
+      soundscape: (opens[SOUNDSCAPE_CHANGE_KIND] ? 1 : 0) + changes(SOUNDSCAPE_CHANGE_KIND),
+      atmosphere: (opens[ATMOSPHERE_CHANGE_KIND] ? 1 : 0) + changes(ATMOSPHERE_CHANGE_KIND),
+      cues: live.soundCues.length, speakers: live.speakers.length, holdings: live.holdingChanges.length,
+      appearances: live.appearances.length, status: live.statuses?.length ?? 0,
+    };
+    return createTagRows({ counts, findings, account });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- opens is read from the chapter and its opening
+  }, [state, chapter, entries, opening, soundtrack, account]);
+  const tag = tagging && !tagging.gap ? async () => {
+    setRetagging(true);
+    setTagProblem(undefined);
+    try {
+      await tagging.run();
+    } catch (error) {
+      setTagProblem(error instanceof Error ? error.message : 'The chapter could not be tagged.');
+    } finally {
+      setRetagging(false);
+    }
+  } : undefined;
   const prose = useMemo((): CSSProperties => ({
     fontFamily: text.font.family, fontSize: `calc(${text.fontSize} * var(--reader-scale, 1))`, fontWeight: text.fontWeight,
     fontSynthesis: 'none', fontKerning: 'normal', '--sen-text-line-height': text.lineHeight,
@@ -245,21 +309,14 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
 
   return <article ref={articleRef} className="mx-auto mt-6 max-w-[var(--reader-measure,34em)]" style={prose} data-chapter-number={chapter.chapterNumber}
     data-testid="chapter-authoring" lang={locale} aria-labelledby={`harness-reader-chapter-${chapter.chapterNumber}`}>
-    <div className="mb-5 space-y-3 rounded-2xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] p-4 font-sans text-sm" data-testid="create-mode-panel">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-semibold text-(--reader-text)">Create mode</p>
-        <p role="status" className="text-xs text-(--reader-text-dim)" data-testid="create-mode-saving">
-          {saving === 'saving' ? 'Saving…' : saving === 'failed' ? 'Not saved' : 'Saved'}
-        </p>
-      </div>
-      <p className="text-xs leading-relaxed text-(--reader-text-dim)">Hold a word or drag to select, then choose Edit, Copy or Media. Media places a Sound Cue or changes the soundscape or atmosphere there; in the first sentence, it chooses how the chapter opens. Changes save as you make them; moving on to the next chapter seals this one.</p>
-      <ManuscriptOverlaySwitch mode={overlayMode} onChange={setOverlayMode} overlay={overlay} />
+    <CreateTagPanel rows={rows} lit={lit} onLight={setLit} saving={saving} editable={editable} sealedNote={sealedNote} account={account}
+      tagging={tag && { busy: retagging, disabled: saving !== 'saved', problem: tagProblem, onTag: () => void tag() }}>
       {/* A chapter may have no Sound Cues, but where there should be some their absence is loud: say so here, never in the Reader. */}
-      {cues.length === 0 && <p role="status" className="rounded-lg border border-(--reader-warning-bright)/25 bg-(--reader-warning)/[0.06] px-3 py-2 text-xs leading-relaxed text-(--reader-warning-pale)" data-testid="create-mode-no-cues">
+      {editable && cues.length === 0 && <p role="status" className="rounded-lg border border-(--reader-warning-bright)/25 bg-(--reader-warning)/[0.06] px-3 py-2 text-xs leading-relaxed text-(--reader-warning-pale)" data-testid="create-mode-no-cues">
         This chapter has no Sound Cues. Where a sound happens, highlight its words and choose Media → Audio → Cue.
       </p>}
       {notice && <p role="alert" className="rounded-lg border border-(--reader-light)/10 bg-(--reader-surface-raised)/70 px-3 py-2 text-xs text-(--reader-warning-pale)">{notice}</p>}
-      {flaggedAttachments(state).length > 0 && <section aria-labelledby="create-mode-waiting" className="space-y-2" data-testid="create-mode-waiting">
+      {editable && flaggedAttachments(state).length > 0 && <section aria-labelledby="create-mode-waiting" className="space-y-2" data-testid="create-mode-waiting">
         <h2 id="create-mode-waiting" className="text-xs font-semibold uppercase tracking-[0.14em] text-(--reader-text-muted)">Needs a new spot</h2>
         <ul className="space-y-2">
           {flaggedAttachments(state).map(attachment => {
@@ -267,19 +324,19 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
             return <li key={attachment.id} className="flex items-start justify-between gap-3 rounded-lg border border-(--reader-light)/10 bg-(--reader-surface-raised)/50 px-3 py-2">
               <span className="min-w-0 text-xs leading-relaxed"><span className="block font-medium text-(--reader-text)">{title}</span><span className="text-(--reader-text-dim)">{detail}</span></span>
               <button type="button" onClick={() => update(current => removeAttachment(current, attachment.id))}
-                className="min-h-9 shrink-0 rounded-lg border border-(--reader-light)/15 px-3 text-xs text-(--reader-text-soft) hover:bg-(--reader-light)/10">Remove</button>
+                className="min-h-11 shrink-0 rounded-lg border border-(--reader-light)/15 px-3 text-xs text-(--reader-text-soft) hover:bg-(--reader-light)/10">Remove</button>
             </li>;
           })}
         </ul>
       </section>}
-    </div>
+    </CreateTagPanel>
     <p className="font-mono text-[10px] font-normal uppercase tracking-[0.2em] text-(--reader-text-faint)">Chapter {chapter.chapterNumber}</p>
     <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" style={{ fontFamily: text.titleFont.family }}
       className="mt-1 text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-(--reader-light) sm:text-[length:calc(1.875rem*var(--reader-scale,1))]">{chapterTitleText(chapter.title) || chapter.title}</h1>
     {/* A quiet gutter on phones gives the overlay's ¶ numbers room, so turning an overlay on never moves a word. */}
     <div className="ps-3 sm:ps-0">
-      <HighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={edit} actions={actions} removeActions={removeActions}
-        editable overlay={overlay} locale={locale} className="mt-6 text-(--reader-text-soft)"
+      <HighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={editable ? edit : keepProse}
+        {...editable ? { actions, removeActions } : {}} editable={editable} overlay={overlay} locale={locale} className="mt-6 text-(--reader-text-soft)"
         renderBlockText={block => {
           const blockCues = cues.filter(cue => cue.anchor.blockId === block.id);
           return blockCues.length ? <InlineAudioText text={block.text} cues={blockCues} renderText={words => words} /> : block.text;

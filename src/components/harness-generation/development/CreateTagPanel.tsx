@@ -3,7 +3,7 @@ import { Eye, EyeOff, LoaderCircle, MoreHorizontal, Sparkles } from 'lucide-reac
 import { SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
 import { lineTone } from '@seihouse/sen/highlight-engine';
 import type { ChapterTaggingAccount } from '../shared/chapterTagging';
-import { CREATE_TAG_GROUPS, CREATE_TAG_KINDS, createTagStyle, createTagTone, nextLit, type CreateTagGroupId, type CreateTagLit, type CreateTagRow } from './createTags';
+import { CREATE_TAG_GROUPS, CREATE_TAG_KINDS, createTagLine, createTagStyle, createTagTone, nextLit, type CreateTagGroupId, type CreateTagLit, type CreateTagRow } from './createTags';
 import { controlFeedback, pickerHeading, pickerRow, pickerSurface } from './readerPicker';
 import './reader-colors.css';
 
@@ -81,8 +81,13 @@ export function CreateTagPanel({ rows, lit, onLight, saving, editable, sealedNot
               {/* The swatch is drawn the way the page draws the kind: a dot for a highlight, a short line for an underline.
                   A kind with tags is solid; a kind with none, hollow and faint. */}
               {createTagStyle(kind) === 'underline'
-                ? <span aria-hidden="true" data-swatch="underline" className="h-[3px] w-3.5 shrink-0 rounded-full"
-                  style={row.found ? { background: lineTone(createTagTone(kind)) } : { boxShadow: `inset 0 0 0 1px ${lineTone(createTagTone(kind))}`, opacity: 0.5 }} />
+                ? createTagLine(kind) === 'dotted'
+                  // A dotted line is three dots, solid with tags and faint without.
+                  ? <span aria-hidden="true" data-swatch="underline-dotted" className="flex w-3.5 shrink-0 justify-between" style={row.found ? undefined : { opacity: 0.5 }}>
+                    {[0, 1, 2].map(dot => <span key={dot} className="h-[3px] w-[3px] rounded-full" style={{ background: lineTone(createTagTone(kind)) }} />)}
+                  </span>
+                  : <span aria-hidden="true" data-swatch="underline" className="h-[3px] w-3.5 shrink-0 rounded-full"
+                    style={row.found ? { background: lineTone(createTagTone(kind)) } : { boxShadow: `inset 0 0 0 1px ${lineTone(createTagTone(kind))}`, opacity: 0.5 }} />
                 : <span aria-hidden="true" data-swatch="fill" className="h-2.5 w-2.5 shrink-0 rounded-full"
                   style={row.found ? { background: createTagTone(kind) } : { boxShadow: `inset 0 0 0 1.5px ${createTagTone(kind)}`, opacity: 0.5 }} />}
               {row.count > 0 && <span className="text-[11px] tabular-nums text-(--reader-text-dim) sm:hidden">{row.count.toLocaleString()}</span>}

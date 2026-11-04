@@ -18,9 +18,16 @@ export interface OverlayMark {
    * planned.)
    */
   style?: OverlayMarkStyle;
+  /**
+   * An underline's line: `solid` (the default) or `dotted`, a row of round
+   * dots like an e-reader's linked word. A variation inside the underline
+   * family, so kinds that share a style still read apart.
+   */
+  line?: OverlayMarkLine;
 }
 
 export type OverlayMarkStyle = 'fill' | 'underline';
+export type OverlayMarkLine = 'solid' | 'dotted';
 
 /**
  * A tone at full strength for a line: a tint is kept translucent so words stay

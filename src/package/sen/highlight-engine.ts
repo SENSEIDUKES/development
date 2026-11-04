@@ -24,7 +24,7 @@ export {
   type ManuscriptAnchor, type ManuscriptAnchorLevel, type ManuscriptAnchorResolution, type ManuscriptAddress,
   type ManuscriptAttachment, type ManuscriptState, type ManuscriptEditResult,
 } from '../../components/highlight-engine/shared/manuscript';
-export type { OverlayMark, OverlayMarkStyle, OverlayPin, TextHighlightOverlay } from '../../components/highlight-engine/shared/overlay';
+export type { OverlayMark, OverlayMarkLine, OverlayMarkStyle, OverlayPin, TextHighlightOverlay } from '../../components/highlight-engine/shared/overlay';
 export { lineTone } from '../../components/highlight-engine/shared/overlay';
 export {
   ATTACHMENT_COLORS, MANUSCRIPT_OVERLAY_GROUPS, MANUSCRIPT_OVERLAYS, OVERLAY_KINDS, overlayGroupOf, type ManuscriptOverlayGroup, OVERLAY_SOUNDTRACK_KIND, attachmentMarks, isChapterOpening, openingSoundMark, structurePins, type ManuscriptOverlayMode,

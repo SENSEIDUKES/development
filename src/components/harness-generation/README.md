@@ -44,7 +44,10 @@ existing Chapter Generation feature.
   Highlight Engine's new mark `style`. The legend's swatch is drawn the same
   way: a dot for a highlight, a short line for an underline. Kept in Create
   mode for now (SENSEI: highlights are not on in the regular Reader yet).
-  Colored words for Codex names come later.
+  Colored words for Codex names come later. Then SENSEI: three parent styles
+  (highlight, colored words, underline) with customization inside each,
+  starting with a dotted underline for Status (`CREATE_TAG_KINDS.status.line`,
+  `createTagLine`); its swatch is three dots.
 - **2026-11-04 (Tag media again):** SENSEI: "maybe you only want to have it
   retag a specific thing." `retagChapter(storyId, chapterId, { focus: 'media' })`
   reads a chapter's sound again on its own: the tagger is taught the sound tags

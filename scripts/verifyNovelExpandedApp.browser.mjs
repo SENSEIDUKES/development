@@ -146,6 +146,8 @@ const rewritten = {
 const rewrittenNotes = [
   { paragraph: 1, words: 'the beast roared', tag: '[[sound: beast roar | high]]' },
   { paragraph: 2, words: 'Mara found the bell key under the gate.', tag: '[[gained: MC | Bell Key]]' },
+  // A status, so Create mode's dotted Status underline shows in the screenshots.
+  { paragraph: 2, words: 'She hid it in her sleeve.', tag: '[[status: MC | hiding the key]]' },
   { paragraph: 3, words: 'Later she touched the bell key again to be sure.', tag: '[[gained: MC | Bell Key]]' },
   { paragraph: 4, words: '“Ring the bells,”', tag: '[[@MC]]' },
 ];

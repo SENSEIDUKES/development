@@ -1,12 +1,14 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { passageRange, type TextHighlightBlock } from '../shared/selection';
-import { lineTone, type OverlayMarkStyle, type OverlayPin, type TextHighlightOverlay } from '../shared/overlay';
+import { lineTone, type OverlayMarkLine, type OverlayMarkStyle, type OverlayPin, type TextHighlightOverlay } from '../shared/overlay';
 import { mergeLineRectangles, watchLayout, type PassageRectangle } from './measure';
 
-interface PlacedMark { id: string; tone: string; attention?: boolean; style?: OverlayMarkStyle; rects: PassageRectangle[] }
+interface PlacedMark { id: string; tone: string; attention?: boolean; style?: OverlayMarkStyle; line?: OverlayMarkLine; rects: PassageRectangle[] }
 
 /** An underline is this tall, set on the bottom of the words' glyph box so descenders cross it, as with a printed underline. */
 const UNDERLINE_HEIGHT = 2;
+/** A dotted line: round dots the line's height across, one every 4px. */
+const dotted = (color: string) => ({ background: `radial-gradient(circle, ${color} 1px, transparent 1.25px) 0 0 / 4px ${UNDERLINE_HEIGHT}px repeat-x` });
 
 interface PlacedPin { id: string; label: string; placement: OverlayPin['placement']; top: number; left?: number; width?: number }
 
@@ -57,7 +59,7 @@ export function OverlayLayer({ overlay, blocks }: {
       const placedMarks: PlacedMark[] = [];
       for (const mark of overlay.marks ?? []) {
         const rects = mergeLineRectangles(local(passageRange(root, mark.selection)?.getClientRects()));
-        if (rects.length) placedMarks.push({ id: mark.id, tone: mark.tone, attention: mark.attention, style: mark.style, rects });
+        if (rects.length) placedMarks.push({ id: mark.id, tone: mark.tone, attention: mark.attention, style: mark.style, line: mark.line, rects });
       }
       const placedPins: PlacedPin[] = [];
       const raised: Array<PlacedPin & { left: number; width: number }> = [];
@@ -97,8 +99,9 @@ export function OverlayLayer({ overlay, blocks }: {
   return <>
     <div ref={layerRef} className="sen-text-highlight-overlay" aria-hidden="true">
       {marks.flatMap(mark => mark.rects.map((rect, index) => mark.style === 'underline'
-        ? <span key={`${mark.id}:${index}`} className="sen-overlay-mark" data-overlay-id={mark.id} data-style="underline" data-attention={mark.attention ? '' : undefined}
-          style={{ left: rect.left, width: rect.width, top: rect.top + rect.height - UNDERLINE_HEIGHT, height: UNDERLINE_HEIGHT, background: lineTone(mark.tone) }} />
+        ? <span key={`${mark.id}:${index}`} className="sen-overlay-mark" data-overlay-id={mark.id} data-style="underline" data-line={mark.line} data-attention={mark.attention ? '' : undefined}
+          style={{ left: rect.left, width: rect.width, top: rect.top + rect.height - UNDERLINE_HEIGHT, height: UNDERLINE_HEIGHT,
+            ...(mark.line === 'dotted' ? dotted(lineTone(mark.tone)) : { background: lineTone(mark.tone) }) }} />
         : <span key={`${mark.id}:${index}`} className="sen-overlay-mark" data-overlay-id={mark.id} data-attention={mark.attention ? '' : undefined}
           style={{ ...rect, background: mark.tone }} />))}
     </div>

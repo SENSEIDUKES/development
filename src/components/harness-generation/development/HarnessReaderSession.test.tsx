@@ -1206,7 +1206,7 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(panel()!.getAttribute('data-lit')).toBe('all');
     // Each group is drawn its own way, and the legend's swatch shows which: Media highlighted, Story info underlined.
     expect([...panel()!.querySelectorAll('[data-tag-kind] [data-swatch]')].map(swatch => swatch.getAttribute('data-swatch')))
-      .toEqual(['fill', 'fill', 'fill', 'underline', 'underline', 'underline', 'underline', 'underline']);
+      .toEqual(['fill', 'fill', 'fill', 'underline', 'underline', 'underline', 'underline-dotted', 'underline']);
     // Create mode stays on from chapter to chapter: the newest can be changed.
     await click(byLabel('Next Chapter'), 'Next Chapter');
     expect(create().getAttribute('aria-pressed')).toBe('true');
@@ -1231,9 +1231,10 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
     expect(chapterOnScreen(2)).toBeTruthy();
   });
-  it('draws Media as highlights and Story info as underlines', async () => {
+  it('draws Media as highlights and Story info as underlines, Status dotted', async () => {
     const { controller, storyId } = await story({ written: 1, replies: [reply('Low Tide', [
       '[[gained: MC | Bell Key]] Mara found the bell key under the drowned gate.',
+      '[[status: MC | soaked to the bone]] Mara shivered in her wet coat.',
       'Mara froze as [[sound: beast roar | the beast roared | high]] beyond the seawall. Nothing answered it.',
     ])] });
     await mount(<Host controller={controller} storyId={storyId} openAtChapter={1} openInCreate />);
@@ -1245,7 +1246,11 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     // Holdings lit alone: only underlines.
     await click(button => button.getAttribute('data-tag-kind') === 'holdings', 'Holdings');
     expect(marks().length).toBeGreaterThan(0);
-    marks().forEach(mark => expect(mark.dataset.style).toBe('underline'));
+    marks().forEach(mark => expect([mark.dataset.style, mark.dataset.line]).toEqual(['underline', undefined]));
+    // Status lit alone: dotted underlines.
+    await click(button => button.getAttribute('data-tag-kind') === 'status', 'Status');
+    expect(marks().length).toBeGreaterThan(0);
+    marks().forEach(mark => expect([mark.dataset.style, mark.dataset.line]).toEqual(['underline', 'dotted']));
     // Sound Cues lit alone: only highlights.
     await click(button => button.getAttribute('data-tag-kind') === 'cues', 'Sound Cues');
     expect(marks().length).toBeGreaterThan(0);

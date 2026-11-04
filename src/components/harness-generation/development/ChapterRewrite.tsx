@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { CHAPTER_REWRITE_NOTE_LIMIT } from '../../../narrative/generation';
 import './reader-colors.css';
 
@@ -7,11 +7,13 @@ import './reader-colors.css';
  * link that opens a box for an optional note on what to change. The note is
  * kept if the rewrite fails, so the reader can simply ask again.
  */
-export function ChapterRewrite({ chapterNumber, disabled, onRewrite }: {
+export function ChapterRewrite({ chapterNumber, disabled, onRewrite, cost }: {
   chapterNumber: number;
   disabled?: boolean;
   /** Writes the chapter again; resolves true once the new version is saved. */
   onRewrite: (note?: string) => Promise<boolean>;
+  /** The host's Energy price for writing the chapter again. */
+  cost?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
@@ -50,7 +52,7 @@ export function ChapterRewrite({ chapterNumber, disabled, onRewrite }: {
         className="min-h-11 rounded-full border border-(--reader-light)/15 px-4 text-sm text-(--reader-text-soft) hover:border-(--reader-light)/30">Cancel</button>
       <button type="submit" disabled={disabled}
         className="min-h-11 rounded-full border border-(--reader-accent-bright)/50 bg-(--reader-accent)/15 px-4 text-sm font-semibold text-(--reader-accent-mist) hover:bg-(--reader-accent)/25 disabled:cursor-not-allowed disabled:opacity-40">
-        Rewrite Chapter {chapterNumber}
+        Rewrite Chapter {chapterNumber}{cost && <span className="ms-2 inline-flex align-middle">{cost}</span>}
       </button>
     </div>
   </form>;

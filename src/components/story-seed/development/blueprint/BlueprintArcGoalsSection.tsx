@@ -1,4 +1,4 @@
-import { memo, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { memo, useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { Map as RoadmapIcon, RefreshCw } from 'lucide-react';
 import { ARC_LENGTH, ArcPlanView, STORY_LENGTH_ARCS, type ArcPlan } from '@seihouse/sen/arc-goals';
 import { type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
@@ -22,6 +22,8 @@ interface BlueprintArcGoalsSectionProps {
   generating?: boolean;
   /** Replaces the whole Blueprint with one for a story of the chosen length. */
   onRegenerate?: (arcCount: number) => Promise<void>;
+  /** The host's Energy price on Replace Blueprint, which writes a fresh one. */
+  price?: ReactNode;
 }
 
 const arcsLabel = (count: number) => `${count} ${count === 1 ? 'arc' : 'arcs'}`;
@@ -42,7 +44,7 @@ const arcsLabel = (count: number) => `${count} ${count === 1 ? 'arc' : 'arcs'}`;
  */
 export const BlueprintArcGoalsSection = memo(({
   arcPlans = [], estimatedArcs, arcOneScope, destinedEnding, problem, setBlueprint, updateSeed,
-  regenerating = false, generating = false, onRegenerate,
+  regenerating = false, generating = false, onRegenerate, price,
 }: BlueprintArcGoalsSectionProps) => {
   const [countText, setCountText] = useState(String(estimatedArcs));
   const [confirmingRegenerate, setConfirmingRegenerate] = useState(false);
@@ -152,7 +154,7 @@ export const BlueprintArcGoalsSection = memo(({
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <LibraryButton type="button" size="sm" variant="danger" icon={RefreshCw} onClick={() => void regenerate()}>
-                Replace Blueprint
+                Replace Blueprint{price && <span className="ms-2 inline-flex align-middle">{price}</span>}
               </LibraryButton>
               <LibraryButton type="button" size="sm" variant="ghost" onClick={() => setConfirmingRegenerate(false)}>
                 Keep this Blueprint

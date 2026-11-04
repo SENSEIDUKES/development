@@ -38,14 +38,16 @@ describe('NovelExpanded addresses', () => {
       { page: 'read', storyId: 'hst_1' },
       { page: 'blueprint', storyId: 'hst_1' },
       { page: 'world', storyId: 'hst_1' },
-      { page: 'world', storyId: 'hst_1', chapterNumber: 3 },
       { page: 'write', storyId: 'hst_1' },
       { page: 'write', storyId: 'hst_1', chapterNumber: 3 },
+      { page: 'write', storyId: 'hst_1', chapterNumber: 3, create: true },
     ];
     expect(pages.map(routeSearch)).toEqual(['', '?page=discover', '?page=create', '?story=hst_1', '?story=hst_1&read=1', '?story=hst_1&blueprint=1',
-      '?page=create&world=hst_1', '?page=create&world=hst_1&chapter=3',
-      // The creator's Reader lives in Create, apart from a reader's Reader.
-      '?page=create&world=hst_1&read=1', '?page=create&world=hst_1&read=1&chapter=3']);
+      '?page=create&world=hst_1',
+      // The creator's Reader lives in Create, apart from a reader's Reader; a chapter from Chapters opens in Create mode.
+      '?page=create&world=hst_1&read=1', '?page=create&world=hst_1&read=1&chapter=3', '?page=create&world=hst_1&read=1&chapter=3&create=1']);
+    // A chapter on the world's own address opens the world: its chapters open in the Reader.
+    expect(parseRoute('?page=create&world=hst_1&chapter=3')).toEqual({ page: 'world', storyId: 'hst_1' });
     // A chapter that is no number opens the world itself.
     expect(parseRoute('?page=create&world=hst_1&chapter=0')).toEqual({ page: 'world', storyId: 'hst_1' });
     for (const page of pages) expect(parseRoute(routeSearch(page))).toEqual(page);

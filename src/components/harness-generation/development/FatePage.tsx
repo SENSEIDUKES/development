@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { HarnessWorkspaceState } from '../../../narrative/generation';
 import type { HarnessGenerationController } from '../shared/controller';
 import { arcPlanGap, arcReviewGap, harnessStoryMode, nextArcStep } from '../shared/arcState';
@@ -13,13 +14,15 @@ import './reader-colors.css';
  * four paths to intervene; Fate Survival asks the reader to direct every
  * chapter. Writing the chapter is a host action, since the host owns the model.
  */
-export function FatePage({ state, storyId, controller, onBack, onGenerateNextChapter, onReadChapter, onOpenArc, writer: sharedWriter, focusDirection = false }: {
+export function FatePage({ state, storyId, controller, onBack, onGenerateNextChapter, onReadChapter, onOpenArc, writer: sharedWriter, focusDirection = false, writeCost }: {
   state: HarnessWorkspaceState;
   storyId: string;
   controller: HarnessGenerationController;
   onBack: () => void;
   /** Writes the next chapter with the host's model. Absent when the host cannot generate here. */
   onGenerateNextChapter?: () => Promise<void>;
+  /** The host's Energy price for writing a chapter, on Write. */
+  writeCost?: ReactNode;
   /** Opens a chapter in the Reader. */
   onReadChapter?: (chapterNumber: number) => void;
   /** Opens the World Blueprint's goals for the arc the next chapter begins. */
@@ -77,6 +80,7 @@ export function FatePage({ state, storyId, controller, onBack, onGenerateNextCha
           <button type="button" onClick={() => void write()} disabled={writing || Boolean(gap)}
             className="min-h-11 rounded-full border border-(--reader-accent-bright)/50 bg-(--reader-accent)/15 px-5 text-sm font-semibold text-(--reader-accent-mist) hover:bg-(--reader-accent)/25 disabled:cursor-not-allowed disabled:opacity-45">
             {writing ? `Writing Chapter ${nextChapter}…` : `Write Chapter ${nextChapter}`}
+            {!writing && writeCost && <span className="ms-2 inline-flex align-middle">{writeCost}</span>}
           </button>
           {gap && <p className="text-xs text-(--reader-text-dim)">{gap}</p>}
         </div>

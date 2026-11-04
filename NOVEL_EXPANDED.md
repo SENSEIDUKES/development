@@ -351,7 +351,9 @@ Update it whenever it changes.
     Chapter 1 is written under the Aura Veil and opens when it is saved. The
     book stays in Create, its creator's alone, until they **Publish** it from
     the author's world view; only then do readers find it, and a reader's
-    Reader has Fate alone (SENSEI, 2026-11-03).
+    Reader has Fate alone (SENSEI, 2026-11-03). Create mode in the creator's
+    Reader is the tagger's page: every tag lit in the Reader's own look,
+    Media and Story info apart, on any chapter (SENSEI, 2026-11-04).
   - **The Reader Chamber is reading and listening:** chapters sit on the Text
     Highlight Engine (read-only), with Sound Cues active. Next writes the next
     chapter; Fate directs it. **Listen** reads the chapter aloud with the

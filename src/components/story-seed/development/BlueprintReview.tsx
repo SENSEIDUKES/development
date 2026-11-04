@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type Dispatch,
+  type ReactNode,
   type SetStateAction,
 } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, Check, Copy, Download, Languages, Settings2 } from 'lucide-react';
@@ -47,6 +48,8 @@ interface BlueprintReviewProps {
   onRegenerateBlueprint?: (arcCount: number) => Promise<void>;
   /** The seed's Story Language, chosen in Story Seed Settings and confirmed here before Manifest. */
   originalLanguage: SenLanguageCode;
+  /** The host's Energy price, on the actions that generate: Create Story (Chapter 1 is written at once) and Replace Blueprint. */
+  price?: ReactNode;
 }
 
 export const BlueprintReview = ({
@@ -60,6 +63,7 @@ export const BlueprintReview = ({
   isGenerating,
   onRegenerateBlueprint,
   originalLanguage,
+  price,
 }: BlueprintReviewProps) => {
   const runtime = useStoryCreationRuntime();
   const activeAgentId = useStoryCreationStore(state => state.activeAgentId);
@@ -333,6 +337,7 @@ export const BlueprintReview = ({
             regenerating={regenerating}
             generating={isGenerating}
             onRegenerate={onRegenerateBlueprint ? regenerate : undefined}
+            price={price}
           />
           <ArcWorkspace seed={seed} updateSeed={updateSeed} showActiveArcGoal={false} showStoryLength={false} />
         </div>
@@ -364,6 +369,7 @@ export const BlueprintReview = ({
               iconRight={!isGenerating ? <ArrowRight size={16} /> : undefined}
             >
               {createLabel}
+              {!isGenerating && price && <span className="ms-2 inline-flex align-middle">{price}</span>}
             </ManifestButton>
           </div>
         </div>

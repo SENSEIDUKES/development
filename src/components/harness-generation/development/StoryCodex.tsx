@@ -256,6 +256,8 @@ interface ProfileArt {
   problem?: string;
   /** Absent until the record has written down a look to make the picture from. */
   onManifest?: () => void;
+  /** The host's Energy price beside Manifest. */
+  cost?: ReactNode;
 }
 
 /**
@@ -272,6 +274,7 @@ function ManifestControl({ art, name }: { art: ProfileArt; name: string }) {
       className="inline-flex min-h-11 items-center gap-2 rounded-full border border-(--reader-light)/20 bg-(--reader-light)/[0.06] px-5 text-sm font-medium text-(--reader-light) hover:border-(--reader-light)/40 disabled:opacity-60">
       {art.making ? <LoaderCircle size={16} aria-hidden className="motion-safe:animate-spin" /> : <WandSparkles size={16} aria-hidden />}
       {art.making ? 'Manifesting…' : art.picture ? 'Manifest again' : 'Manifest'}
+      {!art.making && art.cost}
     </button>
     {art.problem && <p role="alert" className="max-w-sm text-center text-xs text-(--reader-warning-soft)">{art.problem}</p>}
   </div>;
@@ -398,10 +401,12 @@ const EMPTY: Record<CodexTab, string> = {
  * fact the world opened with has no passage to link. The record's checks close
  * the gallery, for testing.
  */
-export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage, onReadChapter }: {
+export function StoryCodex({ codex, storyTitle, pictures, manifestCost, onBack, onReadPassage, onReadChapter }: {
   codex: StoryCodexRecord;
   /** The host's pictures for this story's cards. Without them, cards show their aura and offer no Manifest. */
   pictures?: CodexPictures;
+  /** The host's Energy price beside Manifest. */
+  manifestCost?: ReactNode;
   storyTitle: string;
   /** Back to the chapter. */
   onBack?: () => void;
@@ -437,7 +442,7 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
       ? { summary: look.summary, traits: look.traits }
       : fromTheStart ? { summary: fromTheStart, traits: {} } : undefined;
     return {
-      picture: pictures.pictureOf(key), making: Boolean(making[key]), problem: problems[key],
+      picture: pictures.pictureOf(key), making: Boolean(making[key]), problem: problems[key], cost: manifestCost,
       // A current look makes the picture at once; otherwise the host writes the look first, from the story's words.
       ...(appearance || fromTheStart ? { onManifest: () => manifest({ key, subject, name, ...(current ? { look: current } : {}) }) } : {}),
     };

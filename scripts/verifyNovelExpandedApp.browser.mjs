@@ -867,7 +867,10 @@ async function walk(browser, viewport, sample) {
   const picture = counts.pictures.at(-1);
   check(picture?.token && picture.body.card.subject === 'character' && picture.body.card.look.summary.includes(', as the drowned city first saw them.'),
     `Manifest should ask for one picture from the card's look, with the token, got ${JSON.stringify(picture)}.`);
-  check(await codexSheet.getByTestId('codex-manifest').getByRole('button').textContent() === 'Manifest again', 'A manifested card should offer Manifest again.');
+  const manifestAgain = codexSheet.getByTestId('codex-manifest').getByRole('button');
+  // Its words, then the picture's Energy price riding on it.
+  check((await manifestAgain.textContent()).startsWith('Manifest again'), 'A manifested card should offer Manifest again.');
+  check(await manifestAgain.locator('[data-energy-action="image.generate"]').count() === 1, 'Manifest should carry a picture\'s Energy price.');
   await shot('6d-codex-manifested');
   await slot.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
   // A fact's link asks before it moves the chapter.
@@ -1106,12 +1109,39 @@ async function walk(browser, viewport, sample) {
   check(counts.tags.length === taggedBefore + 1 && counts.tags.at(-1).chapterNumber === 1 && counts.tags.at(-1).token,
     `Tag should read the checked chapter once, with the token, got ${counts.tags.length - taggedBefore} taggings.`);
   await authorWorld.getByRole('button', { name: 'Tag', exact: true }).waitFor();
+  // A chapter opens in the creator's Reader, in Create mode: the Reader's own look, every tag lit, Media and Story info apart.
   await firstChapter.getByRole('button', { name: 'Open Chapter 1' }).click();
-  await page.getByTestId('author-chapter').waitFor();
-  check(address().endsWith('&chapter=1'), `A chapter should open at its own address, got ${address()}`);
-  await page.locator('[data-testid="author-chapter-prose"] .sen-overlay-mark').first().waitFor();
-  await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: 0 }));
-  await shot('7a-author-chapter');
+  const authoring = page.getByTestId('chapter-authoring');
+  await authoring.waitFor();
+  check(address().endsWith('&read=1&chapter=1&create=1'), `A chapter should open in Create mode at its own address, got ${address()}`);
+  check((await authoring.getAttribute('data-chapter-number')) === '1', 'Chapter 1 should open in Create mode.');
+  await authoring.locator('.sen-overlay-mark').first().waitFor();
+  check((await page.getByTestId('create-mode-panel').getAttribute('data-lit')) === 'all', 'Create mode should open with every tag lit.');
+  check(JSON.stringify(await page.locator('[data-testid="create-mode-panel"] [data-tag-group]').evaluateAll(groups => groups.map(group => group.getAttribute('data-tag-group')))) === '["media","info"]',
+    'Create mode should hold Media and Story info apart.');
+  check(!(await page.evaluate(slidesSideways)), 'Create mode must never scroll sideways.');
+  for (const kind of await page.locator('[data-testid="create-mode-panel"] button').all()) {
+    const box = await kind.boundingBox();
+    check(!box || box.height >= 43.5, `A Create mode control should be at least 44px tall, got ${box && Math.round(box.height)}px: ${await kind.textContent()}`);
+  }
+  await page.evaluate(() => window.scrollTo({ top: 0 }));
+  await shot('7a-create-mode');
+  // A kind lights alone; tapping it again lights every tag.
+  await page.locator('[data-testid="create-mode-panel"] [data-tag-kind="speakers"]').click();
+  check((await page.getByTestId('create-mode-panel').getAttribute('data-lit')) === 'speakers', 'A kind should light alone.');
+  // Let the line that says what it holds finish opening.
+  await page.waitForTimeout(400);
+  await shot('7a-create-mode-speakers');
+  // The eye hides every tag (the reader's page) and shows them again; Tag this chapter again lives in the ⋯ menu.
+  await page.getByTestId('create-mode-show-tags').click();
+  check((await page.getByTestId('create-mode-panel').getAttribute('data-lit')) === 'off', 'The eye should hide every tag.');
+  check((await authoring.locator('.sen-overlay-mark').count()) === 0, 'Hidden tags should leave the page as a reader sees it.');
+  await page.getByTestId('create-mode-show-tags').click();
+  await page.getByTestId('create-mode-menu').click();
+  await page.getByTestId('create-mode-tag').waitFor();
+  await page.waitForTimeout(400);
+  await shot('7a-create-mode-menu');
+  await page.keyboard.press('Escape');
   await page.goBack();
   await authorWorld.locator('[data-testid="author-world-chapter"]').first().waitFor();
   await page.goBack();

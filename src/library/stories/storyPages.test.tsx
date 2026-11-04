@@ -82,7 +82,14 @@ const click = async (element: HTMLElement | null | undefined, label: string) => 
   await act(async () => { element!.click(); });
   await flush();
 };
-const buttonByText = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === text);
+/** A control's own words, without the Energy price it carries. */
+const wordsOf = (element: Element | null | undefined) => {
+  if (!element) return undefined;
+  const copy = element.cloneNode(true) as Element;
+  copy.querySelectorAll('.energy-action-cost').forEach(cost => cost.remove());
+  return copy.textContent?.trim();
+};
+const buttonByText = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(button => wordsOf(button) === text);
 const worldInfo = () => container.querySelector<HTMLElement>('[data-testid="harness-world-info"]');
 const chaptersAction = () => worldInfo()?.querySelector<HTMLElement>('[data-world-info-chapters="action"]');
 
@@ -105,7 +112,9 @@ describe('A story\'s own pages for any host', { timeout: 20_000 }, () => {
     await flush();
 
     expect(worldInfo()!.querySelector('h1')!.textContent).toBe('The Drowned Name');
-    expect(chaptersAction()!.textContent).toBe('Begin Story');
+    expect(wordsOf(chaptersAction())).toBe('Begin Story');
+    // Begin Story writes Chapter 1, so it carries a chapter's Energy.
+    expect(chaptersAction()!.querySelector('[data-energy-action="chapter.generate"]')).toBeTruthy();
 
     // The host swaps the page; StoryPages stays mounted, so the Reader begins Chapter 1 at once.
     await click(chaptersAction(), 'Start Story');
@@ -224,6 +233,7 @@ describe('A story\'s own pages for any host', { timeout: 20_000 }, () => {
     expect(container.querySelector('[data-chapter-number="1"]')).toBeTruthy();
 
     await click(buttonByText('Rewrite this chapter'), 'Rewrite this chapter');
+    expect(buttonByText('Rewrite Chapter 1')!.querySelector('[data-energy-action="chapter.generate"]')).toBeTruthy();
     await click(buttonByText('Rewrite Chapter 1'), 'Rewrite Chapter 1');
     await flush();
     expect(model.generate).toHaveBeenCalledTimes(2);

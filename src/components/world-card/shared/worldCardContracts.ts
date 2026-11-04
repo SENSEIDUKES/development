@@ -29,6 +29,10 @@ export interface WorldCardInfoProps {
    * (for example writing Chapter 1); without it, an empty story stays static.
    */
   onStart?: () => void;
+  /** The host's Energy price on Begin Story, which writes Chapter 1. */
+  startCost?: ReactNode;
+  /** The same price in words for the button's accessible name, such as "costs 2 Energy". */
+  startCostLabel?: string;
   onOpenCodex?: () => void;
   /**
    * The book's chapters for World Info's chapter selector, beside the reading pill: the whole

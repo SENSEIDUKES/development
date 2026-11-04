@@ -1198,7 +1198,7 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(authoring.getAttribute('data-chapter-number')).toBe('1');
     expect(authoring.querySelector('[data-testid="create-mode-sealed"]')).toBeTruthy();
     expect(authoring.querySelector('[data-testid="create-mode-saving"]')).toBeNull();
-    expect(authoring.querySelector('[contenteditable="true"]')).toBeNull();
+    expect(authoring.querySelector('[data-selection-mode="owned"]')).toBeNull();
     // Media and Story info apart, every kind lit.
     expect([...panel()!.querySelectorAll('[data-tag-group]')].map(group => group.getAttribute('data-tag-group'))).toEqual(['media', 'info']);
     expect([...panel()!.querySelectorAll('[data-tag-kind]')].map(kind => kind.getAttribute('data-tag-kind')))
@@ -1242,6 +1242,26 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(tag.querySelector('[data-testid="tag-cost"]')).toBeTruthy();
     await click(button => button === tag, 'Tag this chapter');
     expect(onTagChapter).toHaveBeenCalledWith(controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 1)!.id);
+  });
+  it('changes nothing on the chapter while it is being tagged again, so no edit is lost when its new tags arrive', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    let finish: () => void = () => undefined;
+    const onTagChapter = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
+    let tools: ReaderHostTools | undefined;
+    await mount(<Host controller={controller} storyId={storyId} openAtChapter={2} openInCreate onTagChapter={onTagChapter}
+      renderHostTools={current => { tools = current; return null; }} />);
+    const authoring = () => container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
+    expect(authoring().querySelector('[data-selection-mode="owned"]')).toBeTruthy();
+    await click(button => button.getAttribute('data-testid') === 'create-mode-menu', 'Chapter options');
+    await click(button => button.getAttribute('data-testid') === 'create-mode-tag', 'Tag this chapter again');
+    // While the tagger reads it, the page cannot be changed and a sound asked for in words is turned away.
+    expect(authoring().querySelector('[data-selection-mode="owned"]')).toBeNull();
+    const placed = tools!.createMode!.sounds.resolve(tools!.createMode!.sounds.soundWords[0], { kind: 'words', words: 'with a lantern' });
+    if (!placed.ok) throw new Error(placed.problem);
+    await act(async () => { await expect(tools!.createMode!.sounds.place(placed.cue)).rejects.toThrow('Wait until the chapter is tagged'); });
+    await act(async () => { finish(); });
+    await flush();
+    expect(authoring().querySelector('[data-selection-mode="owned"]')).toBeTruthy();
   });
   it('adds a Sound Cue placed in words to the open Create mode page and its saves', async () => {
     const { controller, storyId } = await story({ written: 2 });

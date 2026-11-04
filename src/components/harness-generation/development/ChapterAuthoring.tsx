@@ -133,6 +133,10 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   const [opening, setOpening] = useState<ChapterOpeningSound | undefined>(chapter.openingSound);
   const [lit, setLit] = useState<CreateTagLit>('all');
   const [retagging, setRetagging] = useState(false);
+  // While the tagger reads the chapter the controller refuses saves, and its new tags replace this page:
+  // nothing on it changes until the tagging is done, so no edit is made only to be lost.
+  const retaggingNow = useRef(false);
+  const changeable = editable && !retagging;
   const [tagProblem, setTagProblem] = useState<string>();
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState<'saved' | 'saving' | 'failed'>('saved');
@@ -144,6 +148,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     ? chapter.mediaLoadout : controller.describeStoryMedia(chapter.storyId) ?? chapter.mediaLoadout), [chapter.mediaLoadout, chapter.storyId, controller]);
   /** The chapter's opening music or atmosphere: the writer's (cleared) or one the reader chose. */
   const chooseOpening = (kind: SoundtrackChangeKind, id: string) => {
+    if (retaggingNow.current) return;
     const next: ChapterOpeningSound = { ...opening };
     if (kind === SOUNDSCAPE_CHANGE_KIND) { if (id === WRITER_OPENING) delete next.soundscape; else next.soundscape = { pieceId: id }; }
     else if (id === WRITER_OPENING) delete next.atmosphere; else next.atmosphere = { atmosphereId: id };
@@ -217,6 +222,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     blocks: () => latest.current.manuscript.paragraphs.map(paragraph => ({ id: paragraph.id, text: paragraph.text })),
     soundCues: () => placedSoundCues(latest.current),
     addSoundCue: cue => {
+      if (retaggingNow.current) return Promise.reject(new Error('Wait until the chapter is tagged before adding sounds.'));
       const current = latest.current;
       // Reviewed before an edit: its words must still be exactly where they were, or it is asked for again.
       const paragraph = current.manuscript.paragraphs.find(entry => entry.id === cue.anchor.blockId);
@@ -238,6 +244,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     },
   }));
   const update = (change: (current: ChapterState) => ChapterState) => {
+    if (retaggingNow.current) return;
     const next = change(state);
     if (next === state) return;
     setState(next);
@@ -292,6 +299,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   // eslint-disable-next-line react-hooks/exhaustive-deps -- opens is read from the chapter and its opening
   }, [state, chapter, entries, opening, soundtrack, account]);
   const tag = tagging && !tagging.gap ? async () => {
+    retaggingNow.current = true;
     setRetagging(true);
     setTagProblem(undefined);
     try {
@@ -299,6 +307,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     } catch (error) {
       setTagProblem(error instanceof Error ? error.message : 'The chapter could not be tagged.');
     } finally {
+      retaggingNow.current = false;
       setRetagging(false);
     }
   } : undefined;
@@ -323,7 +332,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
             const { title, detail } = describeWaiting(attachment);
             return <li key={attachment.id} className="flex items-start justify-between gap-3 rounded-lg border border-(--reader-light)/10 bg-(--reader-surface-raised)/50 px-3 py-2">
               <span className="min-w-0 text-xs leading-relaxed"><span className="block font-medium text-(--reader-text)">{title}</span><span className="text-(--reader-text-dim)">{detail}</span></span>
-              <button type="button" onClick={() => update(current => removeAttachment(current, attachment.id))}
+              <button type="button" disabled={retagging} onClick={() => update(current => removeAttachment(current, attachment.id))}
                 className="min-h-11 shrink-0 rounded-lg border border-(--reader-light)/15 px-3 text-xs text-(--reader-text-soft) hover:bg-(--reader-light)/10">Remove</button>
             </li>;
           })}
@@ -335,8 +344,8 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       className="mt-1 text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-(--reader-light) sm:text-[length:calc(1.875rem*var(--reader-scale,1))]">{chapterTitleText(chapter.title) || chapter.title}</h1>
     {/* A quiet gutter on phones gives the overlay's ¶ numbers room, so turning an overlay on never moves a word. */}
     <div className="ps-3 sm:ps-0">
-      <HighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={editable ? edit : keepProse}
-        {...editable ? { actions, removeActions } : {}} editable={editable} overlay={overlay} locale={locale} className="mt-6 text-(--reader-text-soft)"
+      <HighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={changeable ? edit : keepProse}
+        {...changeable ? { actions, removeActions } : {}} editable={changeable} overlay={overlay} locale={locale} className="mt-6 text-(--reader-text-soft)"
         renderBlockText={block => {
           const blockCues = cues.filter(cue => cue.anchor.blockId === block.id);
           return blockCues.length ? <InlineAudioText text={block.text} cues={blockCues} renderText={words => words} /> : block.text;

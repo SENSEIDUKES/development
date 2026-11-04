@@ -7,6 +7,8 @@ import { EnergySunIcon } from './EnergySunIcon';
 
 export type EnergyActionCostProps = {
   className?: string;
+  /** A price-only total of a projected catalog action (several chapters tagged at once), labeled as projected too. */
+  projected?: boolean;
 } & ({ actionId: EnergyActionId; price?: never } | { price: number; actionId?: never });
 
 /**
@@ -15,13 +17,13 @@ export type EnergyActionCostProps = {
  * renders nothing for an action that has no price yet. A chapter or image
  * shows its grade's price for the host's model (`EnergyModelsProvider`).
  */
-export function EnergyActionCost({ actionId, price, className = '' }: EnergyActionCostProps) {
+export function EnergyActionCost({ actionId, price, className = '', projected = false }: EnergyActionCostProps) {
   const entry = actionId ? getEnergyPriceEntry(actionId) : null;
   const graded = useActionEnergyPrice(actionId ?? 'chapter.generate');
   const resolved = entry ? (entry.price === null ? null : graded) : price ?? null;
   if (resolved === null) return null;
   const display = entry && entry.price !== null ? formatEnergyPriceRange({ ...entry, price: resolved }) : formatEnergy(resolved);
-  const label = `Costs ${display} Energy${entry?.projected ? ' (projected)' : ''}`;
+  const label = `Costs ${display} Energy${entry?.projected || projected ? ' (projected)' : ''}`;
   return (
     <span className={`energy-action-cost energy-badge ${className}`.trim()} data-energy-action={actionId ?? undefined} title={label} aria-label={label} role="img">
       <EnergySunIcon className="energy-glyph" />

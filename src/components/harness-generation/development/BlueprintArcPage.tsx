@@ -124,8 +124,8 @@ export function BlueprintArcPage({ state, storyId, controller, onBack, onPlanArc
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" className={primaryButton} disabled={busy} onClick={() => void accept()}>
             {edit.canAccept ? `Accept and ${mode === 'survival' ? 'direct' : 'write'} Chapter ${nextChapter}` : continueLabel}
-            {/* Accept and write writes the chapter; Accept and direct only opens Fate. */}
-            {edit.canAccept && mode !== 'survival' && writeCost && <span className="ms-2 inline-flex align-middle">{writeCost}</span>}
+            {/* Outside Fate Survival this button writes the chapter; there it only opens Fate. */}
+            {mode !== 'survival' && writeCost && <span className="ms-2 inline-flex align-middle">{writeCost}</span>}
           </button>
           {edit.canAccept && <p className="text-xs text-(--reader-text-dim)">{mode === 'survival'
             ? 'Accept the goals as written, or edit them once. They lock when the chapter is generated.'

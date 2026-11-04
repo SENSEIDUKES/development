@@ -76,6 +76,8 @@ interface StoryBankCardProps {
   onUseSeed: (record: StorySeedRecord) => void;
   onExportSeed: (record: StorySeedRecord) => void;
   onManifest: (record: StorySeedRecord) => void;
+  /** The host's Energy price on Manifest Novel, which starts the story and writes Chapter 1. */
+  price?: ReactNode;
 }
 
 /** Dossier metadata chip — the same quiet pill the Blueprint review uses. */
@@ -102,6 +104,7 @@ const StoryBankCard = ({
   onUseSeed,
   onExportSeed,
   onManifest,
+  price,
 }: StoryBankCardProps) => {
   const premise = record.seed.story.required.premise.trim();
   const { genre, style } = record.seed.story.required;
@@ -229,6 +232,7 @@ const StoryBankCard = ({
                 : 'Manifest a World Blueprint before the novel'}
             >
               Manifest Novel
+              {price && !isGenerating && <span className="ms-2 inline-flex align-middle">{price}</span>}
             </ManifestButton>
           </div>
         )}
@@ -255,6 +259,8 @@ interface StoryBankProps {
   onUseSeed: (record: StorySeedRecord) => void;
   onExportSeed: (record: StorySeedRecord) => void;
   onManifest: (record: StorySeedRecord) => void;
+  /** The host's Energy price on Manifest Novel, which starts the story and writes Chapter 1. */
+  price?: ReactNode;
 }
 
 export const StoryBank = ({
@@ -272,6 +278,7 @@ export const StoryBank = ({
   onUseSeed,
   onExportSeed,
   onManifest,
+  price,
 }: StoryBankProps) => (
   <LibraryPanel as="section" aria-labelledby="story-bank-title" padding="none" className="story-bank-surface mt-6">
     {/* The same restrained celestial ambience the creation workspaces float over. */}
@@ -411,6 +418,7 @@ export const StoryBank = ({
                         onUseSeed={onUseSeed}
                         onExportSeed={onExportSeed}
                         onManifest={onManifest}
+                        price={price}
                       />
                     ))}
                   </div>

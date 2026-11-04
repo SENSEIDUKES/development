@@ -887,6 +887,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
             onUseSeed={handleUseSeed}
             onExportSeed={handleExportSavedSeed}
             onManifest={handleManifestSeed}
+            price={manifestAside}
           />
         </DeferredStorySeedView>
         {errorBanner}

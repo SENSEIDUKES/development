@@ -17,6 +17,7 @@ import { StoryBlueprintPage, type StoryBlueprintAccess, type StoryBlueprintViewP
 import type { LibraryStories } from './useLibraryStories';
 import { EnergyCostMeter } from '../../components/energy/development/EnergyCostMeter';
 import { EnergyActionCost } from '../../components/energy/development/EnergyActionCost';
+import { useActionEnergyPrice } from '../../components/energy/shared/energyModels';
 import { useWorkspaceHeaderAccessory } from '../../components/library-shell/development/WorkspaceHeader';
 import { ReaderFamiliar } from './ReaderFamiliar';
 
@@ -99,6 +100,8 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
   useEffect(() => { if (page !== 'read') setChosenChapter(undefined); }, [page]);
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(beginOnOpen);
+  // Begin Story writes Chapter 1: its price, said in words for the button's accessible name.
+  const chapterPrice = useActionEnergyPrice('chapter.generate');
   // The Familiar's recall, from the app's header, rides in the Reader's top bar beside Reader Settings.
   const familiar = useWorkspaceHeaderAccessory();
   const [readingPosition, setReadingPosition] = useState<{ chapterNumber: number }>();
@@ -194,6 +197,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
   }
   // Begin Story writes Chapter 1 in the creator's Reader: its price, where this Reader writes.
   const startCost = writes ? <EnergyActionCost actionId="chapter.generate" /> : undefined;
+  const startCostLabel = writes && chapterPrice !== null ? `costs ${chapterPrice} Energy` : undefined;
   const info = <>
     {writerAlert}
     <Page className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-world-info">
@@ -202,11 +206,11 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
             story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
             chapters={chapters} arcs={arcs} onOpenChapter={openChapter} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
-            onStart={() => { setStartOnOpen(true); onOpenReader(); }} startCost={startCost} />
+            onStart={() => { setStartOnOpen(true); onOpenReader(); }} startCost={startCost} startCostLabel={startCostLabel} />
         : <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
             onBack={onBack} chapters={chapters} arcs={arcs} onOpenChapter={openChapter} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
-            onStart={() => { setStartOnOpen(true); onOpenReader(); }} startCost={startCost} />}
+            onStart={() => { setStartOnOpen(true); onOpenReader(); }} startCost={startCost} startCostLabel={startCostLabel} />}
       {/* For testing: the whole story as one file, so a test can be shared. */}
       <div className="mx-auto mt-10 flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 border-t border-white/10 pt-4" data-testid="story-export">
         <button type="button" onClick={exportStory}

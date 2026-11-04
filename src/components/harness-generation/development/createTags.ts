@@ -74,7 +74,8 @@ export function createTagRows({ counts, findings, account }: {
     const line = account.kinds.find(entry => entry.kind === tagger);
     const quiet = account.status === 'untagged' ? 'Not tagged yet'
       : account.status === 'failed' ? 'The tagger could not read this chapter'
-      : line?.state === 'not-asked' ? 'Nothing equipped'
+      // A chapter tagged before Status existed says so, with how to fix it; any other kind never asked was never equipped.
+      : line?.state === 'not-asked' ? (kind === 'status' ? line.said : 'Nothing equipped')
       : line?.state === 'set-aside' ? line.said
       : 'Nothing found';
     return { kind, count: counts[kind], said: quiet, found: counts[kind] > 0 };

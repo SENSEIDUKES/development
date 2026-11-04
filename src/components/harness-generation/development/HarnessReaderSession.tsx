@@ -583,7 +583,8 @@ export function HarnessReaderSession({
         // Keyed by its tagging too, so a chapter tagged again opens with its new tags.
         ? <ChapterAuthoring key={`${chapter.id}:${chapter.tagging?.at ?? ''}:${authorable}`} handle={authorable ? authoringHandle : undefined} chapter={chapter} controller={controller}
             locale={story.originalLanguage} text={text} articleRef={articleRef} editable={authorable} sealedNote={authorable ? undefined : sealedNote}
-            entries={entries} tagging={onTagChapter && { gap: tagGap, run: () => onTagChapter(chapter.id), cost: renderCost?.('tag') }} />
+            entries={entries} tagging={onTagChapter && { gap: tagGap, run: () => onTagChapter(chapter.id), cost: renderCost?.('tag') }}
+            highlight={highlight} reading={reading} />
         : chapter
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
             highlight={highlight} reading={reading} text={text} />

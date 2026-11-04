@@ -21,6 +21,8 @@ import { harnessParagraphBlockId } from '../shared/chapterBody';
 import { chapterTagFindings, describeChapterTagging } from '../shared/chapterTagging';
 import type { CodexEntry } from '../../../narrative/holdings';
 import { CreateTagPanel } from './CreateTagPanel';
+import { READ_ALOUD_TONE } from './ProseChapterBody';
+import type { NarrationHighlight } from './useFollowNarration';
 import { CREATE_TAG_KINDS, createTagRows, litKinds, type CreateTagKind, type CreateTagLit } from './createTags';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { ReaderChapter } from './readerChapterBody';
@@ -110,7 +112,7 @@ const KIND_NAMES: Record<string, [string, string]> = {
  * again or removes it, or the chapter is sealed. A changed chapter is marked
  * as changed, so it is read again at its seal.
  */
-export function ChapterAuthoring({ chapter, controller, locale, text, articleRef, handle, editable = true, sealedNote, entries, tagging }: {
+export function ChapterAuthoring({ chapter, controller, locale, text, articleRef, handle, editable = true, sealedNote, entries, tagging, highlight, reading = false }: {
   chapter: ReaderChapter;
   controller: HarnessGenerationController;
   locale: string;
@@ -125,6 +127,10 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   entries?: readonly CodexEntry[];
   /** Tag this chapter (again); absent where this Reader cannot tag. */
   tagging?: { gap?: string; run: () => Promise<void>; /** The host's Energy price for it. */ cost?: ReactNode };
+  /** The sentence (or title) Listen is reading, lit as in the Reader. */
+  highlight?: NarrationHighlight;
+  /** Whether Listen is playing or paused. */
+  reading?: boolean;
 }) {
   const [state, setState] = useState<ChapterState>(() => chapterState(chapter, locale));
   // The page as last set, for a cue added in words between renders.
@@ -260,7 +266,9 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   const { actions, removeActions } = audioActions({ state, update, catalog, onNotice: setNotice, soundtrack: choices });
   // The Soundscapes and Atmospheres overlays mark where the opening begins: the reader's own, or the writer's.
   const opens = { [SOUNDSCAPE_CHANGE_KIND]: Boolean(opening?.soundscape ?? chapter.scene?.music ?? chapter.scene?.soundscape), [ATMOSPHERE_CHANGE_KIND]: Boolean(opening?.atmosphere ?? chapter.scene?.atmosphere) };
-  const overlay = useMemo(() => {
+  // The sentence Listen is reading stays lit in Create mode, as in the Reader, tags shown or hidden.
+  const spoken = reading && highlight && highlight !== 'title' ? { id: 'read-aloud', selection: highlight, tone: READ_ALOUD_TONE } : undefined;
+  const tags = useMemo(() => {
     if (lit === 'off') return undefined;
     const kinds = litKinds(lit);
     const starts = ([['soundscape', SOUNDSCAPE_CHANGE_KIND], ['atmosphere', ATMOSPHERE_CHANGE_KIND]] as const)
@@ -269,6 +277,9 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     return { marks: [...starts, ...attachmentMarks(state, kinds.map(kind => CREATE_TAG_KINDS[kind].attachment))], ...(kinds.length === 1 ? { pins: structurePins(state.manuscript) } : {}) };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- opens is read from the chapter and its opening, both deps through state and opening
   }, [lit, state, opening]);
+  const overlay = useMemo(() => !spoken ? tags : { ...tags, marks: [spoken, ...tags?.marks ?? []] },
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- spoken is rebuilt from highlight and reading
+    [tags, reading, highlight]);
   const cues = useMemo(() => placedSoundCues(state), [state]);
   // Every tag on the page as it stands (edits included), each kind counted and said.
   const account = useMemo(() => describeChapterTagging(chapter, { entries, locale }), [chapter, entries, locale]);
@@ -340,8 +351,9 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       </section>}
     </CreateTagPanel>
     <p className="font-mono text-[10px] font-normal uppercase tracking-[0.2em] text-(--reader-text-faint)">Chapter {chapter.chapterNumber}</p>
-    <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" style={{ fontFamily: text.titleFont.family }}
-      className="mt-1 text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-(--reader-light) sm:text-[length:calc(1.875rem*var(--reader-scale,1))]">{chapterTitleText(chapter.title) || chapter.title}</h1>
+    <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" data-speaking={reading && highlight === 'title' ? '' : undefined}
+      style={{ fontFamily: text.titleFont.family }}
+      className={`mt-1 rounded text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-(--reader-light) transition-colors sm:text-[length:calc(1.875rem*var(--reader-scale,1))] ${reading && highlight === 'title' ? 'bg-(--reader-accent-bright)/15' : ''}`}>{chapterTitleText(chapter.title) || chapter.title}</h1>
     {/* A quiet gutter on phones gives the overlay's ¶ numbers room, so turning an overlay on never moves a word. */}
     <div className="ps-3 sm:ps-0">
       <HighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={changeable ? edit : keepProse}

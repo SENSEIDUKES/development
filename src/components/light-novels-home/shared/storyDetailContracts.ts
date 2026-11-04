@@ -94,6 +94,8 @@ export interface StoryDetailScreenProps {
   onStart?: () => void;
   /** See `WorldCardInfoProps.startCost`. */
   startCost?: ReactNode;
+  /** See `WorldCardInfoProps.startCostLabel`. */
+  startCostLabel?: string;
   onOpenCodex?: () => void;
   /** See `WorldCardInfoProps.chapters`. */
   chapters?: readonly WorldInfoChapter[];

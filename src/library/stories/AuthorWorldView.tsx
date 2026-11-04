@@ -8,6 +8,7 @@ import { WorldCard } from '../../components/world-card/development/WorldCard';
 import { useLibraryAssets } from '../assets';
 import { EnergyActionCost } from '../../components/energy/development/EnergyActionCost';
 import { useActionEnergyPrice } from '../../components/energy/shared/energyModels';
+import { getEnergyPriceEntry } from '../../components/energy/shared/energyContracts';
 import { StoryBlueprintPage } from './StoryBlueprint';
 import { StorySettings } from './settings/StorySettings';
 import { isStoryPublished, storyOrigin } from './storyView';
@@ -340,7 +341,7 @@ function ChapterTable({ stories, storyId, onOpenChapter }: { stories: LibrarySto
         : <>
             <ManifestButton size="md" icon={Sparkles} disabled={!chosen.length} onClick={() => void tag()}>
               {chosen.length ? `Tag ${chosen.length === 1 ? '1 chapter' : `${chosen.length} chapters`}` : 'Tag'}
-              {chosen.length > 0 && tagPrice !== null && <EnergyActionCost price={tagPrice * chosen.length} className="ms-2" />}
+              {chosen.length > 0 && tagPrice !== null && <EnergyActionCost price={tagPrice * chosen.length} projected={getEnergyPriceEntry('chapter.tag').projected} className="ms-2" />}
             </ManifestButton>
             <p className="text-xs text-neutral-400" data-testid="author-world-cost">
               {chosen.length

@@ -581,8 +581,9 @@ export function HarnessReaderSession({
       {storageError && <p role="alert" className="mt-3 text-sm text-(--reader-warning-bright)">{storageError}</p>}
 
       {authoring
-        // Keyed by its tagging too, so a chapter tagged again opens with its new tags.
-        ? <ChapterAuthoring key={`${chapter.id}:${chapter.tagging?.at ?? ''}:${authorable}`} handle={authorable ? authoringHandle : undefined} chapter={chapter} controller={controller}
+        // Keyed by its tagging too (a full read and a media-only read alike), so a chapter tagged again
+        // opens with its new tags and no edit saves the tags it had before over them.
+        ? <ChapterAuthoring key={`${chapter.id}:${chapter.tagging?.at ?? ''}:${chapter.tagging?.media?.at ?? ''}:${authorable}`} handle={authorable ? authoringHandle : undefined} chapter={chapter} controller={controller}
             locale={story.originalLanguage} text={text} articleRef={articleRef} editable={authorable} sealedNote={authorable ? undefined : sealedNote}
             entries={entries} tagging={onTagChapter && { gap: tagGap, mediaGap: mediaTagGap, run: focus => onTagChapter(chapter.id, focus), cost: renderCost?.('tag') }}
             highlight={highlight} reading={reading} />

@@ -9,7 +9,7 @@ import { createRoot } from '../../../test-utils/createReaderRoot';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { STOPPED_WRITE_REPLY, writtenChapter } from '../../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
-import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessReaderWriting, type ReaderChapterBody, type ReaderHostTools } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationController, HarnessReaderSession, notesOfTaggedChapter, type HarnessGenerationModelAdapter, type HarnessTagRequest, type HarnessGenerationRequest, type HarnessReaderWriting, type ReaderChapterBody, type ReaderHostTools } from '@seihouse/sen/harness-generation';
 import type { ReadAloudVoicePicks, ReaderFonts, ReaderPreferenceStorage, ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { installFakeSpeechSynthesis, type FakeSpeechSynthesis } from '../../../test-utils/fakeSpeechSynthesis';
 import { ReaderMixerProvider, type ReaderMixer, type ReaderMixerSleepEvent } from '@seihouse/audio-player';
@@ -87,7 +87,7 @@ function Host({ controller, storyId, readerState, renderWriting, renderWriteAsid
   startOnOpen?: boolean; canWrite?: boolean; canRewrite?: boolean;
   readerPreferences?: ReaderPreferenceStorage; readAloudVoices?: ReadAloudVoicePicks;
   readerFonts?: ReaderFonts; chapterBody?: ReaderChapterBody; renderHostTools?: (tools: ReaderHostTools) => React.ReactNode;
-  creator?: boolean; openAtChapter?: number; openInCreate?: boolean; onTagChapter?: (chapterId: string) => Promise<void>; renderCost?: (action: 'chapter' | 'tag' | 'picture') => React.ReactNode;
+  creator?: boolean; openAtChapter?: number; openInCreate?: boolean; onTagChapter?: (chapterId: string, focus?: 'media') => Promise<void>; renderCost?: (action: 'chapter' | 'tag' | 'picture') => React.ReactNode;
 }) {
   const [state, setState] = useState(controller.snapshot());
   useEffect(() => { const stop = controller.subscribe(setState); return () => { stop(); }; }, [controller]);
@@ -1255,6 +1255,26 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     // A story-info kind lit alone does not offer it.
     await click(button => button.getAttribute('data-tag-kind') === 'speakers', 'Speakers');
     expect(container.querySelector('[data-testid="create-tag-media-inline"]')).toBeNull();
+  });
+  it('shows the new cues in Create mode after Tag media again, so no edit saves the old ones over them', async () => {
+    const { controller, storyId, adapter } = await story({ written: 2 });
+    const chapterId = controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 1)!.id;
+    // The media read puts the beast's roar on the seawall instead.
+    adapter.tagChapter = vi.fn(async (request: HarnessTagRequest) => ({
+      rawProviderResponse: JSON.stringify({ notes: notesOfTaggedChapter(request.paragraphs.map(paragraph =>
+        paragraph.replace('beyond the seawall', 'beyond [[sound: beast roar | the seawall | low]]'))) }),
+      providerReceipt: receipt,
+    }));
+    await mount(<Host controller={controller} storyId={storyId} openAtChapter={1} openInCreate
+      onTagChapter={(id, focus) => controller.retagChapter(storyId, id, focus ? { focus } : {})} />);
+    await click(button => button.getAttribute('data-tag-kind') === 'cues', 'Sound Cues');
+    await click(button => button.getAttribute('data-testid') === 'create-tag-media-inline', 'Tag media again');
+    await flush();
+    expect(controller.snapshot().chapters.find(chapter => chapter.id === chapterId)!.soundCues!.map(cue => cue.anchor.selectedText)).toEqual(['the seawall']);
+    // The page Create mode holds is the chapter as it now stands: the new cue, not the old one.
+    const cueMarks = [...container.querySelectorAll('[data-testid="chapter-authoring"] .sen-overlay-mark')].map(mark => mark.getAttribute('data-overlay-id'));
+    const cue = controller.snapshot().chapters.find(chapter => chapter.id === chapterId)!.soundCues![0];
+    expect(cueMarks).toContain(`mark:${cue.id}`);
   });
   it('changes nothing on the chapter while it is being tagged again, so no edit is lost when its new tags arrive', async () => {
     const { controller, storyId } = await story({ written: 2 });

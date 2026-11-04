@@ -41,6 +41,7 @@ import { storyWorldRecord } from '../shared/foundation';
 import { deriveStoryCodex, type CodexPictureMaker, type CodexPictures } from '../shared/storyCodex';
 import { BlueprintArcPage } from './BlueprintArcPage';
 import { ChapterAuthoring, type ChapterAuthoringHandle } from './ChapterAuthoring';
+import type { CreateTagLit } from './createTags';
 import { ChapterRewrite } from './ChapterRewrite';
 import { FatePage } from './FatePage';
 import { ProseChapterBody } from './ProseChapterBody';
@@ -365,6 +366,8 @@ export function HarnessReaderSession({
   const pageOpen = layer?.kind === 'page';
   // Create mode: the reader authors the chapter on screen in place. It closes when another chapter opens.
   const [creating, setCreating] = useState(openInCreate && creator);
+  // What Create mode lights outlives its page: from chapter to chapter, and through a chapter tagged again.
+  const [createLit, setCreateLit] = useState<CreateTagLit>('all');
   // Create mode's page, for Sound Cues asked for in words: they read and join it, never a separate save.
   const authoringHandle = useRef<ChapterAuthoringHandle>(null);
   useLayoutEffect(() => {
@@ -586,7 +589,7 @@ export function HarnessReaderSession({
         ? <ChapterAuthoring key={`${chapter.id}:${chapter.tagging?.at ?? ''}:${chapter.tagging?.media?.at ?? ''}:${authorable}`} handle={authorable ? authoringHandle : undefined} chapter={chapter} controller={controller}
             locale={story.originalLanguage} text={text} articleRef={articleRef} editable={authorable} sealedNote={authorable ? undefined : sealedNote}
             entries={entries} tagging={onTagChapter && { gap: tagGap, mediaGap: mediaTagGap, run: focus => onTagChapter(chapter.id, focus), cost: renderCost?.('tag') }}
-            highlight={highlight} reading={reading} />
+            highlight={highlight} reading={reading} lit={createLit} onLight={setCreateLit} />
         : chapter
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
             highlight={highlight} reading={reading} text={text} />

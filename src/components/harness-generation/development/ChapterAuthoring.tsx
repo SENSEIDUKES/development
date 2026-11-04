@@ -118,7 +118,7 @@ const KIND_NAMES: Record<string, [string, string]> = {
  * again or removes it, or the chapter is sealed. A changed chapter is marked
  * as changed, so it is read again at its seal.
  */
-export function ChapterAuthoring({ chapter, controller, locale, text, articleRef, handle, editable = true, sealedNote, entries, tagging, highlight, reading = false }: {
+export function ChapterAuthoring({ chapter, controller, locale, text, articleRef, handle, editable = true, sealedNote, entries, tagging, highlight, reading = false, lit: litFromHost, onLight }: {
   chapter: ReaderChapter;
   controller: HarnessGenerationController;
   locale: string;
@@ -145,13 +145,21 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   highlight?: NarrationHighlight;
   /** Whether Listen is playing or paused. */
   reading?: boolean;
+  /**
+   * What the page lights, when the host keeps it: then it outlives this page,
+   * from chapter to chapter and through a chapter tagged again. Without it the page keeps its own.
+   */
+  lit?: CreateTagLit;
+  onLight?: (lit: CreateTagLit) => void;
 }) {
   const [state, setState] = useState<ChapterState>(() => chapterState(chapter, locale));
   // The page as last set, for a cue added in words between renders.
   const latest = useRef(state);
   latest.current = state;
   const [opening, setOpening] = useState<ChapterOpeningSound | undefined>(chapter.openingSound);
-  const [lit, setLit] = useState<CreateTagLit>('all');
+  const [ownLit, setOwnLit] = useState<CreateTagLit>('all');
+  const lit = litFromHost ?? ownLit;
+  const setLit = onLight ?? setOwnLit;
   const [retagging, setRetagging] = useState<'all' | 'media'>();
   // While the tagger reads the chapter the controller refuses saves, and its new tags replace this page:
   // nothing on it changes until the tagging is done, so no edit is made only to be lost.

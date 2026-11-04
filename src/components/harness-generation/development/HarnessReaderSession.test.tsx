@@ -1275,6 +1275,9 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     const cueMarks = [...container.querySelectorAll('[data-testid="chapter-authoring"] .sen-overlay-mark')].map(mark => mark.getAttribute('data-overlay-id'));
     const cue = controller.snapshot().chapters.find(chapter => chapter.id === chapterId)!.soundCues![0];
     expect(cueMarks).toContain(`mark:${cue.id}`);
+    // Sound Cues stays lit alone through the reopened page, and Tag media again is ready again.
+    expect(container.querySelector('[data-testid="create-mode-panel"]')!.getAttribute('data-lit')).toBe('cues');
+    expect(container.querySelector('[data-testid="create-tag-media-inline"]')!.textContent).toContain('Tag media again');
   });
   it('changes nothing on the chapter while it is being tagged again, so no edit is lost when its new tags arrive', async () => {
     const { controller, storyId } = await story({ written: 2 });

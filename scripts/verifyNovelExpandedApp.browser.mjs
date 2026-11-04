@@ -1144,7 +1144,9 @@ async function walk(browser, viewport, sample) {
   for (let waited = 0; waited < 100 && counts.tags.length === tagsBeforeMedia; waited += 1) await page.waitForTimeout(100);
   check(counts.tags.length === tagsBeforeMedia + 1 && counts.tags.at(-1).focus === 'media' && counts.tags.at(-1).subjects.length === 0,
     `Tag media again should read the chapter's media alone, once, got ${JSON.stringify(counts.tags.slice(tagsBeforeMedia))}`);
+  // The page reopens with its new cues and keeps Sound Cues lit alone, so the button is back, ready again.
   await page.getByTestId('create-tag-media-inline').getByText('Tag media again').waitFor();
+  check((await page.getByTestId('create-mode-panel').getAttribute('data-lit')) === 'cues', 'Sound Cues should stay lit alone after Tag media again.');
   // The eye hides every tag (the reader's page) and shows them again; Tag this chapter again lives in the ⋯ menu.
   await page.getByTestId('create-mode-show-tags').click();
   check((await page.getByTestId('create-mode-panel').getAttribute('data-lit')) === 'off', 'The eye should hide every tag.');

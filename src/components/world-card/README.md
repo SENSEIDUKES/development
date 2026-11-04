@@ -26,7 +26,7 @@ Big cards show a world; small cards show many worlds.
 | Card | Job | How the reader moves | Motion |
 | --- | --- | --- | --- |
 | Feature | One spotlighted world at the top of a page | Sideways, one slide at a time, auto-advancing with a story-style segmented bar (3 to 5 slides) | The world's hero loop plays on its own |
-| Show | The main card on Home and most rows (2 across) | A sideways row with the next card peeking in; "See all" is a 2-across grid you scroll down | Tap a still: it comes alive for a moment, then enters the world |
+| Show | The main card on Home and most rows (2 across) | A sideways row with the next card peeking in; "See all" is a 2-across grid you scroll down | Its MP control plays or pauses its loop; a tap enters the world, a press and hold opens its story information |
 | Compact | Many worlds at once (4 across) | Scroll down, never sideways; curated boxes show a fixed set with a Switch button | None; the Info page carries it |
 | Menu | Lists: updates, rankings, your library | A short paged block on Home; "View all" is a long list you scroll down | None |
 
@@ -50,30 +50,26 @@ whole card is one door into the world. The sample world's hero lives at
 
 World Card faces are styled only in `world-card.css`. The app's Library Look
 skin does not restyle them (no gold rim, fill or badge changes), so the app and
-the Workshop render one card. A Novel's corner badge is the Information mark (ⓘ);
-other formats keep their label.
+the Workshop render one card. A format other than Novel keeps its corner mark; a
+Novel's information control is the keyboard's and shows only while focused.
 
-The Workshop shows one card type at a time. A sticky card-type switcher above
-the stage (chips plus previous/next arrows, remembered per browser) picks World
-Card, Info, Feature, Grid, Compact, Menu or All. The Workshop Pages controls include a viewport switcher: current browser,
-320px small phone, 390px phone, 768px tablet and 1280px desktop. Fixed sizes
-render the same preview stage in an iframe so its media queries see the chosen
-width. `canvas=1` is an internal frame mode of the existing preview route, not
-a second Workshop entry or a production surface.
-Connected media is not part of the Info page. The Workshop Info stage and the
-Library shell's world detail no longer render Home's `WorldExpressions`
-section beneath it; that component, its package export and its concept
-fixtures stay in `light-novels-home` for future use.
+## One line, one dot, one MP control (2026-11-04)
 
-Clicking Full or Compact opens that world's existing Info page through a host-supplied
-action. In the World Card Workshop, the same Info stage is shown for the
-selected card, with Back to cards. Home already routes its Full card to the
-detail screen. Create now routes Compact cards there as well; Continue and
-Studio remain separate actions below the selected world. Create's local story
-projection carries only title, chapter count, status, art, and known creator
-lettering. The Info page keeps its standard layout and omits an unavailable
-arc and tags instead of inventing them. The Workshop route retains the selected world's
-preview data in browser history for Back, Forward, and refresh.
+Every card reads the same beneath its art: the title, then **genre | creator | status**, the
+creator alive in their elemental lettering (Full, Compact, the Grid's Full cards and the Menu
+row). No card shows a chapter count: a reader may begin a world at any chapter (SENSEI,
+2026-11-04). A world that allows branching ends the line with a small branch mark that always
+keeps its place; the words give way with an ellipsis on a narrow card.
+
+Every card except World Info carries the world's activity mark (`WorldCardActivityMark`), one
+still dot in the cover's top corner: green while readers are in it now, yellow this week, nothing
+for a quiet world. On the Feature card it leads the corner tag.
+
+The Full card keeps its MP control (top-right) to play or pause its motion picture; nothing plays
+until the reader asks (SENSEI, 2026-11-04: a loop that plays by itself cannot be paused and loops
+without end). A tap anywhere else enters the world; a press and hold (or a phone's own long
+press) opens the story information, and the tap that ends a hold never also enters
+(`useCoverHold`).
 
 ## Why Library owns it
 
@@ -402,6 +398,10 @@ Workshop sample data remains outside the host adapter.
 
 ## Workshop history
 
+- **2026-11-04** — One details line on every card (genre | creator | status), no chapter
+  counts, and Branching as a small mark at its end. The activity mark on every card but World
+  Info. The Full card's information opens with a press and hold; its MP control stays. (Tried
+  and dropped the same day: the creator's name on the cover, and a loop that played by itself.)
 - **2026-10-30** — The Chapters card (#487) is removed: tagging is an author's
   tool and lives in Create's world view, never on World Info.
 - **2026-10-28** — With the owner's approval, removed the old copies in `reference/`

@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { ElementalTitle } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
+import { WorldCardActivityMark } from './WorldCardActivityMark';
 import { WorldCardCover } from './WorldCardCover';
 import { WorldCardRibbon } from './WorldCardRibbon';
 import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
@@ -43,7 +44,7 @@ export function WorldCardCompactTile({ world, detail, onOpen, senSash = false }:
     <span className="world-card-compact-tile-cover">
       <WorldCardCover src={world.imageUrl} title={world.title} decorative />
       {senSash && <WorldCardRibbon />}
-      {activity && <span className={`world-card-compact-tile-activity ${activity.color}`} title={activity.label} data-activity={world.activityStatus} />}
+      <WorldCardActivityMark status={world.activityStatus} className="world-card-compact-tile-activity" />
       <button type="button" className="world-card-compact-tile-open" onClick={onOpen}
         aria-label={`Open ${title.text}${language.spokenLanguage ? `, in ${language.spokenLanguage}` : ''}${creatorName ? `, creator ${creatorName}` : ''}${line ? `, ${line}` : ''}${activity ? `, ${activity.label}` : ''}`} />
     </span>

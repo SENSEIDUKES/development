@@ -135,11 +135,24 @@
 }
 .world-card-tile:hover .world-card-caption-title,
 .world-card-tile:focus-within .world-card-caption-title { color: #70d0ff; }
-/* The creator's name, in their elemental lettering when the host supplies it, beneath the title. */
-.world-card-caption-creator { margin: 0; overflow: hidden; color: #e5e5e5; font-family: var(--font-sc, serif); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
-.world-card-caption-details { margin: 0; overflow: hidden; color: #aeb7c6; font-family: sans-serif; font-size: 0.75rem; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
-/* Feature badges keep their row even when a world has none, so captions stay one height. */
-.world-card-caption-features { display: flex; flex-wrap: wrap; gap: 0.3rem; min-height: 1.35rem; margin: 0.15rem 0 0; padding: 0; list-style: none; }
+/* The creator's name beneath the title, on the small cards (the big cards carry it on the cover). */
+.world-card-caption-creator { margin: 0; overflow: hidden; color: #e5e5e5; font-family: var(--font-sc, serif); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.world-card-caption-details { display: flex; align-items: center; min-width: 0; margin: 0; color: #aeb7c6; font-family: sans-serif; font-size: 0.75rem; line-height: 1.3; white-space: nowrap; }
+/* The words give way with an ellipsis; the branch mark after them always keeps its place. */
+.world-card-caption-details-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.world-card-caption-branching { flex: none; }
+/* The line never wraps, even around the creator's lettering (whose layers set their own wrapping). */
+:is(.world-card-caption-details, .world-card-menu-meta) * { white-space: nowrap; }
+/* A world that allows branching ends its line with a small branch mark. */
+.world-card-caption-branching { display: inline-flex; margin-inline-start: 0.3rem; color: #9fdcff; vertical-align: -0.15em; }
+.world-card-caption-branching svg { width: 0.85rem; height: 0.85rem; }
+
+/* A press and hold on the cover opens the story's information: no phone callout or text selection under it. */
+.world-card-base-open { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+/* A Novel's information control is the keyboard's: it shows only while focused. */
+.world-card-base-format-quiet:not(:focus-visible) { opacity: 0; pointer-events: none; }
+/* With an activity mark in the corner, a visible format mark steps aside for it. */
+.world-card-base-media:has(.world-card-activity-mark) .world-card-base-format:not(.world-card-base-format-quiet) { left: 1.5rem; }
 .world-card-feature {
   display: inline-flex; align-items: center; gap: 0.25rem; height: 1.35rem; padding-inline: 0.4rem;
   border: 1px solid rgba(203, 213, 225, 0.7); border-radius: 0.3rem; color: #e5e7eb;
@@ -806,6 +819,30 @@
    (Thai, Vietnamese, Hindi), keeps a right-to-left name reading correctly while it sits on the
    page's side like every other name, and fades out at the edge when a name is longer than the
    card (an animated title is one piece, so it cannot end in an ellipsis). */
+/* On the art's top-left corner (the sash keeps the bottom-right), with a soft glow of its own color. */
+/* The activity mark: one still dot in a cover's top corner, on every card (green now, yellow this week). */
+.world-card-activity-mark {
+  position: absolute; z-index: 6; top: 0.5rem; inset-inline-start: 0.5rem; width: 0.5rem; height: 0.5rem; border-radius: 50%;
+  box-shadow: 0 0 8px currentColor, 0 1px 3px rgba(0, 0, 0, 0.45); pointer-events: none;
+}
+.world-card-activity-mark[data-activity='active-now'] { color: rgba(52, 211, 153, 0.7); }
+.world-card-activity-mark[data-activity='active-this-week'] { color: rgba(251, 191, 36, 0.45); }
+.world-card-compact-tile-activity { z-index: 3; top: 0.4rem; inset-inline-start: 0.4rem; }
+.world-card-menu-activity { top: 0.25rem; inset-inline-start: 0.25rem; width: 0.4rem; height: 0.4rem; }
+/* On the Feature card the mark leads the corner tag; with no tag it stands in the corner. */
+.world-card-banner-activity { position: static; display: inline-block; margin-inline-end: 0.5em; vertical-align: 0.05em; }
+.world-card-banner-activity-corner { position: absolute; z-index: 1; top: 1rem; inset-inline-start: 1rem; }
+/* A small cover: the sash takes a larger share of the corner and smaller lettering, so SEN and
+   both stars stay inside the band. */
+.world-card-compact-tile-cover .world-card-ribbon { width: 56cqw; height: 56cqw; }
+.world-card-compact-tile-cover .world-card-ribbon > span {
+  width: 96cqw; gap: 0.3em; font-size: clamp(0.4375rem, 7.4cqw, 0.625rem); letter-spacing: 0.16em; padding-left: 0.16em;
+  transform: translate(-50%, -50%) translate(10cqw, 10cqw) rotate(-45deg);
+}
+.world-card-compact-tile-detail {
+  color: rgba(229, 231, 235, 0.55); font-family: sans-serif; font-size: 0.6875rem; line-height: 1.2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .world-card-compact-tile-creator {
   display: block; min-width: 0; max-width: 100%; overflow: hidden; padding-block: 0.1em; color: #e5e5e5;
   font-family: var(--font-sc, serif); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em; line-height: 1.45;
@@ -818,24 +855,6 @@
   mask-image: linear-gradient(270deg, #000 calc(100% - 0.9rem), transparent);
 }
 .world-card-compact-tile-creator > * { white-space: nowrap; overflow-wrap: normal; word-break: keep-all; unicode-bidi: isolate; }
-/* On the art's top-left corner (the sash keeps the bottom-right), with a soft glow of its own color. */
-.world-card-compact-tile-activity {
-  position: absolute; z-index: 3; top: 0.4rem; inset-inline-start: 0.4rem; width: 0.5rem; height: 0.5rem; border-radius: 50%;
-  box-shadow: 0 0 8px currentColor, 0 1px 3px rgba(0, 0, 0, 0.45); pointer-events: none;
-}
-.world-card-compact-tile-activity[data-activity='active-now'] { color: rgba(52, 211, 153, 0.7); }
-.world-card-compact-tile-activity[data-activity='active-this-week'] { color: rgba(251, 191, 36, 0.45); }
-/* A small cover: the sash takes a larger share of the corner and smaller lettering, so SEN and
-   both stars stay inside the band. */
-.world-card-compact-tile-cover .world-card-ribbon { width: 56cqw; height: 56cqw; }
-.world-card-compact-tile-cover .world-card-ribbon > span {
-  width: 96cqw; gap: 0.3em; font-size: clamp(0.4375rem, 7.4cqw, 0.625rem); letter-spacing: 0.16em; padding-left: 0.16em;
-  transform: translate(-50%, -50%) translate(10cqw, 10cqw) rotate(-45deg);
-}
-.world-card-compact-tile-detail {
-  color: rgba(229, 231, 235, 0.55); font-family: sans-serif; font-size: 0.6875rem; line-height: 1.2;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
 @media (min-width: 640px) {
   .world-card-compact-tile-title { font-size: 0.9375rem; }
   .world-card-compact-tile-detail, .world-card-compact-tile-creator { font-size: 0.75rem; }

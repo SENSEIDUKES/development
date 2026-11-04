@@ -4,6 +4,7 @@ import { ElementalTitle } from '@seihouse/ui';
 import { useDominantColor } from '@seihouse/sen/motion-picture';
 import type { WorldCardFeatureProps } from '../shared/worldCardContracts';
 import { prefersReducedMotion, WorldCardBackdropVideo, type WorldCardBackdropVideoHandle } from './WorldCardBackdropVideo';
+import { WorldCardActivityMark } from './WorldCardActivityMark';
 import { WorldCardRibbon } from './WorldCardRibbon';
 import { WORLD_STATUS_LABELS } from './worldCardStatus';
 import { authorText, useLanguagePeek, useWorldTitle } from './worldCardText';
@@ -42,7 +43,8 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
   const genre = world.genre?.trim();
   const synopsis = world.synopsis?.trim();
   // One text per part, so the genre and status each show in the reader's language.
-  const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean)
+  // No chapter count: a reader may begin a world at any chapter.
+  const details = [genre, statusLabel].filter(Boolean)
     .map((part, index) => <span key={part}>{index > 0 && ' | '}{part}</span>);
   const openLabel = `Open ${title.text}${language.spokenLanguage ? `, in ${language.spokenLanguage}` : ''}, ${world.chapterCount} chapters${world.creatorName ? `, creator ${world.creatorName}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
 
@@ -59,7 +61,10 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
     <span className="world-card-banner-wash" aria-hidden="true" />
     {senSash && <span className="world-card-banner-sash" aria-hidden="true"><WorldCardRibbon /></span>}
     {/* The section's name sits in the corner, off the art; the words below keep fixed places. */}
-    {label && <p className="world-card-banner-eyebrow">{label}</p>}
+    {/* The world's activity mark leads the corner tag (or stands in the corner alone). */}
+    {label
+      ? <p className="world-card-banner-eyebrow"><WorldCardActivityMark status={world.activityStatus} className="world-card-banner-activity" />{label}</p>
+      : <WorldCardActivityMark status={world.activityStatus} className="world-card-banner-activity world-card-banner-activity-corner" />}
     <div className="world-card-banner-body">
       <h3 className="world-card-banner-title font-display" {...authorText(title.lang)}>{title.text}</h3>
       {world.creatorName && <p className="world-card-banner-byline">

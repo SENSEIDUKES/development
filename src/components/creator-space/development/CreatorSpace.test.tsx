@@ -71,9 +71,9 @@ it('selects the most recent world first and retargets exactly two actions to the
   const cards = Array.from(container.querySelectorAll<HTMLElement>('.world-card-compact'));
   const opens = cards.map(card => card.querySelector<HTMLElement>('.world-card-base-open')!);
   expect(opens.map(open => open.getAttribute('aria-label'))).toEqual([
-    'Open The Last Lotus of the Jade Empire, 24 chapters, Draft',
-    'Open Ashes of the Nine Moons, 12 chapters, Draft',
-    'Open The Pavilion Beneath the Lake, 40 chapters, Complete',
+    'Open The Last Lotus of the Jade Empire, 24 chapters, Draft. Press and hold for story information',
+    'Open Ashes of the Nine Moons, 12 chapters, Draft. Press and hold for story information',
+    'Open The Pavilion Beneath the Lake, 40 chapters, Complete. Press and hold for story information',
   ]);
   expect(cards[0].getAttribute('data-selected')).toBe('true');
   expect(selected()?.querySelector('h3')?.textContent).toBe('The Last Lotus of the Jade Empire');

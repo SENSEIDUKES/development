@@ -470,6 +470,19 @@ describe('Fixer: the rest of the record', () => {
     const renamedState = { ...state, codexEntries: named.entries, chapters: state.chapters.map(entry => (entry.id === latest.id ? { ...named.chapter, fixer: { checkedAt: runtime.now(), fixes: named.fixes } } : entry)) };
     const rewound = withoutLatestChapter(renamedState, latest.storyId);
     expect(rewound.codexEntries.find(entry => entry.id === envoy.id)).toEqual(envoy);
+
+    // Renamed twice in the chapter: the rewrite gives back the name before both (review finding, Codex, 2026-11-04).
+    const twice = [
+      ...named.fixes,
+      { checks: ['possible-name' as const], problems: [], outcome: 'named' as const, before: 'Envoy Ming', after: 'Envoy Ming',
+        named: { entryId: envoy.id, name: 'Envoy Ming', previousName: 'Envoy Lan' } },
+    ];
+    const renamedTwice = {
+      ...state,
+      codexEntries: named.entries.map(entry => (entry.id === envoy.id ? { ...entry, name: 'Envoy Ming', aliases: ['Masked Envoy', 'Envoy Lan'] } : entry)),
+      chapters: state.chapters.map(entry => (entry.id === latest.id ? { ...named.chapter, fixer: { checkedAt: runtime.now(), fixes: twice } } : entry)),
+    };
+    expect(withoutLatestChapter(renamedTwice, latest.storyId).codexEntries.find(entry => entry.id === envoy.id)).toEqual(envoy);
   });
 
   it('asks about someone dead who speaks, and records how they are now when the story brought them back', async () => {

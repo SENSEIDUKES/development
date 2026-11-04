@@ -98,8 +98,9 @@ export function withoutLatestChapter(state: HarnessWorkspaceState, storyId: stri
     kept.aliases = kept.aliases.filter(alias => alias !== merged!.alias);
     if (!kept.aliases.length) delete kept.aliases;
   }
-  // A name the fixer gave a character because this chapter's prose called them by it.
-  for (const { named } of latest.fixer?.fixes ?? []) {
+  // A name the fixer gave a character because this chapter's prose called them by it,
+  // undone last first: a character renamed twice gets back the name before both.
+  for (const { named } of [...latest.fixer?.fixes ?? []].reverse()) {
     const entry = named ? next.codexEntries.find(candidate => candidate.id === named.entryId) : undefined;
     if (!entry || !named) continue;
     const { name, previousName } = named;

@@ -7,7 +7,9 @@
   open the creator's Reader, the Reader's Back returns to it, and its Back returns to the book
   in Create. A reader's World Info (`?story=<id>`) is unchanged. A chapter's Read it still opens
   that chapter in the creator's Reader. The world view gains an **Info** tab after Assets: when
-  the book was created and last updated, and **Export book**.
+  the book was created and last updated, **Publish** and **Export book**. Publish moved there
+  from beside Read: it is a testing placeholder, since real publishing will come with user
+  agreements and a subscription (it is monetized), so it is never a one-tap button by Read.
 - **2026-11-03** — **A book stays in Create until its creator publishes it** (SENSEI). Start Story no longer
   puts a new book in front of readers: it opens the creator's Reader in Create
   (`?page=create&world=<id>&read=1`), where Chapter 1 arrives and Fate and Create sit

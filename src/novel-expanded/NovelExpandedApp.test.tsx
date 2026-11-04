@@ -157,6 +157,11 @@ const publishedStoryWithChapter = async (repository: InMemoryHarnessGenerationRe
 };
 /** The creator's Reader of a world, opened from Create. */
 const writeAddress = (storyId: string, chapterNumber?: number) => `/app/?page=create&world=${storyId}&read=1${chapterNumber ? `&chapter=${chapterNumber}` : ''}`;
+/** The author's world view's Info tab, where Publish and Export live. */
+const openWorldInfoTab = async () => {
+  const tab = [...document.querySelectorAll<HTMLButtonElement>('[data-testid="author-world-tabs"] [role="tab"]')].find(entry => entry.textContent === 'Info');
+  await click(tab, 'Info', 10);
+};
 /** A book's World Info opened from Create: its creator's. */
 const infoAddress = (storyId: string) => `/app/?page=create&world=${storyId}&info=1`;
 
@@ -950,6 +955,9 @@ describe('NovelExpanded: publishing, and the creator\'s and the reader\'s Reader
     const services = appServices(story.writer);
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer, regularSeedRecord(), { draft: true });
     await render(services, `/app/?page=create&world=${created.id}`);
+    // Publish lives in Info, never by Read.
+    expect(document.querySelector('[data-testid="author-world-header"] [data-testid="author-world-publish"]')).toBeNull();
+    await openWorldInfoTab();
     await click(document.querySelector('[data-testid="author-world-publish"]'), 'Publish', 20);
     const sheet = document.querySelector<HTMLElement>('[data-testid="author-world-publish-sheet"]')!;
     expect(sheet.textContent).toContain('Write Chapter 1 first');
@@ -977,6 +985,7 @@ describe('NovelExpanded: publishing, and the creator\'s and the reader\'s Reader
     const hub = document.querySelector<HTMLElement>('[data-testid="novel-expanded-create-hub"]')!;
     await click(hub.querySelector(`button[aria-label^="Open ${created.title}"]`), 'the world card', 40);
     expect(address()).toBe(`/app/?page=create&world=${created.id}`);
+    await openWorldInfoTab();
     const publish = () => document.querySelector<HTMLElement>('[data-testid="author-world-publish"]')!;
     expect(publish().getAttribute('data-published')).toBeNull();
     expect(publish().textContent).toBe('Publish');

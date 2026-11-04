@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkshopHome } from './WorkshopHome';
 import { getWorkshopVersionLabel, WORKSHOP_OWNER_LABELS, workshopEntries } from './manifest';
+
+const stylesSource = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8');
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let container: HTMLDivElement;
@@ -233,5 +237,16 @@ describe('WorkshopHome', () => {
     const stageModeBtn = container.querySelector<HTMLButtonElement>('[data-workshop-mode="stage"]')!;
     act(() => stageModeBtn.click());
     expect(main.getAttribute('data-panel-mode')).toBe('stage');
+
+    // Stylesheet contract for index-mode panel toggling and wider-viewport split
+    expect(stylesSource).toMatch(
+      /\.workshop-home\[data-workshop-stage\]\[data-panel-mode='index'\]\s+\.workshop-stage-view\s*\{\s*display:\s*none;\s*\}/,
+    );
+    expect(stylesSource).toMatch(
+      /\.workshop-home\[data-workshop-stage\]\[data-panel-mode='index'\]\s+\.workshop-index-view\s*\{\s*display:\s*flex;/,
+    );
+    expect(stylesSource).toMatch(
+      /\.workshop-home\[data-workshop-stage\]\s+\.workshop-stage-view,\s*\.workshop-home\[data-workshop-stage\]\[data-panel-mode='index'\]\s+\.workshop-stage-view\s*\{\s*display:\s*flex;\s*\}/,
+    );
   });
 });

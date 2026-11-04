@@ -397,6 +397,7 @@ export function WorkshopHome() {
       setActiveTab(readWorkshopTab());
       setActiveGroup('all');
       setSelectedEntryId(null);
+      setArchiveOpen(false);
     };
     window.addEventListener('popstate', restoreLocation);
     return () => window.removeEventListener('popstate', restoreLocation);
@@ -617,6 +618,9 @@ export function WorkshopHome() {
                       <span className="workshop-stage-counter" data-workshop-counter>
                         {activeStageIndex + 1} / {stageEntries.length}
                       </span>
+                      <span className="workshop-visually-hidden" aria-live="polite" aria-atomic="true">
+                        {currentEntry.title} ({activeStageIndex + 1} of {stageEntries.length})
+                      </span>
                       <button
                         type="button"
                         className="workshop-stage-step is-next"
@@ -695,7 +699,9 @@ export function WorkshopHome() {
                     section={tab}
                     activeGroup={activeGroup}
                     selectedId={currentEntry?.id}
-                    onFocusEntry={(id) => setSelectedEntryId(id)}
+                    onFocusEntry={(id) => {
+                      if (stageEntries.some((entry) => entry.id === id)) setSelectedEntryId(id);
+                    }}
                   />
                 </div>
               </div>

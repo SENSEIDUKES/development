@@ -862,6 +862,8 @@ body:has(.reader-glass-picker[role='dialog']) [data-workshop-controls] {
   gap: 0.4rem;
   outline: none;
   touch-action: pan-y;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .workshop-stage-window {
   flex: 1 1 auto;
@@ -1031,7 +1033,9 @@ body:has(.reader-glass-picker[role='dialog']) [data-workshop-controls] {
   background: rgba(6, 8, 15, 0.82);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .workshop-home[data-workshop-stage][data-panel-mode='index'] .workshop-stage-view {
   display: none;
@@ -1242,8 +1246,8 @@ body:has(.reader-glass-picker[role='dialog']) [data-workshop-controls] {
   flex-shrink: 0;
 }
 
-/* Wider screens (>= 768px): Stage on the left, live Index HUD beside it on the right */
-@media (min-width: 48rem) {
+/* Wider & tall screens (>= 768px x >= 576px): Stage on the left, live Index HUD beside it on the right */
+@media (min-width: 48rem) and (min-height: 36rem) {
   .workshop-stage-art {
     inset: calc(var(--workspace-header-height) + 2rem) 46% calc(var(--library-bottom-clearance) + 18.5rem) 0;
   }
@@ -1271,5 +1275,55 @@ body:has(.reader-glass-picker[role='dialog']) [data-workshop-controls] {
   .workshop-home[data-workshop-stage] .workshop-nav-tab {
     font-size: 0.65rem;
     letter-spacing: 0.02em;
+  }
+}
+
+/* Short-height viewports (e.g. 844x390 landscape phone): fold the hero window and
+   arrange key-value pairs in two columns so the primary Open action stays above the dock. */
+@media (max-height: 35.99rem) {
+  .workshop-home[data-workshop-stage] {
+    --workspace-header-height: calc(2.9rem + env(safe-area-inset-top, 0px));
+    --library-bottom-clearance: calc(3.6rem + env(safe-area-inset-bottom, 0px));
+  }
+  .workshop-hud-bar {
+    flex-wrap: nowrap;
+    padding: 0.15rem 0;
+    gap: 0.25rem;
+  }
+  .workshop-stage-window {
+    display: none;
+  }
+  .workshop-stage-hud {
+    gap: 0.3rem;
+    padding: 0.45rem 0.75rem;
+  }
+  .workshop-home[data-workshop-stage] .workshop-title {
+    font-size: 1.15rem;
+    margin-top: 0.05rem;
+  }
+  .workshop-home[data-workshop-stage] .workshop-subtitle {
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    margin-top: 0.1rem;
+    font-size: 0.7rem;
+  }
+  .workshop-kv-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1rem;
+  }
+  .workshop-kv-row {
+    padding: 0.15rem 0;
+    font-size: 0.68rem;
+  }
+  .workshop-dock {
+    bottom: max(0.2rem, env(safe-area-inset-bottom, 0px));
+  }
+  .workshop-home[data-workshop-stage] .workshop-nav {
+    padding: 0.1rem 0.2rem;
+  }
+  .workshop-home[data-workshop-stage] .workshop-nav-tab {
+    flex-direction: row;
+    gap: 0.3rem;
+    padding: 0 0.35rem;
   }
 }

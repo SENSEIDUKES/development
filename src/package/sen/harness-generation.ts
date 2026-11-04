@@ -97,6 +97,7 @@ export { SEN_SPEAKERS_INSTRUCTIONS } from '../../components/harness-generation/s
 export { SEN_HOLDINGS_INSTRUCTIONS } from '../../components/harness-generation/shared/holdingsSkill';
 export { SEN_APPEARANCE_INSTRUCTIONS } from '../../components/harness-generation/shared/appearanceSkill';
 export { SEN_STATUS_INSTRUCTIONS } from '../../components/harness-generation/shared/statusSkill';
+export { SEN_PLACE_INSTRUCTIONS } from '../../components/harness-generation/shared/placeSkill';
 export { HARNESS_TAG_RULES } from '../../components/harness-generation/shared/tagRules';
 export { isStraySoundTag, settleStraySoundTags, trimLeadingStrayPunctuation } from '../../components/harness-generation/shared/soundTagRepair';
 export {
@@ -164,6 +165,7 @@ export {
   deriveAppearances,
   describableAppearances,
   placeAppearances,
+  placeAppearancesFromPlaces,
   readAppearanceTag,
   resolveAppearances,
   thingAppearancesFromHoldings,
@@ -189,6 +191,17 @@ export {
   type ReadStatusTag,
   type StatusPlacement,
 } from '../../components/harness-generation/shared/statuses';
+export {
+  derivePlaces,
+  placeKey,
+  placeOfEntry,
+  placePlaces,
+  readPlaceTag,
+  resolvePlaces,
+  type CurrentPlace,
+  type PlacePlacement,
+  type ReadPlaceTag,
+} from '../../components/harness-generation/shared/places';
 export {
   LOOK_DECLARED_CHARACTERS,
   LOOK_PASSAGE_CHARACTERS,
@@ -218,6 +231,7 @@ export {
 export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';
 export * from '../../narrative/statuses';
+export * from '../../narrative/places';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
 export { HarnessReaderSession, type HarnessReaderWriting, type ReaderGenerationCost, type ReaderHostTools, type ReaderSoundAuthoring } from '../../components/harness-generation/development/HarnessReaderSession';

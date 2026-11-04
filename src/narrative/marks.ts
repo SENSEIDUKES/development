@@ -124,19 +124,30 @@ export const STATUS_TAG_WORDS = {
 } as const satisfies Record<string, readonly string[]>;
 
 /**
+ * The Place tag word: where a character is now, on the sentence where they
+ * arrive (`[[place: Shen Yuan | Summit Hall]]`). The name comes first, then
+ * the place.
+ */
+export const PLACE_TAG_WORDS = {
+  place: ['place', 'location', 'arrives', 'arrived', 'moved to', 'now at'],
+} as const satisfies Record<string, readonly string[]>;
+
+/**
  * The tag words of the tiny SEN language: every word-tag kind's words, each
  * with the other spellings a writer may slip into.
  */
-export const TAG_WORDS = { ...HOLDING_TAG_WORDS, ...APPEARANCE_TAG_WORDS, ...STATUS_TAG_WORDS } as const;
+export const TAG_WORDS = { ...HOLDING_TAG_WORDS, ...APPEARANCE_TAG_WORDS, ...STATUS_TAG_WORDS, ...PLACE_TAG_WORDS } as const;
 
 export type TagWord = keyof typeof TAG_WORDS;
 export type HoldingTagWord = keyof typeof HOLDING_TAG_WORDS;
 export type AppearanceTagWord = keyof typeof APPEARANCE_TAG_WORDS;
 export type StatusTagWord = keyof typeof STATUS_TAG_WORDS;
+export type PlaceTagWord = keyof typeof PLACE_TAG_WORDS;
 
 export const isHoldingTagWord = (word: TagWord): word is HoldingTagWord => word in HOLDING_TAG_WORDS;
 export const isAppearanceTagWord = (word: TagWord): word is AppearanceTagWord => word in APPEARANCE_TAG_WORDS;
 export const isStatusTagWord = (word: TagWord): word is StatusTagWord => word in STATUS_TAG_WORDS;
+export const isPlaceTagWord = (word: TagWord): word is PlaceTagWord => word in PLACE_TAG_WORDS;
 
 /** A word tag, and where it sat in the clean text: it points at what follows it. */
 export interface WordTag {
@@ -547,9 +558,9 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
         else if (parts.length < 2) wordTagIssues.push({ kind: 'incomplete', word });
         else {
           wordTags.push({ word, ...(spelling !== word ? { spelling } : {}), parts, offset: text.length });
-          // The name a tag names: a holding's thing (its second part), an appearance's or a status's
-          // subject (its first), never the main character's own tag, never a rank.
-          const named = isAppearanceTagWord(word) || isStatusTagWord(word) ? (/^mc$/i.test(parts[0]) ? undefined : parts[0]) : word === 'rank' ? undefined : parts[1];
+          // The name a tag names: a holding's thing (its second part), an appearance's, a status's or a
+          // place tag's subject (its first), never the main character's own tag, never a rank.
+          const named = isAppearanceTagWord(word) || isStatusTagWord(word) || isPlaceTagWord(word) ? (/^mc$/i.test(parts[0]) ? undefined : parts[0]) : word === 'rank' ? undefined : parts[1];
           const name = namedInPlace(text, source.slice(index + wordTag[0].length), named);
           if (name) {
             // The tag stood where its name belongs: the name stays, with the text's own spacing around it.

@@ -73,6 +73,28 @@ existing Chapter Generation feature.
   and `scripts/verifyNarrationCues.browser.mjs` (controlled speech and silent
   media at phone/desktop sizes, not an audible device-voice check).
 
+- **2026-11-04 (Place, the third information tag):** SENSEI: "build Place
+  the way we discussed, with its own fixer checks added to this same one
+  fixer". Status's twin: the tagger tags the sentence where a character
+  arrives somewhere, `[[place: Name | Place]]`; the HARNESS reads it with the
+  chapter's other tags (`placePlaces`), saves a `PlaceAttachment` on its
+  sentence, and resolves both names when the chapter commits: the character,
+  and the place, a Codex entry of the new kind `place`. Where a character is
+  now is the latest tag in story order (`derivePlaces`), never stored. A
+  place steps onto the page with the appearance tag's third kind,
+  `[[appears: Place | place]]`, or with its first place tag
+  (`placeAppearancesFromPlaces`), and the look writer writes a place's look
+  by land, buildings, light, size and condition. The tagger reads where each
+  character is beside their name and the story's places (the World
+  Blueprint's place cards included) under PLACES; the writer reads it in
+  Appeared ("Shen Yuan (character, wounded, at Summit Hall): …"); the Codex
+  card shows "At …" with its passage, and the Places tab is one card a place,
+  the Blueprint's and the tags' together, with its look and who is there
+  now. The fixer's new place check asks about someone who acts after the
+  chapter names another place with no place tag to take them there, and its
+  duplicate check covers places. Schema 44 (an optional field). Writer
+  Instructions: Place, the appearance tag, the tagger's role line, the fixer
+  and the look writer, dated.
 - **2026-10-31 (Status, the second information tag):** SENSEI: finish the
   information tags before name colors link to the Codex, and build each the
   way the others work, simply. Status is the appearance tag's twin: the

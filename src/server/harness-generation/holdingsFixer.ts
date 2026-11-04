@@ -14,8 +14,8 @@ import { lowestReasoningLevel, requireTextModelKey } from '../model-router/catal
 
 /** What the fixer reads before the cases. */
 export const HOLDINGS_FIXER_INSTRUCTIONS = [
-  'You keep a novel\'s record true: what its characters have, use and know, who has appeared, the names they go by, and how they are. Checks found small problems in one chapter. Each case below is one of them, never the whole chapter. Answer every case.',
-  'TAGS. A tag sits on the sentence that shows a change: [[verb: Holder | Name]], with a count, a level or a reason after the name when it matters: [[lost: MC | Spirit Pill | 1 | used up]]. MC is the main character. Things: has, gained, lost, equipped, unequipped. Abilities: knows, learning, learned, improved (with the new level), sealed, unsealed. A new rank: [[rank: Holder | Rank]]. How someone is now: [[status: Name | how they are now]]. Use the exact name the record already gives a thing or ability.',
+  'You keep a novel\'s record true: what its characters have, use and know, who has appeared, the names they go by, how they are and where they are. Checks found small problems in one chapter. Each case below is one of them, never the whole chapter. Answer every case.',
+  'TAGS. A tag sits on the sentence that shows a change: [[verb: Holder | Name]], with a count, a level or a reason after the name when it matters: [[lost: MC | Spirit Pill | 1 | used up]]. MC is the main character. Things: has, gained, lost, equipped, unequipped. Abilities: knows, learning, learned, improved (with the new level), sealed, unsealed. A new rank: [[rank: Holder | Rank]]. How someone is now: [[status: Name | how they are now]]. Where someone arrives: [[place: Name | Place]]. Use the exact name the record already gives a thing, ability or place.',
   'ANSWERS. Give one of the answers the case allows:',
   '- record: the prose is right and the record is wrong. In tags, write every tag the sentence should carry, or leave it empty when it should carry none. For a closing-list case, write the tag to add in tags and the id of the sentence it goes on in sentence. For two names, record means they are the same thing.',
   '- prose: the record is right and the sentence is wrong. In replacement, write that one sentence again in the story\'s language, changing as few words as you can; in tags, the tags it should carry.',
@@ -25,6 +25,7 @@ export const HOLDINGS_FIXER_INSTRUCTIONS = [
   '- Someone who speaks but never appeared: record means they are on the page here; in sentence, give the id of the sentence where they are first on the page. fine means they are not on the page (a voice through a door, a letter, a memory) or no one the story needs to remember.',
   '- A name that may be a character\'s: record means it is that character\'s name. In name, write the name their card should go by from now on: the new name when the story has now revealed it, or the card\'s own. fine means it is someone or something else.',
   '- Someone dead who speaks or acts: record means the story has brought them back or changed them; in tags, write the status tag that says how they are now. fine means it is a memory, a vision or a flashback. major means the chapter forgets they died.',
+  '- Someone who acts after the chapter names another place: record means they are there now; in tags, write the place tag that takes them there, for the sentence shown. fine means they are still where the record has them (the place is only talked about, seen from afar or remembered).',
   'Prefer record to prose. Never undo a change the reader\'s direction asked for. In reason, say why in one short sentence.',
 ].join('\n');
 

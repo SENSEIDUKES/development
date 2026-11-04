@@ -2,6 +2,7 @@ import { parseModelJson } from '../../../narrative/modelJson';
 import { splitSentences } from '../../highlight-engine/shared/manuscript';
 import {
   CHARACTER_LOOK_TRAITS,
+  PLACE_LOOK_TRAITS,
   THING_LOOK_TRAITS,
   type AppearanceAttachment,
   type AppearanceEntity,
@@ -37,6 +38,7 @@ export const LOOK_TRAIT_WORDS = 14;
 export const LOOK_TRAITS: Readonly<Record<AppearanceEntity, readonly LookTrait[]>> = {
   character: CHARACTER_LOOK_TRAITS,
   thing: THING_LOOK_TRAITS,
+  place: PLACE_LOOK_TRAITS,
 };
 
 const paragraphAt = (chapter: Pick<HarnessChapter, 'paragraphs'>, blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0) - 1;

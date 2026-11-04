@@ -64,7 +64,9 @@ describe('Reading appearance tags', () => {
     expect(readAppearanceTag(tag('[[appears: Crimson Broadsword | weapon]] x'))).toEqual({ ok: true, appearance: { event: 'appears', subject: { name: 'Crimson Broadsword' }, entity: 'thing' } });
     expect(readAppearanceTag(tag('[[appears: Silver Lotus | beast]] x'))).toMatchObject({ ok: true, appearance: { entity: 'character' } });
     expect(readAppearanceTag(tag('[[look: MC | a scar | across the cheek]] x'))).toEqual({ ok: true, appearance: { event: 'look', subject: { name: 'MC' }, change: 'a scar; across the cheek' } });
-    expect(readAppearanceTag(tag('[[appears: Iron Gate | place]] x'))).toEqual({ ok: false, problem: 'an appears tag for Iron Gate named ‘place’, neither a character nor a thing' });
+    expect(readAppearanceTag(tag('[[appears: Iron Gate | place]] x'))).toEqual({ ok: true, appearance: { event: 'appears', subject: { name: 'Iron Gate' }, entity: 'place' } });
+    expect(readAppearanceTag(tag('[[appears: Iron Gate | feeling]] x'))).toEqual({ ok: false, problem: 'an appears tag for Iron Gate named ‘feeling’, not a character, a thing or a place' });
+    expect(readAppearanceTag(tag('[[appears: MC | place]] x'))).toEqual({ ok: false, problem: 'an appears tag named the main character as a place' });
     expect(readAppearanceTag(tag(`[[look: Old Wu | ${'very '.repeat(16)}tired]] x`))).toMatchObject({ ok: false });
     expect(readAppearanceTag(tag('[[gained: MC | Sword]] x'))).toEqual({ ok: false, problem: 'a gained tag is not an appearance' });
     expect(readAppearanceTag(tag('[[appears: MC | thing]] x'))).toEqual({ ok: false, problem: 'an appears tag named the main character as a thing' });
@@ -105,13 +107,13 @@ describe('Accepting a chapter with appearance tags', () => {
   });
 
   it('flags unreadable appearance tags apart from holdings, and keeps an empty list when the writer was asked for them', () => {
-    const flagged = accept(['[[appears: Old Wu]] He waited. [[appears: Iron Gate | place]] The gate stood open.'], { appearancesExpected: true });
+    const flagged = accept(['[[appears: Old Wu]] He waited. [[appears: Iron Gate | feeling]] The gate stood open.'], { appearancesExpected: true });
     expect(flagged.accepted).toBe(true);
     if (!flagged.accepted) return;
     expect(flagged.draft.appearances).toEqual([]);
     expect(flagged.warnings).toContainEqual({
       code: 'appearance_tags_incomplete',
-      message: '1 appearance tag was unreadable and removed; an appears tag for Iron Gate named ‘place’, neither a character nor a thing.',
+      message: '1 appearance tag was unreadable and removed; an appears tag for Iron Gate named ‘feeling’, not a character, a thing or a place.',
     });
     expect(flagged.warnings.map(warning => warning.code)).not.toContain('holding_tags_incomplete');
     // Without the skill and without tags, the chapter carries no appearances at all.

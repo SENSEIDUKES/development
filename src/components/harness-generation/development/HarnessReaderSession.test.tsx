@@ -1202,7 +1202,7 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     // Media and Story info apart, every kind lit.
     expect([...panel()!.querySelectorAll('[data-tag-group]')].map(group => group.getAttribute('data-tag-group'))).toEqual(['media', 'info']);
     expect([...panel()!.querySelectorAll('[data-tag-kind]')].map(kind => kind.getAttribute('data-tag-kind')))
-      .toEqual(['soundscape', 'atmosphere', 'cues', 'speakers', 'holdings', 'appearances', 'status']);
+      .toEqual(['soundscape', 'atmosphere', 'cues', 'speakers', 'holdings', 'appearances', 'status', 'place']);
     expect(panel()!.getAttribute('data-lit')).toBe('all');
     // Create mode stays on from chapter to chapter: the newest can be changed.
     await click(byLabel('Next Chapter'), 'Next Chapter');

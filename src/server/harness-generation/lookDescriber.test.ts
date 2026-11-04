@@ -74,6 +74,7 @@ describe('The look step\'s call', () => {
     expect(LOOK_DESCRIBER_INSTRUCTIONS).toContain('the passage wins, and conflict says how in one short sentence');
     expect(LOOK_DESCRIBER_INSTRUCTIONS).toContain('A character: build, face, eyes, hair, skin, clothing, marks, gear');
     expect(LOOK_DESCRIBER_INSTRUCTIONS).toContain('A thing: form, size, material, colour, condition, marks');
+    expect(LOOK_DESCRIBER_INSTRUCTIONS).toContain('A place: land, buildings, light, size, condition');
   });
 
   it('refuses a malformed look request before contacting the provider', async () => {
@@ -82,7 +83,7 @@ describe('The look step\'s call', () => {
     const bad: Array<Partial<HarnessLookRequest>> = [
       { subjects: [] },
       { subjects: Array.from({ length: LOOK_SUBJECT_LIMIT + 1 }, (_, index) => ({ ...subject, id: `s${index}` })) },
-      { subjects: [{ ...subject, entity: 'place' as never }] },
+      { subjects: [{ ...subject, entity: 'faction' as never }] },
       { subjects: [{ ...subject, event: 'vanishes' as never }] },
       { subjects: [{ ...subject, passage: 'x'.repeat(2_000) }] },
       { subjects: [{ ...subject, passage: '  ' }] },

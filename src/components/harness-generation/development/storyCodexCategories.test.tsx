@@ -3,7 +3,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it } from 'vitest';
 import { StoryCodex } from './StoryCodex';
-import type { CodexCharacter, CodexWorldCard, StoryCodexRecord } from '../shared/storyCodex';
+import type { CodexCharacter, CodexPlace, CodexWorldCard, StoryCodexRecord } from '../shared/storyCodex';
 
 /**
  * A category appears once the record holds one of its kind, and never before
@@ -55,4 +55,25 @@ it('falls back to a category that still holds something when the open one emptie
   expect(container.querySelector('[aria-selected="true"]')!.textContent).toContain('Characters');
   expect(container.querySelector('[data-testid="codex-character"]')).not.toBeNull();
   act(() => root.unmount());
+});
+
+it('shows where a character is now, and a place with its look and who is there (Place, 2026-11-04)', async () => {
+  const there = { chapterNumber: 2, blockId: 'c2-p1', text: 'He went down into the Lower Stacks.' };
+  const stacks: CodexPlace = {
+    key: 'e-stacks', name: 'Lower Stacks', firstSeen: there,
+    atChapterZero: [{ slot: { id: 'appearance', label: 'Look', test: 'artist', changes: true, asks: 'how it looks' }, value: 'Bright reading halls.' }],
+    appearance: { first: there, changes: [], look: { summary: 'Dust-choked shelves under a low stone vault.', traits: { light: 'one oil lamp' }, passage: there } },
+    here: [{ key: 'chen', name: 'Ye Chen', mainCharacter: true }],
+  };
+  const view = await render({ ...empty, characters: [{ ...chen, place: { text: 'Lower Stacks', passage: there } }], places: [stacks] });
+  const click = (element: Element | null | undefined) => act(() => { (element as HTMLElement).click(); });
+  click(view.container.querySelector('[data-testid="codex-character"] button, [data-testid="codex-character"]'));
+  expect(view.container.querySelector('[data-testid="codex-place"]')?.textContent).toContain('At Lower Stacks · Ch. 2');
+  click([...view.container.querySelectorAll('[role="tab"]')].find(tab => tab.textContent?.startsWith('Places')));
+  // The card reads the place as the story shows it now, before what the world said at Chapter 0 (review finding, CodeRabbit, 2026-11-04).
+  expect(view.container.querySelector('[data-testid="codex-places"]')?.textContent).toContain('Dust-choked shelves under a low stone vault.');
+  click(view.container.querySelector('[data-testid="codex-places"] button, [data-testid="codex-places"]'));
+  expect(view.container.textContent).toContain('Dust-choked shelves under a low stone vault.');
+  expect(view.container.querySelector('[data-testid="codex-here"]')?.textContent).toContain('Ye Chen');
+  act(() => view.root.unmount());
 });

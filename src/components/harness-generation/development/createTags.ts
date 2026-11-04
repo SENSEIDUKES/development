@@ -4,6 +4,7 @@ import { SPEAKER_KIND } from '../../../narrative/speech';
 import { HOLDING_CHANGE_KIND } from '../../../narrative/holdings';
 import { APPEARANCE_KIND } from '../../../narrative/appearances';
 import { STATUS_KIND } from '../../../narrative/statuses';
+import { PLACE_KIND } from '../../../narrative/places';
 import type { ChapterTaggingAccount, ChapterTaggingKind, ChapterTagFindings } from '../shared/chapterTagging';
 
 /**
@@ -14,7 +15,7 @@ import type { ChapterTaggingAccount, ChapterTaggingKind, ChapterTagFindings } fr
  * way an overlay shows one kind; Off is the page as a reader sees it.
  */
 
-export type CreateTagKind = 'soundscape' | 'atmosphere' | 'cues' | 'speakers' | 'holdings' | 'appearances' | 'status';
+export type CreateTagKind = 'soundscape' | 'atmosphere' | 'cues' | 'speakers' | 'holdings' | 'appearances' | 'status' | 'place';
 export type CreateTagGroupId = 'media' | 'info';
 /** What the page lights: every tag, none, or one kind. */
 export type CreateTagLit = 'all' | 'off' | CreateTagKind;
@@ -27,11 +28,12 @@ export const CREATE_TAG_KINDS: Readonly<Record<CreateTagKind, { label: string; a
   holdings: { label: 'Holdings', attachment: HOLDING_CHANGE_KIND, tagger: 'Holdings', finding: 'holdings' },
   appearances: { label: 'Appearances', attachment: APPEARANCE_KIND, tagger: 'Appearances', finding: 'appearances' },
   status: { label: 'Status', attachment: STATUS_KIND, tagger: 'Status', finding: 'statuses' },
+  place: { label: 'Place', attachment: PLACE_KIND, tagger: 'Place', finding: 'places' },
 };
 
 export const CREATE_TAG_GROUPS: ReadonlyArray<{ id: CreateTagGroupId; label: string; kinds: readonly CreateTagKind[] }> = [
   { id: 'media', label: 'Media', kinds: ['soundscape', 'atmosphere', 'cues'] },
-  { id: 'info', label: 'Story info', kinds: ['speakers', 'holdings', 'appearances', 'status'] },
+  { id: 'info', label: 'Story info', kinds: ['speakers', 'holdings', 'appearances', 'status', 'place'] },
 ];
 
 /** The color a kind's marks wear on the page. */
@@ -74,8 +76,8 @@ export function createTagRows({ counts, findings, account }: {
     const line = account.kinds.find(entry => entry.kind === tagger);
     const quiet = account.status === 'untagged' ? 'Not tagged yet'
       : account.status === 'failed' ? 'The tagger could not read this chapter'
-      // A chapter tagged before Status existed says so, with how to fix it; any other kind never asked was never equipped.
-      : line?.state === 'not-asked' ? (kind === 'status' ? line.said : 'Nothing equipped')
+      // A chapter tagged before Status or Place existed says so, with how to fix it; any other kind never asked was never equipped.
+      : line?.state === 'not-asked' ? (kind === 'status' || kind === 'place' ? line.said : 'Nothing equipped')
       : line?.state === 'set-aside' ? line.said
       : 'Nothing found';
     return { kind, count: counts[kind], said: quiet, found: counts[kind] > 0 };

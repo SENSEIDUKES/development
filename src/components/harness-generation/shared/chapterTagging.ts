@@ -13,7 +13,7 @@ import type { HarnessChapter, HarnessWarning } from '../../../narrative/generati
  * those words, so a quiet chapter and a failed one never look alike.
  */
 
-export type ChapterTaggingKind = 'Soundscape and atmosphere' | 'Sound Cues' | 'Speakers' | 'Holdings' | 'Appearances' | 'Status';
+export type ChapterTaggingKind = 'Soundscape and atmosphere' | 'Sound Cues' | 'Speakers' | 'Holdings' | 'Appearances' | 'Status' | 'Place';
 
 export interface ChapterTaggingKindLine {
   kind: ChapterTaggingKind;
@@ -48,6 +48,7 @@ const KIND_WARNINGS: Record<ChapterTaggingKind, ReadonlyArray<HarnessWarning['co
   Holdings: ['holding_tags_incomplete'],
   Appearances: ['appearance_tags_incomplete'],
   Status: ['status_tags_incomplete'],
+  Place: ['place_tags_incomplete'],
 };
 
 const NOTHING_HERE = 'The tagger found nothing here.';
@@ -71,7 +72,7 @@ const when = (at: string, locale?: string) => {
 /**
  * What a chapter carries now, one line per kind, in words for the page: its
  * opening music and atmosphere, then its Sound Cues, speakers, holding
- * changes, appearances and statuses, each counted and named. A kind with
+ * changes, appearances, statuses and place tags, each counted and named. A kind with
  * nothing on the page has no line. `entries` are the story's Codex entries,
  * so a tag written as `MC` reads by the main character's own name.
  */
@@ -83,10 +84,11 @@ export interface ChapterTagFindings {
   holdings?: string;
   appearances?: string;
   statuses?: string;
+  places?: string;
 }
 
 export function chapterTagFindings(
-  chapter: Pick<HarnessChapter, 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'scene'>,
+  chapter: Pick<HarnessChapter, 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'scene'>,
   { entries = [] }: { entries?: ReadonlyArray<Pick<CodexEntry, 'id' | 'name'>> } = {},
 ): ChapterTagFindings {
   const nameOf = (ref: { name: string; entryId?: string } | undefined) =>
@@ -108,6 +110,9 @@ export function chapterTagFindings(
   if (chapter.statuses?.length) {
     findings.statuses = `${count(chapter.statuses.length, 'status', 'statuses')}: ${few(chapter.statuses.map(status => `${nameOf(status.payload.subject)} ${status.payload.status}`))}`;
   }
+  if (chapter.places?.length) {
+    findings.places = `${count(chapter.places.length, 'place tag')}: ${few(chapter.places.map(record => `${nameOf(record.payload.subject)} at ${nameOf(record.payload.place)}`))}`;
+  }
   return findings;
 }
 
@@ -117,7 +122,7 @@ export function chapterTagFindings(
  * character's own name, as the Codex knows them.
  */
 export function describeChapterTagging(
-  chapter: Pick<HarnessChapter, 'tagging' | 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'scene'>,
+  chapter: Pick<HarnessChapter, 'tagging' | 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'scene'>,
   { entries = [], locale }: { entries?: ReadonlyArray<Pick<CodexEntry, 'id' | 'name'>>; locale?: string } = {},
 ): ChapterTaggingAccount {
   const record = chapter.tagging;
@@ -162,6 +167,10 @@ export function describeChapterTagging(
     chapter.statuses
       ? line('Status', found.statuses)
       : { kind: 'Status', said: 'Tagged before Status existed: tag it again to read it.', state: 'not-asked' },
+    // Likewise for Place.
+    chapter.places
+      ? line('Place', found.places)
+      : { kind: 'Place', said: 'Tagged before Place existed: tag it again to read it.', state: 'not-asked' },
   ];
   return { status: 'tagged', headline: `Read${by} · ${when(record.at, locale)}${tokens}`, ...(notes ? { notes } : {}), kinds, problems };
 }

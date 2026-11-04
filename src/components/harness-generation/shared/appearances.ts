@@ -19,6 +19,8 @@ import { factionNamed, type DeclaredFaction } from './factions';
 import { createCodexEntryResolver, holdingName, pointedSentence, type CodexEntryResolver, type DeclaredCharacter, type HoldingPassage } from './holdings';
 import { isMainCharacterTag } from './speakers';
 import type { CurrentStatus } from './statuses';
+import type { CurrentPlace } from './places';
+import type { PlaceAttachment } from '../../../narrative/places';
 
 /**
  * Appearances in the HARNESS: the writer's appears and look tags read into
@@ -36,6 +38,7 @@ import type { CurrentStatus } from './statuses';
 const ENTITY_WORDS: Readonly<Record<AppearanceEntity, readonly string[]>> = {
   character: ['character', 'person', 'creature', 'beast', 'being', 'spirit'],
   thing: ['thing', 'object', 'item', 'weapon', 'artifact', 'artefact', 'treasure'],
+  place: ['place', 'location', 'area', 'building', 'room', 'hall', 'city', 'town', 'village', 'region', 'realm'],
 };
 const entityOf = (written: string | undefined): AppearanceEntity | undefined => {
   const word = written?.trim().toLowerCase();
@@ -62,10 +65,10 @@ export function readAppearanceTag(tag: WordTag): ReadAppearanceTag {
   const subject = { name: named.name };
   if (tag.word === 'appears') {
     const entity = entityOf(second);
-    if (entity === 'thing' && isMainCharacterTag(named.name)) return { ok: false, problem: 'an appears tag named the main character as a thing' };
+    if (entity && entity !== 'character' && isMainCharacterTag(named.name)) return { ok: false, problem: `an appears tag named the main character as a ${entity}` };
     return entity
       ? { ok: true, appearance: { event: 'appears', subject, entity } }
-      : { ok: false, problem: `an appears tag for ${named.name} named ‘${second}’, neither a character nor a thing` };
+      : { ok: false, problem: `an appears tag for ${named.name} named ‘${second}’, not a character, a thing or a place` };
   }
   const change = [second, ...rest].join('; ').trim();
   if (!change) return { ok: false, problem: `a look tag for ${named.name} said nothing about what changed` };
@@ -117,7 +120,7 @@ export interface ResolvedAppearances {
 
 /**
  * Resolves every name in a chapter's appearances to a Codex entry when it
- * commits. An appears tag finds or makes its character or thing; a look tag
+ * commits. An appears tag finds or makes its character, thing or place; a look tag
  * only finds one already in the record (a look for someone who never appeared
  * is flagged by the rules, never made into an entry), and takes its kind from
  * that entry. With a `resolver`, the chapter's holding changes share it.
@@ -136,12 +139,12 @@ export function resolveAppearances({ storyId, chapter, appearances, entries, dec
   const resolved = appearances.map((appearance): AppearanceAttachment => {
     const { event, subject, entity } = appearance.payload;
     const entry = event === 'appears'
-      ? (entity === 'thing' ? resolver.entry('thing', subject.name) : resolver.character(subject.name))
+      ? (entity === 'thing' || entity === 'place' ? resolver.entry(entity, subject.name) : resolver.character(subject.name))
       : resolver.existing(subject.name);
     if (!entry) return appearance;
     return {
       ...appearance,
-      payload: { ...appearance.payload, subject: { name: subject.name, entryId: entry.id }, entity: entry.kind === 'thing' ? 'thing' : 'character' },
+      payload: { ...appearance.payload, subject: { name: subject.name, entryId: entry.id }, entity: entry.kind === 'thing' || entry.kind === 'place' ? entry.kind : 'character' },
     };
   });
   return { appearances: resolved, created: resolver.created };
@@ -235,6 +238,8 @@ export interface AppearancesChapter {
   paragraphs?: readonly string[];
   speakers?: readonly SpeakerAttachment[];
   holdingChanges?: readonly HoldingChangeAttachment[];
+  /** Arrivals: someone arriving somewhere brings both back to the page's recent past. */
+  places?: readonly PlaceAttachment[];
 }
 
 const paragraphIndex = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
@@ -275,11 +280,13 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
     type Event =
       | { kind: 'appearance'; record: AppearanceAttachment; order: number }
       | { kind: 'speaker'; record: SpeakerAttachment; order: number }
-      | { kind: 'holding'; record: HoldingChangeAttachment; order: number };
+      | { kind: 'holding'; record: HoldingChangeAttachment; order: number }
+      | { kind: 'place'; record: PlaceAttachment; order: number };
     const events: Event[] = [
       ...(chapter.appearances ?? []).filter(record => record.kind === APPEARANCE_KIND).map((record, order) => ({ kind: 'appearance' as const, record, order })),
       ...(chapter.speakers ?? []).filter(record => record.kind === SPEAKER_KIND && !record.anchor.detached).map((record, order) => ({ kind: 'speaker' as const, record, order })),
       ...(chapter.holdingChanges ?? []).map((record, order) => ({ kind: 'holding' as const, record, order })),
+      ...(chapter.places ?? []).map((record, order) => ({ kind: 'place' as const, record, order })),
     ].sort((left, right) => paragraphIndex(left.record.anchor.blockId) - paragraphIndex(right.record.anchor.blockId)
       || left.record.anchor.startOffset - right.record.anchor.startOffset
       // At one place, an appearance comes before the speech or change it introduces.
@@ -305,6 +312,12 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
     });
 
     for (const event of events) {
+      if (event.kind === 'place') {
+        const { subject, place } = event.record.payload;
+        if (subject.entryId) seen(subject.entryId);
+        if (place.entryId) seen(place.entryId);
+        continue;
+      }
       if (event.kind === 'holding') {
         const { holder, target } = event.record.payload;
         if (holder.entryId) seen(holder.entryId);
@@ -445,6 +458,38 @@ export function thingAppearancesFromHoldings({ chapter, chapters, entries }: {
   return found;
 }
 
+/**
+ * The places a committed chapter's place tags name that have not stepped onto
+ * the page yet: each gets its appearance on the sentence of its first such
+ * tag, as a held thing does from its holding tag, so every place someone
+ * arrives in has a look without the tagger tagging it twice. `chapters` are
+ * the story's other chapters before this one; `chapter` carries its resolved
+ * appearances and place tags.
+ */
+export function placeAppearancesFromPlaces({ chapter, chapters, entries }: {
+  chapter: AppearancesChapter & { places?: readonly PlaceAttachment[] };
+  chapters: readonly AppearancesChapter[];
+  entries: readonly CodexEntry[];
+}): AppearanceAttachment[] {
+  const state = deriveAppearances({ entries, chapters: [...chapters.filter(other => other.id !== chapter.id), chapter] });
+  const appeared = new Set(state.subjects.filter(subject => subject.entity === 'place').map(subject => subject.entryId ?? subject.key));
+  const found: AppearanceAttachment[] = [];
+  let index = chapter.appearances?.length ?? 0;
+  for (const record of chapter.places ?? []) {
+    const entry = record.payload.place.entryId ? entries.find(candidate => candidate.id === record.payload.place.entryId) : undefined;
+    if (!entry || entry.kind !== 'place' || appeared.has(entry.id)) continue;
+    appeared.add(entry.id);
+    const { blockId, startOffset, endOffset } = record.anchor;
+    found.push({
+      id: appearanceId(blockId, startOffset, endOffset, index++),
+      kind: APPEARANCE_KIND,
+      anchor: { ...record.anchor },
+      payload: { origin: 'harness', event: 'appears', subject: { name: entry.name, entryId: entry.id }, entity: 'place' },
+    });
+  }
+  return found;
+}
+
 /** The appearances a chapter's look step describes: each appears or look tag the rules accept, in reading order. */
 export function describableAppearances(state: AppearancesState, chapterId: string): Array<{ appearanceId: string; subject: AppearanceSubject }> {
   const found: Array<{ appearanceId: string; subject: AppearanceSubject }> = [];
@@ -462,41 +507,58 @@ export function describableAppearances(state: AppearancesState, chapterId: strin
 
 // ─── The packet section ─────────────────────────────────────────────────────
 
-/** How many characters besides the main character, and how many things, the writer is shown, most recently seen first. */
+/** How many characters besides the main character, how many things and how many places the writer is shown, most recently seen first. */
 export const APPEARED_SECTION_CHARACTERS = 20;
 export const APPEARED_SECTION_THINGS = 10;
+export const APPEARED_SECTION_PLACES = 10;
 
 /**
  * The Appeared section the writer reads: the main character first when they
- * have appeared, then the characters and the things on the page, those seen
- * most recently first, each with its look's one line once it is written down.
+ * have appeared, then the characters, the things and the places on the page,
+ * those seen most recently first, each with its look's one line once it is
+ * written down, and each character's status and place once a tag gave one.
  * Exact names only; how to use them is the Appearance skill's job.
  */
-export function appearancesSection(state: AppearancesState, statuses?: ReadonlyMap<string, CurrentStatus>, entries: readonly CodexEntry[] = []): AppearancesSection {
-  const statusOf = (subject: AppearanceSubject) => (subject.entity === 'character' ? statuses?.get(subject.key)?.status : undefined);
+export function appearancesSection(state: AppearancesState, statuses?: ReadonlyMap<string, CurrentStatus>, entries: readonly CodexEntry[] = [], places?: ReadonlyMap<string, CurrentPlace>): AppearancesSection {
+  const statusOf = (key: string) => statuses?.get(key)?.status;
+  const placeOf = (key: string) => places?.get(key)?.place;
+  const recordOf = (key: string) => ({
+    ...(statusOf(key) ? { status: statusOf(key)! } : {}),
+    ...(placeOf(key) ? { place: placeOf(key)! } : {}),
+  });
   const entryOf = (subject: AppearanceSubject): AppearancesSectionEntry => ({
     name: subject.name,
     entity: subject.entity,
     ...(subject.mainCharacter ? { mainCharacter: true as const } : {}),
     ...(appearedLookLine(subject) ? { look: appearedLookLine(subject)! } : {}),
-    ...(statusOf(subject) ? { status: statusOf(subject)! } : {}),
+    ...(subject.entity === 'character' ? recordOf(subject.key) : {}),
   });
   const recent = (left: AppearanceSubject, right: AppearanceSubject) => (state.recency.get(right.key) ?? 0) - (state.recency.get(left.key) ?? 0);
   const main = state.subjects.find(subject => subject.mainCharacter);
   const characters = state.subjects.filter(subject => subject.entity === 'character' && !subject.mainCharacter).sort(recent).slice(0, APPEARED_SECTION_CHARACTERS);
   const things = state.subjects.filter(subject => subject.entity === 'thing').sort(recent).slice(0, APPEARED_SECTION_THINGS);
-  // Someone the story gave a status but never tagged appearing still reaches the writer, with that status,
-  // so a death tagged on its own is never forgotten.
-  // Measured against who is actually listed, so a character the counts leave out still keeps their status;
-  // the most recent statuses first, as many as the characters' own count.
-  const listed = new Set([...(main ? [main] : []), ...characters, ...things].map(subject => subject.key));
-  const statusOnly = [...statuses ?? []].filter(([key]) => !listed.has(key))
-    .sort(([, left], [, right]) => right.passage.chapterNumber - left.passage.chapterNumber)
-    .slice(0, APPEARED_SECTION_CHARACTERS)
+  const placesShown = state.subjects.filter(subject => subject.entity === 'place').sort(recent).slice(0, APPEARED_SECTION_PLACES);
+  // Someone the story gave a status or a place but never tagged appearing still reaches the writer, with them,
+  // so a death or an arrival tagged on its own is never forgotten.
+  // Measured against who is actually listed, so a character the counts leave out still keeps theirs;
+  // the most recent first, as many as the characters' own count.
+  const listed = new Set([...(main ? [main] : []), ...characters].map(subject => subject.key));
+  const latest = new Map<string, { name: string; chapterNumber: number }>();
+  for (const [key, current] of [...statuses ?? [], ...places ?? []]) {
+    if (listed.has(key)) continue;
+    const seen = latest.get(key);
+    if (!seen || current.passage.chapterNumber > seen.chapterNumber) latest.set(key, { name: current.name, chapterNumber: current.passage.chapterNumber });
+  }
+  const everyRecordOnly = [...latest].sort(([, left], [, right]) => right.chapterNumber - left.chapterNumber)
     .map(([key, current]): AppearancesSectionEntry => {
-    const entry = entries.find(candidate => candidate.id === key);
-    return { name: entry?.name ?? current.name, entity: 'character', ...(entry?.mainCharacter ? { mainCharacter: true as const } : {}), status: current.status };
-  });
-  const mainStatusOnly = statusOnly.filter(entry => entry.mainCharacter);
-  return { entries: [...(main ? [entryOf(main)] : mainStatusOnly), ...characters.map(entryOf), ...statusOnly.filter(entry => !entry.mainCharacter), ...things.map(entryOf)] };
+      const entry = entries.find(candidate => candidate.id === key);
+      return { name: entry?.name ?? current.name, entity: 'character', ...(entry?.mainCharacter ? { mainCharacter: true as const } : {}), ...recordOf(key) };
+    });
+  // The main character is never counted out: the count is the others'.
+  const mainRecordOnly = everyRecordOnly.filter(entry => entry.mainCharacter);
+  const recordOnly = everyRecordOnly.filter(entry => !entry.mainCharacter).slice(0, APPEARED_SECTION_CHARACTERS);
+  return { entries: [
+    ...(main ? [entryOf(main)] : mainRecordOnly), ...characters.map(entryOf), ...recordOnly,
+    ...things.map(entryOf), ...placesShown.map(entryOf),
+  ] };
 }

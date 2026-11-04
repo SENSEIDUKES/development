@@ -45,8 +45,9 @@ import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { codexEntriesWithoutChapter, createCodexEntryResolver, declaredCharacters, deriveHoldings, holdingsSection, resolveHoldingChanges } from './holdings';
 import { planChapterTagging, readChapterTagging, retagChapterGap } from './tagger';
-import { appearanceSources, deriveAppearances, resolveAppearances, thingAppearancesFromHoldings } from './appearances';
+import { appearanceSources, deriveAppearances, placeAppearancesFromPlaces, resolveAppearances, thingAppearancesFromHoldings } from './appearances';
 import { deriveStatuses, resolveStatuses } from './statuses';
+import { derivePlaces, resolvePlaces } from './places';
 import type { Look } from '../../../narrative/appearances';
 import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
 import { planCodexLook, readDescribedLooks } from './lookDescriber';
@@ -489,7 +490,7 @@ export class HarnessGenerationController {
    * change replaced wait in `waiting`, off the page, until the chapter is
    * sealed. The chapter is marked as changed, so it is read again at its seal.
    */
-  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'openingSound' | 'soundtrackChanges'>
+  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'openingSound' | 'soundtrackChanges'>
     & { waiting?: NonNullable<HarnessChapter['authoring']>['waiting'] }): Promise<void> {
     this.assertHydrated();
     if (this.generating) throw new Error('Wait for the active Harness operation before changing a chapter.');
@@ -507,8 +508,8 @@ export class HarnessGenerationController {
       const text = blocks.get(attachment.anchor.blockId);
       return !attachment.anchor.detached && text?.slice(attachment.anchor.startOffset, attachment.anchor.endOffset) === attachment.anchor.selectedText;
     };
-    for (const attachment of [...changes.soundCues ?? [], ...changes.speakers ?? [], ...changes.holdingChanges ?? [], ...changes.appearances ?? [], ...changes.statuses ?? [], ...changes.soundtrackChanges ?? []]) {
-      if (!onItsWords(attachment)) throw new Error('Every Sound Cue, speaker, holding change, appearance, status and soundtrack change must sit on its words before the chapter is saved.');
+    for (const attachment of [...changes.soundCues ?? [], ...changes.speakers ?? [], ...changes.holdingChanges ?? [], ...changes.appearances ?? [], ...changes.statuses ?? [], ...changes.places ?? [], ...changes.soundtrackChanges ?? []]) {
+      if (!onItsWords(attachment)) throw new Error('Every Sound Cue, speaker, holding change, appearance, status, place and soundtrack change must sit on its words before the chapter is saved.');
     }
     // The opening is one of each kind's two: a chapter changes its music once, and its atmosphere once, after it.
     for (const kind of [SOUNDSCAPE_CHANGE_KIND, ATMOSPHERE_CHANGE_KIND]) {
@@ -519,12 +520,13 @@ export class HarnessGenerationController {
     chapter.paragraphs = paragraphs;
     chapter.prose = paragraphs.join('\n\n');
     chapter.metrics = { ...chapter.metrics, wordCount: paragraphs.reduce((total, paragraph) => total + paragraph.split(/\s+/u).length, 0), paragraphCount: paragraphs.length };
-    for (const key of ['soundCues', 'speakers', 'holdingChanges', 'appearances', 'statuses', 'soundtrackChanges'] as const) {
+    for (const key of ['soundCues', 'speakers', 'holdingChanges', 'appearances', 'statuses', 'places', 'soundtrackChanges'] as const) {
       const list = changes[key];
       if (list?.length) (chapter as Record<typeof key, unknown>)[key] = cloneHarnessValue(list);
-      // A chapter the tagger read for appearances or statuses keeps its list, even empty, so it is still known to have been asked.
+      // A chapter the tagger read for appearances, statuses or places keeps its list, even empty, so it is still known to have been asked.
       else if (key === 'appearances' && chapter.appearances) chapter.appearances = [];
       else if (key === 'statuses' && chapter.statuses) chapter.statuses = [];
+      else if (key === 'places' && chapter.places) chapter.places = [];
       else delete chapter[key];
     }
     const opening = changes.openingSound;
@@ -1344,7 +1346,7 @@ export class HarnessGenerationController {
     // the writer half-tagged.
     proseAttempt.acceptedDraft = {
       ...acceptance.draft,
-      soundCues: undefined, speakers: undefined, holdingChanges: undefined, appearances: undefined, statuses: undefined, scene: undefined,
+      soundCues: undefined, speakers: undefined, holdingChanges: undefined, appearances: undefined, statuses: undefined, places: undefined, scene: undefined,
     };
     // The committed chapter's id is settled here, before anything is written
     // against it: tagging and the commit both address the chapter by it.
@@ -1403,6 +1405,7 @@ export class HarnessGenerationController {
       chapter, entries: this.state.codexEntries.filter(entry => entry.storyId === storyId), world,
       holdings: before,
       statuses: deriveStatuses(others.filter(entry => entry.chapterNumber < chapter.chapterNumber)),
+      places: derivePlaces(others.filter(entry => entry.chapterNumber < chapter.chapterNumber), this.state.codexEntries),
       soundWords: soundVocabulary(chapter.mediaLoadout),
       soundtrack: soundtrackVocabulary(chapter.mediaLoadout),
       language: story.originalLanguage,
@@ -1475,10 +1478,18 @@ export class HarnessGenerationController {
           chapters: others.filter(entry => entry.chapterNumber < chapter.chapterNumber), entries: candidate.codexEntries,
         }));
       }
+      const places = resolvePlaces(tagging.tags.places ?? [], resolver);
+      // A place someone arrives in for the first time steps onto the page there, by what came before this chapter.
+      appearances.push(...placeAppearancesFromPlaces({
+        chapter: { ...saved, appearances, places },
+        chapters: others.filter(entry => entry.chapterNumber < chapter.chapterNumber),
+        entries: [...candidate.codexEntries, ...resolver.created],
+      }));
       saved.soundCues = tagging.tags.soundCues;
       saved.speakers = tagging.tags.speakers;
       saved.appearances = appearances;
       saved.statuses = resolveStatuses(tagging.tags.statuses ?? [], resolver);
+      saved.places = places;
       if (holdings?.changes.length) saved.holdingChanges = holdings.changes;
       else delete saved.holdingChanges;
       if (tagging.tags.scene) saved.scene = tagging.tags.scene;
@@ -1525,6 +1536,7 @@ export class HarnessGenerationController {
       holdings: before,
       // Only the chapters before this one: a rewrite's replaced chapter is still saved, and its statuses are not this chapter's past.
       statuses: deriveStatuses(this.state.chapters.filter(chapter => chapter.storyId === story.id && chapter.chapterNumber < attempt.chapterNumber)),
+      places: derivePlaces(this.state.chapters.filter(chapter => chapter.storyId === story.id && chapter.chapterNumber < attempt.chapterNumber), this.state.codexEntries),
       soundWords: soundVocabulary(attempt.mediaLoadout),
       soundtrack: soundtrackVocabulary(attempt.mediaLoadout),
       language: story.originalLanguage,
@@ -1584,7 +1596,7 @@ export class HarnessGenerationController {
     if (tagged.acceptedDraft && tagging.tags) {
       // The tags replace whatever the draft carried: with the tagger reading the
       // chapter, these are the chapter's tags, and there is no second source.
-      const { soundCues, speakers, holdingChanges, appearances, statuses, scene } = tagging.tags;
+      const { soundCues, speakers, holdingChanges, appearances, statuses, places, scene } = tagging.tags;
       tagged.acceptedDraft = {
         ...tagged.acceptedDraft,
         ...(soundCues.length ? { soundCues } : { soundCues: undefined }),
@@ -1592,6 +1604,7 @@ export class HarnessGenerationController {
         ...(holdingChanges.length ? { holdingChanges } : { holdingChanges: undefined }),
         appearances,
         statuses,
+        places,
         ...(scene ? { scene } : { scene: undefined }),
       };
     }
@@ -1675,11 +1688,20 @@ export class HarnessGenerationController {
       ? resolveHoldingChanges({ ...resolving, changes: acceptedDraft.holdingChanges, resolver })
       : undefined;
     const statuses = acceptedDraft.statuses ? resolveStatuses(acceptedDraft.statuses, resolver) : undefined;
+    const places = acceptedDraft.places ? resolvePlaces(acceptedDraft.places, resolver) : undefined;
     // A thing the chapter's holding tags show for the first time steps onto the page there.
     if (appearances && holdings?.changes.length) {
       appearances.push(...thingAppearancesFromHoldings({
         chapter: { id: chapterId, chapterNumber: commitAttempt.chapterNumber, appearances, holdingChanges: holdings.changes },
         chapters: candidate.chapters.filter(entry => entry.storyId === commitAttempt.storyId),
+        entries: [...candidate.codexEntries.filter(entry => entry.storyId === commitAttempt.storyId), ...resolver.created],
+      }));
+    }
+    // A place someone arrives in for the first time steps onto the page there.
+    if (appearances && places?.length) {
+      appearances.push(...placeAppearancesFromPlaces({
+        chapter: { id: chapterId, chapterNumber: commitAttempt.chapterNumber, appearances, places },
+        chapters: candidate.chapters.filter(entry => entry.storyId === commitAttempt.storyId && entry.chapterNumber < commitAttempt.chapterNumber),
         entries: [...candidate.codexEntries.filter(entry => entry.storyId === commitAttempt.storyId), ...resolver.created],
       }));
     }
@@ -1701,6 +1723,7 @@ export class HarnessGenerationController {
       ...(acceptedDraft.closingHoldings ? { closingHoldings: [...acceptedDraft.closingHoldings] } : {}),
       ...(appearances ? { appearances } : {}),
       ...(statuses ? { statuses } : {}),
+      ...(places ? { places } : {}),
       ...(acceptedDraft.scene ? { scene: cloneHarnessValue(acceptedDraft.scene) } : {}),
       mediaLoadout: cloneHarnessValue(commitAttempt.mediaLoadout),
       ...(acceptedDraft.plan ? { plan: acceptedDraft.plan } : {}),

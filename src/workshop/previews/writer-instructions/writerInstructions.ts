@@ -9,6 +9,7 @@ import {
   SEN_SOUNDTRACK_INSTRUCTIONS,
   SEN_SPEAKERS_INSTRUCTIONS,
   SEN_STATUS_INSTRUCTIONS,
+  SEN_PLACE_INSTRUCTIONS,
   assembleCapaPrompt,
   buildHarnessOfficialOutputRequirements,
   presentSoundVocabulary,
@@ -50,6 +51,7 @@ export type WriterInstructionId =
   | 'holdings'
   | 'appearance'
   | 'status'
+  | 'place'
   | 'reading-guide'
   | 'return-format'
   | 'hard-rules'
@@ -153,7 +155,7 @@ export const BEFORE_THE_STORY: readonly WriterInstruction[] = [
 export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
   {
     id: 'holdings-fixer', title: 'Fixer', source: 'HARNESS',
-    when: 'After a chapter is saved, only when its checks found problems that need a model (its holdings; someone who speaks but never appeared; a name no card has that shares a word with a character\'s; someone dead who speaks or acts): one short call with the chapter\'s model, which reads these instructions and the small cases (a sentence, its tags, what the record shows), never the whole chapter.',
+    when: 'After a chapter is saved, only when its checks found problems that need a model (its holdings; someone who speaks but never appeared; a name no card has that shares a word with a character\'s; someone dead who speaks or acts; someone who acts after the chapter names another place than the one the record has them in): one short call with the chapter\'s model, which reads these instructions and the small cases (a sentence, its tags, what the record shows), never the whole chapter.',
     text: HOLDINGS_FIXER_INSTRUCTIONS,
   },
   {
@@ -185,6 +187,11 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
     id: 'status', title: 'Status', source: 'HARNESS',
     when: 'Every chapter the tagger reads. The tagger is told each character\'s status so far beside their name.',
     text: SEN_STATUS_INSTRUCTIONS,
+  },
+  {
+    id: 'place', title: 'Place', source: 'HARNESS',
+    when: 'Every chapter the tagger reads. The tagger is told each character\'s place so far beside their name, and the story\'s places under PLACES.',
+    text: SEN_PLACE_INSTRUCTIONS,
   },
   {
     id: 'sound-cues', title: 'Sound Cues', source: 'HARNESS',

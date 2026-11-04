@@ -37,6 +37,11 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-11-04 (a quiet legend):** SENSEI: "what would Apple do?" `CreateTagPanel`
+  drops its boxes, title, Saved line and help text: each kind is a dot and a
+  name (hollow ring when the page holds none), the kind lit alone gets a
+  capsule while the others fade, an eye replaces All/Off, and Tag this chapter
+  again, the record and the help line move into a ⋯ menu (`SEIPopover`).
 - **2026-11-04 (Create mode is the tagger's page):** SENSEI: the Chapter
   Tagger's page and Create mode's overlays are two sides of one coin. Create
   mode (`ChapterAuthoring`) now opens with every tag lit, through

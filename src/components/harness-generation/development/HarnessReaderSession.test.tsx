@@ -1209,7 +1209,9 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(create().getAttribute('aria-pressed')).toBe('true');
     authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
     expect(authoring.getAttribute('data-chapter-number')).toBe('2');
-    expect(authoring.querySelector('[data-testid="create-mode-saving"]')!.textContent).toBe('Saved');
+    // Saved says nothing: the panel speaks only while saving, on a failed save, or on a sealed chapter.
+    expect(authoring.querySelector('[data-testid="create-mode-saving"]')!.getAttribute('data-saving')).toBe('saved');
+    expect(authoring.querySelector('[data-testid="create-mode-saving"]')!.textContent).toBe('');
     expect(authoring.querySelector('[data-testid="create-mode-sealed"]')).toBeNull();
     // A kind lights alone (with the page's numbering), again goes back to every tag, and Off is the page as a reader sees it.
     await click(button => button.getAttribute('data-tag-kind') === 'speakers', 'Speakers');
@@ -1217,7 +1219,7 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(authoring.querySelector('.sen-overlay-pin')).toBeTruthy();
     await click(button => button.getAttribute('data-tag-kind') === 'speakers', 'Speakers again');
     expect(panel()!.getAttribute('data-lit')).toBe('all');
-    await click(button => button.textContent === 'Off' && button.closest('[data-testid="create-mode-panel"]') !== null, 'Off');
+    await click(button => button.getAttribute('data-testid') === 'create-mode-show-tags', 'Hide tags');
     expect(panel()!.getAttribute('data-lit')).toBe('off');
     expect(authoring.querySelector('.sen-overlay-mark')).toBeNull();
     expect(authoring.textContent).toContain('Mara');
@@ -1232,7 +1234,9 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     await mount(<Host controller={controller} storyId={storyId} openAtChapter={1} openInCreate onTagChapter={onTagChapter} />);
     const authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
     expect(authoring.getAttribute('data-chapter-number')).toBe('1');
-    const tag = container.querySelector<HTMLButtonElement>('[data-testid="create-mode-tag"]')!;
+    // Tag this chapter again lives in the chapter's ⋯ menu.
+    await click(button => button.getAttribute('data-testid') === 'create-mode-menu', 'Chapter options');
+    const tag = document.querySelector<HTMLButtonElement>('[data-testid="create-mode-tag"]')!;
     expect(tag.textContent).toContain('Tag this chapter');
     await click(button => button === tag, 'Tag this chapter');
     expect(onTagChapter).toHaveBeenCalledWith(controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 1)!.id);

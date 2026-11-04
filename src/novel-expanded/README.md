@@ -1,5 +1,11 @@
 # NovelExpanded app
 
+- **2026-11-04** — **Create mode's panel, cleaned up** (SENSEI: "what would Apple do?"). The
+  tags are a quiet legend: a colored dot and a name per kind, no boxes; a kind with none is a
+  hollow ring; a kind lit alone gets a soft capsule while the rest fade, and says what it holds.
+  The eye shows or hides every tag (All/Off is gone). The panel says nothing while saved, and
+  speaks only while saving, on a failed save or on a sealed chapter. Tag this chapter again, the
+  tagger's record and the help line live in the ⋯ menu. About 170px tall on a phone.
 - **2026-11-04** — **Create mode is the tagger's page** (SENSEI). The Chapter Tagger's page and
   the Reader's Create mode are one: a chapter tapped in the world view's Chapters opens in the
   creator's Reader (`?page=create&world=<id>&read=1&chapter=<n>&create=1`) in Create mode,

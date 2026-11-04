@@ -1126,7 +1126,19 @@ async function walk(browser, viewport, sample) {
   // A kind lights alone; tapping it again lights every tag.
   await page.locator('[data-testid="create-mode-panel"] [data-tag-kind="speakers"]').click();
   check((await page.getByTestId('create-mode-panel').getAttribute('data-lit')) === 'speakers', 'A kind should light alone.');
+  // Let the line that says what it holds finish opening.
+  await page.waitForTimeout(400);
   await shot('7a-create-mode-speakers');
+  // The eye hides every tag (the reader's page) and shows them again; Tag this chapter again lives in the ⋯ menu.
+  await page.getByTestId('create-mode-show-tags').click();
+  check((await page.getByTestId('create-mode-panel').getAttribute('data-lit')) === 'off', 'The eye should hide every tag.');
+  check((await authoring.locator('.sen-overlay-mark').count()) === 0, 'Hidden tags should leave the page as a reader sees it.');
+  await page.getByTestId('create-mode-show-tags').click();
+  await page.getByTestId('create-mode-menu').click();
+  await page.getByTestId('create-mode-tag').waitFor();
+  await page.waitForTimeout(400);
+  await shot('7a-create-mode-menu');
+  await page.keyboard.press('Escape');
   await page.goBack();
   await authorWorld.locator('[data-testid="author-world-chapter"]').first().waitFor();
   await page.goBack();

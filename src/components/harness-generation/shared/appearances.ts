@@ -238,6 +238,8 @@ export interface AppearancesChapter {
   paragraphs?: readonly string[];
   speakers?: readonly SpeakerAttachment[];
   holdingChanges?: readonly HoldingChangeAttachment[];
+  /** Arrivals: someone arriving somewhere brings both back to the page's recent past. */
+  places?: readonly PlaceAttachment[];
 }
 
 const paragraphIndex = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
@@ -278,11 +280,13 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
     type Event =
       | { kind: 'appearance'; record: AppearanceAttachment; order: number }
       | { kind: 'speaker'; record: SpeakerAttachment; order: number }
-      | { kind: 'holding'; record: HoldingChangeAttachment; order: number };
+      | { kind: 'holding'; record: HoldingChangeAttachment; order: number }
+      | { kind: 'place'; record: PlaceAttachment; order: number };
     const events: Event[] = [
       ...(chapter.appearances ?? []).filter(record => record.kind === APPEARANCE_KIND).map((record, order) => ({ kind: 'appearance' as const, record, order })),
       ...(chapter.speakers ?? []).filter(record => record.kind === SPEAKER_KIND && !record.anchor.detached).map((record, order) => ({ kind: 'speaker' as const, record, order })),
       ...(chapter.holdingChanges ?? []).map((record, order) => ({ kind: 'holding' as const, record, order })),
+      ...(chapter.places ?? []).map((record, order) => ({ kind: 'place' as const, record, order })),
     ].sort((left, right) => paragraphIndex(left.record.anchor.blockId) - paragraphIndex(right.record.anchor.blockId)
       || left.record.anchor.startOffset - right.record.anchor.startOffset
       // At one place, an appearance comes before the speech or change it introduces.
@@ -308,6 +312,12 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
     });
 
     for (const event of events) {
+      if (event.kind === 'place') {
+        const { subject, place } = event.record.payload;
+        if (subject.entryId) seen(subject.entryId);
+        if (place.entryId) seen(place.entryId);
+        continue;
+      }
       if (event.kind === 'holding') {
         const { holder, target } = event.record.payload;
         if (holder.entryId) seen(holder.entryId);

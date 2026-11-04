@@ -111,6 +111,28 @@ describe('where a character is now', () => {
       .toBe('- Shen Yuan (character, wounded, at Summit Hall): a thin sweeper in grey');
   });
 
+  it('brings a place back into Appeared when someone returns to it, however many places came between (review finding, Codex, 2026-11-04)', () => {
+    const names = Array.from({ length: 11 }, (_, index) => `Hall ${index + 1}`);
+    const entries = names.map((name, index) => entry({ id: `e-${index + 1}`, name, kind: 'place' }));
+    const chapters = names.map((name, index) => {
+      const text = `He walked into ${name}.`;
+      const place = { name, entryId: `e-${index + 1}` };
+      return {
+        id: `c${index + 1}`, chapterNumber: index + 1, paragraphs: [text],
+        appearances: [{ id: `a${index + 1}`, kind: 'appearance' as const, anchor: { level: 'span' as const, blockId: `c${index + 1}-p1`, startOffset: 0, endOffset: text.length, selectedText: text },
+          payload: { origin: 'harness' as const, event: 'appears' as const, subject: place, entity: 'place' as const } }],
+        places: [placeTag(index + 1, `c${index + 1}-p1`, text, { name: 'MC', entryId: 'e-mc' }, place)],
+      };
+    });
+    const back = 'He came back to Hall 1.';
+    chapters.push({ id: 'c12', chapterNumber: 12, paragraphs: [back], appearances: [],
+      places: [placeTag(12, 'c12-p1', back, { name: 'MC', entryId: 'e-mc' }, { name: 'Hall 1', entryId: 'e-1' })] });
+    const shown = appearancesSection(deriveAppearances({ entries, chapters }), undefined, entries).entries.map(shownEntry => shownEntry.name);
+    expect(shown).toHaveLength(10);
+    expect(shown[0]).toBe('Hall 1');
+    expect(shown).not.toContain('Hall 2');
+  });
+
   it('gives a place its appearance on its first place tag, once', () => {
     const entries = [entry({ id: 'e-hall', name: 'Summit Hall', kind: 'place' })];
     const tagged = placeTag(2, 'c2-p1', 'He climbed into the Summit Hall.', { name: 'MC', entryId: 'e-mc' }, { name: 'Summit Hall', entryId: 'e-hall' });

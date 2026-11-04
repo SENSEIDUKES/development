@@ -7,6 +7,7 @@ import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDet
 import { WorldCard } from './WorldCard';
 import { WorldCardInfo } from './WorldCardInfo';
 import { WorldCardFeature } from './WorldCardFeature';
+import { WorldCardMenu } from './WorldCardMenu';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let container: HTMLDivElement;
@@ -20,7 +21,7 @@ const world: HomeWorld = {
   mcName: 'Ye Chen', powerStage: 'Foundation', creatorName: 'SENSEI', format: 'Novel', acquired: true,
 };
 
-it('keeps the format mark and an awarded SEN sash on the 2:3 art, with the title, creator and details beneath', () => {
+it('keeps the 2:3 art clean but for the SEN sash, with the title and genre | creator | status beneath', () => {
   const onOpen = vi.fn();
   act(() => root.render(<WorldCard world={world} senSash onOpen={onOpen} />));
 
@@ -29,13 +30,13 @@ it('keeps the format mark and an awarded SEN sash on the 2:3 art, with the title
   const card = tile.querySelector('[data-world-card="full"]')!;
   expect((card as HTMLElement).style.getPropertyValue('--world-card-glow')).not.toBe('');
   const open = card.querySelector<HTMLButtonElement>('.world-card-base-open')!;
-  expect(open.getAttribute('aria-label')).toBe('Open The Last Lotus, 24 chapters, creator SENSEI, format Novel');
+  expect(open.getAttribute('aria-label')).toBe('Open The Last Lotus, 24 chapters, creator SENSEI, format Novel. Press and hold for story information');
   const media = card.querySelector('.world-card-base-media')!;
-  // On the art: the format mark and the SEN sash only. The title and creator live in the caption.
-  expect(media.querySelector(':scope > .world-card-base-format .sr-only')?.textContent).toBe('Novel');
-  expect(card.querySelector(':scope .world-card-base-format svg.lucide-info')).not.toBeNull();
-  expect(card.querySelector('[data-sen-icon="story-scroll"]')).toBeNull();
+  // On the art: the SEN sash; no creator name and no words.
   expect(media.textContent).not.toContain('SENSEI');
+  // A Novel's information control is the keyboard's; it is quiet on the art.
+  expect(media.querySelector(':scope > .world-card-base-format')?.classList.contains('world-card-base-format-quiet')).toBe(true);
+  expect(card.querySelector('[data-sen-icon="story-scroll"]')).toBeNull();
   expect(media.querySelector('.world-card-ribbon')?.textContent).toBe('SEN');
   expect(media.querySelectorAll('.world-card-ribbon-star')).toHaveLength(2);
   expect(media.querySelector('.world-card-ribbon')?.getAttribute('aria-hidden')).toBe('true');
@@ -44,8 +45,9 @@ it('keeps the format mark and an awarded SEN sash on the 2:3 art, with the title
 
   const caption = tile.querySelector('.world-card-caption')!;
   expect(caption.querySelector('h3')?.textContent).toBe('The Last Lotus');
-  expect(caption.querySelector('.world-card-caption-creator')?.textContent).toBe('SENSEI');
-  expect(caption.querySelector('.world-card-caption-details')?.textContent).toBe('Xianxia | Ch. 24');
+  // The creator sits in the middle of the line, as on Compact.
+  expect(caption.querySelector('.world-card-caption-details')?.textContent).toBe('Xianxia | SENSEI');
+  expect(caption.querySelector('.world-card-caption-details .world-card-caption-creator')?.textContent).toBe('SENSEI');
   for (const value of ['Standard', 'Creator', 'Format', 'Manga', 'Ye Chen', 'Foundation', '1,280', 'Sealed', 'Draft', 'Unacquired', 'Recently read']) {
     expect(tile.textContent).not.toContain(value);
   }
@@ -58,23 +60,62 @@ it('keeps the format mark and an awarded SEN sash on the 2:3 art, with the title
   expect(container.querySelector('.world-card-ribbon')).toBeNull();
 });
 
-it('shows the Branching badge only when the creator has enabled branching, keeping the badge row either way', () => {
+it('ends the details line with a small branch mark only when the creator has enabled branching', () => {
   act(() => root.render(<WorldCard world={{ ...world, branchingEnabled: true }} onOpen={() => {}} />));
-  expect(container.querySelector('.world-card-caption-features')?.textContent).toBe('Branching');
+  const mark = () => container.querySelector('.world-card-caption-details .world-card-caption-branching');
+  expect(mark()?.textContent).toBe(', Branching');
+  expect(mark()?.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
   act(() => root.render(<WorldCard world={{ ...world, branchingEnabled: false }} onOpen={() => {}} />));
-  expect(container.querySelector('.world-card-caption-features')?.textContent).toBe('');
+  expect(mark()).toBeNull();
   act(() => root.render(<WorldCard world={world} onOpen={() => {}} />));
-  expect(container.querySelector('.world-card-caption-features')).not.toBeNull();
-  expect(container.querySelector('.world-card-feature')).toBeNull();
+  expect(mark()).toBeNull();
 });
 
-it('renders host-supplied creator lettering without assigning an element to other creators', () => {
+it('wears host-supplied creator lettering, alive, in its line without assigning an element to other creators', () => {
   act(() => root.render(<WorldCard world={{ ...world, creatorTitle: { element: 'lightning', intensity: 'rare' } }} onOpen={() => {}} />));
-  expect(container.querySelector('.world-card-caption-creator [data-element="lightning"]')?.textContent).toContain('SENSEI');
+  expect(container.querySelector('.world-card-caption-details .world-card-caption-creator [data-element="lightning"]')?.textContent).toContain('SENSEI');
 
   act(() => root.render(<WorldCard world={world} onOpen={() => {}} />));
   expect(container.querySelector('.world-card-caption-creator')?.textContent).toBe('SENSEI');
   expect(container.querySelector('.world-card-caption-creator [data-element]')).toBeNull();
+});
+
+it('marks a busy world in the cover corner, green now and yellow this week, and a quiet one not at all', () => {
+  const mark = (activityStatus?: HomeWorld['activityStatus']) => {
+    act(() => root.render(<WorldCard world={{ ...world, activityStatus }} onOpen={() => {}} />));
+    return container.querySelector('.world-card-base-media .world-card-activity-mark');
+  };
+  expect(mark('active-now')?.getAttribute('data-activity')).toBe('active-now');
+  expect(container.querySelector('.world-card-base-open')?.getAttribute('aria-label')).toContain('Active now');
+  expect(mark('active-this-week')?.getAttribute('title')).toBe('Active this week');
+  expect(mark('quiet')).toBeNull();
+  expect(mark(undefined)).toBeNull();
+});
+
+it('opens the story information with a press and hold on the cover, never entering the world', async () => {
+  vi.useFakeTimers();
+  const onOpen = vi.fn();
+  await act(async () => root.render(<WorldCard world={{ ...world, synopsis: 'A lotus blooms.' }} onOpen={onOpen} />));
+  const open = container.querySelector<HTMLButtonElement>('.world-card-base-open')!;
+  await act(async () => {
+    open.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 50, clientY: 50 }));
+    vi.advanceTimersByTime(500);
+  });
+  expect(document.querySelector('.world-card-story-panel')?.textContent).toContain('A lotus blooms.');
+  // The click that ends the hold is the hold's.
+  await act(async () => { open.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })); open.click(); });
+  expect(onOpen).not.toHaveBeenCalled();
+  await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Close dialog"]')!.click());
+  // A finger that moves is a scroll, not a hold; a tap still enters.
+  await act(async () => {
+    open.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 50, clientY: 50 }));
+    open.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 50, clientY: 80 }));
+    vi.advanceTimersByTime(600);
+  });
+  expect(document.querySelector('.world-card-story-panel')).toBeNull();
+  await act(async () => open.click());
+  expect(onOpen).toHaveBeenCalledOnce();
+  vi.useRealTimers();
 });
 
 it('opens authorized story information without navigating or playing motion', async () => {
@@ -128,20 +169,20 @@ it('does not infer hidden activity or branching permission from missing data', a
   expect(panel.textContent).not.toContain('Quiet');
 });
 
-it('puts chapter and host-selected status in the caption details', () => {
+it('puts the host-selected status in the caption details, and no chapter count: a reader may begin anywhere', () => {
   act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'public', value: 'ongoing' }} onOpen={() => {}} />));
   const details = () => container.querySelector('.world-card-caption-details')?.textContent;
-  expect(details()).toBe('Xianxia | Ch. 24 | On Going');
+  expect(details()).toBe('Xianxia | SENSEI | On Going');
   expect(container.querySelector('.world-card-base-open')?.getAttribute('aria-label')).toContain('On Going');
 
   act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'public', value: 'completed' }} onOpen={() => {}} />));
-  expect(details()).toBe('Xianxia | Ch. 24 | Completed');
+  expect(details()).toBe('Xianxia | SENSEI | Completed');
 
   act(() => root.render(<WorldCard world={{ ...world, draft: false }} displayStatus={{ view: 'library', value: 'draft' }} onOpen={() => {}} />));
-  expect(details()).toBe('Xianxia | Ch. 24 | Draft');
+  expect(details()).toBe('Xianxia | SENSEI | Draft');
 
   act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'library', value: 'complete' }} onOpen={() => {}} />));
-  expect(details()).toBe('Xianxia | Ch. 24 | Complete');
+  expect(details()).toBe('Xianxia | SENSEI | Complete');
 });
 
 it('plays only this world’s supplied motion clip without opening the world', () => {
@@ -186,7 +227,7 @@ it('keeps acquisition and reading states off the card and handles missing covers
 
   act(() => root.render(<WorldCard world={{ ...world, creatorName: undefined, format: undefined, genre: '' }} onOpen={() => {}} />));
   expect(container.querySelector('.world-card-caption-creator')).toBeNull();
-  expect(container.querySelector('.world-card-caption-details')?.textContent).toBe('Ch. 24');
+  expect(container.querySelector('.world-card-caption-details')?.textContent).toBe('');
 
   act(() => root.render(<WorldCard world={{ ...world, format: 'Manga' }} onOpen={() => {}} />));
   expect(container.textContent).toContain('MANGA');
@@ -710,7 +751,7 @@ it('spotlights a world in the living Feature hero with its art, sash, details, s
   expect(card.querySelector('h3')?.textContent).toBe('The Last Lotus');
   expect(card.querySelector('.world-card-banner-byline')?.textContent).toBe('bySENSEI');
   // Branching rides the details line, so the words keep fixed places.
-  expect(card.querySelector('.world-card-banner-details')?.textContent).toBe('Xianxia | Ch. 24 | On GoingBranching');
+  expect(card.querySelector('.world-card-banner-details')?.textContent).toBe('Xianxia | On GoingBranching');
   expect(card.querySelector('.world-card-banner-details .world-card-feature')?.textContent).toBe('Branching');
   expect(card.querySelector('.world-card-banner-synopsis')?.textContent).toBe('A lotus blooms.');
   expect(card.querySelector('.world-card-feature')?.textContent).toBe('Branching');
@@ -781,4 +822,17 @@ it('loops the world’s own motion picture, muted, behind the Feature card', () 
   act(() => root.render(<WorldCardFeature key="hero" world={{ ...world, videoUrl: '/lotus.mp4', heroVideoUrl: '/lotus-hero.mp4' }} active onOpen={() => {}} />));
   expect(play).toHaveBeenCalled();
   play.mockRestore();
+});
+
+it('reads the Menu row like every card: genre | creator | status, with the activity mark on its cover', () => {
+  act(() => root.render(<WorldCardMenu world={{ ...world, publicationStatus: 'ongoing', activityStatus: 'active-now',
+    creatorTitle: { element: 'lightning', intensity: 'rare' } }} chapter={{ number: 7, title: 'Skybound Ruins' }} onOpen={() => {}} />));
+  const row = container.querySelector('[data-world-card="menu"]')!;
+  // The lettering's layers each repeat the name, so the line is read around it.
+  const meta = row.querySelector('.world-card-menu-meta')!.textContent!;
+  expect(meta.startsWith('Xianxia | SENSEI')).toBe(true);
+  expect(meta.endsWith('SENSEI | On Going')).toBe(true);
+  expect(row.querySelector('.world-card-menu-creator [data-element="lightning"]')).not.toBeNull();
+  expect(row.querySelector('.world-card-menu-cover .world-card-activity-mark')?.getAttribute('data-activity')).toBe('active-now');
+  expect(row.getAttribute('aria-label')).toContain('creator SENSEI, On Going, Active now');
 });

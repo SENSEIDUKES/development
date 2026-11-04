@@ -7,20 +7,25 @@ import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
 
 /**
  * A read-only preview of host-authorized story information opened from its format.
- * The Full card opens it from its corner Information badge; the Info page supplies its own Information row as the trigger.
+ * The Full and Compact cards open it with a press and hold on the cover (their trigger shows
+ * only for a format other than Novel, and to the keyboard); the Info page supplies its own
+ * Information row as the trigger.
  */
 /** What the story information dialog reads; a Home world and a creator's world both supply it. */
 export type WorldCardStoryPanelWorld = Pick<HomeWorld, 'title' | 'format' | 'synopsis' | 'tags' | 'senVerified' | 'activityStatus' | 'branchingEnabled'>
   & { reads?: number };
 
-export function WorldCardStoryPanel({ world, trigger, triggerClassName = 'world-card-base-format' }: {
+export function WorldCardStoryPanel({ world, trigger, triggerClassName = 'world-card-base-format', open, onOpenChange }: {
   world: WorldCardStoryPanelWorld;
   trigger?: ReactNode;
   triggerClassName?: string;
+  /** Controlled open state, for a host that also opens it another way (a press and hold). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const format = world.format?.trim();
   const activity = world.activityStatus ? WORLD_ACTIVITY_DISPLAY[world.activityStatus] : undefined;
-  return <SEIDialog>
+  return <SEIDialog open={open} onOpenChange={onOpenChange ? next => onOpenChange(next) : undefined}>
     <SEIDialogTrigger className={triggerClassName} aria-label={`Story information for ${world.title}${format ? `, ${format}` : ''}`}>
       {/* A Novel (or a world with no format) wears the Information badge; other formats keep their label. */}
       {trigger ?? (format && format.toLowerCase() !== 'novel'

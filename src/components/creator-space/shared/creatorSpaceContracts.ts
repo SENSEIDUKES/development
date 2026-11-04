@@ -30,6 +30,8 @@ export interface CreatorWorld {
   genre?: string;
   /** The creator's branching permission; the caption shows Branching only when true. */
   branchingEnabled?: boolean;
+  /** How busy the world is with its readers, for the card's activity mark; absent when unknown. */
+  activityStatus?: 'active-now' | 'active-this-week' | 'quiet';
   /** Optional information for the format mark's story dialog. */
   synopsis?: string;
   tags?: readonly string[];

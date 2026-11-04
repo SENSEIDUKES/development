@@ -63,3 +63,4 @@ export const WorldCardBackdropVideo = forwardRef<WorldCardBackdropVideoHandle, {
     data-playing={playing ? 'true' : undefined} onPlaying={() => setPlaying(true)} onPause={() => setPlaying(false)}
     onError={() => setPlaying(false)} />;
 });
+

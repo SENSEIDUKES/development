@@ -540,3 +540,61 @@ describe('Fixer: the rest of the record', () => {
     expect(planHoldingsFix(inputFor(state, latest)).cases).toEqual([]);
   });
 });
+
+describe('Fixer: where someone is (Place)', () => {
+  const HALL = ['[[place: MC | Summit Hall]] Ye Chen climbed into the Summit Hall.', '[[appears: Lower Stacks | place]] Far below lay the Lower Stacks, dark and silent.'];
+
+  it('asks about someone who speaks after the chapter names another place, and records where they are now', async () => {
+    const { state, latest } = await written(reply(HALL),
+      reply(['By dusk Ye Chen had reached the Lower Stacks.', '[[@MC]] “Anyone here?” he called.']));
+    const plan = planHoldingsFix(inputFor(state, latest));
+    expect(plan.cases.map(planned => planned.case)).toEqual([{
+      id: 'c1',
+      problems: ['‘Ye Chen’ is at Summit Hall since Chapter 1, but speaks in this chapter after it names Lower Stacks, with no place tag to take them there: ““Anyone here?” he called.”'],
+      passage: { sentence: 'By dusk Ye Chen had reached the Lower Stacks.' },
+      tags: '',
+      record: ['Ye Chen, Chapter 1: at Summit Hall: “Ye Chen climbed into the Summit Hall.”'],
+      answers: ['record', 'fine'],
+    }]);
+
+    // He is there now: the place tag goes on the sentence that names it, naming the place the record already has.
+    const { result } = apply(state, latest, [{ case: 'c1', outcome: 'record', tags: '[[place: MC | Lower Stacks]]', reason: 'He walked down.' }]);
+    expect(result.fixes[0]).toMatchObject({ checks: ['place-contradiction'], outcome: 'fixed-tags', blockId: 'c2-p1', after: '[[place: MC | Lower Stacks]]' });
+    const stacks = state.codexEntries.find(entry => entry.kind === 'place' && entry.name === 'Lower Stacks')!;
+    const ye = state.codexEntries.find(entry => entry.mainCharacter)!;
+    expect(result.chapter.places?.at(-1)).toMatchObject({
+      anchor: { blockId: 'c2-p1', selectedText: 'By dusk Ye Chen had reached the Lower Stacks.' },
+      payload: { subject: { name: 'MC', entryId: ye.id }, place: { name: 'Lower Stacks', entryId: stacks.id } },
+    });
+    // The place was already on the page: it does not step onto it twice, and no second card is made.
+    expect(result.chapter.appearances).toEqual(latest.appearances);
+    expect(result.entries).toEqual(state.codexEntries);
+
+    // Only talked about: nothing changes. A tag for someone else is not this case's answer.
+    expect(apply(state, latest, [{ case: 'c1', outcome: 'fine', reason: 'He is still in the hall.' }]).result.chapter).toEqual(latest);
+    const wrong = apply(state, latest, [{ case: 'c1', outcome: 'record', tags: '[[place: Elder Qin | Lower Stacks]]', reason: 'x' }]).result;
+    expect(wrong.fixes[0]).toMatchObject({ outcome: 'skipped' });
+    expect(wrong.chapter).toEqual(latest);
+  });
+
+  it('never asks when a place tag takes them there first, or when the place named last is the one the record has them in', async () => {
+    const tagged = await written(reply(HALL),
+      reply(['[[place: MC | Lower Stacks]] By dusk Ye Chen had reached the Lower Stacks.', '[[@MC]] “Anyone here?” he called.']));
+    expect(planHoldingsFix(inputFor(tagged.state, tagged.latest)).cases).toEqual([]);
+    const stayed = await written(reply(HALL),
+      reply(['The Lower Stacks lay far below the Summit Hall.', '[[@MC]] “Not today,” Ye Chen said.']));
+    expect(planHoldingsFix(inputFor(stayed.state, stayed.latest)).cases).toEqual([]);
+  });
+
+  it('merges a place a chapter names twice under two names, and its place tags follow the one kept', async () => {
+    const { state, latest } = await written(reply(['[[place: MC | Summit Hall]] Ye Chen climbed into the Summit Hall.']),
+      reply(['[[place: MC | the Great Summit Hall]] He came back to the great hall at dawn.']));
+    const plan = planHoldingsFix(inputFor(state, latest));
+    expect(plan.cases.map(planned => planned.kind)).toEqual(['duplicate']);
+    const hall = state.codexEntries.find(entry => entry.name === 'Summit Hall')!;
+    const { result } = apply(state, latest, [{ case: 'c1', outcome: 'record', reason: 'One hall.' }]);
+    expect(result.fixes[0]).toMatchObject({ outcome: 'merged', merged: { keptEntryId: hall.id, alias: 'the Great Summit Hall' } });
+    expect(result.chapter.places?.[0].payload.place).toEqual({ name: 'the Great Summit Hall', entryId: hall.id });
+    expect(result.entries.filter(entry => entry.kind === 'place').map(entry => entry.name)).toEqual(['Summit Hall']);
+  });
+});

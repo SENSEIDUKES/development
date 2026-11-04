@@ -301,14 +301,17 @@ describe('what the tagger is told about the story', () => {
       entries: [entry({ name: 'Ye Chen', kind: 'character', mainCharacter: true, aliases: ['the Quarry Boy'] })],
       world: WORLD,
     });
-    expect(subjects.map(subject => subject.name)).toEqual(['Ye Chen', 'Jade Token']);
+    expect(subjects.map(subject => subject.name)).toEqual(['Ye Chen', 'Jade Token', 'Rift Quarry']);
     // The Codex entry wins over the card of the same name: its id is what a tag resolves to.
     expect(subjects[0]).toMatchObject({ mainCharacter: true, aliases: ['the Quarry Boy'] });
   });
 
   it('leaves out a card kind no tag can name yet', () => {
-    const subjects = tagSubjectsOfStory({ entries: [], world: WORLD });
-    expect(subjects.some(subject => subject.name === 'Rift Quarry')).toBe(false);
+    const world: WorldRecord = { cards: [...WORLD.cards, { key: 'world:species:ash-wolf', kind: 'species', name: 'Ash Wolf', enteredInChapter: 0, slots: {} }] };
+    const subjects = tagSubjectsOfStory({ entries: [], world });
+    expect(subjects.some(subject => subject.name === 'Ash Wolf')).toBe(false);
+    // A place card is named by the place tag, under its own kind.
+    expect(subjects.find(subject => subject.name === 'Rift Quarry')).toEqual({ name: 'Rift Quarry', kind: 'place' });
   });
 
   it('sends the chapter, who exists and what they carry, and never how the story got here', () => {

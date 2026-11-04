@@ -15,12 +15,13 @@ import type { AppearanceTagWord } from './marks';
  * appearances and looks, so a rewritten chapter changes the result.
  *
  * The look is medium-neutral: what someone or something looks like, never how
- * to show it (no camera, framing, pose, lighting or art style). Places come
- * with the Place tag; factions are never given a look.
+ * to show it (no camera, framing, pose, lighting or art style). A place steps
+ * onto the page the same way (`[[appears: Summit Hall | place]]`); where a
+ * character is, is the Place tag's. Factions are never given a look.
  */
 
-/** What an appearance names: a character (a person or a named creature) or a thing. */
-export type AppearanceEntity = 'character' | 'thing';
+/** What an appearance names: a character (a person or a named creature), a thing, or a place. */
+export type AppearanceEntity = 'character' | 'thing' | 'place';
 
 /** The attachment kind of an appearance. */
 export const APPEARANCE_KIND = 'appearance';
@@ -56,7 +57,7 @@ export interface AppearanceAttachment extends ManuscriptAttachment<AppearancePay
 /** An appearance's id: its sentence, and its place among the chapter's appearances. */
 export const appearanceId = (blockId: string, start: number, end: number, index: number) => `appearance:${blockId}:${start}-${end}:${index}`;
 
-export { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type CodexEntryLook, type CodexEntryLookFailure, type Look, type LookTrait } from './looks';
+export { CHARACTER_LOOK_TRAITS, PLACE_LOOK_TRAITS, THING_LOOK_TRAITS, type CodexEntryLook, type CodexEntryLookFailure, type Look, type LookTrait } from './looks';
 import type { Look } from './looks';
 
 /** The look written down for one appearance of a chapter. */
@@ -91,10 +92,10 @@ export type AppearanceFlagKind =
   | 'look-unseen'
   /** Someone speaks in a chapter written with the Appearance skill before any tag shows them appearing. */
   | 'speaks-unseen'
-  /** An appears tag whose kind is neither character nor thing. */
+  /** An appears tag whose kind is not a character, a thing or a place. */
   | 'unknown-kind';
 
-/** One character or thing the writer reads as already on the page, with the look the record holds. */
+/** One character, thing or place the writer reads as already on the page, with the look the record holds. */
 export interface AppearancesSectionEntry {
   name: string;
   entity: AppearanceEntity;
@@ -103,13 +104,15 @@ export interface AppearancesSectionEntry {
   look?: string;
   /** How they are now, when a status tag gave one. */
   status?: string;
+  /** Where they are now, when a place tag gave one. */
+  place?: string;
 }
 
 /**
- * The Appeared section of the Story Information Packet: every character and
- * thing already on the page, with its look. The main character comes first
- * when they have appeared; then the characters, then the things, those seen
- * most recently first.
+ * The Appeared section of the Story Information Packet: every character,
+ * thing and place already on the page, with its look. The main character
+ * comes first when they have appeared; then the characters, the things and
+ * the places, those seen most recently first.
  */
 export interface AppearancesSection {
   entries: AppearancesSectionEntry[];

@@ -175,6 +175,8 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   41: stored => ({ ...stored, schemaVersion: 42 }),
   // 43 adds only optional fields (the fixer's record checks and a name it gave): every saved story reads as it is.
   42: stored => ({ ...stored, schemaVersion: 43 }),
+  // 44 adds only an optional field (each chapter's places): every saved story reads as it is.
+  43: stored => ({ ...stored, schemaVersion: 44 }),
 };
 
 /** The CAPA slots that left the schema when the tagger took the tags (schema 39). */

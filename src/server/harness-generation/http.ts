@@ -90,7 +90,7 @@ const parseHoldingsFix = (parsed: Record<string, unknown>): HarnessHoldingsFixRe
 
 /** The longest name, change of look or earlier look one look subject may carry. */
 const LOOK_TEXT_LIMIT = 400;
-const LOOK_ENTITIES = new Set(['character', 'thing']);
+const LOOK_ENTITIES = new Set(['character', 'thing', 'place']);
 const LOOK_EVENTS = new Set(['appears', 'look']);
 
 /** A look step request: a few subjects, each a passage within its limits. */
@@ -118,7 +118,7 @@ const parseLookRequest = (parsed: Record<string, unknown>): HarnessLookRequest =
  * use. Nothing here describes how the story got here, so there is nothing of
  * the packet to validate.
  */
-const TAG_SUBJECT_KINDS = new Set(['character', 'thing', 'ability']);
+const TAG_SUBJECT_KINDS = new Set(['character', 'thing', 'ability', 'place']);
 
 const parseTagRequest = (parsed: Record<string, unknown>): HarnessTagRequest => {
   const within = (value: unknown, limit: number) => typeof value === 'string' && value.length <= limit;
@@ -133,7 +133,8 @@ const parseTagRequest = (parsed: Record<string, unknown>): HarnessTagRequest => 
     && subjects.every(subject => isRecord(subject) && within(subject.name, TAG_NAME_CHARACTERS) && Boolean((subject.name as string).trim())
       && TAG_SUBJECT_KINDS.has(subject.kind as string)
       && (subject.aliases === undefined || (Array.isArray(subject.aliases) && subject.aliases.every(alias => within(alias, TAG_NAME_CHARACTERS))))
-      && (subject.status === undefined || within(subject.status, TAG_NAME_CHARACTERS)));
+      && (subject.status === undefined || within(subject.status, TAG_NAME_CHARACTERS))
+      && (subject.place === undefined || within(subject.place, TAG_NAME_CHARACTERS)));
   if (!valid) throw new Error(`A tagging request needs its chapter, model and language, 1 to ${TAG_PARAGRAPH_LIMIT} paragraphs, and at most ${TAG_SUBJECT_LIMIT} named subjects.`);
   // The sound words travel with the chapter the tagger reads, so they are
   // checked against the same limits a Sound Cue pack is held to before any call.

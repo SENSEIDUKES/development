@@ -111,7 +111,7 @@ describe('Harness Generation HTTP boundary', () => {
       { ...tagRequest, reasoningLevel: 7 },
       { ...tagRequest, paragraphs: [] },
       { ...tagRequest, paragraphs: ['A paragraph.', 7] },
-      { ...tagRequest, subjects: [{ name: 'Ye Chen', kind: 'place' }] },
+      { ...tagRequest, subjects: [{ name: 'Ye Chen', kind: 'faction' }] },
       { ...tagRequest, chapterNumber: 0 },
       { ...tagRequest, language: '' },
     ]) {

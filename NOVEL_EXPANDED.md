@@ -1031,6 +1031,20 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
    passage that showed it. Not yet proven with a real model.
 3. **Place:** places become Codex entries, and the record knows where each
    character is.
+   **Built (2026-11-04),** the way Status is built: the tagger tags the
+   sentence where a character arrives somewhere, `[[place: Name | Place]]`,
+   and where a character is now is the latest tag in story order, never
+   stored. A place is a Codex entry of its own, one card with the World
+   Blueprint's place of the same name, and steps onto the page with the
+   appearance tag (`[[appears: Place | place]]`) or with the first place tag
+   that names it, so it gets a look (land, buildings, light, size,
+   condition). The tagger reads where each character is beside their name
+   and the story's places under PLACES; the writer reads it in Appeared; the
+   Codex card shows "At …" with its passage, and each place card its look
+   and who is there now. The fixer gained its place check (someone who acts
+   after the chapter names another place, with no place tag to take them
+   there), and its duplicate-name check now covers places. Where a scene is
+   stays with Scene. Not yet proven with a real model.
 4. **Scene:** where a story scene starts, where it is, when (time of day,
    conditions) and who is present. With appearance, this is what an artist
    needs to draw a panel. Its first piece is the cast plan before writing

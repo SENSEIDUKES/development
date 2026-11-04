@@ -3,9 +3,9 @@ import { Archive, Backpack, ChevronLeft, Eye, Flag, Hand, LoaderCircle, Lock, Ma
 import './story-codex.css';
 import { CodexCardButton, CodexProfileHeader, type CodexCardCategory } from './codexCardParts';
 import type { HoldingVerb } from '../../../narrative/holdings';
-import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
+import { CHARACTER_LOOK_TRAITS, PLACE_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
-import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, CodexPictureCard, CodexPictures, CodexWorldCard, CodexWorldFact, StoryCodexRecord } from '../shared/storyCodex';
+import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, CodexPictureCard, CodexPictures, CodexPlace, CodexWorldCard, CodexWorldFact, StoryCodexRecord } from '../shared/storyCodex';
 import './reader-colors.css';
 
 /** How each change reads in the Codex. */
@@ -18,6 +18,7 @@ const VERB_LABELS: Record<HoldingVerb, string> = {
 const TRAIT_LABELS: Record<LookTrait, string> = {
   build: 'Build', face: 'Face', eyes: 'Eyes', hair: 'Hair', skin: 'Skin', clothing: 'Clothing', marks: 'Marks', gear: 'Gear',
   form: 'Form', size: 'Size', material: 'Material', colour: 'Colour', condition: 'Condition',
+  land: 'Land', buildings: 'Buildings', light: 'Light',
 };
 
 /** Opens the chapter behind a fact, at its paragraph, with the Codex still open. */
@@ -290,6 +291,9 @@ function CharacterProfile({ character, art, onBack, onReadPassage }: { character
       {character.status && <span data-testid="codex-status" className="contents">
         <PassageChip passage={character.status.passage} label={`${character.status.text} · Ch. ${character.status.passage.chapterNumber}`} onReadPassage={onReadPassage} />
       </span>}
+      {character.place && <span data-testid="codex-place" className="contents">
+        <PassageChip passage={character.place.passage} label={`At ${character.place.text} · Ch. ${character.place.passage.chapterNumber}`} onReadPassage={onReadPassage} />
+      </span>}
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>
@@ -322,8 +326,8 @@ function FactionProfile({ faction, onBack, onReadPassage }: { faction: CodexFact
 }
 
 /**
- * A card the world opened with and no chapter has reached yet: an ability, a
- * place, or one of the Bestiary's species.
+ * A card the world opened with that holds only its facts: an ability, or one
+ * of the Bestiary's species.
  */
 function WorldCardProfile({ category, card, backLabel, onBack }: {
   category: CodexTab; card: CodexWorldCard; backLabel: string; onBack: () => void;
@@ -332,6 +336,24 @@ function WorldCardProfile({ category, card, backLabel, onBack }: {
     badges={[]} backLabel={backLabel} onBack={onBack}>
     <WorldAtTheStart name={card.name} facts={card.atChapterZero} />
     {!card.atChapterZero.length && <p className="text-sm text-(--reader-text-dim)">The world records nothing about it yet but its name.</p>}
+  </Profile>;
+}
+
+/** A place: the world's facts about it, its look once it stepped onto the page, and who is there now. */
+function PlaceProfile({ place, onBack, onReadPassage }: { place: CodexPlace; onBack: () => void; onReadPassage?: ReadPassage }) {
+  return <Profile category="places" name={place.name} line={worldFact(place.atChapterZero, 'within') ?? metLine(place)}
+    badges={[]} backLabel="All places" onBack={onBack}>
+    <div className="flex flex-wrap gap-1.5">
+      {place.firstSeen
+        ? <PassageChip passage={place.firstSeen} label={`First seen · Ch. ${place.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
+        : <span className="inline-flex min-h-8 items-center rounded-full border border-(--reader-light)/12 bg-(--reader-light)/[0.04] px-2.5 text-[11px] text-(--reader-text-muted)">{AT_THE_START}</span>}
+    </div>
+    {place.atChapterZero.length > 0 && <WorldAtTheStart name={place.name} facts={place.atChapterZero} />}
+    {place.appearance && <LookSection name={place.name} appearance={place.appearance} traits={PLACE_LOOK_TRAITS} onReadPassage={onReadPassage} />}
+    {place.here.length > 0 && <Section title="Here now" icon={<Users size={12} aria-hidden />} label={`${place.name}: Here now`} testId="codex-here">
+      <p className="text-sm text-(--reader-text-soft)">{place.here.map(who => who.name).join(', ')}</p>
+    </Section>}
+    {!place.atChapterZero.length && !place.appearance && <p className="text-sm text-(--reader-text-dim)">The world records nothing about it yet but its name.</p>}
   </Profile>;
 }
 
@@ -469,15 +491,15 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
   const character = tab === 'characters' ? codex.characters.find(entry => entry.key === open) : undefined;
   const faction = tab === 'factions' ? codex.factions.find(entry => entry.key === open) : undefined;
   const item = tab === 'items' ? codex.items.find(entry => entry.key === open) : undefined;
+  const place = tab === 'places' ? codex.places.find(entry => entry.key === open) : undefined;
   // The kinds the world opens with share one profile: their cards hold only facts.
   const worldGroups: Partial<Record<CodexTab, { cards: readonly CodexWorldCard[]; backLabel: string }>> = {
     abilities: { cards: codex.abilities, backLabel: 'All abilities' },
-    places: { cards: codex.places, backLabel: 'All places' },
     species: { cards: codex.species, backLabel: 'All species' },
   };
   const worldGroup = worldGroups[tab];
   const worldCard = worldGroup?.cards.find(entry => entry.key === open);
-  const profileOpen = Boolean(character || faction || item || worldCard);
+  const profileOpen = Boolean(character || faction || item || place || worldCard);
   // A new view starts at its top.
   useLayoutEffect(() => {
     const box = scrollBoxOf(root.current);
@@ -494,6 +516,9 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
     : tab === 'factions'
       ? codex.factions.map(entry => <CodexCard key={entry.key} category="factions" testId="codex-faction" cardKey={entry.key} name={entry.name} {...art(entry.key)}
           line={worldFact(entry.atChapterZero, 'factionKind') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
+      : tab === 'places'
+        ? codex.places.map(entry => <CodexCard key={entry.key} category="places" testId="codex-places" cardKey={entry.key} name={entry.name} {...art(entry.key)}
+            line={worldFact(entry.atChapterZero, 'appearance') ?? entry.appearance?.look?.summary ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
       : worldGroup
         ? worldGroup.cards.map(entry => <CodexCard key={entry.key} category={tab} testId={`codex-${tab}`} cardKey={entry.key} name={entry.name} {...art(entry.key)}
             line={worldFact(entry.atChapterZero, 'appearance') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
@@ -531,6 +556,7 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
       {faction && <FactionProfile key={faction.key} faction={faction} onBack={close} onReadPassage={askToRead} />}
       {item && <ItemProfile key={item.key} item={item} onBack={close} onReadPassage={askToRead}
         art={artOf(item.key, 'thing', item.name, item.appearance, item.atChapterZero)} />}
+      {place && <PlaceProfile key={place.key} place={place} onBack={close} onReadPassage={askToRead} />}
       {worldCard && worldGroup && <WorldCardProfile key={worldCard.key} category={tab} card={worldCard} backLabel={worldGroup.backLabel} onBack={close} />}
       {/* The World rules are one sheet, not a gallery: every other card refers to them. */}
       {tab === 'world-rules'

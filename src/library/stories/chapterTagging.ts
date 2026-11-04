@@ -12,7 +12,7 @@ import { ATTACHMENT_COLORS, type OverlayMark, type TextHighlightBlock } from '@s
  * those words, so a quiet chapter and a failed one never look alike.
  */
 
-export type ChapterTaggingKind = 'Soundscape and atmosphere' | 'Sound Cues' | 'Speakers' | 'Holdings' | 'Appearances' | 'Status';
+export type ChapterTaggingKind = 'Soundscape and atmosphere' | 'Sound Cues' | 'Speakers' | 'Holdings' | 'Appearances' | 'Status' | 'Place';
 
 export interface ChapterTaggingKindLine {
   kind: ChapterTaggingKind;
@@ -47,6 +47,7 @@ const KIND_WARNINGS: Record<ChapterTaggingKind, ReadonlyArray<HarnessWarning['co
   Holdings: ['holding_tags_incomplete'],
   Appearances: ['appearance_tags_incomplete'],
   Status: ['status_tags_incomplete'],
+  Place: ['place_tags_incomplete'],
 };
 
 const NOTHING_HERE = 'The tagger found nothing here.';
@@ -73,7 +74,7 @@ const when = (at: string, locale?: string) => {
  * character's own name, as the Codex knows them.
  */
 export function describeChapterTagging(
-  chapter: Pick<HarnessChapter, 'tagging' | 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'scene'>,
+  chapter: Pick<HarnessChapter, 'tagging' | 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'scene'>,
   { entries = [], locale }: { entries?: ReadonlyArray<Pick<CodexEntry, 'id' | 'name'>>; locale?: string } = {},
 ): ChapterTaggingAccount {
   const nameOf = (ref: { name: string; entryId?: string } | undefined) =>
@@ -134,6 +135,12 @@ export function describeChapterTagging(
         ? `${count(chapter.statuses.length, 'status', 'statuses')}: ${few(chapter.statuses.map(status => `${nameOf(status.payload.subject)} ${status.payload.status}`))}`
         : undefined)
       : { kind: 'Status', said: 'Tagged before Status existed: tag it again to read it.', state: 'not-asked' },
+    // Likewise for Place.
+    chapter.places
+      ? line('Place', chapter.places.length
+        ? `${count(chapter.places.length, 'place tag')}: ${few(chapter.places.map(record => `${nameOf(record.payload.subject)} at ${record.payload.place.name}`))}`
+        : undefined)
+      : { kind: 'Place', said: 'Tagged before Place existed: tag it again to read it.', state: 'not-asked' },
   ];
   return { status: 'tagged', headline: `Read${by} · ${when(record.at, locale)}${tokens}`, ...(notes ? { notes } : {}), kinds, problems };
 }
@@ -146,6 +153,7 @@ export const CHAPTER_TAGGING_KINDS: ReadonlyArray<{ kind: ChapterTaggingKind; to
   { kind: 'Holdings', tone: ATTACHMENT_COLORS['holding-change'].tone },
   { kind: 'Appearances', tone: ATTACHMENT_COLORS.appearance.tone },
   { kind: 'Status', tone: ATTACHMENT_COLORS.status.tone },
+  { kind: 'Place', tone: ATTACHMENT_COLORS.place.tone },
 ];
 
 /** The chapter's paragraphs as Highlight Engine blocks, under the ids its tags are anchored to. */
@@ -161,7 +169,7 @@ type Spanned = { id: string; anchor: { level: string; detached?: true; blockId?:
  * its first word, where they begin. `shown` chooses the kinds to light.
  */
 export function chapterTagMarks(
-  chapter: Pick<HarnessChapter, 'chapterNumber' | 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'scene'>,
+  chapter: Pick<HarnessChapter, 'chapterNumber' | 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'scene'>,
   shown: ReadonlySet<ChapterTaggingKind>,
 ): OverlayMark[] {
   const tone = (kind: ChapterTaggingKind) => CHAPTER_TAGGING_KINDS.find(entry => entry.kind === kind)!.tone;
@@ -176,6 +184,7 @@ export function chapterTagMarks(
     ...spans('Holdings', chapter.holdingChanges),
     ...spans('Appearances', chapter.appearances),
     ...spans('Status', chapter.statuses),
+    ...spans('Place', chapter.places),
   ];
   const scene = chapter.scene;
   const first = chapter.paragraphs[0];

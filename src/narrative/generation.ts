@@ -5,6 +5,7 @@ import type { CodexEntry, CodexEntryKind, HoldingChangeAttachment, HoldingsSecti
 import type { WorldCard, WorldRecord } from './worldRecord';
 import type { AppearanceAttachment, AppearanceEntity, AppearanceEvent, AppearancesSection, ChapterLooks, Look } from './appearances';
 import type { StatusAttachment } from './statuses';
+import type { PlaceAttachment } from './places';
 import type { SoundWord } from '../audio/soundWords';
 import type { AudioTags } from '../audio/audioTags';
 import type { SoundtrackVocabulary } from '../audio/soundtrackVocabulary';
@@ -39,8 +40,10 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * to it, seeded from each story's active Foundation; 40 numbers every saved
  * workspace with its revision, so a save made from an older one (another tab)
  * is refused instead of overwriting it; 42 adds each chapter's optional
- * statuses (how a character is now, from the status tag). */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 43 as const;
+ * statuses (how a character is now, from the status tag); 43 adds the
+ * fixer's record checks and a name it gave; 44 adds each chapter's optional
+ * places (where a character is now, from the place tag). */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 44 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -588,7 +591,7 @@ export type HarnessModelPlan = string | {
  */
 export interface HarnessChapterAuthoring {
   editedAt: string;
-  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment | AppearanceAttachment | StatusAttachment>;
+  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment | AppearanceAttachment | StatusAttachment | PlaceAttachment>;
 }
 
 export interface HarnessChapterMetrics {
@@ -626,6 +629,8 @@ export interface HarnessAcceptedChapterDraft {
   appearances?: AppearanceAttachment[];
   /** Every status the tagger tagged (how a character is now), on the sentence its tag points at. Names resolve when the chapter commits. */
   statuses?: StatusAttachment[];
+  /** Every place tag the tagger tagged (where a character is now), on the sentence its tag points at. Names resolve when the chapter commits. */
+  places?: PlaceAttachment[];
   /** The chapter's music and atmosphere, from the writer's soundscape and atmosphere tags. */
   scene?: HarnessChapterScene;
   title: string;
@@ -685,6 +690,7 @@ export interface HarnessWarning {
     | 'holding_tags_incomplete'
     | 'appearance_tags_incomplete'
     | 'status_tags_incomplete'
+    | 'place_tags_incomplete'
     /** A note the tagger wrote could not be placed on its paragraph (its words are not there, or not there once) and was dropped on its own. */
     | 'tag_note_dropped';
   message: string;
@@ -975,6 +981,12 @@ export interface HarnessChapter {
    * status now is worked out from these, never stored.
    */
   statuses?: StatusAttachment[];
+  /**
+   * Where characters are now: one place tag per tag, on the sentence where
+   * they arrive, with both names resolved to Codex entries (the character and
+   * the place). Where each is now is worked out from these, never stored.
+   */
+  places?: PlaceAttachment[];
   /**
    * The looks the look step wrote down after the chapter committed, one per
    * appearance it read. Absent when it found nothing to describe, or did not run.
@@ -1399,6 +1411,8 @@ export interface HarnessTagSubject {
   mainCharacter?: true;
   /** A character's status going into the chapter, when a status tag ever gave one. */
   status?: string;
+  /** Where a character is going into the chapter, when a place tag ever gave one. */
+  place?: string;
 }
 
 /**
@@ -1506,9 +1520,11 @@ export interface HarnessHoldingsFixRequest {
 /**
  * The checks the fixer runs on the rest of the record (SENSEI, 2026-11-04):
  * someone who speaks for the first time but never appeared, a name in the
- * prose that may be a character's, and someone dead who speaks or acts.
+ * prose that may be a character's, and someone dead who speaks or acts; and,
+ * with Place, someone who acts in this chapter after it names a place other
+ * than the one the record has them in.
  */
-export type HarnessRecordCheckKind = 'missed-appearance' | 'possible-name' | 'status-contradiction';
+export type HarnessRecordCheckKind = 'missed-appearance' | 'possible-name' | 'status-contradiction' | 'place-contradiction';
 
 /** Every check the fixer runs: the holdings checks and the record checks. */
 export type HarnessFixerCheck = import('./holdings').HoldingFlagKind | HarnessRecordCheckKind;

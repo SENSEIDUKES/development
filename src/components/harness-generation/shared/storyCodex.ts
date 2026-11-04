@@ -16,6 +16,7 @@ import { normalizeIdentityLabel } from './canonicalProjection';
 import { factionNamed, type DeclaredFaction } from './factions';
 import { deriveAppearances, type AppearanceFlag, type AppearancePassage, type AppearanceSubject } from './appearances';
 import { deriveStatuses } from './statuses';
+import { derivePlaces } from './places';
 import {
   deriveHoldings,
   holdingTargetKind,
@@ -133,6 +134,8 @@ export interface CodexCharacter {
   rank?: { text: string; events: HoldingEvent[] };
   /** How they are now, from the latest status tag, with the passage that showed it. Absent while no tag gave one. */
   status?: { text: string; passage: CodexPassage };
+  /** Where they are now, from the latest place tag, with the passage where they arrived. Absent while no tag gave one. */
+  place?: { text: string; passage: CodexPassage };
   /** Things they hold now, in the order they came to hold them. */
   things: HeldThing[];
   /** Abilities they are learning or know. */
@@ -165,6 +168,18 @@ export interface CodexItem {
   appearance?: CodexAppearance;
 }
 
+/**
+ * A place: one the world opened with, or one a chapter's tags brought in, one
+ * card either way, with its look once it stepped onto the page and who the
+ * record has there now.
+ */
+export interface CodexPlace extends CodexWorldCard {
+  /** Its appearance on the page, and its look. */
+  appearance?: CodexAppearance;
+  /** Who is here now: everyone whose latest place tag names it. */
+  here: Array<{ key: string; name: string; mainCharacter: boolean }>;
+}
+
 /** A check the record's plain rules flagged (holdings or appearances), with the paragraph it is about when it has one. */
 export type CodexCheck = (HoldingFlag | AppearanceFlag) & { blockId?: string };
 
@@ -192,8 +207,8 @@ export interface StoryCodexRecord {
   items: CodexItem[];
   /** The abilities the world opened with that the story has reached. What each character knows is on their own card. */
   abilities: CodexWorldCard[];
-  /** The places the world opened with. */
-  places: CodexWorldCard[];
+  /** The places the world opened with, then every place the story's tags brought in, in the order the story met them. */
+  places: CodexPlace[];
   /** The Bestiary: the species natural to this world. */
   species: CodexWorldCard[];
   /** The one World rules sheet every other card refers to, when the world states one. */
@@ -203,7 +218,7 @@ export interface StoryCodexRecord {
 }
 
 /** What the Codex reads from a chapter. */
-export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'holdingChanges' | 'closingHoldings' | 'appearances' | 'looks' | 'statuses'>;
+export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'holdingChanges' | 'closingHoldings' | 'appearances' | 'looks' | 'statuses' | 'places'>;
 
 const paragraphOrder = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
 const comesBefore = (left: CodexPassage, right: CodexPassage) =>
@@ -340,11 +355,11 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     if (!character.firstSeen || comesBefore(first, character.firstSeen) < 0) character.firstSeen = first;
   }
 
-  // Someone met only by a status tag (a guard who falls, never tagged
-  // otherwise) is still met there: the tag's sentence is where the record
-  // first sees them. A group is never a character.
+  // Someone met only by a status or a place tag (a guard who falls, never
+  // tagged otherwise) is still met there: the tag's sentence is where the
+  // record first sees them. A group is never a character.
   for (const chapter of ordered) {
-    for (const record of chapter.statuses ?? []) {
+    for (const record of [...chapter.statuses ?? [], ...chapter.places ?? []]) {
       const { subject } = record.payload;
       const entry = subject.entryId ? entries.find(candidate => candidate.id === subject.entryId) : undefined;
       if ((entry && entry.kind !== 'character') || factionNamed(subject.name, declaredFactions)) continue;
@@ -425,17 +440,26 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     .filter(faction => ((faction.firstSeen && faction.voice) || faction.atChapterZero) && reached(faction))
     .sort((left, right) => inRecordOrder(left, right, faction => factionOrder.indexOf(faction)));
 
-  // How each is now: the latest status tag, by their entry or any name they answer to.
+  // How each is now, and where: the latest status and place tags, by their entry or any name they answer to.
   const statuses = deriveStatuses(ordered);
   const statusFor = (character: Working) => statuses.get(character.key)
     ?? [...character.names].map(name => statuses.get(`character:${name}`)).find(Boolean);
+  const wherever = derivePlaces(ordered, entries);
+  const placeFor = (character: Working) => wherever.get(character.key)
+    ?? [...character.names].map(name => wherever.get(`character:${name}`)).find(Boolean);
   const known = [...characters.values()].filter(character => (character.firstSeen || character.atChapterZero) && reached(character));
   const roster: CodexCharacter[] = known
     .sort((left, right) => Number(right.mainCharacter) - Number(left.mainCharacter)
       || inRecordOrder(left, right, character => known.indexOf(character)))
     .map(({ names, ...character }) => {
       const status = statusFor({ ...character, names });
-      return status ? { ...character, status: { text: status.status, passage: { chapterNumber: status.passage.chapterNumber, blockId: status.passage.blockId, text: status.passage.text } } } : character;
+      const place = placeFor({ ...character, names });
+      const passage = (from: { chapterNumber: number; blockId: string; text: string }) => ({ chapterNumber: from.chapterNumber, blockId: from.blockId, text: from.text });
+      return {
+        ...character,
+        ...(status ? { status: { text: status.status, passage: passage(status.passage) } } : {}),
+        ...(place ? { place: { text: place.place, passage: passage(place.passage) } } : {}),
+      };
     });
 
   // Things: what the world opened with, then every change the record saw,
@@ -520,11 +544,12 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     }
   }
 
-  // Places and the Bestiary wait for their own tags: until a chapter can name
-  // one, nothing in it reaches them, so a reader meets them only in a world
-  // open to them. An ability opens when a chapter reaches it, like every
-  // other card the story meets.
-  const worldCards = (kind: 'ability' | 'place' | 'species'): CodexWorldCard[] => {
+  // The Bestiary waits for its own tag: until a chapter can name a species,
+  // nothing in it reaches one, so a reader meets them only in a world open to
+  // them. An ability opens when a chapter reaches it, like every other card
+  // the story meets; a place, below, when it steps onto the page or someone
+  // arrives in it.
+  const worldCards = (kind: 'ability' | 'species'): CodexWorldCard[] => {
     const all = worldCardsOfKind(world, kind);
     // An identity two cards share is a name those words cannot tell apart
     // ("Phoenix Cry (East)" and "Phoenix Cry (West)" are both reached by
@@ -557,6 +582,55 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     });
     return cards.filter(reached).sort((left, right) => inRecordOrder(left, right, card => cards.indexOf(card)));
   };
+  // Places: the world's own cards first, then every place a chapter's tags
+  // brought in, one card a place, with its look and who is there now. A tag
+  // reaches a world card by its name or an alias, so the Blueprint's place is
+  // the one the story walks into, never a second card beside it.
+  const places = new Map<string, CodexPlace>();
+  const placeByLabel = new Map<string, string>();
+  for (const card of worldCardsOfKind(world, 'place')) {
+    const labels = labelsOf(card);
+    const entry = entryNamed('place', labels);
+    const named = entry?.id ?? card.key;
+    const key = places.has(named) ? card.key : named;
+    places.set(key, {
+      key, name: entry?.name ?? card.name, ...(card.aliases?.length ? { aliases: [...card.aliases] } : {}),
+      atChapterZero: worldCardFacts(card), here: [],
+    });
+    for (const label of [...labels, ...(entry ? labelsOf(entry) : [])]) if (!placeByLabel.has(label)) placeByLabel.set(label, key);
+  }
+  const placeOf = (entryId: string | undefined, name: string): CodexPlace => {
+    const entry = entryId ? entries.find(candidate => candidate.id === entryId) : undefined;
+    const labels = [name, ...(entry ? [entry.name, ...(entry.aliases ?? [])] : [])].map(normalizeIdentityLabel);
+    const found = (entryId ? places.get(entryId) : undefined) ?? labels.map(label => places.get(placeByLabel.get(label) ?? '')).find(Boolean);
+    if (found) return found;
+    const key = entryId ?? `place:${labels[0]}`;
+    const place: CodexPlace = { key, name: entry?.name ?? name, atChapterZero: [], here: [] };
+    places.set(key, place);
+    for (const label of labels) if (!placeByLabel.has(label)) placeByLabel.set(label, key);
+    return place;
+  };
+  const meets = (place: CodexPlace, passage: CodexPassage) => {
+    if (!place.firstSeen || comesBefore(passage, place.firstSeen) < 0) place.firstSeen = passage;
+  };
+  for (const subject of appeared.subjects) {
+    if (subject.entity !== 'place') continue;
+    const place = placeOf(subject.entryId, subject.name);
+    place.appearance = appearanceOf(subject);
+    meets(place, appearancePassage(subject.first));
+  }
+  for (const chapter of ordered) {
+    for (const record of chapter.places ?? []) {
+      meets(placeOf(record.payload.place.entryId, record.payload.place.name), { chapterNumber: chapter.chapterNumber, blockId: record.anchor.blockId, text: record.anchor.selectedText });
+    }
+  }
+  for (const character of known) {
+    const now = placeFor(character);
+    if (now) placeOf(now.placeEntryId, now.place).here.push({ key: character.key, name: character.name, mainCharacter: character.mainCharacter });
+  }
+  const placeOrder = [...places.values()];
+  const placeList = placeOrder.filter(reached).sort((left, right) => inRecordOrder(left, right, place => placeOrder.indexOf(place)));
+
   // The World rules are the world's frame, not a card the story reaches: the
   // ladder every rank is read against, and the age the story stands in.
   const rules = worldRulesCard(world);
@@ -575,7 +649,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     factions: factionList,
     items: itemList,
     abilities: worldCards('ability'),
-    places: worldCards('place'),
+    places: placeList,
     species: worldCards('species'),
     ...(rules ? { worldRules: worldCardFacts(rules) } : {}),
     checks,

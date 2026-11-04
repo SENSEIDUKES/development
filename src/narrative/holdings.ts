@@ -20,8 +20,8 @@ import type { HoldingTagWord } from './marks';
  * it known. Whether an ability can be used is worked out: learned and not sealed.
  */
 
-/** The kinds of Codex entry holdings name. */
-export type CodexEntryKind = 'character' | 'thing' | 'ability';
+/** The kinds of Codex entry the tags name: holdings name characters, things and abilities; place tags name places. */
+export type CodexEntryKind = 'character' | 'thing' | 'ability' | 'place';
 
 /**
  * A Codex entry: one person, thing or ability the story knows, with one

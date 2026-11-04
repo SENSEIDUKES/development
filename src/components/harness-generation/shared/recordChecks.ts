@@ -265,7 +265,7 @@ function statusContradictions(input: RecordChecksInput, locale?: string): Record
     if (!DEAD_STATUS.test(current.status)) continue;
     const entry = entries.find(candidate => candidate.id === statusKey);
     const known = entry ? namesOf(entry) : [current.name];
-    const isThem = (subject: { name: string; entryId?: string }) => (entry && subject.entryId === entry.id) || answersTo(known, subject.name);
+    const isThem = (subject: { name: string; entryId?: string }) => (entry && subject.entryId ? subject.entryId === entry.id : answersTo(known, subject.name));
     const first = firstAct(chapter, { entry, known, isThem }, locale);
     if (!first) continue;
     // A status this chapter gives them at or before that sentence already says how they are now.
@@ -328,17 +328,19 @@ function placeContradictions(input: RecordChecksInput, locale?: string): RecordF
   for (const [whoKey, current] of derivePlaces(earlier, entries)) {
     const entry = entries.find(candidate => candidate.id === whoKey);
     const known = entry ? namesOf(entry) : [current.name];
-    const isThem = (subject: { name: string; entryId?: string }) => (entry && subject.entryId === entry.id) || answersTo(known, subject.name);
+    const isThem = (subject: { name: string; entryId?: string }) => (entry && subject.entryId ? subject.entryId === entry.id : answersTo(known, subject.name));
     const first = firstAct(chapter, { entry, known, isThem }, locale);
     if (!first) continue;
-    // A place tag this chapter gives them at or before that sentence already says where they are now.
-    if ((chapter.places ?? []).some(record => isThem(record.payload.subject) && !before(first, spanPlace(chapter, record.anchor)))) continue;
     const here = places.find(place => (current.placeEntryId && place.entryId === current.placeEntryId) || answersTo(place.names, current.place));
     // The last place the chapter names up to that sentence: where the prose has taken the scene by then.
     const named = sentences.filter(sentence => !before(first, sentence))
       .map(sentence => ({ sentence, place: placeNamed(sentence.text, places) }))
       .filter(found => found.place).at(-1);
     if (!named?.place || (here && named.place.names.some(name => answersTo(here.names, name))) || answersTo(named.place.names, current.place)) continue;
+    // A place tag this chapter gives them at or before that sentence settles it, when it names the place the prose reached.
+    const reached = named.place;
+    if ((chapter.places ?? []).some(record => isThem(record.payload.subject) && !before(first, spanPlace(chapter, record.anchor))
+      && answersTo(reached.names, record.payload.place.name))) continue;
     const around = sentenceAt(chapter, named.sentence.blockId, named.sentence.start, locale)!;
     const name = entry?.name ?? current.name;
     const message = `‘${name}’ is at ${current.place} since Chapter ${current.passage.chapterNumber}, but ${first.what} in this chapter after it names ${named.place.name}, with no place tag to take them there: “${first.text}”`;
@@ -396,7 +398,7 @@ export type RecordFixAttempt =
 function readFixTagsFor<T extends { subject: { name: string } }>(text: string, known: readonly string[], what: string,
   read: (tag: ReturnType<typeof readMarks>['wordTags'][number]) => { ok: true; value: T } | { ok: false; problem: string }): { ok: true; values: T[] } | { ok: false; problem: string } {
   const reading = readMarks(text);
-  if (reading.text.trim() || reading.sounds.length || reading.speakers.length || reading.marks.length || reading.wordTagIssues.length || reading.soundIssues.length) {
+  if (reading.text.trim() || reading.sounds.length || reading.speakers.length || reading.marks.length || reading.soundtracks.length || reading.wordTagIssues.length || reading.soundIssues.length) {
     return { ok: false, problem: `the answer held more than a ${what} tag` };
   }
   const values: T[] = [];

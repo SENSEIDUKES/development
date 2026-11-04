@@ -523,7 +523,7 @@ export function StoryCodex({ codex, storyTitle, pictures, manifestCost, onBack, 
           line={worldFact(entry.atChapterZero, 'factionKind') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
       : tab === 'places'
         ? codex.places.map(entry => <CodexCard key={entry.key} category="places" testId="codex-places" cardKey={entry.key} name={entry.name} {...art(entry.key)}
-            line={worldFact(entry.atChapterZero, 'appearance') ?? entry.appearance?.look?.summary ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
+            line={entry.appearance?.look?.summary ?? worldFact(entry.atChapterZero, 'appearance') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
       : worldGroup
         ? worldGroup.cards.map(entry => <CodexCard key={entry.key} category={tab} testId={`codex-${tab}`} cardKey={entry.key} name={entry.name} {...art(entry.key)}
             line={worldFact(entry.atChapterZero, 'appearance') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)

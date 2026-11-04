@@ -9,6 +9,7 @@ import {
   placeAppearancesFromPlaces,
   placePlaces,
   readPlaceTag,
+  resolvePlaces,
   type HarnessGenerationModelAdapter,
   type HarnessTagRequest,
 } from '@seihouse/sen/harness-generation';
@@ -21,6 +22,7 @@ import type { PlaceAttachment } from '../../../narrative/places';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { acceptChapterTags } from './responseAcceptance';
+import { createCodexEntryResolver } from './holdings';
 
 /**
  * Place, the third information tag (SENSEI, 2026-11-04), built the way
@@ -54,6 +56,8 @@ describe('reading place tags', () => {
   it('sets aside a place tag that names no place, or tells what happens there instead', () => {
     expect(readMarks('[[place: Shen Yuan]] He went in.').wordTagIssues).toEqual([{ kind: 'incomplete', word: 'place' }]);
     expect(readPlaceTag(tag('[[place: Shen Yuan | the hall where the elders met to judge him for the theft]] He went in.'))).toMatchObject({ ok: false });
+    // A name longer than a tagging request may carry would break every later request (review finding, CodeRabbit, 2026-11-04).
+    expect(readPlaceTag(tag(`[[place: Shen Yuan | ${'Hall'.repeat(55)}]] He went in.`))).toMatchObject({ ok: false });
   });
 
   it('places each on the sentence its tag points at, and an unreadable one is flagged as a place, never as a holding', () => {
@@ -131,6 +135,26 @@ describe('where a character is now', () => {
     expect(shown).toHaveLength(10);
     expect(shown[0]).toBe('Hall 1');
     expect(shown).not.toContain('Hall 2');
+  });
+
+  it('never makes a character of a place tag whose "who" is a place the story has (review finding, CodeRabbit, 2026-11-04)', () => {
+    const entries = [entry({ id: 'e-hall', name: 'Summit Hall', kind: 'place' })];
+    const resolver = createCodexEntryResolver({ storyId: 's', chapter: { id: 'c2', chapterNumber: 2 }, entries, declared: [], createdAt: 'now', createId: () => 'new' });
+    const odd = placeTag(2, 'c2-p1', 'The hall stood in the academy.', { name: 'Summit Hall' }, { name: 'Lingxu Academy' });
+    expect(resolvePlaces([odd], resolver)).toEqual([]);
+    expect(resolver.created).toEqual([]);
+  });
+
+  it('keeps the main character\'s place in Appeared however many others have one (review finding, CodeRabbit, 2026-11-04)', () => {
+    const entries = [entry({ id: 'e-mc', name: 'Ye Chen', kind: 'character', mainCharacter: true }),
+      ...Array.from({ length: 25 }, (_, index) => entry({ id: `e-${index}`, name: `Guard ${index}`, kind: 'character' }))];
+    const chapters = [
+      { id: 'c1', chapterNumber: 1, places: [placeTag(1, 'c1-p1', 'In.', { name: 'MC', entryId: 'e-mc' }, { name: 'Summit Hall' })] },
+      { id: 'c2', chapterNumber: 2, places: Array.from({ length: 25 }, (_, index) => ({ ...placeTag(2, 'c2-p1', 'In.', { name: `Guard ${index}`, entryId: `e-${index}` }, { name: 'Gate' }), id: `p${index}` })) },
+    ];
+    const shown = appearancesSection(deriveAppearances({ entries, chapters }), undefined, entries, derivePlaces(chapters, entries)).entries;
+    expect(shown[0]).toEqual({ name: 'Ye Chen', entity: 'character', mainCharacter: true, place: 'Summit Hall' });
+    expect(shown).toHaveLength(21);
   });
 
   it('gives a place its appearance on its first place tag, once', () => {

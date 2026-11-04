@@ -15,6 +15,8 @@ import { holdingName, pointedSentence, type CodexEntryResolver, type HoldingPass
 
 /** More words than a place's name should carry: it names where, not what happens there. */
 const PLACE_WORD_LIMIT = 8;
+/** The most characters a place's name may carry: a name every later tagging request sends (TAG_NAME_CHARACTERS). */
+const PLACE_NAME_CHARACTERS = 200;
 
 export type ReadPlaceTag =
   | { ok: true; place: Omit<PlacePayload, 'origin'> }
@@ -29,7 +31,7 @@ export function readPlaceTag(tag: WordTag): ReadPlaceTag {
   const where = rest.join('; ').trim();
   if (!where) return { ok: false, problem: `a place tag for ${named.name} named no place` };
   const place = holdingName(where);
-  if ('note' in place || where.split(/\s+/).length > PLACE_WORD_LIMIT) return { ok: false, problem: `a place tag for ${named.name} described more than a place, so it was set aside` };
+  if ('note' in place || where.split(/\s+/).length > PLACE_WORD_LIMIT || place.name.length > PLACE_NAME_CHARACTERS) return { ok: false, problem: `a place tag for ${named.name} described more than a place, so it was set aside` };
   return { ok: true, place: { subject: { name: named.name }, place: { name: place.name } } };
 }
 
@@ -67,9 +69,14 @@ export function placePlaces({ paragraphs, locale }: {
   return { places, problems };
 }
 
-/** Resolves every place tag's two names when its chapter commits, sharing the chapter's resolver: the character, and the place. */
+/**
+ * Resolves every place tag's two names when its chapter commits, sharing the
+ * chapter's resolver: the character, and the place. A tag whose "who" is a
+ * place the story already has is no character arriving, so it is left out
+ * rather than made into a character.
+ */
 export const resolvePlaces = (places: readonly PlaceAttachment[], resolver: CodexEntryResolver): PlaceAttachment[] =>
-  places.map(record => {
+  places.filter(record => resolver.existing(record.payload.subject.name)?.kind !== 'place').map(record => {
     const who = resolver.character(record.payload.subject.name);
     const where = resolver.entry('place', record.payload.place.name);
     return {

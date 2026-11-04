@@ -549,15 +549,16 @@ export function appearancesSection(state: AppearancesState, statuses?: ReadonlyM
     const seen = latest.get(key);
     if (!seen || current.passage.chapterNumber > seen.chapterNumber) latest.set(key, { name: current.name, chapterNumber: current.passage.chapterNumber });
   }
-  const recordOnly = [...latest].sort(([, left], [, right]) => right.chapterNumber - left.chapterNumber)
-    .slice(0, APPEARED_SECTION_CHARACTERS)
+  const everyRecordOnly = [...latest].sort(([, left], [, right]) => right.chapterNumber - left.chapterNumber)
     .map(([key, current]): AppearancesSectionEntry => {
       const entry = entries.find(candidate => candidate.id === key);
       return { name: entry?.name ?? current.name, entity: 'character', ...(entry?.mainCharacter ? { mainCharacter: true as const } : {}), ...recordOf(key) };
     });
-  const mainRecordOnly = recordOnly.filter(entry => entry.mainCharacter);
+  // The main character is never counted out: the count is the others'.
+  const mainRecordOnly = everyRecordOnly.filter(entry => entry.mainCharacter);
+  const recordOnly = everyRecordOnly.filter(entry => !entry.mainCharacter).slice(0, APPEARED_SECTION_CHARACTERS);
   return { entries: [
-    ...(main ? [entryOf(main)] : mainRecordOnly), ...characters.map(entryOf), ...recordOnly.filter(entry => !entry.mainCharacter),
+    ...(main ? [entryOf(main)] : mainRecordOnly), ...characters.map(entryOf), ...recordOnly,
     ...things.map(entryOf), ...placesShown.map(entryOf),
   ] };
 }

@@ -575,6 +575,16 @@ describe('Fixer: where someone is (Place)', () => {
     const wrong = apply(state, latest, [{ case: 'c1', outcome: 'record', tags: '[[place: Elder Qin | Lower Stacks]]', reason: 'x' }]).result;
     expect(wrong.fixes[0]).toMatchObject({ outcome: 'skipped' });
     expect(wrong.chapter).toEqual(latest);
+    // An answer carrying anything but place tags is no answer (review finding, CodeRabbit, 2026-11-04).
+    const extra = apply(state, latest, [{ case: 'c1', outcome: 'record', tags: '[[place: MC | Lower Stacks]] [[soundscape: mystical]]', reason: 'x' }]).result;
+    expect(extra.fixes[0]).toMatchObject({ outcome: 'skipped' });
+    expect(extra.chapter).toEqual(latest);
+  });
+
+  it('still asks when the chapter\'s own place tag names another place than the one the prose reached (review finding, CodeRabbit, 2026-11-04)', async () => {
+    const { state, latest } = await written(reply(HALL),
+      reply(['[[place: MC | Summit Hall]] By dusk Ye Chen had reached the Lower Stacks.', '[[@MC]] “Anyone here?” he called.']));
+    expect(planHoldingsFix(inputFor(state, latest)).cases.map(planned => planned.flags[0].kind)).toEqual(['place-contradiction']);
   });
 
   it('never asks when a place tag takes them there first, or when the place named last is the one the record has them in', async () => {

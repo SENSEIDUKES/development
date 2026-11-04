@@ -10,7 +10,7 @@ import './reader-colors.css';
 const keepProse = () => undefined;
 
 /** Behind the sentence being read aloud; a host theme may set its own. */
-const READ_ALOUD_TONE = 'var(--sen-read-aloud-highlight, color-mix(in srgb, var(--reader-accent-bright) 16%, transparent))';
+export const READ_ALOUD_TONE = 'var(--sen-read-aloud-highlight, color-mix(in srgb, var(--reader-accent-bright) 16%, transparent))';
 
 /**
  * The chapter as prose: its title and its paragraphs on the Highlight

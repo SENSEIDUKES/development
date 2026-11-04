@@ -1,5 +1,29 @@
 # NovelExpanded app
 
+- **2026-11-04** — **Energy on every generation** (SENSEI). Each control that calls a model shows
+  its price: Rewrite, Fate's Write, Accept and write, Begin Story, Create Story and Replace
+  Blueprint (a chapter, 2), Tag this chapter again and Tag N chapters (1 a chapter; tagging by
+  hand is free), and Codex Manifest (an image, 5). Arc planning, Sparks and the Familiar's live
+  talk have no catalog price yet and show none.
+- **2026-11-04** — **Create mode's panel, cleaned up** (SENSEI: "what would Apple do?"). The
+  tags are a quiet legend: a colored dot and a name per kind, no boxes; a kind with none is a
+  hollow ring; a kind lit alone gets a soft capsule while the rest fade, and says what it holds.
+  The eye shows or hides every tag (All/Off is gone). The panel says nothing while saved, and
+  speaks only while saving, on a failed save or on a sealed chapter. Tag this chapter again, the
+  tagger's record and the help line live in the ⋯ menu. About 170px tall on a phone.
+- **2026-11-04** — **Create mode is the tagger's page** (SENSEI). The Chapter Tagger's page and
+  the Reader's Create mode are one: a chapter tapped in the world view's Chapters opens in the
+  creator's Reader (`?page=create&world=<id>&read=1&chapter=<n>&create=1`) in Create mode,
+  in the Reader's own look, so what the author sees is what a reader gets. Every tag is lit as
+  it opens, in two groups, **Media** (Soundscape, Atmosphere, Sound Cues) and **Story info**
+  (Speakers, Holdings, Appearances, Status); tapping a kind lights it alone with the page's
+  numbering, tapping it again lights them all, and **Off** is the page as a reader sees it. On a
+  phone the kinds are a fixed palette of tiles above the chapter; on a wider page each says what
+  it holds. Tag this chapter (again) and the tagger's record sit at the panel's foot. Create
+  mode now opens on any chapter and stays on from chapter to chapter: the newest can be
+  changed as before, a sealed one shows its tags and nothing changes (sealing itself is
+  unchanged). The world view's separate chapter page is gone; Back from the Reader returns to
+  Chapters.
 - **2026-11-04** — **World Info first, and Info in the author's world view** (SENSEI). Create Story,
   the world view's **Read** and the Creator Space's Studio now open the book's **World Info**
   (cover, Start or Continue, Settings, Export) before the Reader. World Info opened from Create
@@ -168,9 +192,9 @@ rewrites and every page survives a reload.
 | Home | `/app/` | Events above Featured, the reader's stories, newest first, and Carve New Destiny |
 | Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); Novel / Manga / Game / Video (`medium`) above section navigation, left browsing rail, scoped All / My updates, genres and rankings outside Lore |
 | Create | `/app/?page=create` | The Library's Creator Space: the reader's worlds (Continue, Studio), Energy, the Creator Toolkit previews and Create |
-| A world, for its author | `/app/?page=create&world=<id>` (`&chapter=<n>` for one chapter) | What a world opens to when its author taps it under Your worlds: the author's worlds as mini world cards, Novel (Sequential Art later), and Blueprint, Chapters, Codex (coming) and Assets (`AuthorWorldView`). Chapters is the iTunes list where chapters are checked and tagged a few at a time; a chapter opens with its tags lit. The only place in the app where tagging is seen |
+| A world, for its author | `/app/?page=create&world=<id>` | What a world opens to when its author taps it under Your worlds: the author's worlds as mini world cards, Novel (Sequential Art later), and Blueprint, Chapters, Codex (coming), Assets and Info (`AuthorWorldView`). Chapters is the iTunes list where chapters are checked and tagged a few at a time; a chapter opens in the creator's Reader, below, in Create mode with its tags lit |
 | Story Seed | `/app/?page=create&seed=new` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story; `&seed=<id>` opens a saved seed |
-| The creator's Reader | `/app/?page=create&world=<id>&read=1` (`&chapter=<n>` to open at a chapter) | The Reader with Fate and Create together, where the creator writes the next chapter; opened by Start Story, Continue, the world view's Read and a chapter's Read it. Back returns to the book in Create |
+| The creator's Reader | `/app/?page=create&world=<id>&read=1` (`&chapter=<n>` to open at a chapter, `&create=1` for Create mode with its tags lit) | The Reader with Fate and Create together, where the creator writes the next chapter and tags each chapter (Create mode); opened by Start Story, Continue and a chapter in the world's Chapters. Back returns to Chapters for a chapter opened there, else to the book's World Info in Create |
 | Story View | `/app/?story=<id>`; the creator's, from Create: `/app/?page=create&world=<id>&info=1` | The story's World Info page: Begin Story or Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | A reader's Reader for a published book: Fate alone, never writing. A draft opened here goes to the creator's Reader |
 | Blueprint | `/app/?story=<id>&blueprint=1` | The story's own World Blueprint, opened from World Info's Blueprint button. Every story on the device is the reader's own, so it opens for its creator: editable while the novel is private, saved as a new Foundation revision the next chapter uses |

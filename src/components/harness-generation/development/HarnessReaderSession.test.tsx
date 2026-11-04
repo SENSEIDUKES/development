@@ -81,20 +81,20 @@ const story = async ({ written = 0, replies, language }: { written?: number; rep
 };
 
 /** A host like the Library workspace: it follows the controller and writes chapters with its model. */
-function Host({ controller, storyId, readerState, renderWriting, renderWriteAside, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices, readerFonts, chapterBody, renderHostTools, creator, openAtChapter }: {
+function Host({ controller, storyId, readerState, renderWriting, renderWriteAside, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices, readerFonts, chapterBody, renderHostTools, creator, openAtChapter, openInCreate, onTagChapter, renderCost }: {
   controller: HarnessGenerationController; storyId: string; readerState?: ReaderStateRepository;
   renderWriting?: (writing: HarnessReaderWriting) => React.ReactNode; renderWriteAside?: (written: number) => React.ReactNode;
   startOnOpen?: boolean; canWrite?: boolean; canRewrite?: boolean;
   readerPreferences?: ReaderPreferenceStorage; readAloudVoices?: ReadAloudVoicePicks;
   readerFonts?: ReaderFonts; chapterBody?: ReaderChapterBody; renderHostTools?: (tools: ReaderHostTools) => React.ReactNode;
-  creator?: boolean; openAtChapter?: number;
+  creator?: boolean; openAtChapter?: number; openInCreate?: boolean; onTagChapter?: (chapterId: string) => Promise<void>; renderCost?: (action: 'chapter' | 'tag' | 'picture') => React.ReactNode;
 }) {
   const [state, setState] = useState(controller.snapshot());
   useEffect(() => { const stop = controller.subscribe(setState); return () => { stop(); }; }, [controller]);
   return <HarnessReaderSession state={state} storyId={storyId} controller={controller} onClose={() => undefined}
     readerStateRepository={readerState} renderWriting={renderWriting} renderWriteAside={renderWriteAside} startOnOpen={startOnOpen}
     readerPreferences={readerPreferences} readAloudVoices={readAloudVoices} readerFonts={readerFonts} chapterBody={chapterBody} renderHostTools={renderHostTools}
-    creator={creator} openAtChapter={openAtChapter}
+    creator={creator} openAtChapter={openAtChapter} openInCreate={openInCreate} onTagChapter={onTagChapter} renderCost={renderCost}
     onGenerateNextChapter={canWrite ? async () => { await controller.generateNextChapter(storyId, 'test-model'); } : undefined}
     onRewriteChapter={canRewrite ? async note => { await controller.rewriteLatestChapter(storyId, 'test-model', note); } : undefined} />;
 }
@@ -1181,41 +1181,87 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     Range.prototype.getClientRects = () => [{ left: 100, top: 200, right: 170, bottom: 222, width: 70, height: 22 }] as unknown as DOMRectList;
   });
   afterEach(() => { vi.unstubAllGlobals(); Range.prototype.getClientRects = rects; });
-  it('opens the newest chapter on the Highlight Engine with its overlays; an earlier chapter is sealed', async () => {
+  it('opens any chapter with every tag lit; only the newest can be changed, and an earlier one is sealed', async () => {
     const { controller, storyId } = await story({ written: 2 });
     await mount(<Host controller={controller} storyId={storyId} />);
     const create = () => buttonBy(byLabel('Fate and Create'))!;
-    // Chapter 1: the story has moved on from it, so it is sealed.
+    const panel = () => container.querySelector<HTMLElement>('[data-testid="create-mode-panel"]');
+    // Chapter 1: the story has moved on from it, so it is sealed, but Create mode still opens on it with its tags.
     expect(chapterOnScreen(1)).toBeTruthy();
-    expect(create().disabled).toBe(false);
     await click(byLabel('Fate and Create'), 'Fate and Create');
     const choice = buttonBy(byLabel('Create mode'))!;
-    expect(choice.disabled).toBe(true);
-    expect(choice.title).toBe('Only the newest chapter can be changed');
-    expect(buttonBy(byLabel('Open Fate'))!.disabled).toBe(false);
+    expect(choice.disabled).toBe(false);
     expect([...choice.closest('[role="dialog"]')!.querySelectorAll('button')].map(button => button.textContent?.trim())).toEqual(['Fate', 'Create']);
     await click(byLabel('Fate and Create'), 'close chooser');
-    await click(byLabel('Next Chapter'), 'Next Chapter');
-    expect(create().disabled).toBe(false);
     await chooseAction('Create mode');
+    let authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
+    expect(authoring.getAttribute('data-chapter-number')).toBe('1');
+    expect(authoring.querySelector('[data-testid="create-mode-sealed"]')).toBeTruthy();
+    expect(authoring.querySelector('[data-testid="create-mode-saving"]')).toBeNull();
+    expect(authoring.querySelector('[data-selection-mode="owned"]')).toBeNull();
+    // Media and Story info apart, every kind lit.
+    expect([...panel()!.querySelectorAll('[data-tag-group]')].map(group => group.getAttribute('data-tag-group'))).toEqual(['media', 'info']);
+    expect([...panel()!.querySelectorAll('[data-tag-kind]')].map(kind => kind.getAttribute('data-tag-kind')))
+      .toEqual(['soundscape', 'atmosphere', 'cues', 'speakers', 'holdings', 'appearances', 'status', 'place']);
+    expect(panel()!.getAttribute('data-lit')).toBe('all');
+    // Create mode stays on from chapter to chapter: the newest can be changed.
+    await click(byLabel('Next Chapter'), 'Next Chapter');
     expect(create().getAttribute('aria-pressed')).toBe('true');
-    const authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
+    authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
     expect(authoring.getAttribute('data-chapter-number')).toBe('2');
-    expect(authoring.querySelector('[data-testid="create-mode-saving"]')!.textContent).toBe('Saved');
-    // The Audio overlay is on: its legend explains the page's numbering, and Off hides it.
-    expect(authoring.querySelector('[data-testid="overlay-legend"]')!.textContent).toContain('P2 S6');
-    await click(button => button.textContent === 'Off' && button.closest('[data-testid="overlay-switch"]') !== null, 'Overlays off');
-    expect(authoring.querySelector('[data-testid="overlay-legend"]')).toBeNull();
+    // Saved says nothing: the panel speaks only while saving, on a failed save, or on a sealed chapter.
+    expect(authoring.querySelector('[data-testid="create-mode-saving"]')!.getAttribute('data-saving')).toBe('saved');
+    expect(authoring.querySelector('[data-testid="create-mode-saving"]')!.textContent).toBe('');
+    expect(authoring.querySelector('[data-testid="create-mode-sealed"]')).toBeNull();
+    // A kind lights alone (with the page's numbering), again goes back to every tag, and Off is the page as a reader sees it.
+    await click(button => button.getAttribute('data-tag-kind') === 'speakers', 'Speakers');
+    expect(panel()!.getAttribute('data-lit')).toBe('speakers');
+    expect(authoring.querySelector('.sen-overlay-pin')).toBeTruthy();
+    await click(button => button.getAttribute('data-tag-kind') === 'speakers', 'Speakers again');
+    expect(panel()!.getAttribute('data-lit')).toBe('all');
+    await click(button => button.getAttribute('data-testid') === 'create-mode-show-tags', 'Hide tags');
+    expect(panel()!.getAttribute('data-lit')).toBe('off');
+    expect(authoring.querySelector('.sen-overlay-mark')).toBeNull();
     expect(authoring.textContent).toContain('Mara');
     // Back to reading: the chapter is prose again.
     await chooseAction('Create mode');
     expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
     expect(chapterOnScreen(2)).toBeTruthy();
-    // Another chapter closes Create mode.
-    await chooseAction('Create mode');
-    await click(byLabel('Previous Chapter'), 'Previous Chapter');
-    expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
-    expect(create().getAttribute('aria-pressed')).toBe('false');
+  });
+  it('opens in Create mode when asked, and tags the chapter again from it', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    const onTagChapter = vi.fn(async () => undefined);
+    await mount(<Host controller={controller} storyId={storyId} openAtChapter={1} openInCreate onTagChapter={onTagChapter} renderCost={action => <span data-testid={`${action}-cost`}>1</span>} />);
+    const authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
+    expect(authoring.getAttribute('data-chapter-number')).toBe('1');
+    // Tag this chapter again lives in the chapter's ⋯ menu.
+    await click(button => button.getAttribute('data-testid') === 'create-mode-menu', 'Chapter options');
+    const tag = document.querySelector<HTMLButtonElement>('[data-testid="create-mode-tag"]')!;
+    expect(tag.textContent).toContain('Tag this chapter');
+    // The host's Energy price rides on it.
+    expect(tag.querySelector('[data-testid="tag-cost"]')).toBeTruthy();
+    await click(button => button === tag, 'Tag this chapter');
+    expect(onTagChapter).toHaveBeenCalledWith(controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 1)!.id);
+  });
+  it('changes nothing on the chapter while it is being tagged again, so no edit is lost when its new tags arrive', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    let finish: () => void = () => undefined;
+    const onTagChapter = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
+    let tools: ReaderHostTools | undefined;
+    await mount(<Host controller={controller} storyId={storyId} openAtChapter={2} openInCreate onTagChapter={onTagChapter}
+      renderHostTools={current => { tools = current; return null; }} />);
+    const authoring = () => container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
+    expect(authoring().querySelector('[data-selection-mode="owned"]')).toBeTruthy();
+    await click(button => button.getAttribute('data-testid') === 'create-mode-menu', 'Chapter options');
+    await click(button => button.getAttribute('data-testid') === 'create-mode-tag', 'Tag this chapter again');
+    // While the tagger reads it, the page cannot be changed and a sound asked for in words is turned away.
+    expect(authoring().querySelector('[data-selection-mode="owned"]')).toBeNull();
+    const placed = tools!.createMode!.sounds.resolve(tools!.createMode!.sounds.soundWords[0], { kind: 'words', words: 'with a lantern' });
+    if (!placed.ok) throw new Error(placed.problem);
+    await act(async () => { await expect(tools!.createMode!.sounds.place(placed.cue)).rejects.toThrow('Wait until the chapter is tagged'); });
+    await act(async () => { finish(); });
+    await flush();
+    expect(authoring().querySelector('[data-selection-mode="owned"]')).toBeTruthy();
   });
   it('adds a Sound Cue placed in words to the open Create mode page and its saves', async () => {
     const { controller, storyId } = await story({ written: 2 });

@@ -29,7 +29,7 @@ import { WorldCardChapters } from './WorldCardChapters';
  * This is the public view a reader sees. It shows no owner or library states
  * (visibility, draft, acquisition); the owner's view is a separate Story View.
  */
-export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, chapters, arcs, branch, onOpenChapter, portal, settings, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
+export function WorldCardInfo({ story, onRead, onStart, startCost, startCostLabel, onOpenCodex, chapters, arcs, branch, onOpenChapter, portal, settings, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
   const videoUrl = 'videoUrl' in story ? story.videoUrl?.trim() || undefined : undefined;
@@ -73,7 +73,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, chapters, a
           <div className="world-card-info-actions">
             <div className="world-card-info-buttons">
               <ReadingAction title={infoTitle.text} count={count} countLabel={countLabel} currentArc={currentArc}
-                onRead={onRead} onStart={onStart} readingPosition={readingPosition} />
+                onRead={onRead} onStart={onStart} startCost={startCost} startCostLabel={startCostLabel} readingPosition={readingPosition} />
               {/* The whole book, a small companion to the reading pill. (The Blueprint lives in Create.) */}
               {onOpenChapter && chapters && chapters.length > 0 && <WorldCardChapters title={infoTitle.text} chapters={chapters} arcs={arcs} branch={branch}
                 readingChapter={readingPosition?.chapterNumber} language={'originalLanguage' in story ? story.originalLanguage : undefined} onOpenChapter={onOpenChapter} />}
@@ -183,9 +183,9 @@ function WorldSynopsis({ storyId, synopsis }: { storyId: string; synopsis?: stri
  * host's reading action, or to its start action while the story has no
  * chapters yet. Without a working destination it says so instead.
  */
-function ReadingAction({ title, count, countLabel, currentArc, onRead, onStart, readingPosition }: {
+function ReadingAction({ title, count, countLabel, currentArc, onRead, onStart, startCost, startCostLabel, readingPosition }: {
   title: string; count: number; countLabel: string; currentArc?: string;
-  onRead?: () => void; onStart?: () => void; readingPosition?: WorldCardInfoProps['readingPosition'];
+  onRead?: () => void; onStart?: () => void; startCost?: ReactNode; startCostLabel?: string; readingPosition?: WorldCardInfoProps['readingPosition'];
 }) {
   const resumeChapter = readingPosition && Number.isSafeInteger(readingPosition.chapterNumber) && readingPosition.chapterNumber > 0
     ? readingPosition.chapterNumber : undefined;
@@ -199,9 +199,11 @@ function ReadingAction({ title, count, countLabel, currentArc, onRead, onStart, 
   // The same night-glass button as Home's Carve New Destiny.
   return <ManifestButton size="lg" className="world-card-info-read" data-world-info-chapters="action"
     icon={count === 0 ? Sparkles : BookOpen}
-    aria-label={`${spokenAction}: ${title}, ${countLabel}${currentArc ? `, current arc ${currentArc}` : ''}`}
+    aria-label={`${spokenAction}: ${title}, ${countLabel}${currentArc ? `, current arc ${currentArc}` : ''}${count === 0 && startCost && startCostLabel ? `, ${startCostLabel}` : ''}`}
     onClick={() => action()}>
     {actionLabel}
+    {/* Begin Story writes Chapter 1: its Energy rides on it. */}
+    {count === 0 && startCost && <span className="ms-2 inline-flex align-middle">{startCost}</span>}
   </ManifestButton>;
 }
 

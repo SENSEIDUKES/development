@@ -1,6 +1,7 @@
-import { soundVocabulary, soundtrackVocabulary } from '@seihouse/sen/audio';
-import { harnessParagraphBlockId, type CodexEntry, type HarnessChapter, type HarnessWarning } from '@seihouse/sen/harness-generation';
-import { ATTACHMENT_COLORS, type OverlayMark, type TextHighlightBlock } from '@seihouse/sen/highlight-engine';
+import { soundVocabulary } from '../../../audio/media';
+import { soundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
+import type { CodexEntry } from '../../../narrative/holdings';
+import type { HarnessChapter, HarnessWarning } from '../../../narrative/generation';
 
 /**
  * A chapter's tagging record, in words for the page (SENSEI, 2026-10-29,
@@ -69,6 +70,53 @@ const when = (at: string, locale?: string) => {
 };
 
 /**
+ * What a chapter carries now, one line per kind, in words for the page: its
+ * opening music and atmosphere, then its Sound Cues, speakers, holding
+ * changes, appearances, statuses and place tags, each counted and named. A kind with
+ * nothing on the page has no line. `entries` are the story's Codex entries,
+ * so a tag written as `MC` reads by the main character's own name.
+ */
+export interface ChapterTagFindings {
+  music?: string;
+  atmosphere?: string;
+  cues?: string;
+  speakers?: string;
+  holdings?: string;
+  appearances?: string;
+  statuses?: string;
+  places?: string;
+}
+
+export function chapterTagFindings(
+  chapter: Pick<HarnessChapter, 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'scene'>,
+  { entries = [] }: { entries?: ReadonlyArray<Pick<CodexEntry, 'id' | 'name'>> } = {},
+): ChapterTagFindings {
+  const nameOf = (ref: { name: string; entryId?: string } | undefined) =>
+    (ref?.entryId ? entries.find(entry => entry.id === ref.entryId)?.name : undefined) ?? ref?.name ?? '';
+  const scene = chapter.scene;
+  const atmosphere = scene?.atmosphere
+    ? (chapter.mediaLoadout.atmospheres ?? []).find(bed => bed.id === scene.atmosphere)
+    : undefined;
+  const findings: ChapterTagFindings = {};
+  const music = scene?.music?.category || scene?.soundscape;
+  if (music) findings.music = music;
+  if (scene?.atmosphere) findings.atmosphere = atmosphere ? atmosphere.label ?? atmosphere.word : scene.atmosphere;
+  if (chapter.soundCues?.length) findings.cues = `${count(chapter.soundCues.length, 'cue')}: ${few(chapter.soundCues.map(cue => cue.payload.sound))}`;
+  if (chapter.speakers?.length) findings.speakers = `${count(chapter.speakers.length, 'spoken line')}: ${few(chapter.speakers.map(speaker => speaker.payload.speaker))}`;
+  if (chapter.holdingChanges?.length) {
+    findings.holdings = `${count(chapter.holdingChanges.length, 'change')}: ${few(chapter.holdingChanges.map(change => [change.payload.verb, nameOf(change.payload.target) || change.payload.level || ''].filter(Boolean).join(' ')))}`;
+  }
+  if (chapter.appearances?.length) findings.appearances = `${count(chapter.appearances.length, 'appearance')}: ${few(chapter.appearances.map(appearance => nameOf(appearance.payload.subject)))}`;
+  if (chapter.statuses?.length) {
+    findings.statuses = `${count(chapter.statuses.length, 'status', 'statuses')}: ${few(chapter.statuses.map(status => `${nameOf(status.payload.subject)} ${status.payload.status}`))}`;
+  }
+  if (chapter.places?.length) {
+    findings.places = `${count(chapter.places.length, 'place tag')}: ${few(chapter.places.map(record => `${nameOf(record.payload.subject)} at ${nameOf(record.payload.place)}`))}`;
+  }
+  return findings;
+}
+
+/**
  * The record of one chapter's tagging, read for the page. `entries` are the
  * story's Codex entries, so a tag written as `MC` reads by the main
  * character's own name, as the Codex knows them.
@@ -77,8 +125,6 @@ export function describeChapterTagging(
   chapter: Pick<HarnessChapter, 'tagging' | 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'scene'>,
   { entries = [], locale }: { entries?: ReadonlyArray<Pick<CodexEntry, 'id' | 'name'>>; locale?: string } = {},
 ): ChapterTaggingAccount {
-  const nameOf = (ref: { name: string; entryId?: string } | undefined) =>
-    (ref?.entryId ? entries.find(entry => entry.id === ref.entryId)?.name : undefined) ?? ref?.name ?? '';
   const record = chapter.tagging;
   if (!record) return { status: 'untagged', headline: 'Not tagged yet.', kinds: [], problems: [] };
   const warnings = record.warnings ?? [];
@@ -105,98 +151,28 @@ export function describeChapterTagging(
   };
 
   const soundtrack = soundtrackVocabulary(chapter.mediaLoadout);
-  const scene = chapter.scene;
-  const atmosphere = scene?.atmosphere
-    ? (chapter.mediaLoadout.atmospheres ?? []).find(bed => bed.id === scene.atmosphere)
-    : undefined;
-  const sceneParts = [
-    scene?.music?.category ? `Music: ${scene.music.category}` : scene?.soundscape ? `Music: ${scene.soundscape}` : '',
-    atmosphere ? `Atmosphere: ${atmosphere.label ?? atmosphere.word}` : scene?.atmosphere ? `Atmosphere: ${scene.atmosphere}` : '',
-  ].filter(Boolean);
+  const found = chapterTagFindings(chapter, { entries });
+  const sceneParts = [found.music ? `Music: ${found.music}` : '', found.atmosphere ? `Atmosphere: ${found.atmosphere}` : ''].filter(Boolean);
   const kinds: ChapterTaggingKindLine[] = [
     soundtrack.music.length || soundtrack.atmospheres.length
       ? line('Soundscape and atmosphere', sceneParts.length ? sceneParts.join(' · ') : undefined)
       : { kind: 'Soundscape and atmosphere', said: 'No soundscapes or atmospheres were equipped, so none were asked for.', state: 'not-asked' },
     soundVocabulary(chapter.mediaLoadout).length
-      ? line('Sound Cues', chapter.soundCues?.length ? `${count(chapter.soundCues.length, 'cue')}: ${few(chapter.soundCues.map(cue => cue.payload.sound))}` : undefined)
+      ? line('Sound Cues', found.cues)
       : { kind: 'Sound Cues', said: 'No Sound Words were equipped, so no cues were asked for.', state: 'not-asked' },
-    line('Speakers', chapter.speakers?.length
-      ? `${count(chapter.speakers.length, 'spoken line')}: ${few(chapter.speakers.map(speaker => speaker.payload.speaker))}`
-      : undefined),
-    line('Holdings', chapter.holdingChanges?.length
-      ? `${count(chapter.holdingChanges.length, 'change')}: ${few(chapter.holdingChanges.map(change => [change.payload.verb, nameOf(change.payload.target) || change.payload.level || ''].filter(Boolean).join(' ')))}`
-      : undefined),
-    line('Appearances', chapter.appearances?.length
-      ? `${count(chapter.appearances.length, 'appearance')}: ${few(chapter.appearances.map(appearance => nameOf(appearance.payload.subject)))}`
-      : undefined),
+    line('Speakers', found.speakers),
+    line('Holdings', found.holdings),
+    line('Appearances', found.appearances),
     // A chapter tagged before Status existed has no list at all: it was never asked.
     chapter.statuses
-      ? line('Status', chapter.statuses.length
-        ? `${count(chapter.statuses.length, 'status', 'statuses')}: ${few(chapter.statuses.map(status => `${nameOf(status.payload.subject)} ${status.payload.status}`))}`
-        : undefined)
+      ? line('Status', found.statuses)
       : { kind: 'Status', said: 'Tagged before Status existed: tag it again to read it.', state: 'not-asked' },
     // Likewise for Place.
     chapter.places
-      ? line('Place', chapter.places.length
-        ? `${count(chapter.places.length, 'place tag')}: ${few(chapter.places.map(record => `${nameOf(record.payload.subject)} at ${record.payload.place.name}`))}`
-        : undefined)
+      ? line('Place', found.places)
       : { kind: 'Place', said: 'Tagged before Place existed: tag it again to read it.', state: 'not-asked' },
   ];
   return { status: 'tagged', headline: `Read${by} · ${when(record.at, locale)}${tokens}`, ...(notes ? { notes } : {}), kinds, problems };
-}
-
-/** The kinds in the order the tags read, each with the color its marks wear on the page. */
-export const CHAPTER_TAGGING_KINDS: ReadonlyArray<{ kind: ChapterTaggingKind; tone: string }> = [
-  { kind: 'Soundscape and atmosphere', tone: ATTACHMENT_COLORS['soundscape-change'].tone },
-  { kind: 'Sound Cues', tone: ATTACHMENT_COLORS['sound-cue'].tone },
-  { kind: 'Speakers', tone: ATTACHMENT_COLORS.speaker.tone },
-  { kind: 'Holdings', tone: ATTACHMENT_COLORS['holding-change'].tone },
-  { kind: 'Appearances', tone: ATTACHMENT_COLORS.appearance.tone },
-  { kind: 'Status', tone: ATTACHMENT_COLORS.status.tone },
-  { kind: 'Place', tone: ATTACHMENT_COLORS.place.tone },
-];
-
-/** The chapter's paragraphs as Highlight Engine blocks, under the ids its tags are anchored to. */
-export const chapterBlocks = (chapter: Pick<HarnessChapter, 'chapterNumber' | 'paragraphs'>): TextHighlightBlock[] =>
-  chapter.paragraphs.map((text, index) => ({ id: harnessParagraphBlockId(chapter.chapterNumber, index), text }));
-
-type Spanned = { id: string; anchor: { level: string; detached?: true; blockId?: string; startOffset?: number; endOffset?: number; selectedText?: string } };
-
-/**
- * Where the chapter's tags landed, as tints behind the prose in each kind's
- * color: every speaker line, Sound Cue, holding change and appearance on the
- * exact words the tagger named, and the chapter's soundscape and atmosphere on
- * its first word, where they begin. `shown` chooses the kinds to light.
- */
-export function chapterTagMarks(
-  chapter: Pick<HarnessChapter, 'chapterNumber' | 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'scene'>,
-  shown: ReadonlySet<ChapterTaggingKind>,
-): OverlayMark[] {
-  const tone = (kind: ChapterTaggingKind) => CHAPTER_TAGGING_KINDS.find(entry => entry.kind === kind)!.tone;
-  const spans = (kind: ChapterTaggingKind, attachments: readonly Spanned[] | undefined): OverlayMark[] => (shown.has(kind) ? (attachments ?? []) : []).flatMap(attachment => {
-    const { anchor } = attachment;
-    if (anchor.level !== 'span' || anchor.detached || typeof anchor.blockId !== 'string' || typeof anchor.startOffset !== 'number' || typeof anchor.endOffset !== 'number') return [];
-    return [{ id: `mark:${attachment.id}`, selection: { blockId: anchor.blockId, startOffset: anchor.startOffset, endOffset: anchor.endOffset, selectedText: anchor.selectedText ?? '' }, tone: tone(kind) }];
-  });
-  const marks = [
-    ...spans('Sound Cues', chapter.soundCues),
-    ...spans('Speakers', chapter.speakers),
-    ...spans('Holdings', chapter.holdingChanges),
-    ...spans('Appearances', chapter.appearances),
-    ...spans('Status', chapter.statuses),
-    ...spans('Place', chapter.places),
-  ];
-  const scene = chapter.scene;
-  const first = chapter.paragraphs[0];
-  if (shown.has('Soundscape and atmosphere') && scene && (scene.music || scene.soundscape || scene.atmosphere) && first) {
-    const letter = first.search(/[\p{L}\p{N}]/u);
-    const end = letter < 0 ? -1 : first.slice(letter).search(/[^\p{L}\p{N}'’-]/u);
-    if (letter >= 0) {
-      const endOffset = end < 0 ? first.length : letter + end;
-      marks.unshift({ id: 'mark:scene', selection: { blockId: harnessParagraphBlockId(chapter.chapterNumber, 0), startOffset: letter, endOffset, selectedText: first.slice(letter, endOffset) }, tone: tone('Soundscape and atmosphere') });
-    }
-  }
-  return marks;
 }
 
 /** The Chapters card's line: how many chapters, and how many of them the tagger has read. */

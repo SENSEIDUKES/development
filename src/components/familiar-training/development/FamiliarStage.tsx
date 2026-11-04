@@ -79,8 +79,9 @@ export interface FamiliarStageProps {
  *
  * The stage shows one Familiar at a time, swiped left and right, with its
  * bond rail, who it is, and the effect bonding lends the cultivator's name.
- * Bond, Elements and Lore open in a sheet; offering QI sits in the thumb's
- * reach; companion settings and personalisation open from ⚙. A wider screen
+ * On a phone the tabs (Bond, Elements, Lore, Guides) stand in a column left
+ * of the Familiar, its bond ranks to the right; a tab opens its details over
+ * the page. Offering QI sits in the thumb's reach; companion settings and personalisation open from ⚙. A wider screen
  * moves the sheet beside the stage. The server decides every spend and
  * unlock; this page asks and shows the answer. Nothing here grants an
  * advantage.

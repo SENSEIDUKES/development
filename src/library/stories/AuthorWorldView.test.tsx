@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, useState } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
@@ -65,14 +65,14 @@ const threeChapters = async () => {
   return { repository, storyId: story.id };
 };
 
-function Host({ repository, adapter, storyId, worlds }: {
+function Host({ repository, adapter, storyId, worlds, onOpenChapter = () => undefined }: {
   repository: InMemoryHarnessGenerationRepository; adapter: HarnessGenerationModelAdapter; storyId: string; worlds: CreatorWorld[];
+  onOpenChapter?: (chapterNumber: number) => void;
 }) {
   const stories = useLibraryStories({ repository, modelAdapter: adapter });
-  const [chapterNumber, setChapterNumber] = useState<number>();
   if (!stories.state) return null;
-  return <AuthorWorldView stories={stories} worlds={worlds} storyId={storyId} chapterNumber={chapterNumber}
-    onChooseWorld={() => undefined} onOpenChapter={setChapterNumber} onCloseChapter={() => setChapterNumber(undefined)} onBack={() => undefined} />;
+  return <AuthorWorldView stories={stories} worlds={worlds} storyId={storyId}
+    onChooseWorld={() => undefined} onOpenChapter={onOpenChapter} onBack={() => undefined} />;
 }
 
 const rects = Range.prototype.getClientRects;
@@ -92,7 +92,7 @@ afterEach(() => {
 });
 
 describe('the author\'s world view', { timeout: 20_000 }, () => {
-  it('lists the chapters, tags the ones the author checks, in order, and opens one with its tags lit', async () => {
+  it('lists the chapters, tags the ones the author checks, in order, and opens one in the Reader', async () => {
     const { repository, storyId } = await threeChapters();
     const tagChapter = vi.fn(async (request: HarnessTagRequest) => ({
       rawProviderResponse: JSON.stringify({ notes: [{ paragraph: 1, words: request.paragraphs[0], tag: '[[appears: MC | character]]' }] }),
@@ -105,7 +105,8 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
       tagChapter,
     };
     const worlds: CreatorWorld[] = [{ id: storyId, title: 'The Drowned Name', chapterCount: 3, status: 'draft', updatedAt: '2026-10-30T12:00:00.000Z' }];
-    await act(async () => root.render(<Host repository={repository} adapter={adapter} storyId={storyId} worlds={worlds} />));
+    const opened: number[] = [];
+    await act(async () => root.render(<Host repository={repository} adapter={adapter} storyId={storyId} worlds={worlds} onOpenChapter={number => opened.push(number)} />));
     await flush(20);
 
     // The world, its medium (Sequential Art waits), and Chapters open first.
@@ -121,12 +122,14 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
     await click(row(1), 'Chapter 1');
     await click(row(3), 'Chapter 3', { shiftKey: true });
     expect(rows().map(entry => entry.getAttribute('data-checked'))).toEqual(['true', 'true', 'true']);
-    expect(buttonByText('Tag 3 chapters')).toBeTruthy();
-    expect(view().querySelector('[data-testid="author-world-cost"]')!.textContent).toContain('3 tagging calls');
+    // Its price, one Energy a chapter, rides on the button.
+    expect(buttonByText('Tag 3 chapters3')).toBeTruthy();
+    expect(view().querySelector('[data-energy-action]') ?? view().querySelector('.energy-action-cost')).toBeTruthy();
+    expect(view().querySelector('[data-testid="author-world-cost"]')!.textContent).toContain('3 tagging calls, one per chapter, 1 Energy each');
     await click(row(2), 'Chapter 2');
-    expect(buttonByText('Tag 2 chapters')).toBeTruthy();
+    expect(buttonByText('Tag 2 chapters2')).toBeTruthy();
 
-    await click(buttonByText('Tag 2 chapters'), 'Tag 2 chapters');
+    await click(buttonByText('Tag 2 chapters2'), 'Tag 2 chapters');
     await flush(50);
     expect(tagChapter.mock.calls.map(([request]) => request.chapterNumber)).toEqual([1, 3]);
     expect([1, 2, 3].map(stateOf)).toEqual(['Tagged', 'Not yet', 'Tagged']);
@@ -134,13 +137,9 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
     expect(view().querySelector('[data-testid="author-world-summary"]')!.textContent).toBe('3 chapters · 2 tagged · 1 not tagged yet');
     expect(rows().every(entry => entry.getAttribute('data-checked') === 'false')).toBe(true);
 
-    // Its arrow opens a chapter with its tags lit; Chapters goes back to the list.
+    // Its arrow opens the chapter: the host opens it in the creator's Reader, in Create mode with its tags lit.
     await click(row(1).querySelector('button[aria-label="Open Chapter 1"]'), 'Open Chapter 1');
-    const chapter = view().querySelector<HTMLElement>('[data-testid="author-chapter"]')!;
-    expect(chapter.getAttribute('data-tagging-status')).toBe('tagged');
-    expect(chapter.querySelector('[data-tagging-kind="Appearances"]')!.textContent).toContain('1 appearance');
-    await click(buttonByText('Chapters'), 'Chapters');
-    expect(rows()).toHaveLength(3);
+    expect(opened).toEqual([1]);
   });
 
   it('shows the world\'s Blueprint, its coming Codex, and its skill packs', async () => {

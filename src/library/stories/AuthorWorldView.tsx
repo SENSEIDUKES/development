@@ -1,13 +1,14 @@
 import { useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { ArrowLeft, BookOpen, Check, ChevronRight, Download, Globe, LoaderCircle, Sparkles, Square } from 'lucide-react';
 import { SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
-import { findStory, type HarnessChapter } from '@seihouse/sen/harness-generation';
+import { describeChapterTagging, findStory, storyTaggingSummary, type HarnessChapter } from '@seihouse/sen/harness-generation';
 import { LibraryButton, ManifestButton } from '@seihouse/library-ui';
 import type { CreatorWorld } from '../../components/creator-space/shared/creatorSpaceContracts';
 import { WorldCard } from '../../components/world-card/development/WorldCard';
 import { useLibraryAssets } from '../assets';
-import { AuthorChapterView } from './AuthorChapterView';
-import { describeChapterTagging, storyTaggingSummary } from './chapterTagging';
+import { EnergyActionCost } from '../../components/energy/development/EnergyActionCost';
+import { useActionEnergyPrice } from '../../components/energy/shared/energyModels';
+import { getEnergyPriceEntry } from '../../components/energy/shared/energyContracts';
 import { StoryBlueprintPage } from './StoryBlueprint';
 import { StorySettings } from './settings/StorySettings';
 import { isStoryPublished, storyOrigin } from './storyView';
@@ -44,25 +45,23 @@ function fallbackCover(id: string, images: readonly string[]) {
   return images[hash % images.length];
 }
 
-export function AuthorWorldView({ stories, worlds, storyId, chapterNumber, onChooseWorld, onOpenChapter, onCloseChapter, onBack, onRead }: {
+export function AuthorWorldView({ stories, worlds, storyId, onChooseWorld, onOpenChapter, onBack, onRead }: {
   stories: LibraryStories;
   /** Every world the author has, as Create's Your worlds shows them. */
   worlds: readonly CreatorWorld[];
   /** The chosen world. */
   storyId: string;
-  /** A chapter opened from the Chapters tab. */
-  chapterNumber?: number;
   onChooseWorld: (storyId: string) => void;
+  /** A chapter opened from the Chapters tab: the creator's Reader at that chapter, in Create mode with its tags lit. */
   onOpenChapter: (chapterNumber: number) => void;
-  onCloseChapter: () => void;
   /** Back to Create. */
   onBack: () => void;
-  /** The creator's Reader, at a chapter when one is given. Without it, there is no Read. */
-  onRead?: (chapterNumber?: number) => void;
+  /** Read: the book's World Info in Create. Without it, there is no Read. */
+  onRead?: () => void;
 }) {
   const { homeImages = [] } = useLibraryAssets();
   const [tab, setTab] = useState<AuthorWorldTab>('chapters');
-  const shown = chapterNumber ? 'chapters' : tab;
+  const shown = tab;
   const world = worlds.find(entry => entry.id === storyId);
 
   return <div className="mx-auto w-full max-w-7xl" data-testid="author-world" data-world={storyId}>
@@ -95,16 +94,13 @@ export function AuthorWorldView({ stories, worlds, storyId, chapterNumber, onCho
         <WorldHeader stories={stories} storyId={storyId} title={world?.title} onRead={onRead} />
         <div role="tablist" aria-label="This world" className="mt-5 flex gap-1 overflow-x-auto border-b border-white/10" data-testid="author-world-tabs">
           {TABS.map(entry => <button key={entry.id} type="button" role="tab" aria-selected={shown === entry.id}
-            onClick={() => { setTab(entry.id); if (chapterNumber) onCloseChapter(); }}
+            onClick={() => setTab(entry.id)}
             className={`min-h-11 shrink-0 border-b-2 px-4 text-sm transition-colors ${shown === entry.id ? 'border-[#d4af37] text-white' : 'border-transparent text-neutral-400 hover:text-neutral-200'}`}>
             {entry.label}
           </button>)}
         </div>
         <div className="mt-5" role="tabpanel" aria-label={TABS.find(entry => entry.id === shown)!.label}>
-          {shown === 'chapters' && (chapterNumber
-            ? <AuthorChapterView stories={stories} storyId={storyId} chapterNumber={chapterNumber} onBack={onCloseChapter}
-                onRead={onRead && (() => onRead(chapterNumber))} />
-            : <ChapterTable key={storyId} stories={stories} storyId={storyId} onOpenChapter={onOpenChapter} />)}
+          {shown === 'chapters' && <ChapterTable key={storyId} stories={stories} storyId={storyId} onOpenChapter={onOpenChapter} />}
           {shown === 'blueprint' && <WorldBlueprint stories={stories} storyId={storyId} />}
           {shown === 'codex' && <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-neutral-300" data-testid="author-world-codex">
             Coming soon: every card and every picture of this world, all in one place, ahead of what a reader has reached.
@@ -125,7 +121,7 @@ export function AuthorWorldView({ stories, worlds, storyId, chapterNumber, onCho
  * with user agreements and a subscription, so it is never a button up here.
  */
 function WorldHeader({ stories, storyId, title, onRead }: {
-  stories: LibraryStories; storyId: string; title?: string; onRead?: (chapterNumber?: number) => void;
+  stories: LibraryStories; storyId: string; title?: string; onRead?: () => void;
 }) {
   const story = stories.state ? findStory(stories.state, storyId) : undefined;
   if (!story) return <h1 className="font-display text-2xl text-white sm:text-3xl">{title}</h1>;
@@ -276,6 +272,8 @@ const rowState = (chapter: HarnessChapter, current: boolean, queued: boolean): R
  */
 function ChapterTable({ stories, storyId, onOpenChapter }: { stories: LibraryStories; storyId: string; onOpenChapter: (chapterNumber: number) => void }) {
   const { state, controller, canGenerate } = stories;
+  // Each chapter tagged is one tagging call, at the catalog's price (one Energy).
+  const tagPrice = useActionEnergyPrice('chapter.tag');
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [anchor, setAnchor] = useState<number>();
   const [run, setRun] = useState<{ queue: readonly string[]; current?: string }>();
@@ -343,10 +341,11 @@ function ChapterTable({ stories, storyId, onOpenChapter }: { stories: LibrarySto
         : <>
             <ManifestButton size="md" icon={Sparkles} disabled={!chosen.length} onClick={() => void tag()}>
               {chosen.length ? `Tag ${chosen.length === 1 ? '1 chapter' : `${chosen.length} chapters`}` : 'Tag'}
+              {chosen.length > 0 && tagPrice !== null && <EnergyActionCost price={tagPrice * chosen.length} projected={getEnergyPriceEntry('chapter.tag').projected} className="ms-2" />}
             </ManifestButton>
             <p className="text-xs text-neutral-400" data-testid="author-world-cost">
               {chosen.length
-                ? `${chosen.length === 1 ? 'One tagging call' : `${chosen.length} tagging calls`}, one per chapter. Energy for tagging isn’t priced yet.`
+                ? `${chosen.length === 1 ? 'One tagging call' : `${chosen.length} tagging calls`}, one per chapter${tagPrice !== null ? `, ${tagPrice} Energy each` : ''}.`
                 : canGenerate ? 'Check the chapters to tag.' : 'The tagger cannot be reached here right now.'}
             </p>
           </>}

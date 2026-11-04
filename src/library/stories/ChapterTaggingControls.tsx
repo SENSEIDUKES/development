@@ -1,6 +1,5 @@
-import { findStory, type CodexEntry, type HarnessChapter } from '@seihouse/sen/harness-generation';
+import { describeChapterTagging, findStory, type CodexEntry, type HarnessChapter } from '@seihouse/sen/harness-generation';
 import { NarrativeButton as LibraryButton } from '@seihouse/sen/presentation';
-import { describeChapterTagging } from './chapterTagging';
 import type { LibraryStories } from './useLibraryStories';
 
 /**

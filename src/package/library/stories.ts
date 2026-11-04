@@ -23,9 +23,7 @@ export { LIBRARY_READ_ALOUD_VOICES } from '../../library/stories/readAloudVoices
 export { LIBRARY_READER_FONTS } from '../../library/stories/readerFonts';
 export { StorySettings } from '../../library/stories/settings/StorySettings';
 export { ChapterTaggingRecord, TagChapterAction } from '../../library/stories/ChapterTaggingControls';
-export { AuthorChapterView } from '../../library/stories/AuthorChapterView';
 export { AuthorWorldView, type AuthorWorldTab } from '../../library/stories/AuthorWorldView';
-export { CHAPTER_TAGGING_KINDS, chapterBlocks, chapterTagMarks, describeChapterTagging, storyTaggingSummary, type ChapterTaggingAccount, type ChapterTaggingKind, type ChapterTaggingKindLine } from '../../library/stories/chapterTagging';
 export { CreateStorySettings, type CreateStorySettingsProps } from '../../library/stories/settings/CreateStorySettings';
 export { SoundWordsPanel } from '../../library/stories/settings/SoundWordsPanel';
 export {

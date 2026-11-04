@@ -854,6 +854,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
               isGenerating={isGenerating}
               onRegenerateBlueprint={requestRegenerateBlueprint}
               originalLanguage={originalLanguage}
+              price={manifestAside}
             />
           </DeferredStorySeedView>
         </div>
@@ -886,6 +887,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
             onUseSeed={handleUseSeed}
             onExportSeed={handleExportSavedSeed}
             onManifest={handleManifestSeed}
+            price={manifestAside}
           />
         </DeferredStorySeedView>
         {errorBanner}

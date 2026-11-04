@@ -10,6 +10,7 @@ const MIGRATIONS = [
   '20260918_001_energy_ledger.sql',
   '20260922_001_energy_generation_actions.sql',
   '20260923_002_energy_spend.sql',
+  '20261104_001_energy_chapter_tag_action.sql',
 ].map(file => path.resolve(__dirname, '../../../database/migrations', file));
 
 let database: Promise<PGlite> | undefined;

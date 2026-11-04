@@ -13,7 +13,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Workshop previews:** `?preview=familiar-training` (in the Workshop's Rewards section);
   `?preview=reward-loop` (Familiar tab); `?preview=user-profile&cave=/home/familiar`
 - **Created:** 2026-09-23
-- **Last recorded Workshop update:** 2026-11-02
+- **Last recorded Workshop update:** 2026-11-04
 - **Historical source inspection:** 2026-09-23 (this repository; there is no production original)
 - **Status:** approved reconstruction (Workshop Replica Mode B), development skeleton
 - **Package:** `@seihouse/library/familiar`
@@ -143,6 +143,11 @@ Workshop previews and the account service remain separate.
 
 ## Workshop history
 
+- **2026-11-04:** From SENSEI's iPhone review: the tab bar under the Familiar, stacked on the
+  app's navigation, took too much height. On a phone the tabs now stand in a column on the left,
+  the Familiar in the middle and its bond ranks on the right (SENSEI's sketch: Bond, Elements,
+  Lore, Guides). Offer moves to the lower left beside the pager. A tab still opens its details
+  over the page, with the tabs across the top and Close details. From 768px nothing changes.
 - **2026-11-03 (review):** Guides follow the mobile-first rule for choosing one of many: no column of
   cards. The tab opens on the first guide not yet watched and is swiped (or stepped with the arrows
   and arrow keys); a row of dots shows the place, watched guides and those coming soon. A reading the

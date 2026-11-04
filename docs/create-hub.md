@@ -341,3 +341,9 @@ chapters first, until the tagging is right):
   at the foot; phone first. Sealing is unchanged (SENSEI: "I don't really need
   you to work on the sealing shit right now"): the newest chapter can be
   changed, a sealed one shows its tags.
+- **2026-11-04 (Tag media again):** SENSEI: a re-tag should be able to read
+  one group on its own instead of everything. First the media: Create mode's
+  Tag media again teaches the tagger only the sound tags and replaces only the
+  chapter's cues, soundscape and atmosphere; the information tags and the
+  Codex are untouched. Same Energy as a full read (a few hundred tokens either
+  way). Long term each information tag gets its own focused read too.

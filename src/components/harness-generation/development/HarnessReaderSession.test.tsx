@@ -1241,7 +1241,20 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     // The host's Energy price rides on it.
     expect(tag.querySelector('[data-testid="tag-cost"]')).toBeTruthy();
     await click(button => button === tag, 'Tag this chapter');
-    expect(onTagChapter).toHaveBeenCalledWith(controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 1)!.id);
+    const chapterId = controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 1)!.id;
+    expect(onTagChapter).toHaveBeenLastCalledWith(chapterId, undefined);
+    // A media kind lit alone offers its sound read again on its own, at the same price, right under the legend.
+    expect(controller.retagChapterGap(storyId, chapterId, 'media')).toBeUndefined();
+    expect(container.querySelector('[data-testid="create-tag-media-inline"]')).toBeNull();
+    await click(button => button.getAttribute('data-tag-kind') === 'cues', 'Sound Cues');
+    const media = container.querySelector<HTMLButtonElement>('[data-testid="create-tag-media-inline"]')!;
+    expect(media.textContent).toContain('Tag media again');
+    expect(media.querySelector('[data-testid="tag-cost"]')).toBeTruthy();
+    await click(button => button === media, 'Tag media again');
+    expect(onTagChapter).toHaveBeenLastCalledWith(chapterId, 'media');
+    // A story-info kind lit alone does not offer it.
+    await click(button => button.getAttribute('data-tag-kind') === 'speakers', 'Speakers');
+    expect(container.querySelector('[data-testid="create-tag-media-inline"]')).toBeNull();
   });
   it('changes nothing on the chapter while it is being tagged again, so no edit is lost when its new tags arrive', async () => {
     const { controller, storyId } = await story({ written: 2 });

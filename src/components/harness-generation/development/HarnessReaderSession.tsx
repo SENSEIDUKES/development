@@ -56,7 +56,7 @@ import { readingScene, useReaderSoundtrack } from './useReaderSoundtrack';
 import { useChapterFinished } from './useChapterFinished';
 import './reader-frame.css';
 import type { HarnessGenerationController } from '../shared/controller';
-import type { HarnessChapter, HarnessWorkspaceState } from '../../../narrative/generation';
+import type { HarnessChapter, HarnessTagFocus, HarnessWorkspaceState } from '../../../narrative/generation';
 import './reader-colors.css';
 
 /** What the host's writing screen shows. */
@@ -250,7 +250,7 @@ export function HarnessReaderSession({
    * Tags a chapter again with the host's tagger, from Create mode. Absent when
    * the host cannot tag here; Create mode then shows the tags without Tag this chapter.
    */
-  onTagChapter?: (chapterId: string) => Promise<void>;
+  onTagChapter?: (chapterId: string, focus?: HarnessTagFocus) => Promise<void>;
   /**
    * The host's Energy price for a generation action, shown on its button: a
    * chapter (Rewrite, Fate's Write, Accept and write), tagging a chapter with
@@ -558,6 +558,7 @@ export function HarnessReaderSession({
     : writer.writing ? 'A chapter is being written. Changes wait until it is done.'
     : 'This chapter cannot be changed right now.';
   const tagGap = chapter && onTagChapter ? controller.retagChapterGap(storyId, chapter.id) : undefined;
+  const mediaTagGap = chapter && onTagChapter ? controller.retagChapterGap(storyId, chapter.id, 'media') : undefined;
   const rewriteChapter = async (note?: string) => {
     const rewritten = await writer.rewrite(note);
     if (rewritten) openChapter(rewritten);
@@ -583,7 +584,7 @@ export function HarnessReaderSession({
         // Keyed by its tagging too, so a chapter tagged again opens with its new tags.
         ? <ChapterAuthoring key={`${chapter.id}:${chapter.tagging?.at ?? ''}:${authorable}`} handle={authorable ? authoringHandle : undefined} chapter={chapter} controller={controller}
             locale={story.originalLanguage} text={text} articleRef={articleRef} editable={authorable} sealedNote={authorable ? undefined : sealedNote}
-            entries={entries} tagging={onTagChapter && { gap: tagGap, run: () => onTagChapter(chapter.id), cost: renderCost?.('tag') }}
+            entries={entries} tagging={onTagChapter && { gap: tagGap, mediaGap: mediaTagGap, run: focus => onTagChapter(chapter.id, focus), cost: renderCost?.('tag') }}
             highlight={highlight} reading={reading} />
         : chapter
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}

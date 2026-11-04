@@ -52,19 +52,24 @@ const HEADINGS = {
 /**
  * The tag teaching, in the order the tags read: the HARNESS rules that hold
  * for every kind, then one section per kind the story actually uses. A story
- * with no sound words is never taught to tag a sound it cannot name.
+ * with no sound words is never taught to tag a sound it cannot name. A media
+ * read (`focus: 'media'`) is taught the sound tags alone: the same sections,
+ * word for word, with the information tags left out.
  */
-export const presentTaggerTagTeaching = (request: Pick<HarnessTagRequest, 'soundWords' | 'soundtrack'>) => {
+export const presentTaggerTagTeaching = (request: Pick<HarnessTagRequest, 'soundWords' | 'soundtrack' | 'focus'>) => {
   const soundWords = request.soundWords ?? [];
   const soundtrack = request.soundtrack;
   const hasSoundtrack = Boolean(soundtrack?.music?.length || soundtrack?.atmospheres?.length);
-  return [
-    HARNESS_TAG_RULES,
+  const information = request.focus === 'media' ? [] : [
     SEN_SPEAKERS_INSTRUCTIONS,
     SEN_HOLDINGS_INSTRUCTIONS,
     SEN_APPEARANCE_INSTRUCTIONS,
     SEN_STATUS_INSTRUCTIONS,
     SEN_PLACE_INSTRUCTIONS,
+  ];
+  return [
+    HARNESS_TAG_RULES,
+    ...information,
     ...(soundWords.length ? [[SEN_SOUND_CUES_INSTRUCTIONS, presentSoundVocabulary(soundWords)].filter(Boolean).join('\n')] : []),
     ...(hasSoundtrack ? [[SEN_SOUNDTRACK_INSTRUCTIONS, presentSoundtrackVocabulary(soundtrack!)].filter(Boolean).join('\n')] : []),
   ].join('\n\n');
@@ -160,8 +165,11 @@ export const buildHarnessTagPrompt = (request: HarnessTagRequest) => ({
   ].join('\n\n'),
   userPrompt: [
     `CHAPTER ${request.chapterNumber} · Language: ${request.language} · ${request.paragraphs.length} paragraph${request.paragraphs.length === 1 ? '' : 's'}`,
-    ['WHO AND WHAT THE STORY ALREADY HAS (tag by these names, never a new one for someone already here)', presentTagSubjects(request.subjects)].join('\n'),
-    ['WHAT EACH CHARACTER HAD GOING INTO THIS CHAPTER', presentTagHoldings(request.holdings)].join('\n'),
+    // A media read names no one, so it is sent neither who the story has nor what they carry.
+    ...request.focus === 'media' ? [] : [
+      ['WHO AND WHAT THE STORY ALREADY HAS (tag by these names, never a new one for someone already here)', presentTagSubjects(request.subjects)].join('\n'),
+      ['WHAT EACH CHARACTER HAD GOING INTO THIS CHAPTER', presentTagHoldings(request.holdings)].join('\n'),
+    ],
     ['THE CHAPTER', presentTagChapter(request.paragraphs)].join('\n'),
     `Return your notes on these ${request.paragraphs.length} paragraphs, and nothing else.`,
   ].join('\n\n'),

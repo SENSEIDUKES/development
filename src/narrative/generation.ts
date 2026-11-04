@@ -43,7 +43,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * statuses (how a character is now, from the status tag); 43 adds the
  * fixer's record checks and a name it gave; 44 adds each chapter's optional
  * places (where a character is now, from the place tag). */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 44 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 45 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -1263,6 +1263,18 @@ export interface HarnessChapterTagging {
   notes?: { written: number; placed: number };
   /** What the tag reader set aside or could not use, as plain warnings. */
   warnings?: HarnessWarning[];
+  /**
+   * The newest media-only read (Tag media again, SENSEI 2026-11-04): the
+   * chapter's sound cues and its soundscape and atmosphere read again on
+   * their own, everything else left as the full read above placed it. Its
+   * warnings replace the full read's media warnings in `warnings`.
+   */
+  media?: {
+    at: string;
+    model?: string;
+    notes?: { written: number; placed: number };
+    providerReceipt?: HarnessProviderReceipt;
+  };
 }
 
 export interface HarnessWorkspaceState {
@@ -1456,7 +1468,16 @@ export interface HarnessTagRequest {
   soundWords?: SoundWord[];
   /** The story's music and atmosphere categories. Without them no soundtrack is chosen. */
   soundtrack?: SoundtrackVocabulary;
+  /**
+   * One group of tags read again on its own (SENSEI, 2026-11-04): `media`
+   * teaches the tagger only the sound tags (cues, soundscape and atmosphere)
+   * and sends neither who the story has nor what they carry. Absent, every tag.
+   */
+  focus?: HarnessTagFocus;
 }
+
+/** A group of tags read again on its own. Today, media; each information tag later. */
+export type HarnessTagFocus = 'media';
 
 /**
  * The host's choice for the Chapter Tagger (SENSEI, 2026-10-29: "maybe cheap

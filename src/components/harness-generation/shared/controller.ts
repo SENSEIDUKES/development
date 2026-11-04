@@ -44,7 +44,7 @@ import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestCh
 import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { codexEntriesWithoutChapter, createCodexEntryResolver, declaredCharacters, deriveHoldings, holdingsSection, resolveHoldingChanges } from './holdings';
-import { planChapterTagging, readChapterTagging, retagChapterGap } from './tagger';
+import { MEDIA_TAG_WARNING_CODES, planChapterTagging, readChapterTagging, retagChapterGap } from './tagger';
 import { appearanceSources, deriveAppearances, placeAppearancesFromPlaces, resolveAppearances, thingAppearancesFromHoldings } from './appearances';
 import { deriveStatuses, resolveStatuses } from './statuses';
 import { derivePlaces, resolvePlaces } from './places';
@@ -57,7 +57,7 @@ import {
   type HarnessGenerationRepository,
 } from './repository';
 import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
-import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessTaggerChoice, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessTaggerChoice, HarnessTagFocus, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export interface HarnessGenerationControllerOptions {
   repository: HarnessGenerationRepository;
@@ -1359,9 +1359,9 @@ export class HarnessGenerationController {
     return this.tagAttempt(attemptId);
   }
 
-  /** Why one of this story's committed chapters cannot be tagged, when it cannot. */
-  retagChapterGap(storyId: string, chapterId: string): string | undefined {
-    return retagChapterGap(this.state, storyId, chapterId);
+  /** Why one of this story's committed chapters cannot be tagged (or its media alone), when it cannot. */
+  retagChapterGap(storyId: string, chapterId: string, focus?: HarnessTagFocus): string | undefined {
+    return retagChapterGap(this.state, storyId, chapterId, focus);
   }
 
   /**
@@ -1381,10 +1381,18 @@ export class HarnessGenerationController {
    * can give: who the main character is, and the sound words the chapter was
    * written with. Without that attempt the gap refuses rather than guess, as
    * the Holdings fixer and the look writer do.
+   *
+   * With `focus: 'media'` (SENSEI, 2026-11-04: "maybe you only want to have it
+   * retag a specific thing") only the sound is read again: the tagger is taught
+   * the sound tags alone, and only the chapter's Sound Cues and its soundscape
+   * and atmosphere are replaced. Its speakers, holdings, appearances, statuses,
+   * places and every Codex entry stay exactly as they were. A media read that
+   * fails changes nothing and says why.
    */
-  async retagChapter(storyId: string, chapterId: string): Promise<void> {
+  async retagChapter(storyId: string, chapterId: string, { focus }: { focus?: HarnessTagFocus } = {}): Promise<void> {
     this.assertHydrated();
     if (this.generating) throw new Error('Wait for the active Harness operation before tagging a chapter.');
+    if (focus === 'media') return this.retagChapterMedia(storyId, chapterId);
     const gap = retagChapterGap(this.state, storyId, chapterId);
     if (gap) throw new Error(gap);
     if (!this.modelAdapter.tagChapter) throw new Error('This host cannot tag a chapter yet.');
@@ -1496,6 +1504,69 @@ export class HarnessGenerationController {
       else delete saved.scene;
       if (resolver.created.length) candidate.codexEntries.push(...resolver.created);
     }
+    await this.persist(candidate);
+  }
+
+  /** `retagChapter` with `focus: 'media'`: the chapter's sound read again, nothing else touched. */
+  private async retagChapterMedia(storyId: string, chapterId: string): Promise<void> {
+    const gap = retagChapterGap(this.state, storyId, chapterId, 'media');
+    if (gap) throw new Error(gap);
+    if (!this.modelAdapter.tagChapter) throw new Error('This host cannot tag a chapter yet.');
+    const story = findStory(this.state, storyId)!;
+    const chapter = this.state.chapters.find(entry => entry.storyId === storyId && entry.id === chapterId)!;
+    const attempt = this.state.attempts.find(entry => entry.id === chapter.attemptId)!;
+    const request = planChapterTagging({
+      chapter, entries: [], language: story.originalLanguage,
+      soundWords: soundVocabulary(chapter.mediaLoadout),
+      soundtrack: soundtrackVocabulary(chapter.mediaLoadout),
+      focus: 'media',
+      ...this.taggerFor(attempt.model),
+    });
+    let response: HarnessGenerationResponse;
+    const previous = this.generating;
+    this.generating = true;
+    try {
+      response = await this.modelAdapter.tagChapter(request);
+    } catch (caught) {
+      throw new Error(errorMessage(caught, 'The tagger could not be reached.'));
+    } finally {
+      this.generating = previous;
+    }
+    const at = this.runtime.now();
+    const read = readChapterTagging({
+      raw: response.rawProviderResponse,
+      sent: chapter.paragraphs,
+      chapterNumber: chapter.chapterNumber,
+      at,
+      model: request.model,
+      options: {
+        soundVocabulary: soundVocabulary(chapter.mediaLoadout),
+        locale: story.originalLanguage,
+        media: chapter.mediaLoadout,
+        speakersExpected: false,
+        appearancesExpected: false,
+        soundtrackExpected: Boolean(request.soundtrack?.music?.length || request.soundtrack?.atmospheres?.length),
+      },
+    });
+    // A failed media read changes nothing: the chapter keeps the sound and the record it had.
+    if (!read.tags) throw new Error(read.record.problem ?? 'The tagger\'s answer could not be read, so nothing was changed.');
+    const candidate = cloneHarnessValue(this.state);
+    const saved = candidate.chapters.find(entry => entry.id === chapter.id);
+    if (!saved || saved.tagging?.status !== 'tagged') return;
+    // Only the media tags are taken from the answer; any other tag the tagger wrote anyway is set aside.
+    saved.soundCues = read.tags.soundCues;
+    if (read.tags.scene) saved.scene = read.tags.scene;
+    else delete saved.scene;
+    const media = (warning: HarnessWarning) => MEDIA_TAG_WARNING_CODES.has(warning.code);
+    const fresh = (read.record.warnings ?? []).filter(warning => media(warning)
+      || warning.code === 'tag_note_dropped').map(warning => warning.code === 'tag_note_dropped' ? { ...warning, message: `Media read again: ${warning.message}` } : warning);
+    const kept = (saved.tagging.warnings ?? []).filter(warning => !media(warning) && !warning.message.startsWith('Media read again: '));
+    saved.tagging = {
+      ...saved.tagging,
+      ...(kept.length + fresh.length ? { warnings: [...kept, ...fresh] } : {}),
+      media: { at, model: request.model, ...(read.record.notes ? { notes: read.record.notes } : {}), ...(response.providerReceipt ? { providerReceipt: response.providerReceipt } : {}) },
+    };
+    if (!kept.length && !fresh.length) delete saved.tagging.warnings;
     await this.persist(candidate);
   }
 

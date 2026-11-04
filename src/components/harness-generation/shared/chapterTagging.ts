@@ -172,7 +172,9 @@ export function describeChapterTagging(
       ? line('Place', found.places)
       : { kind: 'Place', said: 'Tagged before Place existed: tag it again to read it.', state: 'not-asked' },
   ];
-  return { status: 'tagged', headline: `Read${by} · ${when(record.at, locale)}${tokens}`, ...(notes ? { notes } : {}), kinds, problems };
+  // A media-only read since (Tag media again) is said after the full read it joined.
+  const media = record.media ? ` · media read again${record.media.model ? ` by ${record.media.model}` : ''} · ${when(record.media.at, locale)}` : '';
+  return { status: 'tagged', headline: `Read${by} · ${when(record.at, locale)}${tokens}${media}`, ...(notes ? { notes } : {}), kinds, problems };
 }
 
 /** The Chapters card's line: how many chapters, and how many of them the tagger has read. */

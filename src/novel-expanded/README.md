@@ -1,5 +1,10 @@
 # NovelExpanded app
 
+- **2026-11-04** — **Tag media again** (SENSEI). In Create mode, tapping Soundscape, Atmosphere or
+  Sound Cues offers "Tag media again ⚡1" under the legend (and in the ⋯ menu): the tagger reads
+  the chapter's sound alone, and only its cues, soundscape and atmosphere are replaced. Speakers,
+  holdings, appearances, status, place and the Codex stay exactly as they were. Same price as a
+  full read. The information tags will each get their own focused read later.
 - **2026-11-04** — **Energy on every generation** (SENSEI). Each control that calls a model shows
   its price: Rewrite, Fate's Write, Accept and write, Begin Story, Create Story and Replace
   Blueprint (a chapter, 2), Tag this chapter again and Tag N chapters (1 a chapter; tagging by

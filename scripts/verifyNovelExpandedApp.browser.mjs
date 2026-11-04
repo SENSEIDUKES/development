@@ -335,7 +335,7 @@ async function walk(browser, viewport, sample) {
     // tagger would, a note on the words each tag belongs to, so the Reader, the Codex and the
     // Holdings fixer downstream are reading the tagger's work and nothing else.
     if (body.operation === 'tag-chapter') {
-      counts.tags.push({ chapterNumber: body.chapterNumber, subjects: body.subjects, token: request.headers().authorization === `Bearer ${TOKEN}` });
+      counts.tags.push({ chapterNumber: body.chapterNumber, subjects: body.subjects, focus: body.focus, token: request.headers().authorization === `Bearer ${TOKEN}` });
       const written = body.paragraphs.some(paragraph => paragraph.startsWith('Mara found the bell key')) ? rewrittenNotes : notes;
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ notes: written }), providerReceipt: receipt }) });
       return;
@@ -1132,6 +1132,19 @@ async function walk(browser, viewport, sample) {
   // Let the line that says what it holds finish opening.
   await page.waitForTimeout(400);
   await shot('7a-create-mode-speakers');
+  // A media kind lit alone offers its sound read again on its own: one call, media only, nobody named.
+  await page.locator('[data-testid="create-mode-panel"] [data-tag-kind="cues"]').click();
+  const tagMedia = page.getByTestId('create-tag-media-inline');
+  await tagMedia.waitFor();
+  check(!(await page.evaluate(slidesSideways)), 'Tag media again must never push the page sideways.');
+  await page.waitForTimeout(400);
+  await shot('7a-create-mode-tag-media');
+  const tagsBeforeMedia = counts.tags.length;
+  await tagMedia.click();
+  for (let waited = 0; waited < 100 && counts.tags.length === tagsBeforeMedia; waited += 1) await page.waitForTimeout(100);
+  check(counts.tags.length === tagsBeforeMedia + 1 && counts.tags.at(-1).focus === 'media' && counts.tags.at(-1).subjects.length === 0,
+    `Tag media again should read the chapter's media alone, once, got ${JSON.stringify(counts.tags.slice(tagsBeforeMedia))}`);
+  await page.getByTestId('create-tag-media-inline').getByText('Tag media again').waitFor();
   // The eye hides every tag (the reader's page) and shows them again; Tag this chapter again lives in the ⋯ menu.
   await page.getByTestId('create-mode-show-tags').click();
   check((await page.getByTestId('create-mode-panel').getAttribute('data-lit')) === 'off', 'The eye should hide every tag.');

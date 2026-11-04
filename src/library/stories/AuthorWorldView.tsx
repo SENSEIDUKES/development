@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
-import { ArrowLeft, BookOpen, Check, ChevronRight, Globe, LoaderCircle, Sparkles, Square } from 'lucide-react';
+import { ArrowLeft, BookOpen, Check, ChevronRight, Download, Globe, LoaderCircle, Sparkles, Square } from 'lucide-react';
 import { SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
 import { findStory, type HarnessChapter } from '@seihouse/sen/harness-generation';
 import { LibraryButton, ManifestButton } from '@seihouse/library-ui';
@@ -11,6 +11,7 @@ import { describeChapterTagging, storyTaggingSummary } from './chapterTagging';
 import { StoryBlueprintPage } from './StoryBlueprint';
 import { StorySettings } from './settings/StorySettings';
 import { isStoryPublished, storyOrigin } from './storyView';
+import { downloadHarnessStory } from './storyExport';
 import type { LibraryStories } from './useLibraryStories';
 
 /**
@@ -20,17 +21,19 @@ import type { LibraryStories } from './useLibraryStories';
  * on a phone), a medium switcher (Novel; Sequential Art later), and the chosen
  * world's Blueprint, Chapters, Codex and Assets. Tagging lives here and
  * nowhere else: a reader never sees any of it. A world stays here, its
- * creator's alone, until they publish it; Read opens it in the creator's
- * Reader (Fate and Create together), and a chapter's Read it opens that chapter.
+ * creator's alone, until they publish it; Read opens its World Info (its
+ * cover, Start or Continue into the creator's Reader), a chapter's Read it
+ * opens that chapter in the creator's Reader, and Info holds its dates and Export.
  */
 
-export type AuthorWorldTab = 'blueprint' | 'chapters' | 'codex' | 'assets';
+export type AuthorWorldTab = 'blueprint' | 'chapters' | 'codex' | 'assets' | 'info';
 
 const TABS: ReadonlyArray<{ id: AuthorWorldTab; label: string }> = [
   { id: 'blueprint', label: 'Blueprint' },
   { id: 'chapters', label: 'Chapters' },
   { id: 'codex', label: 'Codex' },
   { id: 'assets', label: 'Assets' },
+  { id: 'info', label: 'Info' },
 ];
 
 /** Library art for a world with no cover yet, the same pick Create's row makes. */
@@ -107,6 +110,7 @@ export function AuthorWorldView({ stories, worlds, storyId, chapterNumber, onCho
             Coming soon: every card and every picture of this world, all in one place, ahead of what a reader has reached.
           </p>}
           {shown === 'assets' && <StorySettings stories={stories} storyId={storyId} only="assets" />}
+          {shown === 'info' && <WorldInfoTab stories={stories} storyId={storyId} />}
         </div>
       </section>
     </div>
@@ -117,7 +121,7 @@ export function AuthorWorldView({ stories, worlds, storyId, chapterNumber, onCho
  * The top of the author's world view: the title, one line saying where the
  * world stands (Draft or Published, Made in SEN or Imported, its chapters) and
  * what that origin means for its chapters, then the two actions in a fixed
- * row that never moves: Read (the creator's Reader) and Publish.
+ * row that never moves: Read (its World Info, the creator's) and Publish.
  */
 function WorldHeader({ stories, storyId, title, onRead }: {
   stories: LibraryStories; storyId: string; title?: string; onRead?: (chapterNumber?: number) => void;
@@ -192,6 +196,49 @@ function PublishControl({ stories, storyId, published, hasChapters }: { stories:
       </div>
     </SEIPopoverContent>
   </SEIPopover>;
+}
+
+/** A date as the author reads it: the day, and the time on it. */
+const shownDate = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' });
+};
+
+/**
+ * Info: the book's record for its author. For now, when it was created and
+ * last updated, and Export, the whole book as one file (every chapter and what
+ * the writer was given for it), as World Info offers it too.
+ */
+function WorldInfoTab({ stories, storyId }: { stories: LibraryStories; storyId: string }) {
+  const [problem, setProblem] = useState<string>();
+  const story = stories.state ? findStory(stories.state, storyId) : undefined;
+  if (!story || !stories.state) return null;
+  const state = stories.state;
+  const exportBook = () => {
+    try {
+      downloadHarnessStory(state, storyId);
+      setProblem(undefined);
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : 'The book could not be exported.');
+    }
+  };
+  return <section className="max-w-xl" data-testid="author-world-info">
+    <dl className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03]">
+      <div className="flex items-center justify-between gap-4 px-4 py-3">
+        <dt className="text-sm text-neutral-400">Created</dt>
+        <dd className="text-right text-sm text-neutral-100" data-testid="author-world-created"><time dateTime={story.createdAt}>{shownDate(story.createdAt)}</time></dd>
+      </div>
+      <div className="flex items-center justify-between gap-4 px-4 py-3">
+        <dt className="text-sm text-neutral-400">Last updated</dt>
+        <dd className="text-right text-sm text-neutral-100" data-testid="author-world-updated"><time dateTime={story.updatedAt}>{shownDate(story.updatedAt)}</time></dd>
+      </div>
+    </dl>
+    <div className="mt-5 flex flex-col items-start gap-2">
+      <LibraryButton variant="secondary" icon={Download} onClick={exportBook} data-testid="author-world-export">Export book</LibraryButton>
+      <p className="text-xs text-neutral-500">Saves the whole book as one file: every chapter and what the writer was given for it.</p>
+      {problem && <p role="alert" className="text-xs text-amber-200">{problem}</p>}
+    </div>
+  </section>;
 }
 
 /** The world's Blueprint, or a plain note when the world has none (an imported novel, or one begun from a premise). */

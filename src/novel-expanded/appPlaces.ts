@@ -18,7 +18,8 @@ export function appLibraryLocation(route: NovelExpandedRoute): LibraryLocation {
     case 'create': return route.seedId || route.newSeed ? { screen: 'creator' } : { screen: 'creator-space' };
     // A world as its author sees it belongs to Create.
     case 'world': return { screen: 'creator-space' };
-    case 'story':
+    // A book's World Info opened from Create belongs to Create.
+    case 'story': return route.inCreate ? { screen: 'creator-space' } : { screen: 'detail' };
     case 'blueprint': return { screen: 'detail' };
     case 'read':
     case 'write': return { screen: 'reader' };

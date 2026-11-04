@@ -157,6 +157,8 @@ const publishedStoryWithChapter = async (repository: InMemoryHarnessGenerationRe
 };
 /** The creator's Reader of a world, opened from Create. */
 const writeAddress = (storyId: string, chapterNumber?: number) => `/app/?page=create&world=${storyId}&read=1${chapterNumber ? `&chapter=${chapterNumber}` : ''}`;
+/** A book's World Info opened from Create: its creator's. */
+const infoAddress = (storyId: string) => `/app/?page=create&world=${storyId}&info=1`;
 
 let container: HTMLDivElement;
 let root: Root;
@@ -269,8 +271,13 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');
     expect(story.recoverMemory).not.toHaveBeenCalled();
 
-    // The Reader's Back returns to the world in Create, whose chapters now hold Chapter 1.
+    // The Reader's Back returns to the book's World Info, its creator's, in Create.
     await click(buttonByText('Back'), 'Back', 10);
+    expect(address()).toBe(infoAddress(created.id));
+    expect(worldInfo()).toBeTruthy();
+    expect(chaptersAction()!.textContent).toBe('Continue');
+    // World Info's Back returns to the book in Create, whose chapters now hold Chapter 1.
+    await click(worldInfo()!.querySelector('button[aria-label="Back to the book in Create"]'), 'Back to the book in Create', 20);
     expect(address()).toBe(`/app/?page=create&world=${created.id}`);
     const world = () => document.querySelector<HTMLElement>('[data-testid="author-world"]')!;
     expect([...world().querySelectorAll('[data-testid="author-world-chapter"]')].map(row => row.getAttribute('data-chapter-number'))).toEqual(['1']);
@@ -285,6 +292,9 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     await flush(30);
     expect(address()).toBe(`/app/?page=create&world=${created.id}`);
     expect(world()).toBeTruthy();
+    await act(async () => { window.history.back(); });
+    await flush(30);
+    expect(address()).toBe(infoAddress(created.id));
     await act(async () => { window.history.back(); });
     await flush(30);
     expect(address()).toBe(writeAddress(created.id));
@@ -540,7 +550,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     await back();
     expect(address()).toBe('/app/?page=create');
     await click(buttonByText('Studio', hub()), 'Studio', 20);
-    expect(address()).toBe(`/app/?story=${created.id}`);
+    // Studio: the book's World Info, its creator's, in Create.
+    expect(address()).toBe(infoAddress(created.id));
     expect(worldInfo()).toBeTruthy();
     // World Info, the regular novel page, carries no tagging.
     expect(worldInfo()!.textContent).not.toMatch(/Tag this chapter|Tagging/);
@@ -550,7 +561,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(address()).toBe(`/app/?page=create&world=${created.id}`);
     const world = document.querySelector<HTMLElement>('[data-testid="author-world"]')!;
     expect(world.querySelector('h1')!.textContent).toBe(created.title);
-    expect([...world.querySelectorAll('[role="tab"]')].map(entry => entry.textContent)).toEqual(['Blueprint', 'Chapters', 'Codex', 'Assets']);
+    expect([...world.querySelectorAll('[role="tab"]')].map(entry => entry.textContent)).toEqual(['Blueprint', 'Chapters', 'Codex', 'Assets', 'Info']);
     // Chapter 1 is still being written, so the world has no chapters yet.
     expect(world.querySelector('[data-testid="author-world-no-chapters"]')).toBeTruthy();
     await click(world.querySelector('button[aria-label="Back to Create"]'), 'Back to Create', 20);
@@ -832,11 +843,15 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     expect(requestWorldBlueprint.mock.calls.map(call => call[1])).toEqual(['wrong-token', 'right-token']);
     expect(sheet()).toBeNull();
 
-    // Create Story starts it with the official CAPA skills, unpublished, and opens its creator's Reader.
+    // Create Story starts it with the official CAPA skills, unpublished, and opens its World Info, its creator's.
     await click(buttonByText('Create Story', container), 'Create Story', 50);
     const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
     expect(started.skillLoadout).toEqual(createOfficialCapaDefaultLoadout(record.seed.story.required.style));
     expect(started.visibility ?? 'private').toBe('private');
+    expect(address()).toBe(infoAddress(started.id));
+    expect(worldInfo()).toBeTruthy();
+    // Start Story opens the creator's Reader.
+    await click(chaptersAction(), 'Start Story', 20);
     expect(address()).toBe(writeAddress(started.id));
     expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
     // The creator's Reader: Fate and Create together.
@@ -846,7 +861,10 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await flush(20);
     expect(writer.generate).not.toHaveBeenCalled();
 
-    // The started story replaced Create, so the browser's Back goes Home.
+    // The started story's World Info replaced Create, so the browser's Back walks to it, then Home.
+    await act(async () => { window.history.back(); });
+    await flush(30);
+    expect(address()).toBe(infoAddress(started.id));
     await act(async () => { window.history.back(); });
     await flush(30);
     expect(address()).toBe('/app/');
@@ -854,7 +872,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     expect(container.querySelector(`#home-world-${started.id}`)).toBeNull();
   });
 
-  it('a Regular story: Create Story begins Chapter 1 at once and opens it in the creator\'s Reader without writing it twice', async () => {
+  it('a Regular story: Create Story begins Chapter 1 at once, opens its World Info, and Start Story opens it in the creator\'s Reader without writing it twice', async () => {
     const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
     record.seed.story.optional.fateSurvival = { ...record.seed.story.optional.fateSurvival, enabled: false };
     const { blueprint, ...withoutBlueprint } = record;
@@ -871,9 +889,11 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await manifestWorldBlueprint(300);
     await click(buttonByText('Create Story', container), 'Create Story', 50);
     const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
-    expect(address()).toBe(writeAddress(started.id));
-    // Chapter 1 is already being written as the creator's Reader opens.
+    expect(address()).toBe(infoAddress(started.id));
+    // Chapter 1 is already being written while the creator looks over World Info.
     expect(writer.generate).toHaveBeenCalledTimes(1);
+    await click(chaptersAction(), 'Start Story', 10);
+    expect(address()).toBe(writeAddress(started.id));
 
     // The Reader, which begins a story with no chapters, finds it still being written:
     // the veil, never a second write; it opens when saved.
@@ -896,15 +916,19 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     expect(address()).toBe(writeAddress(created.id));
     expect(story.generate).toHaveBeenCalledTimes(1);
 
-    // Back out mid-write, to the world in Create: the chapter is still being written.
+    // Back out mid-write, to its World Info and then the book in Create: the chapter is still being written.
     await click(buttonByText('Back'), 'Back', 10);
+    expect(address()).toBe(infoAddress(created.id));
+    await click(worldInfo()!.querySelector('button[aria-label="Back to the book in Create"]'), 'Back to the book in Create', 10);
     expect(address()).toBe(`/app/?page=create&world=${created.id}`);
     expect(document.querySelector('[data-testid="author-world-no-chapters"]')).toBeTruthy();
     await act(async () => { story.release(); });
     await flush(20);
     expect(document.querySelector('[data-testid="author-world-chapter"][data-chapter-number="1"]')).toBeTruthy();
-    // Come back through the world's Read: Chapter 1 is there, written once.
+    // Come back through the world's Read (its World Info) and Continue: Chapter 1 is there, written once.
     await click(document.querySelector('[data-testid="author-world-read"]'), 'Read', 10);
+    expect(address()).toBe(infoAddress(created.id));
+    await click(chaptersAction(), 'Continue', 10);
     expect(address()).toBe(writeAddress(created.id));
     expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');
     expect(story.generate).toHaveBeenCalledTimes(1);
@@ -1021,7 +1045,7 @@ describe('NovelExpanded: publishing, and the creator\'s and the reader\'s Reader
 
     // A reader of the published story, from Home, reads that chapter with Fate alone: no Rewrite, no Create.
     await click(buttonByText('Back'), 'Back', 20);
-    expect(address()).toBe(`/app/?page=create&world=${created.id}`);
+    expect(address()).toBe(infoAddress(created.id));
     await click(buttonByText('Home', strip()!), 'Home in the navigation', 20);
     await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card', 20);
     await click(chaptersAction(), 'Continue', 20);
@@ -1033,6 +1057,46 @@ describe('NovelExpanded: publishing, and the creator\'s and the reader\'s Reader
     expect(buttonByText('Rewrite this chapter')).toBeUndefined();
     expect(document.querySelector('form[aria-label^="Rewrite Chapter"]')).toBeNull();
     expect(story.generate).toHaveBeenCalledTimes(1);
+  });
+
+  it('the world view\'s Info holds when the book was created and last updated, and Export saves the whole book', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository, { draft: true });
+    await render(services, `/app/?page=create&world=${created.id}`);
+    const world = () => document.querySelector<HTMLElement>('[data-testid="author-world"]')!;
+    await click([...world().querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(tab => tab.textContent === 'Info'), 'Info', 10);
+    const info = world().querySelector<HTMLElement>('[data-testid="author-world-info"]')!;
+    const saved = findStory((services.stories as InMemoryHarnessGenerationRepository).snapshot(), created.id)!;
+    expect(info.querySelector('[data-testid="author-world-created"] time')!.getAttribute('datetime')).toBe(saved.createdAt);
+    expect(info.querySelector('[data-testid="author-world-updated"] time')!.getAttribute('datetime')).toBe(saved.updatedAt);
+    const createObjectURL = vi.fn(() => 'blob:book');
+    const revokeObjectURL = vi.fn();
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+    const clicked = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    await click(info.querySelector('[data-testid="author-world-export"]'), 'Export book', 10);
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(clicked).toHaveBeenCalledTimes(1);
+    clicked.mockRestore();
+    expect(info.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('the world view\'s Read opens the book\'s World Info, its creator\'s, whose Start or Continue opens the creator\'s Reader', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository);
+    await render(services, `/app/?page=create&world=${created.id}`);
+    await click(document.querySelector('[data-testid="author-world-read"]'), 'Read', 20);
+    expect(address()).toBe(infoAddress(created.id));
+    expect(worldInfo()).toBeTruthy();
+    // Even a published book's World Info, opened from Create, is its creator's.
+    await click(chaptersAction(), 'Continue', 20);
+    expect(address()).toBe(writeAddress(created.id));
+    expect(document.querySelector('[data-testid="reader-actions-button"]')).toBeTruthy();
+    await click(buttonByText('Back'), 'Back', 20);
+    expect(address()).toBe(infoAddress(created.id));
+    await click(worldInfo()!.querySelector('button[aria-label="Back to the book in Create"]'), 'Back to the book in Create', 20);
+    expect(address()).toBe(`/app/?page=create&world=${created.id}`);
   });
 
   it('a reader\'s link to a draft opens its creator\'s Reader in its place', async () => {
@@ -1577,7 +1641,8 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     const after = (await services.stories.load()).foundations.filter(revision => revision.storyId === created.id).length;
     expect(after).toBe(before + 1);
     await click(document.querySelector('[aria-label="Back to World Info"]'), 'Back to World Info', 20);
-    expect(address()).toBe(`/app/?story=${created.id}`);
+    // A draft's World Info is its creator's, in Create.
+    expect(address()).toBe(infoAddress(created.id));
     expect(worldInfo()).toBeTruthy();
   });
 

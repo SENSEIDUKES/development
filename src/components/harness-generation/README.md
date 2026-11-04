@@ -37,6 +37,23 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-11-04 (Tag media again):** SENSEI: "maybe you only want to have it
+  retag a specific thing." `retagChapter(storyId, chapterId, { focus: 'media' })`
+  reads a chapter's sound again on its own: the tagger is taught the sound tags
+  alone (`HarnessTagRequest.focus`, `presentTaggerTagTeaching` leaving the
+  information sections out, word for word the same otherwise) and is sent
+  nobody the story has and nothing they carry. Only the chapter's Sound Cues
+  and its soundscape and atmosphere are replaced; speakers, holdings,
+  appearances, statuses, places and every Codex entry stay as the full read
+  placed them, and a tag of another kind in the answer is set aside. The record
+  keeps the full read and adds `media` (when, by whom, its notes); media
+  warnings are replaced, every other warning kept. A failed media read changes
+  nothing and says why. Offered (`retagChapterGap(…, 'media')`) only on a
+  chapter read in full with sound equipped; a manual cue still blocks it, the
+  fixer's merged names do not. Schema 45, an optional field. Create mode offers
+  it under the legend when a media kind is lit alone, and in the ⋯ menu, at the
+  same Energy (SENSEI: a focused read costs about the same). The information
+  tags will each get their own focus later.
 - **2026-11-04 (a quiet legend):** SENSEI: "what would Apple do?" `CreateTagPanel`
   drops its boxes, title, Saved line and help text: each kind is a dot and a
   name (hollow ring when the page holds none), the kind lit alone gets a

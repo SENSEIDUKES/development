@@ -13,8 +13,9 @@ import './reader-colors.css';
  * (the others fade; tap again for every tag), and it says what it holds. The
  * eye shows or hides every tag (hidden is the page as a reader sees it). The
  * panel says nothing while the page is saved; it speaks only while saving, on
- * a failed save, and on a sealed chapter. Tag this chapter (again), the
- * tagger's record and the one help line live in the ⋯ menu. On a wider page
+ * a failed save, and on a sealed chapter. Tag this chapter (again), Tag media
+ * again, the tagger's record and the one help line live in the ⋯ menu; a
+ * media kind lit alone also offers Tag media again right under the legend. On a wider page
  * each kind says what it holds beside its color. The panel scrolls with the
  * chapter, so the prose is never covered.
  */
@@ -30,13 +31,30 @@ export function CreateTagPanel({ rows, lit, onLight, saving, editable, sealedNot
   sealedNote?: string;
   /** The tagger's record of the chapter. */
   account: ChapterTaggingAccount;
-  /** Tag this chapter (again): absent where this Reader cannot tag. */
-  tagging?: { busy: boolean; disabled?: boolean; problem?: string; onTag: () => void; /** The host's Energy price for it. */ cost?: ReactNode };
+  /**
+   * Tag this chapter (again), and Tag media again, its sound alone: absent
+   * where this Reader cannot tag. `onTagMedia` is absent where the media
+   * cannot be read on its own (the chapter was never fully read, or has no sound equipped).
+   */
+  tagging?: {
+    /** Which read is running. */
+    busy?: 'all' | 'media';
+    disabled?: boolean;
+    problem?: string;
+    onTag: () => void;
+    onTagMedia?: () => void;
+    /** The host's Energy price for a read (the same for both). */
+    cost?: ReactNode;
+  };
   /** What the page has to say under the tags: notices, effects waiting for a new spot. */
   children?: ReactNode;
 }) {
   const [menu, setMenu] = useState(false);
   const alone = rows.find(row => row.kind === lit);
+  const mediaKinds = CREATE_TAG_GROUPS.find(group => group.id === 'media')!.kinds;
+  // A media kind lit alone offers its group read again on its own, right where the author is looking.
+  const mediaAction = tagging?.onTagMedia && alone && mediaKinds.includes(alone.kind) ? tagging : undefined;
+  const busy = Boolean(tagging?.busy);
   const shown = lit !== 'off';
   const iconButton = `grid h-11 w-11 shrink-0 place-items-center rounded-full text-(--reader-text-dim) hover:bg-(--reader-light)/8 hover:text-(--reader-text) ${controlFeedback}`;
   const label = (group: CreateTagGroupId, id: string) => <p id={id} className="ps-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-(--reader-text-muted)">
@@ -92,10 +110,16 @@ export function CreateTagPanel({ rows, lit, onLight, saving, editable, sealedNot
       </SEIPopoverTrigger>
       <SEIPopoverContent side="bottom" align="end" sideOffset={6} collisionPadding={12} variant="dark" className={pickerSurface} data-testid="create-mode-options">
         <SEIPopoverTitle className={pickerHeading}>{editable ? 'Select words to edit them or add media.' : sealedNote ?? 'This chapter is sealed.'}</SEIPopoverTitle>
-        {tagging && <button type="button" onClick={tagging.onTag} disabled={tagging.busy || tagging.disabled} aria-busy={tagging.busy || undefined}
+        {tagging && <button type="button" onClick={tagging.onTag} disabled={busy || tagging.disabled} aria-busy={tagging.busy === 'all' || undefined}
           data-testid="create-mode-tag" className={`${pickerRow} disabled:opacity-50`}>
-          {tagging.busy ? <LoaderCircle className="h-4 w-4 shrink-0 animate-spin text-(--reader-accent-soft)" aria-hidden /> : <Sparkles className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
-          <span className="min-w-0 flex-1">{tagging.busy ? 'Reading the chapter…' : account.status === 'untagged' ? 'Tag this chapter' : 'Tag this chapter again'}</span>
+          {tagging.busy === 'all' ? <LoaderCircle className="h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none text-(--reader-accent-soft)" aria-hidden /> : <Sparkles className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
+          <span className="min-w-0 flex-1">{tagging.busy === 'all' ? 'Reading the chapter…' : account.status === 'untagged' ? 'Tag this chapter' : 'Tag this chapter again'}</span>
+          {tagging.cost}
+        </button>}
+        {tagging?.onTagMedia && <button type="button" onClick={tagging.onTagMedia} disabled={busy || tagging.disabled} aria-busy={tagging.busy === 'media' || undefined}
+          data-testid="create-mode-tag-media" className={`${pickerRow} disabled:opacity-50`}>
+          {tagging.busy === 'media' ? <LoaderCircle className="h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none text-(--reader-accent-soft)" aria-hidden /> : <Sparkles className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
+          <span className="min-w-0 flex-1">{tagging.busy === 'media' ? 'Reading its media…' : 'Tag media again'}</span>
           {tagging.cost}
         </button>}
         {tagging?.problem && <p role="alert" className="px-3 pb-2 text-xs text-(--reader-warning-pale)">{tagging.problem}</p>}
@@ -133,6 +157,18 @@ export function CreateTagPanel({ rows, lit, onLight, saving, editable, sealedNot
         </p>}
       </div>
     </div>
+    {/* A media kind lit alone: its group read again on its own, the sound tags only. */}
+    {mediaAction && <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 px-1">
+      <button type="button" onClick={mediaAction.onTagMedia} disabled={busy || mediaAction.disabled} aria-busy={mediaAction.busy === 'media' || undefined}
+        data-testid="create-tag-media-inline"
+        className={`inline-flex min-h-11 items-center gap-2 rounded-full border border-(--reader-light)/12 px-4 text-xs font-medium text-(--reader-text) hover:bg-(--reader-light)/8 disabled:opacity-50 ${controlFeedback}`}>
+        {mediaAction.busy === 'media' ? <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none text-(--reader-accent-soft)" aria-hidden /> : <Sparkles className="h-4 w-4 text-(--reader-accent-soft)" aria-hidden />}
+        {mediaAction.busy === 'media' ? 'Reading its media…' : 'Tag media again'}
+        {mediaAction.busy !== 'media' && mediaAction.cost}
+      </button>
+      <span className="text-xs text-(--reader-text-dim)">Sound only: everything else stays as it is.</span>
+    </div>}
+    {mediaAction?.problem && <p role="alert" className="mt-1 px-1 text-xs text-(--reader-warning-pale)">{mediaAction.problem}</p>}
     {children && <div className="mt-3 space-y-3">{children}</div>}
   </section>;
 }

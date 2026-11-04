@@ -41,6 +41,7 @@ import { storyWorldRecord } from '../shared/foundation';
 import { deriveStoryCodex, type CodexPictureMaker, type CodexPictures } from '../shared/storyCodex';
 import { BlueprintArcPage } from './BlueprintArcPage';
 import { ChapterAuthoring, type ChapterAuthoringHandle } from './ChapterAuthoring';
+import type { CreateTagLit } from './createTags';
 import { ChapterRewrite } from './ChapterRewrite';
 import { FatePage } from './FatePage';
 import { ProseChapterBody } from './ProseChapterBody';
@@ -165,7 +166,7 @@ export type ReaderGenerationCost = 'chapter' | 'tag' | 'picture';
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
   readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
-  creator = true, openAtChapter, openInCreate = false, onTagChapter, renderCost,
+  creator = true, openAtChapter, openInCreate = false, onTagChapter, onTagChapterMedia, renderCost,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
@@ -251,6 +252,13 @@ export function HarnessReaderSession({
    * the host cannot tag here; Create mode then shows the tags without Tag this chapter.
    */
   onTagChapter?: (chapterId: string) => Promise<void>;
+  /**
+   * Reads a chapter's media again on its own (Tag media again): its sound
+   * replaced, every other tag and the Codex untouched. Its own capability, so a
+   * host that has not taken it up never offers it; with only `onTagChapter`
+   * the Reader offers the whole read alone.
+   */
+  onTagChapterMedia?: (chapterId: string) => Promise<void>;
   /**
    * The host's Energy price for a generation action, shown on its button: a
    * chapter (Rewrite, Fate's Write, Accept and write), tagging a chapter with
@@ -365,6 +373,8 @@ export function HarnessReaderSession({
   const pageOpen = layer?.kind === 'page';
   // Create mode: the reader authors the chapter on screen in place. It closes when another chapter opens.
   const [creating, setCreating] = useState(openInCreate && creator);
+  // What Create mode lights outlives its page: from chapter to chapter, and through a chapter tagged again.
+  const [createLit, setCreateLit] = useState<CreateTagLit>('all');
   // Create mode's page, for Sound Cues asked for in words: they read and join it, never a separate save.
   const authoringHandle = useRef<ChapterAuthoringHandle>(null);
   useLayoutEffect(() => {
@@ -558,6 +568,7 @@ export function HarnessReaderSession({
     : writer.writing ? 'A chapter is being written. Changes wait until it is done.'
     : 'This chapter cannot be changed right now.';
   const tagGap = chapter && onTagChapter ? controller.retagChapterGap(storyId, chapter.id) : undefined;
+  const mediaTagGap = chapter && onTagChapterMedia ? controller.retagChapterGap(storyId, chapter.id, 'media') : undefined;
   const rewriteChapter = async (note?: string) => {
     const rewritten = await writer.rewrite(note);
     if (rewritten) openChapter(rewritten);
@@ -580,11 +591,15 @@ export function HarnessReaderSession({
       {storageError && <p role="alert" className="mt-3 text-sm text-(--reader-warning-bright)">{storageError}</p>}
 
       {authoring
-        // Keyed by its tagging too, so a chapter tagged again opens with its new tags.
-        ? <ChapterAuthoring key={`${chapter.id}:${chapter.tagging?.at ?? ''}:${authorable}`} handle={authorable ? authoringHandle : undefined} chapter={chapter} controller={controller}
+        // Keyed by its tagging too (a full read and a media-only read alike), so a chapter tagged again
+        // opens with its new tags and no edit saves the tags it had before over them.
+        ? <ChapterAuthoring key={`${chapter.id}:${chapter.tagging?.at ?? ''}:${chapter.tagging?.media?.at ?? ''}:${authorable}`} handle={authorable ? authoringHandle : undefined} chapter={chapter} controller={controller}
             locale={story.originalLanguage} text={text} articleRef={articleRef} editable={authorable} sealedNote={authorable ? undefined : sealedNote}
-            entries={entries} tagging={onTagChapter && { gap: tagGap, run: () => onTagChapter(chapter.id), cost: renderCost?.('tag') }}
-            highlight={highlight} reading={reading} />
+            entries={entries} tagging={onTagChapter && {
+              gap: tagGap, run: () => onTagChapter(chapter.id), cost: renderCost?.('tag'),
+              ...(onTagChapterMedia ? { media: { gap: mediaTagGap, run: () => onTagChapterMedia(chapter.id) } } : {}),
+            }}
+            highlight={highlight} reading={reading} lit={createLit} onLight={setCreateLit} />
         : chapter
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
             highlight={highlight} reading={reading} text={text} />

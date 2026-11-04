@@ -21,6 +21,7 @@ import { PLACE_KIND, type PlaceAttachment } from '../../../narrative/places';
 import { harnessParagraphBlockId } from '../shared/chapterBody';
 import { chapterTagFindings, describeChapterTagging } from '../shared/chapterTagging';
 import type { CodexEntry } from '../../../narrative/holdings';
+import type { HarnessTagFocus } from '../../../narrative/generation';
 import { CreateTagPanel } from './CreateTagPanel';
 import { READ_ALOUD_TONE } from './ProseChapterBody';
 import type { NarrationHighlight } from './useFollowNarration';
@@ -117,7 +118,7 @@ const KIND_NAMES: Record<string, [string, string]> = {
  * again or removes it, or the chapter is sealed. A changed chapter is marked
  * as changed, so it is read again at its seal.
  */
-export function ChapterAuthoring({ chapter, controller, locale, text, articleRef, handle, editable = true, sealedNote, entries, tagging, highlight, reading = false }: {
+export function ChapterAuthoring({ chapter, controller, locale, text, articleRef, handle, editable = true, sealedNote, entries, tagging, highlight, reading = false, lit: litFromHost, onLight }: {
   chapter: ReaderChapter;
   controller: HarnessGenerationController;
   locale: string;
@@ -131,19 +132,35 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   /** The story's Codex entries, so a tag reads by the name the Codex knows. */
   entries?: readonly CodexEntry[];
   /** Tag this chapter (again); absent where this Reader cannot tag. */
-  tagging?: { gap?: string; run: () => Promise<void>; /** The host's Energy price for it. */ cost?: ReactNode };
+  tagging?: {
+    gap?: string;
+    /** Reads the whole chapter again. */
+    run: () => Promise<void>;
+    /** Reads its media alone again (Tag media again), where the host offers it; `gap` says why it cannot, when it cannot. */
+    media?: { gap?: string; run: () => Promise<void> };
+    /** The host's Energy price for a read. */
+    cost?: ReactNode;
+  };
   /** The sentence (or title) Listen is reading, lit as in the Reader. */
   highlight?: NarrationHighlight;
   /** Whether Listen is playing or paused. */
   reading?: boolean;
+  /**
+   * What the page lights, when the host keeps it: then it outlives this page,
+   * from chapter to chapter and through a chapter tagged again. Without it the page keeps its own.
+   */
+  lit?: CreateTagLit;
+  onLight?: (lit: CreateTagLit) => void;
 }) {
   const [state, setState] = useState<ChapterState>(() => chapterState(chapter, locale));
   // The page as last set, for a cue added in words between renders.
   const latest = useRef(state);
   latest.current = state;
   const [opening, setOpening] = useState<ChapterOpeningSound | undefined>(chapter.openingSound);
-  const [lit, setLit] = useState<CreateTagLit>('all');
-  const [retagging, setRetagging] = useState(false);
+  const [ownLit, setOwnLit] = useState<CreateTagLit>('all');
+  const lit = litFromHost ?? ownLit;
+  const setLit = onLight ?? setOwnLit;
+  const [retagging, setRetagging] = useState<'all' | 'media'>();
   // While the tagger reads the chapter the controller refuses saves, and its new tags replace this page:
   // nothing on it changes until the tagging is done, so no edit is made only to be lost.
   const retaggingNow = useRef(false);
@@ -316,19 +333,22 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     return createTagRows({ counts, findings, account });
   // eslint-disable-next-line react-hooks/exhaustive-deps -- opens is read from the chapter and its opening
   }, [state, chapter, entries, opening, soundtrack, account]);
-  const tag = tagging && !tagging.gap ? async () => {
+  const read = (focus?: HarnessTagFocus) => async () => {
+    if (!tagging) return;
     retaggingNow.current = true;
-    setRetagging(true);
+    setRetagging(focus ?? 'all');
     setTagProblem(undefined);
     try {
-      await tagging.run();
+      await (focus === 'media' ? tagging.media!.run() : tagging.run());
     } catch (error) {
       setTagProblem(error instanceof Error ? error.message : 'The chapter could not be tagged.');
     } finally {
       retaggingNow.current = false;
-      setRetagging(false);
+      setRetagging(undefined);
     }
-  } : undefined;
+  };
+  const tag = tagging && !tagging.gap ? read() : undefined;
+  const tagMedia = tagging?.media && !tagging.media.gap ? read('media') : undefined;
   const prose = useMemo((): CSSProperties => ({
     fontFamily: text.font.family, fontSize: `calc(${text.fontSize} * var(--reader-scale, 1))`, fontWeight: text.fontWeight,
     fontSynthesis: 'none', fontKerning: 'normal', '--sen-text-line-height': text.lineHeight,
@@ -337,7 +357,12 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   return <article ref={articleRef} className="mx-auto mt-6 max-w-[var(--reader-measure,34em)]" style={prose} data-chapter-number={chapter.chapterNumber}
     data-testid="chapter-authoring" lang={locale} aria-labelledby={`harness-reader-chapter-${chapter.chapterNumber}`}>
     <CreateTagPanel rows={rows} lit={lit} onLight={setLit} saving={saving} editable={editable} sealedNote={sealedNote} account={account}
-      tagging={tag && { busy: retagging, disabled: saving !== 'saved', problem: tagProblem, onTag: () => void tag(), cost: tagging?.cost }}>
+      tagging={(tag || tagMedia) && {
+        busy: retagging, disabled: saving !== 'saved', problem: tagProblem, cost: tagging?.cost,
+        // A chapter whose whole read is refused may still have its media read on its own, and the other way round.
+        onTag: () => { if (tag) void tag(); else setTagProblem(tagging?.gap); },
+        ...(tagMedia ? { onTagMedia: () => void tagMedia() } : {}),
+      }}>
       {/* A chapter may have no Sound Cues, but where there should be some their absence is loud: say so here, never in the Reader. */}
       {editable && cues.length === 0 && <p role="status" className="rounded-lg border border-(--reader-warning-bright)/25 bg-(--reader-warning)/[0.06] px-3 py-2 text-xs leading-relaxed text-(--reader-warning-pale)" data-testid="create-mode-no-cues">
         This chapter has no Sound Cues. Where a sound happens, highlight its words and choose Media → Audio → Cue.
@@ -350,7 +375,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
             const { title, detail } = describeWaiting(attachment);
             return <li key={attachment.id} className="flex items-start justify-between gap-3 rounded-lg border border-(--reader-light)/10 bg-(--reader-surface-raised)/50 px-3 py-2">
               <span className="min-w-0 text-xs leading-relaxed"><span className="block font-medium text-(--reader-text)">{title}</span><span className="text-(--reader-text-dim)">{detail}</span></span>
-              <button type="button" disabled={retagging} onClick={() => update(current => removeAttachment(current, attachment.id))}
+              <button type="button" disabled={Boolean(retagging)} onClick={() => update(current => removeAttachment(current, attachment.id))}
                 className="min-h-11 shrink-0 rounded-lg border border-(--reader-light)/15 px-3 text-xs text-(--reader-text-soft) hover:bg-(--reader-light)/10">Remove</button>
             </li>;
           })}

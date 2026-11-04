@@ -6,7 +6,9 @@ import { activeAttemptForStory } from './attempts';
 import { findStory } from './foundation';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
-import type { HarnessWarning } from '../../../narrative/generation';
+import type { HarnessTagFocus, HarnessWarning } from '../../../narrative/generation';
+import { soundVocabulary } from '../../../audio/media';
+import { soundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import { SOUNDTRACK_TAG_WORDS, SOUND_TAG_WORDS, readMarks } from '../../../narrative/marks';
 import { statusOfEntry, type CurrentStatus } from './statuses';
 import { placeOfEntry, type CurrentPlace } from './places';
@@ -94,7 +96,7 @@ export function tagSubjectsOfStory({ entries, world, statuses, places }: {
  * which is what makes re-tagging an existing chapter the same operation as
  * tagging a new one.
  */
-export function planChapterTagging({ chapter, entries, world, holdings, statuses, places, soundWords, soundtrack, language, model, reasoningLevel }: {
+export function planChapterTagging({ chapter, entries, world, holdings, statuses, places, soundWords, soundtrack, language, model, reasoningLevel, focus }: {
   chapter: Pick<HarnessChapter, 'id' | 'storyId' | 'chapterNumber' | 'paragraphs'>;
   entries: readonly CodexEntry[];
   world?: WorldRecord;
@@ -111,7 +113,10 @@ export function planChapterTagging({ chapter, entries, world, holdings, statuses
   model: string;
   /** How hard it thinks, when the host chose; otherwise as little as the model allows. */
   reasoningLevel?: string;
+  /** One group read again on its own: media sends only the sound words and categories, nobody and nothing the story has. */
+  focus?: HarnessTagFocus;
 }): HarnessTagRequest {
+  const media = focus === 'media';
   return {
     operation: 'tag-chapter',
     storyId: chapter.storyId,
@@ -121,12 +126,19 @@ export function planChapterTagging({ chapter, entries, world, holdings, statuses
     ...(reasoningLevel ? { reasoningLevel } : {}),
     language,
     paragraphs: [...chapter.paragraphs],
-    subjects: tagSubjectsOfStory({ entries, world, statuses, places }),
-    ...(holdings?.characters.length ? { holdings } : {}),
+    subjects: media ? [] : tagSubjectsOfStory({ entries, world, statuses, places }),
+    ...(!media && holdings?.characters.length ? { holdings } : {}),
     ...(soundWords?.length ? { soundWords: [...soundWords] } : {}),
     ...(soundtrack ? { soundtrack } : {}),
+    ...(focus ? { focus } : {}),
   };
 }
+
+/**
+ * The warnings that belong to the media tags: a media-only read replaces
+ * these in the chapter's record and leaves every other warning as it was.
+ */
+export const MEDIA_TAG_WARNING_CODES: ReadonlySet<HarnessWarning['code']> = new Set(['soundtrack_incomplete', 'sound_cue_set_aside', 'sound_tag_moved']);
 
 /**
  * Why one of this story's committed chapters cannot be tagged (again), when it
@@ -142,7 +154,7 @@ export function planChapterTagging({ chapter, entries, world, holdings, statuses
  * A prose edit is no obstacle: a reader who changed the words wants the chapter
  * read again. What is refused is work a machine cannot give back.
  */
-export function retagChapterGap(state: HarnessWorkspaceState, storyId: string, chapterId: string): string | undefined {
+export function retagChapterGap(state: HarnessWorkspaceState, storyId: string, chapterId: string, focus?: HarnessTagFocus): string | undefined {
   const story = findStory(state, storyId);
   if (!story) return 'Open a story before tagging a chapter.';
   const target = state.chapters.find(chapter => chapter.storyId === storyId && chapter.id === chapterId);
@@ -162,6 +174,16 @@ export function retagChapterGap(state: HarnessWorkspaceState, storyId: string, c
   // the chapter's cues with the tagger's, taking theirs with them.
   if ((target.soundCues ?? []).some(cue => cue.payload.origin === 'manual')) {
     return `${chapter} has a Sound Cue you placed yourself, so tagging it again would remove it.`;
+  }
+  // Media read again on its own leaves every name, holding and Codex entry as it is.
+  if (focus === 'media') {
+    // A media-only read joins a full one: the information tags it keeps came from that read.
+    if (target.tagging?.status !== 'tagged') return `Tag all of ${chapter} first; its media can be tagged again on its own after that.`;
+    const vocabulary = soundtrackVocabulary(target.mediaLoadout);
+    if (!soundVocabulary(target.mediaLoadout).length && !vocabulary.music.length && !vocabulary.atmospheres.length) {
+      return `${chapter} has no sound words, soundscapes or atmospheres equipped, so it has no media to tag.`;
+    }
+    return undefined;
   }
   // The Holdings fixer taught an older entry one of this chapter's names. That
   // alias lives on the other entry, and only a rewrite of this chapter takes it

@@ -340,6 +340,35 @@
 .familiar-settings button:focus-visible, .familiar-settings input:focus-visible,
 .familiar-stage button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
 
+/* Phone, details closed: the tabs stand in a column on the left, the Familiar in the middle,
+   its bond ranks on the right; no second bar above the navigation. A tab opens the details
+   over the whole page as before, with its tabs across the top. */
+@media (max-width: 767px) {
+  .familiar-stage:not([data-sheet-full]) {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(7rem, 1fr) auto auto;
+    grid-template-areas: "top top" "sheet hero" "identity identity" "actions actions";
+  }
+  .familiar-stage:not([data-sheet-full]) .familiar-stage-sheet {
+    justify-content: center; margin: 0 0 0 max(0.5rem, env(safe-area-inset-left));
+    border: 0; border-radius: 0; background: none; backdrop-filter: none; box-shadow: none; overflow: visible;
+  }
+  .familiar-stage:not([data-sheet-full]) .familiar-stage-tabs { flex-direction: column; gap: clamp(0.25rem, 1.5cqh, 0.5rem); padding: 0; }
+  .familiar-stage:not([data-sheet-full]) .familiar-stage-tabs [role="tab"] {
+    flex: 0 0 auto; padding: 0 0.85rem; text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(3, 6, 12, 0.55); backdrop-filter: blur(6px);
+  }
+  .familiar-stage:not([data-sheet-full]) .familiar-stage-sheet-toggle { display: none; }
+  /* The Familiar stands centred between the tabs and the ranks. */
+  .familiar-stage:not([data-sheet-full]) .familiar-stage-art { inset: 0.25rem 3.25rem 2.75rem 0.5rem; }
+  /* Offer waits in the lower left corner, its amounts rising above it. */
+  .familiar-stage-offer { top: auto; bottom: 0; left: 0.25rem; translate: none; align-items: flex-end; }
+  .familiar-stage-offer-button { width: 3rem; height: 3rem; }
+  .familiar-stage-offer-label { font-size: 0.5rem; }
+  .familiar-stage-nav.is-previous { left: calc(50% - 4.75rem); }
+  .familiar-stage-nav.is-next { right: calc(50% - 4.75rem); }
+}
+
 /* Wider screens: the sheet stands beside the stage, always open. */
 @media (min-width: 768px) {
   .familiar-stage,

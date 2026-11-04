@@ -177,6 +177,21 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     expect(chapterOnScreen(1)).toBeTruthy();
   });
 
+  it('opens at the chapter the reader chose, which becomes their place, with or without saved state', async () => {
+    const { controller, storyId } = await story({ written: 3, replies: [...CHAPTERS, reply('The Drowned Gate', ['Mara crossed the gate.'])] });
+    // No durable storage at all: the chosen chapter still opens.
+    await mount(<Host controller={controller} storyId={storyId} openAtChapter={3} />);
+    expect(chapterOnScreen(3)!.textContent).toContain('Mara crossed the gate.');
+    act(() => root.unmount());
+    root = createRoot(container);
+    // With storage, the chosen chapter becomes the saved place.
+    const readerState = new MemoryReaderStateRepository();
+    await mount(<Host controller={controller} storyId={storyId} readerState={readerState} openAtChapter={2} />);
+    expect(chapterOnScreen(2)).toBeTruthy();
+    await flush();
+    expect(readerState.records.get(storyId)?.lastReadChapter).toBe(2);
+  });
+
   it('chooses any saved chapter by its full title, marks the current one, and restores the chosen place after reload', async () => {
     const { harness, controller, storyId } = await story({ written: 3, replies: [...CHAPTERS, reply('The Drowned Gate', ['Mara crossed the gate.'])] });
     const canonBefore = harness.snapshot();

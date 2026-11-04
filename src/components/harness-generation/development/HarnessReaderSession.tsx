@@ -235,7 +235,11 @@ export function HarnessReaderSession({
    * keeps both.
    */
   creator?: boolean;
-  /** Opens at this chapter instead of where the reader left off, when the story has it (a chapter opened from Create). */
+  /**
+   * Opens at this chapter instead of where the reader left off, when the story has it (a chapter
+   * opened from Create, or chosen on World Info's chapter map). It becomes the reader's place,
+   * with or without durable storage.
+   */
   openAtChapter?: number;
 }) {
   const story = state.stories.find(entry => entry.id === storyId);
@@ -282,7 +286,10 @@ export function HarnessReaderSession({
       readerStateRef.current = initial;
       setReaderState(initial);
       const numbers = chaptersRef.current.map(chapter => chapter.chapterNumber);
-      setSelectedChapter(openAtChapter && numbers.includes(openAtChapter) ? openAtChapter : resolveReaderOpeningChapter(initial, numbers));
+      const chosen = openAtChapter !== undefined && numbers.includes(openAtChapter);
+      setSelectedChapter(chosen ? openAtChapter : resolveReaderOpeningChapter(initial, numbers));
+      // A chosen chapter becomes the reader's place.
+      if (chosen && initial.lastReadChapter !== openAtChapter) keepReaderState(applyReaderStatePatch(initial, { lastReadChapter: openAtChapter }));
     };
     if (!readerStateRepository) { open(undefined); return () => { active = false; }; }
     readerStateRepository.load(storyId).then(open, () => {
@@ -291,7 +298,7 @@ export function HarnessReaderSession({
       open(undefined);
     });
     return () => { active = false; };
-    // The opening chapter is read once, as the story opens.
+    // The opening chapter is read once, as the story opens; keepReaderState is stable for a repository.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storyId, readerStateRepository]);
 

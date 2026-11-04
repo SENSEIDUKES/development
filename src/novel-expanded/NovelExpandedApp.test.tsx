@@ -1544,6 +1544,16 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(rows[1], 'Chapter 2', 50);
     expect(address()).toBe(`/app/?story=${created.id}&read=1`);
     expect((await services.readerState.load(created.id))?.lastReadChapter).toBe(2);
+    // The choice is for that one visit: read back to Chapter 1, leave by the browser's Back, and
+    // Continue opens at Chapter 1, the latest place, not the chapter chosen before.
+    await click(document.querySelector('button[aria-label="Previous Chapter"]'), 'Previous Chapter', 20);
+    expect((await services.readerState.load(created.id))?.lastReadChapter).toBe(1);
+    await act(async () => { window.history.back(); window.dispatchEvent(new PopStateEvent('popstate')); });
+    await flush(20);
+    expect(address()).toBe(`/app/?story=${created.id}`);
+    await click(worldInfo()!.querySelector('[data-world-info-chapters="action"]'), 'Continue', 50);
+    expect(address()).toBe(`/app/?story=${created.id}&read=1`);
+    expect((await services.readerState.load(created.id))?.lastReadChapter).toBe(1);
   });
 
   it('A story\'s Blueprint still opens at its own address; its creator edits and saves it, and Back returns', async () => {

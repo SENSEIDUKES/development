@@ -429,6 +429,26 @@ describe('Fixer: the rest of the record', () => {
     expect(voice.entries).toEqual(state.codexEntries);
   });
 
+  it('never asks about a group speaking as one, a faction rather than a character (review finding, Codex, 2026-11-04)', async () => {
+    const { state, latest } = await written(reply([SWORD]), reply(['[[@Iron Crane Sect]] “We accept,” the disciples chorused.']));
+    expect(planHoldingsFix(inputFor(state, latest)).cases).toEqual([]);
+  });
+
+  it('places an appearance on the words it was asked about after an earlier fix corrected a sentence before them (review finding, Codex, 2026-11-04)', async () => {
+    const { state, latest } = await written(reply([SWORD, '[[gained: MC | Spirit Pill]] He pocketed a spirit pill.']),
+      reply(['[[lost: MC | Spirit Pill | 2]] Ye Chen swallowed two pills at once. [[@Elder Mo]] “Fool,” said Elder Mo.']));
+    const plan = planHoldingsFix(inputFor(state, latest));
+    expect(plan.cases.map(planned => planned.kind)).toEqual(['sentence', 'appearance']);
+    const { result } = apply(state, latest, [
+      { case: 'c1', outcome: 'prose', replacement: 'Ye Chen swallowed his last pill.', tags: '[[lost: MC | Spirit Pill]]', reason: 'One pill.' },
+      { case: 'c2', outcome: 'record', sentence: 'm1', reason: 'He speaks in the room.' },
+    ]);
+    expect(result.fixes.map(fix => fix.outcome)).toEqual(['fixed-sentence', 'fixed-tags']);
+    const placed = result.chapter.appearances!.at(-1)!.anchor;
+    expect(placed.selectedText).toBe('“Fool,” said Elder Mo.');
+    expect(result.chapter.paragraphs[0].slice(placed.startOffset, placed.endOffset)).toBe('“Fool,” said Elder Mo.');
+  });
+
   it('never asks about someone who already appeared, or who spoke in an earlier chapter', async () => {
     const appeared = await written(reply([SWORD]),
       reply(['[[appears: Elder Mo | character]] In the doorway stood Elder Mo.', '[[@Elder Mo]] “You are late,” he said.']));

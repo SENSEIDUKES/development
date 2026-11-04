@@ -11,6 +11,7 @@ import { createCodexEntryResolver, pointedSentence, type DeclaredCharacter } fro
 import { resolveAppearances } from './appearances';
 import { isMainCharacterTag } from './speakers';
 import { deriveStatuses, readStatusTag, resolveStatuses } from './statuses';
+import { factionNamed } from './factions';
 
 /**
  * The fixer's record checks (SENSEI, 2026-11-04): the same one fixer, with
@@ -35,13 +36,14 @@ export interface RecordFlag {
   key: string;
 }
 
-type Mention = { id: string; blockId: string; start: number; end: number };
+/** A sentence a case offers, with its words, so its answer lands on them even after another fix moved them. */
+type Mention = { id: string; blockId: string; start: number; end: number; text: string };
 
 /** A record case the fixer is asked about, with where its answer applies. */
 export type RecordFixPlanCase =
   | { kind: 'appearance'; case: HarnessHoldingsFixCase; flags: RecordFlag[]; name: string; mentions: Mention[] }
   | { kind: 'name'; case: HarnessHoldingsFixCase; flags: RecordFlag[]; entryId: string; name: string }
-  | { kind: 'status'; case: HarnessHoldingsFixCase; flags: RecordFlag[]; name: string; blockId: string; start: number; end: number };
+  | { kind: 'status'; case: HarnessHoldingsFixCase; flags: RecordFlag[]; name: string; blockId: string; start: number; end: number; text: string };
 
 /** At most this many name cases in one chapter: the names it uses most. */
 const NAME_CASE_LIMIT = 3;
@@ -122,11 +124,13 @@ function missedAppearances(input: RecordChecksInput, locale?: string): RecordFix
       return [appearance.payload.subject.name, ...(entry ? namesOf(entry) : [])];
     })).map(key));
   const spokeBefore = new Set(earlier.flatMap(saved => (saved.speakers ?? []).map(speaker => key(speaker.payload.speaker))));
+  // A group speaking as one ("the Iron Crane Sect") is a faction, never a character missing an appearance.
+  const factions = (input.worldAtChapterZero?.cards ?? []).filter(card => card.kind === 'faction');
   const cases: RecordFixPlanCase[] = [];
   const asked = new Set<string>();
   for (const speaker of chapter.speakers ?? []) {
     const name = speaker.payload.speaker.trim();
-    if (!name || speaker.payload.protagonist || isMainCharacterTag(name)) continue;
+    if (!name || speaker.payload.protagonist || isMainCharacterTag(name) || factionNamed(name, factions)) continue;
     const entry = entryOf(name);
     if (entry?.mainCharacter) continue;
     const known = entry ? namesOf(entry) : [name];
@@ -141,7 +145,7 @@ function missedAppearances(input: RecordChecksInput, locale?: string): RecordFix
     cases.push({
       kind: 'appearance', name,
       flags: [{ kind: 'missed-appearance', message, key: `missed-appearance:${key(name)}` }],
-      mentions: mentions.map(({ id, blockId, start, end }) => ({ id, blockId, start, end })),
+      mentions: mentions.map(({ id, blockId, start, end, text }) => ({ id, blockId, start, end, text })),
       case: { id: '', problems: [message], mentions: mentions.map(({ id, text }) => ({ id, sentence: text })), answers: ['record', 'fine'] },
     });
   }
@@ -249,7 +253,7 @@ function statusContradictions(input: RecordChecksInput, locale?: string): Record
     const message = `‘${name}’ is ${current.status} since Chapter ${current.passage.chapterNumber}, but ${first.what} in this chapter.`;
     const tags = (chapter.statuses ?? []).filter(status => status.anchor.blockId === first.blockId && status.anchor.startOffset === first.start && status.anchor.endOffset === first.end).map(statusTagText).join(' ');
     cases.push({
-      kind: 'status', name, blockId: first.blockId, start: first.start, end: first.end,
+      kind: 'status', name, blockId: first.blockId, start: first.start, end: first.end, text: sentence.text,
       flags: [{ kind: 'status-contradiction', message, key: `status-contradiction:${statusKey}` }],
       case: {
         id: '', problems: [message], passage: passageOf(sentence), tags,
@@ -306,9 +310,16 @@ function readStatusFixTags(text: string, known: readonly string[]): { ok: true; 
   return { ok: true, statuses };
 }
 
-const spanAnchor = (chapter: HarnessChapter, blockId: string, start: number, end: number) => {
+/**
+ * The sentence a case offered, where it stands now: an earlier fix in the same
+ * call may have corrected a sentence before it in its paragraph and moved it.
+ * Found by its words, once; a sentence that changed or is there twice is none.
+ */
+const spanAnchor = (chapter: HarnessChapter, { blockId, start, end, text }: { blockId: string; start: number; end: number; text: string }) => {
   const paragraph = chapter.paragraphs.find((_, index) => harnessParagraphBlockId(chapter.chapterNumber, index) === blockId) ?? '';
-  return { level: 'span' as const, blockId, startOffset: start, endOffset: end, selectedText: paragraph.slice(start, end) };
+  const at = paragraph.slice(start, end) === text ? start
+    : paragraph.indexOf(text) >= 0 && paragraph.indexOf(text) === paragraph.lastIndexOf(text) ? paragraph.indexOf(text) : -1;
+  return at < 0 || !text ? undefined : { level: 'span' as const, blockId, startOffset: at, endOffset: at + text.length, selectedText: text };
 };
 
 /** Applies one answer to a record case. The caller keeps it only when the case's own check no longer finds it. */
@@ -335,7 +346,8 @@ export function attemptRecordFix(planned: RecordFixPlanCase, answer: RecordFixAn
   if (planned.kind === 'appearance') {
     const mention = planned.mentions.find(candidate => candidate.id === answer.sentence) ?? (planned.mentions.length === 1 ? planned.mentions[0] : undefined);
     if (!mention) return { problem: 'no sentence was chosen for the appearance' };
-    const anchor = spanAnchor(chapter, mention.blockId, mention.start, mention.end);
+    const anchor = spanAnchor(chapter, mention);
+    if (!anchor) return { problem: 'its sentence changed' };
     const taken = new Set((chapter.appearances ?? []).map(appearance => appearance.id));
     let index = taken.size;
     let id = appearanceId(anchor.blockId, anchor.startOffset, anchor.endOffset, index);
@@ -355,7 +367,8 @@ export function attemptRecordFix(planned: RecordFixPlanCase, answer: RecordFixAn
   const entry = entries.find(candidate => answersTo(namesOf(candidate), planned.name));
   const read = readStatusFixTags(answer.tags ?? '', entry ? namesOf(entry) : [planned.name]);
   if (!read.ok) return { problem: read.problem };
-  const anchor = spanAnchor(chapter, planned.blockId, planned.start, planned.end);
+  const anchor = spanAnchor(chapter, planned);
+  if (!anchor) return { problem: 'its sentence changed' };
   const taken = new Set((chapter.statuses ?? []).map(status => status.id));
   let index = taken.size;
   const fresh: StatusAttachment[] = read.statuses.map(status => {

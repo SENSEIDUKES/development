@@ -201,4 +201,37 @@ describe('WorkshopHome', () => {
     }
     select('Systems');
   });
+
+  it('renders a viewport-locked stage with stepper controls, subsection pills, mode tabs, and no nested card visuals', () => {
+    const main = container.querySelector('main.workshop-home[data-workshop-stage]')!;
+    expect(main).not.toBeNull();
+    expect(container.querySelector('.workshop-card-visual')).toBeNull();
+
+    // Starts on the first Pages entry ("Home")
+    expect(container.querySelector('[data-workshop-stage-title]')?.textContent).toBe('Home');
+    expect(container.querySelector('[data-workshop-counter]')?.textContent).toBe('1 / 11');
+    expect(container.querySelector<HTMLAnchorElement>('[data-workshop-open]')?.getAttribute('href')).toBe('?preview=light-novels-home');
+
+    // Step forward on the stage
+    const nextButton = container.querySelector<HTMLButtonElement>('[data-workshop-step="next"]')!;
+    act(() => nextButton.click());
+    expect(container.querySelector('[data-workshop-stage-title]')?.textContent).toBe('Library Shell');
+    expect(container.querySelector('[data-workshop-counter]')?.textContent).toBe('2 / 11');
+    expect(container.querySelector<HTMLAnchorElement>('[data-workshop-open]')?.getAttribute('href')).toBe('?preview=library-shell');
+
+    // Filter by subsection pill ("Read")
+    const readPill = container.querySelector<HTMLButtonElement>('[data-workshop-group-pill="read"]')!;
+    act(() => readPill.click());
+    expect(container.querySelector('[data-workshop-stage-title]')?.textContent).toBe('Reader Chamber');
+    expect(container.querySelector('[data-workshop-counter]')?.textContent).toBe('1 / 2');
+
+    // Switch between Stage and Index segmented pills
+    const indexModeBtn = container.querySelector<HTMLButtonElement>('[data-workshop-mode="index"]')!;
+    act(() => indexModeBtn.click());
+    expect(main.getAttribute('data-panel-mode')).toBe('index');
+
+    const stageModeBtn = container.querySelector<HTMLButtonElement>('[data-workshop-mode="stage"]')!;
+    act(() => stageModeBtn.click());
+    expect(main.getAttribute('data-panel-mode')).toBe('stage');
+  });
 });

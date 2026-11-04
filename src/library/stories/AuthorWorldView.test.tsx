@@ -122,12 +122,14 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
     await click(row(1), 'Chapter 1');
     await click(row(3), 'Chapter 3', { shiftKey: true });
     expect(rows().map(entry => entry.getAttribute('data-checked'))).toEqual(['true', 'true', 'true']);
-    expect(buttonByText('Tag 3 chapters')).toBeTruthy();
-    expect(view().querySelector('[data-testid="author-world-cost"]')!.textContent).toContain('3 tagging calls');
+    // Its price, one Energy a chapter, rides on the button.
+    expect(buttonByText('Tag 3 chapters3')).toBeTruthy();
+    expect(view().querySelector('[data-energy-action]') ?? view().querySelector('.energy-action-cost')).toBeTruthy();
+    expect(view().querySelector('[data-testid="author-world-cost"]')!.textContent).toContain('3 tagging calls, one per chapter, 1 Energy each');
     await click(row(2), 'Chapter 2');
-    expect(buttonByText('Tag 2 chapters')).toBeTruthy();
+    expect(buttonByText('Tag 2 chapters2')).toBeTruthy();
 
-    await click(buttonByText('Tag 2 chapters'), 'Tag 2 chapters');
+    await click(buttonByText('Tag 2 chapters2'), 'Tag 2 chapters');
     await flush(50);
     expect(tagChapter.mock.calls.map(([request]) => request.chapterNumber)).toEqual([1, 3]);
     expect([1, 2, 3].map(stateOf)).toEqual(['Tagged', 'Not yet', 'Tagged']);

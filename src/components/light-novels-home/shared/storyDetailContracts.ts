@@ -92,6 +92,8 @@ export interface StoryDetailScreenProps {
   onRead?: () => void;
   /** Starts a story that has no chapters yet; see `WorldCardInfoProps.onStart`. */
   onStart?: () => void;
+  /** See `WorldCardInfoProps.startCost`. */
+  startCost?: ReactNode;
   onOpenCodex?: () => void;
   /** See `WorldCardInfoProps.chapters`. */
   chapters?: readonly WorldInfoChapter[];

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArcPlanView } from '../../arc-goals/development/ArcPlanView';
 import { ARC_LENGTH, createArcChapterPosition, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import type { HarnessWorkspaceState } from '../../../narrative/generation';
@@ -20,7 +20,7 @@ const quietButton = `${button} border-(--reader-light)/15 text-(--reader-text-so
  * for its direction first. Planning is a host action, since the host owns the
  * model.
  */
-export function BlueprintArcPage({ state, storyId, controller, onBack, onPlanArc, onContinue }: {
+export function BlueprintArcPage({ state, storyId, controller, onBack, onPlanArc, onContinue, writeCost }: {
   state: HarnessWorkspaceState;
   storyId: string;
   controller: HarnessGenerationController;
@@ -30,6 +30,8 @@ export function BlueprintArcPage({ state, storyId, controller, onBack, onPlanArc
   onPlanArc?: () => Promise<void>;
   /** The arc is reviewed: write its first chapter (Regular Reader) or direct it (Fate Survival). */
   onContinue: () => void;
+  /** The host's Energy price for writing a chapter, on Accept and write. */
+  writeCost?: ReactNode;
 }) {
   const story = state.stories.find(entry => entry.id === storyId);
   const foundation = story ? state.foundations.find(entry => entry.id === story.activeFoundationRevisionId)?.input : undefined;
@@ -122,6 +124,8 @@ export function BlueprintArcPage({ state, storyId, controller, onBack, onPlanArc
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" className={primaryButton} disabled={busy} onClick={() => void accept()}>
             {edit.canAccept ? `Accept and ${mode === 'survival' ? 'direct' : 'write'} Chapter ${nextChapter}` : continueLabel}
+            {/* Accept and write writes the chapter; Accept and direct only opens Fate. */}
+            {edit.canAccept && mode !== 'survival' && writeCost && <span className="ms-2 inline-flex align-middle">{writeCost}</span>}
           </button>
           {edit.canAccept && <p className="text-xs text-(--reader-text-dim)">{mode === 'survival'
             ? 'Accept the goals as written, or edit them once. They lock when the chapter is generated.'

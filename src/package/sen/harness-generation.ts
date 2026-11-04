@@ -220,7 +220,7 @@ export * from '../../narrative/appearances';
 export * from '../../narrative/statuses';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
-export { HarnessReaderSession, type HarnessReaderWriting, type ReaderHostTools, type ReaderSoundAuthoring } from '../../components/harness-generation/development/HarnessReaderSession';
+export { HarnessReaderSession, type HarnessReaderWriting, type ReaderGenerationCost, type ReaderHostTools, type ReaderSoundAuthoring } from '../../components/harness-generation/development/HarnessReaderSession';
 export { ProseChapterBody } from '../../components/harness-generation/development/ProseChapterBody';
 export { ReaderAudioNote } from '../../components/harness-generation/development/ReaderAudioNote';
 export { ReaderPanel, useWideReader } from '../../components/harness-generation/development/ReaderPanel';

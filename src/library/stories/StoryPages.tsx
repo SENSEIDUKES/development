@@ -16,6 +16,7 @@ import { worldInfoChapterMap } from './worldInfoChapterMap';
 import { StoryBlueprintPage, type StoryBlueprintAccess, type StoryBlueprintViewProps } from './StoryBlueprint';
 import type { LibraryStories } from './useLibraryStories';
 import { EnergyCostMeter } from '../../components/energy/development/EnergyCostMeter';
+import { EnergyActionCost } from '../../components/energy/development/EnergyActionCost';
 import { useWorkspaceHeaderAccessory } from '../../components/library-shell/development/WorkspaceHeader';
 import { ReaderFamiliar } from './ReaderFamiliar';
 
@@ -146,6 +147,8 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       onRewriteChapter={writes ? note => stories.rewriteLatestChapter(storyId, note) : undefined}
       onPlanArc={writes ? () => stories.planArc(storyId) : undefined}
       onTagChapter={writes ? chapterId => controller.retagChapter(storyId, chapterId) : undefined}
+      // Every generation shows its Energy: a chapter, tagging with the tagger (tagging by hand is free), a Codex picture.
+      renderCost={action => <EnergyActionCost actionId={action === 'tag' ? 'chapter.tag' : action === 'picture' ? 'image.generate' : 'chapter.generate'} />}
       renderWriting={writingAgent ? writing => <GenerationOverlay agent={writingAgent} isGenerating={writing.active}
         completed={state.chapters.some(chapter => chapter.storyId === storyId && chapter.chapterNumber === writing.chapterNumber)}
         generationPhase="chapter" generatingChapterNum={writing.chapterNumber} progress={null}
@@ -189,6 +192,8 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     </>;
     return frame ? <>{frame(blueprint)}</> : blueprint;
   }
+  // Begin Story writes Chapter 1 in the creator's Reader: its price, where this Reader writes.
+  const startCost = writes ? <EnergyActionCost actionId="chapter.generate" /> : undefined;
   const info = <>
     {writerAlert}
     <Page className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-world-info">
@@ -197,11 +202,11 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
             story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
             chapters={chapters} arcs={arcs} onOpenChapter={openChapter} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
-            onStart={() => { setStartOnOpen(true); onOpenReader(); }} />
+            onStart={() => { setStartOnOpen(true); onOpenReader(); }} startCost={startCost} />
         : <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
             onBack={onBack} chapters={chapters} arcs={arcs} onOpenChapter={openChapter} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
-            onStart={() => { setStartOnOpen(true); onOpenReader(); }} />}
+            onStart={() => { setStartOnOpen(true); onOpenReader(); }} startCost={startCost} />}
       {/* For testing: the whole story as one file, so a test can be shared. */}
       <div className="mx-auto mt-10 flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 border-t border-white/10 pt-4" data-testid="story-export">
         <button type="button" onClick={exportStory}

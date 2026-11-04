@@ -102,6 +102,12 @@ or verified against a production deployment.
 
 ## Workshop history
 
+- **2026-11-04 chapter tagging** — `chapter.tag` joins the catalog at 1 Energy (SENSEI: tagging a
+  chapter is one Energy; tagging by hand is free, only the AI tagger costs), with the
+  `20261104_001` migration widening the reservation allowlist. Every generation control in the app
+  now shows its price: chapter Write, Rewrite, Fate's Write and Accept and write, Begin Story,
+  Create Story and Replace Blueprint (a chapter), Tag this chapter again and Tag N chapters (tagging),
+  and Codex Manifest (an image). SEN's Reader takes them from the host (`renderCost`).
 - 2026-11-03: Added the official balance pill (`BalancePill`, `BalancePills` in `development/BalancePill.tsx`): a balance's own mark and number in one rounded pill, QI with the yin-yang mark in violet and Energy with the Energy mark in gold, always QI then Energy. First used in the Familiar page's top bar (SENSEI: one look for every balance users see).
 - **2026-11-01 tiers** — `ENERGY_TIER_MODELS` is the team's model behind each tier per kind
   (chapters: Gemini 3.1 Flash Lite, Gemini 3.8 Flash, Claude Opus 5.5; images: Nano Banana 2 Lite, Nano

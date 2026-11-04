@@ -81,20 +81,20 @@ const story = async ({ written = 0, replies, language }: { written?: number; rep
 };
 
 /** A host like the Library workspace: it follows the controller and writes chapters with its model. */
-function Host({ controller, storyId, readerState, renderWriting, renderWriteAside, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices, readerFonts, chapterBody, renderHostTools, creator, openAtChapter, openInCreate, onTagChapter }: {
+function Host({ controller, storyId, readerState, renderWriting, renderWriteAside, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices, readerFonts, chapterBody, renderHostTools, creator, openAtChapter, openInCreate, onTagChapter, renderCost }: {
   controller: HarnessGenerationController; storyId: string; readerState?: ReaderStateRepository;
   renderWriting?: (writing: HarnessReaderWriting) => React.ReactNode; renderWriteAside?: (written: number) => React.ReactNode;
   startOnOpen?: boolean; canWrite?: boolean; canRewrite?: boolean;
   readerPreferences?: ReaderPreferenceStorage; readAloudVoices?: ReadAloudVoicePicks;
   readerFonts?: ReaderFonts; chapterBody?: ReaderChapterBody; renderHostTools?: (tools: ReaderHostTools) => React.ReactNode;
-  creator?: boolean; openAtChapter?: number; openInCreate?: boolean; onTagChapter?: (chapterId: string) => Promise<void>;
+  creator?: boolean; openAtChapter?: number; openInCreate?: boolean; onTagChapter?: (chapterId: string) => Promise<void>; renderCost?: (action: 'chapter' | 'tag' | 'picture') => React.ReactNode;
 }) {
   const [state, setState] = useState(controller.snapshot());
   useEffect(() => { const stop = controller.subscribe(setState); return () => { stop(); }; }, [controller]);
   return <HarnessReaderSession state={state} storyId={storyId} controller={controller} onClose={() => undefined}
     readerStateRepository={readerState} renderWriting={renderWriting} renderWriteAside={renderWriteAside} startOnOpen={startOnOpen}
     readerPreferences={readerPreferences} readAloudVoices={readAloudVoices} readerFonts={readerFonts} chapterBody={chapterBody} renderHostTools={renderHostTools}
-    creator={creator} openAtChapter={openAtChapter} openInCreate={openInCreate} onTagChapter={onTagChapter}
+    creator={creator} openAtChapter={openAtChapter} openInCreate={openInCreate} onTagChapter={onTagChapter} renderCost={renderCost}
     onGenerateNextChapter={canWrite ? async () => { await controller.generateNextChapter(storyId, 'test-model'); } : undefined}
     onRewriteChapter={canRewrite ? async note => { await controller.rewriteLatestChapter(storyId, 'test-model', note); } : undefined} />;
 }
@@ -1231,13 +1231,15 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
   it('opens in Create mode when asked, and tags the chapter again from it', async () => {
     const { controller, storyId } = await story({ written: 2 });
     const onTagChapter = vi.fn(async () => undefined);
-    await mount(<Host controller={controller} storyId={storyId} openAtChapter={1} openInCreate onTagChapter={onTagChapter} />);
+    await mount(<Host controller={controller} storyId={storyId} openAtChapter={1} openInCreate onTagChapter={onTagChapter} renderCost={action => <span data-testid={`${action}-cost`}>1</span>} />);
     const authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
     expect(authoring.getAttribute('data-chapter-number')).toBe('1');
     // Tag this chapter again lives in the chapter's ⋯ menu.
     await click(button => button.getAttribute('data-testid') === 'create-mode-menu', 'Chapter options');
     const tag = document.querySelector<HTMLButtonElement>('[data-testid="create-mode-tag"]')!;
     expect(tag.textContent).toContain('Tag this chapter');
+    // The host's Energy price rides on it.
+    expect(tag.querySelector('[data-testid="tag-cost"]')).toBeTruthy();
     await click(button => button === tag, 'Tag this chapter');
     expect(onTagChapter).toHaveBeenCalledWith(controller.snapshot().chapters.find(chapter => chapter.chapterNumber === 1)!.id);
   });

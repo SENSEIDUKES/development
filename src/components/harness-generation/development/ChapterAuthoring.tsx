@@ -1,4 +1,4 @@
-import { useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type Ref } from 'react';
+import { useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from 'react';
 import { useOptionalReaderMixer } from '@seihouse/audio-player';
 import {
   ATMOSPHERE_CHANGE_KIND, SOUNDSCAPE_CHANGE_KIND, SOUND_CUE_KIND, SOUND_CUE_RULES, createMediaCatalog, isSoundtrackChange,
@@ -124,7 +124,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   /** The story's Codex entries, so a tag reads by the name the Codex knows. */
   entries?: readonly CodexEntry[];
   /** Tag this chapter (again); absent where this Reader cannot tag. */
-  tagging?: { gap?: string; run: () => Promise<void> };
+  tagging?: { gap?: string; run: () => Promise<void>; /** The host's Energy price for it. */ cost?: ReactNode };
 }) {
   const [state, setState] = useState<ChapterState>(() => chapterState(chapter, locale));
   // The page as last set, for a cue added in words between renders.
@@ -310,7 +310,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   return <article ref={articleRef} className="mx-auto mt-6 max-w-[var(--reader-measure,34em)]" style={prose} data-chapter-number={chapter.chapterNumber}
     data-testid="chapter-authoring" lang={locale} aria-labelledby={`harness-reader-chapter-${chapter.chapterNumber}`}>
     <CreateTagPanel rows={rows} lit={lit} onLight={setLit} saving={saving} editable={editable} sealedNote={sealedNote} account={account}
-      tagging={tag && { busy: retagging, disabled: saving !== 'saved', problem: tagProblem, onTag: () => void tag() }}>
+      tagging={tag && { busy: retagging, disabled: saving !== 'saved', problem: tagProblem, onTag: () => void tag(), cost: tagging?.cost }}>
       {/* A chapter may have no Sound Cues, but where there should be some their absence is loud: say so here, never in the Reader. */}
       {editable && cues.length === 0 && <p role="status" className="rounded-lg border border-(--reader-warning-bright)/25 bg-(--reader-warning)/[0.06] px-3 py-2 text-xs leading-relaxed text-(--reader-warning-pale)" data-testid="create-mode-no-cues">
         This chapter has no Sound Cues. Where a sound happens, highlight its words and choose Media → Audio → Cue.

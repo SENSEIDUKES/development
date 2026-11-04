@@ -159,10 +159,13 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  * knows, and each fact in it moves the chapter to its passage. Mind Palace is
  * not part of it.
  */
+/** A generation action whose Energy price the host shows on its button. */
+export type ReaderGenerationCost = 'chapter' | 'tag' | 'picture';
+
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
   readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
-  creator = true, openAtChapter, openInCreate = false, onTagChapter,
+  creator = true, openAtChapter, openInCreate = false, onTagChapter, renderCost,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
@@ -248,6 +251,13 @@ export function HarnessReaderSession({
    * the host cannot tag here; Create mode then shows the tags without Tag this chapter.
    */
   onTagChapter?: (chapterId: string) => Promise<void>;
+  /**
+   * The host's Energy price for a generation action, shown on its button: a
+   * chapter (Rewrite, Fate's Write, Accept and write), tagging a chapter with
+   * the tagger (never tagging by hand, which is free), or a Codex picture.
+   * Without it, no price is shown. Write at the chapter's end keeps `renderWriteAside`.
+   */
+  renderCost?: (action: ReaderGenerationCost) => ReactNode;
 }) {
   const story = state.stories.find(entry => entry.id === storyId);
   const chapters = useMemo(() => state.chapters
@@ -573,7 +583,7 @@ export function HarnessReaderSession({
         // Keyed by its tagging too, so a chapter tagged again opens with its new tags.
         ? <ChapterAuthoring key={`${chapter.id}:${chapter.tagging?.at ?? ''}:${authorable}`} handle={authorable ? authoringHandle : undefined} chapter={chapter} controller={controller}
             locale={story.originalLanguage} text={text} articleRef={articleRef} editable={authorable} sealedNote={authorable ? undefined : sealedNote}
-            entries={entries} tagging={onTagChapter && { gap: tagGap, run: () => onTagChapter(chapter.id) }} />
+            entries={entries} tagging={onTagChapter && { gap: tagGap, run: () => onTagChapter(chapter.id), cost: renderCost?.('tag') }} />
         : chapter
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
             highlight={highlight} reading={reading} text={text} />
@@ -593,7 +603,7 @@ export function HarnessReaderSession({
             className={`${navButton} border-(--reader-accent-bright)/50 bg-(--reader-accent)/15 font-semibold text-(--reader-accent-mist) hover:bg-(--reader-accent)/25`}>{continueAfterLatest.label}</button>
         </span>}
       </div>
-      {rewritable && chapter && !authoring && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} />}
+      {rewritable && chapter && !authoring && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} cost={renderCost?.('chapter')} />}
       </div>
       <ReaderBottomBar readAloud={readAloud} onListen={chapter ? listen : undefined} offscreen={follow.offscreen} direction={direction}
         onBackToNarration={follow.backToNarration} barRef={playerRef}
@@ -610,7 +620,7 @@ export function HarnessReaderSession({
     </main>
     </div>
     {layer?.id === 'arc' && <main className="mx-auto w-full min-w-0 max-w-6xl">
-      <BlueprintArcPage state={state} storyId={storyId} controller={controller} onBack={closeLayer} onPlanArc={onPlanArc}
+      <BlueprintArcPage state={state} storyId={storyId} controller={controller} onBack={closeLayer} onPlanArc={onPlanArc} writeCost={renderCost?.('chapter')}
         onContinue={() => {
           setLayer(undefined);
           if (mode === 'survival') openFate(true);
@@ -618,12 +628,12 @@ export function HarnessReaderSession({
         }} />
     </main>}
     <ReaderPanel open={panel === 'fate'} onClose={closeLayer} labelledBy="fate-page-title" testId="reader-panel-fate">
-      <FatePage state={state} storyId={storyId} controller={controller} onBack={closeLayer} onOpenArc={openArc}
+      <FatePage state={state} storyId={storyId} controller={controller} onBack={closeLayer} onOpenArc={openArc} writeCost={renderCost?.('chapter')}
         onGenerateNextChapter={onGenerateNextChapter} writer={writer} focusDirection={layer?.id === 'fate' && layer.focusDirection}
         onReadChapter={readChapter} />
     </ReaderPanel>
     <ReaderPanel open={panel === 'codex'} onClose={closeLayer} labelledBy="codex-panel-title" testId="reader-panel-codex" peek={codexPeek}>
-      <ReaderCodex state={state} storyId={storyId} chapters={chapters} storyTitle={story.title} onBack={closeLayer} pictures={codexPictures && {
+      <ReaderCodex state={state} storyId={storyId} chapters={chapters} storyTitle={story.title} onBack={closeLayer} manifestCost={renderCost?.('picture')} pictures={codexPictures && {
         pictureOf: codexPictures.pictureOf,
         // A card without a current look has it written first, from the story's own words, then pictured.
         manifest: async card => codexPictures.manifest({ ...card, look: card.look ?? await controller.describeCodexLook(storyId, card.key) }),
@@ -642,9 +652,11 @@ export function HarnessReaderSession({
  * opened with and its chapters as they are now. It is worked out only while
  * the Codex is open.
  */
-function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, onBack, onReadPassage, onReadChapter }: {
+function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, manifestCost, onBack, onReadPassage, onReadChapter }: {
   state: HarnessWorkspaceState;
   pictures?: CodexPictures;
+  /** The host's Energy price beside Manifest. */
+  manifestCost?: ReactNode;
   storyId: string;
   chapters: readonly HarnessChapter[];
   storyTitle: string;
@@ -665,5 +677,5 @@ function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, onBack, o
     declared: foundation ? declaredCharacters(foundation) : [],
     declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],
   }), [state.codexEntries, storyId, chapters, foundation, world]);
-  return <StoryCodex codex={codex} storyTitle={storyTitle} pictures={pictures} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />;
+  return <StoryCodex codex={codex} storyTitle={storyTitle} pictures={pictures} manifestCost={manifestCost} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />;
 }

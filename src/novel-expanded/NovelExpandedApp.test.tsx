@@ -179,7 +179,14 @@ const manifestWorldBlueprint = async (wait = 0) => {
   await click(container.querySelector('[data-seed-creator-strip] button[data-step="manifest"]'), 'the Manifest step', 20);
   await click([...container.querySelectorAll<HTMLButtonElement>('[data-seed-creator-footer] button')].find(button => button.getAttribute('aria-label') === 'Create World Blueprint' && !button.disabled), 'Create World Blueprint', wait);
 };
-const buttonByText = (text: string, scope: ParentNode = document) => [...scope.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === text);
+/** A control's own words, without the Energy price it carries. */
+const wordsOf = (element: Element | null | undefined) => {
+  if (!element) return undefined;
+  const copy = element.cloneNode(true) as Element;
+  copy.querySelectorAll('.energy-action-cost').forEach(cost => cost.remove());
+  return copy.textContent?.trim();
+};
+const buttonByText = (text: string, scope: ParentNode = document) => [...scope.querySelectorAll<HTMLButtonElement>('button')].find(button => wordsOf(button) === text);
 const chooseSeedUtility = async (name: string) => {
   await click(document.querySelector('.library-workspace-navigation button'), 'More on Story Seed', 20);
   const menu = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Story Seed sections"]')!;

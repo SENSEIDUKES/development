@@ -246,7 +246,9 @@ chapters first, until the tagging is right):
 6. **Clearing a bad run.** Re-tagging replaces a chapter's tags and nothing
    keeps the ones before; a Clear tags action per chapter and per story, no
    history of past taggings. Basic first.
-7. **Energy for tagging: SENSEI sets it from the numbers; not decided yet.**
+7. **Energy for tagging: one Energy a chapter (SENSEI, 2026-11-04).** Tagging
+   by hand is free; only the tagger (AI) costs. `chapter.tag` in the Energy
+   catalog, shown on Tag this chapter again and on Tag N chapters. Earlier note:
    The rule is simple (SENSEI, 2026-10-29): nothing with generation in it is
    free, and the user always sees what they spent and what it cost, even
    through the Library's own Energy conversion. Writing a chapter is one

@@ -1,5 +1,10 @@
 # NovelExpanded app
 
+- **2026-11-04** — **Energy on every generation** (SENSEI). Each control that calls a model shows
+  its price: Rewrite, Fate's Write, Accept and write, Begin Story, Create Story and Replace
+  Blueprint (a chapter, 2), Tag this chapter again and Tag N chapters (1 a chapter; tagging by
+  hand is free), and Codex Manifest (an image, 5). Arc planning, Sparks and the Familiar's live
+  talk have no catalog price yet and show none.
 - **2026-11-04** — **Create mode's panel, cleaned up** (SENSEI: "what would Apple do?"). The
   tags are a quiet legend: a colored dot and a name per kind, no boxes; a kind with none is a
   hollow ring; a kind lit alone gets a soft capsule while the rest fade, and says what it holds.

@@ -66,7 +66,14 @@ const click = async (element: HTMLElement | null | undefined, label: string) => 
   await act(async () => { element!.click(); });
   await flush();
 };
-const buttonByText = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === text);
+/** A control's own words, without the Energy price it carries. */
+const wordsOf = (element: Element | null | undefined) => {
+  if (!element) return undefined;
+  const copy = element.cloneNode(true) as Element;
+  copy.querySelectorAll('.energy-action-cost').forEach(cost => cost.remove());
+  return copy.textContent?.trim();
+};
+const buttonByText = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(button => wordsOf(button) === text);
 const worldInfo = () => container.querySelector<HTMLElement>('[data-testid="harness-world-info"]');
 
 beforeEach(() => {
@@ -107,7 +114,7 @@ describe('A story\'s way in: World Info, then the Reader', { timeout: 20_000 }, 
     expect(worldInfo()!.textContent).toContain(LOGLINE);
     expect(worldInfo()!.textContent).toContain('Xianxia');
     const start = worldInfo()!.querySelector<HTMLElement>('[data-world-info-chapters="action"]');
-    expect(start?.textContent).toBe('Begin Story');
+    expect(wordsOf(start)).toBe('Begin Story');
 
     // Start Story opens the Reader and begins Chapter 1 at once, with Versa's veil over it.
     await click(start, 'Start Story');

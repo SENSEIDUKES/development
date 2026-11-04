@@ -21,6 +21,7 @@ export const ENERGY_ACTION_IDS = [
   'video.generate',
   'narration.generate',
   'translation.generate',
+  'chapter.tag',
 ] as const;
 
 export type EnergyActionId = (typeof ENERGY_ACTION_IDS)[number];
@@ -65,6 +66,8 @@ export const ENERGY_PRICE_CATALOG: readonly EnergyPriceEntry[] = [
   { actionId: 'video.generate', label: 'Video', price: 30, maximumPrice: 50, projected: true },
   { actionId: 'narration.generate', label: 'Narration', price: null },
   { actionId: 'translation.generate', label: 'Translation', price: null },
+  // Tagging a chapter (again) from Create: SENSEI, 2026-11-04, one Energy.
+  { actionId: 'chapter.tag', label: 'Chapter tagging', price: 1, projected: true },
 ];
 
 export class EnergyPriceUnavailableError extends Error {

@@ -31,7 +31,7 @@ export function CreateTagPanel({ rows, lit, onLight, saving, editable, sealedNot
   /** The tagger's record of the chapter. */
   account: ChapterTaggingAccount;
   /** Tag this chapter (again): absent where this Reader cannot tag. */
-  tagging?: { busy: boolean; disabled?: boolean; problem?: string; onTag: () => void };
+  tagging?: { busy: boolean; disabled?: boolean; problem?: string; onTag: () => void; /** The host's Energy price for it. */ cost?: ReactNode };
   /** What the page has to say under the tags: notices, effects waiting for a new spot. */
   children?: ReactNode;
 }) {
@@ -95,7 +95,8 @@ export function CreateTagPanel({ rows, lit, onLight, saving, editable, sealedNot
         {tagging && <button type="button" onClick={tagging.onTag} disabled={tagging.busy || tagging.disabled} aria-busy={tagging.busy || undefined}
           data-testid="create-mode-tag" className={`${pickerRow} disabled:opacity-50`}>
           {tagging.busy ? <LoaderCircle className="h-4 w-4 shrink-0 animate-spin text-(--reader-accent-soft)" aria-hidden /> : <Sparkles className="h-4 w-4 shrink-0 text-(--reader-accent-soft)" aria-hidden />}
-          {tagging.busy ? 'Reading the chapter…' : account.status === 'untagged' ? 'Tag this chapter' : 'Tag this chapter again'}
+          <span className="min-w-0 flex-1">{tagging.busy ? 'Reading the chapter…' : account.status === 'untagged' ? 'Tag this chapter' : 'Tag this chapter again'}</span>
+          {tagging.cost}
         </button>}
         {tagging?.problem && <p role="alert" className="px-3 pb-2 text-xs text-(--reader-warning-pale)">{tagging.problem}</p>}
         <details className="group text-xs text-(--reader-text-dim)" data-testid="create-mode-record">

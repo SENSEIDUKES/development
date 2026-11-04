@@ -6,6 +6,8 @@ import { LibraryButton, ManifestButton } from '@seihouse/library-ui';
 import type { CreatorWorld } from '../../components/creator-space/shared/creatorSpaceContracts';
 import { WorldCard } from '../../components/world-card/development/WorldCard';
 import { useLibraryAssets } from '../assets';
+import { EnergyActionCost } from '../../components/energy/development/EnergyActionCost';
+import { useActionEnergyPrice } from '../../components/energy/shared/energyModels';
 import { StoryBlueprintPage } from './StoryBlueprint';
 import { StorySettings } from './settings/StorySettings';
 import { isStoryPublished, storyOrigin } from './storyView';
@@ -269,6 +271,8 @@ const rowState = (chapter: HarnessChapter, current: boolean, queued: boolean): R
  */
 function ChapterTable({ stories, storyId, onOpenChapter }: { stories: LibraryStories; storyId: string; onOpenChapter: (chapterNumber: number) => void }) {
   const { state, controller, canGenerate } = stories;
+  // Each chapter tagged is one tagging call, at the catalog's price (one Energy).
+  const tagPrice = useActionEnergyPrice('chapter.tag');
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [anchor, setAnchor] = useState<number>();
   const [run, setRun] = useState<{ queue: readonly string[]; current?: string }>();
@@ -336,10 +340,11 @@ function ChapterTable({ stories, storyId, onOpenChapter }: { stories: LibrarySto
         : <>
             <ManifestButton size="md" icon={Sparkles} disabled={!chosen.length} onClick={() => void tag()}>
               {chosen.length ? `Tag ${chosen.length === 1 ? '1 chapter' : `${chosen.length} chapters`}` : 'Tag'}
+              {chosen.length > 0 && tagPrice !== null && <EnergyActionCost price={tagPrice * chosen.length} className="ms-2" />}
             </ManifestButton>
             <p className="text-xs text-neutral-400" data-testid="author-world-cost">
               {chosen.length
-                ? `${chosen.length === 1 ? 'One tagging call' : `${chosen.length} tagging calls`}, one per chapter. Energy for tagging isn’t priced yet.`
+                ? `${chosen.length === 1 ? 'One tagging call' : `${chosen.length} tagging calls`}, one per chapter${tagPrice !== null ? `, ${tagPrice} Energy each` : ''}.`
                 : canGenerate ? 'Check the chapters to tag.' : 'The tagger cannot be reached here right now.'}
             </p>
           </>}

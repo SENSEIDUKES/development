@@ -867,7 +867,10 @@ async function walk(browser, viewport, sample) {
   const picture = counts.pictures.at(-1);
   check(picture?.token && picture.body.card.subject === 'character' && picture.body.card.look.summary.includes(', as the drowned city first saw them.'),
     `Manifest should ask for one picture from the card's look, with the token, got ${JSON.stringify(picture)}.`);
-  check(await codexSheet.getByTestId('codex-manifest').getByRole('button').textContent() === 'Manifest again', 'A manifested card should offer Manifest again.');
+  const manifestAgain = codexSheet.getByTestId('codex-manifest').getByRole('button');
+  // Its words, then the picture's Energy price riding on it.
+  check((await manifestAgain.textContent()).startsWith('Manifest again'), 'A manifested card should offer Manifest again.');
+  check(await manifestAgain.locator('[data-energy-action="image.generate"]').count() === 1, 'Manifest should carry a picture\'s Energy price.');
   await shot('6d-codex-manifested');
   await slot.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
   // A fact's link asks before it moves the chapter.

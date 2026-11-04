@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
-import { ArrowLeft, BookOpen, Check, ChevronRight, Globe, LoaderCircle, Sparkles, Square } from 'lucide-react';
+import { ArrowLeft, BookOpen, Check, ChevronRight, Download, Globe, LoaderCircle, Sparkles, Square } from 'lucide-react';
 import { SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
 import { findStory, type HarnessChapter } from '@seihouse/sen/harness-generation';
 import { LibraryButton, ManifestButton } from '@seihouse/library-ui';
@@ -11,6 +11,7 @@ import { describeChapterTagging, storyTaggingSummary } from './chapterTagging';
 import { StoryBlueprintPage } from './StoryBlueprint';
 import { StorySettings } from './settings/StorySettings';
 import { isStoryPublished, storyOrigin } from './storyView';
+import { downloadHarnessStory } from './storyExport';
 import type { LibraryStories } from './useLibraryStories';
 
 /**
@@ -20,17 +21,19 @@ import type { LibraryStories } from './useLibraryStories';
  * on a phone), a medium switcher (Novel; Sequential Art later), and the chosen
  * world's Blueprint, Chapters, Codex and Assets. Tagging lives here and
  * nowhere else: a reader never sees any of it. A world stays here, its
- * creator's alone, until they publish it; Read opens it in the creator's
- * Reader (Fate and Create together), and a chapter's Read it opens that chapter.
+ * creator's alone, until they publish it; Read opens its World Info (its
+ * cover, Start or Continue into the creator's Reader), a chapter's Read it
+ * opens that chapter in the creator's Reader, and Info holds its dates and Export.
  */
 
-export type AuthorWorldTab = 'blueprint' | 'chapters' | 'codex' | 'assets';
+export type AuthorWorldTab = 'blueprint' | 'chapters' | 'codex' | 'assets' | 'info';
 
 const TABS: ReadonlyArray<{ id: AuthorWorldTab; label: string }> = [
   { id: 'blueprint', label: 'Blueprint' },
   { id: 'chapters', label: 'Chapters' },
   { id: 'codex', label: 'Codex' },
   { id: 'assets', label: 'Assets' },
+  { id: 'info', label: 'Info' },
 ];
 
 /** Library art for a world with no cover yet, the same pick Create's row makes. */
@@ -107,6 +110,7 @@ export function AuthorWorldView({ stories, worlds, storyId, chapterNumber, onCho
             Coming soon: every card and every picture of this world, all in one place, ahead of what a reader has reached.
           </p>}
           {shown === 'assets' && <StorySettings stories={stories} storyId={storyId} only="assets" />}
+          {shown === 'info' && <WorldInfoTab stories={stories} storyId={storyId} />}
         </div>
       </section>
     </div>
@@ -116,8 +120,9 @@ export function AuthorWorldView({ stories, worlds, storyId, chapterNumber, onCho
 /**
  * The top of the author's world view: the title, one line saying where the
  * world stands (Draft or Published, Made in SEN or Imported, its chapters) and
- * what that origin means for its chapters, then the two actions in a fixed
- * row that never moves: Read (the creator's Reader) and Publish.
+ * what that origin means for its chapters, then Read (its World Info, the
+ * creator's). Publish is in Info (SENSEI, 2026-11-04): publishing will come
+ * with user agreements and a subscription, so it is never a button up here.
  */
 function WorldHeader({ stories, storyId, title, onRead }: {
   stories: LibraryStories; storyId: string; title?: string; onRead?: (chapterNumber?: number) => void;
@@ -141,10 +146,10 @@ function WorldHeader({ stories, storyId, title, onRead }: {
         : 'Already written, so any chapter can be reopened. Sounds and media can change too.'}
     </p>
     {/* Fixed row: two even buttons on a phone, side by side on wider screens. Publish's question opens from it. */}
-    <div className="mt-4 grid grid-cols-2 gap-3 sm:flex sm:max-w-md" data-testid="author-world-actions">
-      {onRead && <LibraryButton variant="primary" fullWidth icon={BookOpen} onClick={() => onRead()} data-testid="author-world-read" className="sm:flex-1">Read</LibraryButton>}
-      <PublishControl key={storyId} stories={stories} storyId={storyId} published={published} hasChapters={chapters > 0} />
-    </div>
+    {/* One action here, Read; Publish lives in Info until publishing grows its agreements and subscriber terms. */}
+    {onRead && <div className="mt-4 sm:max-w-56" data-testid="author-world-actions">
+      <LibraryButton variant="primary" fullWidth icon={BookOpen} onClick={() => onRead()} data-testid="author-world-read">Read</LibraryButton>
+    </div>}
   </header>;
 }
 
@@ -173,7 +178,7 @@ function PublishControl({ stories, storyId, published, hasChapters }: { stories:
     }
   };
   return <SEIPopover modal={false} open={open} onOpenChange={next => { setOpen(next); if (!next) setProblem(undefined); }}>
-    <SEIPopoverTrigger render={<LibraryButton variant="secondary" fullWidth icon={published ? Check : Globe} className="sm:flex-1" aria-label={published ? 'Published: change who can read it' : 'Publish'} />}
+    <SEIPopoverTrigger render={<LibraryButton variant="secondary" fullWidth icon={published ? Check : Globe}  aria-label={published ? 'Published: change who can read it' : 'Publish'} />}
       data-testid="author-world-publish" data-published={published || undefined}>
       {published ? 'Published' : 'Publish'}
     </SEIPopoverTrigger>
@@ -192,6 +197,53 @@ function PublishControl({ stories, storyId, published, hasChapters }: { stories:
       </div>
     </SEIPopoverContent>
   </SEIPopover>;
+}
+
+/** A date as the author reads it: the day, and the time on it. */
+const shownDate = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' });
+};
+
+/**
+ * Info: the book's record for its author. For now, when it was created and
+ * last updated, Publish (a placeholder for testing: real publishing will ask
+ * for user agreements and a subscription, because it is monetized), and
+ * Export, the whole book as one file (every chapter and what the writer was
+ * given for it), as World Info offers it too.
+ */
+function WorldInfoTab({ stories, storyId }: { stories: LibraryStories; storyId: string }) {
+  const [problem, setProblem] = useState<string>();
+  const story = stories.state ? findStory(stories.state, storyId) : undefined;
+  if (!story || !stories.state) return null;
+  const state = stories.state;
+  const chapters = state.chapters.filter(entry => entry.storyId === storyId).length;
+  const exportBook = () => {
+    try {
+      downloadHarnessStory(state, storyId);
+      setProblem(undefined);
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : 'The book could not be exported.');
+    }
+  };
+  return <section className="max-w-xl" data-testid="author-world-info">
+    <dl className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03]">
+      <div className="flex items-center justify-between gap-4 px-4 py-3">
+        <dt className="text-sm text-neutral-400">Created</dt>
+        <dd className="text-right text-sm text-neutral-100" data-testid="author-world-created"><time dateTime={story.createdAt}>{shownDate(story.createdAt)}</time></dd>
+      </div>
+      <div className="flex items-center justify-between gap-4 px-4 py-3">
+        <dt className="text-sm text-neutral-400">Last updated</dt>
+        <dd className="text-right text-sm text-neutral-100" data-testid="author-world-updated"><time dateTime={story.updatedAt}>{shownDate(story.updatedAt)}</time></dd>
+      </div>
+    </dl>
+    <div className="mt-5 flex max-w-xs flex-col gap-3">
+      <PublishControl key={storyId} stories={stories} storyId={storyId} published={isStoryPublished(story)} hasChapters={chapters > 0} />
+      <LibraryButton variant="secondary" fullWidth icon={Download} onClick={exportBook} data-testid="author-world-export">Export book</LibraryButton>
+      <p className="text-xs text-neutral-500">Saves the whole book as one file: every chapter and what the writer was given for it.</p>
+      {problem && <p role="alert" className="text-xs text-amber-200">{problem}</p>}
+    </div>
+  </section>;
 }
 
 /** The world's Blueprint, or a plain note when the world has none (an imported novel, or one begun from a premise). */

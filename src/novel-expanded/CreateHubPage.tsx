@@ -91,7 +91,7 @@ export function CreateHubPage({ worlds, stories, navigate, readerProfile, sparks
             onBrowseToolkit={kind => navigate({ page: 'create', plugins: kind ?? 'all' })}
             onContinueWorld={storyId => navigate({ page: 'write', storyId })}
             onOpenWorld={world => navigate({ page: 'world', storyId: world.id })}
-            onOpenStudio={storyId => navigate({ page: 'story', storyId })} />}
+            onOpenStudio={storyId => navigate({ page: 'story', storyId, inCreate: true })} />}
     </div>
   </AppShell>;
 }

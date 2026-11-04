@@ -212,7 +212,13 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const storyId = route.page === 'story' || route.page === 'read' || route.page === 'write' || route.page === 'blueprint' ? route.storyId : undefined;
   const draft = Boolean(state && storyId && findStory(state, storyId) && !isStoryPublished(findStory(state, storyId)!));
   // A story not yet published has no reader but its creator: its Reader is the creator's, in Create.
-  useEffect(() => { if (route.page === 'read' && draft) navigate({ page: 'write', storyId: route.storyId }, { replace: true }); }, [route, draft, navigate]);
+  useEffect(() => {
+    if (route.page === 'read' && draft) navigate({ page: 'write', storyId: route.storyId }, { replace: true });
+    // Its World Info too is its creator's, in Create.
+    else if (route.page === 'story' && !route.inCreate && draft) navigate({ page: 'story', storyId: route.storyId, inCreate: true }, { replace: true });
+  }, [route, draft, navigate]);
+  // World Info opened from Create (or a draft's) is the creator's: its Reader is the creator's, and Back returns to Create.
+  const creatorInfo = route.page === 'story' && Boolean(route.inCreate);
   const worldId = route.page === 'world' ? route.storyId : undefined;
   const missing = Boolean(state && storyId && !findStory(state, storyId));
   // A world that is not here (an old link, another browser) goes back to Create.
@@ -274,7 +280,10 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
         onCloseChapter={() => navigate({ page: 'world', storyId: route.storyId })}
         onBack={() => navigate({ page: 'create' })}
         // Read: the world in its creator's Reader, at the chapter when Read it was tapped on one.
-        onRead={chapterNumber => navigate({ page: 'write', storyId: route.storyId, ...(chapterNumber ? { chapterNumber } : {}) })} />
+        // Read: the book's World Info first (its cover, Start or Continue); a chapter's Read it opens that chapter in the creator's Reader.
+        onRead={chapterNumber => navigate(chapterNumber
+          ? { page: 'write', storyId: route.storyId, chapterNumber }
+          : { page: 'story', storyId: route.storyId, inCreate: true })} />
     </div>
   </AppShell>);
 
@@ -304,9 +313,9 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
       // (Fate Survival's first direction) waits; a failed start is simply tried again by
       // Start Story, which shows any reason.
       if (!nextChapterWaitsOnReader(stories.controller.snapshot(), story.id)) void stories.generateNextChapter(story.id).catch(() => undefined);
-      // The new story stays in Create: its creator reads Chapter 1 in their Reader as it arrives,
-      // and Back from it goes to the story's chapters in Create. Nothing is published until they publish it.
-      navigate({ page: 'write', storyId: story.id }, { replace: true });
+      // The new story stays in Create: its World Info opens first (its cover, Start Story), its
+      // creator's, while Chapter 1 is written. Nothing is published until they publish it.
+      navigate({ page: 'story', storyId: story.id, inCreate: true }, { replace: true });
     }} />);
 
   if (storyId) return withFamiliar(missing ? null : <StoryPages key={storyId} stories={stories} storyId={storyId}
@@ -315,18 +324,20 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     creator={route.page === 'write'} beginOnOpen={route.page === 'write'}
     openAtChapter={route.page === 'write' ? route.chapterNumber : undefined} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
-    writingAgent={AGENTS.VERSA} backLabel="Back to your stories" covers={covers} codexPictures={codexPictures}
+    writingAgent={AGENTS.VERSA} covers={covers} codexPictures={codexPictures}
     // World Info sits in the Library Shell; the Reader never does.
-    frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds}
+    frame={info => <AppShell route={{ page: 'story', storyId, ...(creatorInfo ? { inCreate: true } : {}) }} navigate={navigate} stories={worlds}
       readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}
     onCloseBlueprint={() => navigate({ page: 'story', storyId })}
-    // World Info's Start or Continue: a published story opens the reader's Reader; a draft, its creator's.
-    onOpenReader={() => navigate({ page: draft ? 'write' : 'read', storyId })}
-    // Back from the creator's Reader returns to the story in Create (at the chapter it was opened from).
+    // World Info's Start or Continue: the creator's World Info (or a draft's) opens the creator's Reader; a reader's, the reader's.
+    onOpenReader={() => navigate({ page: creatorInfo || draft ? 'write' : 'read', storyId })}
+    // Back from the creator's Reader: to the chapter in Create it was opened from, otherwise to the creator's World Info.
     onCloseReader={() => navigate(route.page === 'write'
-      ? { page: 'world', storyId, ...(route.chapterNumber ? { chapterNumber: route.chapterNumber } : {}) }
+      ? route.chapterNumber ? { page: 'world', storyId, chapterNumber: route.chapterNumber } : { page: 'story', storyId, inCreate: true }
       : { page: 'story', storyId })}
-    onBack={() => navigate(HOME_ROUTE)} />);
+    // World Info's Back: the creator's returns to the book in Create; a reader's goes Home.
+    backLabel={creatorInfo ? 'Back to the book in Create' : 'Back to your stories'}
+    onBack={() => navigate(creatorInfo ? { page: 'world', storyId } : HOME_ROUTE)} />);
 
   if (route.page === 'discover') return withFamiliar(<DiscoverPage route={route} navigate={navigate} stories={worlds} readerProfile={profile} />);
   return withFamiliar(<HomePage worlds={worlds} navigate={navigate} readerProfile={profile} />);

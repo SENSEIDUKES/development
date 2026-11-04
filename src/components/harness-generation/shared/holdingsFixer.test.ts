@@ -15,6 +15,7 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import { createReplayTagger } from '../../../test-utils/replayTagger';
 import { REST_OF_CHAPTER, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { declaredCharacters } from './holdings';
+import { withoutLatestChapter } from './chapterRewrite';
 
 /**
  * The Holdings fixer's two halves, without a model: the cases a committed
@@ -392,5 +393,150 @@ describe('Holdings fixer: the answers', () => {
     const unreached = apply(state, latest, [], undefined, { error: 'The writer is busy.' }).result;
     expect(unreached.fixes[0]).toMatchObject({ outcome: 'skipped', reason: 'The fixer could not be reached: The writer is busy.' });
     expect(unreached.chapter).toEqual(latest);
+  });
+});
+
+/**
+ * The fixer's record checks (SENSEI, 2026-11-04, from The Echo of Forgotten
+ * Blades): the same one fixer, with three more plain rules. Each finds its
+ * problem with no model; only what they find becomes a case for the call.
+ */
+describe('Fixer: the rest of the record', () => {
+  it('asks where someone first on the page is when they speak for the first time but never appeared, and places the appearance', async () => {
+    const { state, latest } = await written(reply([SWORD]),
+      reply(['In the doorway stood Elder Mo, his grey beard tied with red cord.', '[[@Elder Mo]] “You are late,” he said.']));
+    const plan = planHoldingsFix(inputFor(state, latest));
+    expect(plan.cases.map(planned => planned.case)).toEqual([{
+      id: 'c1', problems: ['‘Elder Mo’ speaks for the first time in this chapter, but the record never shows them appear.'],
+      mentions: [
+        { id: 'm1', sentence: 'In the doorway stood Elder Mo, his grey beard tied with red cord.' },
+        { id: 'm2', sentence: '“You are late,” he said.' },
+      ],
+      answers: ['record', 'fine'],
+    }]);
+
+    const { result } = apply(state, latest, [{ case: 'c1', outcome: 'record', sentence: 'm1', reason: 'He is in the doorway.' }]);
+    expect(result.fixes[0]).toMatchObject({ checks: ['missed-appearance'], outcome: 'fixed-tags', blockId: 'c2-p1', after: '[[appears: Elder Mo | character]]' });
+    const placed = result.chapter.appearances!.at(-1)!;
+    expect(placed.anchor.selectedText).toBe('In the doorway stood Elder Mo, his grey beard tied with red cord.');
+    const made = result.entries.find(entry => entry.name === 'Elder Mo')!;
+    expect(made).toMatchObject({ kind: 'character', origin: { source: 'tag', chapterId: latest.id } });
+    expect(placed.payload.subject).toEqual({ name: 'Elder Mo', entryId: made.id });
+
+    // Only a voice: nothing changes.
+    const voice = apply(state, latest, [{ case: 'c1', outcome: 'fine', reason: 'A voice through the door.' }]).result;
+    expect(voice.chapter).toEqual(latest);
+    expect(voice.entries).toEqual(state.codexEntries);
+  });
+
+  it('never asks about a group speaking as one, a faction rather than a character (review finding, Codex, 2026-11-04)', async () => {
+    const { state, latest } = await written(reply([SWORD]), reply(['[[@Iron Crane Sect]] “We accept,” the disciples chorused.']));
+    expect(planHoldingsFix(inputFor(state, latest)).cases).toEqual([]);
+  });
+
+  it('places an appearance on the words it was asked about after an earlier fix corrected a sentence before them (review finding, Codex, 2026-11-04)', async () => {
+    const { state, latest } = await written(reply([SWORD, '[[gained: MC | Spirit Pill]] He pocketed a spirit pill.']),
+      reply(['[[lost: MC | Spirit Pill | 2]] Ye Chen swallowed two pills at once. [[@Elder Mo]] “Fool,” said Elder Mo.']));
+    const plan = planHoldingsFix(inputFor(state, latest));
+    expect(plan.cases.map(planned => planned.kind)).toEqual(['sentence', 'appearance']);
+    const { result } = apply(state, latest, [
+      { case: 'c1', outcome: 'prose', replacement: 'Ye Chen swallowed his last pill.', tags: '[[lost: MC | Spirit Pill]]', reason: 'One pill.' },
+      { case: 'c2', outcome: 'record', sentence: 'm1', reason: 'He speaks in the room.' },
+    ]);
+    expect(result.fixes.map(fix => fix.outcome)).toEqual(['fixed-sentence', 'fixed-tags']);
+    const placed = result.chapter.appearances!.at(-1)!.anchor;
+    expect(placed.selectedText).toBe('“Fool,” said Elder Mo.');
+    expect(result.chapter.paragraphs[0].slice(placed.startOffset, placed.endOffset)).toBe('“Fool,” said Elder Mo.');
+  });
+
+  it('never asks about someone who already appeared, or who spoke in an earlier chapter', async () => {
+    const appeared = await written(reply([SWORD]),
+      reply(['[[appears: Elder Mo | character]] In the doorway stood Elder Mo.', '[[@Elder Mo]] “You are late,” he said.']));
+    expect(planHoldingsFix(inputFor(appeared.state, appeared.latest)).cases).toEqual([]);
+    const spokeBefore = await written(reply(['[[@Elder Mo]] “Rise,” said a voice.']), reply(['[[@Elder Mo]] “You are late,” he said.']));
+    expect(planHoldingsFix(inputFor(spokeBefore.state, spokeBefore.latest)).cases).toEqual([]);
+  });
+
+  it('asks whether a name no card has is a character\'s when it shares a word with theirs, and gives the card that name', async () => {
+    const { state, latest } = await written(reply(['[[appears: Masked Envoy | character]] A masked envoy waited at the gate.']),
+      reply(['“Envoy Lan,” Ye Chen said, bowing low.', 'The Summit Hall was silent.']));
+    const plan = planHoldingsFix(inputFor(state, latest));
+    expect(plan.cases.map(planned => planned.case)).toEqual([{
+      id: 'c1', problems: ['The chapter calls someone ‘Envoy Lan’, a name no card has; it shares a word with the character ‘Masked Envoy’.'],
+      passage: { sentence: '“Envoy Lan,” Ye Chen said, bowing low.' },
+      record: ['‘Masked Envoy’ is a character.'],
+      answers: ['record', 'fine'],
+    }]);
+    const envoy = state.codexEntries.find(entry => entry.name === 'Masked Envoy')!;
+
+    // The story has revealed his name: the card goes by it, and answers to the old one.
+    const named = apply(state, latest, [{ case: 'c1', outcome: 'record', name: 'Envoy Lan', reason: 'The envoy is named.' }]).result;
+    expect(named.fixes[0]).toMatchObject({ checks: ['possible-name'], outcome: 'named', before: 'Envoy Lan', after: 'Envoy Lan',
+      named: { entryId: envoy.id, name: 'Envoy Lan', previousName: 'Masked Envoy' } });
+    expect(named.entries.find(entry => entry.id === envoy.id)).toMatchObject({ name: 'Envoy Lan', aliases: ['Masked Envoy'] });
+
+    // Another name he goes by: the card keeps its own and answers to the new one.
+    const alias = apply(state, latest, [{ case: 'c1', outcome: 'record', name: 'Masked Envoy', reason: 'A courtesy name.' }]).result;
+    expect(alias.entries.find(entry => entry.id === envoy.id)).toMatchObject({ name: 'Masked Envoy', aliases: ['Envoy Lan'] });
+
+    // Someone else: nothing changes, and a later chapter does not ask again.
+    const other = apply(state, latest, [{ case: 'c1', outcome: 'fine', reason: 'His brother.' }]).result;
+    expect(other.entries).toEqual(state.codexEntries);
+    const fixed = { ...latest, fixer: { checkedAt: runtime.now(), fixes: other.fixes } };
+    const later = { ...latest, id: 'later', chapterNumber: 3 };
+    expect(planHoldingsFix({ ...inputFor(state, later), chapters: [...state.chapters.filter(entry => entry.id !== latest.id), fixed, later] }).cases).toEqual([]);
+
+    // A rewrite of the chapter takes the name back.
+    const renamedState = { ...state, codexEntries: named.entries, chapters: state.chapters.map(entry => (entry.id === latest.id ? { ...named.chapter, fixer: { checkedAt: runtime.now(), fixes: named.fixes } } : entry)) };
+    const rewound = withoutLatestChapter(renamedState, latest.storyId);
+    expect(rewound.codexEntries.find(entry => entry.id === envoy.id)).toEqual(envoy);
+
+    // Renamed twice in the chapter: the rewrite gives back the name before both (review finding, Codex, 2026-11-04).
+    const twice = [
+      ...named.fixes,
+      { checks: ['possible-name' as const], problems: [], outcome: 'named' as const, before: 'Envoy Ming', after: 'Envoy Ming',
+        named: { entryId: envoy.id, name: 'Envoy Ming', previousName: 'Envoy Lan' } },
+    ];
+    const renamedTwice = {
+      ...state,
+      codexEntries: named.entries.map(entry => (entry.id === envoy.id ? { ...entry, name: 'Envoy Ming', aliases: ['Masked Envoy', 'Envoy Lan'] } : entry)),
+      chapters: state.chapters.map(entry => (entry.id === latest.id ? { ...named.chapter, fixer: { checkedAt: runtime.now(), fixes: twice } } : entry)),
+    };
+    expect(withoutLatestChapter(renamedTwice, latest.storyId).codexEntries.find(entry => entry.id === envoy.id)).toEqual(envoy);
+  });
+
+  it('asks about someone dead who speaks, and records how they are now when the story brought them back', async () => {
+    const { state, latest } = await written(
+      reply(['[[appears: Elder Qin | character]] [[status: Elder Qin | dead]] Elder Qin slid down the pillar and did not rise again.']),
+      reply(['Mist gathered over the grave.', '[[@Elder Qin]] “You forgot me,” said the pale shape of Elder Qin.']));
+    const plan = planHoldingsFix(inputFor(state, latest));
+    expect(plan.cases.map(planned => planned.case)).toEqual([{
+      id: 'c1', problems: ['‘Elder Qin’ is dead since Chapter 1, but speaks in this chapter.'],
+      passage: { sentence: '“You forgot me,” said the pale shape of Elder Qin.' }, tags: '',
+      record: ['Elder Qin, Chapter 1: dead: “Elder Qin slid down the pillar and did not rise again.”'],
+      answers: ['record', 'fine', 'major'],
+    }]);
+
+    const { result } = apply(state, latest, [{ case: 'c1', outcome: 'record', tags: '[[status: Elder Qin | a ghost]]', reason: 'He returns as a ghost.' }]);
+    expect(result.fixes[0]).toMatchObject({ checks: ['status-contradiction'], outcome: 'fixed-tags', after: '[[status: Elder Qin | a ghost]]' });
+    const qin = state.codexEntries.find(entry => entry.name === 'Elder Qin')!;
+    expect(result.chapter.statuses!.at(-1)).toMatchObject({
+      anchor: { blockId: 'c2-p2', selectedText: '“You forgot me,” said the pale shape of Elder Qin.' },
+      payload: { origin: 'harness', subject: { name: 'Elder Qin', entryId: qin.id }, status: 'a ghost' },
+    });
+
+    // Only a status for him stands; anything else changes nothing.
+    const wrong = apply(state, latest, [{ case: 'c1', outcome: 'record', tags: '[[gained: MC | Spirit Pill]]', reason: '?' }]).result;
+    expect(wrong.fixes[0]).toMatchObject({ outcome: 'skipped' });
+    expect(wrong.chapter).toEqual(latest);
+    // A memory is fine; a chapter that forgets his death is kept as it is, recorded.
+    expect(apply(state, latest, [{ case: 'c1', outcome: 'major', reason: 'He is simply alive.' }]).result.fixes[0]).toMatchObject({ outcome: 'major' });
+  });
+
+  it('never asks about someone dead whom the chapter brings back before they speak', async () => {
+    const { state, latest } = await written(
+      reply(['[[appears: Elder Qin | character]] [[status: Elder Qin | dead]] Elder Qin slid down the pillar and did not rise again.']),
+      reply(['[[status: Elder Qin | revived]] The pill burned, and Elder Qin breathed.', '[[@Elder Qin]] “You forgot me,” he said.']));
+    expect(planHoldingsFix(inputFor(state, latest)).cases).toEqual([]);
   });
 });

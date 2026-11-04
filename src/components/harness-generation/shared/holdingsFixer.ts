@@ -7,6 +7,7 @@ import type {
   HarnessHoldingsFixAnswer,
   HarnessHoldingsFixCase,
   HarnessHoldingsFixerPolicy,
+  HarnessFixerCheck,
 } from '../../../narrative/generation';
 import type { WorldRecord } from '../../../narrative/worldRecord';
 import { readArcReply } from './arcState';
@@ -20,9 +21,9 @@ import {
   type CharacterHoldings,
   type DeclaredCharacter,
   type HoldingFlag,
-  type HoldingFlagKind,
   type HoldingsState,
 } from './holdings';
+import { attemptRecordFix, planRecordChecks, recordFlagKeys, type RecordFixPlanCase } from './recordChecks';
 
 /**
  * The Holdings fixer: after a chapter commits, the HARNESS checks the holdings
@@ -55,7 +56,8 @@ type SpanAnchor = HoldingChangeAnchor;
 export type HoldingsFixPlanCase =
   | { kind: 'sentence'; case: HarnessHoldingsFixCase; flags: HoldingFlag[]; blockId: string; start: number; end: number }
   | { kind: 'closing'; case: HarnessHoldingsFixCase; flags: HoldingFlag[]; mentions: Array<{ id: string; blockId: string; start: number; end: number }> }
-  | { kind: 'duplicate'; case: HarnessHoldingsFixCase; flags: HoldingFlag[]; entryIds: [string, string] };
+  | { kind: 'duplicate'; case: HarnessHoldingsFixCase; flags: HoldingFlag[]; entryIds: [string, string] }
+  | RecordFixPlanCase;
 
 export interface HoldingsFixPlan {
   /** What the fixer is asked about. */
@@ -306,6 +308,9 @@ export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName,
     });
   }
 
+  // The rest of the record: who appeared, the names they go by, and how they are.
+  cases.push(...planRecordChecks({ chapter, chapters: storyChapters, entries, worldAtChapterZero, locale }));
+
   const asked = cases.slice(0, HOLDINGS_FIXER_CASE_LIMIT);
   for (const left of cases.slice(HOLDINGS_FIXER_CASE_LIMIT)) {
     settled.push({ checks: unique(left.flags.map(flag => flag.kind)), problems: left.case.problems, outcome: 'skipped',
@@ -331,7 +336,7 @@ export function readFixTags(text: string): { ok: true; changes: Array<Omit<Holdi
   return { ok: true, changes };
 }
 
-interface FixAnswer { case: string; outcome: string; sentence?: string; tags?: string; replacement?: string; reason?: string }
+interface FixAnswer { case: string; outcome: string; sentence?: string; tags?: string; replacement?: string; name?: string; reason?: string }
 
 /** The fixer's answers, read leniently: anything malformed is no answer. */
 export function readHoldingsFixReply(raw: string | undefined): FixAnswer[] {
@@ -341,7 +346,7 @@ export function readHoldingsFixReply(raw: string | undefined): FixAnswer[] {
   return fixes.flatMap(value => {
     const answer = value as Record<string, unknown> | null;
     if (!answer || typeof answer !== 'object' || typeof answer.case !== 'string' || typeof answer.outcome !== 'string') return [];
-    return [{ case: answer.case, outcome: answer.outcome, sentence: text(answer.sentence), tags: text(answer.tags), replacement: text(answer.replacement), reason: text(answer.reason)?.trim() || undefined }];
+    return [{ case: answer.case, outcome: answer.outcome, sentence: text(answer.sentence), tags: text(answer.tags), replacement: text(answer.replacement), name: text(answer.name)?.trim() || undefined, reason: text(answer.reason)?.trim() || undefined }];
   });
 }
 
@@ -364,7 +369,7 @@ export interface HoldingsFixResult {
   fixes: HarnessHoldingsFix[];
 }
 
-type Attempted = { chapter: HarnessChapter; entries: CodexEntry[]; fix: Pick<HarnessHoldingsFix, 'outcome' | 'blockId' | 'before' | 'after' | 'merged'> } | { problem: string };
+type Attempted = { chapter: HarnessChapter; entries: CodexEntry[]; fix: Pick<HarnessHoldingsFix, 'outcome' | 'blockId' | 'before' | 'after' | 'merged' | 'named'> } | { problem: string };
 
 const withChanges = (chapter: HarnessChapter, changes: HoldingChangeAttachment[]): HarnessChapter => {
   const next: HarnessChapter = { ...chapter };
@@ -408,6 +413,9 @@ export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixRes
   };
 
   const attempt = (planned: HoldingsFixPlanCase, answer: FixAnswer): Attempted => {
+    if (planned.kind === 'appearance' || planned.kind === 'name' || planned.kind === 'status') {
+      return attemptRecordFix(planned, answer, { chapter, entries, declared, createdAt, createId, locale });
+    }
     if (planned.kind === 'duplicate') {
       const created = createdIn(entries, chapter.id);
       const pair = planned.entryIds.map(id => entries.find(entry => entry.id === id));
@@ -508,7 +516,11 @@ export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixRes
   };
 
   for (const planned of plan.cases) {
-    const base = { checks: unique(planned.flags.map(flag => flag.kind)) as HoldingFlagKind[], problems: planned.case.problems };
+    const base = {
+      checks: unique<HarnessFixerCheck>(planned.flags.map(flag => flag.kind)), problems: planned.case.problems,
+      // A name case keeps the name it asked about, so a later chapter does not ask about one found to be someone else.
+      ...(planned.kind === 'name' ? { before: planned.name } : {}),
+    };
     const answer = answers.find(candidate => candidate.case === planned.case.id);
     if (!answer) {
       fixes.push({ ...base, outcome: 'skipped', reason: input.error ? `The fixer could not be reached: ${input.error}` : 'The fixer gave no answer for it.' });
@@ -529,9 +541,14 @@ export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixRes
       continue;
     }
     const after = problemsOf(tried.chapter, tried.entries);
-    const settles = planned.kind === 'duplicate'
-      ? after.length <= before.length && !after.some(flag => flag.kind === 'possible-duplicate' && planned.entryIds.every(id => flag.entryIds?.includes(id)))
-      : after.length < before.length;
+    const settles = planned.kind === 'appearance' || planned.kind === 'name' || planned.kind === 'status'
+      // A record fix stands when its own check no longer finds it, and it leaves the holdings no worse.
+      ? after.length <= before.length && planned.flags.every(flag => !recordFlagKeys({
+        chapter: tried.chapter, chapters: [...others, tried.chapter], entries: tried.entries, worldAtChapterZero, locale,
+      }).has(flag.key))
+      : planned.kind === 'duplicate'
+        ? after.length <= before.length && !after.some(flag => flag.kind === 'possible-duplicate' && planned.entryIds.every(id => flag.entryIds?.includes(id)))
+        : after.length < before.length;
     if (!settles) {
       fixes.push({ ...base, outcome: 'skipped', reason: 'Nothing was changed: the fix would not have settled it.' });
       continue;

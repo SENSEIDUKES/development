@@ -227,6 +227,26 @@ outcome is kept on the chapter (`HarnessChapter.fixer`, in the export). How
 far it may go is the host's choice (`HarnessHoldingsFixerPolicy`: off, records
 only, or records and sentences); in the Library it belongs to the Familiar.
 
+**The fixer's record checks** (`shared/recordChecks.ts`, SENSEI, 2026-11-04):
+the same one fixer, with three more plain rules beside the holdings ones, so
+the story runs on three calls (the writer, the tagger, and the fixer only when
+needed). Someone who speaks for the first time in the chapter but has never
+appeared is a case offering the sentences that name them before their first
+line, and the line itself; `record` places `[[appears: Name | character]]` on
+the sentence the answer chooses. A capitalized name in the chapter's prose
+that no Codex entry, world card or speaker has, sharing a word with exactly
+one character's name ("Inspector Wei" beside "Summit Inspector"), is a case
+(at most three a chapter); `record` gives the character that name, as the
+card's own when the answer's `name` says so (the old one becomes an alias),
+otherwise as an alias, kept as `named` on the fix so a rewrite of the chapter
+takes it back; a name answered `fine` is not asked about again. Someone whose
+status before the chapter is dead and who speaks, acts or changes look in it,
+with no status of this chapter before that, is a case; `record` places the
+status tag the answer writes on that sentence, `fine` is a memory or a
+vision, `major` a chapter that forgets the death. Each fix stands only when
+its own rule no longer finds the problem and the holdings are no worse.
+Each new information tag brings its own rules here.
+
 **Appearances** (2026-10-14) — who and what is on the page, and how each
 looks. The tag words: `appears` (`[[appears: Name | character]]` for a person
 or named creature, `[[appears: Thing | thing]]` for a named object, the moment

@@ -40,7 +40,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * workspace with its revision, so a save made from an older one (another tab)
  * is refused instead of overwriting it; 42 adds each chapter's optional
  * statuses (how a character is now, from the status tag). */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 42 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 43 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -1503,19 +1503,30 @@ export interface HarnessHoldingsFixRequest {
   cases: HarnessHoldingsFixCase[];
 }
 
+/**
+ * The checks the fixer runs on the rest of the record (SENSEI, 2026-11-04):
+ * someone who speaks for the first time but never appeared, a name in the
+ * prose that may be a character's, and someone dead who speaks or acts.
+ */
+export type HarnessRecordCheckKind = 'missed-appearance' | 'possible-name' | 'status-contradiction';
+
+/** Every check the fixer runs: the holdings checks and the record checks. */
+export type HarnessFixerCheck = import('./holdings').HoldingFlagKind | HarnessRecordCheckKind;
+
 /** One problem the fixer looked at, and what became of it. */
 export interface HarnessHoldingsFix {
   /** The checks that found it. */
-  checks: import('./holdings').HoldingFlagKind[];
+  checks: HarnessFixerCheck[];
   /** What they found, in plain words. */
   problems: string[];
   /**
    * `fixed-tags`: the record was corrected. `fixed-sentence`: one sentence was
-   * corrected. `merged`: two names became one entry. `fine`: nothing was
-   * wrong. `major`: a contradiction no small fix can settle, kept as it is.
+   * corrected. `merged`: two names became one entry. `named`: a character
+   * was given a name the prose calls them. `fine`: nothing was wrong.
+   * `major`: a contradiction no small fix can settle, kept as it is.
    * `skipped`: no fix was safe to make.
    */
-  outcome: 'fixed-tags' | 'fixed-sentence' | 'merged' | 'fine' | 'major' | 'skipped';
+  outcome: 'fixed-tags' | 'fixed-sentence' | 'merged' | 'named' | 'fine' | 'major' | 'skipped';
   /** The paragraph it was in. */
   blockId?: string;
   /** The tags or sentence before the fix. */
@@ -1526,6 +1537,12 @@ export interface HarnessHoldingsFix {
   reason?: string;
   /** For a merge: the entry kept and the name it now also answers to, so a rewrite of the chapter can take it back. */
   merged?: { keptEntryId: string; alias?: string };
+  /**
+   * For a name: the entry and the name it was given. With `previousName`, the
+   * new name became the card's name and the old one its alias; without it,
+   * the new name is an alias. A rewrite of the chapter takes it back.
+   */
+  named?: { entryId: string; name: string; previousName?: string };
 }
 
 /** The Holdings fixer's record on a chapter: what it checked and what it changed. */

@@ -21,37 +21,44 @@ const topic = (id: string, title: string, aliases: string[] = []): DocsTopic => 
 // explanations only as each term's meaning is confirmed by the product owner.
 export const docsCategories: readonly DocsCategory[] = [
   {
-    id: 'product', title: 'Product & people', description: 'SEN, the Celestial Library, our Workshop, and the people creating and reading stories.',
+    id: 'product', title: 'Product & people', description: 'SEN, NovelExpanded, our Workshop, and the people creating and reading stories.',
     topics: [
       {
         ...topic('seihouse', 'SEIHouse'),
         definition: 'A better time capsule and translator of artistic expression.',
-        howItFits: 'SEIHouse is the company and creative platform we are building around that purpose. SEN (SEIHouse Expanded Novels) is our engine for expanded novels, and the Celestial Library is our own place to create and experience them. SEA (SEIHouse Expanded Albums) brings the same vision into music. We develop and pressure-test reusable systems through SEN so they can serve SEA too; the two sides grow together.',
+        howItFits: 'SEIHouse is the company and creative platform we are building around that purpose. SEN (SEIHouse Expanded Novels) is our engine for expanded novels, and NovelExpanded is our own place to create and experience them. SEA (SEIHouse Expanded Albums) brings the same vision into music. We develop and pressure-test reusable systems through SEN so they can serve SEA too; the two sides grow together.',
       },
       {
         ...topic('sen', 'SEN', ['SEIHouse Expanded Novels']),
         definition: 'Our portable engine for expanded novels.',
-        howItFits: 'We build SEN as the shared narrative foundation beneath the Celestial Library. It provides story and chapter structure, Reader and Codex experiences, cards, Color Codes, translation, and other reusable capabilities. Other creators and publishers can use SEN in their own apps with their own stories, branding, accounts, storage, and media. AI generation is an optional content source. We keep Library-specific rules in the Library so SEN stays portable.',
+        howItFits: 'We build SEN as the shared narrative foundation beneath NovelExpanded. It provides story and chapter structure, Reader and Codex experiences, cards, Color Codes, translation, and other reusable capabilities. Other creators and publishers can use SEN in their own apps with their own stories, branding, accounts, storage, and media. AI generation is an optional content source. We keep our first-party rules in the Library lane so SEN stays portable.',
       },
       {
-        ...topic('library', 'Library', ['Celestial Library']),
-        definition: 'Our home for creating, discovering, and experiencing expanded novels.',
-        howItFits: 'The Celestial Library is the application we build on top of SEN. SEN gives us reusable narrative capabilities; we add our visual identity, story creation and discovery, profiles and community, cultivation and QI, rewards, and economy. The Library’s host and backend provide accounts, storage, APIs, and the source of truth for transactions. We keep those first-party rules here so SEN can power other apps too.',
+        ...topic('novel-expanded', 'NovelExpanded', ['NovelExpanded.com', 'Expanded Novels', 'Celestial Library']),
+        definition: 'Our own home for creating, discovering, and experiencing expanded novels, at NovelExpanded.com.',
+        howItFits: 'NovelExpanded is the product we build on top of SEN. SEN gives us reusable narrative capabilities; we add our visual identity, story creation and discovery, profiles and community, cultivation and QI, rewards, and economy. Its host and backend provide accounts, storage, APIs, and the source of truth for transactions. We keep those first-party rules in the Library lane so SEN can power other apps too. NovelExpanded is the brand name; “expanded novels” in lower case is the format itself. The product was called the Celestial Library before NovelExpanded, and that name is retired.',
+        related: ['library', 'sen'],
+      },
+      {
+        ...topic('library', 'Library', ['@seihouse/library', 'first-party lane']),
+        definition: 'The code lane holding NovelExpanded’s own behavior on top of SEN.',
+        howItFits: 'Library is what we call the first-party side in code: the @seihouse/library package and everything branded or specific to NovelExpanded. The rule runs one way — Library may depend on SEN, and SEN must never depend on Library. When a surface mixes reusable behavior with our own presentation, the behavior belongs to SEN and the skin stays in Library. Library is a lane in the codebase, not a name we show readers.',
+        related: ['novel-expanded', 'sen', 'seihouse-library'],
       },
       {
         ...topic('workshop', 'Workshop', ['Development', 'DEV']),
-        definition: 'Our space for building, previewing, and refining SEN and Library experiences.',
-        howItFits: 'We use the Workshop inside the Development repository to see SEN and Library work in context while it is still being developed. Its previews, controls, and NovelExpanded Docs let us test product flows and agree on the language around them. Workshop is our workbench, not a product package: SEN owns reusable narrative behavior, and Library owns our first-party product behavior. Moving approved work into production is a separate step.',
+        definition: 'Our space for building, previewing, and refining SEN and NovelExpanded experiences.',
+        howItFits: 'We use the Workshop inside the Development repository to see SEN and Library work in context while it is still being developed. Its previews, controls, and NovelExpanded Docs let us test product flows and agree on the language around them. Workshop is our workbench, not a product package: SEN owns reusable narrative behavior, and Library owns NovelExpanded’s first-party behavior. Moving approved work into production is a separate step.',
       },
       {
         ...topic('creator', 'Creator', ['Author']),
-        definition: 'A person creating a story with SEN or the Celestial Library.',
-        howItFits: 'We use Creator for the person making a story. It is not a separate kind of user from Reader: someone can create one story and experience another. SEN provides reusable story and chapter capabilities, while the Celestial Library gives creators our own place to make and share their novels. The artistic direction belongs to the creator.',
+        definition: 'A person creating a story with SEN or NovelExpanded.',
+        howItFits: 'We use Creator for the person making a story. It is not a separate kind of user from Reader: someone can create one story and experience another. SEN provides reusable story and chapter capabilities, while NovelExpanded gives creators our own place to make and share their novels. The artistic direction belongs to the creator.',
       },
       {
         ...topic('reader', 'Reader', ['Cultivator']),
-        definition: 'A person experiencing a story; in the Celestial Library, we call that reader a Cultivator.',
-        howItFits: 'We use Reader for the person reading chapters, listening, or exploring a story’s Codex. SEN carries the reusable reading experience, and we bring it into the Celestial Library with our cultivation language and progression. Cultivator is our name for the Reader there, not a separate user type. The same person can be a Creator when making a work.',
+        definition: 'A person experiencing a story; in NovelExpanded, we call that reader a Cultivator.',
+        howItFits: 'We use Reader for the person reading chapters, listening, or exploring a story’s Codex. SEN carries the reusable reading experience, and we bring it into NovelExpanded with our cultivation language and progression. Cultivator is our name for the Reader there, not a separate user type. The same person can be a Creator when making a work.',
       },
     ],
   },
@@ -187,18 +194,18 @@ export const docsCategories: readonly DocsCategory[] = [
       },
       {
         ...topic('seihouse-library-ui', '@seihouse/library-ui'),
-        definition: 'Our visual language for the Celestial Library.',
+        definition: 'Our visual language for NovelExpanded.',
         howItFits: 'The UI repository owns this separate software package of stateless Library presentation. @seihouse/library composes these visuals over reusable SEN behavior and supplies host asset locations. @seihouse/sen does not depend on Library UI, so another publisher can present the same narrative capabilities in its own style.',
       },
       {
         ...topic('seihouse-sen', '@seihouse/sen'),
         definition: 'The portable engine for expanded novels.',
-        howItFits: 'The Development repository publishes SEN’s reusable story, Reader, Codex, audio, generation, translation, and arc capabilities as a software package. A host supplies its own writing, branding, accounts, storage, media, and optional model adapter. Our Celestial Library builds on SEN, but SEN never depends on Library-specific rules or services.',
+        howItFits: 'The Development repository publishes SEN’s reusable story, Reader, Codex, audio, generation, translation, and arc capabilities as a software package. A host supplies its own writing, branding, accounts, storage, media, and optional model adapter. Our own NovelExpanded builds on SEN, but SEN never depends on Library-specific rules or services.',
       },
       {
         ...topic('seihouse-library', '@seihouse/library'),
-        definition: 'The Celestial Library’s own product behavior.',
-        howItFits: 'The Development repository publishes our first-party Library package on top of @seihouse/sen. It brings together the Library’s creation journey, home and profile, cultivation, rewards, economy, and branded presentation. The host and backend remain authoritative for accounts, purchases, durable balances, and media records; these rules do not move into SEN.',
+        definition: 'NovelExpanded’s own product behavior.',
+        howItFits: 'The Development repository publishes our first-party Library package on top of @seihouse/sen. It brings together NovelExpanded’s creation journey, home and profile, cultivation, rewards, economy, and branded presentation. The host and backend remain authoritative for accounts, purchases, durable balances, and media records; these rules do not move into SEN.',
       },
       {
         ...topic('spp', 'SPP', ['SPP Manifest', 'Package ID', 'instructions', 'resources']),

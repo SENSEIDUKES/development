@@ -31,9 +31,17 @@ describe('Docs topic catalog', () => {
     expect(searchDocs('not-a-real-term')).toEqual([]);
   });
 
+  it('routes the retired Celestial Library name to NovelExpanded and keeps Library as the code lane', () => {
+    expect(searchDocs('Celestial Library').map(topic => topic.id)).toEqual(['novel-expanded']);
+    expect(findDocsTopic('novel-expanded')!.title).toBe('NovelExpanded');
+    expect(findDocsTopic('library')!.title).toBe('Library');
+    const retired = docsTopics.filter(topic => /Celestial Library/i.test(`${topic.definition ?? ''} ${topic.howItFits ?? ''}`));
+    expect(retired.map(topic => topic.id)).toEqual(['novel-expanded']);
+  });
+
   it('defines Product & people, Story, and Packages terms while leaving later categories for their own phase', () => {
     const productTopics = docsCategories.find(category => category.id === 'product')!.topics;
-    expect(productTopics.map(topic => topic.id)).toEqual(['seihouse', 'sen', 'library', 'workshop', 'creator', 'reader']);
+    expect(productTopics.map(topic => topic.id)).toEqual(['seihouse', 'sen', 'novel-expanded', 'library', 'workshop', 'creator', 'reader']);
     expect(findDocsTopic('sensei')).toBeUndefined();
     const storyTopics = docsCategories.find(category => category.id === 'story')!.topics;
     expect(storyTopics).toHaveLength(19);

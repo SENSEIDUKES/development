@@ -53,8 +53,10 @@ AI chapter generation is only one of the content sources SEN accepts.
 ### Expanded Novels, SEIHouse's first-party product
 
 Expanded Novels, at NovelExpanded.com, is the product SEIHouse builds on SEN. In code
-and in the packages it is the Library (`@seihouse/library`, presented as the
-Celestial Library). **SEN is the engine. Expanded Novels is SEIHouse's flagship
+and in the packages it is the Library (`@seihouse/library`). Its brand name is
+**NovelExpanded**; "expanded novels" in lower case is the format itself. The product
+was called the Celestial Library before NovelExpanded, and that name is retired: it
+stays only where code or an asset still carries it. **SEN is the engine. Expanded Novels is SEIHouse's flagship
 implementation of that engine.** [What Expanded Novels adds](#what-expanded-novels-adds)
 lists what it brings beyond SEN.
 
@@ -1211,7 +1213,7 @@ same record; none of them adds anything medium-specific to the story itself.
 | Name | What it is |
 | --- | --- |
 | SEN | SEIHouse Expanded Novels: the product-independent, licensable expanded-novel engine (`@seihouse/sen`). [The product family](#the-product-family). |
-| Expanded Novels | SEIHouse's first-party product on SEN, at NovelExpanded.com. In code, the Library (`@seihouse/library`), presented as the Celestial Library. |
+| Expanded Novels | SEIHouse's first-party product on SEN, branded NovelExpanded, at NovelExpanded.com. In code, the Library (`@seihouse/library`). The retired name Celestial Library is not used for it. |
 | SEA | SEIHouse Expanded Albums: SEIHouse's expanded-music product, separate from SEN. It inherits the shared infrastructure SEN pressure-tests. |
 | NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader; piece 2: the Library Shell around it; piece 3: Profile, with the Familiar and a practice economy; piece 4: Story Settings in Create and Story View; piece 5: cover art on Story View), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |

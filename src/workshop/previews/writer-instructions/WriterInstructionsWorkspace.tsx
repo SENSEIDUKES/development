@@ -4,8 +4,8 @@ import { CAPA_SCHEMA, type HarnessSkillManifest } from '@seihouse/sen/harness-ge
 import type { StoryStyle } from '@seihouse/sen/story-seed';
 import { OFFICIAL_STYLE_REFERENCES, installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
 import {
-  PIPELINE, PIPELINE_CHECKS, RETIRED_WRITER_INSTRUCTIONS, WHOLE_PROMPTS, WRITER_INSTRUCTIONS, WRITER_NEXT_MESSAGE, countWords,
-  officialWriterSkills, writerSystemInstruction,
+  PIPELINE, PIPELINE_CHECKS, RETIRED_WRITER_INSTRUCTIONS, WHOLE_PROMPTS, WRITER_EXAMPLE_CHAPTER, WRITER_INSTRUCTIONS, countWords,
+  officialWriterSkills, writerPrompt,
   type PipelineStep, type PipelineStepId, type PromptMessage, type WriterInstruction, type WriterInstructionId,
 } from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, type WriterInstructionsChange } from './writerInstructionsHistory';
@@ -18,11 +18,21 @@ const changesTo = (id: WriterInstructionId) => WRITER_INSTRUCTIONS_HISTORY.filte
 type View = PipelineStepId | 'changes';
 const VIEWS: readonly View[] = [...PIPELINE.map(step => step.id), 'changes'];
 
-/** The page's place, kept in the address so a link opens the same step and block. */
-const readHash = (): { view: View; block?: string } => {
-  const [view, block] = (typeof window === 'undefined' ? '' : window.location.hash.slice(1)).split('/');
+const STYLES: ReadonlyArray<[StoryStyle, string]> = [['chinese', 'Chinese'], ['japanese', 'Japanese'], ['korean', 'Korean']];
+const STYLE_IDS = STYLES.map(([id]) => id);
+
+/** The page's place, kept in the address so a link opens the same step, block and style. */
+const readHash = (): { view: View; block?: string; style?: StoryStyle } => {
+  const [view, block, style] = (typeof window === 'undefined' ? '' : window.location.hash.slice(1)).split('/');
   if (!VIEWS.includes(view as View)) return { view: 'tagger' };
-  return { view: view as View, ...(block && view !== 'changes' ? { block: decodeURIComponent(block) } : {}) };
+  // A hand-edited or cut-off address must never break the page (review finding, CodeRabbit, 2026-11-05).
+  let decoded: string | undefined;
+  try { decoded = block ? decodeURIComponent(block) : undefined; } catch { decoded = undefined; }
+  return {
+    view: view as View,
+    ...(decoded && view !== 'changes' ? { block: decoded } : {}),
+    ...(STYLE_IDS.includes(style as StoryStyle) ? { style: style as StoryStyle } : {}),
+  };
 };
 
 /** The chip that shows a step's whole prompt, as one. */
@@ -31,7 +41,6 @@ const ALL = 'all';
 /** One block on the page: the HARNESS's own, or a CAPA skill read from its package. */
 type ShownBlock = Omit<WriterInstruction, 'id'> & { id: string };
 
-const STYLES: ReadonlyArray<[StoryStyle, string]> = [['chinese', 'Chinese'], ['japanese', 'Japanese'], ['korean', 'Korean']];
 const slotLabel = (skill: HarnessSkillManifest) => CAPA_SCHEMA.find(slot => slot.id === skill.slot)?.label ?? skill.slot;
 
 /** A CAPA skill as the page shows it: its words, exactly as its package holds them. */
@@ -140,10 +149,13 @@ function InstructionBlock({ block }: { block: ShownBlock }) {
 /** A step's whole prompt, as one: every message the model is sent, in order, as the code builds it. */
 function WholePrompt({ messages, note }: { messages: readonly PromptMessage[]; note: string }) {
   const [raw, setRaw] = useState(true);
-  const [copied, setCopied] = useState(false);
+  const [copy, setCopy] = useState<'idle' | 'copied' | 'failed'>('idle');
   const words = messages.reduce((total, message) => total + countWords(message.text), 0);
-  const copy = () => {
-    void navigator.clipboard?.writeText(messages.map(message => `${message.label.toUpperCase()}\n\n${message.text}`).join('\n\n\n')).then(() => setCopied(true));
+  // A copy that cannot happen says so, never fails silently (review finding, CodeRabbit, 2026-11-05).
+  const copyAll = () => {
+    const text = messages.map(message => `${message.label.toUpperCase()}\n\n${message.text}`).join('\n\n\n');
+    if (!navigator.clipboard?.writeText) { setCopy('failed'); return; }
+    navigator.clipboard.writeText(text).then(() => setCopy('copied'), () => setCopy('failed'));
   };
   return (
     <article className="wi-block" data-instruction={ALL}>
@@ -155,7 +167,7 @@ function WholePrompt({ messages, note }: { messages: readonly PromptMessage[]; n
       <div className="wi-block__view" role="group" aria-label="How to show the text">
         <button type="button" aria-pressed={raw} onClick={() => setRaw(true)}>Exactly as the model sees it</button>
         <button type="button" aria-pressed={!raw} onClick={() => setRaw(false)}>Easy to read</button>
-        <button type="button" onClick={copy}>{copied ? 'Copied' : 'Copy all'}</button>
+        <button type="button" onClick={copyAll}>{copy === 'copied' ? 'Copied' : copy === 'failed' ? 'Copy failed' : 'Copy all'}</button>
       </div>
       {messages.map(message => (
         <section key={message.label} className="wi-message">
@@ -211,7 +223,7 @@ function StepView({ step, groups, whole, block, onBlock, before }: {
           </div>
         </div>
       ))}
-      {selected ? <InstructionBlock key={selected.id} block={selected} /> : whole && <WholePrompt messages={whole.messages} note={whole.note} />}
+      {selected ? <InstructionBlock key={selected.id} block={selected} /> : whole && <WholePrompt key={whole.note} messages={whole.messages} note={whole.note} />}
     </section>
   );
 }
@@ -254,7 +266,10 @@ export function WriterInstructionsWorkspace() {
   });
   const [installed, setInstalled] = useState<readonly HarnessSkillManifest[] | 'loading' | 'failed'>('loading');
   // A saved link to a Style skill reopens that style (review finding, Codex, 2026-11-05).
-  const [style, setStyle] = useState<StoryStyle>(() => STYLES.find(([id]) => OFFICIAL_STYLE_REFERENCES[id].id === readHash().block)?.[0] ?? 'chinese');
+  const [style, setStyle] = useState<StoryStyle>(() => {
+    const start = readHash();
+    return start.style ?? STYLES.find(([id]) => OFFICIAL_STYLE_REFERENCES[id].id === start.block)?.[0] ?? 'chinese';
+  });
   useEffect(() => {
     let live = true;
     installOfficialCapaSkillsInMemory().then(skills => { if (live) setInstalled(skills); }, () => { if (live) setInstalled('failed'); });
@@ -269,8 +284,8 @@ export function WriterInstructionsWorkspace() {
   });
   const whole = !step ? undefined : step.id === 'writer'
     ? (skills.length ? {
-      messages: [{ label: 'Its instructions', text: writerSystemInstruction(skills) }, WRITER_NEXT_MESSAGE],
-      note: `What the writer of a Novel Expanded story in ${STYLES.find(([id]) => id === style)![1]} style reads, in English, with no Fate Survival, Reading Mode or translation. The next message changes every chapter, so each part's place is shown.`,
+      messages: writerPrompt(skills),
+      note: `What the writer of a Novel Expanded story in ${STYLES.find(([id]) => id === style)![1]} style reads for Chapter ${WRITER_EXAMPLE_CHAPTER}, in English, with no Fate Survival, Reading Mode or translation, and no direction from the reader. The Story Information is the story's own, so only its place is shown.`,
     } : undefined)
     : {
       messages: WHOLE_PROMPTS[step.id],
@@ -278,13 +293,15 @@ export function WriterInstructionsWorkspace() {
         ? 'The whole request, with an empty Story Seed where yours goes.'
         : step.id === 'tagger'
           ? 'Everything the tagger is sent for one chapter, with the story\'s default sound words, music and atmospheres. The parts that change every chapter show their place.'
-          : 'Everything it is sent. The parts that change every time show their place.',
+          : step.id === 'fixer'
+            ? 'Everything it is sent, with one case showing every part a case can carry (a real case carries only the parts it needs). The parts that change every time show their place.'
+            : 'Everything it is sent. The parts that change every time show their place.',
     };
   const block = step ? blocks[step.id] ?? (whole ? ALL : groups[0]?.blocks[0]?.id) : undefined;
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.history.replaceState(null, '', `#${view}${block ? `/${encodeURIComponent(block)}` : ''}`);
-  }, [view, block]);
+    window.history.replaceState(null, '', `#${view}${block ? `/${encodeURIComponent(block)}` : ''}${view === 'writer' ? `/${style}` : ''}`);
+  }, [view, block, style]);
   // Choosing one of three is a ◀ value ▶ stepper, with arrow keys, as AGENTS.md asks (review finding, Codex, 2026-11-05).
   const styleIndex = STYLES.findIndex(([id]) => id === style);
   const stepStyle = (by: 1 | -1) => setStyle(STYLES[(styleIndex + by + STYLES.length) % STYLES.length][0]);

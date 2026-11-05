@@ -10,7 +10,11 @@ import {
   SEN_SPEAKERS_INSTRUCTIONS,
   SEN_STATUS_INSTRUCTIONS,
   SEN_PLACE_INSTRUCTIONS,
+  HARNESS_CHAPTER_TARGET_MAX_WORDS,
+  HARNESS_CHAPTER_TARGET_MIN_WORDS,
   assembleCapaPrompt,
+  buildMissionReminder,
+  harnessChapterParagraphTarget,
   buildHarnessOfficialOutputRequirements,
   presentSoundVocabulary,
   presentSoundtrackVocabulary,
@@ -25,8 +29,10 @@ import {
   HARNESS_RETURN_FORMAT,
   HARNESS_ROLE,
   HARNESS_WRITING_RULES,
+  buildHarnessChapterResponseSchema,
   composeHarnessSystemInstruction,
   composeHarnessUserPrompt,
+  presentImmediateChapterRequest,
   type HarnessPromptPart,
 } from '../../../server/harness-generation/prompt';
 import { HOLDINGS_FIXER_INSTRUCTIONS, buildHoldingsFixerPrompt } from '../../../server/harness-generation/holdingsFixer';
@@ -232,17 +238,6 @@ export const OFFICIAL_WRITER_SKILLS = (style: StoryStyle) => [
 export const officialWriterSkills = (installed: readonly HarnessSkillManifest[], style: StoryStyle) =>
   OFFICIAL_WRITER_SKILLS(style).map(reference => installed.find(skill => skill.id === reference.id && skill.version === reference.version)).filter((skill): skill is HarnessSkillManifest => Boolean(skill));
 
-/**
- * Everything an English story's writer reads before the story, exactly as the
- * HARNESS assembles it: the CAPA Prompt from the story's skills in the
- * HARNESS's skeleton.
- */
-export const writerSystemInstruction = (skills: readonly HarnessSkillManifest[]) => composeHarnessSystemInstruction(assembleCapaPrompt({
-  capturedAt: 'now',
-  originalLanguage: 'en',
-  skills: [...skills],
-}));
-
 /** One message of a whole prompt: what the model is told first, then what it is given. */
 export interface PromptMessage {
   label: string;
@@ -251,31 +246,66 @@ export interface PromptMessage {
 
 /** Where something changes every time it is sent: the page shows its place, never a story's own words. */
 const slot = (what: string) => `⟨${what}⟩`;
-/** A message with its changing middle shown: before its closing line, where the builder puts it. */
-const withSlot = (message: string, middle: string) => {
-  const parts = message.split('\n\n');
-  return [...parts.slice(0, -1), middle, parts.at(-1)!].join('\n\n');
-};
+/** A number a builder writes into its text, shown as its place instead. */
+const numberSlot = (what: string) => slot(what) as unknown as number;
 
-/** The writer's next message, with each part's place shown: it changes every chapter. */
-export const WRITER_NEXT_MESSAGE: PromptMessage = {
-  label: 'The next message (changes every chapter)',
-  text: composeHarnessUserPrompt({
-    story: [slot('The Story Information, section by section: the Foundation, the Destined Ending, the arc goal, the World at Chapter 0, who has appeared and how they look, status, place, holdings, the Previously On recaps')],
-    request: slot('This chapter\'s request: its number, its length, and the reader\'s direction when there is one'),
-    reminder: slot('The Mission Reminder'),
-  }),
+/**
+ * The shape the answer must take. Claude and MiniMax models read it at the end
+ * of the instructions, after "Return only the JSON answer, without Markdown
+ * fences."; the other providers are given it as the answer's format.
+ */
+const answerShape = (schema: unknown): PromptMessage => ({ label: 'The answer\'s shape', text: JSON.stringify(schema, null, 2) });
+
+const assembledWriterPrompt = (skills: readonly HarnessSkillManifest[]) => assembleCapaPrompt({ capturedAt: 'now', originalLanguage: 'en', skills: [...skills] });
+
+/**
+ * Everything an English story's writer reads before the story, exactly as the
+ * HARNESS assembles it: the CAPA Prompt from the story's skills in the
+ * HARNESS's skeleton.
+ */
+export const writerSystemInstruction = (skills: readonly HarnessSkillManifest[]) => composeHarnessSystemInstruction(assembledWriterPrompt(skills));
+
+/** The chapter the writer's whole prompt is shown for: the second, with the path left to the HARNESS. */
+export const WRITER_EXAMPLE_CHAPTER = 2;
+
+/**
+ * The writer's whole prompt, built by the functions that send it: its
+ * instructions, then the next message with the chapter request and the
+ * Mission Reminder exactly as they are written for Chapter 2 (the Story
+ * Information is the story's own, so only its place is shown), then the
+ * answer's shape.
+ */
+export const writerPrompt = (skills: readonly HarnessSkillManifest[]): PromptMessage[] => {
+  const capaPrompt = assembledWriterPrompt(skills);
+  const paragraphs = harnessChapterParagraphTarget('example', WRITER_EXAMPLE_CHAPTER);
+  return [
+    { label: 'Its instructions', text: composeHarnessSystemInstruction(capaPrompt) },
+    {
+      label: 'The next message (changes every chapter)',
+      text: composeHarnessUserPrompt({
+        story: [slot('The Story Information, section by section: the Foundation, the Destined Ending, the arc goal, the World at Chapter 0, who has appeared and how they look, status, place, holdings, the Previously On recaps')],
+        request: presentImmediateChapterRequest({
+          chapterNumber: WRITER_EXAMPLE_CHAPTER, continuation: true,
+          chapterScale: { minWords: HARNESS_CHAPTER_TARGET_MIN_WORDS, maxWords: HARNESS_CHAPTER_TARGET_MAX_WORDS, paragraphs },
+        }),
+        reminder: buildMissionReminder(capaPrompt).text,
+      }),
+    },
+    answerShape(buildHarnessChapterResponseSchema(paragraphs)),
+  ];
 };
 
 /**
  * Every other step's whole prompt, built by the same functions that send it,
- * with each changing part's place shown: the Tagger's with the story's default
- * sound words, music and atmospheres; the World builder's with an empty Story
- * Seed where the creator's goes.
+ * with each changing part shown by its place: the Tagger's with the story's
+ * default sound words, music and atmospheres; the fixer's with one case
+ * carrying every part a case can have (a real case carries only those it
+ * needs); the look writer's with one subject; the World builder's with an
+ * empty Story Seed where the creator's goes.
  */
 export const WHOLE_PROMPTS: Record<Exclude<PipelineStepId, 'writer'>, readonly PromptMessage[]> = (() => {
   const tag = buildHarnessTagPrompt({
-    operation: 'tag-chapter', storyId: '', chapterId: '', chapterNumber: 1, model: '', language: 'en',
+    operation: 'tag-chapter', storyId: '', chapterId: '', chapterNumber: numberSlot('number'), model: '', language: slot('language'),
     paragraphs: [slot('the chapter\'s first paragraph'), slot('every paragraph after it, one by one')],
     subjects: [
       { kind: 'character', name: slot('each character'), status: slot('their status so far'), place: slot('where they are so far') },
@@ -287,11 +317,29 @@ export const WHOLE_PROMPTS: Record<Exclude<PipelineStepId, 'writer'>, readonly P
     soundWords: LIBRARY_SOUND_WORDS,
     soundtrack: DEFAULT_SOUNDTRACK_WORDS,
   });
+  // The two sample paragraphs stand for every paragraph: their count is the chapter's.
+  const tagMessage = tag.userPrompt.replace(/\b2 paragraphs\b/g, `${slot('number')} paragraphs`);
   const fix = buildHoldingsFixerPrompt({
-    operation: 'fix-holdings', storyId: '', chapterId: '', chapterNumber: 1, model: '', language: 'en',
-    mainCharacter: slot('the main character'), direction: slot('the reader\'s direction, when there is one'), cases: [],
+    operation: 'fix-holdings', storyId: '', chapterId: '', chapterNumber: numberSlot('number'), model: '', language: slot('language'),
+    mainCharacter: slot('the main character'), direction: slot('the reader\'s direction, when there is one'),
+    cases: [{
+      id: slot('case id'),
+      problems: [slot('what the checks found')],
+      passage: { before: slot('the sentence before'), sentence: slot('the sentence'), after: slot('the sentence after') },
+      tags: slot('the tags the sentence carries'),
+      mentions: [{ id: slot('id'), sentence: slot('each sentence that names it') }],
+      record: [slot('what the record shows')],
+      answers: ['record', 'prose', 'fine', 'major'],
+    }],
   });
-  const look = buildLookDescriberPrompt({ operation: 'describe-looks', storyId: '', chapterId: '', chapterNumber: 1, model: '', language: 'en', subjects: [] });
+  const look = buildLookDescriberPrompt({
+    operation: 'describe-looks', storyId: '', chapterId: '', chapterNumber: numberSlot('number'), model: '', language: slot('language'),
+    subjects: [{
+      id: slot('id'), name: slot('name'), entity: 'character', event: 'appears',
+      passage: slot('the tagged sentence and the rest of its paragraph'),
+      declared: slot('the author\'s notes on them, when there are any'),
+    }],
+  });
   return {
     world: [
       { label: 'Who it is', text: WORLD_BLUEPRINT_SYSTEM_PROMPT },
@@ -299,15 +347,18 @@ export const WHOLE_PROMPTS: Record<Exclude<PipelineStepId, 'writer'>, readonly P
     ],
     tagger: [
       { label: 'Its instructions', text: tag.systemInstruction },
-      { label: 'The next message (changes every chapter)', text: tag.userPrompt },
+      { label: 'The next message (changes every chapter)', text: tagMessage },
+      answerShape(tag.responseJsonSchema),
     ],
     fixer: [
       { label: 'Its instructions', text: fix.systemInstruction },
-      { label: 'The next message (changes every chapter)', text: withSlot(fix.userPrompt, slot('each case, one by one: what the checks found, its sentences, their tags, what the record shows, and the answers it allows')) },
+      { label: 'The next message (changes every chapter)', text: fix.userPrompt },
+      answerShape(fix.responseJsonSchema),
     ],
     look: [
       { label: 'Its instructions', text: look.systemInstruction },
-      { label: 'The next message', text: withSlot(look.userPrompt, slot('the one entry: its names, and every passage the tags saved for it')) },
+      { label: 'The next message', text: look.userPrompt },
+      answerShape(look.responseJsonSchema),
     ],
   };
 })();

@@ -5,7 +5,8 @@ import { HARNESS_PROMPT_HEADINGS } from '../../../server/harness-generation/prom
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { OFFICIAL_STYLE_REFERENCES, installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
-import { EVERY_CHAPTER, PIPELINE, RETIRED_WRITER_INSTRUCTIONS, WHOLE_PROMPTS, WRITER_INSTRUCTIONS, fingerprintText, officialWriterSkills, writerSystemInstruction } from './writerInstructions';
+import { MISSION_REMINDER_OPENING } from '@seihouse/sen/harness-generation';
+import { EVERY_CHAPTER, PIPELINE, RETIRED_WRITER_INSTRUCTIONS, WHOLE_PROMPTS, WRITER_INSTRUCTIONS, fingerprintText, officialWriterSkills, writerPrompt, writerSystemInstruction } from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHistory';
 import { ReadableText, WriterInstructionsWorkspace } from './WriterInstructionsWorkspace';
 
@@ -44,6 +45,13 @@ describe('Writer Instructions', () => {
       const skills = officialWriterSkills(installed, style);
       // Author, Pacing, Continuity and the story's Style: the loadout a story made from its Story Seed starts with.
       expect(skills.map(skill => skill.slot)).toEqual(['author', 'pacing', 'continuity', 'style']);
+      expect(skills.at(-1)).toMatchObject({ id: OFFICIAL_STYLE_REFERENCES[style].id, version: OFFICIAL_STYLE_REFERENCES[style].version });
+      // The whole prompt carries the request's and the Mission Reminder's own fixed lines, and the answer's shape (review finding, CodeRabbit, 2026-11-05).
+      const [instructions, next, shape] = writerPrompt(skills);
+      expect(instructions.text).toBe(writerSystemInstruction(skills));
+      expect(next.text).toContain('Write the next chapter now. Return only the requested JSON object.');
+      expect(next.text).toContain(MISSION_REMINDER_OPENING);
+      expect(JSON.parse(shape.text)).toHaveProperty('properties.paragraphs');
       const whole = writerSystemInstruction(skills);
       const order = [
         HARNESS_PROMPT_HEADINGS.role, block('role').text,
@@ -65,6 +73,14 @@ describe('Writer Instructions', () => {
   });
 
   it('builds every other step\'s whole prompt with the code that sends it, every block of the step inside it', () => {
+    // Every message is there: who it is or its instructions, the next message, and the answer's shape where it has one.
+    expect(Object.fromEntries(Object.entries(WHOLE_PROMPTS).map(([id, messages]) => [id, messages.length]))).toEqual({ world: 2, tagger: 3, fixer: 3, look: 3 });
+    // A changing number or language is shown by its place, never as a fixed word (review finding, CodeRabbit, 2026-11-05).
+    for (const id of ['tagger', 'fixer', 'look'] as const) expect(WHOLE_PROMPTS[id][1].text).toMatch(/^CHAPTER ⟨number⟩ · Language: ⟨language⟩/);
+    expect(WHOLE_PROMPTS.tagger[1].text).toContain('⟨number⟩ paragraphs');
+    // Each fixer case and look subject is laid out as the model reads it.
+    expect(WHOLE_PROMPTS.fixer[1].text).toMatch(/CASE ⟨case id⟩ · answers: record, prose, fine, major\nProblems:/);
+    expect(WHOLE_PROMPTS.look[1].text).toMatch(/SUBJECT ⟨id⟩ · ⟨name⟩ · a character · first appearance\nPassage:/);
     for (const step of PIPELINE.filter(item => item.id !== 'writer')) {
       const whole = WHOLE_PROMPTS[step.id as Exclude<typeof step.id, 'writer'>].map(message => message.text).join('\n\n');
       for (const item of step.groups.flatMap(group => group.blocks)) {
@@ -99,6 +115,19 @@ describe('Writer Instructions', () => {
       const markup = renderToStaticMarkup(createElement(WriterInstructionsWorkspace));
       expect(markup).toContain('data-style="korean"');
       expect(markup).toMatch(/wi-stepper__value[^>]*>Korean</);
+    } finally {
+      if (saved) Object.defineProperty(globalThis, 'window', saved);
+      else Reflect.deleteProperty(globalThis, 'window');
+    }
+  });
+
+  it('opens on a broken address instead of breaking the page (review finding, CodeRabbit, 2026-11-05)', () => {
+    const saved = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { hash: '#writer/%E0%A4%A/japanese' } } });
+    try {
+      const markup = renderToStaticMarkup(createElement(WriterInstructionsWorkspace));
+      expect(markup).toContain('data-step="writer"');
+      expect(markup).toMatch(/wi-stepper__value[^>]*>Japanese</);
     } finally {
       if (saved) Object.defineProperty(globalThis, 'window', saved);
       else Reflect.deleteProperty(globalThis, 'window');

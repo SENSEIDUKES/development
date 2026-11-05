@@ -287,7 +287,7 @@ const daoTileStates = () => Array.from(container.querySelectorAll<HTMLButtonElem
 const settle = async () => { await act(async () => { await vi.advanceTimersByTimeAsync(50); }); };
 const openSearch = async () => {
   if (!document.querySelector('.workspace-search-results')) {
-    await click(document.querySelector('[aria-label="Search for stories"]')!);
+    await click(document.querySelector('[aria-label="Search For Worlds"]')!);
     await act(async () => { await vi.advanceTimersByTimeAsync(500); });
   }
 };

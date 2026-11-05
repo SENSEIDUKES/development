@@ -76,12 +76,22 @@
   display: flex; align-items: center; gap: 8px; min-width: 0;
 }
 
-/* Search: a field-style trigger that fills the row after the logo, with a thin
-   glowing underline. Below 6rem of room the words step aside for the glass alone. */
-.workspace-search { flex: 1 1 auto; min-width: 44px; container-type: inline-size; }
+/* Search: a field-style trigger with a thin glowing underline. It grows into the row
+   up to 28rem, then stops, so it never stretches across a large screen. On phones and
+   tablets it follows the logo and the Familiar and the music note stay by the
+   Portrait; on computers (from 1024px, where the Pathways sidebar appears) it moves
+   to the right, just before the Familiar, the music note and the Portrait. */
+.workspace-search {
+  flex: 1 1 auto; min-width: 44px; max-width: 28rem; margin-inline-end: auto;
+  container-type: inline-size;
+}
+@media (min-width: 1024px) {
+  .workspace-search { margin-inline: auto 0; }
+}
 .workspace-search-field {
+  --workspace-search-line: 42px; /* the field's 44px less its border */
   position: relative;
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center;
   width: 100%; height: 44px; padding-inline: 16px;
   border-radius: 9999px;
   background: rgba(0, 0, 0, 0.95);
@@ -103,10 +113,22 @@
 }
 .workspace-search-field:is(:hover, :focus-visible)::after { opacity: 1; }
 .workspace-search-field:focus-visible { outline-offset: 2px !important; }
-.workspace-search-emblem { flex: none; width: 20px; height: 20px; color: var(--color-sen-signal); }
-.workspace-search-placeholder { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-search-emblem {
+  flex: none; width: 20px; height: 20px; color: var(--color-sen-signal);
+  margin-block: calc((var(--workspace-search-line) - 20px) / 2);
+}
+/* The words are whole or not shown, never cut off or "…": the magnifier and the words
+   share one line that wraps, so words with no room beside the magnifier drop to a
+   second line the field hides. Any language's wording fits or steps aside by itself. */
+.workspace-search-line {
+  display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start;
+  column-gap: 10px; flex: 1 1 auto; min-width: 0;
+  height: var(--workspace-search-line); overflow: hidden;
+}
+.workspace-search-placeholder { flex: none; white-space: nowrap; line-height: var(--workspace-search-line); }
 @container (max-width: 6rem) {
   .workspace-search-field { justify-content: center; padding-inline: 0; }
+  .workspace-search-line { flex: none; justify-content: center; }
   .workspace-search-placeholder {
     position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   }
@@ -249,7 +271,8 @@ button.workspace-profile-row:disabled { opacity: 0.5; cursor: default; }
 .workspace-search-results small { display: block; margin-top: 4px; font-weight: 400; }
 @media (max-width: 639px) {
   .workspace-header-actions { gap: 4px; }
-  .workspace-search-field { padding-inline: 12px; gap: 8px; font-size: 14px; }
+  .workspace-search-field { padding-inline: 12px; font-size: 14px; }
+  .workspace-search-line { column-gap: 8px; }
   .workspace-header-context { max-width: 44px; flex: none; }
   .workspace-header-public-view { width: 44px; justify-content: center; }
   .workspace-header-public-view > span {

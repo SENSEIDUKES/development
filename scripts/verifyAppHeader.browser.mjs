@@ -42,7 +42,7 @@ async function checkHeader(frame, label) {
     };
   });
   const evidence = `${label}: ${JSON.stringify(geometry)}`;
-  assert.equal(geometry.controls[0]?.label, 'Search for stories', `Search is not first after the logo. ${evidence}`);
+  assert.equal(geometry.controls[0]?.label, 'Search For Worlds', `Search is not first after the logo. ${evidence}`);
   assert.equal(geometry.controls.at(-1)?.label, 'Profile and preferences', `The Profile Portrait is not last. ${evidence}`);
   assert(geometry.logo.right <= geometry.search.left + 0.5, `Search overlaps the logo. ${evidence}`);
   assert(geometry.search.width >= 44 && geometry.search.height >= 44, `Search loses its touch target. ${evidence}`);

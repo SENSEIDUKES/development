@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Chispas",
       "Sparks: story ideas": "Chispas: ideas para historias",
       "Close Sparks": "Cerrar Chispas",
-      "Search for stories": "Buscar historias",
+      "Search For Worlds": "Buscar mundos",
       "Profile and preferences": "Perfil y preferencias",
       "Sign in": "Iniciar sesión",
       "Not connected yet": "Aún no conectado",

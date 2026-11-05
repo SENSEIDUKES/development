@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Iskry",
       "Sparks: story ideas": "Iskry: pomysły na historie",
       "Close Sparks": "Zamknij Iskry",
-      "Search for stories": "Szukaj historii",
+      "Search For Worlds": "Szukaj światów",
       "Profile and preferences": "Profil i preferencje",
       "Sign in": "Zaloguj się",
       "Not connected yet": "Jeszcze niepołączono",

@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Kıvılcımlar",
       "Sparks: story ideas": "Kıvılcımlar: hikâye fikirleri",
       "Close Sparks": "Kıvılcımları kapat",
-      "Search for stories": "Hikâye ara",
+      "Search For Worlds": "Dünya ara",
       "Profile and preferences": "Profil ve tercihler",
       "Sign in": "Giriş yap",
       "Not connected yet": "Henüz bağlı değil",

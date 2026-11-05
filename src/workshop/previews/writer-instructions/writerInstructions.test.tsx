@@ -2,9 +2,13 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { HARNESS_PROMPT_HEADINGS } from '../../../server/harness-generation/prompt';
-import { EVERY_CHAPTER, PIPELINE, RETIRED_WRITER_INSTRUCTIONS, WRITER_INSTRUCTIONS, defaultSystemInstruction, fingerprintText } from './writerInstructions';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { OFFICIAL_STYLE_REFERENCES, installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
+import { MISSION_REMINDER_OPENING } from '@seihouse/sen/harness-generation';
+import { EVERY_CHAPTER, PIPELINE, RETIRED_WRITER_INSTRUCTIONS, WHOLE_PROMPTS, WRITER_INSTRUCTIONS, fingerprintText, officialWriterSkills, writerPrompt, writerSystemInstruction } from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHistory';
-import { ReadableText, WriterInstructionsWorkspace } from './WriterInstructionsWorkspace';
+import { ReadableText, WriterInstructionsWorkspace, restyledBlock } from './WriterInstructionsWorkspace';
 
 const block = (id: string) => EVERY_CHAPTER.find(item => item.id === id)!;
 
@@ -34,17 +38,55 @@ describe('Writer Instructions', () => {
     }
   });
 
-  it('shows exactly what a default story\'s writer reads, in the order it reads it, each block under its part\'s heading', () => {
-    const skill = (id: string, label: string) => `CAPA SKILL [${label}] — ${block(id).source}\n${block(id).text}`;
-    expect(defaultSystemInstruction()).toBe([
-      HARNESS_PROMPT_HEADINGS.role, block('role').text,
-      HARNESS_PROMPT_HEADINGS.writing, skill('author', 'Author'), block('writing-rules').text,
-      HARNESS_PROMPT_HEADINGS.reading, block('reading-guide').text,
-      HARNESS_PROMPT_HEADINGS.returning, block('return-format').text,
-      HARNESS_PROMPT_HEADINGS.hardRules, block('hard-rules').text,
-    ].join('\n\n'));
-    // Every block of every chapter belongs to one part, and the page lists them part by part.
+  it('shows what a Novel Expanded story\'s writer reads: the official CAPA skills from their packages, each under its part', async () => {
+    const installed = await installOfficialCapaSkillsInMemory(async definition =>
+      new Uint8Array(await readFile(path.resolve(__dirname, '../../../host/generation/capa/official-capa', definition.archiveFile))));
+    for (const style of ['chinese', 'japanese', 'korean'] as const) {
+      const skills = officialWriterSkills(installed, style);
+      // Author, Pacing, Continuity and the story's Style: the loadout a story made from its Story Seed starts with.
+      expect(skills.map(skill => skill.slot)).toEqual(['author', 'pacing', 'continuity', 'style']);
+      expect(skills.at(-1)).toMatchObject({ id: OFFICIAL_STYLE_REFERENCES[style].id, version: OFFICIAL_STYLE_REFERENCES[style].version });
+      // The whole prompt carries the request's and the Mission Reminder's own fixed lines, and the answer's shape (review finding, CodeRabbit, 2026-11-05).
+      const [instructions, next, shape] = writerPrompt(skills);
+      expect(instructions.text).toBe(writerSystemInstruction(skills));
+      expect(next.text).toContain('Write the next chapter now. Return only the requested JSON object.');
+      expect(next.text).toContain(MISSION_REMINDER_OPENING);
+      expect(JSON.parse(shape.text)).toHaveProperty('properties.paragraphs');
+      const whole = writerSystemInstruction(skills);
+      const order = [
+        HARNESS_PROMPT_HEADINGS.role, block('role').text,
+        HARNESS_PROMPT_HEADINGS.writing, ...skills.map(skill => skill.instructions!.trim()), block('writing-rules').text,
+        HARNESS_PROMPT_HEADINGS.reading, block('reading-guide').text,
+        HARNESS_PROMPT_HEADINGS.returning, block('return-format').text,
+        HARNESS_PROMPT_HEADINGS.hardRules, block('hard-rules').text,
+      ];
+      let at = 0;
+      for (const piece of order) {
+        const found = whole.indexOf(piece, at);
+        expect(found, piece.slice(0, 60)).toBeGreaterThanOrEqual(at);
+        at = found + piece.length;
+      }
+    }
+    // The SEN Author is no longer shown as every story's: Novel Expanded's stories read CAPA AUTHOR.
+    expect(EVERY_CHAPTER.some(item => item.id === 'author')).toBe(false);
     expect(EVERY_CHAPTER.every(item => item.part)).toBe(true);
+  });
+
+  it('builds every other step\'s whole prompt with the code that sends it, every block of the step inside it', () => {
+    // Every message is there: who it is or its instructions, the next message, and the answer's shape (the World builder's too: review finding, Codex, 2026-11-05).
+    expect(Object.fromEntries(Object.entries(WHOLE_PROMPTS).map(([id, messages]) => [id, messages.length]))).toEqual({ world: 3, tagger: 3, fixer: 3, look: 3 });
+    // A changing number or language is shown by its place, never as a fixed word (review finding, CodeRabbit, 2026-11-05).
+    for (const id of ['tagger', 'fixer', 'look'] as const) expect(WHOLE_PROMPTS[id][1].text).toMatch(/^CHAPTER ⟨number⟩ · Language: ⟨language⟩/);
+    expect(WHOLE_PROMPTS.tagger[1].text).toContain('⟨number⟩ paragraphs');
+    // Each fixer case and look subject is laid out as the model reads it.
+    expect(WHOLE_PROMPTS.fixer[1].text).toMatch(/CASE ⟨case id⟩ · answers: record, prose, fine, major\nProblems:/);
+    expect(WHOLE_PROMPTS.look[1].text).toMatch(/SUBJECT ⟨id⟩ · ⟨name⟩ · a character · first appearance\nPassage:/);
+    for (const step of PIPELINE.filter(item => item.id !== 'writer')) {
+      const whole = WHOLE_PROMPTS[step.id as Exclude<typeof step.id, 'writer'>].map(message => message.text).join('\n\n');
+      for (const item of step.groups.flatMap(group => group.blocks)) {
+        for (const line of item.text.split('\n').filter(Boolean)) expect(whole, `${step.id}: ${item.id}`).toContain(line);
+      }
+    }
   });
 
   it('puts every block in exactly one step of the pipeline', () => {
@@ -60,9 +102,44 @@ describe('Writer Instructions', () => {
     expect(markup).toContain('data-view="changes"');
     expect(markup).toContain('data-step="tagger"');
     for (const id of ['tagger', 'tag-rules', 'speakers', 'holdings', 'appearance', 'status', 'place', 'sound-cues', 'soundtrack']) expect(markup).toContain(`data-block="${id}"`);
-    expect(markup).toContain('data-instruction="tagger"');
+    expect(markup).toContain('data-block="all"');
+    expect(markup).toContain('data-instruction="all"');
+    expect(markup).toContain('All, as one prompt');
+    // How the answer's shape reaches Claude and MiniMax models is said on the page (review finding, CodeRabbit, 2026-11-05).
+    expect(markup).toContain('Return only the JSON answer, without Markdown fences.');
     expect(markup).toContain('Exactly as the model sees it');
-    expect(markup.replace(/<[^>]+>/g, '')).toMatch(/HARNESS · \d+ words · changed \d{4}-\d{2}-\d{2}/);
+  });
+
+  it('reopens the style a saved link to a Style skill was made in (review finding, Codex, 2026-11-05)', () => {
+    const saved = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { hash: `#writer/${encodeURIComponent(OFFICIAL_STYLE_REFERENCES.korean.id)}` } } });
+    try {
+      const markup = renderToStaticMarkup(createElement(WriterInstructionsWorkspace));
+      expect(markup).toContain('data-style="korean"');
+      expect(markup).toMatch(/wi-stepper__value[^>]*>Korean</);
+    } finally {
+      if (saved) Object.defineProperty(globalThis, 'window', saved);
+      else Reflect.deleteProperty(globalThis, 'window');
+    }
+  });
+
+  it('opens on a broken address instead of breaking the page (review finding, CodeRabbit, 2026-11-05)', () => {
+    const saved = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { hash: '#writer/%E0%A4%A/japanese' } } });
+    try {
+      const markup = renderToStaticMarkup(createElement(WriterInstructionsWorkspace));
+      expect(markup).toContain('data-step="writer"');
+      expect(markup).toMatch(/wi-stepper__value[^>]*>Japanese</);
+    } finally {
+      if (saved) Object.defineProperty(globalThis, 'window', saved);
+      else Reflect.deleteProperty(globalThis, 'window');
+    }
+  });
+
+  it('keeps an open Style skill open when the story style changes (review finding, Codex, 2026-11-05)', () => {
+    expect(restyledBlock(OFFICIAL_STYLE_REFERENCES.chinese.id, 'japanese')).toBe(OFFICIAL_STYLE_REFERENCES.japanese.id);
+    expect(restyledBlock('all', 'korean')).toBe('all');
+    expect(restyledBlock('role', 'korean')).toBe('role');
   });
 
   it('lays the text out for a person without losing a word of it', () => {

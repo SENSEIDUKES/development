@@ -1,5 +1,13 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
-import { PIPELINE, PIPELINE_CHECKS, RETIRED_WRITER_INSTRUCTIONS, WRITER_INSTRUCTIONS, countWords, type PipelineStep, type PipelineStepId, type WriterInstruction, type WriterInstructionId } from './writerInstructions';
+import { CAPA_SCHEMA, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import type { StoryStyle } from '@seihouse/sen/story-seed';
+import { OFFICIAL_STYLE_REFERENCES, installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
+import {
+  PIPELINE, PIPELINE_CHECKS, RETIRED_WRITER_INSTRUCTIONS, WHOLE_PROMPTS, WRITER_EXAMPLE_CHAPTER, WRITER_INSTRUCTIONS, countWords,
+  officialWriterSkills, writerPrompt,
+  type PipelineStep, type PipelineStepId, type PromptMessage, type WriterInstruction, type WriterInstructionId,
+} from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, type WriterInstructionsChange } from './writerInstructionsHistory';
 import './writer-instructions.css';
 
@@ -9,16 +17,47 @@ const changesTo = (id: WriterInstructionId) => WRITER_INSTRUCTIONS_HISTORY.filte
 
 type View = PipelineStepId | 'changes';
 const VIEWS: readonly View[] = [...PIPELINE.map(step => step.id), 'changes'];
-const firstBlock = (step: PipelineStep) => step.groups[0].blocks[0].id;
 
-/** The page's place, kept in the address so a link opens the same step and block. */
-const readHash = (): { view: View; block?: WriterInstructionId } => {
-  const [view, block] = (typeof window === 'undefined' ? '' : window.location.hash.slice(1)).split('/');
+const STYLES: ReadonlyArray<[StoryStyle, string]> = [['chinese', 'Chinese'], ['japanese', 'Japanese'], ['korean', 'Korean']];
+const STYLE_IDS = STYLES.map(([id]) => id);
+
+/** The page's place, kept in the address so a link opens the same step, block and style. */
+const readHash = (): { view: View; block?: string; style?: StoryStyle } => {
+  const [view, block, style] = (typeof window === 'undefined' ? '' : window.location.hash.slice(1)).split('/');
   if (!VIEWS.includes(view as View)) return { view: 'tagger' };
-  const step = PIPELINE.find(item => item.id === view);
-  const known = step && block && step.groups.some(group => group.blocks.some(item => item.id === block));
-  return { view: view as View, ...(known ? { block: block as WriterInstructionId } : {}) };
+  // A hand-edited or cut-off address must never break the page (review finding, CodeRabbit, 2026-11-05).
+  let decoded: string | undefined;
+  try { decoded = block ? decodeURIComponent(block) : undefined; } catch { decoded = undefined; }
+  return {
+    view: view as View,
+    ...(decoded && view !== 'changes' ? { block: decoded } : {}),
+    ...(STYLE_IDS.includes(style as StoryStyle) ? { style: style as StoryStyle } : {}),
+  };
 };
+
+/** A selected block after the story style changes: an official Style skill becomes the new style's; any other block stays. */
+export const restyledBlock = (block: string, style: StoryStyle) =>
+  STYLES.some(([id]) => OFFICIAL_STYLE_REFERENCES[id].id === block) ? OFFICIAL_STYLE_REFERENCES[style].id : block;
+
+/** The chip that shows a step's whole prompt, as one. */
+const ALL = 'all';
+
+/** One block on the page: the HARNESS's own, or a CAPA skill read from its package. */
+type ShownBlock = Omit<WriterInstruction, 'id'> & { id: string };
+
+const slotLabel = (skill: HarnessSkillManifest) => CAPA_SCHEMA.find(slot => slot.id === skill.slot)?.label ?? skill.slot;
+
+/** A CAPA skill as the page shows it: its words, exactly as its package holds them. */
+const skillBlock = (skill: HarnessSkillManifest): ShownBlock => ({
+  id: skill.id,
+  title: slotLabel(skill),
+  source: `${skill.name.replace(/ · .*$/, '')} v${skill.version}`,
+  part: 'writing',
+  when: skill.slot === 'style'
+    ? 'Every chapter of a story whose Story Seed chose this style, under How to write. Pick the style above. Its words are fixed by its package: a change to them is a new package version.'
+    : `Every story made in Novel Expanded starts with this ${slotLabel(skill)} skill, under How to write. Its words are fixed by its package: a change to them is a new package version.`,
+  text: skill.instructions?.trim() ?? '',
+});
 
 // ─── The text, made readable without changing a word ──────────────────────
 
@@ -83,9 +122,9 @@ function ChangeSummary({ change }: { change: WriterInstructionsChange }) {
   );
 }
 
-function InstructionBlock({ block }: { block: WriterInstruction }) {
+function InstructionBlock({ block }: { block: ShownBlock }) {
   const [raw, setRaw] = useState(false);
-  const changes = changesTo(block.id);
+  const changes = changesTo(block.id as WriterInstructionId);
   return (
     <article className="wi-block" data-instruction={block.id}>
       <header className="wi-block__header">
@@ -111,11 +150,54 @@ function InstructionBlock({ block }: { block: WriterInstruction }) {
   );
 }
 
+/** A step's whole prompt, as one: every message the model is sent, in order, as the code builds it. */
+function WholePrompt({ messages, note }: { messages: readonly PromptMessage[]; note: string }) {
+  const [raw, setRaw] = useState(true);
+  const [copy, setCopy] = useState<'idle' | 'copied' | 'failed'>('idle');
+  const words = messages.reduce((total, message) => total + countWords(message.text), 0);
+  // A copy that cannot happen says so, never fails silently (review finding, CodeRabbit, 2026-11-05).
+  const copyAll = () => {
+    const text = messages.map(message => `${message.label.toUpperCase()}\n\n${message.text}`).join('\n\n\n');
+    if (!navigator.clipboard?.writeText) { setCopy('failed'); return; }
+    navigator.clipboard.writeText(text).then(() => setCopy('copied'), () => setCopy('failed'));
+  };
+  return (
+    <article className="wi-block" data-instruction={ALL}>
+      <header className="wi-block__header">
+        <h3>All, as one prompt</h3>
+        <p className="wi-block__meta">{words.toLocaleString('en')} words · built by the same code that sends it</p>
+        <p className="wi-block__when">{note}</p>
+      </header>
+      <div className="wi-block__view" role="group" aria-label="How to show the text">
+        <button type="button" aria-pressed={raw} onClick={() => setRaw(true)}>Exactly as the model sees it</button>
+        <button type="button" aria-pressed={!raw} onClick={() => setRaw(false)}>Easy to read</button>
+        <button type="button" onClick={copyAll}>{copy === 'copied' ? 'Copied' : copy === 'failed' ? 'Copy failed' : 'Copy all'}</button>
+      </div>
+      {messages.map(message => (
+        <section key={message.label} className="wi-message">
+          <h4 className="wi-message__label">{message.label}</h4>
+          {message.note && <p className="wi-step__note">{message.note}</p>}
+          {raw ? <pre className="wi-raw">{message.text}</pre> : <ReadableText text={message.text} />}
+        </section>
+      ))}
+    </article>
+  );
+}
+
 // ─── One step of the pipeline ────────────────────────────────────────────
 
-function StepView({ step, block, onBlock }: { step: PipelineStep; block: WriterInstructionId; onBlock: (id: WriterInstructionId) => void }) {
-  const selected = step.groups.flatMap(group => group.blocks).find(item => item.id === block) ?? step.groups[0].blocks[0];
-  const single = step.groups.length === 1 && step.groups[0].blocks.length === 1;
+interface StepGroups { label: string; blocks: readonly ShownBlock[] }
+
+function StepView({ step, groups, whole, block, onBlock, before }: {
+  step: PipelineStep;
+  groups: readonly StepGroups[];
+  whole: { messages: readonly PromptMessage[]; note: string } | undefined;
+  block: string;
+  onBlock: (id: string) => void;
+  before?: ReactNode;
+}) {
+  const all = groups.flatMap(group => group.blocks);
+  const selected = block === ALL && whole ? undefined : all.find(item => item.id === block) ?? (whole ? undefined : all[0]);
   return (
     <section className="wi-step" aria-labelledby="wi-step-title" data-step={step.id}>
       <h2 id="wi-step-title">{step.name} <span className="wi-step__runs">{step.runs}</span></h2>
@@ -130,19 +212,23 @@ function StepView({ step, block, onBlock }: { step: PipelineStep; block: WriterI
           <ul>{step.gives.map(item => <li key={item}>{item}</li>)}</ul>
         </div>
       </div>
-      {!single && step.groups.map(group => (
+      {before}
+      {groups.map((group, groupIndex) => (
         <div key={group.label} className="wi-picker">
           <h3>{group.label}</h3>
           <div className="wi-chips" role="tablist" aria-label={group.label}>
+            {groupIndex === 0 && whole && (
+              <button type="button" role="tab" className="wi-chips__all" aria-selected={!selected} onClick={() => onBlock(ALL)} data-block={ALL}>All, as one prompt</button>
+            )}
             {group.blocks.map((item, index) => (
-              <button key={item.id} type="button" role="tab" aria-selected={item.id === selected.id} onClick={() => onBlock(item.id)} data-block={item.id}>
-                {step.groups.length === 1 || group === step.groups[0] ? <span className="wi-chips__order">{index + 1}</span> : null}{item.title}
+              <button key={item.id} type="button" role="tab" aria-selected={item.id === selected?.id} onClick={() => onBlock(item.id)} data-block={item.id}>
+                {groupIndex === 0 ? <span className="wi-chips__order">{index + 1}</span> : null}{item.title}
               </button>
             ))}
           </div>
         </div>
       ))}
-      <InstructionBlock key={selected.id} block={selected} />
+      {selected ? <InstructionBlock key={selected.id} block={selected} /> : whole && <WholePrompt key={whole.note} messages={whole.messages} note={whole.note} />}
     </section>
   );
 }
@@ -151,7 +237,7 @@ function ChangesView() {
   return (
     <section className="wi-step" aria-labelledby="wi-changes-title" data-step="changes">
       <h2 id="wi-changes-title">Every change <span className="wi-step__runs">newest first</span></h2>
-      <p className="wi-step__job">Any change to what a model reads must be written here, with its date, or the build fails.</p>
+      <p className="wi-step__job">Any change to the HARNESS&rsquo;s own words must be written here, with its date, or the build fails. The official CAPA skills are not listed here: their words are fixed by their package, so a change to them is a new package version, shown beside each skill.</p>
       <ol className="wi-changes">
         {WRITER_INSTRUCTIONS_HISTORY.map(change => (
           <li key={`${change.date}:${change.summary.slice(0, 40)}`} className="wi-change">
@@ -179,23 +265,83 @@ function ChangesView() {
  */
 export function WriterInstructionsWorkspace() {
   const [view, setView] = useState<View>(() => readHash().view);
-  const [blocks, setBlocks] = useState<Partial<Record<PipelineStepId, WriterInstructionId>>>(() => {
+  const [blocks, setBlocks] = useState<Partial<Record<PipelineStepId, string>>>(() => {
     const start = readHash();
     return start.block && start.view !== 'changes' ? { [start.view]: start.block } : {};
   });
+  const [installed, setInstalled] = useState<readonly HarnessSkillManifest[] | 'loading' | 'failed'>('loading');
+  // A saved link to a Style skill reopens that style (review finding, Codex, 2026-11-05).
+  const [style, setStyle] = useState<StoryStyle>(() => {
+    const start = readHash();
+    return start.style ?? STYLES.find(([id]) => OFFICIAL_STYLE_REFERENCES[id].id === start.block)?.[0] ?? 'chinese';
+  });
+  useEffect(() => {
+    let live = true;
+    installOfficialCapaSkillsInMemory().then(skills => { if (live) setInstalled(skills); }, () => { if (live) setInstalled('failed'); });
+    return () => { live = false; };
+  }, []);
+  const skills = Array.isArray(installed) ? officialWriterSkills(installed, style) : [];
   const step = PIPELINE.find(item => item.id === view);
-  const block = step ? blocks[step.id] ?? firstBlock(step) : undefined;
+  const groups: StepGroups[] = !step ? [] : step.id !== 'writer' ? step.groups.map(group => ({ ...group })) : step.groups.map((group, index) => index > 0 ? { ...group } : {
+    ...group,
+    // The official CAPA skills sit under How to write, before the HARNESS writing rules, as the writer reads them.
+    blocks: group.blocks.flatMap(item => item.id === 'writing-rules' ? [...skills.map(skillBlock), item] : [item]),
+  });
+  const whole = !step ? undefined : step.id === 'writer'
+    ? (skills.length ? {
+      messages: writerPrompt(skills),
+      note: `What the writer of a Novel Expanded story in ${STYLES.find(([id]) => id === style)![1]} style reads for Chapter ${WRITER_EXAMPLE_CHAPTER}, in English, with no Fate Survival, Reading Mode or translation, and no direction from the reader. The Story Information is the story's own, so only its place is shown.`,
+    } : undefined)
+    : {
+      messages: WHOLE_PROMPTS[step.id],
+      note: step.id === 'world'
+        ? 'The whole request, with an empty Story Seed where yours goes.'
+        : step.id === 'tagger'
+          ? 'Everything the tagger is sent for one chapter, with the story\'s default sound words, music and atmospheres. The parts that change every chapter show their place.'
+          : step.id === 'fixer'
+            ? 'Everything it is sent, with one case showing every part a case can carry (a real case carries only the parts it needs). The parts that change every time show their place.'
+            : 'Everything it is sent. The parts that change every time show their place.',
+    };
+  const block = step ? blocks[step.id] ?? (whole ? ALL : groups[0]?.blocks[0]?.id) : undefined;
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.history.replaceState(null, '', `#${view}${block ? `/${block}` : ''}`);
-  }, [view, block]);
+    window.history.replaceState(null, '', `#${view}${block ? `/${encodeURIComponent(block)}` : ''}${view === 'writer' ? `/${style}` : ''}`);
+  }, [view, block, style]);
+  // Choosing one of three is a ◀ value ▶ stepper, with arrow keys, as AGENTS.md asks (review finding, Codex, 2026-11-05).
+  const styleIndex = STYLES.findIndex(([id]) => id === style);
+  const stepStyle = (by: 1 | -1) => {
+    const next = STYLES[(styleIndex + by + STYLES.length) % STYLES.length][0];
+    setStyle(next);
+    // An open Style skill stays open, now in the new style (review finding, Codex, 2026-11-05).
+    setBlocks(current => current.writer ? { ...current, writer: restyledBlock(current.writer, next) } : current);
+  };
+  const styleRow = step?.id === 'writer' && (
+    <div className="wi-picker">
+      <div className="wi-setting">
+        <h3 id="wi-style-label">Story style</h3>
+        <div
+          className="wi-stepper" role="group" aria-labelledby="wi-style-label" tabIndex={0} data-style={style}
+          onKeyDown={event => {
+            if (event.key === 'ArrowLeft') { event.preventDefault(); stepStyle(-1); }
+            if (event.key === 'ArrowRight') { event.preventDefault(); stepStyle(1); }
+          }}
+        >
+          <button type="button" aria-label="Previous style" onClick={() => stepStyle(-1)}><ChevronLeft size={18} aria-hidden /></button>
+          <span className="wi-stepper__value" aria-live="polite">{STYLES[styleIndex][1]}</span>
+          <button type="button" aria-label="Next style" onClick={() => stepStyle(1)}><ChevronRight size={18} aria-hidden /></button>
+        </div>
+      </div>
+      {installed === 'loading' && <p className="wi-step__note">Loading the official skills from their packages…</p>}
+      {installed === 'failed' && <p className="wi-step__note">The official skills could not be loaded, so the writer's CAPA skills are not shown.</p>}
+    </div>
+  );
 
   return (
     <main className="writer-instructions">
       <header>
         <h1>What the Models Read</h1>
         <p className="writer-instructions__intro">
-          Every word each model in a story is told, straight from the live code. Pick a step to see what it does, what it is given, and its instructions.
+          Every word each model in a story is told, straight from the live code. Pick a step to see what it does, what it is given, and its instructions, one by one or all as one prompt.
         </p>
         <button type="button" className="wi-history-link" aria-current={view === 'changes' ? 'page' : undefined} onClick={() => setView('changes')} data-view="changes">
           Every change, with its date
@@ -220,7 +366,9 @@ export function WriterInstructionsWorkspace() {
         ))}
       </nav>
 
-      {step && block ? <StepView step={step} block={block} onBlock={id => setBlocks(current => ({ ...current, [step.id]: id }))} /> : <ChangesView />}
+      {step && block
+        ? <StepView step={step} groups={groups} whole={whole} block={block} before={styleRow} onBlock={id => setBlocks(current => ({ ...current, [step.id]: id }))} />
+        : <ChangesView />}
     </main>
   );
 }

@@ -1,11 +1,19 @@
-import { ARC_LENGTH, MAX_ARC_GOALS, MAX_ARC_LOOKAHEAD, STORY_LENGTH_ARCS } from '@seihouse/sen/arc-goals';
+import { ARC_LENGTH, ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ARC_GOALS, MAX_ARC_LOOKAHEAD, STORY_LENGTH_ARCS } from '@seihouse/sen/arc-goals';
 import {
   SEED_ABILITY_LIMIT,
+  SEED_ABILITY_SLOT_FIELDS,
   SEED_CHARACTER_LIMIT,
+  SEED_CHARACTER_SLOT_FIELDS,
   SEED_FACTION_LIMIT,
+  SEED_FACTION_SLOT_FIELDS,
+  SEED_MAIN_CHARACTER_SLOT_FIELDS,
   SEED_PLACE_LIMIT,
+  SEED_PLACE_SLOT_FIELDS,
   SEED_SPECIES_LIMIT,
+  SEED_SPECIES_SLOT_FIELDS,
   SEED_THING_LIMIT,
+  SEED_THING_SLOT_FIELDS,
+  SEED_WORLD_RULES_FIELDS,
   WORLD_FACT_DETAILS,
   type StorySeedInput,
 } from '@seihouse/sen/story-seed';
@@ -126,3 +134,93 @@ ${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
 ${WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS}
 
 Return the JSON object only.`;
+
+const textSlots = (fields: readonly string[]) => Object.fromEntries(fields.map(field => [field, { type: "string" }]));
+
+/** One Chapter 0 card kind's list: a name and every slot the Codex card holds. */
+const cardList = (fields: readonly string[], limit: number, minItems = 0) => ({
+  type: "array", minItems, maxItems: limit, items: {
+    type: "object", additionalProperties: false, required: ["name", ...fields],
+    properties: { name: { type: "string", minLength: 1 }, ...textSlots(fields) },
+  },
+});
+
+/**
+ * The Blueprint response schema. It has a place for every Story Seed slot
+ * (filled only where the creator left one blank) and it plans Arc 1 only (`arcOne`: wording and
+ * chapters; the identities are assigned on the server) and a hidden look-ahead
+ * for the next arcs. `exactArcs` is the Seed's Story Length, when the creator
+ * chose one; without it the model picks a realistic length.
+ */
+export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "title",
+    "logline",
+    "worldOverview",
+    "startingLocation",
+    "societyStructure",
+    "powerSystemOutline",
+    "mainCharacter",
+    "characters",
+    "factions",
+    // The world at Chapter 0: a card kind left out of the answer would leave
+    // the world short of it, so every one is asked for.
+    "things",
+    "startingAbilities",
+    "places",
+    "species",
+    "abilities",
+    "powerSystem",
+    "mainOpposition",
+    "firstArcPromise",
+    "arcOne",
+    "arcLookahead",
+    "tropeRules",
+    "styleBible",
+    "destinedEnding",
+    "estimatedArcs",
+  ],
+  properties: {
+    title: { type: "string", minLength: 1 },
+    logline: { type: "string", minLength: 1 },
+    worldOverview: { type: "string", minLength: 1 },
+    startingLocation: { type: "string", minLength: 1 },
+    societyStructure: { type: "string", minLength: 1 },
+    powerSystemOutline: { type: "string", minLength: 1 },
+    mainCharacter: {
+      type: "object",
+      additionalProperties: false,
+      required: ["name", "age", "personality", "appearance", "backgroundProfile", ...SEED_MAIN_CHARACTER_SLOT_FIELDS],
+      properties: {
+        name: { type: "string", minLength: 1 },
+        age: { type: "string", minLength: 1 },
+        personality: { type: "string", minLength: 1 },
+        appearance: { type: "string", minLength: 1 },
+        backgroundProfile: { type: "string", minLength: 1 },
+        ...textSlots(SEED_MAIN_CHARACTER_SLOT_FIELDS),
+      },
+    },
+    // Every Chapter 0 card kind: the creator's own by name first, then supporting ones.
+    characters: cardList(SEED_CHARACTER_SLOT_FIELDS, SEED_CHARACTER_LIMIT, 1),
+    factions: cardList(SEED_FACTION_SLOT_FIELDS, SEED_FACTION_LIMIT, 1),
+    things: cardList(SEED_THING_SLOT_FIELDS, SEED_THING_LIMIT),
+    startingAbilities: cardList(SEED_ABILITY_SLOT_FIELDS, SEED_ABILITY_LIMIT),
+    places: cardList(SEED_PLACE_SLOT_FIELDS, SEED_PLACE_LIMIT, 1),
+    species: cardList(SEED_SPECIES_SLOT_FIELDS, SEED_SPECIES_LIMIT),
+    abilities: { type: "object", additionalProperties: false, required: ["startingPowerConcept", "uniquePath"], properties: textSlots(["startingPowerConcept", "uniquePath"]) },
+    // The World rules sheet, which the Seed keeps in its power-system family.
+    powerSystem: { type: "object", additionalProperties: false, required: SEED_WORLD_RULES_FIELDS, properties: textSlots(SEED_WORLD_RULES_FIELDS) },
+    mainOpposition: { type: "string" },
+    arcOne: ARC_PLAN_DRAFT_SCHEMA,
+    arcLookahead: ARC_LOOKAHEAD_SCHEMA,
+    firstArcPromise: { type: "string", minLength: 1 },
+    tropeRules: { type: "string", minLength: 1 },
+    styleBible: { type: "string", minLength: 1 },
+    destinedEnding: { type: "string", minLength: 1 },
+    estimatedArcs: { type: "integer", minimum: exactArcs ?? STORY_LENGTH_ARCS.min, maximum: exactArcs ?? STORY_LENGTH_ARCS.max },
+  },
+}) as const;
+
+export const WORLD_BLUEPRINT_RESPONSE_SCHEMA = worldBlueprintResponseSchema();

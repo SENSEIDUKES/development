@@ -94,23 +94,37 @@ const DOCS_QUESTION_WORDS = new Set([
   'what', 'when', 'where', 'which', 'who', 'why', 'will', 'with', 'work', 'works', 'would', 'you', 'your',
 ]);
 
+/** Anything that is not a letter or a number separates two words. */
+const DOCS_WORD_SPLIT = /[^\p{L}\p{N}]+/u;
+
+/**
+ * A word reduced so a plural meets its singular: a reader asking about "arc
+ * goals" means the Arc Goal entry. Short words are left alone, so "qi" is not
+ * mistaken for a plural.
+ */
+const docsStem = (word: string): string => (word.length > 3 && word.endsWith('s') ? word.slice(0, -1) : word);
+
 /**
  * A question reduced to the words that carry its meaning: punctuation dropped,
  * so "Story Seed?" and "Story Seed" ask the same thing. If a question is
  * nothing but question words, they are kept, because they are all it has.
  */
 function docsQueryWords(query: string): string[] {
-  const words = query.toLocaleLowerCase().replace(/[^\p{L}\p{N}\s]+/gu, ' ').split(/\s+/).filter(Boolean);
+  const words = query.toLocaleLowerCase().split(DOCS_WORD_SPLIT).filter(Boolean);
   const meaningful = words.filter(word => !DOCS_QUESTION_WORDS.has(word));
-  return meaningful.length ? meaningful : words;
+  return (meaningful.length ? meaningful : words).map(docsStem);
 }
 
 /**
- * Whether a question's word appears in some text, counting a plural as its
- * singular: a reader asking about "arc goals" means the Arc Goal entry.
+ * The whole words of some text, each reduced the same way a question's are.
+ *
+ * Matching whole words and not fragments is what keeps a lookup honest: on a
+ * substring, "ad" is found inside "Roadmap" and an unanswerable question comes
+ * back looking answered, which is worse than finding nothing because the
+ * companion then speaks as though the docs covered it.
  */
-function docsWordIn(text: string, word: string): boolean {
-  return text.includes(word) || (word.length > 3 && word.endsWith('s') && text.includes(word.slice(0, -1)));
+function docsWords(text: string): Set<string> {
+  return new Set(text.toLocaleLowerCase().split(DOCS_WORD_SPLIT).filter(Boolean).map(docsStem));
 }
 
 /**
@@ -129,10 +143,10 @@ export function lookUpDocs(catalog: DocsCatalog, query: string, limit = DOCS_LOO
   const scored = catalog.flatMap(category => category.topics
     .filter(docsTopicExplained)
     .map(topic => {
-      const name = [topic.title, ...topic.aliases].join(' ').toLocaleLowerCase();
-      const text = [name, topic.definition, topic.howItFits, category.title].filter(Boolean).join(' ').toLocaleLowerCase();
-      const inText = words.filter(word => docsWordIn(text, word)).length;
-      const inName = words.filter(word => docsWordIn(name, word)).length;
+      const name = docsWords([topic.title, ...topic.aliases].join(' '));
+      const text = docsWords([topic.title, ...topic.aliases, topic.definition, topic.howItFits, category.title].filter(Boolean).join(' '));
+      const inText = words.filter(word => text.has(word)).length;
+      const inName = words.filter(word => name.has(word)).length;
       return { topic, category: category.title, all: inText === words.length, score: inText ? inText + inName * 3 : 0 };
     }));
   // An entry that answers the whole question crowds out one that caught a single

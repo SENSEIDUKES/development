@@ -75,6 +75,18 @@ describe('Docs Knowledge', () => {
     expect(lookUpDocs(catalog, '??!')).toEqual([]);
   });
 
+  it('matches whole words, so a fragment inside another word never answers a question', () => {
+    // "art" sits inside "starting" and "ad" inside "Roadmap". On a substring match an
+    // unanswerable question comes back looking answered, which is worse than finding
+    // nothing: the companion would speak as though the docs covered it.
+    expect(lookUpDocs(catalog, 'what is art')).toEqual([]);
+    expect(lookUpDocs(catalog, 'What is an ad?')).toEqual([]);
+    expect(lookUpDocs(catalog, 'tart')).toEqual([]);
+    // The whole word still reaches its entry, punctuation and all.
+    expect(lookUpDocs(catalog, 'arc')[0].topic.id).toBe('arc-goal');
+    expect(lookUpDocs(catalog, 'what is QI?')[0].topic.id).toBe('qi');
+  });
+
   it('searches the whole catalog for a reader typing on the docs page, explained or not', () => {
     expect(searchDocs(catalog, 'hard pin').map(topic => topic.id)).toEqual(['hard-pin']);
     expect(searchDocs(catalog, 'not-a-real-term')).toEqual([]);

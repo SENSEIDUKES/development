@@ -62,11 +62,65 @@ integration under [DEVELOPMENT_RECONSTRUCTION.md](./DEVELOPMENT_RECONSTRUCTION.m
 ## Run locally
 
 ```bash
-npm install
+npm ci
 npm run dev -- --host 0.0.0.0
 ```
 
+Use `npm ci` for initial setup and after pulling dependency or vendored-package
+updates, matching CI. It recreates `node_modules` from the lockfile. `npm install`
+can leave an old UI build installed when a vendored tarball changes without a
+version change. `npm run check:ui-artifacts` detects installed UI files that do
+not match the checked-in tarballs; rerun `npm ci` if it reports a mismatch.
+
 Open the local or forwarded Vite preview, usually on port `5173`.
+
+## Verification and CI
+
+`npm run verify` is the local non-browser suite: type checks, unit tests,
+ownership, package boundaries, the app's import graph, and package
+builds/consumer smoke tests. **It does not run browser checks or build the
+production app.** The full automated check in
+[CI](./.github/workflows/ci.yml) includes those additional checks.
+
+To run all CI checks locally, use Node.js 22 (the CI version), install with
+`npm ci`, then:
+
+```bash
+npm run verify
+npx playwright install --with-deps chromium webkit
+```
+
+In one terminal, start the dev server and wait until it is ready on port `5173`:
+
+```bash
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
+```
+
+In a second terminal, run the same dev-server browser checks as CI (Highlight
+Engine rendering, selection, and the NovelExpanded app walk):
+
+```bash
+npm run test:browser
+```
+
+Stop the dev server with Ctrl+C. In that terminal, build the app and serve the
+production output, waiting until the preview is ready on port `4173`:
+
+```bash
+npm run build
+npm run preview -- --host 127.0.0.1 --port 4173 --strictPort
+```
+
+In the second terminal, check the production header in Chromium and WebKit:
+
+```bash
+npm run test:browser:app-header
+```
+
+Stop the preview with Ctrl+C when finished. Browser evidence is written under
+`output/playwright/highlight-engine/` and `output/playwright/novel-expanded/`.
+Report the checks actually run, including any skipped or blocked checks; a
+passing `verify` alone is not full CI verification.
 
 ## Current workshop entries
 
@@ -129,3 +183,8 @@ and never edited or refreshed. New features get `development/`, genuinely shared
 only when needed, one FeatureWorkspace preview, one manifest entry pointing at this
 repository and a README with a short dated history. Never change another repository
 unless the owner explicitly asks.
+
+## History
+
+- 2026-11-05: Standardized setup on `npm ci` and documented the local suite's
+  scope plus the browser and production app checks required for full CI coverage.

@@ -41,9 +41,7 @@ jobs:
             if curl --fail --silent http://localhost:5173/ > /dev/null; then break; fi
             sleep 1
           done
-          node scripts/verifyHighlightEngine.mjs
-          node scripts/verifyHighlightSelection.mjs
-          node scripts/verifyNovelExpandedApp.browser.mjs
+          npm run test:browser
 
       - name: Build app and verify the production header
         run: |
@@ -55,7 +53,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:4173/app/ > /dev/null; then break; fi
             sleep 1
           done
-          node scripts/verifyAppHeader.browser.mjs
+          npm run test:browser:app-header
 
       - name: Run test suite
         run: npm test

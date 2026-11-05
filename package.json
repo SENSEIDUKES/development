@@ -18,6 +18,8 @@
     "test:package": "npm run check:ui-artifacts && npm run check:package-boundaries && npm run build:package && node scripts/smokePackage.mjs sen && node scripts/smokePackage.mjs library",
     "typecheck": "tsc -b && tsc -p tsconfig.reference.json",
     "test": "vitest run",
+    "test:browser": "node scripts/verifyHighlightEngine.mjs && node scripts/verifyHighlightSelection.mjs && node scripts/verifyNovelExpandedApp.browser.mjs",
+    "test:browser:app-header": "node scripts/verifyAppHeader.browser.mjs",
     "test:ownership": "vitest run scripts/ownershipGraph.test.ts",
     "test:chapter-manifestation": "vitest run src/components/chapter-manifestation",
     "test:harness-generation": "vitest run src/components/harness-generation src/server/harness-generation src/workshop/previews/harness-generation",

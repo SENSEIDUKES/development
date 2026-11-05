@@ -88,8 +88,9 @@ current product names in NOVEL_EXPANDED.md's Names table.
 
 ## Reader Codex
 
-The Codex is the story's world as its record knows it, every fact linked to its
-passage. Verify its currently supported categories in the implementation and
+The Codex is the story's world as its record knows it. Facts reached in a chapter
+link to their passage; opening-world facts may have no passage. Verify its
+currently supported categories in the implementation and
 NOVEL_EXPANDED.md. **One record, many views:** each category is one record, built the same way. Power rankings, Karma and other
 Codex mechanics are ways of displaying that record, never separate stores fed
 separately. The Codex shows only what the record holds today and grows as each step of

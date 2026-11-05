@@ -107,8 +107,9 @@ prose and returns notes naming exact words; the HARNESS places those notes as
 tags without changing the prose (see its implementation owner above). Tags say
 what happened; the saved records tell the next chapter what remains true.
 The Holdings fixer runs after commit only when checks flag a case requiring
-judgment. Full looks are written on demand from an entry's passages; neither
-operation rewrites the chapter.
+judgment; under the `records-and-sentences` policy it may correct a sentence
+in place. Full looks are written on demand from an entry's passages and stored
+on its Codex entry.
 
 - **Sound tag** — `[[sound: Sound Word | Words | Energy]]`: wraps the words where
   a sound plays and names it; the words stay in the prose. (The numbered mark
@@ -253,11 +254,12 @@ holdings are no worse. Each new information tag brings its own rules here.
 looks. The tag words: `appears` (`[[appears: Name | character]]` for a person
 or named creature, `[[appears: Thing | thing]]` for a named object, the moment
 it first steps onto the page) and `look` (`[[look: Name | what changed]]`, a
-change of look: a scar, new clothes, a breakthrough, an injury). Taught by SEN
-Appearance (`shared/appearanceSkill.ts`, the Appearance slot, on every
-chapter), which tells the writer to keep every look the Appeared section gives
-until a look tag changes it. Places, factions and sects wait for their own
-tags. An appearance (`AppearanceAttachment`, `src/narrative/appearances.ts`)
+change of look: a scar, new clothes, a breakthrough, an injury). The Chapter
+Tagger reads the appearance teaching (`SEN_APPEARANCE_INSTRUCTIONS` in
+`shared/appearanceSkill.ts`) and returns tag notes. Appearance is not a CAPA
+writer slot; the writer reads the existing looks in Appeared. A place appears
+with `[[appears: Place | place]]` or its first `[[place: Name | Place]]` tag.
+Factions and sects await their own tags. An appearance (`AppearanceAttachment`, `src/narrative/appearances.ts`)
 is a manuscript span attachment on its sentence; its name resolves to the
 same Codex entry holdings use. Who has appeared is never stored:
 `deriveAppearances` (`shared/appearances.ts`) works it out again from each

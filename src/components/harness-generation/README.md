@@ -1,10 +1,6 @@
 # Harness Generation
 
-Where `reference/` exists, it holds the old production version, kept as reference
-material for the remake; it is not edited or refreshed. New features do not get a
-reference folder. Old systems stay until each is remade on the new path; never
-reconnect them as they are or re-sync with the old production app. The destination
-is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-rule).
 
 > **Before changing Harness Generation behavior:** read
 > [ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md) first. It is
@@ -35,7 +31,351 @@ existing Chapter Generation feature.
 | Historical source inspection | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Reader-directed continuation (Fate page) in a Reader on the Highlight Engine that reads aloud in three voices over the SEIHouse audio player's soundtrack, each chapter with the music and atmosphere the tagger chose for it, with holdings tagged by the tagger, checked by plain rules and quietly fixed after each chapter by the Holdings fixer, the newest chapter rewritable with a note, a chapter's writing kept going when the reader leaves, the story's point of view kept from its opening, and failed writes never saved |
 
-### History
+Dated changes are kept in [History](#history) below the current guide.
+
+## Implementation inventory and boundaries
+- `development/` contains the active client workspace.
+- `shared/` owns the portable Foundation, response boundary, context compiler,
+  controller, and browser repository contracts.
+- `src/server/harness-generation/` owns provider configuration, prompt and API
+  behavior. It is intentionally outside the published package.
+- `src/workshop/previews/harness-generation/` is Workshop-only mounting.
+
+The portable package entry is `@seihouse/sen/harness-generation`. It may use
+generic SEN UI primitives and accept a neutral, host-injected Story Seed source,
+  but it never imports Story Seed internals. The Workshop preview owns the only
+Story Seed-to-Foundation adapter. HARNESS reuses Chapter Generation's public
+SEN block normalization and accepted-media contracts, but not its legacy
+generation cycle, prompts, planning, processing, or persistence.
+`development/HarnessReaderSession.tsx` is the Reader's frame, filling the
+screen: the top bar (`ReaderTopBar.tsx`, identifying the story and chapter),
+the bottom bar (`ReaderBottomBar.tsx`: Listen, Codex, the chapter picker between
+its arrows, and the shared Fate/Create chooser), Reader Settings and the Fate,
+Holdings and arc pages. The chapter on screen is its body (`readerChapterBody.ts`),
+prose by default (`ProseChapterBody.tsx`: the read-only Highlight Engine with
+the Sound Cues, in the reader's text settings). It owns no second persistence
+path; the reading place is host Reader state and the text settings are a device
+preference.
+`shared/senAdapter.ts` still derives the SEN story the controller's reader-edit
+path uses, though the Reader no longer edits. SEN stays provider-neutral.
+
+## Durable generation behavior
+
+1. Persist `request_started` before a provider request.
+2. Persist the raw provider response immediately after it returns.
+3. Accept the paragraphs as the authoritative chapter, strip every mark from
+   the reply, place each Sound Cue on the words its mark wraps with a
+   recording from the frozen Media Loadout, and persist that accepted chapter
+   draft. A malformed or unplaceable cue becomes a warning, never lost prose.
+4. Read the accepted chapter for its tags (one tagger call) and persist the
+   `tagged` checkpoint. A retry from the prose checkpoint tags; a retry from
+   the tagging checkpoint commits, without asking the tagger again.
+5. Atomically append a chapter with its paragraphs and placed Sound Cues,
+   attempt receipt, and updated story head. A rewrite first takes the story
+   back to just before the chapter it replaces, in the same write.
+6. Run the Holdings fixer on the new chapter. Its outcome is saved as the
+   chapter's `fixer` record; a failed call or write leaves the committed
+   chapter exactly as it was.
+
+Only a committed chapter enters the next context snapshot.
+
+**A stale tab never overwrites.** Every save carries the workspace revision it
+was read at and lands, atomically, only while storage is still there; another
+tab's save since makes it refuse with `HarnessWorkspaceConflictError`, writing
+nothing, until the tab reloads.
+
+**Storage resets preserve data.** A saved workspace this build cannot read (an
+older schema version or an unreadable shape; schema 22 deliberately upgrades
+nothing earlier) is still reset for this build, but
+the host IndexedDB repository first copies the untouched record to a
+`preserved:v<version>:<time>` key in the same transaction, and the Workshop
+lists it with a download control. Reader state (the reading place) is stored
+separately and is never affected by a HARNESS reset. If storage fails,
+the controller retains the completed local checkpoint, blocks continuation,
+and retries persistence without another model call.
+
+## Phase 3 extension boundary
+
+The SEN adapter translates supported
+canonical character, location, faction, artifact and mechanical facts to existing
+Reader contracts as story memory, world rules and character abilities. It never
+turns extracted memory into a reader-visible System Panel: a panel exists only
+where the chapter itself established one through a System Panel signal. Unknown relationships, speakers and unsupported effects remain
+unknown. Exact, uniquely anchored speech receives the known speaker's role;
+host-supplied cast identity establishes the main character without guessing from
+paragraph order. Mechanical rows and status stats use the same preserved value.
+
+## CAPA boundary
+
+Development's complete SPP import flow and validation evidence are documented in
+[SPP_IMPORT.md](./SPP_IMPORT.md). Terms are defined in
+[ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md).
+
+CAPA Skills are not the deterministic capability handlers above. Capability handlers
+are permanent internal machinery that interprets committed evidence. CAPA Skills are
+versioned packages in one of the eight CAPA Schema slots (`CAPA_SCHEMA` in
+`shared/skills.ts`): Author, Pacing, Fate, Continuity, Style, Accessibility,
+Translation, and Sound Cues. Author, Pacing, Continuity and Style are equipped per
+story. Fate, Accessibility, Translation and Sound Cues are managed: the HARNESS resolves
+them from the story's Fate mode, Reading Mode, Story Language and Media Loadout at every
+loadout freeze, and nobody equips them. Users configure those through Story Settings and
+the Media Loadout and never see a slot. The Media Loadout itself is not a CAPA slot:
+only its sound words reach the writer, as the Sound Cues skill's list. The bundled SEN Novel Author is a normal, replaceable generation skill, not
+hidden creative Harness behavior. It is equipped for new and previously saved local
+stories.
+
+The host supplies validated `HarnessSkillManifest` records. The Harness persists an
+exact `id` and `version` reference in the story and refuses to generate if a
+referenced version is unavailable. For each attempt it freezes the equipped manifests
+in schema order and assembles every generation skill, Author first, once, into one
+CAPA Prompt (`assembleCapaPrompt`). The permanent HARNESS Official Output Requirements
+follow the skills only when a chapter needs them (an Accessibility or Translation skill is
+loaded, or the story is not written in English) and are shown as a locked inspection card
+in Development; they are not a CAPA Skill and cannot be equipped, removed, or reordered. That CAPA Prompt is frozen on the attempt and is
+the model's complete authoring instruction; it never enters the Story Information
+Packet. Only manifests declaring the `generation` application contribute text.
+Reader and post-commit applications may be recorded in the frozen CAPA Prompt's
+skill inventory for their owning host runtime and send nothing to the writing model.
+
+When any loaded skill teaches a tag (Sound Cues, Soundtrack, Speakers, Holdings, Appearance), the
+HARNESS tag rules (`HARNESS_TAG_RULES`) come once, just before the first of
+them: what every tag kind shares, so no kind repeats it. Like the official
+requirements they are HARNESS text, never a skill.
+
+The separate permanent `HARNESS_RESPONSE_CONTRACT` describes the chapter reply:
+the paragraphs, the Arc Goal and ending evidence, the recap and the three
+suggestions, and the guard against invented IDs, URLs and assets. It carries no
+tag wording: how to tag lives only in the CAPA skills, and every signal travels
+as a tag inside `paragraphs`, so the response schema
+(`buildHarnessChapterResponseSchema`) has no list of signals. It is fixed
+HARNESS infrastructure, never an installable skill or loadout slot, and
+contains no asset catalog, R2 path, filename, track list, unlocked-resource
+list, or pack contents. HARNESS retains validation, placement, generated IDs,
+ordering, persistence, and checkpoint recovery; sound words stay
+machine-facing English while the words a sound tag wraps stay in the story's
+language. Every block the writer reads is shown, from the live code, on the
+Workshop's Writer Instructions page.
+
+The Workshop's sample skill manifests remain preview data only. Media Packs use
+the separate inventory and runtime boundary documented in
+[MEDIA_LOADOUT.md](./MEDIA_LOADOUT.md). Development includes only two tiny test
+catalog fixtures and a Workshop-owned temporary test reward adapter; it does not define product
+packs, marketplace behavior, currency, scheduling, or a reward economy.
+
+## Chapter direction and continuation
+
+The reader directs one chapter at a time. `controller.chooseChapterDirection(id,
+choice)` saves the path for the next chapter only: one of Rhythm's three chapter
+functions with the idea the reader picked, or the reader's own direction in
+their words (either mode). `null` returns Regular Reader mode to fate's
+automatic pick. The choice travels in the Immediate Chapter Request, stays
+through failed attempts, and is consumed when that chapter commits; the committed
+chapter records the `path` it took. Fate Survival requires a direction for every
+chapter and cannot run batches. Corrections, not directions, change established
+canon; Foundation/Blueprint future plans are subordinate proposals.
+
+In the HARNESS Reader, Next at the newest chapter continues the story
+(`ReaderChamber`'s `continueAfterLatest`, supplied by `HarnessReaderSession`):
+Regular Reader mode writes the next chapter, through Rhythm unless the reader
+chose a path, and opens it; Fate Survival opens the Fate panel at the direction
+step, or writes once a direction is set; an ended story shows how it ended. On
+earlier chapters Next only navigates, and a swipe never writes. The Fate panel opens
+over the chapter, which stays readable beside or above it. The Fate page and
+Next share one writer (`useNextChapterWriter`), so a failed write reports the same
+error in both places and keeps the chosen direction for the retry.
+
+### Fate modes
+
+Both modes record every Arc Goal honestly. A goal is achieved only when the writer
+reports it with a verbatim passage from the chapter; when its deadline chapter
+commits without that, it is recorded as missed. A chapter never waits for the
+writer to claim a goal. The one chapter that can be held back is the one a broken
+Fate Survival route requires to end the story: `missingRequiredEnding` keeps it
+uncommitted until its prose shows that ending. `commitHarnessArc` applies the
+rest, in the same write as the chapter:
+
+| | Regular Reader | Fate Survival |
+| --- | --- | --- |
+| Who directs | Fate (Rhythm) by default; the reader may take any chapter | The reader, every chapter |
+| Fate CAPA skill | None: the mode-managed Fate slot stays empty | SEN Fate Survival, loaded on every chapter call |
+| Destined Ending | Guaranteed as the standing direction: every chapter pursues it; nothing forces the prose to reach it | Not guaranteed |
+| A missed goal | The story is off track; the next goal begins; no consequence | Counted within its arc; the next goal begins |
+| Route breaks | Never | When at least half of one arc's goals are missed (`goalsThatBreakRoute`: 1 of 1 or 2, 2 of 3 or 4, 3 of 5) or the final goal is missed (`HarnessStory.brokenRoute`) |
+| Missed final goal | No ending is recorded. The story continues past its roadmap with that goal still its destination and no deadline (`route.status: 'past-final-goal'`); no arc or goal is invented. When the prose reaches the Destined Ending the story concludes (`reached-after-final-goal-missed`) | The route breaks (`final-goal-missed`) |
+| After the route breaks | — | The next chapter must end the story (`route.status: 'broken'`, and the Fate Survival skill's ending rule). The reader still directs it. It commits only when its prose shows the ending (`storyEnded` with a verbatim passage); otherwise it is not saved, its direction stays in place, and the reader tries again. No recovery call is made. It may pass the arc's planned end but never begins, plans, reviews or locks another arc. A chapter that breaks the route and already shows a genuine ending ends the story at once |
+| The story ends | The final goal achieved (`final-goal-completed`) | Only when committed prose shows it: the final goal achieved, or the writer's verbatim passage showing the ending (`story-ended`: a fatal ending at any point, or the ending a broken route requires). A chapter count, a broken route alone, or an unsupported claim never ends it |
+
+After `HarnessStory.conclusion` is set no chapter is written or planned. How a
+Regular reader might later change the Destined Ending, and any "continue this
+series" flow after an ending, are deliberately not decided here.
+
+The ordinary cycle is prepare context → one writing call → read the chapter for
+its tags → commit → settle the chapter's holdings → continue. There is no
+routine literary review loop or full-novel planning requirement. The packet
+carries the latest five recaps, the world record, what each character has now,
+who is already on the page, and the author's corrections; chapter prose never
+enters it, and the audit records every omission with its reason.
+
+The Reader preview derives chapter-scoped memory. Its reading settings
+and edits are session-local; durable story changes belong to the reader's chapter
+directions and corrections. Fully malformed optional output still requires usable source evidence;
+replay does not invent missing facts or call the model again.
+
+## Generation Model Call and inspection
+
+Each attempt freezes the three HARNESS-prepared inputs and shows them separately:
+the **Frozen CAPA Prompt**, the **Frozen Story Information Packet** (with its
+**Included / Omitted** lists), and the **Immediate Chapter Request**. The packet
+shows the exact selected Foundation revision, source Seed and optional Blueprint,
+corrections (with target evidence), retained chapters, the reader's direction, and
+selection reasons; it contains no skill instructions.
+
+`buildHarnessGenerationPrompt` combines them into one provider call: the system
+instruction is the CAPA Prompt followed by the distinct Harness response and
+evidence contract; the generation content is the packet (Foundation, explicit
+author changes, committed evidence, frozen source, coverage/omissions, persistent
+author direction, mechanical continuity) followed by the Immediate Chapter Request
+(chapter number, opening or continuation, and the assignment to act on now). The
+coverage section states whether the actual last committed chapter was included.
+
+Selection protects steering, Foundation, corrections with their target evidence,
+quantified observations, and the latest committed chapter. These mandatory inputs
+may exceed the soft budget. Recent prose is selected newest first before optional
+compact developments, bounded lookup, canonical records, and derived handoff.
+Optional items are included whole when they fit or omitted with a reason. The
+budget counts estimated selected content, not exact provider tokens or prompt
+formatting overhead. A missing latest chapter blocks continuation instead of
+substituting older history.
+
+The latest applicable correction overrides earlier conflicting evidence. Active
+Foundation edits take precedence over its frozen source snapshot; explicit Seed
+values take precedence over generated Blueprint elaboration. Opening setup is
+for the story opening, while committed prose anchors continuation. Arc promises,
+mysteries, and endings are future direction, not chapter deadlines or already
+established events. Existing saved snapshots remain readable without migration.
+
+## Retired memory call and historical state
+
+The separate automatic/on-request memory model call, client method, server operation,
+and Workshop recovery control are removed. Chapters no longer receive the recurring
+“story memory incomplete” warning. Chapter writing, acceptance, saving, replay and the
+Reader retain their existing paths. Sound Cues, speakers and Holdings come from tags;
+recaps come from the chapter response.
+
+Current Canonical State and its deterministic readers remain. Existing committed events,
+canonical records, corrections and previously saved chapter checkpoints are still read;
+the removed call produces no new event records. Historical `memoryRecoveries` requests,
+raw replies, usage receipts and status fields remain stored and readable, but are never
+resumed or applied. No stored data or schema version changes, and no migration is needed.
+Deterministic replay of existing events remains available without a provider call.
+Tests seed historical records directly to check their readers and saved-story compatibility.
+
+## Implementation inventory and boundaries
+The active `development/` and `shared/` implementation is exposed through its
+package barrel and the host server route. Workshop previews and controls remain
+separate from the packages and app.
+
+### 2026-09-06 — Library UI ownership migration
+
+Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.
+
+### 2026-09-20 — Story Seed Arc handoff
+
+Story Seed initializes the existing Hard Pin authority with zero to three
+author-owned entries and the existing Arc Plan authority with one initial goal.
+Only the active goal and its deadline are presented to the generation model;
+the full Arc Plan remains internal. Fun Settings are optional Current Story
+Information and cannot override canon, CAPA, ending, pins, or the current goal.
+They do not enter canonical state or CAPA. The saved HARNESS schema is now 18;
+existing Development reset behavior rejects stale state.
+
+### 2026-10-10 — Reader audio mute and synchronized Master faders
+
+The shared Reader note is white for sound on and gray when muted or actively scrolling, without a mute slash. Tap mutes without disabling Master or losing its volume. Hold or right-click opens a compact Master fader; it and the Settings fader read and update the same saved mixer state. Zero volume keeps the icon visible, and unmute restores the last nonzero level, including after preference reload. Only switching Master off in Reader Settings hides the note. Narration retains its independent controls. NovelExpanded and the Workshop share the canonical host composition; Workshop Sound on uses the direct click gesture to unlock playback.
+
+### 2026-10-10 — Narration speed in the playback pill
+
+The bottom bar places the narration speed selector between Previous sentence and Next sentence, mirroring the chapter pill. Its compact labels use fractions (½, ¾, 1¼, 1½, 1¾), without a multiplier symbol, while keeping the exact saved rates and explicit spoken labels. The speed and chapter selectors share popup styling, current-selection marks, keyboard focus and dismissal. Half speed is supported by the narration engine and saved preferences, and also appears in Reader Settings. The selector uses the existing saved Read Aloud rate, stays in sync with Reader Settings, and appears before narration starts. The app and Workshop render the same ReaderBottomBar.
+
+### 2026-10-10 — Chapter picker in the bottom bar
+
+The chapter pill shows only the current chapter number, without a total, and opens a scrollable list of saved chapter numbers and full titles, with the current chapter marked. Selection uses the Reader's existing chapter navigation and saves the reading place; Previous and Next retain their existing behavior, including the next writing step. The app and Workshop share this picker, and both control pills keep their compact layout on phones.
+
+### 2026-10-10 — Standard Reader bar visual refinement
+
+The shared app and Workshop Reader bar uses 48px main actions (44px on narrow phones), quiet charcoal secondary fills, thin borders and a cyan Codex accent without a persistent glow. Matching compact control pills remain centered between the three action anchors, with extended vertical hit areas and consistent hover, pressed and keyboard focus states. Narration, chapter selection and saved preferences retain their existing behavior.
+
+### 2026-10-10 — Matching standard Reader top bar
+
+The shared Reader top bar matches the bottom bar's quiet charcoal buttons, thin borders, responsive 48/44px action sizes and interaction states. A readable sentence-case story title and subdued chapter label clarify the hierarchy. The Familiar remains beside Settings on the right; sticky behavior and all actions are unchanged.
+
+### 2026-10-10 — Matching Reader selector menus
+
+Chapter and narration speed menus share a restrained dark surface, thin border, rounded corners, quiet section heading and consistent 44px minimum rows. Current selections use a neutral highlight with a small cyan check. Existing selection, saved preferences, scrolling, focus and dismissal behavior remain in the canonical shared Reader bar.
+
+### 2026-10-10 — Matching selector rims
+
+Chapter and narration speed menus share a subtle 2px perimeter using the navigation seam's gold-to-cyan palette. The decorative rim follows their rounded corners without receiving pointer events; the compact audio capsule stays unchanged.
+
+### 2026-10-10 — Library navigation seams
+
+Reader bars and panel edges that meet the chapter use Library navigation's stationary 3px gold-to-cyan seam, including its fine highlight. The top bar's lower edge and bottom bar's upper edge run horizontally; Reader panels use an upper edge on mobile and a left edge on desktop. Decoration lives in the Library skin, does not receive pointer events or change layout, and falls back to normal system borders in forced colors.
+
+### 2026-10-10 — Compact quick volume
+
+Holding the soundtrack note reveals a 48px-wide vertical volume capsule immediately above the note, using the same glass as Reader menus. The visible label and percentage box are removed; the native slider retains its accessible Master volume name and percentage value, keyboard adjustment, Escape/focus return and outside-tap dismissal. Tap still mutes independently, zero volume never hides the note, and only Settings' Master switch removes it. Volume still reads and writes the original mixer shared with Settings. Reduced motion skips the short reveal.
+
+### 2026-10-10 — Supporting Reader chrome
+
+The default Reader is quiet infrastructure around the story's System Panels and Manifestations; distinctive custom looks belong in the Workshop. Codex now uses the same blue-gray glass, pale icon and rim as its neighboring controls. Its spectrum halo is a faint, close accent (18% resting opacity, 3px extension, 6px blur), with restrained interaction feedback.
+
+### 2026-10-10 — Quieter Codex face, clearer halo
+
+The Codex face is now smoked graphite with an ivory icon and neutral rim. The shared Library spectrum remains its color accent: the halo extends 8px beyond the button, with 10px blur and 80% resting opacity. The existing reduced-motion and forced-colors treatments remain in place.
+
+### 2026-10-10 — Codex badge color and spectrum halo
+
+The Library Reader skin gives the central Codex action a violet-to-gold glass face, pale-gold book icon and warm rim. Its small halo uses Library UI's header emblem spectrum palette and shared 18-second flow animation. Decorative layers do not receive pointer events or change layout; reduced motion keeps the halo still and forced colors removes the decoration. The portable Reader's action and host boundary stay unchanged.
+
+### 2026-10-10 — Library glass in the Reader
+
+Library's `reader-glass.css`, included by its package stylesheet, skins the portable Reader's material hooks with the Familiar action dock's blue-gray gradient, warm rim and cool inset highlight. Top and bottom bars, secondary controls, chapter/speed menus and Reader panels share that treatment; settings and long menus use a denser body for contrast. The prose background, layout, actions and persistence stay unchanged. Nested controls do not add backdrop filters; touch devices and reduced-transparency preferences use a denser fallback. Library owns the skin, so SEN does not import Library styling and hosts can supply their own material. App and Workshop use the same source.
+
+### 2026-10-10 — Restored reading font choices
+
+The shared host catalogue offers Literata, Rubik and System Mono alongside Noto Serif, with SEIHouse Sans retained as the default and reset choice. Title choices use the shorter Ink, Soft, Edge and Wide labels without changing saved identifiers. Font picker labels use the interface font so opening Settings does not fetch unused alternatives. Literata uses the existing Google Fonts stylesheet with swap fallback and downloads when selected; Rubik can reuse the interface font, and System Mono uses installed system faces. App regression coverage checks selection, persistence, reset and unstyled picker labels.
+
+### 2026-10-10 — Reader Settings hierarchy and local presentation
+
+Reader Settings now exposes Text, Audio and Narration as accessible category tabs, with the heading, category switcher and Close button outside the scrolling content. Each category starts at the top when selected. Text groups typefaces separately from size, spacing and weight; the sample block is removed because the chapter is the live preview, including with the existing half-height sheet. Audio puts the original mixer’s Master switch and volume first, keeps individual layers and the sleep timer, and places presets and scene choices below. Narration leads with speed, then grouped voice selectors and previews. Host-scoped styling uses the same quiet surfaces, borders and cyan accents as the Reader bars; the audio-player source and all preference/storage contracts remain unchanged. The app and Workshop share this composition. Regression coverage verifies tab changes preserve saved speed and presets, the sample is absent, and the existing Master/quick-volume and app Reader flows still work.
+
+### 2026-10-11 — Connected audio glass and Reader scrollbars
+
+The quick-volume capsule now grows from behind the note as one dense glass surface. The idle, unmuted note has a softer glass backing; both muted and scrolling ghost states leave only the gray glyph. The open capsule supplies its own backing, without stacking two surfaces. Reduced motion, reduced transparency and forced colors keep their respective fallbacks.
+
+Chapter and narration menus, Settings and Fate reuse SEIHouse UI's overlay scrollbar with Library navigation's gold thumb and scroll/drag-only visibility. The chapter keeps its original document scroll owner, with a scoped gold native scrollbar that hides at rest and cleans up on exit. Half-height panels size their scrollport to the visible area so the thumb and the last settings remain reachable. App and Workshop use the same Reader implementation.
+
+### 2026-10-11 — Opaque Reader bars
+
+The Library Reader top and bottom bars retain their blue-gray finish and navigation seams with fully opaque gradient stops in every transparency mode. Chapter words cannot show through either bar. The host explicitly defaults Master audio on; saved Settings choices still take precedence.
+
+### 2026-10-11 — Scroll-aware top bar and aligned audio note
+
+The top bar slides away after intentional downward scrolling and returns on upward scrolling, near the chapter top, when its controls receive focus, or when the chapter changes. Reader panels keep it available. It follows the same actual scroll container as narration, ignores small direction changes and elastic overscroll, preserves the sticky layout slot, and respects reduced motion. The audio note is anchored to the center of the Fate action instead of an independent page-edge inset, including when quick volume expands.
+
+### 2026-10-11 — Quieter speed control and a glass Back to narration
+
+From SENSEI: between the sentence skips, normal speed shows a dim divider (∶) instead of "1"; a changed speed still shows its value (½, 1½…), and the picker and its spoken label are unchanged. Back to narration floats in the same resting glass as the story audio note (Library's `reader-glass-float` skin) instead of a ghost outline.
+
+### 2026-10-14 — A lighter dip under Listen, louder Sound Cues
+
+From SENSEI on mobile: with Listen reading aloud, Soundscapes and Atmosphere were inaudible even at full level, and Sound Cues were barely audible. Phones already lower a page's sound while their built-in speech voice talks, and the Reader's own dip (`LISTEN_DUCK`, music and atmosphere to 40%) stacked on top. The Reader's dip is now light (`LISTEN_DUCK` 0.25, to 75%), and a cue's Energy scales its level less (`SOUND_CUE_ENERGY_VOLUME`: low 0.8, medium 0.9, high 1; was 0.6, 0.8, 1).
+
+### 2026-10-29 — Named Reader colors
+
+From SENSEI, step one toward themed Reader Chambers: every color the Reader painted by hand (about 380 places across the bars, pickers, Fate, Codex, authoring, settings and the audio note) now points at a named role in `reader-colors.css`, and Library's Reader blue names its own control, ink, focus and settings colors in `reader-glass.css`. The defaults are the old colors: screenshots of the Reader, Codex, Settings, chapter list and playback picker at phone and desktop sizes match pixel for pixel. Setting the roles recolors the whole Reader, which is what a future Face pack will do.
+
+## History
 
 - **2026-11-05 (appears tag on the sentence that shows them):** SENSEI, from
   The Nomad's Foundation: "Fix the appearance tags." The sentence an appears
@@ -949,346 +1289,4 @@ existing Chapter Generation feature.
   Seed handoff. Selecting a saved seed copies the seed and optional Blueprint
   into a frozen Harness Foundation; manual premise entry remains a secondary
   development fallback.
-
-## Implementation inventory and boundaries
-- `development/` contains the active client workspace.
-- `shared/` owns the portable Foundation, response boundary, context compiler,
-  controller, and browser repository contracts.
-- `src/server/harness-generation/` owns provider configuration, prompt and API
-  behavior. It is intentionally outside the published package.
-- `src/workshop/previews/harness-generation/` is Workshop-only mounting.
-
-The portable package entry is `@seihouse/sen/harness-generation`. It may use
-generic SEN UI primitives and accept a neutral, host-injected Story Seed source,
-  but it never imports Story Seed internals. The Workshop preview owns the only
-Story Seed-to-Foundation adapter. HARNESS reuses Chapter Generation's public
-SEN block normalization and accepted-media contracts, but not its legacy
-generation cycle, prompts, planning, processing, or persistence.
-`development/HarnessReaderSession.tsx` is the Reader's frame, filling the
-screen: the top bar (`ReaderTopBar.tsx`, identifying the story and chapter),
-the bottom bar (`ReaderBottomBar.tsx`: Listen, Codex, the chapter picker between
-its arrows, and the shared Fate/Create chooser), Reader Settings and the Fate,
-Holdings and arc pages. The chapter on screen is its body (`readerChapterBody.ts`),
-prose by default (`ProseChapterBody.tsx`: the read-only Highlight Engine with
-the Sound Cues, in the reader's text settings). It owns no second persistence
-path; the reading place is host Reader state and the text settings are a device
-preference.
-`shared/senAdapter.ts` still derives the SEN story the controller's reader-edit
-path uses, though the Reader no longer edits. SEN stays provider-neutral.
-
-## Durable generation behavior
-
-1. Persist `request_started` before a provider request.
-2. Persist the raw provider response immediately after it returns.
-3. Accept the paragraphs as the authoritative chapter, strip every mark from
-   the reply, place each Sound Cue on the words its mark wraps with a
-   recording from the frozen Media Loadout, and persist that accepted chapter
-   draft. A malformed or unplaceable cue becomes a warning, never lost prose.
-4. Read the accepted chapter for its tags (one tagger call) and persist the
-   `tagged` checkpoint. A retry from the prose checkpoint tags; a retry from
-   the tagging checkpoint commits, without asking the tagger again.
-5. Atomically append a chapter with its paragraphs and placed Sound Cues,
-   attempt receipt, and updated story head. A rewrite first takes the story
-   back to just before the chapter it replaces, in the same write.
-6. Run the Holdings fixer on the new chapter. Its outcome is saved as the
-   chapter's `fixer` record; a failed call or write leaves the committed
-   chapter exactly as it was.
-
-Only a committed chapter enters the next context snapshot.
-
-**A stale tab never overwrites.** Every save carries the workspace revision it
-was read at and lands, atomically, only while storage is still there; another
-tab's save since makes it refuse with `HarnessWorkspaceConflictError`, writing
-nothing, until the tab reloads.
-
-**Storage resets preserve data.** A saved workspace this build cannot read (an
-older schema version or an unreadable shape; schema 22 deliberately upgrades
-nothing earlier) is still reset for this build, but
-the host IndexedDB repository first copies the untouched record to a
-`preserved:v<version>:<time>` key in the same transaction, and the Workshop
-lists it with a download control. Reader state (the reading place) is stored
-separately and is never affected by a HARNESS reset. If storage fails,
-the controller retains the completed local checkpoint, blocks continuation,
-and retries persistence without another model call.
-
-## Phase 3 extension boundary
-
-The SEN adapter translates supported
-canonical character, location, faction, artifact and mechanical facts to existing
-Reader contracts as story memory, world rules and character abilities. It never
-turns extracted memory into a reader-visible System Panel: a panel exists only
-where the chapter itself established one through a System Panel signal. Unknown relationships, speakers and unsupported effects remain
-unknown. Exact, uniquely anchored speech receives the known speaker's role;
-host-supplied cast identity establishes the main character without guessing from
-paragraph order. Mechanical rows and status stats use the same preserved value.
-
-## CAPA boundary
-
-Development's complete SPP import flow and validation evidence are documented in
-[SPP_IMPORT.md](./SPP_IMPORT.md). Terms are defined in
-[ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md).
-
-CAPA Skills are not the deterministic capability handlers above. Capability handlers
-are permanent internal machinery that interprets committed evidence. CAPA Skills are
-versioned packages in one of the eight CAPA Schema slots (`CAPA_SCHEMA` in
-`shared/skills.ts`): Author, Pacing, Fate, Continuity, Style, Accessibility,
-Translation, and Sound Cues. Author, Pacing, Continuity and Style are equipped per
-story. Fate, Accessibility, Translation and Sound Cues are managed: the HARNESS resolves
-them from the story's Fate mode, Reading Mode, Story Language and Media Loadout at every
-loadout freeze, and nobody equips them. Users configure those through Story Settings and
-the Media Loadout and never see a slot. The Media Loadout itself is not a CAPA slot:
-only its sound words reach the writer, as the Sound Cues skill's list. The bundled SEN Novel Author is a normal, replaceable generation skill, not
-hidden creative Harness behavior. It is equipped for new and previously saved local
-stories.
-
-The host supplies validated `HarnessSkillManifest` records. The Harness persists an
-exact `id` and `version` reference in the story and refuses to generate if a
-referenced version is unavailable. For each attempt it freezes the equipped manifests
-in schema order and assembles every generation skill, Author first, once, into one
-CAPA Prompt (`assembleCapaPrompt`). The permanent HARNESS Official Output Requirements
-follow the skills only when a chapter needs them (an Accessibility or Translation skill is
-loaded, or the story is not written in English) and are shown as a locked inspection card
-in Development; they are not a CAPA Skill and cannot be equipped, removed, or reordered. That CAPA Prompt is frozen on the attempt and is
-the model's complete authoring instruction; it never enters the Story Information
-Packet. Only manifests declaring the `generation` application contribute text.
-Reader and post-commit applications may be recorded in the frozen CAPA Prompt's
-skill inventory for their owning host runtime and send nothing to the writing model.
-
-When any loaded skill teaches a tag (Sound Cues, Soundtrack, Speakers, Holdings, Appearance), the
-HARNESS tag rules (`HARNESS_TAG_RULES`) come once, just before the first of
-them: what every tag kind shares, so no kind repeats it. Like the official
-requirements they are HARNESS text, never a skill.
-
-The separate permanent `HARNESS_RESPONSE_CONTRACT` describes the chapter reply:
-the paragraphs, the Arc Goal and ending evidence, the recap and the three
-suggestions, and the guard against invented IDs, URLs and assets. It carries no
-tag wording: how to tag lives only in the CAPA skills, and every signal travels
-as a tag inside `paragraphs`, so the response schema
-(`buildHarnessChapterResponseSchema`) has no list of signals. It is fixed
-HARNESS infrastructure, never an installable skill or loadout slot, and
-contains no asset catalog, R2 path, filename, track list, unlocked-resource
-list, or pack contents. HARNESS retains validation, placement, generated IDs,
-ordering, persistence, and checkpoint recovery; sound words stay
-machine-facing English while the words a sound tag wraps stay in the story's
-language. Every block the writer reads is shown, from the live code, on the
-Workshop's Writer Instructions page.
-
-The Workshop's sample skill manifests remain preview data only. Media Packs use
-the separate inventory and runtime boundary documented in
-[MEDIA_LOADOUT.md](./MEDIA_LOADOUT.md). Development includes only two tiny test
-catalog fixtures and a Workshop-owned temporary test reward adapter; it does not define product
-packs, marketplace behavior, currency, scheduling, or a reward economy.
-
-## Chapter direction and continuation
-
-The reader directs one chapter at a time. `controller.chooseChapterDirection(id,
-choice)` saves the path for the next chapter only: one of Rhythm's three chapter
-functions with the idea the reader picked, or the reader's own direction in
-their words (either mode). `null` returns Regular Reader mode to fate's
-automatic pick. The choice travels in the Immediate Chapter Request, stays
-through failed attempts, and is consumed when that chapter commits; the committed
-chapter records the `path` it took. Fate Survival requires a direction for every
-chapter and cannot run batches. Corrections, not directions, change established
-canon; Foundation/Blueprint future plans are subordinate proposals.
-
-In the HARNESS Reader, Next at the newest chapter continues the story
-(`ReaderChamber`'s `continueAfterLatest`, supplied by `HarnessReaderSession`):
-Regular Reader mode writes the next chapter, through Rhythm unless the reader
-chose a path, and opens it; Fate Survival opens the Fate panel at the direction
-step, or writes once a direction is set; an ended story shows how it ended. On
-earlier chapters Next only navigates, and a swipe never writes. The Fate panel opens
-over the chapter, which stays readable beside or above it. The Fate page and
-Next share one writer (`useNextChapterWriter`), so a failed write reports the same
-error in both places and keeps the chosen direction for the retry.
-
-### Fate modes
-
-Both modes record every Arc Goal honestly. A goal is achieved only when the writer
-reports it with a verbatim passage from the chapter; when its deadline chapter
-commits without that, it is recorded as missed. A chapter never waits for the
-writer to claim a goal. The one chapter that can be held back is the one a broken
-Fate Survival route requires to end the story: `missingRequiredEnding` keeps it
-uncommitted until its prose shows that ending. `commitHarnessArc` applies the
-rest, in the same write as the chapter:
-
-| | Regular Reader | Fate Survival |
-| --- | --- | --- |
-| Who directs | Fate (Rhythm) by default; the reader may take any chapter | The reader, every chapter |
-| Fate CAPA skill | None: the mode-managed Fate slot stays empty | SEN Fate Survival, loaded on every chapter call |
-| Destined Ending | Guaranteed as the standing direction: every chapter pursues it; nothing forces the prose to reach it | Not guaranteed |
-| A missed goal | The story is off track; the next goal begins; no consequence | Counted within its arc; the next goal begins |
-| Route breaks | Never | When at least half of one arc's goals are missed (`goalsThatBreakRoute`: 1 of 1 or 2, 2 of 3 or 4, 3 of 5) or the final goal is missed (`HarnessStory.brokenRoute`) |
-| Missed final goal | No ending is recorded. The story continues past its roadmap with that goal still its destination and no deadline (`route.status: 'past-final-goal'`); no arc or goal is invented. When the prose reaches the Destined Ending the story concludes (`reached-after-final-goal-missed`) | The route breaks (`final-goal-missed`) |
-| After the route breaks | — | The next chapter must end the story (`route.status: 'broken'`, and the Fate Survival skill's ending rule). The reader still directs it. It commits only when its prose shows the ending (`storyEnded` with a verbatim passage); otherwise it is not saved, its direction stays in place, and the reader tries again. No recovery call is made. It may pass the arc's planned end but never begins, plans, reviews or locks another arc. A chapter that breaks the route and already shows a genuine ending ends the story at once |
-| The story ends | The final goal achieved (`final-goal-completed`) | Only when committed prose shows it: the final goal achieved, or the writer's verbatim passage showing the ending (`story-ended`: a fatal ending at any point, or the ending a broken route requires). A chapter count, a broken route alone, or an unsupported claim never ends it |
-
-After `HarnessStory.conclusion` is set no chapter is written or planned. How a
-Regular reader might later change the Destined Ending, and any "continue this
-series" flow after an ending, are deliberately not decided here.
-
-The ordinary cycle is prepare context → one writing call → read the chapter for
-its tags → commit → settle the chapter's holdings → continue. There is no
-routine literary review loop or full-novel planning requirement. The packet
-carries the latest five recaps, the world record, what each character has now,
-who is already on the page, and the author's corrections; chapter prose never
-enters it, and the audit records every omission with its reason.
-
-The Reader preview derives chapter-scoped memory. Its reading settings
-and edits are session-local; durable story changes belong to the reader's chapter
-directions and corrections. Fully malformed optional output still requires usable source evidence;
-replay does not invent missing facts or call the model again.
-
-## Generation Model Call and inspection
-
-Each attempt freezes the three HARNESS-prepared inputs and shows them separately:
-the **Frozen CAPA Prompt**, the **Frozen Story Information Packet** (with its
-**Included / Omitted** lists), and the **Immediate Chapter Request**. The packet
-shows the exact selected Foundation revision, source Seed and optional Blueprint,
-corrections (with target evidence), retained chapters, the reader's direction, and
-selection reasons; it contains no skill instructions.
-
-`buildHarnessGenerationPrompt` combines them into one provider call: the system
-instruction is the CAPA Prompt followed by the distinct Harness response and
-evidence contract; the generation content is the packet (Foundation, explicit
-author changes, committed evidence, frozen source, coverage/omissions, persistent
-author direction, mechanical continuity) followed by the Immediate Chapter Request
-(chapter number, opening or continuation, and the assignment to act on now). The
-coverage section states whether the actual last committed chapter was included.
-
-Selection protects steering, Foundation, corrections with their target evidence,
-quantified observations, and the latest committed chapter. These mandatory inputs
-may exceed the soft budget. Recent prose is selected newest first before optional
-compact developments, bounded lookup, canonical records, and derived handoff.
-Optional items are included whole when they fit or omitted with a reason. The
-budget counts estimated selected content, not exact provider tokens or prompt
-formatting overhead. A missing latest chapter blocks continuation instead of
-substituting older history.
-
-The latest applicable correction overrides earlier conflicting evidence. Active
-Foundation edits take precedence over its frozen source snapshot; explicit Seed
-values take precedence over generated Blueprint elaboration. Opening setup is
-for the story opening, while committed prose anchors continuation. Arc promises,
-mysteries, and endings are future direction, not chapter deadlines or already
-established events. Existing saved snapshots remain readable without migration.
-
-## Retired memory call and historical state
-
-The separate automatic/on-request memory model call, client method, server operation,
-and Workshop recovery control are removed. Chapters no longer receive the recurring
-“story memory incomplete” warning. Chapter writing, acceptance, saving, replay and the
-Reader retain their existing paths. Sound Cues, speakers and Holdings come from tags;
-recaps come from the chapter response.
-
-Current Canonical State and its deterministic readers remain. Existing committed events,
-canonical records, corrections and previously saved chapter checkpoints are still read;
-the removed call produces no new event records. Historical `memoryRecoveries` requests,
-raw replies, usage receipts and status fields remain stored and readable, but are never
-resumed or applied. No stored data or schema version changes, and no migration is needed.
-Deterministic replay of existing events remains available without a provider call.
-Tests seed historical records directly to check their readers and saved-story compatibility.
-
-## Implementation inventory and boundaries
-The active `development/` and `shared/` implementation is exposed through its
-package barrel and the host server route. Workshop previews and controls remain
-separate from the packages and app.
-
-### 2026-09-06 — Library UI ownership migration
-
-Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.
-
-### 2026-09-20 — Story Seed Arc handoff
-
-Story Seed initializes the existing Hard Pin authority with zero to three
-author-owned entries and the existing Arc Plan authority with one initial goal.
-Only the active goal and its deadline are presented to the generation model;
-the full Arc Plan remains internal. Fun Settings are optional Current Story
-Information and cannot override canon, CAPA, ending, pins, or the current goal.
-They do not enter canonical state or CAPA. The saved HARNESS schema is now 18;
-existing Development reset behavior rejects stale state.
-
-### 2026-10-10 — Reader audio mute and synchronized Master faders
-
-The shared Reader note is white for sound on and gray when muted or actively scrolling, without a mute slash. Tap mutes without disabling Master or losing its volume. Hold or right-click opens a compact Master fader; it and the Settings fader read and update the same saved mixer state. Zero volume keeps the icon visible, and unmute restores the last nonzero level, including after preference reload. Only switching Master off in Reader Settings hides the note. Narration retains its independent controls. NovelExpanded and the Workshop share the canonical host composition; Workshop Sound on uses the direct click gesture to unlock playback.
-
-### 2026-10-10 — Narration speed in the playback pill
-
-The bottom bar places the narration speed selector between Previous sentence and Next sentence, mirroring the chapter pill. Its compact labels use fractions (½, ¾, 1¼, 1½, 1¾), without a multiplier symbol, while keeping the exact saved rates and explicit spoken labels. The speed and chapter selectors share popup styling, current-selection marks, keyboard focus and dismissal. Half speed is supported by the narration engine and saved preferences, and also appears in Reader Settings. The selector uses the existing saved Read Aloud rate, stays in sync with Reader Settings, and appears before narration starts. The app and Workshop render the same ReaderBottomBar.
-
-### 2026-10-10 — Chapter picker in the bottom bar
-
-The chapter pill shows only the current chapter number, without a total, and opens a scrollable list of saved chapter numbers and full titles, with the current chapter marked. Selection uses the Reader's existing chapter navigation and saves the reading place; Previous and Next retain their existing behavior, including the next writing step. The app and Workshop share this picker, and both control pills keep their compact layout on phones.
-
-### 2026-10-10 — Standard Reader bar visual refinement
-
-The shared app and Workshop Reader bar uses 48px main actions (44px on narrow phones), quiet charcoal secondary fills, thin borders and a cyan Codex accent without a persistent glow. Matching compact control pills remain centered between the three action anchors, with extended vertical hit areas and consistent hover, pressed and keyboard focus states. Narration, chapter selection and saved preferences retain their existing behavior.
-
-### 2026-10-10 — Matching standard Reader top bar
-
-The shared Reader top bar matches the bottom bar's quiet charcoal buttons, thin borders, responsive 48/44px action sizes and interaction states. A readable sentence-case story title and subdued chapter label clarify the hierarchy. The Familiar remains beside Settings on the right; sticky behavior and all actions are unchanged.
-
-### 2026-10-10 — Matching Reader selector menus
-
-Chapter and narration speed menus share a restrained dark surface, thin border, rounded corners, quiet section heading and consistent 44px minimum rows. Current selections use a neutral highlight with a small cyan check. Existing selection, saved preferences, scrolling, focus and dismissal behavior remain in the canonical shared Reader bar.
-
-### 2026-10-10 — Matching selector rims
-
-Chapter and narration speed menus share a subtle 2px perimeter using the navigation seam's gold-to-cyan palette. The decorative rim follows their rounded corners without receiving pointer events; the compact audio capsule stays unchanged.
-
-### 2026-10-10 — Library navigation seams
-
-Reader bars and panel edges that meet the chapter use Library navigation's stationary 3px gold-to-cyan seam, including its fine highlight. The top bar's lower edge and bottom bar's upper edge run horizontally; Reader panels use an upper edge on mobile and a left edge on desktop. Decoration lives in the Library skin, does not receive pointer events or change layout, and falls back to normal system borders in forced colors.
-
-### 2026-10-10 — Compact quick volume
-
-Holding the soundtrack note reveals a 48px-wide vertical volume capsule immediately above the note, using the same glass as Reader menus. The visible label and percentage box are removed; the native slider retains its accessible Master volume name and percentage value, keyboard adjustment, Escape/focus return and outside-tap dismissal. Tap still mutes independently, zero volume never hides the note, and only Settings' Master switch removes it. Volume still reads and writes the original mixer shared with Settings. Reduced motion skips the short reveal.
-
-### 2026-10-10 — Supporting Reader chrome
-
-The default Reader is quiet infrastructure around the story's System Panels and Manifestations; distinctive custom looks belong in the Workshop. Codex now uses the same blue-gray glass, pale icon and rim as its neighboring controls. Its spectrum halo is a faint, close accent (18% resting opacity, 3px extension, 6px blur), with restrained interaction feedback.
-
-### 2026-10-10 — Quieter Codex face, clearer halo
-
-The Codex face is now smoked graphite with an ivory icon and neutral rim. The shared Library spectrum remains its color accent: the halo extends 8px beyond the button, with 10px blur and 80% resting opacity. The existing reduced-motion and forced-colors treatments remain in place.
-
-### 2026-10-10 — Codex badge color and spectrum halo
-
-The Library Reader skin gives the central Codex action a violet-to-gold glass face, pale-gold book icon and warm rim. Its small halo uses Library UI's header emblem spectrum palette and shared 18-second flow animation. Decorative layers do not receive pointer events or change layout; reduced motion keeps the halo still and forced colors removes the decoration. The portable Reader's action and host boundary stay unchanged.
-
-### 2026-10-10 — Library glass in the Reader
-
-Library's `reader-glass.css`, included by its package stylesheet, skins the portable Reader's material hooks with the Familiar action dock's blue-gray gradient, warm rim and cool inset highlight. Top and bottom bars, secondary controls, chapter/speed menus and Reader panels share that treatment; settings and long menus use a denser body for contrast. The prose background, layout, actions and persistence stay unchanged. Nested controls do not add backdrop filters; touch devices and reduced-transparency preferences use a denser fallback. Library owns the skin, so SEN does not import Library styling and hosts can supply their own material. App and Workshop use the same source.
-
-### 2026-10-10 — Restored reading font choices
-
-The shared host catalogue offers Literata, Rubik and System Mono alongside Noto Serif, with SEIHouse Sans retained as the default and reset choice. Title choices use the shorter Ink, Soft, Edge and Wide labels without changing saved identifiers. Font picker labels use the interface font so opening Settings does not fetch unused alternatives. Literata uses the existing Google Fonts stylesheet with swap fallback and downloads when selected; Rubik can reuse the interface font, and System Mono uses installed system faces. App regression coverage checks selection, persistence, reset and unstyled picker labels.
-
-### 2026-10-10 — Reader Settings hierarchy and local presentation
-
-Reader Settings now exposes Text, Audio and Narration as accessible category tabs, with the heading, category switcher and Close button outside the scrolling content. Each category starts at the top when selected. Text groups typefaces separately from size, spacing and weight; the sample block is removed because the chapter is the live preview, including with the existing half-height sheet. Audio puts the original mixer’s Master switch and volume first, keeps individual layers and the sleep timer, and places presets and scene choices below. Narration leads with speed, then grouped voice selectors and previews. Host-scoped styling uses the same quiet surfaces, borders and cyan accents as the Reader bars; the audio-player source and all preference/storage contracts remain unchanged. The app and Workshop share this composition. Regression coverage verifies tab changes preserve saved speed and presets, the sample is absent, and the existing Master/quick-volume and app Reader flows still work.
-
-### 2026-10-11 — Connected audio glass and Reader scrollbars
-
-The quick-volume capsule now grows from behind the note as one dense glass surface. The idle, unmuted note has a softer glass backing; both muted and scrolling ghost states leave only the gray glyph. The open capsule supplies its own backing, without stacking two surfaces. Reduced motion, reduced transparency and forced colors keep their respective fallbacks.
-
-Chapter and narration menus, Settings and Fate reuse SEIHouse UI's overlay scrollbar with Library navigation's gold thumb and scroll/drag-only visibility. The chapter keeps its original document scroll owner, with a scoped gold native scrollbar that hides at rest and cleans up on exit. Half-height panels size their scrollport to the visible area so the thumb and the last settings remain reachable. App and Workshop use the same Reader implementation.
-
-### 2026-10-11 — Opaque Reader bars
-
-The Library Reader top and bottom bars retain their blue-gray finish and navigation seams with fully opaque gradient stops in every transparency mode. Chapter words cannot show through either bar. The host explicitly defaults Master audio on; saved Settings choices still take precedence.
-
-### 2026-10-11 — Scroll-aware top bar and aligned audio note
-
-The top bar slides away after intentional downward scrolling and returns on upward scrolling, near the chapter top, when its controls receive focus, or when the chapter changes. Reader panels keep it available. It follows the same actual scroll container as narration, ignores small direction changes and elastic overscroll, preserves the sticky layout slot, and respects reduced motion. The audio note is anchored to the center of the Fate action instead of an independent page-edge inset, including when quick volume expands.
-
-### 2026-10-11 — Quieter speed control and a glass Back to narration
-
-From SENSEI: between the sentence skips, normal speed shows a dim divider (∶) instead of "1"; a changed speed still shows its value (½, 1½…), and the picker and its spoken label are unchanged. Back to narration floats in the same resting glass as the story audio note (Library's `reader-glass-float` skin) instead of a ghost outline.
-
-### 2026-10-14 — A lighter dip under Listen, louder Sound Cues
-
-From SENSEI on mobile: with Listen reading aloud, Soundscapes and Atmosphere were inaudible even at full level, and Sound Cues were barely audible. Phones already lower a page's sound while their built-in speech voice talks, and the Reader's own dip (`LISTEN_DUCK`, music and atmosphere to 40%) stacked on top. The Reader's dip is now light (`LISTEN_DUCK` 0.25, to 75%), and a cue's Energy scales its level less (`SOUND_CUE_ENERGY_VOLUME`: low 0.8, medium 0.9, high 1; was 0.6, 0.8, 1).
-
-### 2026-10-29 — Named Reader colors
-
-From SENSEI, step one toward themed Reader Chambers: every color the Reader painted by hand (about 380 places across the bars, pickers, Fate, Codex, authoring, settings and the audio note) now points at a named role in `reader-colors.css`, and Library's Reader blue names its own control, ink, focus and settings colors in `reader-glass.css`. The defaults are the old colors: screenshots of the Reader, Codex, Settings, chapter list and playback picker at phone and desktop sizes match pixel for pixel. Setting the roles recolors the whole Reader, which is what a future Face pack will do.
 

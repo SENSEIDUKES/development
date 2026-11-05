@@ -66,13 +66,10 @@ Before inspecting generation implementation, read the HARNESS
 and [principles](../../../src/components/harness-generation/HARNESS_PRINCIPLES.md).
 The HARNESS is invisible to readers; its only user-facing place is Story Settings.
 
-What a chapter knows, plans and records follows [the chapter loop](../../../docs/chapter-loop.md):
-the record (the Codex snapshot) as the last chapter left it, a plan step (Fate) that
-decides what happens, CTE deciding what events do to people, the writer narrating the
-plan, and the record updating from the plan. Media tags (Sound Cues, soundscape,
-atmosphere) stay in the prose; information is never tagged in the prose. The writer
-narrates consequences; it never decides them. Check that document's build order before
-treating any part of the loop as built.
+The architecture vocabulary names the current owners for the writer, the separate
+Chapter Tagger, the story record and their contracts. Use it for the current
+implementation, and NOVEL_EXPANDED.md for product direction and build order;
+a planned system is not evidence that it has been built.
 
 Generated data flows into durable story systems through explicit contracts. Rendered
 chapter text alone does not prove generation completed successfully.
@@ -91,12 +88,13 @@ current product names in NOVEL_EXPANDED.md's Names table.
 
 ## Reader Codex
 
-The Codex is the story's world as its record knows it: characters, factions and items
-today, places and a Bestiary later, every fact linked to its passage. **One record, many
-views:** each category is one record, built the same way. Power rankings, Karma and other
+The Codex is the story's world as its record knows it. Facts reached in a chapter
+link to their passage; opening-world facts may have no passage. Verify its
+currently supported categories in the implementation and
+NOVEL_EXPANDED.md. **One record, many views:** each category is one record, built the same way. Power rankings, Karma and other
 Codex mechanics are ways of displaying that record, never separate stores fed
 separately. The Codex shows only what the record holds today and grows as each step of
-the chapter loop is built.
+the product is built.
 
 Manifesting happens while reading: a name the story has met glows in the chapter and
 its card offers Manifest. Nothing the story has not yet shown can be manifested. Entries

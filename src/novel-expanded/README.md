@@ -1,163 +1,6 @@
 # NovelExpanded app
 
-- **2026-11-04** — **Each tag group its own style** (SENSEI). In Create mode, Media tags
-  (Soundscape, Atmosphere, Sound Cues) keep the full highlight and Story info tags (Speakers,
-  Holdings, Appearances, Status, Place) are drawn as a colored underline, so the two groups read
-  apart at a glance. The legend shows a dot for a highlight and a short line for an underline.
-  Status is a dotted underline, the first variation inside a style (SENSEI: three parent styles,
-  customizable within). Create mode only for now; the Reader does not light tags yet.
-- **2026-11-04** — **Tag media again** (SENSEI). In Create mode, tapping Soundscape, Atmosphere or
-  Sound Cues offers "Tag media again ⚡1" under the legend (and in the ⋯ menu): the tagger reads
-  the chapter's sound alone, and only its cues, soundscape and atmosphere are replaced. Speakers,
-  holdings, appearances, status, place and the Codex stay exactly as they were. Same price as a
-  full read. The information tags will each get their own focused read later.
-- **2026-11-04** — **Energy on every generation** (SENSEI). Each control that calls a model shows
-  its price: Rewrite, Fate's Write, Accept and write, Begin Story, Create Story and Replace
-  Blueprint (a chapter, 2), Tag this chapter again and Tag N chapters (1 a chapter; tagging by
-  hand is free), and Codex Manifest (an image, 5). Arc planning, Sparks and the Familiar's live
-  talk have no catalog price yet and show none.
-- **2026-11-04** — **Create mode's panel, cleaned up** (SENSEI: "what would Apple do?"). The
-  tags are a quiet legend: a colored dot and a name per kind, no boxes; a kind with none is a
-  hollow ring; a kind lit alone gets a soft capsule while the rest fade, and says what it holds.
-  The eye shows or hides every tag (All/Off is gone). The panel says nothing while saved, and
-  speaks only while saving, on a failed save or on a sealed chapter. Tag this chapter again, the
-  tagger's record and the help line live in the ⋯ menu. About 170px tall on a phone.
-- **2026-11-04** — **Create mode is the tagger's page** (SENSEI). The Chapter Tagger's page and
-  the Reader's Create mode are one: a chapter tapped in the world view's Chapters opens in the
-  creator's Reader (`?page=create&world=<id>&read=1&chapter=<n>&create=1`) in Create mode,
-  in the Reader's own look, so what the author sees is what a reader gets. Every tag is lit as
-  it opens, in two groups, **Media** (Soundscape, Atmosphere, Sound Cues) and **Story info**
-  (Speakers, Holdings, Appearances, Status); tapping a kind lights it alone with the page's
-  numbering, tapping it again lights them all, and **Off** is the page as a reader sees it. On a
-  phone the kinds are a fixed palette of tiles above the chapter; on a wider page each says what
-  it holds. Tag this chapter (again) and the tagger's record sit at the panel's foot. Create
-  mode now opens on any chapter and stays on from chapter to chapter: the newest can be
-  changed as before, a sealed one shows its tags and nothing changes (sealing itself is
-  unchanged). The world view's separate chapter page is gone; Back from the Reader returns to
-  Chapters.
-- **2026-11-04** — **World Info first, and Info in the author's world view** (SENSEI). Create Story,
-  the world view's **Read** and the Creator Space's Studio now open the book's **World Info**
-  (cover, Start or Continue, Settings, Export) before the Reader. World Info opened from Create
-  (`?page=create&world=<id>&info=1`, and every draft's) is the creator's: Start and Continue
-  open the creator's Reader, the Reader's Back returns to it, and its Back returns to the book
-  in Create. A reader's World Info (`?story=<id>`) is unchanged. A chapter's Read it still opens
-  that chapter in the creator's Reader. The world view gains an **Info** tab after Assets: when
-  the book was created and last updated, **Publish** and **Export book**. Publish moved there
-  from beside Read: it is a testing placeholder, since real publishing will come with user
-  agreements and a subscription (it is monetized), so it is never a one-tap button by Read.
-- **2026-11-03** — **A book stays in Create until its creator publishes it** (SENSEI). Start Story no longer
-  puts a new book in front of readers: it opens the creator's Reader in Create
-  (`?page=create&world=<id>&read=1`), where Chapter 1 arrives and Fate and Create sit
-  together as before; its Back returns to the book in Create. Home, Search and Discover
-  list only published books (`visibility: 'public'`); the Creator Space lists every
-  book with its Draft or Public badge. The author's world view has **Read** and
-  **Publish** (asked once; a published book can return to a draft), and a chapter
-  there has **Read it**, which opens that chapter in the creator's Reader. A reader's
-  Reader (`?story=<id>&read=1`) has **Fate alone**: no Create mode, no Rewrite, and it
-  never writes a chapter. A draft opened there goes to the creator's Reader. The
-  Creator Space's Continue opens the creator's Reader. Sealing is unchanged.
-  The world view's header says where the book stands (Draft or Published) and where it
-  came from: **Made in SEN** (chapters seal as the story moves on, for the Codex) or
-  **Imported** (any chapter can reopen; `HarnessStory.origin`, absent means Made in
-  SEN since importing is not built yet). Read and Publish sit in one fixed row; the
-  Publish question opens from its button, so nothing on the page moves.
-- **2026-11-01** — Model Router tiers: readers choose Mortal, Immortal or Heaven; the team sets the model behind each.
-- **2026-11-01** — Settings › Familiar › Say “Familiar” (beta) calls the Familiar by voice; live talk hangs up after a quiet moment and is charged by the started 20 seconds (3 / 6 / 9 Energy a minute).
-- **2026-11-01** — Settings › Advanced Tools › Usage: what this device made (chapters, pictures, Familiar talk, worlds) and its Energy, with a Behind the scenes view of models and token counts. Recorded in this browser for 90 days (`src/host/usage/`). Chapters cost 2 Energy.
-- **2026-11-01** — Settings › Advanced Tools › Model Router (was Aether Router) opens the Model Router.
-- **2026-10-30** — **The author's world view.** Tapping a world under Your
-  worlds in Create opens it as its author sees it (`AuthorWorldView`,
-  `?page=create&world=<id>`), iTunes-plain, SENSEI's design: the author's worlds
-  on the left as mini world cards (a row on a phone), a Novel | Sequential Art
-  switcher (Sequential Art inactive), and Blueprint, Chapters, Codex (coming)
-  and Assets (the world's CAPA and media skill packs). Chapters lists every
-  chapter: check them (shift-click for a run), Tag reads them in order, Stop
-  finishes the one being read, and a chapter opens with its tags lit. Tagging
-  is seen here and nowhere else: the Chapters card and chapter page #487 put on
-  World Info are gone, and the regular novel page is as it was.
-- **2026-10-30 (night)** — The header is back to its original box shape, and
-  the Portrait menu's Store opens the Celestial Store (`/home/store`), not the
-  creator's User Shop.
-
-- **2026-10-30 (late)** — The header is flush with the top again, with rounded
-  bottom corners, and the Portrait menu's Settings became the Store (the Cave's
-  Celestial Store).
-
-- **2026-10-30 (evening)** — The page scrolls under the floating header (no
-  more cut-off band), the Portrait's menu is a modern sheet of plain rows, and
-  the laptop sidebar starts at its pathways without the reader card.
-
-- **2026-10-30 (later)** — The header floats as a rounded dock like the bottom
-  navigation; Search is a black pill; the Profile Portrait is a black circle with
-  the Profile figure, filled edge to edge by the reader's picture once they set one.
-
-- **2026-10-30** — Header redesign, from SENSEI. Every Library header now reads
-  `Logo | Search | Familiar | Sound | Profile Portrait`. Search is a wide
-  field ("Search for stories", a thin glowing underline) filling the row after the
-  logo; it opens the same Search sheet on a tap. The Preferences gear is gone: the
-  **Profile Portrait** (the reader's picture or initial) opens one menu with their
-  name and rank, **Sign in**, Your profile, Settings, Preferred Language, Menu music
-  and Help. The app has no accounts yet, so Sign in opens the Library's sign-in
-  screen marked "not connected yet" with its buttons switched off (`AppSignIn`);
-  accounts plug in there. The laptop sidebar's reader card opens the same menu
-  beside itself instead of the Profile page. The music note stays in the laptop
-  header between the Familiar and the Portrait; phones keep it floating above the
-  bottom bar. **Dao Insights is renamed Sparks** and leaves the header: a spark
-  button beside the Creator Space title begins a spark as a new Story Seed (or
-  keeps it in the Story Bank), and the same button in Story Seed's Origin heading
-  fills the open seed's Origin (premise, genre, tradition, Story Tags, Fate
-  Survival and title) instead of starting a new one.
-
-- **2026-10-29** — Create is the Creator Space, and Profile wears the look. The
-  Create tab (`?page=create`) now opens the Library's Create page in the shell:
-  the reader's worlds with Continue (the Reader) and Studio (World Info), the live
-  Energy balance (the Cave's Energy page), the Creator Toolkit previews and, at
-  the end, Create, which plants a new Story Seed at `?page=create&seed=new`.
-  Home's Carve New Destiny goes straight to that new Story Seed; a Dao Insights
-  spark still opens its saved seed (Sparks, since 2026-10-30, in Create). Back from Story Seed returns to the Creator
-  Space. Profile (the Cave) wears the Library's look too: violet glass chrome,
-  rims on its identity panel and home cards, black aura picker and Energy
-  panels, over the Cave's own backdrop. The app may now import
-  `@seihouse/library/creator-space` and `@seihouse/library/energy`.
-
-- **2026-10-29** — The look is the app's: Discover, Story View, Blueprint and
-  Create now wear Home's V2 look (`LibraryLook`, the Library's `look.css`): violet
-  glass chrome, black controls, gold rims and the artwork (or the saved Background
-  Image) behind every page. Profile's Cave and the Reader keep their own
-  presentation. Discover's cover cards keep the World Card's own edge, with no rim.
-
-- **2026-10-29** — Home adopts the owner's V2 default: edited Midnight violet
-  (90% opacity, 40px blur) for chrome and nested cards, Violet inset for outer
-  panels, the supplied gold accent, and black spectrum buttons. Home and its
-  Workshop previews share the composition. Saved accent/background preferences
-  remain respected; image/video cards stay clear and other pages retain their
-  existing defaults.
-
-- **2026-10-28** — Profile's Background Image replaces Cave Environment and includes the current Home artwork. The existing profile saves the choice for Home, Discover, Create and other shared menu-page backdrops; Profile uses it too. Story media stays with the Reader. Tint, glass opacity/blur and control styles remain independent. Tablet navigation uses definite button widths so its border encloses the full dock in Safari.
-
-- **2026-10-28** — Home's plain panels and cards now share the header/navigation's purple, and background tint/strength updates all of them together. Profile's App colors default preset restores purple and original accents, while background-only reset remains independent. Artwork, media cards, black controls, rainbow glows and Reader blue retain their treatments. The material Workshop has the same default preset, with prior blue/smoked paints archived and saved looks preserved.
-
-- **2026-10-28** — Profile Customization adds Background tint: a color picker, Black → Full color slider, live shared-material preview, and reset. It saves on the existing device profile, preserves unfinished identity edits and the independent accent, and currently colors only Home's header, navigation frame and plain footer. Hues stay dark enough for light text; artwork, black controls, panel glass and Reader blue retain their own appearance. Palette & Materials Colors now inventories actual rendered base, text, border, shadow and spectrum layers instead of fallback swatches.
-
-- **2026-10-28, background follow-up:** Home's plain footer now shares the header's
-  Story Seed blue-violet finish. The artwork backdrop behind Home content remains.
-  Buttons retain black fills; media remains clear. Reader tests now locate their
-  subject content through the accent scope rather than assuming the provider
-  adds no DOM wrapper.
-
-- **2026-10-28** — Profile Settings → Customization → Appearance now has an accent color picker, saved immediately on the existing device profile with a reset to the original colors. It preserves unfinished identity edits, Cultivator Aura colors, artwork and rainbow button effects. Home trials Story Seed's blue-violet material on its header and navigation frames with a denser base; the buttons remain black and keep their glows and transitions. This chrome trial stays on Home; the saved accent follows the reader through the app's Library presentation. Home and Profile Workshop previews share the current surfaces, with Profile retaining its isolated mock state.
-
-- **2026-10-28** — Home trials the owner’s V1 palette: transparent blue outer panels, black nested cards and navigation, and the shared Reader border. Buttons retain the rainbow rim and halo. Image/video cards stay clear of glass overlays. Navigation retains its original colored labels, gradients, glows and hover transitions; only its icons are white. `AppShell` opts in only for Home; the existing Home Workshop iframe shows the same result. No saved Workshop looks or other routes are changed.
-
-- **2026-10-27** — Preferences includes a native Menu music switch synchronized with Profile Settings → Sound. Sound has a separate Menu Music SPP slot: Studio song collections and Soundscape packs install into the existing device media store, persist across reloads and play through the shared mixer; failed imports keep the prior selection. Menu music defaults to the 13 NovelExpanded theme songs at the owner's permanent `media.seihouse.org` URLs, each verified against the original Dropbox SPP's SHA-256 hash. Custom pack selections remain respected, and the Reader keeps SEN Soundscapes as its own soundtrack. `templates/spp/NovelExpanded Theme Songs v1.0.1.spp` carries the hosted links and original source provenance; `scripts/linkMenuMusicSpp.mjs` regenerates such a pack from the original and a complete URL map, requiring a new version.
-
-- **2026-10-26** — Simplified the Library header across every tab (`Logo | Insights | Familiar | Preferences | Search`). Removed header badges from the header row, moved the Create (`Story Seed`) and Profile (`Profile`) titles to the top of their pages below the header, and replaced `Help` in the header with `Preferences` — a compact card where the reader can immediately switch their `Preferred Language` (updating both app interface language and default reading language) or open `Help`. The header now remains unchanged across Home, Create, Discover, Profile and Story View.
-
-- **2026-10-26** — Fixed the production-only Dao Insights header overlap. The phone center now clears the canonical header's translation utility through its class API; resetting `translate: none` in app CSS was lowered to `transform` during the build and left the separate -50% translation active. `scripts/verifyAppHeader.browser.mjs` checks the built app and Home Workshop in Chromium and WebKit, including phone, tablet, laptop and enlarged-text layouts. CI now builds and checks this delivered header as well as the development app.
-
-- **2026-10-24** — Home places Insights from the Dao in the header on phones and desktops. Its existing spark host, Copy, Story Bank and Begin actions are retained; the duplicate content placement is removed.
-
-- **2026-10-24** — Header branding uses the exact Novel Expanded logo from Library Studios, replacing the circular S emblem. The pinned brand package supplies artwork, spectrum border and reduced-motion behavior. Home navigation, title badges and utilities remain in their hosts. The app header shows only the new logo; its duplicate large wordmark is removed, while the footer wordmark remains. Library Shell and Home Workshop Development previews share these implementations; historical references are unchanged. See `vendor/studio-brand-artifact.json` for provenance.
+Current composition and boundaries are below; dated changes are in [History](#history).
 
 The NovelExpanded app as its own place, at **`/app/`** on every preview and
 deployment. It holds the core application spine from [`NOVEL_EXPANDED.md`](../../NOVEL_EXPANDED.md),
@@ -532,6 +375,165 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs (a stand-in cover among them) and a stand-in for the browser's speech (headless Chromium has no voices): Create's Story Settings, Story View's Story Settings, and Manifest on the cover (three to choose from, the picker) to World Info and Home.
 
 ## History
+
+- **2026-11-04** — **Each tag group its own style** (SENSEI). In Create mode, Media tags
+  (Soundscape, Atmosphere, Sound Cues) keep the full highlight and Story info tags (Speakers,
+  Holdings, Appearances, Status, Place) are drawn as a colored underline, so the two groups read
+  apart at a glance. The legend shows a dot for a highlight and a short line for an underline.
+  Status is a dotted underline, the first variation inside a style (SENSEI: three parent styles,
+  customizable within). Create mode only for now; the Reader does not light tags yet.
+- **2026-11-04** — **Tag media again** (SENSEI). In Create mode, tapping Soundscape, Atmosphere or
+  Sound Cues offers "Tag media again ⚡1" under the legend (and in the ⋯ menu): the tagger reads
+  the chapter's sound alone, and only its cues, soundscape and atmosphere are replaced. Speakers,
+  holdings, appearances, status, place and the Codex stay exactly as they were. Same price as a
+  full read. The information tags will each get their own focused read later.
+- **2026-11-04** — **Energy on every generation** (SENSEI). Each control that calls a model shows
+  its price: Rewrite, Fate's Write, Accept and write, Begin Story, Create Story and Replace
+  Blueprint (a chapter, 2), Tag this chapter again and Tag N chapters (1 a chapter; tagging by
+  hand is free), and Codex Manifest (an image, 5). Arc planning, Sparks and the Familiar's live
+  talk have no catalog price yet and show none.
+- **2026-11-04** — **Create mode's panel, cleaned up** (SENSEI: "what would Apple do?"). The
+  tags are a quiet legend: a colored dot and a name per kind, no boxes; a kind with none is a
+  hollow ring; a kind lit alone gets a soft capsule while the rest fade, and says what it holds.
+  The eye shows or hides every tag (All/Off is gone). The panel says nothing while saved, and
+  speaks only while saving, on a failed save or on a sealed chapter. Tag this chapter again, the
+  tagger's record and the help line live in the ⋯ menu. About 170px tall on a phone.
+- **2026-11-04** — **Create mode is the tagger's page** (SENSEI). The Chapter Tagger's page and
+  the Reader's Create mode are one: a chapter tapped in the world view's Chapters opens in the
+  creator's Reader (`?page=create&world=<id>&read=1&chapter=<n>&create=1`) in Create mode,
+  in the Reader's own look, so what the author sees is what a reader gets. Every tag is lit as
+  it opens, in two groups, **Media** (Soundscape, Atmosphere, Sound Cues) and **Story info**
+  (Speakers, Holdings, Appearances, Status); tapping a kind lights it alone with the page's
+  numbering, tapping it again lights them all, and **Off** is the page as a reader sees it. On a
+  phone the kinds are a fixed palette of tiles above the chapter; on a wider page each says what
+  it holds. Tag this chapter (again) and the tagger's record sit at the panel's foot. Create
+  mode now opens on any chapter and stays on from chapter to chapter: the newest can be
+  changed as before, a sealed one shows its tags and nothing changes (sealing itself is
+  unchanged). The world view's separate chapter page is gone; Back from the Reader returns to
+  Chapters.
+- **2026-11-04** — **World Info first, and Info in the author's world view** (SENSEI). Create Story,
+  the world view's **Read** and the Creator Space's Studio now open the book's **World Info**
+  (cover, Start or Continue, Settings, Export) before the Reader. World Info opened from Create
+  (`?page=create&world=<id>&info=1`, and every draft's) is the creator's: Start and Continue
+  open the creator's Reader, the Reader's Back returns to it, and its Back returns to the book
+  in Create. A reader's World Info (`?story=<id>`) is unchanged. A chapter's Read it still opens
+  that chapter in the creator's Reader. The world view gains an **Info** tab after Assets: when
+  the book was created and last updated, **Publish** and **Export book**. Publish moved there
+  from beside Read: it is a testing placeholder, since real publishing will come with user
+  agreements and a subscription (it is monetized), so it is never a one-tap button by Read.
+- **2026-11-03** — **A book stays in Create until its creator publishes it** (SENSEI). Start Story no longer
+  puts a new book in front of readers: it opens the creator's Reader in Create
+  (`?page=create&world=<id>&read=1`), where Chapter 1 arrives and Fate and Create sit
+  together as before; its Back returns to the book in Create. Home, Search and Discover
+  list only published books (`visibility: 'public'`); the Creator Space lists every
+  book with its Draft or Public badge. The author's world view has **Read** and
+  **Publish** (asked once; a published book can return to a draft), and a chapter
+  there has **Read it**, which opens that chapter in the creator's Reader. A reader's
+  Reader (`?story=<id>&read=1`) has **Fate alone**: no Create mode, no Rewrite, and it
+  never writes a chapter. A draft opened there goes to the creator's Reader. The
+  Creator Space's Continue opens the creator's Reader. Sealing is unchanged.
+  The world view's header says where the book stands (Draft or Published) and where it
+  came from: **Made in SEN** (chapters seal as the story moves on, for the Codex) or
+  **Imported** (any chapter can reopen; `HarnessStory.origin`, absent means Made in
+  SEN since importing is not built yet). Read and Publish sit in one fixed row; the
+  Publish question opens from its button, so nothing on the page moves.
+- **2026-11-01** — Model Router tiers: readers choose Mortal, Immortal or Heaven; the team sets the model behind each.
+- **2026-11-01** — Settings › Familiar › Say “Familiar” (beta) calls the Familiar by voice; live talk hangs up after a quiet moment and is charged by the started 20 seconds (3 / 6 / 9 Energy a minute).
+- **2026-11-01** — Settings › Advanced Tools › Usage: what this device made (chapters, pictures, Familiar talk, worlds) and its Energy, with a Behind the scenes view of models and token counts. Recorded in this browser for 90 days (`src/host/usage/`). Chapters cost 2 Energy.
+- **2026-11-01** — Settings › Advanced Tools › Model Router (was Aether Router) opens the Model Router.
+- **2026-10-30** — **The author's world view.** Tapping a world under Your
+  worlds in Create opens it as its author sees it (`AuthorWorldView`,
+  `?page=create&world=<id>`), iTunes-plain, SENSEI's design: the author's worlds
+  on the left as mini world cards (a row on a phone), a Novel | Sequential Art
+  switcher (Sequential Art inactive), and Blueprint, Chapters, Codex (coming)
+  and Assets (the world's CAPA and media skill packs). Chapters lists every
+  chapter: check them (shift-click for a run), Tag reads them in order, Stop
+  finishes the one being read, and a chapter opens with its tags lit. Tagging
+  is seen here and nowhere else: the Chapters card and chapter page #487 put on
+  World Info are gone, and the regular novel page is as it was.
+- **2026-10-30 (night)** — The header is back to its original box shape, and
+  the Portrait menu's Store opens the Celestial Store (`/home/store`), not the
+  creator's User Shop.
+
+- **2026-10-30 (late)** — The header is flush with the top again, with rounded
+  bottom corners, and the Portrait menu's Settings became the Store (the Cave's
+  Celestial Store).
+
+- **2026-10-30 (evening)** — The page scrolls under the floating header (no
+  more cut-off band), the Portrait's menu is a modern sheet of plain rows, and
+  the laptop sidebar starts at its pathways without the reader card.
+
+- **2026-10-30 (later)** — The header floats as a rounded dock like the bottom
+  navigation; Search is a black pill; the Profile Portrait is a black circle with
+  the Profile figure, filled edge to edge by the reader's picture once they set one.
+
+- **2026-10-30** — Header redesign, from SENSEI. Every Library header now reads
+  `Logo | Search | Familiar | Sound | Profile Portrait`. Search is a wide
+  field ("Search for stories", a thin glowing underline) filling the row after the
+  logo; it opens the same Search sheet on a tap. The Preferences gear is gone: the
+  **Profile Portrait** (the reader's picture or initial) opens one menu with their
+  name and rank, **Sign in**, Your profile, Settings, Preferred Language, Menu music
+  and Help. The app has no accounts yet, so Sign in opens the Library's sign-in
+  screen marked "not connected yet" with its buttons switched off (`AppSignIn`);
+  accounts plug in there. The laptop sidebar's reader card opens the same menu
+  beside itself instead of the Profile page. The music note stays in the laptop
+  header between the Familiar and the Portrait; phones keep it floating above the
+  bottom bar. **Dao Insights is renamed Sparks** and leaves the header: a spark
+  button beside the Creator Space title begins a spark as a new Story Seed (or
+  keeps it in the Story Bank), and the same button in Story Seed's Origin heading
+  fills the open seed's Origin (premise, genre, tradition, Story Tags, Fate
+  Survival and title) instead of starting a new one.
+
+- **2026-10-29** — Create is the Creator Space, and Profile wears the look. The
+  Create tab (`?page=create`) now opens the Library's Create page in the shell:
+  the reader's worlds with Continue (the Reader) and Studio (World Info), the live
+  Energy balance (the Cave's Energy page), the Creator Toolkit previews and, at
+  the end, Create, which plants a new Story Seed at `?page=create&seed=new`.
+  Home's Carve New Destiny goes straight to that new Story Seed; a Dao Insights
+  spark still opens its saved seed (Sparks, since 2026-10-30, in Create). Back from Story Seed returns to the Creator
+  Space. Profile (the Cave) wears the Library's look too: violet glass chrome,
+  rims on its identity panel and home cards, black aura picker and Energy
+  panels, over the Cave's own backdrop. The app may now import
+  `@seihouse/library/creator-space` and `@seihouse/library/energy`.
+
+- **2026-10-29** — The look is the app's: Discover, Story View, Blueprint and
+  Create now wear Home's V2 look (`LibraryLook`, the Library's `look.css`): violet
+  glass chrome, black controls, gold rims and the artwork (or the saved Background
+  Image) behind every page. Profile's Cave and the Reader keep their own
+  presentation. Discover's cover cards keep the World Card's own edge, with no rim.
+
+- **2026-10-29** — Home adopts the owner's V2 default: edited Midnight violet
+  (90% opacity, 40px blur) for chrome and nested cards, Violet inset for outer
+  panels, the supplied gold accent, and black spectrum buttons. Home and its
+  Workshop previews share the composition. Saved accent/background preferences
+  remain respected; image/video cards stay clear and other pages retain their
+  existing defaults.
+
+- **2026-10-28** — Profile's Background Image replaces Cave Environment and includes the current Home artwork. The existing profile saves the choice for Home, Discover, Create and other shared menu-page backdrops; Profile uses it too. Story media stays with the Reader. Tint, glass opacity/blur and control styles remain independent. Tablet navigation uses definite button widths so its border encloses the full dock in Safari.
+
+- **2026-10-28** — Home's plain panels and cards now share the header/navigation's purple, and background tint/strength updates all of them together. Profile's App colors default preset restores purple and original accents, while background-only reset remains independent. Artwork, media cards, black controls, rainbow glows and Reader blue retain their treatments. The material Workshop has the same default preset, with prior blue/smoked paints archived and saved looks preserved.
+
+- **2026-10-28** — Profile Customization adds Background tint: a color picker, Black → Full color slider, live shared-material preview, and reset. It saves on the existing device profile, preserves unfinished identity edits and the independent accent, and currently colors only Home's header, navigation frame and plain footer. Hues stay dark enough for light text; artwork, black controls, panel glass and Reader blue retain their own appearance. Palette & Materials Colors now inventories actual rendered base, text, border, shadow and spectrum layers instead of fallback swatches.
+
+- **2026-10-28, background follow-up:** Home's plain footer now shares the header's
+  Story Seed blue-violet finish. The artwork backdrop behind Home content remains.
+  Buttons retain black fills; media remains clear. Reader tests now locate their
+  subject content through the accent scope rather than assuming the provider
+  adds no DOM wrapper.
+
+- **2026-10-28** — Profile Settings → Customization → Appearance now has an accent color picker, saved immediately on the existing device profile with a reset to the original colors. It preserves unfinished identity edits, Cultivator Aura colors, artwork and rainbow button effects. Home trials Story Seed's blue-violet material on its header and navigation frames with a denser base; the buttons remain black and keep their glows and transitions. This chrome trial stays on Home; the saved accent follows the reader through the app's Library presentation. Home and Profile Workshop previews share the current surfaces, with Profile retaining its isolated mock state.
+
+- **2026-10-28** — Home trials the owner’s V1 palette: transparent blue outer panels, black nested cards and navigation, and the shared Reader border. Buttons retain the rainbow rim and halo. Image/video cards stay clear of glass overlays. Navigation retains its original colored labels, gradients, glows and hover transitions; only its icons are white. `AppShell` opts in only for Home; the existing Home Workshop iframe shows the same result. No saved Workshop looks or other routes are changed.
+
+- **2026-10-27** — Preferences includes a native Menu music switch synchronized with Profile Settings → Sound. Sound has a separate Menu Music SPP slot: Studio song collections and Soundscape packs install into the existing device media store, persist across reloads and play through the shared mixer; failed imports keep the prior selection. Menu music defaults to the 13 NovelExpanded theme songs at the owner's permanent `media.seihouse.org` URLs, each verified against the original Dropbox SPP's SHA-256 hash. Custom pack selections remain respected, and the Reader keeps SEN Soundscapes as its own soundtrack. `templates/spp/NovelExpanded Theme Songs v1.0.1.spp` carries the hosted links and original source provenance; `scripts/linkMenuMusicSpp.mjs` regenerates such a pack from the original and a complete URL map, requiring a new version.
+
+- **2026-10-26** — Simplified the Library header across every tab (`Logo | Insights | Familiar | Preferences | Search`). Removed header badges from the header row, moved the Create (`Story Seed`) and Profile (`Profile`) titles to the top of their pages below the header, and replaced `Help` in the header with `Preferences` — a compact card where the reader can immediately switch their `Preferred Language` (updating both app interface language and default reading language) or open `Help`. The header now remains unchanged across Home, Create, Discover, Profile and Story View.
+
+- **2026-10-26** — Fixed the production-only Dao Insights header overlap. The phone center now clears the canonical header's translation utility through its class API; resetting `translate: none` in app CSS was lowered to `transform` during the build and left the separate -50% translation active. `scripts/verifyAppHeader.browser.mjs` checks the built app and Home Workshop in Chromium and WebKit, including phone, tablet, laptop and enlarged-text layouts. CI now builds and checks this delivered header as well as the development app.
+
+- **2026-10-24** — Home places Insights from the Dao in the header on phones and desktops. Its existing spark host, Copy, Story Bank and Begin actions are retained; the duplicate content placement is removed.
+
+- **2026-10-24** — Header branding uses the exact Novel Expanded logo from Library Studios, replacing the circular S emblem. The pinned brand package supplies artwork, spectrum border and reduced-motion behavior. Home navigation, title badges and utilities remain in their hosts. The app header shows only the new logo; its duplicate large wordmark is removed, while the footer wordmark remains. Library Shell and Home Workshop Development previews share these implementations; historical references are unchanged. See `vendor/studio-brand-artifact.json` for provenance.
 
 - **2026-11-02** — Spoken codes: while the Familiar is open, Home's story cards show N1, N2…, the Reader's chapter list C1, C2… and Fate's paths F1–F4. Saying a code opens that story or chapter, or picks that path to confirm. The badges disappear when the Familiar closes.
 

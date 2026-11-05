@@ -2,6 +2,13 @@
 
 Prepared for SENSEI.
 
+> **Historical audit — status note added 2026-11-05.** The findings below describe
+> the checkout audited on 2026-10-28, not a current cleanup queue. In particular,
+> finding 1's old Codex page was subsequently removed; see the
+> [Reader Codex history](../src/components/reader-codex/README.md#workshop-history).
+> Recheck each remaining finding against current code before acting. The original
+> report is preserved below.
+
 ## What this is
 
 A sweep of the whole `development` repository looking for code that is **outdated, redundant, unused, or superseded** — the kind of thing that quietly costs time every time a person or an agent works in this codebase.

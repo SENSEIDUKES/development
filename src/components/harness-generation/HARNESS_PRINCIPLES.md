@@ -89,7 +89,10 @@ information tags; the Codex keeps it and shows it.
 To show a story in another medium you need the facts the prose describes, not
 the prose:
 
-| Fact | What it answers | Today |
+The table below is a historical implementation snapshot. For the current build
+state, read [NOVEL_EXPANDED.md](../../../NOVEL_EXPANDED.md#where-we-are-2026-10-10).
+
+| Fact | What it answers | Historical state |
 |---|---|---|
 | **Entities** | Who and what exists: characters, things, abilities, places, factions, each with one permanent ID | Characters, things and abilities **have** (Codex entries). Places and factions missing |
 | **Appearance** | What each entity looks like, and when that changes (a scar, new robes, a breakthrough) | Characters and things **have** (appears and look tags keep the writer's own description; a full look is written on demand). Places wait for the Place tag |
@@ -112,9 +115,10 @@ story.
 
 ### How it is built
 
-The same way as Holdings: the writer tags only the moment something changes
-("enters", "arrives at", "is wounded", "now wears"); the engine resolves names
-to entries and works out current state; every fact points at its passage. Full
+The same way as Holdings: the writer describes what happens; the separate
+Chapter Tagger annotates moments of change ("enters", "arrives at", "is wounded",
+"now wears") with tag notes. The engine resolves names to entries and works out
+current state; each chapter-observed fact points at its passage. Full
 descriptions (a character's whole look) are written by a small separate call
 only when something needs them (on demand, since 2026-10-17), from the
 passages the tags mark, so the chapter writer's job stays small, cheap models

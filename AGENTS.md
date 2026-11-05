@@ -243,11 +243,31 @@ No replica-creation or source-comparison dates are required.
 ## Live preview workflow
 
 ```bash
-npm install
+npm ci
 npm run dev -- --host 0.0.0.0
 ```
 
+Use `npm ci` for initial setup and after pulling dependency or vendored-package
+updates, as CI does. It installs the lockfile from a clean `node_modules`.
+`npm install` can retain an older same-version UI tarball; `npm run check:ui-artifacts`
+detects that mismatch, and `npm ci` fixes it.
+
 Keep the local or forwarded preview available, usually on port `5173`. After changes, confirm the app compiles and the relevant preview still renders on mobile and desktop.
+
+## Verification and CI
+
+`npm run verify` checks types, unit tests, ownership, package boundaries, the app's
+import graph, and package builds/consumer smoke tests. It does **not** run browser
+checks or the production app build, so passing it alone does not mean all CI checks
+passed.
+
+CI also runs `npm run test:browser` against the dev server on port `5173`,
+`npm run build`, and `npm run test:browser:app-header` against the built app served
+by `npm run preview` on port `4173`. Browser checks require Playwright Chromium and
+WebKit (`npx playwright install --with-deps chromium webkit`). Follow the
+[local CI check instructions](./README.md#verification-and-ci) for the complete
+sequence and server commands. Report which checks actually ran and which were
+skipped or blocked; do not describe `verify` alone as full CI verification.
 
 ## Final integration
 

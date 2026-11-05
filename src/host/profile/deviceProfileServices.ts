@@ -284,7 +284,7 @@ export function useDeviceProfileController(
 
   const handleFamiliarInHeaderChange = useCallback((inHeader: boolean) => {
     if (!profile) return;
-    commit({ familiarInHeader: inHeader || undefined });
+    commit({ familiarInHeader: inHeader ? undefined : false });
   }, [commit, profile]);
 
   const handleFamiliarLiveTalkChange = useCallback((liveTalk: boolean) => {

@@ -386,6 +386,7 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-11-05: Keep in the header is on by default. A reader who has not chosen finds the Familiar waiting in the header until they call it; turning the setting off lets it float over the page. Unset means on, and only the choice to float is saved (`familiarInHeader: false`), so a device that had the old default unset now starts in the header, and one that had it on stays there. Restore defaults turns it back on.
 - 2026-11-03 (onboarding order): SENSEI: a new reader meets the app before the Familiar. The app's welcome will come first, in the System voice (greeting, Create, Discover), then hand over to the Familiar. Until it is built, the Familiar no longer greets a new reader by itself, and Settings › Familiar's "Meet your Familiar again" is removed. Its card and its Guides button are unchanged; the card's greeting (`guides.welcome`) stays ready to be the welcome's last step. Recorded guide lines will be the System voice, the same voice as the help lines; a Familiar speaks in its own voice only in Live talk.
 - 2026-11-03 (latest): SENSEI: the guide card is the Familiar's own, not a separate mechanic. The tray's Energy button is now **Guides** (`FamiliarGuidesAction`, floating tray and header actions alike): it opens the Familiar's card beside it on any page, any time, so it can always be reopened. The first meeting is the same card, opened once on its greeting. `FamiliarHelperProvider` owns the card (`guides`: the list, the teaching Familiar, watched guides, `welcome`/`onWelcomed`); the card finds whether the Familiar floats (it perches by it) or waits in the header (it drops below the header). Energy is no longer on the Familiar (`FamiliarEnergyAction` removed); SENSEI will place it elsewhere.
 - 2026-11-03 (later): From SENSEI's review: nothing the Familiar does takes over the screen or takes the reader anywhere. The first meeting is now a tip, not a page: the screen dims a little and the Familiar's small card pops up beside it (above it, or below it where there is more room; under the header when it waits there), with a thought-bubble tail toward it. Show me around plays the guides inside that card, on the page the reader is on (`FamiliarGuideView`, compact: ‹ Done ›); a guide too tall to fit beside the Familiar takes the room above the navigation instead of being cut off. Done, Later, Escape or a tap outside closes it and the reader carries on where they were. The `/home/familiar/guides` deep link was removed.
@@ -439,8 +440,9 @@ Escape/outside dismissal, and reduced-motion handling.
   name and one short line, an icon row (info, microphone, typing); how to talk
   moved behind info. Explain shows each page's help topics, read in the System
   voice where recorded (the device voice otherwise), with a clip only when one
-  exists (`helpVideos`). The Familiar floats by default; Settings → Familiar →
-  Keep in the header puts it back in the header.
+  exists (`helpVideos`). The Familiar floated by default then; since 2026-11-05 it
+  waits in the header by default, and Settings → Familiar → Keep in the header off
+  lets it float.
 - 2026-10-29: Tap the microphone to start talking and tap again when done; a
   pause no longer ends listening. It stops by itself after 30 seconds.
 - 2026-10-28: With the owner's approval, removed the old supplied-GIF copy

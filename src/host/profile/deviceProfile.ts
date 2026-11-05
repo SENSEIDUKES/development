@@ -58,7 +58,8 @@ function restore(raw: string | null, fresh: UserProfile): UserProfile {
     interfaceLanguage: normalizeSenLanguageCode(record.interfaceLanguage),
     defaultReadingLanguage: normalizeSenLanguageCode(record.defaultReadingLanguage),
     familiarSize: typeof saved.familiarSize === 'number' && Number.isFinite(saved.familiarSize) ? saved.familiarSize : undefined,
-    familiarInHeader: saved.familiarInHeader === true ? true : undefined,
+    // On is the default and is not stored; only the reader's choice to let the Familiar float is.
+    familiarInHeader: saved.familiarInHeader === false ? false : undefined,
     familiarLiveTalk: saved.familiarLiveTalk === true ? true : undefined,
     familiarWakeWord: saved.familiarWakeWord === true ? true : undefined,
     familiarPersonal: normalizeFamiliarPersonalizations(saved.familiarPersonal),

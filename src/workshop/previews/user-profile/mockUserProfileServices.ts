@@ -406,7 +406,7 @@ export function createMockUserProfileServices({
 
     const handleFamiliarInHeaderChange = useCallback((inHeader: boolean) => {
       if (!profileRef.current) return;
-      const next = { ...profileRef.current, familiarInHeader: inHeader || undefined, updatedAt: new Date().toISOString() };
+      const next = { ...profileRef.current, familiarInHeader: inHeader ? undefined : false, updatedAt: new Date().toISOString() };
       profileRef.current = next;
       setProfile(next);
       if (currentUser) onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize: next.familiarSize, familiarInHeader: inHeader, familiarLiveTalk: next.familiarLiveTalk, familiarWakeWord: next.familiarWakeWord });

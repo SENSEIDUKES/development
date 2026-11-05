@@ -16,9 +16,10 @@ const READER_BOTTOM = 136;
 
 /**
  * The reader's equipped Familiar: one companion for the whole app, so it keeps
- * its place from page to page. It floats over the page unless the reader keeps
- * it in the header (Familiar page → settings → Keep in the header): minimized, its
- * recall in every Library header (beside the music note on laptops).
+ * its place from page to page. It waits in the header by default (Familiar page → settings → Keep in the
+ * header, on unless the reader turns it off): minimized, its recall in every
+ * Library header (beside the music note on laptops), until they call it; with
+ * that setting off it floats over the page.
  * Floating, it starts at the bottom right above the bottom bar and the music
  * note on phones and tablets, and above the page's corner on laptops. It
  * follows the profile: a Familiar or size chosen in the Cave changes it at
@@ -41,7 +42,7 @@ const READER_BOTTOM = 136;
  * returns it to the reader's choice.
  */
 export function AppFamiliar({ profile, present, reading = false, place, navigate, guides, onGuideSeen, tucked = false, boundaryRef, children }: { profile: UserProfile; present: boolean; reading?: boolean; tucked?: boolean; guides?: readonly FamiliarGuide[]; onGuideSeen?: (guideId: string) => void; place: { title: string; help: FamiliarHelpPlace; page?: FamiliarPage }; navigate?: Navigate; boundaryRef?: RefObject<HTMLElement | null>; children: ReactNode }) {
-  const inHeader = profile.familiarInHeader ?? false;
+  const inHeader = profile.familiarInHeader ?? true;
   const [minimized, setMinimized] = useState(inHeader);
   // Changing the setting moves it at once, on the Familiar page too.
   useEffect(() => { setMinimized(inHeader); }, [inHeader]);

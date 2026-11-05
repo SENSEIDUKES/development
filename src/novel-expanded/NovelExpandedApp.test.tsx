@@ -1318,10 +1318,12 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     const profile = createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID });
     await render(appServices(scriptedWriter().writer, { readerPreferences, profile }));
     const card = () => document.querySelector<HTMLElement>('[data-familiar-welcome]');
-    for (let tries = 0; !document.querySelector('.familiar-companion') && tries < 20; tries++) await flush(20);
-    // The app's own welcome comes first (to be built); the Familiar waits its turn.
+    for (let tries = 0; !recall() && tries < 20; tries++) await flush(20);
+    // The app's own welcome comes first (to be built); the Familiar waits its turn, in the header.
     await flush(100);
     expect(card()).toBeNull();
+    expect(companion()).toBeNull();
+    await summon();
     await click(document.querySelector('.familiar-companion .familiar-trigger'), 'the Familiar');
     await click(document.querySelector('[data-familiar-guides-open]'), 'Guides', 20);
     expect(card()?.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet-your-familiar');
@@ -1442,10 +1444,10 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Profile');
     // The practice account opens with the most QI a tester could want.
     expect(cave()!.querySelector('[data-cave-qi]')?.textContent).toBe('1,000,000 to spend');
-    // The music note floats above the Cave's bar on a phone, and the Familiar floats over the Cave.
+    // The music note floats above the Cave's bar on a phone, and the Familiar waits in the header.
     expect(floatingNote()).toBeTruthy();
-    expect(companion()).toBeTruthy();
-    expect(recall()).toBeNull();
+    expect(companion()).toBeNull();
+    expect(recall()).toBeTruthy();
     // The Cave's logo goes Home, and so does Home in the navigation.
     expect(document.querySelector<HTMLAnchorElement>('.workspace-header a[aria-label="Return to Library"]')?.getAttribute('href')).toBe('/app/');
     await click(buttonByText('Home', strip()!), 'Home in the navigation');
@@ -1491,15 +1493,23 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(slide()).toBe('phoenix');
     await click(cave()!.querySelector('[data-familiar-activate]'), 'Make active', 20);
     expect(services.profile.read().familiarId).toBe('phoenix');
-    expect(companion()!.querySelector('[aria-label="Phoenix: show actions"]')).toBeTruthy();
+    expect(recall('Phoenix')).toBeTruthy();
     // The companion's settings open from the page's settings button, over the whole app.
     await click(cave()!.querySelector('[data-familiar-settings-open]'), 'Familiar settings', 10);
     const setting = (label: string) => document.body.querySelector<HTMLButtonElement>(`[data-familiar-settings] [role="switch"][aria-label="${label}"]`)!;
-    // Keep in the header: off by default, the Familiar floats; on, it waits in the header until called.
-    expect(setting('Keep in the header').getAttribute('aria-checked')).toBe('false');
+    // Keep in the header: on by default, the Familiar waits in the header until called; off, it floats.
+    expect(setting('Keep in the header').getAttribute('aria-checked')).toBe('true');
+    expect(companion()).toBeNull();
+    expect(recall('Phoenix')).toBeTruthy();
     await act(async () => { setting('Keep in the header').click(); });
     await flush(10);
-    expect(services.profile.read().familiarInHeader).toBe(true);
+    expect(services.profile.read().familiarInHeader).toBe(false);
+    expect(setting('Keep in the header').getAttribute('aria-checked')).toBe('false');
+    expect(companion()).toBeTruthy();
+    expect(recall('Phoenix')).toBeNull();
+    await act(async () => { setting('Keep in the header').click(); });
+    await flush(10);
+    expect(services.profile.read().familiarInHeader).toBeUndefined();
     expect(companion()).toBeNull();
     expect(recall('Phoenix')).toBeTruthy();
     expect(recall('Quill')).toBeNull();

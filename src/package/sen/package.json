@@ -1,6 +1,6 @@
 {
   "name": "@seihouse/sen",
-  "version": "0.40.0",
+  "version": "0.41.0",
   "description": "SEIHouse Expanded Novels: an embeddable expanded-narrative engine — expanded reading behavior, structured chapter contracts, Color Codes, Codex behavior, cards, and the narrative surfaces built on them.",
   "type": "module",
   "sideEffects": [
@@ -82,6 +82,10 @@
     "./translation": {
       "types": "./dist/types/package/sen/translation.d.ts",
       "import": "./dist/translation.js"
+    },
+    "./docs-knowledge": {
+      "types": "./dist/types/package/sen/docs-knowledge.d.ts",
+      "import": "./dist/docs-knowledge.js"
     }
   },
   "peerDependencies": {

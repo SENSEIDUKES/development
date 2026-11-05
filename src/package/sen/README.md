@@ -71,6 +71,12 @@ The defaults are the previous colors, so nothing looks different. A host recolor
 the Reader by setting them on `:root` or an element holding the whole Reader; the
 panels render beside `.reader-frame`, not inside it.
 
+**0.41.0 (2026-11-05):** New `./docs-knowledge` entry: the shape of a host's docs
+catalog (`DocsTopic`, `DocsCategory`, `DocsCatalog`) and the reading a grounded
+companion does over it — `docsIndex` for the names it is given at the start of a
+conversation, `lookUpDocs` for the entry it asks for, `searchDocs` for a docs page's
+search box. SEN owns the reading; a host supplies its own words.
+
 **0.40.0 (2026-10-26):** The root entry exports the shared `HighlightActionIcon`
 artwork and its names and props without importing Highlight Engine styles, so Library
 can reuse the same SVGs in its individually named icons.
@@ -388,6 +394,7 @@ palette checks alone do not establish accessibility for a finished surface.
 | `./harness-generation` | Canonical state, continuity, CAPA, generation ports, recovery and export; the Fate page and its panels |
 | `./translation` | Translation/accessibility contracts and controller |
 | `./arc-goals` | Arc planning contracts and operations |
+| `./docs-knowledge` | The shape of a host's docs catalog, and the index and lookup a grounded companion reads it with. SEN owns the reading, never the words: a host supplies its own catalog |
 | `./styles.css` | SEN feature styles |
 
 There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy

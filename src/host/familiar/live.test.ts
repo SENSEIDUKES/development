@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FamiliarLiveBrief, FamiliarLiveEvents } from '@seihouse/library/familiar';
 import { base64ToFloat32, createFamiliarGeminiLive, downsample, liveCall, pcm16ToBase64 } from './live';
 
-const brief: FamiliarLiveBrief = { familiar: { name: 'Fox', description: '' }, place: 'Home', language: 'en-US', topics: [], actions: [] };
+const brief: FamiliarLiveBrief = { familiar: { name: 'Fox', description: '' }, place: 'Home', language: 'en-US', topics: [], actions: [], docs: [] };
 
 class Socket {
   static last: Socket;

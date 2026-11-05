@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FamiliarLiveBrief, FamiliarLiveEvents } from '@seihouse/library/familiar';
 import { createFamiliarRealtimeLive, ELEVENLABS_REALTIME_URL } from './realtimeLive';
 
-const brief: FamiliarLiveBrief = { familiar: { name: 'Quill', description: '' }, place: 'Home', language: 'en-US', topics: [], actions: [] };
+const brief: FamiliarLiveBrief = { familiar: { name: 'Quill', description: '' }, place: 'Home', language: 'en-US', topics: [], actions: [], docs: [] };
 
 class Socket {
   static last: Socket;

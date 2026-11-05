@@ -38,6 +38,11 @@ actions the list allows there, the host's anywhere actions included (registered 
 `FamiliarPlace` with `page` and `actions`); listed `instant` actions run without
 confirmation. A context without a `page` behaves as before.
 
+**0.36.0 (2026-11-05):** New `./docs` entry: `novelExpandedDocs`, the NovelExpanded
+Docs catalog, read by the docs page and by the Familiar, which is grounded in it and
+may say nothing it does not contain. Requires SEN 0.41.0 for `./docs-knowledge`,
+which `./familiar` now imports at runtime.
+
 **0.35.0 (2026-10-26):** Presentation exports 12 individually named reusable icons
 and includes them in the 54-icon catalog. Requires SEN 0.40.0 for the shared artwork.
 
@@ -350,6 +355,7 @@ removed; a real Mini face can be designed later. The Info cover uses
 | `./stories` | A reader's HARNESS stories over host-supplied storage and writer: `useLibraryStories` (one controller with the Library's defaults), `StoryPages` (a story's World Info page, with Manifest on its cover and its Story Settings, and its Reader, with the Aura Veil while a chapter is written), `harnessStoryDisplay` and `storyHomeWorlds` (Home cards, newest first, with the host's covers), `StorySettings` and `CreateStorySettings` (language, Reading Mode, CAPA skill slots, Media Loadout; Create's as a draft the host keeps), `storyCoverRequest`, `STORY_COVER_CHOICES` and the `StoryCoverService` port (make one or three, keep one, let go of the rest) |
 | `./model-router-server` | Server-only Gemini/OpenRouter/MiniMax text and image routing, ElevenLabs speech, and MiniMax video tasks; apps supply credentials, prompts, HTTP policy, and storage |
 | `./media` | First-party catalog selection and entitlement contracts |
+| `./docs` | `novelExpandedDocs`, the NovelExpanded Docs catalog: the product's own explanations, read by the docs page and by the Familiar |
 | `./manifestations` | Celestial manifestation orchestration around Library UI visuals |
 | `./styles.css` | Library feature styles |
 

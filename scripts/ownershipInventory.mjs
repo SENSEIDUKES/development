@@ -26,6 +26,7 @@ export const ownershipRules = [
   ['src/audio/data/', 'host', 'first-party catalog records'],
   ['src/library/media/', 'library', 'media catalog and entitlement policy'],
   ['src/components/arc-goals/', 'sen', 'arc goals'],
+  ['src/components/docs-knowledge/', 'sen', 'docs catalog shape and lookup'],
   ['src/components/reader-chamber/', 'sen', 'reader'],
   ['src/components/reader-codex/', 'sen', 'codex'],
   ['src/components/harness-generation/', 'sen', 'harness'],

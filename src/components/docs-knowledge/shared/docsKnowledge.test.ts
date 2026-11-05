@@ -62,6 +62,19 @@ describe('Docs Knowledge', () => {
     expect(DOCS_LOOKUP_LIMIT).toBe(3);
   });
 
+  it('reads a question as a reader asks it, not as an exact title', () => {
+    // A companion is told to pass the reader's question in its own words, so the
+    // wording around the topic must not decide whether the docs answer at all.
+    for (const question of ['Story Seed', 'story seed?', 'What is a Story Seed?', 'tell me about the story seed', 'what is a story seed']) {
+      expect(lookUpDocs(catalog, question)[0].topic.id, question).toBe('story-seed');
+    }
+    // A plural reaches its entry: "arc goals" is the Arc Goal entry.
+    expect(lookUpDocs(catalog, 'how do arc goals work')[0].topic.id).toBe('arc-goal');
+    // Question words alone decide nothing, and a question the docs do not cover still finds nothing.
+    expect(lookUpDocs(catalog, 'what is a refund policy?')).toEqual([]);
+    expect(lookUpDocs(catalog, '??!')).toEqual([]);
+  });
+
   it('searches the whole catalog for a reader typing on the docs page, explained or not', () => {
     expect(searchDocs(catalog, 'hard pin').map(topic => topic.id)).toEqual(['hard-pin']);
     expect(searchDocs(catalog, 'not-a-real-term')).toEqual([]);

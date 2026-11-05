@@ -81,26 +81,68 @@ export interface DocsLookupHit {
 }
 
 /**
- * What the catalog says about a question, best match first: an explained topic
- * matches when every word of the question appears in its title, its aliases or
- * its own text. An empty result is the honest answer that nothing was written
- * about this, and the caller may record it as a question the docs do not cover.
+ * The words a spoken question is wrapped in. A companion is told to pass the
+ * reader's question as it was asked, so "what is a Story Seed?" has to reach
+ * the same entry as "Story Seed"; these carry no meaning of their own and
+ * would otherwise match everything or nothing.
+ */
+const DOCS_QUESTION_WORDS = new Set([
+  'a', 'about', 'an', 'and', 'any', 'are', 'as', 'at', 'be', 'but', 'by', 'can', 'could', 'did', 'do', 'does',
+  'explain', 'for', 'from', 'get', 'give', 'had', 'has', 'have', 'how', 'i', 'if', 'in', 'into', 'is', 'it',
+  'its', 'me', 'mean', 'means', 'my', 'of', 'on', 'or', 'our', 'should', 'so', 'tell', 'than', 'that', 'the',
+  'their', 'them', 'then', 'there', 'these', 'they', 'this', 'to', 'us', 'use', 'used', 'was', 'we', 'were',
+  'what', 'when', 'where', 'which', 'who', 'why', 'will', 'with', 'work', 'works', 'would', 'you', 'your',
+]);
+
+/**
+ * A question reduced to the words that carry its meaning: punctuation dropped,
+ * so "Story Seed?" and "Story Seed" ask the same thing. If a question is
+ * nothing but question words, they are kept, because they are all it has.
+ */
+function docsQueryWords(query: string): string[] {
+  const words = query.toLocaleLowerCase().replace(/[^\p{L}\p{N}\s]+/gu, ' ').split(/\s+/).filter(Boolean);
+  const meaningful = words.filter(word => !DOCS_QUESTION_WORDS.has(word));
+  return meaningful.length ? meaningful : words;
+}
+
+/**
+ * Whether a question's word appears in some text, counting a plural as its
+ * singular: a reader asking about "arc goals" means the Arc Goal entry.
+ */
+function docsWordIn(text: string, word: string): boolean {
+  return text.includes(word) || (word.length > 3 && word.endsWith('s') && text.includes(word.slice(0, -1)));
+}
+
+/**
+ * What the catalog says about a question, best match first.
+ *
+ * The question is matched as a reader would ask it aloud, not as an exact
+ * title: its meaningful words are looked for in each explained topic, a topic
+ * whose own name is named outranks one that merely mentions it, and matching
+ * every word outranks matching some. An empty result means no word of the
+ * question appears anywhere in the docs — the honest answer that nothing was
+ * written about this, which the caller may record as a question worth an entry.
  */
 export function lookUpDocs(catalog: DocsCatalog, query: string, limit = DOCS_LOOKUP_LIMIT): DocsLookupHit[] {
-  const words = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  const words = docsQueryWords(query);
   if (!words.length) return [];
-  const hits = catalog.flatMap(category => category.topics
+  const scored = catalog.flatMap(category => category.topics
     .filter(docsTopicExplained)
-    .map(topic => ({ topic, category: category.title })));
-  const matched = hits.filter(({ topic, category }) => {
-    const text = [topic.title, ...topic.aliases, topic.definition, topic.howItFits, category]
-      .filter(Boolean).join(' ').toLocaleLowerCase();
-    return words.every(word => text.includes(word));
-  });
-  // A question that names a topic should reach that topic, not whatever mentions it in passing.
-  const named = (hit: DocsLookupHit) =>
-    [hit.topic.title, ...hit.topic.aliases].some(name => words.every(word => name.toLocaleLowerCase().includes(word)));
-  return [...matched.filter(named), ...matched.filter(hit => !named(hit))].slice(0, limit);
+    .map(topic => {
+      const name = [topic.title, ...topic.aliases].join(' ').toLocaleLowerCase();
+      const text = [name, topic.definition, topic.howItFits, category.title].filter(Boolean).join(' ').toLocaleLowerCase();
+      const inText = words.filter(word => docsWordIn(text, word)).length;
+      const inName = words.filter(word => docsWordIn(name, word)).length;
+      return { topic, category: category.title, all: inText === words.length, score: inText ? inText + inName * 3 : 0 };
+    }));
+  // An entry that answers the whole question crowds out one that caught a single
+  // word of it, so a spoken answer is not padded with whatever shares a category.
+  const matched = scored.filter(hit => hit.score > 0);
+  const whole = matched.filter(hit => hit.all);
+  return (whole.length ? whole : matched)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, limit)
+    .map(({ topic, category }) => ({ topic, category }));
 }
 
 /** The search a reader types on a docs page: every match, with its category. */

@@ -242,6 +242,24 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 
 describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, () => {
+  it('moves a story made with CAPA AUTHOR 1.0.1 to the installed 1.0.2 when the app opens (SENSEI, 2026-11-05)', async () => {
+    const made = new InMemoryHarnessGenerationRepository();
+    const { writer } = scriptedWriter();
+    await startedStory(made, writer);
+    const saved = await made.load();
+    const olderAuthor = { ...OFFICIAL_CAPA_DEFAULT_REFERENCES.author, version: '1.0.1' };
+    const stories = new InMemoryHarnessGenerationRepository({ ...saved, stories: saved.stories.map(story => ({ ...story, skillLoadout: { ...story.skillLoadout, author: olderAuthor } })) });
+    await render(appServices(writer, { stories }));
+    await flush(20);
+    const [story] = stories.snapshot().stories;
+    expect(story.skillLoadout?.author).toEqual(OFFICIAL_CAPA_DEFAULT_REFERENCES.author);
+    expect(OFFICIAL_CAPA_DEFAULT_REFERENCES.author.version).toBe('1.0.2');
+    // Every other skill it was made with stays as it was.
+    const { author: _author, ...rest } = story.skillLoadout!;
+    const { author: _made, ...madeRest } = saved.stories[0].skillLoadout!;
+    expect(rest).toEqual(madeRest);
+  });
+
   it('starts on an empty Home that says where stories will appear', async () => {
     await render(appServices(scriptedWriter().writer));
     expect(document.querySelector('[data-testid="novel-expanded-home"]')).toBeTruthy();

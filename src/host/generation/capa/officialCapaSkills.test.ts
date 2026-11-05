@@ -6,9 +6,11 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import {
   createOfficialCapaDefaultLoadout,
   installOfficialCapaSkills,
+  OFFICIAL_CAPA_DEFAULT_REFERENCES,
   OFFICIAL_CAPA_PACKAGES,
   OFFICIAL_STYLE_REFERENCES,
   type OfficialCapaArchiveLoader,
+  officialCapaUpgrades,
 } from './officialCapaSkills';
 import { inspectHarnessSpp } from './sppSkills';
 
@@ -125,7 +127,7 @@ describe('official CAPA SPP defaults', () => {
     await reloaded.generateNextChapter(story.id, 'fixture-model');
     expect(requests).toHaveLength(1);
     expect(requests[0].capaPrompt.skills.map(skill => [skill.slot, skill.id, skill.version])).toEqual([
-      ['author', createOfficialCapaDefaultLoadout('chinese').author!.id, '1.0.1'],
+      ['author', createOfficialCapaDefaultLoadout('chinese').author!.id, '1.0.2'],
       ['pacing', createOfficialCapaDefaultLoadout('chinese').pacing!.id, '1.0.1'],
       ['continuity', createOfficialCapaDefaultLoadout('chinese').continuity!.id, '1.0.1'],
       ['style', OFFICIAL_STYLE_REFERENCES.japanese.id, '1.0.0'],
@@ -133,5 +135,14 @@ describe('official CAPA SPP defaults', () => {
     // Every official package skill keeps the archive it was installed from.
     expect(requests[0].capaPrompt.skills.every(skill => skill.source?.archiveSha256)).toBe(true);
     expect(reloaded.snapshot().attempts[0].capaPrompt).toEqual(requests[0].capaPrompt);
+  });
+});
+
+describe('officialCapaUpgrades', () => {
+  it('moves an official skill made at another version to the one installed, and leaves every other skill', () => {
+    const author = OFFICIAL_CAPA_DEFAULT_REFERENCES.author;
+    expect(officialCapaUpgrades({ author: { ...author, version: '1.0.1' }, pacing: OFFICIAL_CAPA_DEFAULT_REFERENCES.pacing }))
+      .toEqual([['author', author]]);
+    expect(officialCapaUpgrades({ author, style: { id: 'spp:reader-own:style', version: '9.9.9' } })).toEqual([]);
   });
 });

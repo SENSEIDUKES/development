@@ -40,12 +40,12 @@ export interface OfficialCapaPackageDefinition {
 export const OFFICIAL_CAPA_PACKAGES: readonly OfficialCapaPackageDefinition[] = [
   {
     key: 'author', archiveFile: 'CAPA-AUTHOR.spp', archiveUrl: authorArchiveUrl,
-    archiveSha256: '5210a911e243aacfd51a943e4899c51b94a076fc1ca1e54afc23f686b7951380',
-    packageId: 'e103be1b-ade1-4670-867a-13cb0fa1d7ba', packageName: 'CAPA AUTHOR', packageVersion: '1.0.1', slot: 'author',
+    archiveSha256: '1d1ee9028bc4d710a0675c605620dfbd8b0e5ce5721a3f9d804e116113d74c67',
+    packageId: 'e103be1b-ade1-4670-867a-13cb0fa1d7ba', packageName: 'CAPA AUTHOR', packageVersion: '1.0.2', slot: 'author',
     instructionSourcePath: 'assets/1-CAPA - AUTHOR.docx', instructionPath: 'assets/1-CAPA - AUTHOR.docx.txt',
     resources: [
-      { path: 'assets/1-CAPA - AUTHOR.docx', mediaType: DOCX_MEDIA_TYPE, sha256: '2d020251bbadec8eeae99f044b9ff9c6c3ed1d47a309e1994fa52e81ad827bb1' },
-      { path: 'assets/1-CAPA - AUTHOR.docx.txt', mediaType: 'text/plain', sha256: 'da47c181fb3c6a022fb603779f916a85d2d775d7feb422773de16e56f4b7280a' },
+      { path: 'assets/1-CAPA - AUTHOR.docx', mediaType: DOCX_MEDIA_TYPE, sha256: '93d82e3cd8b6f6100c30facd30267f0684863b93ad6fc36daf509d00d189091b' },
+      { path: 'assets/1-CAPA - AUTHOR.docx.txt', mediaType: 'text/plain', sha256: '0c1d20749a9433496955e49b940eb9b9fa21a826cca2fb9008479c5879cd5c5b' },
     ],
   },
   {
@@ -122,6 +122,19 @@ export const OFFICIAL_STYLE_REFERENCES: Record<StoryStyle, HarnessSkillReference
 };
 
 type HarnessSkillLoadout = Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
+
+/**
+ * The official skills a story's loadout should move to: any slot holding an
+ * official package at another version than the one this host installs. A
+ * story keeps the skill it was made with; only its version follows the
+ * package (CAPA AUTHOR 1.0.2, SENSEI 2026-11-05: two rules added to its
+ * Never do, so stories made with 1.0.1 read them too).
+ */
+export const officialCapaUpgrades = (loadout: HarnessSkillLoadout): Array<[HarnessSkillSlotId, HarnessSkillReference]> =>
+  (Object.entries(loadout) as Array<[HarnessSkillSlotId, HarnessSkillReference | undefined]>).flatMap(([slot, reference]) => {
+    const current = reference && OFFICIAL_CAPA_PACKAGES.map(officialCapaReference).find(official => official.id === reference.id);
+    return current && current.version !== reference.version ? [[slot, current] as [HarnessSkillSlotId, HarnessSkillReference]] : [];
+  });
 type StorySeedStyle = StorySeedRecord['seed']['story']['required']['style'];
 
 /** A deliberate Story Seed style change replaces only the Style slot. */

@@ -12,6 +12,7 @@ import {
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
 import { readMarks } from '@seihouse/sen/generation';
+import { officialCapaUpgrades } from '../../../host/generation/capa/officialCapaSkills';
 import { createReaderStoryState, type ReaderStateRepository, type ReaderStoryState } from '@seihouse/sen/reader-runtime';
 
 /**
@@ -61,6 +62,12 @@ export function storyExportToWorkspace(value: unknown): HarnessWorkspaceState {
     worldCards: records(exported.worldCards),
   });
   if (state.stories.length !== 1) throw new Error('This file is not a story saved with Export story, or it was saved by a version this Workshop cannot open.');
+  // As the app opens it: a story made with an earlier official package moves to the version installed now
+  // (CAPA AUTHOR 1.0.2, SENSEI 2026-11-05).
+  state.stories = state.stories.map(story => {
+    const upgrades = officialCapaUpgrades(story.skillLoadout ?? {});
+    return upgrades.length ? { ...story, skillLoadout: { ...story.skillLoadout, ...Object.fromEntries(upgrades) } } : story;
+  });
   return state;
 }
 

@@ -246,3 +246,82 @@ export const fingerprintText = (text: string) => {
   second = Math.imul(second ^ (second >>> 16), 2246822507) ^ Math.imul(first ^ (first >>> 13), 3266489909);
   return (4294967296 * (2097151 & second) + (first >>> 0)).toString(16).padStart(14, '0');
 };
+
+export type PipelineStepId = 'world' | 'writer' | 'tagger' | 'fixer' | 'look';
+
+/** One model call in the story's pipeline, with every block it reads. */
+export interface PipelineStep {
+  id: PipelineStepId;
+  name: string;
+  /** When it runs, in a few words. */
+  runs: string;
+  /** Its job, in one plain sentence. */
+  job: string;
+  /** What it is given, besides the instructions below. */
+  reads: readonly string[];
+  /** What it hands back, and where that goes. */
+  gives: readonly string[];
+  /** Its instructions, in the order it reads them; a step with stories that differ shows them as a second group. */
+  groups: ReadonlyArray<{ label: string; blocks: readonly WriterInstruction[] }>;
+}
+
+const blocksOf = (ids: readonly WriterInstructionId[]) => ids.map(id => WRITER_INSTRUCTIONS.find(block => block.id === id)!);
+
+/**
+ * The story's model calls, in the order a story meets them (SENSEI,
+ * 2026-11-05: "I have no workspace or nothing to be able to see what we're
+ * telling this model for each specific tag … how the pipeline feeds into each
+ * other"). Every block of the page belongs to exactly one step.
+ */
+export const PIPELINE: readonly PipelineStep[] = [
+  {
+    id: 'world', name: 'World builder', runs: 'Once, before Chapter 1',
+    job: 'Builds the world the story opens with: every character, thing, ability, place and faction card in the Codex.',
+    reads: ['The Story Seed you wrote', 'The World Blueprint\'s other rules (logline, Arc 1, style)'],
+    gives: ['The World at Chapter 0: the Codex cards the story starts with → read by the Writer every chapter'],
+    groups: [{ label: 'What it reads', blocks: blocksOf(['world-builder']) }],
+  },
+  {
+    id: 'writer', name: 'Writer', runs: 'Every chapter',
+    job: 'Writes the chapter. It never writes tags.',
+    reads: [
+      'The Story Information: Foundation, Destined Ending, the arc goal, recaps of earlier chapters',
+      'The Codex as it stands now: who has appeared and how they look, their status, where they are, what they hold',
+      'The chapter request (the reader\'s direction, when there is one)',
+    ],
+    gives: ['The chapter\'s paragraphs → read by the Tagger', 'A short recap → read by later chapters', 'A list of what the main character holds at the end → checked against the Tagger\'s tags'],
+    groups: [
+      { label: 'Every chapter, in order', blocks: EVERY_CHAPTER },
+      { label: 'Only in some stories', blocks: SOME_STORIES },
+    ],
+  },
+  {
+    id: 'tagger', name: 'Tagger', runs: 'After every chapter',
+    job: 'Reads the finished chapter and writes its tags in the margin. It never changes a word.',
+    reads: [
+      'The finished chapter, paragraph by paragraph',
+      'Who and what the story already has, each character with their status and place so far',
+      'What each character was carrying going into the chapter',
+      'The story\'s sound words, music and atmospheres',
+    ],
+    gives: ['Tags on the chapter: who speaks, what is held, who appears, status, place, sounds, music → checked by code, then saved into the Codex'],
+    groups: [{ label: 'What it reads, in order', blocks: blocksOf(['tagger', 'tag-rules', 'speakers', 'holdings', 'appearance', 'status', 'place', 'sound-cues', 'soundtrack']) }],
+  },
+  {
+    id: 'fixer', name: 'Fixer', runs: 'Only when the checks find a problem',
+    job: 'Settles the small problems plain code found in the chapter\'s tags.',
+    reads: ['Only the cases: one sentence, its tags, and what the Codex says. Never the whole chapter.'],
+    gives: ['For each case: fix the tags, rewrite one sentence, leave it, or flag it as major → saved into the Codex'],
+    groups: [{ label: 'What it reads', blocks: blocksOf(['holdings-fixer']) }],
+  },
+  {
+    id: 'look', name: 'Look writer', runs: 'Only when something asks for a look',
+    job: 'Writes one Codex entry\'s full look, for a picture, a manga or a game.',
+    reads: ['Every sentence the tags saved for that one entry (and your notes on a character)'],
+    gives: ['That entry\'s look, trait by trait → kept on its Codex card'],
+    groups: [{ label: 'What it reads', blocks: blocksOf(['look-step']) }],
+  },
+];
+
+/** Where plain code, not a model, checks the tags: between the Tagger and the Fixer. */
+export const PIPELINE_CHECKS = { name: 'Checks', runs: 'No model', after: 'tagger' as PipelineStepId };

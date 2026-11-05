@@ -5,24 +5,35 @@ chapter writer reads before the story, and every dated change to them.
 Open it at `?preview=writer-instructions` (Systems section).
 
 - **Created:** 2026-10-04
-- **Last Workshop update:** 2026-10-17
+- **Last Workshop update:** 2026-11-05
 - **Last source comparison:** not applicable; the page reads the live code
 - **Status:** active, Workshop-owned reference surface
 
 ## What it shows
 
-- **Every chapter, in order:** the Author skill (SEN's default), the HARNESS
-  tag rules, Sound Cues with the default library's sound list, Soundtrack,
-  Speakers, Holdings, Appearance, and the HARNESS response and evidence
-  contract. Each block shows
-  whose words they are (a SEN skill and its version, or the HARNESS), when the
-  writer reads them, their size in words, and the date they last changed.
-- **Only in some stories:** Fate Survival, the three Reading Mode skills, and
-  the official output requirements (shown at their fullest).
-- **After a chapter:** the separate small calls on a saved chapter, never the
-  chapter writer: the Holdings fixer, and the look writer (on demand, never
-  after a chapter, though it is listed here).
-- **History:** every change, newest first, in plain words.
+Titled **What the Models Read** since 2026-11-05 (SENSEI: "you got to be a
+robot to be able to look at, understand what you're seeing … it just needs to
+be made properly so I can actually use it"). One step of the pipeline at a
+time, never the whole wall:
+
+- **The pipeline:** World builder (once, before Chapter 1) → Writer (every
+  chapter) → Tagger (after every chapter) → Checks (plain code, no model) →
+  Fixer (only when the checks find a problem) → Look writer (only when asked).
+  It opens on the Tagger.
+- **Each step:** its job in one sentence, what it is given and what it hands
+  back (and which step reads that next), then its instructions as a row of
+  chips in the order it reads them. The Tagger has one chip per tag.
+- **Each block:** whose words they are, size, last change, when it is read,
+  and the text in two views: easy to read (headings, lists, tags set apart,
+  example notes read out field by field, every word kept; a test checks it)
+  or exactly as the model sees it. "Why it says this" lists every dated
+  change to that block.
+- **Every change, with its date:** the whole history, newest first, each
+  entry's blocks named by step.
+
+The address keeps the place (`#tagger/appearance`), so a link opens the same
+block. `PIPELINE` in `writerInstructions.ts` says which step reads which
+block; a test fails if a block belongs to none, or to two.
 
 Not shown: the story itself (Story Information and the chapter request,
 which change every chapter), skills a story equips by hand (Pacing,

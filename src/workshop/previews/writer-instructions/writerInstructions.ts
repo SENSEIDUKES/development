@@ -36,7 +36,7 @@ import {
   type HarnessPromptPart,
 } from '../../../server/harness-generation/prompt';
 import { HOLDINGS_FIXER_INSTRUCTIONS, buildHoldingsFixerPrompt } from '../../../server/harness-generation/holdingsFixer';
-import { WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintPrompt } from '../../../server/story-seed-blueprint/prompt';
+import { WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintPrompt, worldBlueprintResponseSchema } from '../../../server/story-seed-blueprint/prompt';
 import { OFFICIAL_CAPA_DEFAULT_REFERENCES, OFFICIAL_STYLE_REFERENCES } from '../../../host/generation/capa/officialCapaSkills';
 import { HARNESS_TAGGER_RETURN, HARNESS_TAGGER_ROLE, buildHarnessTagPrompt } from '../../../server/harness-generation/tagger';
 import { LOOK_DESCRIBER_INSTRUCTIONS, buildLookDescriberPrompt } from '../../../server/harness-generation/lookDescriber';
@@ -346,10 +346,13 @@ export const WHOLE_PROMPTS: Record<Exclude<PipelineStepId, 'writer'>, readonly P
       declared: slot('the author\'s notes on them, when there are any'),
     }],
   });
+  const seed = createEmptyStorySeedInput();
   return {
     world: [
       { label: 'Who it is', text: WORLD_BLUEPRINT_SYSTEM_PROMPT },
-      { label: 'The request, with an empty Story Seed where yours goes', text: buildWorldBlueprintPrompt(createEmptyStorySeedInput()) },
+      { label: 'The request, with an empty Story Seed where yours goes', text: buildWorldBlueprintPrompt(seed) },
+      // Its answer's shape, as generateWorldBlueprint sends it (review finding, Codex, 2026-11-05).
+      answerShape(worldBlueprintResponseSchema(seed.story.optional.arcCount)),
     ],
     tagger: [
       { label: 'Its instructions', text: tag.systemInstruction },

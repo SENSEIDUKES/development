@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { WORLD_CARD_KINDS } from '@seihouse/sen/contracts';
 import { createFilledStorySeedInput } from '../../workshop/previews/story-seed/previewData';
 import { WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS, buildWorldBlueprintPrompt } from './prompt';
-import { worldBlueprintResponseSchema } from './generate';
+import { worldBlueprintResponseSchema } from './prompt';
 
 /**
  * The Codex decides the slots. These checks fail if the words the Blueprint

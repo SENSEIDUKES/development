@@ -388,6 +388,7 @@ palette checks alone do not establish accessibility for a finished surface.
 | `./harness-generation` | Canonical state, continuity, CAPA, generation ports, recovery and export; the Fate page and its panels |
 | `./translation` | Translation/accessibility contracts and controller |
 | `./arc-goals` | Arc planning contracts and operations |
+| `./docs-knowledge` | The shape of a host's docs catalog, and the index and lookup a grounded companion reads it with. SEN owns the reading, never the words: a host supplies its own catalog |
 | `./styles.css` | SEN feature styles |
 
 There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy

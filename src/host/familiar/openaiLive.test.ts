@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { FamiliarLiveBrief, FamiliarLiveEvents } from '@seihouse/library/familiar';
 import { createFamiliarOpenAiLive } from './openaiLive';
 
-const brief: FamiliarLiveBrief = { familiar: { name: 'Fox', description: '' }, place: 'Home', language: 'en-US', topics: [], actions: [] };
+const brief: FamiliarLiveBrief = { familiar: { name: 'Fox', description: '' }, place: 'Home', language: 'en-US', topics: [], actions: [], docs: [] };
 
 class Channel extends EventTarget {
   readyState = 'open';

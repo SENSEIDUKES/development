@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { handleFamiliarLiveHttp, parseFamiliarLiveBrief } from './http';
-import { familiarLiveDocs } from './prompt';
+import { familiarLiveDocsIndex } from './prompt';
 
 const brief = {
   familiar: { name: 'Celestial Guardian', description: 'A loyal fox spirit.' },
@@ -8,6 +8,7 @@ const brief = {
   language: 'en-US',
   topics: [{ id: 'energy', label: 'Energy', explanation: 'Energy is the currency used for manifesting.' }],
   actions: [{ id: 'custom', label: 'Custom', detail: 'Your own direction', input: { label: 'Direction', maxLength: 1200 } }],
+  docs: [{ id: 'story-seed', title: 'Story Seed', category: 'Story' }, { id: 'arc-goal', title: 'Arc Goal', category: 'Story' }],
 };
 const NOW = Date.parse('2026-10-29T12:00:00Z');
 
@@ -46,13 +47,14 @@ describe('Familiar live talk route', () => {
     expect(instruction).toContain('You are Celestial Guardian');
     expect(instruction).toContain('- Energy (energy): Energy is the currency used for manifesting.');
     expect(instruction).toContain('- custom: Custom. Your own direction. Needs their words for "Direction", at most 1200 characters');
-    // Beyond the page, the NovelExpanded Docs are its facts.
-    expect(instruction).toContain(familiarLiveDocs());
-    expect(familiarLiveDocs()).toContain('- Story Seed (Story): The starting place for a new novel and its world.');
+    // Beyond the page, the docs are its facts: it is given their names, and looks an entry up when it needs one.
+    expect(instruction).toContain('- Story: Story Seed, Arc Goal');
+    expect(instruction).not.toContain('The starting place for a new novel and its world.');
+    expect(familiarLiveDocsIndex(parseFamiliarLiveBrief({ brief }))).toBe('- Story: Story Seed, Arc Goal');
     const tools = config.liveConnectConstraints.config.tools[0].functionDeclarations;
-    expect(tools.map((tool: { name: string }) => tool.name)).toEqual(['show_topic', 'propose_action', 'answer_proposal']);
-    expect(tools[0].parameters.properties.topic_id.enum).toEqual(['energy']);
-    expect(tools[1].parameters.properties.action_id.enum).toEqual(['custom']);
+    expect(tools.map((tool: { name: string }) => tool.name)).toEqual(['look_up', 'show_topic', 'propose_action', 'answer_proposal']);
+    expect(tools[1].parameters.properties.topic_id.enum).toEqual(['energy']);
+    expect(tools[2].parameters.properties.action_id.enum).toEqual(['custom']);
     // The browser opens the same setup the token locks.
     expect(result.body).toEqual({
       provider: 'gemini',
@@ -70,7 +72,7 @@ describe('Familiar live talk route', () => {
 
   it('offers no tools a place does not have, and follows the server\'s live model and voice', async () => {
     const create = vi.fn(async () => ({ name: 'auth_tokens/abc' }));
-    await handleFamiliarLiveHttp({ method: 'POST', body: { brief: { ...brief, topics: [], actions: [] } } },
+    await handleFamiliarLiveHttp({ method: 'POST', body: { brief: { ...brief, topics: [], actions: [], docs: [] } } },
       { environment: { GEMINI_API_KEY: 'secret', FAMILIAR_LIVE_VOICE: 'Kore', FAMILIAR_LIVE_MODEL: 'google/unknown' }, tokens: () => ({ create }) });
     const { config } = (create.mock.calls[0] as unknown as [{ config: Record<string, any> }])[0];
     expect(config.liveConnectConstraints.model).toBe('gemini-3.8-live');
@@ -85,6 +87,10 @@ describe('Familiar live talk route', () => {
     expect(() => parseFamiliarLiveBrief({ brief: { ...brief, topics: [{ ...brief.topics[0], id: 'no spaces' }] } })).toThrow('not a valid id');
     expect(() => parseFamiliarLiveBrief({ brief: { ...brief, topics: Array(21).fill(brief.topics[0]) } })).toThrow('at most 20');
     expect(() => parseFamiliarLiveBrief({ brief: { ...brief, language: 'English please' } })).toThrow('language');
+    expect(() => parseFamiliarLiveBrief({ brief: { ...brief, docs: Array(301).fill(brief.docs[0]) } })).toThrow('at most 300');
+    expect(() => parseFamiliarLiveBrief({ brief: { ...brief, docs: [{ ...brief.docs[0], title: 'x'.repeat(61) }] } })).toThrow('docs[0].title');
+    // A host with no docs of its own still talks; it simply has nothing to look up.
+    expect(parseFamiliarLiveBrief({ brief: { ...brief, docs: undefined } }).docs).toEqual([]);
     const result = await handleFamiliarLiveHttp({ method: 'POST', body: '{' }, { environment: { GEMINI_API_KEY: 'secret' } });
     expect(result.status).toBe(400);
   });
@@ -114,13 +120,15 @@ describe('Familiar live talk route', () => {
     expect(sent.session).toMatchObject({ model: 'gpt-live-1', audio: { output: { voice: 'ballad' } } });
     expect(sent.session.instructions).toContain('You are Celestial Guardian');
     expect(sent.session.instructions).toContain('- Energy (energy): Energy is the currency used for manifesting.');
-    expect(sent.session.instructions).toContain('delegate to the backend');
+    // The voice keeps the page's own facts; anything else, the docs included, goes to the backend.
+    expect(sent.session.instructions).toContain('Everything else goes to the backend');
+    expect(sent.session.instructions).toContain('- Story: Story Seed, Arc Goal');
     expect(sent.session.delegation).toMatchObject({ type: 'responses', responses: {
       model: 'gpt-5.4-mini', tool_choice: 'auto', parallel_tool_calls: false, reasoning: { effort: 'low' },
     } });
     expect(sent.session.delegation.responses.instructions).toContain('- custom: Custom. Your own direction.');
-    expect(sent.session.delegation.responses.tools.map((tool: { name: string }) => tool.name)).toEqual(['show_topic', 'propose_action', 'answer_proposal']);
-    expect(sent.session.delegation.responses.tools[0]).toMatchObject({ type: 'function', parameters: { type: 'object', properties: { topic_id: { enum: ['energy'] } } } });
+    expect(sent.session.delegation.responses.tools.map((tool: { name: string }) => tool.name)).toEqual(['look_up', 'show_topic', 'propose_action', 'answer_proposal']);
+    expect(sent.session.delegation.responses.tools[1]).toMatchObject({ type: 'function', parameters: { type: 'object', properties: { topic_id: { enum: ['energy'] } } } });
   });
 
   it('needs the browser\'s offer for OpenAI, and passes on OpenAI\'s reason without the key', async () => {
@@ -181,7 +189,7 @@ describe('Familiar live talk on ElevenLabs Realtime', () => {
       tool_choice: 'auto', parallel_tool_calls: false,
     });
     expect(session.instructions).toContain('You are Celestial Guardian');
-    expect(session.tools.map((tool: { name: string }) => tool.name)).toEqual(['show_topic', 'propose_action', 'answer_proposal']);
+    expect(session.tools.map((tool: { name: string }) => tool.name)).toEqual(['look_up', 'show_topic', 'propose_action', 'answer_proposal']);
   });
 
   it('says exactly why ElevenLabs refused, without the key', async () => {

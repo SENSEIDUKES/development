@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FamiliarLiveBrief, FamiliarLiveEvents } from '@seihouse/library/familiar';
 import { createLiveEngine, type LiveConversation, type LiveTranslator } from './liveEngine';
 
-const brief: FamiliarLiveBrief = { familiar: { name: 'Fox', description: '' }, place: 'Home', language: 'en-US', topics: [], actions: [] };
+const brief: FamiliarLiveBrief = { familiar: { name: 'Fox', description: '' }, place: 'Home', language: 'en-US', topics: [], actions: [], docs: [] };
 const events = () => ({ connected: vi.fn(), caption: vi.fn(), call: vi.fn(async () => 'Shown.'), ended: vi.fn(), notice: vi.fn() }) satisfies FamiliarLiveEvents;
 const track = { stop: vi.fn() };
 const microphone = vi.fn(async () => ({ getTracks: () => [track] }) as unknown as MediaStream);

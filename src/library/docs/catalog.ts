@@ -1,0 +1,254 @@
+/**
+ * The NovelExpanded Docs: the product's own explanations, in NovelExpanded's
+ * own words. One current explanation per term.
+ *
+ * This is Library content, not SEN machinery. `@seihouse/sen/docs-knowledge`
+ * owns the shape and the reading; a publisher embedding SEN writes its own
+ * catalog in place of this one and never edits the engine.
+ *
+ * Two surfaces read it: the NovelExpanded Docs page, and the Familiar, which
+ * is grounded in it and may say nothing the catalog does not.
+ */
+import type { DocsCatalog, DocsTopic } from '@seihouse/sen/docs-knowledge';
+
+const topic = (id: string, title: string, aliases: string[] = []): DocsTopic => ({ id, title, aliases });
+
+// The product-term audit supplied the index, not approved definitions. Add
+// explanations only as each term's meaning is confirmed by the product owner.
+export const novelExpandedDocs: DocsCatalog = [
+  {
+    id: 'product', title: 'Product & people', description: 'SEN, NovelExpanded, our Workshop, and the people creating and reading stories.',
+    topics: [
+      {
+        ...topic('seihouse', 'SEIHouse'),
+        definition: 'A better time capsule and translator of artistic expression.',
+        howItFits: 'SEIHouse is the company and creative platform we are building around that purpose. SEN (SEIHouse Expanded Novels) is our engine for expanded novels, and NovelExpanded is our own place to create and experience them. SEA (SEIHouse Expanded Albums) brings the same vision into music. We develop and pressure-test reusable systems through SEN so they can serve SEA too; the two sides grow together.',
+      },
+      {
+        ...topic('sen', 'SEN', ['SEIHouse Expanded Novels']),
+        definition: 'Our portable engine for expanded novels.',
+        howItFits: 'We build SEN as the shared narrative foundation beneath NovelExpanded. It provides story and chapter structure, Reader and Codex experiences, cards, Color Codes, translation, and other reusable capabilities. Other creators and publishers can use SEN in their own apps with their own stories, branding, accounts, storage, and media. AI generation is an optional content source. We keep our first-party rules in the Library lane so SEN stays portable.',
+      },
+      {
+        ...topic('novel-expanded', 'NovelExpanded', ['NovelExpanded.com', 'Expanded Novels', 'Celestial Library']),
+        definition: 'Our own home for creating, discovering, and experiencing expanded novels, at NovelExpanded.com.',
+        howItFits: 'NovelExpanded is the product we build on top of SEN. SEN gives us reusable narrative capabilities; we add our visual identity, story creation and discovery, profiles and community, cultivation and QI, rewards, and economy. Its host and backend provide accounts, storage, APIs, and the source of truth for transactions. We keep those first-party rules in the Library lane so SEN can power other apps too. NovelExpanded is the brand name; “expanded novels” in lower case is the format itself. The product was called the Celestial Library before NovelExpanded, and that name is retired.',
+        related: ['library', 'sen'],
+      },
+      {
+        ...topic('library', 'Library', ['@seihouse/library', 'first-party lane']),
+        definition: 'The code lane holding NovelExpanded’s own behavior on top of SEN.',
+        howItFits: 'Library is what we call the first-party side in code: the @seihouse/library package and everything branded or specific to NovelExpanded. The rule runs one way — Library may depend on SEN, and SEN must never depend on Library. When a surface mixes reusable behavior with our own presentation, the behavior belongs to SEN and the skin stays in Library. Library is a lane in the codebase, not a name we show readers.',
+        related: ['novel-expanded', 'sen', 'seihouse-library'],
+      },
+      {
+        ...topic('workshop', 'Workshop', ['Development', 'DEV']),
+        definition: 'Our space for building, previewing, and refining SEN and NovelExpanded experiences.',
+        howItFits: 'We use the Workshop inside the Development repository to see SEN and Library work in context while it is still being developed. Its previews, controls, and NovelExpanded Docs let us test product flows and agree on the language around them. Workshop is our workbench, not a product package: SEN owns reusable narrative behavior, and Library owns NovelExpanded’s first-party behavior. Moving approved work into production is a separate step.',
+      },
+      {
+        ...topic('creator', 'Creator', ['Author']),
+        definition: 'A person creating a story with SEN or NovelExpanded.',
+        howItFits: 'We use Creator for the person making a story. It is not a separate kind of user from Reader: someone can create one story and experience another. SEN provides reusable story and chapter capabilities, while NovelExpanded gives creators our own place to make and share their novels. The artistic direction belongs to the creator.',
+      },
+      {
+        ...topic('reader', 'Reader', ['Cultivator']),
+        definition: 'A person experiencing a story; in NovelExpanded, we call that reader a Cultivator.',
+        howItFits: 'We use Reader for the person reading chapters, listening, or exploring a story’s Codex. SEN carries the reusable reading experience, and we bring it into NovelExpanded with our cultivation language and progression. Cultivator is our name for the Reader there, not a separate user type. The same person can be a Creator when making a work.',
+      },
+    ],
+  },
+  {
+    id: 'story', title: 'Story', description: 'Story creation, world planning, direction, and fate.',
+    topics: [
+      {
+        ...topic('story-seed', 'Story Seed'),
+        definition: 'The starting place for a new novel and its world.',
+        howItFits: 'We collect the creator’s premise and choices through Origin, ARC, and World, then save that Story Seed for review and reuse. Its required story inputs include premise, genre, Style, and Story Tags; other direction and world details can be added as needed. A reviewed World Blueprint expands the seed before we manifest a novel. Starting the novel carries the resolved seed and Blueprint into a HARNESS Story Foundation.',
+      },
+      {
+        ...topic('story-foundation', 'Story Foundation'),
+        definition: 'The story’s saved starting truth and direction for chapter writing.',
+        howItFits: 'When a novel begins, we resolve its Story Seed and reviewed World Blueprint into a Foundation for HARNESS. It carries the creator’s premise, world facts, characters, opening, and direction without making the Blueprint or a model response a second source of truth. Reviewed changes to a started novel become Foundation revisions; committed chapters and their evidence remain intact.',
+      },
+      {
+        ...topic('origin', 'Origin'),
+        definition: 'The part of Story Seed where a novel’s core idea takes shape.',
+        howItFits: 'Origin brings together Style, Genre, title, synopsis/premise, Fate Pressure, the Fate Survival switch, and Story Tags. It gives the Blueprint and HARNESS the creator’s initial direction; ARC holds the long-range destination and goals, while World holds the setting and cast. The author’s stated facts stay authoritative when the Blueprint adds detail.',
+      },
+      {
+        ...topic('arc', 'Arc'),
+        definition: 'A 100-chapter stretch of a novel with its own goals.',
+        howItFits: 'Each arc has one to five sequential Arc Goals, with one active goal at a time and an allocated chapter range for each. The Story Seed ARC section collects the Destined Ending, the Story Length in arcs, optional Hard Pins, an initial Active Arc Goal, and Fun Settings; the World Blueprint plans Arc 1 for that length (or suggests a length when it is left blank), and each later arc is planned when it begins. HARNESS tracks the live arc and its goals as chapters commit.',
+      },
+      {
+        ...topic('world', 'World'),
+        definition: 'The setting, people, powers, and rules of a story.',
+        howItFits: 'The World part of Story Seed holds World Identity, characters, factions, abilities, and the power system. The creator can leave room for the Blueprint to add compatible detail. Reviewed facts move into the Story Foundation and later canonical developments are tracked by HARNESS, so background proposals are not mistaken for events that already happened.',
+      },
+      {
+        ...topic('genre', 'Genre'),
+        definition: 'The kind of story the creator wants to tell.',
+        howItFits: 'Genre is a required Origin choice alongside premise and Style. It helps the Blueprint and chapter writer understand the intended experience, while Story Tags add more specific signals. We interpret it through the chosen storytelling tradition and the creator’s actual direction, not as a fixed plot formula.',
+      },
+      {
+        ...topic('style', 'Style'),
+        definition: 'The storytelling tradition shaping how the novel is written.',
+        howItFits: 'Origin requires a Style choice; our current official choices are Chinese, Japanese, and Korean. The selection maps to the matching writing skill when HARNESS authors chapters. Style influences voice and storytelling conventions, while the creator’s premise, world, goals, and canon determine the particular story.',
+      },
+      {
+        ...topic('story-tags', 'Story Tags'),
+        definition: 'Focused signals about the experience a story should deliver.',
+        howItFits: 'Tags sit with premise, Genre, and Style in Origin. The creator can choose them, and the Story Seed can infer suggestions from the other story inputs when tags are empty. They guide Blueprint and chapter generation without becoming mandatory plot events or replacing the creator’s own direction. Tags sit in families (what kind of tag) and niches (which genre path reaches for them); the creator browses them by niche, family and search.',
+      },
+      {
+        ...topic('world-identity', 'World Identity', ['Make It Work', 'Main Opposition']),
+        definition: 'The story world’s defining facts and starting situation.',
+        howItFits: 'In Story Seed, World Identity includes the world type, society, opening location, and the novel’s title. The World section also gathers Main Opposition and the creator’s Make It Work instruction for unusual or difficult ideas. Reviewed Blueprint edits to Seed-owned facts write back to the Seed; the Blueprint may add compatible detail, but it cannot quietly replace what the creator established.',
+      },
+      {
+        ...topic('world-blueprint', 'World Blueprint', ['Blueprint']),
+        definition: 'Our editable plan for a novel before it begins.',
+        howItFits: 'The Blueprint is a sibling to the Story Seed, not a replacement for it. It expands the creator’s inputs into reviewable world background, cast and power-system detail, Style guidance, the Destined Ending, Arc 1’s goals and the story’s length, and it fills every Story Seed slot the creator left blank without changing what they wrote. Seed-owned facts stay in the Seed when reviewed; Blueprint-only elaboration remains editable. We validate Arc 1 before manifesting the novel and carry it into HARNESS. Its goal section reappears in the Reader at the start of every later arc. The Blueprint is the novel’s transferable core: branching will let a reader keep a published Story Seed and make their own version of its Blueprint.',
+      },
+      {
+        ...topic('destined-ending', 'Destined Ending'),
+        definition: 'The ending the creator sets for the novel to move toward.',
+        howItFits: 'The creator can set it in Story Seed ARC or review it in the Blueprint; the final arc, planned when it begins, aims for it. HARNESS carries it as story direction, not as an event already in canon or a forced chapter deadline. In regular reading it remains the guaranteed destination even if a final goal is missed; in Fate Survival it is not guaranteed. Once the novel begins, this ending is fixed.',
+      },
+      {
+        ...topic('hard-pin', 'Hard Pin'),
+        definition: 'A creator-set rule the story must not break.',
+        howItFits: 'A story can hold up to three Hard Pins, written and changed only by the creator. HARNESS keeps them with the Destined Ending as high-priority direction for every chapter. They have no weights, and neither the Blueprint model nor the chapter writer may invent or silently edit them.',
+      },
+      {
+        ...topic('fun-settings', 'Fun Settings'),
+        definition: 'Optional controls for a story’s playful dramatic flavor.',
+        howItFits: 'Story Seed ARC lets the creator tune Face-Slaps, Plot Armor, and Recognition at low, medium, or high. These settings enter the chapter writer’s current story information as flavor. They do not outrank the Destined Ending, Hard Pins, the active goal, established canon, or the writing skills.',
+      },
+      {
+        ...topic('arc-roadmap', 'Arc Planning', ['Arc Roadmap', 'look-ahead']),
+        definition: 'How each arc’s goals are planned as the novel reaches it.',
+        howItFits: 'The creator can set the story’s length in arcs on the Story Seed’s ARC page, or leave it for the Blueprint to suggest. The World Blueprint plans only Arc 1 for that length, plus a short private look-ahead of the next arcs that only the arc planner reads. When the reader reaches a new arc, HARNESS plans its goals with one model request, continuing from where the last arc left off (including missed goals) toward the Destined Ending, and the final arc reaches it. The World Blueprint’s goal section then appears for review: the reader can edit the goals (once in Fate Survival) or accept them before the arc’s first chapter. The chapter writer still sees only the active goal, never a later arc.',
+      },
+      {
+        ...topic('arc-goal', 'Arc Goal', ['Active Arc Goal', 'allocation', 'deadline']),
+        definition: 'A concrete objective for one part of an arc.',
+        howItFits: 'An arc has one to five sequential, weighted goals across its 100 chapters. Only its active goal and allocated deadline guide a given chapter; an early success does not start the next goal before its segment. If a deadline chapter does not achieve the goal, the chapter still commits and the goal is marked missed. Regular reading and Fate Survival give that miss different consequences.',
+      },
+      {
+        ...topic('fate-pressure', 'Fate Pressure'),
+        definition: 'The intensity setting for a novel’s automatic chapter rhythm.',
+        howItFits: 'Origin offers Mortal, Immortal, and Heaven pressure. HARNESS uses the chosen tier with recent chapter functions to calculate the next automatic Rhythm recommendation. Pressure is independent of the Fate Survival switch: it does not choose who directs a chapter, set the Arc Goal deadline, or decide whether the story survives.',
+      },
+      {
+        ...topic('chapter-rhythm', 'Chapter Rhythm'),
+        definition: 'The story’s changing balance of progress, worldbuilding, and conflict.',
+        howItFits: 'After a chapter commits, HARNESS records the function it served and uses recent functions with Fate Pressure to recommend what kind of chapter comes next. In regular reading, that recommendation informs the automatic path when the reader does not choose one. A reader’s one-chapter direction takes precedence; in Fate Survival, the reader directs every chapter.',
+      },
+      {
+        ...topic('fate-survival', 'Fate Survival', ['Fate Outcome']),
+        definition: 'A story mode where the reader directs every chapter and the ending is not guaranteed.',
+        howItFits: 'The creator chooses this mode in Origin before the novel begins, and the choice is then fixed. The reader must choose each chapter’s path, one of the writer’s three suggested directions or their own words, because nothing is automatic; HARNESS loads the Fate Survival writing skill on every call. Missed goals can break the route, requiring the next chapter to end the story. The story ends only when committed prose shows the ending—not merely because a goal or chapter count says so.',
+      },
+      {
+        ...topic('alter-fate', 'Alter Fate'),
+        definition: 'The reader’s way to choose the next chapter’s path.',
+        howItFits: 'Alter Fate opens the Fate page in the Reader; it does not rewrite chapters that already happened. In regular reading, the reader can take one of three suggested directions or write their own instead of letting Rhythm choose. In Fate Survival nothing is automatic: they must take one of those suggested directions or write their own before a chapter can begin. The choice belongs to that one chapter, survives a failed attempt, and is consumed when the chapter commits.',
+      },
+    ],
+  },
+  {
+    id: 'generation', title: 'Generation', description: 'The authoring system and the information it works with.',
+    topics: [
+      topic('harness', 'HARNESS', ['Harness Generation']), topic('capa', 'CAPA', ['Composable Author Prompt Architecture']),
+      topic('capa-schema', 'CAPA Schema'), topic('capa-skill', 'CAPA Skill'),
+      topic('capa-prompt', 'CAPA Prompt'), topic('capa-loadout', 'CAPA Loadout'),
+      topic('story-information', 'Story Information'), topic('story-information-packet', 'Story Information Packet'),
+      topic('mission-reminder', 'Mission Reminder'), topic('immediate-chapter-request', 'Immediate Chapter Request'),
+      topic('generation-model-call', 'Generation Model Call'), topic('generated-chapter', 'Generated Chapter'),
+      topic('generation-attempt', 'Generation Attempt', ['checkpoint', 'commit', 'replay']),
+      topic('story-memory', 'Story Memory', ['context', 'evidence']),
+      topic('steering', 'Steering', ['correction']), topic('sen-block', 'SEN Block', ['paragraph', 'prose', 'semantic signal']),
+    ],
+  },
+  {
+    id: 'models', title: 'Models', description: 'Models, providers, and how generation work is routed.',
+    topics: [
+      topic('model', 'Model'), topic('provider', 'Provider'), topic('agent', 'Agent'),
+      topic('model-router', 'Model Router'), topic('model-capability', 'Model Capability'),
+      topic('generation-consumer', 'Generation Consumer', ['Used by']), topic('model-profile', 'Model Profile'),
+    ],
+  },
+  {
+    id: 'packages', title: 'Packages', description: 'Four installable software packages build SEN and the Library; SPPs carry portable content and assets.',
+    topics: [
+      {
+        ...topic('seihouse-ui', '@seihouse/ui'),
+        definition: 'Our shared building blocks for interfaces.',
+        howItFits: 'The UI repository owns this software package. It supplies universal visual primitives and experience tokens that SEN and Library surfaces can use without carrying Library branding or product rules. SEN depends on this neutral UI layer; our branded presentation stays in @seihouse/library-ui.',
+      },
+      {
+        ...topic('seihouse-library-ui', '@seihouse/library-ui'),
+        definition: 'Our visual language for NovelExpanded.',
+        howItFits: 'The UI repository owns this separate software package of stateless Library presentation. @seihouse/library composes these visuals over reusable SEN behavior and supplies host asset locations. @seihouse/sen does not depend on Library UI, so another publisher can present the same narrative capabilities in its own style.',
+      },
+      {
+        ...topic('seihouse-sen', '@seihouse/sen'),
+        definition: 'The portable engine for expanded novels.',
+        howItFits: 'The Development repository publishes SEN’s reusable story, Reader, Codex, audio, generation, translation, and arc capabilities as a software package. A host supplies its own writing, branding, accounts, storage, media, and optional model adapter. Our own NovelExpanded builds on SEN, but SEN never depends on Library-specific rules or services.',
+      },
+      {
+        ...topic('seihouse-library', '@seihouse/library'),
+        definition: 'NovelExpanded’s own product behavior.',
+        howItFits: 'The Development repository publishes our first-party Library package on top of @seihouse/sen. It brings together NovelExpanded’s creation journey, home and profile, cultivation, rewards, economy, and branded presentation. The host and backend remain authoritative for accounts, purchases, durable balances, and media records; these rules do not move into SEN.',
+      },
+      {
+        ...topic('spp', 'SPP', ['SPP Manifest', 'Package ID', 'instructions', 'resources']),
+        definition: 'A portable file that keeps related content and assets together.',
+        howItFits: 'An SPP is our shared SEIHouse Productions Package container: a validated .spp archive with a manifest.json and an inventory of original files under assets/. Its manifest records the stable package ID, version, publisher, file paths, media types, and SHA-256 fingerprints. It can carry a writing skill or a Media Pack catalog, but the receiving host must explicitly select, validate, and use those files. The archive itself does not install instructions, grant access, or run code.',
+      },
+    ],
+  },
+  {
+    id: 'media', title: 'Media', description: 'Media selection, sound, visual expression, and asset records.',
+    topics: [
+      {
+        ...topic('media-loadout', 'Media Loadout', ['Media Pack']),
+        definition: 'The Soundscape and Sound Cue packs equipped for a story.',
+        howItFits: 'A Media Pack is validated catalog data for one audio type, with an ID, version, and verified source. The Library decides which registered packs a person may equip; the host owns the catalog and entitlement truth. A story can independently equip a Soundscape Pack and a Sound Cue Pack. HARNESS freezes the authorized loadout for an attempt. An equipped Sound Cue Pack replaces the default sound words and recordings; only those sound words reach the writer, through the managed Sound Cues skill, and the HARNESS picks the recording itself when it places each cue. Recordings, URLs and entitlements never enter the model prompt, and later equipment changes do not rewrite committed chapters.',
+      },
+      topic('media-catalog', 'Media Catalog'),
+      topic('media-resolver', 'Media Resolver', ['resolved asset']),
+      topic('soundscape', 'Soundscape'), topic('sound-word', 'Sound Word'), topic('sound-cue', 'Sound Cue'),
+      topic('manifest-action', 'Manifest Action'), topic('manifestation', 'Manifestation'),
+      topic('motion-picture', 'Motion Picture'), topic('provenance', 'Provenance'),
+    ],
+  },
+  {
+    id: 'reader-codex', title: 'Reader & Codex', description: 'The reading experience and its structured story world.',
+    topics: [
+      topic('reader-chamber', 'Reader Chamber'), topic('reader-codex', 'Reader Codex'),
+      topic('mind-palace', 'Mind Palace', ['bookmark', 'saved passage']),
+      topic('codex-record', 'Codex Record', ['Character', 'Location', 'Faction', 'Artifact', 'Ability', 'Power System', 'Lore', 'World Rule']),
+      topic('portrait', 'Portrait'), topic('bestiary', 'Bestiary', ['species']),
+      topic('system-prompt', 'System Prompt', ['Fate System Prompt']),
+      topic('system-panel', 'System Panel'), topic('world-notice', 'World Notice'),
+      topic('color-codes', 'Color Codes'), topic('character-voice', 'Character Voice', ['signature quote', 'voice key']),
+      topic('original-language', 'Original Language'), topic('reader-language', 'Reader Language'),
+      topic('translation', 'Translation'),
+    ],
+  },
+  {
+    id: 'rewards', title: 'Rewards', description: 'Currencies, progression, rewards, and collected customization.',
+    topics: [
+      topic('energy', 'Energy'), topic('qi', 'QI'), topic('dao-xp', 'DAO XP'), topic('cultivator-rank', 'Cultivator Rank'),
+      topic('daily-dao-pillar', 'Daily Dao Pillar'), topic('achievement', 'Achievement'),
+      topic('mystery-scroll', 'Mystery Scroll'), topic('fate-survival-relic', 'Fate Survival Relic'),
+      topic('familiar', 'Familiar', ['Active Familiar']), topic('familiar-rarity', 'Familiar Rarity'),
+      topic('bond-rank', 'Bond Rank'), topic('elemental-effect', 'Elemental Effect', ['Active Elemental Effect']),
+      topic('element-mastery', 'Element Mastery'), topic('offer', 'Offer'),
+      topic('entitlement', 'Entitlement', ['ownership', 'purchase']), topic('equipment', 'Equipment', ['equipped state']),
+    ],
+  },
+];

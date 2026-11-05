@@ -1,4 +1,6 @@
 import type { ComponentType } from 'react';
+import { docsIndex, docsTopicText, lookUpDocs, type DocsIndexEntry } from '@seihouse/sen/docs-knowledge';
+import { novelExpandedDocs } from '../docs/catalog';
 import { familiarActionEntry, familiarActionsFor, familiarFrontCount, type FamiliarPage } from './actionList';
 import { parseSpokenCode, type SpokenCode, type SpokenCodeLetter } from './spokenCodes';
 
@@ -138,12 +140,20 @@ export interface FamiliarLiveBrief {
   place: string;
   language: string;
   topics: { id: string; label: string; explanation: string }[];
+  /**
+   * The docs the Familiar may look up, by name only. The host supplies them,
+   * so a conversation carries an index that grows by a line per entry instead
+   * of the whole catalog, and the words are fetched by `look_up` when asked
+   * for. Empty when the host has no docs: the Familiar then has only `topics`.
+   */
+  docs: DocsIndexEntry[];
   /** `instant`: it only goes somewhere, so it happens at once without confirmation. */
   actions: { id: string; label: string; detail?: string; input?: { label: string; maxLength: number }; instant?: true }[];
 }
 
 /** What the Familiar asks the screen for mid-conversation; the screen still confirms every change. */
 export type FamiliarLiveCall =
+  | { name: 'look_up'; query: string }
   | { name: 'show_topic'; topicId: string }
   | { name: 'propose_action'; actionId: string; input: string }
   | { name: 'answer_proposal'; answer: 'confirm' | 'cancel' | 'hear' };
@@ -643,6 +653,7 @@ export class FamiliarHelperController {
       place: context.title,
       language: this.language,
       topics: context.topics.map(({ id, label, explanation }) => ({ id, label, explanation })),
+      docs: docsIndex(novelExpandedDocs),
       actions: context.actions.map(action => ({ id: action.id, label: action.label, ...(action.detail ? { detail: action.detail } : {}),
         ...(action.input ? { input: action.input } : {}), ...(this.instant(action) ? { instant: true as const } : {}) })),
     };
@@ -726,6 +737,17 @@ export class FamiliarHelperController {
   };
   /** What the Familiar asked of the screen mid-conversation, answered with what happened. */
   private async answerLive(call: FamiliarLiveCall): Promise<string> {
+    // A lookup reads the docs, not the page, so it is answered wherever the reader is.
+    if (call.name === 'look_up') {
+      const hits = lookUpDocs(novelExpandedDocs, call.query);
+      if (!hits.length) {
+        // The docs do not cover what was asked: the Familiar says so rather than filling the gap itself.
+        this.addLine({ speaker: 'note', text: `No docs entry for “${call.query}”` });
+        return 'The docs say nothing about that. Tell the reader you do not know, and do not answer it yourself.';
+      }
+      this.addLine({ speaker: 'note', text: `Read ${hits.map(hit => hit.topic.title).join(', ')}` });
+      return ['What the docs say:', ...hits.map(hit => `- ${docsTopicText(hit.topic, hit.category)}`)].join('\n');
+    }
     const context = this.context;
     if (!context) return 'Nothing is open here.';
     if (call.name === 'show_topic') {

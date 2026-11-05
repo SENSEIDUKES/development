@@ -96,7 +96,11 @@
       "types": "./dist/types/package/library/stories.d.ts",
       "import": "./dist/stories.js"
     },
-    "./styles.css": "./dist/library.css"
+    "./styles.css": "./dist/library.css",
+    "./docs": {
+      "types": "./dist/types/package/library/docs.d.ts",
+      "import": "./dist/docs.js"
+    }
   },
   "peerDependencies": {
     "@seihouse/sen": ">=0.40.0",

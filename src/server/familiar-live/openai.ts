@@ -17,6 +17,17 @@ const SESSION_TIMEOUT_MS = 20_000;
 /** The Familiar's functions, for the delegated Responses model. */
 export function openAiLiveTools(brief: FamiliarLiveBrief) {
   return [
+    ...(brief.docs.length ? [{
+      type: 'function' as const,
+      name: 'look_up',
+      description: 'Reads what the docs say about a question. Answers with the entries themselves, or with nothing when the docs do not cover it.',
+      parameters: {
+        type: 'object',
+        properties: { query: { type: 'string', description: 'What the reader wants to know, in a few words.' } },
+        required: ['query'],
+        additionalProperties: false,
+      },
+    }] : []),
     ...(brief.topics.length ? [{
       type: 'function' as const,
       name: 'show_topic',
@@ -56,7 +67,7 @@ export function openAiLiveSession(brief: FamiliarLiveBrief, options: { model: st
     instructions: [
       ...familiarLiveCharacter(brief),
       tools.length
-        ? 'Answer questions about the app yourself, from the facts above. When the reader wants a topic shown on their screen, or wants to change something on this page, delegate to the backend: it shows topics and puts changes on the screen for the reader to confirm. Tell the reader what the backend did, and never say a change is made before they confirm it.'
+        ? 'Answer from the facts above when they already cover the question. Everything else goes to the backend: it reads the docs for you, shows topics on their screen, and puts changes there for the reader to confirm. Send it any question the page\'s topics do not answer rather than guessing, say what it found in your own words, and never say a change is made before they confirm it.'
         : 'Answer questions about the app yourself, from the facts above. Nothing on this page can be changed by voice; if asked, say so kindly.',
     ].join('\n\n'),
     audio: { output: { voice: options.voice } },
@@ -65,7 +76,7 @@ export function openAiLiveSession(brief: FamiliarLiveBrief, options: { model: st
       responses: {
         model: options.backend,
         instructions: [
-          `You are the backend for ${brief.familiar.name}, the reader's Familiar in Expanded Novels, on: ${brief.place}. Do only what the reader asked, through your functions, and return one short sentence the Familiar can say.`,
+          `You are the backend for ${brief.familiar.name}, the reader's Familiar in NovelExpanded, on: ${brief.place}. Do only what the reader asked, through your functions, and return one short sentence the Familiar can say.`,
           familiarLiveActions(brief),
         ].join('\n\n'),
         tools,

@@ -71,6 +71,9 @@ export function parseFamiliarLiveBrief(value: unknown): FamiliarLiveBrief {
   if (!/^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*$/.test(language)) throw new Error('language is not a language tag.');
   if (!Array.isArray(body.topics) || body.topics.length > 20) throw new Error('topics must be a list of at most 20.');
   if (!Array.isArray(body.actions) || body.actions.length > 12) throw new Error('actions must be a list of at most 12.');
+  // Names only, and bounded like everything else: the index orients the Familiar, and look_up fetches the words.
+  const docs = body.docs === undefined ? [] : body.docs;
+  if (!Array.isArray(docs) || docs.length > 300) throw new Error('docs must be a list of at most 300.');
   return {
     familiar: { name: text(familiar.name, 'familiar.name', 60), description: text(familiar.description, 'familiar.description', 400, false) },
     place: text(body.place, 'place', 80),
@@ -78,6 +81,10 @@ export function parseFamiliarLiveBrief(value: unknown): FamiliarLiveBrief {
     topics: body.topics.map((topic: unknown, index) => {
       if (!isRecord(topic)) throw new Error(`topics[${index}] is not a topic.`);
       return { id: id(topic.id, `topics[${index}].id`), label: text(topic.label, `topics[${index}].label`, 60), explanation: text(topic.explanation, `topics[${index}].explanation`, 800) };
+    }),
+    docs: docs.map((entry: unknown, index) => {
+      if (!isRecord(entry)) throw new Error(`docs[${index}] is not a docs entry.`);
+      return { id: id(entry.id, `docs[${index}].id`), title: text(entry.title, `docs[${index}].title`, 60), category: text(entry.category, `docs[${index}].category`, 60) };
     }),
     actions: body.actions.map((action: unknown, index) => {
       if (!isRecord(action)) throw new Error(`actions[${index}] is not an action.`);
@@ -97,6 +104,11 @@ export function parseFamiliarLiveBrief(value: unknown): FamiliarLiveBrief {
 }
 
 const declarations = (brief: FamiliarLiveBrief) => [
+  ...(brief.docs.length ? [{
+    name: 'look_up',
+    description: 'Reads what the docs say about a question. Answers with the entries themselves, or with nothing when the docs do not cover it.',
+    parameters: { type: 'OBJECT', properties: { query: { type: 'STRING', description: 'What the reader wants to know, in a few words.' } }, required: ['query'] },
+  }] : []),
   ...(brief.topics.length ? [{
     name: 'show_topic',
     description: 'Shows one of this place\'s topics on the reader\'s screen.',

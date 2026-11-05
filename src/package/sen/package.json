@@ -82,6 +82,10 @@
     "./translation": {
       "types": "./dist/types/package/sen/translation.d.ts",
       "import": "./dist/translation.js"
+    },
+    "./docs-knowledge": {
+      "types": "./dist/types/package/sen/docs-knowledge.d.ts",
+      "import": "./dist/docs-knowledge.js"
     }
   },
   "peerDependencies": {

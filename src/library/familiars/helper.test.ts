@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { docsIndex } from '@seihouse/sen/docs-knowledge';
+import { novelExpandedDocs } from '../docs/catalog';
 import { FAMILIAR_LIVE_QUIET_MS, FAMILIAR_QUIET_NOTE, FAMILIAR_TYPED_QUIET_MS, FamiliarHelperController, matchFamiliarCommand, type FamiliarHelperAction, type FamiliarHelperContext, type FamiliarLive, type FamiliarLiveBrief, type FamiliarLiveEvents, type FamiliarVoice } from './helper';
 
 function setup() {
@@ -301,7 +303,11 @@ describe('Familiar live talk', () => {
       familiar: { name: 'Celestial Guardian', description: 'A loyal fox spirit.' }, place: 'Fate', language: 'en-US',
       topics: [{ id: 'energy', label: 'Energy', explanation: 'Energy pays for manifesting.' }],
       actions: [{ id: 'conflict', label: 'Conflict' }, { id: 'custom', label: 'Custom', input: { label: 'Direction', maxLength: 1200 } }],
+      // Names only: the words are fetched by look_up, so a conversation does not carry the whole catalog.
+      docs: docsIndex(novelExpandedDocs),
     });
+    expect(t.brief().docs).toContainEqual({ id: 'story-seed', title: 'Story Seed', category: 'Story' });
+    expect(JSON.stringify(t.brief().docs)).not.toContain('The starting place for a new novel');
     expect(t.helper.getSnapshot().live?.status).toBe('connecting');
     t.events().connected();
     t.events().caption('reader', 'What is');
@@ -359,6 +365,19 @@ describe('Familiar live talk', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+  it('reads the docs on a lookup, and says plainly when they do not cover the question', async () => {
+    const t = live();
+    t.helper.talk();
+    t.events().connected();
+    const answer = await t.events().call({ name: 'look_up', query: 'story seed' });
+    expect(answer).toContain('Story Seed (Story): The starting place for a new novel and its world.');
+    // The reader can see which entries were read, so the answer is traceable to the docs.
+    expect(t.helper.getSnapshot().chat.at(-1)).toMatchObject({ speaker: 'note', text: expect.stringContaining('Read Story Seed') });
+    // Nothing written about it: the Familiar is told to say so rather than answer it itself.
+    const missing = await t.events().call({ name: 'look_up', query: 'refund policy' });
+    expect(missing).toContain('do not answer it yourself');
+    expect(t.helper.getSnapshot().chat.at(-1)).toMatchObject({ speaker: 'note', text: 'No docs entry for \u201crefund policy\u201d' });
   });
   it('shows topics and proposes changes for the reader to confirm, and confirms only when asked', async () => {
     const t = live();

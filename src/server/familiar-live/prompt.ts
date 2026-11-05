@@ -1,40 +1,49 @@
 /**
  * What the Familiar is told in a live conversation, whichever provider holds
- * it: who it is, how it talks, its facts (the page's topics and the
- * NovelExpanded Docs), and what it can do through its functions.
+ * it: who it is, how it talks, its facts (the page's topics and the docs), and
+ * what it can do through its functions.
+ *
+ * A live instruction is fixed when the connection opens and cannot be rewritten
+ * once the reader asks something, so the docs are not poured in here. The
+ * Familiar is given their index — names only — and looks an entry up when it
+ * needs one. That keeps every exchange the same size however much is written,
+ * and it is paid for by questions rather than by greetings.
+ *
+ * The catalog itself never reaches this file: the host supplies its index in
+ * the brief, so a publisher grounds its own companion in its own docs.
  */
 import type { FamiliarLiveBrief } from '@seihouse/library/familiar';
-import { docsCategories } from '../../workshop/docs/catalog';
 
-/**
- * The NovelExpanded Docs (`src/workshop/docs/catalog.ts`): the product's own
- * explanations, the Familiar's facts beyond the page. Only explained topics.
- */
-export const familiarLiveDocs = (): string => docsCategories
-  .flatMap(category => category.topics.filter(topic => topic.definition)
-    .map(topic => `- ${topic.title} (${category.title}): ${topic.definition}${topic.howItFits ? ` ${topic.howItFits}` : ''}`))
-  .join('\n');
+/** The docs the Familiar knows exist, by name, grouped the way the host wrote them. */
+export const familiarLiveDocsIndex = (brief: FamiliarLiveBrief): string => {
+  const byCategory = new Map<string, string[]>();
+  for (const entry of brief.docs) byCategory.set(entry.category, [...byCategory.get(entry.category) ?? [], entry.title]);
+  return [...byCategory].map(([category, titles]) => `- ${category}: ${titles.join(', ')}`).join('\n');
+};
 
-/** Who the Familiar is, how it talks, and its facts: the page's topics and the NovelExpanded Docs. Shared by every live provider. */
+/** Who the Familiar is, how it talks, and where its facts come from. Shared by every live provider. */
 export function familiarLiveCharacter(brief: FamiliarLiveBrief): string[] {
-  const docs = familiarLiveDocs();
   const { familiar, topics } = brief;
+  const index = familiarLiveDocsIndex(brief);
   return [
     `You are ${familiar.name}, the reader's Familiar: a small spirit companion who lives in NovelExpanded, the app where they read expanded novels.${familiar.description ? ` ${familiar.description}` : ''}`,
     `You talk with the reader out loud, like a friend beside them: warm, quick and natural. Keep answers to two or three short sentences unless they ask for more. Speak the reader's language (${brief.language}).`,
     `The reader is on: ${brief.place}.`,
-    'Your only facts about the app are this page\'s topics and the NovelExpanded Docs below. Never invent features, prices or rules beyond them, and say plainly when you do not know. The docs are written by the people who build the app: explain them to a reader in plain words, and never talk about code, packages, the Workshop or development.',
+    index
+      ? 'Your only facts about the app are this page\'s topics and the docs. You are given the docs by name, not by what they say: when the reader asks about one of them, or about anything the page\'s topics do not already answer, call look_up and answer from what comes back. Never answer from a name alone, never invent features, prices or rules, and say plainly when a lookup finds nothing. The docs are written by the people who build the app: explain them to a reader in plain words, and never talk about code, packages, the Workshop or development.'
+      : 'Your only facts about the app are this page\'s topics. Never invent features, prices or rules beyond them, and say plainly when you do not know. Never talk about code, packages, the Workshop or development.',
     topics.length
       ? ['This page\'s topics:', ...topics.map(topic => `- ${topic.label} (${topic.id}): ${topic.explanation}`)].join('\n')
       : 'This page has no topics of its own.',
-    ...(docs ? [`The NovelExpanded Docs:\n${docs}`] : []),
+    ...(index ? [`The docs you can look up, by name:\n${index}`] : []),
   ];
 }
 
 /** What the Familiar can do here, through its functions, and the rule that the screen confirms every change. */
 export function familiarLiveActions(brief: FamiliarLiveBrief): string {
-  const { topics, actions } = brief;
+  const { topics, actions, docs } = brief;
   return [
+    ...(docs.length ? ['To read what the docs say about something, call look_up with the reader\'s question in your own words. It answers with the entries themselves, or with nothing when the docs do not cover it.'] : []),
     ...(topics.length ? ['When showing a topic would help, call show_topic so it appears on their screen.'] : []),
     ...(actions.length
       ? ['What you can do here, only through propose_action:',
@@ -50,4 +59,3 @@ export function familiarLiveActions(brief: FamiliarLiveBrief): string {
 export function familiarLiveInstruction(brief: FamiliarLiveBrief): string {
   return [...familiarLiveCharacter(brief), familiarLiveActions(brief)].join('\n\n');
 }
-

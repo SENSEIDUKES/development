@@ -130,8 +130,24 @@ function docsQueryWords(query: string): string[] {
  * back looking answered, which is worse than finding nothing because the
  * companion then speaks as though the docs covered it.
  */
+function docsWordList(text: string): string[] {
+  return text.toLocaleLowerCase(DOCS_FOLD_LOCALE).split(DOCS_WORD_SPLIT).filter(Boolean).map(docsStem);
+}
+
 function docsWords(text: string): Set<string> {
-  return new Set(text.toLocaleLowerCase(DOCS_FOLD_LOCALE).split(DOCS_WORD_SPLIT).filter(Boolean).map(docsStem));
+  return new Set(docsWordList(text));
+}
+
+/**
+ * Whether one of a topic's names is the question itself. "Reader" has to beat
+ * "Reader Chamber", "Reader Codex" and "Reader Language", which all contain the
+ * word and would otherwise fill every slot and leave the asked-for entry out.
+ */
+function docsNamedExactly(topic: DocsTopic, words: string[]): boolean {
+  return [topic.title, ...topic.aliases].some(name => {
+    const parts = docsWordList(name);
+    return parts.length === words.length && parts.every((part, index) => part === words[index]);
+  });
 }
 
 /**
@@ -154,7 +170,8 @@ export function lookUpDocs(catalog: DocsCatalog, query: string, limit = DOCS_LOO
       const text = docsWords([topic.title, ...topic.aliases, topic.definition, topic.howItFits, category.title].filter(Boolean).join(' '));
       const inText = words.filter(word => text.has(word)).length;
       const inName = words.filter(word => name.has(word)).length;
-      return { topic, category: category.title, all: inText === words.length, score: inText ? inText + inName * 3 : 0 };
+      const exact = docsNamedExactly(topic, words) ? 10 : 0;
+      return { topic, category: category.title, all: inText === words.length, score: inText ? inText + inName * 3 + exact : 0 };
     }));
   // An entry that answers the whole question crowds out one that caught a single
   // word of it, so a spoken answer is not padded with whatever shares a category.

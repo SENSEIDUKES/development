@@ -100,6 +100,21 @@ describe('Docs Knowledge', () => {
     expect(lookUpDocs(mentions, 'beta').map(hit => hit.topic.id)).toEqual(['beta', 'mentions']);
   });
 
+  it('puts the topic that is exactly named ahead of longer names containing it', () => {
+    // "Reader" must beat "Reader Chamber", "Reader Codex" and "Reader Language",
+    // which all contain the word and would otherwise fill every slot without it.
+    const readers: DocsCatalog = [{ id: 'r', title: 'Reading', description: 'Reading things.', topics: [
+      { id: 'reader-chamber', title: 'Reader Chamber', aliases: [], definition: 'The chamber.' },
+      { id: 'reader-codex', title: 'Reader Codex', aliases: [], definition: 'The codex.' },
+      { id: 'reader-language', title: 'Reader Language', aliases: [], definition: 'The language.' },
+      { id: 'reader', title: 'Reader', aliases: [], definition: 'A person experiencing a story.' },
+    ] }];
+    expect(lookUpDocs(readers, 'reader')[0].topic.id).toBe('reader');
+    expect(lookUpDocs(readers, 'what is a reader?')[0].topic.id).toBe('reader');
+    // A longer name asked for exactly still wins its own question.
+    expect(lookUpDocs(readers, 'reader codex')[0].topic.id).toBe('reader-codex');
+  });
+
   it('folds case the same way whatever language the reader speaks', () => {
     // A Turkish device lowercases "ORIGIN" to "orıgın", which would never meet the
     // "origin" in the catalog. The companion speaks every language; the fold is fixed.

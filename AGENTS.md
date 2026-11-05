@@ -2,6 +2,10 @@
 
 Read this file before making changes.
 
+Read the relevant feature guide for current ownership and behavior. Dated histories
+and audits record earlier states; consult them when the task needs that history,
+and verify any open finding against current code before acting on it.
+
 ## Purpose
 
 This repository is the **SEN Development space**: a centralized development, reconstruction, and preview environment for SEN and Library components and the NovelExpanded app built here at `/app/`.
@@ -103,17 +107,13 @@ concept it already defines.
 
 ### The writer's prompt skeleton
 
-The chapter writer's prompt is laid out in fixed parts (SENSEI, 2026-10-16),
-defined in `HARNESS_PROMPT_PARTS` (`src/server/harness-generation/prompt.ts`):
-Role and mission, How to write, How to tag, How to read the story
-information, How to return the chapter, Hard rules; then Story information,
-This chapter, and the Mission Reminder last. It is how the HARNESS joins its
-inputs, not a system beside it. Every change that adds or moves text the writer
-reads must name the one part it belongs to and go through that part's owner (a
-CAPA skill in its schema slot, or the HARNESS part), never text placed between
-parts. Writing guidance belongs in How to write, tag teaching in How to tag,
-story data in Story information. `promptSkeleton.test.ts` fails on anything out
-of place.
+The [architecture vocabulary](./src/components/harness-generation/ARCHITECTURE_VOCABULARY.md#core-definitions)
+defines the writer's prompt skeleton; `HARNESS_PROMPT_PARTS` in
+`src/server/harness-generation/prompt.ts` and `promptSkeleton.test.ts` enforce it.
+Every change to text the writer reads must name its part and go through that
+part's owner, never insert text between parts. CAPA writing guidance belongs in
+How to write, and story data in Story information. Tag teaching belongs to the
+separate Chapter Tagger; it left the writer on 2026-10-26.
 
 ### Generation features and the Model Router
 

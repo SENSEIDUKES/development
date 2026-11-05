@@ -34,11 +34,7 @@
   of its default badge. NovelExpanded uses it for the approved wordmark;
   existing workspace titles and header utilities retain their presentation.
 
-Where `reference/` exists, it holds the old production version, kept as reference
-material for the remake; it is not edited or refreshed. New features do not get a
-reference folder. Old systems stay until each is remade on the new path; never
-reconnect them as they are or re-sync with the old production app. The destination
-is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-rule).
 
 - **Source repositories:** `SENSEIDUKES/Light-Novels`, `SENSEIDUKES/development`; UI dependencies from `SENSEIDUKES/UI`.
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.

@@ -17,9 +17,8 @@ for product responsibilities; it is a guide to inspection, not a fixed API catal
    its [How we build](../../NOVEL_EXPANDED.md#how-we-build) rules and its
    [Names](../../NOVEL_EXPANDED.md#names) table govern over this skill. Read
    "Where we are" only for the part of the product the task touches.
-3. **Feature design documents** the task touches, such as
-   [the chapter loop](../../docs/chapter-loop.md) for anything about what a chapter
-   knows, plans or records, and the HARNESS
+3. **Feature design documents** the task touches. For what a chapter knows,
+   writes or records, read the HARNESS
    [architecture vocabulary](../../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md)
    before reading, changing, or discussing HARNESS code. Use their terms; do not
    copy their volatile details into this skill or invent parallel definitions.

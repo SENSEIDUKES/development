@@ -406,8 +406,8 @@ export const workshopEntries: WorkshopEntry[] = [
     section: 'systems',
     owner: 'workshop',
     status: 'active',
-    title: 'Writer Instructions',
-    description: 'The exact instructions the chapter writer reads before the story, taken from the live code: the Author, the tag rules, Sound Cues with the story\'s sound list, Speakers, Holdings and the response contract, each with its version, size and the date it last changed, plus the blocks only some stories get. A dated history records every change; a test fails until a change is written there.',
+    title: 'What the Models Read',
+    description: 'Every word each model in a story is told, from the live code, step by step: the World builder, the Writer, the Tagger (one tap per tag), the Fixer and the Look writer. Each step says what it is given and what it hands back; each block reads easily or exactly as the model sees it, with why it says what it says. The Writer Instructions history records every change; a test fails until a change is written there.',
     category: 'other',
     version: 'v1.0',
     source: {

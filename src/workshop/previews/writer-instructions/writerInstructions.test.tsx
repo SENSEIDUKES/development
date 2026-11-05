@@ -2,9 +2,9 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { HARNESS_PROMPT_HEADINGS } from '../../../server/harness-generation/prompt';
-import { EVERY_CHAPTER, RETIRED_WRITER_INSTRUCTIONS, WRITER_INSTRUCTIONS, defaultSystemInstruction, fingerprintText } from './writerInstructions';
+import { EVERY_CHAPTER, PIPELINE, RETIRED_WRITER_INSTRUCTIONS, WRITER_INSTRUCTIONS, defaultSystemInstruction, fingerprintText } from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHistory';
-import { WriterInstructionsWorkspace } from './WriterInstructionsWorkspace';
+import { ReadableText, WriterInstructionsWorkspace } from './WriterInstructionsWorkspace';
 
 const block = (id: string) => EVERY_CHAPTER.find(item => item.id === id)!;
 
@@ -47,22 +47,41 @@ describe('Writer Instructions', () => {
     expect(EVERY_CHAPTER.every(item => item.part)).toBe(true);
   });
 
-  it('renders every block with its words, version and last change, the tag blocks open, then the history', () => {
+  it('puts every block in exactly one step of the pipeline', () => {
+    const placed = PIPELINE.flatMap(step => step.groups.flatMap(group => group.blocks.map(item => item.id)));
+    expect([...placed].sort()).toEqual(WRITER_INSTRUCTIONS.map(item => item.id).sort());
+    expect(new Set(placed).size).toBe(placed.length);
+  });
+
+  it('opens on the Tagger, with every tag it reads one tap away, and the Chapter tagger\'s own words shown', () => {
     const markup = renderToStaticMarkup(createElement(WriterInstructionsWorkspace));
-    expect(markup).toContain('<h1>Writer Instructions</h1>');
-    for (const { id, source } of WRITER_INSTRUCTIONS) {
-      expect(markup).toContain(`data-instruction="${id}"`);
-      expect(markup).toContain(source);
+    expect(markup).toContain('<h1>What the Models Read</h1>');
+    for (const step of PIPELINE) expect(markup).toContain(`data-view="${step.id}"`);
+    expect(markup).toContain('data-view="changes"');
+    expect(markup).toContain('data-step="tagger"');
+    for (const id of ['tagger', 'tag-rules', 'speakers', 'holdings', 'appearance', 'status', 'place', 'sound-cues', 'soundtrack']) expect(markup).toContain(`data-block="${id}"`);
+    expect(markup).toContain('data-instruction="tagger"');
+    expect(markup).toContain('Exactly as the model sees it');
+    expect(markup.replace(/<[^>]+>/g, '')).toMatch(/HARNESS · \d+ words · changed \d{4}-\d{2}-\d{2}/);
+  });
+
+  it('lays the text out for a person without losing a word of it', () => {
+    const plain = (html: string) => html.replace(/<\/(p|h4|div|span)>/g, ' ').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&#x27;/g, '\'').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ');
+    for (const { id, text } of WRITER_INSTRUCTIONS) {
+      const shown = plain(renderToStaticMarkup(createElement(ReadableText, { text })));
+      for (const line of text.split('\n').map(item => item.trim()).filter(Boolean)) {
+        if (/^Example:\s*\{/.test(line)) {
+          // An example note is read out field by field: its words and its tag are both there.
+          for (const piece of line.replace(/^Example:\s*/, '').split(/(\{[^{}]*\})/).map(item => item.trim()).filter(Boolean)) {
+            if (!piece.startsWith('{')) { expect(shown, `${id}: ${line}`).toContain(piece.replace(/^\((.*)\)$/, '$1')); continue; }
+            const note = JSON.parse(piece) as { words?: string; tag: string };
+            expect(shown, `${id}: ${line}`).toContain(note.tag);
+            if (note.words) expect(shown, `${id}: ${line}`).toContain(note.words);
+          }
+          continue;
+        }
+        expect(shown, `${id}: ${line}`).toContain(line.replace(/^[-•]\s/, '').replace(/\s+/g, ' ').replace(/^([A-Z][A-Z0-9 ,'’&()/-]{2,}):\s+/, '$1: '));
+      }
     }
-    for (const id of ['tag-rules', 'sound-cues', 'soundtrack', 'speakers', 'holdings', 'appearance']) expect(markup).toMatch(new RegExp(`<details[^>]*open=""[^>]*data-instruction="${id}"`));
-    expect(markup).not.toMatch(/<details[^>]*open=""[^>]*data-instruction="reading-guide"/);
-    for (const heading of ['# ROLE AND MISSION', '# HOW TO WRITE', '# HOW TO READ THE STORY INFORMATION', '# HOW TO RETURN THE CHAPTER', '# HARD RULES']) expect(markup).toContain(heading);
-    // The tag teaching is on the page as the tagger's, never as a part of the
-    // writer's prompt. The history still names the retired heading, as it must.
-    expect(markup).not.toContain('data-part="tagging"');
-    expect(markup).not.toContain('writer-instructions__heading"># HOW TO TAG');
-    expect(markup).toContain('A paragraph with several lines gets a note for each.');
-    expect(markup.replace(/<[^>]+>/g, '')).toMatch(/SEN Novel Author v1\.1\.0 · \d+ words · changed 2026-10-26/);
-    expect(markup).toMatch(/<time datetime="2026-10-04">2026-10-04<\/time>/i);
   });
 });

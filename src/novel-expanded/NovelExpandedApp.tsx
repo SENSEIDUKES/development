@@ -10,7 +10,7 @@ import { HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinatio
 import { SparksButton } from '@seihouse/sen/story-seed';
 import { AuthorWorldView, CreateStorySettings, StoryPages, isStoryPublished, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
-import { createOfficialCapaDefaultLoadout } from '../host/generation/capa/officialCapaSkills';
+import { createOfficialCapaDefaultLoadout, officialCapaUpgrades } from '../host/generation/capa/officialCapaSkills';
 import { NarrativeButton } from '@seihouse/sen/presentation';
 import { EconomyClientProviders } from '../host/economy/EconomyClientProviders';
 import { useModelPreference, useTaggerPreference } from '../host/generation/modelPreference';
@@ -187,7 +187,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     baseMedia: LIBRARY_BASE_MEDIA, preferredModel: chapterModel, preferredTagger: taggerChoice,
     soundWordPresets: soundWords.presets, importSoundWords: soundWords.importPack,
     registeredMediaPacks: mediaPacks.packs, mediaPackEntitlements: mediaPacks.entitlements, importMediaPack: mediaPacks.importPack,
-    skillIntake: inspectHarnessSkillPackage, installSkill,
+    skillIntake: inspectHarnessSkillPackage, installSkill, skillUpgrades: officialCapaUpgrades,
   });
   const { state } = stories;
   // Story Settings chosen in Create, kept on this device until Manifest applies them.

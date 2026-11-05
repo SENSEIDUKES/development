@@ -9,6 +9,8 @@ import {
   type HarnessGenerationServerInfo,
   type HarnessTaggerChoice,
   type HarnessSkillManifest,
+  type HarnessSkillReference,
+  type HarnessSkillSlotId,
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
 import { createLibraryMediaPort, type MediaPack, type MediaPackEntitlement, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
@@ -36,6 +38,12 @@ export interface LibraryStoriesOptions {
   importSoundWords?: (file: Blob) => Promise<SoundWordsPreset>;
   /** Checks a skill `.spp` package, where the host lets readers install skills. */
   skillIntake?: SkillPackageIntake;
+  /**
+   * The skills a story should move to when the host's own packages have a new
+   * version (slot and reference), given the story's loadout. Stories read
+   * the new version as they open; nothing is saved until a story next is.
+   */
+  skillUpgrades?: (loadout: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>) => Array<[HarnessSkillSlotId, HarnessSkillReference]>;
   /** Keeps an installed skill in the host's inventory, which then returns in `installedSkills`. */
   installSkill?: (skill: HarnessSkillManifest) => void;
   /**
@@ -124,6 +132,7 @@ export function useLibraryStories({
   soundWordPresets = EMPTY_PRESETS,
   importSoundWords,
   skillIntake,
+  skillUpgrades,
   installSkill: keepSkill,
   importMediaPack: installMediaPack,
   preferredModel,
@@ -131,9 +140,9 @@ export function useLibraryStories({
   holdingsFixer = 'records-and-sentences',
 }: LibraryStoriesOptions): LibraryStories {
   const controller = useMemo(
-    () => new HarnessGenerationController({ repository, modelAdapter, media: createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia }) }),
+    () => new HarnessGenerationController({ repository, modelAdapter, skillUpgrades, media: createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia }) }),
     // The inventory and media follow below without replacing the controller.
-    [repository, modelAdapter],
+    [repository, modelAdapter, skillUpgrades],
   );
   useEffect(() => controller.setInstalledSkills(installedSkills), [controller, installedSkills]);
   useEffect(() => controller.setHoldingsFixer(holdingsFixer), [controller, holdingsFixer]);

@@ -79,6 +79,12 @@ export interface HarnessGenerationControllerOptions {
    * chapter's own writer, thinking as little as it allows.
    */
   tagger?: HarnessTaggerChoice;
+  /**
+   * The skills a story should move to when the host's own packages have a
+   * newer version (slot and reference), given the story's loadout. Applied as
+   * stories open, in memory, like every recovery here: the next save keeps it.
+   */
+  skillUpgrades?: (loadout: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>) => Array<[HarnessSkillSlotId, HarnessSkillReference]>;
 }
 
 /**
@@ -156,6 +162,7 @@ export class HarnessGenerationController {
   private media?: NarrativeMediaPort;
   private holdingsFixer: HarnessHoldingsFixerPolicy;
   private tagger: HarnessTaggerChoice;
+  private readonly skillUpgrades: HarnessGenerationControllerOptions['skillUpgrades'];
   private readonly listeners = new Set<WorkspaceListener>();
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
@@ -170,6 +177,7 @@ export class HarnessGenerationController {
     this.media = options.media;
     this.holdingsFixer = options.holdingsFixer ?? 'records-and-sentences';
     this.tagger = options.tagger ?? {};
+    this.skillUpgrades = options.skillUpgrades;
   }
 
   /** The host's choice for chapters committed from now on (in the Library, the Familiar's). */
@@ -353,6 +361,10 @@ export class HarnessGenerationController {
       batch.updatedAt = this.runtime.now();
     }
     for (const story of recovered.stories) {
+      // A story made with an earlier version of one of the host's own packages reads the version installed now.
+      for (const [slot, reference] of this.skillUpgrades?.(story.skillLoadout ?? {}) ?? []) {
+        story.skillLoadout = { ...(story.skillLoadout ?? {}), [slot]: cloneHarnessValue(reference) };
+      }
       if (story.skillLoadout?.author) continue;
       story.skillLoadout = {
         ...(story.skillLoadout ?? {}),

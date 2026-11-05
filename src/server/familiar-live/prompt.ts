@@ -43,7 +43,10 @@ export function familiarLiveCharacter(brief: FamiliarLiveBrief): string[] {
 export function familiarLiveActions(brief: FamiliarLiveBrief): string {
   const { topics, actions, docs } = brief;
   return [
-    ...(docs.length ? ['To read what the docs say about something, call look_up with the reader\'s question in your own words. It answers with the entries themselves, or with nothing when the docs do not cover it.'] : []),
+    // The docs are written in one language and the index gives you its names. Asking in
+    // the reader's language would find nothing, and the Familiar would deny a documented
+    // topic to everyone not reading in it — so the model translates, and the lookup does not.
+    ...(docs.length ? ['To read what the docs say about something, call look_up with the name it has in the list of docs above, in the language that list is written in — never the reader\'s own wording, which the docs will not match. Work out which name the reader means, look it up, then tell them what it says in their language. It answers with the entries themselves, or with nothing when the docs do not cover it.'] : []),
     ...(topics.length ? ['When showing a topic would help, call show_topic so it appears on their screen.'] : []),
     ...(actions.length
       ? ['What you can do here, only through propose_action:',

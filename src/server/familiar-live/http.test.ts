@@ -49,6 +49,10 @@ describe('Familiar live talk route', () => {
     expect(instruction).toContain('- custom: Custom. Your own direction. Needs their words for "Direction", at most 1200 characters');
     // Beyond the page, the docs are its facts: it is given their names, and looks an entry up when it needs one.
     expect(instruction).toContain('- Story: Story Seed, Arc Goal');
+    // The catalog is written in one language; a reader speaking another must still reach it,
+    // so the model translates the question into the docs' own names and answers in theirs.
+    expect(instruction).toContain('in the language that list is written in');
+    expect(instruction).toContain('tell them what it says in their language');
     expect(instruction).not.toContain('The starting place for a new novel and its world.');
     expect(familiarLiveDocsIndex(parseFamiliarLiveBrief({ brief }))).toBe('- Story: Story Seed, Arc Goal');
     const tools = config.liveConnectConstraints.config.tools[0].functionDeclarations;

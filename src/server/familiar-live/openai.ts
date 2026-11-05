@@ -20,10 +20,10 @@ export function openAiLiveTools(brief: FamiliarLiveBrief) {
     ...(brief.docs.length ? [{
       type: 'function' as const,
       name: 'look_up',
-      description: 'Reads what the docs say about a question. Answers with the entries themselves, or with nothing when the docs do not cover it.',
+      description: 'Reads what the docs say about a topic. Answers with the entries themselves, or with nothing when the docs do not cover it.',
       parameters: {
         type: 'object',
-        properties: { query: { type: 'string', description: 'What the reader wants to know, in a few words.' } },
+        properties: { query: { type: 'string', description: 'The name the topic has in the list of docs, in that list\'s own language — not the reader\'s wording.' } },
         required: ['query'],
         additionalProperties: false,
       },

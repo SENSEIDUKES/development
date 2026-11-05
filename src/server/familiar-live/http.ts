@@ -106,8 +106,8 @@ export function parseFamiliarLiveBrief(value: unknown): FamiliarLiveBrief {
 const declarations = (brief: FamiliarLiveBrief) => [
   ...(brief.docs.length ? [{
     name: 'look_up',
-    description: 'Reads what the docs say about a question. Answers with the entries themselves, or with nothing when the docs do not cover it.',
-    parameters: { type: 'OBJECT', properties: { query: { type: 'STRING', description: 'What the reader wants to know, in a few words.' } }, required: ['query'] },
+    description: 'Reads what the docs say about a topic. Answers with the entries themselves, or with nothing when the docs do not cover it.',
+    parameters: { type: 'OBJECT', properties: { query: { type: 'STRING', description: 'The name the topic has in the list of docs, in that list\'s own language — not the reader\'s wording.' } }, required: ['query'] },
   }] : []),
   ...(brief.topics.length ? [{
     name: 'show_topic',

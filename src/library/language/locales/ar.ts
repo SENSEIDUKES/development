@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "شرارات",
       "Sparks: story ideas": "شرارات: أفكار للقصص",
       "Close Sparks": "إغلاق الشرارات",
-      "Search For Worlds": "ابحث عن العوالم",
+      "Search for worlds": "ابحث عن العوالم",
       "Profile and preferences": "الملف الشخصي والتفضيلات",
       "Sign in": "تسجيل الدخول",
       "Not connected yet": "غير متصل بعد",

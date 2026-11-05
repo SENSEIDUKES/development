@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "چنگاریاں",
       "Sparks: story ideas": "چنگاریاں: کہانی کے خیالات",
       "Close Sparks": "چنگاریاں بند کریں",
-      "Search For Worlds": "دنیائیں تلاش کریں",
+      "Search for worlds": "دنیائیں تلاش کریں",
       "Profile and preferences": "پروفائل اور ترجیحات",
       "Sign in": "سائن ان کریں",
       "Not connected yet": "ابھی منسلک نہیں",

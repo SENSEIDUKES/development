@@ -42,11 +42,11 @@ export function WorkspaceHeaderSearch({ items }: { items: readonly HeaderSearchI
 
   return <>
     <div className="workspace-search">
-      <button ref={searchRef} type="button" className="workspace-search-field" aria-label="Search For Worlds"
+      <button ref={searchRef} type="button" className="workspace-search-field" aria-label="Search for worlds"
         aria-haspopup="dialog" aria-expanded={open} onClick={openSearch}>
         <span className="workspace-search-line">
           <SENSearchIcon aria-hidden="true" size={20} className="workspace-search-emblem" />
-          <span className="workspace-search-placeholder">Search For Worlds</span>
+          <span className="workspace-search-placeholder">Search for worlds</span>
         </span>
       </button>
     </div>

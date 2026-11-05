@@ -376,6 +376,11 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-05 (later)** — **Search for worlds, readable on phones** (SENSEI). The label is
+  "Search for worlds". On a phone's narrow field the words no longer disappear: they take
+  one line where it fits and otherwise wrap onto two ("Search for / worlds"), in every
+  interface language; only a field too narrow for the longest word shows the magnifier
+  alone. Filipino reads "Maghanap ng mundo" so it fits on the smallest phones.
 - **2026-11-05** — **Search For Worlds** (SENSEI). The header's search reads "Search For
   Worlds" (in every interface language) and its words are shown whole or not at all,
   never cut off or "…". It no longer stretches across the header on large screens: it

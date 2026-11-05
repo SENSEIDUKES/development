@@ -36,31 +36,31 @@ it('puts the host\'s sound control on every header beneath it, unless a header s
   const host = (header: React.ReactNode) => <WorkspaceHeaderSoundProvider sound={<button aria-label="Mute music">Note</button>}>{header}</WorkspaceHeaderSoundProvider>;
   // After Search and before the Profile Portrait, like a header's own sound.
   await render(host(<WorkspaceHeader title="Story Seed" />));
-  expect(controls()).toEqual(['Search For Worlds', 'Mute music', 'Profile and preferences']);
+  expect(controls()).toEqual(['Search for worlds', 'Mute music', 'Profile and preferences']);
   await render(host(<WorkspaceHeader title="Story Seed" sound={<button aria-label="Page sound">Page</button>} />));
-  expect(controls()).toEqual(['Search For Worlds', 'Page sound', 'Profile and preferences']);
+  expect(controls()).toEqual(['Search for worlds', 'Page sound', 'Profile and preferences']);
   await render(host(<WorkspaceHeader title="Story Seed" sound={null} />));
-  expect(controls()).toEqual(['Search For Worlds', 'Profile and preferences']);
+  expect(controls()).toEqual(['Search for worlds', 'Profile and preferences']);
   await render(<WorkspaceHeader title="Story Seed" />);
-  expect(controls()).toEqual(['Search For Worlds', 'Profile and preferences']);
+  expect(controls()).toEqual(['Search for worlds', 'Profile and preferences']);
 });
 
 it('keeps logo, Search, optional context and the Profile Portrait in document order without a header badge', async () => {
   await render(<WorkspaceHeader title="Long Library workspace title" emblem={{ src: '/favicon.jpg', alt: 'Library' }}
     home={{ href: '/', label: 'Home' }} contextualItem={<button>Page context</button>} />);
   const header = container.querySelector('header')!;
-  expect(Array.from(header.querySelectorAll('a, button')).map(element => element.getAttribute('aria-label') ?? element.textContent)).toEqual(['Home', 'Search For Worlds', 'Page context', 'Profile and preferences']);
+  expect(Array.from(header.querySelectorAll('a, button')).map(element => element.getAttribute('aria-label') ?? element.textContent)).toEqual(['Home', 'Search for worlds', 'Page context', 'Profile and preferences']);
   expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
   expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
   expect(header.querySelector('.workspace-header-context')).not.toBeNull();
   expect(header.querySelector('input')).toBeNull();
   // Search reads as a field, and the Portrait sits in the header's profile slot at the end.
-  expect(button('Search For Worlds').querySelector('.workspace-search-placeholder')?.textContent).toBe('Search For Worlds');
-  expect(button('Search For Worlds').querySelector('.workspace-search-line > .workspace-search-emblem + .workspace-search-placeholder')).not.toBeNull();
+  expect(button('Search for worlds').querySelector('.workspace-search-placeholder')?.textContent).toBe('Search for worlds');
+  expect(button('Search for worlds').querySelector('.workspace-search-line > .workspace-search-emblem + .workspace-search-placeholder')).not.toBeNull();
   expect(button('Profile and preferences').closest('[data-slot="app-header-profile"]')).not.toBeNull();
   await render(<WorkspaceHeader title="Quiet page" contextualItem={false} />);
   expect(container.querySelector('.workspace-header-context')).toBeNull();
-  expect(Array.from(container.querySelectorAll('button')).map(element => element.getAttribute('aria-label'))).toEqual(['Search For Worlds', 'Profile and preferences']);
+  expect(Array.from(container.querySelectorAll('button')).map(element => element.getAttribute('aria-label'))).toEqual(['Search for worlds', 'Profile and preferences']);
 });
 
 it('opens the Profile Portrait menu with the Preferences, updates Preferred Language immediately, and calls the page Help owner', async () => {
@@ -147,9 +147,9 @@ it.each(TEST_WIDTHS)('regression: keeps Search and the Profile Portrait separate
   expect(button('Header options')).toBeNull();
   expect(header.querySelector('.header-overflow')).toBeNull();
   expect(Array.from(header.querySelectorAll('button')).map(element => element.getAttribute('aria-label')))
-    .toEqual(['Search For Worlds', 'Profile and preferences']);
-  expect(button('Search For Worlds').querySelector('.workspace-search-emblem')).not.toBeNull();
-  expect(button('Search For Worlds').querySelector('[data-sen-icon="header-search"]')).not.toBeNull();
+    .toEqual(['Search for worlds', 'Profile and preferences']);
+  expect(button('Search for worlds').querySelector('.workspace-search-emblem')).not.toBeNull();
+  expect(button('Search for worlds').querySelector('[data-sen-icon="header-search"]')).not.toBeNull();
   expect(button('Profile and preferences').className).toContain('workspace-profile-portrait');
   // The header carries the logo without a page badge.
   expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
@@ -159,11 +159,11 @@ it.each(TEST_WIDTHS)('regression: keeps Search and the Profile Portrait separate
   await click(button('Profile and preferences'));
   await click(button('Help'));
   expect(onAction).toHaveBeenCalledTimes(1);
-  await click(button('Search For Worlds'));
+  await click(button('Search for worlds'));
   expect(document.activeElement?.getAttribute('type')).toBe('search');
   await click(button('Close Search')); await settle();
   // Focus returns to Search itself, not to a shared overflow trigger.
-  expect(document.activeElement).toBe(button('Search For Worlds'));
+  expect(document.activeElement).toBe(button('Search for worlds'));
 });
 
 it('regression: keeps the Search field, Portrait touch target and menu styling in workspace-header.css', () => {
@@ -174,6 +174,8 @@ it('regression: keeps the Search field, Portrait touch target and menu styling i
   // Its words are whole or hidden, never cut off with "…".
   expect(css).toMatch(/\.workspace-search-line \{[^}]*flex-wrap: wrap;[^}]*overflow: hidden;/);
   expect(css).not.toMatch(/\.workspace-search-placeholder \{[^}]*text-overflow/);
+  // On a phone's narrow field the words wrap onto two lines rather than disappear.
+  expect(css).toMatch(/\.workspace-search-placeholder \{[^}]*flex: 1 1 0; min-width: min-content;/);
   expect(css).toMatch(/\.workspace-search-field \{[^}]*height: 44px;/);
   expect(css).toMatch(/\.workspace-profile-portrait \{[^}]*width: 44px; height: 44px;/);
   expect(css).toContain('.workspace-profile-panel');
@@ -206,7 +208,7 @@ it('searches labels and descriptions, announces no results, resets on reopen, an
     { id: 'profile', label: 'Celestial Profile', description: 'Manage spirit link settings', onAction: navigate },
     { id: 'blocked', label: 'Unavailable', disabled: true, onAction: blocked },
   ]} />);
-  await click(button('Search For Worlds'));
+  await click(button('Search for worlds'));
   const input = document.querySelector<HTMLInputElement>('input[type="search"]')!;
   expect(document.activeElement).toBe(input);
   expect(button('Unavailable').disabled).toBe(true);
@@ -218,8 +220,8 @@ it('searches labels and descriptions, announces no results, resets on reopen, an
   await fill(input, 'no such result');
   expect(document.querySelector('[role="dialog"] [role="status"]')?.textContent).toBe('No results');
   await click(button('Close Search')); await settle();
-  expect(document.activeElement).toBe(button('Search For Worlds'));
-  await click(button('Search For Worlds'));
+  expect(document.activeElement).toBe(button('Search for worlds'));
+  await click(button('Search for worlds'));
   expect(document.querySelector<HTMLInputElement>('input[type="search"]')!.value).toBe('');
   await click(button('Celestial Profile')); await settle();
   expect(navigate).toHaveBeenCalledTimes(1);
@@ -236,7 +238,7 @@ it('retains Home commands, active story destinations and host effects in Search'
     requestDao: vi.fn(),
   }} />);
   expect(container.querySelector('.workspace-header-context')).toBeNull();
-  await click(button('Search For Worlds'));
+  await click(button('Search for worlds'));
   expect(button('Celestial Profile').title).toBe('Open Celestial Tools');
   expect(button('Tome Chambers').textContent).toContain("Explore Ye Chen's world logs");
   expect(button('Chamber Reader')).not.toBeNull();

@@ -8,7 +8,7 @@ import { OFFICIAL_STYLE_REFERENCES, installOfficialCapaSkillsInMemory } from '..
 import { MISSION_REMINDER_OPENING } from '@seihouse/sen/harness-generation';
 import { EVERY_CHAPTER, PIPELINE, RETIRED_WRITER_INSTRUCTIONS, WHOLE_PROMPTS, WRITER_INSTRUCTIONS, fingerprintText, officialWriterSkills, writerPrompt, writerSystemInstruction } from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHistory';
-import { ReadableText, WriterInstructionsWorkspace } from './WriterInstructionsWorkspace';
+import { ReadableText, WriterInstructionsWorkspace, restyledBlock } from './WriterInstructionsWorkspace';
 
 const block = (id: string) => EVERY_CHAPTER.find(item => item.id === id)!;
 
@@ -134,6 +134,12 @@ describe('Writer Instructions', () => {
       if (saved) Object.defineProperty(globalThis, 'window', saved);
       else Reflect.deleteProperty(globalThis, 'window');
     }
+  });
+
+  it('keeps an open Style skill open when the story style changes (review finding, Codex, 2026-11-05)', () => {
+    expect(restyledBlock(OFFICIAL_STYLE_REFERENCES.chinese.id, 'japanese')).toBe(OFFICIAL_STYLE_REFERENCES.japanese.id);
+    expect(restyledBlock('all', 'korean')).toBe('all');
+    expect(restyledBlock('role', 'korean')).toBe('role');
   });
 
   it('lays the text out for a person without losing a word of it', () => {

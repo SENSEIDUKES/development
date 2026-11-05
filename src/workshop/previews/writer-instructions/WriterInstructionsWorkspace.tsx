@@ -35,6 +35,10 @@ const readHash = (): { view: View; block?: string; style?: StoryStyle } => {
   };
 };
 
+/** A selected block after the story style changes: an official Style skill becomes the new style's; any other block stays. */
+export const restyledBlock = (block: string, style: StoryStyle) =>
+  STYLES.some(([id]) => OFFICIAL_STYLE_REFERENCES[id].id === block) ? OFFICIAL_STYLE_REFERENCES[style].id : block;
+
 /** The chip that shows a step's whole prompt, as one. */
 const ALL = 'all';
 
@@ -305,7 +309,12 @@ export function WriterInstructionsWorkspace() {
   }, [view, block, style]);
   // Choosing one of three is a ◀ value ▶ stepper, with arrow keys, as AGENTS.md asks (review finding, Codex, 2026-11-05).
   const styleIndex = STYLES.findIndex(([id]) => id === style);
-  const stepStyle = (by: 1 | -1) => setStyle(STYLES[(styleIndex + by + STYLES.length) % STYLES.length][0]);
+  const stepStyle = (by: 1 | -1) => {
+    const next = STYLES[(styleIndex + by + STYLES.length) % STYLES.length][0];
+    setStyle(next);
+    // An open Style skill stays open, now in the new style (review finding, Codex, 2026-11-05).
+    setBlocks(current => current.writer ? { ...current, writer: restyledBlock(current.writer, next) } : current);
+  };
   const styleRow = step?.id === 'writer' && (
     <div className="wi-picker">
       <div className="wi-setting">

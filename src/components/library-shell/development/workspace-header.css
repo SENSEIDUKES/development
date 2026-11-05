@@ -76,13 +76,17 @@
   display: flex; align-items: center; gap: 8px; min-width: 0;
 }
 
-/* Search: a field-style trigger after the logo, with a thin glowing underline. It
-   grows into the row up to 28rem, then stops: on a large screen it does not stretch
-   across the header, and the Familiar and the music note stay at the far end, by the
-   Portrait. */
+/* Search: a field-style trigger with a thin glowing underline. It grows into the row
+   up to 28rem, then stops, so it never stretches across a large screen. On phones and
+   tablets it follows the logo and the Familiar and the music note stay by the
+   Portrait; on computers (from 1024px, where the Pathways sidebar appears) it moves
+   to the right, just before the Familiar, the music note and the Portrait. */
 .workspace-search {
   flex: 1 1 auto; min-width: 44px; max-width: 28rem; margin-inline-end: auto;
   container-type: inline-size;
+}
+@media (min-width: 1024px) {
+  .workspace-search { margin-inline: auto 0; }
 }
 .workspace-search-field {
   --workspace-search-line: 42px; /* the field's 44px less its border */

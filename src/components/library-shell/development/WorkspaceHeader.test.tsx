@@ -168,8 +168,9 @@ it.each(TEST_WIDTHS)('regression: keeps Search and the Profile Portrait separate
 
 it('regression: keeps the Search field, Portrait touch target and menu styling in workspace-header.css', () => {
   const css = readFileSync(join(process.cwd(), 'src/components/library-shell/development/workspace-header.css'), 'utf8');
-  // Search grows after the logo up to 28rem, never across a large screen, and the controls after it stay by the Portrait.
+  // Search grows up to 28rem, never across a large screen: after the logo on phones and tablets, on the right on computers.
   expect(css).toMatch(/\.workspace-search \{[^}]*flex: 1 1 auto; min-width: 44px; max-width: 28rem; margin-inline-end: auto;[^}]*container-type: inline-size;/);
+  expect(css).toMatch(/@media \(min-width: 1024px\) \{\s*\.workspace-search \{ margin-inline: auto 0; \}/);
   // Its words are whole or hidden, never cut off with "…".
   expect(css).toMatch(/\.workspace-search-line \{[^}]*flex-wrap: wrap;[^}]*overflow: hidden;/);
   expect(css).not.toMatch(/\.workspace-search-placeholder \{[^}]*text-overflow/);

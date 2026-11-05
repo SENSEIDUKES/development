@@ -17,11 +17,12 @@ intercept an ordinary click for local navigation.
 The row reads `Logo | Search | Familiar | Sound | Profile Portrait` at every width. The
 logo and the Portrait keep their width; the actions take the rest of the row:
 
-- **Search** (`WorkspaceHeaderSearch`) is a field-style trigger right after the logo,
-  "Search For Worlds" with a thin glowing underline, that grows into whatever the
-  other controls leave, up to 28rem; on a large screen it stops there instead of
-  stretching across the header, and the controls after it stay at the far end, by
-  the Portrait. Its words are whole or not shown, never cut off or "…": where they do
+- **Search** (`WorkspaceHeaderSearch`) is a field-style trigger, "Search For Worlds"
+  with a thin glowing underline, that grows into whatever the other controls leave,
+  up to 28rem, so it never stretches across a large screen. On phones and tablets it
+  follows the logo and the controls after it stay at the far end, by the Portrait; on
+  computers (from 1024px) it moves to the right, just before the Familiar, the music
+  note and the Portrait. Its words are whole or not shown, never cut off or "…": where they do
   not fit beside the magnifier they step aside for the magnifier alone. It opens the Search sheet on a tap, click, Enter or Space, never on focus.
 - Optional page context (`contextualItem`, the public Cave's Public View) follows Search.
 - The host-provided persistent accessory (the Familiar's recall) follows.

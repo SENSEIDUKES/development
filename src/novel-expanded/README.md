@@ -379,7 +379,8 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - **2026-11-05** — **Search For Worlds** (SENSEI). The header's search reads "Search For
   Worlds" (in every interface language) and its words are shown whole or not at all,
   never cut off or "…". It no longer stretches across the header on large screens: it
-  grows up to 28rem after the logo, and the Familiar and the music note stay by the
+  grows up to 28rem. On phones and tablets it follows the logo; on computers (from
+  1024px) it sits on the right, just before the Familiar, the music note and the
   Portrait.
 - **2026-11-04** — **Each tag group its own style** (SENSEI). In Create mode, Media tags
   (Soundscape, Atmosphere, Sound Cues) keep the full highlight and Story info tags (Speakers,

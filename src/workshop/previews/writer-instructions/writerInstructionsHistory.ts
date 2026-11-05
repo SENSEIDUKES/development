@@ -21,6 +21,11 @@ export interface WriterInstructionsChange {
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
     date: '2026-11-05',
+    summary: 'The World builder writes its answer in the order the world depends on itself (SENSEI, 2026-11-05, reading the World builder\'s prompt on this page: "a huge Frankenstein prompt made from different eras of the app"). A model writes its answer top to bottom, and the answer asked for the characters first, so every place, faction, thing, ability and rank a character card names was made up before the card for it existed, and the Destined Ending came last, after the arcs that were meant to travel toward it, although the prompt said to establish it first. The answer now runs: title and logline, the Destined Ending and the story\'s length, the power system, the overview and society, the places (then the opening location), factions, species, abilities, things, the main character, the supporting characters, then the opposition, Arc 1, the look-ahead, trope rules and style bible. The card list the World builder reads follows the same order and says so; the ability cards now say the character cards name them exactly as written there, since the abilities are written first. No slot, rule or limit changed.',
+    changed: { 'world-builder': '0e786bb4cc496d' },
+  },
+  {
+    date: '2026-11-05',
     summary: 'The appears tag goes on the sentence that shows someone, not the one that names them (SENSEI, 2026-11-05, from The Nomad\'s Foundation: "Fix the appearance tags"). The sentence an appears tag sits on is kept as that character\'s look, and the tagger had been putting it where the name first shows up: Lin Yuan\'s on "Lin Yuan.", the line where he gives his name, three paragraphs after the prose showed a thin young man in grey scholar\'s robes; Ah Tai\'s on "The boy\'s name was Ah Tai.", which went on to tell his past. The rule now asks for the sentence that shows what they look like, says that sentence is kept as their look, and says to choose the first one that describes them even when their name only comes later, never one that only says their name, speaks for them or tells their past; when nothing describes them, the sentence where they are first on the page. The example now says Old Wen is named two paragraphs later.',
     changed: { appearance: '188d5cb01a86a0' },
   },
@@ -77,7 +82,7 @@ export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = 
   {
     date: '2026-10-24',
     summary: 'Voice, as SENSEI asked for it after reading the Korean Test\'s cards: "Voice should be described like \'Energetic Middle age man\' or \'An old voice filled with wisdom\'... we\'re trying to match ElevenLabs voices to a character." The world builder asked for "how they speak", so it answered with manner — "low and controlled, with short sentences" — which tells a reader how a line sounds and tells a voice catalog nothing. It now asks for the voice to cast the character with: its age, weight and energy in a few words, with both of SENSEI\'s own examples. The slot is the Codex\'s, whose test is other-media, and the chapter writer never reads it, so no chapter changes; what reads it is the voice the character is cast in.',
-    changed: { 'world-builder': '13f60da4796967' },
+    changed: { 'world-builder': '0e786bb4cc496d' },
   },
   {
     date: '2026-10-22',

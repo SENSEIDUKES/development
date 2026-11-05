@@ -172,6 +172,7 @@ function WholePrompt({ messages, note }: { messages: readonly PromptMessage[]; n
       {messages.map(message => (
         <section key={message.label} className="wi-message">
           <h4 className="wi-message__label">{message.label}</h4>
+          {message.note && <p className="wi-step__note">{message.note}</p>}
           {raw ? <pre className="wi-raw">{message.text}</pre> : <ReadableText text={message.text} />}
         </section>
       ))}

@@ -242,6 +242,8 @@ export const officialWriterSkills = (installed: readonly HarnessSkillManifest[],
 export interface PromptMessage {
   label: string;
   text: string;
+  /** How the message reaches the model, when that differs by provider. */
+  note?: string;
 }
 
 /** Where something changes every time it is sent: the page shows its place, never a story's own words. */
@@ -254,7 +256,11 @@ const numberSlot = (what: string) => slot(what) as unknown as number;
  * of the instructions, after "Return only the JSON answer, without Markdown
  * fences."; the other providers are given it as the answer's format.
  */
-const answerShape = (schema: unknown): PromptMessage => ({ label: 'The answer\'s shape', text: JSON.stringify(schema, null, 2) });
+const answerShape = (schema: unknown): PromptMessage => ({
+  label: 'The answer\'s shape',
+  note: 'Claude and MiniMax models read this at the end of the instructions, after "Return only the JSON answer, without Markdown fences." Other models are given it as the answer\'s format.',
+  text: JSON.stringify(schema, null, 2),
+});
 
 const assembledWriterPrompt = (skills: readonly HarnessSkillManifest[]) => assembleCapaPrompt({ capturedAt: 'now', originalLanguage: 'en', skills: [...skills] });
 

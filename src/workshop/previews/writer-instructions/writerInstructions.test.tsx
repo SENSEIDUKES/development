@@ -105,6 +105,8 @@ describe('Writer Instructions', () => {
     expect(markup).toContain('data-block="all"');
     expect(markup).toContain('data-instruction="all"');
     expect(markup).toContain('All, as one prompt');
+    // How the answer's shape reaches Claude and MiniMax models is said on the page (review finding, CodeRabbit, 2026-11-05).
+    expect(markup).toContain('Return only the JSON answer, without Markdown fences.');
     expect(markup).toContain('Exactly as the model sees it');
   });
 

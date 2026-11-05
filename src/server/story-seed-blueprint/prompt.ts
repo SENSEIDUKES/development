@@ -63,13 +63,13 @@ const worldFactRules = (storySeed: StorySeedInput): string[] => {
 
 /** Where each card kind's cards go in the answer, and how many it may hold. */
 const CARD_ANSWERS: Array<{ kind: WorldCardKindId; field: string; limit?: number; lead: string }> = [
-  { kind: 'character', field: 'characters', limit: SEED_CHARACTER_LIMIT, lead: "List the creator's own characters first, by their exact name, then only the supporting ones the story needs. Never the main character." },
-  { kind: 'thing', field: 'things', limit: SEED_THING_LIMIT, lead: 'List what the cast already holds, and what waits somewhere to be found.' },
-  { kind: 'ability', field: 'startingAbilities', limit: SEED_ABILITY_LIMIT, lead: 'List the abilities anyone already knows, by the names the character cards use for them.' },
+  { kind: 'world-rules', field: 'powerSystem', lead: 'Write it once, for the whole story.' },
   { kind: 'place', field: 'places', limit: SEED_PLACE_LIMIT, lead: 'List the place the story opens in first, then the others it opens among.' },
   { kind: 'faction', field: 'factions', limit: SEED_FACTION_LIMIT, lead: "List the creator's own factions first, by their exact name, then only the supporting ones the story needs." },
   { kind: 'species', field: 'species', limit: SEED_SPECIES_LIMIT, lead: 'List the creatures this world has, not individuals.' },
-  { kind: 'world-rules', field: 'powerSystem', lead: 'Write it once, for the whole story.' },
+  { kind: 'ability', field: 'startingAbilities', limit: SEED_ABILITY_LIMIT, lead: 'List the abilities anyone already knows; the character cards name them exactly as they are written here.' },
+  { kind: 'thing', field: 'things', limit: SEED_THING_LIMIT, lead: 'List what the cast already holds, and what waits somewhere to be found.' },
+  { kind: 'character', field: 'characters', limit: SEED_CHARACTER_LIMIT, lead: "List the creator's own characters first, by their exact name, then only the supporting ones the story needs. Never the main character." },
 ];
 
 const cardSlotLines = (kind: WorldCardKindId): string => WORLD_CARD_KINDS
@@ -98,7 +98,7 @@ Fill every slot of every card, each one short and concrete. Where the creator al
 
 Use one name for one thing, everywhere: a character's holds names things on the thing cards, their knows names abilities on the ability cards, their belongsTo names factions on the faction cards, their location names a place on the place cards, a faction's seat names a place and its leader a character, and every rank or level comes from the rank ladder in the world rules.
 
-The cards, and what each slot holds:
+The cards, in the order to write them, so every name a card points to already stands on its own card, and what each slot holds:
 
 ${CARD_ANSWERS.map(({ kind, field, limit, lead }) => {
   const definition = WORLD_CARD_KINDS.find(candidate => candidate.id === kind)!;
@@ -155,40 +155,52 @@ const cardList = (fields: readonly string[], limit: number, minItems = 0) => ({
 export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
   type: "object",
   additionalProperties: false,
+  // The order the model writes its answer in: each part comes before the
+  // parts that point to it, so a name is set on its own card before another
+  // card uses it, and the Destined Ending before the arcs that travel to it.
   required: [
     "title",
     "logline",
-    "worldOverview",
-    "startingLocation",
-    "societyStructure",
+    "destinedEnding",
+    "estimatedArcs",
+    "powerSystem",
     "powerSystemOutline",
-    "mainCharacter",
-    "characters",
-    "factions",
+    "worldOverview",
+    "societyStructure",
     // The world at Chapter 0: a card kind left out of the answer would leave
     // the world short of it, so every one is asked for.
-    "things",
-    "startingAbilities",
     "places",
+    "startingLocation",
+    "factions",
     "species",
+    "startingAbilities",
+    "things",
+    "mainCharacter",
     "abilities",
-    "powerSystem",
+    "characters",
     "mainOpposition",
     "firstArcPromise",
     "arcOne",
     "arcLookahead",
     "tropeRules",
     "styleBible",
-    "destinedEnding",
-    "estimatedArcs",
   ],
   properties: {
     title: { type: "string", minLength: 1 },
     logline: { type: "string", minLength: 1 },
-    worldOverview: { type: "string", minLength: 1 },
-    startingLocation: { type: "string", minLength: 1 },
-    societyStructure: { type: "string", minLength: 1 },
+    destinedEnding: { type: "string", minLength: 1 },
+    estimatedArcs: { type: "integer", minimum: exactArcs ?? STORY_LENGTH_ARCS.min, maximum: exactArcs ?? STORY_LENGTH_ARCS.max },
+    // The World rules sheet, which the Seed keeps in its power-system family.
+    powerSystem: { type: "object", additionalProperties: false, required: SEED_WORLD_RULES_FIELDS, properties: textSlots(SEED_WORLD_RULES_FIELDS) },
     powerSystemOutline: { type: "string", minLength: 1 },
+    worldOverview: { type: "string", minLength: 1 },
+    societyStructure: { type: "string", minLength: 1 },
+    places: cardList(SEED_PLACE_SLOT_FIELDS, SEED_PLACE_LIMIT, 1),
+    startingLocation: { type: "string", minLength: 1 },
+    factions: cardList(SEED_FACTION_SLOT_FIELDS, SEED_FACTION_LIMIT, 1),
+    species: cardList(SEED_SPECIES_SLOT_FIELDS, SEED_SPECIES_LIMIT),
+    startingAbilities: cardList(SEED_ABILITY_SLOT_FIELDS, SEED_ABILITY_LIMIT),
+    things: cardList(SEED_THING_SLOT_FIELDS, SEED_THING_LIMIT),
     mainCharacter: {
       type: "object",
       additionalProperties: false,
@@ -202,24 +214,15 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
         ...textSlots(SEED_MAIN_CHARACTER_SLOT_FIELDS),
       },
     },
-    // Every Chapter 0 card kind: the creator's own by name first, then supporting ones.
-    characters: cardList(SEED_CHARACTER_SLOT_FIELDS, SEED_CHARACTER_LIMIT, 1),
-    factions: cardList(SEED_FACTION_SLOT_FIELDS, SEED_FACTION_LIMIT, 1),
-    things: cardList(SEED_THING_SLOT_FIELDS, SEED_THING_LIMIT),
-    startingAbilities: cardList(SEED_ABILITY_SLOT_FIELDS, SEED_ABILITY_LIMIT),
-    places: cardList(SEED_PLACE_SLOT_FIELDS, SEED_PLACE_LIMIT, 1),
-    species: cardList(SEED_SPECIES_SLOT_FIELDS, SEED_SPECIES_LIMIT),
     abilities: { type: "object", additionalProperties: false, required: ["startingPowerConcept", "uniquePath"], properties: textSlots(["startingPowerConcept", "uniquePath"]) },
-    // The World rules sheet, which the Seed keeps in its power-system family.
-    powerSystem: { type: "object", additionalProperties: false, required: SEED_WORLD_RULES_FIELDS, properties: textSlots(SEED_WORLD_RULES_FIELDS) },
+    // The supporting cast, written last of the cards: the creator's own by name first, then supporting ones.
+    characters: cardList(SEED_CHARACTER_SLOT_FIELDS, SEED_CHARACTER_LIMIT, 1),
     mainOpposition: { type: "string" },
+    firstArcPromise: { type: "string", minLength: 1 },
     arcOne: ARC_PLAN_DRAFT_SCHEMA,
     arcLookahead: ARC_LOOKAHEAD_SCHEMA,
-    firstArcPromise: { type: "string", minLength: 1 },
     tropeRules: { type: "string", minLength: 1 },
     styleBible: { type: "string", minLength: 1 },
-    destinedEnding: { type: "string", minLength: 1 },
-    estimatedArcs: { type: "integer", minimum: exactArcs ?? STORY_LENGTH_ARCS.min, maximum: exactArcs ?? STORY_LENGTH_ARCS.max },
   },
 }) as const;
 

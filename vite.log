@@ -3,3 +3,4 @@
 
   ➜  Local:   http://localhost:5199/
   ➜  Network: use --host to expose
+7:49:12 AM [vite] (client) hmr update /src/workshop/previews/writer-instructions/WriterInstructionsWorkspace.tsx, /src/styles.css

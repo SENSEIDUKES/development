@@ -232,7 +232,7 @@ function ChangesView() {
   return (
     <section className="wi-step" aria-labelledby="wi-changes-title" data-step="changes">
       <h2 id="wi-changes-title">Every change <span className="wi-step__runs">newest first</span></h2>
-      <p className="wi-step__job">Any change to what a model reads must be written here, with its date, or the build fails.</p>
+      <p className="wi-step__job">Any change to the HARNESS&rsquo;s own words must be written here, with its date, or the build fails. The official CAPA skills are not listed here: their words are fixed by their package, so a change to them is a new package version, shown beside each skill.</p>
       <ol className="wi-changes">
         {WRITER_INSTRUCTIONS_HISTORY.map(change => (
           <li key={`${change.date}:${change.summary.slice(0, 40)}`} className="wi-change">

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { HARNESS_PROMPT_HEADINGS } from '../../../server/harness-generation/prompt';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
+import { OFFICIAL_STYLE_REFERENCES, installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
 import { EVERY_CHAPTER, PIPELINE, RETIRED_WRITER_INSTRUCTIONS, WHOLE_PROMPTS, WRITER_INSTRUCTIONS, fingerprintText, officialWriterSkills, writerSystemInstruction } from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHistory';
 import { ReadableText, WriterInstructionsWorkspace } from './WriterInstructionsWorkspace';
@@ -90,6 +90,18 @@ describe('Writer Instructions', () => {
     expect(markup).toContain('data-instruction="all"');
     expect(markup).toContain('All, as one prompt');
     expect(markup).toContain('Exactly as the model sees it');
+  });
+
+  it('reopens the style a saved link to a Style skill was made in (review finding, Codex, 2026-11-05)', () => {
+    const saved = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { hash: `#writer/${encodeURIComponent(OFFICIAL_STYLE_REFERENCES.korean.id)}` } } });
+    try {
+      const markup = renderToStaticMarkup(createElement(WriterInstructionsWorkspace));
+      expect(markup).toMatch(/aria-checked="true"[^>]*data-style="korean"/);
+    } finally {
+      if (saved) Object.defineProperty(globalThis, 'window', saved);
+      else Reflect.deleteProperty(globalThis, 'window');
+    }
   });
 
   it('lays the text out for a person without losing a word of it', () => {

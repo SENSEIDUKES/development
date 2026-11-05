@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { CAPA_SCHEMA, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import type { StoryStyle } from '@seihouse/sen/story-seed';
-import { installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
+import { OFFICIAL_STYLE_REFERENCES, installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
 import {
   PIPELINE, PIPELINE_CHECKS, RETIRED_WRITER_INSTRUCTIONS, WHOLE_PROMPTS, WRITER_INSTRUCTIONS, WRITER_NEXT_MESSAGE, countWords,
   officialWriterSkills, writerSystemInstruction,
@@ -252,7 +252,8 @@ export function WriterInstructionsWorkspace() {
     return start.block && start.view !== 'changes' ? { [start.view]: start.block } : {};
   });
   const [installed, setInstalled] = useState<readonly HarnessSkillManifest[] | 'loading' | 'failed'>('loading');
-  const [style, setStyle] = useState<StoryStyle>('chinese');
+  // A saved link to a Style skill reopens that style (review finding, Codex, 2026-11-05).
+  const [style, setStyle] = useState<StoryStyle>(() => STYLES.find(([id]) => OFFICIAL_STYLE_REFERENCES[id].id === readHash().block)?.[0] ?? 'chinese');
   useEffect(() => {
     let live = true;
     installOfficialCapaSkillsInMemory().then(skills => { if (live) setInstalled(skills); }, () => { if (live) setInstalled('failed'); });

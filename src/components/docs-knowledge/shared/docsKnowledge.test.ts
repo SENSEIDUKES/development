@@ -58,7 +58,8 @@ describe('Docs Knowledge', () => {
     expect(lookUpDocs(catalog, '   ')).toEqual([]);
     // An unexplained topic is never a hit, even by its own name.
     expect(lookUpDocs(catalog, 'Hard Pin')).toEqual([]);
-    expect(lookUpDocs(catalog, 'the', 2)).toHaveLength(2);
+    // Below the match count, so the limit is actually exercised.
+    expect(lookUpDocs(catalog, 'the', 1)).toHaveLength(1);
     expect(DOCS_LOOKUP_LIMIT).toBe(3);
   });
 
@@ -85,6 +86,25 @@ describe('Docs Knowledge', () => {
     // The whole word still reaches its entry, punctuation and all.
     expect(lookUpDocs(catalog, 'arc')[0].topic.id).toBe('arc-goal');
     expect(lookUpDocs(catalog, 'what is QI?')[0].topic.id).toBe('qi');
+  });
+
+  it('puts the topic that is named first, even when an earlier entry mentions its name', () => {
+    const mentions: DocsCatalog = [
+      { id: 'a', title: 'A', description: 'A things.', topics: [
+        { id: 'mentions', title: 'Mentions', aliases: [], definition: 'See Beta first.', howItFits: 'Beta is named here.' },
+      ] },
+      { id: 'b', title: 'B', description: 'B things.', topics: [
+        { id: 'beta', title: 'Beta', aliases: [], definition: 'The named topic.' },
+      ] },
+    ];
+    expect(lookUpDocs(mentions, 'beta').map(hit => hit.topic.id)).toEqual(['beta', 'mentions']);
+  });
+
+  it('folds case the same way whatever language the reader speaks', () => {
+    // A Turkish device lowercases "ORIGIN" to "orıgın", which would never meet the
+    // "origin" in the catalog. The companion speaks every language; the fold is fixed.
+    expect(lookUpDocs(catalog, 'STORY SEED')[0].topic.id).toBe('story-seed');
+    expect(lookUpDocs(catalog, 'QI')[0].topic.id).toBe('qi');
   });
 
   it('searches the whole catalog for a reader typing on the docs page, explained or not', () => {

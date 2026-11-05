@@ -77,6 +77,11 @@ export function openAiLiveSession(brief: FamiliarLiveBrief, options: { model: st
         model: options.backend,
         instructions: [
           `You are the backend for ${brief.familiar.name}, the reader's Familiar in NovelExpanded, on: ${brief.place}. Do only what the reader asked, through your functions, and return one short sentence the Familiar can say.`,
+          // The voice repeats what comes back as documented fact, so the grounding rule has to hold here too:
+          // nothing stops this model answering from its own memory and the Familiar speaking it as the docs.
+          ...(brief.docs.length
+            ? ['Answer a question about the app only from what look_up returns. Never answer one from your own knowledge, and when look_up finds nothing, say that the docs do not cover it instead of filling the gap.']
+            : []),
           familiarLiveActions(brief),
         ].join('\n\n'),
         tools,

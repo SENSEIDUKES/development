@@ -98,6 +98,13 @@ const DOCS_QUESTION_WORDS = new Set([
 const DOCS_WORD_SPLIT = /[^\p{L}\p{N}]+/u;
 
 /**
+ * Case is folded in one fixed locale, never the reader's. The companion speaks
+ * every language, and a device set to Turkish lowercases "ORIGIN" to "orıgın",
+ * which would never meet the "origin" written in the catalog.
+ */
+const DOCS_FOLD_LOCALE = 'en-US';
+
+/**
  * A word reduced so a plural meets its singular: a reader asking about "arc
  * goals" means the Arc Goal entry. Short words are left alone, so "qi" is not
  * mistaken for a plural.
@@ -110,7 +117,7 @@ const docsStem = (word: string): string => (word.length > 3 && word.endsWith('s'
  * nothing but question words, they are kept, because they are all it has.
  */
 function docsQueryWords(query: string): string[] {
-  const words = query.toLocaleLowerCase().split(DOCS_WORD_SPLIT).filter(Boolean);
+  const words = query.toLocaleLowerCase(DOCS_FOLD_LOCALE).split(DOCS_WORD_SPLIT).filter(Boolean);
   const meaningful = words.filter(word => !DOCS_QUESTION_WORDS.has(word));
   return (meaningful.length ? meaningful : words).map(docsStem);
 }
@@ -124,7 +131,7 @@ function docsQueryWords(query: string): string[] {
  * companion then speaks as though the docs covered it.
  */
 function docsWords(text: string): Set<string> {
-  return new Set(text.toLocaleLowerCase().split(DOCS_WORD_SPLIT).filter(Boolean).map(docsStem));
+  return new Set(text.toLocaleLowerCase(DOCS_FOLD_LOCALE).split(DOCS_WORD_SPLIT).filter(Boolean).map(docsStem));
 }
 
 /**
@@ -161,10 +168,10 @@ export function lookUpDocs(catalog: DocsCatalog, query: string, limit = DOCS_LOO
 
 /** The search a reader types on a docs page: every match, with its category. */
 export function searchDocs(catalog: DocsCatalog, query: string) {
-  const words = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  const words = query.trim().toLocaleLowerCase(DOCS_FOLD_LOCALE).split(/\s+/).filter(Boolean);
   return catalog.flatMap(category => category.topics
     .filter(topic => {
-      const text = [topic.title, ...topic.aliases, topic.definition, topic.howItFits, category.title].join(' ').toLocaleLowerCase();
+      const text = [topic.title, ...topic.aliases, topic.definition, topic.howItFits, category.title].join(' ').toLocaleLowerCase(DOCS_FOLD_LOCALE);
       return words.every(word => text.includes(word));
     })
     .map(topic => ({ ...topic, category: category.title })));

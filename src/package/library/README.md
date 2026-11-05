@@ -38,6 +38,11 @@ actions the list allows there, the host's anywhere actions included (registered 
 `FamiliarPlace` with `page` and `actions`); listed `instant` actions run without
 confirmation. A context without a `page` behaves as before.
 
+**0.36.0 (2026-11-05):** New `./docs` entry: `novelExpandedDocs`, the NovelExpanded
+Docs catalog, read by the docs page and by the Familiar, which is grounded in it and
+may say nothing it does not contain. Requires SEN 0.41.0 for `./docs-knowledge`,
+which `./familiar` now imports at runtime.
+
 **0.35.0 (2026-10-26):** Presentation exports 12 individually named reusable icons
 and includes them in the 54-icon catalog. Requires SEN 0.40.0 for the shared artwork.
 

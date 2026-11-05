@@ -31,6 +31,26 @@ time, never the whole wall:
 - **Every change, with its date:** the whole history, newest first, each
   entry's blocks named by step.
 
+**2026-11-05, the writer's real skills and the whole prompt** (SENSEI: "why
+is the writer prompts only showing the author CAPA skill? Where are the other
+CAPA skills? … we need to add an all button so I can see them when it's all as
+one prompt"):
+
+- The Writer step shows what a story made in Novel Expanded reads: the
+  official CAPA skills it starts with (CAPA AUTHOR, Pacing, Continuity, and
+  the Style its Story Seed chose; pick Chinese, Japanese or Korean), loaded
+  from their `.spp` packages by `installOfficialCapaSkillsInMemory`, the
+  app's own loader. Until now the page showed the bundled SEN Novel Author
+  as every story's Author; it is only a story's that never chose one, and is
+  now listed under "Only in some stories".
+- Every step opens on **All, as one prompt**: every message the model is sent,
+  in order, built by the same function that sends it
+  (`writerSystemInstruction`, `buildHarnessTagPrompt`,
+  `buildHoldingsFixerPrompt`, `buildLookDescriberPrompt`,
+  `WORLD_BLUEPRINT_SYSTEM_PROMPT` with `buildWorldBlueprintPrompt`), with
+  `⟨…⟩` where the parts that change every time go. Exactly as the model sees
+  it by default, easy to read on a tap, and Copy all.
+
 The address keeps the place (`#tagger/appearance`), so a link opens the same
 block. `PIPELINE` in `writerInstructions.ts` says which step reads which
 block; a test fails if a block belongs to none, or to two.

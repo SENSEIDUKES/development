@@ -129,6 +129,11 @@
 }
 .wi-chips button:hover { border-color: rgba(236, 231, 221, 0.3); }
 .wi-chips button[aria-selected='true'] { border-color: var(--wi-accent); background: rgba(227, 161, 142, 0.14); color: var(--wi-bright); }
+.wi-chips__all { border-style: dashed !important; }
+.wi-chips button[aria-checked='true'] { border-color: var(--wi-accent); background: rgba(227, 161, 142, 0.14); color: var(--wi-bright); }
+.wi-step__note { margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--wi-muted); }
+.wi-message { margin-top: 1.25rem; }
+.wi-message__label { margin: 0; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--wi-accent); }
 .wi-chips__order { font-size: 0.7rem; color: var(--wi-muted); }
 
 /* ─── One block ─────────────────────────────────────────────────────────── */

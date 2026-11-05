@@ -2,7 +2,10 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { HARNESS_PROMPT_HEADINGS } from '../../../server/harness-generation/prompt';
-import { EVERY_CHAPTER, PIPELINE, RETIRED_WRITER_INSTRUCTIONS, WRITER_INSTRUCTIONS, defaultSystemInstruction, fingerprintText } from './writerInstructions';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
+import { EVERY_CHAPTER, PIPELINE, RETIRED_WRITER_INSTRUCTIONS, WHOLE_PROMPTS, WRITER_INSTRUCTIONS, fingerprintText, officialWriterSkills, writerSystemInstruction } from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHistory';
 import { ReadableText, WriterInstructionsWorkspace } from './WriterInstructionsWorkspace';
 
@@ -34,17 +37,40 @@ describe('Writer Instructions', () => {
     }
   });
 
-  it('shows exactly what a default story\'s writer reads, in the order it reads it, each block under its part\'s heading', () => {
-    const skill = (id: string, label: string) => `CAPA SKILL [${label}] — ${block(id).source}\n${block(id).text}`;
-    expect(defaultSystemInstruction()).toBe([
-      HARNESS_PROMPT_HEADINGS.role, block('role').text,
-      HARNESS_PROMPT_HEADINGS.writing, skill('author', 'Author'), block('writing-rules').text,
-      HARNESS_PROMPT_HEADINGS.reading, block('reading-guide').text,
-      HARNESS_PROMPT_HEADINGS.returning, block('return-format').text,
-      HARNESS_PROMPT_HEADINGS.hardRules, block('hard-rules').text,
-    ].join('\n\n'));
-    // Every block of every chapter belongs to one part, and the page lists them part by part.
+  it('shows what a Novel Expanded story\'s writer reads: the official CAPA skills from their packages, each under its part', async () => {
+    const installed = await installOfficialCapaSkillsInMemory(async definition =>
+      new Uint8Array(await readFile(path.resolve(__dirname, '../../../host/generation/capa/official-capa', definition.archiveFile))));
+    for (const style of ['chinese', 'japanese', 'korean'] as const) {
+      const skills = officialWriterSkills(installed, style);
+      // Author, Pacing, Continuity and the story's Style: the loadout a story made from its Story Seed starts with.
+      expect(skills.map(skill => skill.slot)).toEqual(['author', 'pacing', 'continuity', 'style']);
+      const whole = writerSystemInstruction(skills);
+      const order = [
+        HARNESS_PROMPT_HEADINGS.role, block('role').text,
+        HARNESS_PROMPT_HEADINGS.writing, ...skills.map(skill => skill.instructions!.trim()), block('writing-rules').text,
+        HARNESS_PROMPT_HEADINGS.reading, block('reading-guide').text,
+        HARNESS_PROMPT_HEADINGS.returning, block('return-format').text,
+        HARNESS_PROMPT_HEADINGS.hardRules, block('hard-rules').text,
+      ];
+      let at = 0;
+      for (const piece of order) {
+        const found = whole.indexOf(piece, at);
+        expect(found, piece.slice(0, 60)).toBeGreaterThanOrEqual(at);
+        at = found + piece.length;
+      }
+    }
+    // The SEN Author is no longer shown as every story's: Novel Expanded's stories read CAPA AUTHOR.
+    expect(EVERY_CHAPTER.some(item => item.id === 'author')).toBe(false);
     expect(EVERY_CHAPTER.every(item => item.part)).toBe(true);
+  });
+
+  it('builds every other step\'s whole prompt with the code that sends it, every block of the step inside it', () => {
+    for (const step of PIPELINE.filter(item => item.id !== 'writer')) {
+      const whole = WHOLE_PROMPTS[step.id as Exclude<typeof step.id, 'writer'>].map(message => message.text).join('\n\n');
+      for (const item of step.groups.flatMap(group => group.blocks)) {
+        for (const line of item.text.split('\n').filter(Boolean)) expect(whole, `${step.id}: ${item.id}`).toContain(line);
+      }
+    }
   });
 
   it('puts every block in exactly one step of the pipeline', () => {
@@ -60,9 +86,10 @@ describe('Writer Instructions', () => {
     expect(markup).toContain('data-view="changes"');
     expect(markup).toContain('data-step="tagger"');
     for (const id of ['tagger', 'tag-rules', 'speakers', 'holdings', 'appearance', 'status', 'place', 'sound-cues', 'soundtrack']) expect(markup).toContain(`data-block="${id}"`);
-    expect(markup).toContain('data-instruction="tagger"');
+    expect(markup).toContain('data-block="all"');
+    expect(markup).toContain('data-instruction="all"');
+    expect(markup).toContain('All, as one prompt');
     expect(markup).toContain('Exactly as the model sees it');
-    expect(markup.replace(/<[^>]+>/g, '')).toMatch(/HARNESS · \d+ words · changed \d{4}-\d{2}-\d{2}/);
   });
 
   it('lays the text out for a person without losing a word of it', () => {

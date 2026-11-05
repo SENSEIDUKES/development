@@ -16,6 +16,7 @@ import {
   presentSoundtrackVocabulary,
   type HarnessSkillManifest,
 } from '@seihouse/sen/harness-generation';
+import { createEmptyStorySeedInput, type StoryStyle } from '@seihouse/sen/story-seed';
 import { soundtrackVocabulary } from '@seihouse/sen/audio';
 import { LIBRARY_BASE_MEDIA, LIBRARY_SOUND_WORDS } from '../../../host/media/libraryCatalog';
 import {
@@ -25,12 +26,14 @@ import {
   HARNESS_ROLE,
   HARNESS_WRITING_RULES,
   composeHarnessSystemInstruction,
+  composeHarnessUserPrompt,
   type HarnessPromptPart,
 } from '../../../server/harness-generation/prompt';
-import { HOLDINGS_FIXER_INSTRUCTIONS } from '../../../server/harness-generation/holdingsFixer';
-import { WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS } from '../../../server/story-seed-blueprint/prompt';
-import { HARNESS_TAGGER_RETURN, HARNESS_TAGGER_ROLE } from '../../../server/harness-generation/tagger';
-import { LOOK_DESCRIBER_INSTRUCTIONS } from '../../../server/harness-generation/lookDescriber';
+import { HOLDINGS_FIXER_INSTRUCTIONS, buildHoldingsFixerPrompt } from '../../../server/harness-generation/holdingsFixer';
+import { WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintPrompt } from '../../../server/story-seed-blueprint/prompt';
+import { OFFICIAL_CAPA_DEFAULT_REFERENCES, OFFICIAL_STYLE_REFERENCES } from '../../../host/generation/capa/officialCapaSkills';
+import { HARNESS_TAGGER_RETURN, HARNESS_TAGGER_ROLE, buildHarnessTagPrompt } from '../../../server/harness-generation/tagger';
+import { LOOK_DESCRIBER_INSTRUCTIONS, buildLookDescriberPrompt } from '../../../server/harness-generation/lookDescriber';
 
 /**
  * The writer's instructions, read from the live code: every block of text the
@@ -97,11 +100,6 @@ export const EVERY_CHAPTER: readonly WriterInstruction[] = [
     text: HARNESS_ROLE,
   },
   {
-    id: 'author', title: 'Author', source: skillSource(SEN_NOVEL_AUTHOR_SKILL), part: 'writing',
-    when: 'Every chapter, first under How to write, before the other writing skills. This is SEN\'s default Author; a story may equip another.',
-    text: skillText(SEN_NOVEL_AUTHOR_SKILL),
-  },
-  {
     id: 'writing-rules', title: 'HARNESS writing rules', source: 'HARNESS', part: 'writing',
     when: 'Every chapter, closing How to write, after every writing skill. No skill can change them.',
     text: HARNESS_WRITING_RULES,
@@ -125,6 +123,11 @@ export const EVERY_CHAPTER: readonly WriterInstruction[] = [
 
 /** Read only in some stories, each in its own place among the blocks above. */
 export const SOME_STORIES: readonly WriterInstruction[] = [
+  {
+    id: 'author', title: 'SEN Novel Author', source: skillSource(SEN_NOVEL_AUTHOR_SKILL), part: 'writing',
+    when: 'Only a story that never chose an Author: one started in the Workshop without a Story Seed, or an older story. Every story made in Novel Expanded reads CAPA AUTHOR instead, with Pacing, Continuity and its Style (above).',
+    text: skillText(SEN_NOVEL_AUTHOR_SKILL),
+  },
   {
     id: 'fate-survival', title: 'Fate Survival', source: skillSource(SEN_FATE_SURVIVAL_SKILL), part: 'writing',
     when: 'Fate Survival stories, under How to write, after the Author.',
@@ -217,16 +220,97 @@ export const RETIRED_WRITER_INSTRUCTIONS: ReadonlyMap<WriterInstructionId, strin
   ['response-contract', 'Response and evidence contract (retired)'],
 ]);
 
+/** The official CAPA skills every story made in Novel Expanded starts with, in the order the writer reads them. */
+export const OFFICIAL_WRITER_SKILLS = (style: StoryStyle) => [
+  OFFICIAL_CAPA_DEFAULT_REFERENCES.author,
+  OFFICIAL_CAPA_DEFAULT_REFERENCES.pacing,
+  OFFICIAL_CAPA_DEFAULT_REFERENCES.continuity,
+  OFFICIAL_STYLE_REFERENCES[style],
+];
+
+/** The official skills, found among those the host installed, in reading order. */
+export const officialWriterSkills = (installed: readonly HarnessSkillManifest[], style: StoryStyle) =>
+  OFFICIAL_WRITER_SKILLS(style).map(reference => installed.find(skill => skill.id === reference.id && skill.version === reference.version)).filter((skill): skill is HarnessSkillManifest => Boolean(skill));
+
 /**
- * Everything a default English story's writer reads before the story, exactly
- * as the HARNESS assembles it: the CAPA Prompt in the HARNESS's skeleton. The
- * page's blocks are this text, in this order, under the skeleton's headings.
+ * Everything an English story's writer reads before the story, exactly as the
+ * HARNESS assembles it: the CAPA Prompt from the story's skills in the
+ * HARNESS's skeleton.
  */
-export const defaultSystemInstruction = () => composeHarnessSystemInstruction(assembleCapaPrompt({
+export const writerSystemInstruction = (skills: readonly HarnessSkillManifest[]) => composeHarnessSystemInstruction(assembleCapaPrompt({
   capturedAt: 'now',
   originalLanguage: 'en',
-  skills: [SEN_NOVEL_AUTHOR_SKILL],
+  skills: [...skills],
 }));
+
+/** One message of a whole prompt: what the model is told first, then what it is given. */
+export interface PromptMessage {
+  label: string;
+  text: string;
+}
+
+/** Where something changes every time it is sent: the page shows its place, never a story's own words. */
+const slot = (what: string) => `⟨${what}⟩`;
+/** A message with its changing middle shown: before its closing line, where the builder puts it. */
+const withSlot = (message: string, middle: string) => {
+  const parts = message.split('\n\n');
+  return [...parts.slice(0, -1), middle, parts.at(-1)!].join('\n\n');
+};
+
+/** The writer's next message, with each part's place shown: it changes every chapter. */
+export const WRITER_NEXT_MESSAGE: PromptMessage = {
+  label: 'The next message (changes every chapter)',
+  text: composeHarnessUserPrompt({
+    story: [slot('The Story Information, section by section: the Foundation, the Destined Ending, the arc goal, the World at Chapter 0, who has appeared and how they look, status, place, holdings, the Previously On recaps')],
+    request: slot('This chapter\'s request: its number, its length, and the reader\'s direction when there is one'),
+    reminder: slot('The Mission Reminder'),
+  }),
+};
+
+/**
+ * Every other step's whole prompt, built by the same functions that send it,
+ * with each changing part's place shown: the Tagger's with the story's default
+ * sound words, music and atmospheres; the World builder's with an empty Story
+ * Seed where the creator's goes.
+ */
+export const WHOLE_PROMPTS: Record<Exclude<PipelineStepId, 'writer'>, readonly PromptMessage[]> = (() => {
+  const tag = buildHarnessTagPrompt({
+    operation: 'tag-chapter', storyId: '', chapterId: '', chapterNumber: 1, model: '', language: 'en',
+    paragraphs: [slot('the chapter\'s first paragraph'), slot('every paragraph after it, one by one')],
+    subjects: [
+      { kind: 'character', name: slot('each character'), status: slot('their status so far'), place: slot('where they are so far') },
+      { kind: 'thing', name: slot('each thing') },
+      { kind: 'ability', name: slot('each ability') },
+      { kind: 'place', name: slot('each place') },
+    ],
+    holdings: { characters: [{ name: slot('each character'), inHand: [slot('what they hold in hand')], carries: [slot('what they carry')], knows: [slot('what they know')] }] },
+    soundWords: LIBRARY_SOUND_WORDS,
+    soundtrack: DEFAULT_SOUNDTRACK_WORDS,
+  });
+  const fix = buildHoldingsFixerPrompt({
+    operation: 'fix-holdings', storyId: '', chapterId: '', chapterNumber: 1, model: '', language: 'en',
+    mainCharacter: slot('the main character'), direction: slot('the reader\'s direction, when there is one'), cases: [],
+  });
+  const look = buildLookDescriberPrompt({ operation: 'describe-looks', storyId: '', chapterId: '', chapterNumber: 1, model: '', language: 'en', subjects: [] });
+  return {
+    world: [
+      { label: 'Who it is', text: WORLD_BLUEPRINT_SYSTEM_PROMPT },
+      { label: 'The request, with an empty Story Seed where yours goes', text: buildWorldBlueprintPrompt(createEmptyStorySeedInput()) },
+    ],
+    tagger: [
+      { label: 'Its instructions', text: tag.systemInstruction },
+      { label: 'The next message (changes every chapter)', text: tag.userPrompt },
+    ],
+    fixer: [
+      { label: 'Its instructions', text: fix.systemInstruction },
+      { label: 'The next message (changes every chapter)', text: withSlot(fix.userPrompt, slot('each case, one by one: what the checks found, its sentences, their tags, what the record shows, and the answers it allows')) },
+    ],
+    look: [
+      { label: 'Its instructions', text: look.systemInstruction },
+      { label: 'The next message', text: withSlot(look.userPrompt, slot('the one entry: its names, and every passage the tags saved for it')) },
+    ],
+  };
+})();
 
 export const countWords = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 

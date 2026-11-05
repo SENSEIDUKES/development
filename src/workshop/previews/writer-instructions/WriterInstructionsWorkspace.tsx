@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { CAPA_SCHEMA, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import type { StoryStyle } from '@seihouse/sen/story-seed';
@@ -284,13 +285,24 @@ export function WriterInstructionsWorkspace() {
     if (typeof window === 'undefined') return;
     window.history.replaceState(null, '', `#${view}${block ? `/${encodeURIComponent(block)}` : ''}`);
   }, [view, block]);
+  // Choosing one of three is a ◀ value ▶ stepper, with arrow keys, as AGENTS.md asks (review finding, Codex, 2026-11-05).
+  const styleIndex = STYLES.findIndex(([id]) => id === style);
+  const stepStyle = (by: 1 | -1) => setStyle(STYLES[(styleIndex + by + STYLES.length) % STYLES.length][0]);
   const styleRow = step?.id === 'writer' && (
     <div className="wi-picker">
-      <h3>Story style</h3>
-      <div className="wi-chips" role="radiogroup" aria-label="Story style">
-        {STYLES.map(([id, label]) => (
-          <button key={id} type="button" role="radio" aria-checked={style === id} aria-selected={style === id} onClick={() => setStyle(id)} data-style={id}>{label}</button>
-        ))}
+      <div className="wi-setting">
+        <h3 id="wi-style-label">Story style</h3>
+        <div
+          className="wi-stepper" role="group" aria-labelledby="wi-style-label" tabIndex={0} data-style={style}
+          onKeyDown={event => {
+            if (event.key === 'ArrowLeft') { event.preventDefault(); stepStyle(-1); }
+            if (event.key === 'ArrowRight') { event.preventDefault(); stepStyle(1); }
+          }}
+        >
+          <button type="button" aria-label="Previous style" onClick={() => stepStyle(-1)}><ChevronLeft size={18} aria-hidden /></button>
+          <span className="wi-stepper__value" aria-live="polite">{STYLES[styleIndex][1]}</span>
+          <button type="button" aria-label="Next style" onClick={() => stepStyle(1)}><ChevronRight size={18} aria-hidden /></button>
+        </div>
       </div>
       {installed === 'loading' && <p className="wi-step__note">Loading the official skills from their packages…</p>}
       {installed === 'failed' && <p className="wi-step__note">The official skills could not be loaded, so the writer's CAPA skills are not shown.</p>}

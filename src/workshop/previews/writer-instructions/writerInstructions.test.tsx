@@ -97,7 +97,8 @@ describe('Writer Instructions', () => {
     Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { hash: `#writer/${encodeURIComponent(OFFICIAL_STYLE_REFERENCES.korean.id)}` } } });
     try {
       const markup = renderToStaticMarkup(createElement(WriterInstructionsWorkspace));
-      expect(markup).toMatch(/aria-checked="true"[^>]*data-style="korean"/);
+      expect(markup).toContain('data-style="korean"');
+      expect(markup).toMatch(/wi-stepper__value[^>]*>Korean</);
     } finally {
       if (saved) Object.defineProperty(globalThis, 'window', saved);
       else Reflect.deleteProperty(globalThis, 'window');

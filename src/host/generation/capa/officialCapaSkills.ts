@@ -125,7 +125,7 @@ type HarnessSkillLoadout = Partial<Record<HarnessSkillSlotId, HarnessSkillRefere
 
 /**
  * The official skills a story's loadout should move to: any slot holding an
- * official package at another version than the one this host installs. A
+ * official package at an older version than the one this host installs. A
  * story keeps the skill it was made with; only its version follows the
  * package (CAPA AUTHOR 1.0.2, SENSEI 2026-11-05: two rules added to its
  * Never do, so stories made with 1.0.1 read them too).
@@ -133,8 +133,19 @@ type HarnessSkillLoadout = Partial<Record<HarnessSkillSlotId, HarnessSkillRefere
 export const officialCapaUpgrades = (loadout: HarnessSkillLoadout): Array<[HarnessSkillSlotId, HarnessSkillReference]> =>
   (Object.entries(loadout) as Array<[HarnessSkillSlotId, HarnessSkillReference | undefined]>).flatMap(([slot, reference]) => {
     const current = reference && OFFICIAL_CAPA_PACKAGES.map(officialCapaReference).find(official => official.id === reference.id);
-    return current && current.version !== reference.version ? [[slot, current] as [HarnessSkillSlotId, HarnessSkillReference]] : [];
+    // Only forward: a story that names a newer version than this host has keeps it (review finding, CodeRabbit, 2026-11-05).
+    return current && isOlderVersion(reference.version, current.version) ? [[slot, current] as [HarnessSkillSlotId, HarnessSkillReference]] : [];
   });
+
+/** Whether `version` comes before `than`, part by part (1.0.1 before 1.0.2 before 1.1.0). */
+const isOlderVersion = (version: string, than: string) => {
+  const parts = (value: string) => value.split('.').map(part => Number.parseInt(part, 10) || 0);
+  const [left, right] = [parts(version), parts(than)];
+  for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+    if ((left[index] ?? 0) !== (right[index] ?? 0)) return (left[index] ?? 0) < (right[index] ?? 0);
+  }
+  return false;
+};
 type StorySeedStyle = StorySeedRecord['seed']['story']['required']['style'];
 
 /** A deliberate Story Seed style change replaces only the Style slot. */

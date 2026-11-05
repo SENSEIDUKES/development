@@ -242,20 +242,27 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 
 describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, () => {
-  it('moves a story made with CAPA AUTHOR 1.0.1 to the installed 1.0.2 when the app opens (SENSEI, 2026-11-05)', async () => {
+  it('writes a story made with CAPA AUTHOR 1.0.1 with the installed 1.0.2, and the chapter\'s own save keeps it (SENSEI, 2026-11-05)', async () => {
+    const story = scriptedWriter();
     const made = new InMemoryHarnessGenerationRepository();
-    const { writer } = scriptedWriter();
-    await startedStory(made, writer);
+    const created = await startedStory(made, story.writer, regularSeedRecord(), { draft: true });
     const saved = await made.load();
     const olderAuthor = { ...OFFICIAL_CAPA_DEFAULT_REFERENCES.author, version: '1.0.1' };
-    const stories = new InMemoryHarnessGenerationRepository({ ...saved, stories: saved.stories.map(story => ({ ...story, skillLoadout: { ...story.skillLoadout, author: olderAuthor } })) });
-    await render(appServices(writer, { stories }));
-    await flush(20);
-    const [story] = stories.snapshot().stories;
-    expect(story.skillLoadout?.author).toEqual(OFFICIAL_CAPA_DEFAULT_REFERENCES.author);
+    const stories = new InMemoryHarnessGenerationRepository({ ...saved, stories: saved.stories.map(entry => ({ ...entry, skillLoadout: { ...entry.skillLoadout, author: olderAuthor } })) });
+    // The creator's Reader begins Chapter 1 as it opens.
+    await render(appServices(story.writer, { stories }), writeAddress(created.id));
+    await flush(10);
+    expect(story.generate).toHaveBeenCalledTimes(1);
+    const sent = (story.generate.mock.calls[0] as unknown as [HarnessGenerationRequest])[0];
     expect(OFFICIAL_CAPA_DEFAULT_REFERENCES.author.version).toBe('1.0.2');
-    // Every other skill it was made with stays as it was.
-    const { author: _author, ...rest } = story.skillLoadout!;
+    expect(sent.capaPrompt.skills.find(skill => skill.slot === 'author')?.version).toBe('1.0.2');
+    expect(sent.capaPrompt.text).toContain('Open every chapter the same way. Scenery is one way to begin, not a habit.');
+    await act(async () => { story.release(); });
+    await flush(10);
+    // The chapter's own save keeps the move; every other skill stays as it was made.
+    const [after] = stories.snapshot().stories;
+    expect(after.skillLoadout?.author).toEqual(OFFICIAL_CAPA_DEFAULT_REFERENCES.author);
+    const { author: _author, ...rest } = after.skillLoadout!;
     const { author: _made, ...madeRest } = saved.stories[0].skillLoadout!;
     expect(rest).toEqual(madeRest);
   });

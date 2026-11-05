@@ -144,5 +144,8 @@ describe('officialCapaUpgrades', () => {
     expect(officialCapaUpgrades({ author: { ...author, version: '1.0.1' }, pacing: OFFICIAL_CAPA_DEFAULT_REFERENCES.pacing }))
       .toEqual([['author', author]]);
     expect(officialCapaUpgrades({ author, style: { id: 'spp:reader-own:style', version: '9.9.9' } })).toEqual([]);
+    // Never backwards: a story naming a newer version than this host has keeps it (review finding, CodeRabbit, 2026-11-05).
+    expect(officialCapaUpgrades({ author: { ...author, version: '1.0.10' } })).toEqual([]);
+    expect(officialCapaUpgrades({ author: { ...author, version: '0.9.0' } })).toEqual([['author', author]]);
   });
 });

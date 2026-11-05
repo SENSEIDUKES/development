@@ -40,8 +40,8 @@ export interface LibraryStoriesOptions {
   skillIntake?: SkillPackageIntake;
   /**
    * The skills a story should move to when the host's own packages have a new
-   * version (slot and reference), given the story's loadout. Each story is
-   * moved once its stories are open and the new version is installed.
+   * version (slot and reference), given the story's loadout. Stories read
+   * the new version as they open; nothing is saved until a story next is.
    */
   skillUpgrades?: (loadout: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>) => Array<[HarnessSkillSlotId, HarnessSkillReference]>;
   /** Keeps an installed skill in the host's inventory, which then returns in `installedSkills`. */
@@ -140,9 +140,9 @@ export function useLibraryStories({
   holdingsFixer = 'records-and-sentences',
 }: LibraryStoriesOptions): LibraryStories {
   const controller = useMemo(
-    () => new HarnessGenerationController({ repository, modelAdapter, media: createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia }) }),
+    () => new HarnessGenerationController({ repository, modelAdapter, skillUpgrades, media: createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia }) }),
     // The inventory and media follow below without replacing the controller.
-    [repository, modelAdapter],
+    [repository, modelAdapter, skillUpgrades],
   );
   useEffect(() => controller.setInstalledSkills(installedSkills), [controller, installedSkills]);
   useEffect(() => controller.setHoldingsFixer(holdingsFixer), [controller, holdingsFixer]);
@@ -174,20 +174,6 @@ export function useLibraryStories({
       unsubscribe();
     };
   }, [controller, storageAttempt]);
-
-  // A story made with an earlier version of one of the host's own packages moves to the version installed now.
-  // A story that cannot move yet (the new version is still loading, or a chapter is being written) is left as it
-  // is and tried again the next time the skills or the stories change.
-  useEffect(() => {
-    if (!opened || !skillUpgrades) return;
-    void (async () => {
-      for (const story of controller.snapshot().stories) {
-        for (const [slot, reference] of skillUpgrades(story.skillLoadout ?? {})) {
-          try { await controller.setSkillSlot(story.id, slot, reference); } catch { /* tried again on the next change */ }
-        }
-      }
-    })();
-  }, [controller, opened, installedSkills, skillUpgrades]);
 
   useEffect(() => {
     let active = true;

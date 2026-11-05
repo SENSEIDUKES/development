@@ -36,8 +36,9 @@ chapter the same way. Scenery is one way to begin, not a habit." and "Repeat a
 character's full portrait chapter after chapter. Give the full picture when the moment
 earns it, a light touch between." They had moved from the HARNESS writing rules to the
 bundled SEN Novel Author on 2026-10-26, which no story made in Novel Expanded reads. The
-same two paragraphs are in its Word document. A story made with 1.0.1 moves to 1.0.2 when
-Novel Expanded opens it (`officialCapaUpgrades`). Development runs them through the same
+same two paragraphs are in its Word document. A story made with 1.0.1 reads 1.0.2 as
+Novel Expanded opens it, in memory, and its next save keeps it (`officialCapaUpgrades`,
+the HARNESS controller's `skillUpgrades`); an upgrade never goes backwards. Development runs them through the same
 `intakePack`, selected-instruction, manifest-validation, inventory, and equipment path as a
 manual import. The host registry pins package ID, version, exact readable instruction path,
 selected-file SHA-256, complete resource inventory, archive SHA-256, and CAPA slot. A filename

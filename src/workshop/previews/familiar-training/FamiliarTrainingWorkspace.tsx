@@ -50,7 +50,7 @@ function BondScene({ activeId, onActivate }: { activeId: string; onActivate: (id
   const { simulators } = useWorkshopEconomy();
   const [note, setNote] = useState<string | null>(null);
   // Companion settings and personalisation are host profile state; this tab keeps its own.
-  const [companion, setCompanion] = useState({ size: 1, inHeader: false, liveTalk: false, wakeWord: false });
+  const [companion, setCompanion] = useState({ size: 1, inHeader: true, liveTalk: false, wakeWord: false });
   const [personal, setPersonal] = useState<FamiliarPersonalizations | undefined>(undefined);
   // The guides and the first meeting are profile state in the Cave; this tab keeps its own.
   const [guidesSeen, setGuidesSeen] = useState<string[]>([]);

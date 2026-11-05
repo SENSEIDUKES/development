@@ -70,8 +70,8 @@ describe('the Reader Chamber workspace: the app\'s Reader', { timeout: 30_000 },
     await waitFor(() => chapterTitle(1), 'Chapter 1 on screen');
     expect(chapterTitle(1)).toBe('Rust and Fractures');
     expect(button('Next Chapter')).toBeTruthy();
-    // The Familiar floats over the Reader: it is not kept in the top bar by default.
-    expect(container.querySelector('[data-testid="reader-top-bar"] [aria-label="Show Quill actions"]')).toBeNull();
+    // The Familiar is kept in the header by default, so in the Reader its recall sits in the top bar.
+    await waitFor(() => container.querySelector('[data-testid="reader-top-bar"] [aria-label="Show Quill actions"]'), 'the Familiar recall in the top bar');
     expect(container.querySelectorAll('[data-chapter-number="1"] p[data-sen-text-block], [data-chapter-number="1"] [data-sen-text-block]').length).toBeGreaterThanOrEqual(50);
   });
 

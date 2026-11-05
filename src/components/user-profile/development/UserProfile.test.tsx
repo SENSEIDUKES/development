@@ -1017,9 +1017,10 @@ describe('Cultivator Cave settings', () => {
     expect(controller().profile?.displayName).not.toBe('Unsaved draft');
     expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: 'quill', familiarSize: 1.1 });
     const header = menu.querySelector<HTMLButtonElement>('[aria-label="Keep in the header"]')!;
-    expect(header.getAttribute('aria-checked')).toBe('false');
+    // Kept in the header unless the reader turns it off.
+    expect(header.getAttribute('aria-checked')).toBe('true');
     await click(header);
-    expect(controller().profile?.familiarInHeader).toBe(true);
+    expect(controller().profile?.familiarInHeader).toBe(false);
     await click(byText('.familiar-settings-footer button', 'Restore defaults'));
     expect(controller().profile?.familiarSize).toBe(1);
     expect(controller().profile?.familiarInHeader).toBeUndefined();

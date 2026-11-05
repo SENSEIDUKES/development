@@ -52,7 +52,7 @@ export interface UserProfile {
   familiarId?: string;
   /** Familiar scale preference; 1 is the default size. */
   familiarSize?: number;
-  /** The Familiar waits in the header until called; off (the default), it floats over the page. */
+  /** The Familiar waits in the header until called (the default, so unset means on); `false` is the reader's choice to let it float over the page. */
   familiarInHeader?: boolean;
   /** Live talk with the Familiar (beta); off (the default), it listens with the device voice. */
   familiarLiveTalk?: boolean;

@@ -83,7 +83,7 @@ export function FamiliarSettingsMenu({ settings, familiar, onNameChange, onRewri
   };
   const restoreDefaults = () => {
     settings.onSizeChange?.(defaultSize);
-    settings.onInHeaderChange?.(false);
+    settings.onInHeaderChange?.(true);
     settings.onLiveTalkChange?.(false);
     settings.onWakeWordChange?.(false);
   };
@@ -121,7 +121,7 @@ export function FamiliarSettingsMenu({ settings, familiar, onNameChange, onRewri
           ) : null}
           {settings.onInHeaderChange ? (
             <Row id="header" label="Keep in the header" focused={focused} onFocusRow={setFocused}>
-              <OnOff label="Keep in the header" checked={settings.inHeader ?? false} disabled={disabled} onChange={settings.onInHeaderChange} />
+              <OnOff label="Keep in the header" checked={settings.inHeader ?? true} disabled={disabled} onChange={settings.onInHeaderChange} />
             </Row>
           ) : null}
           {settings.onLiveTalkChange ? (

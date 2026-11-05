@@ -37,6 +37,15 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-11-05 (appears tag on the sentence that shows them):** SENSEI, from
+  The Nomad's Foundation: "Fix the appearance tags." The sentence an appears
+  tag sits on is kept as the look, and the tagger had put Lin Yuan's on
+  "Lin Yuan." (where he gives his name) and Ah Tai's on "The boy's name was
+  Ah Tai." (his past). `SEN_APPEARANCE_INSTRUCTIONS` now asks for the first
+  sentence that describes them, even before their name; never one that only
+  names them, speaks for them or tells their past. Wording only: no code, no
+  new call. Places are left as they are while SENSEI thinks about folding
+  them into Scene.
 - **2026-11-04 (each group its own style):** SENSEI: "each group getting its
   own style." Create mode draws Media (soundscape, atmosphere, Sound Cues) as a
   full highlight and Story info (speakers, holdings, appearances, status,

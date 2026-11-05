@@ -100,6 +100,18 @@ describe('Docs Knowledge', () => {
     expect(lookUpDocs(mentions, 'beta').map(hit => hit.topic.id)).toEqual(['beta', 'mentions']);
   });
 
+  it('treats overlap as coverage only when the question names a topic', () => {
+    // Sharing one incidental word is not an answer. A question the docs do not
+    // cover must come back empty, or the companion reads out whatever brushed
+    // against it as though the docs settled the matter.
+    expect(lookUpDocs(catalog, 'What is a credit card?')).toEqual([]);
+    expect(lookUpDocs(catalog, 'can I change my password?')).toEqual([]);
+    // "story" appears in Story Seed's own text, but nothing here is named for deletion.
+    expect(lookUpDocs(catalog, 'how do I delete my story?').map(hit => hit.topic.id)).toEqual(['story-seed']);
+    // A question wrapped in words the docs never use still reaches the topic it names.
+    expect(lookUpDocs(catalog, 'what is a story seed for beginners')[0].topic.id).toBe('story-seed');
+  });
+
   it('puts the topic that is exactly named ahead of longer names containing it', () => {
     // "Reader" must beat "Reader Chamber", "Reader Codex" and "Reader Language",
     // which all contain the word and would otherwise fill every slot without it.

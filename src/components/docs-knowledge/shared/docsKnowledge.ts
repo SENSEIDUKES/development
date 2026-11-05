@@ -171,13 +171,17 @@ export function lookUpDocs(catalog: DocsCatalog, query: string, limit = DOCS_LOO
       const inText = words.filter(word => text.has(word)).length;
       const inName = words.filter(word => name.has(word)).length;
       const exact = docsNamedExactly(topic, words) ? 10 : 0;
-      return { topic, category: category.title, all: inText === words.length, score: inText ? inText + inName * 3 + exact : 0 };
+      return { topic, category: category.title, inName, all: inText === words.length, score: inText ? inText + inName * 3 + exact : 0 };
     }));
-  // An entry that answers the whole question crowds out one that caught a single
-  // word of it, so a spoken answer is not padded with whatever shares a category.
+  // Overlap is not coverage. An entry that answers the whole question comes
+  // first; failing that, only an entry the question actually names is offered,
+  // because a question the docs do not cover ("can I change my password?")
+  // otherwise comes back answered by whatever happens to share one word with it,
+  // and the companion speaks it as though the docs settled the matter.
   const matched = scored.filter(hit => hit.score > 0);
   const whole = matched.filter(hit => hit.all);
-  return (whole.length ? whole : matched)
+  const named = matched.filter(hit => hit.inName > 0);
+  return (whole.length ? whole : named)
     .sort((left, right) => right.score - left.score)
     .slice(0, limit)
     .map(({ topic, category }) => ({ topic, category }));

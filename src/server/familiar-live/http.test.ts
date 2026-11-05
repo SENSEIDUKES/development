@@ -127,6 +127,10 @@ describe('Familiar live talk route', () => {
     // The voice keeps the page's own facts; anything else, the docs included, goes to the backend.
     expect(sent.session.instructions).toContain('Everything else goes to the backend');
     expect(sent.session.instructions).toContain('- Story: Story Seed, Arc Goal');
+    // The backend is the model that calls look_up, and a typed message reaches it without
+    // passing the voice, so it needs the docs' names itself, not only a reference to them.
+    expect(sent.session.delegation.responses.instructions).toContain('- Story: Story Seed, Arc Goal');
+    expect(sent.session.delegation.responses.instructions).toContain('only from what look_up returns');
     expect(sent.session.delegation).toMatchObject({ type: 'responses', responses: {
       model: 'gpt-5.4-mini', tool_choice: 'auto', parallel_tool_calls: false, reasoning: { effort: 'low' },
     } });

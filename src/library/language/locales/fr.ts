@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Étincelles",
       "Sparks: story ideas": "Étincelles : idées d’histoires",
       "Close Sparks": "Fermer les Étincelles",
-      "Search for stories": "Rechercher des histoires",
+      "Search For Worlds": "Rechercher des mondes",
       "Profile and preferences": "Profil et préférences",
       "Sign in": "Se connecter",
       "Not connected yet": "Pas encore connecté",

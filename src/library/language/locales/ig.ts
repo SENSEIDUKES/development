@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Ọkụ Ntụ",
       "Sparks: story ideas": "Ọkụ Ntụ: echiche akụkọ",
       "Close Sparks": "Mechie Ọkụ Ntụ",
-      "Search for stories": "Chọọ akụkọ",
+      "Search For Worlds": "Chọọ ụwa",
       "Profile and preferences": "Profaịlụ na mmasị",
       "Sign in": "Banye",
       "Not connected yet": "Ejikọbeghị ya",

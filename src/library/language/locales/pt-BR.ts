@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Faíscas",
       "Sparks: story ideas": "Faíscas: ideias de histórias",
       "Close Sparks": "Fechar Faíscas",
-      "Search for stories": "Buscar histórias",
+      "Search For Worlds": "Buscar mundos",
       "Profile and preferences": "Perfil e preferências",
       "Sign in": "Entrar",
       "Not connected yet": "Ainda não conectado",

@@ -163,7 +163,7 @@ export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
             <>
               <p className="docs-eyebrow">NovelExpanded Docs</p>
               <h1 id="docs-article-title" ref={headingRef} tabIndex={-1}>What each thing is.<br />How it all fits.</h1>
-              <p className="docs-intro">Our shared reference for the Celestial Library and SEN—what each concept means and how they connect.</p>
+              <p className="docs-intro">Our shared reference for SEN and NovelExpanded—what each concept means and how they connect.</p>
               <div className="docs-category-index">
                 {docsCategories.map(group => (
                   <section key={group.id}>

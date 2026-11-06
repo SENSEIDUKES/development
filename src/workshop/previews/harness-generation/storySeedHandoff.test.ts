@@ -32,6 +32,14 @@ describe('Story Seed to Harness handoff', () => {
     expect(seedFoundation.plannedArcCount).toBeUndefined();
     expect(seedFoundation.initialArcLookahead).toBeUndefined();
     expect(seedFoundation.initialArcPlan?.goals[0].text).toBe(seedOnly.seed.story.optional.arcOneGoals![0].text);
+    // The creator's Arc 2 and Arc 3 lines travel even with Arc 1's goals left blank.
+    const linesOnly = createMockStorySeedRecord();
+    delete linesOnly.blueprint;
+    delete linesOnly.seed.story.optional.arcOneGoals;
+    linesOnly.seed.story.optional.arcLookahead = [{ arcNumber: 2, direction: 'The sect war begins.' }];
+    const linesFoundation = createHarnessFoundationFromStorySeed(linesOnly);
+    expect(linesFoundation.initialArcPlan).toBeUndefined();
+    expect(linesFoundation.initialArcLookahead).toEqual([{ arcNumber: 2, direction: 'The sect war begins.' }]);
   });
 
   it('routes Arc inputs once and freezes the original pins and active goal across reload, retry, and replay', async () => {

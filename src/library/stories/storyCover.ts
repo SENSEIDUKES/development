@@ -49,10 +49,17 @@ export function storyCoverRequest(state: HarnessWorkspaceState, storyId: string)
   // (SENSEI, 2026-11-06); a story begun before then still has it as text.
   const rules = seed?.world?.optional?.worldFoundations?.powerSystem;
   const legacyIdentity = seed?.world?.optional?.worldIdentity as Record<string, unknown> | undefined;
+  const facts = text(input?.worldFacts);
+  // A story begun before then also has the old text in its world facts: it
+  // travels there, once.
+  const legacy = (value: unknown) => {
+    const old = text(value);
+    return old && !facts?.includes(old) ? old : undefined;
+  };
   const world = [
-    text(rules?.kindOfWorld) ?? text(legacyIdentity?.worldType),
-    text(rules?.whoRules) ?? text(legacyIdentity?.societyStructure),
-    text(input?.worldFacts),
+    text(rules?.kindOfWorld) ?? legacy(legacyIdentity?.worldType),
+    text(rules?.whoRules) ?? legacy(legacyIdentity?.societyStructure),
+    facts,
   ].filter(Boolean).join('\n');
   const request: StoryCoverRequest = { title: text(story.title) ?? 'Untitled' };
   const fields: Array<[Exclude<keyof StoryCoverRequest, 'title' | 'tags' | 'titled'>, unknown]> = [

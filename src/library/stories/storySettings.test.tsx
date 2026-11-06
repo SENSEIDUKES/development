@@ -394,6 +394,19 @@ describe('Cover art on Story View', () => {
     });
     expect(storyCoverRequest(controller.snapshot(), 'gone')).toBeUndefined();
   });
+
+  it('describes the world from the World card, and an older story\'s world text only once', () => {
+    const stateWith = (seed: unknown, worldFacts?: string) => ({
+      stories: [{ id: 'story', title: 'The Drowned Name', activeFoundationRevisionId: 'rev' }],
+      foundations: [{ id: 'rev', input: { premise: 'p', worldFacts, sourceSnapshot: { kind: 'story-seed', seed } } }],
+    }) as unknown as Parameters<typeof storyCoverRequest>[0];
+    const onCard = { world: { optional: { worldFoundations: { powerSystem: { kindOfWorld: 'A drowned city', whoRules: 'The tide courts' } } } } };
+    expect(storyCoverRequest(stateWith(onCard), 'story')?.world).toBe('A drowned city The tide courts');
+    // A story begun before the world moved onto its card carries it in its world facts already.
+    const older = { world: { optional: { worldIdentity: { worldType: 'A drowned city', societyStructure: 'The tide courts' } } } };
+    const facts = 'World: A drowned city\nSociety: The tide courts';
+    expect(storyCoverRequest(stateWith(older, facts), 'story')?.world).toBe('World: A drowned city Society: The tide courts');
+  });
 });
 
 describe('The Create draft of Story Settings', () => {

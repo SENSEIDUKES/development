@@ -67,7 +67,8 @@ describe('The world lives on its one World card (SENSEI, 2026-11-06)', () => {
   it('carries a Seed saved before then onto the card when it is read, and forgets where it opened', () => {
     const old = authoredSeed();
     Object.assign(old.world.optional.worldIdentity, { worldType: WORLD, societyStructure: SOCIETY, startingLocation: OPENING });
-    const read = parseStorySeedJson(JSON.stringify(createStorySeedExport(old)))[0].seed;
+    // Read raw, as an old file arrives, so nothing has carried it over beforehand.
+    const read = parseStorySeedJson(JSON.stringify({ seed: old }))[0].seed;
     expect(read.world.optional.worldFoundations.powerSystem).toMatchObject({ kindOfWorld: WORLD, whoRules: SOCIETY });
     expect(read.world.optional.worldIdentity).toEqual({ title: 'Ashes of the Ninth Meridian' });
     expect(JSON.stringify(read)).not.toContain(OPENING);
@@ -84,8 +85,10 @@ describe('The world lives on its one World card (SENSEI, 2026-11-06)', () => {
   it('fills a blank card from a Blueprint saved before then', () => {
     const seed = authoredSeed();
     const blueprint = { ...normalizeWorldBlueprint({}, seed), worldOverview: WORLD, societyStructure: SOCIETY } as WorldBlueprint;
-    const { seed: reconciled } = reconcileStorySeedBlueprint(seed, blueprint);
+    const { seed: reconciled, blueprint: reconciledBlueprint } = reconcileStorySeedBlueprint(seed, blueprint);
     expect(reconciled.world.optional.worldFoundations.powerSystem).toMatchObject({ kindOfWorld: WORLD, whoRules: SOCIETY });
+    expect(reconciledBlueprint).not.toHaveProperty('worldOverview');
+    expect(reconciledBlueprint).not.toHaveProperty('societyStructure');
   });
 
   it('keeps no world text or detail of its own in a Blueprint, and hands the card\'s world to the canon', () => {

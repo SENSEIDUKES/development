@@ -87,7 +87,10 @@ export const ArcWorkspace = ({ seed, updateSeed, showArcGoals = true, showStoryL
   };
   const lastWrittenGoal = goalDrafts.reduce((last, goal, index) => goal.text.trim() ? index : last, -1);
   const visibleGoals = Math.min(MAX_ARC_GOALS, lastWrittenGoal + 2);
-  const givenChapters = goalsFromDrafts(goalDrafts).reduce((sum, goal) => sum + (goal.chapters ?? 0), 0);
+  const writtenGoals = goalsFromDrafts(goalDrafts);
+  const givenChapters = writtenGoals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0);
+  // Every goal counted and chapters left over: the last goal runs to the arc's end.
+  const lastRunsOn = givenChapters < ARC_LENGTH && writtenGoals.length > 0 && writtenGoals.every(goal => goal.chapters !== undefined);
   // Where Arcs 2 and 3 head, one line each.
   const direction = (arcNumber: number) => seed.story.optional.arcLookahead?.find(entry => entry.arcNumber === arcNumber)?.direction ?? '';
   const updateDirection = (arcNumber: number, value: string) => updateSeed(current => {
@@ -145,7 +148,7 @@ export const ArcWorkspace = ({ seed, updateSeed, showArcGoals = true, showStoryL
               <p className="mt-2 text-xs text-neutral-400" data-testid="arc-one-chapters-summary">
                 {givenChapters > ARC_LENGTH
                   ? `These goals take ${givenChapters} chapters; Arc 1 has ${ARC_LENGTH}.`
-                  : `${givenChapters} of ${ARC_LENGTH} chapters given.`}
+                  : `${givenChapters} of ${ARC_LENGTH} chapters given.${lastRunsOn ? ` The last goal runs to chapter ${ARC_LENGTH}.` : ''}`}
               </p>
             )}
           </section>}

@@ -901,20 +901,26 @@ const allocateArcOneChapters = (given: ReadonlyArray<number | undefined>, saved:
 /**
  * Keeps Arc 1's goals in step with the creator's Arc 1 goals on the Seed: each
  * of the Blueprint's goals takes the wording of the Seed's goal in its place,
- * a goal the creator added after the Blueprint joins the plan, and the
- * creator's chapters are kept (`allocateArcOneChapters`). Identities and any
- * goal the Seed does not have stay as saved. A Blueprint that has not planned
- * Arc 1 yet gets none: Arc 1 comes only from the Blueprint, never from the
- * Seed's goals alone.
+ * and the creator's chapters are kept (`allocateArcOneChapters`); identities
+ * stay as saved. Once the Seed holds the whole plan (`promoteBlueprintIntoSeed`
+ * copies in the goals a Blueprint added), the Seed's list is the plan: a goal
+ * the creator adds joins it and a goal they clear leaves it. Only
+ * `keepPlannedGoals` (a Blueprint just generated, or read with the Seed it was
+ * made from) keeps the goals the Blueprint planned after the creator's, each
+ * giving way when the creator's chapters leave it no room. A Blueprint that
+ * has not planned Arc 1 yet gets none: Arc 1 comes only from the Blueprint,
+ * never from the Seed's goals alone.
  */
-export const alignArcOneWithSeed = (arcPlans: ArcPlan[] | undefined, seed: StorySeedInput): ArcPlan[] | undefined => {
+export const alignArcOneWithSeed = (
+  arcPlans: ArcPlan[] | undefined,
+  seed: StorySeedInput,
+  { keepPlannedGoals = false }: { keepPlannedGoals?: boolean } = {},
+): ArcPlan[] | undefined => {
   const seedGoals = seed.story.optional.arcOneGoals ?? [];
   const first = arcPlans?.[0];
   if (!first) return undefined;
   if (!seedGoals.length) return [first];
-  // A goal only the Blueprint added gives way when the creator's chapters
-  // leave it no room: the creator's counts are never overwritten to fit it.
-  let count = Math.min(MAX_ARC_GOALS, Math.max(seedGoals.length, first.goals.length));
+  let count = keepPlannedGoals ? Math.min(MAX_ARC_GOALS, Math.max(seedGoals.length, first.goals.length)) : seedGoals.length;
   const givenSum = seedGoals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0);
   const openSeedGoals = seedGoals.filter(goal => goal.chapters === undefined).length;
   while (count > seedGoals.length && ARC_LENGTH - givenSum < openSeedGoals + (count - seedGoals.length)) count -= 1;
@@ -1128,7 +1134,7 @@ export const normalizeWorldBlueprint = (
     initialCharacters: Array.isArray(source.initialCharacters)
       ? stringList(source.initialCharacters)
       : fallback.initialCharacters,
-    arcPlans: alignArcOneWithSeed(arcOne ? [arcOne] : undefined, normalizedSeed),
+    arcPlans: alignArcOneWithSeed(arcOne ? [arcOne] : undefined, normalizedSeed, { keepPlannedGoals: true }),
     ...(arcOne ? { arcOneScope } : {}),
     ...(alignedLookahead.length ? { arcLookahead: alignedLookahead } : {}),
     hardPins: validateHardPinInputs(seed ? normalizedSeed.story.optional.hardPins ?? [] : source.hardPins ?? []),
@@ -1442,15 +1448,21 @@ export const promoteBlueprintIntoSeed = (seed: StorySeedInput, blueprint: WorldB
       ...(parsed.role ? { role: parsed.role } : {}), ...(parsed.details ? { description: parsed.details } : {}),
     });
   }
-  // Arc 1's goals fill empty Seed Arc 1 goals, like any slot the creator left
-  // blank: wording and chapters, so the ARC page shows the plan the Blueprint made.
-  const suggestedGoals = blueprint.arcPlans?.[0]?.goals.map(goal => ({ text: goal.text, chapters: goal.chapters }));
+  // Arc 1's goals fill the Seed's, like any slot the creator left blank:
+  // wording and chapters, so the ARC page shows the whole plan the Blueprint
+  // made, and from then on the Seed's list is the plan. A Seed with fewer goals
+  // than the plan keeps its own and gains the goals the Blueprint planned after
+  // them.
+  const ownGoals = source.story.optional.arcOneGoals ?? [];
+  const plannedGoals = ownGoals.length < (blueprint.arcPlans?.[0]?.goals.length ?? 0)
+    ? alignArcOneWithSeed(blueprint.arcPlans, source, { keepPlannedGoals: true })?.[0]?.goals : undefined;
+  const suggestedGoals = plannedGoals?.map(goal => ({ text: goal.text, chapters: goal.chapters }));
 
   return normalizeStorySeedInput({
     ...source,
     story: { ...source.story, optional: {
       ...source.story.optional,
-      ...(!source.story.optional.arcOneGoals?.length && suggestedGoals?.length ? { arcOneGoals: suggestedGoals } : {}),
+      ...(suggestedGoals?.length ? { arcOneGoals: suggestedGoals } : {}),
     } },
     world: { ...source.world, optional: {
       worldIdentity: {

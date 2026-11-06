@@ -97,6 +97,9 @@ describe('Story Seed Arc and World ownership', () => {
     expect(goalCount()).toBe(3);
     expect(current.story.optional.arcOneGoals).toEqual([{ text: 'Expelled at the sect gate.', chapters: 6 }, { text: 'Win a place in the outer sect.' }]);
     expect(container.querySelector('[data-testid="arc-one-chapters-summary"]')!.textContent).toBe('6 of 30 chapters given.');
+    fill('arc-one-goal-2-chapters', '4');
+    expect(container.querySelector('[data-testid="arc-one-chapters-summary"]')!.textContent).toBe('10 of 30 chapters given. The last goal runs to chapter 30.');
+    fill('arc-one-goal-2-chapters', '');
     ['Third', 'Fourth', 'Fifth'].forEach((text, i) => fill(`arc-one-goal-${i + 3}`, `${text} goal.`));
     expect(goalCount()).toBe(5);
     fill('arc-direction-3', 'The sect war spills into the capital.');
@@ -120,7 +123,10 @@ describe('Story Seed Arc and World ownership', () => {
     expect(container.textContent).toContain('Generate the Blueprint to plan Arc 1');
     expect(container.querySelector('#arc-one-goal-1')).toBeNull();
     // A generated Blueprint for a twelve-arc story plans Arc 1: review and edit it before the story begins.
-    render(current, 'blueprint', reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: [roadmap[0]], estimatedArcs: 12 }).blueprint);
+    // As the app does, the generated pair is reconciled first: the Seed gains the goals the Blueprint planned.
+    const generatedPair = reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: [roadmap[0]], estimatedArcs: 12 });
+    expect(generatedPair.seed.story.optional.arcOneGoals).toHaveLength(2);
+    render(generatedPair.seed, 'blueprint', generatedPair.blueprint);
     expect(container.textContent).not.toContain('Arc 2');
     fill('hard-pin-2', 'Rebuild the temple.');
     act(() => button('Edit Arc 1 goals')!.click());

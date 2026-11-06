@@ -55,10 +55,11 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
   const initialArcPlan = blueprintArcOne
     ?? arcOnePlanFromSeedGoals(optional.arcOneGoals);
   const plannedArcCount = blueprintArcOne ? blueprint!.estimatedArcs : undefined;
-  // Without a Blueprint, the creator's own directions for Arc 2 and Arc 3 travel.
+  // Without a Blueprint, the creator's own directions for Arc 2 and Arc 3
+  // travel, whether or not they wrote Arc 1's goals.
   const initialArcLookahead = plannedArcCount
     ? normalizeArcLookahead(blueprint!.arcLookahead, { afterArc: 1, plannedArcCount })
-    : initialArcPlan ? normalizeArcLookahead(optional.arcLookahead ?? [], { afterArc: 1, plannedArcCount: optional.arcCount }) : [];
+    : normalizeArcLookahead(optional.arcLookahead ?? [], { afterArc: 1, plannedArcCount: optional.arcCount });
   if (initialArcPlan && initialArcPlan.arcNumber !== 1) {
     throw new Error('Story Seed supplies the Arc 1 plan.');
   }

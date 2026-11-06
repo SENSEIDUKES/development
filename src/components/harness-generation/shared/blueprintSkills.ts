@@ -19,11 +19,7 @@ The Seed's style (story.required.style) is the novel tradition the creator chose
 - Korean: murim and modern-system fantasy. Clans, martial factions, regression, ranks and status windows. Korean names.
 - Japanese: light-novel fantasy. Academies, guilds, dungeons, adventurers, and named skills. Japanese names.
 
-Names, titles, ranks and places all follow the chosen tradition.
-
-styleBible: practical guidance the chapter writer will follow. Translate the genre, the tradition, the tags and the maturity setting into how the prose should read: its pacing, point of view, dialogue, and what the story keeps returning to. Write it as advice to a writer, not a description of the story.
-
-tropeRules: how this story uses its tropes. The Seed's Fun Settings set how strongly three of them appear: faceSlap (arrogant people humiliated by the hero), plotArmor (how safe the hero is), recognition (how quickly others see the hero's worth). Turn each level into a plain rule a writer can follow, never the setting's name or level ("Face-slap: medium"). Fun Settings are flavour: they never override the creator's facts, the Hard Pins or the Destined Ending. Leave Fate Survival out of the trope rules; the chapter writer is given it separately.`;
+Names, titles, ranks and places all follow the chosen tradition.`;
 
 const WORLD_INSTRUCTIONS = `Build the world as it stands the moment Chapter 1 opens: the people, places, things, powers and factions the opening of the story stands on. Chapters change the world afterwards and may add to it. What exists at the start is written here.
 
@@ -33,7 +29,7 @@ Two tests decide whether a card holds enough, and nothing beyond them belongs on
 
 Write what the world is, never how it is shown: "at the North Ridge Gate, at dusk, wounded", never a panel, a camera, a frame count or an art style.
 
-Keep every slot to one short, concrete fact. The longer fields (worldOverview, societyStructure, powerSystemOutline, backgroundProfile) add what the cards do not already say; they never repeat a card.
+Keep every slot to one short, concrete fact. The longer fields (worldOverview, societyStructure, backgroundProfile) add what the cards do not already say; they never repeat a card.
 
 Choose the supporting cast and factions for the opening arc: the mentor, the rival, the elder, the enemy at the gate. Use fewer cards before you pad them; an empty card list is better than a filler card.
 
@@ -58,13 +54,11 @@ mainOpposition: the force that stands against the hero across the story: a perso
 
 arcOne: plan only Arc 1, as 1 to 5 goals in order. Each goal is one line, and says what happens, not how it feels. Each takes a whole number of chapters, weighted by what it needs, and together they take exactly 30. Goals never overlap. No Arc 1 goal reaches or resolves the Destined Ending: the story has far to go.
 
-firstArcPromise: what a reader is promised by the end of Arc 1, in one or two sentences.
-
 arcLookahead: one line each for Arc 2 and Arc 3 (never beyond the story's length), saying where the road goes next on its way to the Destined Ending. When one of them is the final arc, its line arrives at the Destined Ending. Readers never see this; it guides the planning of those arcs, which happens when the story reaches them.`;
 
 export const SEN_EASTERN_FANTASY_ORIGIN_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-eastern-fantasy',
-  version: '1.0.0',
+  version: '1.1.0',
   name: 'SEN Eastern Fantasy',
   description: 'Builds the world of an Eastern fantasy web novel, in the Chinese, Korean or Japanese tradition the creator chose.',
   slot: 'origin',
@@ -75,7 +69,7 @@ export const SEN_EASTERN_FANTASY_ORIGIN_SKILL: HarnessSkillManifest = {
 
 export const SEN_WORLD_BUILDER_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-world-builder',
-  version: '1.0.0',
+  version: '1.1.0',
   name: 'SEN World Builder',
   description: 'Builds the world as Chapter 1 opens: the cards an artist could draw it from and a game could load it from.',
   slot: 'world',
@@ -86,7 +80,7 @@ export const SEN_WORLD_BUILDER_SKILL: HarnessSkillManifest = {
 
 export const SEN_ARC_PLANNER_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-arc-planner',
-  version: '1.0.0',
+  version: '1.1.0',
   name: 'SEN Arc Planner',
   description: 'Chooses the Destined Ending and the story\'s length first, then plans Arc 1 toward it.',
   slot: 'arc',

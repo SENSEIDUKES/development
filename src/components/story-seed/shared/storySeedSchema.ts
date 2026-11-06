@@ -867,9 +867,6 @@ export const createBlueprintDraftFromSeed = (
     worldOverview: worldIdentity.worldType || '',
     startingLocation: worldIdentity.startingLocation || '',
     societyStructure: worldIdentity.societyStructure || '',
-    powerSystemOutline: worldFoundations.abilities?.startingPowerConcept
-      || worldFoundations.powerSystem?.knownRanks
-      || '',
     mainCharacter: {
       name: mainCharacter.name || '',
       age: '',
@@ -883,9 +880,6 @@ export const createBlueprintDraftFromSeed = (
     arcPlans: undefined,
     hardPins: validateHardPinInputs(seed.story.optional.hardPins ?? []),
     funSettings: normalizeFunSettings(seed.story.optional.funSettings),
-    firstArcPromise: '',
-    tropeRules: '',
-    styleBible: '',
     destinedEnding: worldFoundations.destinedEnding || '',
     estimatedArcs: seed.story.optional.arcCount ?? 10,
   };
@@ -988,7 +982,6 @@ export const normalizeWorldBlueprint = (
     // An explicit empty string is the author clearing a detail, kept like any edit.
     ...Object.fromEntries(WORLD_FACT_DETAILS.flatMap(({ detail, basis }) =>
       [detail, basis].flatMap(key => hasString(source, key) ? [[key, read(key)]] : []))),
-    powerSystemOutline: read('powerSystemOutline', fallback.powerSystemOutline),
     mainCharacter,
     mcProfile: mainCharacter.backgroundProfile,
     majorFactions: Array.isArray(source.majorFactions)
@@ -1002,9 +995,6 @@ export const normalizeWorldBlueprint = (
     ...(arcLookahead.length ? { arcLookahead } : {}),
     hardPins: validateHardPinInputs(seed ? normalizedSeed.story.optional.hardPins ?? [] : source.hardPins ?? []),
     funSettings: normalizeFunSettings(seed ? normalizedSeed.story.optional.funSettings : source.funSettings),
-    firstArcPromise: read('firstArcPromise', fallback.firstArcPromise),
-    tropeRules: read('tropeRules', fallback.tropeRules),
-    styleBible: read('styleBible', fallback.styleBible),
     destinedEnding: text(seedFoundations.destinedEnding) || read('destinedEnding', fallback.destinedEnding || ''),
     estimatedArcs,
   };
@@ -1033,8 +1023,7 @@ const MAIN_CHARACTER_CARD_LABELS = new Set(['Age', 'Appearance', 'Biography']);
 
 /**
  * The labels of the power system whose facts the one Chapter 0 World rules
- * sheet carries in slots of its own (`flavor`, `knownRanks`). The outline prose
- * and the rest have no card to sit on.
+ * sheet carries in slots of its own (`flavor`, `knownRanks`).
  */
 const WORLD_RULES_CARD_LABELS = new Set(['Power flavor', 'Known ranks']);
 
@@ -1546,13 +1535,15 @@ export const resolveStorySeedWorldCanon = (
       : undefined;
     return detail ? [[entry.detail, detail]] : [];
   })) as Pick<StorySeedWorldCanon, WorldFactDetailField>;
+  // Power travels as the creator's own slots only: the World rules card holds
+  // it, and no Blueprint paragraph repeats it (SENSEI, 2026-11-06).
   const powerSystem = text(withAuthoritativeDetails(
-    blueprint?.powerSystemOutline || '',
+    '',
     powerSystemAuthoredDetails(worldFoundations),
   ));
   // The same, without what the World rules sheet holds in its own slots.
   const powerSystemBeyondItsCard = text(withAuthoritativeDetails(
-    blueprint?.powerSystemOutline || '',
+    '',
     powerSystemAuthoredDetails(worldFoundations).filter(([label]) => !WORLD_RULES_CARD_LABELS.has(label)),
   ));
 
@@ -1621,7 +1612,6 @@ export const finalizeGeneratedWorldBlueprint = (
     worldOverview: text(worldIdentity.worldType) || generated.worldOverview,
     startingLocation: text(worldIdentity.startingLocation) || generated.startingLocation,
     societyStructure: text(worldIdentity.societyStructure) || generated.societyStructure,
-    powerSystemOutline: generated.powerSystemOutline,
     mainCharacter: {
       ...generatedMainCharacter,
       name: text(mainCharacter.name) || generatedMainCharacter.name,
@@ -1642,7 +1632,6 @@ export const finalizeGeneratedWorldBlueprint = (
         characterBlueprintEntry,
         mainCharacterName ? [mainCharacterName] : [],
       ),
-    firstArcPromise: generated.firstArcPromise,
     destinedEnding: text(worldFoundations.destinedEnding) || generated.destinedEnding,
     ...(Object.keys(generatedSeedSlots).length ? { generatedSeedSlots } : {}),
   };

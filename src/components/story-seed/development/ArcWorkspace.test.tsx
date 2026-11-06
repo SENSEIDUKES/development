@@ -156,7 +156,6 @@ describe('Story Seed Arc and World ownership', () => {
     fill('blueprint-world-overview', 'Reviewed world');
     fill('blueprint-opening-location', 'Reviewed gate');
     fill('blueprint-world-order', 'Reviewed order');
-    fill('blueprint-power-outline', 'Reviewed ladder');
     fill('a11y-control-kytc0oh', 'Reviewed power style');
     // The main character's fields open from Cast's Edit, in a sheet.
     press('[data-testid="blueprint-cast-edit"]');
@@ -188,7 +187,7 @@ describe('Story Seed Arc and World ownership', () => {
     expect(foundations.factions?.[0]).toMatchObject({ name: 'Azure Sect', description: 'Reviewed faction profile' });
     // The Blueprint mirrors the Seed and keeps only its own prose.
     expect(blueprint).toMatchObject({
-      worldOverview: 'Reviewed world', startingLocation: 'Reviewed gate', societyStructure: 'Reviewed order', powerSystemOutline: 'Reviewed ladder',
+      worldOverview: 'Reviewed world', startingLocation: 'Reviewed gate', societyStructure: 'Reviewed order',
       mainCharacter: { name: 'Reviewed Name', age: '19', appearance: 'Ash-grey eyes', personality: 'Reviewed temper', backgroundProfile: 'Reviewed background prose' },
     });
     expect(blueprint.initialCharacters).toEqual(['Elder Qin — role: Betrayer']);

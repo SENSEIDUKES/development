@@ -73,15 +73,11 @@ export interface WorldBlueprint {
   worldOverviewDetailBasis?: string;
   startingLocationDetailBasis?: string;
   societyStructureDetailBasis?: string;
-  powerSystemOutline: string;
   /** Structured fields added without removing the legacy combined profile. */
   mainCharacter?: WorldBlueprintMainCharacter;
   mcProfile: string;
   majorFactions: string[];
   initialCharacters: string[];
-  firstArcPromise: string;
-  tropeRules: string;
-  styleBible: string;
   destinedEnding?: string;
   /**
    * The story's length in arcs of 100 chapters; its last arc arrives at the

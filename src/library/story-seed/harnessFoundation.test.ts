@@ -85,7 +85,7 @@ describe('Story Seed handoff of world detail and generated cast', () => {
       ...older
     } = record.blueprint;
     const foundation = createHarnessFoundationFromStorySeed({ ...record, blueprint: older });
-    expect(foundation.worldFacts).toContain(`World: ${WORLD}\nSociety: ${SOCIETY}\n`);
+    expect(foundation.worldFacts).toContain(`World: ${WORLD}\nSociety: ${SOCIETY}`);
     expect(foundation.worldFacts).not.toContain('detail');
     expect(foundation.openingSituation).toBe(OPENING);
   });

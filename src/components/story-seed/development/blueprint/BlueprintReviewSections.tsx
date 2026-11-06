@@ -182,9 +182,7 @@ interface BlueprintWorldSettingSectionProps {
   worldType: string;
   startingLocation: string;
   societyStructure: string;
-  powerSystemOutline?: WorldBlueprint['powerSystemOutline'];
   onUpdateWorldIdentity: (patch: Partial<StorySeedWorldIdentity>) => void;
-  onPowerSystemOutlineChange: (powerSystemOutline: string) => void;
   /** The Blueprint's generated detail beside each author-written fact, when it has one, and the fact it was written for. */
   worldFactDetails?: WorldFactDetails;
   /** An edit to a detail, which also reviews it against the fact shown above it. */
@@ -238,16 +236,14 @@ const WorldFactDetailArea = ({ id, label, field, fact, details, onChange }: {
   );
 };
 
-/** World setting: the Seed's world identity, abilities, and power system, plus the Blueprint's power outline prose. */
+/** World setting: the Seed's world identity, abilities, and power system. */
 export const BlueprintWorldSettingSection = memo(({
   seed,
   updateSeed,
   worldType,
   startingLocation,
   societyStructure,
-  powerSystemOutline,
   onUpdateWorldIdentity,
-  onPowerSystemOutlineChange,
   worldFactDetails = {},
   onWorldFactDetailChange,
 }: BlueprintWorldSettingSectionProps) => (
@@ -310,44 +306,9 @@ export const BlueprintWorldSettingSection = memo(({
 
       <AbilitiesFields seed={seed} updateSeed={updateSeed} />
       <PowerSystemFields seed={seed} updateSeed={updateSeed} />
-
-      <LibraryTextArea
-        id="blueprint-power-outline"
-        label="Power System Outline"
-        rightElement={<EditableChip />}
-        icon={SENPowerSystemIcon}
-        value={powerSystemOutline || ''}
-        onChange={onPowerSystemOutlineChange}
-        rows={4}
-        className="font-mono leading-relaxed"
-        placeholder="Power scaling, ranks, costs, limits, magical energy..."
-      />
     </div>
   </LibraryPanel>
 ));
 
 BlueprintWorldSettingSection.displayName = 'BlueprintWorldSettingSection';
 
-interface BlueprintNotesSectionProps {
-  styleBible?: WorldBlueprint['styleBible'];
-  setBlueprint: Dispatch<SetStateAction<WorldBlueprint>>;
-}
-export const BlueprintNotesSection = memo(({ styleBible, setBlueprint }: BlueprintNotesSectionProps) => (
-  <LibraryPanel as="section" aria-labelledby="blueprint-notes-heading" padding="md">
-    <BlueprintSectionHeading id="blueprint-notes-heading" icon={FileText} title="Generated Notes" tagline="Review the suggested prose guidance." />
-    <div className="mt-5 space-y-5">
-        <LibraryTextArea
-          id="blueprint-style-bible"
-          label="Generated Style Bible"
-          rightElement={<EditableChip />}
-          icon={FileText}
-          value={styleBible || ''}
-          onChange={value => setBlueprint(current => ({ ...current, styleBible: value }))}
-          rows={5}
-          className="font-mono"
-          placeholder="Generated prose rules, forbidden phrasing, and tone requirements..."
-        />
-    </div>
-  </LibraryPanel>
-));
-BlueprintNotesSection.displayName = 'BlueprintNotesSection';

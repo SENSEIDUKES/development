@@ -45,7 +45,7 @@ describe('Story Seed to Harness handoff', () => {
     record.seed.world.optional.worldFoundations.destinedEnding = 'ENDING_FREE_VALLEY';
     Object.assign(record.seed.story.optional, { additionalStoryDirection: 'REMOVED_DIRECTION', firstMajorConflict: 'REMOVED_CONFLICT', arcPlan: { goals: [{ text: 'REMOVED_FUTURE_GOAL' }] } });
     record.blueprint!.logline = 'REMOVED_BLUEPRINT_DIRECTION';
-    record.blueprint!.firstArcPromise = 'REMOVED_FIRST_CONFLICT';
+    Object.assign(record.blueprint!, { firstArcPromise: 'REMOVED_FIRST_CONFLICT' });
     const foundation = createHarnessFoundationFromStorySeed(record);
     const requests: HarnessGenerationRequest[] = [];
     const adapter = {
@@ -150,7 +150,8 @@ describe('Story Seed to Harness handoff', () => {
       },
     });
     expect(foundation.toneStyle).toContain('Chinese');
-    expect(foundation.toneStyle).toContain('Style bible');
+    // How the prose reads is the Style skill's job: no Blueprint style bible travels (SENSEI, 2026-11-06).
+    expect(foundation.toneStyle).not.toContain('Style bible');
     expect(foundation.characters).toBeUndefined();
     expect(foundation.identities?.map(identity => identity.name)).toContain('Ye Chen');
     expect(foundation.identities?.find(identity => identity.name === 'Heavenly Sword Sect')?.kind).toBe('faction');
@@ -185,8 +186,8 @@ describe('Story Seed to Harness handoff', () => {
       mainCharacter: { name: 'Hero Once', age: '20', personality: 'HERO_TEMPER_ONCE', appearance: 'HERO_LOOK_ONCE', backgroundProfile: 'REVIEWED_PROSE_ONCE' },
       initialCharacters: ['Ally Once — profile: ALLY_BIO_ONCE', 'Rival Once (Rival)'],
       majorFactions: ['Guild Once — profile: GUILD_PROFILE_ONCE', 'Cult Once'],
-      powerSystemOutline: 'POWER_CONCEPT_ONCE ladder, POWER_LADDER_ONCE',
-      styleBible: 'STYLE_BIBLE_ONCE',
+      // Retired Blueprint prose an older Blueprint may hold never reaches the writer.
+      ...{ powerSystemOutline: 'POWER_LADDER_RETIRED', styleBible: 'STYLE_BIBLE_RETIRED' },
     }, record.seed);
     const foundation = createHarnessFoundationFromStorySeed(record);
     const requests: HarnessGenerationRequest[] = [];
@@ -206,7 +207,7 @@ describe('Story Seed to Harness handoff', () => {
 
     for (const marker of ['TITLE_ONCE', 'WORLD_ONCE', 'SOCIETY_ONCE', 'OPENING_ONCE', 'OPPOSITION_ONCE', 'HERO_TEMPER_ONCE',
       'HERO_BIO_ONCE', 'REVIEWED_PROSE_ONCE', 'HERO_LOOK_ONCE', 'ALLY_BIO_ONCE', 'ALLY_ALIAS_ONCE', 'GUILD_PROFILE_ONCE',
-      'GUILD_ALIAS_ONCE', 'POWER_CONCEPT_ONCE', 'POWER_FLAVOR_ONCE', 'POWER_LADDER_ONCE', 'STYLE_BIBLE_ONCE', 'TAG_ONCE',
+      'GUILD_ALIAS_ONCE', 'POWER_CONCEPT_ONCE', 'POWER_FLAVOR_ONCE', 'TAG_ONCE',
       // A Blueprint-introduced character's role, now carried by their Chapter 0
       // card under the label its Codex slot shows, not as prose in the
       // identity that declares their name.
@@ -332,7 +333,7 @@ describe('Story Seed to Harness handoff', () => {
     expect(userPrompt).toContain('"eyeColor": "green"');
     expect(userPrompt).not.toContain('Mara has green eyes.');
     expect(userPrompt).not.toContain('targetEvidence');
-    expect(userPrompt).not.toContain(record.blueprint!.firstArcPromise);
+    expect(userPrompt).not.toContain('REMOVED_FIRST_CONFLICT');
     expect(userPrompt).not.toContain('CONTEXT COVERAGE AND OMISSIONS');
     expect(userPrompt).not.toContain('selectionAudit');
     expect(systemInstruction).toContain('An arc promise spans an arc, not one chapter.');

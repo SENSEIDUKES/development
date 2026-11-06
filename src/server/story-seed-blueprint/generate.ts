@@ -125,8 +125,7 @@ export class BlueprintRequestError extends Error {
 /** What each required part is called where a creator reads it. */
 const BLUEPRINT_PART_NAMES: Record<string, string> = {
   title: 'the title', logline: 'the logline', worldOverview: 'the world overview', startingLocation: 'the opening location',
-  societyStructure: 'the society', powerSystemOutline: 'the power system', mcProfile: "the main character's profile",
-  firstArcPromise: 'the first-arc promise', tropeRules: 'the trope rules', styleBible: 'the style bible',
+  societyStructure: 'the society', mcProfile: "the main character's profile",
   destinedEnding: 'the Destined Ending', majorFactions: 'the factions', initialCharacters: 'the supporting characters',
   estimatedArcs: 'the story length', 'mainCharacter.name': "the main character's name", 'mainCharacter.age': "the main character's age",
   'mainCharacter.personality': "the main character's personality", 'mainCharacter.appearance': "the main character's appearance",
@@ -175,11 +174,7 @@ const REQUIRED_STRINGS = [
   "worldOverview",
   "startingLocation",
   "societyStructure",
-  "powerSystemOutline",
   "mcProfile",
-  "firstArcPromise",
-  "tropeRules",
-  "styleBible",
   "destinedEnding",
 ] as const;
 

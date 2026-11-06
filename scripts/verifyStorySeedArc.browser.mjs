@@ -40,12 +40,12 @@ try {
       assert(!('arcCount' in request));
       await route.fulfill({ json: {
         title: 'Arc browser verification', logline: 'A journey to the gate.', worldOverview: 'A mountain kingdom.',
-        startingLocation: 'The foothills.', societyStructure: 'Mountain villages.', powerSystemOutline: 'Costly cultivation.',
+        startingLocation: 'The foothills.', societyStructure: 'Mountain villages.',
         mainCharacter: { name: 'Mara', age: '25', personality: 'Patient', appearance: 'Dark hair', backgroundProfile: 'A returning traveler.' },
         mcProfile: 'A returning traveler.', majorFactions: ['The Gate'], initialCharacters: ['The Keeper'], majorMysteries: [],
-        firstArcPromise: 'Reach the gate.', arcPlans: [{ arcNumber: 1, goals: [{ ...storySeed.story.optional.activeArcGoal, chapters: 30 }] }],
+        arcPlans: [{ arcNumber: 1, goals: [{ ...storySeed.story.optional.activeArcGoal, chapters: 30 }] }],
         arcLookahead: [{ arcNumber: 2, direction: 'LOOKAHEAD_HIDDEN Cross the gate.' }],
-        tropeRules: 'Earn each success.', styleBible: 'Clear sensory prose.', destinedEnding: 'Free the valley.', estimatedArcs: 11, unresolvedPlotThreads: [],
+        destinedEnding: 'Free the valley.', estimatedArcs: 11, unresolvedPlotThreads: [],
       } });
     });
     await page.goto(`${origin}/?preview=story-seed`);

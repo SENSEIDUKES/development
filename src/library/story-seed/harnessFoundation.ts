@@ -96,8 +96,8 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     worldAtChapterZero,
     genre: required.genre,
     toneStyle: labeledLines([
+      // How the prose reads is the Style skill's job, never a Blueprint paragraph (SENSEI, 2026-11-06).
       ['Story tradition', getStoryStyleLabel(required.style)],
-      ['Style bible', blueprint?.styleBible],
     ]),
     permanentInstructions: labeledLines([['Make It Work', optional.makeItWorkInstruction]]),
     openingSituation: withAddedDetail(identity.startingLocation, canon.startingLocationDetail),
@@ -112,7 +112,7 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       ['Society', canon.societyStructure],
       ['Society detail', canon.societyStructureDetail],
       // The World rules sheet carries the ladder and how power works; what is
-      // left is the outline prose no card slot holds.
+      // left is what the creator wrote about power that no card slot holds.
       ['Power system', carriesWorld ? canon.powerSystemBeyondItsCard : canon.powerSystem],
       ['Main Opposition', world.mainOpposition],
     ]),

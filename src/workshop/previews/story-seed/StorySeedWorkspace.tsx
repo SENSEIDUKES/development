@@ -128,13 +128,6 @@ async function runDevelopmentFillScenario(isCancelled: () => boolean) {
   if (!await waitUnlessCancelled(80, isCancelled)) return;
   if (!mutateRoots('development', isCancelled, root => clickByText(root, 'button', /Xianxia/))) return;
 
-  // Casual story preferences belong to Origin, before the deeper World and Arc editors.
-  if (!mutateRoots('development', isCancelled, root => {
-    (root.querySelector('[id="origin-face-slap-increase"]') as HTMLElement | null)?.click();
-    (root.querySelector('[id="origin-plot-armor-decrease"]') as HTMLElement | null)?.click();
-    (root.querySelector('[id="origin-recognition-increase"]') as HTMLElement | null)?.click();
-  })) return;
-
   // Premise remains the dominant Origin field.
   if (!mutateRoots('development', isCancelled, root => setFieldValue(
     root,
@@ -199,8 +192,12 @@ async function runDevelopmentFillScenario(isCancelled: () => boolean) {
   if (!await selectSection(/^ARC$/)) return;
   if (!mutateRoots('development', isCancelled, root => {
     setFieldValue(root, 'hard-pin-1', 'Protect the prince.');
-    setFieldValue(root, 'active-arc-goal-input', 'Reach Foundation rank.');
+    setFieldValue(root, 'arc-one-goal-1', 'Reach Foundation rank.');
     setFieldValue(root, 'destined-ending-input', 'The prince survives and severs the celestial court from fate.');
+    // Fun Settings sit on the ARC page (SENSEI, 2026-11-06).
+    (root.querySelector('[id="origin-face-slap-increase"]') as HTMLElement | null)?.click();
+    (root.querySelector('[id="origin-plot-armor-decrease"]') as HTMLElement | null)?.click();
+    (root.querySelector('[id="origin-recognition-increase"]') as HTMLElement | null)?.click();
   })) return;
 
   // Land back on Origin.

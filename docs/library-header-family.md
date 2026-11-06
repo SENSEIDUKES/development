@@ -24,7 +24,9 @@ logo and the Portrait keep their width; the actions take the rest of the row:
   computers (from 1024px) it moves to the right, just before the Familiar, the music
   note and the Portrait. Its words are whole or not shown, never cut off or "…": on one line where
   it fits, otherwise wrapped onto two (a phone's narrow field reads "Search for /
-  worlds"); only a field too narrow for the longest word shows the magnifier alone. It opens the Search sheet on a tap, click, Enter or Space, never on focus.
+  worlds"). The magnifier shows alone when the field is 6rem wide or less, when it is
+  too narrow for the longest word, or when the words would need a third line
+  (`WorkspaceHeaderSearch` measures this and sets `data-label-hidden`). It opens the Search sheet on a tap, click, Enter or Space, never on focus.
 - Optional page context (`contextualItem`, the public Cave's Public View) follows Search.
 - The host-provided persistent accessory (the Familiar's recall) follows.
 - The host's sound control (the music note) sits here on laptops; while a Library bottom

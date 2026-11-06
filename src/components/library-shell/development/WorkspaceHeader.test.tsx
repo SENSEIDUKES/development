@@ -176,6 +176,8 @@ it('regression: keeps the Search field, Portrait touch target and menu styling i
   expect(css).not.toMatch(/\.workspace-search-placeholder \{[^}]*text-overflow/);
   // On a phone's narrow field the words wrap onto two lines rather than disappear.
   expect(css).toMatch(/\.workspace-search-placeholder \{[^}]*flex: 1 1 0; min-width: min-content;/);
+  // Words that would need a third line step aside for the magnifier instead of being cut off.
+  expect(css).toMatch(/\.workspace-search-field\[data-label-hidden\] \.workspace-search-placeholder \{[^}]*position: absolute;/);
   expect(css).toMatch(/\.workspace-search-field \{[^}]*height: 44px;/);
   expect(css).toMatch(/\.workspace-profile-portrait \{[^}]*width: 44px; height: 44px;/);
   expect(css).toContain('.workspace-profile-panel');

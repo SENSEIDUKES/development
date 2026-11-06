@@ -137,6 +137,13 @@
     position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   }
 }
+/* Words that would need a third line step aside for the magnifier too (set by
+   WorkspaceHeaderSearch), so they are never cut off by the field. */
+.workspace-search-field[data-label-hidden] { justify-content: center; }
+.workspace-search-field[data-label-hidden] .workspace-search-line { flex: none; justify-content: center; }
+.workspace-search-field[data-label-hidden] .workspace-search-placeholder {
+  position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
 
 /* The Profile Portrait and its menu. The menu is drawn over the page (beside
    whatever opened it: the Portrait, or the laptop sidebar's profile card). */

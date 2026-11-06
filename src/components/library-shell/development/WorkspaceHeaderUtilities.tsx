@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { NarrativeButton, NarrativeTextBox } from '@seihouse/sen/presentation';
 import { LibrarySearchIcon as SENSearchIcon } from '@seihouse/library-ui';
 import type { SenLanguageCode } from '@seihouse/sen/contracts';
@@ -32,6 +32,27 @@ export function WorkspaceHeaderSearch({ items }: { items: readonly HeaderSearchI
   const dispatchTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => { window.clearTimeout(dispatchTimer.current); }, []);
 
+  // The words show on one or two lines, or not at all: more than two lines would be cut
+  // off by the field, so then only the magnifier shows. Measured again whenever the field
+  // resizes or the words change (an interface language swaps them in place).
+  const placeholderRef = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const field = searchRef.current;
+    const words = placeholderRef.current;
+    if (!field || !words) return;
+    const measure = () => {
+      delete field.dataset.labelHidden;
+      const lineHeight = parseFloat(getComputedStyle(words).lineHeight);
+      if (lineHeight > 0 && words.getBoundingClientRect().height > lineHeight * 2 + 1) field.dataset.labelHidden = '';
+    };
+    measure();
+    const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    resize?.observe(field);
+    const mutation = typeof MutationObserver === 'undefined' ? null : new MutationObserver(measure);
+    mutation?.observe(words, { childList: true, characterData: true, subtree: true });
+    return () => { resize?.disconnect(); mutation?.disconnect(); };
+  }, []);
+
   const searchId = useId();
   const needle = query.trim().toLocaleLowerCase();
   const results = items.filter(item => `${item.label} ${item.description ?? ''}`.toLocaleLowerCase().includes(needle));
@@ -46,7 +67,7 @@ export function WorkspaceHeaderSearch({ items }: { items: readonly HeaderSearchI
         aria-haspopup="dialog" aria-expanded={open} onClick={openSearch}>
         <span className="workspace-search-line">
           <SENSearchIcon aria-hidden="true" size={20} className="workspace-search-emblem" />
-          <span className="workspace-search-placeholder">Search for worlds</span>
+          <span ref={placeholderRef} className="workspace-search-placeholder">Search for worlds</span>
         </span>
       </button>
     </div>

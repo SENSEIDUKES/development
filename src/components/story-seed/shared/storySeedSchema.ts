@@ -946,13 +946,28 @@ export const alignArcOneWithSeed = (
 /**
  * The creator's directions for Arc 2 and Arc 3 take the place of the
  * Blueprint's own, and join it where it has none, within the arcs a story of
- * `estimatedArcs` has after Arc 1.
+ * `estimatedArcs` has after Arc 1. A line that was the creator's
+ * (`authoredArcs`) and is no longer on the Seed was cleared, and leaves too.
  */
-export const alignArcLookaheadWithSeed = (entries: ArcLookaheadEntry[], seed: StorySeedInput, estimatedArcs: number): ArcLookaheadEntry[] => {
+export const alignArcLookaheadWithSeed = (
+  entries: ArcLookaheadEntry[],
+  seed: StorySeedInput,
+  estimatedArcs: number,
+  authoredArcs: readonly number[] = [],
+): ArcLookaheadEntry[] => {
   const written = seed.story.optional.arcLookahead ?? [];
-  const kept = entries.filter(entry => !written.some(line => line.arcNumber === entry.arcNumber));
+  const kept = entries.filter(entry => !written.some(line => line.arcNumber === entry.arcNumber) && !authoredArcs.includes(entry.arcNumber));
   return fitArcLookahead([...written, ...kept].sort((a, b) => a.arcNumber - b.arcNumber), estimatedArcs);
 };
+
+/** Which of the look-ahead's lines are the creator's own: Arc 2 and Arc 3 only. */
+const readAuthoredArcs = (value: unknown): number[] =>
+  Array.isArray(value) ? [2, 3].filter(arcNumber => value.includes(arcNumber)) : [];
+
+/** The arcs of `aligned` whose line came from the Seed. */
+const authoredArcsOf = (aligned: readonly ArcLookaheadEntry[], seed: StorySeedInput): number[] =>
+  aligned.filter(entry => (seed.story.optional.arcLookahead ?? []).some(line => line.arcNumber === entry.arcNumber && line.direction === entry.direction))
+    .map(entry => entry.arcNumber);
 
 /**
  * Arc 1's plan from the creator's own goals, for a story begun without a
@@ -1115,7 +1130,11 @@ export const normalizeWorldBlueprint = (
   // The look-ahead was written for the Blueprint's saved length; a story now
   // set to another length drops it rather than steer toward the old ending.
   const arcLookahead = savedArcs !== undefined && savedArcs !== estimatedArcs ? [] : readArcLookahead(source, estimatedArcs);
-  const alignedLookahead = alignArcLookaheadWithSeed(arcLookahead, normalizedSeed, estimatedArcs);
+  const savedAuthoredArcs = readAuthoredArcs(source.authoredArcLookahead);
+  const alignedLookahead = alignArcLookaheadWithSeed(arcLookahead, normalizedSeed, estimatedArcs, seed ? savedAuthoredArcs : []);
+  // Read alone, a Blueprint keeps its own record of which lines were the creator's.
+  const authoredArcLookahead = seed ? authoredArcsOf(alignedLookahead, normalizedSeed)
+    : savedAuthoredArcs.filter(arcNumber => alignedLookahead.some(entry => entry.arcNumber === arcNumber));
 
   return {
     blueprintVersion: sourceMetadata('blueprintVersion') || WORLD_BLUEPRINT_VERSION,
@@ -1137,6 +1156,7 @@ export const normalizeWorldBlueprint = (
     arcPlans: alignArcOneWithSeed(arcOne ? [arcOne] : undefined, normalizedSeed, { keepPlannedGoals: true }),
     ...(arcOne ? { arcOneScope } : {}),
     ...(alignedLookahead.length ? { arcLookahead: alignedLookahead } : {}),
+    ...(authoredArcLookahead.length ? { authoredArcLookahead } : {}),
     hardPins: validateHardPinInputs(seed ? normalizedSeed.story.optional.hardPins ?? [] : source.hardPins ?? []),
     funSettings: normalizeFunSettings(seed ? normalizedSeed.story.optional.funSettings : source.funSettings),
     destinedEnding: text(seedFoundations.destinedEnding) || read('destinedEnding', fallback.destinedEnding || ''),
@@ -1516,9 +1536,11 @@ export const mirrorSeedIntoBlueprint = (blueprint: WorldBlueprint, seed: StorySe
     // The Blueprint's look-ahead was written for one length: a changed length
     // drops it, and the next arcs are planned from where the story is. The
     // creator's own directions always travel.
-    arcLookahead: (() => {
-      const aligned = alignArcLookaheadWithSeed(estimatedArcs === blueprint.estimatedArcs ? blueprint.arcLookahead ?? [] : [], seed, estimatedArcs);
-      return aligned.length ? aligned : undefined;
+    ...(() => {
+      const aligned = alignArcLookaheadWithSeed(estimatedArcs === blueprint.estimatedArcs ? blueprint.arcLookahead ?? [] : [], seed, estimatedArcs,
+        blueprint.authoredArcLookahead ?? []);
+      const authored = authoredArcsOf(aligned, seed);
+      return { arcLookahead: aligned.length ? aligned : undefined, authoredArcLookahead: authored.length ? authored : undefined };
     })(),
     hardPins: validateHardPinInputs(seed.story.optional.hardPins ?? []),
     funSettings: normalizeFunSettings(seed.story.optional.funSettings),

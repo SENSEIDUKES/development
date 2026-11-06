@@ -157,6 +157,24 @@ describe('Story Seed arc plans', () => {
     expect(mirrorSeedIntoBlueprint(reviewed, same).arcLookahead).toEqual([...lookahead, { arcNumber: 3, direction: 'The sect war reaches the capital.' }]);
   });
 
+  it('clears an Arc 2 or Arc 3 line from the Blueprint when the creator clears it, keeping the Blueprint\'s own', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
+    seed.story.optional.arcCount = 12;
+    seed.story.optional.arcLookahead = [{ arcNumber: 3, direction: 'The sect war reaches the capital.' }];
+    const pair = reconcileStorySeedBlueprint(seed, { arcPlans: [arcOne], estimatedArcs: 12, arcLookahead: [...lookahead, { arcNumber: 3, direction: 'Model line.' }] });
+    expect(pair.blueprint.arcLookahead).toEqual([...lookahead, { arcNumber: 3, direction: 'The sect war reaches the capital.' }]);
+    const withLines = (arcLookahead: StorySeedInput['story']['optional']['arcLookahead']): StorySeedInput =>
+      ({ ...pair.seed, story: { ...pair.seed.story, optional: { ...pair.seed.story.optional, arcLookahead } } });
+    // Deleting the line one letter at a time leaves nothing of it behind.
+    const typing = mirrorSeedIntoBlueprint(pair.blueprint, withLines([{ arcNumber: 3, direction: 'T' }]));
+    const cleared = mirrorSeedIntoBlueprint(typing, withLines(undefined));
+    expect(cleared.arcLookahead).toEqual(lookahead);
+    // Saved and reopened, it stays cleared.
+    const [restored] = parseStorySeedJson(JSON.stringify(createStorySeedExport(withLines(undefined), cleared)));
+    expect(restored.blueprint?.arcLookahead).toEqual(lookahead);
+  });
+
   it('drops the removed long-term goal field during normalization', () => {
     const empty = createEmptyStorySeedInput();
     const seed = normalizeStorySeedInput({ ...empty, story: {

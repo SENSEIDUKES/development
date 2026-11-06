@@ -118,5 +118,14 @@ describe('the story\'s knowledge, for a companion to look up', () => {
     // With the last chapter open, the whole record is how things are.
     expect(lookUpDocs(storyKnowledgeOf(state, 's', 'c2'), 'Han Shuo')[0].topic.definition).toContain('missing an arm');
   });
+
+  it('finds the open chapter as "this chapter" however many chapters came before it', () => {
+    const many = [1, 2, 3, 4, 5].map(number => ({ chapterNumber: number, title: `Part ${number}`, recap: { text: `Recap ${number}`, source: 'model' as const, updatedAt: '' } }));
+    const knowledge = storyKnowledge({ codex, chapters: many, openChapterNumber: 5 });
+    for (const asked of ['this chapter', 'the current chapter', 'what just happened']) {
+      expect(lookUpDocs(knowledge, asked)[0].topic.title, asked).toBe('Chapter 5: Part 5');
+    }
+    expect(lookUpDocs(knowledge, 'chapter 3')[0].topic.title).toBe('Chapter 3: Part 3');
+  });
 });
 

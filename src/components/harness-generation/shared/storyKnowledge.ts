@@ -194,7 +194,9 @@ export function storyKnowledge({ codex, chapters, openChapterNumber }: {
         return {
           id: `story-chapter-${chapter.chapterNumber}`,
           title: `Chapter ${chapter.chapterNumber}${chapter.title ? `: ${chapter.title}` : ''}`,
-          aliases: [`chapter ${chapter.chapterNumber}`, ...(open ? ['this chapter', 'current chapter', 'what just happened'] : [])],
+          // The lookup drops question words ("this", "what"), so the open chapter answers to what is left:
+          // "this chapter" and "the chapter" become "chapter", "what just happened" becomes "just happened".
+          aliases: [`chapter ${chapter.chapterNumber}`, ...(open ? ['chapter', 'current chapter', 'just happened'] : [])],
           definition: joined([open ? 'The chapter open now.' : undefined, sentence(chapter.recap?.text)]),
         };
       }) },

@@ -437,7 +437,7 @@ const describeSeedArcGoalsProblem = (value: unknown): string | undefined => {
   const goals = normalizeSeedArcGoals(value);
   const given = goals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0);
   const open = goals.filter(goal => goal.chapters === undefined).length;
-  if (given + open > ARC_LENGTH || (!open && goals.length && given !== ARC_LENGTH && goals.length === MAX_ARC_GOALS)) {
+  if (given + open > ARC_LENGTH) {
     return `Arc 1's goals take ${ARC_LENGTH} chapters in all.`;
   }
   return undefined;
@@ -879,48 +879,79 @@ const readArcLookahead = (source: Record<string, unknown>, estimatedArcs: number
 };
 
 /**
+ * Arc 1's chapters, from the creator's: every count they gave is kept, and the
+ * rest of the arc is shared among the goals left without one. Where `saved`
+ * (the Blueprint's own allocation) already fills that rest exactly, it stands.
+ * When every goal has a count and they leave chapters over, the last goal runs
+ * to the arc's end. Counts that cannot fit the arc share it evenly; the ARC
+ * page already says so.
+ */
+const allocateArcOneChapters = (given: ReadonlyArray<number | undefined>, saved: ReadonlyArray<number | undefined> = []): number[] => {
+  const share = (total: number, count: number, index: number) => Math.floor(total / count) + (index === count - 1 ? total % count : 0);
+  const even = given.map((_, index) => share(ARC_LENGTH, given.length, index));
+  const rest = ARC_LENGTH - given.reduce<number>((sum, chapters) => sum + (chapters ?? 0), 0);
+  const open = given.flatMap((chapters, index) => chapters === undefined ? [index] : []);
+  if (!open.length) return rest < 0 ? even : given.map((chapters, index) => chapters! + (index === given.length - 1 ? rest : 0));
+  if (rest < open.length) return even;
+  const keepSaved = open.every(index => (saved[index] ?? 0) >= 1) && open.reduce((sum, index) => sum + saved[index]!, 0) === rest;
+  let openIndex = 0;
+  return given.map((chapters, index) => chapters ?? (keepSaved ? saved[index]! : share(rest, open.length, openIndex++)));
+};
+
+/**
  * Keeps Arc 1's goals in step with the creator's Arc 1 goals on the Seed: each
  * of the Blueprint's goals takes the wording of the Seed's goal in its place,
- * and the creator's chapters when every goal has them and they total the arc.
- * Identities and any goal the Seed does not have stay as saved. A Blueprint
- * that has not planned Arc 1 yet gets none: Arc 1 comes only from the
- * Blueprint, never from the Seed's goals alone.
+ * a goal the creator added after the Blueprint joins the plan, and the
+ * creator's chapters are kept (`allocateArcOneChapters`). Identities and any
+ * goal the Seed does not have stay as saved. A Blueprint that has not planned
+ * Arc 1 yet gets none: Arc 1 comes only from the Blueprint, never from the
+ * Seed's goals alone.
  */
 export const alignArcOneWithSeed = (arcPlans: ArcPlan[] | undefined, seed: StorySeedInput): ArcPlan[] | undefined => {
   const seedGoals = seed.story.optional.arcOneGoals ?? [];
   const first = arcPlans?.[0];
   if (!first) return undefined;
   if (!seedGoals.length) return [first];
-  const goals = first.goals.map((goal, index) => seedGoals[index] ? { ...goal, text: seedGoals[index].text } : goal);
-  const allocated = seedGoals.length === goals.length && seedGoals.every(goal => goal.chapters !== undefined)
-    && seedGoals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0) === ARC_LENGTH;
-  return [{ ...first, goals: allocated ? goals.map((goal, index) => ({ ...goal, chapters: seedGoals[index].chapters! })) : goals }];
+  const count = Math.min(MAX_ARC_GOALS, Math.max(seedGoals.length, first.goals.length));
+  const given = Array.from({ length: count }, (_, index) => seedGoals[index]?.chapters);
+  const saved = first.goals.map(goal => goal.chapters);
+  const chapters = given.some(value => value !== undefined) || count > first.goals.length
+    ? allocateArcOneChapters(given, saved) : saved;
+  const ids = new Set(first.goals.map(goal => goal.id));
+  const newId = () => {
+    let number = first.goals.length + 1;
+    while (ids.has(`arc-1-${number}`)) number += 1;
+    ids.add(`arc-1-${number}`);
+    return `arc-1-${number}`;
+  };
+  return [{ ...first, goals: Array.from({ length: count }, (_, index) => ({
+    ...first.goals[index],
+    id: first.goals[index]?.id ?? newId(),
+    text: seedGoals[index]?.text ?? first.goals[index].text,
+    chapters: chapters[index],
+  })) }];
 };
 
-/** The creator's directions for Arc 2 and Arc 3 take the place of the Blueprint's own. */
-export const alignArcLookaheadWithSeed = (entries: ArcLookaheadEntry[], seed: StorySeedInput): ArcLookaheadEntry[] => {
+/**
+ * The creator's directions for Arc 2 and Arc 3 take the place of the
+ * Blueprint's own, and join it where it has none, within the arcs a story of
+ * `estimatedArcs` has after Arc 1.
+ */
+export const alignArcLookaheadWithSeed = (entries: ArcLookaheadEntry[], seed: StorySeedInput, estimatedArcs: number): ArcLookaheadEntry[] => {
   const written = seed.story.optional.arcLookahead ?? [];
-  return entries.map(entry => written.find(line => line.arcNumber === entry.arcNumber) ?? entry);
+  const kept = entries.filter(entry => !written.some(line => line.arcNumber === entry.arcNumber));
+  return fitArcLookahead([...written, ...kept].sort((a, b) => a.arcNumber - b.arcNumber), estimatedArcs);
 };
 
 /**
  * Arc 1's plan from the creator's own goals, for a story begun without a
- * Blueprint: chapters the creator gave are kept and the rest of the arc is
- * shared among the goals left without, so the arc totals its chapters. When
- * what the creator gave cannot fit, the arc is shared evenly.
+ * Blueprint, its chapters from the creator's (`allocateArcOneChapters`).
  */
 export const arcOnePlanFromSeedGoals = (goals: readonly StorySeedArcGoal[] | undefined): ArcPlan | undefined => {
   if (!goals?.length) return undefined;
-  const given = goals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0);
-  const open = goals.filter(goal => goal.chapters === undefined).length;
-  const fits = open ? ARC_LENGTH - given >= open : given === ARC_LENGTH;
-  const share = (total: number, count: number, index: number) => Math.floor(total / count) + (index === count - 1 ? total % count : 0);
-  let openIndex = 0;
+  const chapters = allocateArcOneChapters(goals.map(goal => goal.chapters));
   return validateArcPlan({ arcNumber: 1, goals: goals.map((goal, index) => ({
-    id: `arc-1-${index + 1}`,
-    text: goal.text,
-    chapters: !fits ? share(ARC_LENGTH, goals.length, index)
-      : goal.chapters ?? share(ARC_LENGTH - given, open, openIndex++),
+    id: `arc-1-${index + 1}`, text: goal.text, chapters: chapters[index],
   })) });
 };
 
@@ -1073,6 +1104,7 @@ export const normalizeWorldBlueprint = (
   // The look-ahead was written for the Blueprint's saved length; a story now
   // set to another length drops it rather than steer toward the old ending.
   const arcLookahead = savedArcs !== undefined && savedArcs !== estimatedArcs ? [] : readArcLookahead(source, estimatedArcs);
+  const alignedLookahead = alignArcLookaheadWithSeed(arcLookahead, normalizedSeed, estimatedArcs);
 
   return {
     blueprintVersion: sourceMetadata('blueprintVersion') || WORLD_BLUEPRINT_VERSION,
@@ -1093,7 +1125,7 @@ export const normalizeWorldBlueprint = (
       : fallback.initialCharacters,
     arcPlans: alignArcOneWithSeed(arcOne ? [arcOne] : undefined, normalizedSeed),
     ...(arcOne ? { arcOneScope } : {}),
-    ...(arcLookahead.length ? { arcLookahead: alignArcLookaheadWithSeed(arcLookahead, normalizedSeed) } : {}),
+    ...(alignedLookahead.length ? { arcLookahead: alignedLookahead } : {}),
     hardPins: validateHardPinInputs(seed ? normalizedSeed.story.optional.hardPins ?? [] : source.hardPins ?? []),
     funSettings: normalizeFunSettings(seed ? normalizedSeed.story.optional.funSettings : source.funSettings),
     destinedEnding: text(seedFoundations.destinedEnding) || read('destinedEnding', fallback.destinedEnding || ''),
@@ -1464,11 +1496,13 @@ export const mirrorSeedIntoBlueprint = (blueprint: WorldBlueprint, seed: StorySe
     majorFactions: (worldFoundations.factions || []).filter(entry => text(entry.name)).map(factionBlueprintEntry),
     arcPlans: alignArcOneWithSeed(blueprint.arcPlans, seed),
     estimatedArcs,
-    // The look-ahead was written for one length: a changed length drops it,
-    // and the next arcs are planned from where the story is.
-    arcLookahead: estimatedArcs === blueprint.estimatedArcs && blueprint.arcLookahead?.length
-      && fitArcLookahead(blueprint.arcLookahead, estimatedArcs).length
-      ? alignArcLookaheadWithSeed(fitArcLookahead(blueprint.arcLookahead, estimatedArcs), seed) : undefined,
+    // The Blueprint's look-ahead was written for one length: a changed length
+    // drops it, and the next arcs are planned from where the story is. The
+    // creator's own directions always travel.
+    arcLookahead: (() => {
+      const aligned = alignArcLookaheadWithSeed(estimatedArcs === blueprint.estimatedArcs ? blueprint.arcLookahead ?? [] : [], seed, estimatedArcs);
+      return aligned.length ? aligned : undefined;
+    })(),
     hardPins: validateHardPinInputs(seed.story.optional.hardPins ?? []),
     funSettings: normalizeFunSettings(seed.story.optional.funSettings),
     destinedEnding: text(worldFoundations.destinedEnding) || '',

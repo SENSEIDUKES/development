@@ -29,6 +29,8 @@ export const FAMILIAR_ACTION_LIST: readonly FamiliarActionEntry[] = [
   { id: 'go-energy', label: 'My Energy', where: 'anywhere', instant: true },
   { id: 'go-settings', label: 'Settings', where: 'anywhere', instant: true },
   { id: 'go-store', label: 'Store', where: 'anywhere', instant: true },
+  // The rescue: back to the previous screen, always offered (shown as its own pill, never a tile).
+  { id: 'go-back', label: 'Take me back', where: 'anywhere', instant: true },
   // Spoken codes (N3, C12): said, never shown as tiles. Going somewhere, so at once.
   { id: 'open-novel', label: 'Open a story by its code', where: ['home'], instant: true },
   { id: 'open-chapter', label: 'Open a chapter by its code', where: ['reader'], instant: true },

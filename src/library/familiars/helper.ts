@@ -219,6 +219,11 @@ export interface FamiliarChatLine { speaker: 'reader' | 'familiar' | 'note'; tex
 
 /** The conversation keeps this many lines; older ones drop off. */
 const CHAT_LINES = 200;
+/** The rescue action's id: back to the previous screen, shown as its own pill and said in either mode. */
+export const FAMILIAR_BACK_ACTION_ID = 'go-back';
+/** What the reader says for it, typed or spoken, in Explain or Action. */
+export const FAMILIAR_BACK_PHRASES = ['take me back', 'go back', 'back'] as const;
+const BACK_WORDS: ReadonlySet<string> = new Set(FAMILIAR_BACK_PHRASES);
 /** The reader's own words asking for a spoiler, which unlock it on the device voice. */
 const SPOILER_WORDS = /\bspoil(?:er|ers)?\b/i;
 const SPOILER_WORDS_ALL = /\bspoil(?:er|ers)?\b/gi;
@@ -565,10 +570,28 @@ export class FamiliarHelperController {
     this.listening?.stop();
     this.release(true);
   };
+  /**
+   * "Take me back", the rescue that never changes anything: a change waiting
+   * to be confirmed is backed out of, and otherwise the reader goes back to
+   * the previous screen. Said or tapped, in either mode.
+   */
+  back = () => {
+    if (!this.state.open || !this.context || this.state.phase === 'saving') return;
+    this.silence();
+    if (this.state.proposal) {
+      this.change();
+      if (this.spoken) this.respond('Backed out. Nothing changed.', 'ready');
+      return;
+    }
+    const action = this.context.actions.find(entry => entry.id === FAMILIAR_BACK_ACTION_ID);
+    if (action) this.act(action, '');
+    else this.respond('There is nothing to go back to.', 'ready');
+  };
   submit = (text: string) => {
     if (!this.state.open || !this.context || this.state.phase === 'saving') return;
     this.silence();
     if (normalize(text) === 'cancel') { this.close(); return; }
+    if (BACK_WORDS.has(normalize(text))) { this.back(); return; }
     if (this.state.proposal) {
       if (normalize(text) === 'confirm') void this.confirm();
       else if (HEAR.has(normalize(text)) && this.proposedAction()?.preview) this.hear();
@@ -828,6 +851,12 @@ export class FamiliarHelperController {
     if (call.name === 'propose_action') {
       if (this.state.phase === 'saving') return 'A change is still being saved.';
       const action = context.actions.find(entry => entry.id === call.actionId);
+      // "Take me back" with a change waiting backs out of the change, as the pill and the device voice do: it never leaves the page.
+      if (call.actionId === FAMILIAR_BACK_ACTION_ID && this.state.proposal) {
+        this.change();
+        this.addLine({ speaker: 'note', text: 'Backed out' });
+        return 'Backed out of the change. Nothing changed, and they are still on this page.';
+      }
       if (!action) return 'That choice is not on this page.';
       if (this.instant(action)) {
         try { await action.run(action.input ? call.input.trim() : ''); } catch (error) { return error instanceof Error ? error.message : 'That did not work.'; }

@@ -134,4 +134,58 @@ describe('the Familiar\'s actions, page by page', () => {
     helper.submit('N1');
     expect(helper.getSnapshot().message).toBe('N1 is not on this page.');
   });
+
+  it('always has a way back: "take me back" in either mode goes to the previous screen at once, and backs out of a change instead', async () => {
+    // One screen behind this one, in the tab's history.
+    const back = vi.fn();
+    vi.stubGlobal('window', { history: { state: { depth: 1 }, back } });
+    try {
+      const navigate = vi.fn();
+      const helper = new FamiliarHelperController(voice);
+      const withBack = (page: FamiliarPage): FamiliarHelperContext => ({ ...base(page, navigate), actions: appFamiliarActions(navigate, { back: true }) });
+      helper.setContext(Symbol(), withBack('profile'), 'base');
+      // Never a tile: it is not among the front suggestions, it comes after them.
+      expect(composeFamiliarContext(withBack('home'))!.actions.slice(0, 4).map(action => action.id)).not.toContain('go-back');
+      helper.open();
+      helper.submit('Take me back');
+      expect(back).toHaveBeenCalledOnce();
+      await vi.waitFor(() => expect(helper.getSnapshot().open).toBe(false));
+      helper.open();
+      helper.setMode('action');
+      helper.submit('go back');
+      expect(back).toHaveBeenCalledTimes(2);
+      await vi.waitFor(() => expect(helper.getSnapshot().open).toBe(false));
+      // A change waiting to be confirmed: back backs out of it, nothing is saved, nobody leaves the page.
+      helper.setContext(Symbol(), withBack('reader'), 'base');
+      helper.setContext(Symbol(), await reader());
+      helper.open();
+      helper.submit('conflict');
+      expect(helper.getSnapshot().proposal?.actionId).toBe('conflict');
+      helper.back();
+      expect(helper.getSnapshot().proposal).toBeUndefined();
+      expect(back).toHaveBeenCalledTimes(2);
+      // Live talk too: asked to go back with a change waiting, the Familiar backs out of it and stays.
+      let call: ((request: { name: 'propose_action'; actionId: string; input: string }) => Promise<string>) | undefined;
+      const live = new FamiliarHelperController(voice, 'en-US', { start: (_brief, events) => { call = events.call; events.connected(); return { end() {}, send() {} }; } });
+      live.setContext(Symbol(), withBack('reader'), 'base');
+      live.setContext(Symbol(), await reader());
+      live.open(true);
+      await call!({ name: 'propose_action', actionId: 'conflict', input: '' });
+      expect(live.getSnapshot().proposal?.actionId).toBe('conflict');
+      await expect(call!({ name: 'propose_action', actionId: 'go-back', input: '' })).resolves.toMatch(/^Backed out/);
+      expect(live.getSnapshot().proposal).toBeUndefined();
+      expect(back).toHaveBeenCalledTimes(2);
+      // With nothing waiting, it goes back.
+      await expect(call!({ name: 'propose_action', actionId: 'go-back', input: '' })).resolves.toBe('Done: Went back.');
+      expect(back).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('offers it only where there is somewhere to go back to', () => {
+    expect(appFamiliarActions(vi.fn()).map(action => action.id)).not.toContain('go-back');
+    expect(appFamiliarActions(vi.fn(), { back: true })[0].id).toBe('go-back');
+  });
 });
+

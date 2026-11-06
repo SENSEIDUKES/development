@@ -116,6 +116,29 @@ export function routeHref(route: NovelExpandedRoute): string {
 export type Navigate = (route: NovelExpandedRoute, options?: { replace?: boolean; scroll?: boolean }) => void;
 
 /**
+ * How many of the app's own screens are behind this one in the tab's history:
+ * 0 on the screen the app was opened on. Each history entry the app adds
+ * carries it (`history.state.depth`), so Back can tell the app's last screen
+ * from the page before the app.
+ */
+export function historyDepth(): number {
+  const depth = (window.history.state as { depth?: unknown } | null)?.depth;
+  return typeof depth === 'number' && depth > 0 ? depth : 0;
+}
+
+/** Whether "Take me back" has somewhere to go: an earlier screen, or Home from anywhere else. */
+export const canGoBack = (atHome: boolean) => historyDepth() > 0 || !atHome;
+
+/**
+ * The Familiar's rescue: back to the previous screen in the app, never out of
+ * it. On the screen the app was opened on, back is Home.
+ */
+export function goBack(navigate: Navigate) {
+  if (historyDepth() > 0) window.history.back();
+  else navigate(HOME_ROUTE, { replace: true });
+}
+
+/**
  * The page in the address bar. Moving inside the app adds a history entry, so
  * the browser's Back and Forward walk the same pages; `replace` swaps the
  * current entry instead (a started story replaces Create, so Back goes Home).
@@ -129,9 +152,10 @@ export function useAppRoute(): [NovelExpandedRoute, Navigate] {
   }, []);
   const navigate = useCallback<Navigate>((next, { replace = false, scroll = true } = {}) => {
     const url = routeHref(next);
-    if (replace) window.history.replaceState(null, '', url);
-    else window.history.pushState(null, '', url);
-    setRoute(next);
+    if (replace) window.history.replaceState({ depth: historyDepth() }, '', url);
+    else window.history.pushState({ depth: historyDepth() + 1 }, '', url);
+    // A fresh object even for the same page (Home from Home), so the app redraws and sees the new history depth.
+    setRoute({ ...next });
     // A new page starts at its top.
     if (scroll) window.scrollTo({ top: 0 });
   }, []);

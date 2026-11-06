@@ -16,15 +16,19 @@ const blueprint: WorldBlueprint = {
   worldOverview: 'A shattered celestial court rules the sects through fate ledgers.',
   startingLocation: 'Outer sect quarry',
   societyStructure: 'Sect-led feudal hierarchy',
-  powerSystemOutline: 'Cultivation advances by severing imposed destinies.',
   mcProfile: 'Ye Chen is a fallen heir with memories of seven failures.',
   majorFactions: ['Heavenly Sword Sect', 'Celestial Court'],
   initialCharacters: ['Elder Qin (Protector)', 'Ninth Prince'],
+  destinedEnding: 'The prince survives and severs the court from fate.',
+  estimatedArcs: 12,
+};
+
+/** Prose an older Blueprint may still hold; the Blueprint no longer asks for or keeps it (SENSEI, 2026-11-06). */
+const retiredBlueprintProse = {
+  powerSystemOutline: 'Cultivation advances by severing imposed destinies.',
   firstArcPromise: 'The first assassination attempt begins at the tournament.',
   tropeRules: 'Consequences before triumph.',
   styleBible: 'korean',
-  destinedEnding: 'The prince survives and severs the court from fate.',
-  estimatedArcs: 12,
 };
 
 /** Fate Survival proposals an older Blueprint may still hold; the development Blueprint no longer reads them. */
@@ -151,7 +155,6 @@ describe('Story Seed creator/story/world contract', () => {
       ...blueprint,
       title: 'A Generated Replacement Title',
       logline: 'Generated direction that deliberately differs from the premise.',
-      styleBible: 'Generated prose guidance, not a Novel Tradition value.',
       creator: 'Model-Invented Creator',
       status: 'Model-Invented Status',
       createdAt: 'Model-Invented Date',
@@ -179,7 +182,6 @@ describe('Story Seed creator/story/world contract', () => {
     expect(normalized.originSnapshot).toEqual(createBlueprintOriginSnapshot(seed));
     expect(normalized.title).toBe('Ashes of the Ninth Meridian');
     expect(normalized.logline).toBe('Generated direction that deliberately differs from the premise.');
-    expect(normalized.styleBible).toBe('Generated prose guidance, not a Novel Tradition value.');
     expect(normalized.creator).toBe('SENSEI');
     expect(normalized.status).toBeUndefined();
     expect(normalized.createdAt).toBe('2026-08-06T00:00:00.000Z');
@@ -193,7 +195,7 @@ describe('Story Seed creator/story/world contract', () => {
     expect(draft.originSnapshot?.premise).toBe('A prince must survive the seven timelines that say he dies.');
     expect(draft.logline).toBe('');
     expect(draft.logline).not.toBe(draft.originSnapshot?.premise);
-    expect(draft.styleBible).toBe('');
+    for (const retired of Object.keys(retiredBlueprintProse)) expect(draft).not.toHaveProperty(retired);
     expect(draft.mainCharacter).toMatchObject({
       name: 'Ye Chen',
       age: '',
@@ -237,8 +239,6 @@ describe('Story Seed creator/story/world contract', () => {
       title: '',
       startingLocation: '',
       societyStructure: '',
-      powerSystemOutline: '',
-      firstArcPromise: '',
       mainCharacter: {
         name: '',
         age: '',
@@ -253,8 +253,6 @@ describe('Story Seed creator/story/world contract', () => {
       title: '',
       startingLocation: '',
       societyStructure: '',
-      powerSystemOutline: '',
-      firstArcPromise: '',
       mcProfile: '',
       mainCharacter: {
         name: '',
@@ -428,8 +426,8 @@ describe('Story Seed creator/story/world contract', () => {
           generalAtmosphere: 'Ominous',
           powerPace: 'Slow burn',
           logline: blueprint.logline,
-          firstArcPromise: blueprint.firstArcPromise,
-          tropeRules: blueprint.tropeRules,
+          firstArcPromise: retiredBlueprintProse.firstArcPromise,
+          tropeRules: retiredBlueprintProse.tropeRules,
           unresolvedPlotThreads: retiredSurvivalFields.unresolvedPlotThreads,
           estimatedArcs: 7,
         },
@@ -565,10 +563,10 @@ describe('Story Seed creator/story/world contract', () => {
     expect(migratedBlueprint).toMatchObject({
       title: 'Ashes of the Ninth Meridian — Reviewed Legacy Blueprint',
       logline: blueprint.logline,
-      firstArcPromise: blueprint.firstArcPromise,
-      tropeRules: blueprint.tropeRules,
       estimatedArcs: blueprint.estimatedArcs,
     });
+    // The retired prose an old Blueprint held is not carried forward.
+    for (const retired of Object.keys(retiredBlueprintProse)) expect(migratedBlueprint).not.toHaveProperty(retired);
     expect(migratedBlueprint).not.toHaveProperty('majorMysteries');
     expect(migratedBlueprint).not.toHaveProperty('unresolvedPlotThreads');
     expect(JSON.stringify(migrated)).not.toContain('fatePressure');

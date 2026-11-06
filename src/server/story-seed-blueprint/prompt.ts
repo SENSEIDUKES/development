@@ -158,7 +158,6 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     "destinedEnding",
     "estimatedArcs",
     "powerSystem",
-    "powerSystemOutline",
     "worldOverview",
     "societyStructure",
     // The world at Chapter 0: a card kind left out of the answer would leave
@@ -173,11 +172,8 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     "abilities",
     "characters",
     "mainOpposition",
-    "firstArcPromise",
     "arcOne",
     "arcLookahead",
-    "tropeRules",
-    "styleBible",
   ],
   properties: {
     title: { type: "string", minLength: 1 },
@@ -186,7 +182,6 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     estimatedArcs: { type: "integer", minimum: exactArcs ?? STORY_LENGTH_ARCS.min, maximum: exactArcs ?? STORY_LENGTH_ARCS.max },
     // The World rules sheet, which the Seed keeps in its power-system family.
     powerSystem: { type: "object", additionalProperties: false, required: SEED_WORLD_RULES_FIELDS, properties: textSlots(SEED_WORLD_RULES_FIELDS) },
-    powerSystemOutline: { type: "string", minLength: 1 },
     worldOverview: { type: "string", minLength: 1 },
     societyStructure: { type: "string", minLength: 1 },
     places: cardList(SEED_PLACE_SLOT_FIELDS, SEED_PLACE_LIMIT, 1),
@@ -212,11 +207,8 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     // The supporting cast, written last of the cards: the creator's own by name first, then supporting ones.
     characters: cardList(SEED_CHARACTER_SLOT_FIELDS, SEED_CHARACTER_LIMIT, 1),
     mainOpposition: { type: "string" },
-    firstArcPromise: { type: "string", minLength: 1 },
     arcOne: ARC_PLAN_DRAFT_SCHEMA,
     arcLookahead: ARC_LOOKAHEAD_SCHEMA,
-    tropeRules: { type: "string", minLength: 1 },
-    styleBible: { type: "string", minLength: 1 },
   },
 }) as const;
 

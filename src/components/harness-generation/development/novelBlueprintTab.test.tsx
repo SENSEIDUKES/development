@@ -78,14 +78,14 @@ describe('The novel page Blueprint tab', () => {
     expect(container.querySelector('[data-testid="novel-arc-unplanned"]')!.textContent).toContain('Arcs 2–10 are planned when each begins');
     expect(container.querySelector('[data-testid="novel-arc-goal-rules"]')!.textContent).toContain('While this novel is private');
 
-    const outline = container.querySelector<HTMLTextAreaElement>('#blueprint-power-outline')!;
-    await act(async () => setValue(outline, 'EDITED_OUTLINE Meridians burn brighter under starlight.'));
+    const world = container.querySelector<HTMLTextAreaElement>('#blueprint-world-overview')!;
+    await act(async () => setValue(world, 'EDITED_WORLD Meridians burn brighter under starlight.'));
     await act(async () => button('Save Blueprint')!.click());
     const saved = repository.snapshot();
     expect(saved.foundations).toHaveLength(2);
     const revision = saved.foundations.at(-1)!.input;
-    expect(revision.worldFacts).toContain('EDITED_OUTLINE');
-    expect((revision.sourceSnapshot!.blueprint as { powerSystemOutline: string }).powerSystemOutline).toContain('EDITED_OUTLINE');
+    expect(revision.worldFacts).toContain('EDITED_WORLD');
+    expect((revision.sourceSnapshot!.blueprint as { worldOverview: string }).worldOverview).toContain('EDITED_WORLD');
     expect(revision.destinedEnding).toBe(saved.foundations[0].input.destinedEnding);
     expect(revision.plannedArcCount).toBe(10);
     expect(saved.chapters).toHaveLength(1);
@@ -93,7 +93,7 @@ describe('The novel page Blueprint tab', () => {
 
     await controller.hydrate();
     await controller.generateNextChapter(story.id, 'fixture');
-    expect(buildHarnessGenerationPrompt(requests.at(-1)!).userPrompt).toContain('EDITED_OUTLINE');
+    expect(buildHarnessGenerationPrompt(requests.at(-1)!).userPrompt).toContain('EDITED_WORLD');
   });
 
   it('Regular Reader: plans the next arc when it begins, then the reader edits it as its review', async () => {
@@ -137,10 +137,10 @@ describe('The novel Blueprint editor', () => {
   it('keeps unsaved edits when the page re-renders', async () => {
     const { repository } = await startNovel(false);
     await openBlueprint(repository);
-    await act(async () => setValue(container.querySelector<HTMLTextAreaElement>('#blueprint-power-outline')!, 'UNSAVED_OUTLINE'));
+    await act(async () => setValue(container.querySelector<HTMLTextAreaElement>('#blueprint-world-overview')!, 'UNSAVED_WORLD'));
     // The page re-renders (as it does on any workspace update) while the edit is unsaved.
     await act(async () => root.render(<HarnessGenerationWorkspace repository={repository} modelAdapter={modelAdapter} />));
-    expect(container.querySelector<HTMLTextAreaElement>('#blueprint-power-outline')!.value).toBe('UNSAVED_OUTLINE');
+    expect(container.querySelector<HTMLTextAreaElement>('#blueprint-world-overview')!.value).toBe('UNSAVED_WORLD');
     expect(button('Save Blueprint')!.disabled).toBe(false);
     expect(repository.snapshot().foundations).toHaveLength(1);
   });

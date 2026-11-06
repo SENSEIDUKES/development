@@ -342,7 +342,7 @@ describe("protected Story Seed World Blueprint generation", () => {
     // Structured Seed details stay in their Seed fields, never copied into Blueprint prose.
     expect(blueprint.mcProfile).toBe((generatedBlueprint().mainCharacter as WorldBlueprint["mainCharacter"])?.backgroundProfile);
     expect(blueprint.mcProfile).not.toContain("Secret advantage:");
-    expect(blueprint.powerSystemOutline).toBe(generatedBlueprint().powerSystemOutline);
+    expect(blueprint).not.toHaveProperty("powerSystemOutline");
     // The cast lists show the cast the Seed will hold: the creator's cards exactly, then the new ones.
     expect(blueprint.initialCharacters[0]).toContain("Minister Sui");
     expect(blueprint.initialCharacters[0]).toContain("age: 52");
@@ -366,7 +366,7 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(filled.factions![0]).toEqual(seed.world.optional.worldFoundations.factions![0]);
     expect(filled.abilities).toEqual(seed.world.optional.worldFoundations.abilities);
     expect(filled.mainOpposition).toBe("Regent Zhao and the forged succession decree");
-    expect(blueprint.firstArcPromise).toBe(generatedBlueprint().firstArcPromise);
+    for (const retired of ["firstArcPromise", "tropeRules", "styleBible"]) expect(blueprint).not.toHaveProperty(retired);
     expect(blueprint.destinedEnding).toBe(seed.world.optional.worldFoundations.destinedEnding);
   });
 
@@ -453,12 +453,12 @@ describe("protected Story Seed World Blueprint generation", () => {
     // The creator is told which parts were left out, in their words, never a vague retry.
     expect(response.status).toBe(502);
     expect(response.body).toEqual({
-      error: "The model's World Blueprint left out the logline, the first-arc promise, the trope rules, the style bible, "
+      error: "The model's World Blueprint left out the logline, "
         + "the main character's age, and the main character's appearance. Nothing was saved; generate again.",
     });
     expect(onError).toHaveBeenCalledOnce();
     expect((onError.mock.calls[0][0] as { missing: string[] }).missing)
-      .toEqual(['logline', 'firstArcPromise', 'tropeRules', 'styleBible', 'mainCharacter.age', 'mainCharacter.appearance']);
+      .toEqual(['logline', 'mainCharacter.age', 'mainCharacter.appearance']);
   });
 
   it("rejects an invalid configured model before calling the provider", async () => {
@@ -703,11 +703,11 @@ describe("Cleaned-up Blueprint instructions", () => {
       "the immediate goal the creator will review", "Completion rules", "Nothing is left for a later chapter to invent",
     ]) expect(both).not.toContain(removed);
     // The instructions are the Origin, World and Arc skills in that order, then the permanent rules.
-    const order = ["[Origin] SEN Eastern Fantasy 1.0.0", "[World] SEN World Builder 1.0.0", "[Arc] SEN Arc Planner 1.0.0", "The creator's words\n"]
+    const order = ["[Origin] SEN Eastern Fantasy 1.1.0", "[World] SEN World Builder 1.1.0", "[Arc] SEN Arc Planner 1.1.0", "The creator's words\n"]
       .map(heading => systemInstruction.indexOf(heading));
     expect(order.every(index => index >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(systemInstruction.startsWith("[Origin] SEN Eastern Fantasy 1.0.0\nYou are writing the world of an Eastern fantasy web novel")).toBe(true);
+    expect(systemInstruction.startsWith("[Origin] SEN Eastern Fantasy 1.1.0\nYou are writing the world of an Eastern fantasy web novel")).toBe(true);
     // The request is the Seed and only the lines that depend on it.
     expect(userPrompt.startsWith("Build the World Blueprint for this Story Seed:\n\n{")).toBe(true);
     expect(userPrompt).not.toContain("Never the main character.");
@@ -735,9 +735,9 @@ describe("Cleaned-up Blueprint instructions", () => {
     // Every card kind of the world at Chapter 0 is asked for, so none can be
     // left out of a schema-valid answer.
     expect([...schema.required].sort()).toEqual([
-      "abilities", "arcLookahead", "arcOne", "characters", "destinedEnding", "estimatedArcs", "factions", "firstArcPromise", "logline",
-      "mainCharacter", "mainOpposition", "places", "powerSystem", "powerSystemOutline", "societyStructure", "species", "startingAbilities",
-      "startingLocation", "styleBible", "things", "title", "tropeRules", "worldOverview",
+      "abilities", "arcLookahead", "arcOne", "characters", "destinedEnding", "estimatedArcs", "factions", "logline",
+      "mainCharacter", "mainOpposition", "places", "powerSystem", "societyStructure", "species", "startingAbilities",
+      "startingLocation", "things", "title", "worldOverview",
     ]);
     expect(Object.keys(schema.properties)).not.toContain("worldOverviewDetail");
   });

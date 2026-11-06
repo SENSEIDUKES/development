@@ -75,8 +75,6 @@ ${factDetailLine(blueprint, 'startingLocationDetail', blueprint.startingLocation
 ### World Order
 ${blueprint.societyStructure || ''}
 ${factDetailLine(blueprint, 'societyStructureDetail', blueprint.societyStructure, 'World Order Detail')}
-### Power System Outline
-${blueprint.powerSystemOutline || ''}
 
 ## Arc
 
@@ -93,9 +91,6 @@ ${(blueprint.arcPlans ?? []).slice(0, 1).map(plan => plan.goals.map((goal, index
 ${Object.entries(blueprint.funSettings ?? {}).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
 
 **Story Length:** ${blueprint.estimatedArcs || ''} arcs. Each later arc is planned when it begins.
-
-### Generated Style Bible
-${blueprint.styleBible || ''}
 
 ## Side Characters
 ${markdownList(blueprint.initialCharacters || [])}

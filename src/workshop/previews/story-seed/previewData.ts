@@ -122,15 +122,10 @@ export const createMockBlueprint = (): WorldBlueprint => ({
     'A sect-led world built atop the bones of a shattered celestial court, where meridians are currency and fate itself can be read like a ledger.',
   startingLocation: 'The outer sect labor quarry of Heavenly Sword Sect, carved into a volcanic rift.',
   societyStructure: 'Sect-led feudal hierarchy with a decaying celestial court above it.',
-  powerSystemOutline:
-    'Qi Condensation -> Foundation Establishment -> Core Formation -> Nascent Soul -> Soul Transformation, each tier gated by meridian purity.',
   mcProfile:
     'Ye Chen, outwardly a crippled young master, carries foreknowledge of seven timelines in which the Ninth Prince is assassinated.',
   majorFactions: ['Heavenly Sword Sect', 'Deep Sea Alliance', 'Abyssal Cult'],
   initialCharacters: ['Elder Qin (Protector)', 'Junior Sister Han (Ally)', 'Young Master Ye (Rival)'],
-  firstArcPromise: 'The sect tournament exposes the first assassination attempt on the prince.',
-  tropeRules: 'Face-slapping tied to fate corrections, not petty insults.',
-  styleBible: 'Close third-person narration with restrained exposition, concrete sensory detail, and sharp reversals at scene endings.',
   destinedEnding: "The prince survives and shatters the celestial court's grip on fate.",
   estimatedArcs: 10,
 });

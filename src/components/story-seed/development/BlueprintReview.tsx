@@ -17,7 +17,6 @@ import { patchStoryRequired, patchWorldIdentity, type UpdateSeed } from './seedS
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import {
   BlueprintHeaderSection,
-  BlueprintNotesSection,
   BlueprintOriginSection,
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
@@ -145,10 +144,6 @@ export const BlueprintReview = ({
     }));
   }, [mainCharacter, setBlueprint]);
 
-  const updatePowerSystemOutline = useCallback((powerSystemOutline: string) => {
-    setBlueprint(current => ({ ...current, powerSystemOutline }));
-  }, [setBlueprint]);
-
   const updateWorldFactDetail = useCallback((field: WorldFactDetailField, value: string, fact: string) => {
     setBlueprint(current => reviewWorldFactDetail(current, field, value, fact));
   }, [setBlueprint]);
@@ -254,8 +249,6 @@ export const BlueprintReview = ({
           />
           <FunSettingsPanel seed={seed} updateSeed={updateSeed} />
 
-          <BlueprintNotesSection styleBible={blueprint.styleBible} setBlueprint={setBlueprint} />
-
           {/* The Story Settings this novel starts with, confirmed before
               Create. They are edited in Story Seed Settings. */}
           <section className="bp-section" aria-labelledby="blueprint-story-settings-heading" data-testid="blueprint-story-settings">
@@ -316,9 +309,7 @@ export const BlueprintReview = ({
             worldType={identity.worldType ?? ''}
             startingLocation={identity.startingLocation ?? ''}
             societyStructure={identity.societyStructure ?? ''}
-            powerSystemOutline={blueprint.powerSystemOutline}
             onUpdateWorldIdentity={updateWorldIdentity}
-            onPowerSystemOutlineChange={updatePowerSystemOutline}
             worldFactDetails={worldFactDetails}
             onWorldFactDetailChange={updateWorldFactDetail}
           />

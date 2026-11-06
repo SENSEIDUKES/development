@@ -16,7 +16,6 @@ import { WorldCardGrid } from './blueprint/WorldCardGrid';
 import './blueprint/blueprint.css';
 import {
   BlueprintHeaderSection,
-  BlueprintNotesSection,
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
 
@@ -141,9 +140,7 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, r
         worldType={identity.worldType ?? ''}
         startingLocation={identity.startingLocation ?? ''}
         societyStructure={identity.societyStructure ?? ''}
-        powerSystemOutline={blueprint.powerSystemOutline}
         onUpdateWorldIdentity={patch => updateSeed(patchWorldIdentity(patch))}
-        onPowerSystemOutlineChange={powerSystemOutline => setBlueprint(current => ({ ...current, powerSystemOutline }))}
         worldFactDetails={{
           worldOverviewDetail: blueprint.worldOverviewDetail,
           worldOverviewDetailBasis: blueprint.worldOverviewDetailBasis,
@@ -154,7 +151,6 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, r
         }}
         onWorldFactDetailChange={(field, value, fact) => setBlueprint(current => reviewWorldFactDetail(current, field, value, fact))}
       />
-      <BlueprintNotesSection styleBible={blueprint.styleBible} setBlueprint={setBlueprint} />
       </fieldset>
       <WorldCardGrid seed={seed} updateSeed={updateSeed} readOnly={readOnly} />
       {!readOnly && <LibraryPanel padding="sm" className="sm:p-5">

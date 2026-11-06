@@ -13,7 +13,7 @@ What a story is made of: what the creator fills in on the Story Seed, and what t
   - These base names never change.
   - Codex themes relabel them per story later ("Ranks" shows as cultivation realms in one story and social standing in another).
   - CAPA skills teach the model how to fill them in.
-- **The user decides what matters; the AI decides how it plays out.** This is HARNESS_PRINCIPLES.md rule 8.
+- **The user decides what matters; the AI decides how it plays out.** This is HARNESS_PRINCIPLES.md rule 8, balanced by Fate mode: the user is never made to do everything. In Fate Survival the user steers and makes these calls; in Regular mode the app makes most of them for them, and they can still step in.
 
 Examples are given in pairs: *power fantasy / romance or drama*.
 
@@ -152,5 +152,7 @@ The arrogant young master of the week, the sneering shopkeeper.
 - The writer creates them freely as the story needs them. They're recorded as **mini cards** (name and who they are in one line) behind a side-characters button in the Codex.
 - **Only the user promotes one** to the full cast, which gives them a full card and a place in the arc's cast. The AI never decides who matters.
 - **The crowd** ("a guard", "the disciples") gets no card at all.
+
+How this splits between Fate Survival (where the user steers) and Regular mode (where the app does most of it) is decided when this change is designed.
 
 This touches the writer, the tagger and the Codex, not only the Story Seed and Blueprint, so it comes after the form is built.

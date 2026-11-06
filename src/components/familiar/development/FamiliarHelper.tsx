@@ -293,7 +293,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
 
     <div ref={body} className="familiar-helper-body">
     {info ? <div className="familiar-helper-info">
-      <p><Lightbulb size={16} aria-hidden /> <strong>Explain</strong> shows and tells you how things work here.</p>
+      <p><Lightbulb size={16} aria-hidden /> <strong>Explain</strong> shows and tells you how things work here, and answers questions about the app and your story.</p>
       <p><Zap size={16} aria-hidden /> <strong>Action</strong> does things for you. It always asks before it changes anything.</p>
       {helper.live
         ? <p><Mic size={16} aria-hidden /> Tap the microphone and talk with your Familiar like a friend; tap it again to hang up. <MessagesSquare size={16} aria-hidden /> shows the conversation, where you can type to it too.</p>

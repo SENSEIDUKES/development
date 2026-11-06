@@ -50,7 +50,9 @@ writing an entry for. Nothing here stores that record; the caller decides.
   page (`src/workshop/docs/`), and the Familiar's live conversation
   (`src/library/familiars/helper.ts` and `src/server/familiar-live/`), which
   also reads a story's own knowledge in this shape (`storyKnowledgeOf` in
-  `src/components/harness-generation/shared/storyKnowledge.ts`).
+  `src/components/harness-generation/shared/storyKnowledge.ts`). The device
+  voice reads both too, with no model, when nothing on the page matches what
+  the reader said.
 - No Workshop preview of its own: it has no surface. The docs page it serves is
   at `?preview=novel-expanded-docs`.
 

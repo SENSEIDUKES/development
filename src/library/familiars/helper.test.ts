@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { docsIndex } from '@seihouse/sen/docs-knowledge';
 import { novelExpandedDocs } from '../docs/catalog';
-import { FAMILIAR_LIVE_QUIET_MS, FAMILIAR_QUIET_NOTE, FAMILIAR_TYPED_QUIET_MS, FamiliarHelperController, matchFamiliarCommand, type FamiliarHelperAction, type FamiliarHelperContext, type FamiliarLive, type FamiliarLiveBrief, type FamiliarLiveEvents, type FamiliarVoice } from './helper';
+import { FAMILIAR_LIVE_QUIET_MS, FAMILIAR_SPOILER_OFFER, FAMILIAR_QUIET_NOTE, FAMILIAR_TYPED_QUIET_MS, FamiliarHelperController, matchFamiliarCommand, type FamiliarHelperAction, type FamiliarHelperContext, type FamiliarLive, type FamiliarLiveBrief, type FamiliarLiveEvents, type FamiliarVoice } from './helper';
 
 function setup() {
   const run = vi.fn(async (_text: string) => {});
@@ -521,6 +521,59 @@ describe('Familiar live talk', () => {
     t.events().ended('Your Familiar stopped talking.');
     expect(t.helper.getSnapshot()).toMatchObject({ live: undefined, message: 'Your Familiar stopped talking.' });
     expect(t.voice.listen).toHaveBeenCalledOnce();
+  });
+});
+
+describe('the device voice answers questions from the docs and the story', () => {
+  const story = () => [
+    { id: 'story-characters', title: 'This story: characters', description: '', topics: [{ id: 'story-character-1', title: 'Lin Feng', aliases: [], definition: 'The main character. Has both arms.' }] },
+    { id: 'story-spoilers', title: 'This story: spoilers', description: '', unlisted: true as const, topics: [{ id: 'spoiler-story-character-1', title: 'Lin Feng', aliases: [], definition: 'Spoiler, from after Chapter 1: loses an arm.' }] },
+  ];
+  function withStory(mode: 'explain' | 'action') {
+    const t = setup();
+    t.helper.setContext(t.owner, { ...t.context, knowledge: story });
+    t.helper.open();
+    t.helper.setMode(mode);
+    return t;
+  }
+
+  it('reads the best entry for a typed question, with no model and no spoiler, in either mode', () => {
+    for (const mode of ['explain', 'action'] as const) {
+      const t = withStory(mode);
+      t.helper.submit('Who is Lin Feng?');
+      expect(t.helper.getSnapshot().message).toBe(`Lin Feng. The main character. Has both arms. ${FAMILIAR_SPOILER_OFFER}`);
+      expect(t.helper.getSnapshot().message).not.toContain('loses an arm');
+      // Typed: shown, not read aloud.
+      expect(t.voice.speak).not.toHaveBeenCalled();
+    }
+  });
+
+  it('reads the answer aloud in a voice session, then listens again', () => {
+    const t = withStory('explain');
+    t.helper.open(true);
+    t.heard('who is Lin Feng');
+    expect(t.voice.speak).toHaveBeenLastCalledWith(expect.stringContaining('Lin Feng. The main character.'), 'en-US', expect.any(Function), expect.any(Function));
+    const listens = vi.mocked(t.voice.listen).mock.calls.length;
+    t.spoken();
+    expect(vi.mocked(t.voice.listen).mock.calls.length).toBe(listens + 1);
+  });
+
+  it('tells a spoiler only when the reader asks for it in their own words', () => {
+    const t = withStory('explain');
+    t.helper.submit('spoil Lin Feng');
+    expect(t.helper.getSnapshot().message).toBe('Lin Feng. Spoiler, from after Chapter 1: loses an arm.');
+  });
+
+  it('answers the app\'s docs too, still runs a page\'s action first, and falls back to the hint', () => {
+    const t = withStory('explain');
+    t.helper.submit('What is a Story Seed?');
+    expect(t.helper.getSnapshot().message).toMatch(/^Story Seed\. The starting place for a new novel/);
+    const acting = withStory('action');
+    acting.helper.submit('conflict');
+    expect(acting.helper.getSnapshot().proposal?.actionId).toBe('conflict');
+    const lost = withStory('action');
+    lost.helper.submit('qwertyuiop');
+    expect(lost.helper.getSnapshot().message).toBe('Choose a path.');
   });
 });
 

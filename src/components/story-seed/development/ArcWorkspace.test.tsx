@@ -54,14 +54,16 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove(); resetWorkshopStorySeedStorage(); });
 
 describe('Story Seed Arc and World ownership', () => {
-  it('renders the approved order, reveals up to three optional pins one at a time, and one goal without a full plan editor', () => {
+  it('renders the approved order, reveals up to three optional pins one at a time, and Arc 1 goals without a full plan editor', () => {
     render(initial());
-    const nodes = ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]'].map(selector => container.querySelector(selector)!);
+    // Ending, story length, Arc 1 goals, where Arcs 2 and 3 head, Hard Pins, Fun Settings (SENSEI, 2026-11-06).
+    const nodes = ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', 'label[for="arc-one-goal-1"]',
+      'label[for="arc-direction-2"]', '#arc-hard-pins-title', '#origin-fun-settings-title'].map(selector => container.querySelector(selector)!);
     nodes.forEach(node => expect(node).not.toBeNull());
     nodes.slice(1).forEach((node, i) => expect(nodes[i].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy());
     const pinCount = () => container.querySelectorAll('input[id^="hard-pin-"]').length;
     expect(pinCount()).toBe(1);
-    expect(container.querySelectorAll('#active-arc-goal-input')).toHaveLength(1);
+    expect(container.querySelectorAll('input[id^="arc-one-goal-"]:not([id$="-chapters"])')).toHaveLength(1);
     expect(container.textContent).not.toMatch(/Story Sauce|Story Direction|First Major Conflict|Main Opposition|Make It Work|Edit Arc Plan|Add Goal/);
     fill('hard-pin-1', 'Protect the master.');
     expect(pinCount()).toBe(2);
@@ -84,15 +86,30 @@ describe('Story Seed Arc and World ownership', () => {
     act(() => more.click());
     expect(more.getAttribute('aria-expanded')).toBe('true');
     expect(container.textContent).toContain('You can alter this outcome later.');
-    expect(container.textContent).not.toContain('Fun Settings');
+  });
+
+  it('keeps Arc 1 goals in order with optional chapters, reveals them one at a time up to five, and keeps the directions for Arcs 2 and 3', () => {
+    render(initial());
+    const goalCount = () => container.querySelectorAll('input[id^="arc-one-goal-"]:not([id$="-chapters"])').length;
+    fill('arc-one-goal-1', 'Expelled at the sect gate.');
+    fill('arc-one-goal-1-chapters', '6');
+    fill('arc-one-goal-2', 'Win a place in the outer sect.');
+    expect(goalCount()).toBe(3);
+    expect(current.story.optional.arcOneGoals).toEqual([{ text: 'Expelled at the sect gate.', chapters: 6 }, { text: 'Win a place in the outer sect.' }]);
+    expect(container.querySelector('[data-testid="arc-one-chapters-summary"]')!.textContent).toBe('6 of 30 chapters given.');
+    ['Third', 'Fourth', 'Fifth'].forEach((text, i) => fill(`arc-one-goal-${i + 3}`, `${text} goal.`));
+    expect(goalCount()).toBe(5);
+    fill('arc-direction-3', 'The sect war spills into the capital.');
+    expect(current.story.optional.arcLookahead).toEqual([{ arcNumber: 3, direction: 'The sect war spills into the capital.' }]);
+    fill('arc-direction-3', '');
+    expect(current.story.optional.arcLookahead).toBeUndefined();
   });
 
   it('preserves edits through World, Blueprint review, persistence, export/import, and story creation', async () => {
     render(initial());
     fill('destined-ending-input', 'Free the valley.');
     ['Protect the master.', 'Restore the temple.', 'Keep the vow.'].forEach((text, i) => fill(`hard-pin-${i + 1}`, text));
-    fill('active-arc-goal-input', 'Reach the mountain gate.');
-    render(current, 'origin');
+    fill('arc-one-goal-1', 'Reach the mountain gate.');
     act(() => container.querySelector<HTMLButtonElement>('#origin-face-slap-increase')!.click());
     render(current, 'world');
     fill('make-it-work-instruction-input', 'The mountain walks. Make it believable.');
@@ -101,7 +118,7 @@ describe('Story Seed Arc and World ownership', () => {
     render(current, 'blueprint');
     expect(button('Create Story')?.disabled).toBe(true);
     expect(container.textContent).toContain('Generate the Blueprint to plan Arc 1');
-    expect(container.querySelector('#active-arc-goal-input')).toBeNull();
+    expect(container.querySelector('#arc-one-goal-1')).toBeNull();
     // A generated Blueprint for a twelve-arc story plans Arc 1: review and edit it before the story begins.
     render(current, 'blueprint', reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: [roadmap[0]], estimatedArcs: 12 }).blueprint);
     expect(container.textContent).not.toContain('Arc 2');
@@ -114,8 +131,8 @@ describe('Story Seed Arc and World ownership', () => {
     });
     await act(async () => { button('Save goals')!.click(); });
     expect(blueprint.hardPins).toEqual(current.story.optional.hardPins);
-    // Arc 1's opening goal writes through to the Seed; its allocation and its other goals stay saved.
-    expect(current.story.optional.activeArcGoal).toEqual({ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 30 });
+    // Arc 1's goals write through to the Seed, wording and chapters; identities stay with the Blueprint.
+    expect(current.story.optional.arcOneGoals).toEqual([{ text: 'Open the mountain gate.', chapters: 18 }, { text: roadmap[0].goals[1].text, chapters: roadmap[0].goals[1].chapters }]);
     expect(blueprint.arcPlans).toEqual([{ arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 18 }, roadmap[0].goals[1]] }]);
     expect(blueprint.funSettings?.faceSlap).toBe('high');
     expect(button('Create Story')?.disabled).toBe(false);

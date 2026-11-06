@@ -36,6 +36,8 @@ const canonicalSeed = (): StorySeedInput => ({
         faceSlap: "low",
         plotArmor: "medium",
         recognition: "high",
+        tension: "low",
+        maturity: "high",
       },
       makeItWorkInstruction: "The prince's laziness is a disciplined defense against prophetic surveillance.",
     },
@@ -244,7 +246,7 @@ describe("protected Story Seed World Blueprint generation", () => {
   it('plans only Arc 1 with a hidden look-ahead, and retains author-owned Hard Pins, Fun Settings and the opening goal', async () => {
     const seed = canonicalSeed();
     seed.story.optional.hardPins = [{ text: 'Keep the master alive.' }];
-    seed.story.optional.activeArcGoal = { id: 'arc-1-author', text: 'Reach the hearing.', chapters: 30 };
+    seed.story.optional.arcOneGoals = [{ text: 'Reach the hearing.' }];
     const provider = new RecordingProvider({ ...generatedBlueprint(), hardPins: [{ text: 'Unwanted model goal.' }], funSettings: { faceSlap: 'high' } });
     const response = await handleStorySeedBlueprintHttp({ method: 'POST', headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed: seed } }, { environment, providerFactory: () => provider });
     expect(response.status).toBe(200);
@@ -270,7 +272,7 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(systemInstruction).toContain('arcOne: plan only Arc 1, as 1 to 5 goals in order.');
     expect(systemInstruction).toContain('it guides the planning of those arcs, which happens when the story reaches them');
     expect(systemInstruction).toContain('arcLookahead: one line each for Arc 2 and Arc 3');
-    expect(prompt).toContain("- Arc 1 begins with the Active Arc Goal: use its text word for word as Arc 1's first goal.");
+    expect(prompt).toContain("- Arc 1 begins with the creator's Arc 1 goals: use each word for word, in order, as Arc 1's first goals, with the chapters the creator gave. Plan any further goals after them so Arc 1 totals 30 chapters.");
     expect(`${systemInstruction}\n${prompt}`).not.toMatch(/firstMajorConflict|additionalStoryDirection|plotAndTropeSettings|arcPlans/);
   });
 

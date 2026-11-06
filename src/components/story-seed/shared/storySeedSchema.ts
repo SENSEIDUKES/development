@@ -6,7 +6,7 @@
  * ├── creator
  * ├── story
  * │   ├── required   storyTags · premise · genre · style
- * │   └── optional   intendedForMatureAudiences · fateSurvival · funSettings · hardPins · activeArcGoal · makeItWorkInstruction
+ * │   └── optional   intendedForMatureAudiences · fateSurvival · funSettings · hardPins · arcOneGoals · arcLookahead · makeItWorkInstruction
  * └── world
  *     ├── required   (intentionally empty — World has no required inputs)
  *     └── optional   worldIdentity · worldFoundations
@@ -20,7 +20,7 @@
  * in `storyAdministrativeMetadata.ts`.
  */
 
-import { ARC_LENGTH, MAX_ROADMAP_ARCS, STORY_LENGTH_ARCS, arcLookaheadFromPlans, createInitialArcPlan, normalizeArcLookahead, validateArcPlan, type ArcGoal, type ArcLookaheadEntry, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { ARC_LENGTH, ARC_LOOKAHEAD_TEXT_LIMIT, MAX_ARC_GOALS, MAX_ROADMAP_ARCS, STORY_LENGTH_ARCS, arcLookaheadFromPlans, createInitialArcPlan, normalizeArcLookahead, validateArcPlan, type ArcGoal, type ArcLookaheadEntry, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { normalizeFunSettings, validateHardPinInputs, type FunSettings, type HardPinInput } from '../../../narrative/storyDirection';
 import { worldCardKind, type WorldCardKindId } from '../../../narrative/worldRecord';
 import { isChapterWritingStyle, type ChapterWritingStyle } from '../../../narrative/readingMode';
@@ -80,8 +80,29 @@ export interface StorySeedFateSurvivalSettings {
   pressure: StorySeedSurvivalPressure;
 }
 
+/**
+ * One of Arc 1's goals as the creator wrote it on the ARC page. The chapters it
+ * takes are optional: the Blueprint gives the rest, so Arc 1 totals its
+ * chapters.
+ */
+export interface StorySeedArcGoal {
+  text: string;
+  chapters?: number;
+}
+
 export interface StorySeedStoryOptional {
-  activeArcGoal?: ArcGoal;
+  /**
+   * Arc 1's goals, in order, as the creator wrote them (SENSEI, 2026-11-06):
+   * the first is what is happening when Chapter 1 opens. The Blueprint keeps
+   * them word for word and plans any the creator left out. A Seed saved before
+   * held only the first, as `activeArcGoal`, which is read as this list's first.
+   */
+  arcOneGoals?: StorySeedArcGoal[];
+  /**
+   * Where Arc 2 and Arc 3 head, one line each, as the creator wrote them. The
+   * Blueprint keeps them word for word and writes any the creator left out.
+   */
+  arcLookahead?: ArcLookaheadEntry[];
   /**
    * The Story Length: how many arcs of 100 chapters the story takes to reach
    * its Destined Ending, as the creator chose it on the ARC page. Blueprint
@@ -390,6 +411,38 @@ const arcOneScopeFor = (estimatedArcs: number): NonNullable<WorldBlueprint['arcO
 
 const WORLD_IDENTITY_FIELDS = ['title'] as const;
 
+/** The creator's Arc 1 goals as saved: one-line wording, up to the arc's goal limit, chapters kept only when whole and within the arc. */
+const normalizeSeedArcGoals = (value: unknown): StorySeedArcGoal[] => (Array.isArray(value) ? value : [])
+  .flatMap(entry => {
+    const goal = isRecord(entry) ? entry : {};
+    const wording = text(goal.text)?.replace(/\s*[\r\n]+\s*/g, ' ');
+    if (!wording) return [];
+    const chapters = goal.chapters;
+    return [{ text: wording, ...(Number.isInteger(chapters) && (chapters as number) >= 1 && (chapters as number) <= ARC_LENGTH ? { chapters: chapters as number } : {}) }];
+  })
+  .slice(0, MAX_ARC_GOALS);
+
+/** The creator's directions for Arc 2 and Arc 3: one line each, the rest dropped. */
+const normalizeSeedArcLookahead = (value: unknown): ArcLookaheadEntry[] => [2, 3].flatMap(arcNumber => {
+  const entry = (Array.isArray(value) ? value : []).find(item => isRecord(item) && item.arcNumber === arcNumber);
+  const direction = isRecord(entry) ? text(entry.direction)?.replace(/\s*[\r\n]+\s*/g, ' ').slice(0, ARC_LOOKAHEAD_TEXT_LIMIT) : undefined;
+  return direction ? [{ arcNumber, direction }] : [];
+});
+
+/** Why the creator's Arc 1 goals cannot plan an arc, or undefined when they can. */
+const describeSeedArcGoalsProblem = (value: unknown): string | undefined => {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) return 'Arc 1 goals must be a list.';
+  if (value.length > MAX_ARC_GOALS) return `Arc 1 has at most ${MAX_ARC_GOALS} goals.`;
+  const goals = normalizeSeedArcGoals(value);
+  const given = goals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0);
+  const open = goals.filter(goal => goal.chapters === undefined).length;
+  if (given + open > ARC_LENGTH || (!open && goals.length && given !== ARC_LENGTH && goals.length === MAX_ARC_GOALS)) {
+    return `Arc 1's goals take ${ARC_LENGTH} chapters in all.`;
+  }
+  return undefined;
+};
+
 /**
  * Every Story Seed card's fields come from the one definition of its Codex
  * card kind (`WORLD_CARD_KINDS`), so a kind's slots are the same in the Seed,
@@ -518,7 +571,10 @@ const normalizeStoryOptional = (value: unknown): StorySeedStoryOptional => {
     if (!isSavedArcCount(source.arcCount)) throw new Error(STORY_LENGTH_MESSAGE);
     normalized.arcCount = source.arcCount;
   }
-  if (source.activeArcGoal !== undefined) normalized.activeArcGoal = createInitialArcPlan(source.activeArcGoal as ArcGoal).goals[0];
+  const arcOneGoals = normalizeSeedArcGoals(source.arcOneGoals ?? (isRecord(source.activeArcGoal) ? [{ text: source.activeArcGoal.text }] : undefined));
+  if (arcOneGoals.length) normalized.arcOneGoals = arcOneGoals;
+  const arcLookahead = normalizeSeedArcLookahead(source.arcLookahead);
+  if (arcLookahead.length) normalized.arcLookahead = arcLookahead;
   const makeItWorkInstruction = text(source.makeItWorkInstruction);
   if (makeItWorkInstruction) normalized.makeItWorkInstruction = makeItWorkInstruction;
   if (source.startedFrom === 'story-spark') normalized.startedFrom = 'story-spark';
@@ -674,10 +730,8 @@ export const validateStorySeedDraft = (value: unknown): StorySeedValidationResul
   if (isRecord(value.story) && isRecord(value.story.optional)) {
     try { validateHardPinInputs(value.story.optional.hardPins ?? []); }
     catch (error) { errors.push(error instanceof Error ? error.message : 'Invalid Hard Pins.'); }
-    if (value.story.optional.activeArcGoal !== undefined) {
-      try { createInitialArcPlan(value.story.optional.activeArcGoal as ArcGoal); }
-      catch (error) { errors.push(error instanceof Error ? error.message : 'Invalid Active Arc Goal.'); }
-    }
+    const goalsProblem = describeSeedArcGoalsProblem(value.story.optional.arcOneGoals);
+    if (goalsProblem) errors.push(goalsProblem);
     if (hasArcCount(value.story.optional.arcCount) && !isSavedArcCount(value.story.optional.arcCount)) {
       errors.push(STORY_LENGTH_MESSAGE);
     }
@@ -825,17 +879,49 @@ const readArcLookahead = (source: Record<string, unknown>, estimatedArcs: number
 };
 
 /**
- * Keeps Arc 1's opening goal in step with the Seed's Active Arc Goal, the one
- * arc-goal value the Seed owns. Allocations, identities and every other goal
- * stay as saved. A Blueprint that has not planned Arc 1 yet gets none: Arc 1
- * comes only from the Blueprint, never from the Seed's goal alone.
+ * Keeps Arc 1's goals in step with the creator's Arc 1 goals on the Seed: each
+ * of the Blueprint's goals takes the wording of the Seed's goal in its place,
+ * and the creator's chapters when every goal has them and they total the arc.
+ * Identities and any goal the Seed does not have stay as saved. A Blueprint
+ * that has not planned Arc 1 yet gets none: Arc 1 comes only from the
+ * Blueprint, never from the Seed's goals alone.
  */
 export const alignArcOneWithSeed = (arcPlans: ArcPlan[] | undefined, seed: StorySeedInput): ArcPlan[] | undefined => {
-  const seedGoal = seed.story.optional.activeArcGoal;
+  const seedGoals = seed.story.optional.arcOneGoals ?? [];
   const first = arcPlans?.[0];
   if (!first) return undefined;
-  if (!seedGoal || first.goals[0]?.text === seedGoal.text) return [first];
-  return [{ ...first, goals: first.goals.map((goal, index) => index === 0 ? { ...goal, text: seedGoal.text } : goal) }];
+  if (!seedGoals.length) return [first];
+  const goals = first.goals.map((goal, index) => seedGoals[index] ? { ...goal, text: seedGoals[index].text } : goal);
+  const allocated = seedGoals.length === goals.length && seedGoals.every(goal => goal.chapters !== undefined)
+    && seedGoals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0) === ARC_LENGTH;
+  return [{ ...first, goals: allocated ? goals.map((goal, index) => ({ ...goal, chapters: seedGoals[index].chapters! })) : goals }];
+};
+
+/** The creator's directions for Arc 2 and Arc 3 take the place of the Blueprint's own. */
+export const alignArcLookaheadWithSeed = (entries: ArcLookaheadEntry[], seed: StorySeedInput): ArcLookaheadEntry[] => {
+  const written = seed.story.optional.arcLookahead ?? [];
+  return entries.map(entry => written.find(line => line.arcNumber === entry.arcNumber) ?? entry);
+};
+
+/**
+ * Arc 1's plan from the creator's own goals, for a story begun without a
+ * Blueprint: chapters the creator gave are kept and the rest of the arc is
+ * shared among the goals left without, so the arc totals its chapters. When
+ * what the creator gave cannot fit, the arc is shared evenly.
+ */
+export const arcOnePlanFromSeedGoals = (goals: readonly StorySeedArcGoal[] | undefined): ArcPlan | undefined => {
+  if (!goals?.length) return undefined;
+  const given = goals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0);
+  const open = goals.filter(goal => goal.chapters === undefined).length;
+  const fits = open ? ARC_LENGTH - given >= open : given === ARC_LENGTH;
+  const share = (total: number, count: number, index: number) => Math.floor(total / count) + (index === count - 1 ? total % count : 0);
+  let openIndex = 0;
+  return validateArcPlan({ arcNumber: 1, goals: goals.map((goal, index) => ({
+    id: `arc-1-${index + 1}`,
+    text: goal.text,
+    chapters: !fits ? share(ARC_LENGTH, goals.length, index)
+      : goal.chapters ?? share(ARC_LENGTH - given, open, openIndex++),
+  })) });
 };
 
 /**
@@ -886,7 +972,7 @@ export const createBlueprintDraftFromSeed = (
     originSnapshot: createBlueprintOriginSnapshot(seed),
     title: worldIdentity.title || UNTITLED_BLUEPRINT_TITLE,
     // Generated summaries stay blank until Blueprint generation.
-    // The initial Active Arc Goal has its own canonical contract.
+    // The creator's Arc 1 goals have their own canonical contract.
     logline: '',
     mainCharacter: {
       name: mainCharacter.name || '',
@@ -1007,7 +1093,7 @@ export const normalizeWorldBlueprint = (
       : fallback.initialCharacters,
     arcPlans: alignArcOneWithSeed(arcOne ? [arcOne] : undefined, normalizedSeed),
     ...(arcOne ? { arcOneScope } : {}),
-    ...(arcLookahead.length ? { arcLookahead } : {}),
+    ...(arcLookahead.length ? { arcLookahead: alignArcLookaheadWithSeed(arcLookahead, normalizedSeed) } : {}),
     hardPins: validateHardPinInputs(seed ? normalizedSeed.story.optional.hardPins ?? [] : source.hardPins ?? []),
     funSettings: normalizeFunSettings(seed ? normalizedSeed.story.optional.funSettings : source.funSettings),
     destinedEnding: text(seedFoundations.destinedEnding) || read('destinedEnding', fallback.destinedEnding || ''),
@@ -1319,17 +1405,15 @@ export const promoteBlueprintIntoSeed = (seed: StorySeedInput, blueprint: WorldB
       ...(parsed.role ? { role: parsed.role } : {}), ...(parsed.details ? { description: parsed.details } : {}),
     });
   }
-  // Arc 1's opening goal fills an empty Seed Active Arc Goal. The Seed
-  // keeps it as the creator's statement of intent; its real chapter
-  // allocation lives in the Blueprint's Arc 1.
-  const openingGoal = blueprint.arcPlans?.[0]?.goals[0];
-  const suggestedGoal = openingGoal ? { id: openingGoal.id, text: openingGoal.text, chapters: ARC_LENGTH } : undefined;
+  // Arc 1's goals fill empty Seed Arc 1 goals, like any slot the creator left
+  // blank: wording and chapters, so the ARC page shows the plan the Blueprint made.
+  const suggestedGoals = blueprint.arcPlans?.[0]?.goals.map(goal => ({ text: goal.text, chapters: goal.chapters }));
 
   return normalizeStorySeedInput({
     ...source,
     story: { ...source.story, optional: {
       ...source.story.optional,
-      ...(!source.story.optional.activeArcGoal && suggestedGoal ? { activeArcGoal: suggestedGoal } : {}),
+      ...(!source.story.optional.arcOneGoals?.length && suggestedGoals?.length ? { arcOneGoals: suggestedGoals } : {}),
     } },
     world: { ...source.world, optional: {
       worldIdentity: {
@@ -1384,7 +1468,7 @@ export const mirrorSeedIntoBlueprint = (blueprint: WorldBlueprint, seed: StorySe
     // and the next arcs are planned from where the story is.
     arcLookahead: estimatedArcs === blueprint.estimatedArcs && blueprint.arcLookahead?.length
       && fitArcLookahead(blueprint.arcLookahead, estimatedArcs).length
-      ? fitArcLookahead(blueprint.arcLookahead, estimatedArcs) : undefined,
+      ? alignArcLookaheadWithSeed(fitArcLookahead(blueprint.arcLookahead, estimatedArcs), seed) : undefined,
     hardPins: validateHardPinInputs(seed.story.optional.hardPins ?? []),
     funSettings: normalizeFunSettings(seed.story.optional.funSettings),
     destinedEnding: text(worldFoundations.destinedEnding) || '',

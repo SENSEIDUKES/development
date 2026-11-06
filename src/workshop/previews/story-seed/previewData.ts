@@ -18,14 +18,14 @@ const MOCK_ROUTE = [
 
 /**
  * A mock Arc 1, the only arc a Blueprint plans. It opens with the creator's
- * Active Arc Goal when one is supplied; in a one-arc story its last goal is
+ * Arc 1 goals when they are supplied; in a one-arc story its last goal is
  * the Destined Ending.
  */
-export const createMockArcOne = (openingGoal?: { id: string; text: string }, arcCount = 10): ArcPlan => {
+export const createMockArcOne = (openingGoals?: ReadonlyArray<{ text: string }>, arcCount = 10): ArcPlan => {
   const texts: string[] = [...MOCK_ROUTE[0]];
   if (arcCount === 1) texts[texts.length - 1] = 'The prince survives and the court\'s grip on fate is broken';
   const goals = texts.map((text, goalIndex) => ({ id: `arc-1-goal-${goalIndex + 1}`, text, chapters: goalIndex === 1 ? 12 : 9 }));
-  if (openingGoal) goals[0] = { ...goals[0], id: openingGoal.id, text: openingGoal.text };
+  openingGoals?.slice(0, goals.length).forEach((goal, index) => { goals[index] = { ...goals[index], text: goal.text }; });
   return { arcNumber: 1, goals };
 };
 
@@ -148,7 +148,7 @@ export const createFilledStorySeedInput = (): StorySeedInput => ({
         plotArmor: 'low',
         recognition: 'high',
       },
-      activeArcGoal: { id: 'arc-1-rank', text: 'Reach Foundation rank.', chapters: 30 },
+      arcOneGoals: [{ text: 'Reach Foundation rank.' }],
       makeItWorkInstruction: 'The weakest bloodline is secretly the only one heaven fears.',
     },
   },

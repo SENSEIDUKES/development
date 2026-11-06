@@ -34,15 +34,16 @@ describe('Story Seed creator steps', () => {
 
     const ready = patchStoryRequired({ style: 'chinese', genre: 'Xianxia', premise: 'A courier crosses the sea.' })(empty);
     expect(stepStatus('origin', ready)).toBe('empty');
-    expect(stepStatus('origin', ready, ['origin.fun', 'origin.fate', 'origin.tags'])).toBe('filled');
+    expect(stepStatus('origin', ready, ['origin.fate', 'origin.tags'])).toBe('filled');
     expect(stepStatus('manifest', ready)).toBe('filled');
   });
 
   it('never treats untouched defaults as reviewed or lets confirmations replace required answers', () => {
     const seed = createEmptyStorySeedInput();
-    expect(partComplete('origin', 'fun', seed)).toBe(false);
+    // Fun Settings sit on the ARC page (SENSEI, 2026-11-06).
+    expect(partComplete('arc', 'fun', seed)).toBe(false);
     expect(partComplete('origin', 'fate', seed)).toBe(false);
-    expect(partComplete('origin', 'fun', seed, ['origin.fun'])).toBe(true);
+    expect(partComplete('arc', 'fun', seed, ['arc.fun'])).toBe(true);
     expect(partComplete('origin', 'style', seed, ['origin.style'])).toBe(false);
     expect(partComplete('origin', 'synopsis', seed, ['origin.synopsis'])).toBe(false);
     seed.story.required.style = 'chinese';
@@ -63,12 +64,12 @@ describe('Story Seed creator steps', () => {
     const world = SEED_SECTIONS.filter(section => section.family === 'world').map(section => section.id);
     expect(stepStatus('world', seed, world)).toBe('filled');
     expect(stepStatus('arc', seed, ['arc.ending'])).toBe('empty');
-    expect(stepStatus('arc', seed, ['arc.ending', 'arc.pins'])).toBe('filled');
+    expect(stepStatus('arc', seed, ['arc.ending', 'arc.goals', 'arc.pins', 'arc.fun'])).toBe('filled');
   });
 
   it('confirms only the displayed phone part or the displayed whole desktop page', () => {
-    expect(tabsToConfirm({ page: 'origin', part: 'fun' }, true)).toEqual(['origin.fun']);
-    expect(tabsToConfirm({ page: 'arc' }, false)).toEqual(['arc.ending', 'arc.pins']);
+    expect(tabsToConfirm({ page: 'arc', part: 'fun' }, true)).toEqual(['arc.fun']);
+    expect(tabsToConfirm({ page: 'arc' }, false)).toEqual(['arc.ending', 'arc.goals', 'arc.pins', 'arc.fun']);
     expect(tabsToConfirm({ page: 'characters' }, true)).toEqual(['characters']);
     expect(tabsToConfirm({ page: 'manifest' }, true)).toEqual([]);
   });

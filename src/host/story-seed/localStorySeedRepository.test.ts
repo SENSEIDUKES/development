@@ -55,7 +55,7 @@ describe('Local Story Seeds', () => {
 
   it('keeps draft confirmations across save, update, and a later visit, isolated per seed', async () => {
     const repository = createLocalStorySeedRepository({ storageKey: 'app-seeds' });
-    const progress = { confirmedTabs: ['origin.fun', 'origin.fate', 'factions'] };
+    const progress = { confirmedTabs: ['arc.fun', 'origin.fate', 'factions'] };
     const first = await repository.create('reader', seed('First story'), undefined, 'en', progress);
     const second = await repository.create('reader', seed('Second story'), undefined, 'en');
     await repository.update('reader', first, first.seed, undefined, 'en');
@@ -69,11 +69,11 @@ describe('Local Story Seeds', () => {
   it('ignores damaged editor metadata without resetting creative content or older records', async () => {
     const repository = createLocalStorySeedRepository({ storageKey: 'app-seeds' });
     const first = await repository.create('reader', seed('Keep this story'), undefined, 'en');
-    const second = { ...first, id: 'second', editorProgress: { confirmedTabs: [...Array.from({ length: 45 }, (_, index) => `unknown-${index}`), null, 'origin.fun', 'origin.fun', 15] } };
+    const second = { ...first, id: 'second', editorProgress: { confirmedTabs: [...Array.from({ length: 45 }, (_, index) => `unknown-${index}`), null, 'arc.fun', 'arc.fun', 15] } };
     window.localStorage.setItem('app-seeds', JSON.stringify([{ ...first, editorProgress: false }, second]));
     const reopened = await repository.list('reader');
     expect(reopened).toHaveLength(2);
-    expect(reopened[1].editorProgress).toEqual({ confirmedTabs: ['origin.fun'] });
+    expect(reopened[1].editorProgress).toEqual({ confirmedTabs: ['arc.fun'] });
     expect(reopened[0].seed.story.required.premise).toBe('Keep this story');
   });
 });

@@ -17,7 +17,7 @@ describe('Story Seed to Harness handoff', () => {
     const foundation = createHarnessFoundationFromStorySeed(record);
     expect(foundation.plannedArcCount).toBe(10);
     expect(foundation.initialArcPlan).toEqual(record.blueprint!.arcPlans![0]);
-    expect(foundation.initialArcPlan?.goals[0].text).toBe(record.seed.story.optional.activeArcGoal!.text);
+    expect(foundation.initialArcPlan?.goals[0].text).toBe(record.seed.story.optional.arcOneGoals![0].text);
     expect(foundation.initialArcLookahead).toEqual(record.blueprint!.arcLookahead);
     // A Blueprint saved before arcs were planned as they begin hands over its Arc 1, its length and its next arcs as the look-ahead.
     const older = createMockStorySeedRecord();
@@ -31,15 +31,15 @@ describe('Story Seed to Harness handoff', () => {
     const seedFoundation = createHarnessFoundationFromStorySeed(seedOnly);
     expect(seedFoundation.plannedArcCount).toBeUndefined();
     expect(seedFoundation.initialArcLookahead).toBeUndefined();
-    expect(seedFoundation.initialArcPlan?.goals[0].text).toBe(seedOnly.seed.story.optional.activeArcGoal!.text);
+    expect(seedFoundation.initialArcPlan?.goals[0].text).toBe(seedOnly.seed.story.optional.arcOneGoals![0].text);
   });
 
   it('routes Arc inputs once and freezes the original pins and active goal across reload, retry, and replay', async () => {
     const record = createMockStorySeedRecord();
     record.seed.story.optional.fateSurvival.enabled = false;
     record.seed.story.optional.hardPins = [{ text: 'PIN_KEEP_MASTER' }, { text: 'PIN_KEEP_TEMPLE' }, { text: 'PIN_KEEP_VOW' }];
-    record.seed.story.optional.activeArcGoal = { id: 'arc-1-gate', text: 'GOAL_OPEN_GATE', chapters: 30 };
-    record.seed.story.optional.funSettings = { faceSlap: 'high', plotArmor: 'low', recognition: 'medium' };
+    record.seed.story.optional.arcOneGoals = [{ text: 'GOAL_OPEN_GATE' }];
+    record.seed.story.optional.funSettings = { faceSlap: 'high', plotArmor: 'low', recognition: 'medium', tension: 'low', maturity: 'high' };
     record.seed.story.optional.makeItWorkInstruction = 'WORLD_WALKING_MOUNTAIN';
     record.seed.world.optional.worldFoundations.mainOpposition = 'WORLD_GATE_KEEPER';
     record.seed.world.optional.worldFoundations.destinedEnding = 'ENDING_FREE_VALLEY';

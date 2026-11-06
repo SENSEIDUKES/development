@@ -90,9 +90,9 @@ export const BlueprintArcGoalsSection = memo(({
 
   const savePlan = (edited: ArcPlan) => {
     setBlueprint(current => ({ ...current, arcPlans: [edited] }));
-    const opening = edited.goals[0];
+    // Arc 1's goals are the Seed's: a review edit writes every goal through to the ARC page.
     updateSeed((current: StorySeedInput) => ({ ...current, story: { ...current.story, optional: {
-      ...current.story.optional, activeArcGoal: { id: opening.id, text: opening.text, chapters: ARC_LENGTH },
+      ...current.story.optional, arcOneGoals: edited.goals.map(goal => ({ text: goal.text, chapters: goal.chapters })),
     } } }));
   };
 

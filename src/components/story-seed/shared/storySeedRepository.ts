@@ -14,9 +14,9 @@ export interface StorySeedEditorProgress {
 
 /** Canonical persisted editor keys; the host's creator positions must match this contract. */
 export const STORY_SEED_EDITOR_TAB_KEYS = [
-  'origin.style', 'origin.fun', 'origin.synopsis', 'origin.fate', 'origin.tags',
+  'origin.style', 'origin.synopsis', 'origin.fate', 'origin.tags',
   'world-identity', 'characters', 'factions', 'things', 'places', 'species', 'abilities', 'power-system',
-  'arc.ending', 'arc.pins',
+  'arc.ending', 'arc.goals', 'arc.pins', 'arc.fun',
 ] as const;
 const editorTabKeys = new Set<string>(STORY_SEED_EDITOR_TAB_KEYS);
 

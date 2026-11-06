@@ -311,7 +311,7 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
           // Finalized like the server's reply, so the preview shows the same
           // author-fact detail and cast merging a real generation produces.
           return finalizeGeneratedWorldBlueprint(
-            { ...mock, ...createMockSeedSlotAnswer(), estimatedArcs: arcCount, arcPlans: [createMockArcOne(payload.storySeed.story.optional.activeArcGoal, arcCount)], arcLookahead: createMockArcLookahead(arcCount) },
+            { ...mock, ...createMockSeedSlotAnswer(), estimatedArcs: arcCount, arcPlans: [createMockArcOne(payload.storySeed.story.optional.arcOneGoals, arcCount)], arcLookahead: createMockArcLookahead(arcCount) },
             payload.storySeed,
           );
         }

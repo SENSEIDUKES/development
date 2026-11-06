@@ -5,7 +5,7 @@ import { SeedConfirmationContext } from '../creator/SeedPart';
 import { funSettings, patchFunSettings, type UpdateSeed } from '../seedState';
 import './fun-settings.css';
 
-type FunSettingKey = 'faceSlap' | 'plotArmor' | 'recognition';
+type FunSettingKey = 'faceSlap' | 'plotArmor' | 'recognition' | 'tension' | 'maturity';
 
 const FUN_LEVELS: ReadonlyArray<{
   value: FunSettingLevel;
@@ -56,9 +56,31 @@ const FUN_SETTINGS: ReadonlyArray<{
       high: 'The protagonist\'s name spreads fast. Wins create fear, respect, enemies, invitations, and status shifts.',
     },
   },
+  {
+    key: 'tension',
+    id: 'tension',
+    label: 'Tension',
+    help: 'Controls how charged the moments between characters feel, in any genre.',
+    levelCopy: {
+      low: 'Interactions stay clean and friendly. Nobody lingers.',
+      medium: 'Teasing, lingering looks, flustered moments, and sparks left unsaid.',
+      high: 'Heavy chemistry in every scene: near-misses, jealousy, and a charge even between rivals.',
+    },
+  },
+  {
+    key: 'maturity',
+    id: 'maturity',
+    label: 'Maturity',
+    help: 'Controls how hard the story hits. The same premise can be told for every reader or for seasoned ones.',
+    levelCopy: {
+      low: 'Clean and clear. Fights thrill, losses sadden, and nothing is graphic.',
+      medium: 'Real danger and real cost. Blood on the page, deaths that land, and grey choices.',
+      high: 'Brutal. Visceral battles, cruelty, sacrifice that hurts, and consequences that stay.',
+    },
+  },
 ];
 
-/** The same settings in Origin and the Blueprint's Origin snapshot. */
+/** The same settings on the ARC page and in the Blueprint review. */
 export function FunSettingsPanel({ seed, updateSeed }: { seed: StorySeedInput; updateSeed: UpdateSeed }) {
   const settings = funSettings(seed);
   const confirm = useContext(SeedConfirmationContext);
@@ -68,7 +90,7 @@ export function FunSettingsPanel({ seed, updateSeed }: { seed: StorySeedInput; u
     const level = FUN_LEVELS[Math.max(0, Math.min(FUN_LEVELS.length - 1, index))].value;
     setFocused(key);
     updateSeed(patchFunSettings({ [key]: level }));
-    confirm('origin.fun');
+    confirm('arc.fun');
   };
   const active = FUN_SETTINGS.find(setting => setting.key === focused)!;
   return (
@@ -110,7 +132,7 @@ export function FunSettingsPanel({ seed, updateSeed }: { seed: StorySeedInput; u
       </div>
       <p id="origin-fun-help" className="seed-fun-help" aria-live="polite">{active.help} {active.levelCopy[settings[focused] || 'medium']}</p>
       <button type="button" className="seed-fun-restore" onClick={() => {
-        updateSeed(patchFunSettings({ faceSlap: 'medium', plotArmor: 'medium', recognition: 'medium' })); confirm('origin.fun');
+        updateSeed(patchFunSettings({ faceSlap: 'medium', plotArmor: 'medium', recognition: 'medium', tension: 'medium', maturity: 'medium' })); confirm('arc.fun');
       }}>Restore defaults</button>
     </section>
   );

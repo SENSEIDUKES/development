@@ -99,6 +99,10 @@ export interface FunSettings {
   faceSlap?: FunSettingLevel;
   plotArmor?: FunSettingLevel;
   recognition?: FunSettingLevel;
+  /** How charged the moments between characters feel (SENSEI, 2026-11-06). */
+  tension?: FunSettingLevel;
+  /** How hard the story hits: the same premise told gently or brutally (SENSEI, 2026-11-06). */
+  maturity?: FunSettingLevel;
 }
 export const normalizeFunSettings = (value: unknown): FunSettings => {
   const source = value && typeof value === 'object' ? value as Record<string, unknown> : {};
@@ -106,5 +110,8 @@ export const normalizeFunSettings = (value: unknown): FunSettings => {
     const value = typeof input === 'string' ? input.trim().toLowerCase() : '';
     return value === 'low' || value === 'high' ? value : 'medium';
   };
-  return { faceSlap: level(source.faceSlap), plotArmor: level(source.plotArmor), recognition: level(source.recognition) };
+  return {
+    faceSlap: level(source.faceSlap), plotArmor: level(source.plotArmor), recognition: level(source.recognition),
+    tension: level(source.tension), maturity: level(source.maturity),
+  };
 };

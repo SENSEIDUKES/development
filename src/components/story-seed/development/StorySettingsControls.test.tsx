@@ -120,7 +120,7 @@ describe('Reading Mode stays out of world generation', () => {
   const completeSeed = () => {
     const seed = createEmptyStorySeedInput();
     seed.story.required = { premise: 'A courier crosses the sea.', genre: 'Xianxia', style: 'chinese', storyTags: ['sea'] };
-    seed.story.optional.activeArcGoal = { id: 'arc-1-sea', text: 'Cross the sea.', chapters: 30 };
+    seed.story.optional.arcOneGoals = [{ text: 'Cross the sea.' }];
     seed.story.optional.chapterWritingStyle = 'Easy Read';
     return seed;
   };
@@ -128,7 +128,7 @@ describe('Reading Mode stays out of world generation', () => {
   it('keeps the setting on the saved seed, including after a Blueprint writes back into it', () => {
     const seed = completeSeed();
     expect(normalizeStorySeedInput(seed).story.optional.chapterWritingStyle).toBe('Easy Read');
-    const generated = { ...createBlueprintDraftFromSeed(seed), arcPlans: [createMockArcOne(seed.story.optional.activeArcGoal, 2)], estimatedArcs: 2 };
+    const generated = { ...createBlueprintDraftFromSeed(seed), arcPlans: [createMockArcOne(seed.story.optional.arcOneGoals, 2)], estimatedArcs: 2 };
     expect(reconcileStorySeedBlueprint(seed, generated).seed.story.optional.chapterWritingStyle).toBe('Easy Read');
   });
 

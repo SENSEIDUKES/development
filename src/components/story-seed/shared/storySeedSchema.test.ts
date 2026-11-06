@@ -50,6 +50,8 @@ const completeSeed = (): StorySeedInput => ({
         faceSlap: 'low',
         plotArmor: 'high',
         recognition: 'medium',
+        tension: 'high',
+        maturity: 'low',
       },
       makeItWorkInstruction: 'The weakest bloodline is secretly the only one heaven fears.',
     },
@@ -320,6 +322,8 @@ describe('Story Seed creator/story/world contract', () => {
       faceSlap: 'medium',
       plotArmor: 'medium',
       recognition: 'medium',
+      tension: 'medium',
+      maturity: 'medium',
     });
     expect(missing.story.optional.intendedForMatureAudiences).toBe(false);
 
@@ -340,6 +344,8 @@ describe('Story Seed creator/story/world contract', () => {
       faceSlap: 'high',
       plotArmor: 'medium',
       recognition: 'medium',
+      tension: 'medium',
+      maturity: 'medium',
     });
   });
 
@@ -544,6 +550,8 @@ describe('Story Seed creator/story/world contract', () => {
       faceSlap: 'medium',
       plotArmor: 'medium',
       recognition: 'medium',
+      tension: 'medium',
+      maturity: 'medium',
     });
     expect(migrated.world.optional.worldIdentity.title)
       .toBe('Ashes of the Ninth Meridian — Reviewed Legacy Blueprint');
@@ -584,6 +592,8 @@ describe('Story Seed creator/story/world contract', () => {
       faceSlap: 'medium',
       plotArmor: 'medium',
       recognition: 'medium',
+      tension: 'medium',
+      maturity: 'medium',
     });
     expect(reloaded.seed.world.optional).toEqual({ worldIdentity: {}, worldFoundations: {} });
   });

@@ -73,7 +73,8 @@ export const SEED_SECTIONS: SeedSection[] = [
     icon: 'arc',
     tagline: 'The forces that shape the journey and the destination it ultimately reaches.',
     isFilled: seed => {
-      return hasText(seed.story.optional.activeArcGoal?.text)
+      return Boolean(seed.story.optional.arcOneGoals?.some(goal => hasText(goal.text)))
+        || Boolean(seed.story.optional.arcLookahead?.length)
         || Boolean(seed.story.optional.hardPins?.length)
         || seed.story.optional.arcCount !== undefined
         || hasText(worldFoundations(seed).destinedEnding);

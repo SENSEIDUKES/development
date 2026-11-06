@@ -964,9 +964,13 @@ export const alignArcLookaheadWithSeed = (
 const readAuthoredArcs = (value: unknown): number[] =>
   Array.isArray(value) ? [2, 3].filter(arcNumber => value.includes(arcNumber)) : [];
 
-/** The arcs of `aligned` whose line came from the Seed. */
+/**
+ * The arcs of `aligned` whose line came from the Seed. Alignment gives the
+ * Seed's line its arc, so the arc number is enough: the text itself may have
+ * been tidied (spaces collapsed) on the way.
+ */
 const authoredArcsOf = (aligned: readonly ArcLookaheadEntry[], seed: StorySeedInput): number[] =>
-  aligned.filter(entry => (seed.story.optional.arcLookahead ?? []).some(line => line.arcNumber === entry.arcNumber && line.direction === entry.direction))
+  aligned.filter(entry => (seed.story.optional.arcLookahead ?? []).some(line => line.arcNumber === entry.arcNumber))
     .map(entry => entry.arcNumber);
 
 /**

@@ -73,7 +73,7 @@ export function parseFamiliarLiveBrief(value: unknown): FamiliarLiveBrief {
   if (!Array.isArray(body.actions) || body.actions.length > 12) throw new Error('actions must be a list of at most 12.');
   // Names only, and bounded like everything else: the index orients the Familiar, and look_up fetches the words.
   const docs = body.docs === undefined ? [] : body.docs;
-  if (!Array.isArray(docs) || docs.length > 300) throw new Error('docs must be a list of at most 300.');
+  if (!Array.isArray(docs) || docs.length > 500) throw new Error('docs must be a list of at most 500.');
   return {
     familiar: { name: text(familiar.name, 'familiar.name', 60), description: text(familiar.description, 'familiar.description', 400, false) },
     place: text(body.place, 'place', 80),
@@ -106,8 +106,11 @@ export function parseFamiliarLiveBrief(value: unknown): FamiliarLiveBrief {
 const declarations = (brief: FamiliarLiveBrief) => [
   ...(brief.docs.length ? [{
     name: 'look_up',
-    description: 'Reads what the docs say about a topic. Answers with the entries themselves, or with nothing when the docs do not cover it.',
-    parameters: { type: 'OBJECT', properties: { query: { type: 'STRING', description: 'The name the topic has in the list of docs, in that list\'s own language — not the reader\'s wording.' } }, required: ['query'] },
+    description: 'Reads what the docs, or the record of the story the reader is in, say about something. Answers with the entries themselves, or with nothing when they do not cover it.',
+    parameters: { type: 'OBJECT', properties: {
+      query: { type: 'STRING', description: 'The name the topic has in the list of docs, in that list\'s own language — not the reader\'s wording.' },
+      spoilers: { type: 'BOOLEAN', description: 'true only when the reader has plainly asked for spoilers, in their own words. Leave it out otherwise: then nothing past the chapter they have open comes back.' },
+    }, required: ['query'] },
   }] : []),
   ...(brief.topics.length ? [{
     name: 'show_topic',

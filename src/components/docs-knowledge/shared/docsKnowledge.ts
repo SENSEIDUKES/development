@@ -27,6 +27,11 @@ export interface DocsCategory {
   title: string;
   description: string;
   topics: readonly DocsTopic[];
+  /**
+   * Looked up when asked for, but never named in the index: entries a
+   * companion should not even hint at unprompted, such as a story's spoilers.
+   */
+  unlisted?: true;
 }
 
 /** A host's whole catalog. */
@@ -55,13 +60,14 @@ export function findDocsTopic(catalog: DocsCatalog, id: string): DocsTopic | und
 
 /**
  * The index: what the companion is told exists, without what any of it says.
- * Only explained topics, because an unexplained one has nothing to look up.
+ * Only explained topics, because an unexplained one has nothing to look up,
+ * and never an unlisted category's.
  *
  * This is what keeps a conversation's cost flat as a catalog grows: writing a
  * new entry adds one short line here, not a paragraph to every exchange.
  */
 export function docsIndex(catalog: DocsCatalog): DocsIndexEntry[] {
-  return catalog.flatMap(category => category.topics
+  return catalog.filter(category => !category.unlisted).flatMap(category => category.topics
     .filter(docsTopicExplained)
     .map(topic => ({ id: topic.id, title: topic.title, category: category.title })));
 }

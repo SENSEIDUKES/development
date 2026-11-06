@@ -36,9 +36,8 @@ import { harnessStoryMode, nextArcStep } from '../shared/arcState';
 import { pendingChapterDirection } from '../shared/chapterDirection';
 import { chapterRewriteGap, latestStoryChapter } from '../shared/chapterRewrite';
 import { protagonistNames } from '../shared/speakers';
-import { declaredCharacters } from '../shared/holdings';
-import { storyWorldRecord } from '../shared/foundation';
-import { deriveStoryCodex, type CodexPictureMaker, type CodexPictures } from '../shared/storyCodex';
+import { type CodexPictureMaker, type CodexPictures } from '../shared/storyCodex';
+import { storyCodexOf } from '../shared/storyKnowledge';
 import { BlueprintArcPage } from './BlueprintArcPage';
 import { ChapterAuthoring, type ChapterAuthoringHandle } from './ChapterAuthoring';
 import type { CreateTagLit } from './createTags';
@@ -680,18 +679,7 @@ function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, manifestC
   onReadPassage: (chapterNumber: number, blockId: string) => void;
   onReadChapter: (chapterNumber: number) => void;
 }) {
-  const story = state.stories.find(entry => entry.id === storyId);
-  const foundation = state.foundations.find(entry => entry.id === story?.activeFoundationRevisionId)?.input;
-  // The world as it stands, not the author's opening world: a card a chapter
-  // brought in belongs in the Codex as surely as one the Blueprint wrote.
-  const world = useMemo(() => storyWorldRecord(state, storyId), [state, storyId]);
-  const codex = useMemo(() => deriveStoryCodex({
-    entries: state.codexEntries.filter(entry => entry.storyId === storyId),
-    chapters,
-    world,
-    mainCharacterName: foundation?.cast?.find(member => member.isMainCharacter)?.name,
-    declared: foundation ? declaredCharacters(foundation) : [],
-    declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],
-  }), [state.codexEntries, storyId, chapters, foundation, world]);
+  // The same record the Familiar looks the story up in, worked out the same way.
+  const codex = useMemo(() => storyCodexOf(state, storyId, chapters), [state, storyId, chapters]);
   return <StoryCodex codex={codex} storyTitle={storyTitle} pictures={pictures} manifestCost={manifestCost} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />;
 }

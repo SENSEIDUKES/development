@@ -5,7 +5,7 @@
  * exchanges it with OpenAI for the answer, so the API key never leaves it.
  */
 import type { FamiliarLiveBrief } from '@seihouse/library/familiar';
-import { familiarLiveActions, familiarLiveCharacter, familiarLiveDocsIndex } from './prompt';
+import { FAMILIAR_NO_SPOILERS, familiarLiveActions, familiarLiveCharacter, familiarLiveDocsIndex } from './prompt';
 
 const LIVE_SESSIONS_URL = 'https://api.openai.com/v1/live/sessions';
 /** A built-in voice the owner chose in the playground (2026-11-01); `FAMILIAR_LIVE_OPENAI_VOICE` changes it. */
@@ -20,10 +20,13 @@ export function openAiLiveTools(brief: FamiliarLiveBrief) {
     ...(brief.docs.length ? [{
       type: 'function' as const,
       name: 'look_up',
-      description: 'Reads what the docs say about a topic. Answers with the entries themselves, or with nothing when the docs do not cover it.',
+      description: 'Reads what the docs, or the record of the story the reader is in, say about something. Answers with the entries themselves, or with nothing when they do not cover it.',
       parameters: {
         type: 'object',
-        properties: { query: { type: 'string', description: 'The name the topic has in the list of docs, in that list\'s own language — not the reader\'s wording.' } },
+        properties: {
+          query: { type: 'string', description: 'The name the topic has in the list of docs, in that list\'s own language — not the reader\'s wording.' },
+          spoilers: { type: 'boolean', description: 'true only when the reader has plainly asked for spoilers, in their own words. Leave it out otherwise: then nothing past the chapter they have open comes back.' },
+        },
         required: ['query'],
         additionalProperties: false,
       },
@@ -76,15 +79,17 @@ export function openAiLiveSession(brief: FamiliarLiveBrief, options: { model: st
       responses: {
         model: options.backend,
         instructions: [
-          `You are the backend for ${brief.familiar.name}, the reader's Familiar in NovelExpanded, on: ${brief.place}. Do only what the reader asked, through your functions, and return one short sentence the Familiar can say.`,
+          `You are the backend for ${brief.familiar.name}, the reader's Familiar in NovelExpanded. When the conversation began the reader was on: ${brief.place}. They may have moved since: every look_up answer starts with where they are now, so look something up before telling them where they are. Do only what the reader asked, through your functions, and return one short sentence the Familiar can say.`,
           // The voice repeats what comes back as documented fact, so the grounding rule has to hold here too:
           // nothing stops this model answering from its own memory and the Familiar speaking it as the docs.
           ...(brief.docs.length
-            ? ['Answer a question about the app only from what look_up returns. Never answer one from your own knowledge, and when look_up finds nothing, say that the docs do not cover it instead of filling the gap.',
+            ? ['Answer a question about the app, or about the story the reader is in, only from what look_up returns. Never answer one from your own knowledge, and when look_up finds nothing, say that the docs and the story\'s record do not cover it instead of filling the gap.',
               // This model is the one that calls look_up, and a typed message reaches it without
               // passing the voice at all, so it needs the names itself. Without them it is told to
               // choose from a list it cannot see, and has to guess at the catalog's own wording.
-              `The docs you can look up, by name:\n${familiarLiveDocsIndex(brief)}`]
+              `The docs you can look up, by name:\n${familiarLiveDocsIndex(brief)}`,
+              // The voice says what this model returns, and a typed message reaches it alone, so it keeps spoilers back itself.
+              FAMILIAR_NO_SPOILERS]
             : []),
           familiarLiveActions(brief),
         ].join('\n\n'),

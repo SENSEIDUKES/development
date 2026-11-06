@@ -377,6 +377,15 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-06 (the Familiar knows the story):** SENSEI: the Familiar needs the
+  Codex and the page the reader is on, looked up the way it looks up the docs.
+  `shared/storyKnowledge.ts` writes the story's Codex (every card the Codex
+  shows, the World rules sheet) and each chapter's saved recap as a docs
+  catalog; the Reader's Codex panel and the Familiar now work the Codex out
+  through the same `storyCodexOf`. The Familiar is told the chapter open now
+  and reads the record only up to it; what comes after is kept apart as
+  unlisted spoilers, which it never names and tells only when the reader
+  explicitly asks (SENSEI, the same day).
 - **2026-11-05 (appears tag on the sentence that shows them):** SENSEI, from
   The Nomad's Foundation: "Fix the appearance tags." The sentence an appears
   tag sits on is kept as the look, and the tagger had put Lin Yuan's on

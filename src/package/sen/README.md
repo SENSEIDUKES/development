@@ -71,6 +71,13 @@ The defaults are the previous colors, so nothing looks different. A host recolor
 the Reader by setting them on `:root` or an element holding the whole Reader; the
 panels render beside `.reader-frame`, not inside it.
 
+**Unreleased (2026-11-06):** A companion can look the story up.
+`./harness-generation` adds `storyKnowledgeOf` (and `storyKnowledge`,
+`storyCodexOf`, `STORY_KNOWLEDGE_CATEGORIES`): the story's Codex and chapter
+recaps written as a docs catalog, worked out up to the chapter the reader has open,
+with what comes after it kept apart as spoilers. `./docs-knowledge`'s
+`DocsCategory` takes `unlisted`: found by `lookUpDocs`, never named by `docsIndex`.
+
 **0.41.0 (2026-11-05):** New `./docs-knowledge` entry: the shape of a host's docs
 catalog (`DocsTopic`, `DocsCategory`, `DocsCatalog`) and the reading a grounded
 companion does over it — `docsIndex` for the names it is given at the start of a

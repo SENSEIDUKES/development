@@ -138,4 +138,13 @@ describe('Docs Knowledge', () => {
     expect(searchDocs(catalog, 'hard pin').map(topic => topic.id)).toEqual(['hard-pin']);
     expect(searchDocs(catalog, 'not-a-real-term')).toEqual([]);
   });
+
+  it('never names an unlisted category\'s entries in the index, but still finds them when asked', () => {
+    const hidden: DocsCatalog = [...catalog, { id: 'secret', title: 'Secrets', description: '', unlisted: true, topics: [
+      { id: 'the-twist', title: 'The Twist', aliases: [], definition: 'The mentor was the villain.' },
+    ] }];
+    expect(docsIndex(hidden)).toEqual(docsIndex(catalog));
+    expect(lookUpDocs(hidden, 'the twist')[0].topic.id).toBe('the-twist');
+  });
 });
+

@@ -379,6 +379,42 @@ describe('Familiar live talk', () => {
     expect(missing).toContain('do not answer it yourself');
     expect(t.helper.getSnapshot().chat.at(-1)).toMatchObject({ speaker: 'note', text: 'No docs entry for \u201crefund policy\u201d' });
   });
+  it('knows the story the reader is in: where they are, and its record to look up beside the docs', async () => {
+    const t = live();
+    const knowledge = vi.fn(() => [{ id: 'story-characters', title: 'This story: characters', description: '', topics: [
+      { id: 'story-character-1', title: 'Lin Feng', aliases: [], definition: 'The main character. Now at: Azure Peak.' },
+    ] }]);
+    t.helper.setContext(t.owner, { ...t.context, place: 'Reading Sundered Heavens, Chapter 4: The Iron Gate', knowledge });
+    // Nothing is worked out until the Familiar needs it.
+    expect(knowledge).not.toHaveBeenCalled();
+    t.helper.talk();
+    expect(t.brief().place).toBe('Reading Sundered Heavens, Chapter 4: The Iron Gate');
+    // The story's names come first, then the app's docs, still names only.
+    expect(t.brief().docs[0]).toEqual({ id: 'story-character-1', title: 'Lin Feng', category: 'This story: characters' });
+    expect(t.brief().docs).toContainEqual({ id: 'story-seed', title: 'Story Seed', category: 'Story' });
+    expect(JSON.stringify(t.brief().docs)).not.toContain('Azure Peak');
+    t.events().connected();
+    await expect(t.events().call({ name: 'look_up', query: 'Lin Feng' })).resolves.toContain('Lin Feng (This story: characters): The main character. Now at: Azure Peak.');
+    expect(t.helper.getSnapshot().chat.at(-1)).toMatchObject({ speaker: 'note', text: 'Read Lin Feng' });
+    // The app's docs still answer in a story.
+    await expect(t.events().call({ name: 'look_up', query: 'story seed' })).resolves.toContain('Story Seed (Story)');
+  });
+  it('keeps spoilers back unless the reader asked for them, saying only that there is more', async () => {
+    const t = live();
+    t.helper.setContext(t.owner, { ...t.context, place: 'Reading Sundered Heavens, Chapter 1', knowledge: () => [
+      { id: 'story-characters', title: 'This story: characters', description: '', topics: [{ id: 'story-character-1', title: 'Lin Feng', aliases: [], definition: 'Has both arms.' }] },
+      { id: 'story-spoilers', title: 'This story: spoilers', description: '', unlisted: true, topics: [{ id: 'spoiler-story-character-1', title: 'Lin Feng', aliases: [], definition: 'Spoiler, from after Chapter 1: loses an arm.' }] },
+    ] });
+    t.helper.talk();
+    t.events().connected();
+    const ordinary = await t.events().call({ name: 'look_up', query: 'Lin Feng' });
+    expect(ordinary).toContain('The reader is on: Reading Sundered Heavens, Chapter 1.');
+    expect(ordinary).toContain('Has both arms.');
+    expect(ordinary).not.toContain('loses an arm');
+    expect(ordinary).toContain('Later chapters say more about this. That is a spoiler');
+    // Only a lookup made for a plain request for spoilers reads them, and they come back marked.
+    await expect(t.events().call({ name: 'look_up', query: 'Lin Feng', spoilers: true })).resolves.toContain('Spoiler, from after Chapter 1: loses an arm.');
+  });
   it('shows topics and proposes changes for the reader to confirm, and confirms only when asked', async () => {
     const t = live();
     t.helper.talk();

@@ -11,7 +11,7 @@
 > context.
 
 - **Created:** 2026-09-29
-- **Last updated:** 2026-11-02
+- **Last updated:** 2026-11-06
 - **Owner:** SENSEI, SEIHouse Productions
 
 ## The two rules everything follows
@@ -653,6 +653,11 @@ Update it whenever it changes.
       typing equivalents and a separate confirmation. One global interaction
       owner accepts screen-supplied actions and a replaceable voice adapter.
       General conversation, translation and hands-free activation come later.
+      **The Familiar knows the story (2026-11-06, SENSEI):** in a story it
+      looks up that story's Codex and chapter recaps the way it looks up the
+      docs, and knows which chapter the reader has open. **It never reveals a
+      spoiler unless the reader explicitly asks for one**: nothing from after
+      the chapter they have open, and no card they have not reached.
   - **Story Settings are in the app, off the developer page** (piece 4). The
     story's own settings, the only place a reader meets the HARNESS:
     - **On Story View**, closed until opened: the Story Language (fixed when the

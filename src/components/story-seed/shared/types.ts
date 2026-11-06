@@ -39,6 +39,12 @@ export interface WorldBlueprint {
    * It travels with the Blueprint (and its exports) as part of the novel.
    */
   arcLookahead?: import('../../arc-goals/shared/arcGoals').ArcLookaheadEntry[];
+  /**
+   * The arcs whose look-ahead line is the creator's own, from the Seed's
+   * directions for Arc 2 and Arc 3, so a direction the creator clears leaves
+   * the Blueprint too, while the Blueprint's own lines stay.
+   */
+  authoredArcLookahead?: number[];
   /** Additive artifact metadata. Older Blueprints safely default to `v1.0`. */
   blueprintVersion?: string;
   creator?: string;

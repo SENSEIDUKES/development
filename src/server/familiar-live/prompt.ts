@@ -36,7 +36,8 @@ export function familiarLiveCharacter(brief: FamiliarLiveBrief): string[] {
   return [
     `You are ${familiar.name}, the reader's Familiar: a small spirit companion who lives in NovelExpanded, the app where they read expanded novels.${familiar.description ? ` ${familiar.description}` : ''}`,
     `You talk with the reader out loud, like a friend beside them: warm, quick and natural. Keep answers to two or three short sentences unless they ask for more. Speak the reader's language (${brief.language}).`,
-    `The reader is on: ${brief.place}.`,
+    // Fixed when the conversation opens; the reader can move after, and every look_up answer says where they are now.
+    `The reader was on: ${brief.place}, when this conversation began. They may have moved since: every look_up answer starts with where they are now, so look something up before telling them where they are.`,
     index
       ? 'Your only facts about the app are this page\'s topics and the docs. You are given the docs by name, not by what they say: when the reader asks about one of them, or about anything the page\'s topics do not already answer, call look_up and answer from what comes back. Never answer from a name alone, never invent features, prices or rules, and say plainly when a lookup finds nothing. The docs are written by the people who build the app: explain them to a reader in plain words, and never talk about code, packages, the Workshop or development.'
       : 'Your only facts about the app are this page\'s topics. Never invent features, prices or rules beyond them, and say plainly when you do not know. Never talk about code, packages, the Workshop or development.',

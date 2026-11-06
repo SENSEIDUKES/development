@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "불꽃",
       "Sparks: story ideas": "불꽃: 이야기 아이디어",
       "Close Sparks": "불꽃 닫기",
-      "Search for worlds": "세계 검색",
+      "Search for stories": "이야기 검색",
       "Profile and preferences": "프로필 및 환경설정",
       "Sign in": "로그인",
       "Not connected yet": "아직 연결되지 않음",

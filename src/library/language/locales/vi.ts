@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Tia Lửa",
       "Sparks: story ideas": "Tia Lửa: ý tưởng truyện",
       "Close Sparks": "Đóng Tia Lửa",
-      "Search for worlds": "Tìm thế giới",
+      "Search for stories": "Tìm truyện",
       "Profile and preferences": "Hồ sơ và tùy chọn",
       "Sign in": "Đăng nhập",
       "Not connected yet": "Chưa kết nối",

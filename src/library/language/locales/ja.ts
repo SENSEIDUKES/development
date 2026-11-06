@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "閃き",
       "Sparks: story ideas": "閃き：物語のアイデア",
       "Close Sparks": "閃きを閉じる",
-      "Search for worlds": "ワールドを検索",
+      "Search for stories": "物語を検索",
       "Profile and preferences": "プロフィールと設定",
       "Sign in": "サインイン",
       "Not connected yet": "まだ接続されていません",

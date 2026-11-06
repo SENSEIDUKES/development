@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "ብልጭታዎች",
       "Sparks: story ideas": "ብልጭታዎች፦ የታሪክ ሀሳቦች",
       "Close Sparks": "ብልጭታዎችን ዝጋ",
-      "Search for worlds": "ዓለማትን ፈልግ",
+      "Search for stories": "ታሪኮችን ፈልግ",
       "Profile and preferences": "መገለጫ እና ምርጫዎች",
       "Sign in": "ግባ",
       "Not connected yet": "ገና አልተገናኘም",

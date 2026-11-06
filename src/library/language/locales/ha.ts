@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Tartsatsi",
       "Sparks: story ideas": "Tartsatsi: ra’ayoyin labarai",
       "Close Sparks": "Rufe Tartsatsi",
-      "Search for worlds": "Nemi duniyoyi",
+      "Search for stories": "Nemi labarai",
       "Profile and preferences": "Bayanan martaba da zaɓuɓɓuka",
       "Sign in": "Shiga",
       "Not connected yet": "Har yanzu ba a haɗa ba",

@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "ניצוצות",
       "Sparks: story ideas": "ניצוצות: רעיונות לסיפורים",
       "Close Sparks": "סגירת ניצוצות",
-      "Search for worlds": "חיפוש עולמות",
+      "Search for stories": "חיפוש סיפורים",
       "Profile and preferences": "פרופיל והעדפות",
       "Sign in": "התחברות",
       "Not connected yet": "עדיין לא מחובר",

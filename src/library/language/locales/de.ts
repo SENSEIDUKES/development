@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Funken",
       "Sparks: story ideas": "Funken: Geschichtenideen",
       "Close Sparks": "Funken schließen",
-      "Search for worlds": "Welten suchen",
+      "Search for stories": "Geschichten suchen",
       "Profile and preferences": "Profil und Einstellungen",
       "Sign in": "Anmelden",
       "Not connected yet": "Noch nicht verbunden",

@@ -11,9 +11,9 @@ export async function verifyLibraryHeader({ tab, viewport, baseUrl }) {
   await tab.playwright.getByRole('link', { name: 'Library home' }).press('Tab');
   const active = () => tab.playwright.evaluate(() => document.activeElement?.getAttribute('aria-label'));
   // Logo | Search | Profile Portrait: Search comes first after the logo, the Portrait last.
-  assert.equal(await active(), 'Search for worlds');
+  assert.equal(await active(), 'Search for stories');
   await tab.cua.keypress({ keys: ['Tab'] }); assert.equal(await active(), 'Profile and preferences');
-  await tab.playwright.getByRole('button', { name: 'Search for worlds', exact: true }).press('Enter');
+  await tab.playwright.getByRole('button', { name: 'Search for stories', exact: true }).press('Enter');
   await tab.playwright.getByRole('dialog', { name: 'Search', exact: true }).waitFor({ state: 'visible' });
   assert(await tab.playwright.evaluate(() => document.activeElement?.matches('input[type="search"]')));
   await tab.playwright.getByRole('searchbox').fill('missing item');
@@ -25,7 +25,7 @@ export async function verifyLibraryHeader({ tab, viewport, baseUrl }) {
   await tab.playwright.getByRole('button', { name: 'Stories', exact: true }).press('Tab');
   await tab.playwright.locator('button[aria-label="Close Search"]:focus').waitFor({ state: 'visible' });
   await tab.playwright.getByRole('button', { name: 'Close Search', exact: true }).press('Escape');
-  await tab.playwright.locator('button[aria-label="Search for worlds"]:focus').waitFor({ state: 'visible' });
+  await tab.playwright.locator('button[aria-label="Search for stories"]:focus').waitFor({ state: 'visible' });
   await tab.playwright.getByRole('button', { name: 'Profile and preferences', exact: true }).press('Enter');
   await tab.playwright.locator('#header-preferred-language:focus').waitFor({ state: 'visible' });
   await tab.playwright.getByRole('button', { name: 'Help', exact: true }).press('Enter');
@@ -40,14 +40,14 @@ export async function verifyLibraryHeader({ tab, viewport, baseUrl }) {
   // Landscape notch with long context; the overlay remains in the viewport.
   await viewport.set({ width: 844, height: 390 });
   await tab.goto(`${baseUrl}/library-shell.html?variant=development&source=header-states&state=long-context&safeArea=landscape&motion=reduced`);
-  await tab.playwright.getByRole('button', { name: 'Search for worlds', exact: true }).waitFor({ state: 'visible' });
+  await tab.playwright.getByRole('button', { name: 'Search for stories', exact: true }).waitFor({ state: 'visible' });
   const safe = await tab.playwright.evaluate(() => ({
     left: document.querySelector('a[aria-label="Library home"]').getBoundingClientRect().left,
-    right: document.querySelector('button[aria-label="Search for worlds"]').getBoundingClientRect().right,
+    right: document.querySelector('button[aria-label="Search for stories"]').getBoundingClientRect().right,
     width: innerWidth,
   }));
   assert(safe.left >= 44 && safe.right <= safe.width - 44);
-  await tab.playwright.getByRole('button', { name: 'Search for worlds', exact: true }).click();
+  await tab.playwright.getByRole('button', { name: 'Search for stories', exact: true }).click();
   const dialog = await tab.playwright.getByRole('dialog', { name: 'Search', exact: true }).evaluate(element => {
     const rect = element.getBoundingClientRect();
     return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, height: innerHeight, width: innerWidth };

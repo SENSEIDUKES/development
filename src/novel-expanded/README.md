@@ -376,18 +376,6 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
-- **2026-11-05 (later)** — **Search for worlds, readable on phones** (SENSEI). The label is
-  "Search for worlds". On a phone's narrow field the words no longer disappear: they take
-  one line where it fits and otherwise wrap onto two ("Search for / worlds"), in every
-  interface language. The magnifier shows alone only when the field is 6rem wide or less,
-  too narrow for the longest word, or the words would need a third line, so they are
-  never cut off. Filipino reads "Maghanap ng mundo" so it fits on the smallest phones.
-- **2026-11-05** — **Search For Worlds** (SENSEI). The header's search reads "Search For
-  Worlds" (in every interface language) and its words are shown whole or not at all,
-  never cut off or "…". It no longer stretches across the header on large screens: it
-  grows up to 28rem. On phones and tablets it follows the logo; on computers (from
-  1024px) it sits on the right, just before the Familiar, the music note and the
-  Portrait.
 - **2026-11-04** — **Each tag group its own style** (SENSEI). In Create mode, Media tags
   (Soundscape, Atmosphere, Sound Cues) keep the full highlight and Story info tags (Speakers,
   Holdings, Appearances, Status, Place) are drawn as a colored underline, so the two groups read

@@ -107,7 +107,10 @@ const declarations = (brief: FamiliarLiveBrief) => [
   ...(brief.docs.length ? [{
     name: 'look_up',
     description: 'Reads what the docs, or the record of the story the reader is in, say about something. Answers with the entries themselves, or with nothing when they do not cover it.',
-    parameters: { type: 'OBJECT', properties: { query: { type: 'STRING', description: 'The name the topic has in the list of docs, in that list\'s own language — not the reader\'s wording.' } }, required: ['query'] },
+    parameters: { type: 'OBJECT', properties: {
+      query: { type: 'STRING', description: 'The name the topic has in the list of docs, in that list\'s own language — not the reader\'s wording.' },
+      spoilers: { type: 'BOOLEAN', description: 'true only when the reader has plainly asked for spoilers, in their own words. Leave it out otherwise: then nothing past the chapter they have open comes back.' },
+    }, required: ['query'] },
   }] : []),
   ...(brief.topics.length ? [{
     name: 'show_topic',

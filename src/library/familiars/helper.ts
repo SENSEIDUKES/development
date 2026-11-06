@@ -166,7 +166,8 @@ export interface FamiliarLiveBrief {
 
 /** What the Familiar asks the screen for mid-conversation; the screen still confirms every change. */
 export type FamiliarLiveCall =
-  | { name: 'look_up'; query: string }
+  /** `spoilers`: the reader plainly asked for them, so entries past the open chapter come back too, marked. */
+  | { name: 'look_up'; query: string; spoilers?: true }
   | { name: 'show_topic'; topicId: string }
   | { name: 'propose_action'; actionId: string; input: string }
   | { name: 'answer_proposal'; answer: 'confirm' | 'cancel' | 'hear' };
@@ -222,6 +223,13 @@ const CHAT_LINES = 200;
 export const FAMILIAR_PLACE_LIMIT = 80;
 export const FAMILIAR_DOCS_LIMIT = 500;
 export const FAMILIAR_DOCS_TITLE_LIMIT = 60;
+/** A name cut to fit the index at a word's end, so what the Familiar looks up by still names its entry. */
+const indexTitle = (title: string) => {
+  if (title.length <= FAMILIAR_DOCS_TITLE_LIMIT) return title;
+  const cut = title.slice(0, FAMILIAR_DOCS_TITLE_LIMIT + 1);
+  const space = cut.lastIndexOf(' ');
+  return (space > 0 ? cut.slice(0, space) : cut.slice(0, FAMILIAR_DOCS_TITLE_LIMIT)).replace(/[\s:,;.-]+$/, '');
+};
 
 const normalize = (text: string) => text.trim().toLocaleLowerCase('en-US').replace(/[.!?]+$/, '').trim();
 const HEAR = new Set(['hear it', 'hear', 'play it', 'play', 'preview']);
@@ -675,7 +683,7 @@ export class FamiliarHelperController {
       language: this.language,
       topics: context.topics.map(({ id, label, explanation }) => ({ id, label, explanation })),
       // The page's own knowledge (a story's Codex) first, then the app's docs: names only, the words come by look_up.
-      docs: docsIndex(this.knowledge(context)).slice(0, FAMILIAR_DOCS_LIMIT).map(entry => ({ ...entry, title: entry.title.slice(0, FAMILIAR_DOCS_TITLE_LIMIT) })),
+      docs: docsIndex(this.knowledge(context)).slice(0, FAMILIAR_DOCS_LIMIT).map(entry => ({ ...entry, title: indexTitle(entry.title) })),
       actions: context.actions.map(action => ({ id: action.id, label: action.label, ...(action.detail ? { detail: action.detail } : {}),
         ...(action.input ? { input: action.input } : {}), ...(this.instant(action) ? { instant: true as const } : {}) })),
     };
@@ -761,14 +769,21 @@ export class FamiliarHelperController {
   private async answerLive(call: FamiliarLiveCall): Promise<string> {
     // A lookup reads the docs, and the story's record where the reader is in one, as they stand now.
     if (call.name === 'look_up') {
-      const hits = lookUpDocs(this.knowledge(this.context), call.query);
+      const knowledge = this.knowledge(this.context);
+      // Unlisted entries (a story's spoilers) come back only when the reader asked for them;
+      // otherwise the Familiar is told only that there is more, never what it is.
+      const hits = lookUpDocs(call.spoilers ? knowledge : knowledge.filter(category => !category.unlisted), call.query);
+      const heldBack = !call.spoilers && lookUpDocs(knowledge.filter(category => category.unlisted), call.query).length > 0;
+      // Where the reader is now, which may have moved since the conversation began.
+      const where = this.context?.place ? [`The reader is on: ${this.context.place}.`] : [];
+      const more = heldBack ? ['Later chapters say more about this. That is a spoiler: do not hint at it, and offer it only if the reader asks to be spoiled.'] : [];
       if (!hits.length) {
         // Nothing covers what was asked: the Familiar says so rather than filling the gap itself.
         this.addLine({ speaker: 'note', text: `No docs entry for “${call.query}”` });
-        return 'Neither the docs nor the story\'s record say anything about that. Tell the reader you do not know, and do not answer it yourself.';
+        return [...where, 'Neither the docs nor the story\'s record say anything about that up to here. Tell the reader you do not know, and do not answer it yourself.', ...more].join('\n');
       }
       this.addLine({ speaker: 'note', text: `Read ${hits.map(hit => hit.topic.title).join(', ')}` });
-      return ['What the docs and the story\'s record say:', ...hits.map(hit => `- ${docsTopicText(hit.topic, hit.category)}`)].join('\n');
+      return [...where, 'What the docs and the story\'s record say:', ...hits.map(hit => `- ${docsTopicText(hit.topic, hit.category)}`), ...more].join('\n');
     }
     const context = this.context;
     if (!context) return 'Nothing is open here.';

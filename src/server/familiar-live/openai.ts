@@ -23,7 +23,10 @@ export function openAiLiveTools(brief: FamiliarLiveBrief) {
       description: 'Reads what the docs, or the record of the story the reader is in, say about something. Answers with the entries themselves, or with nothing when they do not cover it.',
       parameters: {
         type: 'object',
-        properties: { query: { type: 'string', description: 'The name the topic has in the list of docs, in that list\'s own language — not the reader\'s wording.' } },
+        properties: {
+          query: { type: 'string', description: 'The name the topic has in the list of docs, in that list\'s own language — not the reader\'s wording.' },
+          spoilers: { type: 'boolean', description: 'true only when the reader has plainly asked for spoilers, in their own words. Leave it out otherwise: then nothing past the chapter they have open comes back.' },
+        },
         required: ['query'],
         additionalProperties: false,
       },

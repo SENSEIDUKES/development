@@ -27,7 +27,7 @@ const CONNECT_MS = 15_000;
 /** A tool call from the model, read strictly into what the screen understands. */
 export function liveCall(name: unknown, args: unknown): FamiliarLiveCall | undefined {
   const value = args && typeof args === 'object' ? args as Record<string, unknown> : {};
-  if (name === 'look_up' && typeof value.query === 'string') return { name, query: value.query };
+  if (name === 'look_up' && typeof value.query === 'string') return { name, query: value.query, ...(value.spoilers === true ? { spoilers: true as const } : {}) };
   if (name === 'show_topic' && typeof value.topic_id === 'string') return { name, topicId: value.topic_id };
   if (name === 'propose_action' && typeof value.action_id === 'string') return { name, actionId: value.action_id, input: typeof value.input === 'string' ? value.input : '' };
   if (name === 'answer_proposal' && (value.answer === 'confirm' || value.answer === 'cancel' || value.answer === 'hear')) return { name, answer: value.answer };

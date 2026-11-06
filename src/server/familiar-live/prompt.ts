@@ -20,7 +20,7 @@ import type { FamiliarLiveBrief } from '@seihouse/library/familiar';
  * comes back for an ordinary question about a name, and only this rule keeps
  * it from being passed on.
  */
-export const FAMILIAR_NO_SPOILERS = 'Never reveal a spoiler unless the reader explicitly asks for one. The place above says which chapter they have open, and look_up marks anything past it as a spoiler: say nothing of it, not even a hint, and if a question can only be answered with one, tell them so and ask if they want it spoiled. Only a plain request for spoilers, in their own words, unlocks it.';
+export const FAMILIAR_NO_SPOILERS = 'Never reveal a spoiler unless the reader explicitly asks for one. look_up answers only up to the chapter they have open, and says when there is more after it: say nothing of that, not even a hint, and if a question can only be answered with it, tell them so and ask if they want it spoiled. Only a plain request for spoilers, in their own words, lets you call look_up with spoilers set to true, and what comes back is marked as a spoiler.';
 
 /** The docs the Familiar knows exist, by name, grouped the way the host wrote them. */
 export const familiarLiveDocsIndex = (brief: FamiliarLiveBrief): string => {

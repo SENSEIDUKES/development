@@ -429,11 +429,21 @@ const normalizeSeedArcLookahead = (value: unknown): ArcLookaheadEntry[] => [2, 3
   return direction ? [{ arcNumber, direction }] : [];
 });
 
-/** Why the creator's Arc 1 goals cannot plan an arc, or undefined when they can. */
+/** Why the creator's Arc 1 goals cannot be saved, or undefined when they can. */
 const describeSeedArcGoalsProblem = (value: unknown): string | undefined => {
   if (value === undefined) return undefined;
   if (!Array.isArray(value)) return 'Arc 1 goals must be a list.';
   if (value.length > MAX_ARC_GOALS) return `Arc 1 has at most ${MAX_ARC_GOALS} goals.`;
+  return undefined;
+};
+
+/**
+ * Why the creator's Arc 1 goals cannot plan an arc, or undefined when they
+ * can. A draft may hold counts that overflow the arc while the creator is
+ * still typing (the ARC page says so); only generation is held back.
+ */
+const describeSeedArcGoalsFit = (value: unknown): string | undefined => {
+  if (!Array.isArray(value)) return undefined;
   const goals = normalizeSeedArcGoals(value);
   const given = goals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0);
   const open = goals.filter(goal => goal.chapters === undefined).length;
@@ -763,7 +773,10 @@ export const validateStorySeedInput = (value: unknown): StorySeedValidationResul
     if (storyTags.length > STORY_TAG_LIMIT) errors.push(`Story Tags cannot exceed ${STORY_TAG_LIMIT}.`);
   }
   // A length saved before the current range loads, but a story is generated only within it.
-  const arcCount = isRecord(value) && isRecord(value.story) && isRecord(value.story.optional) ? value.story.optional.arcCount : undefined;
+  const optional = isRecord(value) && isRecord(value.story) && isRecord(value.story.optional) ? value.story.optional : undefined;
+  const goalsFit = describeSeedArcGoalsFit(optional?.arcOneGoals);
+  if (goalsFit) errors.push(goalsFit);
+  const arcCount = optional?.arcCount;
   const lengthProblem = isSavedArcCount(arcCount) ? describeStoryLengthProblem(arcCount) : undefined;
   if (lengthProblem) errors.push(lengthProblem);
   return { valid: errors.length === 0, errors };

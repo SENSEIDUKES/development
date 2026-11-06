@@ -4,7 +4,8 @@
 in the session that moved the Chapter Tagger to notes in the margin
 ([#482](https://github.com/SENSEIDUKES/development/pull/482)) and gave it its
 own model choice ([#484](https://github.com/SENSEIDUKES/development/pull/484)).
-Nothing below is built yet except what "Where this stands" says. Any agent
+Phase B is built (the author's world view, below); the Phases table says where
+each phase stands (checked against the code 2026-11-06). Any agent
 picking this up should read it top to bottom, then
 [NOVEL_EXPANDED.md](../NOVEL_EXPANDED.md) (the product map and How we build),
 [HARNESS_PRINCIPLES](../src/components/harness-generation/HARNESS_PRINCIPLES.md)
@@ -84,8 +85,8 @@ and phase B closes on SENSEI's run in it."
   chapter, one at a time**, and the record counts its notes. #487 also put a
   Chapters card and a chapter page on World Info. **That was the wrong place**
   (SENSEI, 2026-10-30): World Info is the regular novel page every reader
-  opens, and nobody there wants tagging. They come off when the author's world
-  view (below) is built, and the regular novel page goes back to what it was.
+  opens, and nobody there wants tagging. They came off when the author's world
+  view (below) was built, and the regular novel page went back to what it was.
 - **The intake exists.** Sound Words packages (a story's own words, at most 30),
   Sound Cue packs, Soundscape and atmosphere packs, and CAPA skill packages
   all install from SPP and reach the tagger and the writer. The Studios do not
@@ -140,7 +141,10 @@ and phase B closes on SENSEI's run in it."
 
 ## The author's world view (designed with SENSEI, 2026-10-30)
 
-Not built yet. It has no name of its own: it is what a world opens to in Create.
+**Built** (`src/library/stories/AuthorWorldView.tsx`, checked 2026-11-06): the
+Worlds column, Novel (Sequential Art shown, not yet working), Blueprint,
+Chapters, Codex (coming soon), Assets and an Info tab. It has no name of its
+own: it is what a world opens to in Create.
 
 > "This page is going to be essentially the author's tool, where the real
 > authors can go into these novels and tag multiple chapters at a time, or see
@@ -198,11 +202,11 @@ Not built yet. It has no name of its own: it is what a world opens to in Create.
 | # | Phase | Agents build | SENSEI decides | SENSEI sees | Where it stands |
 |---|---|---|---|---|---|
 | A | This design | This document | Approve or cut | This doc | approved 2026-10-29 (merged) |
-| B | Tag any chapter, a few at a time | The author's world view (its section above): the Worlds column, the Novel medium, the four tabs, with Chapters working (check chapters, Tag them in order, cost shown first, each row updating, open a chapter to see its tags lit and the findings per kind) and Blueprint and Assets showing what already exists; Codex marked as coming. The World Info additions from #487 come off in the same change. The engine underneath (any chapter, the counted record) is already built. No whole-story run yet (SENSEI, 2026-10-29: "one chapter at a time, a couple chapters at a time, until we get this right") | Approve this design; decision 4 below | The Nine-Fold Furnace's chapters 1 to 3 tagged from the Chapters tab | designed 2026-10-30; waits on SENSEI's approval |
-| C | The manuscript way in. *A manuscript world is an authored world; expansion is a later action, and the tagger discovers before it confirms.* | A second way to start a world beside the Seed: the author's chapters in (see decisions 1 to 3), a world with no Seed and no Blueprint, open to its reader, readable in the Reader, with Story Settings for its language, its main character and its sound words | Decisions 1 to 3 below | A novel of SENSEI's choosing in the app, untagged, opening in the Reader | waits on B |
-| D | The tagging loop, one kind at a time | For each kind: the teaching rewritten for that kind alone, re-tag, count against the sentences the prose offers (the agent lists them), fix, repeat. Order: soundscape and atmosphere (and the category vocabulary they choose from), Sound Cues (with the story's own words equipped), speakers for named characters, then holdings and appearances with the already-appeared list | Approve each kind's words; equip the packs for the test story | Each kind landing on a chapter SENSEI can hear and see: music that changes between chapters, cues on the bells, voices on the named cast | waits on B; C helps |
-| E | The Codex open in Create | The Codex tab of the author's world view: every card and every picture, ahead of the reader | When; what the author may edit | The whole world in Create, the reached part in the Reader | later |
-| G | Tag the whole story | Tag all chapters of an imported manuscript in order as one run: what happens when it stops halfway (resume from the first chapter without a record from this run, cancel, never re-tag what is done) and clearing a bad run across chapters | Decisions 5 and 6 below | A long novel tagged end to end | later, after D works on single chapters |
+| B | Tag any chapter, a few at a time | The author's world view (its section above): the Worlds column, the Novel medium, the four tabs, with Chapters working (check chapters, Tag them in order, cost shown first, each row updating, open a chapter to see its tags lit and the findings per kind) and Blueprint and Assets showing what already exists; Codex marked as coming. The World Info additions from #487 come off in the same change. The engine underneath (any chapter, the counted record) is already built. No whole-story run yet (SENSEI, 2026-10-29: "one chapter at a time, a couple chapters at a time, until we get this right") | Approve this design; decision 4 below | The Nine-Fold Furnace's chapters 1 to 3 tagged from the Chapters tab | **built**; the #487 World Info additions are off. SENSEI's run on the Nine-Fold Furnace is not recorded |
+| C | The manuscript way in. *A manuscript world is an authored world; expansion is a later action, and the tagger discovers before it confirms.* | A second way to start a world beside the Seed: the author's chapters in (see decisions 1 to 3), a world with no Seed and no Blueprint, open to its reader, readable in the Reader, with Story Settings for its language, its main character and its sound words | Decisions 1 to 3 below | A novel of SENSEI's choosing in the app, untagged, opening in the Reader | **not built**; B is done, so this is next. Only the `imported` origin type and badge exist; nothing creates an imported world |
+| D | The tagging loop, one kind at a time | For each kind: the teaching rewritten for that kind alone, re-tag, count against the sentences the prose offers (the agent lists them), fix, repeat. Order: soundscape and atmosphere (and the category vocabulary they choose from), Sound Cues (with the story's own words equipped), speakers for named characters, then holdings and appearances with the already-appeared list | Approve each kind's words; equip the packs for the test story | Each kind landing on a chapter SENSEI can hear and see: music that changes between chapters, cues on the bells, voices on the named cast | **partly built**: the media re-read, Place, Appears, the one fixer and the already-on-the-page list are in. Left: the speakers step for named characters (its teaching still tags every spoken line) |
+| E | The Codex open in Create | The Codex tab of the author's world view: every card and every picture, ahead of the reader | When; what the author may edit | The whole world in Create, the reached part in the Reader | not built (the tab says Coming soon) |
+| G | Tag the whole story | Tag all chapters of an imported manuscript in order as one run: what happens when it stops halfway (resume from the first chapter without a record from this run, cancel, never re-tag what is done) and clearing a bad run across chapters | Decisions 5 and 6 below | A long novel tagged end to end | not built; no Clear tags action exists yet |
 | F | The Studios hand-off | Nothing here: SPP export from the Studios (their repo), then Manga Studio, MP Studio and games reading the Codex | Separate missions | A pack made in a Studio equipped in Create; later, a manga drawn from the Codex | later |
 
 ## Decisions for SENSEI, not to be guessed

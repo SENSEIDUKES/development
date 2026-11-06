@@ -34,7 +34,7 @@ picks in the Seed, turned into numbers by code.
 |---|---|---|---|---|---|
 | A | Finish this design | Card kinds drafted (below); revise from SENSEI's cuts | Approve or cut the list | This doc | **done** |
 | B | World at Chapter 0 | Seed slots, Blueprint fill, Chapter 0 record | Approve any new model words or calls | Seed and Blueprint pages; the Codex full before Chapter 1 | **built 2026-10-22** |
-| C | CTE engine + first probe | CGT section 13 as code, the Fragmentation probe, CGT section 14's examples as tests | Hand over CGT v1.5 (PDF); decide chapter-loop decisions 1, 2, 4 | A **CTE panel**: each character's variables, phase and evidence per chapter | next |
+| C | CTE engine + first probe | CGT section 13 as code, the Fragmentation probe, CGT section 14's examples as tests | Hand over CGT v1.5 (PDF); decide chapter-loop decisions 1, 2, 4 | A **CTE panel**: each character's variables, phase and evidence per chapter | **not built**, next (no CTE code yet; "What phase C built" below is the writer reading the world, a separate step done 2026-10-24) |
 | D | Planner reads CTE + Fate Pressure | The readout in plain words; the tier as the aim | Approve the planner's new words | The plan and the readout side by side on the Harness Generation page | waits on C |
 | E | World judge | Outcomes by code | Decide chapter-loop decision 3 | Outcomes and their reasons | waits on C |
 | F | Other probes, one variable at a time | Each probe with its doctrine file | Approve each doctrine file in plain words | The CTE panel filling in | waits on C |
@@ -44,8 +44,8 @@ picks in the Seed, turned into numbers by code.
 the pressures per Fate Pressure tier (later, not to be invented); the writer's
 freedom line. Two pieces of phase B are deliberately left for their own steps,
 each with its own approval: **what the chapter writer reads from this world**
-(today it still reads what it always read, so the Story Information it gets is
-unchanged), and a character's **starting CTE state**, which is phase C's and
+(built 2026-10-24: the writer reads THE WORLD AT CHAPTER 0, see "What phase C
+built" below), and a character's **starting CTE state**, which is phase C's and
 whose numbers are the owner's.
 
 **To hand this to a new chat:** "Read docs/world-at-chapter-0.md. Phase B is
@@ -396,8 +396,9 @@ the one scene the Seed sets.
    imported novel) shows every card from the start. The World rules sheet is
    not a card the story reaches, so it shows either way. An ability is reached
    by a holdings tag (`knows`, `learning`, `learned`), so its card opens with
-   the chapter that taught it; places and the Bestiary have no tag that names
-   one yet, so until those tags exist only an open world shows them.
+   the chapter that taught it. A place is reached by the Place tag (built
+   2026-11-04); the Bestiary has no tag that names one yet, so until it does
+   only an open world shows its cards.
 
 ## Open questions for SENSEI
 
@@ -606,6 +607,8 @@ The world is now recorded before Chapter 1, in the Codex's own card kinds.
   it, rather than waiting for a world open to its reader — a holdings tag does
   reach an ability, so holding its card back was hiding something the story had
   already shown. Places and the Bestiary still wait on tags of their own.
+  (2026-11-06: places now have theirs, the Place tag of 2026-11-04; the
+  Bestiary still waits.)
   Recorded open question 5 — what a manifested picture is
   keyed to once a chapter reaches a card an imported novel's reader could
   already see. Nothing in the generated path can reach it, and the card key

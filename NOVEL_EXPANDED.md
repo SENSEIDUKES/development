@@ -31,7 +31,7 @@ map, what SEN and Expanded Novels each cover, who they serve, and how SEIHouse m
 to sustain them. The capabilities it names are vision: they say where the product is
 going, not what exists.
 
-The second half is how we build it. [Where we are](#where-we-are-2026-10-08) is the
+The second half is how we build it. [Where we are](#where-we-are-2026-10-10) is the
 only section that says what is built today. A capability the first half names that
 Where we are does not list is not built. Knowing the whole product should shape every
 decision, but it is not a work order: build what the task asks for, and never
@@ -341,7 +341,8 @@ mode**. That means:
 ## Where we are (2026-10-10)
 
 The current implementation status, and the only section that says what is built.
-Update it whenever it changes.
+Update it whenever it changes. The heading's date is when the section began; its
+entries run to 2026-11-06.
 
 - **Built:**
   - Chapters are narration plus Sound Cues in the tiny SEN language (#295).
@@ -445,8 +446,8 @@ Update it whenever it changes.
     world written for the story never spoils it. A world open to its reader
     (`openToTheReader`) shows every card from the start, for a novel its author
     brought in and is expanding; the World rules sheet, the world's frame
-    rather than a card, shows either way. The chapter writer's own instructions
-    are unchanged: what it reads from this world is the next step. The plan is
+    rather than a card, shows either way. The chapter writer reads this world
+    too, as THE WORLD AT CHAPTER 0 in its Story Information. The plan is
     [the World at Chapter 0](./docs/world-at-chapter-0.md).
   - **The Codex, remade on the record (2026-10-13):** a panel like Fate,
     opened from the bottom bar's Codex button, holding only what the record
@@ -473,6 +474,8 @@ Update it whenever it changes.
     (2026-10-14). A **Bestiary** comes later (SENSEI, 2026-10-13): it
     holds species and unique beast groups (the dragon kin), while a named beast
     (the Dragon King, an emperor and the main villain) is a character.
+    Since then the Codex also has **Abilities**, **Places**, the **Bestiary**
+    and the **World rules** sheet beside Characters, Items and Factions.
     **Record checks** close each gallery, for testing. Every fact links to its
     passage, after a confirm (2026-10-14, SENSEI: an instant jump lost the
     reader's place): "Go to Chapter 4?" with Go or Stay. On Go the chapter
@@ -555,6 +558,12 @@ Update it whenever it changes.
     bar, faint while the page scrolls; on laptops it sits in the header beside
     Help and Search. Off, the menus are silent and the note goes; the Reader
     keeps its own music. The switch is in the app's own Profile Settings too.
+  - **Tagging left the writer (2026-10-26):** a separate **Chapter Tagger**
+    now writes every tag (the soundscape and atmosphere, sounds, speakers,
+    Holdings, appearances, Status and Place) after the writer's prose, and the
+    writer only writes. Where an entry below says "the writer tags", read "the
+    Chapter Tagger tags"; each entry describes how its tag began
+    ([the vocabulary](./src/components/harness-generation/ARCHITECTURE_VOCABULARY.md)).
   - **A chapter's soundtrack, in the tiny SEN language:** at the very start of
     every chapter the writer writes a soundscape tag and an atmosphere tag,
     separate sounds with separate tags since 2026-10-12
@@ -591,11 +600,13 @@ Update it whenever it changes.
   - **The app sits in the Library Shell:** Home and World Info have the
     Library's header (NovelExpanded, Help and Search, and the music note on
     laptops; on phones and tablets the note floats above the bottom bar), its
-    navigation and its footer. The navigation shows only the app's two places,
-    Home and Create: the bottom strip on phones and tablets, the Pathways
+    navigation and its footer. The navigation shows the app's places, Home,
+    Create, Discover and Profile: the bottom strip on phones and tablets, the Pathways
     sidebar on laptops, which opens the way the reader last left it on the
     device. Search opens the reader's stories; the footer offers Help and the
-    draft Terms, Privacy and Cookies. Create is Story Seed in the shell's
+    draft Terms, Privacy and Cookies. Create opens the Creator Space (the
+    reader's worlds, Energy and the Creator Toolkit); a new or saved Story Seed
+    opens from it in the shell's
     workspace mode (Sections, Story Bank, Blueprint, Settings, Back), laid out
     as a character creator: Origin → World → ARC → Create, with a live story
     card, and the World Blueprint inside the same shell (2026-10-26). The Reader stays
@@ -623,8 +634,8 @@ Update it whenever it changes.
     catalogues, follows and rankings remain samples; Lore term tracking is not
     built, and its My updates says so.
   - **Profile is in the app, with what it connects to,** so the pieces can be
-    seen working together and refined there. Profile is a third place in the
-    navigation (Home, Create, Profile, with Settings beside it); it is the
+    seen working together and refined there. Profile is a place in the
+    navigation (Home, Create, Discover, Profile, with Settings beside it); it is the
     Library's Cultivator Cave, whole:
     - **The reader's profile is kept on the device:** the Dao Name and its aura,
       the languages, the default Reading Mode, the equipped Familiar and its
@@ -662,9 +673,8 @@ Update it whenever it changes.
     story's own settings, the only place a reader meets the HARNESS:
     - **On Story View**, closed until opened: the Story Language (fixed when the
       story began), the Reading Mode, the **CAPA skill slots** (choose the Author,
-      Pacing, Continuity and Style skills; Fate, Accessibility, Translation, Sound
-      Cues, Soundtrack, Speakers and Holdings follow the story's own choices and
-      say so; each hand-equipped slot also takes a skill package, installed on
+      Pacing, Continuity and Style skills; Fate, Accessibility and Translation
+      follow the story's own choices and say so; each hand-equipped slot also takes a skill package, installed on
       the device), the **Media Loadout** (the Library's own sounds, shown
       equipped, or your own Soundscape and Sound Cue packages, imported as
       `.spp` and kept on the device) and the story's own **Sound Words**, the only sounds the writer may
@@ -696,7 +706,7 @@ Update it whenever it changes.
     save step, and a changed length throws away the private look-ahead written for
     the old one.
   - **Story Language and Reading Mode come from the Story Seed:** chapters are
-    written in the story's language, one of 11 today, and Clear Reading, Easy Read
+    written in the story's language, one of 30 today, and Clear Reading, Easy Read
     or Literal Reading loads SEN's matching Accessibility skill on every chapter.
   - **The World Blueprint shows Arc 1 only**, with the story's length. The model
     gets a short private look-ahead of the next arcs. Each later arc is planned
@@ -758,7 +768,7 @@ Update it whenever it changes.
     high]]`), naming one of the story's sound words, on up to 8 words; the
     numbered marks and separate list that lost sounds in the tests are gone.
     Speakers must be tagged from Chapter 1 on, one speaker per paragraph.
-  - **Writer Instructions, in the Workshop:** every block of text the writer
+  - **What the Models Read (once Writer Instructions), in the Workshop:** every block of text the writer
     reads before the story, from the live code, with its version, size and
     the date it last changed, and a dated history. A change to the writer's
     instructions fails the build until it is written in that history.
@@ -791,7 +801,7 @@ Update it whenever it changes.
     call. A fix stands only when it leaves fewer problems; a contradiction too
     big for one sentence is recorded and left as it is. The reader sees none of
     it; each chapter keeps a record of what was checked and changed, in the
-    export, and the fixer's instructions are on the Writer Instructions page.
+    export, and the fixer's instructions are on the What the Models Read page.
     The Library sets how far it may go (records only, or off), which is where
     the Familiar will control it.
     **One fixer for the whole record (2026-11-04):** the same call now also
@@ -819,7 +829,7 @@ Update it whenever it changes.
     look for someone who never appeared, and someone who speaks before any
     tag shows them. A story begun before the tag (Test Story - Blade) tags
     everyone on the page again in its next chapter, since nobody has appeared
-    on its record yet. Places wait for the Place tag.
+    on its record yet. Places joined with the Place tag (2026-11-04).
     After the first test (Test Story - Blade, chapters 3 to 10): every new
     character was tagged and the looks held from chapter to chapter, but no
     thing was tagged. So a thing now steps onto the page with the first
@@ -827,6 +837,12 @@ Update it whenever it changes.
     its look, with nothing more for the writer to do; and a look tag in the
     paragraph that first shows someone is read as that first look, never a
     change (SEN Appearance 1.1.0).
+  - **Status and Place (2026-10-31 and 2026-11-04):** the second and third
+    information tags, `[[status: Name | how they are now]]` and
+    `[[place: Name | Place]]`. A character's status and where they are is the
+    latest tag in story order; places are Codex cards of their own; the writer
+    reads both in Appeared, and the fixer checks them
+    ([Stage E1](#the-engine-track-the-world-record-and-the-codex), steps 2 and 3).
 - **Not tested yet:**
   - a right-to-left story with a real model, and Listen in Arabic and Hebrew
     on real phones, whose voices for those languages differ from device to
@@ -848,8 +864,9 @@ Update it whenever it changes.
   - Rewrite this chapter and the Holdings fixer with a real model: how often the
     fixer is called, what it costs next to a chapter, and whether its fixes
     hold (each chapter's record in the export shows it);
-  - the appearance tags and the look step with a real model: whether the
-    writer tags everyone new on the page and keeps the looks Appeared gives,
+  - the Status and Place tags with a real model;
+  - the appearance tags and the look step with a real model, again after the
+    first test's fixes (SEN Appearance 1.1.0): whether everyone new on the page is tagged and keeps the looks Appeared gives,
     and whether the looks written down match the prose (each chapter's
     `looks` in the export shows them);
   - Listen on real phones (iPhone Safari, Android Chrome), whose voices differ
@@ -867,12 +884,11 @@ Update it whenever it changes.
   - The app's Profile runs on the device and a practice economy: there are no
     accounts, database or server-side storage yet, so nothing the economy holds
     survives a reload, and the account and server pieces wait.
-  - Creator Space is a Library package entry the Workshop previews; the
-    NovelExpanded app does not use it yet.
-  - Create as the creator's hub, with the manuscript way in and the tagging
-    loop on a story that already exists, is planned in
-    [docs/create-hub.md](./docs/create-hub.md) (owner's direction, 2026-10-29).
-    Not built yet.
+  - Create as the creator's hub ([docs/create-hub.md](./docs/create-hub.md),
+    owner's direction, 2026-10-29) is partly built: the app's Create is the
+    Creator Space, and the author's world view with its Chapters tagging list
+    is in. Not built yet: the manuscript way in (import), the world's Codex
+    tab, a whole-story tagging run with resume, and Clear tags.
   - Discover's world shelves use samples only: no public worlds,
     releases, Tracker, signals, Rankings or Events are real yet.
 - **Not rebuilt yet:**
@@ -902,11 +918,11 @@ When a session asks "what now?", start here:
    Manifest, whose picture the Codex's card then wears. It waits on the
    owner's refinement of the Color Codes, which the glowing names use (SENSEI,
    2026-10-13). The Codex as a card gallery is built.
-3. **Owner:** test the first information tag, **first appearance with
-   appearance** (Stage E1, step 1, built 2026-10-14), by writing the next
-   chapters of Test Story - Blade on to ten and exporting it: does the writer
-   tag everyone new, do the looks written down match the prose, and do later
-   chapters keep them? Then Stage E1 step 2, Status.
+3. **Owner:** test the information tags with a real model and export the
+   story: **first appearance** (built 2026-10-14; its first test on Test Story -
+   Blade is done and its fixes are in), **Status** (built 2026-10-31) and
+   **Place** (built 2026-11-04). Is everyone new tagged, do the looks match the
+   prose, and do statuses and places hold? Then Stage E1 step 4, Scene.
 4. **Agent:** the next step of reading in every script (product track, item
    1): a reading font chosen on purpose for each remaining script. Right-to-left
    reading is built.
@@ -915,8 +931,8 @@ When a session asks "what now?", start here:
 ### The product track
 
 1. **Read in every script, starting with right-to-left.** The target is
-   roughly 60 languages, and the Reader today lays out only left-to-right
-   text. A story in Arabic, Hebrew, Persian or Urdu must read right to left:
+   roughly 60 languages (30 are SEN languages today), and the Reader first
+   laid out only left-to-right text. A story in Arabic, Hebrew, Persian or Urdu must read right to left:
    the text, its alignment, the lit sentence during Listen, Sound Cue
    highlights, and the Reader's own controls mirrored where a right-to-left
    reader expects them (the chapter switcher's previous and next swap sides).
@@ -1025,8 +1041,9 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
    against.
    **Built (2026-10-14):** the tags, SEN Appearance, the Appeared section, the
    look step (registered as Look Describer) and each Look in the Codex, as
-   [Where we are](#where-we-are-2026-10-10) says. Not yet proven with a real
-   model.
+   [Where we are](#where-we-are-2026-10-10) says. First real-model test done
+   (Test Story - Blade, chapters 3 to 10) and its fixes are in (SEN Appearance
+   1.1.0); a second test is still owed.
 2. **Status:** alive, wounded, transformed, sealed away, and so on. Moved
    before Place on 2026-10-14 (SENSEI): "the world remembers what you did"
    mostly comes from Status and Ties, so a dead sect leader stays dead because
@@ -1065,16 +1082,17 @@ complete the record, the world they add to has to exist: the Story Seed and the
 World Blueprint now write every Codex card kind before Chapter 1, and the Codex
 shows them ([the plan](./docs/world-at-chapter-0.md), phase B). The tags still
 record what changes; they no longer have to invent what was there at the start.
-What the chapter writer reads from that world, the CTE engine and the world
-judge are the phases after it.
+The chapter writer now reads that world (THE WORLD AT CHAPTER 0 in Story
+Information). The CTE engine and the world judge are the phases after it, not
+built.
 
 **Stage E2: complete the Codex on the record.** The Codex is remade alongside
 the tags ("the Codex grows with the record", [How we build](#how-we-build)):
 since 2026-10-13 it has characters (with their holdings as one section of each
-character's sheet) and items, each fact linked to the passage that made it.
+character's sheet) and items, each fact linked to the passage that made it,
+and now abilities, places, factions, the Bestiary and world rules.
 Each tag of Stage E1 adds its part (looks, places, scenes, status, ties); what
-remains here is the rest of its categories (factions, the timeline) and its
-finish. Done when the record passes the two tests in the principles: **the
+remains here is the timeline and its finish. Done when the record passes the two tests in the principles: **the
 artist test** and **the save-game test**.
 
 **After E2: keeping the record true when a reader edits a chapter.** Create
@@ -1093,8 +1111,8 @@ again. It comes back once the Codex is designed, on this principle (SENSEI):
   nothing for a model to read). Only an edit that leaves a **conflict with
   what the Codex holds** from that chapter matters.
 - **Conflicts are found without a model.** Each fact a chapter gives the
-  record is pinned to its words (today a speaker and a holdings change; later
-  every information tag from Stage E1). An edit that breaks a pin is known at
+  record is pinned to its words (today Sound Cues, speakers, holdings changes,
+  appearances, statuses and places; later every information tag from Stage E1). An edit that breaks a pin is known at
   once: the fact shows under Create mode's *Needs a new spot*.
 - **The reader settles a conflict for free.** Placing the fact on its new
   words, or removing it, costs nothing.
@@ -1156,7 +1174,7 @@ ever deleted; everything else waits in the full record.
   page offers one tap: **Pin this as a goal?** Any past Alter Fate can be made
   a pin from the story's history.
 - **How much the writer sees.** Already capped by recency: the main character
-  and up to 20 characters and 10 things in Appeared, holdings for the main
+  and up to 20 characters, 10 things and 10 places in Appeared, holdings for the main
   character and 6 others, the last 5 recaps. Added: the arc goal, the reader's
   direction and the pins pull an older card back from the full record by name.
   Later, recall by meaning (above) finds vaguer references ("the old smith
@@ -1212,6 +1230,32 @@ straight on to the next chapter.
 
 Manga Studio, and later animation and game exports, are studio work on the
 same record; none of them adds anything medium-specific to the story itself.
+
+### Plans kept in other docs
+
+Plans written in their own documents, so none is forgotten. Each document says
+where it stands; this list was checked against the code on 2026-11-06.
+
+- [Create, the creator's hub](./docs/create-hub.md): phase B (the author's
+  world view and its Chapters tagging) is built. Open: C, the manuscript way
+  in; the rest of D, the speakers step for named characters; E, the world's
+  Codex tab; G, tagging a whole story with resume and Clear tags; colored
+  words as a third tag style; a focused re-read for each information tag.
+- [The world at Chapter 0](./docs/world-at-chapter-0.md): phase B and the
+  writer reading the world are built. Open: the CTE engine and its first probe,
+  the planner reading CTE and Fate Pressure, the world judge, the other probes,
+  the cleanup of what covered for the missing world (faction guessing from
+  names, the look writer), cards added by chapters, and the owner's open
+  questions.
+- [CTE consequences](./docs/cte-consequences.md): direction, none built.
+- [Discover](./docs/discover-page.md): structure built on samples. Open: real
+  worlds and releases, Tracker, signals, community lists, credits pages, branch
+  lineage, curated reviews, the posting guardrails, series status and content
+  warnings.
+- [The Story Tag audit](./docs/story-tag-audit-2026-10-25.md): the first pass
+  and the niche engine are built. Open: the Protagonist & Tropes and Slice of
+  Life families, moving farming, food and cozy out of Romance, a one-line
+  meaning for each tag, and filtering Discover and Home by tag.
 
 ## Names
 

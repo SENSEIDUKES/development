@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Искры",
       "Sparks: story ideas": "Искры: идеи для историй",
       "Close Sparks": "Закрыть Искры",
-      "Search For Worlds": "Искать миры",
+      "Search for stories": "Искать истории",
       "Profile and preferences": "Профиль и настройки",
       "Sign in": "Войти",
       "Not connected yet": "Пока не подключено",

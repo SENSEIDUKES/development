@@ -17,11 +17,9 @@ export interface WorkspaceHeaderPreferences {
 }
 
 /**
- * Search: a field-style trigger right after the logo, growing into the space
- * before the Familiar and the Profile Portrait up to a comfortable width (it
- * does not stretch across a large screen), that opens the Search sheet of
- * host destinations and actions. Its words are shown whole or not at all: where
- * they do not fit beside the magnifier they step aside, never cut off or "…". It opens on a tap or click (and Enter or
+ * Search: a wide field-style trigger right after the logo, filling the space
+ * before the Familiar and the Profile Portrait, that opens the Search sheet of
+ * host destinations and actions. It opens on a tap or click (and Enter or
  * Space), never on focus, so moving past it with the keyboard opens nothing.
  */
 export function WorkspaceHeaderSearch({ items }: { items: readonly HeaderSearchItem[] }) {
@@ -42,12 +40,10 @@ export function WorkspaceHeaderSearch({ items }: { items: readonly HeaderSearchI
 
   return <>
     <div className="workspace-search">
-      <button ref={searchRef} type="button" className="workspace-search-field" aria-label="Search For Worlds"
+      <button ref={searchRef} type="button" className="workspace-search-field" aria-label="Search for stories"
         aria-haspopup="dialog" aria-expanded={open} onClick={openSearch}>
-        <span className="workspace-search-line">
-          <SENSearchIcon aria-hidden="true" size={20} className="workspace-search-emblem" />
-          <span className="workspace-search-placeholder">Search For Worlds</span>
-        </span>
+        <SENSearchIcon aria-hidden="true" size={20} className="workspace-search-emblem" />
+        <span className="workspace-search-placeholder">Search for stories</span>
       </button>
     </div>
     <WorkspaceSheet open={open} onOpenChange={setOpen}

@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "جرقه‌ها",
       "Sparks: story ideas": "جرقه‌ها: ایده‌های داستان",
       "Close Sparks": "بستن جرقه‌ها",
-      "Search For Worlds": "جستجوی جهان‌ها",
+      "Search for stories": "جستجوی داستان‌ها",
       "Profile and preferences": "نمایه و ترجیحات",
       "Sign in": "ورود",
       "Not connected yet": "هنوز متصل نیست",

@@ -59,7 +59,7 @@ it('regression: Sparks is no longer in the header: Logo, Search and the Profile 
     expect(header.querySelector('.dao-sparks-trigger')).toBeNull();
     expect(header.querySelector('[data-slot="app-header-center"]')).toBeNull();
     expect(Array.from(header.querySelectorAll('button'))
-      .map(element => element.getAttribute('aria-label'))).toEqual(['Search For Worlds', 'Profile and preferences']);
+      .map(element => element.getAttribute('aria-label'))).toEqual(['Search for stories', 'Profile and preferences']);
     expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
   }
 });

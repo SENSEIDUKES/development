@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "ประกาย",
       "Sparks: story ideas": "ประกาย: ไอเดียเรื่องราว",
       "Close Sparks": "ปิดประกาย",
-      "Search For Worlds": "ค้นหาโลก",
+      "Search for stories": "ค้นหาเรื่องราว",
       "Profile and preferences": "โปรไฟล์และการตั้งค่า",
       "Sign in": "ลงชื่อเข้าใช้",
       "Not connected yet": "ยังไม่ได้เชื่อมต่อ",

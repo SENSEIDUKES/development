@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Mga Kislap",
       "Sparks: story ideas": "Mga Kislap: mga ideya ng kuwento",
       "Close Sparks": "Isara ang Mga Kislap",
-      "Search For Worlds": "Maghanap ng mga mundo",
+      "Search for stories": "Maghanap ng mga kuwento",
       "Profile and preferences": "Profile at mga kagustuhan",
       "Sign in": "Mag-sign in",
       "Not connected yet": "Hindi pa nakakonekta",

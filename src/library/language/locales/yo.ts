@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Ìtànná",
       "Sparks: story ideas": "Ìtànná: èrò ìtàn",
       "Close Sparks": "Pa Ìtànná dé",
-      "Search For Worlds": "Wá àwọn ayé",
+      "Search for stories": "Wá ìtàn",
       "Profile and preferences": "Profaili àti àṣàyàn",
       "Sign in": "Wọlé",
       "Not connected yet": "Kò tíì sopọ̀",

@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Percikan",
       "Sparks: story ideas": "Percikan: ide cerita",
       "Close Sparks": "Tutup Percikan",
-      "Search For Worlds": "Cari dunia",
+      "Search for stories": "Cari cerita",
       "Profile and preferences": "Profil dan preferensi",
       "Sign in": "Masuk",
       "Not connected yet": "Belum terhubung",

@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Dhimbiilo",
       "Sparks: story ideas": "Dhimbiilo: fikrado sheeko",
       "Close Sparks": "Xir Dhimbiilada",
-      "Search For Worlds": "Raadi caalamyada",
+      "Search for stories": "Raadi sheekooyin",
       "Profile and preferences": "Astaanta iyo doorbidyada",
       "Sign in": "Gal",
       "Not connected yet": "Weli lama xirin",

@@ -75,6 +75,16 @@ first pieces exist) or **goal** (designed for, not built).
    runs only when needed, never more work for the chapter writer.
 7. **Keep receipts.** Every model call keeps what it was given and what it
    returned.
+8. **The user decides what matters; the AI decides how it plays out.** AI is
+   poor at choosing which character, mystery or thread should be important, so
+   importance is always the user's call: who is promoted from a passing
+   character to the cast, who is the main enemy, what the Hard Pins are. Inside
+   those choices the AI has full creative freedom: inventing the arrogant young
+   master, writing the scene, filling a blank card. That balance is what makes a
+   user feel they are watching their own story play out (SENSEI, 2026-11-06).
+   It is also balanced by Fate mode: the user is never made to do everything.
+   Fate Survival is where the user steers and makes these calls; in Regular
+   mode the app makes most of them for the user, who can still step in.
 
 ## Translation across media: the world record
 
@@ -144,6 +154,11 @@ the record, which must stay exact.
 
 ## History
 
+- **2026-11-06:** Rule 8, the user decides what matters and the AI decides
+  how it plays out, from SENSEI while redesigning the Story Seed: AI is poor at
+  choosing what is important, so importance stays with the user, balanced by
+  Fate mode: the user steers in Fate Survival, and Regular mode does most of it
+  for them.
 - **2026-10-17:** Looks on demand: no call after a chapter. The writer's own
   description is kept by code; a full look, the core record a picture, manga
   or game draws from, is written for one entry when something needs it and

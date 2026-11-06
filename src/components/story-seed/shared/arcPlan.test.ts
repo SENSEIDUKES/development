@@ -138,9 +138,11 @@ describe('Story Seed arc plans', () => {
     seed.story.optional.arcOneGoals = [{ text: 'Reach the gate.', chapters: 5 }, { text: 'Reach the city.', chapters: 5 }];
     expect(validateStorySeedDraft(seed).valid).toBe(true);
     expect(arcOnePlanFromSeedGoals(seed.story.optional.arcOneGoals)!.goals.map(goal => goal.chapters)).toEqual([5, 25]);
-    // Counts past the arc's thirty are a problem to fix, never a plan.
+    // Counts past the arc's thirty save as a draft (the ARC page says so), but never generate.
     seed.story.optional.arcOneGoals = [{ text: 'Reach the gate.', chapters: 20 }, { text: 'Reach the city.', chapters: 20 }];
-    expect(validateStorySeedDraft(seed).valid).toBe(false);
+    expect(validateStorySeedDraft(seed).valid).toBe(true);
+    expect(normalizeStorySeedInput(seed).story.optional.arcOneGoals).toEqual(seed.story.optional.arcOneGoals);
+    expect(validateStorySeedInput(seed).errors).toEqual(["Arc 1's goals take 30 chapters in all."]);
   });
 
   it('carries the creator\'s Arc 2 and Arc 3 lines into the Blueprint even after the story length changed', () => {

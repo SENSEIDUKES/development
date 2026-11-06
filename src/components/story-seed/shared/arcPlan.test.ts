@@ -170,6 +170,10 @@ describe('Story Seed arc plans', () => {
     const typing = mirrorSeedIntoBlueprint(pair.blueprint, withLines([{ arcNumber: 3, direction: 'T' }]));
     const cleared = mirrorSeedIntoBlueprint(typing, withLines(undefined));
     expect(cleared.arcLookahead).toEqual(lookahead);
+    // A line the Blueprint tidies (double spaces) is still known as the creator's, and clears in one edit.
+    const spaced = mirrorSeedIntoBlueprint(pair.blueprint, withLines([{ arcNumber: 3, direction: 'The  sect  war.' }]));
+    expect(spaced.authoredArcLookahead).toEqual([3]);
+    expect(mirrorSeedIntoBlueprint(spaced, withLines(undefined)).arcLookahead).toEqual(lookahead);
     // Saved and reopened, it stays cleared.
     const [restored] = parseStorySeedJson(JSON.stringify(createStorySeedExport(withLines(undefined), cleared)));
     expect(restored.blueprint?.arcLookahead).toEqual(lookahead);

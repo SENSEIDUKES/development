@@ -103,8 +103,8 @@ export const novelExpandedDocs: DocsCatalog = [
       },
       {
         ...topic('world-identity', 'World Identity', ['Make It Work', 'Main Opposition']),
-        definition: 'The story world’s defining facts and starting situation.',
-        howItFits: 'In Story Seed, World Identity includes the world type, society, opening location, and the novel’s title. The World section also gathers Main Opposition and the creator’s Make It Work instruction for unusual or difficult ideas. Reviewed Blueprint edits to Seed-owned facts write back to the Seed; the Blueprint may add compatible detail, but it cannot quietly replace what the creator established.',
+        definition: 'What the world must make work, and who pushes back hardest.',
+        howItFits: 'In Story Seed, World Identity holds the creator’s Make It Work instruction for unusual or difficult ideas and the Main Opposition. What kind of world it is and who rules it live on the World card with its ranks, laws and era, and the story opens at its first Place. Reviewed Blueprint edits to Seed-owned facts write back to the Seed; the Blueprint fills only what the creator left blank and never replaces what they established.',
       },
       {
         ...topic('world-blueprint', 'World Blueprint', ['Blueprint']),

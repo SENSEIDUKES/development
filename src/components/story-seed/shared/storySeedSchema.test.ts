@@ -13,9 +13,6 @@ const blueprint: WorldBlueprint = {
   arcLookahead: [{ arcNumber: 2, direction: 'Hold the route through Arc 2.' }, { arcNumber: 3, direction: 'Hold the route through Arc 3.' }],
   title: 'Ashes of the Ninth Meridian',
   logline: 'Seven doomed timelines. One chance to break fate.',
-  worldOverview: 'A shattered celestial court rules the sects through fate ledgers.',
-  startingLocation: 'Outer sect quarry',
-  societyStructure: 'Sect-led feudal hierarchy',
   mcProfile: 'Ye Chen is a fallen heir with memories of seven failures.',
   majorFactions: ['Heavenly Sword Sect', 'Celestial Court'],
   initialCharacters: ['Elder Qin (Protector)', 'Ninth Prince'],
@@ -62,16 +59,13 @@ const completeSeed = (): StorySeedInput => ({
     optional: {
       worldIdentity: {
         title: 'Ashes of the Ninth Meridian',
-        worldType: 'Ancient sect world',
-        societyStructure: 'Sect-led feudal hierarchy',
-        startingLocation: 'Outer sect quarry',
       },
       worldFoundations: {
         mainCharacter: { name: 'Ye Chen', personality: 'Protective and ruthless' },
         additionalCharacters: [{ id: 'character-1', name: 'Elder Qin' }],
         factions: [{ id: 'faction-1', name: 'Heavenly Sword Sect' }],
         abilities: { startingPowerConcept: 'Qi Condensation', uniquePath: 'Fate severing' },
-        powerSystem: { flavor: 'Daoist martial arts', knownRanks: 'Qi Condensation > Foundation' },
+        powerSystem: { kindOfWorld: 'Ancient sect world', whoRules: 'Sect-led feudal hierarchy', flavor: 'Daoist martial arts', knownRanks: 'Qi Condensation > Foundation' },
         destinedEnding: 'The prince survives and severs the court from fate.',
       },
     },
@@ -232,13 +226,11 @@ describe('Story Seed creator/story/world contract', () => {
     const seed = completeSeed();
     // Review edits to Seed-owned values write through, so a cleared review
     // field arrives with its Seed value cleared too.
-    Object.assign(seed.world.optional.worldIdentity, { title: '', startingLocation: '', societyStructure: '' });
+    Object.assign(seed.world.optional.worldIdentity, { title: '' });
     Object.assign(seed.world.optional.worldFoundations.mainCharacter!, { name: '', personality: '' });
     const cleared = normalizeWorldBlueprint({
       ...blueprint,
       title: '',
-      startingLocation: '',
-      societyStructure: '',
       mainCharacter: {
         name: '',
         age: '',
@@ -251,8 +243,6 @@ describe('Story Seed creator/story/world contract', () => {
 
     expect(cleared).toMatchObject({
       title: '',
-      startingLocation: '',
-      societyStructure: '',
       mcProfile: '',
       mainCharacter: {
         name: '',
@@ -266,17 +256,16 @@ describe('Story Seed creator/story/world contract', () => {
 
   it('keeps Seed-authored values authoritative over stale Blueprint copies', () => {
     const seed = completeSeed();
-    Object.assign(seed.world.optional.worldIdentity, { worldType: 'Seed world', startingLocation: 'Seed opening', societyStructure: 'Seed order' });
     Object.assign(seed.world.optional.worldFoundations, { destinedEnding: 'Seed ending' });
     Object.assign(seed.world.optional.worldFoundations.mainCharacter!, { name: 'Seed Hero', personality: 'Seed temper' });
     const normalized = normalizeWorldBlueprint({
       ...blueprint,
-      worldOverview: 'Stale world', startingLocation: 'Stale opening', societyStructure: 'Stale order', destinedEnding: 'Stale ending',
+      destinedEnding: 'Stale ending',
       mainCharacter: { name: 'Stale Hero', age: '19', personality: 'Stale temper', appearance: 'Tall', backgroundProfile: 'Reviewed prose' },
     }, seed);
 
     expect(normalized).toMatchObject({
-      worldOverview: 'Seed world', startingLocation: 'Seed opening', societyStructure: 'Seed order', destinedEnding: 'Seed ending',
+      destinedEnding: 'Seed ending',
       mainCharacter: { name: 'Seed Hero', age: '19', personality: 'Seed temper', appearance: 'Tall', backgroundProfile: 'Reviewed prose' },
     });
   });
@@ -435,7 +424,7 @@ describe('Story Seed creator/story/world contract', () => {
       world: {
         required: {},
         optional: {
-          worldIdentity: { ...completeSeed().world.optional.worldIdentity, universe: blueprint.worldOverview },
+          worldIdentity: { ...completeSeed().world.optional.worldIdentity, universe: 'A shattered celestial court rules the sects through fate ledgers.' },
           worldFoundations: {
             ...completeSeed().world.optional.worldFoundations,
             majorMysteries: retiredSurvivalFields.majorMysteries,

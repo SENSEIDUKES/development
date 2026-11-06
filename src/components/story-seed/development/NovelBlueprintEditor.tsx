@@ -4,7 +4,6 @@ import {
   mirrorSeedIntoBlueprint,
   normalizeStorySeedInput,
   reconcileStorySeedBlueprint,
-  reviewWorldFactDetail,
   type StorySeedInput,
   type WorldBlueprint,
 } from '@seihouse/sen/story-seed';
@@ -134,23 +133,7 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, r
         }))}
       />
       <fieldset disabled={readOnly} className="novel-blueprint-fields m-0 min-w-0 space-y-6 border-0 p-0">
-      <BlueprintWorldSettingSection
-        seed={seed}
-        updateSeed={updateSeed}
-        worldType={identity.worldType ?? ''}
-        startingLocation={identity.startingLocation ?? ''}
-        societyStructure={identity.societyStructure ?? ''}
-        onUpdateWorldIdentity={patch => updateSeed(patchWorldIdentity(patch))}
-        worldFactDetails={{
-          worldOverviewDetail: blueprint.worldOverviewDetail,
-          worldOverviewDetailBasis: blueprint.worldOverviewDetailBasis,
-          startingLocationDetail: blueprint.startingLocationDetail,
-          startingLocationDetailBasis: blueprint.startingLocationDetailBasis,
-          societyStructureDetail: blueprint.societyStructureDetail,
-          societyStructureDetailBasis: blueprint.societyStructureDetailBasis,
-        }}
-        onWorldFactDetailChange={(field, value, fact) => setBlueprint(current => reviewWorldFactDetail(current, field, value, fact))}
-      />
+      <BlueprintWorldSettingSection seed={seed} updateSeed={updateSeed} />
       </fieldset>
       <WorldCardGrid seed={seed} updateSeed={updateSeed} readOnly={readOnly} />
       {!readOnly && <LibraryPanel padding="sm" className="sm:p-5">

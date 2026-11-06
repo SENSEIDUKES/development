@@ -45,9 +45,6 @@ const canonicalSeed = (): StorySeedInput => ({
     optional: {
       worldIdentity: {
         title: "The Seventh Oath",
-        worldType: "A cultivation empire suspended beneath a dead, oath-recording heaven.",
-        societyStructure: "Nine imperial clans share power with witness sects.",
-        startingLocation: "The rain court beneath Vermilion Palace.",
       },
       worldFoundations: {
         mainCharacter: {
@@ -88,6 +85,8 @@ const canonicalSeed = (): StorySeedInput => ({
           uniquePath: "Read fractures left by promises broken in other timelines",
         },
         powerSystem: {
+          kindOfWorld: "A cultivation empire suspended beneath a dead, oath-recording heaven.",
+          whoRules: "Nine imperial clans share power with witness sects.",
           flavor: "Cultivation through witnessed promises and their consequences",
           knownRanks: "Oath Spark → Seal Heart → Crown Soul",
         },
@@ -330,9 +329,8 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(blueprint.originSnapshot).toEqual(seed.story.required);
     expect(blueprint.title).toBe(seed.world.optional.worldIdentity.title);
     expect(blueprint.logline).toBe(generatedBlueprint().logline);
-    expect(blueprint.worldOverview).toBe(seed.world.optional.worldIdentity.worldType);
-    expect(blueprint.startingLocation).toBe(seed.world.optional.worldIdentity.startingLocation);
-    expect(blueprint.societyStructure).toBe(seed.world.optional.worldIdentity.societyStructure);
+    // The world lives on its card, never as Blueprint text beside it.
+    for (const retired of ["worldOverview", "startingLocation", "societyStructure"]) expect(blueprint).not.toHaveProperty(retired);
     expect(blueprint.mainCharacter).toMatchObject({
       name: "Jin Rui",
       age: "Twenty-three",
@@ -703,7 +701,7 @@ describe("Cleaned-up Blueprint instructions", () => {
       "the immediate goal the creator will review", "Completion rules", "Nothing is left for a later chapter to invent",
     ]) expect(both).not.toContain(removed);
     // The instructions are the Origin, World and Arc skills in that order, then the permanent rules.
-    const order = ["[Origin] SEN Eastern Fantasy 1.1.0", "[World] SEN World Builder 1.1.0", "[Arc] SEN Arc Planner 1.1.0", "The creator's words\n"]
+    const order = ["[Origin] SEN Eastern Fantasy 1.1.0", "[World] SEN World Builder 1.2.0", "[Arc] SEN Arc Planner 1.1.0", "The creator's words\n"]
       .map(heading => systemInstruction.indexOf(heading));
     expect(order.every(index => index >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
@@ -716,19 +714,6 @@ describe("Cleaned-up Blueprint instructions", () => {
     expect(userPrompt).not.toMatch(/mcProfile|Name \(role\) — description/);
   });
 
-  it("asks for added detail only where the creator wrote the world fact", async () => {
-    const allWritten = await promptFor(canonicalSeed());
-    expect(allWritten.userPrompt).toContain("- The creator already wrote the world overview (worldIdentity.worldType), opening location (worldIdentity.startingLocation), and society (worldIdentity.societyStructure); that wording stays the fact. In worldOverview, startingLocation, and societyStructure, add only compatible detail.");
-    const noneWritten = canonicalSeed();
-    noneWritten.world.optional.worldIdentity = { title: "The Seventh Oath" };
-    const open = await promptFor(noneWritten);
-    expect(open.userPrompt).not.toContain("The creator already wrote");
-    const someWritten = canonicalSeed();
-    someWritten.world.optional.worldIdentity = { title: "The Seventh Oath", societyStructure: "Nine clans share power." };
-    const partial = await promptFor(someWritten);
-    expect(partial.userPrompt).toContain("- The creator already wrote the society (worldIdentity.societyStructure); that wording stays the fact. In societyStructure, add only compatible detail.");
-  });
-
   it("keeps the strict output form", async () => {
     const { schema } = await promptFor(canonicalSeed());
     expect(schema.additionalProperties).toBe(false);
@@ -736,27 +721,21 @@ describe("Cleaned-up Blueprint instructions", () => {
     // left out of a schema-valid answer.
     expect([...schema.required].sort()).toEqual([
       "abilities", "arcLookahead", "arcOne", "characters", "destinedEnding", "estimatedArcs", "factions", "logline",
-      "mainCharacter", "mainOpposition", "places", "powerSystem", "societyStructure", "species", "startingAbilities",
-      "startingLocation", "things", "title", "worldOverview",
+      "mainCharacter", "mainOpposition", "places", "powerSystem", "species", "startingAbilities",
+      "things", "title",
     ]);
     expect(Object.keys(schema.properties)).not.toContain("worldOverviewDetail");
   });
 
-  it("returns the added detail beside the author's facts, never in their place", async () => {
-    const provider = new RecordingProvider({
-      ...generatedBlueprint(),
-      worldOverview: "Oaths are recorded in the sky as scars of light.",
-      startingLocation: "Rainwater in the court runs red during hearings.",
-      societyStructure: "Every clan keeps a witness sect as hostage and guarantor.",
-    });
-    const response = await post({ storySeed: canonicalSeed() }, provider);
-    const blueprint = response.body as WorldBlueprint;
-    const identity = canonicalSeed().world.optional.worldIdentity;
-    expect(blueprint).toMatchObject({
-      worldOverview: identity.worldType, startingLocation: identity.startingLocation, societyStructure: identity.societyStructure,
-      worldOverviewDetail: "Oaths are recorded in the sky as scars of light.",
-      startingLocationDetail: "Rainwater in the court runs red during hearings.",
-      societyStructureDetail: "Every clan keeps a witness sect as hostage and guarantor.",
-    });
+  it("keeps the creator's World card and fills only its blank slots", async () => {
+    const seed = canonicalSeed();
+    seed.world.optional.worldFoundations.powerSystem = { kindOfWorld: "Author world" };
+    const provider = new RecordingProvider({ ...generatedBlueprint(), powerSystem: { kindOfWorld: "Model world", whoRules: "Model rulers", knownRanks: "", flavor: "", laws: "", era: "" } });
+    const response = await post({ storySeed: seed }, provider);
+    const generated = response.body as GeneratedWorldBlueprint;
+    const slots = generated.generatedSeedSlots?.powerSystem;
+    const filled = fillBlankSeedSlots(seed, generated.generatedSeedSlots ?? {}).world.optional.worldFoundations.powerSystem;
+    expect(slots).toMatchObject({ whoRules: "Model rulers" });
+    expect(filled).toMatchObject({ kindOfWorld: "Author world", whoRules: "Model rulers" });
   });
 });

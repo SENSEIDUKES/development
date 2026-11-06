@@ -57,7 +57,7 @@ describe('Story Seed creator steps', () => {
 
   it('completes parents only when every child has content or confirmation', () => {
     const seed = createEmptyStorySeedInput();
-    seed.world.optional.worldIdentity.worldType = 'An island';
+    seed.story.optional.makeItWorkInstruction = 'An island that sinks a little every year';
     expect(pageComplete('world-identity', seed)).toBe(true);
     expect(stepStatus('world', seed)).toBe('empty');
     const world = SEED_SECTIONS.filter(section => section.family === 'world').map(section => section.id);

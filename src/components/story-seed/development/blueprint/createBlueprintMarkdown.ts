@@ -1,15 +1,12 @@
 import { type StorySeedStoryRequired } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
-import { getStoryStyleLabel, worldFactDetailIsCurrent, type WorldFactDetailField } from '@seihouse/sen/story-seed';
+import { getStoryStyleLabel, type StorySeedPowerSystem } from '@seihouse/sen/story-seed';
+import { WORLD_CARD_KINDS } from '@seihouse/sen/contracts';
 
 export const formatBlueprintDate = (value: string): string => {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString();
 };
-
-/** A detail line, written only while the detail belongs to its fact as that fact reads now. */
-const factDetailLine = (blueprint: WorldBlueprint, detail: WorldFactDetailField, fact: string | undefined, label: string): string =>
-  worldFactDetailIsCurrent(blueprint, detail, fact) && blueprint[detail] ? `\n**${label}:** ${blueprint[detail]}\n` : '';
 
 const markdownList = (items: string[]): string => {
   const cleanItems = items.map(item => item.trim()).filter(Boolean);
@@ -22,7 +19,14 @@ export const createBlueprintMarkdown = (
   blueprint: WorldBlueprint,
   origin: StorySeedStoryRequired,
   mainCharacter: WorldBlueprintMainCharacter,
+  /** The Seed's World card: what kind of world it is, who rules it, and its rules. */
+  world: StorySeedPowerSystem = {},
 ): string => {
+  const worldLines = WORLD_CARD_KINDS.find(kind => kind.id === 'world-rules')!.slots
+    .flatMap(slot => {
+      const value = (world as Record<string, string | undefined>)[slot.id]?.trim();
+      return value ? [`### ${slot.label}\n${value}`] : [];
+    }).join('\n\n');
   const styleLabel = getStoryStyleLabel(origin.style) || origin.style;
   const metadata = [
     `**Blueprint Version:** ${blueprint.blueprintVersion || 'v1.0'}`,
@@ -64,17 +68,9 @@ ${mainCharacter.appearance}
 ### Background / Profile
 ${mainCharacter.backgroundProfile}
 
-## World Setting
+## World
 
-### World Overview
-${blueprint.worldOverview || ''}
-${factDetailLine(blueprint, 'worldOverviewDetail', blueprint.worldOverview, 'World Detail')}
-### Opening Location
-${blueprint.startingLocation || ''}
-${factDetailLine(blueprint, 'startingLocationDetail', blueprint.startingLocation, 'Opening Location Detail')}
-### World Order
-${blueprint.societyStructure || ''}
-${factDetailLine(blueprint, 'societyStructureDetail', blueprint.societyStructure, 'World Order Detail')}
+${worldLines || '_None yet_'}
 
 ## Arc
 

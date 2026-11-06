@@ -126,12 +126,13 @@ export interface StorySeedStory {
 /** World has no required creator inputs. The family exists and stays empty. */
 export interface StorySeedWorldRequired {}
 
-/** Name, world type, society, and the place the story opens in. */
+/**
+ * The novel's name. What kind of world it is and who rules it live on the one
+ * World rules card, and where the story opens is its first Place (SENSEI,
+ * 2026-11-06); a Seed saved before then has them lifted onto the card when read.
+ */
 export interface StorySeedWorldIdentity {
   title?: string;
-  worldType?: string;
-  societyStructure?: string;
-  startingLocation?: string;
 }
 
 /**
@@ -263,6 +264,8 @@ export interface StorySeedAbilities {
  * the story stands in.
  */
 export interface StorySeedPowerSystem {
+  kindOfWorld?: string;
+  whoRules?: string;
   flavor?: string;
   knownRanks?: string;
   laws?: string;
@@ -385,7 +388,7 @@ export const describeStoryLengthProblem = (arcCount: unknown): string | undefine
 const arcOneScopeFor = (estimatedArcs: number): NonNullable<WorldBlueprint['arcOneScope']> =>
   estimatedArcs === 1 ? 'whole-story' : 'opening';
 
-const WORLD_IDENTITY_FIELDS = ['title', 'worldType', 'societyStructure', 'startingLocation'] as const;
+const WORLD_IDENTITY_FIELDS = ['title'] as const;
 
 /**
  * Every Story Seed card's fields come from the one definition of its Codex
@@ -576,14 +579,35 @@ const normalizeWorldFoundations = (value: unknown): StorySeedWorldFoundations =>
   return normalized;
 };
 
+/**
+ * A Seed saved before the world moved onto its card (SENSEI, 2026-11-06) wrote
+ * what kind of world it is and who rules it as text beside the card. Read, each
+ * fills its card slot when that slot is blank, so nothing written is lost and a
+ * card the creator already filled wins.
+ */
+const RETIRED_WORLD_TEXT: ReadonlyArray<[from: string, to: 'kindOfWorld' | 'whoRules']> = [
+  ['worldType', 'kindOfWorld'],
+  ['societyStructure', 'whoRules'],
+];
+
+export const liftRetiredWorldText = (
+  foundations: StorySeedWorldFoundations,
+  retired: Record<string, unknown>,
+): StorySeedWorldFoundations => {
+  const lifted = { ...foundations.powerSystem };
+  for (const [from, to] of RETIRED_WORLD_TEXT) {
+    const value = text(retired[from]);
+    if (value && !text(lifted[to])) lifted[to] = value;
+  }
+  return Object.keys(lifted).length > 0 ? { ...foundations, powerSystem: lifted } : foundations;
+};
+
 const normalizeWorldOptional = (value: unknown): StorySeedWorldOptional => {
   const source = isRecord(value) ? value : {};
+  const identity = isRecord(source.worldIdentity) ? source.worldIdentity : {};
   return {
-    worldIdentity: optionalTextFields<StorySeedWorldIdentity>(
-      isRecord(source.worldIdentity) ? source.worldIdentity : {},
-      WORLD_IDENTITY_FIELDS,
-    ),
-    worldFoundations: normalizeWorldFoundations(source.worldFoundations),
+    worldIdentity: optionalTextFields<StorySeedWorldIdentity>(identity, WORLD_IDENTITY_FIELDS),
+    worldFoundations: liftRetiredWorldText(normalizeWorldFoundations(source.worldFoundations), identity),
   };
 };
 
@@ -864,9 +888,6 @@ export const createBlueprintDraftFromSeed = (
     // Generated summaries stay blank until Blueprint generation.
     // The initial Active Arc Goal has its own canonical contract.
     logline: '',
-    worldOverview: worldIdentity.worldType || '',
-    startingLocation: worldIdentity.startingLocation || '',
-    societyStructure: worldIdentity.societyStructure || '',
     mainCharacter: {
       name: mainCharacter.name || '',
       age: '',
@@ -976,12 +997,6 @@ export const normalizeWorldBlueprint = (
     originSnapshot,
     title: requestedTitle || read('title', fallback.title),
     logline: read('logline', fallback.logline),
-    worldOverview: text(seedIdentity.worldType) || read('worldOverview', fallback.worldOverview),
-    startingLocation: text(seedIdentity.startingLocation) || read('startingLocation', fallback.startingLocation),
-    societyStructure: text(seedIdentity.societyStructure) || read('societyStructure', fallback.societyStructure),
-    // An explicit empty string is the author clearing a detail, kept like any edit.
-    ...Object.fromEntries(WORLD_FACT_DETAILS.flatMap(({ detail, basis }) =>
-      [detail, basis].flatMap(key => hasString(source, key) ? [[key, read(key)]] : []))),
     mainCharacter,
     mcProfile: mainCharacter.backgroundProfile,
     majorFactions: Array.isArray(source.majorFactions)
@@ -1129,91 +1144,6 @@ const mergeAuthoritativeEntries = <T extends { name: string; aliases?: string[] 
   ];
 };
 
-/**
- * The author-owned world facts a Blueprint may add detail to: the Seed field
- * holding the author's wording, the Blueprint field that mirrors it, the
- * Blueprint-owned field for the model's compatible added detail, and the fact
- * as it read when that detail was generated or last reviewed.
- */
-export const WORLD_FACT_DETAILS = [
-  { fact: 'worldType', field: 'worldOverview', detail: 'worldOverviewDetail', basis: 'worldOverviewDetailBasis' },
-  { fact: 'startingLocation', field: 'startingLocation', detail: 'startingLocationDetail', basis: 'startingLocationDetailBasis' },
-  { fact: 'societyStructure', field: 'societyStructure', detail: 'societyStructureDetail', basis: 'societyStructureDetailBasis' },
-] as const satisfies ReadonlyArray<{
-  fact: keyof StorySeedWorldIdentity;
-  field: keyof WorldBlueprint;
-  detail: keyof WorldBlueprint;
-  basis: keyof WorldBlueprint;
-}>;
-
-export type WorldFactDetailField = typeof WORLD_FACT_DETAILS[number]['detail'];
-export type WorldFactDetailBasisField = typeof WORLD_FACT_DETAILS[number]['basis'];
-
-/** The `WORLD_FACT_DETAILS` entry for one detail field. */
-const worldFactDetailEntry = (detail: WorldFactDetailField) =>
-  WORLD_FACT_DETAILS.find(entry => entry.detail === detail)!;
-
-/**
- * A fact's wording without case, spacing, or punctuation. Separators are
- * dropped rather than treated as word breaks, so a punctuation-only edit in a
- * script written without spaces ("天庭，修士" → "天庭修士") leaves it unchanged.
- */
-const factWording = (value: string | undefined): string =>
-  (value ?? '').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
-
-/**
- * Whether a detail was generated or last reviewed against the author's fact as
- * it reads now; case, spacing, and punctuation aside. A detail written for an
- * earlier or cleared version of the fact is kept but not used.
- */
-export const worldFactDetailIsCurrent = (
-  blueprint: Partial<Pick<WorldBlueprint, WorldFactDetailBasisField>> | undefined,
-  detail: WorldFactDetailField,
-  fact: string | undefined,
-): boolean => {
-  const wording = factWording(fact);
-  return wording.length > 0 && wording === factWording(blueprint?.[worldFactDetailEntry(detail).basis]);
-};
-
-/** The author's edit to a detail, which also reviews it against the fact it sits under. */
-export const reviewWorldFactDetail = (
-  blueprint: WorldBlueprint,
-  detail: WorldFactDetailField,
-  value: string,
-  fact: string,
-): WorldBlueprint => ({ ...blueprint, [detail]: value, [worldFactDetailEntry(detail).basis]: fact.trim() });
-
-/** Lead-in words a restated fact may carry: "This is …", "The society here is a …". */
-const RESTATEMENT_LEAD_WORDS = 5;
-
-/** Whether a sentence only restates the author's fact, adding nothing to it. */
-const restatesFact = (sentence: string, factWords: string[]): boolean => {
-  const words = comparableWords(sentence);
-  if (!words.length) return true;
-  // The fact, or a piece of it, in its own words.
-  const fact = new Set(factWords);
-  if (words.every(word => fact.has(word))) return true;
-  // The whole fact, verbatim, closing a short lead-in.
-  if (factWords.length < 2 || words.length - factWords.length > RESTATEMENT_LEAD_WORDS) return false;
-  return ` ${words.join(' ')}`.endsWith(` ${factWords.join(' ')}`);
-};
-
-/**
- * What a generated passage adds to an author's fact. Sentences that only
- * restate the fact are removed so the chapter writer never receives it twice:
- * the fact or a piece of it, and the whole fact closing a short lead-in
- * ("This is …"). Paraphrases, and whether the rest agrees with the fact, are
- * left to the prompt and the author's review. Undefined when nothing is added.
- */
-export const detailBeyondAuthoredFact = (fact: string | undefined, generated: string | undefined): string | undefined => {
-  const passage = text(generated);
-  if (!passage) return undefined;
-  const factWords = comparableWords(fact ?? '');
-  if (!factWords.length) return passage;
-  const sentences = passage.match(/[^.!?。！？]+(?:[.!?。！？]+|$)\s*/gu) ?? [passage];
-  return text(sentences.filter(sentence => !restatesFact(sentence, factWords)).join(''));
-};
-
 export interface StorySeedWorldEntity {
   name: string;
   aliases?: string[];
@@ -1241,13 +1171,10 @@ export interface StorySeedWorldCanon {
   powerSystemBeyondItsCard?: string;
   characters: StorySeedWorldEntity[];
   factions: StorySeedWorldEntity[];
+  /** The World rules card's kind of world and who rules, for a consumer that does not send the card. */
   worldOverview?: string;
   societyStructure?: string;
   powerSystem?: string;
-  /** Generated detail beside each author-owned fact, with any restatement of it removed. */
-  worldOverviewDetail?: string;
-  societyStructureDetail?: string;
-  startingLocationDetail?: string;
 }
 
 const labeledDetails = (entries: Array<[label: string, value: string | undefined]>): string =>
@@ -1408,9 +1335,6 @@ export const promoteBlueprintIntoSeed = (seed: StorySeedInput, blueprint: WorldB
       worldIdentity: {
         ...identity,
         title: fill(identity.title, blueprint.title === UNTITLED_BLUEPRINT_TITLE ? undefined : blueprint.title),
-        worldType: fill(identity.worldType, blueprint.worldOverview),
-        startingLocation: fill(identity.startingLocation, blueprint.startingLocation),
-        societyStructure: fill(identity.societyStructure, blueprint.societyStructure),
       },
       worldFoundations: {
         ...foundations,
@@ -1444,9 +1368,6 @@ export const mirrorSeedIntoBlueprint = (blueprint: WorldBlueprint, seed: StorySe
     ...blueprint,
     originSnapshot: createBlueprintOriginSnapshot(seed),
     title: text(worldIdentity.title) || blueprint.title,
-    worldOverview: text(worldIdentity.worldType) || '',
-    startingLocation: text(worldIdentity.startingLocation) || '',
-    societyStructure: text(worldIdentity.societyStructure) || '',
     mainCharacter: {
       name: text(mainCharacter.name) || '',
       age: text(mainCharacter.age) || '',
@@ -1481,7 +1402,15 @@ export const reconcileStorySeedBlueprint = (
   blueprint: unknown,
   context: WorldBlueprintContext = {},
 ): { seed: StorySeedInput; blueprint: WorldBlueprint } => {
-  const normalizedSeed = normalizeStorySeedInput(seed);
+  const readSeed = normalizeStorySeedInput(seed);
+  // A Blueprint saved before the world moved onto its card held it as text:
+  // it fills the card's blank slots, like any other Blueprint value.
+  const retired = isRecord(blueprint) ? blueprint : {};
+  const normalizedSeed: StorySeedInput = { ...readSeed, world: { ...readSeed.world, optional: {
+    ...readSeed.world.optional,
+    worldFoundations: liftRetiredWorldText(readSeed.world.optional.worldFoundations,
+      { worldType: retired.worldOverview, societyStructure: retired.societyStructure }),
+  } } };
   const promotedSeed = promoteBlueprintIntoSeed(normalizedSeed, normalizeWorldBlueprint(blueprint, normalizedSeed, context));
   return {
     seed: promotedSeed,
@@ -1524,17 +1453,9 @@ export const resolveStorySeedWorldCanon = (
     ...(entry.aliases?.length ? { aliases: [...entry.aliases] } : {}),
     description,
   });
-  const worldOverview = text(worldIdentity.worldType);
-  const societyStructure = text(worldIdentity.societyStructure);
-  // A detail only travels beside the fact it was written or last reviewed
-  // for: a cleared or rewritten fact sends none, though the Blueprint keeps it.
-  const factDetails = Object.fromEntries(WORLD_FACT_DETAILS.flatMap(entry => {
-    const fact = text(worldIdentity[entry.fact]);
-    const detail = worldFactDetailIsCurrent(blueprint, entry.detail, fact)
-      ? detailBeyondAuthoredFact(fact, blueprint?.[entry.detail])
-      : undefined;
-    return detail ? [[entry.detail, detail]] : [];
-  })) as Pick<StorySeedWorldCanon, WorldFactDetailField>;
+  // What kind of world it is and who rules it live on the World rules card.
+  const worldOverview = text(worldFoundations.powerSystem?.kindOfWorld);
+  const societyStructure = text(worldFoundations.powerSystem?.whoRules);
   // Power travels as the creator's own slots only: the World rules card holds
   // it, and no Blueprint paragraph repeats it (SENSEI, 2026-11-06).
   const powerSystem = text(withAuthoritativeDetails(
@@ -1559,7 +1480,6 @@ export const resolveStorySeedWorldCanon = (
     ...(societyStructure ? { societyStructure } : {}),
     ...(powerSystem ? { powerSystem } : {}),
     ...(powerSystemBeyondItsCard ? { powerSystemBeyondItsCard } : {}),
-    ...factDetails,
   };
 };
 
@@ -1576,7 +1496,7 @@ export const finalizeGeneratedWorldBlueprint = (
   // Details are derived below from the author's facts, and what Arc 1 was
   // planned as from the answer's own length, never taken as sent.
   const modelOutput = Object.fromEntries(Object.entries(isRecord(value) ? value : {})
-    .filter(([key]) => key !== 'arcOneScope' && !WORLD_FACT_DETAILS.some(entry => entry.detail === key || entry.basis === key)));
+    .filter(([key]) => key !== 'arcOneScope'));
   const generated = normalizeWorldBlueprint(modelOutput, storySeed, {
     preserveSourceMetadata: false,
   });
@@ -1587,14 +1507,6 @@ export const finalizeGeneratedWorldBlueprint = (
   // carries a second, separately editable copy of them.
   const backgroundProfile = generatedMainCharacter.backgroundProfile;
   const mainCharacterName = text(mainCharacter.name) || text(generatedMainCharacter.name);
-  // Where the author wrote a world fact, the model was asked for compatible
-  // detail in that field instead; the author's wording stays the fact, and
-  // the detail is bound to that wording.
-  const worldFactDetails = Object.fromEntries(WORLD_FACT_DETAILS.flatMap(({ fact, field, detail, basis }) => {
-    const authored = text(worldIdentity[fact]);
-    const added = authored ? detailBeyondAuthoredFact(authored, text(modelOutput[field])) : undefined;
-    return added ? [[detail, added], [basis, authored]] : [];
-  })) as Pick<WorldBlueprint, WorldFactDetailField | WorldFactDetailBasisField>;
   // The slot values the model proposed for the Seed travel with the reply, to
   // fill only the creator's blanks. When the answer gives structured cards, the
   // Blueprint's cast lists show the cast the Seed will hold once they are filled.
@@ -1604,14 +1516,10 @@ export const finalizeGeneratedWorldBlueprint = (
 
   return {
     ...generated,
-    ...worldFactDetails,
     blueprintVersion: WORLD_BLUEPRINT_VERSION,
     originSnapshot: createBlueprintOriginSnapshot(storySeed),
     title: text(worldIdentity.title) || generated.title,
     logline: generated.logline,
-    worldOverview: text(worldIdentity.worldType) || generated.worldOverview,
-    startingLocation: text(worldIdentity.startingLocation) || generated.startingLocation,
-    societyStructure: text(worldIdentity.societyStructure) || generated.societyStructure,
     mainCharacter: {
       ...generatedMainCharacter,
       name: text(mainCharacter.name) || generatedMainCharacter.name,

@@ -171,7 +171,8 @@ describe('Story Seed to Harness handoff', () => {
     // Regular Reader mode, so the chapter continues without a reader direction.
     record.seed.story.optional.fateSurvival.enabled = false;
     const world = record.seed.world.optional;
-    Object.assign(world.worldIdentity, { title: 'TITLE_ONCE', worldType: 'WORLD_ONCE', societyStructure: 'SOCIETY_ONCE', startingLocation: 'OPENING_ONCE' });
+    // A Seed saved before the world moved onto its card: its world text is carried onto the card, once; where it opened is retired.
+    Object.assign(world.worldIdentity, { title: 'TITLE_ONCE', worldType: 'WORLD_ONCE', societyStructure: 'SOCIETY_ONCE', startingLocation: 'OPENING_RETIRED' });
     Object.assign(world.worldFoundations, {
       mainOpposition: 'OPPOSITION_ONCE',
       mainCharacter: { name: 'Hero Once', personality: 'HERO_TEMPER_ONCE', bio: 'HERO_BIO_ONCE' },
@@ -205,7 +206,8 @@ describe('Story Seed to Harness handoff', () => {
     await controller.generateNextChapter(story.id, 'fixture');
     const { userPrompt } = buildHarnessGenerationPrompt(requests[0]);
 
-    for (const marker of ['TITLE_ONCE', 'WORLD_ONCE', 'SOCIETY_ONCE', 'OPENING_ONCE', 'OPPOSITION_ONCE', 'HERO_TEMPER_ONCE',
+    expect(userPrompt).not.toContain('OPENING_RETIRED');
+    for (const marker of ['TITLE_ONCE', 'WORLD_ONCE', 'SOCIETY_ONCE', 'OPPOSITION_ONCE', 'HERO_TEMPER_ONCE',
       'HERO_BIO_ONCE', 'REVIEWED_PROSE_ONCE', 'HERO_LOOK_ONCE', 'ALLY_BIO_ONCE', 'ALLY_ALIAS_ONCE', 'GUILD_PROFILE_ONCE',
       'GUILD_ALIAS_ONCE', 'POWER_CONCEPT_ONCE', 'POWER_FLAVOR_ONCE', 'TAG_ONCE',
       // A Blueprint-introduced character's role, now carried by their Chapter 0
@@ -228,13 +230,12 @@ describe('Story Seed to Harness handoff', () => {
 
   it('keeps future promises separate and favors explicit Seed values over generated fallbacks', () => {
     const record = createMockStorySeedRecord();
-    record.seed.world.optional.worldIdentity.startingLocation = 'Author opening';
     record.seed.world.optional.worldFoundations.destinedEnding = 'Author ending';
-    record.blueprint!.startingLocation = 'Generated opening';
     record.blueprint!.destinedEnding = 'Generated ending';
     record.blueprint!.mainCharacter = { name: 'Mara', age: '20', personality: 'Quiet', appearance: 'Tall', backgroundProfile: 'Additional profile detail that must survive.' };
     const foundation = createHarnessFoundationFromStorySeed(record);
-    expect(foundation.openingSituation).toBe('Author opening');
+    // Where the story opens is its first Place and Arc 1's first goal, never separate text.
+    expect(foundation.openingSituation).toBeUndefined();
     expect(foundation.destinedEnding).toBe('Author ending');
     expect(foundation.intendedDirection).toBeUndefined();
     // Story Tags travel as their own field, never as declared canon.

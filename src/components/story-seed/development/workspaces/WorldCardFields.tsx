@@ -13,7 +13,7 @@ import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBo
  */
 
 /** Slots long enough to want a box of their own. */
-const WIDE_SLOTS = new Set(['appearance', 'bio', 'description', 'goals', 'ties', 'laws', 'era', 'holds', 'knows']);
+const WIDE_SLOTS = new Set(['appearance', 'bio', 'description', 'goals', 'ties', 'laws', 'era', 'holds', 'knows', 'kindOfWorld', 'whoRules']);
 
 export const worldCardSlots = (kind: WorldCardKindId, only?: readonly string[]): WorldCardSlot[] => {
   const slots = WORLD_CARD_KINDS.find(candidate => candidate.id === kind)!.slots.filter(slot => !slot.aliases);

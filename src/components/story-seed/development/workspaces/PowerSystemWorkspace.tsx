@@ -17,6 +17,14 @@ export const PowerSystemFields = ({ seed, updateSeed }: PowerSystemWorkspaceProp
   const powerSystem = worldFoundations(seed).powerSystem || {};
   return (
     <div className="grid grid-cols-1 gap-4">
+      {/* What kind of world it is and who rules it, first on the one World card (SENSEI, 2026-11-06). */}
+      <WorldCardSlotFields
+        kind="world-rules"
+        card={powerSystem}
+        idPrefix="world-rules"
+        only={['kindOfWorld', 'whoRules']}
+        onChange={patch => updateSeed(patchPowerSystem(patch))}
+      />
       <LibraryTextBox
         id="a11y-control-kytc0oh"
         label="Power Style"

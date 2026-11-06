@@ -9,7 +9,7 @@ import {
   type SetStateAction,
 } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, Check, Copy, Download, Languages, Settings2 } from 'lucide-react';
-import { describeBlueprintArcPlanProblem, reviewWorldFactDetail, type WorldBlueprint, type WorldBlueprintMainCharacter, type WorldFactDetailField } from '@seihouse/sen/story-seed';
+import { describeBlueprintArcPlanProblem, type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
 import { STORY_TAG_LIMIT, type StorySeedInput, type StorySeedStoryRequired, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore } from '../../../library/story-seed/runtime';
 import { NarrativeButton as LibraryButton, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
@@ -86,7 +86,7 @@ export const BlueprintReview = ({
     appearance: blueprint.mainCharacter?.appearance || '',
     backgroundProfile: blueprint.mainCharacter?.backgroundProfile || blueprint.mcProfile || '',
   }), [blueprint.mainCharacter, blueprint.mcProfile]);
-  const copyPayloadRef = useRef({ blueprint, origin, mainCharacter });
+  const copyPayloadRef = useRef({ blueprint, origin, mainCharacter, world: seed.world.optional.worldFoundations.powerSystem });
   const arcProblem = describeBlueprintArcPlanProblem(blueprint);
   // A regeneration owns the busy state, so the Manifest button never claims
   // to be manifesting while the Blueprint is being replaced.
@@ -102,8 +102,8 @@ export const BlueprintReview = ({
   }, [onRegenerateBlueprint]);
 
   useEffect(() => {
-    copyPayloadRef.current = { blueprint, origin, mainCharacter };
-  }, [blueprint, mainCharacter, origin]);
+    copyPayloadRef.current = { blueprint, origin, mainCharacter, world: seed.world.optional.worldFoundations.powerSystem };
+  }, [blueprint, mainCharacter, origin, seed.world.optional.worldFoundations.powerSystem]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -132,10 +132,6 @@ export const BlueprintReview = ({
     updateOrigin({ storyTags });
   }, [updateOrigin]);
 
-  const updateWorldIdentity = useCallback((patch: Partial<StorySeedWorldIdentity>) => {
-    updateSeed(patchWorldIdentity(patch));
-  }, [updateSeed]);
-
   const updateBackgroundProfile = useCallback((backgroundProfile: string) => {
     setBlueprint(current => ({
       ...current,
@@ -144,24 +140,8 @@ export const BlueprintReview = ({
     }));
   }, [mainCharacter, setBlueprint]);
 
-  const updateWorldFactDetail = useCallback((field: WorldFactDetailField, value: string, fact: string) => {
-    setBlueprint(current => reviewWorldFactDetail(current, field, value, fact));
-  }, [setBlueprint]);
-  const worldFactDetails = useMemo(() => ({
-    worldOverviewDetail: blueprint.worldOverviewDetail,
-    worldOverviewDetailBasis: blueprint.worldOverviewDetailBasis,
-    startingLocationDetail: blueprint.startingLocationDetail,
-    startingLocationDetailBasis: blueprint.startingLocationDetailBasis,
-    societyStructureDetail: blueprint.societyStructureDetail,
-    societyStructureDetailBasis: blueprint.societyStructureDetailBasis,
-  }), [
-    blueprint.worldOverviewDetail, blueprint.worldOverviewDetailBasis,
-    blueprint.startingLocationDetail, blueprint.startingLocationDetailBasis,
-    blueprint.societyStructureDetail, blueprint.societyStructureDetailBasis,
-  ]);
-
   const handleCopyBlueprint = useCallback(async () => {
-    const { blueprint: currentBlueprint, origin: currentOrigin, mainCharacter: currentMainCharacter } = copyPayloadRef.current;
+    const { blueprint: currentBlueprint, origin: currentOrigin, mainCharacter: currentMainCharacter, world: currentWorld } = copyPayloadRef.current;
     const clipboard = typeof navigator === 'undefined' ? undefined : navigator.clipboard;
 
     const showCopyError = () => {
@@ -181,7 +161,7 @@ export const BlueprintReview = ({
 
     try {
       await clipboard.writeText(
-        createBlueprintMarkdown(currentBlueprint, currentOrigin, currentMainCharacter),
+        createBlueprintMarkdown(currentBlueprint, currentOrigin, currentMainCharacter, currentWorld),
       );
       if (!isMountedRef.current) return;
       setCopyError(null);
@@ -301,18 +281,8 @@ export const BlueprintReview = ({
         </div>
 
         <div {...panel('world')}>
-          {/* World Setting: the Seed's world identity, abilities, and power
-              system, plus the Blueprint's power outline prose. */}
-          <BlueprintWorldSettingSection
-            seed={seed}
-            updateSeed={updateSeed}
-            worldType={identity.worldType ?? ''}
-            startingLocation={identity.startingLocation ?? ''}
-            societyStructure={identity.societyStructure ?? ''}
-            onUpdateWorldIdentity={updateWorldIdentity}
-            worldFactDetails={worldFactDetails}
-            onWorldFactDetailChange={updateWorldFactDetail}
-          />
+          {/* World Setting: the one World card and the abilities. */}
+          <BlueprintWorldSettingSection seed={seed} updateSeed={updateSeed} />
           <WorldCardGrid seed={seed} updateSeed={updateSeed} />
         </div>
 

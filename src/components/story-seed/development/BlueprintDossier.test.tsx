@@ -114,6 +114,6 @@ describe('World Blueprint as a character screen', () => {
     act(() => avatar.click());
     expect(stat('role')).toBe('Protector');
     // The fields themselves stay view-only.
-    expect(container.querySelector<HTMLTextAreaElement>('#blueprint-world-overview')!.closest('fieldset')!.disabled).toBe(true);
+    expect(container.querySelector<HTMLTextAreaElement>('#world-rules-kindOfWorld')!.closest('fieldset')!.disabled).toBe(true);
   });
 });

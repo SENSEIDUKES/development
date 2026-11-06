@@ -163,9 +163,12 @@ export const WORLD_CARD_KINDS: readonly WorldCardKind[] = [
     id: 'world-rules',
     label: 'World rules',
     plural: 'World rules',
-    purpose: 'The one sheet every other card refers to: the ladder, the laws, and the age the story stands in.',
+    purpose: 'The one sheet every other card refers to: what kind of world it is, who rules it, the ladder, the laws, and the age the story stands in.',
     single: true,
     slots: [
+      // The world itself lives on this one card, not as separate text beside it (SENSEI, 2026-11-06).
+      { id: 'kindOfWorld', label: 'Kind of world', test: 'both', changes: false, asks: 'what kind of world this is, in a line or two' },
+      { id: 'whoRules', label: 'Who rules', test: 'save-game', changes: true, asks: 'who holds power and how society is ordered' },
       { id: 'knownRanks', label: 'The rank ladder', test: 'both', changes: false, asks: "the world's ranks in order, so ranks and levels can be compared" },
       { id: 'flavor', label: 'How power works', test: 'both', changes: false, asks: 'what kind of power this world runs on' },
       { id: 'laws', label: 'Laws and customs', test: 'save-game', changes: true, asks: 'the laws and customs that change what can happen, one line each' },

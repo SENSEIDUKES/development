@@ -14,22 +14,10 @@ import {
   SEED_THING_LIMIT,
   SEED_THING_SLOT_FIELDS,
   SEED_WORLD_RULES_FIELDS,
-  WORLD_FACT_DETAILS,
   type StorySeedInput,
 } from '@seihouse/sen/story-seed';
 import { WORLD_CARD_KINDS, type WorldCardKindId } from '@seihouse/sen/contracts';
 import { SEN_BLUEPRINT_DEFAULT_SKILLS, assembleBlueprintSkills, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
-
-/** How the request names each world fact the creator may have written. */
-const WORLD_FACT_PROMPT_LABELS: Record<typeof WORLD_FACT_DETAILS[number]['field'], string> = {
-  worldOverview: 'world overview',
-  startingLocation: 'opening location',
-  societyStructure: 'society',
-};
-
-const listPhrase = (items: string[]): string => items.length <= 2
-  ? items.join(' and ')
-  : `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
 
 /** Where each card kind's cards go in the answer, and how many it may hold, in the order the answer writes them. */
 const CARD_ANSWERS: Array<{ kind: WorldCardKindId; field: string; limit?: number; lead: string }> = [
@@ -102,24 +90,16 @@ export const buildWorldBlueprintSystemPrompt = (
 export const WORLD_BLUEPRINT_SYSTEM_PROMPT = buildWorldBlueprintSystemPrompt();
 
 /**
- * The lines of the request that depend on this Seed: world facts the creator
- * already wrote (their wording stays the fact; the matching Blueprint field
- * carries only compatible detail, which chapter generation receives beside
- * it), a Story Length the creator chose, and an Active Arc Goal.
+ * The lines of the request that depend on this Seed: a Story Length the
+ * creator chose, and an Active Arc Goal. A world fact the creator wrote is a
+ * card slot like any other, which the permanent rules already cover.
  */
-const seedRules = (storySeed: StorySeedInput, arcCount: number | undefined): string[] => {
-  const identity = storySeed.world.optional.worldIdentity;
-  const written = WORLD_FACT_DETAILS.filter(entry => identity[entry.fact]?.trim());
-  return [
-    ...(written.length
-      ? [`The creator already wrote the ${listPhrase(written.map(entry => `${WORLD_FACT_PROMPT_LABELS[entry.field]} (worldIdentity.${entry.fact})`))}; that wording stays the fact. In ${listPhrase(written.map(entry => entry.field))}, add only compatible detail.`]
-      : []),
-    ...(arcCount === undefined ? [] : [`The creator chose the story's length: estimatedArcs is exactly ${arcCount}.`]),
-    ...(storySeed.story.optional.activeArcGoal
-      ? ['Arc 1 begins with the Active Arc Goal: use its text word for word as Arc 1\'s first goal.']
-      : []),
-  ];
-};
+const seedRules = (storySeed: StorySeedInput, arcCount: number | undefined): string[] => [
+  ...(arcCount === undefined ? [] : [`The creator chose the story's length: estimatedArcs is exactly ${arcCount}.`]),
+  ...(storySeed.story.optional.activeArcGoal
+    ? ['Arc 1 begins with the Active Arc Goal: use its text word for word as Arc 1\'s first goal.']
+    : []),
+];
 
 /** The request: the Story Seed, then only the lines that depend on it. */
 export const buildWorldBlueprintPrompt = (storySeed: StorySeedInput, arcCount = storySeed.story.optional.arcCount): string => {
@@ -158,12 +138,9 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     "destinedEnding",
     "estimatedArcs",
     "powerSystem",
-    "worldOverview",
-    "societyStructure",
     // The world at Chapter 0: a card kind left out of the answer would leave
     // the world short of it, so every one is asked for.
     "places",
-    "startingLocation",
     "factions",
     "species",
     "startingAbilities",
@@ -182,10 +159,7 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     estimatedArcs: { type: "integer", minimum: exactArcs ?? STORY_LENGTH_ARCS.min, maximum: exactArcs ?? STORY_LENGTH_ARCS.max },
     // The World rules sheet, which the Seed keeps in its power-system family.
     powerSystem: { type: "object", additionalProperties: false, required: SEED_WORLD_RULES_FIELDS, properties: textSlots(SEED_WORLD_RULES_FIELDS) },
-    worldOverview: { type: "string", minLength: 1 },
-    societyStructure: { type: "string", minLength: 1 },
     places: cardList(SEED_PLACE_SLOT_FIELDS, SEED_PLACE_LIMIT, 1),
-    startingLocation: { type: "string", minLength: 1 },
     factions: cardList(SEED_FACTION_SLOT_FIELDS, SEED_FACTION_LIMIT, 1),
     species: cardList(SEED_SPECIES_SLOT_FIELDS, SEED_SPECIES_LIMIT),
     startingAbilities: cardList(SEED_ABILITY_SLOT_FIELDS, SEED_ABILITY_LIMIT),

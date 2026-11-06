@@ -29,7 +29,7 @@ Two tests decide whether a card holds enough, and nothing beyond them belongs on
 
 Write what the world is, never how it is shown: "at the North Ridge Gate, at dusk, wounded", never a panel, a camera, a frame count or an art style.
 
-Keep every slot to one short, concrete fact. The longer fields (worldOverview, societyStructure, backgroundProfile) add what the cards do not already say; they never repeat a card.
+Keep every slot to one short, concrete fact. The main character's backgroundProfile adds what the cards do not already say; it never repeats a card.
 
 Choose the supporting cast and factions for the opening arc: the mentor, the rival, the elder, the enemy at the gate. Use fewer cards before you pad them; an empty card list is better than a filler card.
 
@@ -69,7 +69,7 @@ export const SEN_EASTERN_FANTASY_ORIGIN_SKILL: HarnessSkillManifest = {
 
 export const SEN_WORLD_BUILDER_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-world-builder',
-  version: '1.1.0',
+  version: '1.2.0',
   name: 'SEN World Builder',
   description: 'Builds the world as Chapter 1 opens: the cards an artist could draw it from and a game could load it from.',
   slot: 'world',

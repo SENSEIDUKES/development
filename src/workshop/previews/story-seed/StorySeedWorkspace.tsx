@@ -156,9 +156,6 @@ async function runDevelopmentFillScenario(isCancelled: () => boolean) {
   if (!mutateRoots('development', isCancelled, root => {
     setFieldValue(root, 'make-it-work-instruction-input', 'The weakest bloodline is secretly the only one heaven fears.');
     setFieldValue(root, 'main-opposition-input', 'The celestial court');
-    setFieldValue(root, 'world-type-input', 'Ancient sect world with a collapsing celestial court');
-    setFieldValue(root, 'society-structure-input', 'Sect-led feudal hierarchy');
-    setFieldValue(root, 'starting-location-input', 'Outer sect labor quarry inside a volcanic rift.');
   })) return;
 
   // Characters (main character + one additional character)
@@ -192,7 +189,11 @@ async function runDevelopmentFillScenario(isCancelled: () => boolean) {
 
   // Power System
   if (!await selectSection(/^Power System$/)) return;
-  if (!mutateRoots('development', isCancelled, root => setFieldValue(root, 'a11y-control-kytc0oh', 'Martial arts, Daoist'))) return;
+  if (!mutateRoots('development', isCancelled, root => {
+    setFieldValue(root, 'world-rules-kindOfWorld', 'Ancient sect world with a collapsing celestial court');
+    setFieldValue(root, 'world-rules-whoRules', 'Sect-led feudal hierarchy');
+    setFieldValue(root, 'a11y-control-kytc0oh', 'Martial arts, Daoist');
+  })) return;
 
   // ARC combines plot direction with the story's intended destination.
   if (!await selectSection(/^ARC$/)) return;

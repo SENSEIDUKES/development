@@ -85,6 +85,9 @@
 /* More / See all: a quiet text button after the first few. */
 .familiar-helper .familiar-helper-more { background: transparent; color: #b9c7d6; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
 .familiar-helper .familiar-helper-actions .familiar-helper-more { grid-column: 1 / -1; min-height: 40px; justify-content: center; background: transparent; }
+/* "Take me back": one plain pill above the microphone row, never scrolled away. */
+.familiar-helper .familiar-helper-back { display: flex; flex: none; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px; margin: 8px 0 0; border-radius: 999px; background: #ffffff14; color: #eef3f8; font-size: 15px; font-weight: 600; }
+.familiar-helper .familiar-helper-back:hover, .familiar-helper .familiar-helper-back:focus-visible { background: #ffffff24; }
 /* A proposal: what will happen, then four plain answers. */
 .familiar-helper-proposal { margin: 10px 4px 8px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
 .familiar-helper-answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }

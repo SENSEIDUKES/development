@@ -1,6 +1,7 @@
-import { Home, PenLine, Settings, Store, UserRound, Zap } from 'lucide-react';
 import type { FamiliarHelperContext, FamiliarPage } from '@seihouse/library/familiar';
-import { HOME_ROUTE, type Navigate, type NovelExpandedRoute } from './routes';
+import { ArrowLeft, Home, PenLine, Settings, Store, UserRound, Zap } from 'lucide-react';
+import { FAMILIAR_BACK_ACTION_ID, FAMILIAR_BACK_PHRASES } from '@seihouse/library/familiar';
+import { HOME_ROUTE, goBack, type Navigate, type NovelExpandedRoute } from './routes';
 
 /** One of the Familiar's actions (the package's name for it also names its tray button). */
 type FamiliarHelperAction = FamiliarHelperContext['actions'][number];
@@ -33,8 +34,14 @@ const go = (id: string, label: string, icon: FamiliarHelperAction['icon'], phras
  * (`@seihouse/library/familiar` `FAMILIAR_ACTION_LIST`), which decides where
  * they are offered; going somewhere changes nothing, so none asks to confirm.
  */
-export function appFamiliarActions(navigate: Navigate): FamiliarHelperAction[] {
+export function appFamiliarActions(navigate: Navigate, { back = false }: { back?: boolean } = {}): FamiliarHelperAction[] {
   return [
+    // "Take me back": the previous screen, never out of the app. Offered wherever there is somewhere to go back to.
+    ...(back ? [{
+      id: FAMILIAR_BACK_ACTION_ID, label: 'Take me back', icon: ArrowLeft, phrases: [...FAMILIAR_BACK_PHRASES],
+      describe: () => 'Go back to the previous screen.', success: 'Went back.',
+      run: async () => { goBack(navigate); },
+    }] : []),
     go('go-home', 'Home', Home, ['home', 'go home', 'take me home', 'open home', 'my stories'], HOME_ROUTE, navigate),
     go('go-create', 'Create', PenLine, ['create', 'go to create', 'open create', 'new story', 'create a story'], { page: 'create' }, navigate),
     go('go-profile', 'Profile', UserRound, ['profile', 'my profile', 'open profile', 'go to profile', 'my cave'], { page: 'profile' }, navigate),

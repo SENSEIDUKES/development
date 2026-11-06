@@ -66,6 +66,28 @@ describe('Familiar helper surface', () => {
     expect(chips()).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
   });
 
+  it('keeps "Take me back" as its own pill, never a tile, and backs out of a change before it leaves the page', async () => {
+    const t = setup();
+    const back = vi.fn(async () => {});
+    const go = (id: string, label: string) => ({ id, label, phrases: [label.toLowerCase()], describe: () => label, success: `Opened ${label}.`, run: vi.fn(async () => {}) });
+    t.render({ ...t.context, key: 'reader:back', page: 'reader', actions: [
+      { id: 'go-back', label: 'Take me back', phrases: ['take me back'], describe: () => 'Back.', success: 'Went back.', run: back },
+      ...t.context.actions, go('go-energy', 'My Energy'),
+    ] });
+    await click('Talk to Familiar');
+    await click('Action');
+    const tiles = () => [...document.querySelectorAll('.familiar-helper-actions button[aria-label]')].map(element => element.getAttribute('aria-label'));
+    expect(tiles()).not.toContain('Take me back');
+    // A change waiting to be confirmed: the pill backs out of it and stays on the page.
+    await click('Conflict');
+    expect(button('Back out')).toBeTruthy();
+    await click('Back out');
+    expect(t.run).not.toHaveBeenCalled();
+    expect(back).not.toHaveBeenCalled();
+    await click('Take me back');
+    expect(back).toHaveBeenCalledOnce();
+  });
+
   it('handles a queued size measurement when the card closes and reopens', async () => {
     let resize = () => {};
     vi.stubGlobal('ResizeObserver', class {

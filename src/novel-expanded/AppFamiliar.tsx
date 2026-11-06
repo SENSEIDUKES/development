@@ -7,7 +7,7 @@ import { createFamiliarBrowserVoice } from '../host/familiar/voice';
 import { useFamiliarLive } from '../host/familiar/liveTalk';
 import { createFamiliarWakeWord } from '../host/familiar/wakeWord';
 import { appFamiliarActions } from './appFamiliarActions';
-import type { Navigate } from './routes';
+import { canGoBack, type Navigate } from './routes';
 
 /** The space the Familiar keeps above the bottom bar and the music note floating over it. */
 const BOTTOM_GAP = 8;
@@ -55,7 +55,9 @@ export function AppFamiliar({ profile, present, reading = false, place, navigate
   const familiar = (familiarCatalogueEntry(profile.familiarId) ?? defaultFamiliar).definition;
   const clearance = useLibraryBottomClearance();
   const bottomInset = reading ? READER_BOTTOM : clearance ? clearance + BOTTOM_GAP : 0;
-  const actions = useMemo(() => navigate ? appFamiliarActions(navigate) : undefined, [navigate]);
+  // "Take me back" is offered everywhere but the Home the app was opened on, where there is nothing behind.
+  const back = Boolean(navigate) && canGoBack(place.page === 'home');
+  const actions = useMemo(() => navigate ? appFamiliarActions(navigate, { back }) : undefined, [navigate, back]);
   const welcomeOption = allFamiliarOptions.find(option => option.id === familiar.id);
   const recall = present && minimized ? <FamiliarRecall key={familiar.id} familiar={familiar} onRecall={() => setMinimized(false)} /> : null;
   // The Familiar's guides: its Guides button opens its card anywhere; a reader who has not met it is greeted once.

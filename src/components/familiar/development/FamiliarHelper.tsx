@@ -5,9 +5,9 @@ import { FamiliarClip } from './FamiliarClip';
 import { FamiliarWelcome } from './FamiliarWelcome';
 import type { FamiliarGuide, FamiliarOption } from '../shared/familiar';
 import { SpokenCode, SpokenCodesProvider } from '@seihouse/sen/presentation';
-import { Check, Compass, GripVertical, Info, Keyboard, Lightbulb, MessagesSquare, Mic, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
+import { ArrowLeft, Check, Compass, GripVertical, Info, Keyboard, Lightbulb, MessagesSquare, Mic, RotateCcw, SendHorizontal, Square, Volume2, X, Zap } from 'lucide-react';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
-import { FAMILIAR_WAKE_WORD, FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice, type FamiliarWakeWord } from '../../../library/familiars/helper';
+import { FAMILIAR_BACK_ACTION_ID, FAMILIAR_WAKE_WORD, FamiliarHelperController, type FamiliarHelperContext, type FamiliarLive, type FamiliarPlaceLevel, type FamiliarVoice, type FamiliarWakeWord } from '../../../library/familiars/helper';
 import { useFamiliarPanelDrag } from './useFamiliarPanelDrag';
 
 import { FamiliarHelperContextValue as Helper } from './familiarHelperContext';
@@ -262,7 +262,9 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   const topic = state.mode === 'explain' ? context?.topics.find(entry => entry.id === state.topicId) : undefined;
   // What this page needs most first: its front suggestions, everything else behind See all / More.
   // Actions said by a numbered code (N3, C12) are never tiles.
-  const tiles = context?.actions.filter(action => !(action.code && action.code.number === undefined)) ?? [];
+  // "Take me back" is its own pill, never a tile.
+  const tiles = context?.actions.filter(action => !(action.code && action.code.number === undefined) && action.id !== FAMILIAR_BACK_ACTION_ID) ?? [];
+  const canGoBack = Boolean(state.proposal) || Boolean(context?.actions.some(action => action.id === FAMILIAR_BACK_ACTION_ID));
   const frontActions = Math.min(context?.front || FRONT, FRONT);
   const shownActions = allActions ? tiles : tiles.slice(0, frontActions);
   const topicAt = context?.topics.findIndex(entry => entry.id === state.topicId) ?? -1;
@@ -360,6 +362,10 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
         onFocus={helper.useText} onChange={event => setText(event.target.value)} />
       <button type="submit" className="familiar-helper-icon" aria-label="Send" disabled={busy || !text.trim()}><Check size={20} aria-hidden /></button>
     </form>}
+
+    {/* The rescue, always in reach: back out of a change, or back to the previous screen. It never changes anything. */}
+    {canGoBack && <button type="button" className="familiar-helper-back" disabled={busy} onClick={() => { helper.useText(); setInfo(false); helper.back(); }}>
+      <ArrowLeft size={18} aria-hidden />{state.proposal ? 'Back out' : 'Take me back'}</button>}
 
     <div className="familiar-helper-bottom">
       <button type="button" className="familiar-helper-icon" aria-label="How to talk to your Familiar" title="How to talk to your Familiar"

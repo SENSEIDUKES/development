@@ -49,7 +49,8 @@ describe('Story Seed arc plans', () => {
     expect(normalizeWorldBlueprint({ arcPlans: [{ arcNumber: 1, goals: 'broken' }], estimatedArcs: 3 }).arcPlans).toBeUndefined();
     // The look-ahead travels with an export.
     const [restored] = parseStorySeedJson(JSON.stringify(createStorySeedExport(normalized, aligned)));
-    expect(restored.seed.story.optional.arcOneGoals).toEqual(seed.story.optional.arcOneGoals);
+    // Reopened, the Seed holds the whole plan the Blueprint made, its own goal first.
+    expect(restored.seed.story.optional.arcOneGoals).toEqual(aligned.arcPlans![0].goals.map(goal => ({ text: goal.text, chapters: goal.chapters })));
     expect(restored.blueprint?.arcPlans).toEqual(aligned.arcPlans);
     expect(restored.blueprint?.arcLookahead).toEqual(aligned.arcLookahead);
     expect(restored.seed.story.optional.funSettings).not.toHaveProperty('longTermGoal');
@@ -105,9 +106,30 @@ describe('Story Seed arc plans', () => {
       { id: 'arc-1-a', text: 'A.', chapters: 10 }, { id: 'arc-1-b', text: 'B.', chapters: 10 }, { id: 'arc-1-c', text: 'C.', chapters: 10 },
     ] }], estimatedArcs: 12 }).blueprint;
     seed.story.optional.arcOneGoals = [{ text: 'Reach the gate.', chapters: 29 }];
-    expect(mirrorSeedIntoBlueprint(threeGoals, seed).arcPlans![0].goals).toEqual([
+    const tight = reconcileStorySeedBlueprint(seed, threeGoals);
+    expect(tight.blueprint.arcPlans![0].goals).toEqual([
       { id: 'arc-1-a', text: 'Reach the gate.', chapters: 29 }, { id: 'arc-1-b', text: 'B.', chapters: 1 },
     ]);
+    expect(tight.seed.story.optional.arcOneGoals).toEqual([{ text: 'Reach the gate.', chapters: 29 }, { text: 'B.', chapters: 1 }]);
+  });
+
+  it('removes a goal the creator clears from the plan, never repeating or keeping it', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
+    seed.story.optional.arcCount = 12;
+    // Generated: the Seed holds the whole plan.
+    const pair = reconcileStorySeedBlueprint(seed, { arcPlans: [arcOne], estimatedArcs: 12 });
+    expect(pair.seed.story.optional.arcOneGoals).toEqual([{ text: 'Reach the gate.', chapters: 15 }, { text: 'Reach the city.', chapters: 15 }]);
+    const withGoals = (arcOneGoals: StorySeedInput['story']['optional']['arcOneGoals']): StorySeedInput =>
+      ({ ...pair.seed, story: { ...pair.seed.story, optional: { ...pair.seed.story.optional, arcOneGoals } } });
+    // Clearing the first goal leaves only the second, never the second twice.
+    const firstCleared = mirrorSeedIntoBlueprint(pair.blueprint, withGoals([{ text: 'Reach the city.', chapters: 15 }]));
+    expect(firstCleared.arcPlans![0].goals).toEqual([{ id: 'arc-1-gate', text: 'Reach the city.', chapters: 30 }]);
+    // Clearing the last goal removes it, and a reopened pair stays that way.
+    const lastCleared = withGoals([{ text: 'Reach the gate.', chapters: 15 }]);
+    const mirrored = mirrorSeedIntoBlueprint(pair.blueprint, lastCleared);
+    expect(mirrored.arcPlans![0].goals).toEqual([{ id: 'arc-1-gate', text: 'Reach the gate.', chapters: 30 }]);
+    expect(reconcileStorySeedBlueprint(lastCleared, mirrored).blueprint.arcPlans![0].goals).toHaveLength(1);
   });
 
   it('begins a story without a Blueprint from the creator\'s chapters, the last goal running to the arc\'s end', () => {

@@ -6,6 +6,15 @@ import type { CapaPrompt, HarnessSelectedTranslationGlossary, HarnessSkillLoadou
 import { SEN_FATE_SURVIVAL_SKILL } from './fateSurvivalSkill';
 import { SEN_READING_MODE_SKILLS } from './readingModeSkills';
 
+/**
+ * Which model call reads a CAPA slot's skill: the chapter writer, or the World
+ * Blueprint call that builds the world before the story exists (SENSEI,
+ * 2026-11-05: split the Blueprint into Origin, World and Arc skills, so a
+ * publisher can replace the Origin). One schema holds both, so a slot has one
+ * definition wherever it is read.
+ */
+export type CapaSlotReader = 'writer' | 'blueprint';
+
 /** The story state that fills a managed CAPA slot. */
 export type CapaSlotManager = 'fate-mode' | 'story-language' | 'reading-mode';
 
@@ -13,6 +22,8 @@ export interface CapaSlotDefinition {
   id: HarnessSkillSlotId;
   label: string;
   description: string;
+  /** The model call that reads this slot's skill. */
+  readBy: CapaSlotReader;
   /**
    * Which story state fills this slot. A managed slot is never equipped by
    * hand: loadout freezing resolves it on every chapter call, and the result is
@@ -41,14 +52,23 @@ export interface CapaSlotDefinition {
  * See ARCHITECTURE_VOCABULARY.md.
  */
 export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
-  { id: 'author', label: 'Author', description: 'Defines how the writing model approaches and writes the chapter.', installable: true },
-  { id: 'pacing', label: 'Pacing', description: 'Controls event spacing, arc pressure, and payoff timing.', installable: true },
-  { id: 'fate', label: 'Fate', description: 'Carries the Fate mode\'s writing rules: the reader\'s direction, honest pursuit, lasting consequences, and endings.', managedBy: 'fate-mode', installable: false },
-  { id: 'continuity', label: 'Continuity', description: 'Adds specialized canon and long-range consistency guidance.', installable: true },
-  { id: 'style', label: 'Style', description: 'Shapes prose tradition, voice, rhythm, and presentation.', installable: true },
-  { id: 'accessibility', label: 'Accessibility', description: 'Writes chapters in the story\'s Reading Mode.', managedBy: 'reading-mode', installable: false },
-  { id: 'translation', label: 'Translation', description: 'Writes chapters in the story\'s Story Language when it is not English.', managedBy: 'story-language', installable: true },
+  { id: 'author', label: 'Author', description: 'Defines how the writing model approaches and writes the chapter.', readBy: 'writer', installable: true },
+  { id: 'pacing', label: 'Pacing', description: 'Controls event spacing, arc pressure, and payoff timing.', readBy: 'writer', installable: true },
+  { id: 'fate', label: 'Fate', description: 'Carries the Fate mode\'s writing rules: the reader\'s direction, honest pursuit, lasting consequences, and endings.', readBy: 'writer', managedBy: 'fate-mode', installable: false },
+  { id: 'continuity', label: 'Continuity', description: 'Adds specialized canon and long-range consistency guidance.', readBy: 'writer', installable: true },
+  { id: 'style', label: 'Style', description: 'Shapes prose tradition, voice, rhythm, and presentation.', readBy: 'writer', installable: true },
+  { id: 'accessibility', label: 'Accessibility', description: 'Writes chapters in the story\'s Reading Mode.', readBy: 'writer', managedBy: 'reading-mode', installable: false },
+  { id: 'translation', label: 'Translation', description: 'Writes chapters in the story\'s Story Language when it is not English.', readBy: 'writer', managedBy: 'story-language', installable: true },
+  { id: 'origin', label: 'Origin', description: 'The kind of fiction the World Blueprint builds in: its tradition, tropes, names and style.', readBy: 'blueprint', installable: false },
+  { id: 'world', label: 'World', description: 'How the World Blueprint builds the world as Chapter 1 opens: its cards and the main character.', readBy: 'blueprint', installable: false },
+  { id: 'arc', label: 'Arc', description: 'How the World Blueprint chooses the Destined Ending, the story\'s length and Arc 1.', readBy: 'blueprint', installable: false },
 ] as const;
+
+/** The slots a story equips and the chapter writer reads, in assembled order. */
+export const CAPA_WRITER_SLOTS: readonly CapaSlotDefinition[] = CAPA_SCHEMA.filter(slot => slot.readBy === 'writer');
+
+/** The slots the World Blueprint call reads, in assembled order: Origin, World, Arc. */
+export const CAPA_BLUEPRINT_SLOTS: readonly CapaSlotDefinition[] = CAPA_SCHEMA.filter(slot => slot.readBy === 'blueprint');
 
 
 const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
@@ -223,12 +243,12 @@ export const freezeHarnessSkillLoadout = (
   fateMode: HarnessStoryMode = 'regular',
 ): HarnessSkillLoadoutSnapshot => {
   const unsupportedSlot = Object.keys(story.skillLoadout ?? {})
-    .find(slot => !CAPA_SCHEMA.some(definition => definition.id === slot));
+    .find(slot => !CAPA_WRITER_SLOTS.some(definition => definition.id === slot));
   if (unsupportedSlot) {
     throw new Error(`${unsupportedSlot} is not a supported CAPA skill slot.`);
   }
   const managed = resolveManagedCapaSkills(story, catalog, fateMode);
-  const skills = CAPA_SCHEMA.flatMap(slot => {
+  const skills = CAPA_WRITER_SLOTS.flatMap(slot => {
     // A managed slot ignores the story's loadout: story state decides it.
     if (slot.managedBy) {
       const skill = managed[slot.id];
@@ -314,11 +334,11 @@ export const assembleCapaPrompt = (
     immediateChapterRequest: ImmediateChapterRequest;
   },
 ): CapaPrompt => {
-  const unsupportedSkill = loadout.skills.find(skill => !CAPA_SCHEMA.some(slot => slot.id === skill.slot));
+  const unsupportedSkill = loadout.skills.find(skill => !CAPA_WRITER_SLOTS.some(slot => slot.id === skill.slot));
   if (unsupportedSkill) {
     throw new Error(`${unsupportedSkill.slot} is not a supported CAPA skill slot.`);
   }
-  const ordered = CAPA_SCHEMA.flatMap(slot => loadout.skills.filter(skill => skill.slot === slot.id));
+  const ordered = CAPA_WRITER_SLOTS.flatMap(slot => loadout.skills.filter(skill => skill.slot === slot.id));
   const author = ordered.find(skill => skill.slot === 'author' && isAuthoringSkill(skill));
   if (!author) throw new Error('Harness Generation requires an equipped Author skill.');
 
@@ -370,4 +390,25 @@ export const assembleCapaPrompt = (
     estimatedTokens,
     ...(translationGlossary ? { translationGlossary: cloneHarnessValue(translationGlossary) } : {}),
   };
+};
+
+/**
+ * The World Blueprint's skills, assembled the way the CAPA Prompt assembles
+ * the writer's: one skill per Blueprint slot, in CAPA Schema order (Origin,
+ * World, Arc), each under a plain heading. The heading names no app machinery
+ * ("CAPA", "HARNESS"): the Blueprint model reads only about the story. The
+ * Blueprint's permanent rules follow these in its own prompt and are never a
+ * skill.
+ */
+export const assembleBlueprintSkills = (skills: readonly HarnessSkillManifest[]): string => {
+  const misplaced = skills.find(skill => !CAPA_BLUEPRINT_SLOTS.some(slot => slot.id === skill.slot));
+  if (misplaced) throw new Error(`${misplaced.name} is not a World Blueprint skill.`);
+  return CAPA_BLUEPRINT_SLOTS.map(slot => {
+    const filling = skills.filter(skill => skill.slot === slot.id);
+    if (filling.length !== 1) throw new Error(`The World Blueprint needs exactly one ${slot.label} skill.`);
+    const [skill] = filling;
+    validateHarnessSkillManifest(skill);
+    if (!isAuthoringSkill(skill)) throw new Error(`${skill.name} has no instructions for the World Blueprint.`);
+    return `[${slot.label}] ${skill.name} ${skill.version}\n${skill.instructions!.trim()}`;
+  }).join('\n\n');
 };

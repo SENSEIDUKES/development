@@ -2,14 +2,14 @@ import type { ReactNode } from 'react';
 import { FileText, Puzzle } from 'lucide-react';
 import { getSenLanguageLabel, normalizeChapterWritingStyle } from '@seihouse/sen/contracts';
 import {
-  CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS,
+  CAPA_WRITER_SLOTS, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS,
   buildHarnessOfficialOutputRequirements, harnessSkillKey, resolveStoryLanguagePackage,
   type CapaSlotManager, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStoryMode,
 } from '@seihouse/sen/harness-generation';
 import { NarrativePanel as LibraryPanel } from '@seihouse/sen/presentation';
 import type { StorySettingsValues } from './storySettingsValues';
 
-type ManagedCapaSlot = (typeof CAPA_SCHEMA)[number] & { managedBy: CapaSlotManager };
+type ManagedCapaSlot = (typeof CAPA_WRITER_SLOTS)[number] & { managedBy: CapaSlotManager };
 
 /**
  * What a managed slot resolves to for this story right now, from the same
@@ -84,8 +84,8 @@ export function StorySkillSlots({
 }) {
   const installedByKey = new Map(installedSkills.map(skill => [harnessSkillKey(skill), skill]));
   // Managed slots follow story state, so only hand-equipped slots count here.
-  const equippableSlots = CAPA_SCHEMA.filter(slot => !slot.managedBy);
-  const managedCount = CAPA_SCHEMA.length - equippableSlots.length;
+  const equippableSlots = CAPA_WRITER_SLOTS.filter(slot => !slot.managedBy);
+  const managedCount = CAPA_WRITER_SLOTS.length - equippableSlots.length;
   const equippedCount = equippableSlots.filter(slot => story.skillLoadout?.[slot.id]).length;
   const missingCount = equippableSlots
     .map(slot => story.skillLoadout?.[slot.id])
@@ -124,7 +124,7 @@ export function StorySkillSlots({
       )}
 
       <div className={`mt-5 grid gap-3 ${stacked ? '' : 'sm:grid-cols-2 xl:grid-cols-3'}`}>
-        {CAPA_SCHEMA.map(slot => {
+        {CAPA_WRITER_SLOTS.map(slot => {
           if (slot.managedBy) {
             const managed = managedSlotInspection(slot as ManagedCapaSlot, story, fateMode, installedSkills);
             const loaded = managed.status === 'Loaded';

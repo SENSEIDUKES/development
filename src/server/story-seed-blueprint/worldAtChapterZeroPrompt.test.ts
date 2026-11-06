@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { WORLD_CARD_KINDS } from '@seihouse/sen/contracts';
-import { createFilledStorySeedInput } from '../../workshop/previews/story-seed/previewData';
-import { WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS, buildWorldBlueprintPrompt } from './prompt';
+import { SEN_BLUEPRINT_DEFAULT_SKILLS } from '@seihouse/sen/harness-generation';
+import { BLUEPRINT_PERMANENT_RULES, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintSystemPrompt } from './prompt';
 import { worldBlueprintResponseSchema } from './prompt';
 
 /**
@@ -24,27 +24,32 @@ const ANSWER_FIELDS: Record<string, string> = {
 describe('The world builder asks for every Codex card kind', () => {
   it('names every card kind and every slot of it', () => {
     for (const kind of WORLD_CARD_KINDS) {
-      expect(WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS, kind.label).toContain(`- ${ANSWER_FIELDS[kind.id]}`);
+      expect(BLUEPRINT_PERMANENT_RULES, kind.label).toContain(`- ${ANSWER_FIELDS[kind.id]}`);
       for (const slot of kind.slots) {
         if (slot.aliases) continue;
-        expect(WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS, `${kind.label}: ${slot.id}`).toContain(`${slot.id}: ${slot.asks}`);
+        expect(BLUEPRINT_PERMANENT_RULES, `${kind.label}: ${slot.id}`).toContain(`${slot.id}: ${slot.asks}`);
       }
     }
   });
 
   it('states the two tests a card is measured by, and that the record is medium-neutral', () => {
-    expect(WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS).toContain('an artist must be able to draw the opening scene');
-    expect(WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS).toContain('a game must be able to load the world exactly as it stands');
-    expect(WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS).toContain('never a panel, a camera, a frame count or an art style');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('an artist must be able to draw the opening scene');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('a game must be able to load the world exactly as it stands');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('never a panel, a camera, a frame count or an art style');
   });
 
-  it('never asks the model to write aliases, which are the author\'s alone', () => {
-    expect(WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS).toContain('Never write aliases');
-    expect(WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS).not.toContain('aliases:');
+  it('never asks the model for aliases, which are the author\'s alone and have no place in the answer', () => {
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toContain('aliases');
   });
 
-  it('travels with every Blueprint request', () => {
-    expect(buildWorldBlueprintPrompt(createFilledStorySeedInput())).toContain(WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS);
+  it('travels with every Blueprint, whichever skills it reads', () => {
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT.endsWith(BLUEPRINT_PERMANENT_RULES)).toBe(true);
+    const western = { id: 'test.western-fantasy', version: '1.0.0', name: 'Western Fantasy', description: 'A test Origin.', slot: 'origin' as const, applications: ['generation' as const], instructions: 'You are writing the world of a Western fantasy novel: knights, keeps and old magic.' };
+    const swapped = buildWorldBlueprintSystemPrompt([western, ...SEN_BLUEPRINT_DEFAULT_SKILLS.filter(skill => skill.slot !== 'origin')]);
+    expect(swapped).toContain('[Origin] Western Fantasy 1.0.0\nYou are writing the world of a Western fantasy novel');
+    expect(swapped).not.toContain('Eastern fantasy');
+    expect(swapped).toContain('[World] SEN World Builder 1.0.0');
+    expect(swapped.endsWith(BLUEPRINT_PERMANENT_RULES)).toBe(true);
   });
 
   it('has a place in the answer for every slot of every card kind', () => {

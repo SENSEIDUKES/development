@@ -3,7 +3,7 @@ import { act, useMemo, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPack } from 'seihouse-productions-package';
-import { CAPA_SCHEMA, HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { CAPA_WRITER_SLOTS, HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { SppSkillImport } from './SppSkillImport';
@@ -113,7 +113,7 @@ describe('Uploading an SPP directly from a CAPA slot', () => {
     await act(async () => root.render(<SlotImportHost repository={repository} />));
 
     expect(slotImporters().map(details => details.querySelector('summary')!.textContent))
-      .toEqual(CAPA_SCHEMA.filter(slot => !slot.managedBy).map(slot => `Upload SPP to ${slot.label}`));
+      .toEqual(CAPA_WRITER_SLOTS.filter(slot => !slot.managedBy).map(slot => `Upload SPP to ${slot.label}`));
     // Fate, Accessibility and Translation follow Story Settings; nothing is uploaded into them from a story.
     for (const managed of ['Fate', 'Accessibility', 'Translation']) {
       expect(slotImporters().some(details => details.querySelector('summary')!.textContent === `Upload SPP to ${managed}`)).toBe(false);

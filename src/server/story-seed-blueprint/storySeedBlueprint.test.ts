@@ -267,12 +267,12 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(schema.properties.arcLookahead.maxItems).toBe(2);
     // The story's length is no longer bounded by how many arcs one answer can hold.
     expect(schema.properties.estimatedArcs).toMatchObject({ minimum: 10, maximum: 40 });
-    const prompt = provider.requests[0].userPrompt;
-    expect(prompt).toContain('Plan only Arc 1, in arcOne');
-    expect(prompt).toContain('Every later arc is planned when the story reaches it');
-    expect(prompt).toContain('Write arcLookahead: private direction for the arcs after Arc 1');
-    expect(prompt).toContain('use its text verbatim as Arc 1\'s first goal');
-    expect(prompt).not.toMatch(/firstMajorConflict|additionalStoryDirection|plotAndTropeSettings|arcPlans/);
+    const { systemInstruction, userPrompt: prompt } = provider.requests[0];
+    expect(systemInstruction).toContain('arcOne: plan only Arc 1, as 1 to 5 goals in order.');
+    expect(systemInstruction).toContain('it guides the planning of those arcs, which happens when the story reaches them');
+    expect(systemInstruction).toContain('arcLookahead: one line each for Arc 2 and Arc 3');
+    expect(prompt).toContain("- Arc 1 begins with the Active Arc Goal: use its text word for word as Arc 1's first goal.");
+    expect(`${systemInstruction}\n${prompt}`).not.toMatch(/firstMajorConflict|additionalStoryDirection|plotAndTropeSettings|arcPlans/);
   });
 
   it('fails loudly instead of padding an Arc 1 that does not fill its thirty chapters', async () => {
@@ -611,8 +611,7 @@ describe("Blueprint story length", () => {
     expect((response.body as WorldBlueprint).arcOneScope).toBe("opening");
     const schema = provider.requests[0].responseJsonSchema;
     expect(schema.properties.estimatedArcs).toMatchObject({ minimum: 12, maximum: 12 });
-    expect(provider.requests[0].userPrompt).toContain("The creator chose the story's length (story.optional.arcCount): estimatedArcs is exactly 12.");
-    expect(provider.requests[0].userPrompt).not.toContain("a realistic estimatedArcs");
+    expect(provider.requests[0].userPrompt).toContain("- The creator chose the story's length: estimatedArcs is exactly 12.");
   });
 
   it("lets the model choose a realistic length from 10 to 40 when the Seed leaves it blank, kept inside that range", async () => {
@@ -620,7 +619,8 @@ describe("Blueprint story length", () => {
     const response = await post({ storySeed: canonicalSeed() }, provider);
     expect(response.status).toBe(200);
     expect(provider.requests[0].responseJsonSchema.properties.estimatedArcs).toMatchObject({ minimum: 10, maximum: 40 });
-    expect(provider.requests[0].userPrompt).toContain("a realistic estimatedArcs between 10 and 40");
+    expect(provider.requests[0].userPrompt).not.toContain("estimatedArcs is exactly");
+    expect(provider.requests[0].systemInstruction).toContain("Choose a length the Destined Ending honestly needs.");
     // A suggestion in range keeps its look-ahead.
     expect((response.body as WorldBlueprint).arcLookahead?.map(entry => entry.arcNumber)).toEqual([2, 3]);
     // A provider that ignores the range costs no Blueprint: the suggestion is kept inside it, and Arc 1 stays the opening.
@@ -664,7 +664,7 @@ describe("Blueprint story length", () => {
     expect((opening.body as WorldBlueprint).arcLookahead?.map(entry => entry.arcNumber)).toEqual([2, 3]);
     const recorded = new RecordingProvider();
     await post({ storySeed: canonicalSeed() }, recorded);
-    expect(recorded.requests[0].userPrompt).toContain("No Arc 1 goal reaches or resolves the Destined Ending.");
+    expect(recorded.requests[0].systemInstruction).toContain("No Arc 1 goal reaches or resolves the Destined Ending");
     expect(recorded.requests[0].userPrompt).not.toContain("estimatedArcs is 1");
     const provider = new RecordingProvider();
     const extension = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed() }, provider);
@@ -683,13 +683,15 @@ describe("Cleaned-up Blueprint instructions", () => {
   };
   const count = (haystack: string, needle: string) => haystack.split(needle).length - 1;
 
-  it("states each rule once and drops dead conditions, internal labels, and the genre list", async () => {
+  it("states each rule once and drops dead conditions, internal labels, and app words", async () => {
     const { systemInstruction, userPrompt, both } = await promptFor(canonicalSeed());
     for (const rule of [
-      "Every non-empty value is authoritative",
-      "Make It Work is an absolute worldbuilding instruction",
-      "Destined Ending is the novel's fixed destination",
-      "integrate it instead of replacing it",
+      "Every value they wrote is a fact",
+      "Make It Work (story.optional.makeItWorkInstruction)",
+      "Hard Pins (story.optional.hardPins)",
+      "destinedEnding: the novel's fixed destination",
+      "Build the creator's own characters and factions into the world under their exact names",
+      "Where the creator already wrote a card slot, repeat their value exactly",
       "Describe minors safely and never sexualize a character under 18",
       "Return the JSON object only.",
     ]) expect(count(both, rule)).toBe(1);
@@ -697,35 +699,34 @@ describe("Cleaned-up Blueprint instructions", () => {
     for (const removed of [
       "when the creator left it open", "The server will enforce", "for compatibility", "HARNESS", "CAPA",
       "Preserve author Hard Pins exactly", "Fate Survival is optional", "Return only the requested JSON object",
-      "You are fluent in", "Wuxia, Xianxia, Xuanhuan",
+      "You are fluent in", "Wuxia, Xianxia, Xuanhuan", "elite", "Never write aliases or Hard Pins",
+      "the immediate goal the creator will review", "Completion rules", "Nothing is left for a later chapter to invent",
     ]) expect(both).not.toContain(removed);
-    // The anchor is who the model is, not a genre list: an Eastern fantasy author
-    // who reads whatever genre and tags the creator chose through that frame.
-    expect(systemInstruction.startsWith("You are an elite Eastern fantasy author and world architect.")).toBe(true);
-    expect(systemInstruction).toContain("Interpret the Story Seed's genre, tags, and storytelling tradition through that Eastern fantasy frame, as adaptable lenses rather than mandatory tropes. Never fill open creative space with Western fantasy defaults unless the Story Seed asks for them.");
-    for (const genreList of ["Wuxia", "Xuanhuan", "LitRPG", "tower climbing", "cultivation realms"]) expect(systemInstruction).not.toContain(genreList);
-    expect(userPrompt).toContain("- Generate a strong logline.\n");
-    expect(userPrompt).toContain("- Fill every Story Seed slot. Where the creator already wrote a slot, repeat their value exactly; only blank slots are yours to fill. Never write aliases or Hard Pins.");
-    // The side-character rule now travels with the world at Chapter 0's own cards.
-    expect(userPrompt).toContain("Never the main character.");
-    expect(userPrompt).toContain("Keep every slot to one short, concrete fact");
+    // The instructions are the Origin, World and Arc skills in that order, then the permanent rules.
+    const order = ["[Origin] SEN Eastern Fantasy 1.0.0", "[World] SEN World Builder 1.0.0", "[Arc] SEN Arc Planner 1.0.0", "The creator's words\n"]
+      .map(heading => systemInstruction.indexOf(heading));
+    expect(order.every(index => index >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(systemInstruction.startsWith("[Origin] SEN Eastern Fantasy 1.0.0\nYou are writing the world of an Eastern fantasy web novel")).toBe(true);
+    // The request is the Seed and only the lines that depend on it.
+    expect(userPrompt.startsWith("Build the World Blueprint for this Story Seed:\n\n{")).toBe(true);
+    expect(userPrompt).not.toContain("Never the main character.");
+    expect(systemInstruction).toContain("Never the main character.");
+    expect(systemInstruction).toContain("separate them with commas, and never put a comma inside a name");
     expect(userPrompt).not.toMatch(/mcProfile|Name \(role\) — description/);
   });
 
   it("asks for added detail only where the creator wrote the world fact", async () => {
     const allWritten = await promptFor(canonicalSeed());
-    expect(allWritten.userPrompt).toContain("- Establish a usable power-system outline.\n");
-    expect(allWritten.userPrompt).toContain("- The creator already wrote the world overview (worldIdentity.worldType), opening location (worldIdentity.startingLocation), and society (worldIdentity.societyStructure); that wording stays the fact. In worldOverview, startingLocation, and societyStructure, write only compatible added detail that builds on the matching fact, never restating or contradicting it.");
+    expect(allWritten.userPrompt).toContain("- The creator already wrote the world overview (worldIdentity.worldType), opening location (worldIdentity.startingLocation), and society (worldIdentity.societyStructure); that wording stays the fact. In worldOverview, startingLocation, and societyStructure, add only compatible detail.");
     const noneWritten = canonicalSeed();
     noneWritten.world.optional.worldIdentity = { title: "The Seventh Oath" };
     const open = await promptFor(noneWritten);
-    expect(open.userPrompt).toContain("- Establish the world overview, opening location, society, and a usable power-system outline.\n");
     expect(open.userPrompt).not.toContain("The creator already wrote");
     const someWritten = canonicalSeed();
     someWritten.world.optional.worldIdentity = { title: "The Seventh Oath", societyStructure: "Nine clans share power." };
     const partial = await promptFor(someWritten);
-    expect(partial.userPrompt).toContain("- Establish the world overview, opening location, and a usable power-system outline.\n");
-    expect(partial.userPrompt).toContain("- The creator already wrote the society (worldIdentity.societyStructure); that wording stays the fact. In societyStructure, write only");
+    expect(partial.userPrompt).toContain("- The creator already wrote the society (worldIdentity.societyStructure); that wording stays the fact. In societyStructure, add only compatible detail.");
   });
 
   it("keeps the strict output form", async () => {

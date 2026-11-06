@@ -3,7 +3,10 @@ import {
   SEN_APPEARANCE_INSTRUCTIONS,
   SEN_FATE_SURVIVAL_SKILL,
   SEN_HOLDINGS_INSTRUCTIONS,
+  SEN_ARC_PLANNER_SKILL,
+  SEN_EASTERN_FANTASY_ORIGIN_SKILL,
   SEN_NOVEL_AUTHOR_SKILL,
+  SEN_WORLD_BUILDER_SKILL,
   SEN_READING_MODE_SKILLS,
   SEN_SOUND_CUES_INSTRUCTIONS,
   SEN_SOUNDTRACK_INSTRUCTIONS,
@@ -36,7 +39,7 @@ import {
   type HarnessPromptPart,
 } from '../../../server/harness-generation/prompt';
 import { HOLDINGS_FIXER_INSTRUCTIONS, buildHoldingsFixerPrompt } from '../../../server/harness-generation/holdingsFixer';
-import { WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintPrompt, worldBlueprintResponseSchema } from '../../../server/story-seed-blueprint/prompt';
+import { BLUEPRINT_PERMANENT_RULES, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintPrompt, worldBlueprintResponseSchema } from '../../../server/story-seed-blueprint/prompt';
 import { OFFICIAL_CAPA_DEFAULT_REFERENCES, OFFICIAL_STYLE_REFERENCES } from '../../../host/generation/capa/officialCapaSkills';
 import { HARNESS_TAGGER_RETURN, HARNESS_TAGGER_ROLE, buildHarnessTagPrompt } from '../../../server/harness-generation/tagger';
 import { LOOK_DESCRIBER_INSTRUCTIONS, buildLookDescriberPrompt } from '../../../server/harness-generation/lookDescriber';
@@ -74,7 +77,12 @@ export type WriterInstructionId =
   | 'holdings-fixer'
   | 'look-step'
   | 'tagger'
-  | 'world-builder';
+  /** Retired 2026-11-05: split into the Origin, World and Arc skills and the Blueprint's permanent rules. */
+  | 'world-builder'
+  | 'origin-skill'
+  | 'world-skill'
+  | 'arc-skill'
+  | 'blueprint-rules';
 
 export interface WriterInstruction {
   id: WriterInstructionId;
@@ -151,12 +159,31 @@ export const SOME_STORIES: readonly WriterInstruction[] = [
   },
 ];
 
-/** Read before the story exists, by the call that builds its world: never by the chapter writer. */
+/**
+ * Read before the story exists, by the call that builds its world: never by
+ * the chapter writer. Its Origin, World and Arc skills, then the permanent
+ * rules no skill can replace (SENSEI, 2026-11-05).
+ */
 export const BEFORE_THE_STORY: readonly WriterInstruction[] = [
   {
-    id: 'world-builder', title: 'World builder: the world at Chapter 0', source: 'HARNESS',
-    when: 'Once, when a World Blueprint is generated from a Story Seed, before the story begins. These words tell the Blueprint model to fill every Codex card the world opens with, slot by slot, and are read beside the Seed itself and the Blueprint\'s other rules (the logline, Arc 1, the style bible).',
-    text: WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS,
+    id: 'origin-skill', title: 'Origin', source: skillSource(SEN_EASTERN_FANTASY_ORIGIN_SKILL),
+    when: 'Once, when a World Blueprint is generated from a Story Seed, before the story begins; read first. The kind of fiction the world is built in: its tradition, names, style bible and trope rules. A replaceable skill: a publisher who licenses SEN can give its own Origin, such as Western Fantasy.',
+    text: skillText(SEN_EASTERN_FANTASY_ORIGIN_SKILL),
+  },
+  {
+    id: 'world-skill', title: 'World', source: skillSource(SEN_WORLD_BUILDER_SKILL),
+    when: 'Every World Blueprint, after the Origin: how to build the world as Chapter 1 opens, and what each of the main character\'s own slots means. A replaceable skill.',
+    text: skillText(SEN_WORLD_BUILDER_SKILL),
+  },
+  {
+    id: 'arc-skill', title: 'Arc', source: skillSource(SEN_ARC_PLANNER_SKILL),
+    when: 'Every World Blueprint, after the World: the Destined Ending and the story\'s length first, then Arc 1 and the look-ahead. A replaceable skill. Arcs after Arc 1 are planned later by their own call, which does not read it yet.',
+    text: skillText(SEN_ARC_PLANNER_SKILL),
+  },
+  {
+    id: 'blueprint-rules', title: 'Blueprint rules', source: 'HARNESS',
+    when: 'Every World Blueprint, after its three skills, whichever skills it reads: the creator\'s words win, one name for one thing across the cards, how lists are written, and every Codex card slot by slot. No skill can change them.',
+    text: BLUEPRINT_PERMANENT_RULES,
   },
 ];
 
@@ -224,6 +251,7 @@ export const WRITER_INSTRUCTIONS: readonly WriterInstruction[] = [...EVERY_CHAPT
 /** Blocks no longer read, kept so the history can still name them. */
 export const RETIRED_WRITER_INSTRUCTIONS: ReadonlyMap<WriterInstructionId, string> = new Map([
   ['response-contract', 'Response and evidence contract (retired)'],
+  ['world-builder', 'World builder: the world at Chapter 0 (retired)'],
 ]);
 
 /** The official CAPA skills every story made in Novel Expanded starts with, in the order the writer reads them. */
@@ -421,9 +449,9 @@ export const PIPELINE: readonly PipelineStep[] = [
   {
     id: 'world', name: 'World builder', runs: 'Once, before Chapter 1',
     job: 'Builds the world the story opens with: every character, thing, ability, place and faction card in the Codex.',
-    reads: ['The Story Seed you wrote', 'The World Blueprint\'s other rules (logline, Arc 1, style)'],
+    reads: ['The Story Seed you wrote', 'Its Origin, World and Arc skills, and the rules no skill can change'],
     gives: ['The World at Chapter 0: the Codex cards the story starts with → read by the Writer every chapter'],
-    groups: [{ label: 'What it reads', blocks: blocksOf(['world-builder']) }],
+    groups: [{ label: 'What it reads', blocks: blocksOf(['origin-skill', 'world-skill', 'arc-skill', 'blueprint-rules']) }],
   },
   {
     id: 'writer', name: 'Writer', runs: 'Every chapter',

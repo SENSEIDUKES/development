@@ -10,16 +10,17 @@ import {
   type StorySeedInput,
 } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { SEN_BLUEPRINT_DEFAULT_SKILLS, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { type ResolvedStorySeedBlueprintConfig } from "./config";
 import { DEVELOPMENT_OPENROUTER_ATTRIBUTION } from '../model-router/openRouter';
 import {
   buildWorldBlueprintPrompt,
+  buildWorldBlueprintSystemPrompt,
   worldBlueprintResponseSchema,
-  WORLD_BLUEPRINT_SYSTEM_PROMPT,
 } from "./prompt";
 
 
-/** One structured call to the Blueprint model: a whole Blueprint, or only the arcs being added. */
+/** The one structured call to the Blueprint model, which writes a whole Blueprint. */
 export interface BlueprintModelRequest<Schema extends object = ReturnType<typeof worldBlueprintResponseSchema>> {
   systemInstruction: string;
   userPrompt: string;
@@ -214,6 +215,8 @@ export const generateWorldBlueprint = async (
   config: ResolvedStorySeedBlueprintConfig,
   provider: WorldBlueprintModelProvider,
   reasoningLevel?: ReasoningLevel,
+  /** The Origin, World and Arc skills the Blueprint reads; SEN's own unless the host gives others. */
+  skills: readonly HarnessSkillManifest[] = SEN_BLUEPRINT_DEFAULT_SKILLS,
 ): Promise<GeneratedWorldBlueprint> => {
   let storySeed: StorySeedInput;
   try { ({ storySeed } = buildBlueprintGenerationPayload(payload.storySeed)); }
@@ -221,7 +224,7 @@ export const generateWorldBlueprint = async (
   // The creator's Story Length, when set, is the exact length Arc 1 is planned for.
   const arcCount = storySeed.story.optional.arcCount;
   const generated = await provider.generate({
-    systemInstruction: WORLD_BLUEPRINT_SYSTEM_PROMPT,
+    systemInstruction: buildWorldBlueprintSystemPrompt(skills),
     userPrompt: buildWorldBlueprintPrompt(storySeed),
     responseJsonSchema: worldBlueprintResponseSchema(arcCount),
     temperature: config.temperature,

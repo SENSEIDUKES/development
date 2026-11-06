@@ -297,7 +297,11 @@ export type HarnessSkillSlotId =
   | 'continuity'
   | 'style'
   | 'accessibility'
-  | 'translation';
+  | 'translation'
+  // Read by the World Blueprint call, before the story exists; never by the chapter writer.
+  | 'origin'
+  | 'world'
+  | 'arc';
 
 export type HarnessSkillApplication =
   | 'generation'

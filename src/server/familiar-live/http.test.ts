@@ -91,7 +91,7 @@ describe('Familiar live talk route', () => {
     expect(() => parseFamiliarLiveBrief({ brief: { ...brief, topics: [{ ...brief.topics[0], id: 'no spaces' }] } })).toThrow('not a valid id');
     expect(() => parseFamiliarLiveBrief({ brief: { ...brief, topics: Array(21).fill(brief.topics[0]) } })).toThrow('at most 20');
     expect(() => parseFamiliarLiveBrief({ brief: { ...brief, language: 'English please' } })).toThrow('language');
-    expect(() => parseFamiliarLiveBrief({ brief: { ...brief, docs: Array(301).fill(brief.docs[0]) } })).toThrow('at most 300');
+    expect(() => parseFamiliarLiveBrief({ brief: { ...brief, docs: Array(501).fill(brief.docs[0]) } })).toThrow('at most 500');
     expect(() => parseFamiliarLiveBrief({ brief: { ...brief, docs: [{ ...brief.docs[0], title: 'x'.repeat(61) }] } })).toThrow('docs[0].title');
     // A host with no docs of its own still talks; it simply has nothing to look up.
     expect(parseFamiliarLiveBrief({ brief: { ...brief, docs: undefined } }).docs).toEqual([]);

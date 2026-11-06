@@ -20,7 +20,7 @@ export function openAiLiveTools(brief: FamiliarLiveBrief) {
     ...(brief.docs.length ? [{
       type: 'function' as const,
       name: 'look_up',
-      description: 'Reads what the docs say about a topic. Answers with the entries themselves, or with nothing when the docs do not cover it.',
+      description: 'Reads what the docs, or the record of the story the reader is in, say about something. Answers with the entries themselves, or with nothing when they do not cover it.',
       parameters: {
         type: 'object',
         properties: { query: { type: 'string', description: 'The name the topic has in the list of docs, in that list\'s own language — not the reader\'s wording.' } },
@@ -80,7 +80,7 @@ export function openAiLiveSession(brief: FamiliarLiveBrief, options: { model: st
           // The voice repeats what comes back as documented fact, so the grounding rule has to hold here too:
           // nothing stops this model answering from its own memory and the Familiar speaking it as the docs.
           ...(brief.docs.length
-            ? ['Answer a question about the app only from what look_up returns. Never answer one from your own knowledge, and when look_up finds nothing, say that the docs do not cover it instead of filling the gap.',
+            ? ['Answer a question about the app, or about the story the reader is in, only from what look_up returns. Never answer one from your own knowledge, and when look_up finds nothing, say that the docs and the story\'s record do not cover it instead of filling the gap.',
               // This model is the one that calls look_up, and a typed message reaches it without
               // passing the voice at all, so it needs the names itself. Without them it is told to
               // choose from a list it cannot see, and has to guess at the catalog's own wording.

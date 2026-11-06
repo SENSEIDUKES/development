@@ -36,6 +36,13 @@ export function familiarLiveCharacter(brief: FamiliarLiveBrief): string[] {
       ? ['This page\'s topics:', ...topics.map(topic => `- ${topic.label} (${topic.id}): ${topic.explanation}`)].join('\n')
       : 'This page has no topics of its own.',
     ...(index ? [`The docs you can look up, by name:\n${index}`] : []),
+    // In a story the host files that story's record among the docs (its Codex and chapter recaps), under
+    // categories that say so. It is all the Familiar knows of the story: the record holds only what the
+    // chapters have reached, so answering from it never spoils what the reader has not met.
+    ...(index ? ['When the reader is in a story, the list also holds that story\'s record under categories that say so: the people they have met, what they carry, the places, the world\'s rules and what each chapter held. Answer anything about the story only from look_up, the same way: never invent what happened, who someone is or what something does, and never guess beyond what the record says.'] : []),
+    // SENSEI, 2026-11-06: the record holds every chapter written, which can run ahead of the one the reader
+    // has open, so the Familiar keeps what lies past it to itself until the reader asks outright.
+    ...(index ? ['Never reveal a spoiler unless the reader explicitly asks for one. The place above says which chapter they have open, and the record marks anything past it as a spoiler: say nothing of it, not even a hint, and if a question can only be answered with one, tell them so and ask if they want it spoiled. Only a plain request for spoilers, in their own words, unlocks it.'] : []),
   ];
 }
 

@@ -157,6 +157,12 @@ export {
   type StoryCodexChapter,
   type StoryCodexRecord,
 } from '../../components/harness-generation/shared/storyCodex';
+export {
+  STORY_KNOWLEDGE_CATEGORIES,
+  storyCodexOf,
+  storyKnowledge,
+  storyKnowledgeOf,
+} from '../../components/harness-generation/shared/storyKnowledge';
 export { factionNamed, type DeclaredFaction as CodexDeclaredFaction } from '../../components/harness-generation/shared/factions';
 export {
   APPEARED_SECTION_CHARACTERS,

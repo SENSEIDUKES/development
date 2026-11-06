@@ -1,5 +1,5 @@
 import { useOptionalReaderMixer } from '@seihouse/audio-player';
-import { CHAPTER_DIRECTION_TEXT_LIMIT, CHAPTER_FUNCTION_LABELS, type HarnessGenerationController, type HarnessWorkspaceState, type ReaderHostTools, type ReaderSoundAuthoring, type ChapterDirectionChoice } from '@seihouse/sen/harness-generation';
+import { CHAPTER_DIRECTION_TEXT_LIMIT, CHAPTER_FUNCTION_LABELS, storyKnowledgeOf, type HarnessGenerationController, type HarnessWorkspaceState, type ReaderHostTools, type ReaderSoundAuthoring, type ChapterDirectionChoice } from '@seihouse/sen/harness-generation';
 import { AudioLines, Globe, PenLine, Swords, TrendingUp } from 'lucide-react';
 import { useFamiliarHelperContext } from '../../components/familiar/development/FamiliarHelper';
 import type { FamiliarHelperAction, FamiliarHelperContext, FamiliarIcon, FamiliarTopic } from '../familiars/helper';
@@ -76,6 +76,21 @@ export function chapterCodeAction(openChapter: (chapterNumber: number) => boolea
   };
 }
 
+/**
+ * What the Familiar knows in a story: where the reader is (the chapter open
+ * now), and the story's record to look up, the very Codex the Reader shows
+ * with each chapter's recap. Worked out only when the Familiar asks.
+ */
+export function readerKnowledge(state: HarnessWorkspaceState, storyId: string, chapterId: string): Pick<FamiliarHelperContext, 'place' | 'knowledge'> {
+  const story = state.stories.find(entry => entry.id === storyId);
+  const chapter = state.chapters.find(entry => entry.id === chapterId && entry.storyId === storyId);
+  const where = chapter ? `Chapter ${chapter.chapterNumber}${chapter.title ? `: ${chapter.title}` : ''}` : '';
+  return {
+    place: [story?.title ? `Reading ${story.title}` : 'Reader', where].filter(Boolean).join(', '),
+    knowledge: () => storyKnowledgeOf(state, storyId, chapterId),
+  };
+}
+
 /** The Reader: what it explains, and Fate as its actions (saving still belongs to SEN). */
 export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: string, controller: HarnessGenerationController, tools: ReaderHostTools, topics: readonly FamiliarTopic[] = []): FamiliarHelperContext {
   const story = state.stories.find(entry => entry.id === storyId);
@@ -117,7 +132,7 @@ export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: str
   // Going to a chapter works even while Fate is unavailable.
   if (tools.openChapter) actions.push(chapterCodeAction(tools.openChapter));
   return {
-    key, title: 'Reader', topics, actions, page: 'reader',
+    key, title: 'Reader', topics, actions, page: 'reader', ...readerKnowledge(state, storyId, tools.chapterId),
     hint: blocked ? 'Fate is unavailable while writing or after the story ends.'
       : 'Say World Building, Progression, Conflict, or Custom followed by your direction.',
     interrupt: tools.interruptPlayback,
@@ -142,7 +157,7 @@ export function ReaderFamiliar({ state, storyId, controller, tools }: {
   const topics = useFamiliarHelpTopics('reader');
   const create = tools.createMode;
   useFamiliarHelperContext(create
-    ? createModeFamiliarContext(create.sounds, interrupt, mixer ? url => { mixer.playCue(url); } : undefined)
+    ? { ...createModeFamiliarContext(create.sounds, interrupt, mixer ? url => { mixer.playCue(url); } : undefined), ...readerKnowledge(state, storyId, tools.chapterId) }
     : { ...readerFamiliarContext(state, storyId, controller, tools, topics), interrupt });
   return null;
 }

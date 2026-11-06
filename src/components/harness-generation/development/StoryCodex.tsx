@@ -2,17 +2,14 @@ import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'rea
 import { Archive, Backpack, ChevronLeft, Eye, Flag, Hand, LoaderCircle, Lock, MapPin, Package, PawPrint, Scale, ScrollText, Sparkles, Sword, TriangleAlert, Users, WandSparkles } from 'lucide-react';
 import './story-codex.css';
 import { CodexCardButton, CodexProfileHeader, type CodexCardCategory } from './codexCardParts';
-import type { HoldingVerb } from '../../../narrative/holdings';
+import { CODEX_VERB_LABELS } from '../shared/storyKnowledge';
 import { CHARACTER_LOOK_TRAITS, PLACE_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
 import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, CodexPictureCard, CodexPictures, CodexPlace, CodexWorldCard, CodexWorldFact, StoryCodexRecord } from '../shared/storyCodex';
 import './reader-colors.css';
 
 /** How each change reads in the Codex. */
-const VERB_LABELS: Record<HoldingVerb, string> = {
-  has: 'already had', gained: 'gained', lost: 'lost', equipped: 'took up', unequipped: 'put away', knows: 'already knew',
-  learning: 'began learning', learned: 'learned', improved: 'improved', sealed: 'sealed', unsealed: 'unsealed', rank: 'reached',
-};
+const VERB_LABELS = CODEX_VERB_LABELS;
 
 /** How each trait of a look is named, in the order a look is read. */
 const TRAIT_LABELS: Record<LookTrait, string> = {

@@ -1,6 +1,7 @@
 import { type StorySeedStoryRequired } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
-import { getStoryStyleLabel } from '@seihouse/sen/story-seed';
+import { getStoryStyleLabel, type StorySeedPowerSystem } from '@seihouse/sen/story-seed';
+import { WORLD_CARD_KINDS } from '@seihouse/sen/contracts';
 
 export const formatBlueprintDate = (value: string): string => {
   const parsed = new Date(value);
@@ -18,7 +19,14 @@ export const createBlueprintMarkdown = (
   blueprint: WorldBlueprint,
   origin: StorySeedStoryRequired,
   mainCharacter: WorldBlueprintMainCharacter,
+  /** The Seed's World card: what kind of world it is, who rules it, and its rules. */
+  world: StorySeedPowerSystem = {},
 ): string => {
+  const worldLines = WORLD_CARD_KINDS.find(kind => kind.id === 'world-rules')!.slots
+    .flatMap(slot => {
+      const value = (world as Record<string, string | undefined>)[slot.id]?.trim();
+      return value ? [`### ${slot.label}\n${value}`] : [];
+    }).join('\n\n');
   const styleLabel = getStoryStyleLabel(origin.style) || origin.style;
   const metadata = [
     `**Blueprint Version:** ${blueprint.blueprintVersion || 'v1.0'}`,
@@ -59,6 +67,10 @@ ${mainCharacter.appearance}
 
 ### Background / Profile
 ${mainCharacter.backgroundProfile}
+
+## World
+
+${worldLines || '_None yet_'}
 
 ## Arc
 

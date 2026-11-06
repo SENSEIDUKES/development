@@ -86,7 +86,7 @@ export const BlueprintReview = ({
     appearance: blueprint.mainCharacter?.appearance || '',
     backgroundProfile: blueprint.mainCharacter?.backgroundProfile || blueprint.mcProfile || '',
   }), [blueprint.mainCharacter, blueprint.mcProfile]);
-  const copyPayloadRef = useRef({ blueprint, origin, mainCharacter });
+  const copyPayloadRef = useRef({ blueprint, origin, mainCharacter, world: seed.world.optional.worldFoundations.powerSystem });
   const arcProblem = describeBlueprintArcPlanProblem(blueprint);
   // A regeneration owns the busy state, so the Manifest button never claims
   // to be manifesting while the Blueprint is being replaced.
@@ -102,8 +102,8 @@ export const BlueprintReview = ({
   }, [onRegenerateBlueprint]);
 
   useEffect(() => {
-    copyPayloadRef.current = { blueprint, origin, mainCharacter };
-  }, [blueprint, mainCharacter, origin]);
+    copyPayloadRef.current = { blueprint, origin, mainCharacter, world: seed.world.optional.worldFoundations.powerSystem };
+  }, [blueprint, mainCharacter, origin, seed.world.optional.worldFoundations.powerSystem]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -141,7 +141,7 @@ export const BlueprintReview = ({
   }, [mainCharacter, setBlueprint]);
 
   const handleCopyBlueprint = useCallback(async () => {
-    const { blueprint: currentBlueprint, origin: currentOrigin, mainCharacter: currentMainCharacter } = copyPayloadRef.current;
+    const { blueprint: currentBlueprint, origin: currentOrigin, mainCharacter: currentMainCharacter, world: currentWorld } = copyPayloadRef.current;
     const clipboard = typeof navigator === 'undefined' ? undefined : navigator.clipboard;
 
     const showCopyError = () => {
@@ -161,7 +161,7 @@ export const BlueprintReview = ({
 
     try {
       await clipboard.writeText(
-        createBlueprintMarkdown(currentBlueprint, currentOrigin, currentMainCharacter),
+        createBlueprintMarkdown(currentBlueprint, currentOrigin, currentMainCharacter, currentWorld),
       );
       if (!isMountedRef.current) return;
       setCopyError(null);

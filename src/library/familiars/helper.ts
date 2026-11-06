@@ -851,6 +851,12 @@ export class FamiliarHelperController {
     if (call.name === 'propose_action') {
       if (this.state.phase === 'saving') return 'A change is still being saved.';
       const action = context.actions.find(entry => entry.id === call.actionId);
+      // "Take me back" with a change waiting backs out of the change, as the pill and the device voice do: it never leaves the page.
+      if (call.actionId === FAMILIAR_BACK_ACTION_ID && this.state.proposal) {
+        this.change();
+        this.addLine({ speaker: 'note', text: 'Backed out' });
+        return 'Backed out of the change. Nothing changed, and they are still on this page.';
+      }
       if (!action) return 'That choice is not on this page.';
       if (this.instant(action)) {
         try { await action.run(action.input ? call.input.trim() : ''); } catch (error) { return error instanceof Error ? error.message : 'That did not work.'; }

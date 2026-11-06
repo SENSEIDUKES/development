@@ -575,5 +575,21 @@ describe('the device voice answers questions from the docs and the story', () =>
     lost.helper.submit('qwertyuiop');
     expect(lost.helper.getSnapshot().message).toBe('Choose a path.');
   });
+
+  it('takes the reader back by voice: a waiting change is backed out of, said aloud, and with nowhere to go it says so', () => {
+    const t = setup();
+    t.helper.open(true);
+    t.heard('conflict');
+    t.spoken();
+    expect(t.helper.getSnapshot().proposal?.actionId).toBe('conflict');
+    t.heard('take me back');
+    expect(t.helper.getSnapshot().proposal).toBeUndefined();
+    expect(t.voice.speak).toHaveBeenLastCalledWith('Backed out. Nothing changed.', 'en-US', expect.any(Function), expect.any(Function));
+    expect(t.run).not.toHaveBeenCalled();
+    // This page has no way back (the app gives none on the Home it opened on).
+    t.spoken();
+    t.heard('go back');
+    expect(t.helper.getSnapshot().message).toBe('There is nothing to go back to.');
+  });
 });
 

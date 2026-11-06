@@ -164,6 +164,20 @@ describe('the Familiar\'s actions, page by page', () => {
       helper.back();
       expect(helper.getSnapshot().proposal).toBeUndefined();
       expect(back).toHaveBeenCalledTimes(2);
+      // Live talk too: asked to go back with a change waiting, the Familiar backs out of it and stays.
+      let call: ((request: { name: 'propose_action'; actionId: string; input: string }) => Promise<string>) | undefined;
+      const live = new FamiliarHelperController(voice, 'en-US', { start: (_brief, events) => { call = events.call; events.connected(); return { end() {}, send() {} }; } });
+      live.setContext(Symbol(), withBack('reader'), 'base');
+      live.setContext(Symbol(), await reader());
+      live.open(true);
+      await call!({ name: 'propose_action', actionId: 'conflict', input: '' });
+      expect(live.getSnapshot().proposal?.actionId).toBe('conflict');
+      await expect(call!({ name: 'propose_action', actionId: 'go-back', input: '' })).resolves.toMatch(/^Backed out/);
+      expect(live.getSnapshot().proposal).toBeUndefined();
+      expect(back).toHaveBeenCalledTimes(2);
+      // With nothing waiting, it goes back.
+      await expect(call!({ name: 'propose_action', actionId: 'go-back', input: '' })).resolves.toBe('Done: Went back.');
+      expect(back).toHaveBeenCalledTimes(3);
     } finally {
       vi.unstubAllGlobals();
     }

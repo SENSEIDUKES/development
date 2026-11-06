@@ -154,7 +154,8 @@ export function useAppRoute(): [NovelExpandedRoute, Navigate] {
     const url = routeHref(next);
     if (replace) window.history.replaceState({ depth: historyDepth() }, '', url);
     else window.history.pushState({ depth: historyDepth() + 1 }, '', url);
-    setRoute(next);
+    // A fresh object even for the same page (Home from Home), so the app redraws and sees the new history depth.
+    setRoute({ ...next });
     // A new page starts at its top.
     if (scroll) window.scrollTo({ top: 0 });
   }, []);

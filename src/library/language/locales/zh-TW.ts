@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "靈感火花",
       "Sparks: story ideas": "靈感火花：故事創意",
       "Close Sparks": "關閉靈感火花",
-      "Search For Worlds": "搜尋世界",
+      "Search for worlds": "搜尋世界",
       "Profile and preferences": "個人資料與偏好",
       "Sign in": "登入",
       "Not connected yet": "尚未連線",

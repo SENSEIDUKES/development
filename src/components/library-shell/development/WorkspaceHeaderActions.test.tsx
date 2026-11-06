@@ -56,7 +56,7 @@ it('keeps universal Search and the Profile Portrait without a header badge, cont
   expect(container.querySelector('h1')).toBeNull();
   expect(container.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
   expect(container.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
-  expect(Array.from(container.querySelectorAll('button')).map(button => button.getAttribute('aria-label'))).toEqual(['Search For Worlds', 'Profile and preferences']);
+  expect(Array.from(container.querySelectorAll('button')).map(button => button.getAttribute('aria-label'))).toEqual(['Search for worlds', 'Profile and preferences']);
   expect(container.querySelector('.workspace-header-context')).toBeNull();
   expect(container.querySelector('[role="status"]')).toBeNull();
   expect(container.textContent).not.toMatch(/Dao|Seed|Qi/);

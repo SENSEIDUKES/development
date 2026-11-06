@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Sparks": "Cheche",
       "Sparks: story ideas": "Cheche: mawazo ya hadithi",
       "Close Sparks": "Funga Cheche",
-      "Search For Worlds": "Tafuta walimwengu",
+      "Search for worlds": "Tafuta walimwengu",
       "Profile and preferences": "Wasifu na mapendeleo",
       "Sign in": "Ingia",
       "Not connected yet": "Bado haijaunganishwa",

@@ -117,21 +117,32 @@
   flex: none; width: 20px; height: 20px; color: var(--color-sen-signal);
   margin-block: calc((var(--workspace-search-line) - 20px) / 2);
 }
-/* The words are whole or not shown, never cut off or "…": the magnifier and the words
-   share one line that wraps, so words with no room beside the magnifier drop to a
-   second line the field hides. Any language's wording fits or steps aside by itself. */
+/* The words are whole or not shown, never cut off or "…". They take one line beside
+   the magnifier when it fits, or wrap onto two shorter lines (a phone's narrow field:
+   "Search for / worlds"). Only when even their longest word has no room beside the
+   magnifier do they drop to a second flex line the field hides, leaving the magnifier. */
 .workspace-search-line {
   display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start;
   column-gap: 10px; flex: 1 1 auto; min-width: 0;
   height: var(--workspace-search-line); overflow: hidden;
 }
-.workspace-search-placeholder { flex: none; white-space: nowrap; line-height: var(--workspace-search-line); }
+.workspace-search-placeholder {
+  flex: 1 1 0; min-width: min-content;
+  line-height: 1.15; overflow-wrap: normal; word-break: normal;
+}
 @container (max-width: 6rem) {
   .workspace-search-field { justify-content: center; padding-inline: 0; }
   .workspace-search-line { flex: none; justify-content: center; }
   .workspace-search-placeholder {
     position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   }
+}
+/* Words that would need a third line step aside for the magnifier too (set by
+   WorkspaceHeaderSearch), so they are never cut off by the field. */
+.workspace-search-field[data-label-hidden] { justify-content: center; }
+.workspace-search-field[data-label-hidden] .workspace-search-line { flex: none; justify-content: center; }
+.workspace-search-field[data-label-hidden] .workspace-search-placeholder {
+  position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
 
 /* The Profile Portrait and its menu. The menu is drawn over the page (beside

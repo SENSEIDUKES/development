@@ -110,6 +110,6 @@ describe('The header\'s sound control', () => {
     expect(container.querySelector('.header-sound-control')).toBeNull();
     render(<WorkspaceHeader title="NovelExpanded" sound={<HeaderSoundControl />} />);
     const labels = Array.from(container.querySelectorAll('header button')).map(button => button.getAttribute('aria-label'));
-    expect(labels).toEqual(['Search For Worlds', 'Mute sound', 'Profile and preferences']);
+    expect(labels).toEqual(['Search for worlds', 'Mute sound', 'Profile and preferences']);
   });
 });

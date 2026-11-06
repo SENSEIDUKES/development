@@ -13,7 +13,7 @@ export async function verifyAppShellTitles({ tab, viewport, baseUrl }) {
       'source=header-states&state=long-context',
     ]) {
       await tab.goto(`${baseUrl}/library-shell.html?variant=development&${config}`);
-      await tab.playwright.getByRole('button', { name: 'Search For Worlds', exact: true }).waitFor({ state: 'visible' });
+      await tab.playwright.getByRole('button', { name: 'Search for worlds', exact: true }).waitFor({ state: 'visible' });
       const geometry = await tab.playwright.evaluate(() => {
         const header = document.querySelector('[data-slot="app-header"]');
         const logo = header.querySelector('.novel-expanded-emblem');

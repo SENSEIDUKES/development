@@ -54,7 +54,7 @@ it('regression: renders exactly one header and no toolbar row beneath it', async
   const header = container.querySelector('header')!;
   expect(header.querySelector('[data-story-seed-action-row]')).toBeNull();
   expect(Array.from(header.querySelectorAll('button'))
-    .map(element => element.getAttribute('aria-label'))).toEqual(['Search For Worlds', 'Profile and preferences']);
+    .map(element => element.getAttribute('aria-label'))).toEqual(['Search for worlds', 'Profile and preferences']);
   expect(header.textContent).not.toContain('Save Draft');
   expect(header.textContent).not.toContain('Manifest');
   // The Story Seed page title lives at the top of the page below the header.

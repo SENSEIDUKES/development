@@ -523,7 +523,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(header.querySelector('.novel-expanded-wordmark')).toBeNull();
     expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
     expect(header.querySelector('button[aria-label="Profile and preferences"]')).toBeTruthy();
-    expect(header.querySelector('button[aria-label="Search for worlds"]')).toBeTruthy();
+    expect(header.querySelector('button[aria-label="Search For Worlds"]')).toBeTruthy();
     // On a phone the music note floats above the bar, not in the header.
     expect(floatingNote()).toBeTruthy();
     expect(headerNote()).toBeNull();
@@ -649,7 +649,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
     await render(services);
 
-    await click(shell()!.querySelector('header button[aria-label="Search for worlds"]'), 'Search', 20);
+    await click(shell()!.querySelector('header button[aria-label="Search For Worlds"]'), 'Search', 20);
     const results = document.querySelector<HTMLElement>('[role="dialog"]')!;
     for (const label of ['Your stories', 'Create a story', created.title]) expect(results.querySelector(`button[aria-label="${label}"]`)).toBeTruthy();
     await click(results.querySelector(`button[aria-label="${created.title}"]`), 'the story in Search', 60);
@@ -745,7 +745,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
       expect(header.querySelector('.dao-sparks-trigger')).toBeNull();
       expect(
         Array.from(header.querySelectorAll('button')).map(button => button.getAttribute('aria-label')),
-      ).toEqual(['Search for worlds', 'Show Quill actions', 'Profile and preferences']);
+      ).toEqual(['Search For Worlds', 'Show Quill actions', 'Profile and preferences']);
     };
 
     // Home
@@ -974,7 +974,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
 
 describe('NovelExpanded: publishing, and the creator\'s and the reader\'s Readers', { timeout: 30_000 }, () => {
   const searchResults = async () => {
-    await click(shell()!.querySelector('header button[aria-label="Search for worlds"]'), 'Search', 20);
+    await click(shell()!.querySelector('header button[aria-label="Search For Worlds"]'), 'Search', 20);
     return document.querySelector<HTMLElement>('[role="dialog"]')!;
   };
   const closeSearch = async () => {
@@ -1584,7 +1584,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(confirmDialog()).toBeNull();
     expect(document.documentElement.dataset.interfaceLanguage).toBe('en');
     expect(cave()!.textContent).toContain('Interface Language');
-    expect(document.querySelector('.workspace-header .workspace-search-field')?.getAttribute('aria-label')).toBe('Search for worlds');
+    expect(document.querySelector('.workspace-header .workspace-search-field')?.getAttribute('aria-label')).toBe('Search For Worlds');
 
     await chooseInterfaceLanguage('zh-CN');
     expect(confirmDialog()!.textContent).toContain('确认更改语言');

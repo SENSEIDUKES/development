@@ -1,4 +1,4 @@
-import { ARC_LENGTH, ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ARC_GOALS, MAX_ARC_LOOKAHEAD, STORY_LENGTH_ARCS } from '@seihouse/sen/arc-goals';
+import { ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, STORY_LENGTH_ARCS } from '@seihouse/sen/arc-goals';
 import {
   SEED_ABILITY_LIMIT,
   SEED_ABILITY_SLOT_FIELDS,
@@ -18,16 +18,9 @@ import {
   type StorySeedInput,
 } from '@seihouse/sen/story-seed';
 import { WORLD_CARD_KINDS, type WorldCardKindId } from '@seihouse/sen/contracts';
+import { SEN_BLUEPRINT_DEFAULT_SKILLS, assembleBlueprintSkills, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 
-export const WORLD_BLUEPRINT_SYSTEM_PROMPT = `You are an elite Eastern fantasy author and world architect. Build a detailed World Blueprint that can serve as the canon bible for serialized chapter generation.
-
-Interpret the Story Seed's genre, tags, and storytelling tradition through that Eastern fantasy frame, as adaptable lenses rather than mandatory tropes. Never fill open creative space with Western fantasy defaults unless the Story Seed asks for them.
-
-The Story Seed contains creator-authored world facts and separate creative intentions. Every non-empty value is authoritative: never contradict, replace, rename, weaken, or silently omit it. Fill blank creative space intelligently and connect the creator's facts into one coherent world. Make It Work is an absolute worldbuilding instruction. Destined Ending is the novel's fixed destination: the whole story travels toward it and its final arc arrives at it. Fun Settings are optional creative flavor, not canon, and subordinate to Destined Ending, Hard Pins, Active Arc Goal, and canon. The genre, style, tags, characters, factions, abilities, and power-system details must materially influence the result.
-
-When a creator supplied a character or faction, integrate it instead of replacing it. You may add supporting characters and factions when the story needs them. Describe minors safely and never sexualize a character under 18.`;
-
-/** How the completion rules name each world fact the creator may have written. */
+/** How the request names each world fact the creator may have written. */
 const WORLD_FACT_PROMPT_LABELS: Record<typeof WORLD_FACT_DETAILS[number]['field'], string> = {
   worldOverview: 'world overview',
   startingLocation: 'opening location',
@@ -38,30 +31,7 @@ const listPhrase = (items: string[]): string => items.length <= 2
   ? items.join(' and ')
   : `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
 
-/**
- * World facts the creator left open are established in full. Facts the
- * creator wrote stay theirs; the matching Blueprint field carries only
- * compatible detail that adds to the fact, which chapter generation receives
- * beside it.
- */
-const worldFactRules = (storySeed: StorySeedInput): string[] => {
-  const identity = storySeed.world.optional.worldIdentity;
-  const written = WORLD_FACT_DETAILS.filter(entry => identity[entry.fact]?.trim());
-  const open = WORLD_FACT_DETAILS.filter(entry => !identity[entry.fact]?.trim());
-  const establish = open.length
-    ? `the ${listPhrase([...open.map(entry => WORLD_FACT_PROMPT_LABELS[entry.field]), 'a usable power-system outline'])}`
-    : 'a usable power-system outline';
-  const facts = listPhrase(written.map(entry => `${WORLD_FACT_PROMPT_LABELS[entry.field]} (worldIdentity.${entry.fact})`));
-  const fields = listPhrase(written.map(entry => entry.field));
-  return [
-    `Establish ${establish}.`,
-    ...(written.length
-      ? [`The creator already wrote the ${facts}; that wording stays the fact. In ${fields}, write only compatible added detail that builds on the matching fact, never restating or contradicting it.`]
-      : []),
-  ];
-};
-
-/** Where each card kind's cards go in the answer, and how many it may hold. */
+/** Where each card kind's cards go in the answer, and how many it may hold, in the order the answer writes them. */
 const CARD_ANSWERS: Array<{ kind: WorldCardKindId; field: string; limit?: number; lead: string }> = [
   { kind: 'world-rules', field: 'powerSystem', lead: 'Write it once, for the whole story.' },
   { kind: 'place', field: 'places', limit: SEED_PLACE_LIMIT, lead: 'List the place the story opens in first, then the others it opens among.' },
@@ -79,26 +49,35 @@ const cardSlotLines = (kind: WorldCardKindId): string => WORLD_CARD_KINDS
   .join('\n');
 
 /**
- * The world at Chapter 0, in the words the Blueprint model reads (SENSEI,
- * 2026-10-21). Every card kind and every slot is written from the Codex's own
- * definition (`WORLD_CARD_KINDS`), so this instruction can never ask for a
- * slot the Story Seed cannot hold or the Codex cannot show.
+ * The World Blueprint's permanent rules: what every Blueprint holds to,
+ * whichever Origin, World and Arc skills it reads, so no replaced skill can
+ * break the Codex or the creator's authority (SENSEI, 2026-11-05; words
+ * approved before they were written here). Never a skill. Every card kind and
+ * slot is written from the Codex's own definition (`WORLD_CARD_KINDS`), so
+ * these rules can never ask for a slot the Story Seed cannot hold or the Codex
+ * cannot show.
  */
-export const WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS = `The world at Chapter 0
+export const BLUEPRINT_PERMANENT_RULES = `The creator's words
+The Story Seed is the creator's. Every value they wrote is a fact: never contradict, replace, rename, weaken or leave it out. Where the creator already wrote a card slot, repeat their value exactly; only blank slots are yours to fill. Build the creator's own characters and factions into the world under their exact names, listed first, before any you add.
+- Make It Work (story.optional.makeItWorkInstruction): an instruction about the world that must hold, whatever else has to bend.
+- Hard Pins (story.optional.hardPins): truths the creator fixed for the whole story. Build a world where every one can hold.
+- Active Arc Goal (story.optional.activeArcGoal): where the creator wants the story to begin.
 
-The Story Seed and this Blueprint are the world as it already stands when Chapter 1 opens. Nothing is left for a later chapter to invent: everything that exists at the start exists here, and the chapters only change it afterwards.
+One name for one thing
+Every name a card points to is the exact name on that thing's own card:
+- a character's location names a place card, their holds names thing cards, their knows names ability cards, their belongsTo names faction cards;
+- a thing's holder names a character;
+- a place's heldBy names a faction card, and a place's within names another place card;
+- a faction's seat names a place card and its leader a character card;
+- ties name character or faction cards;
+- every rank, level and strength comes from powerSystem.knownRanks.
 
-Two tests decide whether a card holds enough, and nothing beyond them belongs on one:
-- an artist must be able to draw the opening scene from these cards alone, without reading a chapter;
-- a game must be able to load the world exactly as it stands: who is where, holding what, in what condition, allied with whom.
+Write the answer in the order it is asked for, so each card is written before the cards that point to it.
 
-Write what the world is, never how it is shown: "at the North Ridge Gate, at dusk, wounded", never a panel, a camera, a frame count or an art style.
+Lists
+Where a slot holds more than one name (holds, knows, ties, belongsTo, habitat), separate them with commas, and never put a comma inside a name. A count goes before its name: "3 Spirit Pills". knownRanks lists the ranks from lowest to highest, separated by commas. laws writes one law per line.
 
-Fill every slot of every card, each one short and concrete. Where the creator already wrote a slot, repeat their value exactly; only blank slots are yours to fill. Never write aliases.
-
-Use one name for one thing, everywhere: a character's holds names things on the thing cards, their knows names abilities on the ability cards, their belongsTo names factions on the faction cards, their location names a place on the place cards, a faction's seat names a place and its leader a character, and every rank or level comes from the rank ladder in the world rules.
-
-The cards, in the order to write them, so every name a card points to already stands on its own card, and what each slot holds:
+The cards, in the order to write them, and what each slot holds:
 
 ${CARD_ANSWERS.map(({ kind, field, limit, lead }) => {
   const definition = WORLD_CARD_KINDS.find(candidate => candidate.id === kind)!;
@@ -106,34 +85,49 @@ ${CARD_ANSWERS.map(({ kind, field, limit, lead }) => {
   return `- ${field}${count}: ${definition.purpose} ${lead}\n${cardSlotLines(kind)}`;
 }).join('\n')}
 
-mainCharacter is a character card too, with the slots only they have: startingIdentity, personality, mainFlaw, secretAdvantage, startingWeakness, moralAlignment, and backgroundProfile, their fuller backstory beyond the one-line bio.`;
-
-export const buildWorldBlueprintPrompt = (storySeed: StorySeedInput, arcCount = storySeed.story.optional.arcCount): string => `Create one complete World Blueprint from this finalized canonical Story Seed:
-
-${JSON.stringify(storySeed, null, 2)}
-
-Completion rules:
-- Complete every output field. No blank strings. characters and factions must not be empty.
-- Generate a strong logline.
-${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
-- Fill every Story Seed slot. Where the creator already wrote a slot, repeat their value exactly; only blank slots are yours to fill. Never write aliases or Hard Pins.
-- abilities (startingPowerConcept, uniquePath) and mainOpposition: fill each.
-- Keep every slot to one short, concrete fact; the longer prose fields (logline, worldOverview, powerSystemOutline, backgroundProfile, firstArcPromise) add what the slots do not already say, never restating them.
-- ${arcCount === undefined
-  ? `Establish the Destined Ending first, then a realistic estimatedArcs between ${STORY_LENGTH_ARCS.min} and ${STORY_LENGTH_ARCS.max}: the story's length.`
-  : `Establish the Destined Ending first. The creator chose the story's length (story.optional.arcCount): estimatedArcs is exactly ${arcCount}.`} Each arc is exactly ${ARC_LENGTH} chapters, and the last arc arrives at the Destined Ending.
-- Plan only Arc 1, in arcOne: 1 to ${MAX_ARC_GOALS} sequential one-line goals, each with a positive whole-chapter allocation weighted by what it requires; the allocations sum to exactly ${ARC_LENGTH}. Goals never overlap. No Arc 1 goal reaches or resolves the Destined Ending. Every later arc is planned when the story reaches it, from where the story is then.
-- ${storySeed.story.optional.activeArcGoal
-  ? 'Arc 1 must begin with story.optional.activeArcGoal: use its text verbatim as Arc 1\'s first goal and plan the rest of the arc around it.'
-  : 'Choose Arc 1\'s first goal as the immediate goal the creator will review.'}
-- Write arcLookahead: private direction for the arcs after Arc 1, one line each for at most the next ${MAX_ARC_LOOKAHEAD} arcs (Arc 2 and Arc 3), never beyond estimatedArcs, describing where the route goes toward the Destined Ending; the final arc's line arrives at it. Readers never see it; it guides the planning of those arcs.
-- Establish the first-arc promise, trope rules, and a practical style bible.
-- The style bible must translate genre, style, tags, and maturity metadata into actionable prose, pacing, viewpoint, dialogue, and thematic guidance.
-- The trope rules must explicitly account for face-slap, plot-armor, recognition, and Make It Work settings. Keep Fate Survival settings out of trope rules; chapter generation receives them separately. Apply the other settings without exposing app-control language as ordinary narration.
-
-${WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS}
+Describe minors safely and never sexualize a character under 18.
 
 Return the JSON object only.`;
+
+/**
+ * The World Blueprint's instructions: its Origin, World and Arc skills, in
+ * CAPA Schema order, then its permanent rules. `skills` defaults to SEN's own;
+ * a host that licenses SEN may give its own (for example another Origin).
+ */
+export const buildWorldBlueprintSystemPrompt = (
+  skills: readonly HarnessSkillManifest[] = SEN_BLUEPRINT_DEFAULT_SKILLS,
+): string => `${assembleBlueprintSkills(skills)}\n\n${BLUEPRINT_PERMANENT_RULES}`;
+
+/** The World Blueprint's instructions with SEN's own skills. */
+export const WORLD_BLUEPRINT_SYSTEM_PROMPT = buildWorldBlueprintSystemPrompt();
+
+/**
+ * The lines of the request that depend on this Seed: world facts the creator
+ * already wrote (their wording stays the fact; the matching Blueprint field
+ * carries only compatible detail, which chapter generation receives beside
+ * it), a Story Length the creator chose, and an Active Arc Goal.
+ */
+const seedRules = (storySeed: StorySeedInput, arcCount: number | undefined): string[] => {
+  const identity = storySeed.world.optional.worldIdentity;
+  const written = WORLD_FACT_DETAILS.filter(entry => identity[entry.fact]?.trim());
+  return [
+    ...(written.length
+      ? [`The creator already wrote the ${listPhrase(written.map(entry => `${WORLD_FACT_PROMPT_LABELS[entry.field]} (worldIdentity.${entry.fact})`))}; that wording stays the fact. In ${listPhrase(written.map(entry => entry.field))}, add only compatible detail.`]
+      : []),
+    ...(arcCount === undefined ? [] : [`The creator chose the story's length: estimatedArcs is exactly ${arcCount}.`]),
+    ...(storySeed.story.optional.activeArcGoal
+      ? ['Arc 1 begins with the Active Arc Goal: use its text word for word as Arc 1\'s first goal.']
+      : []),
+  ];
+};
+
+/** The request: the Story Seed, then only the lines that depend on it. */
+export const buildWorldBlueprintPrompt = (storySeed: StorySeedInput, arcCount = storySeed.story.optional.arcCount): string => {
+  const rules = seedRules(storySeed, arcCount);
+  return `Build the World Blueprint for this Story Seed:
+
+${JSON.stringify(storySeed, null, 2)}${rules.length ? `\n\n${rules.map(rule => `- ${rule}`).join('\n')}` : ''}`;
+};
 
 const textSlots = (fields: readonly string[]) => Object.fromEntries(fields.map(field => [field, { type: "string" }]));
 

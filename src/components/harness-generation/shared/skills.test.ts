@@ -4,9 +4,10 @@ import { createHarnessStory } from './foundation';
 import { defaultHarnessRuntime } from './ids';
 import { createEmptyHarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
-import { CAPA_SCHEMA, SEN_READING_MODE_SKILLS, assembleCapaPrompt, buildHarnessOfficialOutputRequirements, createHarnessSkillCatalog, freezeHarnessSkillLoadout, validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { CAPA_BLUEPRINT_SLOTS, CAPA_SCHEMA, CAPA_WRITER_SLOTS, SEN_BLUEPRINT_DEFAULT_SKILLS, SEN_EASTERN_FANTASY_ORIGIN_SKILL, SEN_READING_MODE_SKILLS, assembleBlueprintSkills, assembleCapaPrompt, buildHarnessOfficialOutputRequirements, createHarnessSkillCatalog, freezeHarnessSkillLoadout, validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
 import { SEN_FATE_SURVIVAL_SKILL, SEN_NOVEL_AUTHOR_SKILL, includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
+import { ARC_LENGTH, MAX_ARC_GOALS, MAX_ARC_LOOKAHEAD } from '@seihouse/sen/arc-goals';
 import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../../lib/senLightNovelAuthorInstructions';
 
 const pacingSkill = (): HarnessSkillManifest => ({
@@ -121,7 +122,7 @@ describe('Harness installed skills', () => {
         SEN_NOVEL_AUTHOR_SKILL,
       ],
     });
-    expect(CAPA_SCHEMA.map(slot => slot.id)).toEqual([
+    expect(CAPA_WRITER_SLOTS.map(slot => slot.id)).toEqual([
       'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation',
     ]);
     // Fate, Accessibility and Translation follow story state; the rest are equipped by hand.
@@ -287,5 +288,52 @@ describe('Harness installed skills', () => {
     expect(() => assembleCapaPrompt({ capturedAt: 'now', skills: [pacingSkill()] })).toThrow('Author skill');
     const long = { ...pacingSkill(), instructions: 'x'.repeat(16_000) };
     expect(() => assembleCapaPrompt({ capturedAt: 'now', skills: [SEN_NOVEL_AUTHOR_SKILL, long, { ...long, id: 'b', slot: 'style' }] })).toThrow('CAPA Prompt budget');
+  });
+
+  it('holds the World Blueprint\'s Origin, World and Arc slots in the same schema, never read by the chapter writer', async () => {
+    expect(CAPA_SCHEMA.map(slot => slot.id)).toEqual([
+      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'origin', 'world', 'arc',
+    ]);
+    expect(CAPA_BLUEPRINT_SLOTS.map(slot => slot.id)).toEqual(['origin', 'world', 'arc']);
+    expect(CAPA_SCHEMA.every(slot => CAPA_WRITER_SLOTS.includes(slot) !== CAPA_BLUEPRINT_SLOTS.includes(slot))).toBe(true);
+    for (const skill of SEN_BLUEPRINT_DEFAULT_SKILLS) expect(() => validateHarnessSkillManifest(skill)).not.toThrow();
+    // The writer's CAPA Prompt never takes a Blueprint skill, and a story never equips one.
+    expect(() => assembleCapaPrompt({ capturedAt: 'now', skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_EASTERN_FANTASY_ORIGIN_SKILL] })).toThrow('origin is not a supported CAPA skill slot');
+    const controller = new HarnessGenerationController({
+      repository: new InMemoryHarnessGenerationRepository(),
+      modelAdapter: {
+        getServerInfo: async () => ({ provider: 'gemini', configured: false, models: [], defaultModel: 'fixture' }),
+        generate: async () => { throw new Error('not used'); },
+      },
+      installedSkills: [SEN_EASTERN_FANTASY_ORIGIN_SKILL],
+    });
+    await controller.hydrate();
+    const origin = { id: SEN_EASTERN_FANTASY_ORIGIN_SKILL.id, version: SEN_EASTERN_FANTASY_ORIGIN_SKILL.version };
+    const story = await controller.createStory({ premise: 'A patient rebellion begins.' });
+    await expect(controller.setSkillSlot(story.id, 'origin', origin)).rejects.toThrow('origin is not a supported CAPA skill slot');
+    await expect(controller.createStory({ premise: 'Another rebellion.' }, 'en', {
+      author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version }, origin,
+    })).rejects.toThrow('origin is not a supported CAPA skill slot');
+  });
+
+  it('assembles the World Blueprint\'s skills in schema order under plain headings, one per slot', () => {
+    const [origin, world, arc] = SEN_BLUEPRINT_DEFAULT_SKILLS;
+    const text = assembleBlueprintSkills([arc, origin, world]);
+    expect(text.indexOf('[Origin] SEN Eastern Fantasy 1.0.0\n')).toBe(0);
+    expect(text.indexOf('[World] SEN World Builder 1.0.0\n')).toBeGreaterThan(0);
+    expect(text.indexOf('[Arc] SEN Arc Planner 1.0.0\n')).toBeGreaterThan(text.indexOf('[World]'));
+    expect(text).not.toMatch(/CAPA|HARNESS/);
+    expect(() => assembleBlueprintSkills([origin, world])).toThrow('exactly one Arc skill');
+    expect(() => assembleBlueprintSkills([origin, origin, world, arc])).toThrow('exactly one Origin skill');
+    expect(() => assembleBlueprintSkills([origin, world, arc, SEN_NOVEL_AUTHOR_SKILL])).toThrow('not a World Blueprint skill');
+    expect(() => assembleBlueprintSkills([{ ...origin, instructions: '' }, world, arc])).toThrow();
+  });
+
+  it('keeps the Arc skill\'s numbers in step with the arc rules the Blueprint is checked against', () => {
+    const arc = SEN_BLUEPRINT_DEFAULT_SKILLS.find(skill => skill.slot === 'arc')!.instructions!;
+    expect(arc).toContain(`Each arc is exactly ${ARC_LENGTH} chapters.`);
+    expect(arc).toContain(`together they take exactly ${ARC_LENGTH}`);
+    expect(arc).toContain(`as 1 to ${MAX_ARC_GOALS} goals in order`);
+    expect(MAX_ARC_LOOKAHEAD).toBe(2);
   });
 });

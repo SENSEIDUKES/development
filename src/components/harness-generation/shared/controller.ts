@@ -21,7 +21,7 @@ import { buildImmediateChapterRequest } from './immediateChapterRequest';
 import { attemptChapterPath, chapterDirectionGap, pendingChapterDirection, validateChapterDirectionChoice } from './chapterDirection';
 import { appendHarnessCorrection, type AppendHarnessCorrectionInput } from './canonicalState';
 import {
-  CAPA_SCHEMA,
+  CAPA_WRITER_SLOTS,
   managedCapaSkillSignature,
   managedCapaSlotReason,
   assembleCapaPrompt,
@@ -399,10 +399,10 @@ export class HarnessGenerationController {
     created.story.chapterWritingStyle = normalizeChapterWritingStyle(options.chapterWritingStyle);
     if (initialSkillLoadout) {
       const unsupportedSlot = Object.keys(initialSkillLoadout)
-        .find(slot => !CAPA_SCHEMA.some(definition => definition.id === slot));
+        .find(slot => !CAPA_WRITER_SLOTS.some(definition => definition.id === slot));
       if (unsupportedSlot) throw new Error(`${unsupportedSlot} is not a supported CAPA skill slot.`);
       const loadout: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>> = {};
-      for (const slot of CAPA_SCHEMA) {
+      for (const slot of CAPA_WRITER_SLOTS) {
         const reference = initialSkillLoadout[slot.id];
         if (!reference) continue;
         const managed = managedCapaSlotReason(slot.id);
@@ -641,7 +641,7 @@ export class HarnessGenerationController {
   ): Promise<HarnessStory> {
     this.assertHydrated();
     if (this.generating) throw new Error('Wait for the active Harness update before changing skills.');
-    if (!CAPA_SCHEMA.some(definition => definition.id === slot)) {
+    if (!CAPA_WRITER_SLOTS.some(definition => definition.id === slot)) {
       throw new Error(`${slot} is not a supported CAPA skill slot.`);
     }
     const managed = managedCapaSlotReason(slot);

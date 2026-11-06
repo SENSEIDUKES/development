@@ -29,8 +29,11 @@ export { projectCanonicalState, normalizeIdentityLabel, type CanonicalProjection
 export { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER, estimatePacketTokens, type PacketSectionBudget } from '../../components/harness-generation/shared/packetBudget';
 export {
   CAPA_SCHEMA,
+  CAPA_WRITER_SLOTS,
+  CAPA_BLUEPRINT_SLOTS,
   CAPA_PROMPT_TOKEN_LIMIT,
   HARNESS_SKILL_INSTRUCTION_LIMIT,
+  assembleBlueprintSkills,
   assembleCapaPrompt,
   buildHarnessOfficialOutputRequirements,
   createHarnessSkillCatalog,
@@ -44,8 +47,15 @@ export {
   validateHarnessSkillManifest,
   type CapaSlotDefinition,
   type CapaSlotManager,
+  type CapaSlotReader,
   type StoryLanguagePackage,
 } from '../../components/harness-generation/shared/skills';
+export {
+  SEN_ARC_PLANNER_SKILL,
+  SEN_BLUEPRINT_DEFAULT_SKILLS,
+  SEN_EASTERN_FANTASY_ORIGIN_SKILL,
+  SEN_WORLD_BUILDER_SKILL,
+} from '../../components/harness-generation/shared/blueprintSkills';
 export {
   HARNESS_CANONICAL_LANGUAGE,
   TRANSLATION_GLOSSARY_ENTRY_LIMIT,

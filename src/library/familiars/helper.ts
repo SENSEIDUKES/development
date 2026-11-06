@@ -219,6 +219,11 @@ export interface FamiliarChatLine { speaker: 'reader' | 'familiar' | 'note'; tex
 
 /** The conversation keeps this many lines; older ones drop off. */
 const CHAT_LINES = 200;
+/** The reader's own words asking for a spoiler, which unlock it on the device voice. */
+const SPOILER_WORDS = /\bspoil(?:er|ers)?\b/i;
+const SPOILER_WORDS_ALL = /\bspoil(?:er|ers)?\b/gi;
+/** Said after an answer when later chapters say more: that there is more, never what. */
+export const FAMILIAR_SPOILER_OFFER = 'Later chapters say more. Say “spoil” and the name to hear it.';
 /** What live talk accepts (`src/server/familiar-live/http.ts`): the place's length, and the docs index's size and name length. */
 export const FAMILIAR_PLACE_LIMIT = 80;
 export const FAMILIAR_DOCS_LIMIT = 500;
@@ -287,6 +292,35 @@ export class FamiliarHelperController {
   /** Everything the Familiar may look up here: the page's own knowledge (a story's Codex), then the app's docs. */
   private knowledge(context: FamiliarHelperContext | undefined): DocsCatalog {
     return [...(context?.knowledge?.() ?? []), ...novelExpandedDocs];
+  }
+  /**
+   * What the docs and the story's record say about a question, shared by live
+   * talk and the device voice. Unlisted entries (a story's spoilers) come back
+   * only when the reader asked for them; otherwise `heldBack` says only that
+   * there is more, never what it is.
+   */
+  private lookUp(query: string, spoilers: boolean) {
+    const knowledge = this.knowledge(this.context);
+    const hidden = knowledge.filter(category => category.unlisted);
+    const hits = lookUpDocs(spoilers ? knowledge : knowledge.filter(category => !category.unlisted), query);
+    const heldBack = !spoilers && lookUpDocs(hidden, query).length > 0;
+    return { hits, heldBack, isSpoiler: (category: string) => hidden.some(entry => entry.title === category) };
+  }
+  /**
+   * The device voice's answer to a question nothing on the page matched: the
+   * best entry the docs or the story's record hold, read as it is written.
+   * No model is involved, so it costs nothing and nothing leaves the device.
+   * Spoilers only when the reader's own words ask ("spoil Lin Feng").
+   */
+  private answer(text: string): string | undefined {
+    const spoilers = SPOILER_WORDS.test(text);
+    const query = spoilers ? text.replace(SPOILER_WORDS_ALL, ' ') : text;
+    const { hits, heldBack, isSpoiler } = this.lookUp(query, spoilers);
+    // Asked to be spoiled: what comes later is what they asked for, so it comes first.
+    const [best] = spoilers ? [...hits.filter(hit => isSpoiler(hit.category)), ...hits] : hits;
+    if (!best) return undefined;
+    const { title, definition, howItFits } = best.topic;
+    return [`${title}.`, definition, howItFits, heldBack ? FAMILIAR_SPOILER_OFFER : undefined].filter(Boolean).join(' ');
   }
   private instant(action: FamiliarHelperAction) { return Boolean(this.context?.page && familiarActionEntry(action.id)?.instant); }
   private cancelVoice?: () => void;
@@ -549,12 +583,13 @@ export class FamiliarHelperController {
     if (this.state.mode === 'explain') {
       const topic = this.context.topics.find(entry => entry.phrases.some(phrase => normalize(phrase) === normalize(text)));
       if (topic) this.explain(topic.id);
-      else this.respond(this.hint(), 'ready');
+      else this.respond(this.answer(text) ?? this.hint(), 'ready');
       return;
     }
     const match = matchFamiliarCommand(this.context.actions, text);
     const action = this.context.actions.find(entry => entry.id === match?.actionId);
-    if (!match || !action) { this.respond(this.hint(), 'ready'); return; }
+    // Nothing on the page does it: it may be a question the docs or the story answer.
+    if (!match || !action) { this.respond(this.answer(text) ?? this.hint(), 'ready'); return; }
     this.act(action, match.input);
   };
   /** The action a spoken code names on this page, and its input. */
@@ -769,11 +804,7 @@ export class FamiliarHelperController {
   private async answerLive(call: FamiliarLiveCall): Promise<string> {
     // A lookup reads the docs, and the story's record where the reader is in one, as they stand now.
     if (call.name === 'look_up') {
-      const knowledge = this.knowledge(this.context);
-      // Unlisted entries (a story's spoilers) come back only when the reader asked for them;
-      // otherwise the Familiar is told only that there is more, never what it is.
-      const hits = lookUpDocs(call.spoilers ? knowledge : knowledge.filter(category => !category.unlisted), call.query);
-      const heldBack = !call.spoilers && lookUpDocs(knowledge.filter(category => category.unlisted), call.query).length > 0;
+      const { hits, heldBack } = this.lookUp(call.query, Boolean(call.spoilers));
       // Where the reader is now, which may have moved since the conversation began.
       const where = this.context?.place ? [`The reader is on: ${this.context.place}.`] : [];
       const more = heldBack ? ['Later chapters say more about this. That is a spoiler: do not hint at it, and offer it only if the reader asks to be spoiled.'] : [];

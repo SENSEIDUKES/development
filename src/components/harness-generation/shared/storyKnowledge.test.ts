@@ -112,6 +112,9 @@ describe('the story\'s knowledge, for a companion to look up', () => {
     // It comes back only as a marked spoiler.
     const spoiled = lookUpDocs(knowledge, 'Han Shuo').find(hit => hit.category === STORY_KNOWLEDGE_CATEGORIES.spoilers);
     expect(spoiled?.topic.definition).toMatch(/^Spoiler, from after Chapter 1: .*missing an arm/);
+    // With Chapter 2 open, the change it tagged is part of how Han looks now, even where no look was written after it.
+    const noCached = { ...state, codexEntries: [MC] } as HarnessWorkspaceState;
+    expect(lookUpDocs(storyKnowledgeOf(noCached, 's', 'c2'), 'Han Shuo')[0].topic.definition).toContain('Since then: lost his left arm in Chapter 2.');
     // With the last chapter open, the whole record is how things are.
     expect(lookUpDocs(storyKnowledgeOf(state, 's', 'c2'), 'Han Shuo')[0].topic.definition).toContain('missing an arm');
   });

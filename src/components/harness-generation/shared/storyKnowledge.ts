@@ -94,8 +94,20 @@ const met = (firstSeen: CodexPassage | undefined) =>
   firstSeen ? `First met in Chapter ${firstSeen.chapterNumber}.` : 'Part of the world from the start.';
 const facts = (atChapterZero: readonly CodexWorldFact[] | undefined) =>
   (atChapterZero ?? []).map(fact => sentence(`${fact.slot.label}: ${fact.value}`));
-const looks = (appearance: CodexAppearance | undefined) =>
-  sentence(appearance?.look ? `Looks: ${appearance.look.summary}` : appearance?.description ? `Described as: ${appearance.description}` : undefined);
+/** Whether one passage comes after another in the story: by chapter, then by paragraph. */
+const paragraphOf = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
+const passageAfter = (left: CodexPassage, right: CodexPassage) =>
+  (left.chapterNumber - right.chapterNumber || paragraphOf(left.blockId) - paragraphOf(right.blockId)) > 0;
+/** How it looks as of the chapters given: the written look, or its first description, then every change the story tagged since. */
+const looks = (appearance: CodexAppearance | undefined) => {
+  if (!appearance) return [];
+  const base = appearance.look ? `Looks: ${appearance.look.summary}` : appearance.description ? `Described as: ${appearance.description}` : undefined;
+  const since = appearance.look ? appearance.changes.filter(entry => passageAfter(entry.passage, appearance.look!.passage)) : appearance.changes;
+  return [
+    sentence(base),
+    since.length ? sentence(`Since then: ${since.map(entry => `${entry.change} in Chapter ${entry.passage.chapterNumber}`).join('; ')}`) : undefined,
+  ];
+};
 const change = (event: HoldingEvent, holder?: string) => {
   const what = [event.count && event.count > 1 ? `${event.count}` : '', event.target ?? '', event.level ? `(${event.level})` : ''].filter(Boolean).join(' ');
   return `${holder ? `${holder} ` : ''}${CODEX_VERB_LABELS[event.verb]}${what ? ` ${what}` : ''} in Chapter ${event.passage.chapterNumber}`;
@@ -113,7 +125,7 @@ export function codexCharacterText(character: CodexCharacter): string {
     character.mainCharacter ? 'The main character.' : undefined,
     met(character.firstSeen),
     ...facts(character.atChapterZero),
-    looks(character.appearance),
+    ...looks(character.appearance),
     character.rank ? sentence(`Rank: ${character.rank.text}`) : undefined,
     character.status ? sentence(`Now: ${character.status.text}`) : undefined,
     character.place ? sentence(`Now at: ${character.place.text}`) : undefined,
@@ -129,7 +141,7 @@ export function codexItemText(item: CodexItem): string {
   return joined([
     met(item.firstSeen),
     ...facts(item.atChapterZero),
-    looks(item.appearance),
+    ...looks(item.appearance),
     item.holder ? sentence(`Held by ${item.holder.name}${item.count > 1 ? `, ${item.count} of them` : ''}${item.equipped ? ', in hand or worn' : ''}`) : 'No one holds it now.',
     recent(item.events.map(event => change(event, event.holder))),
   ]);
@@ -137,7 +149,7 @@ export function codexItemText(item: CodexItem): string {
 
 /** One place card as a companion reads it back. */
 export function codexPlaceText(place: CodexPlace): string {
-  return joined([met(place.firstSeen), ...facts(place.atChapterZero), looks(place.appearance), listed('Here now', place.here.map(who => who.name))]);
+  return joined([met(place.firstSeen), ...facts(place.atChapterZero), ...looks(place.appearance), listed('Here now', place.here.map(who => who.name))]);
 }
 
 /** A faction, an ability or a species card as a companion reads it back. */

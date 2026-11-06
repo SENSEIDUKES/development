@@ -234,6 +234,18 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-11-06 (the world on its one World card):** From SENSEI's Story Form.
+  The World rules card gains Kind of world (`kindOfWorld`) and Who rules
+  (`whoRules`), read first. World Identity keeps only the title; its World
+  Type and World Order move onto the card and Opening Location is retired
+  (the story opens at its first Place). A Seed or Blueprint saved before reads
+  its old text onto the card's blank slots (`liftRetiredWorldText`, in
+  normalizing and in `reconcileStorySeedBlueprint`), so nothing written is lost
+  and no schema version changes. The Blueprint no longer writes
+  `worldOverview`, `startingLocation` or `societyStructure`, and the "detail
+  beside the creator's fact" machinery (`WORLD_FACT_DETAILS` and its review
+  boxes) is gone. The chapter writer gets the world on the card, not as world
+  facts, and no opening-situation text.
 - **2026-11-02 (the Blueprint review test keeps its own timeout):** The Arc
   workspace test that drives the whole Blueprint review surface in one pass
   takes a timeout of its own, so a loaded machine does not read it as a

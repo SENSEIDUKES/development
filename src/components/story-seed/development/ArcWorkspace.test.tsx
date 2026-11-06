@@ -148,14 +148,13 @@ describe('Story Seed Arc and World ownership', () => {
   // machine does not read as a failure.
   it('saves every Blueprint review edit of a Seed-owned value to the Seed that HARNESS reads', { timeout: 30_000 }, () => {
     const seed = initial();
-    Object.assign(seed.world.optional.worldIdentity, { worldType: 'Old world', startingLocation: 'Old gate', societyStructure: 'Old order' });
+    seed.world.optional.worldFoundations.powerSystem = { kindOfWorld: 'Old world', whoRules: 'Old order' };
     seed.world.optional.worldFoundations.mainCharacter = { name: 'Old Name', personality: 'Old temper', startingWeakness: 'Old weakness' };
     seed.world.optional.worldFoundations.additionalCharacters = [{ id: 'char-1', name: 'Elder Qin', role: 'Protector' }];
     seed.world.optional.worldFoundations.factions = [{ id: 'faction-1', name: 'Azure Sect', description: 'Old profile' }];
     render(seed, 'blueprint');
-    fill('blueprint-world-overview', 'Reviewed world');
-    fill('blueprint-opening-location', 'Reviewed gate');
-    fill('blueprint-world-order', 'Reviewed order');
+    fill('world-rules-kindOfWorld', 'Reviewed world');
+    fill('world-rules-whoRules', 'Reviewed order');
     fill('a11y-control-kytc0oh', 'Reviewed power style');
     // The main character's fields open from Cast's Edit, in a sheet.
     press('[data-testid="blueprint-cast-edit"]');
@@ -175,19 +174,17 @@ describe('Story Seed Arc and World ownership', () => {
     fill('faction-description-faction-1', 'Reviewed faction profile');
     done();
     // Typing keeps inner spaces: the review edits the Seed's raw value.
-    fill('blueprint-opening-location', 'Reviewed gate ');
-    expect(container.querySelector<HTMLTextAreaElement>('#blueprint-opening-location')!.value).toBe('Reviewed gate ');
-    fill('blueprint-opening-location', 'Reviewed gate');
+    fill('world-rules-whoRules', 'Reviewed order ');
+    expect(container.querySelector<HTMLTextAreaElement>('#world-rules-whoRules')!.value).toBe('Reviewed order ');
+    fill('world-rules-whoRules', 'Reviewed order');
 
     const foundations = current.world.optional.worldFoundations;
-    expect(current.world.optional.worldIdentity).toMatchObject({ worldType: 'Reviewed world', startingLocation: 'Reviewed gate', societyStructure: 'Reviewed order' });
     expect(foundations.mainCharacter).toMatchObject({ name: 'Reviewed Name', age: '19', appearance: 'Ash-grey eyes', personality: 'Reviewed temper', startingWeakness: 'Reviewed weakness' });
-    expect(foundations.powerSystem).toEqual({ flavor: 'Reviewed power style' });
+    expect(foundations.powerSystem).toEqual({ kindOfWorld: 'Reviewed world', whoRules: 'Reviewed order', flavor: 'Reviewed power style' });
     expect(foundations.additionalCharacters?.[0]).toMatchObject({ name: 'Elder Qin', role: 'Betrayer' });
     expect(foundations.factions?.[0]).toMatchObject({ name: 'Azure Sect', description: 'Reviewed faction profile' });
     // The Blueprint mirrors the Seed and keeps only its own prose.
     expect(blueprint).toMatchObject({
-      worldOverview: 'Reviewed world', startingLocation: 'Reviewed gate', societyStructure: 'Reviewed order',
       mainCharacter: { name: 'Reviewed Name', age: '19', appearance: 'Ash-grey eyes', personality: 'Reviewed temper', backgroundProfile: 'Reviewed background prose' },
     });
     expect(blueprint.initialCharacters).toEqual(['Elder Qin — role: Betrayer']);

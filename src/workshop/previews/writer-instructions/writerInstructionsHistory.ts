@@ -21,6 +21,11 @@ export interface WriterInstructionsChange {
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
     date: '2026-11-06',
+    summary: 'The world moves onto its one World card (SENSEI, 2026-11-06, the Story Form: "World" and "Who rules" join the card; "Where it opens" and the model\'s extra detail copies go). The World rules card gains two slots, read first: Kind of world (what kind of world this is) and Who rules (who holds power and how society is ordered), so the Blueprint rules\' card list now asks for them on the card, and the card\'s purpose says it holds them. The World Blueprint no longer writes worldOverview, startingLocation or societyStructure as text beside the cards, and no longer adds "compatible detail" beside a fact the creator wrote: a world fact the creator wrote is a card slot like any other, which the creator\'s-words rule already covers, so the request\'s "The creator already wrote…" line is gone. Where the story opens is its first Place card. The World skill (now 1.2.0) names only the main character\'s backgroundProfile as a longer field.',
+    changed: { 'world-skill': '016ebad3c0f209', 'blueprint-rules': '178cbcae4d7e97' },
+  },
+  {
+    date: '2026-11-06',
     summary: 'The World builder stops writing four things the new Story Form drops (SENSEI, 2026-11-06, going through the form field by field: "why is writing style even in here? That is took care of by the harness"). The style bible is gone: how the prose reads is the Style skill\'s job, and the chapter writer no longer gets a second, model-written version of it. The trope rules are gone: nothing ever read them, and what the Fun Settings mean belongs in a harness skill. The first-arc promise is gone: nothing read it either. The power paragraph is gone: it repeated the World rules card, which now holds power alone. So the Origin skill (now 1.1.0) no longer asks for the style bible or the trope rules, the World skill (1.1.0) no longer lists the power paragraph among its longer fields, and the Arc skill (1.1.0) no longer asks for the first-arc promise. Nothing else in them changed.',
     changed: { 'origin-skill': '0f2d6f5c5dc02b', 'world-skill': '1d9ae292946b76', 'arc-skill': '05e8bd9ef18d07' },
   },

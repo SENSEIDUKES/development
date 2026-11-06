@@ -78,14 +78,16 @@ describe('The novel page Blueprint tab', () => {
     expect(container.querySelector('[data-testid="novel-arc-unplanned"]')!.textContent).toContain('Arcs 2–10 are planned when each begins');
     expect(container.querySelector('[data-testid="novel-arc-goal-rules"]')!.textContent).toContain('While this novel is private');
 
-    const world = container.querySelector<HTMLTextAreaElement>('#blueprint-world-overview')!;
+    const world = container.querySelector<HTMLTextAreaElement>('#world-rules-kindOfWorld')!;
     await act(async () => setValue(world, 'EDITED_WORLD Meridians burn brighter under starlight.'));
     await act(async () => button('Save Blueprint')!.click());
     const saved = repository.snapshot();
     expect(saved.foundations).toHaveLength(2);
     const revision = saved.foundations.at(-1)!.input;
-    expect(revision.worldFacts).toContain('EDITED_WORLD');
-    expect((revision.sourceSnapshot!.blueprint as { worldOverview: string }).worldOverview).toContain('EDITED_WORLD');
+    // The world travels on its World card, never as world-fact text beside it.
+    expect(revision.worldAtChapterZero?.cards.find(card => card.kind === 'world-rules')?.slots.kindOfWorld).toContain('EDITED_WORLD');
+    expect(revision.worldFacts ?? '').not.toContain('EDITED_WORLD');
+    expect(JSON.stringify(revision.sourceSnapshot!.seed)).toContain('EDITED_WORLD');
     expect(revision.destinedEnding).toBe(saved.foundations[0].input.destinedEnding);
     expect(revision.plannedArcCount).toBe(10);
     expect(saved.chapters).toHaveLength(1);
@@ -137,10 +139,10 @@ describe('The novel Blueprint editor', () => {
   it('keeps unsaved edits when the page re-renders', async () => {
     const { repository } = await startNovel(false);
     await openBlueprint(repository);
-    await act(async () => setValue(container.querySelector<HTMLTextAreaElement>('#blueprint-world-overview')!, 'UNSAVED_WORLD'));
+    await act(async () => setValue(container.querySelector<HTMLTextAreaElement>('#world-rules-kindOfWorld')!, 'UNSAVED_WORLD'));
     // The page re-renders (as it does on any workspace update) while the edit is unsaved.
     await act(async () => root.render(<HarnessGenerationWorkspace repository={repository} modelAdapter={modelAdapter} />));
-    expect(container.querySelector<HTMLTextAreaElement>('#blueprint-world-overview')!.value).toBe('UNSAVED_WORLD');
+    expect(container.querySelector<HTMLTextAreaElement>('#world-rules-kindOfWorld')!.value).toBe('UNSAVED_WORLD');
     expect(button('Save Blueprint')!.disabled).toBe(false);
     expect(repository.snapshot().foundations).toHaveLength(1);
   });

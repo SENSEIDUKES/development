@@ -48,7 +48,7 @@ describe('The world builder asks for every Codex card kind', () => {
     const swapped = buildWorldBlueprintSystemPrompt([western, ...SEN_BLUEPRINT_DEFAULT_SKILLS.filter(skill => skill.slot !== 'origin')]);
     expect(swapped).toContain('[Origin] Western Fantasy 1.0.0\nYou are writing the world of a Western fantasy novel');
     expect(swapped).not.toContain('Eastern fantasy');
-    expect(swapped).toContain('[World] SEN World Builder 1.1.0');
+    expect(swapped).toContain('[World] SEN World Builder 1.2.0');
     expect(swapped.endsWith(BLUEPRINT_PERMANENT_RULES)).toBe(true);
   });
 

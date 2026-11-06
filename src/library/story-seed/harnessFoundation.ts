@@ -18,10 +18,6 @@ const labeledLines = (entries: Array<[string, string | undefined]>): string | un
   return present.length ? present.map(([label, value]) => `${label}: ${value.trim()}`).join('\n') : undefined;
 };
 
-/** An author fact followed, on its own line, by the Blueprint's added detail. */
-const withAddedDetail = (fact: string | undefined, detail: string | undefined): string | undefined =>
-  detail ? [fact?.trim(), detail].filter(Boolean).join('\n') : fact;
-
 /**
  * The only Story Seed -> Harness translation point. It copies author input
  * into a neutral Foundation and freezes the original artifacts for provenance.
@@ -30,8 +26,9 @@ const withAddedDetail = (fact: string | undefined, detail: string | undefined): 
  * roadmap, arc count, Fun Settings, Fate) has its own Foundation fields; each
  * character and faction travels only as a Foundation identity whose evidence
  * is its single description; world facts carry only what no other field
- * already carries. Where the author wrote a world, society, or opening fact,
- * the Blueprint's compatible added detail travels beside it, once. `resolveStorySeedWorldCanon` decides between the Seed and
+ * already carries. What kind of world it is and who rules it travel on the
+ * World rules card, and where the story opens is its first Place and Arc 1's
+ * first goal (SENSEI, 2026-11-06). `resolveStorySeedWorldCanon` decides between the Seed and
  * its reviewed Blueprint, so authored values win and Blueprint copies are
  * never re-sent.
  *
@@ -100,17 +97,16 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       ['Story tradition', getStoryStyleLabel(required.style)],
     ]),
     permanentInstructions: labeledLines([['Make It Work', optional.makeItWorkInstruction]]),
-    openingSituation: withAddedDetail(identity.startingLocation, canon.startingLocationDetail),
     // Tags are the experience the creator asked for, not canon facts (SENSEI, 2026-10-25).
     storyTags: [...required.storyTags],
     cast: mainCharacter ? [{
       name: mainCharacter.name, role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self',
     }] : undefined,
     worldFacts: labeledLines([
-      ['World', canon.worldOverview],
-      ['World detail', canon.worldOverviewDetail],
-      ['Society', canon.societyStructure],
-      ['Society detail', canon.societyStructureDetail],
+      // The World rules card carries what kind of world it is and who rules it;
+      // only a story with no card at all needs them here.
+      ['World', carriesWorld ? undefined : canon.worldOverview],
+      ['Society', carriesWorld ? undefined : canon.societyStructure],
       // The World rules sheet carries the ladder and how power works; what is
       // left is what the creator wrote about power that no card slot holds.
       ['Power system', carriesWorld ? canon.powerSystemBeyondItsCard : canon.powerSystem],

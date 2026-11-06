@@ -45,6 +45,15 @@ export function storyCoverRequest(state: HarnessWorkspaceState, storyId: string)
   const seed = source?.seed as Partial<StorySeedInput> | undefined;
   const blueprint = source?.blueprint as Partial<WorldBlueprint> | undefined;
   const tags = seed?.story?.required?.storyTags;
+  // What kind of world it is lives on the World card, not in the world facts
+  // (SENSEI, 2026-11-06); a story begun before then still has it as text.
+  const rules = seed?.world?.optional?.worldFoundations?.powerSystem;
+  const legacyIdentity = seed?.world?.optional?.worldIdentity as Record<string, unknown> | undefined;
+  const world = [
+    text(rules?.kindOfWorld) ?? text(legacyIdentity?.worldType),
+    text(rules?.whoRules) ?? text(legacyIdentity?.societyStructure),
+    text(input?.worldFacts),
+  ].filter(Boolean).join('\n');
   const request: StoryCoverRequest = { title: text(story.title) ?? 'Untitled' };
   const fields: Array<[Exclude<keyof StoryCoverRequest, 'title' | 'tags' | 'titled'>, unknown]> = [
     ['genre', input?.genre],
@@ -52,7 +61,7 @@ export function storyCoverRequest(state: HarnessWorkspaceState, storyId: string)
     ['synopsis', text(blueprint?.logline) ?? input?.premise],
     ['mainCharacter', input?.cast?.find(member => member.isMainCharacter)?.name],
     ['tone', input?.toneStyle],
-    ['world', input?.worldFacts],
+    ['world', world],
   ];
   for (const [field, value] of fields) {
     const normalized = text(value);

@@ -103,6 +103,8 @@ export const createMockSeedSlotAnswer = () => ({
   ],
   abilities: { startingPowerConcept: 'Qi Condensation Tier 1', uniquePath: 'Rebuilds his meridians from the scars of failed timelines' },
   powerSystem: {
+    kindOfWorld: 'A sect-led world built atop the bones of a shattered celestial court, where meridians are currency.',
+    whoRules: 'Sect-led feudal hierarchy with a decaying celestial court above it.',
     flavor: 'Martial arts, Daoist',
     knownRanks: 'Qi Condensation → Foundation Establishment → Core Formation → Nascent Soul',
     laws: 'No killing inside the sect gates. Outer-sect laborers may not carry a sword. A fate auditor\'s decree cannot be refused aloud.',
@@ -118,10 +120,6 @@ export const createMockBlueprint = (): WorldBlueprint => ({
   creator: 'Workshop Creator',
   title: 'Ashes of the Ninth Meridian',
   logline: 'A crippled young master races seven doomed timelines to save a prince the heavens have already condemned.',
-  worldOverview:
-    'A sect-led world built atop the bones of a shattered celestial court, where meridians are currency and fate itself can be read like a ledger.',
-  startingLocation: 'The outer sect labor quarry of Heavenly Sword Sect, carved into a volcanic rift.',
-  societyStructure: 'Sect-led feudal hierarchy with a decaying celestial court above it.',
   mcProfile:
     'Ye Chen, outwardly a crippled young master, carries foreknowledge of seven timelines in which the Ninth Prince is assassinated.',
   majorFactions: ['Heavenly Sword Sect', 'Deep Sea Alliance', 'Abyssal Cult'],
@@ -159,9 +157,6 @@ export const createFilledStorySeedInput = (): StorySeedInput => ({
     optional: {
       worldIdentity: {
         title: 'Ashes of the Ninth Meridian',
-        worldType: 'Ancient sect world with a collapsing celestial court',
-        societyStructure: 'Sect-led feudal hierarchy',
-        startingLocation: 'A sprawling outer sect labor quarry built inside a cavernous volcanic rift.',
       },
       worldFoundations: {
         mainOpposition: "The celestial court's fate auditors",
@@ -204,7 +199,11 @@ export const createFilledStorySeedInput = (): StorySeedInput => ({
           },
         ],
         abilities: { startingPowerConcept: 'Qi Condensation Tier 1' },
-        powerSystem: { flavor: 'Martial arts, Daoist' },
+        powerSystem: {
+          kindOfWorld: 'Ancient sect world with a collapsing celestial court',
+          whoRules: 'Sect-led feudal hierarchy',
+          flavor: 'Martial arts, Daoist',
+        },
         destinedEnding: "The prince survives and shatters the celestial court's grip on fate.",
       },
     },

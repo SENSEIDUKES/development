@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { normalizeStoryStyle } from '@seihouse/sen/story-seed';
-import { storyRequired, worldFoundations, worldIdentity } from './seedState';
+import { storyRequired, worldFoundations } from './seedState';
 import type { StorySeedIconName } from './SENStorySeedIcon';
 
 /**
@@ -84,13 +84,9 @@ export const SEED_SECTIONS: SeedSection[] = [
     family: 'world',
     label: 'World Identity',
     icon: 'world-identity',
-    tagline: 'World type, society, and the place the story opens in.',
+    tagline: 'What the world must make work, and who pushes back hardest.',
     isFilled: seed => {
-      const identity = worldIdentity(seed);
-      return hasText(identity.worldType)
-        || hasText(identity.startingLocation)
-        || hasText(identity.societyStructure)
-        || hasText(seed.story.optional.makeItWorkInstruction)
+      return hasText(seed.story.optional.makeItWorkInstruction)
         || hasText(worldFoundations(seed).mainOpposition);
     },
   },
@@ -157,10 +153,11 @@ export const SEED_SECTIONS: SeedSection[] = [
     family: 'world',
     label: 'World Rules',
     icon: 'power-system',
-    tagline: "The rank ladder every card is measured by, the laws that change what can happen, and the age the story stands in.",
+    tagline: "What kind of world it is, who rules it, the rank ladder every card is measured by, the laws that change what can happen, and the age the story stands in.",
     isFilled: seed => {
       const powerSystem = worldFoundations(seed).powerSystem || {};
-      return hasText(powerSystem.flavor) || hasText(powerSystem.knownRanks)
+      return hasText(powerSystem.kindOfWorld) || hasText(powerSystem.whoRules)
+        || hasText(powerSystem.flavor) || hasText(powerSystem.knownRanks)
         || hasText(powerSystem.laws) || hasText(powerSystem.era);
     },
   },

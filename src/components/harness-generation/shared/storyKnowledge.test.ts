@@ -3,7 +3,9 @@ import { docsIndex, docsTopicText, lookUpDocs } from '../../docs-knowledge/share
 import { HOLDING_CHANGE_KIND, type CodexEntry, type HoldingChangeAttachment, type HoldingVerb } from '../../../narrative/holdings';
 import { SPEAKER_KIND, type SpeakerAttachment } from '../../../narrative/speech';
 import { deriveStoryCodex, type StoryCodexChapter } from './storyCodex';
-import { STORY_KNOWLEDGE_CATEGORIES, storyKnowledge, storySpoilers } from './storyKnowledge';
+import { STORY_KNOWLEDGE_CATEGORIES, storyKnowledge, storyKnowledgeOf, storySpoilers } from './storyKnowledge';
+import { APPEARANCE_KIND, type AppearanceAttachment, type AppearancePayload } from '../../../narrative/appearances';
+import type { HarnessChapter, HarnessWorkspaceState } from '../../../narrative/generation';
 
 const MC: CodexEntry = { id: 'hcx_mc', storyId: 's', kind: 'character', name: 'Han Shuo', mainCharacter: true, origin: { source: 'foundation' }, createdAt: '' };
 const SWORD: CodexEntry = { id: 'hcx_sword', storyId: 's', kind: 'thing', name: 'Broken Broadsword', origin: { source: 'tag', chapterId: 'c1', chapterNumber: 1 }, createdAt: '' };
@@ -82,4 +84,36 @@ describe('the story\'s knowledge, for a companion to look up', () => {
     // Nothing unchanged is repeated as a spoiler.
     expect(spoilers[0].topics.map(entry => entry.title)).toEqual(['Han Shuo', 'Broken Broadsword', 'Chapter 2: The Gate']);
   });
+
+  it('reads the record as it stood at the open chapter: no look written from a later passage', () => {
+    const shown = (chapter: number, paragraph: number, payload: Omit<AppearancePayload, 'origin'>): AppearanceAttachment => ({
+      id: `appearance:c${chapter}-p${paragraph}`, kind: APPEARANCE_KIND,
+      anchor: { level: 'span', blockId: `c${chapter}-p${paragraph}`, startOffset: 0, endOffset: 4, selectedText: 'Then' },
+      payload: { origin: 'harness', ...payload },
+    });
+    const han = { name: MC.name, entryId: MC.id };
+    const story = (chapter: number, appearance: AppearanceAttachment) =>
+      ({ id: `c${chapter}`, storyId: 's', chapterNumber: chapter, title: `Chapter ${chapter}`, paragraphs: ['Then Han stood.'], appearances: [appearance] }) as unknown as HarnessChapter;
+    // Han's look was written after Chapter 2's battle, from both passages.
+    const look = { summary: 'Han is missing an arm after the battle.', traits: {}, from: ['appearance:c1-p1', 'appearance:c2-p1'], at: '' };
+    const state = {
+      stories: [], foundations: [], worldCards: [],
+      codexEntries: [{ ...MC, look }],
+      chapters: [
+        story(1, shown(1, 1, { event: 'appears', subject: han, entity: 'character' })),
+        story(2, shown(2, 1, { event: 'look', subject: han, entity: 'character', change: 'lost his left arm' })),
+      ],
+    } as unknown as HarnessWorkspaceState;
+    const knowledge = storyKnowledgeOf(state, 's', 'c1');
+    const [han1] = lookUpDocs(knowledge, 'Han Shuo');
+    expect(han1.category).toBe(STORY_KNOWLEDGE_CATEGORIES.characters);
+    expect(han1.topic.definition).not.toContain('missing an arm');
+    expect(han1.topic.definition).toContain('Described as: Then Han stood.');
+    // It comes back only as a marked spoiler.
+    const spoiled = lookUpDocs(knowledge, 'Han Shuo').find(hit => hit.category === STORY_KNOWLEDGE_CATEGORIES.spoilers);
+    expect(spoiled?.topic.definition).toMatch(/^Spoiler, from after Chapter 1: .*missing an arm/);
+    // With the last chapter open, the whole record is how things are.
+    expect(lookUpDocs(storyKnowledgeOf(state, 's', 'c2'), 'Han Shuo')[0].topic.definition).toContain('missing an arm');
+  });
 });
+

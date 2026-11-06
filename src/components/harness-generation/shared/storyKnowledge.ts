@@ -36,15 +36,31 @@ export const CODEX_VERB_LABELS: Record<HoldingVerb, string> = {
  * A story's Codex, worked out the one way the Reader's Codex panel works it
  * out: the world as it stands, the story's entries, its chapters, the main
  * character and everyone the Story Seed declares.
+ *
+ * `reachedOnly` works it out as it stood at the last of `chapters`, for a
+ * reader who has not read past it: a look written on demand from a later
+ * passage is left off (the chapters' own looks stand in), and so is a world
+ * card that entered after. Nothing later is then told as how things are.
  */
-export function storyCodexOf(state: HarnessWorkspaceState, storyId: string, chapters: readonly HarnessChapter[]): StoryCodexRecord {
+export function storyCodexOf(state: HarnessWorkspaceState, storyId: string, chapters: readonly HarnessChapter[], options: { reachedOnly?: boolean } = {}): StoryCodexRecord {
   const foundation = findActiveFoundationRevision(state, storyId)?.input;
+  const entries = state.codexEntries.filter(entry => entry.storyId === storyId);
+  const world = storyWorldRecord(state, storyId);
+  const reachedEntries = () => {
+    const shown = new Set(chapters.flatMap(chapter => (chapter.appearances ?? []).map(appearance => appearance.id)));
+    return entries.map(entry => {
+      if (!entry.look || entry.look.from.every(id => shown.has(id))) return entry;
+      const { look: _later, ...rest } = entry;
+      return rest;
+    });
+  };
+  const lastChapter = Math.max(0, ...chapters.map(chapter => chapter.chapterNumber));
   return deriveStoryCodex({
-    entries: state.codexEntries.filter(entry => entry.storyId === storyId),
+    entries: options.reachedOnly ? reachedEntries() : entries,
     chapters,
     // The world as it stands, not the author's opening world: a card a chapter
     // brought in belongs in the Codex as surely as one the Blueprint wrote.
-    world: storyWorldRecord(state, storyId),
+    world: options.reachedOnly && world ? { ...world, cards: world.cards.filter(card => card.enteredInChapter <= lastChapter) } : world,
     mainCharacterName: foundation?.cast?.find(member => member.isMainCharacter)?.name,
     declared: foundation ? declaredCharacters(foundation) : [],
     declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],
@@ -201,10 +217,10 @@ export function storySpoilers(reached: DocsCatalog, whole: DocsCatalog, openChap
 export function storyKnowledgeOf(state: HarnessWorkspaceState, storyId: string, openChapterId?: string): DocsCatalog {
   const chapters = state.chapters.filter(chapter => chapter.storyId === storyId).sort((left, right) => left.chapterNumber - right.chapterNumber);
   const openChapterNumber = chapters.find(chapter => chapter.id === openChapterId)?.chapterNumber;
-  const knowledgeOf = (written: readonly HarnessChapter[]) =>
-    storyKnowledge({ codex: storyCodexOf(state, storyId, written), chapters: written, openChapterNumber });
+  const knowledgeOf = (written: readonly HarnessChapter[], reachedOnly = false) =>
+    storyKnowledge({ codex: storyCodexOf(state, storyId, written, { reachedOnly }), chapters: written, openChapterNumber });
   if (openChapterNumber === undefined) return knowledgeOf(chapters);
   const reached = chapters.filter(chapter => chapter.chapterNumber <= openChapterNumber);
-  const known = knowledgeOf(reached);
+  const known = knowledgeOf(reached, reached.length < chapters.length);
   return reached.length === chapters.length ? known : [...known, ...storySpoilers(known, knowledgeOf(chapters), openChapterNumber)];
 }

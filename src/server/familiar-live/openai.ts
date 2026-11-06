@@ -5,7 +5,7 @@
  * exchanges it with OpenAI for the answer, so the API key never leaves it.
  */
 import type { FamiliarLiveBrief } from '@seihouse/library/familiar';
-import { familiarLiveActions, familiarLiveCharacter, familiarLiveDocsIndex } from './prompt';
+import { FAMILIAR_NO_SPOILERS, familiarLiveActions, familiarLiveCharacter, familiarLiveDocsIndex } from './prompt';
 
 const LIVE_SESSIONS_URL = 'https://api.openai.com/v1/live/sessions';
 /** A built-in voice the owner chose in the playground (2026-11-01); `FAMILIAR_LIVE_OPENAI_VOICE` changes it. */
@@ -84,7 +84,9 @@ export function openAiLiveSession(brief: FamiliarLiveBrief, options: { model: st
               // This model is the one that calls look_up, and a typed message reaches it without
               // passing the voice at all, so it needs the names itself. Without them it is told to
               // choose from a list it cannot see, and has to guess at the catalog's own wording.
-              `The docs you can look up, by name:\n${familiarLiveDocsIndex(brief)}`]
+              `The docs you can look up, by name:\n${familiarLiveDocsIndex(brief)}`,
+              // The voice says what this model returns, and a typed message reaches it alone, so it keeps spoilers back itself.
+              FAMILIAR_NO_SPOILERS]
             : []),
           familiarLiveActions(brief),
         ].join('\n\n'),

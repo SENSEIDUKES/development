@@ -100,6 +100,14 @@ describe('Story Seed arc plans', () => {
       { id: 'arc-1-3', text: 'Take the throne room.', chapters: 12 },
     ]);
     expect(describeBlueprintArcPlanProblem({ ...generated, arcPlans: [added] })).toBeUndefined();
+    // A goal only the Blueprint added gives way rather than overwrite the creator's count.
+    const threeGoals = reconcileStorySeedBlueprint(createEmptyStorySeedInput(), { arcPlans: [{ arcNumber: 1, goals: [
+      { id: 'arc-1-a', text: 'A.', chapters: 10 }, { id: 'arc-1-b', text: 'B.', chapters: 10 }, { id: 'arc-1-c', text: 'C.', chapters: 10 },
+    ] }], estimatedArcs: 12 }).blueprint;
+    seed.story.optional.arcOneGoals = [{ text: 'Reach the gate.', chapters: 29 }];
+    expect(mirrorSeedIntoBlueprint(threeGoals, seed).arcPlans![0].goals).toEqual([
+      { id: 'arc-1-a', text: 'Reach the gate.', chapters: 29 }, { id: 'arc-1-b', text: 'B.', chapters: 1 },
+    ]);
   });
 
   it('begins a story without a Blueprint from the creator\'s chapters, the last goal running to the arc\'s end', () => {

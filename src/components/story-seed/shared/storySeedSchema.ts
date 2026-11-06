@@ -912,10 +912,15 @@ export const alignArcOneWithSeed = (arcPlans: ArcPlan[] | undefined, seed: Story
   const first = arcPlans?.[0];
   if (!first) return undefined;
   if (!seedGoals.length) return [first];
-  const count = Math.min(MAX_ARC_GOALS, Math.max(seedGoals.length, first.goals.length));
+  // A goal only the Blueprint added gives way when the creator's chapters
+  // leave it no room: the creator's counts are never overwritten to fit it.
+  let count = Math.min(MAX_ARC_GOALS, Math.max(seedGoals.length, first.goals.length));
+  const givenSum = seedGoals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0);
+  const openSeedGoals = seedGoals.filter(goal => goal.chapters === undefined).length;
+  while (count > seedGoals.length && ARC_LENGTH - givenSum < openSeedGoals + (count - seedGoals.length)) count -= 1;
   const given = Array.from({ length: count }, (_, index) => seedGoals[index]?.chapters);
   const saved = first.goals.map(goal => goal.chapters);
-  const chapters = given.some(value => value !== undefined) || count > first.goals.length
+  const chapters = given.some(value => value !== undefined) || count !== first.goals.length
     ? allocateArcOneChapters(given, saved) : saved;
   const ids = new Set(first.goals.map(goal => goal.id));
   const newId = () => {

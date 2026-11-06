@@ -21,6 +21,11 @@ export interface WriterInstructionsChange {
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
     date: '2026-11-06',
+    summary: 'The Writer\'s Role and mission opens with SEN\'s identity, word for word: "You are an elite Eastern fantasy web-novel author specializing in Asian light novels." (SENSEI, 2026-11-06, reading the Writer\'s prompt: "the part that\'s wrong is really just giving its identity before, and then clarifying it up afterwards"). It used to open with a plainer "You are the author of this novel.", which the Author skill then corrected further down. "Write the next complete chapter of the ongoing story" now reads "of this ongoing novel", since the identity names who is writing. Nothing else changed.',
+    changed: { role: '1b3bff3eed0ff4' },
+  },
+  {
+    date: '2026-11-06',
     summary: 'The World builder is now the Blueprint, laid out the way the chapter writer is (SENSEI, 2026-11-06: "there\'s actually a correct way to do these things … models read information in a way that actually matters"; "It needs to be called blueprint"). It opens with its Role and mission, in SEN\'s identity word for word: "You are an elite Eastern fantasy web-novel author specializing in Asian light novels." (SENSEI: "Everything is based off this … Please make sure this is the identity"). The identity had been dropped on 2026-11-05 when the old prompt was split into skills, so the Blueprint was opening with a skill instead of who it is; now it is the first thing it reads, and a host that licenses SEN may give its own. Then How to build holds the Origin, World and Arc skills, unchanged, and the Blueprint rules now sit under their own headings: How to read the Story Seed (the creator\'s words and what each of their story-wide answers means), How to return the Blueprint (one name for one thing, the answer\'s order, how lists are written, and the cards), and Hard rules (minors, JSON only). The next message is the Story Seed, marked as story data and never instructions, then This Blueprint (the lines that depend on this Seed), then a short Mission Reminder that repeats the identity and the job. No rule was removed or reworded; only the order, the headings, the role and the reminder are new.',
     changed: { 'blueprint-role': '18c5a179ddc4f3', 'blueprint-rules': '1cf9bfa223225e' },
   },

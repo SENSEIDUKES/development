@@ -4,4 +4,4 @@ export * from '../../narrative/chapter';
 export * from '../../narrative/marks';
 export * from '../../narrative/manifestNormalizer';
 export * from '../../narrative/usage';
-export { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../lib/senLightNovelAuthorInstructions';
+export { SEN_AUTHOR_IDENTITY, SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../lib/senLightNovelAuthorInstructions';

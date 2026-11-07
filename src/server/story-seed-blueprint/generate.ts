@@ -1,3 +1,4 @@
+import { SEN_AUTHOR_IDENTITY } from '@seihouse/sen/generation';
 import { parseModelJson } from '@seihouse/sen/contracts';
 import { STORY_LENGTH_ARCS, arcPlanFromDraft } from '@seihouse/sen/arc-goals';
 import { createModelRouter, ModelRouterError, type GenerationResult, type ReasoningLevel } from '@seihouse/library/model-router-server';
@@ -208,6 +209,8 @@ export const generateWorldBlueprint = async (
   reasoningLevel?: ReasoningLevel,
   /** The Origin, World and Arc skills the Blueprint reads; SEN's own unless the host gives others. */
   skills: readonly HarnessSkillManifest[] = SEN_BLUEPRINT_DEFAULT_SKILLS,
+  /** Who the Blueprint is, said first and last; SEN's own unless the host gives its own. */
+  identity: string = SEN_AUTHOR_IDENTITY,
 ): Promise<GeneratedWorldBlueprint> => {
   let storySeed: StorySeedInput;
   try { ({ storySeed } = buildBlueprintGenerationPayload(payload.storySeed)); }
@@ -215,8 +218,8 @@ export const generateWorldBlueprint = async (
   // The creator's Story Length, when set, is the exact length Arc 1 is planned for.
   const arcCount = storySeed.story.optional.arcCount;
   const generated = await provider.generate({
-    systemInstruction: buildWorldBlueprintSystemPrompt(skills),
-    userPrompt: buildWorldBlueprintPrompt(storySeed),
+    systemInstruction: buildWorldBlueprintSystemPrompt(skills, identity),
+    userPrompt: buildWorldBlueprintPrompt(storySeed, arcCount, identity),
     responseJsonSchema: worldBlueprintResponseSchema(arcCount),
     temperature: config.temperature,
     maxOutputTokens: config.maxOutputTokens,

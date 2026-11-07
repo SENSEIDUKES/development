@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { WORLD_CARD_KINDS } from '@seihouse/sen/contracts';
 import { SEN_BLUEPRINT_DEFAULT_SKILLS } from '@seihouse/sen/harness-generation';
-import { BLUEPRINT_PERMANENT_RULES, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintSystemPrompt } from './prompt';
+import { createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
+import { BLUEPRINT_PERMANENT_RULES, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintPrompt, buildWorldBlueprintSystemPrompt } from './prompt';
 import { worldBlueprintResponseSchema } from './prompt';
 
 /**
@@ -45,11 +46,18 @@ describe('The world builder asks for every Codex card kind', () => {
   it('travels with every Blueprint, whichever skills it reads', () => {
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT.endsWith(BLUEPRINT_PERMANENT_RULES)).toBe(true);
     const western = { id: 'test.western-fantasy', version: '1.0.0', name: 'Western Fantasy', description: 'A test Origin.', slot: 'origin' as const, applications: ['generation' as const], instructions: 'You are writing the world of a Western fantasy novel: knights, keeps and old magic.' };
-    const swapped = buildWorldBlueprintSystemPrompt([western, ...SEN_BLUEPRINT_DEFAULT_SKILLS.filter(skill => skill.slot !== 'origin')]);
+    // A host that licenses SEN gives its own Origin and its own identity.
+    const swapped = buildWorldBlueprintSystemPrompt([western, ...SEN_BLUEPRINT_DEFAULT_SKILLS.filter(skill => skill.slot !== 'origin')],
+      'You are a celebrated Western fantasy novelist.');
+    expect(swapped.startsWith('# ROLE AND MISSION\n\nYou are a celebrated Western fantasy novelist. Build the Blueprint')).toBe(true);
     expect(swapped).toContain('[Origin] Western Fantasy 1.0.0\nYou are writing the world of a Western fantasy novel');
     expect(swapped).not.toContain('Eastern fantasy');
     expect(swapped).toContain('[World] SEN World Builder 1.2.0');
     expect(swapped.endsWith(BLUEPRINT_PERMANENT_RULES)).toBe(true);
+    // The same identity closes the request, in its Mission Reminder.
+    const request = buildWorldBlueprintPrompt(createEmptyStorySeedInput(), undefined, 'You are a celebrated Western fantasy novelist.');
+    expect(request).toContain('# MISSION REMINDER\n\nYou are a celebrated Western fantasy novelist. Build this novel');
+    expect(request).not.toContain('Eastern fantasy');
   });
 
   it('has a place in the answer for every slot of every card kind', () => {

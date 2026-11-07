@@ -10,7 +10,7 @@ import type { HarnessSkillManifest } from '../../../narrative/generation';
  * on 2026-11-05 before they were written here.
  */
 
-const ORIGIN_INSTRUCTIONS = `You are writing the world of an Eastern fantasy web novel: cultivation, martial sects, clans, dynasties, spirit beasts, and a hero who rises through a hard world.
+const ORIGIN_INSTRUCTIONS = `This is an Eastern fantasy web novel: cultivation, martial sects, clans, dynasties, spirit beasts, and a hero who rises through a hard world.
 
 Read the Story Seed's genre, tags and premise through this tradition. Treat its tropes as tools you may pick up, not a checklist. Where the Seed leaves space open, fill it from Eastern fantasy, never from Western fantasy defaults (knights, elves, dragons as Western beasts, wizard towers), unless the Seed asks for them.
 
@@ -58,7 +58,7 @@ arcLookahead: one line each for Arc 2 and Arc 3 (never beyond the story's length
 
 export const SEN_EASTERN_FANTASY_ORIGIN_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-eastern-fantasy',
-  version: '1.1.0',
+  version: '1.2.0',
   name: 'SEN Eastern Fantasy',
   description: 'Builds the world of an Eastern fantasy web novel, in the Chinese, Korean or Japanese tradition the creator chose.',
   slot: 'origin',

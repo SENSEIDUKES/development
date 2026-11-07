@@ -319,7 +319,7 @@ describe('Harness installed skills', () => {
   it('assembles the World Blueprint\'s skills in schema order under plain headings, one per slot', () => {
     const [origin, world, arc] = SEN_BLUEPRINT_DEFAULT_SKILLS;
     const text = assembleBlueprintSkills([arc, origin, world]);
-    expect(text.indexOf('[Origin] SEN Eastern Fantasy 1.1.0\n')).toBe(0);
+    expect(text.indexOf('[Origin] SEN Eastern Fantasy 1.2.0\n')).toBe(0);
     expect(text.indexOf('[World] SEN World Builder 1.2.0\n')).toBeGreaterThan(0);
     expect(text.indexOf('[Arc] SEN Arc Planner 1.1.0\n')).toBeGreaterThan(text.indexOf('[World]'));
     expect(text).not.toMatch(/CAPA|HARNESS/);

@@ -240,7 +240,9 @@ describe('Harness Generation HTTP boundary', () => {
     const input = generate.mock.calls[0][0] as HarnessTextGenerationRequest;
     // Authoring instruction: the role first, then the CAPA Prompt under How to write, in schema order (Author before Pacing), then the HARNESS parts.
     expect(input.systemInstruction).toBe(composeHarnessSystemInstruction(skilled.capaPrompt));
-    expect(input.systemInstruction).toMatch(/^# ROLE AND MISSION\n\nYou are the author of this novel\./);
+    // SEN's identity first, word for word (SENSEI, 2026-11-06).
+    expect(input.systemInstruction.startsWith('# ROLE AND MISSION\n\nYou are an elite Eastern fantasy web-novel author specializing in Asian light novels. Write the next complete chapter')).toBe(true);
+    expect(input.systemInstruction).not.toContain('You are the author of this novel.');
     expect(input.systemInstruction).toContain(`# HOW TO WRITE\n\nCAPA SKILL [Author] — SEN Novel Author v${SEN_NOVEL_AUTHOR_SKILL.version}\n`);
     expect(input.systemInstruction.indexOf('CAPA SKILL [Author]')).toBeLessThan(input.systemInstruction.indexOf('CAPA SKILL [Pacing]'));
     expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');

@@ -407,7 +407,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'workshop',
     status: 'active',
     title: 'What the Models Read',
-    description: 'Every word each model in a story is told, from the live code, step by step: the World builder, the Writer, the Tagger (one tap per tag), the Fixer and the Look writer. Each step says what it is given and what it hands back; each block reads easily or exactly as the model sees it, with why it says what it says. The Writer Instructions history records every change; a test fails until a change is written there.',
+    description: 'Every word each model in a story is told, from the live code, step by step: the Blueprint, the Writer, the Tagger (one tap per tag), the Fixer and the Look writer. Each step says what it is given and what it hands back; each block reads easily or exactly as the model sees it, with why it says what it says. The Writer Instructions history records every change; a test fails until a change is written there.',
     category: 'other',
     version: 'v1.0',
     source: {

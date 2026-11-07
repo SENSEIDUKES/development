@@ -8,7 +8,7 @@ import { familiarPage } from './appFamiliarActions';
 import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
 import { HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderProfileProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode } from '@seihouse/library/shell';
 import { SparksButton } from '@seihouse/sen/story-seed';
-import { AuthorWorldView, CreateStorySettings, StoryPages, isStoryPublished, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
+import { AuthorWorldView, CreateStoryPlugins, CreateStorySettings, StoryPages, isStoryPublished, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { createOfficialCapaDefaultLoadout, officialCapaUpgrades } from '../host/generation/capa/officialCapaSkills';
 import { NarrativeButton } from '@seihouse/sen/presentation';
@@ -295,6 +295,12 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     // A new Story Seed starts from the profile's languages and Reading Mode.
     accountDefaultLanguage={profile.defaultReadingLanguage} accountDefaultChapterWritingStyle={profile.defaultChapterWritingStyle}
     renderStorySettings={({ seed, originalLanguage }) => <CreateStorySettings stories={stories}
+      defaults={createOfficialCapaDefaultLoadout(seed.story.required.style)}
+      originalLanguage={originalLanguage} chapterWritingStyle={seed.story.optional.chapterWritingStyle}
+      fateMode={seed.story.optional.fateSurvival.enabled ? 'survival' : 'regular'}
+      draft={settingsDraft} onDraftChange={setSettingsDraft} />}
+    // Plugins: the Writer's CAPA skills the story starts with, from the same draft.
+    renderStoryPlugins={({ seed, originalLanguage }) => <CreateStoryPlugins stories={stories}
       defaults={createOfficialCapaDefaultLoadout(seed.story.required.style)}
       originalLanguage={originalLanguage} chapterWritingStyle={seed.story.optional.chapterWritingStyle}
       fateMode={seed.story.optional.fateSurvival.enabled ? 'survival' : 'regular'}

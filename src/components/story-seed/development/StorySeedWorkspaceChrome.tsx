@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Bookmark, Check, Eye, Home, ScrollText as SENBlueprintIcon } from 'lucide-react';
+import { Bookmark, Check, Eye, Home, Puzzle as SENPluginsIcon } from 'lucide-react';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import type { ChapterWritingStyle, SenLanguageCode } from '@seihouse/sen/contracts';
 import type { SeedUpdate } from './seedState';
 import type { SeedSectionId } from './seedSections';
 import { buildStorySeedDrawerSections } from './StorySeedSelector';
 import { StorySeedSettings } from './StorySeedSettings';
+import { StorySeedPlugins } from './StorySeedPlugins';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
 import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
 import { HeaderActionButton, type HeaderAction } from '../../library-shell/development/WorkspaceHeaderActions';
@@ -27,8 +28,10 @@ interface StorySeedWorkspaceChromeProps {
   storyLanguage?: { value: SenLanguageCode; onChange: (language: SenLanguageCode) => void };
   /** Reported when the author picks a Reading Mode in Settings. */
   onReadingModeChange?: (mode: ChapterWritingStyle) => void;
-  /** The host's Story Settings (skills and media), shown in Settings after the Reading Mode. */
+  /** The host's Story Settings (media), shown in Settings after the Reading Mode. */
   storySettings?: ReactNode;
+  /** The host's Writer plugins (its CAPA skill slots), shown on Plugins. */
+  storyPlugins?: ReactNode;
   /** The open Seed section; null while the Manifest step, Story Bank or Blueprint is showing. */
   activeSection: SeedSectionId | null;
   /** Host author metadata; the section navigation does not display a profile. */
@@ -50,9 +53,6 @@ interface StorySeedWorkspaceChromeProps {
   error?: string | null;
   onSaveDraft: () => void;
   onManifest?: () => void;
-  /** Opens the World Blueprint from the bar and the rail; absent, Blueprint is not offered. */
-  onOpenBlueprint?: () => void;
-  blueprintActive?: boolean;
   /** False while the Blueprint is showing: it carries its own actions. */
   showActionRow?: boolean;
   onToggleStoryBank: () => void;
@@ -87,6 +87,7 @@ function MenuSaveDraft({ savedFeedback, isGenerating, onSaveDraft }: Pick<StoryS
 export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [pluginsOpen, setPluginsOpen] = useState(false);
   const desktop = useDesktopNavigation();
   const settingsReturnFocusRef = useRef<HTMLElement | null>(null);
   const rememberFocus = useCallback(() => {
@@ -95,11 +96,15 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
   const openSettings = useCallback(() => {
     rememberFocus();
     setPreviewOpen(false);
+    setPluginsOpen(false);
     setSettingsOpen(true);
   }, [rememberFocus]);
-  const openPreview = useCallback(() => { rememberFocus(); setSettingsOpen(false); setPreviewOpen(true); }, [rememberFocus]);
+  const openPreview = useCallback(() => { rememberFocus(); setSettingsOpen(false); setPluginsOpen(false); setPreviewOpen(true); }, [rememberFocus]);
+  // Plugins replaces Blueprint on the bar (SENSEI, 2026-11-07); the World
+  // Blueprint opens from the Create step instead.
+  const openPlugins = useCallback(() => { rememberFocus(); setSettingsOpen(false); setPreviewOpen(false); setPluginsOpen(true); }, [rememberFocus]);
   const mobileMenu = Boolean(props.mobileUtilities) && !desktop;
-  const { onToggleStoryBank, showStoryBank, onNavigateHome, onOpenBlueprint, blueprintActive = false } = props;
+  const { onToggleStoryBank, showStoryBank, onNavigateHome } = props;
   const workspace = useMemo<LibraryWorkspaceDefinition>(() => ({
     label: 'Story Seed sections', closeLabel: 'Close sections', barLabel: 'Story Seed navigation',
     sections: buildStorySeedDrawerSections(props.seed, props.activeSection, props.onSelectSection),
@@ -110,8 +115,8 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
         { id: 'story-preview', label: 'Story Preview', icon: <Eye size={16} aria-hidden="true" />, onSelect: openPreview },
         { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={16} aria-hidden="true" className="text-neutral-400" />,
           active: showStoryBank, onSelect: onToggleStoryBank },
-        ...(onOpenBlueprint ? [{ id: 'blueprint', label: 'Blueprint', icon: <SENBlueprintIcon size={16} aria-hidden="true" className="text-neutral-400" />,
-          active: blueprintActive, onSelect: onOpenBlueprint }] : []),
+        { id: 'plugins', label: 'Plugins', icon: <SENPluginsIcon size={16} aria-hidden="true" className="text-neutral-400" />,
+          onSelect: openPlugins },
         { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={16} aria-hidden="true" className="text-neutral-400" />,
           onSelect: openSettings },
         ...(mobileMenu ? [{ id: 'home', label: 'Home', icon: <Home size={16} aria-hidden="true" />, onSelect: onNavigateHome }] : []),
@@ -120,22 +125,24 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
     tools: [
       { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={20} aria-hidden="true" />,
         active: showStoryBank, onSelect: () => { setSettingsOpen(false); onToggleStoryBank(); } },
-      ...(onOpenBlueprint ? [{ id: 'blueprint', label: 'Blueprint', icon: <SENBlueprintIcon size={20} aria-hidden="true" />,
-        active: blueprintActive, onSelect: () => { setSettingsOpen(false); onOpenBlueprint(); } }] : []),
+      { id: 'plugins', label: 'Plugins', icon: <SENPluginsIcon size={20} aria-hidden="true" />, active: pluginsOpen, onSelect: openPlugins },
       { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={20} />, active: settingsOpen, onSelect: openSettings },
     ],
     back: { onBack: () => { setSettingsOpen(false); onNavigateHome(); } },
     // Keep Library navigation visible; step actions belong to the form.
     sectionsOnPhoneBar: true,
 
-  }), [props.seed, props.activeSection, props.onSelectSection, showStoryBank, onToggleStoryBank, onOpenBlueprint, blueprintActive, openSettings, settingsOpen, onNavigateHome,
+  }), [props.seed, props.activeSection, props.onSelectSection, showStoryBank, onToggleStoryBank, openPlugins, pluginsOpen, openSettings, settingsOpen, onNavigateHome,
     mobileMenu, props.mobileUtilities, props.savedFeedback, props.isGenerating, props.onSaveDraft, openPreview]);
   const content = <StorySeedChromeContent {...props} workspace={workspace} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen}
     settingsReturnFocusRef={settingsReturnFocusRef} />;
   // A host mounting only the standalone header gets no task bar or drawer.
-  const preview = <WorkspaceSheet open={previewOpen} onOpenChange={setPreviewOpen} title="Story preview" closeLabel="Close story preview" returnFocusRef={settingsReturnFocusRef}>
+  const preview = <><WorkspaceSheet open={previewOpen} onOpenChange={setPreviewOpen} title="Story preview" closeLabel="Close story preview" returnFocusRef={settingsReturnFocusRef}>
     <StorySeedLiveCard seed={props.seed} variant="full" />
-  </WorkspaceSheet>;
+  </WorkspaceSheet>
+  <WorkspaceSheet open={pluginsOpen} onOpenChange={setPluginsOpen} title="Plugins" closeLabel="Close plugins" returnFocusRef={settingsReturnFocusRef}>
+    <StorySeedPlugins writer={props.storyPlugins} />
+  </WorkspaceSheet></>;
   return props.layout === 'header' ? <>{content}{preview}</> : <LibraryNavigation mode="workspace" workspace={workspace}>
     {content}{preview}
     {mobileMenu && props.savedFeedback && <p className="seed-save-feedback" role="status">Draft saved</p>}

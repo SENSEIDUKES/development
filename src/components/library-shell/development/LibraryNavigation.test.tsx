@@ -133,7 +133,7 @@ it('runs Story Seed in the Library Shell workspace mode instead of a navigation 
   const nav = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
   expect(nav.classList.contains('library-global-navigation')).toBe(true);
   expect(nav.classList.contains('library-workspace-navigation')).toBe(true);
-  expect(Array.from(nav.querySelectorAll('button')).map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Settings', 'Back']);
+  expect(Array.from(nav.querySelectorAll('button')).map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Plugins', 'Settings', 'Back']);
   // The desktop rail is the same LibrarySectionSidebar every Library page uses.
   const rail = container.querySelector('[data-slot="app-shell-sidebar"]')!;
   expect(rail.querySelector('nav[aria-label="Story Seed sections"]')?.textContent).toContain('World Rules');

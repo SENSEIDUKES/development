@@ -79,7 +79,7 @@ export const novelExpandedDocs: DocsCatalog = [
       {
         ...topic('arc', 'Arc'),
         definition: 'A 100-chapter stretch of a novel with its own goals.',
-        howItFits: 'Each arc has one to five sequential Arc Goals, with one active goal at a time and an allocated chapter range for each. The Story Seed ARC section collects the Destined Ending, the Story Length in arcs, optional Hard Pins, an initial Active Arc Goal, and Fun Settings; the World Blueprint plans Arc 1 for that length (or suggests a length when it is left blank), and each later arc is planned when it begins. HARNESS tracks the live arc and its goals as chapters commit.',
+        howItFits: 'Each arc has one to five sequential Arc Goals, with one active goal at a time and an allocated chapter range for each. The Story Seed ARC section collects the Destined Ending, the Story Length in arcs, up to five Arc 1 goals with optional chapters, one line each for where Arcs 2 and 3 head, optional Hard Pins, and Fun Settings; the World Blueprint plans Arc 1 for that length (or suggests a length when it is left blank), and each later arc is planned when it begins. HARNESS tracks the live arc and its goals as chapters commit.',
       },
       {
         ...topic('world', 'World'),

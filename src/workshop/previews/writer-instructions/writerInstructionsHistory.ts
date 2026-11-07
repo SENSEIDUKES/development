@@ -21,6 +21,11 @@ export interface WriterInstructionsChange {
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
     date: '2026-11-06',
+    summary: 'The ARC page gets the creator\'s own Arc 1 goals and where Arcs 2 and 3 head (SENSEI, 2026-11-06, the Arc page: "Arc 1 goals (up to 5, with chapters each; first goal = what\'s happening when Chapter 1 starts)" and "Where Arcs 2 and 3 head (one line each)"). The single Active Arc Goal is gone: the creator now writes up to five Arc 1 goals in order, each with optional chapters, and one line each for Arc 2 and Arc 3. So the Blueprint rules name the two new Seed fields, and the request tells the World Blueprint to open Arc 1 with the creator\'s goals word for word, in order, with the chapters given, planning any further goals after them so Arc 1 totals 30 chapters, and to use the creator\'s line for Arc 2 or Arc 3 word for word as that arc\'s look-ahead.',
+    changed: { 'blueprint-rules': '19dd25605346ff' },
+  },
+  {
+    date: '2026-11-06',
     summary: 'The world moves onto its one World card (SENSEI, 2026-11-06, the Story Form: "World" and "Who rules" join the card; "Where it opens" and the model\'s extra detail copies go). The World rules card gains two slots, read first: Kind of world (what kind of world this is) and Who rules (who holds power and how society is ordered), so the Blueprint rules\' card list now asks for them on the card, and the card\'s purpose says it holds them. The World Blueprint no longer writes worldOverview, startingLocation or societyStructure as text beside the cards, and no longer adds "compatible detail" beside a fact the creator wrote: a world fact the creator wrote is a card slot like any other, which the creator\'s-words rule already covers, so the request\'s "The creator already wrote…" line is gone. Where the story opens is its first Place card. The World skill (now 1.2.0) names only the main character\'s backgroundProfile as a longer field.',
     changed: { 'world-skill': '016ebad3c0f209', 'blueprint-rules': '178cbcae4d7e97' },
   },

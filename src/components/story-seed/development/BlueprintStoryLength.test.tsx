@@ -214,7 +214,7 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
     const onGenerateBlueprint = vi.fn(async (payload: BlueprintGenerationPayload) => {
       const arcCount = payload.storySeed.story.optional.arcCount!;
       return finalizeGeneratedWorldBlueprint({
-        ...createMockBlueprint(), estimatedArcs: arcCount, arcPlans: [createMockArcOne(payload.storySeed.story.optional.activeArcGoal, arcCount)], arcLookahead: createMockArcLookahead(arcCount),
+        ...createMockBlueprint(), estimatedArcs: arcCount, arcPlans: [createMockArcOne(payload.storySeed.story.optional.arcOneGoals, arcCount)], arcLookahead: createMockArcLookahead(arcCount),
       }, payload.storySeed);
     });
     renderModal({ onGenerateBlueprint });
@@ -242,7 +242,7 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
   it('fills the Seed\'s blank slots from the Blueprint answer, so the review shows them filled and the saved record keeps them', async () => {
     resetStorySeedRepository([createMockStorySeedRecord({ id: 'seed-slots', userId: LOCAL_WORKSHOP_STORY_SEED_OWNER_ID })]);
     const onGenerateBlueprint = vi.fn(async (payload: BlueprintGenerationPayload) => finalizeGeneratedWorldBlueprint({
-      ...createMockBlueprint(), ...createMockSeedSlotAnswer(), estimatedArcs: 3, arcPlans: [createMockArcOne(payload.storySeed.story.optional.activeArcGoal)],
+      ...createMockBlueprint(), ...createMockSeedSlotAnswer(), estimatedArcs: 3, arcPlans: [createMockArcOne(payload.storySeed.story.optional.arcOneGoals)],
     }, payload.storySeed));
     renderModal({ onGenerateBlueprint });
     await openBankedBlueprint();

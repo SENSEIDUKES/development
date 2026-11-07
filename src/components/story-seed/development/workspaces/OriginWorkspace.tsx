@@ -19,7 +19,6 @@ import { OriginFateControls } from './origin/OriginFateControls';
 import { OriginStyleSelector } from './origin/OriginStyleSelector';
 import { OriginSparksContext } from './origin/OriginSparksContext';
 import { SeedPart, SeedConfirmationContext } from '../creator/SeedPart';
-import { FunSettingsPanel } from './FunSettingsPanel';
 
 interface OriginWorkspaceProps {
   seed: StorySeedInput;
@@ -79,7 +78,6 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
         </div>
       </SeedPart>
 
-      <SeedPart id="fun"><FunSettingsPanel seed={seed} updateSeed={updateSeed} /></SeedPart>
 
       <SeedPart id="synopsis">{titleField}</SeedPart>
 

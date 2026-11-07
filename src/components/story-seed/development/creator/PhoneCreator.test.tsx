@@ -51,8 +51,10 @@ const back = () => container.querySelector<HTMLButtonElement>('.seed-creator-foo
 
 describe('Story Seed on a phone', () => {
   it('walks Origin and Arc part by part, then each page, and never on a wider screen', () => {
-    expect(creatorPositions(true).slice(0, 8).map(positionLabel))
-      .toEqual(['Style', 'Fun Settings', 'Synopsis', 'Fate', 'Tags', 'World Identity', 'Characters', 'Factions']);
+    expect(creatorPositions(true).slice(0, 7).map(positionLabel))
+      .toEqual(['Style', 'Synopsis', 'Fate', 'Tags', 'World Identity', 'Characters', 'Factions']);
+    // Fun Settings sit on the ARC page (SENSEI, 2026-11-06).
+    expect(creatorPositions(true).slice(-5).map(positionLabel)).toEqual(['Ending', 'Goals', 'Hard Pins', 'Fun Settings', 'Create']);
     expect(creatorPositions(false).slice(0, 3).map(positionLabel)).toEqual(['Origin', 'World Identity', 'Characters']);
   });
 
@@ -77,11 +79,9 @@ describe('Story Seed on a phone', () => {
     expect(part('synopsis').hidden).toBe(true);
     // A hidden part keeps its fields.
     expect(container.querySelector('#core-premise-input')).not.toBeNull();
-    expect(next().getAttribute('aria-label')).toBe('Next: Fun Settings');
+    expect(next().getAttribute('aria-label')).toBe('Next: Synopsis');
     act(() => next().click());
     expect(part('style').hidden).toBe(true);
-    expect(part('fun').hidden).toBe(false);
-    act(() => next().click());
     expect(part('synopsis').hidden).toBe(false);
     act(() => next().click());
     act(() => next().click());
@@ -95,21 +95,19 @@ describe('Story Seed on a phone', () => {
   it('confirms defaults with Next, keeps checks while active, and leaves jumped tabs unchecked', () => {
     renderCreator();
     const tab = (id: string) => container.querySelector<HTMLButtonElement>(`[data-part="${id}"]`)!;
-    expect(tab('fun').getAttribute('data-filled')).toBe('false');
-    act(() => tab('fun').click());
-    expect(tab('fun').getAttribute('data-filled')).toBe('false');
-    act(() => next().click());
-    act(() => tab('fun').click());
-    expect(tab('fun').querySelector('[aria-label="complete"]')).not.toBeNull();
     expect(tab('fate').getAttribute('data-filled')).toBe('false');
     act(() => tab('fate').click());
-    act(() => container.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Survival"]')!.click());
-    act(() => container.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Survival"]')!.click());
+    expect(tab('fate').getAttribute('data-filled')).toBe('false');
+    act(() => next().click());
+    act(() => tab('fate').click());
     expect(tab('fate').querySelector('[aria-label="complete"]')).not.toBeNull();
+    // Style was jumped past, never confirmed.
+    expect(tab('style').querySelector('[aria-label="complete"]')).toBeNull();
   });
 
   it('saves confirmations through More and restores them when the draft is reopened', async () => {
     renderCreator();
+    act(() => next().click());
     act(() => next().click());
     act(() => next().click());
     act(() => container.querySelector<HTMLButtonElement>('.library-workspace-navigation button')!.click());
@@ -117,12 +115,12 @@ describe('Story Seed on a phone', () => {
     expect(save).toBeTruthy();
     await act(async () => { save.click(); });
     const [record] = await listStorySeeds(LOCAL_WORKSHOP_STORY_SEED_OWNER_ID);
-    expect(record.editorProgress?.confirmedTabs).toContain('origin.fun');
+    expect(record.editorProgress?.confirmedTabs).toContain('origin.fate');
     act(() => root.unmount());
     root = createRoot(container);
     await act(async () => { renderCreator(record.id); });
-    expect(container.querySelector('[data-part="fun"] [aria-label="complete"]')).not.toBeNull();
-    expect(container.querySelector('[data-part="fate"] [aria-label="complete"]')).toBeNull();
+    expect(container.querySelector('[data-part="fate"] [aria-label="complete"]')).not.toBeNull();
+    expect(container.querySelector('[data-part="tags"] [aria-label="complete"]')).toBeNull();
   });
 
   it('shows the cast as Codex cards that open their fields in a sheet', () => {
@@ -144,7 +142,7 @@ describe('Story Seed on a phone', () => {
 
   it('never writes the previous seed confirmations when starting another seed straight from the bank', async () => {
     await import('../StorySeedSecondary');
-    const first = createMockStorySeedRecord({ id: 'seed-a', title: 'Seed A', userId: LOCAL_WORKSHOP_STORY_SEED_OWNER_ID, editorProgress: { confirmedTabs: ['origin.fun'] } });
+    const first = createMockStorySeedRecord({ id: 'seed-a', title: 'Seed A', userId: LOCAL_WORKSHOP_STORY_SEED_OWNER_ID, editorProgress: { confirmedTabs: ['arc.fun'] } });
     const second = createMockStorySeedRecord({ id: 'seed-b', title: 'Seed B', userId: LOCAL_WORKSHOP_STORY_SEED_OWNER_ID, editorProgress: { confirmedTabs: ['origin.fate'] } });
     resetStorySeedRepository([first, second]);
     await act(async () => { renderCreator(first.id); });

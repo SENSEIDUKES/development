@@ -1,4 +1,4 @@
-import { ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, STORY_LENGTH_ARCS } from '@seihouse/sen/arc-goals';
+import { ARC_LENGTH, ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, STORY_LENGTH_ARCS } from '@seihouse/sen/arc-goals';
 import {
   SEED_ABILITY_LIMIT,
   SEED_ABILITY_SLOT_FIELDS,
@@ -49,7 +49,8 @@ export const BLUEPRINT_PERMANENT_RULES = `The creator's words
 The Story Seed is the creator's. Every value they wrote is a fact: never contradict, replace, rename, weaken or leave it out. Where the creator already wrote a card slot, repeat their value exactly; only blank slots are yours to fill. Build the creator's own characters and factions into the world under their exact names, listed first, before any you add.
 - Make It Work (story.optional.makeItWorkInstruction): an instruction about the world that must hold, whatever else has to bend.
 - Hard Pins (story.optional.hardPins): truths the creator fixed for the whole story. Build a world where every one can hold.
-- Active Arc Goal (story.optional.activeArcGoal): where the creator wants the story to begin.
+- Arc 1 goals (story.optional.arcOneGoals): the creator's own goals for Arc 1, in order; the first is what is happening when Chapter 1 opens.
+- Arc directions (story.optional.arcLookahead): where the creator says Arc 2 and Arc 3 head.
 
 One name for one thing
 Every name a card points to is the exact name on that thing's own card:
@@ -91,14 +92,16 @@ export const WORLD_BLUEPRINT_SYSTEM_PROMPT = buildWorldBlueprintSystemPrompt();
 
 /**
  * The lines of the request that depend on this Seed: a Story Length the
- * creator chose, and an Active Arc Goal. A world fact the creator wrote is a
+ * creator chose, their Arc 1 goals, and their directions for Arc 2 and Arc 3. A world fact the creator wrote is a
  * card slot like any other, which the permanent rules already cover.
  */
 const seedRules = (storySeed: StorySeedInput, arcCount: number | undefined): string[] => [
   ...(arcCount === undefined ? [] : [`The creator chose the story's length: estimatedArcs is exactly ${arcCount}.`]),
-  ...(storySeed.story.optional.activeArcGoal
-    ? ['Arc 1 begins with the Active Arc Goal: use its text word for word as Arc 1\'s first goal.']
+  ...(storySeed.story.optional.arcOneGoals?.length
+    ? [`Arc 1 begins with the creator's Arc 1 goals: use each word for word, in order, as Arc 1's first goals, with the chapters the creator gave. Plan any further goals after them so Arc 1 totals ${ARC_LENGTH} chapters.`]
     : []),
+  ...(storySeed.story.optional.arcLookahead ?? []).map(entry =>
+    `Use the creator's direction for Arc ${entry.arcNumber} word for word as that arc's arcLookahead line.`),
 ];
 
 /** The request: the Story Seed, then only the lines that depend on it. */

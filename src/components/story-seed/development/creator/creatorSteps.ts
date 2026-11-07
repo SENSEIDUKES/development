@@ -57,14 +57,15 @@ export interface CreatorPart { id: string; label: string }
 export const SECTION_PARTS: Partial<Record<SeedSectionId, readonly CreatorPart[]>> = {
   origin: [
     { id: 'style', label: 'Style' },
-    { id: 'fun', label: 'Fun Settings' },
     { id: 'synopsis', label: 'Synopsis' },
     { id: 'fate', label: 'Fate' },
     { id: 'tags', label: 'Tags' },
   ],
   arc: [
     { id: 'ending', label: 'Ending' },
+    { id: 'goals', label: 'Goals' },
     { id: 'pins', label: 'Hard Pins' },
+    { id: 'fun', label: 'Fun Settings' },
   ],
 };
 
@@ -109,12 +110,13 @@ export const partComplete = (page: CreatorPageId, part: string, seed: StorySeedI
   if (page === 'origin') {
     if (part === 'tags') return required.storyTags.some(hasText);
     if (part === 'fate') return seed.story.optional.fateSurvival.enabled || seed.story.optional.fateSurvival.pressure !== 'immortal';
-    if (part === 'fun') return Object.values(seed.story.optional.funSettings).some(level => level !== 'medium');
   }
   if (page === 'arc') {
     if (part === 'pins') return Boolean(seed.story.optional.hardPins?.some(pin => hasText(pin.text)));
-    if (part === 'ending') return hasText(seed.world.optional.worldFoundations.destinedEnding)
-      || hasText(seed.story.optional.activeArcGoal?.text) || seed.story.optional.arcCount !== undefined;
+    if (part === 'ending') return hasText(seed.world.optional.worldFoundations.destinedEnding) || seed.story.optional.arcCount !== undefined;
+    if (part === 'goals') return Boolean(seed.story.optional.arcOneGoals?.some(goal => hasText(goal.text))
+      || seed.story.optional.arcLookahead?.some(entry => hasText(entry.direction)));
+    if (part === 'fun') return Object.values(seed.story.optional.funSettings).some(level => level !== 'medium');
   }
   return false;
 };

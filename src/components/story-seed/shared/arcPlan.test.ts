@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, createBlueprintDraftFromSeed, createEmptyStorySeedInput, describeBlueprintArcPlanProblem, finalizeGeneratedWorldBlueprint, mirrorSeedIntoBlueprint, normalizeStorySeedInput, normalizeWorldBlueprint, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { arcOnePlanFromSeedGoals, buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, createBlueprintDraftFromSeed, createEmptyStorySeedInput, describeBlueprintArcPlanProblem, finalizeGeneratedWorldBlueprint, mirrorSeedIntoBlueprint, normalizeStorySeedInput, normalizeWorldBlueprint, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStorySeedExport, parseStorySeedJson } from '@seihouse/sen/story-seed';
 
 describe('Story Seed arc plans', () => {
@@ -14,7 +14,7 @@ describe('Story Seed arc plans', () => {
   it('begins a story from a valid Arc 1 and a story length, never from a draft that has not planned Arc 1', () => {
     const seed = createEmptyStorySeedInput();
     seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
-    seed.story.optional.activeArcGoal = { id: 'arc-1-gate', text: 'Reach the gate.', chapters: 30 };
+    seed.story.optional.arcOneGoals = [{ text: 'Reach the gate.' }];
     const blueprint = createBlueprintDraftFromSeed(seed);
     const administrative = createStoryAdministrativeMetadata({ storyId: 'story', creatorId: 'author', sourceSeedId: 'seed', originalLanguage: 'en' });
     // A draft never invents Arc 1 from the Seed's goal alone.
@@ -37,7 +37,7 @@ describe('Story Seed arc plans', () => {
   it('keeps Arc 1 opening with the Seed goal, and reads an older Blueprint that planned every arc as Arc 1 plus a look-ahead', () => {
     const seed = createEmptyStorySeedInput();
     seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
-    seed.story.optional.activeArcGoal = { id: 'arc-1-return', text: 'Return to the capital.', chapters: 30 };
+    seed.story.optional.arcOneGoals = [{ text: 'Return to the capital.' }];
     const normalized = normalizeStorySeedInput(seed);
     const aligned = normalizeWorldBlueprint({ arcPlans: roadmap, estimatedArcs: 2 }, seed);
     // Only the opening goal's wording follows the Seed; its allocation and identity stay saved.
@@ -49,17 +49,18 @@ describe('Story Seed arc plans', () => {
     expect(normalizeWorldBlueprint({ arcPlans: [{ arcNumber: 1, goals: 'broken' }], estimatedArcs: 3 }).arcPlans).toBeUndefined();
     // The look-ahead travels with an export.
     const [restored] = parseStorySeedJson(JSON.stringify(createStorySeedExport(normalized, aligned)));
-    expect(restored.seed.story.optional.activeArcGoal).toEqual(seed.story.optional.activeArcGoal);
+    // Reopened, the Seed holds the whole plan the Blueprint made, its own goal first.
+    expect(restored.seed.story.optional.arcOneGoals).toEqual(aligned.arcPlans![0].goals.map(goal => ({ text: goal.text, chapters: goal.chapters })));
     expect(restored.blueprint?.arcPlans).toEqual(aligned.arcPlans);
     expect(restored.blueprint?.arcLookahead).toEqual(aligned.arcLookahead);
     expect(restored.seed.story.optional.funSettings).not.toHaveProperty('longTermGoal');
   });
 
-  it('fills an empty Seed Active Arc Goal from Arc 1, and keeps only look-ahead the story length still has', () => {
+  it('fills empty Seed Arc 1 goals from Arc 1, and keeps only look-ahead the story length still has', () => {
     const seed = createEmptyStorySeedInput();
     seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
     const reconciled = reconcileStorySeedBlueprint(seed, { arcPlans: [arcOne], estimatedArcs: 3, arcLookahead: [...lookahead, { arcNumber: 3, direction: 'Rule.' }] });
-    expect(reconciled.seed.story.optional.activeArcGoal).toEqual({ id: 'arc-1-gate', text: 'Reach the gate.', chapters: 30 });
+    expect(reconciled.seed.story.optional.arcOneGoals).toEqual(arcOne.goals.map(goal => ({ text: goal.text, chapters: goal.chapters })));
     expect(reconciled.blueprint.arcPlans).toEqual([arcOne]);
     expect(reconciled.blueprint.arcLookahead).toHaveLength(2);
     const shorter = reconcileStorySeedBlueprint(seed, { ...reconciled.blueprint, estimatedArcs: 2 });
@@ -78,6 +79,106 @@ describe('Story Seed arc plans', () => {
     expect(reconcileStorySeedBlueprint(longer, reviewed.blueprint).blueprint.arcLookahead).toBeUndefined();
     // The same length keeps it.
     expect(mirrorSeedIntoBlueprint(reviewed.blueprint, reviewed.seed).arcLookahead).toEqual(lookahead);
+  });
+
+  it('keeps the creator\'s chapters and added goals in a generated Arc 1, and the rest of the arc goes to the others', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
+    seed.story.optional.arcCount = 12;
+    const generated = reconcileStorySeedBlueprint(createEmptyStorySeedInput(), { arcPlans: [arcOne], estimatedArcs: 12 }).blueprint;
+    // One goal given 6 chapters, the other left open: the open one takes the other 24.
+    seed.story.optional.arcOneGoals = [{ text: 'Reach the gate.', chapters: 6 }, { text: 'Reach the city.' }];
+    expect(mirrorSeedIntoBlueprint(generated, seed).arcPlans![0].goals.map(goal => goal.chapters)).toEqual([6, 24]);
+    // When the Blueprint's own split already fills the rest, it stands.
+    seed.story.optional.arcOneGoals = [{ text: 'Reach the gate.', chapters: 15 }, { text: 'Reach the city.' }];
+    expect(mirrorSeedIntoBlueprint(generated, seed).arcPlans![0].goals.map(goal => goal.chapters)).toEqual([15, 15]);
+    // A goal added after the Blueprint joins the plan under a new identity.
+    seed.story.optional.arcOneGoals = [{ text: 'Reach the gate.', chapters: 6 }, { text: 'Reach the city.', chapters: 12 }, { text: 'Take the throne room.' }];
+    const added = mirrorSeedIntoBlueprint(generated, seed).arcPlans![0];
+    expect(added.goals).toEqual([
+      { id: 'arc-1-gate', text: 'Reach the gate.', chapters: 6 },
+      { id: 'arc-1-city', text: 'Reach the city.', chapters: 12 },
+      { id: 'arc-1-3', text: 'Take the throne room.', chapters: 12 },
+    ]);
+    expect(describeBlueprintArcPlanProblem({ ...generated, arcPlans: [added] })).toBeUndefined();
+    // A goal only the Blueprint added gives way rather than overwrite the creator's count.
+    const threeGoals = reconcileStorySeedBlueprint(createEmptyStorySeedInput(), { arcPlans: [{ arcNumber: 1, goals: [
+      { id: 'arc-1-a', text: 'A.', chapters: 10 }, { id: 'arc-1-b', text: 'B.', chapters: 10 }, { id: 'arc-1-c', text: 'C.', chapters: 10 },
+    ] }], estimatedArcs: 12 }).blueprint;
+    seed.story.optional.arcOneGoals = [{ text: 'Reach the gate.', chapters: 29 }];
+    const tight = reconcileStorySeedBlueprint(seed, threeGoals);
+    expect(tight.blueprint.arcPlans![0].goals).toEqual([
+      { id: 'arc-1-a', text: 'Reach the gate.', chapters: 29 }, { id: 'arc-1-b', text: 'B.', chapters: 1 },
+    ]);
+    expect(tight.seed.story.optional.arcOneGoals).toEqual([{ text: 'Reach the gate.', chapters: 29 }, { text: 'B.', chapters: 1 }]);
+  });
+
+  it('removes a goal the creator clears from the plan, never repeating or keeping it', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
+    seed.story.optional.arcCount = 12;
+    // Generated: the Seed holds the whole plan.
+    const pair = reconcileStorySeedBlueprint(seed, { arcPlans: [arcOne], estimatedArcs: 12 });
+    expect(pair.seed.story.optional.arcOneGoals).toEqual([{ text: 'Reach the gate.', chapters: 15 }, { text: 'Reach the city.', chapters: 15 }]);
+    const withGoals = (arcOneGoals: StorySeedInput['story']['optional']['arcOneGoals']): StorySeedInput =>
+      ({ ...pair.seed, story: { ...pair.seed.story, optional: { ...pair.seed.story.optional, arcOneGoals } } });
+    // Clearing the first goal leaves only the second, never the second twice.
+    const firstCleared = mirrorSeedIntoBlueprint(pair.blueprint, withGoals([{ text: 'Reach the city.', chapters: 15 }]));
+    expect(firstCleared.arcPlans![0].goals).toEqual([{ id: 'arc-1-gate', text: 'Reach the city.', chapters: 30 }]);
+    // Clearing the last goal removes it, and a reopened pair stays that way.
+    const lastCleared = withGoals([{ text: 'Reach the gate.', chapters: 15 }]);
+    const mirrored = mirrorSeedIntoBlueprint(pair.blueprint, lastCleared);
+    expect(mirrored.arcPlans![0].goals).toEqual([{ id: 'arc-1-gate', text: 'Reach the gate.', chapters: 30 }]);
+    expect(reconcileStorySeedBlueprint(lastCleared, mirrored).blueprint.arcPlans![0].goals).toHaveLength(1);
+  });
+
+  it('begins a story without a Blueprint from the creator\'s chapters, the last goal running to the arc\'s end', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
+    seed.story.optional.arcOneGoals = [{ text: 'Reach the gate.', chapters: 5 }, { text: 'Reach the city.', chapters: 5 }];
+    expect(validateStorySeedDraft(seed).valid).toBe(true);
+    expect(arcOnePlanFromSeedGoals(seed.story.optional.arcOneGoals)!.goals.map(goal => goal.chapters)).toEqual([5, 25]);
+    // Counts past the arc's thirty save as a draft (the ARC page says so), but never generate.
+    seed.story.optional.arcOneGoals = [{ text: 'Reach the gate.', chapters: 20 }, { text: 'Reach the city.', chapters: 20 }];
+    expect(validateStorySeedDraft(seed).valid).toBe(true);
+    expect(normalizeStorySeedInput(seed).story.optional.arcOneGoals).toEqual(seed.story.optional.arcOneGoals);
+    expect(validateStorySeedInput(seed).errors).toEqual(["Arc 1's goals take 30 chapters in all."]);
+  });
+
+  it('carries the creator\'s Arc 2 and Arc 3 lines into the Blueprint even after the story length changed', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
+    seed.story.optional.arcCount = 12;
+    const reviewed = reconcileStorySeedBlueprint(seed, { arcPlans: [arcOne], estimatedArcs: 12, arcLookahead: lookahead }).blueprint;
+    const longer = { ...seed, story: { ...seed.story, optional: { ...seed.story.optional, arcCount: 20,
+      arcLookahead: [{ arcNumber: 3, direction: 'The sect war reaches the capital.' }] } } };
+    // The Blueprint's own line for Arc 2 was written for twelve arcs and goes; the creator's Arc 3 line stays.
+    expect(mirrorSeedIntoBlueprint(reviewed, longer).arcLookahead).toEqual([{ arcNumber: 3, direction: 'The sect war reaches the capital.' }]);
+    // With the same length, the creator's line joins the Blueprint's own.
+    const same = { ...longer, story: { ...longer.story, optional: { ...longer.story.optional, arcCount: 12 } } };
+    expect(mirrorSeedIntoBlueprint(reviewed, same).arcLookahead).toEqual([...lookahead, { arcNumber: 3, direction: 'The sect war reaches the capital.' }]);
+  });
+
+  it('clears an Arc 2 or Arc 3 line from the Blueprint when the creator clears it, keeping the Blueprint\'s own', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
+    seed.story.optional.arcCount = 12;
+    seed.story.optional.arcLookahead = [{ arcNumber: 3, direction: 'The sect war reaches the capital.' }];
+    const pair = reconcileStorySeedBlueprint(seed, { arcPlans: [arcOne], estimatedArcs: 12, arcLookahead: [...lookahead, { arcNumber: 3, direction: 'Model line.' }] });
+    expect(pair.blueprint.arcLookahead).toEqual([...lookahead, { arcNumber: 3, direction: 'The sect war reaches the capital.' }]);
+    const withLines = (arcLookahead: StorySeedInput['story']['optional']['arcLookahead']): StorySeedInput =>
+      ({ ...pair.seed, story: { ...pair.seed.story, optional: { ...pair.seed.story.optional, arcLookahead } } });
+    // Deleting the line one letter at a time leaves nothing of it behind.
+    const typing = mirrorSeedIntoBlueprint(pair.blueprint, withLines([{ arcNumber: 3, direction: 'T' }]));
+    const cleared = mirrorSeedIntoBlueprint(typing, withLines(undefined));
+    expect(cleared.arcLookahead).toEqual(lookahead);
+    // A line the Blueprint tidies (double spaces) is still known as the creator's, and clears in one edit.
+    const spaced = mirrorSeedIntoBlueprint(pair.blueprint, withLines([{ arcNumber: 3, direction: 'The  sect  war.' }]));
+    expect(spaced.authoredArcLookahead).toEqual([3]);
+    expect(mirrorSeedIntoBlueprint(spaced, withLines(undefined)).arcLookahead).toEqual(lookahead);
+    // Saved and reopened, it stays cleared.
+    const [restored] = parseStorySeedJson(JSON.stringify(createStorySeedExport(withLines(undefined), cleared)));
+    expect(restored.blueprint?.arcLookahead).toEqual(lookahead);
   });
 
   it('drops the removed long-term goal field during normalization', () => {

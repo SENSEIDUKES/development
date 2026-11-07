@@ -27,8 +27,8 @@ export interface WorldBlueprint {
   funSettings?: import('../../../narrative/storyDirection').FunSettings;
   /**
    * Arc 1's goal plan, the only arc a Blueprint plans and the only one the
-   * reader sees: every later arc is planned when the reader begins it. Arc 1's
-   * first goal is the Seed's Active Arc Goal when the creator wrote one.
+   * reader sees: every later arc is planned when the reader begins it. Arc 1
+   * opens with the Seed's own Arc 1 goals when the creator wrote them.
    * Blueprints that planned every arc keep their Arc 1 here and their next arcs
    * as the look-ahead (`normalizeWorldBlueprint`).
    */
@@ -39,6 +39,12 @@ export interface WorldBlueprint {
    * It travels with the Blueprint (and its exports) as part of the novel.
    */
   arcLookahead?: import('../../arc-goals/shared/arcGoals').ArcLookaheadEntry[];
+  /**
+   * The arcs whose look-ahead line is the creator's own, from the Seed's
+   * directions for Arc 2 and Arc 3, so a direction the creator clears leaves
+   * the Blueprint too, while the Blueprint's own lines stay.
+   */
+  authoredArcLookahead?: number[];
   /** Additive artifact metadata. Older Blueprints safely default to `v1.0`. */
   blueprintVersion?: string;
   creator?: string;

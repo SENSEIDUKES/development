@@ -400,10 +400,21 @@ describe('Familiar tray', () => {
     await click(guidesButton());
     expect(card()).toBeTruthy();
     expect(card()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet');
+    // The guides play in the full-screen player: the page under it holds still, Back waits, and Done comes on the last guide.
+    expect(card()!.classList.contains('familiar-player')).toBe(true);
+    expect(document.documentElement.style.overflow).toBe('hidden');
+    expect(card()!.querySelectorAll('.familiar-guide-progress > li')).toHaveLength(2);
+    expect(card()!.querySelector<HTMLButtonElement>('[data-familiar-guide-step="previous"]')!.disabled).toBe(true);
+    expect(card()!.querySelector('[data-familiar-welcome-done]')).toBeNull();
     await click(card()!.querySelector('[data-familiar-guide-step="next"]'));
+    expect(card()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('seed');
+    expect(card()!.querySelector('[data-familiar-guide-step="next"]')).toBeNull();
+    // The last guide does not wrap around to the first.
+    act(() => { card()!.querySelector('[data-familiar-guide-open]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
     expect(card()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('seed');
     await click(card()!.querySelector('[data-familiar-welcome-done]'));
     expect(card()).toBeNull();
+    expect(document.documentElement.style.overflow).toBe('');
     expect(window.location.href).toBe(before);
     // It can always be opened again.
     await click(pet());
@@ -420,7 +431,8 @@ describe('Familiar tray', () => {
     await click(card()!.querySelector('[data-familiar-welcome-tour]'));
     expect(card()!.querySelector('[data-familiar-guide-open]')).toBeTruthy();
     expect(onWelcomed).not.toHaveBeenCalled();
-    await click(card()!.querySelector('[data-familiar-welcome-done]'));
+    // Close works at any guide.
+    await click(card()!.querySelector('[data-familiar-welcome-close]'));
     expect(onWelcomed).toHaveBeenCalledOnce();
   });
 
@@ -684,10 +696,10 @@ describe('Header Familiar actions', () => {
     expect(document.querySelector('[aria-label="Show Energy"]')).toBeNull();
     await click(guidesButton());
     expect(card()).toBeTruthy();
-    // With no floating Familiar, the card waits under the header.
-    expect(card()!.getAttribute('data-anchor')).toBe('top');
+    // The guides open straight in the player.
+    expect(card()!.hasAttribute('data-touring')).toBe(true);
     expect(onRecall).not.toHaveBeenCalled();
-    await click(card()!.querySelector('[data-familiar-welcome-done]'));
+    await click(card()!.querySelector('[data-familiar-welcome-close]'));
     await click(container.querySelector('.familiar-recall')!);
     await click(document.querySelector('[aria-label="Expand Familiar"]')!);
     expect(onRecall).toHaveBeenCalledOnce();

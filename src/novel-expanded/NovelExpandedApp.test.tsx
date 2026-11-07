@@ -1352,7 +1352,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(document.querySelector('.familiar-companion .familiar-trigger'), 'the Familiar');
     await click(document.querySelector('[data-familiar-guides-open]'), 'Guides', 20);
     expect(card()?.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet-your-familiar');
-    await click(card()!.querySelector('[data-familiar-welcome-done]'), 'Done', 20);
+    await click(card()!.querySelector('[data-familiar-welcome-close]'), 'Close', 20);
     expect(card()).toBeNull();
     expect(address()).toBe('/app/');
   });

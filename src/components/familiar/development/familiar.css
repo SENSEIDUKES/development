@@ -158,14 +158,12 @@
   transform-origin: bottom right; animation: familiar-tip-pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
 .familiar-tip[data-anchor="top"] { transform-origin: top right; }
-.familiar-tip[data-touring] { width: min(24rem, calc(100vw - 24px)); }
 /* The thought bubble's tail points at the Familiar: down to it floating, up to it in the header. */
 .familiar-tip::after {
   content: ''; position: absolute; right: 2.6rem; bottom: -0.45rem; width: 0.9rem; height: 0.9rem; transform: rotate(45deg);
   background: #070c18; border-right: 1px solid rgba(226, 196, 106, 0.35); border-bottom: 1px solid rgba(226, 196, 106, 0.35);
 }
 .familiar-tip[data-anchor="below"] { transform-origin: top right; }
-.familiar-tip[data-anchor="dropped"]::after { display: none; }
 .familiar-tip[data-anchor="below"]::after { bottom: auto; top: -0.45rem; border: 0; border-left: 1px solid rgba(226, 196, 106, 0.35); border-top: 1px solid rgba(226, 196, 106, 0.35); }
 .familiar-tip[data-anchor="top"]::after { bottom: auto; top: -0.45rem; right: 6.5rem; border: 0; border-left: 1px solid rgba(226, 196, 106, 0.35); border-top: 1px solid rgba(226, 196, 106, 0.35); }
 .familiar-tip-head { display: flex; align-items: center; gap: 0.6rem; }
@@ -184,20 +182,70 @@
 .familiar-tip-done { width: 100%; }
 .familiar-tip button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
 .familiar-tip-note { margin-top: 0.5rem; font-size: 0.7rem; color: rgb(140 140 140); }
-.familiar-tip-body { margin-top: 0.5rem; }
-.familiar-tip .familiar-guide-title { font-size: 1.05rem; }
-.familiar-tip .familiar-guide-line > p { font-size: 0.9rem; line-height: 1.5; }
-.familiar-tip .familiar-clip-frame { max-height: min(24dvh, 12rem); margin-inline: auto; }
-.familiar-tip .familiar-clip-frame[data-shape="tall"] { height: min(24dvh, 12rem); }
-.familiar-tip .familiar-guide { gap: 0.45rem; }
-.familiar-tip .familiar-guide-head { margin-bottom: -0.35rem; }
-.familiar-guide-steps.is-compact { align-items: center; }
-.familiar-guide-steps.is-compact > button:not(.familiar-tip-done) { width: 2.75rem; padding: 0; justify-content: center; flex-shrink: 0; }
-.familiar-tip .familiar-guide-steps.is-compact > .familiar-tip-done { flex: 1; width: auto; justify-content: center; color: #0b1220; font-weight: 700; }
+
+/*
+ * The guide player (the Familiar's tour): an app screen, not a page. On a phone it
+ * holds the whole viewport (100dvh, nothing scrolls): progress, who is showing you
+ * and Close at the top; the recording fills the middle; what the Familiar says and
+ * Back / Next in the thumb's reach. Wider screens get the same screen as a
+ * phone-shaped sheet in the middle.
+ */
+.familiar-tip-dim[data-touring] { z-index: 10015; background: rgba(3, 6, 12, 0.72); }
+.familiar-player {
+  position: fixed; inset: 0; z-index: 10025; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; overscroll-behavior: contain;
+  padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: radial-gradient(130% 45% at 50% 0%, rgba(226, 196, 106, 0.13), transparent 62%), #05080f;
+  color: rgb(229 229 229); animation: familiar-player-rise 280ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@media (min-width: 640px) {
+  .familiar-player {
+    inset: 0; margin: auto; width: min(26rem, calc(100vw - 48px)); height: min(50rem, calc(100dvh - 48px));
+    padding: 14px 18px 18px; border-radius: 1.75rem; border: 1px solid rgba(226, 196, 106, 0.3); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  }
+}
+.familiar-guide.is-player { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.familiar-guide-progress { display: flex; gap: 4px; padding-top: 4px; }
+.familiar-guide-progress > li { flex: 1; height: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.16); transition: background-color 200ms; }
+.familiar-guide-progress > li[data-done] { background: rgba(226, 196, 106, 0.55); }
+.familiar-guide-progress > li[data-current] { background: #e2c46a; }
+.familiar-player-head { display: flex; align-items: center; gap: 0.6rem; }
+.familiar-player-head .familiar-tip-face { width: 2.25rem; height: 2.25rem; }
+.familiar-player-title { flex: 1; min-width: 0; font-size: 0.85rem; font-weight: 600; color: rgb(212 212 212); }
+.familiar-player-title:focus { outline: none; }
+.familiar-player-head .familiar-tip-close { margin: 0 -0.5rem 0 0; background: rgba(255, 255, 255, 0.06); color: rgb(229 229 229); }
+/* The stage takes all the room the words and controls leave; the recording is shown whole inside it. */
+.familiar-guide-stage { flex: 1; min-height: min(28dvh, 11rem); display: flex; border-radius: 1.25rem; background: #000; overflow: hidden; }
+.familiar-clip-frame.is-fill { flex: 1; aspect-ratio: auto; height: auto; border-radius: 0; }
+.familiar-clip-frame.is-fill .familiar-clip { width: 100%; height: 100%; max-width: none; }
+.familiar-clip-frame.is-fill .familiar-clip-toggle { inset-inline-end: 10px; bottom: 10px; }
+.familiar-guide-soon.is-stage {
+  flex: 1; flex-direction: column; justify-content: center; gap: 0.75rem; padding: 1.5rem; border: 0; border-radius: 0; text-align: center;
+  font-size: 0.85rem; color: rgb(163 163 163); background: radial-gradient(70% 55% at 50% 45%, rgba(226, 196, 106, 0.1), transparent 70%), #080d18;
+}
+.familiar-guide-soon.is-stage > svg { color: rgba(226, 196, 106, 0.7); }
+/* What the Familiar says: never pushes the controls off screen; a very long line scrolls inside itself. */
+.familiar-guide-caption { flex-shrink: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.familiar-guide-caption-head { display: flex; align-items: center; gap: 0.5rem; }
+.familiar-guide.is-player .familiar-guide-title { flex: 1; min-width: 0; font-size: 1.4rem; }
+.familiar-guide-caption > p { margin-top: 0.35rem; font-family: var(--font-serif, serif); font-size: 1rem; line-height: 1.55; color: rgb(229 229 229); }
+.familiar-guide-steps.is-player { flex-shrink: 0; align-items: center; gap: 0.75rem; }
+.familiar-guide-steps.is-player > button { padding: 0; border: 0; font-size: 1rem; }
+.familiar-guide-steps.is-player > .familiar-guide-back {
+  display: inline-grid; place-items: center; flex-shrink: 0; width: 3.25rem; height: 3.25rem; border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.18); color: rgb(229 229 229);
+}
+.familiar-guide-steps.is-player > .familiar-guide-back:disabled { opacity: 0.3; }
+.familiar-guide-steps.is-player > .familiar-guide-next {
+  display: inline-flex; flex: 1; align-items: center; justify-content: center; gap: 0.3rem; min-height: 3.25rem; padding: 0 1rem; border-radius: 9999px;
+  background: linear-gradient(180deg, #f3dc94, #e2c46a); color: #0b1220; font-size: 1rem; font-weight: 700;
+}
+.familiar-guide-steps.is-player > .familiar-tip-done { width: auto; }
+.familiar-guide-back:focus-visible, .familiar-guide-next:focus-visible, .familiar-player-head .familiar-tip-close:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
 @keyframes familiar-tip-fade { from { opacity: 0; } }
 @keyframes familiar-tip-pop { from { opacity: 0; transform: scale(0.85); } }
+@keyframes familiar-player-rise { from { opacity: 0; transform: translateY(24px); } }
 @media (prefers-reduced-motion: reduce) {
-  .familiar-tip, .familiar-tip-dim { animation: none; }
+  .familiar-tip, .familiar-tip-dim, .familiar-player { animation: none; }
 }
 
 /* One guide, wherever it is watched (FamiliarGuideView): the Familiar page's Guides and the Familiar's own card. */

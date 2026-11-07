@@ -103,7 +103,10 @@
 .familiar-helper form { display: flex; gap: 6px; margin-top: 10px; }
 .familiar-helper input { flex: 1; min-width: 0; min-height: 44px; border: 0; border-radius: 14px; padding: 8px 12px; background: #ffffff12; color: inherit; font-size: 16px; }
 /* The icon row: info, the microphone, typing. The microphone shows what the Familiar is doing: a pulse while it listens, a glow while it speaks. */
-.familiar-helper-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; padding: 8px 4px; }
+.familiar-helper-bottom { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; margin-top: 4px; padding: 8px 4px; }
+/* Info and this screen's quick actions (Guides) on the left, the microphone in the middle, typing or the conversation on the right. */
+.familiar-helper-bottom-side { display: flex; align-items: center; gap: 4px; }
+.familiar-helper-bottom-side.is-end { justify-content: flex-end; }
 .familiar-helper .familiar-helper-mic { width: 54px; height: 54px; border-radius: 50%; background: #8bdbff2e; }
 /* Lit only while it hears the reader: a ring that ripples outward and fades. */
 .familiar-helper .familiar-helper-mic[data-phase="listening"], .familiar-helper .familiar-helper-mic[data-phase="live"] { opacity: 1; background: #8bdbff59; color: #fff; animation: familiar-listening 1.4s ease-out infinite; }
@@ -158,14 +161,12 @@
   transform-origin: bottom right; animation: familiar-tip-pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
 .familiar-tip[data-anchor="top"] { transform-origin: top right; }
-.familiar-tip[data-touring] { width: min(24rem, calc(100vw - 24px)); }
 /* The thought bubble's tail points at the Familiar: down to it floating, up to it in the header. */
 .familiar-tip::after {
   content: ''; position: absolute; right: 2.6rem; bottom: -0.45rem; width: 0.9rem; height: 0.9rem; transform: rotate(45deg);
   background: #070c18; border-right: 1px solid rgba(226, 196, 106, 0.35); border-bottom: 1px solid rgba(226, 196, 106, 0.35);
 }
 .familiar-tip[data-anchor="below"] { transform-origin: top right; }
-.familiar-tip[data-anchor="dropped"]::after { display: none; }
 .familiar-tip[data-anchor="below"]::after { bottom: auto; top: -0.45rem; border: 0; border-left: 1px solid rgba(226, 196, 106, 0.35); border-top: 1px solid rgba(226, 196, 106, 0.35); }
 .familiar-tip[data-anchor="top"]::after { bottom: auto; top: -0.45rem; right: 6.5rem; border: 0; border-left: 1px solid rgba(226, 196, 106, 0.35); border-top: 1px solid rgba(226, 196, 106, 0.35); }
 .familiar-tip-head { display: flex; align-items: center; gap: 0.6rem; }
@@ -176,24 +177,66 @@
 .familiar-tip-close { display: inline-grid; place-items: center; width: 2.75rem; height: 2.75rem; margin: -0.4rem -0.5rem -0.4rem 0; border-radius: 9999px; color: rgb(163 163 163); }
 .familiar-tip-line { margin-top: 0.6rem; font-family: var(--font-serif, serif); font-size: 0.95rem; line-height: 1.5; color: rgb(229 229 229); }
 .familiar-tip-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
-.familiar-tip-actions > button, .familiar-tip-done {
+.familiar-tip-actions > button {
   flex: 1; min-height: 2.75rem; padding: 0 0.9rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.2);
   font-size: 0.85rem; font-weight: 600; color: rgb(229 229 229);
 }
-.familiar-tip-actions > button.is-primary, .familiar-tip-done { border-color: transparent; background: linear-gradient(180deg, #f3dc94, #e2c46a); color: #0b1220; }
-.familiar-tip-done { width: 100%; }
+.familiar-tip-actions > button.is-primary { border-color: transparent; background: linear-gradient(180deg, #f3dc94, #e2c46a); color: #0b1220; }
 .familiar-tip button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
 .familiar-tip-note { margin-top: 0.5rem; font-size: 0.7rem; color: rgb(140 140 140); }
-.familiar-tip-body { margin-top: 0.5rem; }
-.familiar-tip .familiar-guide-title { font-size: 1.05rem; }
-.familiar-tip .familiar-guide-line > p { font-size: 0.9rem; line-height: 1.5; }
-.familiar-tip .familiar-clip-frame { max-height: min(24dvh, 12rem); margin-inline: auto; }
-.familiar-tip .familiar-clip-frame[data-shape="tall"] { height: min(24dvh, 12rem); }
-.familiar-tip .familiar-guide { gap: 0.45rem; }
-.familiar-tip .familiar-guide-head { margin-bottom: -0.35rem; }
-.familiar-guide-steps.is-compact { align-items: center; }
-.familiar-guide-steps.is-compact > button:not(.familiar-tip-done) { width: 2.75rem; padding: 0; justify-content: center; flex-shrink: 0; }
-.familiar-tip .familiar-guide-steps.is-compact > .familiar-tip-done { flex: 1; width: auto; justify-content: center; color: #0b1220; font-weight: 700; }
+
+/*
+ * A guide in the Familiar's card (the Familiar's one media spot), in place of its topics and
+ * actions, with the microphone still under it: the recording with the guides' progress, Close
+ * and Hear laid over it; under it Back, the title and what the Familiar says, and Next (Done on
+ * the last).
+ */
+.familiar-helper-guide { padding: 2px 0 4px; }
+.familiar-guide.is-in-card { display: flex; flex-direction: column; gap: 4px; }
+.familiar-guide.is-in-card .familiar-guide-stage { position: relative; display: flex; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: #000; }
+.familiar-guide.is-in-card .familiar-guide-stage:has(.familiar-clip-frame[data-shape="tall"]) { aspect-ratio: 9 / 16; max-height: 30dvh; }
+.familiar-helper .familiar-guide.is-in-card .familiar-clip-frame { margin: 0; height: auto; }
+.familiar-clip-frame.is-fill { flex: 1; aspect-ratio: auto; height: auto; border-radius: 0; }
+.familiar-clip-frame.is-fill .familiar-clip { width: 100%; height: 100%; max-width: none; }
+.familiar-guide.is-in-card .familiar-clip-toggle { inset-inline-end: 0; bottom: 0; background: transparent; }
+.familiar-guide.is-in-card .familiar-clip-toggle > svg { padding: 6px; box-sizing: content-box; border-radius: 999px; background: #000a; }
+.familiar-guide-soon.is-stage {
+  flex: 1; flex-direction: column; justify-content: center; gap: 0.3rem; padding: 0.5rem 0.75rem 1.75rem; border: 0; border-radius: 0; text-align: center;
+  font-size: 0.75rem; color: rgb(163 163 163); background: radial-gradient(70% 60% at 50% 45%, rgba(226, 196, 106, 0.12), transparent 70%), #080d18;
+}
+.familiar-guide-soon.is-stage > svg { color: rgba(226, 196, 106, 0.75); }
+.familiar-guide-progress { position: absolute; top: 7px; left: 10px; right: 46px; display: flex; gap: 3px; pointer-events: none; }
+.familiar-guide-progress > li { flex: 1; height: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.28); }
+.familiar-guide-progress > li[data-done] { background: rgba(226, 196, 106, 0.6); }
+.familiar-guide-progress > li[data-current] { background: #e2c46a; }
+/* Close and Hear sit on the recording's top-right and bottom-left corners: 44px to touch, small to see. */
+.familiar-guide-close, .familiar-guide.is-in-card .familiar-guide-hear {
+  position: absolute; display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 0; background: transparent; color: #fff;
+}
+.familiar-guide-close { top: 0; right: 0; }
+.familiar-guide.is-in-card .familiar-guide-hear { bottom: 0; left: 0; }
+.familiar-guide-close > svg, .familiar-guide.is-in-card .familiar-guide-hear > svg { padding: 6px; box-sizing: content-box; border-radius: 999px; background: #000a; }
+.familiar-guide-bar { display: flex; align-items: center; gap: 4px; }
+.familiar-guide-bar > .familiar-guide-back, .familiar-guide-bar > .familiar-guide-next {
+  display: inline-grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; padding: 0; border-radius: 999px; color: rgb(229 229 229);
+}
+.familiar-guide-bar > .familiar-guide-back:disabled { opacity: 0.3; }
+.familiar-guide-bar > .familiar-guide-next { background: linear-gradient(180deg, #f3dc94, #e2c46a); color: #0b1220; }
+.familiar-guide-caption { flex: 1; min-width: 0; padding: 2px 4px; }
+.familiar-guide.is-in-card .familiar-guide-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--font-sans, sans-serif); font-style: normal; font-size: 0.85rem; font-weight: 700; line-height: 1.25; color: #f4f4f5; }
+.familiar-guide-line-toggle { display: block; width: 100%; padding: 0; text-align: start; font-size: 0.78rem; line-height: 1.4; color: rgb(190 190 190); cursor: pointer; }
+.familiar-guide-line-toggle > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.familiar-guide-line-toggle[aria-expanded="true"] > span { display: block; }
+.familiar-guide.is-in-card button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: -2px; }
+/* The card's own button style (padding, hover) stays off the guide's controls. */
+.familiar-helper .familiar-guide.is-in-card :is(.familiar-guide-close, .familiar-guide-hear, .familiar-clip-toggle) { padding: 0; border-radius: 0; background: transparent; }
+.familiar-helper .familiar-guide.is-in-card .familiar-guide-bar > :is(.familiar-guide-back, .familiar-guide-next) { padding: 0; border-radius: 999px; }
+.familiar-helper .familiar-guide.is-in-card .familiar-guide-bar > .familiar-guide-next { background: linear-gradient(180deg, #f3dc94, #e2c46a); color: #0b1220; }
+@media (hover: hover) {
+  .familiar-helper .familiar-guide.is-in-card .familiar-guide-bar > .familiar-guide-next:hover:not(:disabled):not([data-phase="listening"]):not([data-phase="live"]) { background: linear-gradient(180deg, #f7e4a8, #e8cc77); }
+}
+.familiar-helper .familiar-guide.is-in-card .familiar-guide-line-toggle { display: block; min-height: 0; padding: 0; border-radius: 0; text-align: start; }
+.familiar-guide-close > svg, .familiar-guide.is-in-card .familiar-guide-hear > svg, .familiar-guide.is-in-card .familiar-clip-toggle > svg { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18); }
 @keyframes familiar-tip-fade { from { opacity: 0; } }
 @keyframes familiar-tip-pop { from { opacity: 0; transform: scale(0.85); } }
 @media (prefers-reduced-motion: reduce) {

@@ -11,7 +11,7 @@
 > context.
 
 - **Created:** 2026-09-29
-- **Last updated:** 2026-11-06
+- **Last updated:** 2026-11-07
 - **Owner:** SENSEI, SEIHouse Productions
 
 ## The two rules everything follows
@@ -669,6 +669,12 @@ entries run to 2026-11-06.
       docs, and knows which chapter the reader has open. **It never reveals a
       spoiler unless the reader explicitly asks for one**: nothing from after
       the chapter they have open, and no card they have not reached.
+      **The media spot and lenses (2026-11-07, SENSEI):** the frame on the
+      Familiar's card becomes its one media spot (guides, what it looked at,
+      what it found, the camera), and the camera becomes one more accessibility
+      lens, with on-device eye, blink and nod control. A fourth live talk engine
+      made of open models can run on SEIHouse's own servers.
+      [The plan](./docs/familiar-media-spot.md).
   - **Story Settings are in the app, off the developer page** (piece 4). The
     story's own settings, the only place a reader meets the HARNESS:
     - **On Story View**, closed until opened: the Story Language (fixed when the
@@ -1248,6 +1254,11 @@ where it stands; this list was checked against the code on 2026-11-06.
   names, the look writer), cards added by chapters, and the owner's open
   questions.
 - [CTE consequences](./docs/cte-consequences.md): direction, none built.
+- [The Familiar's media spot and its lenses](./docs/familiar-media-spot.md):
+  phase A, guides playing in the Familiar's card with its microphone, is built. Open: B, pictures in the
+  frame; C, Show the Familiar something (one photo); D, the open-model live
+  talk engine on SEIHouse's own server; E, on-device eye, blink and nod control;
+  F, live video talk.
 - [Discover](./docs/discover-page.md): structure built on samples. Open: real
   worlds and releases, Tracker, signals, community lists, credits pages, branch
   lineage, curated reviews, the posting guardrails, series status and content

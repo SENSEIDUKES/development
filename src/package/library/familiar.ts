@@ -15,6 +15,6 @@ export * from '../../components/familiar-training/development';
 export * from '../../library/familiars/helper';
 export * from '../../library/familiars/actionList';
 export * from '../../library/familiars/spokenCodes';
-export { FamiliarHelperProvider, FamiliarHelperAction, FamiliarGuidesAction, useFamiliarHelperContext, useFamiliarReadAloud, type FamiliarGuidesConfig } from '../../components/familiar/development/FamiliarHelper';
+export { FamiliarHelperProvider, FamiliarHelperAction, useFamiliarHelperContext, useFamiliarReadAloud, type FamiliarGuidesConfig } from '../../components/familiar/development/FamiliarHelper';
 export * from '../../library/familiars/helpTopics';
 export { FamiliarPlace } from '../../library/familiars/FamiliarPlace';

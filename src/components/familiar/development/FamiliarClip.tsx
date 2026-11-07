@@ -7,15 +7,17 @@ import './familiar.css';
  * clip on its card, a guide on the Familiar page. It loops without sound,
  * waits for a tap where the reader asked for less motion, and can always be
  * paused from the keyboard. It shows the whole recording, wide or tall: the
- * frame follows the video's own shape once it loads (`data-shape`).
+ * frame follows the video's own shape once it loads (`data-shape`). With
+ * `fill`, it fills the space it is given instead (the guide player's stage),
+ * still showing the whole recording.
  */
-export function FamiliarClip({ src, label, className = '' }: { src: string; label: string; className?: string }) {
+export function FamiliarClip({ src, label, className = '', fill = false }: { src: string; label: string; className?: string; fill?: boolean }) {
   const clip = useRef<HTMLVideoElement>(null);
   const [reducedMotion] = useState(() => typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches));
   const [playing, setPlaying] = useState(false);
   const [shape, setShape] = useState<'wide' | 'tall' | null>(null);
   return (
-    <div className={`familiar-clip-frame ${className}`.trim()} data-shape={shape ?? undefined} data-familiar-clip>
+    <div className={`familiar-clip-frame ${fill ? 'is-fill' : ''} ${className}`.replace(/\s+/g, ' ').trim()} data-shape={shape ?? undefined} data-familiar-clip>
       <video ref={clip} key={src} className="familiar-clip" src={src} autoPlay={!reducedMotion} muted loop playsInline preload="metadata"
         aria-label={label} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
         onLoadedMetadata={event => {

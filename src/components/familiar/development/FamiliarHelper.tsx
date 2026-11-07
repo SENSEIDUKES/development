@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, 
 import { createPortal } from 'react-dom';
 import { useOverlayScrollbar } from '@seihouse/ui';
 import { FamiliarClip } from './FamiliarClip';
+import { FamiliarGuideView } from './FamiliarGuideView';
 import { FamiliarWelcome } from './FamiliarWelcome';
 import type { FamiliarGuide, FamiliarOption } from '../shared/familiar';
 import { SpokenCode, SpokenCodesProvider } from '@seihouse/sen/presentation';
@@ -11,13 +12,13 @@ import { FAMILIAR_BACK_ACTION_ID, FAMILIAR_WAKE_WORD, FamiliarHelperController, 
 import { useFamiliarPanelDrag } from './useFamiliarPanelDrag';
 
 import { FamiliarHelperContextValue as Helper } from './familiarHelperContext';
-/** The Familiar's guides: its Guides button opens its card, wherever the reader is. */
-const Guides = createContext<{ open(): void } | null>(null);
-
 /**
- * What the Familiar teaches, and who is teaching. The card is the Familiar's
- * own: its Guides button opens it on any page, and a reader who has not met
- * it yet sees it once, greeting them (`welcome`). Nothing navigates.
+ * What the Familiar teaches, and who is teaching. The guides play in the
+ * Familiar's own card, in place of its topics and actions, from the Guides
+ * button beside its microphone, in whichever mode the card is in: the reader
+ * watches, follows along on the page and talks to it in one place. A reader
+ * who has not met it yet is greeted once (`welcome`), and Show me around
+ * opens the card on the guides. Nothing navigates.
  */
 export interface FamiliarGuidesConfig {
   guides: readonly FamiliarGuide[];
@@ -108,17 +109,19 @@ export function FamiliarHelperProvider({ voice, live, wake, familiar, guides, la
     document.addEventListener('visibilitychange', hide);
     return () => { document.removeEventListener('visibilitychange', hide); helper.suspend(); };
   }, [helper]);
-  // The guide card: closed, greeting (once, for a reader who has not met the Familiar) or showing guides.
-  const [card, setCard] = useState<'hello' | 'guides' | null>(null);
+  // The greeting, once, for a reader who has not met the Familiar.
+  const [hello, setHello] = useState(false);
   const welcome = Boolean(guides?.welcome);
-  useEffect(() => { if (welcome) setCard(current => current ?? 'hello'); }, [welcome]);
-  const guideControl = useMemo(() => guides?.guides.length ? { open: () => setCard('guides') } : null, [guides?.guides.length]);
-  const closeCard = () => { if (guides?.welcome) guides.onWelcomed?.(); setCard(null); };
-  return <Helper.Provider value={helper}><Guides.Provider value={guideControl}><FocusReturn.Provider value={returnFocus}><FamiliarCodes helper={helper}>{children}<FamiliarHelperPanel helper={helper} bottomInset={Math.max(16, bottomInset)} /></FamiliarCodes>
+  useEffect(() => { if (welcome) setHello(true); }, [welcome]);
+  // The guide playing in the Familiar's card, if any.
+  const [guideAt, setGuideAt] = useState<number | null>(null);
+  const answered = () => { if (guides?.welcome) guides.onWelcomed?.(); setHello(false); };
+  return <Helper.Provider value={helper}><FocusReturn.Provider value={returnFocus}><FamiliarCodes helper={helper}>{children}
+    <FamiliarHelperPanel helper={helper} bottomInset={Math.max(16, bottomInset)} guides={guides} guideAt={guideAt} onGuide={setGuideAt} /></FamiliarCodes>
     {wake?.available && <FamiliarWakeListener helper={helper} wake={wake} language={language} />}
-    {card && guides ? <FamiliarWelcome key={card === 'hello' ? 'hello' : 'guides'} familiar={guides.familiar} name={guides.name} guides={guides.guides} onGuideSeen={guides.onSeen}
-      startWith={card === 'hello' ? 'greeting' : 'guides'} bottomInset={bottomInset} onClose={closeCard} /> : null}
-    </FocusReturn.Provider></Guides.Provider></Helper.Provider>;
+    {hello && guides ? <FamiliarWelcome familiar={guides.familiar} name={guides.name} hasGuides={guides.guides.length > 0} bottomInset={bottomInset}
+      onTour={() => { answered(); setGuideAt(0); helper.open(); }} onClose={answered} /> : null}
+    </FocusReturn.Provider></Helper.Provider>;
 }
 
 /**
@@ -179,17 +182,6 @@ export function useFamiliarHelperContext(context: FamiliarHelperContext, level: 
   }, [helper]);
 }
 
-/**
- * The Familiar's Guides button, in its tray (floating) and its header actions:
- * its card of guides opens beside it, on the page the reader is on.
- */
-export function FamiliarGuidesAction({ onOpen }: { onOpen?: () => void }) {
-  const guides = useContext(Guides);
-  if (!guides) return null;
-  return <button type="button" className="familiar-action" aria-label="Guides" title="Guides" data-familiar-guides-open
-    onClick={() => { onOpen?.(); guides.open(); }}><Compass aria-hidden size={21} /></button>;
-}
-
 /** The same action appears in the header tray and floating Familiar. */
 export function FamiliarHelperAction({ onOpen, focusTarget }: { onOpen?: () => void; focusTarget?: () => HTMLElement | null }) {
   const helper = useContext(Helper);
@@ -215,9 +207,14 @@ function ShowMore({ open, more, label, onToggle }: { open: boolean; more: number
  * A small nonmodal surface, mobile first: the two modes as icons, then what
  * this place offers in that mode (Explain's topics, with a clip where one
  * exists; Action's choices), then the microphone. How to talk to it is behind
- * the info button, never on the panel itself.
+ * the info button, never on the panel itself. Its middle is the Familiar's one
+ * media spot: the Guides button beside the microphone plays a guide there, in
+ * place of the topics and actions, in whichever mode the card is in.
  */
-function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperController; bottomInset: number }) {
+function FamiliarHelperPanel({ helper, bottomInset, guides, guideAt, onGuide }: {
+  helper: FamiliarHelperController; bottomInset: number;
+  guides?: FamiliarGuidesConfig; guideAt: number | null; onGuide: (at: number | null) => void;
+}) {
   const state = useSyncExternalStore(helper.subscribe, helper.getSnapshot, helper.getSnapshot);
   const [text, setText] = useState('');
   const [typing, setTyping] = useState(false);
@@ -241,6 +238,8 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
   }, [state.open, state.proposal, state.context?.key]);
   useEffect(() => { setText(''); setTyping(false); setInfo(false); }, [state.open, state.context?.key]);
   useEffect(() => { setChat(false); setSaid(''); }, [state.open]);
+  // Closing the card ends the guide; opening it from its Guides button starts one.
+  useEffect(() => { if (!state.open) onGuide(null); }, [state.open]); // eslint-disable-line react-hooks/exhaustive-deps
   // A message that never reached the conversation comes back to the box, to send again.
   useEffect(() => { if (state.unsent !== undefined) { const unsent = helper.takeUnsent(); if (unsent) { setSaid(unsent); setChat(true); } } }, [helper, state.unsent]);
   // The newest line stays in view as the conversation goes on.
@@ -285,7 +284,7 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
       <div className="familiar-helper-modes" role="group" aria-label="Familiar mode">
         {([['explain', 'Explain', Lightbulb], ['action', 'Action', Zap]] as const).map(([mode, label, Icon]) =>
           <button type="button" key={mode} aria-pressed={state.mode === mode && !info} aria-label={label} title={label}
-            disabled={busy || Boolean(state.proposal)} onClick={() => { helper.useText(); setTyping(false); setInfo(false); setChat(false); helper.setMode(mode); }}>
+            disabled={busy || Boolean(state.proposal)} onClick={() => { helper.useText(); setTyping(false); setInfo(false); setChat(false); onGuide(null); helper.setMode(mode); }}>
             <Icon size={20} aria-hidden /></button>)}
       </div>
       <button type="button" className="familiar-helper-drag-handle" aria-label="Move Familiar card" aria-describedby={dragInstructions}
@@ -325,6 +324,13 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
         <input aria-label={`Message ${helper.name}`} placeholder={`Message ${helper.name}`} value={said} maxLength={500} onChange={event => setSaid(event.target.value)} />
         <button type="submit" className="familiar-helper-icon" aria-label="Send" disabled={!said.trim()}><SendHorizontal size={20} aria-hidden /></button>
       </form>
+    </div>
+
+    : guideAt !== null && guides?.guides.length ? <div className="familiar-helper-guide" data-familiar-guides-playing>
+      <FamiliarGuideView inCard guides={guides.guides} at={Math.min(guideAt, guides.guides.length - 1)} name={guides.name ?? guides.familiar.name}
+        onSeen={guides.onSeen} onStep={by => onGuide(Math.min(guides.guides.length - 1, Math.max(0, guideAt + by)))}
+        head={<button type="button" className="familiar-guide-close" aria-label="Close guides" onClick={() => onGuide(null)} data-familiar-guides-close><X size={16} aria-hidden /></button>}
+        foot={<button type="button" className="familiar-guide-next" aria-label="Done" onClick={() => onGuide(null)} data-familiar-guides-done><Check size={20} aria-hidden /></button>} />
     </div>
 
     : state.mode === 'explain' ? <>
@@ -368,8 +374,14 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
       <ArrowLeft size={18} aria-hidden />{state.proposal ? 'Back out' : 'Take me back'}</button>}
 
     <div className="familiar-helper-bottom">
+      <div className="familiar-helper-bottom-side">
       <button type="button" className="familiar-helper-icon" aria-label="How to talk to your Familiar" title="How to talk to your Familiar"
         aria-pressed={info} onClick={() => { setChat(false); setInfo(!info); }}><Info size={20} aria-hidden /></button>
+      {/* This screen's quick actions sit by the microphone: the guides play right here, in the mode the card is in. */}
+      {guides?.guides.length ? <button type="button" className="familiar-helper-icon" aria-label="Guides" title="Guides" aria-pressed={guideAt !== null}
+        disabled={busy || Boolean(state.proposal)} data-familiar-guides-open
+        onClick={() => { setInfo(false); setChat(false); setTyping(false); onGuide(guideAt === null ? 0 : null); }}><Compass size={20} aria-hidden /></button> : null}
+      </div>
       <button type="button" className="familiar-helper-mic" data-phase={state.live ? (!state.live.listening ? 'ready' : state.live.status === 'on' ? 'live' : 'connecting') : state.phase}
         aria-label={micLabel} title={micLabel} aria-pressed={Boolean(state.live?.listening) || state.phase === 'listening'} disabled={busy && !state.live}
         onClick={() => {
@@ -379,11 +391,13 @@ function FamiliarHelperPanel({ helper, bottomInset }: { helper: FamiliarHelperCo
           if (state.phase === 'speaking') helper.quiet(); helper.listen();
         }}>
         {state.live?.listening && state.live.status === 'on' ? <Square size={22} aria-hidden /> : <Mic size={26} aria-hidden />}</button>
+      <div className="familiar-helper-bottom-side is-end">
       {helper.live
         ? <button type="button" className="familiar-helper-icon" aria-label="Conversation" title="Read and type to your Familiar" aria-pressed={chat}
           onClick={() => { setInfo(false); setTyping(false); setChat(!chat); }}><MessagesSquare size={20} aria-hidden /></button>
         : <button type="button" className="familiar-helper-icon" aria-label="Type instead" title="Type instead" aria-pressed={typing}
           disabled={Boolean(state.proposal)} onClick={() => { if (typing) setTyping(false); else type(); }}><Keyboard size={20} aria-hidden /></button>}
+      </div>
     </div>
   </div>, document.body);
 }

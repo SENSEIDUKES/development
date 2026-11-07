@@ -15,7 +15,6 @@ export function StorySeedPlugins({ writer }: { writer?: ReactNode }) {
   return <div className="space-y-4" data-testid="story-seed-plugins">
     {writer && <section aria-labelledby="plugins-writer" className="space-y-2">
       <h3 id="plugins-writer" className={groupTitle}>Writer</h3>
-      <p className={groupHelp}>The skills every chapter is written with.</p>
       {writer}
     </section>}
     <details className="rounded-xl border border-neutral-800/80 bg-[#080b17]/80 p-3" data-testid="plugins-advanced">

@@ -704,7 +704,7 @@ describe("Cleaned-up Blueprint instructions", () => {
     ]) expect(both).not.toContain(removed);
     // The writer's skeleton (SENSEI, 2026-11-06): who it is, then the Origin, World and Arc skills
     // under How to build, then how to read the Seed, how to return the Blueprint, and the hard rules.
-    const order = ["# ROLE AND MISSION", "# HOW TO BUILD", "[Origin] SEN Eastern Fantasy 1.1.0", "[World] SEN World Builder 1.2.0", "[Arc] SEN Arc Planner 1.1.0",
+    const order = ["# ROLE AND MISSION", "# HOW TO BUILD", "[Origin] SEN Eastern Fantasy 1.2.0", "[World] SEN World Builder 1.2.0", "[Arc] SEN Arc Planner 1.1.0",
       "# HOW TO READ THE STORY SEED", "The creator's words\n", "# HOW TO RETURN THE BLUEPRINT", "One name for one thing\n", "# HARD RULES"]
       .map(heading => systemInstruction.indexOf(heading));
     expect(order.every(index => index >= 0)).toBe(true);

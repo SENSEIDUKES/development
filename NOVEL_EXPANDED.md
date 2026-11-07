@@ -1255,7 +1255,7 @@ where it stands; this list was checked against the code on 2026-11-06.
   questions.
 - [CTE consequences](./docs/cte-consequences.md): direction, none built.
 - [The Familiar's media spot and its lenses](./docs/familiar-media-spot.md):
-  phase A, the mini guide player in the corner, is built. Open: B, pictures in the
+  phase A, guides playing in the Familiar's card with its microphone, is built. Open: B, pictures in the
   frame; C, Show the Familiar something (one photo); D, the open-model live
   talk engine on SEIHouse's own server; E, on-device eye, blink and nod control;
   F, live video talk.

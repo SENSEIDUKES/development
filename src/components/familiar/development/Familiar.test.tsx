@@ -68,6 +68,8 @@ const GUIDES = [
 ];
 const guidesButton = () => document.querySelector<HTMLButtonElement>('[aria-label="Guides"]');
 const card = () => document.querySelector<HTMLElement>('[data-familiar-welcome]');
+const helperCard = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Familiar"]');
+const playing = () => document.querySelector<HTMLElement>('[data-familiar-guides-playing]');
 
 describe('Familiar sprite playback', () => {
   it.each(familiarCatalogue.map(entry => entry.definition))('holds every $displayName idle frame six times longer in companion mode', familiar => {
@@ -388,7 +390,7 @@ describe('Familiar tray', () => {
     expect(status.textContent).toBe('Familiar artwork could not load.');
   });
 
-  it('carries the Familiar’s Guides in its tray, not Energy; they open its own card beside it, and nothing navigates', async () => {
+  it('carries the Familiar’s Guides in its tray, not Energy; they play in its own card, mic and all, and nothing navigates', async () => {
     const before = window.location.href;
     await act(async () => root.render(<FamiliarHelperProvider voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption }}>
       <FamiliarCompanion familiar={celestialGuardian} />
@@ -396,69 +398,58 @@ describe('Familiar tray', () => {
     const pet = () => document.querySelector<HTMLElement>('.familiar-companion .familiar-trigger')!;
     await click(pet());
     expect(document.querySelector('[aria-label="Show Energy"]')).toBeNull();
-    expect(card()).toBeNull();
+    expect(playing()).toBeNull();
     await click(guidesButton());
-    expect(card()).toBeTruthy();
-    expect(card()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet');
-    // The guides play in the mini player in a corner: nothing dims or traps focus, so the page stays in use.
-    expect(card()!.classList.contains('familiar-mini')).toBe(true);
-    expect(card()!.getAttribute('data-corner')).toBe('bottom-left');
-    expect(card()!.hasAttribute('aria-modal')).toBe(false);
-    expect(document.querySelector('[data-familiar-welcome-dim]')).toBeNull();
-    expect(card()!.querySelectorAll('.familiar-guide-progress > li')).toHaveLength(2);
+    // The guide plays in the Familiar's card, in place of its topics, with the microphone still under it. No second window.
+    expect(card()).toBeNull();
+    expect(playing()!.closest('[aria-label="Familiar"]')).toBe(helperCard());
+    expect(helperCard()!.querySelector('.familiar-helper-mic')).toBeTruthy();
+    expect(helperCard()!.querySelector('[aria-label="Familiar topics"]')).toBeNull();
+    expect(playing()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet');
+    expect(playing()!.querySelectorAll('.familiar-guide-progress > li')).toHaveLength(2);
     // What the Familiar says shows two lines; a tap shows all of it.
-    const whole = card()!.querySelector<HTMLButtonElement>('.familiar-guide-line-toggle')!;
+    const whole = playing()!.querySelector<HTMLButtonElement>('.familiar-guide-line-toggle')!;
     expect(whole.getAttribute('aria-expanded')).toBe('false');
     await click(whole);
     expect(whole.getAttribute('aria-expanded')).toBe('true');
     // Back waits on the first guide, and Done comes on the last.
-    expect(card()!.querySelector<HTMLButtonElement>('[data-familiar-guide-step="previous"]')!.disabled).toBe(true);
-    expect(card()!.querySelector('[data-familiar-welcome-done]')).toBeNull();
-    await click(card()!.querySelector('[data-familiar-guide-step="next"]'));
-    expect(card()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('seed');
-    expect(card()!.querySelector('[data-familiar-guide-step="next"]')).toBeNull();
+    expect(playing()!.querySelector<HTMLButtonElement>('[data-familiar-guide-step="previous"]')!.disabled).toBe(true);
+    expect(playing()!.querySelector('[data-familiar-guides-done]')).toBeNull();
+    await click(playing()!.querySelector('[data-familiar-guide-step="next"]'));
+    expect(playing()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('seed');
+    expect(playing()!.querySelector('[data-familiar-guide-step="next"]')).toBeNull();
     // The last guide does not wrap around to the first.
-    act(() => { card()!.querySelector('[data-familiar-guide-open]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
-    expect(card()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('seed');
-    await click(card()!.querySelector('[data-familiar-welcome-done]'));
-    expect(card()).toBeNull();
+    act(() => { playing()!.querySelector('[data-familiar-guide-open]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
+    expect(playing()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('seed');
+    // Done gives the card its topics back; the card stays open.
+    await click(playing()!.querySelector('[data-familiar-guides-done]'));
+    expect(playing()).toBeNull();
+    expect(helperCard()).toBeTruthy();
     expect(window.location.href).toBe(before);
-    // It can always be opened again.
+    // Choosing Explain or Action ends a guide too, and closing the card ends it.
+    await click(guidesButton());
+    expect(playing()).toBeTruthy();
+    await click(helperCard()!.querySelector('[aria-label="Action"]'));
+    expect(playing()).toBeNull();
+    await click(guidesButton());
+    await click(helperCard()!.querySelector('[aria-label="Close Familiar"]'));
+    expect(helperCard()).toBeNull();
+    // Opened to talk, the card shows its topics, not the guide it was closed on.
     await click(pet());
-    await click(guidesButton());
-    expect(card()).toBeTruthy();
+    await click(document.querySelector('[aria-label="Talk to Familiar"]'));
+    expect(helperCard()).toBeTruthy();
+    expect(playing()).toBeNull();
   });
 
-  it('lets the reader drag the mini player, which settles in the nearest corner; a tap does not move it', async () => {
-    await act(async () => root.render(<FamiliarHelperProvider voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption }}>
-      <FamiliarCompanion familiar={celestialGuardian} />
-    </FamiliarHelperProvider>));
-    await click(document.querySelector<HTMLElement>('.familiar-companion .familiar-trigger'));
-    await click(guidesButton());
-    const press = (type: string, x: number, y: number) => act(() => {
-      card()!.querySelector('.familiar-guide-stage')!.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX: x, clientY: y }));
-    });
-    press('pointerdown', 300, 700); press('pointermove', 302, 701); press('pointerup', 302, 701);
-    expect(card()!.getAttribute('data-corner')).toBe('bottom-left');
-    // jsdom lays nothing out, so the dragged player's middle is the top-left of the screen.
-    press('pointerdown', 300, 700); press('pointermove', 200, 300);
-    expect(card()!.hasAttribute('data-moving')).toBe(true);
-    press('pointerup', 200, 300);
-    expect(card()!.getAttribute('data-corner')).toBe('top-left');
-    expect(card()!.hasAttribute('data-moving')).toBe(false);
-  });
-
-  it('greets a reader who has not met it once, from its own card; either answer is remembered', async () => {
+  it('greets a reader who has not met it once; Show me around opens its card on the guides, and either answer is remembered', async () => {
     const onWelcomed = vi.fn();
     await act(async () => root.render(<FamiliarHelperProvider voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption, welcome: true, onWelcomed }}>
       <FamiliarCompanion familiar={celestialGuardian} />
     </FamiliarHelperProvider>));
     expect(card()?.textContent).toContain('I’m Celestial Guardian.');
     await click(card()!.querySelector('[data-familiar-welcome-tour]'));
-    expect(card()!.querySelector('[data-familiar-guide-open]')).toBeTruthy();
-    expect(onWelcomed).not.toHaveBeenCalled();
-    // Close works at any guide.
-    await click(card()!.querySelector('[data-familiar-welcome-close]'));
+    expect(card()).toBeNull();
+    expect(playing()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet');
     expect(onWelcomed).toHaveBeenCalledOnce();
   });
 
@@ -721,11 +712,12 @@ describe('Header Familiar actions', () => {
     expect(container.querySelector('[role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Waving');
     expect(document.querySelector('[aria-label="Show Energy"]')).toBeNull();
     await click(guidesButton());
-    expect(card()).toBeTruthy();
-    // The guides open straight in the mini player.
-    expect(card()!.hasAttribute('data-touring')).toBe(true);
+    // The guides open in the Familiar's card, even while it waits in the header.
+    expect(playing()).toBeTruthy();
     expect(onRecall).not.toHaveBeenCalled();
-    await click(card()!.querySelector('[data-familiar-welcome-close]'));
+    await click(playing()!.querySelector('[data-familiar-guides-close]'));
+    expect(playing()).toBeNull();
+    await click(helperCard()!.querySelector('[aria-label="Close Familiar"]'));
     await click(container.querySelector('.familiar-recall')!);
     await click(document.querySelector('[aria-label="Expand Familiar"]')!);
     expect(onRecall).toHaveBeenCalledOnce();

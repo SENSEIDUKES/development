@@ -2,7 +2,7 @@
 
 - **Created:** 2026-11-07
 - **Owner:** SENSEI
-- **Status:** phase A built (the mini guide player). Phases B to F are direction, not built.
+- **Status:** phase A built (guides play in the Familiar's card). Phases B to F are direction, not built.
   [`NOVEL_EXPANDED.md`](../NOVEL_EXPANDED.md) stays the source of truth for what
   is built.
 - **Source:** a conversation with SENSEI on 2026-11-07, after trying
@@ -81,14 +81,17 @@ for NPCs. **It is a matter of timing, not a blocker.**
 
 ## The phases
 
-- **A. The mini guide player (built 2026-11-07).** The media spot as a
-  minimized video in a corner, like YouTube's mini player: the reader keeps
-  using the page while the guide plays, so they can follow along. Nothing dims.
-  The recording with the guides' progress, Close and Hear over it; under it
-  Back, the title and what the Familiar says (tap for all of it), and Next
-  (Done on the last). Drag it and it settles in the nearest corner. SENSEI
-  first asked for a full-screen app screen, then corrected it the same day: a
-  guide that covers the screen cannot be followed.
+- **A. Guides play in the Familiar's card (built 2026-11-07).** The card's
+  middle is the media spot: a guide plays there in place of the topics and
+  actions, with the card's top bar, "Take me back" and the microphone still
+  around it, so the reader watches, follows along on the page and talks to the
+  Familiar in one place. The card can be dragged anywhere. The guides'
+  progress, Close and Hear sit on the recording; under it Back, the title and
+  what the Familiar says (tap for all of it), and Next (Done on the last).
+  SENSEI corrected two earlier tries the same day: a full-screen player (a
+  guide that covers the screen cannot be followed) and a separate corner
+  window (two surfaces that do not talk to each other; the card already is
+  the place).
 - **B. The frame shows any media.** Pictures as well as recordings, so the
   Familiar can show what it found (a Codex picture) and what it looked at.
 - **C. Show the Familiar something.** Tap, take one photo, ask about it. The

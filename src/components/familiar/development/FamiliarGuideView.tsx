@@ -16,30 +16,29 @@ export interface FamiliarGuideViewProps {
   name: string;
   /** Called once a recorded guide is shown, so it is counted as watched. */
   onSeen?: (guideId: string) => void;
-  /** Above the title: the Guides tab's Start here; in the mini player, laid over the recording's corner (its Close). */
+  /** Above the title: the Guides tab's Start here; in the Familiar's card, laid over the recording's corner (its Close). */
   head?: ReactNode;
-  /** Under the steps; in the mini player, its Done, shown in place of Next on the last guide. */
+  /** Under the steps; in the Familiar's card, its Done, shown in place of Next on the last guide. */
   foot?: ReactNode;
   /** Focus the title when the guide changes (not on first show, where the opener decides). */
   focusOnChange?: boolean;
   /**
-   * The mini player (the Familiar's tour), like a minimized video in the
-   * corner while the reader keeps using the page: the recording with the
-   * guides' progress over it, then Back, the title and what the Familiar says
-   * (two lines; tap for all of it), and Next (Done, from `foot`, on the last).
-   * Swiping is left to the host, which moves the player.
+   * Inside the Familiar's card, in place of its topics and actions, with its
+   * microphone still under it: the recording with the guides' progress, Close
+   * and Hear over it, then Back, the title and what the Familiar says (two
+   * lines; tap for all of it), and Next (Done, from `foot`, on the last).
    */
-  mini?: boolean;
+  inCard?: boolean;
 }
 
 /**
  * One guide, wherever it is watched: its short silent recording (wide or
  * tall, shown whole), what the Familiar says over it, read aloud on request,
  * and Previous / Next (swipe and arrow keys too). Watching never navigates:
- * the reader stays where they are. Used by the Familiar page's Guides and,
- * as the mini player in the corner, by the Familiar's tour.
+ * the reader stays where they are. Used by the Familiar page's Guides and
+ * inside the Familiar's own card.
  */
-export function FamiliarGuideView({ guides, at, onStep, name, onSeen, head, foot, focusOnChange = true, mini = false }: FamiliarGuideViewProps) {
+export function FamiliarGuideView({ guides, at, onStep, name, onSeen, head, foot, focusOnChange = true, inCard = false }: FamiliarGuideViewProps) {
   const guide = guides[at];
   const voice = useFamiliarReadAloud();
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -96,11 +95,10 @@ export function FamiliarGuideView({ guides, at, onStep, name, onSeen, head, foot
     onPointerUp, onPointerCancel: () => { pointer.current = null; },
   } as const;
 
-  if (mini) {
+  if (inCard) {
     const last = at === guides.length - 1;
     return (
-      <div className="familiar-guide is-mini" role="group" aria-roledescription="guide" aria-label={`Guide ${at + 1} of ${guides.length}: ${guide.title}`}
-        data-familiar-guide-open={guide.id} onKeyDown={onKeyDown}>
+      <div className="familiar-guide is-in-card" {...group}>
         <div className="familiar-guide-stage">
           {guide.videoUrl
             ? <FamiliarClip fill src={guide.videoUrl} label={`${guide.title}, shown`} />

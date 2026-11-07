@@ -1351,8 +1351,12 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await summon();
     await click(document.querySelector('.familiar-companion .familiar-trigger'), 'the Familiar');
     await click(document.querySelector('[data-familiar-guides-open]'), 'Guides', 20);
-    expect(card()?.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet-your-familiar');
-    await click(card()!.querySelector('[data-familiar-welcome-close]'), 'Close', 20);
+    // The guide plays in the Familiar's own card, with its microphone under it.
+    const playing = () => document.querySelector<HTMLElement>('[data-familiar-guides-playing]');
+    expect(playing()?.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet-your-familiar');
+    expect(playing()?.closest('.familiar-helper')?.querySelector('.familiar-helper-mic')).toBeTruthy();
+    await click(playing()!.querySelector('[data-familiar-guides-close]'), 'Close guides', 20);
+    expect(playing()).toBeNull();
     expect(card()).toBeNull();
     expect(address()).toBe('/app/');
   });

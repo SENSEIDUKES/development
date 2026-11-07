@@ -73,7 +73,7 @@ describe('Writer Instructions', () => {
   });
 
   it('builds every other step\'s whole prompt with the code that sends it, every block of the step inside it', () => {
-    // Every message is there: who it is or its instructions, the next message, and the answer's shape (the World builder's too: review finding, Codex, 2026-11-05).
+    // Every message is there: who it is or its instructions, the next message, and the answer's shape (the Blueprint's too: review finding, Codex, 2026-11-05).
     expect(Object.fromEntries(Object.entries(WHOLE_PROMPTS).map(([id, messages]) => [id, messages.length]))).toEqual({ world: 3, tagger: 3, fixer: 3, look: 3 });
     // A changing number or language is shown by its place, never as a fixed word (review finding, CodeRabbit, 2026-11-05).
     for (const id of ['tagger', 'fixer', 'look'] as const) expect(WHOLE_PROMPTS[id][1].text).toMatch(/^CHAPTER ⟨number⟩ · Language: ⟨language⟩/);

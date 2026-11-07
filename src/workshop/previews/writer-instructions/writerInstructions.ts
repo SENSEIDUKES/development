@@ -39,7 +39,7 @@ import {
   type HarnessPromptPart,
 } from '../../../server/harness-generation/prompt';
 import { HOLDINGS_FIXER_INSTRUCTIONS, buildHoldingsFixerPrompt } from '../../../server/harness-generation/holdingsFixer';
-import { BLUEPRINT_PERMANENT_RULES, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintPrompt, worldBlueprintResponseSchema } from '../../../server/story-seed-blueprint/prompt';
+import { BLUEPRINT_PERMANENT_RULES, BLUEPRINT_PROMPT_HEADINGS, WORLD_BLUEPRINT_SYSTEM_PROMPT, blueprintRole, buildWorldBlueprintPrompt, worldBlueprintResponseSchema } from '../../../server/story-seed-blueprint/prompt';
 import { OFFICIAL_CAPA_DEFAULT_REFERENCES, OFFICIAL_STYLE_REFERENCES } from '../../../host/generation/capa/officialCapaSkills';
 import { HARNESS_TAGGER_RETURN, HARNESS_TAGGER_ROLE, buildHarnessTagPrompt } from '../../../server/harness-generation/tagger';
 import { LOOK_DESCRIBER_INSTRUCTIONS, buildLookDescriberPrompt } from '../../../server/harness-generation/lookDescriber';
@@ -79,6 +79,7 @@ export type WriterInstructionId =
   | 'tagger'
   /** Retired 2026-11-05: split into the Origin, World and Arc skills and the Blueprint's permanent rules. */
   | 'world-builder'
+  | 'blueprint-role'
   | 'origin-skill'
   | 'world-skill'
   | 'arc-skill'
@@ -160,29 +161,34 @@ export const SOME_STORIES: readonly WriterInstruction[] = [
 ];
 
 /**
- * Read before the story exists, by the call that builds its world: never by
- * the chapter writer. Its Origin, World and Arc skills, then the permanent
- * rules no skill can replace (SENSEI, 2026-11-05).
+ * Read before the story exists, by the Blueprint: never by the chapter
+ * writer. Who it is, its Origin, World and Arc skills, then the rules no skill
+ * can replace (SENSEI, 2026-11-05), in the writer's skeleton (2026-11-06).
  */
 export const BEFORE_THE_STORY: readonly WriterInstruction[] = [
   {
+    id: 'blueprint-role', title: 'Role and mission', source: 'HARNESS',
+    when: 'Once, when a Blueprint is generated from a Story Seed, before the story begins; read first. Who it is, in SEN\'s own identity word for word, and its job.',
+    text: `${BLUEPRINT_PROMPT_HEADINGS.role}\n\n${blueprintRole()}`,
+  },
+  {
     id: 'origin-skill', title: 'Origin', source: skillSource(SEN_EASTERN_FANTASY_ORIGIN_SKILL),
-    when: 'Once, when a World Blueprint is generated from a Story Seed, before the story begins; read first. The kind of fiction the world is built in: its tradition, names, style bible and trope rules. A replaceable skill: a publisher who licenses SEN can give its own Origin, such as Western Fantasy.',
+    when: 'Every Blueprint, first under How to build. The kind of fiction the world is built in: its tradition, names, style bible and trope rules. A replaceable skill: a publisher who licenses SEN can give its own Origin, such as Western Fantasy.',
     text: skillText(SEN_EASTERN_FANTASY_ORIGIN_SKILL),
   },
   {
     id: 'world-skill', title: 'World', source: skillSource(SEN_WORLD_BUILDER_SKILL),
-    when: 'Every World Blueprint, after the Origin: how to build the world as Chapter 1 opens, and what each of the main character\'s own slots means. A replaceable skill.',
+    when: 'Every Blueprint, after the Origin: how to build the world as Chapter 1 opens, and what each of the main character\'s own slots means. A replaceable skill.',
     text: skillText(SEN_WORLD_BUILDER_SKILL),
   },
   {
     id: 'arc-skill', title: 'Arc', source: skillSource(SEN_ARC_PLANNER_SKILL),
-    when: 'Every World Blueprint, after the World: the Destined Ending and the story\'s length first, then Arc 1 and the look-ahead. A replaceable skill. Arcs after Arc 1 are planned later by their own call, which does not read it yet.',
+    when: 'Every Blueprint, after the World: the Destined Ending and the story\'s length first, then Arc 1 and the look-ahead. A replaceable skill. Arcs after Arc 1 are planned later by their own call, which does not read it yet.',
     text: skillText(SEN_ARC_PLANNER_SKILL),
   },
   {
     id: 'blueprint-rules', title: 'Blueprint rules', source: 'HARNESS',
-    when: 'Every World Blueprint, after its three skills, whichever skills it reads: the creator\'s words win, one name for one thing across the cards, how lists are written, and every Codex card slot by slot. No skill can change them.',
+    when: 'Every Blueprint, after its three skills, whichever skills it reads: how to read the Story Seed (the creator\'s words win), how to return the Blueprint (one name for one thing across the cards, how lists are written, and every Codex card slot by slot), and the hard rules. No skill can change them.',
     text: BLUEPRINT_PERMANENT_RULES,
   },
 ];
@@ -334,7 +340,7 @@ export const writerPrompt = (skills: readonly HarnessSkillManifest[]): PromptMes
  * with each changing part shown by its place: the Tagger's with the story's
  * default sound words, music and atmospheres; the fixer's with one case
  * carrying every part a case can have (a real case carries only those it
- * needs); the look writer's with one subject; the World builder's with an
+ * needs); the look writer's with one subject; the Blueprint's with an
  * empty Story Seed where the creator's goes.
  */
 export const WHOLE_PROMPTS: Record<Exclude<PipelineStepId, 'writer'>, readonly PromptMessage[]> = (() => {
@@ -377,8 +383,8 @@ export const WHOLE_PROMPTS: Record<Exclude<PipelineStepId, 'writer'>, readonly P
   const seed = createEmptyStorySeedInput();
   return {
     world: [
-      { label: 'Who it is', text: WORLD_BLUEPRINT_SYSTEM_PROMPT },
-      { label: 'The request, with an empty Story Seed where yours goes', text: buildWorldBlueprintPrompt(seed) },
+      { label: 'Its instructions', text: WORLD_BLUEPRINT_SYSTEM_PROMPT },
+      { label: 'The next message, with an empty Story Seed where yours goes', text: buildWorldBlueprintPrompt(seed) },
       // Its answer's shape, as generateWorldBlueprint sends it (review finding, Codex, 2026-11-05).
       answerShape(worldBlueprintResponseSchema(seed.story.optional.arcCount)),
     ],
@@ -447,11 +453,11 @@ const blocksOf = (ids: readonly WriterInstructionId[]) => ids.map(id => WRITER_I
  */
 export const PIPELINE: readonly PipelineStep[] = [
   {
-    id: 'world', name: 'World builder', runs: 'Once, before Chapter 1',
+    id: 'world', name: 'Blueprint', runs: 'Once, before Chapter 1',
     job: 'Builds the world the story opens with: every character, thing, ability, place and faction card in the Codex.',
-    reads: ['The Story Seed you wrote', 'Its Origin, World and Arc skills, and the rules no skill can change'],
+    reads: ['The Story Seed you wrote', 'Its role, its Origin, World and Arc skills, and the rules no skill can change'],
     gives: ['The World at Chapter 0: the Codex cards the story starts with → read by the Writer every chapter'],
-    groups: [{ label: 'What it reads', blocks: blocksOf(['origin-skill', 'world-skill', 'arc-skill', 'blueprint-rules']) }],
+    groups: [{ label: 'What it reads', blocks: blocksOf(['blueprint-role', 'origin-skill', 'world-skill', 'arc-skill', 'blueprint-rules']) }],
   },
   {
     id: 'writer', name: 'Writer', runs: 'Every chapter',

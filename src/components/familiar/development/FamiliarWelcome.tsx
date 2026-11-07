@@ -41,11 +41,12 @@ const ABOVE_FAMILIAR = 176;
 
 /**
  * The Familiar's own card, a tip rather than a page: the screen dims a
- * little and the card pops up beside the Familiar. Its Guides button opens
- * it on the guides; the first meeting opens it once on a greeting, whose
- * Show me around plays the guides in the same card. Done (or Later, Escape,
- * a tap outside) closes it and the reader carries on where they were. It
- * never takes them anywhere.
+ * little and the card pops up beside the Familiar. The first meeting opens it
+ * once on a greeting. The guides (its Show me around, or the Guides button)
+ * play in the guide player: on a phone the whole screen, locked like an app
+ * screen and never scrolling; on a wider screen a phone-shaped sheet in the
+ * middle. Done (or Close, Later, Escape, a tap outside) closes it and the
+ * reader carries on where they were. It never takes them anywhere.
  */
 export function FamiliarWelcome({ familiar, name = familiar.name, greeting, guides = [], onGuideSeen, anchor: anchorProp, startWith = 'greeting', bottomInset = 0, onClose }: FamiliarWelcomeProps) {
   // Floating, the card perches by the Familiar; with no floating Familiar, it waits in the header.
@@ -92,62 +93,61 @@ export function FamiliarWelcome({ familiar, name = familiar.name, greeting, guid
     return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', measure); };
   }, [anchor, bottomInset]);
   const line = greeting ?? `I’ll be with you through every story: reading, creating, and everything in between. Want me to show you around?`;
-  // A guide that cannot fit beside the Familiar takes the room above the navigation instead, whole rather than cut off.
-  const [crowded, setCrowded] = useState(false);
-  useLayoutEffect(() => {
-    const element = card.current;
-    if (!element) return;
-    // Compare the card's whole height with the room above the Familiar, so the answer holds once it moves.
-    const check = () => {
-      if (!perch?.bottom) { setCrowded(false); return; }
-      const header = document.querySelector<HTMLElement>('.workspace-header')?.getBoundingClientRect().bottom ?? 72;
-      setCrowded(element.scrollHeight > window.innerHeight - perch.bottom - header - 8);
-    };
-    check();
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check);
-    observer?.observe(element.firstElementChild ?? element);
-    return () => observer?.disconnect();
-  }, [touring === null, perch]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (touring === null) setCrowded(false); }, [touring === null]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The player holds the screen still: the page under it does not scroll while it is open.
+  useEffect(() => {
+    if (touring === null) return;
+    const page = document.documentElement;
+    const before = page.style.overflow;
+    page.style.overflow = 'hidden';
+    return () => { page.style.overflow = before; };
+  }, [touring === null]); // eslint-disable-line react-hooks/exhaustive-deps
   const right = perch ? Math.min(perch.right, 24) : undefined;
-  const dropped = anchor === 'bottom' && crowded && touring !== null;
-  const below = anchor === 'bottom' && !dropped && perch?.top !== undefined;
-  const bottom = dropped ? bottomInset + 8 : perch?.bottom ?? bottomInset + ABOVE_FAMILIAR;
+  const below = anchor === 'bottom' && perch?.top !== undefined;
+  const bottom = perch?.bottom ?? bottomInset + ABOVE_FAMILIAR;
   const position: CSSProperties = anchor === 'top'
     ? { top: 'calc(var(--workspace-header-height, 72px) + 8px)' }
     : below ? { top: perch!.top, right, maxHeight: `calc(100dvh - ${perch!.top}px - ${bottomInset + 8}px)` }
     : { bottom, right, maxHeight: `calc(100dvh - ${bottom}px - var(--workspace-header-height, 72px) - 8px)` };
+  const face = (
+    <span className="familiar-tip-face" aria-hidden>
+      {familiar.portraitUrl && !portraitFailed
+        ? <img src={familiar.portraitUrl} alt="" decoding="async" onError={() => setPortraitFailed(true)} />
+        : <FamiliarHero option={familiar} active={false} className="familiar-tip-hero" />}
+    </span>
+  );
+  const closeButton = <button type="button" className="familiar-tip-close" aria-label="Close" onClick={close} data-familiar-welcome-close><X size={18} aria-hidden /></button>;
   return createPortal(
     <FocusLock returnFocus>
-      <div className="familiar-tip-dim" aria-hidden onClick={close} data-familiar-welcome-dim />
-      <div ref={card} className="familiar-tip" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={touring === null ? lineId : undefined}
-        data-anchor={dropped ? 'dropped' : below ? 'below' : anchor} data-touring={touring !== null || undefined} style={position} data-familiar-welcome>
-        <div className="familiar-tip-head">
-          <span className="familiar-tip-face" aria-hidden>
-            {familiar.portraitUrl && !portraitFailed
-              ? <img src={familiar.portraitUrl} alt="" decoding="async" onError={() => setPortraitFailed(true)} />
-              : <FamiliarHero option={familiar} active={false} className="familiar-tip-hero" />}
-          </span>
-          <h2 id={titleId} className="familiar-tip-title">{touring === null ? `I’m ${name}.` : `${name} shows you around`}</h2>
-          <button type="button" className="familiar-tip-close" aria-label="Close" onClick={close} data-familiar-welcome-close><X size={18} aria-hidden /></button>
-        </div>
-        {touring === null ? (
-          <>
-            <p id={lineId} className="familiar-tip-line">{line}</p>
-            <div className="familiar-tip-actions">
-              {guides.length ? <button type="button" className="is-primary" onClick={() => setTouring(0)} autoFocus data-familiar-welcome-tour>Show me around</button> : null}
-              <button type="button" onClick={close} autoFocus={!guides.length} data-familiar-welcome-later>Later</button>
-            </div>
-            <p className="familiar-tip-note">My guides are always on the Familiar page.</p>
-          </>
-        ) : (
-          <div className="familiar-tip-body">
-            <FamiliarGuideView compact guides={guides} at={touring} name={name} onSeen={onGuideSeen}
-              onStep={by => setTouring(at => ((at ?? 0) + by + guides.length) % guides.length)}
-              foot={<button type="button" className="familiar-tip-done" onClick={close} data-familiar-welcome-done>Done</button>} />
+      <div className="familiar-tip-dim" aria-hidden onClick={close} data-familiar-welcome-dim data-touring={touring !== null || undefined} />
+      {touring === null ? (
+        <div ref={card} className="familiar-tip" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={lineId}
+          data-anchor={below ? 'below' : anchor} style={position} data-familiar-welcome>
+          <div className="familiar-tip-head">
+            {face}
+            <h2 id={titleId} className="familiar-tip-title">{`I’m ${name}.`}</h2>
+            {closeButton}
           </div>
-        )}
-      </div>
+          <p id={lineId} className="familiar-tip-line">{line}</p>
+          <div className="familiar-tip-actions">
+            {guides.length ? <button type="button" className="is-primary" onClick={() => setTouring(0)} autoFocus data-familiar-welcome-tour>Show me around</button> : null}
+            <button type="button" onClick={close} autoFocus={!guides.length} data-familiar-welcome-later>Later</button>
+          </div>
+          <p className="familiar-tip-note">My guides are always on the Familiar page.</p>
+        </div>
+      ) : (
+        <div ref={card} className="familiar-player" role="dialog" aria-modal="true" aria-labelledby={titleId} data-touring data-familiar-welcome>
+          <FamiliarGuideView player guides={guides} at={touring} name={name} onSeen={onGuideSeen}
+            onStep={by => setTouring(at => Math.min(guides.length - 1, Math.max(0, (at ?? 0) + by)))}
+            head={(
+              <div className="familiar-player-head">
+                {face}
+                <h2 id={titleId} className="familiar-player-title">{`${name} shows you around`}</h2>
+                {closeButton}
+              </div>
+            )}
+            foot={<button type="button" className="familiar-guide-next familiar-tip-done" onClick={close} data-familiar-welcome-done>Done</button>} />
+        </div>
+      )}
     </FocusLock>,
     document.body,
   );

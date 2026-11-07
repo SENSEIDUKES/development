@@ -21,6 +21,11 @@ export interface WriterInstructionsChange {
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
     date: '2026-11-07',
+    summary: 'The Writer\'s Role and mission no longer says who the writer is (SENSEI, 2026-11-07: "That first sentence you got there, delete that shit"). It opened with SEN\'s identity and "Write the next complete chapter of this ongoing novel.", both of which the Author skill right below already says. It now holds only the job: respect the Foundation, author direction, canon and prior chapters, and how these instructions are laid out. Nothing else changed.',
+    changed: { role: '1271499a164440' },
+  },
+  {
+    date: '2026-11-07',
     summary: 'The Origin skill (now SEN Eastern Fantasy 1.2.0) no longer says who the Blueprint is (SENSEI, 2026-11-07: "fix the origin skill opening too"). It opened with "You are writing the world of an Eastern fantasy web novel", a second "You are" straight after the Blueprint\'s Role and mission, which already says who it is in SEN\'s identity. It now opens "This is an Eastern fantasy web novel", naming the kind of fiction instead of the Blueprint\'s identity. Nothing else in it changed.',
     changed: { 'origin-skill': '15521a66ebdde9' },
   },

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { WORLD_CARD_KINDS } from '@seihouse/sen/contracts';
 import { SEN_BLUEPRINT_DEFAULT_SKILLS } from '@seihouse/sen/harness-generation';
-import { BLUEPRINT_PERMANENT_RULES, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintSystemPrompt } from './prompt';
+import { createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
+import { BLUEPRINT_PERMANENT_RULES, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintPrompt, buildWorldBlueprintSystemPrompt } from './prompt';
 import { worldBlueprintResponseSchema } from './prompt';
 
 /**
@@ -53,6 +54,10 @@ describe('The world builder asks for every Codex card kind', () => {
     expect(swapped).not.toContain('Eastern fantasy');
     expect(swapped).toContain('[World] SEN World Builder 1.2.0');
     expect(swapped.endsWith(BLUEPRINT_PERMANENT_RULES)).toBe(true);
+    // The same identity closes the request, in its Mission Reminder.
+    const request = buildWorldBlueprintPrompt(createEmptyStorySeedInput(), undefined, 'You are a celebrated Western fantasy novelist.');
+    expect(request).toContain('# MISSION REMINDER\n\nYou are a celebrated Western fantasy novelist. Build this novel');
+    expect(request).not.toContain('Eastern fantasy');
   });
 
   it('has a place in the answer for every slot of every card kind', () => {

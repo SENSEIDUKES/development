@@ -1,4 +1,4 @@
-import { useEffect, useRef, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import { Clapperboard, ChevronLeft, ChevronRight, Square, Volume2 } from 'lucide-react';
 import type { FamiliarGuide } from '../shared/familiar';
 import { FamiliarClip } from './FamiliarClip';
@@ -16,19 +16,20 @@ export interface FamiliarGuideViewProps {
   name: string;
   /** Called once a recorded guide is shown, so it is counted as watched. */
   onSeen?: (guideId: string) => void;
-  /** Above the title: the Guides tab's Start here; in the player, its header (who is showing you, Close). */
+  /** Above the title: the Guides tab's Start here; in the mini player, laid over the recording's corner (its Close). */
   head?: ReactNode;
-  /** Under the steps: the player's Done, shown in place of Next on the last guide. */
+  /** Under the steps; in the mini player, its Done, shown in place of Next on the last guide. */
   foot?: ReactNode;
   /** Focus the title when the guide changes (not on first show, where the opener decides). */
   focusOnChange?: boolean;
   /**
-   * The full-screen guide player (the Familiar's tour): progress at the top,
-   * the recording filling the middle, what the Familiar says under it, and
-   * Back with Next (Done, from `foot`, on the last guide) in the thumb's reach.
-   * It fills the box it is given and never scrolls.
+   * The mini player (the Familiar's tour), like a minimized video in the
+   * corner while the reader keeps using the page: the recording with the
+   * guides' progress over it, then Back, the title and what the Familiar says
+   * (two lines; tap for all of it), and Next (Done, from `foot`, on the last).
+   * Swiping is left to the host, which moves the player.
    */
-  player?: boolean;
+  mini?: boolean;
 }
 
 /**
@@ -36,14 +37,15 @@ export interface FamiliarGuideViewProps {
  * tall, shown whole), what the Familiar says over it, read aloud on request,
  * and Previous / Next (swipe and arrow keys too). Watching never navigates:
  * the reader stays where they are. Used by the Familiar page's Guides and,
- * as the full-screen player, by the Familiar's tour.
+ * as the mini player in the corner, by the Familiar's tour.
  */
-export function FamiliarGuideView({ guides, at, onStep, name, onSeen, head, foot, focusOnChange = true, player = false }: FamiliarGuideViewProps) {
+export function FamiliarGuideView({ guides, at, onStep, name, onSeen, head, foot, focusOnChange = true, mini = false }: FamiliarGuideViewProps) {
   const guide = guides[at];
   const voice = useFamiliarReadAloud();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
   // A reading this view started stops when the view goes (All guides, another tab, Done), not only on the next guide.
+  const [wholeLine, setWholeLine] = useState(false);
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
   const readingHere = useRef(false);
@@ -60,6 +62,7 @@ export function FamiliarGuideView({ guides, at, onStep, name, onSeen, head, foot
     if (shown.current === guide?.id) return;
     shown.current = guide?.id;
     if (voice?.speaking) voice.stop();
+    setWholeLine(false);
     if (focusOnChange) titleRef.current?.focus({ preventScroll: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guide?.id]);
@@ -93,34 +96,39 @@ export function FamiliarGuideView({ guides, at, onStep, name, onSeen, head, foot
     onPointerUp, onPointerCancel: () => { pointer.current = null; },
   } as const;
 
-  if (player) {
+  if (mini) {
     const last = at === guides.length - 1;
     return (
-      <div className="familiar-guide is-player" {...group}>
-        {guides.length > 1 ? (
-          <ol className="familiar-guide-progress" aria-hidden>
-            {guides.map((entry, index) => <li key={entry.id} data-done={index < at || undefined} data-current={index === at || undefined} />)}
-          </ol>
-        ) : null}
-        {head}
+      <div className="familiar-guide is-mini" role="group" aria-roledescription="guide" aria-label={`Guide ${at + 1} of ${guides.length}: ${guide.title}`}
+        data-familiar-guide-open={guide.id} onKeyDown={onKeyDown}>
         <div className="familiar-guide-stage">
           {guide.videoUrl
             ? <FamiliarClip fill src={guide.videoUrl} label={`${guide.title}, shown`} />
-            : <p className="familiar-guide-soon is-stage" data-familiar-guide-video="none"><Clapperboard size={28} aria-hidden /> {soon}</p>}
+            : <p className="familiar-guide-soon is-stage" data-familiar-guide-video="none"><Clapperboard size={18} aria-hidden /> {soon}</p>}
+          {guides.length > 1 ? (
+            <ol className="familiar-guide-progress" aria-hidden>
+              {guides.map((entry, index) => <li key={entry.id} data-done={index < at || undefined} data-current={index === at || undefined} />)}
+            </ol>
+          ) : null}
+          {head}
+          {hear}
         </div>
-        <div className="familiar-guide-caption">
-          <div className="familiar-guide-caption-head">{title}{hear}</div>
-          {line}
-        </div>
-        <div className="familiar-guide-steps is-player">
+        <div className="familiar-guide-bar">
           {guides.length > 1 ? (
             <button type="button" className="familiar-guide-back" onClick={() => onStep(-1)} disabled={at === 0} aria-label="Previous guide" data-familiar-guide-step="previous">
-              <ChevronLeft size={22} aria-hidden />
+              <ChevronLeft size={20} aria-hidden />
             </button>
           ) : null}
+          <div className="familiar-guide-caption">
+            {title}
+            <button type="button" className="familiar-guide-line-toggle" aria-expanded={wholeLine} onClick={() => setWholeLine(whole => !whole)}
+              aria-label={wholeLine ? 'Show less' : `Show all of what ${name} says`}>
+              <span data-familiar-guide-line>{guide.line}</span>
+            </button>
+          </div>
           {last ? foot : (
             <button type="button" className="familiar-guide-next" onClick={() => onStep(1)} aria-label="Next guide" data-familiar-guide-step="next">
-              Next <ChevronRight size={18} aria-hidden />
+              <ChevronRight size={20} aria-hidden />
             </button>
           )}
         </div>

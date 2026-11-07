@@ -2,7 +2,7 @@
 
 - **Created:** 2026-11-07
 - **Owner:** SENSEI
-- **Status:** phase A built (the guide player). Phases B to F are direction, not built.
+- **Status:** phase A built (the mini guide player). Phases B to F are direction, not built.
   [`NOVEL_EXPANDED.md`](../NOVEL_EXPANDED.md) stays the source of truth for what
   is built.
 - **Source:** a conversation with SENSEI on 2026-11-07, after trying
@@ -81,11 +81,14 @@ for NPCs. **It is a matter of timing, not a blocker.**
 
 ## The phases
 
-- **A. The guide player (built 2026-11-07).** The media spot made right for
-  phones first. On a phone the guided tour is a full-screen player that never
-  scrolls: progress at the top, the recording filling the middle, what the
-  Familiar says under it, and Back / Next / Done in the thumb's reach. On a
-  laptop the same player sits in a phone-shaped sheet.
+- **A. The mini guide player (built 2026-11-07).** The media spot as a
+  minimized video in a corner, like YouTube's mini player: the reader keeps
+  using the page while the guide plays, so they can follow along. Nothing dims.
+  The recording with the guides' progress, Close and Hear over it; under it
+  Back, the title and what the Familiar says (tap for all of it), and Next
+  (Done on the last). Drag it and it settles in the nearest corner. SENSEI
+  first asked for a full-screen app screen, then corrected it the same day: a
+  guide that covers the screen cannot be followed.
 - **B. The frame shows any media.** Pictures as well as recordings, so the
   Familiar can show what it found (a Codex picture) and what it looked at.
 - **C. Show the Familiar something.** Tap, take one photo, ask about it. The

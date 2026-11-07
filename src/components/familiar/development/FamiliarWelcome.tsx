@@ -1,7 +1,7 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import FocusLock from 'react-focus-lock';
-import { X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import type { FamiliarGuide, FamiliarOption } from '../shared/familiar';
 import { FamiliarHero } from './FamiliarHero';
 import { FamiliarGuideView } from './FamiliarGuideView';
@@ -38,14 +38,17 @@ export interface FamiliarWelcomeProps {
 
 /** The floating Familiar's own height above its inset, so the card rises clear of it. */
 const ABOVE_FAMILIAR = 176;
+/** A press that moves less than this is a tap, not a move of the mini player. */
+const DRAG_DISTANCE = 8;
+type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
 /**
  * The Familiar's own card, a tip rather than a page: the screen dims a
  * little and the card pops up beside the Familiar. The first meeting opens it
  * once on a greeting. The guides (its Show me around, or the Guides button)
- * play in the guide player: on a phone the whole screen, locked like an app
- * screen and never scrolling; on a wider screen a phone-shaped sheet in the
- * middle. Done (or Close, Later, Escape, a tap outside) closes it and the
+ * play in a mini player in a corner, like a minimized video: nothing dims and
+ * the page stays in use, so the reader can follow along while it plays. Drag
+ * it and it settles in the nearest corner. Done (or Close, Later, Escape) closes it and the
  * reader carries on where they were. It never takes them anywhere.
  */
 export function FamiliarWelcome({ familiar, name = familiar.name, greeting, guides = [], onGuideSeen, anchor: anchorProp, startWith = 'greeting', bottomInset = 0, onClose }: FamiliarWelcomeProps) {
@@ -59,7 +62,10 @@ export function FamiliarWelcome({ familiar, name = familiar.name, greeting, guid
   const voice = useFamiliarReadAloud();
   const close = () => { if (voice?.speaking) voice.stop(); onClose(); };
   useEffect(() => {
-    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') close(); };
+    // The mini player shares the page: Escape closes it only from inside it.
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && (touring === null || card.current?.contains(document.activeElement))) close();
+    };
     document.addEventListener('keydown', escape);
     return () => document.removeEventListener('keydown', escape);
   });
@@ -93,14 +99,33 @@ export function FamiliarWelcome({ familiar, name = familiar.name, greeting, guid
     return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', measure); };
   }, [anchor, bottomInset]);
   const line = greeting ?? `I’ll be with you through every story: reading, creating, and everything in between. Want me to show you around?`;
-  // The player holds the screen still: the page under it does not scroll while it is open.
-  useEffect(() => {
-    if (touring === null) return;
-    const page = document.documentElement;
-    const before = page.style.overflow;
-    page.style.overflow = 'hidden';
-    return () => { page.style.overflow = before; };
-  }, [touring === null]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The mini player starts in the bottom-left corner, clear of the floating Familiar, and settles where it is dragged.
+  const [corner, setCorner] = useState<Corner>('bottom-left');
+  const [moving, setMoving] = useState<{ x: number; y: number } | null>(null);
+  const press = useRef<{ id: number; x: number; y: number; dragging: boolean } | null>(null);
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.target instanceof Element && event.target.closest('button')) return;
+    press.current = { id: event.pointerId, x: event.clientX, y: event.clientY, dragging: false };
+  };
+  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const start = press.current;
+    if (start?.id !== event.pointerId) return;
+    const x = event.clientX - start.x;
+    const y = event.clientY - start.y;
+    if (!start.dragging && Math.hypot(x, y) < DRAG_DISTANCE) return;
+    if (!start.dragging) { start.dragging = true; event.currentTarget.setPointerCapture?.(event.pointerId); }
+    setMoving({ x, y });
+  };
+  const onPointerEnd = (event: PointerEvent<HTMLDivElement>) => {
+    const start = press.current;
+    if (start?.id !== event.pointerId) return;
+    press.current = null;
+    if (!start.dragging) return;
+    const box = event.currentTarget.getBoundingClientRect();
+    const middle = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+    setCorner(`${middle.y < window.innerHeight / 2 ? 'top' : 'bottom'}-${middle.x < window.innerWidth / 2 ? 'left' : 'right'}`);
+    setMoving(null);
+  };
   const right = perch ? Math.min(perch.right, 24) : undefined;
   const below = anchor === 'bottom' && perch?.top !== undefined;
   const bottom = perch?.bottom ?? bottomInset + ABOVE_FAMILIAR;
@@ -116,38 +141,42 @@ export function FamiliarWelcome({ familiar, name = familiar.name, greeting, guid
     </span>
   );
   const closeButton = <button type="button" className="familiar-tip-close" aria-label="Close" onClick={close} data-familiar-welcome-close><X size={18} aria-hidden /></button>;
+  if (touring !== null) {
+    const [vertical, side] = corner.split('-') as ['top' | 'bottom', 'left' | 'right'];
+    const place: CSSProperties = {
+      [vertical]: vertical === 'top' ? 'calc(var(--workspace-header-height, 72px) + 12px)' : `calc(${Math.max(12, bottomInset)}px + env(safe-area-inset-bottom, 0px))`,
+      [side]: `max(12px, env(safe-area-inset-${side}, 0px))`,
+      ...(moving ? { transform: `translate(${moving.x}px, ${moving.y}px)` } : {}),
+    };
+    return createPortal(
+      <div ref={card} className="familiar-mini" role="region" aria-label={`${name} shows you around`} style={place} data-corner={corner}
+        data-moving={moving ? true : undefined} data-touring data-familiar-welcome
+        onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd} onPointerCancel={onPointerEnd}>
+        <FamiliarGuideView mini guides={guides} at={touring} name={name} onSeen={onGuideSeen}
+          onStep={by => setTouring(at => Math.min(guides.length - 1, Math.max(0, (at ?? 0) + by)))}
+          head={<button type="button" className="familiar-mini-close" aria-label="Close" onClick={close} data-familiar-welcome-close><X size={16} aria-hidden /></button>}
+          foot={<button type="button" className="familiar-guide-next" aria-label="Done" onClick={close} data-familiar-welcome-done><Check size={20} aria-hidden /></button>} />
+      </div>,
+      document.body,
+    );
+  }
   return createPortal(
     <FocusLock returnFocus>
-      <div className="familiar-tip-dim" aria-hidden onClick={close} data-familiar-welcome-dim data-touring={touring !== null || undefined} />
-      {touring === null ? (
-        <div ref={card} className="familiar-tip" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={lineId}
-          data-anchor={below ? 'below' : anchor} style={position} data-familiar-welcome>
-          <div className="familiar-tip-head">
-            {face}
-            <h2 id={titleId} className="familiar-tip-title">{`I’m ${name}.`}</h2>
-            {closeButton}
-          </div>
-          <p id={lineId} className="familiar-tip-line">{line}</p>
-          <div className="familiar-tip-actions">
-            {guides.length ? <button type="button" className="is-primary" onClick={() => setTouring(0)} autoFocus data-familiar-welcome-tour>Show me around</button> : null}
-            <button type="button" onClick={close} autoFocus={!guides.length} data-familiar-welcome-later>Later</button>
-          </div>
-          <p className="familiar-tip-note">My guides are always on the Familiar page.</p>
+      <div className="familiar-tip-dim" aria-hidden onClick={close} data-familiar-welcome-dim />
+      <div ref={card} className="familiar-tip" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={lineId}
+        data-anchor={below ? 'below' : anchor} style={position} data-familiar-welcome>
+        <div className="familiar-tip-head">
+          {face}
+          <h2 id={titleId} className="familiar-tip-title">{`I’m ${name}.`}</h2>
+          {closeButton}
         </div>
-      ) : (
-        <div ref={card} className="familiar-player" role="dialog" aria-modal="true" aria-labelledby={titleId} data-touring data-familiar-welcome>
-          <FamiliarGuideView player guides={guides} at={touring} name={name} onSeen={onGuideSeen}
-            onStep={by => setTouring(at => Math.min(guides.length - 1, Math.max(0, (at ?? 0) + by)))}
-            head={(
-              <div className="familiar-player-head">
-                {face}
-                <h2 id={titleId} className="familiar-player-title">{`${name} shows you around`}</h2>
-                {closeButton}
-              </div>
-            )}
-            foot={<button type="button" className="familiar-guide-next familiar-tip-done" onClick={close} data-familiar-welcome-done>Done</button>} />
+        <p id={lineId} className="familiar-tip-line">{line}</p>
+        <div className="familiar-tip-actions">
+          {guides.length ? <button type="button" className="is-primary" onClick={() => setTouring(0)} autoFocus data-familiar-welcome-tour>Show me around</button> : null}
+          <button type="button" onClick={close} autoFocus={!guides.length} data-familiar-welcome-later>Later</button>
         </div>
-      )}
+        <p className="familiar-tip-note">My guides are always on the Familiar page.</p>
+      </div>
     </FocusLock>,
     document.body,
   );

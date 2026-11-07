@@ -400,10 +400,18 @@ describe('Familiar tray', () => {
     await click(guidesButton());
     expect(card()).toBeTruthy();
     expect(card()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet');
-    // The guides play in the full-screen player: the page under it holds still, Back waits, and Done comes on the last guide.
-    expect(card()!.classList.contains('familiar-player')).toBe(true);
-    expect(document.documentElement.style.overflow).toBe('hidden');
+    // The guides play in the mini player in a corner: nothing dims or traps focus, so the page stays in use.
+    expect(card()!.classList.contains('familiar-mini')).toBe(true);
+    expect(card()!.getAttribute('data-corner')).toBe('bottom-left');
+    expect(card()!.hasAttribute('aria-modal')).toBe(false);
+    expect(document.querySelector('[data-familiar-welcome-dim]')).toBeNull();
     expect(card()!.querySelectorAll('.familiar-guide-progress > li')).toHaveLength(2);
+    // What the Familiar says shows two lines; a tap shows all of it.
+    const whole = card()!.querySelector<HTMLButtonElement>('.familiar-guide-line-toggle')!;
+    expect(whole.getAttribute('aria-expanded')).toBe('false');
+    await click(whole);
+    expect(whole.getAttribute('aria-expanded')).toBe('true');
+    // Back waits on the first guide, and Done comes on the last.
     expect(card()!.querySelector<HTMLButtonElement>('[data-familiar-guide-step="previous"]')!.disabled).toBe(true);
     expect(card()!.querySelector('[data-familiar-welcome-done]')).toBeNull();
     await click(card()!.querySelector('[data-familiar-guide-step="next"]'));
@@ -414,12 +422,30 @@ describe('Familiar tray', () => {
     expect(card()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('seed');
     await click(card()!.querySelector('[data-familiar-welcome-done]'));
     expect(card()).toBeNull();
-    expect(document.documentElement.style.overflow).toBe('');
     expect(window.location.href).toBe(before);
     // It can always be opened again.
     await click(pet());
     await click(guidesButton());
     expect(card()).toBeTruthy();
+  });
+
+  it('lets the reader drag the mini player, which settles in the nearest corner; a tap does not move it', async () => {
+    await act(async () => root.render(<FamiliarHelperProvider voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption }}>
+      <FamiliarCompanion familiar={celestialGuardian} />
+    </FamiliarHelperProvider>));
+    await click(document.querySelector<HTMLElement>('.familiar-companion .familiar-trigger'));
+    await click(guidesButton());
+    const press = (type: string, x: number, y: number) => act(() => {
+      card()!.querySelector('.familiar-guide-stage')!.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX: x, clientY: y }));
+    });
+    press('pointerdown', 300, 700); press('pointermove', 302, 701); press('pointerup', 302, 701);
+    expect(card()!.getAttribute('data-corner')).toBe('bottom-left');
+    // jsdom lays nothing out, so the dragged player's middle is the top-left of the screen.
+    press('pointerdown', 300, 700); press('pointermove', 200, 300);
+    expect(card()!.hasAttribute('data-moving')).toBe(true);
+    press('pointerup', 200, 300);
+    expect(card()!.getAttribute('data-corner')).toBe('top-left');
+    expect(card()!.hasAttribute('data-moving')).toBe(false);
   });
 
   it('greets a reader who has not met it once, from its own card; either answer is remembered', async () => {
@@ -696,7 +722,7 @@ describe('Header Familiar actions', () => {
     expect(document.querySelector('[aria-label="Show Energy"]')).toBeNull();
     await click(guidesButton());
     expect(card()).toBeTruthy();
-    // The guides open straight in the player.
+    // The guides open straight in the mini player.
     expect(card()!.hasAttribute('data-touring')).toBe(true);
     expect(onRecall).not.toHaveBeenCalled();
     await click(card()!.querySelector('[data-familiar-welcome-close]'));

@@ -1338,7 +1338,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(document.querySelector('[aria-label="Expand Familiar"]'), 'Expand Familiar');
   };
 
-  it('does not have the Familiar greet a new reader by itself; its Guides button plays guides right there', async () => {
+  it('does not have the Familiar greet a new reader by itself; its Guides, beside its microphone, play guides right there', async () => {
     const readerPreferences = createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences);
     const profile = createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID });
     await render(appServices(scriptedWriter().writer, { readerPreferences, profile }));
@@ -1350,13 +1350,17 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(companion()).toBeNull();
     await summon();
     await click(document.querySelector('.familiar-companion .familiar-trigger'), 'the Familiar');
+    await click(document.querySelector('.familiar-companion [aria-label="Talk to Familiar"]'), 'Talk to Familiar', 20);
     await click(document.querySelector('[data-familiar-guides-open]'), 'Guides', 20);
     // The guide plays in the Familiar's own card, with its microphone under it.
     const playing = () => document.querySelector<HTMLElement>('[data-familiar-guides-playing]');
     expect(playing()?.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet-your-familiar');
     expect(playing()?.closest('.familiar-helper')?.querySelector('.familiar-helper-mic')).toBeTruthy();
+    // The guide takes the place of Home's action buttons; closing it brings them back.
+    expect(document.querySelector('.familiar-helper-actions')).toBeNull();
     await click(playing()!.querySelector('[data-familiar-guides-close]'), 'Close guides', 20);
     expect(playing()).toBeNull();
+    expect(document.querySelector('.familiar-helper-actions')).toBeTruthy();
     expect(card()).toBeNull();
     expect(address()).toBe('/app/');
   });

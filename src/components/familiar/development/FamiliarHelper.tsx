@@ -12,16 +12,13 @@ import { FAMILIAR_BACK_ACTION_ID, FAMILIAR_WAKE_WORD, FamiliarHelperController, 
 import { useFamiliarPanelDrag } from './useFamiliarPanelDrag';
 
 import { FamiliarHelperContextValue as Helper } from './familiarHelperContext';
-/** The Familiar's guides: its Guides button opens its card on them, wherever the reader is. */
-const Guides = createContext<{ open(): void } | null>(null);
-
 /**
  * What the Familiar teaches, and who is teaching. The guides play in the
- * Familiar's own card, in place of its topics and actions, with its
- * microphone still under them: the reader watches, follows along on the page
- * and talks to it in one place. A reader who has not met it yet is greeted
- * once (`welcome`), and Show me around opens the card on the guides. Nothing
- * navigates.
+ * Familiar's own card, in place of its topics and actions, from the Guides
+ * button beside its microphone, in whichever mode the card is in: the reader
+ * watches, follows along on the page and talks to it in one place. A reader
+ * who has not met it yet is greeted once (`welcome`), and Show me around
+ * opens the card on the guides. Nothing navigates.
  */
 export interface FamiliarGuidesConfig {
   guides: readonly FamiliarGuide[];
@@ -118,14 +115,13 @@ export function FamiliarHelperProvider({ voice, live, wake, familiar, guides, la
   useEffect(() => { if (welcome) setHello(true); }, [welcome]);
   // The guide playing in the Familiar's card, if any.
   const [guideAt, setGuideAt] = useState<number | null>(null);
-  const guideControl = useMemo(() => guides?.guides.length ? { open: () => { setGuideAt(0); helper.open(); } } : null, [guides?.guides.length, helper]);
   const answered = () => { if (guides?.welcome) guides.onWelcomed?.(); setHello(false); };
-  return <Helper.Provider value={helper}><Guides.Provider value={guideControl}><FocusReturn.Provider value={returnFocus}><FamiliarCodes helper={helper}>{children}
+  return <Helper.Provider value={helper}><FocusReturn.Provider value={returnFocus}><FamiliarCodes helper={helper}>{children}
     <FamiliarHelperPanel helper={helper} bottomInset={Math.max(16, bottomInset)} guides={guides} guideAt={guideAt} onGuide={setGuideAt} /></FamiliarCodes>
     {wake?.available && <FamiliarWakeListener helper={helper} wake={wake} language={language} />}
     {hello && guides ? <FamiliarWelcome familiar={guides.familiar} name={guides.name} hasGuides={guides.guides.length > 0} bottomInset={bottomInset}
-      onTour={() => { answered(); guideControl?.open(); }} onClose={answered} /> : null}
-    </FocusReturn.Provider></Guides.Provider></Helper.Provider>;
+      onTour={() => { answered(); setGuideAt(0); helper.open(); }} onClose={answered} /> : null}
+    </FocusReturn.Provider></Helper.Provider>;
 }
 
 /**
@@ -186,17 +182,6 @@ export function useFamiliarHelperContext(context: FamiliarHelperContext, level: 
   }, [helper]);
 }
 
-/**
- * The Familiar's Guides button, in its tray (floating) and its header actions:
- * its card opens on the guides, on the page the reader is on.
- */
-export function FamiliarGuidesAction({ onOpen }: { onOpen?: () => void }) {
-  const guides = useContext(Guides);
-  if (!guides) return null;
-  return <button type="button" className="familiar-action" aria-label="Guides" title="Guides" data-familiar-guides-open
-    onClick={() => { onOpen?.(); guides.open(); }}><Compass aria-hidden size={21} /></button>;
-}
-
 /** The same action appears in the header tray and floating Familiar. */
 export function FamiliarHelperAction({ onOpen, focusTarget }: { onOpen?: () => void; focusTarget?: () => HTMLElement | null }) {
   const helper = useContext(Helper);
@@ -223,8 +208,8 @@ function ShowMore({ open, more, label, onToggle }: { open: boolean; more: number
  * this place offers in that mode (Explain's topics, with a clip where one
  * exists; Action's choices), then the microphone. How to talk to it is behind
  * the info button, never on the panel itself. Its middle is the Familiar's one
- * media spot: a guide plays there, in place of the topics and actions, with
- * the microphone still under it.
+ * media spot: the Guides button beside the microphone plays a guide there, in
+ * place of the topics and actions, in whichever mode the card is in.
  */
 function FamiliarHelperPanel({ helper, bottomInset, guides, guideAt, onGuide }: {
   helper: FamiliarHelperController; bottomInset: number;
@@ -389,8 +374,14 @@ function FamiliarHelperPanel({ helper, bottomInset, guides, guideAt, onGuide }: 
       <ArrowLeft size={18} aria-hidden />{state.proposal ? 'Back out' : 'Take me back'}</button>}
 
     <div className="familiar-helper-bottom">
+      <div className="familiar-helper-bottom-side">
       <button type="button" className="familiar-helper-icon" aria-label="How to talk to your Familiar" title="How to talk to your Familiar"
         aria-pressed={info} onClick={() => { setChat(false); setInfo(!info); }}><Info size={20} aria-hidden /></button>
+      {/* This screen's quick actions sit by the microphone: the guides play right here, in the mode the card is in. */}
+      {guides?.guides.length ? <button type="button" className="familiar-helper-icon" aria-label="Guides" title="Guides" aria-pressed={guideAt !== null}
+        disabled={busy || Boolean(state.proposal)} data-familiar-guides-open
+        onClick={() => { setInfo(false); setChat(false); setTyping(false); onGuide(guideAt === null ? 0 : null); }}><Compass size={20} aria-hidden /></button> : null}
+      </div>
       <button type="button" className="familiar-helper-mic" data-phase={state.live ? (!state.live.listening ? 'ready' : state.live.status === 'on' ? 'live' : 'connecting') : state.phase}
         aria-label={micLabel} title={micLabel} aria-pressed={Boolean(state.live?.listening) || state.phase === 'listening'} disabled={busy && !state.live}
         onClick={() => {
@@ -400,11 +391,13 @@ function FamiliarHelperPanel({ helper, bottomInset, guides, guideAt, onGuide }: 
           if (state.phase === 'speaking') helper.quiet(); helper.listen();
         }}>
         {state.live?.listening && state.live.status === 'on' ? <Square size={22} aria-hidden /> : <Mic size={26} aria-hidden />}</button>
+      <div className="familiar-helper-bottom-side is-end">
       {helper.live
         ? <button type="button" className="familiar-helper-icon" aria-label="Conversation" title="Read and type to your Familiar" aria-pressed={chat}
           onClick={() => { setInfo(false); setTyping(false); setChat(!chat); }}><MessagesSquare size={20} aria-hidden /></button>
         : <button type="button" className="familiar-helper-icon" aria-label="Type instead" title="Type instead" aria-pressed={typing}
           disabled={Boolean(state.proposal)} onClick={() => { if (typing) setTyping(false); else type(); }}><Keyboard size={20} aria-hidden /></button>}
+      </div>
     </div>
   </div>, document.body);
 }

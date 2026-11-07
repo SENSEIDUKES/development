@@ -83,8 +83,9 @@ for NPCs. **It is a matter of timing, not a blocker.**
 
 - **A. Guides play in the Familiar's card (built 2026-11-07).** The card's
   middle is the media spot: a guide plays there in place of the topics and
-  actions, with the card's top bar, "Take me back" and the microphone still
-  around it, so the reader watches, follows along on the page and talks to the
+  actions, from the Guides button beside the microphone (the card's quick
+  actions for this screen) and in whichever mode the card is in, with the
+  card's top bar, "Take me back" and the microphone still around it, so the reader watches, follows along on the page and talks to the
   Familiar in one place. The card can be dragged anywhere. The guides'
   progress, Close and Hear sit on the recording; under it Back, the title and
   what the Familiar says (tap for all of it), and Next (Done on the last).

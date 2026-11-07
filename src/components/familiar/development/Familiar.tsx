@@ -2,7 +2,7 @@ import { ChevronDown } from 'lucide-react';
 import { FamiliarSprite, type FamiliarSpriteProps } from './FamiliarSprite';
 import { familiarActivityAnimation } from '../shared/familiar';
 import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
-import { FamiliarGuidesAction, FamiliarHelperAction } from './FamiliarHelper';
+import { FamiliarHelperAction } from './FamiliarHelper';
 
 export interface FamiliarProps extends FamiliarSpriteProps {
   open?: boolean;
@@ -14,7 +14,7 @@ export interface FamiliarProps extends FamiliarSpriteProps {
   children?: ReactNode;
 }
 
-/** Reveal compact pet actions: its Guides, its card (Explain and Action) and Minimize. Energy is not the Familiar's (SENSEI, 2026-11-03). */
+/** Reveal compact pet actions: its card (Explain and Action, with the Guides beside its microphone) and Minimize. Energy is not the Familiar's (SENSEI, 2026-11-03). */
 export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onMinimize, dragging = false, children, ...props }: FamiliarProps) {
   const generatedStatusId = useId();
   const statusId = props.statusId ?? generatedStatusId;
@@ -28,7 +28,6 @@ export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onM
   const expanded = !dragging && (pinned || hovered || focused || open);
   const activityAnimation = familiarActivityAnimation(props.familiar, props.activity);
   const animation = props.animation ?? (expanded && props.familiar.animations.waving ? 'waving' : activityAnimation);
-  const setOpen = (next: boolean) => { setLocalOpen(next); onOpenChange?.(next); };
   useEffect(() => {
     if (dragging) { setPinned(false); setHovered(false); setFocused(false); }
   }, [dragging]);
@@ -52,7 +51,6 @@ export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onM
     <div className="familiar-dock">
       <button type="button" className="familiar-shadow" hidden={expanded} aria-label="Show Familiar actions" aria-expanded={expanded} aria-controls={actionsId} onClick={() => setPinned(true)}><span /></button>
       <div id={actionsId} className="familiar-actions" role="group" aria-label="Familiar actions" hidden={!expanded}>
-        <FamiliarGuidesAction onOpen={() => setOpen(false)} />
         <FamiliarHelperAction />
         {onMinimize && <button type="button" className="familiar-action" aria-label="Minimize Familiar" title="Minimize Familiar" onClick={onMinimize}><ChevronDown aria-hidden="true" size={21} /></button>}
       </div>

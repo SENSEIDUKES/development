@@ -103,7 +103,10 @@
 .familiar-helper form { display: flex; gap: 6px; margin-top: 10px; }
 .familiar-helper input { flex: 1; min-width: 0; min-height: 44px; border: 0; border-radius: 14px; padding: 8px 12px; background: #ffffff12; color: inherit; font-size: 16px; }
 /* The icon row: info, the microphone, typing. The microphone shows what the Familiar is doing: a pulse while it listens, a glow while it speaks. */
-.familiar-helper-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; padding: 8px 4px; }
+.familiar-helper-bottom { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; margin-top: 4px; padding: 8px 4px; }
+/* Info and this screen's quick actions (Guides) on the left, the microphone in the middle, typing or the conversation on the right. */
+.familiar-helper-bottom-side { display: flex; align-items: center; gap: 4px; }
+.familiar-helper-bottom-side.is-end { justify-content: flex-end; }
 .familiar-helper .familiar-helper-mic { width: 54px; height: 54px; border-radius: 50%; background: #8bdbff2e; }
 /* Lit only while it hears the reader: a ring that ripples outward and fades. */
 .familiar-helper .familiar-helper-mic[data-phase="listening"], .familiar-helper .familiar-helper-mic[data-phase="live"] { opacity: 1; background: #8bdbff59; color: #fff; animation: familiar-listening 1.4s ease-out infinite; }

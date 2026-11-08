@@ -187,6 +187,10 @@ try {
   );
 
   if (target.id === 'library') {
+    // The Familiar's card is Front Desk's: the installed Library's Familiar loads Front Desk's own stylesheet, which holds the card's styles.
+    const installed = join(consumerDirectory, 'node_modules/@seihouse');
+    assert((await readFile(join(installed, 'library/dist/familiar.js'), 'utf8')).includes('import "@seihouse/front-desk/styles.css"'), "the Library's Familiar must load Front Desk's stylesheet");
+    assert((await readFile(join(installed, 'front-desk/dist/front-desk.css'), 'utf8')).includes('.familiar-helper{'), "Front Desk's stylesheet must hold the card's styles");
     await writeFile(join(consumerDirectory, 'src/forbidden-browser-import.js'),
       "import { createModelRouter } from '@seihouse/library/model-router-server'; document.body.textContent = String(createModelRouter);");
     await writeFile(join(consumerDirectory, 'index.html'),

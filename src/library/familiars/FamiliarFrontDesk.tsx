@@ -1,4 +1,6 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react';
+// Front Desk's card styles, from Front Desk itself: the Library's Familiar brings them to every host that installs it.
+import '@seihouse/front-desk/styles.css';
 import { FrontDeskProvider, useFrontDeskInUse, type FrontDeskGuide, type FrontDeskGuides, type FrontDeskLive, type FrontDeskVoice, type FrontDeskWakeWord } from '@seihouse/front-desk';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { SpokenCode, SpokenCodesProvider } from '@seihouse/sen/presentation';

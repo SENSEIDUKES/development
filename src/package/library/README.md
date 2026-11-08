@@ -9,7 +9,9 @@ guide view, the clip or the welcome card: they are Front Desk's
 `./familiar` adds `FamiliarFrontDesk` (Front Desk with Novel Expanded's setup, the
 app's narrative player for recorded lines, SEN's code badges and the Familiar's
 face), `familiarFrontDeskSetup`, `familiarActionPolicy`, `FAMILIAR_CODE_WORDS`,
-`FAMILIAR_WORDING`, `FAMILIAR_WAKE_WORD` and `FAMILIAR_SPOILER_OFFER`.
+`FAMILIAR_WORDING`, `FAMILIAR_WAKE_WORD` and `FAMILIAR_SPOILER_OFFER`. The card's
+styles are Front Desk's: `./familiar` loads `@seihouse/front-desk/styles.css`, so a host
+of the Library's Familiar gets them without importing them itself.
 
 **Unreleased (2026-11-02):** The shared Reader plays placed Sound Cues when
 narration reaches their words and cuts them off on pause/seek. Requires

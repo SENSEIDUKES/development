@@ -73,7 +73,10 @@ const contentWords = (text: string, locale?: string) => new Set(
 /** Whether a range shares any text with a sound already placed in its paragraph. */
 const overlapsSound = (range: WordRange, taken: readonly SoundTag[]) => taken.some(tag => range.start < tag.end && range.end > tag.start);
 
-/** The words of `text` that best say what the orphan's words said: at most the cue's word limit, first to last match. */
+/** Punctuation that ends a sentence, between two words. */
+const SENTENCE_BREAK = /[.!?。！？…‽]/u;
+
+/** The words of `text` that best say what the orphan's words said: at most the cue's word limit, first to last match, within one sentence. */
 const bestEcho = (text: string, words: Set<string>, taken: readonly SoundTag[], locale?: string) => {
   const ranges = wordRanges(text, locale);
   const keys = ranges.map(range => text.slice(range.start, range.end).toLocaleLowerCase(locale));
@@ -83,6 +86,7 @@ const bestEcho = (text: string, words: Set<string>, taken: readonly SoundTag[], 
     const seen = new Set<string>([keys[first]]);
     let last = first;
     for (let next = first + 1; next < Math.min(ranges.length, first + SOUND_CUE_RULES.maxWords); next += 1) {
+      if (SENTENCE_BREAK.test(text.slice(ranges[next - 1].end, ranges[next].start))) break;
       if (words.has(keys[next])) { seen.add(keys[next]); last = next; }
     }
     const range = { start: ranges[first].start, end: ranges[last].end };

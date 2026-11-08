@@ -64,7 +64,7 @@ blocks. `onSelectionChange(selection | null)` remains available to hosts. The
 optional `actions` tree accepts nested generic `PassageAction` branches and
 leaf callbacks that receive the immutable `PassageSelection` and a close
 callback. Only the host decides which actions to expose. An action's optional
-`unavailable(selection)` returns a reason ("Sound Cues fit 1–8 words"): the
+`unavailable(selection)` returns a reason ("Sound Cues fit 1–12 words"): the
 action stays in the bar, dimmed, with the reason under its label and as its
 description. `removeActions` fill the bar's Remove mode beside the built-in
 Undo and Delete Passage. Remove mode exists only while `editable`: right-click
@@ -120,7 +120,7 @@ ready-made component handles this itself.
 The optional SEN `createManualSoundCue(block, selection, cue, catalog)` adapter
 validates the selected range against current prose and requires an approved
 host-supplied catalog recording with provenance and a sound word. It refuses a
-range that is not exactly 1–8 whole words (`partial-word`, `too-many-words`) or
+range that is not exactly 1–12 whole words (`partial-word`, `too-many-words`) or
 that overlaps another cue; a host first turns any selection into the words a
 cue would hold with `snapSoundCueSelection` ("Somewher" → "Somewhere"), which
 says instead why a selection cannot hold one. It returns the same
@@ -180,7 +180,7 @@ ManuscriptState      { manuscript; attachments; deletion? }
 
 The Workshop lab starts from three pre-made paragraphs (action, world-building,
 a breakthrough with a System line). Sound Cues are the only working attachment:
-each sits on 1–8 whole words as the SEN `SoundCueAttachment` itself, exactly
+each sits on 1–12 whole words as the SEN `SoundCueAttachment` itself, exactly
 what a generated chapter stores (Remove mode's **Remove cue here** takes cues
 off the selected words), and the Reader renders every cue still placed on its
 words. Below the prose, a Workshop-only inspector shows the
@@ -200,7 +200,7 @@ finished attachment — kept in one place so they can be tuned later.
 
 | Effect | Sits on | Size | Per chapter |
 | --- | --- | --- | --- |
-| Sound Cue | Words: where a sound happens ("drew his sword", "a horn blared across the terrace") | 1–8 whole words, never mid-word | 10 |
+| Sound Cue | Words: where a sound happens ("drew his sword", "a horn blared across the terrace") | 1–12 whole words, never mid-word | 10 |
 | Soundscape change | The chapter's opening (locked at its start), then the one word where the music changes, e.g. the moment before a major battle | One word: where it begins | 2 (the opening and one more) |
 | Atmosphere change | The chapter's opening (locked at its start), then the one word where the place's sound changes | One word: where it begins | 2 (the opening and one more) |
 
@@ -231,7 +231,7 @@ Who enforces them:
 - **The writer** puts a sound tag on the words where a sound happens
   (`[[sound: blade drawn | drew his sword | high]]`). The HARNESS keeps the
   words, widens a tag that starts or ends inside a word to its whole words,
-  and sets aside one that runs past eight words or past the chapter's ten.
+  and sets aside one that runs past twelve words or past the chapter's ten.
 
 ## Behavior and limitations
 
@@ -336,6 +336,8 @@ package peers. Keep Workshop hosting, dummy prose and
 browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
+
+- **2026-11-08:** Sound Cues fit 1–12 whole words (SENSEI: the 8-word cap was blocking cues the writer tagged), for a cue placed by hand and one the writer tags alike.
 
 - **2026-11-04:** Overlay marks gained a `style`: `fill` (the tint, unchanged) or `underline`, a colored line under the words. Create mode draws Media as highlights and Story info as underlines (SENSEI: each group gets its own style; the three planned styles are full highlight, colored words and colored underline). The Reader does not show tags yet, so the styles live in Create mode for now. Underlines gained a `line`, `solid` or `dotted` (SENSEI: three parent styles, with customization inside each; dotted first, for Status).
 

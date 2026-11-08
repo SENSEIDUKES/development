@@ -377,6 +377,16 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-08 (Sound Cues fit 12 words):** SENSEI, from The Frost-Scaled
+  Companion: "take off the 8-word cap for sound cues. Maybe make it 12 words
+  instead." All three cues set aside in that story ran 9 or 10 words ("a
+  whimper that rose and fell and rose again"). `SOUND_CUE_RULES.maxWords` is
+  now 12, for a tagged cue and one placed by hand alike; the Sound Cues
+  instruction reads "tag up to 12 of its own words". A stray sound tag's
+  sound now moves only onto words within one sentence (`soundTagRepair.ts`):
+  with 12 words its search had reached across a full stop ("pick into the
+  wall. It scraped across the salt crystal"). Recorded in the Writer
+  Instructions history.
 - **2026-11-06 (the Familiar knows the story):** SENSEI: the Familiar needs the
   Codex and the page the reader is on, looked up the way it looks up the docs.
   `shared/storyKnowledge.ts` writes the story's Codex (every card the Codex

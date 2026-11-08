@@ -51,7 +51,7 @@ describe('Sound Cues asked for in words', () => {
     expect(request({ kind: 'words', words: 'whistling drafts' }, { sound: 'not a story sound' })).toMatchObject({ ok: false, problem: expect.stringContaining('not one of this story') });
     expect(request({ kind: 'words', words: 'a lantern' })).toMatchObject({ ok: false, problem: 'I can\'t find “a lantern” in this chapter.' });
     expect(request({ kind: 'just-read' })).toMatchObject({ ok: false, problem: expect.stringContaining('Start Listen first') });
-    expect(request({ kind: 'words', words: 'The jagged basalt chimneys of the Whispering Rifts exhaled' })).toMatchObject({ ok: false, problem: expect.stringContaining('1 to 8 words') });
+    expect(request({ kind: 'words', words: 'The jagged basalt chimneys of the Whispering Rifts exhaled cold, whistling drafts that smelled of ozone' })).toMatchObject({ ok: false, problem: expect.stringContaining('1 to 12 words') });
     const placed = request({ kind: 'words', words: 'whistling drafts' });
     if (!placed.ok) throw new Error('expected a cue');
     expect(request({ kind: 'words', words: 'cold whistling' }, { soundCues: [placed.cue] })).toMatchObject({ ok: false, problem: expect.stringContaining('already has a Sound Cue') });

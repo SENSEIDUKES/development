@@ -1,5 +1,10 @@
 # `@seihouse/sen`
 
+**0.43.0 (2026-11-08):** Peers on `@seihouse/front-desk` **0.2.0**, now built in its
+own repository and installed from `vendor/` (step 2 of the Front Desk plan). SEN's
+use of it is unchanged: `storyKnowledge` writes a story's knowledge in Front Desk's
+catalog shape (`@seihouse/front-desk/docs-knowledge`).
+
 **0.42.0 (2026-11-08, breaking):** `./docs-knowledge` moved to SEIHouse Front Desk,
 `@seihouse/front-desk/docs-knowledge` (the same exports). SEN now peers on
 `@seihouse/front-desk` 0.1.0: `storyKnowledge` writes a story's knowledge in Front

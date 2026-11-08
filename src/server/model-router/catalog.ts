@@ -78,11 +78,10 @@ export const PROVIDER_ADAPTERS: readonly string[] = [
   'src/server/harness-generation/provider.ts',
   'src/server/story-seed-blueprint/generate.ts',
   'src/server/audio/codexVoiceQuote.ts',
-  // The browser end of Familiar Live Talk: it opens the conversation the server's token allows.
-  'src/front-desk/engines/live.ts',
   // Familiar Live Talk on OpenAI GPT-Live: the server exchanges the browser's connection offer.
   'src/server/familiar-live/openai.ts',
   // Familiar Live Talk on ElevenLabs Realtime: the server mints the client secret; the browser talks.
   'src/server/familiar-live/elevenlabs.ts',
-  'src/front-desk/engines/realtimeLive.ts',
+  // The browser end of Familiar Live Talk is SEIHouse Front Desk's live engines, installed from vendor/:
+  // they open only the conversation the server's token allows, on the model the server chose.
 ];

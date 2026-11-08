@@ -53,7 +53,7 @@ describe('The Familiar on Front Desk', () => {
     t.render({ key: 'place:home', title: 'Home', hint: '', page: 'home', topics: ['a', 'b', 'c', 'd', 'e', 'f'].map(topic),
       actions: [go('go-home', 'Home'), go('go-profile', 'Profile'), go('go-settings', 'Settings'), go('go-store', 'Store'), go('go-energy', 'My Energy'), go('go-create', 'Create')] });
     await click('Talk to Familiar');
-    const tiles = () => [...document.querySelectorAll('.familiar-helper-actions button[aria-label]')].map(element => element.getAttribute('aria-label'));
+    const tiles = () => [...document.querySelectorAll('.front-desk-card-actions button[aria-label]')].map(element => element.getAttribute('aria-label'));
     // Home's front four in their order; Home itself is not offered on Home.
     expect(tiles()).toEqual(['Create', 'My Energy', 'Store', 'Settings']);
     await click('See all (1 more)');
@@ -61,7 +61,7 @@ describe('The Familiar on Front Desk', () => {
     await click('Fewer');
     expect(tiles()).toHaveLength(4);
     await click('Explain');
-    const chips = () => [...document.querySelectorAll('.familiar-helper-topics button[aria-pressed]')].map(element => element.textContent);
+    const chips = () => [...document.querySelectorAll('.front-desk-card-topics button[aria-pressed]')].map(element => element.textContent);
     expect(chips()).toEqual(['a', 'b', 'c', 'd']);
     await click('More (2 more)');
     expect(chips()).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
@@ -77,7 +77,7 @@ describe('The Familiar on Front Desk', () => {
     ] });
     await click('Talk to Familiar');
     await click('Action');
-    const tiles = () => [...document.querySelectorAll('.familiar-helper-actions button[aria-label]')].map(element => element.getAttribute('aria-label'));
+    const tiles = () => [...document.querySelectorAll('.front-desk-card-actions button[aria-label]')].map(element => element.getAttribute('aria-label'));
     expect(tiles()).not.toContain('Take me back');
     // A change waiting to be confirmed: the pill backs out of it and stays on the page.
     await click('Conflict');
@@ -103,7 +103,7 @@ describe('The Familiar on Front Desk', () => {
       await click('Close Familiar');
       act(() => resize());
       await click('Talk to Familiar');
-      expect(document.querySelector('.familiar-helper')).not.toBeNull();
+      expect(document.querySelector('.front-desk-card')).not.toBeNull();
       expect(button('Move Familiar card')).toBeTruthy();
       expect(t.voice.listen).not.toHaveBeenCalled();
     } finally { vi.unstubAllGlobals(); }
@@ -111,7 +111,7 @@ describe('The Familiar on Front Desk', () => {
   it.each(['mouse', 'touch'])('moves the card by its header with %s, clamps it, and keeps its placement on reopen', async pointerType => {
     const t = setup();
     await click('Talk to Familiar');
-    const panel = document.querySelector<HTMLElement>('.familiar-helper')!;
+    const panel = document.querySelector<HTMLElement>('.front-desk-card')!;
     const handle = button('Move Familiar card');
     const bounds = () => ({ left: parseFloat(panel.style.left), top: parseFloat(panel.style.top), width: 360, height: 200 } as DOMRect);
     vi.spyOn(panel, 'getBoundingClientRect').mockImplementation(bounds);
@@ -147,7 +147,7 @@ describe('The Familiar on Front Desk', () => {
     expect(panel.style.left).toBe(placed.left);
     await click('Close Familiar');
     await click('Talk to Familiar');
-    const reopened = document.querySelector<HTMLElement>('.familiar-helper')!;
+    const reopened = document.querySelector<HTMLElement>('.front-desk-card')!;
     expect(reopened.style.left).toBe(placed.left);
     expect(reopened.style.top).toBe(placed.top);
     expect(t.voice.listen).not.toHaveBeenCalled();
@@ -155,7 +155,7 @@ describe('The Familiar on Front Desk', () => {
   it('supports keyboard movement and keeps the card in view after resize', async () => {
     setup();
     await click('Talk to Familiar');
-    const panel = document.querySelector<HTMLElement>('.familiar-helper')!;
+    const panel = document.querySelector<HTMLElement>('.front-desk-card')!;
     vi.spyOn(panel, 'getBoundingClientRect').mockImplementation(() => ({ left: parseFloat(panel.style.left), top: parseFloat(panel.style.top), width: 360, height: 200 } as DOMRect));
     const move = (key: string, shiftKey = false) => act(() => button('Move Familiar card').dispatchEvent(new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true })));
     move('ArrowRight'); move('ArrowDown', true);
@@ -296,7 +296,7 @@ describe('The Familiar on Front Desk', () => {
     await click('Explain');
     expect(document.querySelector('video')).toBeNull();
     await click('Fate');
-    expect(document.querySelector('.familiar-helper-topic')!.textContent).toContain('Fate chooses the next chapter.');
+    expect(document.querySelector('.front-desk-card-topic')!.textContent).toContain('Fate chooses the next chapter.');
     expect(document.querySelector('video')).toBeNull();
     expect(voice.speak).toHaveBeenLastCalledWith('Fate chooses the next chapter.', 'en-US', expect.any(Function), expect.any(Function));
     await click('Codex');
@@ -311,7 +311,7 @@ describe('The Familiar on Front Desk', () => {
     await click('Talk to Familiar');
     expect(document.body.textContent).not.toContain('Say Conflict.');
     await click('How to talk to your Familiar');
-    expect(document.querySelector('.familiar-helper-info')!.textContent).toContain('Say Conflict.');
+    expect(document.querySelector('.front-desk-card-info')!.textContent).toContain('Say Conflict.');
   });
   it('stops a recorded line through the player as it is now, so Stop silences it', async () => {
     const t = setup();
@@ -426,7 +426,7 @@ describe('The Familiar on Front Desk', () => {
       expect(live.start).not.toHaveBeenCalled();
       await act(async () => { vi.advanceTimersByTime(250); });
       expect(live.start).toHaveBeenCalledWith(expect.anything(), expect.anything(), { microphone: true });
-      expect(document.querySelector('[role="dialog"], .familiar-helper')).toBeTruthy();
+      expect(document.querySelector('[role="dialog"], .front-desk-card')).toBeTruthy();
       // No listening for it while talking.
       const calls = (wake.listen as ReturnType<typeof vi.fn>).mock.calls.length;
       act(() => events!.connected());

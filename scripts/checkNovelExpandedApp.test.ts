@@ -56,11 +56,10 @@ describe('the NovelExpanded app guard', () => {
   it('lets the app use Front Desk only through its listed entries', () => {
     const { violations } = findAppViolations(graphOf({
       [MAIN]: [
-        { specifier: '@seihouse/front-desk', target: 'src/package/front-desk/index.ts' },
-        { specifier: '@seihouse/front-desk/docs-knowledge', target: 'src/package/front-desk/docs-knowledge.ts' },
+        // Installed from vendor/, it resolves to node_modules: no source file here.
+        { specifier: '@seihouse/front-desk' },
+        { specifier: '@seihouse/front-desk/docs-knowledge' },
       ],
-      'src/package/front-desk/index.ts': [],
-      'src/package/front-desk/docs-knowledge.ts': [],
     }), MAIN, ownershipOf);
     expect(violations).toEqual(['ENTRY_NOT_IN_APP src/novel-expanded/main.tsx → @seihouse/front-desk/docs-knowledge']);
   });

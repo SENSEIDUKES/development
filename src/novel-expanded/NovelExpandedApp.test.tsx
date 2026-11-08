@@ -1350,7 +1350,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     const readerPreferences = createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences);
     const profile = createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID });
     await render(appServices(scriptedWriter().writer, { readerPreferences, profile }));
-    const card = () => document.querySelector<HTMLElement>('[data-familiar-welcome]');
+    const card = () => document.querySelector<HTMLElement>('[data-front-desk-greeting]');
     for (let tries = 0; !recall() && tries < 20; tries++) await flush(20);
     // The app's own welcome comes first (to be built); the Familiar waits its turn, in the header.
     await flush(100);
@@ -1359,16 +1359,16 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await summon();
     await click(document.querySelector('.familiar-companion .familiar-trigger'), 'the Familiar');
     await click(document.querySelector('.familiar-companion [aria-label="Talk to Familiar"]'), 'Talk to Familiar', 20);
-    await click(document.querySelector('[data-familiar-guides-open]'), 'Guides', 20);
+    await click(document.querySelector('[data-front-desk-guides-open]'), 'Guides', 20);
     // The guide plays in the Familiar's own card, with its microphone under it.
-    const playing = () => document.querySelector<HTMLElement>('[data-familiar-guides-playing]');
-    expect(playing()?.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet-your-familiar');
-    expect(playing()?.closest('.familiar-helper')?.querySelector('.familiar-helper-mic')).toBeTruthy();
+    const playing = () => document.querySelector<HTMLElement>('[data-front-desk-guides-playing]');
+    expect(playing()?.querySelector('[data-front-desk-guide-open]')?.getAttribute('data-front-desk-guide-open')).toBe('meet-your-familiar');
+    expect(playing()?.closest('.front-desk-card')?.querySelector('.front-desk-card-mic')).toBeTruthy();
     // The guide takes the place of Home's action buttons; closing it brings them back.
-    expect(document.querySelector('.familiar-helper-actions')).toBeNull();
-    await click(playing()!.querySelector('[data-familiar-guides-close]'), 'Close guides', 20);
+    expect(document.querySelector('.front-desk-card-actions')).toBeNull();
+    await click(playing()!.querySelector('[data-front-desk-guides-close]'), 'Close guides', 20);
     expect(playing()).toBeNull();
-    expect(document.querySelector('.familiar-helper-actions')).toBeTruthy();
+    expect(document.querySelector('.front-desk-card-actions')).toBeTruthy();
     expect(card()).toBeNull();
     expect(address()).toBe('/app/');
   });

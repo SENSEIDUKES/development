@@ -1,17 +1,20 @@
 # Package lanes
 
-DEV publishes three packages, and the splits between them are product
-boundaries, not build conveniences.
+DEV publishes two packages, and the split between them is a product boundary,
+not a build convenience. Beneath both sits SEIHouse Front Desk, built in its own
+repository and installed here like the UI kit.
 
 | Directory | Package | What it is |
 | --- | --- | --- |
 | [`sen/`](./sen/README.md) | `@seihouse/sen` | **The portable engine.** SEIHouse Expanded Novels: an embeddable expanded-narrative engine another author or company installs in their own application, supplying their own writing, branding, storage, authentication, and generation method. |
 | [`library/`](./library/README.md) | `@seihouse/library` | **The first-party host application.** SEIHouse's own branded implementation of SEN: permanent DAO XP cultivation, spendable QI, the relic economy, and Library-specific presentation. |
-| [`front-desk/`](./front-desk/README.md) | `@seihouse/front-desk` | **SEIHouse Front Desk**, shared infrastructure beneath both: an app's front desk in one character (help, guides, actions it asks before taking, look-ups, voice and live talk), to be open-sourced. Novel Expanded's character on it is the Familiar. |
+| `vendor/seihouse-front-desk-*.tgz` | `@seihouse/front-desk` | **SEIHouse Front Desk**, shared SEIHouse infrastructure beneath both, from the private `SENSEIDUKES/seihouse-front-desk` repository: an app's front desk in one character (help, guides, actions it asks before taking, look-ups, voice and live talk). Novel Expanded's character on it is the Familiar. |
 
 **Library may depend on SEN. SEN must never depend on Library.** **Front Desk depends
-on neither; SEN and the Library may use it, only through `@seihouse/front-desk`**
-(`FRONT_DESK_BOUNDARY`). It is built first, then SEN, then the Library.
+on neither; SEN and the Library use it as a declared peer, by its package name.** Its
+source is not in this repository, so nothing here can reach past its entries; its own
+repository proves it runs with nothing else from SEIHouse. SEN is built first, then
+the Library.
 
 ## Canonical UI owners
 

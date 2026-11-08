@@ -3,8 +3,9 @@
 - **Created:** 2026-11-07, as the Familiar's media spot plan; widened to the whole
   Front Desk on 2026-11-08.
 - **Owner:** SENSEI
-- **Status:** step 1 built (2026-11-08); the media spot's phase A built (2026-11-07).
-  Everything else is direction, in order. [`NOVEL_EXPANDED.md`](../NOVEL_EXPANDED.md)
+- **Status:** steps 1 and 2 built (2026-11-08); the media spot's phase A built
+  (2026-11-07). Steps 3 to 11 come later, when there's time (SENSEI, 2026-11-08: one
+  person, so the separation and porting it back come first, and the features later). [`NOVEL_EXPANDED.md`](../NOVEL_EXPANDED.md)
   stays the source of truth for what is built.
 - **Sources:** conversations with SENSEI on 2026-11-07 and 2026-11-08, including
   Hugging Face's open real-time voice and camera demo (`smolagents/hf-realtime-voice`:
@@ -16,8 +17,14 @@
 **The app's front desk:** one character who is the interface. Help, guides,
 navigation, messages, accessibility setup, and later taste and memory all go
 through it: one voice, one set of rules, everywhere. It is **SEIHouse Front Desk**
-(`@seihouse/front-desk`), open source under MPL-2.0. Novel Expanded's character on
-it is the Familiar; SEA's will be the vocal director.
+(`@seihouse/front-desk`). Novel Expanded's character on it is the Familiar; SEA's
+will be the vocal director.
+
+It belongs to **the SEIHouse ecosystem**, like the UI kit, the fonts and the audio
+player: SEIHouse's own building blocks, which creators inside SEIHouse put their own
+work on. It keeps SEIHouse's own pieces, such as the UI kit's scrollbars, because
+they were made for SEIHouse's users. Whether to open-source it is a later decision
+(SENSEI, 2026-11-08), not part of these steps.
 
 Its rules: it never changes anything without asking; "Take me back" always works;
 no spoilers unless asked; it never watches unless asked; your data is yours.
@@ -44,12 +51,23 @@ must always work on the free engines.
    (`FRONT_DESK_BOUNDARY`): it imports nothing from SEN, the Library or the app, which
    hand it their docs, action rules, code letters, wording, recorded-line player and
    the character's face. The app works exactly as before, through `FamiliarFrontDesk`.
-2. **Lift it into its own repository.** `seihouse-front-desk`, MPL-2.0, a plain
-   default look, a tiny example app and a README, no SEIHouse art or secrets; vendored
-   back into this repository like the audio player and the UI kit. Then rename the
-   card's CSS classes, `data-familiar-*` attributes and labels, move the live-talk
-   server pieces, give the controller's tests their own fixtures, and decide on the
-   `@seihouse/ui` peer.
+2. **Lift it into its own repository (built 2026-11-08).** The private
+   `SENSEIDUKES/seihouse-front-desk` repository, vendored back into this one like
+   the UI kit (`vendor/seihouse-front-desk-0.2.0.tgz`, its source commit in
+   `vendor/front-desk-artifacts.json`).
+   - The card's classes, `data-*` hooks and labels carry Front Desk's names. A host
+     names its character (`wording.who`) and writes its greeting, so Novel Expanded
+     still says "Talk to Familiar".
+   - Front Desk has its own tests on a sample host, and a small example of a creator
+     plugging in their own character (Basil, a kitchen helper).
+   - A standalone check installs it with nothing else from SEIHouse and runs it.
+   - It keeps the `@seihouse/ui` peer.
+   - The live-talk server stays Novel Expanded's code: it holds the provider keys,
+     so it belongs to whoever hosts it. The wire names it speaks (`familiar`,
+     `/api/familiar-live`) stay.
+
+**Later, when there's time:** steps 3 to 11.
+
 3. **The bridge for older people.** Words under the icons; "Tap to say hello": it
    introduces itself and asks your name, then it is a conversation, listening when it
    finishes talking, with no microphone button per turn; patience (it waits longer,

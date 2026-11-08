@@ -31,13 +31,15 @@ export function importSpecifiers(source, file = 'module.tsx') {
 }
 
 /**
- * The published packages, in build order: SEIHouse Front Desk (shared
- * infrastructure beneath both products), SEN, then the Library.
+ * The packages built here, in build order: SEN, then the Library. SEIHouse
+ * Front Desk (`@seihouse/front-desk`), shared infrastructure beneath both, is
+ * built in its own repository and installed from `vendor/` like the UI kit, so
+ * its source is not here to reach into; SEN and the Library declare it as a peer.
  */
-export const PACKAGE_OWNERS = ['front-desk', 'sen', 'library'];
-/** Which other packages each may use, only through their package names: Front Desk none, SEN Front Desk, the Library both. */
-export const PACKAGE_USES = { 'front-desk': [], sen: ['front-desk'], library: ['front-desk', 'sen'] };
-const PACKAGE_SPECIFIER = /^@seihouse\/(front-desk|sen|library)(\/|$)/;
+export const PACKAGE_OWNERS = ['sen', 'library'];
+/** Which other packages each may use, only through their package names: SEN none, the Library SEN. */
+export const PACKAGE_USES = { sen: [], library: ['sen'] };
+const PACKAGE_SPECIFIER = /^@seihouse\/(sen|library)(\/|$)/;
 const packageOf = specifier => PACKAGE_SPECIFIER.exec(specifier)?.[1];
 
 export function packageEntries(root) {
@@ -75,7 +77,7 @@ export function validateSourcePolicy(source, file, owner) {
   function visit(node) {
     if (!node || typeof node !== 'object') return;
     if (node.type === 'Identifier' && ['localStorage','sessionStorage','indexedDB','mockStore','mockData','previewData','setMockState','useMockStore'].includes(node.name)) violations.add('HOST_DEFAULT');
-    if (node.type === 'StringLiteral' && (/workshop[.:/]|previewData|mockData/i.test(node.value) || (owner === 'sen' && /celestialaudio\.seihouse|\/api\/|library-auth-backdrop|manifest-backdrops\/|@seihouse\/library/.test(node.value)) || (owner === 'front-desk' && /@seihouse\/(sen|library)|celestialaudio\.seihouse|media\.seihouse/.test(node.value)))) violations.add('HOST_LITERAL');
+    if (node.type === 'StringLiteral' && (/workshop[.:/]|previewData|mockData/i.test(node.value) || (owner === 'sen' && /celestialaudio\.seihouse|\/api\/|library-auth-backdrop|manifest-backdrops\/|@seihouse\/library/.test(node.value)))) violations.add('HOST_LITERAL');
     if ((node.type === 'ImportExpression' && node.source.type !== 'StringLiteral') || (node.type === 'CallExpression' && node.callee.name === 'require' && node.arguments[0]?.type !== 'StringLiteral')) violations.add('DYNAMIC_IMPORT');
     for (const [key,value] of Object.entries(node)) {
       if (['loc','start','end','comments','leadingComments','trailingComments','innerComments'].includes(key)) continue;
@@ -111,7 +113,6 @@ export function validateOwnership(graph, packages, classify = ownershipOf, requi
   const packageGraph = new Map(Object.values(packages).filter(pkg => pkg.manifest).map(({ manifest }) => [manifest.name, Object.keys({ ...manifest.dependencies, ...manifest.peerDependencies }).map(target => ({ target }))]));
   for (const group of stronglyConnected(packageGraph)) failures.push(`PACKAGE_CYCLE ${group.join(' -> ')}`);
   for (const { target } of packageGraph.get('@seihouse/sen') ?? []) if (/^@seihouse\/library(?:-ui)?$/.test(target)) failures.push(`PACKAGE_DIRECTION @seihouse/sen -> ${target}`);
-  for (const { target } of packageGraph.get('@seihouse/front-desk') ?? []) if (/^@seihouse\/(sen|library(?:-ui)?)$/.test(target)) failures.push(`PACKAGE_DIRECTION @seihouse/front-desk -> ${target}`);
   for (const [file, imports] of graph) {
     const source = classify(file);
     if (!source) { failures.push(`UNOWNED ${file}`); continue; }
@@ -130,8 +131,6 @@ export function validateOwnership(graph, packages, classify = ownershipOf, requi
         }
       }
       if (PACKAGE_OWNERS.includes(source.owner) && packageOf(specifier) && !target && !specifier.endsWith('.css')) failures.push(`MISSING_EXPORT ${file} -> ${specifier}`);
-      // Front Desk is shared infrastructure beneath both products: it uses no other SEIHouse package and no host file.
-      if (source.owner === 'front-desk' && (/^@seihouse\/(sen|library(?:-ui)?)(?:\/|$)/.test(specifier) || (destination && destination.owner !== 'front-desk'))) failures.push(`FRONT_DESK_BOUNDARY ${file} -> ${specifier}`);
       if (source.owner === 'sen' && (/^@seihouse\/library(?:-ui)?(?:\/|$)/.test(specifier) || (destination && destination.owner !== 'sen' && !PACKAGE_USES.sen.includes(destination.owner)))) failures.push(`SEN_BOUNDARY ${file} -> ${specifier}`);
       if (source.owner === 'library' && destination && !['library', ...PACKAGE_USES.library].includes(destination.owner)) failures.push(`LIBRARY_BOUNDARY ${file} -> ${specifier}`);
       if (destination && source.owner !== destination.owner && PACKAGE_OWNERS.includes(destination.owner) && packageOf(specifier) !== destination.owner) failures.push(`SOURCE_BYPASS ${file} -> ${target}`);

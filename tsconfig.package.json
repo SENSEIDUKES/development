@@ -6,10 +6,8 @@
     "emitDeclarationOnly": true,
     "outDir": "dist/sen/dist/types",
     "rootDir": "src",
-    // SEN type-checks against Front Desk's published declarations (built first), not its source.
+    // Front Desk's types come from its installed package (vendor/), like the UI kit's.
     "paths": {
-      "@seihouse/front-desk": ["./dist/front-desk/dist/types/package/front-desk/index.d.ts"],
-      "@seihouse/front-desk/*": ["./dist/front-desk/dist/types/package/front-desk/*.d.ts"],
       "@seihouse/sen": ["./src/package/sen/index.ts"],
       "@seihouse/sen/*": ["./src/package/sen/*.ts"],
       "@seihouse/library": ["./src/package/library/index.ts"],

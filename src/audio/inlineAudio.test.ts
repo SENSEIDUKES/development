@@ -63,15 +63,15 @@ describe('placeSoundCues', () => {
     expect(soundCues[0].anchor.selectedText).toBe('剣を抜いた');
   });
 
-  it('places up to eight words, the moment a writer wraps whole', () => {
-    const { soundCues, setAside } = place(['Below, [[sound: beast roar | a beast roared across the terrace at dusk]] and fell silent.']);
+  it('places up to twelve words, the moment a writer wraps whole', () => {
+    const { soundCues, setAside } = place(['Below, [[sound: beast roar | a beast roared across the terrace at dusk and the walls shook]] and fell silent.']);
     expect(setAside).toEqual([]);
-    expect(soundCues[0].anchor.selectedText).toBe('a beast roared across the terrace at dusk');
+    expect(soundCues[0].anchor.selectedText).toBe('a beast roared across the terrace at dusk and the walls shook');
   });
 
   it('sets aside, never forces, what breaks the rules', () => {
     const { soundCues, setAside } = place([
-      'He [[sound: blade drawn | drew the long curved blade of his fathers and grandfathers]] slowly. The [[sound: thunder | beast roared]].',
+      'He [[sound: blade drawn | drew the long curved blade that his fathers and grandfathers had carried into every war]] slowly. The [[sound: thunder | beast roared]].',
       '[[[sound: blade drawn | Quest complete]]]',
       'She [[sound: blade drawn | drew]] it.',
     ], 1, undefined, [...VOCABULARY, { word: 'chime', example: 'a soft chime' }]);
@@ -79,7 +79,7 @@ describe('placeSoundCues', () => {
     expect(setAside.map(item => [item.sound, item.reason, item.blockId])).toEqual([
       ['blade drawn', 'too-many-words', 'c1-p1'], ['thunder', 'unknown-sound', 'c1-p1'], ['blade drawn', 'not-prose', 'c1-p2'],
     ]);
-    expect(describeSetAsideSoundCue(setAside[0])).toBe('The "blade drawn" sound on “drew the long curved blade of his fathers and grandfathers” covers more than 8 words; it was set aside.');
+    expect(describeSetAsideSoundCue(setAside[0])).toBe('The "blade drawn" sound on “drew the long curved blade that his fathers and grandfathers had carried into every war” covers more than 12 words; it was set aside.');
     expect(describeSetAsideSoundCue(setAside[1])).toBe('The "thunder" sound on “beast roared” is not one of this story\'s sound words; it was set aside.');
     // A story word with no playable recording is set aside too.
     const silent = place(['A [[sound: chime | soft chime]] rang.'], 1, undefined, [...VOCABULARY, { word: 'chime', example: 'a soft chime' }]);

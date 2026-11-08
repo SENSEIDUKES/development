@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-11-08',
+    summary: 'A Sound Cue may now cover up to 12 words instead of 8 (SENSEI, 2026-11-08, from The Frost-Scaled Companion: "take off the 8-word cap for sound cues. Maybe make it 12 words instead"). The 8-word cap was setting aside sounds the tagger had placed well: all three cues it blocked in that story ran 9 or 10 words, such as "a whimper that rose and fell and rose again". The Sound Cues instruction now reads "tag up to 12 of its own words"; the same limit applies to a cue placed by hand. Nothing else changed.',
+    changed: { 'sound-cues': '184d8b3300abf2' },
+  },
+  {
     date: '2026-11-07',
     summary: 'The Writer\'s Role and mission no longer says who the writer is (SENSEI, 2026-11-07: "That first sentence you got there, delete that shit"). It opened with SEN\'s identity and "Write the next complete chapter of this ongoing novel.", both of which the Author skill right below already says. It now holds only the job: respect the Foundation, author direction, canon and prior chapters, and how these instructions are laid out. Nothing else changed.',
     changed: { role: '1271499a164440' },

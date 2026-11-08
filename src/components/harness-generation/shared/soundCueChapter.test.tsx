@@ -49,7 +49,7 @@ const taggedChapter = () => ({
     'Mara held her ground as [[sound: beast roar | the beast roared | high]] across the courtyard.',
     'She [[sound: Unsheathe | drew her sword]] and waited for the rain to stop.',
     '[[sound: thunder | Thunder rolled | high]] over the tiled roofs.',
-    'The [[sound: war cry | debt collectors of the eastern ward all arrived together]] at once.',
+    'The [[sound: war cry | debt collectors of the eastern ward and their hired men all arrived together]] at once.',
   ],
   arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' },
   recap: 'Mara faced [[sound: beast roar | the beast]] in the courtyard.',
@@ -134,7 +134,7 @@ describe('HARNESS Sound Cues through sound tags', () => {
       'Mara held her ground as the beast roared across the courtyard.',
       'She drew her sword and waited for the rain to stop.',
       'Thunder rolled over the tiled roofs.',
-      'The debt collectors of the eastern ward all arrived together at once.',
+      'The debt collectors of the eastern ward and their hired men all arrived together at once.',
       REST_OF_CHAPTER,
     ]);
     // Nothing a reader or the next chapter sees carries a tag. The tagger's own
@@ -149,7 +149,7 @@ describe('HARNESS Sound Cues through sound tags', () => {
     const warnings = state.attempts[0].warnings.filter(warning => warning.code === 'sound_cue_set_aside').map(warning => warning.message);
     expect(warnings).toEqual([
       'The "thunder" sound on “Thunder rolled” is not one of this story\'s sound words; it was set aside.',
-      'The "war cry" sound on “debt collectors of the eastern ward all arrived together” covers more than 8 words; it was set aside.',
+      'The "war cry" sound on “debt collectors of the eastern ward and their hired men all arrived together” covers more than 12 words; it was set aside.',
     ]);
 
     const reloaded = new HarnessGenerationController({ repository, media, modelAdapter: adapter('{}').value });

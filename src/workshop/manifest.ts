@@ -168,7 +168,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'highlight-engine', title: 'Highlight Engine',
-    description: 'The Highlight Engine (text today, sequential-art images later). The manuscript lab: three pre-made paragraphs saved with permanent paragraph and sentence addresses. Select prose to see its address, edit it, or attach a Sound Cue to 1–8 whole words (up to 10 per chapter); right-click or use the Remove row for Undo, Remove cue here and Delete Passage; switch on the Cues overlay to see every Sound Cue in blue and the page numbered the way the model addresses it (¶ paragraph numbers in the margin, small raised sentence numbers); then seal the chapter.',
+    description: 'The Highlight Engine (text today, sequential-art images later). The manuscript lab: three pre-made paragraphs saved with permanent paragraph and sentence addresses. Select prose to see its address, edit it, or attach a Sound Cue to 1–12 whole words (up to 10 per chapter); right-click or use the Remove row for Undo, Remove cue here and Delete Passage; switch on the Cues overlay to see every Sound Cue in blue and the page numbered the way the model addresses it (¶ paragraph numbers in the margin, small raised sentence numbers); then seal the chapter.',
     category: 'reader-ui', section: 'components', owner: 'sen', status: 'active', version: 'v1.8',
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/highlight-engine/', lastCompared: 'Not applicable — DEV-native primitive' },
   },

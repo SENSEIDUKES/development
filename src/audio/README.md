@@ -27,7 +27,7 @@ The current split is:
 | Sound Cue record, Reader playback and split helpers | SEN | `inlineAudio.ts` (`SoundCueAttachment`), `cues.ts` |
 | Sound Cues on the page: the glyph on the tagged words and its inline playback | SEN (`@seihouse/sen/inline-audio`) | `InlineAudioView.tsx`, `InlineAudio.css` |
 | Placing a writer's Sound Cues on the words its sound tags wrap | SEN | `soundCuePlacement.ts` (`placeSoundCues`) |
-| Finished Sound Cue rules (1–8 whole words, at most 10 per chapter) | SEN | `soundCueRules.ts` |
+| Finished Sound Cue rules (1–12 whole words, at most 10 per chapter) | SEN | `soundCueRules.ts` |
 | Sound words (the event a recording answers, with an example) | SEN | `soundWords.ts`, `soundVocabulary` in `media.ts` |
 | Studio tags (parent + Tone, Energy, Tension) | SEN | `audioTags.ts` |
 | Portable soundscape intent and resolved track shape (a piece may carry its name and measured loudness) | SEN | `soundscapes.ts` |
@@ -65,7 +65,7 @@ each paragraph with its `sounds`, turns those tags into finished cues,
 deterministically. A tag is set aside (with a reason `describeSetAsideSoundCue`
 puts into words), never forced, when its word is not one of the story's, the
 paragraph is a system line or not shown as prose, or the words break the
-finished-cue rules: a placed Sound Cue is 1–8 whole words, never starting or
+finished-cue rules: a placed Sound Cue is 1–12 whole words, never starting or
 ending inside a word, never overlapping another, and a chapter holds at most
 ten, first in reading order (`SOUND_CUE_RULES`, `soundCueWordIssue`). A tag
 that starts or ends inside a word widens to the whole word, in the story's

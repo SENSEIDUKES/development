@@ -72,11 +72,13 @@ export interface CreationModalProps {
    */
   accountDefaultChapterWritingStyle?: ChapterWritingStyle;
   /**
-   * The host's Story Settings for the story this seed will become (its skills
-   * and media), shown in Settings after the Reading Mode. Story Seed only
+   * The host's Story Settings for the story this seed will become (its
+   * media), shown in Settings after the Reading Mode. Story Seed only
    * places it; the host owns what it holds.
    */
   renderStorySettings?: (seed: { seed: StorySeedInput; originalLanguage: SenLanguageCode }) => ReactNode;
+  /** The host's Writer plugins (its CAPA skill slots), shown on Plugins. */
+  renderStoryPlugins?: (seed: { seed: StorySeedInput; originalLanguage: SenLanguageCode }) => ReactNode;
   /** Shown beside the Manifest button, such as the host's price for a World Blueprint. */
   manifestAside?: ReactNode;
   /**
@@ -161,7 +163,7 @@ const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalSt
   libraryStories: state.stories,
 });
 
-export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, manifestAside, initialSeedId, originSparks }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, renderStoryPlugins, manifestAside, initialSeedId, originSparks }: CreationModalProps) {
   const runtime = useStoryCreationRuntime();
   const guestWorkspace = Boolean(runtime.guestOwnerId);
   const storeIsGenerating = useStoryCreationStore(state => state.isGenerating);
@@ -752,8 +754,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     setStage('intake');
   }, []);
   /**
-   * The bar's Blueprint: the World Blueprint inside the shell once one exists,
-   * otherwise the Manifest step, which says where it will appear.
+   * The Create step's Open World Blueprint: the World Blueprint inside the
+   * shell once one exists, otherwise the Create step itself.
    */
   const openBlueprint = useCallback(() => {
     setShowStoryBank(false);
@@ -831,10 +833,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         authorName={authorName}
         storyLanguage={storyLanguageSetting} onReadingModeChange={resolveReadingMode}
         storySettings={renderStorySettings?.({ seed, originalLanguage })}
+        storyPlugins={renderStoryPlugins?.({ seed, originalLanguage })}
         onSelectSection={selectWorkspaceSection} isGenerating={isGenerating} savedFeedback={savedFeedback}
         showStoryBank={showStoryBank} helpOpen={helpOpen}
         showActionRow={!showingBlueprint && !phone}
-        blueprintActive={showingBlueprint} onOpenBlueprint={openBlueprint}
         status={isGenerating ? 'Creating your World Blueprint' : savedFeedback ? 'Draft saved' : missing.length ? `Missing required: ${missingRequiredLabels}` : 'All required Story inputs complete'}
         error={seedError || error} onSaveDraft={requestSaveDraft}
       onToggleStoryBank={toggleStoryBank} onOpenHelp={openHelp} onSecondaryIntent={preloadStorySeedSecondary}

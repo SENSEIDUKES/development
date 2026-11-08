@@ -46,7 +46,7 @@ describe('SEN Sound Cues skill', () => {
 
   it('gives the tagger exactly these instructions, so nothing changes what the model receives unnoticed', () => {
     expect(SEN_SOUND_CUES_INSTRUCTIONS).toBe([
-      'When a sentence describes a sound below happening, tag up to 8 of its own words, where they stand:',
+      'When a sentence describes a sound below happening, tag up to 12 of its own words, where they stand:',
       '[[sound: Sound Word | Energy]]  Energy: low, medium or high.',
       'The words are the sentence\'s own, copied exactly: never words of your own, and never a whole sentence.',
       'At most 10 a chapter.',

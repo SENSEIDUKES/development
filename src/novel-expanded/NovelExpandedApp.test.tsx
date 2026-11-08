@@ -1185,7 +1185,7 @@ describe('NovelExpanded: publishing, and the creator\'s and the reader\'s Reader
 });
 
 describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () => {
-  it('Create\'s Settings holds the story\'s CAPA skills and media; what the reader changes there is the new story\'s', async () => {
+  it('Create\'s Plugins holds the story\'s CAPA skills and Settings its media; what the reader changes there is the new story\'s', async () => {
     const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
     record.seed.story.optional.fateSurvival = { ...record.seed.story.optional.fateSurvival, enabled: false };
     const { blueprint, ...withoutBlueprint } = record;
@@ -1196,11 +1196,11 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     services.accessToken.current = 'owner-token';
     await render(services, '/app/?page=create&seed=new');
 
-    // Story Seed's Settings: the language and Reading Mode, then the skills and media the story starts with.
-    await chooseSeedUtility('Settings');
-    const settings = document.querySelector<HTMLElement>('[data-testid="create-story-settings"]');
-    expect(settings, 'Expected Story Settings in Create').toBeTruthy();
-    const pacing = settings!.querySelector<HTMLSelectElement>('#harness-skill-pacing')!;
+    // Story Seed's Plugins: the Writer skills the story starts with.
+    await chooseSeedUtility('Plugins');
+    const plugins = document.querySelector<HTMLElement>('[data-testid="create-story-plugins"]');
+    expect(plugins, 'Expected the Writer plugins in Create').toBeTruthy();
+    const pacing = plugins!.querySelector<HTMLSelectElement>('#harness-skill-pacing')!;
     expect(pacing.value).not.toBe('');
     // The reader takes Pacing off; the choice waits on this device until Manifest.
     await act(async () => {
@@ -1209,6 +1209,11 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     });
     await flush(20);
     expect(readStorySettingsDraft(services.readerPreferences)).toEqual({ skills: { pacing: null } });
+    await click(document.querySelector('button[aria-label="Close plugins"]'), 'Close plugins', 50);
+    // Story Seed's Settings: the language and Reading Mode, then the media the story starts with.
+    await chooseSeedUtility('Settings');
+    const settings = document.querySelector<HTMLElement>('[data-testid="create-story-settings"]');
+    expect(settings, 'Expected Story Settings in Create').toBeTruthy();
     // The story's Sound Words start from the Library's preset; the reader takes one away.
     const soundWords = settings!.querySelector<HTMLElement>('[data-testid="story-settings-sound-words"]')!;
     expect(soundWords.querySelector('[data-testid="sound-words-count"]')?.textContent).toBe('30/30');
@@ -1230,14 +1235,17 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     expect(readStorySettingsDraft(services.readerPreferences)).toEqual({});
   });
 
-  it('Create\'s Settings installs a skill package into a slot and keeps it on the device for the new story', async () => {
+  it('Create\'s Plugins installs a skill package into a slot and keeps it on the device for the new story', async () => {
     const services = appServices(scriptedWriter().writer);
     await render(services, '/app/?page=create&seed=new');
     await chooseSeedUtility('Settings');
     const settings = document.querySelector<HTMLElement>('[data-testid="create-story-settings"]')!;
     // The Library's own media counts as equipped.
     expect(settings.querySelector('[data-testid="media-loadout-count"]')?.textContent).toBe('3/3 equipped');
-    const styleImport = [...settings.querySelectorAll('details')].find(details => details.querySelector('summary')?.textContent === 'Upload SPP to Style')!;
+    await click(document.querySelector('button[aria-label="Close settings"]'), 'Close settings', 50);
+    await chooseSeedUtility('Plugins');
+    const plugins = document.querySelector<HTMLElement>('[data-testid="create-story-plugins"]')!;
+    const styleImport = [...plugins.querySelectorAll('details')].find(details => details.querySelector('summary')?.textContent === 'Upload SPP to Style')!;
     expect(styleImport, 'Expected an upload on the Style slot').toBeTruthy();
     const bytes = new Uint8Array(await createPack({
       name: 'Grand Style', description: 'Test-only style.',
@@ -1252,7 +1260,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     const draft = readStorySettingsDraft(services.readerPreferences);
     expect(draft.skills?.style?.id).toMatch(/^spp:/);
     expect(services.saveImportedSkill).toHaveBeenCalledWith(expect.objectContaining({ id: draft.skills!.style!.id, slot: 'style', instructions: 'Write with grandeur.' }));
-    expect(settings.querySelector<HTMLSelectElement>('#harness-skill-style')!.value).toContain(draft.skills!.style!.id);
+    expect(plugins.querySelector<HTMLSelectElement>('#harness-skill-style')!.value).toContain(draft.skills!.style!.id);
   });
 
   it('a Create draft naming a pack no longer unlocked starts the story with the Library\'s own sounds', async () => {

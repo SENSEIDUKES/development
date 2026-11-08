@@ -412,21 +412,29 @@ async function walk(browser, viewport, sample) {
   await musicOf('menu');
   check(pieces().every(path => piecesOf('menu').has(path)), `The app's menu music should use its theme songs, got ${JSON.stringify(pieces())}.`);
   check(address() === '/app/?page=create&seed=new', `Carve New Destiny should open a new Story Seed, got ${address()}`);
-  // Story Settings in Create: Story Seed's Settings holds the language and Reading Mode, then the CAPA skill
-  // slots and media the story will start with.
+  // Story Settings in Create: Story Seed's Settings holds the language and Reading Mode, then the media the
+  // story will start with; Plugins holds its Writer CAPA skill slots.
   const seedUtility = async name => {
     const more = page.getByRole('button', { name: 'Sections', exact: true });
     if (await more.isVisible()) await more.click();
     await visibleButton(name).click();
   };
+  await seedUtility(/^Plugins$/);
+  const createPlugins = page.getByTestId('create-story-plugins').filter({ visible: true }).first();
+  await createPlugins.waitFor();
+  check(await createPlugins.locator('#harness-skill-author').count() === 1, 'Create\'s Plugins should offer the Author skill slot.');
+  check(!(await page.evaluate(slidesSideways)), 'Create\'s Plugins must never scroll sideways.');
+  await page.waitForTimeout(400);
+  await shot('2a-create-story-plugins');
+  await page.keyboard.press('Escape');
+  await createPlugins.waitFor({ state: 'hidden' });
   await seedUtility(/^Settings$/);
   const createSettings = page.getByTestId('create-story-settings').filter({ visible: true }).first();
   await createSettings.waitFor();
-  check(await createSettings.locator('#harness-skill-author').count() === 1, 'Create\'s Story Settings should offer the Author skill slot.');
   check((await createSettings.innerText()).includes('The Library’s own Sound Cues'), 'Create\'s Story Settings should show the Library\'s own sounds.');
   check(!(await page.evaluate(slidesSideways)), 'Create\'s Settings must never scroll sideways.');
   await page.waitForTimeout(400);
-  await shot('2a-create-story-settings');
+  await shot('2b-create-story-settings');
   await page.keyboard.press('Escape');
   await createSettings.waitFor({ state: 'hidden' });
   await seedUtility(/^Story Bank$/);

@@ -118,7 +118,7 @@ it('keeps ordered navigation and Help in the top header', async () => {
   await render({ onToggleStoryBank, onOpenHelp });
   const bottom = container.querySelector('nav[aria-label="Story Seed navigation"]')!;
   expect(Array.from(bottom.querySelectorAll('button')).map(element => element.textContent?.trim()))
-    .toEqual(['Sections', 'Story Bank', 'Settings', 'Back']);
+    .toEqual(['Sections', 'Story Bank', 'Plugins', 'Settings', 'Back']);
   // The section drawer lists them too, so the desktop rail built from the same
   // definition offers them without any header command row.
   await click(Array.from(bottom.querySelectorAll('button')).find(element => element.textContent?.trim() === 'Sections')!);

@@ -24,7 +24,7 @@ export { LIBRARY_READER_FONTS } from '../../library/stories/readerFonts';
 export { StorySettings } from '../../library/stories/settings/StorySettings';
 export { ChapterTaggingRecord, TagChapterAction } from '../../library/stories/ChapterTaggingControls';
 export { AuthorWorldView, type AuthorWorldTab } from '../../library/stories/AuthorWorldView';
-export { CreateStorySettings, type CreateStorySettingsProps } from '../../library/stories/settings/CreateStorySettings';
+export { CreateStoryPlugins, CreateStorySettings, type CreateStoryPluginsProps, type CreateStorySettingsProps } from '../../library/stories/settings/CreateStorySettings';
 export { SoundWordsPanel } from '../../library/stories/settings/SoundWordsPanel';
 export {
   SkillPackageImport,

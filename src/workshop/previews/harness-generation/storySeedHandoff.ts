@@ -4,6 +4,7 @@ import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/i
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
 import { createSavedAccessToken } from '../../../host/generation/accessToken';
 import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
+import type { StorySettingsDraft } from '@seihouse/library/stories';
 import { normalizeChapterWritingStyle } from '@seihouse/sen/contracts';
 import type {
   HarnessStorySeedOption,
@@ -35,8 +36,11 @@ export const createWorkshopStorySeedSource = (): HarnessStorySeedSource => ({
   },
 });
 
-/** The Workshop's Start Story: a separate controller over the Workshop's stories, then the shared start. */
-export async function startWorkshopHarnessStory(payload: InitialStoryGenerationPayload) {
+/**
+ * The Workshop's Start Story: a separate controller over the Workshop's stories,
+ * then the shared start, with the plugins chosen in the preview when it has any.
+ */
+export async function startWorkshopHarnessStory(payload: InitialStoryGenerationPayload, draft?: StorySettingsDraft) {
   const { installed } = await installOfficialCapaSkills(localStorage);
   const controller = new HarnessGenerationController({
     repository: new IndexedDbHarnessGenerationRepository(),
@@ -44,5 +48,5 @@ export async function startWorkshopHarnessStory(payload: InitialStoryGenerationP
     installedSkills: installed,
   });
   await controller.hydrate();
-  return startHarnessStoryFromSeed(controller, payload);
+  return startHarnessStoryFromSeed(controller, payload, draft ? { draft, installedSkills: installed } : undefined);
 }

@@ -2,7 +2,7 @@ import { countWords, wholeWordRange } from '../narrative/words';
 
 /**
  * What a placed Sound Cue may be on the page, however it was made: one to
- * eight whole words where a sound happens ("drew his sword", "a horn blared
+ * twelve whole words where a sound happens ("drew his sword", "a horn blared
  * across the terrace"), and no more than ten in a chapter. These describe the finished attachment. A
  * person placing a cue meets them as they select; model direction meets them
  * where it is resolved into an attachment. They are not a description of what
@@ -11,7 +11,7 @@ import { countWords, wholeWordRange } from '../narrative/words';
  * Soundscapes (not built yet) follow different rules: they are set by a
  * passage, never by words, and a chapter has at most two.
  */
-export const SOUND_CUE_RULES = { maxWords: 8, maxPerChapter: 10 } as const;
+export const SOUND_CUE_RULES = { maxWords: 12, maxPerChapter: 10 } as const;
 
 export type SoundCueWordIssue = 'no-words' | 'partial-word' | 'too-many-words';
 
@@ -19,7 +19,7 @@ export type SoundCueWordIssue = 'no-words' | 'partial-word' | 'too-many-words';
  * Why a range of text cannot hold a Sound Cue, or nothing when it can. A cue
  * sits exactly on whole words: `partial-word` means it starts or ends inside a
  * word (or on a space or punctuation mark), `too-many-words` that it holds
- * more than eight.
+ * more than twelve.
  */
 export function soundCueWordIssue(text: string, start: number, end: number, locale?: string): SoundCueWordIssue | undefined {
   const whole = wholeWordRange(text, start, end, locale);

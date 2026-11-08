@@ -326,7 +326,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(listed()).toEqual(expect.arrayContaining(['comedy', 'admin points']));
   });
 
-  it('keeps four navigation entries regardless of Manifest eligibility', () => {
+  it('keeps five navigation entries regardless of Manifest eligibility', () => {
     const onManifest = vi.fn();
     const renderNavigation = (canManifest: boolean) => act(() => root.render(
       <LibraryPresentationProvider>{<StorySeedWorkspaceChrome onNavigateHome={vi.fn()} manifestLabel="Manifest" status="Draft" children={null}
@@ -352,6 +352,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(buttons.map(button => button.getAttribute('aria-label') ?? button.textContent?.trim())).toEqual([
       'Sections',
       'Story Bank',
+      'Plugins',
       'Settings',
       'Back',
     ]);
@@ -363,6 +364,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(buttons.map(button => button.getAttribute('aria-label') ?? button.textContent?.trim())).toEqual([
       'Sections',
       'Story Bank',
+      'Plugins',
       'Settings',
       'Back',
     ]);

@@ -22,23 +22,28 @@ export interface CreateStorySettingsProps {
   onDraftChange: (draft: StorySettingsDraft) => void;
 }
 
+/** What Plugins needs from the host: its installed skills, and the skill upload when it offers one. */
+export type CreateStoryPluginsProps = Omit<CreateStorySettingsProps, 'stories'> & {
+  stories: Pick<LibraryStories, 'skills' | 'skillIntake' | 'installSkill'>;
+};
+
+const createStoryValues = ({ stories, defaults, originalLanguage, chapterWritingStyle, draft }: CreateStoryPluginsProps): StorySettingsValues => ({
+  originalLanguage,
+  ...(chapterWritingStyle ? { chapterWritingStyle } : {}),
+  skillLoadout: applyStorySettingsDraft(defaults, draft, stories.skills),
+  ...(draft.media ? { mediaLoadout: draft.media } : {}),
+});
+
 /**
- * Story Settings in Create: the CAPA skill slots, Media Loadout and Sound
- * Words the story will start with, beside the Story Seed's language and
- * Reading Mode. What the reader changes is a draft the host keeps until
- * Manifest applies it; unchanged, the story starts with the first preset's
- * sound words.
+ * Plugins in Create: the Writer's CAPA skill slots the story will start with
+ * (SENSEI, 2026-11-07: plugins are the CAPA skills, on their own page instead
+ * of inside Settings). What the reader changes is a draft the host keeps until
+ * Manifest applies it.
  */
-export function CreateStorySettings({ stories, defaults, originalLanguage, chapterWritingStyle, fateMode, draft, onDraftChange }: CreateStorySettingsProps) {
-  const values: StorySettingsValues = {
-    originalLanguage,
-    ...(chapterWritingStyle ? { chapterWritingStyle } : {}),
-    skillLoadout: applyStorySettingsDraft(defaults, draft, stories.skills),
-    ...(draft.media ? { mediaLoadout: draft.media } : {}),
-  };
-  const soundWords = useMemo(() => createSoundWords(draft, stories.soundWordPresets), [draft, stories.soundWordPresets]);
-  const { sounds, soundtrack, answered } = useMemo(() => stories.controller.describeMediaSelection(draft.media, soundWords), [stories.controller, draft.media, soundWords]);
-  return <div className="space-y-3" data-testid="create-story-settings">
+export function CreateStoryPlugins(props: CreateStoryPluginsProps) {
+  const { stories, fateMode, draft, onDraftChange } = props;
+  const values = createStoryValues(props);
+  return <div data-testid="create-story-plugins">
     <StorySkillSlots stacked story={values} fateMode={fateMode} installedSkills={stories.skills}
       busy={false}
       onChange={(slot, reference) => onDraftChange({ ...draft, skills: { ...draft.skills, [slot]: reference ?? null } })}
@@ -50,6 +55,22 @@ export function CreateStorySettings({ stories, defaults, originalLanguage, chapt
           onDraftChange({ ...draft, skills: { ...draft.skills, [slot]: { id: skill.id, version: skill.version } } });
         },
       } : {})} />
+  </div>;
+}
+
+/**
+ * Story Settings in Create: the Media Loadout and Sound Words the story will
+ * start with, beside the Story Seed's language and Reading Mode. What the
+ * reader changes is a draft the host keeps until Manifest applies it;
+ * unchanged, the story starts with the first preset's sound words. The skills
+ * live on Plugins (`CreateStoryPlugins`).
+ */
+export function CreateStorySettings(props: CreateStorySettingsProps) {
+  const { stories, draft, onDraftChange } = props;
+  const values = createStoryValues(props);
+  const soundWords = useMemo(() => createSoundWords(draft, stories.soundWordPresets), [draft, stories.soundWordPresets]);
+  const { sounds, answered } = useMemo(() => stories.controller.describeMediaSelection(draft.media, soundWords), [stories.controller, draft.media, soundWords]);
+  return <div className="space-y-3" data-testid="create-story-settings">
     <MediaLoadoutPanel stacked story={values} packs={stories.mediaPacks} entitlements={stories.mediaPackEntitlements} busy={false}
       defaults={stories.mediaDefaults} onImport={stories.importMediaPack}
       onChange={(slot, reference) => {

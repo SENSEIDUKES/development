@@ -2,7 +2,7 @@ import { splitSentences } from '../../highlight-engine/shared/manuscript';
 import type { CodexEntry } from '../../../narrative/holdings';
 import { isTieTagWord, type WordTag } from '../../../narrative/marks';
 import { TIE_KIND, tieId, type TieAttachment, type TiePayload } from '../../../narrative/ties';
-import { worldCardsOfKind, type WorldRecord } from '../../../narrative/worldRecord';
+import type { WorldRecord } from '../../../narrative/worldRecord';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { holdingName, pointedSentence, type CodexEntryResolver, type HoldingPassage } from './holdings';
 
@@ -77,23 +77,27 @@ export function placeTies({ paragraphs, locale }: {
  * Resolves every tie's two names when its chapter commits, sharing the
  * chapter's resolver. The first is a character; the second is the thing the
  * story already has by that name (a sword bound to its spirit), or one of the
- * world's thing cards not met yet, else a character. A tie naming a place or
- * an ability is no tie between two beings, and one that resolves both names to
+ * world's thing cards not met yet, else a character. A tie naming a place, a
+ * faction or an ability, in the Codex or only among the world's cards, is no
+ * tie between two beings, and one that resolves both names to
  * the same entry ties no one; both are left out rather than made into
  * characters.
  */
 export const resolveTies = (ties: readonly TieAttachment[], resolver: CodexEntryResolver, world?: WorldRecord): TieAttachment[] =>
   ties.flatMap(record => {
-    const worldThing = (name: string) => worldCardsOfKind(world, 'thing')
+    // A name the Codex has not met yet may still be one of the world's cards: a thing becomes that thing,
+    // and a place, a faction, an ability or a species is no one to be tied to.
+    const worldCard = (name: string) => world?.cards
       .find(card => [card.name, ...(card.aliases ?? [])].some(label => normalizeIdentityLabel(label) === normalizeIdentityLabel(name)));
     const first = resolver.existing(record.payload.subject.name);
     const second = resolver.existing(record.payload.other.name);
+    const firstCard = first ? undefined : worldCard(record.payload.subject.name);
+    const secondCard = second ? undefined : worldCard(record.payload.other.name);
     // Decided before anything is made, so a tie left out leaves no entry behind.
-    if ((first && first.kind !== 'character') || (!first && worldThing(record.payload.subject.name))) return [];
-    if (second && second.kind !== 'character' && second.kind !== 'thing') return [];
-    const card = second ? undefined : worldThing(record.payload.other.name);
-    const subject = first ?? resolver.character(record.payload.subject.name);
-    const other = second ?? (card ? resolver.entry('thing', card.name) : resolver.character(record.payload.other.name));
+    if ((first && first.kind !== 'character') || (firstCard && firstCard.kind !== 'character')) return [];
+    if ((second && second.kind !== 'character' && second.kind !== 'thing') || (secondCard && secondCard.kind !== 'character' && secondCard.kind !== 'thing')) return [];
+    const subject = first ?? resolver.character(firstCard?.name ?? record.payload.subject.name);
+    const other = second ?? (secondCard?.kind === 'thing' ? resolver.entry('thing', secondCard.name) : resolver.character(secondCard?.name ?? record.payload.other.name));
     if (subject.id === other.id) return [];
     return [{
       ...record,

@@ -113,6 +113,20 @@ describe('resolving a tie when its chapter commits', () => {
     expect(resolver.created.map(created => [created.name, created.kind])).toEqual([['Crimson Sword', 'thing']]);
   });
 
+  it('never ties anyone to a world place, faction or ability not met yet (review finding, Codex, 2026-11-08)', () => {
+    const entries = [entry({ id: 'e-ye', name: 'Ye Chen', kind: 'character', mainCharacter: true })];
+    const card = (kind: 'place' | 'faction' | 'ability', name: string) => ({ key: `world:${kind}:${name}`, kind, name, enteredInChapter: 0, slots: {} });
+    const world = { cards: [card('place', 'Summit Hall'), card('faction', 'Frost Sect Alliance'), card('ability', 'Snowfall Tail Art')] };
+    const resolver = createCodexEntryResolver({ storyId: 's', chapter: { id: 'c1', chapterNumber: 1 }, entries, declared: [], createdAt: 'now', createId: () => 'e-new' });
+    expect(resolveTies([
+      tieTag('c1-p1', 'He bowed to the hall.', { name: 'MC' }, { name: 'Summit Hall' }, 'devoted'),
+      tieTag('c1-p2', 'He took the sect oath.', { name: 'MC' }, { name: 'Frost Sect Alliance' }, 'sworn member'),
+      tieTag('c1-p3', 'The sect claimed him.', { name: 'Frost Sect Alliance' }, { name: 'MC' }, 'master'),
+      tieTag('c1-p4', 'The art answered.', { name: 'MC' }, { name: 'Snowfall Tail Art' }, 'mastered'),
+    ], resolver, world)).toEqual([]);
+    expect(resolver.created).toEqual([]);
+  });
+
   it('never makes a character of an ability a tie names (review finding, Codex, 2026-11-08)', () => {
     const entries = [entry({ id: 'e-ye', name: 'Ye Chen', kind: 'character', mainCharacter: true }), entry({ id: 'e-fire', name: 'Fireball', kind: 'ability' })];
     const resolver = createCodexEntryResolver({ storyId: 's', chapter: { id: 'c1', chapterNumber: 1 }, entries, declared: [], createdAt: 'now', createId: () => 'e-new' });

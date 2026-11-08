@@ -9,6 +9,7 @@ import { COVER_DEFAULT_MODEL_LABEL, COVER_PROMPT_TEMPLATE, COVER_TITLE_OFF, COVE
 import { IMAGE_PROMPTS_HISTORY, lastChange } from './imagePromptsHistory';
 import { ImagePromptsWorkspace } from './ImagePromptsWorkspace';
 import { DEVELOPMENT_ACCESS_TOKEN_KEY } from '../../../host/generation/accessToken';
+import type { ImageLabStore, SavedLabImage } from './imageLabStore';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -59,17 +60,22 @@ describe('The Image Prompts page', () => {
     unmount();
   });
 
-  it('opens one kind at a time from the tab row, and the keys move between tabs', async () => {
+  it('separates parent tabs, kinds and prompt blocks, with keyboard navigation at each level', async () => {
     const { container, unmount } = await renderPage();
     const tab = (id: string) => container.querySelector<HTMLButtonElement>(`[role="tab"][data-tab="${id}"]`)!;
-    const visibleKind = () => [...container.querySelectorAll<HTMLElement>('[role="tabpanel"]')].filter(panel => !panel.hidden).map(panel => panel.id);
-    expect(visibleKind()).toEqual(['image-prompts-panel-cover']);
+    const visibleKind = () => [...container.querySelectorAll<HTMLElement>('[id^="image-kinds-panel-"]')].filter(panel => !panel.hidden).map(panel => panel.id);
+    expect(container.querySelectorAll('[aria-label="Image Prompts"] [role="tab"]')).toHaveLength(5);
+    expect(container.querySelector<HTMLElement>('#image-prompts-panel-prompts')!.hidden).toBe(false);
+    expect(visibleKind()).toEqual(['image-kinds-panel-cover']);
     expect(tab('cover').getAttribute('aria-selected')).toBe('true');
     act(() => tab('codex-portraits').click());
-    expect(visibleKind()).toEqual(['image-prompts-panel-codex-portraits']);
+    expect(visibleKind()).toEqual(['image-kinds-panel-codex-portraits']);
     act(() => tab('codex-portraits').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
-    expect(visibleKind()).toEqual(['image-prompts-panel-codex-places']);
+    expect(visibleKind()).toEqual(['image-kinds-panel-codex-places']);
     expect(document.activeElement).toBe(tab('codex-places'));
+    act(() => tab('prompts').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
+    expect(container.querySelector<HTMLElement>('#image-prompts-panel-lab')!.hidden).toBe(false);
+    expect(document.activeElement).toBe(tab('lab'));
     unmount();
   });
 
@@ -159,7 +165,120 @@ describe('The Image Prompts page', () => {
     expect(lab.querySelector('img')).toBeNull();
     unmount();
   });
+
+  it('saves results from different prompts and models, reloads them, compares them and restores their settings', async () => {
+    window.localStorage.setItem(DEVELOPMENT_ACCESS_TOKEN_KEY, 'owner-token');
+    const store = memoryStore();
+    const fetcher = vi.fn(async (url: string, init?: RequestInit) => url === '/api/model-router'
+      ? Response.json({ capabilities: [{ id: 'images', defaultModel: 'model-a', models: [{ id: 'model-a', label: 'Model A', available: true }, { id: 'model-b', label: 'Model B', available: true }] }] })
+      : Response.json({ image: btoa('image-bytes'), mimeType: 'image/png', model: JSON.parse(String(init?.body)).model, durationMs: 2000 }));
+    let page = await renderPage(fetcher as unknown as typeof fetch, store);
+    const lab = page.container.querySelector<HTMLElement>('[data-image-lab]')!;
+    act(() => page.container.querySelector<HTMLButtonElement>('[data-tab="lab"]')!.click());
+    await editInput(lab.querySelector('textarea')!, 'A lantern in the rain');
+    await act(async () => button(lab, 'Make image').click());
+    await act(async () => button(lab, 'Save image').click());
+    await editInput(lab.querySelector('textarea')!, 'A lantern in the snow');
+    const [model, shape] = lab.querySelectorAll('select');
+    act(() => { model.value = 'model-b'; model.dispatchEvent(new Event('change', { bubbles: true })); shape.value = '3:2'; shape.dispatchEvent(new Event('change', { bubbles: true })); });
+    await act(async () => button(lab, 'Make image').click());
+    await act(async () => button(lab, 'Save image').click());
+    const stored = await store.loadAll();
+    expect(stored.map(image => [image.prompt, image.model, image.shape])).toEqual([
+      ['A lantern in the rain', 'model-a', '1:1'], ['A lantern in the snow', 'model-b', '3:2'],
+    ]);
+    expect(lab.querySelectorAll('[data-image-lab-try]')).toHaveLength(2);
+    page.unmount();
+
+    page = await renderPage(fetcher as unknown as typeof fetch, store);
+    act(() => page.container.querySelector<HTMLButtonElement>('[data-tab="saved"]')!.click());
+    const saved = page.container.querySelector<HTMLElement>('#image-prompts-panel-saved')!;
+    expect(saved.querySelectorAll('[data-saved-image]')).toHaveLength(2);
+    const compare = [...saved.querySelectorAll<HTMLButtonElement>('[data-saved-image] button[aria-pressed]')];
+    act(() => { compare[0].click(); });
+    act(() => { compare[1].click(); });
+    expect(saved.querySelectorAll('[data-comparison-image]')).toHaveLength(2);
+    expect(saved.querySelector('[data-image-comparison]')?.textContent).toContain('Model A');
+    expect(saved.querySelector('[data-image-comparison]')?.textContent).toContain('Model B');
+    const second = saved.querySelectorAll('[data-saved-image]')[1];
+    act(() => button(second, 'Use this prompt').click());
+    const restored = page.container.querySelector<HTMLElement>('[data-image-lab]')!;
+    expect(restored.hidden).toBe(false);
+    expect(restored.querySelector('textarea')!.value).toBe('A lantern in the snow');
+    expect([...restored.querySelectorAll('select')].slice(0, 2).map(select => select.value)).toEqual(['model-b', '3:2']);
+    expect(fetcher.mock.calls.filter(([url]) => url === '/api/image-lab')).toHaveLength(2);
+    act(() => page.container.querySelector<HTMLButtonElement>('[data-tab="saved"]')!.click());
+    await act(async () => button(saved.querySelectorAll('[data-saved-image]')[0], 'Remove saved image').click());
+    expect(await store.loadAll()).toHaveLength(1);
+    expect(saved.querySelectorAll('[data-comparison-image]')).toHaveLength(1);
+    page.unmount();
+  });
+
+  it('keeps the image downloadable and does not claim it was saved when device storage fails', async () => {
+    window.localStorage.setItem(DEVELOPMENT_ACCESS_TOKEN_KEY, 'owner-token');
+    const store = memoryStore();
+    store.save = async () => { throw new Error('Storage quota exceeded.'); };
+    const fetcher = (async (url: string) => url === '/api/model-router' ? Response.json({ capabilities: [] })
+      : Response.json({ image: btoa('image-bytes'), mimeType: 'image/png', model: 'model-a' })) as typeof fetch;
+    const { container, unmount } = await renderPage(fetcher, store);
+    act(() => container.querySelector<HTMLButtonElement>('[data-tab="lab"]')!.click());
+    const lab = container.querySelector<HTMLElement>('[data-image-lab]')!;
+    await editInput(lab.querySelector('textarea')!, 'A lantern in the rain');
+    await act(async () => button(lab, 'Make image').click());
+    await act(async () => button(lab, 'Save image').click());
+    expect(lab.querySelector('[role="alert"]')?.textContent).toContain('Storage quota exceeded.');
+    expect(button(lab, 'Save image').disabled).toBe(false);
+    expect(lab.querySelector('a[download]')).not.toBeNull();
+    expect(await store.loadAll()).toHaveLength(0);
+    unmount();
+  });
+
+  it('retains successful variations after a partial refusal and prevents duplicate submits', async () => {
+    window.localStorage.setItem(DEVELOPMENT_ACCESS_TOKEN_KEY, 'owner-token');
+    let call = 0;
+    const fetcher = (async (url: string) => {
+      if (url === '/api/model-router') return Response.json({ capabilities: [] });
+      call += 1;
+      return call === 2 ? Response.json({ error: 'Refused.' }, { status: 502 })
+        : Response.json({ image: btoa('image-bytes'), mimeType: 'image/png', model: 'model-a' });
+    }) as typeof fetch;
+    const { container, unmount } = await renderPage(fetcher);
+    act(() => button(container.querySelector('[data-image-prompt="profile-picture"]')!, 'Try this prompt').click());
+    const lab = container.querySelector<HTMLElement>('[data-image-lab]')!;
+    await act(async () => { const make = button(lab, 'Make 3 images'); make.click(); make.click(); });
+    expect(call).toBe(3);
+    expect(lab.querySelectorAll('[data-image-lab-try] figure img')).toHaveLength(2);
+    expect(lab.querySelector('[role="alert"]')?.textContent).toContain('1 of 3 images could not be made. Refused.');
+    unmount();
+  });
+
+  it('asks for an available model before generating when the Router default has no key', async () => {
+    window.localStorage.setItem(DEVELOPMENT_ACCESS_TOKEN_KEY, 'owner-token');
+    const fetcher = vi.fn(async () => Response.json({ capabilities: [{ id: 'images', defaultModel: 'no-key', models: [
+      { id: 'no-key', label: 'Missing key', available: false }, { id: 'ready', label: 'Ready model', available: true },
+    ] }] }));
+    const { container, unmount } = await renderPage(fetcher as unknown as typeof fetch);
+    act(() => container.querySelector<HTMLButtonElement>('[data-tab="lab"]')!.click());
+    const lab = container.querySelector<HTMLElement>('[data-image-lab]')!;
+    await editInput(lab.querySelector('textarea')!, 'A lantern in the rain');
+    expect(button(lab, 'Make image').disabled).toBe(true);
+    expect(lab.textContent).toContain('Choose an available model.');
+    act(() => { const model = lab.querySelector('select')!; model.value = 'ready'; model.dispatchEvent(new Event('change', { bubbles: true })); });
+    expect(button(lab, 'Make image').disabled).toBe(false);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    unmount();
+  });
 });
+
+function button(container: ParentNode, text: string): HTMLButtonElement {
+  const found = [...container.querySelectorAll<HTMLButtonElement>('button')].find(element => element.textContent === text);
+  if (!found) throw new Error(`Button not found: ${text}`);
+  return found;
+}
+
+async function editInput(input: HTMLTextAreaElement, value: string) {
+  await act(async () => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, value); input.dispatchEvent(new Event('input', { bubbles: true })); });
+}
 
 let objectUrls = 0;
 URL.createObjectURL = () => `blob:image-${++objectUrls}`;
@@ -180,11 +299,16 @@ async function waitFor<T>(find: () => T | null | undefined): Promise<T> {
   throw new Error('Waited too long.');
 }
 
-async function renderPage(fetcher?: typeof fetch) {
+function memoryStore(): ImageLabStore {
+  const images = new Map<string, SavedLabImage>();
+  return { loadAll: async () => [...images.values()], save: async image => { images.set(image.id, image); }, remove: async id => { images.delete(id); } };
+}
+
+async function renderPage(fetcher?: typeof fetch, savedStore: ImageLabStore = memoryStore()) {
   const fallback = (async () => Response.json({ capabilities: [] })) as unknown as typeof fetch;
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  await act(async () => root.render(<ImagePromptsWorkspace fetcher={fetcher ?? fallback} />));
+  await act(async () => root.render(<ImagePromptsWorkspace fetcher={fetcher ?? fallback} savedStore={savedStore} />));
   return { container, unmount: () => { act(() => root.unmount()); container.remove(); } };
 }

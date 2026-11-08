@@ -1253,6 +1253,11 @@ where it stands; this list was checked against the code on 2026-11-06.
   the cleanup of what covered for the missing world (faction guessing from
   names, the look writer), cards added by chapters, and the owner's open
   questions.
+- [The world state pipeline](./docs/world-state-pipeline.md): the missing
+  half of the world at Chapter 0 (SENSEI, 2026-11-08). Every main card is a
+  Codex entry from the start, the tagger uncovers cards instead of inventing
+  them, Alter Fate adds real cards, and arc boundaries sort what carries on.
+  None built; three phases, each with SENSEI's questions first.
 - [CTE consequences](./docs/cte-consequences.md): direction, none built.
 - [The Familiar's media spot and its lenses](./docs/familiar-media-spot.md):
   phase A, guides playing in the Familiar's card with its microphone, is built. Open: B, pictures in the

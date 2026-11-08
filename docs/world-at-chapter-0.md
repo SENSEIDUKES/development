@@ -205,7 +205,7 @@ Blueprint are the world as it stands at Chapter 0, written in that same schema.
    required.
 3. **What the author leaves blank is filled before generation.** The world is
    complete before Chapter 1, not filled in when something first appears.
-4. **Later arrivals stay Fate's.** Characters, factions and anything else that
+4. **Later arrivals stay Fate's.** *(Under review, 2026-11-08: [the world state pipeline](./world-state-pipeline.md) would make every main card through one way in instead.)* Characters, factions and anything else that
    enters after Chapter 0 are still created by the chapter planner, as now.
 5. **Breaking things to fix this is fine.** This is the development repo with
    no compatibility (SENSEI: "the whole point is to change the architecture").
@@ -571,7 +571,7 @@ The world is now recorded before Chapter 1, in the Codex's own card kinds.
   rules sheet carries the ladder and how power works instead of the world facts
   line. `storySeedHandoff.test.ts` is the guard.
 - **Deliberately not in it:** making Chapter 0 cards into Codex entries up
-  front. Nothing needs it yet — the two meet by name — and the lazy
+  front. *(Under review, 2026-11-08: [the world state pipeline](./world-state-pipeline.md) makes them entries from the start.)* Nothing needs it yet — the two meet by name — and the lazy
   foundation-origin entry the resolver already creates is the existing pattern.
 
 ## History

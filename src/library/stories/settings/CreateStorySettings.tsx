@@ -22,7 +22,12 @@ export interface CreateStorySettingsProps {
   onDraftChange: (draft: StorySettingsDraft) => void;
 }
 
-const createStoryValues = ({ stories, defaults, originalLanguage, chapterWritingStyle, draft }: CreateStorySettingsProps): StorySettingsValues => ({
+/** What Plugins needs from the host: its installed skills, and the skill upload when it offers one. */
+export type CreateStoryPluginsProps = Omit<CreateStorySettingsProps, 'stories'> & {
+  stories: Pick<LibraryStories, 'skills' | 'skillIntake' | 'installSkill'>;
+};
+
+const createStoryValues = ({ stories, defaults, originalLanguage, chapterWritingStyle, draft }: CreateStoryPluginsProps): StorySettingsValues => ({
   originalLanguage,
   ...(chapterWritingStyle ? { chapterWritingStyle } : {}),
   skillLoadout: applyStorySettingsDraft(defaults, draft, stories.skills),
@@ -35,7 +40,7 @@ const createStoryValues = ({ stories, defaults, originalLanguage, chapterWriting
  * of inside Settings). What the reader changes is a draft the host keeps until
  * Manifest applies it.
  */
-export function CreateStoryPlugins(props: CreateStorySettingsProps) {
+export function CreateStoryPlugins(props: CreateStoryPluginsProps) {
   const { stories, fateMode, draft, onDraftChange } = props;
   const values = createStoryValues(props);
   return <div data-testid="create-story-plugins">

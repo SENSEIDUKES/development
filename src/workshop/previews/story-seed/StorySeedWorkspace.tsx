@@ -1,5 +1,5 @@
 import { startWorkshopHarnessStory } from '../harness-generation/storySeedHandoff';
-import type { InitialStoryGenerationPayload, StorySpark } from '@seihouse/sen/story-seed';
+import type { InitialStoryGenerationPayload, StorySeedInput, StorySpark } from '@seihouse/sen/story-seed';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
 import { LIBRARY_DESTINATIONS } from '@seihouse/library/shell';
 import { SparksButton } from '@seihouse/sen/story-seed';
@@ -38,6 +38,31 @@ import {
   scenariosInCategory,
 } from './previewStates';
 import { createStoryBankPreviewRepository } from './previewStorySeedRepository';
+import { CreateStoryPlugins, type StorySettingsDraft } from '@seihouse/library/stories';
+import type { HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import type { SenLanguageCode } from '@seihouse/sen/contracts';
+import { createOfficialCapaDefaultLoadout, installOfficialCapaSkills } from '../../../host/generation/capa/officialCapaSkills';
+
+/**
+ * Plugins' Writer skills, composed the way the app composes them: the official
+ * CAPA skills this device has installed, the seed's Style defaults, and a draft
+ * that lives only in the preview.
+ */
+function WorkshopStoryPlugins({ seed, originalLanguage }: { seed: StorySeedInput; originalLanguage: SenLanguageCode }) {
+  const [skills, setSkills] = useState<HarnessSkillManifest[]>([]);
+  const [draft, setDraft] = useState<StorySettingsDraft>({});
+  useEffect(() => {
+    let cancelled = false;
+    installOfficialCapaSkills(localStorage).then(({ installed }) => { if (!cancelled) setSkills(installed); },
+      error => console.error('The official CAPA skills could not be installed for the preview:', error));
+    return () => { cancelled = true; };
+  }, []);
+  return <CreateStoryPlugins stories={{ skills }}
+    defaults={createOfficialCapaDefaultLoadout(seed.story.required.style)}
+    originalLanguage={originalLanguage} chapterWritingStyle={seed.story.optional.chapterWritingStyle}
+    fateMode={seed.story.optional.fateSurvival.enabled ? 'survival' : 'regular'}
+    draft={draft} onDraftChange={setDraft} />;
+}
 
 // ─── DOM-driven scenario scripting ───────────────────────────────────────────
 // CreationModal owns `intake`, `stage`, and `showImportPanel` as internal
@@ -289,6 +314,9 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
 
   const developmentChamberProps = {
     onNavigateHome: () => navigateLibraryPreview(LIBRARY_DESTINATIONS[0].location),
+    // Plugins shows the Writer skills here as it does in the app.
+    renderStoryPlugins: ({ seed, originalLanguage }: { seed: StorySeedInput; originalLanguage: SenLanguageCode }) =>
+      <WorkshopStoryPlugins seed={seed} originalLanguage={originalLanguage} />,
     // Sparks in the Origin heading, as in the app: the Dao's own hand-written
     // sparks (no server), and a chosen one fills this seed's Origin.
     originSparks: (fillOrigin: (spark: StorySpark) => void) => <SparksButton purpose="fill-seed"

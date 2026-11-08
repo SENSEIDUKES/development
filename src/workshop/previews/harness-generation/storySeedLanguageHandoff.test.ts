@@ -20,7 +20,7 @@ vi.mock('@seihouse/sen/harness-generation', () => ({
 
 vi.mock('../../../host/generation/capa/officialCapaSkills', () => ({
   installOfficialCapaSkills: async () => ({ installed: [], official: [] }),
-  createOfficialCapaDefaultLoadout: () => ({ author: { id: 'official.author', version: '1.0.1' } }),
+  createOfficialCapaDefaultLoadout: () => ({ author: { id: 'official.author', version: '1.0.1' }, pacing: { id: 'official.pacing', version: '1.0.1' } }),
   OFFICIAL_CAPA_DEFAULT_REFERENCES: {
     author: { id: 'official.author', version: '1.0.1' },
     pacing: { id: 'official.pacing', version: '1.0.1' },
@@ -85,5 +85,23 @@ describe('Reading Mode across the Story Seed to Harness handoff', () => {
     await startWorkshopHarnessStory(payloadWithLanguage('en'));
 
     expect(createStory.mock.calls[0][3]).toMatchObject({ chapterWritingStyle: 'Standard' });
+  });
+});
+
+describe('Plugins across the Story Seed to Harness handoff', () => {
+  it('starts the story with the Writer plugins chosen in the preview', async () => {
+    createStory.mockClear();
+    await startWorkshopHarnessStory(payloadWithLanguage('en'), { skills: { pacing: null, author: null } });
+
+    // Pacing taken off on Plugins stays off; Author is never empty, so it keeps its default.
+    expect(createStory.mock.calls[0][2]).toEqual({ author: { id: 'official.author', version: '1.0.1' } });
+    expect(createStory.mock.calls[0][2]).not.toHaveProperty('pacing');
+  });
+
+  it('starts with the official defaults when nothing was changed', async () => {
+    createStory.mockClear();
+    await startWorkshopHarnessStory(payloadWithLanguage('en'));
+
+    expect(createStory.mock.calls[0][2]).toEqual({ author: { id: 'official.author', version: '1.0.1' }, pacing: { id: 'official.pacing', version: '1.0.1' } });
   });
 });

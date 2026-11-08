@@ -6,7 +6,7 @@ images are made in one place. Open it at `?preview=image-prompts` (Systems
 section).
 
 - **Created:** 2026-10-08
-- **Last Workshop update:** 2026-10-08 (tabs, prompt cards, Image Lab)
+- **Last Workshop update:** 2026-11-08 (parent tabs, responsive Lab, saved images and comparison)
 - **Last source comparison:** the app's prompts are read from the live code;
   the old app's are quoted from SENSEIDUKES/Light-Novels at 647165a
   (2026-09-16)
@@ -14,12 +14,13 @@ section).
 
 ## How it is laid out
 
-A row of tabs, kept at the top while scrolling (sideways on a phone): **Image
-Lab**, one tab per kind of image (a dot shows In the app, Old app only or Made
-outside the app), **Ideas** and **History**. A kind's tab shows its summary,
-its prompts as cards (source, word count, last change, when it is used; long
-prompts open with **Show all**; **Copy** and **Try this prompt** on each) and
-its rules as short cards, two across on a laptop.
+Five parent cards follow **What the Models Read**: **Prompts**, **Image Lab**,
+**Saved & compare**, **Ideas** and **History**. Under Prompts, choose an image
+kind, then one prompt block at a time. Each block shows its exact words, word
+count, last change, when it is used, **Copy** and **Try this prompt**; its
+source and the kind's rules open separately. A dot and the kind's status
+distinguish live prompts from reference material. Tabs swipe without widening
+the page; arrow buttons and keyboard arrows, Home and End also select them.
 
 ## The Image Lab
 
@@ -29,10 +30,15 @@ everything else square, as each was made; cover art and the profile picture
 ask for three images to choose from). **Attach an image** sends a photo or
 other image to the model beside the prompt (PNG, JPEG or WebP; made smaller in
 the browser first, so a phone photo fits). **Images per try** is 1, or 3 to
-choose from: each try's images sit together with a **Choose** button. Choose an image model from the Model
+choose from: each try's images sit together with a **Choose** button. On a phone,
+swipe or use the result arrows; on a laptop all variations sit together.
+Choose an image model from the Model
 Router (it starts on the Router's Images choice; changing it here does not
 change the Router) and a shape, then **Make image**. Words in braces are
-flagged, since they are filled in for each image in the app.
+flagged, since they are filled in for each image in the app. The editor and
+results sit together on a laptop and stack on a phone, with the generate
+action kept in reach. New results come into view on the stacked layout.
+Switching parent tabs keeps the draft and visit results.
 
 - **Server:** `POST /api/image-lab` (`src/server/image-lab/http.ts`, registered
   in the Router as **Image Lab**), up to 8,000 characters and one attached
@@ -41,8 +47,28 @@ flagged, since they are filled in for each image in the app.
 - **Who may use it:** only the owner's Development access token, since any
   prompt can be sent. The token is kept on this device, shared with the rest of
   the Workshop.
-- **Images:** shown on the page until it is closed, with **Download**; nothing
-  is kept on the server.
+- **Images:** visit results stay until the page is closed. **Save image**
+  explicitly keeps a result in this browser on this device; **Download**
+  keeps a separate file. Nothing is kept on the server.
+
+## Saved images and comparison
+
+**Saved & compare** loads explicitly saved images after reload. Each retains
+its original bytes, exact prompt, actual model and label, shape, generation
+time, date and reference-image filename. Choose **Compare** on any two saved
+images, including different tries or models. A and B use equal display areas
+without cropping; their settings and exact prompts remain inspectable on
+phone and laptop. **Use this prompt** returns to the Lab with the saved prompt,
+model and shape, ready for a single new test. If it used a reference image,
+the page asks for that file again; reference-image bytes are not saved.
+
+`imageLabStore.ts` owns the Workshop's IndexedDB database,
+`seihouse-workshop-image-lab-v1`. It follows the host's device-media pattern,
+storing image bytes rather than Blob objects for WebKit. It stores no access
+token. A failed save never marks an image saved and leaves Download available.
+Removing a saved image updates this database only. This is Workshop-owned
+testing storage, separate from application media and accounts; it is not
+cross-device storage. Clearing browser site data removes it.
 
 ## What it shows
 
@@ -94,9 +120,20 @@ the history is well formed, that the cover prompt shown is the one the server
 builds, that every kind and prompt renders, that the tabs switch, and that the
 Image Lab sends a card's prompt with the saved token and shows the image or
 the server's reason it failed.
+Interaction checks also cover saving across remounts, comparing different
+models and prompts, restoring settings, removal, partial generation failures,
+duplicate submits and a failed device save. Real IndexedDB reload and image
+downloads are checked in the browser against the built page with controlled
+image responses; this does not establish live-provider image quality.
 
 ## History
 
+- **2026-11-08** — Reorganized the existing workspace around parent cards,
+  image kinds and one prompt at a time. The Lab pairs its editor with results
+  on laptops and stacks them on phones. Added explicit device saves with
+  generation metadata, reload, two-image comparison, download, removal and
+  reuse of a saved prompt's model and shape. Prompt text, the Router's global
+  choice and generation APIs are unchanged.
 - **2026-10-16** — The Codex picture prompts ask for professional, high-quality,
   richly painted Eastern fantasy art (not a cover), and no longer tell the
   model to keep a silent look plain.

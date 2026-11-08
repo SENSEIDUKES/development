@@ -91,6 +91,14 @@ describe('resolving a tie when its chapter commits', () => {
     expect(resolved.map(tie => [tie.payload.subject.entryId, tie.payload.other.entryId])).toEqual([['e-new', 'e-sword']]);
     expect(resolver.created.map(created => [created.name, created.kind])).toEqual([['Chi Lian', 'character']]);
   });
+
+  it('never makes a character of an ability a tie names (review finding, Codex, 2026-11-08)', () => {
+    const entries = [entry({ id: 'e-ye', name: 'Ye Chen', kind: 'character', mainCharacter: true }), entry({ id: 'e-fire', name: 'Fireball', kind: 'ability' })];
+    const resolver = createCodexEntryResolver({ storyId: 's', chapter: { id: 'c1', chapterNumber: 1 }, entries, declared: [], createdAt: 'now', createId: () => 'e-new' });
+    expect(resolveTies([tieTag('c1-p1', 'The flame answered him.', { name: 'Ye Chen' }, { name: 'Fireball' }, 'mastered')], resolver)).toEqual([]);
+    expect(resolveTies([tieTag('c1-p1', 'The flame answered him.', { name: 'Fireball' }, { name: 'Ye Chen' }, 'mastered')], resolver)).toEqual([]);
+    expect(resolver.created).toEqual([]);
+  });
 });
 
 describe('how a pair stands now', () => {
@@ -125,6 +133,14 @@ describe('how a pair stands now', () => {
     expect(subject.ties).toHaveLength(TAG_SUBJECT_TIES);
     expect(subject.ties![0].with).toBe('Elder 1');
     expect(subject.ties!.at(-1)!.with).toBe(`Elder ${TAG_SUBJECT_TIES}`);
+  });
+
+  it('reaches the writer for two who never had an appears tag, so a tie tagged on its own is never forgotten (review finding, Codex, 2026-11-08)', () => {
+    const chapters = [{ id: 'c1', chapterNumber: 1, paragraphs: ['They bowed.'], appearances: [], ties: [tieTag('c1-p1', 'They bowed.', lin, ning, 'sworn brothers')] }];
+    const section = appearancesSection(deriveAppearances({ entries, chapters }), undefined, entries, undefined, deriveTies(chapters, entries));
+    expect(section.entries.map(({ name, ties }) => [name, ties])).toEqual([
+      ['Lin Qingshan', 'Ning Hao (sworn brothers)'], ['Ning Hao', 'Lin Qingshan (sworn brothers)'],
+    ]);
   });
 
   it('reaches the writer beside each character, after the look', () => {

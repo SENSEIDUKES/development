@@ -240,7 +240,7 @@ export interface CodexEntryResolver {
   character(name: string): CodexEntry;
   /** The thing or ability a name names, made when it is new. */
   entry(kind: Exclude<CodexEntryKind, 'character'>, name: string): CodexEntry;
-  /** The entry a name already names, a character before a thing, a thing before a place; never made. */
+  /** The entry a name already names, a character before a thing, a thing before a place, a place before an ability; never made. */
   existing(name: string): CodexEntry | undefined;
   /** New entries, in the order the chapter first named them. */
   readonly created: CodexEntry[];
@@ -325,7 +325,7 @@ export function createCodexEntryResolver({ storyId, chapter, entries, declared, 
         : make('character', name);
     },
     entry: (kind, name) => existingOfKind(kind, name) ?? make(kind, name),
-    existing: name => (namesMain(name) ? existingMain() : undefined) ?? existingOfKind('character', name) ?? existingOfKind('thing', name) ?? existingOfKind('place', name),
+    existing: name => (namesMain(name) ? existingMain() : undefined) ?? existingOfKind('character', name) ?? existingOfKind('thing', name) ?? existingOfKind('place', name) ?? existingOfKind('ability', name),
     created,
   };
 }

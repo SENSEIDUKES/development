@@ -1513,7 +1513,7 @@ export class HarnessGenerationController {
       saved.appearances = appearances;
       saved.statuses = resolveStatuses(tagging.tags.statuses ?? [], resolver);
       saved.places = places;
-      saved.ties = resolveTies(tagging.tags.ties ?? [], resolver);
+      saved.ties = resolveTies(tagging.tags.ties ?? [], resolver, world);
       if (holdings?.changes.length) saved.holdingChanges = holdings.changes;
       else delete saved.holdingChanges;
       if (tagging.tags.scene) saved.scene = tagging.tags.scene;
@@ -1792,7 +1792,7 @@ export class HarnessGenerationController {
       : undefined;
     const statuses = acceptedDraft.statuses ? resolveStatuses(acceptedDraft.statuses, resolver) : undefined;
     const places = acceptedDraft.places ? resolvePlaces(acceptedDraft.places, resolver) : undefined;
-    const ties = acceptedDraft.ties ? resolveTies(acceptedDraft.ties, resolver) : undefined;
+    const ties = acceptedDraft.ties ? resolveTies(acceptedDraft.ties, resolver, storyWorldRecord(candidate, commitAttempt.storyId)) : undefined;
     // A thing the chapter's holding tags show for the first time steps onto the page there.
     if (appearances && holdings?.changes.length) {
       appearances.push(...thingAppearancesFromHoldings({

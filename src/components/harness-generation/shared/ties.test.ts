@@ -57,6 +57,14 @@ describe('reading tie tags', () => {
     expect(readTieTag(tag('[[tie: Lin | Ning Hao]] He glared.'))).toMatchObject({ ok: false });
     expect(readTieTag(tag('[[tie: Lin | Ning Hao | they fought in the courtyard until the elders pulled them apart]] He glared.'))).toMatchObject({ ok: false });
     expect(readTieTag(tag('[[tie: Lin | lin | friends]] He smiled.'))).toMatchObject({ ok: false });
+    // An empty part never closes up, which would read how they stand as a name (review finding, CodeRabbit, 2026-11-08).
+    expect(readMarks('[[tie: Lin | | sworn enemies | since the betrayal]] He glared.')).toMatchObject({ wordTags: [], wordTagIssues: [{ kind: 'incomplete', word: 'tie' }] });
+  });
+
+  it('never puts a name back into the prose, wherever its note sits (review finding, CodeRabbit, 2026-11-08)', () => {
+    const tags = acceptChapterTags(['They swore brotherhood and embraced [[tie: Lin | Ning Hao | sworn brothers]] warmly.'], 1, []);
+    expect(tags.paragraphs).toEqual(['They swore brotherhood and embraced warmly.']);
+    expect(tags.ties.map(tie => tie.payload.tie)).toEqual(['sworn brothers']);
   });
 
   it('places each on the sentence its tag points at, and an unreadable one is flagged as a tie, never as a holding', () => {
@@ -92,6 +100,19 @@ describe('resolving a tie when its chapter commits', () => {
     expect(resolver.created.map(created => [created.name, created.kind])).toEqual([['Chi Lian', 'character']]);
   });
 
+  it('makes a world thing not met yet a thing, never a character (review finding, CodeRabbit, 2026-11-08)', () => {
+    const entries = [entry({ id: 'e-ye', name: 'Ye Chen', kind: 'character', mainCharacter: true })];
+    const world = { cards: [{ key: 'world:thing:crimson-sword', kind: 'thing' as const, name: 'Crimson Sword', aliases: ['the red blade'], enteredInChapter: 0, slots: {} }] };
+    let ids = 0;
+    const resolver = createCodexEntryResolver({ storyId: 's', chapter: { id: 'c1', chapterNumber: 1 }, entries, declared: [], createdAt: 'now', createId: () => `e-new-${++ids}` });
+    const resolved = resolveTies([
+      tieTag('c1-p1', 'The red blade chose him.', { name: 'MC' }, { name: 'the red blade' }, 'bound'),
+      tieTag('c1-p2', 'The sword hummed.', { name: 'Crimson Sword' }, { name: 'MC' }, 'bound'),
+    ], resolver, world);
+    expect(resolved.map(tie => tie.payload.other.entryId)).toEqual(['e-new-1']);
+    expect(resolver.created.map(created => [created.name, created.kind])).toEqual([['Crimson Sword', 'thing']]);
+  });
+
   it('never makes a character of an ability a tie names (review finding, Codex, 2026-11-08)', () => {
     const entries = [entry({ id: 'e-ye', name: 'Ye Chen', kind: 'character', mainCharacter: true }), entry({ id: 'e-fire', name: 'Fireball', kind: 'ability' })];
     const resolver = createCodexEntryResolver({ storyId: 's', chapter: { id: 'c1', chapterNumber: 1 }, entries, declared: [], createdAt: 'now', createId: () => 'e-new' });
@@ -123,6 +144,15 @@ describe('how a pair stands now', () => {
     expect(tiesOfEntry(now, entries[1]).map(tie => [tie.with, tie.tie])).toEqual([['Lin Qingshan', 'sworn enemies']]);
   });
 
+  it('keeps the pairs in the order the story last showed each, so the latest are the ones sent (review finding, CodeRabbit, 2026-11-08)', () => {
+    const now = deriveTies([{ id: 'c1', chapterNumber: 1, ties: [
+      tieTag('c1-p1', 'They met.', lin, ning, 'rivals'),
+      tieTag('c1-p2', 'The cub chose him.', lin, fox, 'bonded companion'),
+      tieTag('c1-p3', 'Ning Hao turned his back.', ning, lin, 'sworn enemies'),
+    ] }], entries);
+    expect(tiesOfEntry(now, entries[0]).map(tie => tie.with)).toEqual(['Little Frost', 'Ning Hao']);
+  });
+
   it('reaches the tagger beside each character, the latest ones only, so a long story never outgrows the request', () => {
     const others = Array.from({ length: TAG_SUBJECT_TIES + 1 }, (_, index) => entry({ id: `e-${index}`, name: `Elder ${index}`, kind: 'character' }));
     const now = deriveTies(others.map((other, index) => ({
@@ -133,6 +163,11 @@ describe('how a pair stands now', () => {
     expect(subject.ties).toHaveLength(TAG_SUBJECT_TIES);
     expect(subject.ties![0].with).toBe('Elder 1');
     expect(subject.ties!.at(-1)!.with).toBe(`Elder ${TAG_SUBJECT_TIES}`);
+    // The writer reads the same latest ones (review finding, CodeRabbit, 2026-11-08).
+    const section = appearancesSection(deriveAppearances({ entries: [entries[0]], chapters: [] }), undefined, [entries[0], ...others], undefined, now);
+    const line = section.entries.find(candidate => candidate.name === 'Lin Qingshan')!.ties!;
+    expect(line.split('; ')).toHaveLength(TAG_SUBJECT_TIES);
+    expect(line.startsWith('Elder 1 (allies)')).toBe(true);
   });
 
   it('reaches the writer for two who never had an appears tag, so a tie tagged on its own is never forgotten (review finding, Codex, 2026-11-08)', () => {

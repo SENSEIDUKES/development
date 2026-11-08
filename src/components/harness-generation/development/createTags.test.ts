@@ -39,4 +39,11 @@ describe('Create mode\'s tags', () => {
     });
     expect(rows.filter(row => row.found).map(row => row.kind)).toEqual(['speakers']);
   });
+
+  it('shows a tie finding and its count', () => {
+    const summary = '1 tie: Ye Chen and Elder Qin master and disciple';
+    const account: ChapterTaggingAccount = { status: 'tagged', headline: 'Read', problems: [], kinds: [{ kind: 'Ties', said: summary, state: 'found' }] };
+    const rows = createTagRows({ counts: { ...none, ties: 1 }, findings: { ties: summary }, account });
+    expect(rows.find(row => row.kind === 'ties')).toEqual({ kind: 'ties', count: 1, said: summary, found: true });
+  });
 });

@@ -20,7 +20,7 @@ import { createCodexEntryResolver, holdingName, pointedSentence, type CodexEntry
 import { isMainCharacterTag } from './speakers';
 import type { CurrentStatus } from './statuses';
 import type { CurrentPlace } from './places';
-import { tiesLine, tiesOfEntry, type CurrentTie } from './ties';
+import { TAG_SUBJECT_TIES, tiesLine, tiesOfEntry, type CurrentTie } from './ties';
 import type { PlaceAttachment } from '../../../narrative/places';
 
 /**
@@ -524,8 +524,9 @@ export const APPEARED_SECTION_PLACES = 10;
 export function appearancesSection(state: AppearancesState, statuses?: ReadonlyMap<string, CurrentStatus>, entries: readonly CodexEntry[] = [], places?: ReadonlyMap<string, CurrentPlace>, ties?: ReadonlyMap<string, CurrentTie>): AppearancesSection {
   const statusOf = (key: string) => statuses?.get(key)?.status;
   const placeOf = (key: string) => places?.get(key)?.place;
-  // A subject's key is its Codex entry once it has one, else its name: ties are found by either.
-  const tiesOf = (key: string, name: string) => (ties?.size ? tiesLine(tiesOfEntry(ties, { id: key, name, aliases: entries.find(entry => entry.id === key)?.aliases })) : '');
+  // A subject's key is its Codex entry once it has one, else its name: ties are found by either. The
+  // latest ones only, as many as the tagger reads, so a long story never outgrows the writer's packet.
+  const tiesOf = (key: string, name: string) => (ties?.size ? tiesLine(tiesOfEntry(ties, { id: key, name, aliases: entries.find(entry => entry.id === key)?.aliases }).slice(-TAG_SUBJECT_TIES)) : '');
   const recordOf = (key: string, name: string) => ({
     ...(statusOf(key) ? { status: statusOf(key)! } : {}),
     ...(placeOf(key) ? { place: placeOf(key)! } : {}),

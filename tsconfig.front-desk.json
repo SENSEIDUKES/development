@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "dist/front-desk/dist/types",
+    "rootDir": "src",
+    // Front Desk sees no other SEIHouse package: an import of one fails to build.
+    "paths": {
+      "@seihouse/front-desk": ["./src/package/front-desk/index.ts"],
+      "@seihouse/front-desk/*": ["./src/package/front-desk/*.ts"]
+    }
+  },
+  "include": ["src/package/front-desk", "src/vite-env.d.ts"]
+}

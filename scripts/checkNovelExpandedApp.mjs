@@ -21,7 +21,10 @@ const APP_SOURCE = 'src/novel-expanded/';
  * connects to (the Cave, the floating Familiar) into the app. Discover joined
  * on 2026-10-20, when the owner asked for its page in the app. The Creator Space
  * and the Energy read it shows joined on 2026-10-29, when the owner asked for the
- * Create page itself in the app, ahead of Story Seed.
+ * Create page itself in the app, ahead of Story Seed. SEIHouse Front Desk (the
+ * Familiar's card, its controller and its voice engines) joined on 2026-11-08,
+ * when the owner approved separating it into its own package (step 1 of the
+ * Front Desk plan): the app uses it as it used the Familiar's helper before.
  */
 export const APP_ENTRIES = new Set([
   '@seihouse/library/stories', '@seihouse/library/story-seed', '@seihouse/library/home', '@seihouse/library/discover',
@@ -30,6 +33,7 @@ export const APP_ENTRIES = new Set([
   '@seihouse/library/creator-space', '@seihouse/library/energy',
   '@seihouse/sen/story-seed', '@seihouse/sen/harness-generation', '@seihouse/sen/presentation',
   '@seihouse/sen/reader-runtime', '@seihouse/sen/styles.css',
+  '@seihouse/front-desk', '@seihouse/front-desk/engines',
 ]);
 
 /** Entries of older systems, which nothing the app loads may reach. */
@@ -90,7 +94,7 @@ export function findAppViolations(graph, entry, classify = ownershipOf) {
     if (problem) { violations.push(`${problem.toUpperCase().replaceAll(' ', '_')} ${chain(file)}`); continue; }
     for (const { specifier, target } of graph.get(file)) {
       if (RETIRED_ENTRIES.has(specifier)) { violations.push(`RETIRED_ENTRY ${chain(file, specifier)}`); continue; }
-      if (file.startsWith(APP_SOURCE) && /^@seihouse\/(?:sen|library)(?:\/|$)/.test(specifier) && !APP_ENTRIES.has(specifier)) {
+      if (file.startsWith(APP_SOURCE) && /^@seihouse\/(?:front-desk|sen|library)(?:\/|$)/.test(specifier) && !APP_ENTRIES.has(specifier)) {
         violations.push(`ENTRY_NOT_IN_APP ${chain(file, specifier)}`);
         continue;
       }

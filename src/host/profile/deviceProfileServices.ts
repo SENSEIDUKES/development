@@ -14,7 +14,8 @@ import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/c
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { downloadStorySeed, downloadStorySeedCollection, reconcileStorySeedBlueprint, type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/story-seed';
 import { getDaoRankData, resolvePermanentDaoXp } from '@seihouse/library/cultivation';
-import { normalizeFamiliarSize, updateFamiliarPersonalizations, type FamiliarGuide, type FamiliarOption } from '@seihouse/library/familiar';
+import type { FrontDeskGuide } from '@seihouse/front-desk';
+import { normalizeFamiliarSize, updateFamiliarPersonalizations, type FamiliarOption } from '@seihouse/library/familiar';
 import type { CelestialStoreAccountServices } from '@seihouse/library/celestial-store';
 import type {
   ChapterWritingStyle, UserProfile, UserProfileController, UserProfileControllerProps, UserProfileNotYetBuilt, UserProfileServices,
@@ -42,7 +43,7 @@ export interface DeviceProfileServicesOptions {
   /** The host's Familiar catalogue. Which ones the reader owns comes from the Store account. */
   familiars: readonly FamiliarOption[];
   /** The how-tos the Familiar teaches, for the Familiar page's Guides tab. */
-  familiarGuides?: readonly FamiliarGuide[];
+  familiarGuides?: readonly FrontDeskGuide[];
   celestialStore?: CelestialStoreAccountServices;
   /** The host's device preferences, for Settings › Sound (Menu music). */
   soundPreferences?: ReaderPreferenceStorage;

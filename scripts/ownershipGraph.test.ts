@@ -49,6 +49,40 @@ describe('ownership guardrails', () => {
     expect(failures).toContain('stubs');
     expect(failures).toContain('@seihouse/library-ui');
   });
+  it('keeps Front Desk apart: it uses no other SEIHouse package and no host file, by name or by path', () => {
+    const graph = new Map([
+      ['src/front-desk/core/controller.ts', [
+        { specifier: '@seihouse/sen/presentation', target: 'src/package/sen/presentation.ts' },
+        { specifier: '@seihouse/library/familiar' },
+        { specifier: '../../library/familiars/actionList', target: 'src/library/familiars/actionList.ts' },
+        { specifier: '../../host/generation/accessToken', target: 'src/host/generation/accessToken.ts' },
+        { specifier: './docsKnowledge', target: 'src/front-desk/core/docsKnowledge.ts' },
+      ]],
+    ]);
+    const failures = validateOwnership(graph, {}, ownershipOf, {}).failures;
+    expect(failures).toEqual(expect.arrayContaining([
+      'FRONT_DESK_BOUNDARY src/front-desk/core/controller.ts -> @seihouse/sen/presentation',
+      'FRONT_DESK_BOUNDARY src/front-desk/core/controller.ts -> @seihouse/library/familiar',
+      'FRONT_DESK_BOUNDARY src/front-desk/core/controller.ts -> ../../library/familiars/actionList',
+      'FRONT_DESK_BOUNDARY src/front-desk/core/controller.ts -> ../../host/generation/accessToken',
+    ]));
+    expect(failures.join('\n')).not.toContain('./docsKnowledge');
+  });
+  it('lets SEN and the Library use Front Desk only by its package name, and never the other way in its manifest', () => {
+    const graph = new Map([
+      ['src/components/harness-generation/shared/storyKnowledge.ts', [{ specifier: '@seihouse/front-desk/docs-knowledge', target: 'src/package/front-desk/docs-knowledge.ts' }]],
+      ['src/library/familiars/FamiliarPlace.tsx', [
+        { specifier: '@seihouse/front-desk', target: 'src/package/front-desk/index.ts' },
+        { specifier: '../../front-desk/card/FrontDesk', target: 'src/front-desk/card/FrontDesk.tsx' },
+      ]],
+    ]);
+    const failures = validateOwnership(graph, {}, ownershipOf, {}).failures.join('\n');
+    expect(failures).not.toContain('SEN_BOUNDARY');
+    expect(failures).not.toContain('LIBRARY_BOUNDARY');
+    expect(failures).toContain('SOURCE_BYPASS src/library/familiars/FamiliarPlace.tsx -> src/front-desk/card/FrontDesk.tsx');
+    const packages = { 'front-desk': { manifest: { name: '@seihouse/front-desk', peerDependencies: { '@seihouse/sen': '*' } }, entries: {} } };
+    expect(validateOwnership(new Map(), packages, ownershipOf, {}).failures).toContain('PACKAGE_DIRECTION @seihouse/front-desk -> @seihouse/sen');
+  });
   it('detects cycles across type and runtime graphs', () => {
     expect(stronglyConnected(new Map([['a', [{ target: 'b' }]], ['b', [{ target: 'a' }]]]))).toEqual([['a', 'b']]);
   });

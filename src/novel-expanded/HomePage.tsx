@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { LightNovelsHome, type HomeWorld } from '@seihouse/library/home';
-import { useFamiliarHelperContext, type FamiliarHelperContext } from '@seihouse/library/familiar';
+import { useFrontDeskContext, type FrontDeskContext } from '@seihouse/front-desk';
 import type { UserProfile } from '@seihouse/library/profile';
 import { AppShell } from './AppShell';
 import type { Navigate } from './routes';
@@ -39,7 +39,7 @@ export function HomePage({ worlds, navigate, readerProfile }: {
   </AppShell>;
 }
 
-type FamiliarAction = FamiliarHelperContext['actions'][number];
+type FamiliarAction = FrontDeskContext['actions'][number];
 
 /**
  * Home's spoken codes for the Familiar: N1, N2… open the story on the card
@@ -62,8 +62,8 @@ export function homeCodeAction(navigate: Navigate, order: { readonly current: re
 }
 
 function useFamiliarHomeCodes(navigate: Navigate, order: { readonly current: readonly string[] }) {
-  const context = useMemo<FamiliarHelperContext>(() => ({
+  const context = useMemo<FrontDeskContext>(() => ({
     key: 'home:codes', title: 'Home', topics: [], hint: '', page: 'home', actions: [homeCodeAction(navigate, order)],
   }), [navigate, order]);
-  useFamiliarHelperContext(context);
+  useFrontDeskContext(context);
 }

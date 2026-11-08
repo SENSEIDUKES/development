@@ -377,6 +377,10 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-08 (Front Desk):** `storyKnowledge.ts` takes its catalog shape from
+  SEIHouse Front Desk (`@seihouse/front-desk/docs-knowledge`), where the docs look-up
+  moved with the rest of the Familiar's system. SEN now peers on Front Desk; nothing
+  a story knows changes.
 - **2026-11-08 (Sound Cues fit 12 words):** SENSEI, from The Frost-Scaled
   Companion: "take off the 8-word cap for sound cues. Maybe make it 12 words
   instead." All three cues set aside in that story ran 9 or 10 words ("a

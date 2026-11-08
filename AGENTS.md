@@ -183,8 +183,11 @@ have no `reference/` folder.
   - `reference/` — the old production version, kept as historical reference for its remake. Never edited or refreshed. Only the Reader Chamber family (`reader-chamber`, `reader-codex`, `card-workshop`) still has one.
   - `development/` — the active implementation, built here. Package entries import from this folder; keep its name. Reconstruction may also change the relevant shared, server, and integration owners.
   - `shared/` (when it applies) — logic genuinely shared by implementations or consumers, such as shared utilities.
-- `src/package/` holds the entry barrels for the two published packages —
-  `src/package/sen/` for `@seihouse/sen` (the portable engine: surface
+- `src/package/` holds the entry barrels for the three published packages —
+  `src/package/front-desk/` for `@seihouse/front-desk` (SEIHouse Front Desk,
+  shared infrastructure beneath both: the Familiar's controller, card and voice
+  engines, from `src/front-desk/`; it imports nothing from SEN, the Library or
+  the app), `src/package/sen/` for `@seihouse/sen` (the portable engine: surface
   primitives, Color Codes, cards, Reader Chamber, Reader Codex,
   Manifestations, motion picture, audio, Story Seed, HARNESS, Reader Runtime,
   Highlight Engine, arc goals, translation, presentation and contracts) and
@@ -195,7 +198,7 @@ have no `reference/` folder.
   historical `reference/` material, and host-owned `src/server/` code stay out of
   client entries. The `@seihouse/library/model-router-server` entry is the
   explicit server-only provider exception; no SEN entry may reach a Library
-  surface.
+  surface, and no Front Desk file may reach either.
   `npm run check:package-boundaries` walks the real import graph and fails on
   the file that breaks the rule; `npm run build:package` re-checks the built
   output. Workshop code consumes package surfaces through `@seihouse/sen/*`

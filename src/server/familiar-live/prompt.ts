@@ -12,7 +12,7 @@
  * The catalog itself never reaches this file: the host supplies its index in
  * the brief, so a publisher grounds its own companion in its own docs.
  */
-import type { FamiliarLiveBrief } from '@seihouse/library/familiar';
+import type { FrontDeskLiveBrief } from '@seihouse/front-desk';
 
 /**
  * Never a spoiler unless the reader asks outright (SENSEI, 2026-11-06). Every
@@ -23,14 +23,14 @@ import type { FamiliarLiveBrief } from '@seihouse/library/familiar';
 export const FAMILIAR_NO_SPOILERS = 'Never reveal a spoiler unless the reader explicitly asks for one. look_up answers only up to the chapter they have open, and says when there is more after it: say nothing of that, not even a hint, and if a question can only be answered with it, tell them so and ask if they want it spoiled. Only a plain request for spoilers, in their own words, lets you call look_up with spoilers set to true, and what comes back is marked as a spoiler.';
 
 /** The docs the Familiar knows exist, by name, grouped the way the host wrote them. */
-export const familiarLiveDocsIndex = (brief: FamiliarLiveBrief): string => {
+export const familiarLiveDocsIndex = (brief: FrontDeskLiveBrief): string => {
   const byCategory = new Map<string, string[]>();
   for (const entry of brief.docs) byCategory.set(entry.category, [...byCategory.get(entry.category) ?? [], entry.title]);
   return [...byCategory].map(([category, titles]) => `- ${category}: ${titles.join(', ')}`).join('\n');
 };
 
 /** Who the Familiar is, how it talks, and where its facts come from. Shared by every live provider. */
-export function familiarLiveCharacter(brief: FamiliarLiveBrief): string[] {
+export function familiarLiveCharacter(brief: FrontDeskLiveBrief): string[] {
   const { familiar, topics } = brief;
   const index = familiarLiveDocsIndex(brief);
   return [
@@ -56,7 +56,7 @@ export function familiarLiveCharacter(brief: FamiliarLiveBrief): string[] {
 }
 
 /** What the Familiar can do here, through its functions, and the rule that the screen confirms every change. */
-export function familiarLiveActions(brief: FamiliarLiveBrief): string {
+export function familiarLiveActions(brief: FrontDeskLiveBrief): string {
   const { topics, actions, docs } = brief;
   return [
     // The docs are written in one language and the index gives you its names. Asking in
@@ -75,6 +75,6 @@ export function familiarLiveActions(brief: FamiliarLiveBrief): string {
 }
 
 /** Gemini's whole instruction: one model hears, thinks, acts and speaks. */
-export function familiarLiveInstruction(brief: FamiliarLiveBrief): string {
+export function familiarLiveInstruction(brief: FrontDeskLiveBrief): string {
   return [...familiarLiveCharacter(brief), familiarLiveActions(brief)].join('\n\n');
 }

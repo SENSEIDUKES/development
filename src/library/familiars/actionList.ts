@@ -3,9 +3,12 @@
  * with where it may do it. A page never hands the Familiar an action this
  * list does not allow there, so a request on one page can never run another
  * page's action. Every action the app gives the Familiar must be listed here
- * (`actionList.test.ts` fails otherwise); a new feature adds its line in the
- * same change.
+ * (`src/novel-expanded/appFamiliarActions.test.ts` fails otherwise); a new
+ * feature adds its line in the same change. Front Desk reads it through
+ * `familiarActionPolicy`.
  */
+
+import type { FrontDeskActionPolicy } from '@seihouse/front-desk';
 
 /** The places the Familiar can be, as the reader sees them. */
 export type FamiliarPage = 'home' | 'discover' | 'create' | 'world-info' | 'profile' | 'reader' | 'create-mode';
@@ -83,3 +86,10 @@ export function familiarActionsFor<Action extends { id: string }>(page: Familiar
 /** How many of a page's actions are front suggestions (they come first). */
 export const familiarFrontCount = (page: FamiliarPage, actions: readonly { id: string }[]) =>
   Math.min(FAMILIAR_FRONT_LIMIT, actions.filter(action => FAMILIAR_FRONT_ACTIONS[page].includes(action.id)).length);
+
+/** The master list as Front Desk's action policy, for the Familiar's pages. */
+export const familiarActionPolicy: FrontDeskActionPolicy = {
+  actionsFor: (page, actions) => familiarActionsFor(page as FamiliarPage, actions),
+  frontCount: (page, actions) => familiarFrontCount(page as FamiliarPage, actions),
+  instant: id => Boolean(familiarActionEntry(id)?.instant),
+};

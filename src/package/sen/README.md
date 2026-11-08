@@ -1,5 +1,10 @@
 # `@seihouse/sen`
 
+**0.42.0 (2026-11-08, breaking):** `./docs-knowledge` moved to SEIHouse Front Desk,
+`@seihouse/front-desk/docs-knowledge` (the same exports). SEN now peers on
+`@seihouse/front-desk` 0.1.0: `storyKnowledge` writes a story's knowledge in Front
+Desk's catalog shape. Front Desk imports nothing from SEN.
+
 **Unreleased (2026-11-02, narration-timed cues):** `./reader-runtime` accepts
 placed Sound Cues in `buildReadAloudScript`; `useReadAloud` provides
 `onSoundCue`, `onStopSoundCues` and `scriptRevision`. The shared Reader plays
@@ -401,7 +406,6 @@ palette checks alone do not establish accessibility for a finished surface.
 | `./harness-generation` | Canonical state, continuity, CAPA, generation ports, recovery and export; the Fate page and its panels |
 | `./translation` | Translation/accessibility contracts and controller |
 | `./arc-goals` | Arc planning contracts and operations |
-| `./docs-knowledge` | The shape of a host's docs catalog, and the index and lookup a grounded companion reads it with. SEN owns the reading, never the words: a host supplies its own catalog |
 | `./styles.css` | SEN feature styles |
 
 There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy

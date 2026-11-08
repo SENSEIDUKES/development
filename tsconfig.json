@@ -17,6 +17,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
+      "@seihouse/front-desk": ["./src/package/front-desk/index.ts"],
+      "@seihouse/front-desk/*": ["./src/package/front-desk/*.ts"],
       "@seihouse/sen": ["./src/package/sen/index.ts"],
       "@seihouse/sen/*": ["./src/package/sen/*.ts"],
       "@seihouse/library": ["./src/package/library/index.ts"],

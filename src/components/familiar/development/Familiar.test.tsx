@@ -2,8 +2,8 @@
 import { act, Profiler, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FamiliarHelperProvider } from './FamiliarHelper';
-import type { FamiliarVoice } from '../../../library/familiars/helper';
+import type { FrontDeskVoice } from '@seihouse/front-desk';
+import { FamiliarFrontDesk } from '../../../library/familiars/FamiliarFrontDesk';
 import { celestialGuardian, celestialGuardianOption } from '../../../host/familiar/celestialGuardian';
 import { allFamiliarOptions, familiarCatalogue } from '../../../host/familiar/catalogue';
 import { familiarLookAnimation } from './useFamiliarLook';
@@ -61,7 +61,7 @@ const touch = (element: Element, type: string) => {
   Object.assign(event, { pointerType: 'touch' });
   act(() => element.dispatchEvent(event));
 };
-const voice = (): FamiliarVoice => ({ available: true, listen: vi.fn(() => ({ stop: vi.fn(), cancel: vi.fn() })), speak: vi.fn(() => () => {}) });
+const voice = (): FrontDeskVoice => ({ available: true, listen: vi.fn(() => ({ stop: vi.fn(), cancel: vi.fn() })), speak: vi.fn(() => () => {}) });
 const GUIDES = [
   { id: 'meet', title: 'Meet your Familiar', line: 'I go everywhere you go.' },
   { id: 'seed', title: 'Start a story seed', line: 'Every story begins as a seed.' },
@@ -392,9 +392,9 @@ describe('Familiar tray', () => {
 
   it('keeps its Guides beside the card’s microphone, not in its tray; they play in the card in the mode it is in, and nothing navigates', async () => {
     const before = window.location.href;
-    await act(async () => root.render(<FamiliarHelperProvider voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption }}>
+    await act(async () => root.render(<FamiliarFrontDesk voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption }}>
       <FamiliarCompanion familiar={celestialGuardian} />
-    </FamiliarHelperProvider>));
+    </FamiliarFrontDesk>));
     const pet = () => document.querySelector<HTMLElement>('.familiar-companion .familiar-trigger')!;
     await click(pet());
     expect(document.querySelector('[aria-label="Show Energy"]')).toBeNull();
@@ -453,9 +453,9 @@ describe('Familiar tray', () => {
 
   it('greets a reader who has not met it once; Show me around opens its card on the guides, and either answer is remembered', async () => {
     const onWelcomed = vi.fn();
-    await act(async () => root.render(<FamiliarHelperProvider voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption, welcome: true, onWelcomed }}>
+    await act(async () => root.render(<FamiliarFrontDesk voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption, welcome: true, onWelcomed }}>
       <FamiliarCompanion familiar={celestialGuardian} />
-    </FamiliarHelperProvider>));
+    </FamiliarFrontDesk>));
     expect(card()?.textContent).toContain('I’m Celestial Guardian.');
     await click(card()!.querySelector('[data-familiar-welcome-tour]'));
     expect(card()).toBeNull();
@@ -717,7 +717,7 @@ describe('Floating companion', () => {
 describe('Header Familiar actions', () => {
   it('opens the Familiar’s card, and its guides, from the header without restoring the floating pet until Expand is chosen', async () => {
     const onRecall = vi.fn();
-    await act(async () => root.render(<FamiliarHelperProvider voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption }}><FamiliarRecall familiar={celestialGuardian} onRecall={onRecall} /></FamiliarHelperProvider>));
+    await act(async () => root.render(<FamiliarFrontDesk voice={voice()} guides={{ guides: GUIDES, familiar: celestialGuardianOption }}><FamiliarRecall familiar={celestialGuardian} onRecall={onRecall} /></FamiliarFrontDesk>));
     await click(container.querySelector('.familiar-recall')!);
     expect(container.querySelector('[role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Waving');
     expect(document.querySelector('[aria-label="Show Energy"]')).toBeNull();

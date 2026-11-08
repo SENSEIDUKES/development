@@ -10,4 +10,6 @@ import { createPackageBuildConfig } from './vite.package.shared';
  */
 export default createPackageBuildConfig({
   target: 'sen',
+  // Front Desk is a peer: SEN links against the published package, never a bundled copy.
+  external: [/^@seihouse\/front-desk(\/.*)?$/],
 });

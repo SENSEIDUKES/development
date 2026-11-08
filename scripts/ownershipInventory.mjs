@@ -4,6 +4,7 @@ export const ownershipRules = [
   ['api/', 'host', 'HTTP deployment adapters'],
   ['database/', 'host', 'reference storage schemas'],
   ['scripts/', 'tooling', 'repository validation and build tooling'],
+  ['src/package/front-desk/', 'front-desk', 'public entries'],
   ['src/package/sen/', 'sen', 'public entries'],
   ['src/package/library/', 'library', 'public entries'],
   ['src/presentation/', 'sen', 'neutral presentation'],
@@ -14,6 +15,7 @@ export const ownershipRules = [
   ['src/novel-expanded/', 'host', 'NovelExpanded app'],
   ['src/components/reader-chamber/shared/types.ts', 'workshop', 'locked-reference adapter'],
   ['src/components/reader-codex/shared/codexCompatibility.ts', 'workshop', 'locked-reference adapter'],
+  ['src/package/front-desk/package.json', 'tooling', 'distribution manifest'],
   ['src/package/sen/package.json', 'tooling', 'distribution manifest'],
   ['src/package/library/package.json', 'tooling', 'distribution manifest'],
   ['src/components/reader-chamber/shared/colorCodes.ts', 'workshop', 'locked-reference adapter'],
@@ -26,7 +28,10 @@ export const ownershipRules = [
   ['src/audio/data/', 'host', 'first-party catalog records'],
   ['src/library/media/', 'library', 'media catalog and entitlement policy'],
   ['src/components/arc-goals/', 'sen', 'arc goals'],
-  ['src/components/docs-knowledge/', 'sen', 'docs catalog shape and lookup'],
+  ['src/front-desk/core/docsKnowledge.ts', 'front-desk', 'docs catalog shape and lookup'],
+  ['src/front-desk/core/', 'front-desk', 'controller'],
+  ['src/front-desk/card/', 'front-desk', 'card'],
+  ['src/front-desk/engines/', 'front-desk', 'voice and live engines'],
   ['src/components/reader-chamber/', 'sen', 'reader'],
   ['src/components/reader-codex/', 'sen', 'codex'],
   ['src/components/harness-generation/', 'sen', 'harness'],
@@ -75,6 +80,7 @@ export const ownershipRules = [
 ];
 
 export const requiredCapabilities = {
+  'front-desk': ['controller', 'card', 'voice and live engines', 'docs catalog shape and lookup'],
   sen: ['reader', 'codex', 'story foundation', 'arc goals', 'harness', 'manifestation contracts', 'media'],
   library: ['profile', 'energy', 'cultivation', 'dao pillar', 'rewards', 'relics', 'familiar', 'shell', 'home', 'story creation'],
 };

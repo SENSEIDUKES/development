@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import type { FamiliarGuide } from '../../familiar/shared/familiar';
-import { FamiliarGuideView } from '../../familiar/development/FamiliarGuideView';
+import { FrontDeskGuideView, type FrontDeskGuide } from '@seihouse/front-desk';
 
 export interface FamiliarGuidesTabProps {
-  guides: readonly FamiliarGuide[];
+  guides: readonly FrontDeskGuide[];
   /** The name the reader knows their Familiar by: it is the one teaching. */
   name: string;
   /** Guide ids already watched on this profile. */
@@ -21,7 +20,7 @@ export interface FamiliarGuidesTabProps {
  * per the mobile-first rule, not a column of cards). A row of dots shows where
  * the reader is and which guides are watched. Each guide is a short silent
  * recording with the Familiar's line under it, read aloud on request
- * (`FamiliarGuideView`, the same player as the Familiar's own card); one not
+ * (`FrontDeskGuideView`, the same player as the Familiar's own card); one not
  * recorded yet says coming soon.
  */
 export function FamiliarGuidesTab({ guides, name, seen = [], onSeen, openGuideId }: FamiliarGuidesTabProps) {
@@ -48,7 +47,7 @@ export function FamiliarGuidesTab({ guides, name, seen = [], onSeen, openGuideId
           </li>
         ))}
       </ol>
-      <FamiliarGuideView guides={guides} at={shown} name={name} focusOnChange={false}
+      <FrontDeskGuideView guides={guides} at={shown} name={name} focusOnChange={false}
         onStep={by => setAt((shown + by + guides.length) % guides.length)}
         onSeen={id => { if (!seen.includes(id)) onSeen?.(id); }}
         head={shown === firstUnwatched && !seenSet.has(guides[shown].id) ? <span className="familiar-guide-badge" data-familiar-guide-start>Start here</span> : undefined} />

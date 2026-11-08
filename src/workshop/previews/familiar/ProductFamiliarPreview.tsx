@@ -1,13 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { FamiliarCompanion, FamiliarHelperProvider, FamiliarPlace, FamiliarRecall, type FamiliarCompanionProps } from '@seihouse/library/familiar';
+import { createBrowserVoice, createWakeWord } from '@seihouse/front-desk/engines';
+import { FamiliarCompanion, FamiliarFrontDesk, FamiliarPlace, FamiliarRecall, type FamiliarCompanionProps } from '@seihouse/library/familiar';
 import { WorkspaceHeaderAccessoryProvider, useLibraryBottomClearance } from '@seihouse/library/shell';
 import { LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/library/manifestations';
 import { EnergyClientProvider, createHttpEnergyClient } from '@seihouse/library/energy';
 import { allFamiliarOptions, defaultFamiliar, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
 import { FAMILIAR_GUIDES } from '../../../host/familiar/guides';
-import { createFamiliarBrowserVoice } from '../../../host/familiar/voice';
 import { useFamiliarLive } from '../../../host/familiar/liveTalk';
-import { createFamiliarWakeWord } from '../../../host/familiar/wakeWord';
 import { appFamiliarActions } from '../../../novel-expanded/appFamiliarActions';
 import { routeSearch } from '../../../novel-expanded/routes';
 import { developmentIdentityToken } from '../../../server/identity/authentication';
@@ -32,10 +31,10 @@ const PREVIEW_FAMILIAR_ACTIONS = appFamiliarActions(route => { window.location.a
 export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_PROFILE_PREVIEW_STATE, initialFamiliarId = PREVIEW_FAMILIAR_ID, initiallyMinimized = true }: { children: ReactNode; initialState?: UserProfilePreviewState; initialFamiliarId?: string; initiallyMinimized?: boolean }) {
   const parent = useContext(SelectionContext);
   const [minimized, setMinimized] = useState(initiallyMinimized);
-  const [voice] = useState(createFamiliarBrowserVoice);
+  const [voice] = useState(createBrowserVoice);
   // As in the app: live talk when the profile turns it on and the server offers it (real provider credit), the device voice otherwise.
   const live = useFamiliarLive();
-  const [wake] = useState(createFamiliarWakeWord);
+  const [wake] = useState(createWakeWord);
   const [selection, reportProfile] = useState<Selection>(() => ({
     uid: getPreviewScenario(initialState).currentUser?.uid ?? null,
     familiarId: initialFamiliarId,
@@ -59,10 +58,10 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
     <LoadingFamiliarProvider value={loadingFamiliar}>
       <EnergyClientProvider client={client}>
         {/* The app's Familiar panel (Explain and Action), with Home's topics and actions, as in the app. */}
-        <FamiliarHelperProvider voice={voice} live={selection.familiarLiveTalk ? live : undefined} wake={selection.familiarWakeWord ? wake : undefined} familiar={{ name: loadingFamiliar.familiar.displayName, description: loadingFamiliar.familiar.description }} guides={guides}>
+        <FamiliarFrontDesk voice={voice} live={selection.familiarLiveTalk ? live : undefined} wake={selection.familiarWakeWord ? wake : undefined} familiar={{ name: loadingFamiliar.familiar.displayName, description: loadingFamiliar.familiar.description }} guides={guides}>
           <FamiliarPlace title="Home" help="library" page="home" actions={PREVIEW_FAMILIAR_ACTIONS} />
           <WorkspaceHeaderAccessoryProvider accessory={<ProductFamiliarRecall />}>{children}</WorkspaceHeaderAccessoryProvider>
-        </FamiliarHelperProvider>
+        </FamiliarFrontDesk>
       </EnergyClientProvider>
     </LoadingFamiliarProvider>
   </SelectionContext.Provider>;

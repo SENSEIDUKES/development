@@ -20,7 +20,8 @@ import React, { createContext, createElement, useContext } from 'react';
 import { type SenLanguageCode } from '@seihouse/sen/contracts';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import type { DaoRankData } from '../../../library/cultivation/progression';
-import type { FamiliarGuide, FamiliarOption } from '../../familiar/shared/familiar';
+import type { FrontDeskGuide } from '@seihouse/front-desk';
+import type { FamiliarOption } from '../../familiar/shared/familiar';
 import type { CelestialStoreAccountServices } from '../../celestial-store/shared/storeAccount';
 import type {
   AccountRole,
@@ -201,7 +202,7 @@ export interface UserProfileServices {
   /** The host's Familiar catalogue. Which ones the cultivator owns comes from the Store account. */
   familiars?: readonly FamiliarOption[];
   /** The how-tos the Familiar teaches, shown in the Familiar page's Guides tab. Without them the tab is not shown. */
-  familiarGuides?: readonly FamiliarGuide[];
+  familiarGuides?: readonly FrontDeskGuide[];
   /**
    * Celestial Store account access: Familiar ownership and the purchase call,
    * both server-owned. Without it the Store shows purchases as not connected.

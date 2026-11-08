@@ -10,5 +10,5 @@ import { createPackageBuildConfig } from './vite.package.shared';
  */
 export default createPackageBuildConfig({
   target: 'library',
-  external: [/^@seihouse\/sen(\/.*)?$/],
+  external: [/^@seihouse\/sen(\/.*)?$/, /^@seihouse\/front-desk(\/.*)?$/],
 });

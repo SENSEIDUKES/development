@@ -4,7 +4,7 @@
  * Familiar's functions. The browser's WebRTC offer comes here, and this server
  * exchanges it with OpenAI for the answer, so the API key never leaves it.
  */
-import type { FamiliarLiveBrief } from '@seihouse/library/familiar';
+import type { FrontDeskLiveBrief } from '@seihouse/front-desk';
 import { FAMILIAR_NO_SPOILERS, familiarLiveActions, familiarLiveCharacter, familiarLiveDocsIndex } from './prompt';
 
 const LIVE_SESSIONS_URL = 'https://api.openai.com/v1/live/sessions';
@@ -15,7 +15,7 @@ const DEFAULT_BACKEND = 'gpt-5.4-mini';
 const SESSION_TIMEOUT_MS = 20_000;
 
 /** The Familiar's functions, for the delegated Responses model. */
-export function openAiLiveTools(brief: FamiliarLiveBrief) {
+export function openAiLiveTools(brief: FrontDeskLiveBrief) {
   return [
     ...(brief.docs.length ? [{
       type: 'function' as const,
@@ -63,7 +63,7 @@ export function openAiLiveTools(brief: FamiliarLiveBrief) {
  * The session: GPT-Live speaks as the Familiar and answers from its facts; it
  * hands the backend anything that shows or changes something on the page.
  */
-export function openAiLiveSession(brief: FamiliarLiveBrief, options: { model: string; voice: string; backend: string }) {
+export function openAiLiveSession(brief: FrontDeskLiveBrief, options: { model: string; voice: string; backend: string }) {
   const tools = openAiLiveTools(brief);
   return {
     model: options.model,
@@ -107,7 +107,7 @@ export interface OpenAiLiveFailure { ok: false; status: number; detail: string }
 
 /** Exchanges the browser's offer for OpenAI's answer, starting the conversation. */
 export async function startOpenAiLive(
-  input: { apiKey: string; brief: FamiliarLiveBrief; sdp: string; environment: Record<string, string | undefined>; model: string },
+  input: { apiKey: string; brief: FrontDeskLiveBrief; sdp: string; environment: Record<string, string | undefined>; model: string },
   request: typeof fetch = fetch,
 ): Promise<OpenAiLiveResult | OpenAiLiveFailure> {
   const session = openAiLiveSession(input.brief, {

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useLibraryAssets, type LibraryAssets } from '../assets';
 import { DEFAULT_HELP_LANGUAGE, STORY_SEED_HELP_ITEMS, getHelpTranslation } from '../../components/story-seed/development/storySeedHelp';
-import type { FamiliarTopic } from './helper';
+import type { FrontDeskTopic } from '@seihouse/front-desk';
 
 /** Where a help topic belongs, as the help menu tags it: Home and the Library, Create, the Reader. */
 export type FamiliarHelpPlace = 'library' | 'story-seed' | 'reader';
@@ -12,7 +12,7 @@ export type FamiliarHelpPlace = 'library' | 'story-seed' | 'reader';
  * and shown in a clip where one exists. One source, so help and the Familiar
  * never say different things.
  */
-export function familiarHelpTopics(place: FamiliarHelpPlace, assets: Pick<LibraryAssets, 'helpAudio' | 'helpVideos'>): FamiliarTopic[] {
+export function familiarHelpTopics(place: FamiliarHelpPlace, assets: Pick<LibraryAssets, 'helpAudio' | 'helpVideos'>): FrontDeskTopic[] {
   return STORY_SEED_HELP_ITEMS.filter(item => item.contexts?.includes(place)).flatMap(item => {
     const line = getHelpTranslation(item, DEFAULT_HELP_LANGUAGE)?.line;
     if (!line) return [];
@@ -27,7 +27,7 @@ export function familiarHelpTopics(place: FamiliarHelpPlace, assets: Pick<Librar
   });
 }
 
-export function useFamiliarHelpTopics(place: FamiliarHelpPlace): FamiliarTopic[] {
+export function useFamiliarHelpTopics(place: FamiliarHelpPlace): FrontDeskTopic[] {
   const { helpAudio, helpVideos } = useLibraryAssets();
   return useMemo(() => familiarHelpTopics(place, { helpAudio, helpVideos }), [place, helpAudio, helpVideos]);
 }

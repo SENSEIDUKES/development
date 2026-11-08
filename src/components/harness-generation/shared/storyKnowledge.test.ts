@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { docsIndex, docsTopicText, lookUpDocs } from '../../docs-knowledge/shared/docsKnowledge';
+import { docsIndex, docsTopicText, lookUpDocs } from '@seihouse/front-desk/docs-knowledge';
 import { HOLDING_CHANGE_KIND, type CodexEntry, type HoldingChangeAttachment, type HoldingVerb } from '../../../narrative/holdings';
 import { SPEAKER_KIND, type SpeakerAttachment } from '../../../narrative/speech';
 import { deriveStoryCodex, type StoryCodexChapter } from './storyCodex';

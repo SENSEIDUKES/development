@@ -11,7 +11,7 @@
 > context.
 
 - **Created:** 2026-09-29
-- **Last updated:** 2026-11-07
+- **Last updated:** 2026-11-08
 - **Owner:** SENSEI, SEIHouse Productions
 
 ## The two rules everything follows
@@ -75,6 +75,13 @@ and cross-medium identity and continuity. They are designed so SEN pressure-test
 them and SEA can inherit them later. Some live inside SEN or the Library today
 because that is where they were first needed. Do not put something in `@seihouse/sen`
 merely because SEN uses it first.
+
+**SEIHouse Front Desk** (`@seihouse/front-desk`, 2026-11-08) is one of them: an app's
+front desk in one character (help, guides, actions it asks before taking, "Take me
+back", look-ups without spoilers, the browser voice and live talk). SENSEI is
+open-sourcing it. It imports nothing from SEN, the Library or the app; both may use
+it. Novel Expanded's character on it is the Familiar; SEA's will be the vocal
+director. [The plan](./docs/front-desk-plan.md).
 
 ### SEN and SEA
 
@@ -674,7 +681,10 @@ entries run to 2026-11-06.
       what it found, the camera), and the camera becomes one more accessibility
       lens, with on-device eye, blink and nod control. A fourth live talk engine
       made of open models can run on SEIHouse's own servers.
-      [The plan](./docs/familiar-media-spot.md).
+      **The Familiar runs on SEIHouse Front Desk (2026-11-08, SENSEI):** its
+      controller, card and voice engines are their own package, to be open-sourced;
+      the Library hands it Novel Expanded's docs, action list, codes and wording
+      (`FamiliarFrontDesk`). [The plan](./docs/front-desk-plan.md), eleven steps.
   - **Story Settings are in the app, off the developer page** (piece 4). The
     story's own settings, the only place a reader meets the HARNESS:
     - **On Story View**, closed until opened: the Story Language (fixed when the
@@ -1254,11 +1264,13 @@ where it stands; this list was checked against the code on 2026-11-06.
   names, the look writer), cards added by chapters, and the owner's open
   questions.
 - [CTE consequences](./docs/cte-consequences.md): direction, none built.
-- [The Familiar's media spot and its lenses](./docs/familiar-media-spot.md):
-  phase A, guides playing in the Familiar's card with its microphone, is built. Open: B, pictures in the
-  frame; C, Show the Familiar something (one photo); D, the open-model live
-  talk engine on SEIHouse's own server; E, on-device eye, blink and nod control;
-  F, live video talk.
+- [SEIHouse Front Desk](./docs/front-desk-plan.md), the Familiar's plan: step 1
+  (Front Desk separated inside this repository) and the media spot's phase A
+  (guides in the card) are built. Open, in order: 2, its own repository; 3, the
+  bridge for older people; 4, memory and first-meeting setup; 5, quiet mode and
+  hands-free listening; 6, pages handing it their content, and the Inbox; 7, the
+  channel everywhere; 8, accessibility lenses; 9, the touch lens; 10, the rest of
+  the media spot; 11, SEA's vocal director.
 - [Discover](./docs/discover-page.md): structure built on samples. Open: real
   worlds and releases, Tracker, signals, community lists, credits pages, branch
   lineage, curated reviews, the posting guardrails, series status and content

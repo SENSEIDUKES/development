@@ -28,9 +28,9 @@ name and is untouched.
   mobile drawer, and overview. Groups start collapsed, and disclosure state is
   shared across those views.
 - The content lives in `src/library/docs/catalog.ts`, published as
-  `@seihouse/library/docs`, and its shape and reading in
-  `@seihouse/sen/docs-knowledge`. This folder's `catalog.ts` holds only the
-  Workshop's own part: the preview URL a topic is reached at, and the SEN lookup
+  `@seihouse/library/docs`, and its shape and reading in SEIHouse Front Desk's
+  `@seihouse/front-desk/docs-knowledge`. This folder's `catalog.ts` holds only the
+  Workshop's own part: the preview URL a topic is reached at, and the lookup
   bound to NovelExpanded's catalog. The topic index comes from the Development
   product-term audit. Aliases are search keywords, **not declarations that two
   concepts are equivalent**.
@@ -38,7 +38,7 @@ name and is untouched.
   catalog and may say nothing it does not contain, so an entry written here is
   spoken to readers. It is given the topic names and looks an entry up when it
   needs one, rather than carrying the catalog in every exchange
-  ([Docs Knowledge](../../components/docs-knowledge/README.md)).
+  ([SEIHouse Front Desk](../../front-desk/README.md#the-docs-look-up)).
 - Add `definition`, `howItFits`, and optional `related` topic IDs to an existing
   entry when its meaning is confirmed; unfilled topics show placeholders.
   Search includes explanation text automatically. Do not add a second entry,
@@ -60,6 +60,9 @@ History:
   `src/components/docs-knowledge/` (SEN), because the Familiar depends on it at
   runtime and the Workshop is a workbench. The page reads the same source it
   always did and is unchanged for a reader.
+- 2026-11-08 the shape and lookup moved again, into SEIHouse Front Desk
+  (`src/front-desk/core/docsKnowledge.ts`, `@seihouse/front-desk/docs-knowledge`),
+  with the rest of the Familiar's system. Unchanged for a reader.
 - 2026-11-05 retired the Celestial Library name. The single Library entry split into
   **NovelExpanded** (the product, new id `novel-expanded`) and **Library** (the code
   lane, keeping id `library`, so existing `&doc=library` links still resolve). Product

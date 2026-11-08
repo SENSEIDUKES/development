@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import type { FamiliarLive } from '@seihouse/library/familiar';
+import type { FrontDeskLive } from '@seihouse/front-desk';
+import { createGeminiLive, createOpenAiLive, createRealtimeLive } from '@seihouse/front-desk/engines';
+import { createSavedAccessToken } from '../generation/accessToken';
 import { chosenEnergyGrade, useModelPreference } from '../generation/modelPreference';
 import { recordUsage } from '../usage/usageLog';
-import { createFamiliarGeminiLive } from './live';
-import { createFamiliarOpenAiLive } from './openaiLive';
-import { createFamiliarRealtimeLive } from './realtimeLive';
 
 export type FamiliarLiveProvider = 'openai' | 'gemini' | 'elevenlabs';
 
@@ -17,11 +16,16 @@ export interface FamiliarLiveOffer {
 
 const asProvider = (value: unknown): FamiliarLiveProvider => value === 'openai' || value === 'elevenlabs' ? value : 'gemini';
 
-/** The browser end of each provider's live talk. */
-const createLive = (provider: FamiliarLiveProvider, model: string): FamiliarLive =>
-  provider === 'openai' ? createFamiliarOpenAiLive({ model })
-    : provider === 'elevenlabs' ? createFamiliarRealtimeLive({ model, label: 'ElevenLabs' })
-      : createFamiliarGeminiLive({ model });
+/**
+ * The browser end of each provider's live talk (Front Desk's engines), with
+ * the owner's saved Development token, which lifts the visitor's daily count.
+ */
+export const createLive = (provider: FamiliarLiveProvider, model: string, saved = createSavedAccessToken()): FrontDeskLive => {
+  const accessToken = () => saved.current;
+  return provider === 'openai' ? createOpenAiLive({ model, accessToken })
+    : provider === 'elevenlabs' ? createRealtimeLive({ model, label: 'ElevenLabs', accessToken })
+      : createGeminiLive({ model, accessToken });
+};
 
 /** The server's live talk offer, if any. Any failure reads as none, so the device voice stays. */
 export async function familiarLiveOffer(request: typeof fetch = fetch): Promise<FamiliarLiveOffer | undefined> {
@@ -49,7 +53,7 @@ export const chooseLiveModel = (offer: FamiliarLiveOffer, preferred?: string) =>
  * from the moment it connected until it ended or the reader hung up. A talk
  * that never connected is not recorded.
  */
-export function withLiveUsage(live: FamiliarLive, model: string, now: () => number = Date.now): FamiliarLive {
+export function withLiveUsage(live: FrontDeskLive, model: string, now: () => number = Date.now): FrontDeskLive {
   return {
     start(brief, events, options) {
       let connectedAt: number | undefined;
@@ -74,7 +78,7 @@ export function withLiveUsage(live: FamiliarLive, model: string, now: () => numb
  * server's own (GPT-Live, Gemini Live or ElevenLabs Realtime), once the server
  * says it can; until then, or without it, the device voice.
  */
-export function useFamiliarLive(): FamiliarLive | undefined {
+export function useFamiliarLive(): FrontDeskLive | undefined {
   const [offer, setOffer] = useState<FamiliarLiveOffer>();
   const [preferred] = useModelPreference('live');
   useEffect(() => {
@@ -82,7 +86,7 @@ export function useFamiliarLive(): FamiliarLive | undefined {
     void familiarLiveOffer().then(found => { if (current) setOffer(found); });
     return () => { current = false; };
   }, []);
-  const [live, setLive] = useState<FamiliarLive>();
+  const [live, setLive] = useState<FrontDeskLive>();
   useEffect(() => {
     if (!offer) { setLive(undefined); return; }
     const chosen = chooseLiveModel(offer, preferred);

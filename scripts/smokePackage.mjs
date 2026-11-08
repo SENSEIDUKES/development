@@ -6,7 +6,10 @@
  * boundary rather than importing source files from the repo, and for Library
  * it proves the Library → SEN link resolves through the published packages.
  *
- * Usage: `node scripts/smokePackage.mjs <sen|library>`
+ * For `@seihouse/front-desk` it proves the package stands alone: no SEN, no
+ * Library, and a controller that runs on a host's own docs and actions.
+ *
+ * Usage: `node scripts/smokePackage.mjs <front-desk|sen|library>`
  */
 import { execFileSync } from 'node:child_process';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
@@ -64,7 +67,9 @@ try {
   const peers = ['react', 'react-dom', 'react-focus-lock', 'lucide-react', 'motion', '@types/react', '@types/react-dom'].map(name => name + '@' + lock.packages['node_modules/' + name].version);
   const dependencyTarballs = target.smokeDependencies.map(id => pack(resolveTarget(id)));
   const tarballPath = pack(target);
-  const audioPlayer = await packAudioPlayer();
+  // Front Desk needs no audio player: it is installed without one.
+  const frontDesk = target.id === 'front-desk';
+  const audioPlayer = frontDesk ? undefined : await packAudioPlayer();
 
   await writeFile(join(consumerDirectory, 'package.json'), JSON.stringify({
     name: `${target.id}-package-smoke-consumer`,
@@ -74,13 +79,49 @@ try {
     overrides: { '@seihouse/audio-player': { '@seihouse/ui': `file:${join(root, 'vendor/seihouse-ui-0.12.0.tgz')}` } },
   }, null, 2));
   runNpm(
-    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.12.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.10.1.tgz'), join(root, 'vendor/library-studios-brand-0.1.0.tgz')] : []), audioPlayer, ...dependencyTarballs, tarballPath],
+    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.12.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.10.1.tgz'), join(root, 'vendor/library-studios-brand-0.1.0.tgz')] : []), ...(audioPlayer ? [audioPlayer] : []), ...dependencyTarballs, tarballPath],
     consumerDirectory,
   );
 
+  if (frontDesk) {
+    // A host of its own: its docs, its actions, its code letters and its wording, run in Node.
+    await writeFile(join(consumerDirectory, 'front-desk-smoke.mjs'), `
+      import assert from 'node:assert/strict';
+      import { FrontDeskController, FRONT_DESK_PACKAGE_VERSION } from '@seihouse/front-desk';
+      import { lookUpDocs } from '@seihouse/front-desk/docs-knowledge';
+      const docs = [{ id: 'help', title: 'Help', description: 'How the app works', topics: [{ id: 'stamps', title: 'Stamps', aliases: ['stamp'], definition: 'A stamp marks a page you liked.' }] }];
+      assert.equal(lookUpDocs(docs, 'stamps')[0].topic.id, 'stamps');
+      const spoken = [];
+      const voice = { available: true, listen: () => ({ stop() {}, cancel() {} }), speak: (text, _language, done) => { spoken.push(text); done(); return () => {}; } };
+      let saved = 0;
+      const save = { id: 'save', label: 'Save', phrases: ['save it'], describe: () => 'Save this page.', success: 'Saved.', run: async () => { saved += 1; }, code: { letter: 'P', number: 2 } };
+      const desk = new FrontDeskController(voice, 'en-US', undefined, { docs, codes: { P: ['p', 'page'] }, wording: { spoilerOffer: 'More later.' } });
+      desk.setContext(Symbol('page'), { key: 'reading', title: 'Reading', topics: [], actions: [save], hint: 'Say save it.' });
+      desk.open();
+      // Explain answers from the host's own docs.
+      desk.setMode('explain');
+      desk.submit('stamps');
+      assert.match(desk.getSnapshot().message, /A stamp marks a page you liked/);
+      // An action is proposed first, and "back" backs out of it without running it.
+      desk.setMode('action');
+      desk.submit('save it');
+      assert.equal(desk.getSnapshot().proposal?.actionId, 'save');
+      desk.submit('back');
+      assert.equal(desk.getSnapshot().proposal, undefined);
+      assert.equal(saved, 0);
+      // Its own code letters: "page two" names the action; confirming runs it.
+      desk.submit('page two');
+      assert.equal(desk.getSnapshot().proposal?.actionId, 'save');
+      await desk.confirm();
+      assert.equal(saved, 1);
+      assert.equal(typeof FRONT_DESK_PACKAGE_VERSION, 'string');
+    `);
+    run(process.execPath, ['front-desk-smoke.mjs'], consumerDirectory);
+  }
+
   // Native ESM also proves Library's provider and SEN's root resolve the same
   // context across the package boundary, without a bundler alias or host CSS.
-  await writeFile(join(consumerDirectory, 'presentation-smoke.mjs'), `
+  if (!frontDesk) await writeFile(join(consumerDirectory, 'presentation-smoke.mjs'), `
     import assert from 'node:assert/strict';
     import { createElement } from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -102,7 +143,7 @@ try {
     assert.equal(html.includes('glass-field'), ${target.id === 'library'});
     assert.equal(html.includes('data-publisher-brand="independent"'), ${target.id === 'sen'});
   `);
-  run(process.execPath, ['presentation-smoke.mjs'], consumerDirectory);
+  if (!frontDesk) run(process.execPath, ['presentation-smoke.mjs'], consumerDirectory);
 
   if (target.id === 'library') {
     await writeFile(join(consumerDirectory, 'model-router-smoke.mjs'), `
@@ -186,6 +227,12 @@ try {
     // The SEIHouse audio player is SEN's sound (a peer), installed at the exact build this repository locks.
     const audioPlayer = JSON.parse(await readFile(join(consumerDirectory, 'node_modules/@seihouse/audio-player/package.json'), 'utf8'));
     assert.equal(audioPlayer.version, lock.packages['node_modules/@seihouse/audio-player'].version);
+  }
+  if (frontDesk) {
+    // It stands alone: no SEN or Library in its manifest or beside it.
+    assert(!/@seihouse\/(sen|library)/.test(JSON.stringify(installedManifest)));
+    const { existsSync } = await import('node:fs');
+    for (const other of ['sen', 'library', 'library-ui', 'audio-player']) assert(!existsSync(join(consumerDirectory, 'node_modules/@seihouse', other)), `@seihouse/${other} must not be installed`);
   }
   const linked = target.smokeDependencies.length > 0
     ? ` linked against ${target.smokeDependencies.join(', ')},`

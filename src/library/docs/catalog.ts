@@ -9,7 +9,7 @@
  * Two surfaces read it: the NovelExpanded Docs page, and the Familiar, which
  * is grounded in it and may say nothing the catalog does not.
  */
-import type { DocsCatalog, DocsTopic } from '@seihouse/sen/docs-knowledge';
+import type { DocsCatalog, DocsTopic } from '@seihouse/front-desk/docs-knowledge';
 
 const topic = (id: string, title: string, aliases: string[] = []): DocsTopic => ({ id, title, aliases });
 

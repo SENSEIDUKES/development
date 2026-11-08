@@ -153,6 +153,7 @@ read it.
 
 ## Workshop history
 
+- 2026-11-08 — Live talk's browser engines moved with SEIHouse Front Desk: `src/host/familiar/live.ts` and `realtimeLive.ts` are now `src/front-desk/engines/live.ts` and `realtimeLive.ts` in `PROVIDER_ADAPTERS`. The Router still chooses the live model (`src/host/familiar/liveTalk.ts`), and the host hands each engine the owner's saved token.
 - 2026-11-01 — Live speech adds ElevenLabs Realtime (Eleven Realtime v1 Mini and Max), Heaven grade, the live Heaven tier's model (Mini). The server mints a client secret locked to the Familiar's session (`src/server/familiar-live/elevenlabs.ts`, `ELEVENLABS_API_KEY`, voice `FAMILIAR_LIVE_ELEVENLABS_VOICE`, default brian); the browser talks over OpenAI's Realtime protocol (`src/host/familiar/realtimeLive.ts`). Listed after the others, so it serves only when chosen.
 - 2026-11-01 — Tiers: Chapters, Images and Live speech open on three tiers (Mortal, Immortal, Heaven, with Story Seed's Fate Pressure flames). Readers choose a tier; the team sets the model behind each (`ENERGY_TIER_MODELS`; a model set here applies on this device), and the Router flags a tier model that costs more to run than the tier brings in. An exact model picked in the list wins over the tier, at its own grade. Prices and Usage follow the tier chosen.
 - 2026-11-01 — Each chapter, image and live model shows its Energy grade (Mortal, Immortal, Heaven) and price, from `src/components/energy/shared/energyGrades.ts`. Every model in those tabs must have a grade (`energyGrades.test.ts`).

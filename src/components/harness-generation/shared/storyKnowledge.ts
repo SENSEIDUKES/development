@@ -16,7 +16,7 @@
  * Nothing here is new knowledge. A card the Codex does not show is not here,
  * and a fact the chapters have not reached is not here.
  */
-import type { DocsCatalog, DocsTopic } from '../../docs-knowledge/shared/docsKnowledge';
+import type { DocsCatalog, DocsTopic } from '@seihouse/front-desk/docs-knowledge';
 import type { HarnessChapter, HarnessWorkspaceState } from '../../../narrative/generation';
 import type { HoldingVerb } from '../../../narrative/holdings';
 import { storyWorldRecord, findActiveFoundationRevision } from './foundation';

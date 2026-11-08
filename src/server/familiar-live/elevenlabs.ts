@@ -5,7 +5,7 @@
  * Familiar is, its functions, its voice), so the API key never leaves it and
  * the browser cannot change the session.
  */
-import type { FamiliarLiveBrief } from '@seihouse/library/familiar';
+import type { FrontDeskLiveBrief } from '@seihouse/front-desk';
 import { FAMILIAR_LIVE_SESSION_MS } from './limits';
 import { openAiLiveTools } from './openai';
 import { familiarLiveInstruction } from './prompt';
@@ -18,7 +18,7 @@ export const ELEVENLABS_LIVE_RATE = 24_000;
 const SECRET_TIMEOUT_MS = 20_000;
 
 /** The whole session: one model hears, thinks, acts through the Familiar's functions and speaks. */
-export function elevenLabsLiveSession(brief: FamiliarLiveBrief, options: { model: string; voice: string }) {
+export function elevenLabsLiveSession(brief: FrontDeskLiveBrief, options: { model: string; voice: string }) {
   const tools = openAiLiveTools(brief);
   return {
     type: 'realtime' as const,
@@ -42,7 +42,7 @@ export interface ElevenLabsLiveFailure { ok: false; status: number; detail: stri
 
 /** Mints the client secret the browser opens the conversation with. */
 export async function startElevenLabsLive(
-  input: { apiKey: string; brief: FamiliarLiveBrief; environment: Record<string, string | undefined>; model: string },
+  input: { apiKey: string; brief: FrontDeskLiveBrief; environment: Record<string, string | undefined>; model: string },
   request: typeof fetch = fetch,
 ): Promise<ElevenLabsLiveResult | ElevenLabsLiveFailure> {
   const session = elevenLabsLiveSession(input.brief, {

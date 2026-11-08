@@ -12,7 +12,8 @@ import {
 import { LibraryGlobalIcon } from '@seihouse/library-ui';
 import { useOverlayScrollbar } from '@seihouse/ui';
 import { BalancePills } from '../../energy/development/BalancePill';
-import { familiarRarityLabel, type FamiliarGuide, type FamiliarOption, type FamiliarPersonalizations } from '../../familiar/shared/familiar';
+import type { FrontDeskGuide } from '@seihouse/front-desk';
+import { familiarRarityLabel, type FamiliarOption, type FamiliarPersonalizations } from '../../familiar/shared/familiar';
 import { FamiliarHero } from '../../familiar/development/FamiliarHero';
 import { FamiliarNameEffect } from './FamiliarNameEffect';
 import { bondProgress, FamiliarBondTab, formatWhole } from './FamiliarBondTab';
@@ -67,7 +68,7 @@ export interface FamiliarStageProps {
   personal?: FamiliarPersonalizations;
   onPersonalChange?: (familiarId: string, changes: { name?: string | null; backstory?: string | null }) => void;
   /** How-tos the Familiar teaches, in the Guides tab; without them the tab is not shown. */
-  guides?: readonly FamiliarGuide[];
+  guides?: readonly FrontDeskGuide[];
   /** Guide ids already watched on this profile. */
   guidesSeen?: readonly string[];
   onGuideSeen?: (guideId: string) => void;

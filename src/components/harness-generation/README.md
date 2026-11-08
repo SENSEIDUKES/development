@@ -377,6 +377,10 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-08 (Front Desk):** `storyKnowledge.ts` takes its catalog shape from
+  SEIHouse Front Desk (`@seihouse/front-desk/docs-knowledge`), where the docs look-up
+  moved with the rest of the Familiar's system. SEN now peers on Front Desk; nothing
+  a story knows changes.
 - **2026-11-06 (the Familiar knows the story):** SENSEI: the Familiar needs the
   Codex and the page the reader is on, looked up the way it looks up the docs.
   `shared/storyKnowledge.ts` writes the story's Codex (every card the Codex

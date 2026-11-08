@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { FamiliarLive, FamiliarLiveEvents } from '@seihouse/library/familiar';
+import type { FrontDeskLive, FrontDeskLiveEvents } from '@seihouse/front-desk';
 import { HarnessGenerationHttpClient } from '../generation/httpClient';
 import { withLiveUsage } from '../familiar/liveTalk';
 import { readUsage, recordUsage, usageEnergy, USAGE_STORAGE_KEY } from './usageLog';
@@ -53,10 +53,10 @@ describe('the usage record', () => {
 
   it('records a live conversation from when it connected until it ended, once', () => {
     let clock = 1_000;
-    let handlers: FamiliarLiveEvents | undefined;
+    let handlers: FrontDeskLiveEvents | undefined;
     const end = vi.fn();
-    const inner: FamiliarLive = { start: (_brief, events) => { handlers = events; return { end, send: vi.fn() }; } };
-    const events: FamiliarLiveEvents = { connected: vi.fn(), caption: vi.fn(), call: vi.fn(async () => ''), ended: vi.fn() };
+    const inner: FrontDeskLive = { start: (_brief, events) => { handlers = events; return { end, send: vi.fn() }; } };
+    const events: FrontDeskLiveEvents = { connected: vi.fn(), caption: vi.fn(), call: vi.fn(async () => ''), ended: vi.fn() };
     const session = withLiveUsage(inner, 'openai/gpt-live-1', () => clock).start({} as never, events);
     handlers!.connected();
     expect(events.connected).toHaveBeenCalledOnce();

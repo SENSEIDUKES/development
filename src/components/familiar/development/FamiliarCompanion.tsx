@@ -4,7 +4,7 @@ import { Familiar, type FamiliarProps } from './Familiar';
 import { familiarDisplaySize } from '../shared/familiar';
 import { useFamiliarLook } from './useFamiliarLook';
 import { useFamiliarMobile } from './useFamiliarMobile';
-import { useFamiliarHelperAvailable } from './FamiliarHelper';
+import { useFrontDeskAvailable } from '@seihouse/front-desk';
 
 type Point = { x: number; y: number };
 type Bounds = { left: number; top: number; right: number; bottom: number };
@@ -36,7 +36,7 @@ function dragAnimation(familiar: FamiliarProps['familiar'], delta: Point): strin
 /** One instance belongs in the host app shell, beneath its account/Energy providers. */
 export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMinimize, bottomInset = 0, children, ...props }: FamiliarCompanionProps) {
   const mobile = useFamiliarMobile();
-  const dockWidth = useFamiliarHelperAvailable() ? 148 : 104;
+  const dockWidth = useFrontDeskAvailable() ? 148 : 104;
   const scale = familiarDisplaySize(size, mobile);
   const ratio = props.familiar.cellHeight / props.familiar.cellWidth;
   const [width, setWidth] = useState(WIDTH * scale);

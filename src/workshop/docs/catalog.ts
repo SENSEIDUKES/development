@@ -13,7 +13,7 @@ import {
   searchDocs as searchCatalog,
   type DocsCategory,
   type DocsTopic,
-} from '@seihouse/sen/docs-knowledge';
+} from '@seihouse/front-desk/docs-knowledge';
 
 export type { DocsCategory, DocsTopic };
 

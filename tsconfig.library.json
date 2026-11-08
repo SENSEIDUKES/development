@@ -9,8 +9,10 @@
     // Library type-checks against SEN's *published* declarations, not SEN
     // source. Without this, `tsc` follows `@seihouse/sen/presentation` into
     // `src/components/` and emits a second copy of the engine's types inside
-    // the Library package. `build:package` builds SEN first, so these exist.
+    // the Library package. `build:package` builds Front Desk and SEN first, so these exist.
     "paths": {
+      "@seihouse/front-desk": ["./dist/front-desk/dist/types/package/front-desk/index.d.ts"],
+      "@seihouse/front-desk/*": ["./dist/front-desk/dist/types/package/front-desk/*.d.ts"],
       "@seihouse/sen": ["./dist/sen/dist/types/package/sen/index.d.ts"],
       "@seihouse/sen/*": ["./dist/sen/dist/types/package/sen/*.d.ts"],
       "@seihouse/library": ["./src/package/library/index.ts"],

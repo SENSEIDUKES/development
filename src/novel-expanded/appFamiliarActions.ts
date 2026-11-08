@@ -1,10 +1,10 @@
-import type { FamiliarHelperContext, FamiliarPage } from '@seihouse/library/familiar';
+import { FRONT_DESK_BACK_ACTION_ID, FRONT_DESK_BACK_PHRASES, type FrontDeskContext } from '@seihouse/front-desk';
+import type { FamiliarPage } from '@seihouse/library/familiar';
 import { ArrowLeft, Home, PenLine, Settings, Store, UserRound, Zap } from 'lucide-react';
-import { FAMILIAR_BACK_ACTION_ID, FAMILIAR_BACK_PHRASES } from '@seihouse/library/familiar';
 import { HOME_ROUTE, goBack, type Navigate, type NovelExpandedRoute } from './routes';
 
 /** One of the Familiar's actions (the package's name for it also names its tray button). */
-type FamiliarHelperAction = FamiliarHelperContext['actions'][number];
+type FrontDeskAction = FrontDeskContext['actions'][number];
 
 /** Which page each route is, for the Familiar's master action list. */
 export function familiarPage(page: NovelExpandedRoute['page']): FamiliarPage {
@@ -21,7 +21,7 @@ export function familiarPage(page: NovelExpandedRoute['page']): FamiliarPage {
   }
 }
 
-const go = (id: string, label: string, icon: FamiliarHelperAction['icon'], phrases: readonly string[], to: NovelExpandedRoute, navigate: Navigate): FamiliarHelperAction => ({
+const go = (id: string, label: string, icon: FrontDeskAction['icon'], phrases: readonly string[], to: NovelExpandedRoute, navigate: Navigate): FrontDeskAction => ({
   id, label, icon, phrases,
   describe: () => `Go to ${label}.`,
   success: `Opened ${label}.`,
@@ -34,11 +34,11 @@ const go = (id: string, label: string, icon: FamiliarHelperAction['icon'], phras
  * (`@seihouse/library/familiar` `FAMILIAR_ACTION_LIST`), which decides where
  * they are offered; going somewhere changes nothing, so none asks to confirm.
  */
-export function appFamiliarActions(navigate: Navigate, { back = false }: { back?: boolean } = {}): FamiliarHelperAction[] {
+export function appFamiliarActions(navigate: Navigate, { back = false }: { back?: boolean } = {}): FrontDeskAction[] {
   return [
     // "Take me back": the previous screen, never out of the app. Offered wherever there is somewhere to go back to.
     ...(back ? [{
-      id: FAMILIAR_BACK_ACTION_ID, label: 'Take me back', icon: ArrowLeft, phrases: [...FAMILIAR_BACK_PHRASES],
+      id: FRONT_DESK_BACK_ACTION_ID, label: 'Take me back', icon: ArrowLeft, phrases: [...FRONT_DESK_BACK_PHRASES],
       describe: () => 'Go back to the previous screen.', success: 'Went back.',
       run: async () => { goBack(navigate); },
     }] : []),

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
 import type { SoundCueAttachment } from '@seihouse/sen/audio';
-import { matchFamiliarCommand } from '../familiars/helper';
+import { matchFrontDeskCommand } from '@seihouse/front-desk';
 import { createModeFamiliarContext, readerFamiliarContext } from './ReaderFamiliar';
 
 const tools = { chapterId: 'no-chapter', busy: false, interruptPlayback: () => () => {} };
@@ -48,7 +48,7 @@ describe('Reader actions for the Familiar', () => {
     const context = createModeFamiliarContext({ chapterNumber: 8, soundWords: ['wind', 'blade clash'], resolve, place }, undefined, playCue);
     expect(context.actions.map(action => action.id)).toEqual(['sound']);
     expect(context.title).toBe('Create mode');
-    const said = matchFamiliarCommand(context.actions, 'Add a howling wind sound on whistling drafts.')!;
+    const said = matchFrontDeskCommand(context.actions, 'Add a howling wind sound on whistling drafts.')!;
     const sound = context.actions.find(action => action.id === said.actionId)!;
     expect(sound.check!(said.input)).toBeUndefined();
     expect(resolve).toHaveBeenLastCalledWith('wind', { kind: 'words', words: 'whistling drafts' });

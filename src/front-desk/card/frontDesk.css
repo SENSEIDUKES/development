@@ -1,0 +1,195 @@
+/*
+ * SEIHouse Front Desk: the card, its media spot (guides and clips) and the greeting.
+ * Class names still begin `familiar-`, the first host's word; they stay until the
+ * package moves to its own repository.
+ */
+/* The card never scrolls as a whole: its top bar and microphone row stay put (and its rim stays whole);
+   only the middle scrolls, with the Library's overlay scrollbar. */
+.familiar-helper { position: fixed; z-index: 10020; inset-inline-end: max(16px, env(safe-area-inset-right)); bottom: max(88px, env(safe-area-inset-bottom)); width: min(360px, calc(100vw - 32px)); max-height: 70dvh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; padding: 10px; border: 1px solid #ffffff14; border-radius: 24px; background: #101c2cf7; color: #eef7ff; box-shadow: 0 16px 48px #0008; font: 15px/1.4 var(--font-sans, sans-serif); }
+.familiar-helper:focus { outline: none; }
+.familiar-helper > :not(.familiar-helper-body) { flex-shrink: 0; }
+.familiar-helper-body { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; margin-inline: -4px; padding-inline: 4px; }
+/* Compact: filled tiles, no outlines; the icon carries the meaning. */
+.familiar-helper button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 44px; min-height: 44px; padding: 6px 10px; border: 0; border-radius: 16px; background: transparent; color: inherit; cursor: pointer; }
+.familiar-helper button:disabled { opacity: .45; cursor: default; }
+.familiar-helper button:focus-visible, .familiar-helper input:focus-visible, .familiar-helper-topics:focus-visible { outline: 2px solid #96ddf9; outline-offset: 2px; }
+/* Touch screens keep :hover after a tap, which would cover the microphone's state. */
+@media (hover: hover) { .familiar-helper button:hover:not(:disabled):not([data-phase="listening"]):not([data-phase="live"]) { background: #ffffff14; } }
+.familiar-helper button[aria-pressed="true"] { background: #8bdbff2e; color: #fff; }
+/* One row: the two modes, where the reader is, close. */
+.familiar-helper-top { display: flex; align-items: center; gap: 8px; touch-action: none; cursor: grab; user-select: none; }
+.familiar-helper .familiar-helper-drag-handle { flex: 1; min-width: 0; justify-content: flex-start; gap: 4px; padding: 6px 0; cursor: grab; }
+.familiar-helper-drag-handle > svg { flex-shrink: 0; opacity: .65; }
+.familiar-helper[data-dragging] .familiar-helper-top, .familiar-helper[data-dragging] .familiar-helper-drag-handle { cursor: grabbing; }
+.familiar-helper-modes { display: flex; gap: 2px; padding: 3px; border-radius: 18px; background: #ffffff0d; }
+.familiar-helper-modes button { min-height: 38px; padding: 4px 14px; border-radius: 14px; }
+.familiar-helper-place { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #b9c7d6; }
+.familiar-helper-icon { padding: 6px; }
+/* Tiles: icon, name, and one short line under it. */
+.familiar-helper-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.familiar-helper .familiar-helper-actions button { justify-content: flex-start; min-height: 64px; padding: 10px 12px; background: #ffffff0d; text-align: start; min-width: 0; overflow-wrap: anywhere; }
+.familiar-helper-tile-text { display: flex; flex-direction: column; min-width: 0; font-size: 14px; font-weight: 600; }
+.familiar-helper-tile-text small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: 11px; font-weight: 400; line-height: 1.3; color: #b9c7d6; }
+.familiar-helper-actions svg, .familiar-helper-topics svg { flex-shrink: 0; }
+/* Explain: a clip (only when the topic has one), its words, then the first few topics; the rest behind More. */
+.familiar-helper-topic { margin-top: 10px; padding: 10px; border-radius: 18px; background: #ffffff0d; }
+.familiar-helper .familiar-clip-frame { margin-bottom: 8px; }
+.familiar-helper .familiar-clip-frame[data-shape="tall"] { height: min(36dvh, 18rem); }
+/* A Familiar's clip shows the whole recording: wide fills the width, tall is held to a phone's height and centred. */
+.familiar-clip-frame { position: relative; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #000; overflow: hidden; aspect-ratio: 16 / 9; }
+.familiar-clip-frame[data-shape="tall"] { aspect-ratio: auto; height: min(38dvh, 22rem); }
+.familiar-clip { display: block; width: 100%; height: 100%; object-fit: contain; background: #000; }
+.familiar-clip-frame[data-shape="tall"] .familiar-clip { width: auto; max-width: 100%; }
+.familiar-clip-toggle { position: absolute; inset-inline-end: 6px; bottom: 6px; display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; color: #fff; background: #000a; }
+.familiar-clip-toggle:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+.familiar-helper-topic-text { display: flex; align-items: flex-start; gap: 6px; }
+.familiar-helper-topic-text p { flex: 1; margin: 0; font-size: 14px; }
+.familiar-helper-topics { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.familiar-helper .familiar-helper-topics button { padding: 6px 14px; border-radius: 999px; background: #ffffff0d; font-size: 14px; }
+.familiar-helper .familiar-helper-topics button[aria-pressed="true"] { background: #8bdbff2e; }
+/* More / See all: a quiet text button after the first few. */
+.familiar-helper .familiar-helper-more { background: transparent; color: #b9c7d6; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.familiar-helper .familiar-helper-actions .familiar-helper-more { grid-column: 1 / -1; min-height: 40px; justify-content: center; background: transparent; }
+/* "Take me back": one plain pill above the microphone row, never scrolled away. */
+.familiar-helper .familiar-helper-back { display: flex; flex: none; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px; margin: 8px 0 0; border-radius: 999px; background: #ffffff14; color: #eef3f8; font-size: 15px; font-weight: 600; }
+.familiar-helper .familiar-helper-back:hover, .familiar-helper .familiar-helper-back:focus-visible { background: #ffffff24; }
+/* A proposal: what will happen, then four plain answers. */
+.familiar-helper-proposal { margin: 10px 4px 8px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.familiar-helper-answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.familiar-helper .familiar-helper-answers button { background: #ffffff0d; }
+.familiar-helper .familiar-helper-answers button:first-child { background: #8bdbff33; font-weight: 600; }
+.familiar-helper-info { margin-top: 10px; padding: 10px 12px; border-radius: 18px; background: #ffffff0d; font-size: 14px; }
+.familiar-helper-info p { margin: 0 0 8px; }
+.familiar-helper-info p:last-child { margin-bottom: 0; }
+.familiar-helper-info svg { display: inline; vertical-align: -3px; }
+.familiar-helper-quiet { color: #b9c7d6; font-size: 12px; }
+.familiar-helper-status { margin: 8px 4px 0; font-size: 13px; }
+.familiar-helper-status:empty { display: none; }
+.familiar-helper form { display: flex; gap: 6px; margin-top: 10px; }
+.familiar-helper input { flex: 1; min-width: 0; min-height: 44px; border: 0; border-radius: 14px; padding: 8px 12px; background: #ffffff12; color: inherit; font-size: 16px; }
+/* The icon row: info, the microphone, typing. The microphone shows what the Familiar is doing: a pulse while it listens, a glow while it speaks. */
+.familiar-helper-bottom { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; margin-top: 4px; padding: 8px 4px; }
+/* Info and this screen's quick actions (Guides) on the left, the microphone in the middle, typing or the conversation on the right. */
+.familiar-helper-bottom-side { display: flex; align-items: center; gap: 4px; }
+.familiar-helper-bottom-side.is-end { justify-content: flex-end; }
+.familiar-helper .familiar-helper-mic { width: 54px; height: 54px; border-radius: 50%; background: #8bdbff2e; }
+/* Lit only while it hears the reader: a ring that ripples outward and fades. */
+.familiar-helper .familiar-helper-mic[data-phase="listening"], .familiar-helper .familiar-helper-mic[data-phase="live"] { opacity: 1; background: #8bdbff59; color: #fff; animation: familiar-listening 1.4s ease-out infinite; }
+@keyframes familiar-listening { 0% { box-shadow: 0 0 0 0 #96ddf999; } 100% { box-shadow: 0 0 0 9px #96ddf900; } }
+.familiar-helper .familiar-helper-mic[data-phase="connecting"] { opacity: .7; }
+@media (prefers-reduced-motion: reduce) { .familiar-helper .familiar-helper-mic[data-phase="listening"], .familiar-helper .familiar-helper-mic[data-phase="live"] { animation: none; box-shadow: 0 0 0 3px #96ddf9; } }
+.familiar-helper-conversation { margin-top: 10px; }
+.familiar-helper-chat { display: flex; flex-direction: column; gap: 6px; max-height: min(42dvh, 320px); overflow-y: auto; overscroll-behavior: contain; padding: 2px; }
+.familiar-helper-chat p { margin: 0; max-width: 85%; padding: 7px 11px; border-radius: 16px; font-size: 14px; line-height: 1.4; }
+.familiar-helper-chat .familiar-helper-line-reader { align-self: flex-end; background: #8bdbff2e; border-bottom-right-radius: 6px; }
+.familiar-helper-chat .familiar-helper-line-familiar { align-self: flex-start; background: #ffffff0f; border-bottom-left-radius: 6px; }
+.familiar-helper-chat .familiar-helper-line-note { align-self: center; max-width: 100%; padding: 2px 8px; font-size: 12px; opacity: .6; text-align: center; }
+.familiar-helper-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* A tip from the Familiar: the screen dims a little and its small card pops up beside it, never over the whole page. */
+.familiar-tip-dim { position: fixed; inset: 0; z-index: 10005; background: rgba(3, 6, 12, 0.45); animation: familiar-tip-fade 200ms ease-out both; }
+.familiar-tip {
+  position: fixed; z-index: 10020; right: max(12px, env(safe-area-inset-right)); width: min(21rem, calc(100vw - 24px));
+  max-height: calc(100dvh - var(--workspace-header-height, 72px) - 24px); overflow-y: auto; overscroll-behavior: contain;
+  padding: 0.85rem 0.95rem 0.95rem; border-radius: 1.25rem; border: 1px solid rgba(226, 196, 106, 0.35);
+  background: radial-gradient(120% 60% at 15% 0%, rgba(226, 196, 106, 0.14), transparent 60%), #070c18;
+  color: rgb(229 229 229); box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  transform-origin: bottom right; animation: familiar-tip-pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.familiar-tip[data-anchor="top"] { transform-origin: top right; }
+/* The thought bubble's tail points at the Familiar: down to it floating, up to it in the header. */
+.familiar-tip::after {
+  content: ''; position: absolute; right: 2.6rem; bottom: -0.45rem; width: 0.9rem; height: 0.9rem; transform: rotate(45deg);
+  background: #070c18; border-right: 1px solid rgba(226, 196, 106, 0.35); border-bottom: 1px solid rgba(226, 196, 106, 0.35);
+}
+.familiar-tip[data-anchor="below"] { transform-origin: top right; }
+.familiar-tip[data-anchor="below"]::after { bottom: auto; top: -0.45rem; border: 0; border-left: 1px solid rgba(226, 196, 106, 0.35); border-top: 1px solid rgba(226, 196, 106, 0.35); }
+.familiar-tip[data-anchor="top"]::after { bottom: auto; top: -0.45rem; right: 6.5rem; border: 0; border-left: 1px solid rgba(226, 196, 106, 0.35); border-top: 1px solid rgba(226, 196, 106, 0.35); }
+.familiar-tip-head { display: flex; align-items: center; gap: 0.6rem; }
+.familiar-tip-face { flex-shrink: 0; width: 2.75rem; height: 2.75rem; border-radius: 9999px; overflow: hidden; border: 1px solid rgba(226, 196, 106, 0.4); background: #0b1324; }
+.familiar-tip-face img, .familiar-tip-hero { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.familiar-tip-title { flex: 1; min-width: 0; font-family: var(--font-display, serif); font-style: italic; font-size: 1.15rem; line-height: 1.2; color: #f4f4f5; }
+.familiar-tip-title:focus { outline: none; }
+.familiar-tip-close { display: inline-grid; place-items: center; width: 2.75rem; height: 2.75rem; margin: -0.4rem -0.5rem -0.4rem 0; border-radius: 9999px; color: rgb(163 163 163); }
+.familiar-tip-line { margin-top: 0.6rem; font-family: var(--font-serif, serif); font-size: 0.95rem; line-height: 1.5; color: rgb(229 229 229); }
+.familiar-tip-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+.familiar-tip-actions > button {
+  flex: 1; min-height: 2.75rem; padding: 0 0.9rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.85rem; font-weight: 600; color: rgb(229 229 229);
+}
+.familiar-tip-actions > button.is-primary { border-color: transparent; background: linear-gradient(180deg, #f3dc94, #e2c46a); color: #0b1220; }
+.familiar-tip button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
+.familiar-tip-note { margin-top: 0.5rem; font-size: 0.7rem; color: rgb(140 140 140); }
+
+/*
+ * A guide in the Familiar's card (the Familiar's one media spot), in place of its topics and
+ * actions, with the microphone still under it: the recording with the guides' progress, Close
+ * and Hear laid over it; under it Back, the title and what the Familiar says, and Next (Done on
+ * the last).
+ */
+.familiar-helper-guide { padding: 2px 0 4px; }
+.familiar-guide.is-in-card { display: flex; flex-direction: column; gap: 4px; }
+.familiar-guide.is-in-card .familiar-guide-stage { position: relative; display: flex; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: #000; }
+.familiar-guide.is-in-card .familiar-guide-stage:has(.familiar-clip-frame[data-shape="tall"]) { aspect-ratio: 9 / 16; max-height: 30dvh; }
+.familiar-helper .familiar-guide.is-in-card .familiar-clip-frame { margin: 0; height: auto; }
+.familiar-clip-frame.is-fill { flex: 1; aspect-ratio: auto; height: auto; border-radius: 0; }
+.familiar-clip-frame.is-fill .familiar-clip { width: 100%; height: 100%; max-width: none; }
+.familiar-guide.is-in-card .familiar-clip-toggle { inset-inline-end: 0; bottom: 0; background: transparent; }
+.familiar-guide.is-in-card .familiar-clip-toggle > svg { padding: 6px; box-sizing: content-box; border-radius: 999px; background: #000a; }
+.familiar-guide-soon.is-stage {
+  flex: 1; flex-direction: column; justify-content: center; gap: 0.3rem; padding: 0.5rem 0.75rem 1.75rem; border: 0; border-radius: 0; text-align: center;
+  font-size: 0.75rem; color: rgb(163 163 163); background: radial-gradient(70% 60% at 50% 45%, rgba(226, 196, 106, 0.12), transparent 70%), #080d18;
+}
+.familiar-guide-soon.is-stage > svg { color: rgba(226, 196, 106, 0.75); }
+.familiar-guide-progress { position: absolute; top: 7px; left: 10px; right: 46px; display: flex; gap: 3px; pointer-events: none; }
+.familiar-guide-progress > li { flex: 1; height: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.28); }
+.familiar-guide-progress > li[data-done] { background: rgba(226, 196, 106, 0.6); }
+.familiar-guide-progress > li[data-current] { background: #e2c46a; }
+/* Close and Hear sit on the recording's top-right and bottom-left corners: 44px to touch, small to see. */
+.familiar-guide-close, .familiar-guide.is-in-card .familiar-guide-hear {
+  position: absolute; display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 0; background: transparent; color: #fff;
+}
+.familiar-guide-close { top: 0; right: 0; }
+.familiar-guide.is-in-card .familiar-guide-hear { bottom: 0; left: 0; }
+.familiar-guide-close > svg, .familiar-guide.is-in-card .familiar-guide-hear > svg { padding: 6px; box-sizing: content-box; border-radius: 999px; background: #000a; }
+.familiar-guide-bar { display: flex; align-items: center; gap: 4px; }
+.familiar-guide-bar > .familiar-guide-back, .familiar-guide-bar > .familiar-guide-next {
+  display: inline-grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; padding: 0; border-radius: 999px; color: rgb(229 229 229);
+}
+.familiar-guide-bar > .familiar-guide-back:disabled { opacity: 0.3; }
+.familiar-guide-bar > .familiar-guide-next { background: linear-gradient(180deg, #f3dc94, #e2c46a); color: #0b1220; }
+.familiar-guide-caption { flex: 1; min-width: 0; padding: 2px 4px; }
+.familiar-guide.is-in-card .familiar-guide-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--font-sans, sans-serif); font-style: normal; font-size: 0.85rem; font-weight: 700; line-height: 1.25; color: #f4f4f5; }
+.familiar-guide-line-toggle { display: block; width: 100%; padding: 0; text-align: start; font-size: 0.78rem; line-height: 1.4; color: rgb(190 190 190); cursor: pointer; }
+.familiar-guide-line-toggle > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.familiar-guide-line-toggle[aria-expanded="true"] > span { display: block; }
+.familiar-guide.is-in-card button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: -2px; }
+/* The card's own button style (padding, hover) stays off the guide's controls. */
+.familiar-helper .familiar-guide.is-in-card :is(.familiar-guide-close, .familiar-guide-hear, .familiar-clip-toggle) { padding: 0; border-radius: 0; background: transparent; }
+.familiar-helper .familiar-guide.is-in-card .familiar-guide-bar > :is(.familiar-guide-back, .familiar-guide-next) { padding: 0; border-radius: 999px; }
+.familiar-helper .familiar-guide.is-in-card .familiar-guide-bar > .familiar-guide-next { background: linear-gradient(180deg, #f3dc94, #e2c46a); color: #0b1220; }
+@media (hover: hover) {
+  .familiar-helper .familiar-guide.is-in-card .familiar-guide-bar > .familiar-guide-next:hover:not(:disabled):not([data-phase="listening"]):not([data-phase="live"]) { background: linear-gradient(180deg, #f7e4a8, #e8cc77); }
+}
+.familiar-helper .familiar-guide.is-in-card .familiar-guide-line-toggle { display: block; min-height: 0; padding: 0; border-radius: 0; text-align: start; }
+.familiar-guide-close > svg, .familiar-guide.is-in-card .familiar-guide-hear > svg, .familiar-guide.is-in-card .familiar-clip-toggle > svg { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18); }
+@keyframes familiar-tip-fade { from { opacity: 0; } }
+@keyframes familiar-tip-pop { from { opacity: 0; transform: scale(0.85); } }
+@media (prefers-reduced-motion: reduce) {
+  .familiar-tip, .familiar-tip-dim { animation: none; }
+}
+
+/* One guide, wherever it is watched (FamiliarGuideView): the Familiar page's Guides and the Familiar's own card. */
+.familiar-guide { display: grid; gap: 0.6rem; touch-action: pan-y; }
+.familiar-guide-head { display: flex; align-items: center; justify-content: space-between; }
+.familiar-guide-count { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.72rem; color: rgb(163 163 163); }
+.familiar-guide-title { font-family: var(--font-display, serif); font-style: italic; font-size: 1.2rem; line-height: 1.25; color: #f4f4f5; }
+.familiar-guide-title:focus { outline: none; }
+.familiar-guide-soon { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 1.1rem 0.9rem; border-radius: 12px; border: 1px dashed rgba(255, 255, 255, 0.14); font-size: 0.8rem; color: rgb(163 163 163); }
+.familiar-guide-line { display: flex; align-items: flex-start; gap: 0.5rem; }
+.familiar-guide-line > p { flex: 1; font-family: var(--font-serif, serif); font-size: 0.98rem; line-height: 1.6; color: rgb(229 229 229); }
+.familiar-guide-hear { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.18); color: rgb(229 229 229); }
+.familiar-guide-steps { display: flex; justify-content: space-between; gap: 0.5rem; }
+.familiar-guide-steps > button { display: inline-flex; align-items: center; gap: 0.25rem; min-height: 2.75rem; padding: 0 0.85rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.16); font-size: 0.8rem; color: rgb(229 229 229); }
+.familiar-guide-hear:focus-visible, .familiar-guide-steps > button:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
+.familiar-guide-soon-badge { padding: 0.2rem 0.5rem; border-radius: 9999px; border: 1px dashed rgba(226, 196, 106, 0.5); font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: #e2c46a; }

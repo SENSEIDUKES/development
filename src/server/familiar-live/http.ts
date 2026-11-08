@@ -6,7 +6,7 @@
  * whether live talk is configured, so the app can keep the device voice.
  */
 import { GoogleGenAI, Modality, type LiveConnectConfig } from '@google/genai';
-import type { FamiliarLiveBrief } from '@seihouse/library/familiar';
+import type { FrontDeskLiveBrief } from '@seihouse/front-desk';
 import { LIVE_MODELS, providerKey, providerModelName } from '../model-router/catalog';
 import { liveModel, liveModelProvider } from '../model-router/status';
 import { FAMILIAR_LIVE_SESSION_MS } from './limits';
@@ -63,7 +63,7 @@ const id = (value: unknown, field: string) => {
 };
 
 /** Reads the brief strictly: only these fields, bounded, so a request cannot become a general-purpose prompt. */
-export function parseFamiliarLiveBrief(value: unknown): FamiliarLiveBrief {
+export function parseFamiliarLiveBrief(value: unknown): FrontDeskLiveBrief {
   const body = isRecord(value) && isRecord(value.brief) ? value.brief : undefined;
   if (!body) throw new Error('A live talk request needs a brief.');
   const familiar = isRecord(body.familiar) ? body.familiar : {};
@@ -103,7 +103,7 @@ export function parseFamiliarLiveBrief(value: unknown): FamiliarLiveBrief {
   };
 }
 
-const declarations = (brief: FamiliarLiveBrief) => [
+const declarations = (brief: FrontDeskLiveBrief) => [
   ...(brief.docs.length ? [{
     name: 'look_up',
     description: 'Reads what the docs, or the record of the story the reader is in, say about something. Answers with the entries themselves, or with nothing when they do not cover it.',
@@ -140,7 +140,7 @@ const declarations = (brief: FamiliarLiveBrief) => [
  * change the model, voice, instructions or tools; the browser sends the same
  * setup when it opens the conversation.
  */
-export function familiarLiveSetup(brief: FamiliarLiveBrief, model: string, voice: string) {
+export function familiarLiveSetup(brief: FrontDeskLiveBrief, model: string, voice: string) {
   const functionDeclarations = declarations(brief);
   const config = {
     responseModalities: [Modality.AUDIO],
@@ -176,7 +176,7 @@ export const handleFamiliarLiveHttp = async (
     });
   }
 
-  let brief: FamiliarLiveBrief;
+  let brief: FrontDeskLiveBrief;
   let body: unknown;
   try {
     body = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;

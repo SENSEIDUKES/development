@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
-import { FAMILIAR_ACTION_LIST, FamiliarHelperController, composeFamiliarContext, type FamiliarHelperContext, type FamiliarPage, type FamiliarVoice } from '@seihouse/library/familiar';
+import { FrontDeskController, composeFrontDeskContext, type FrontDeskContext, type FrontDeskVoice } from '@seihouse/front-desk';
+import { FAMILIAR_ACTION_LIST, familiarActionPolicy, familiarFrontDeskSetup, type FamiliarPage } from '@seihouse/library/familiar';
 import { InMemoryHarnessGenerationRepository } from '../test-utils/InMemoryHarnessGenerationRepository';
 import { createModeFamiliarContext, readerFamiliarContext } from '../library/stories/ReaderFamiliar';
 import { appFamiliarActions, familiarPage } from './appFamiliarActions';
@@ -9,10 +10,10 @@ import { chapterCodeAction } from '../library/stories/ReaderFamiliar';
 import type { NovelExpandedRoute } from './routes';
 
 const ANYWHERE = ['go-home', 'go-create', 'go-profile', 'go-energy', 'go-settings', 'go-store'];
-const base = (page: FamiliarPage, navigate = vi.fn()): FamiliarHelperContext =>
+const base = (page: FamiliarPage, navigate = vi.fn()): FrontDeskContext =>
   ({ key: `place:${page}`, title: page, topics: [], actions: appFamiliarActions(navigate), hint: '', page });
-const ids = (context?: FamiliarHelperContext) => context?.actions.map(action => action.id);
-const voice: FamiliarVoice = { available: true, listen: () => ({ stop() {}, cancel() {} }), speak: (_text, _language, done) => { done(); return () => {}; } };
+const ids = (context?: FrontDeskContext) => context?.actions.map(action => action.id);
+const voice: FrontDeskVoice = { available: true, listen: () => ({ stop() {}, cancel() {} }), speak: (_text, _language, done) => { done(); return () => {}; } };
 
 async function reader() {
   const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter: {
@@ -27,22 +28,22 @@ async function reader() {
 describe('the Familiar\'s actions, page by page', () => {
   it('gives every page exactly its own actions and the anywhere ones, front suggestions first, never another page\'s', async () => {
     // The app's anywhere actions alone, on each page (none goes where the reader already is).
-    expect(ids(composeFamiliarContext(base('home')))).toEqual(['go-create', 'go-energy', 'go-store', 'go-settings', 'go-profile']);
-    expect(ids(composeFamiliarContext(base('profile')))).toEqual(['go-energy', 'go-store', 'go-settings', 'go-home', 'go-create']);
-    expect(ids(composeFamiliarContext(base('create')))).toEqual(['go-energy', 'go-home', 'go-store', 'go-profile', 'go-settings']);
-    expect(ids(composeFamiliarContext(base('discover')))).toEqual(['go-home', 'go-create', 'go-energy', 'go-profile', 'go-settings', 'go-store']);
-    expect(ids(composeFamiliarContext(base('world-info')))).toEqual(['go-home', 'go-create', 'go-energy', 'go-profile', 'go-settings', 'go-store']);
+    expect(ids(composeFrontDeskContext(base('home'), undefined, familiarActionPolicy))).toEqual(['go-create', 'go-energy', 'go-store', 'go-settings', 'go-profile']);
+    expect(ids(composeFrontDeskContext(base('profile'), undefined, familiarActionPolicy))).toEqual(['go-energy', 'go-store', 'go-settings', 'go-home', 'go-create']);
+    expect(ids(composeFrontDeskContext(base('create'), undefined, familiarActionPolicy))).toEqual(['go-energy', 'go-home', 'go-store', 'go-profile', 'go-settings']);
+    expect(ids(composeFrontDeskContext(base('discover'), undefined, familiarActionPolicy))).toEqual(['go-home', 'go-create', 'go-energy', 'go-profile', 'go-settings', 'go-store']);
+    expect(ids(composeFrontDeskContext(base('world-info'), undefined, familiarActionPolicy))).toEqual(['go-home', 'go-create', 'go-energy', 'go-profile', 'go-settings', 'go-store']);
     // The Reader: Fate first, then going anywhere. Never Create mode's sound.
     const fate = await reader();
-    const inReader = composeFamiliarContext(base('reader'), fate)!;
+    const inReader = composeFrontDeskContext(base('reader'), fate, familiarActionPolicy)!;
     expect(ids(inReader)).toEqual(['progression', 'worldBuilding', 'conflict', 'custom', ...ANYWHERE]);
     expect(inReader.front).toBe(4);
     // Create mode: its sound, then going anywhere. Never Fate.
     const sounds = { chapterNumber: 2, soundWords: ['wind'], resolve: vi.fn(), place: vi.fn(async () => {}) };
-    expect(ids(composeFamiliarContext(base('reader'), createModeFamiliarContext(sounds, undefined)))).toEqual(['sound', ...ANYWHERE]);
+    expect(ids(composeFrontDeskContext(base('reader'), createModeFamiliarContext(sounds, undefined), familiarActionPolicy))).toEqual(['sound', ...ANYWHERE]);
     // A Reader action handed to any other page is dropped, as is anything not in the master list.
     const stray = { ...fate, page: 'profile' as const, actions: [...fate.actions, { ...fate.actions[0], id: 'delete-everything' }] };
-    expect(ids(composeFamiliarContext(base('profile'), stray))).toEqual(['go-energy', 'go-store', 'go-settings', 'go-home', 'go-create']);
+    expect(ids(composeFrontDeskContext(base('profile'), stray, familiarActionPolicy))).toEqual(['go-energy', 'go-store', 'go-settings', 'go-home', 'go-create']);
   });
 
   it('lists every action the app gives the Familiar in the master list', async () => {
@@ -62,7 +63,7 @@ describe('the Familiar\'s actions, page by page', () => {
 
   it('takes the reader to My Energy at once when asked, without asking to confirm, and closes the card', () => {
     const navigate = vi.fn();
-    const helper = new FamiliarHelperController(voice);
+    const helper = new FrontDeskController(voice, 'en-US', undefined, familiarFrontDeskSetup);
     helper.setContext(Symbol(), base('home', navigate), 'base');
     helper.open();
     helper.submit('Check my energy.');
@@ -73,7 +74,7 @@ describe('the Familiar\'s actions, page by page', () => {
 
   it('still asks to confirm a Reader change, and goes places at once in live talk too', async () => {
     const navigate = vi.fn();
-    const helper = new FamiliarHelperController(voice);
+    const helper = new FrontDeskController(voice, 'en-US', undefined, familiarFrontDeskSetup);
     helper.setContext(Symbol(), base('reader', navigate), 'base');
     helper.setContext(Symbol(), await reader());
     helper.open();
@@ -81,9 +82,9 @@ describe('the Familiar\'s actions, page by page', () => {
     expect(helper.getSnapshot().proposal?.actionId).toBe('conflict');
     helper.change();
     // Live: the brief marks the anywhere actions as instant, and proposing one goes there.
-    let brief: Parameters<NonNullable<ConstructorParameters<typeof FamiliarHelperController>[2]>['start']>[0] | undefined;
+    let brief: Parameters<NonNullable<ConstructorParameters<typeof FrontDeskController>[2]>['start']>[0] | undefined;
     let call: ((request: { name: 'propose_action'; actionId: string; input: string }) => Promise<string>) | undefined;
-    const live = new FamiliarHelperController(voice, 'en-US', { start: (given, events) => { brief = given; call = events.call; events.connected(); return { end() {}, send() {} }; } });
+    const live = new FrontDeskController(voice, 'en-US', { start: (given, events) => { brief = given; call = events.call; events.connected(); return { end() {}, send() {} }; } }, familiarFrontDeskSetup);
     live.setContext(Symbol(), base('reader', navigate), 'base');
     live.setContext(Symbol(), await reader());
     live.open(true);
@@ -97,7 +98,7 @@ describe('the Familiar\'s actions, page by page', () => {
   it('opens the story on a Home card by its spoken code, in the order shown, and only on Home', async () => {
     const navigate = vi.fn();
     const order = { current: ['story-b', 'story-a'] };
-    const helper = new FamiliarHelperController(voice);
+    const helper = new FrontDeskController(voice, 'en-US', undefined, familiarFrontDeskSetup);
     helper.setContext(Symbol(), base('home', navigate), 'base');
     helper.setContext(Symbol(), { key: 'home:codes', title: 'Home', topics: [], hint: '', page: 'home', actions: [homeCodeAction(navigate, order)] });
     helper.open();
@@ -115,7 +116,7 @@ describe('the Familiar\'s actions, page by page', () => {
   it('opens a chapter by its code in the Reader and picks Fate by the code on its option, still confirmed', async () => {
     const opened: number[] = [];
     const openChapter = (number: number) => { if (number > 5) return false; opened.push(number); return true; };
-    const helper = new FamiliarHelperController(voice);
+    const helper = new FrontDeskController(voice, 'en-US', undefined, familiarFrontDeskSetup);
     helper.setContext(Symbol(), base('reader'), 'base');
     const fate = await reader();
     helper.setContext(Symbol(), { ...fate, actions: [...fate.actions, chapterCodeAction(openChapter)] });
@@ -141,11 +142,11 @@ describe('the Familiar\'s actions, page by page', () => {
     vi.stubGlobal('window', { history: { state: { depth: 1 }, back } });
     try {
       const navigate = vi.fn();
-      const helper = new FamiliarHelperController(voice);
-      const withBack = (page: FamiliarPage): FamiliarHelperContext => ({ ...base(page, navigate), actions: appFamiliarActions(navigate, { back: true }) });
+      const helper = new FrontDeskController(voice, 'en-US', undefined, familiarFrontDeskSetup);
+      const withBack = (page: FamiliarPage): FrontDeskContext => ({ ...base(page, navigate), actions: appFamiliarActions(navigate, { back: true }) });
       helper.setContext(Symbol(), withBack('profile'), 'base');
       // Never a tile: it is not among the front suggestions, it comes after them.
-      expect(composeFamiliarContext(withBack('home'))!.actions.slice(0, 4).map(action => action.id)).not.toContain('go-back');
+      expect(composeFrontDeskContext(withBack('home'), undefined, familiarActionPolicy)!.actions.slice(0, 4).map(action => action.id)).not.toContain('go-back');
       helper.open();
       helper.submit('Take me back');
       expect(back).toHaveBeenCalledOnce();
@@ -166,7 +167,7 @@ describe('the Familiar\'s actions, page by page', () => {
       expect(back).toHaveBeenCalledTimes(2);
       // Live talk too: asked to go back with a change waiting, the Familiar backs out of it and stays.
       let call: ((request: { name: 'propose_action'; actionId: string; input: string }) => Promise<string>) | undefined;
-      const live = new FamiliarHelperController(voice, 'en-US', { start: (_brief, events) => { call = events.call; events.connected(); return { end() {}, send() {} }; } });
+      const live = new FrontDeskController(voice, 'en-US', { start: (_brief, events) => { call = events.call; events.connected(); return { end() {}, send() {} }; } }, familiarFrontDeskSetup);
       live.setContext(Symbol(), withBack('reader'), 'base');
       live.setContext(Symbol(), await reader());
       live.open(true);

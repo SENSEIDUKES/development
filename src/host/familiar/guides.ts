@@ -1,4 +1,4 @@
-import type { FamiliarGuide } from '@seihouse/library/familiar';
+import type { FrontDeskGuide } from '@seihouse/front-desk';
 
 /**
  * The Familiar's guides: the how-tos it teaches a new reader, in the order
@@ -18,7 +18,7 @@ import type { FamiliarGuide } from '@seihouse/library/familiar';
  * To add a guide, copy a block, give it a new `id` (lowercase, dashes), and
  * place it where it should appear in the list.
  */
-export const FAMILIAR_GUIDES: readonly FamiliarGuide[] = [
+export const FAMILIAR_GUIDES: readonly FrontDeskGuide[] = [
   {
     id: 'meet-your-familiar',
     title: 'Meet your Familiar',

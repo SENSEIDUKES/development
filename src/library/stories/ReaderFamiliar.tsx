@@ -1,8 +1,7 @@
 import { useOptionalReaderMixer } from '@seihouse/audio-player';
 import { CHAPTER_DIRECTION_TEXT_LIMIT, CHAPTER_FUNCTION_LABELS, storyKnowledgeOf, type HarnessGenerationController, type HarnessWorkspaceState, type ReaderHostTools, type ReaderSoundAuthoring, type ChapterDirectionChoice } from '@seihouse/sen/harness-generation';
 import { AudioLines, Globe, PenLine, Swords, TrendingUp } from 'lucide-react';
-import { useFamiliarHelperContext } from '../../components/familiar/development/FamiliarHelper';
-import type { FamiliarHelperAction, FamiliarHelperContext, FamiliarIcon, FamiliarTopic } from '../familiars/helper';
+import { useFrontDeskContext, type FrontDeskAction, type FrontDeskContext, type FrontDeskIcon, type FrontDeskTopic } from '@seihouse/front-desk';
 import { useFamiliarHelpTopics } from '../familiars/helpTopics';
 import { parseReaderSoundCommand } from './readerSoundCommand';
 
@@ -15,7 +14,7 @@ const SOUND_REQUEST_LIMIT = 200;
  * cue a highlight would; the Familiar only reads the request. Each step
  * re-reads the chapter, so a proposal is never applied to words that moved.
  */
-function soundAction(sounds: ReaderSoundAuthoring, playCue?: (url: string) => void): FamiliarHelperAction {
+function soundAction(sounds: ReaderSoundAuthoring, playCue?: (url: string) => void): FrontDeskAction {
   const resolve = (input: string) => {
     const command = parseReaderSoundCommand(input, sounds.soundWords);
     return command.ok ? sounds.resolve(command.sound, command.target) : command;
@@ -46,7 +45,7 @@ function soundAction(sounds: ReaderSoundAuthoring, playCue?: (url: string) => vo
 }
 
 /** Create mode: the Highlight Engine's commands (Sound Cues so far), only while it is open. Nothing to explain yet. */
-export function createModeFamiliarContext(sounds: ReaderSoundAuthoring, interrupt: FamiliarHelperContext['interrupt'], playCue?: (url: string) => void): FamiliarHelperContext {
+export function createModeFamiliarContext(sounds: ReaderSoundAuthoring, interrupt: FrontDeskContext['interrupt'], playCue?: (url: string) => void): FrontDeskContext {
   const example = sounds.soundWords[0] ?? 'wind';
   return {
     key: JSON.stringify(['create-mode', sounds.chapterNumber, sounds.soundWords]),
@@ -59,12 +58,12 @@ export function createModeFamiliarContext(sounds: ReaderSoundAuthoring, interrup
   };
 }
 
-const FATE_ICONS: Record<'worldBuilding' | 'progression' | 'conflict', FamiliarIcon> = { worldBuilding: Globe, progression: TrendingUp, conflict: Swords };
+const FATE_ICONS: Record<'worldBuilding' | 'progression' | 'conflict', FrontDeskIcon> = { worldBuilding: Globe, progression: TrendingUp, conflict: Swords };
 /** Fate's spoken codes, in the order the Fate panel shows them: the writer's three directions, then your own. */
 const FATE_CODES = { progression: 1, worldBuilding: 2, conflict: 3, custom: 4 } as const;
 
 /** The Reader's chapter code: C12 opens Chapter 12 of this story. */
-export function chapterCodeAction(openChapter: (chapterNumber: number) => boolean): FamiliarHelperAction {
+export function chapterCodeAction(openChapter: (chapterNumber: number) => boolean): FrontDeskAction {
   return {
     id: 'open-chapter', label: 'Open a chapter', code: { letter: 'C' },
     detail: 'The reader says C and the chapter number: C1, C12…',
@@ -81,7 +80,7 @@ export function chapterCodeAction(openChapter: (chapterNumber: number) => boolea
  * now), and the story's record to look up, the very Codex the Reader shows
  * with each chapter's recap. Worked out only when the Familiar asks.
  */
-export function readerKnowledge(state: HarnessWorkspaceState, storyId: string, chapterId: string): Pick<FamiliarHelperContext, 'place' | 'knowledge'> {
+export function readerKnowledge(state: HarnessWorkspaceState, storyId: string, chapterId: string): Pick<FrontDeskContext, 'place' | 'knowledge'> {
   const story = state.stories.find(entry => entry.id === storyId);
   const chapter = state.chapters.find(entry => entry.id === chapterId && entry.storyId === storyId);
   const where = chapter ? `Chapter ${chapter.chapterNumber}${chapter.title ? `: ${chapter.title}` : ''}` : '';
@@ -92,7 +91,7 @@ export function readerKnowledge(state: HarnessWorkspaceState, storyId: string, c
 }
 
 /** The Reader: what it explains, and Fate as its actions (saving still belongs to SEN). */
-export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: string, controller: HarnessGenerationController, tools: ReaderHostTools, topics: readonly FamiliarTopic[] = []): FamiliarHelperContext {
+export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: string, controller: HarnessGenerationController, tools: ReaderHostTools, topics: readonly FrontDeskTopic[] = []): FrontDeskContext {
   const story = state.stories.find(entry => entry.id === storyId);
   const next = story?.head.nextChapterNumber;
   const chapters = state.chapters.filter(chapter => chapter.storyId === storyId).sort((a, b) => b.chapterNumber - a.chapterNumber);
@@ -110,7 +109,7 @@ export function readerFamiliarContext(state: HarnessWorkspaceState, storyId: str
     await controller.chooseChapterDirection(storyId, choice);
   };
   const success = `Path saved for Chapter ${next}.`;
-  const actions: FamiliarHelperAction[] = blocked ? [] : [
+  const actions: FrontDeskAction[] = blocked ? [] : [
     ...(['worldBuilding', 'progression', 'conflict'] as const).map(chapterFunction => ({
       id: chapterFunction,
       label: CHAPTER_FUNCTION_LABELS[chapterFunction],
@@ -156,7 +155,7 @@ export function ReaderFamiliar({ state, storyId, controller, tools }: {
   };
   const topics = useFamiliarHelpTopics('reader');
   const create = tools.createMode;
-  useFamiliarHelperContext(create
+  useFrontDeskContext(create
     ? { ...createModeFamiliarContext(create.sounds, interrupt, mixer ? url => { mixer.playCue(url); } : undefined), ...readerKnowledge(state, storyId, tools.chapterId) }
     : { ...readerFamiliarContext(state, storyId, controller, tools, topics), interrupt });
   return null;

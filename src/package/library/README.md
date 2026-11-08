@@ -1,5 +1,16 @@
 # `@seihouse/library`
 
+**0.37.0 (2026-11-08, breaking):** The Familiar runs on SEIHouse Front Desk
+(`@seihouse/front-desk` 0.1.0, a new peer). `./familiar` no longer exports the
+helper controller, spoken codes, `FamiliarHelperProvider`, the talk button, the
+guide view, the clip or the welcome card: they are Front Desk's
+(`FrontDeskController`, `FrontDeskProvider`, `FrontDeskTalkButton`,
+`FrontDeskGuideView`, `FrontDeskClip`, `FrontDeskGreeting`, `FrontDeskGuide`).
+`./familiar` adds `FamiliarFrontDesk` (Front Desk with Novel Expanded's setup, the
+app's narrative player for recorded lines, SEN's code badges and the Familiar's
+face), `familiarFrontDeskSetup`, `familiarActionPolicy`, `FAMILIAR_CODE_WORDS`,
+`FAMILIAR_WORDING`, `FAMILIAR_WAKE_WORD` and `FAMILIAR_SPOILER_OFFER`.
+
 **Unreleased (2026-11-02):** The shared Reader plays placed Sound Cues when
 narration reaches their words and cuts them off on pause/seek. Requires
 `@seihouse/audio-player` **^5.2.0**, matching SEN's new cue-stop contract.

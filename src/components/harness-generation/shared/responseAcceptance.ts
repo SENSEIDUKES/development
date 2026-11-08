@@ -4,7 +4,7 @@ import type { FrozenNarrativeMedia } from '../../../audio/media';
 import { describeSetAsideSoundCue, placeSoundCues } from '../../../audio/soundCuePlacement';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundCueAttachment } from '../../../audio/inlineAudio';
-import { isAppearanceTagWord, isHoldingTagWord, isPlaceTagWord, isStatusTagWord, readMarks, type MarkReading, type WordTag } from '../../../narrative/marks';
+import { isAppearanceTagWord, isHoldingTagWord, isPlaceTagWord, isStatusTagWord, isTieTagWord, readMarks, type MarkReading, type WordTag } from '../../../narrative/marks';
 import { settleStraySoundTags } from './soundTagRepair';
 import type { SpeakerAttachment } from '../../../narrative/speech';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
@@ -12,11 +12,13 @@ import type { HoldingChangeAttachment } from '../../../narrative/holdings';
 import type { AppearanceAttachment } from '../../../narrative/appearances';
 import type { StatusAttachment } from '../../../narrative/statuses';
 import type { PlaceAttachment } from '../../../narrative/places';
+import type { TieAttachment } from '../../../narrative/ties';
 import { isMainCharacterTag, isProtagonist, placeSpeakers, type ProtagonistNames } from './speakers';
 import { holdingName, placeHoldingChanges } from './holdings';
 import { placeAppearances } from './appearances';
 import { placeStatuses } from './statuses';
 import { placePlaces } from './places';
+import { placeTies } from './ties';
 import { chapterSoundtrack } from './soundtrack';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { ignoredSoundCueListWarning, stripReplyMarks } from './chapterSignals';
@@ -307,11 +309,12 @@ const readParagraphMarks = (
   let looseWords: WordTag[] = [];
   // The chapter's soundtrack tags in reading order, a paragraph that held nothing else included.
   const soundtracks: MarkReading['soundtracks'] = [];
-  // Unreadable word tags, counted where each kind is reported: appearance, status and place tags apart from the rest.
+  // Unreadable word tags, counted where each kind is reported: appearance, status, place and tie tags apart from the rest.
   let wordTagIssues = 0;
   let appearanceTagIssues = 0;
   let statusTagIssues = 0;
   let placeTagIssues = 0;
+  let tieTagIssues = 0;
   let soundTagIssues = 0;
   const options = soundWords?.length ? { soundWords: soundWords.map(sound => sound.word) } : {};
   // A sound tag written beside its sentence instead of around its words leaves no stray words behind.
@@ -330,6 +333,7 @@ const readParagraphMarks = (
       if (issue.kind !== 'unknown' && isAppearanceTagWord(issue.word)) appearanceTagIssues += 1;
       else if (issue.kind !== 'unknown' && isStatusTagWord(issue.word)) statusTagIssues += 1;
       else if (issue.kind !== 'unknown' && isPlaceTagWord(issue.word)) placeTagIssues += 1;
+      else if (issue.kind !== 'unknown' && isTieTagWord(issue.word)) tieTagIssues += 1;
       else wordTagIssues += 1;
     }
     soundTagIssues += reading.soundIssues.length;
@@ -361,7 +365,7 @@ const readParagraphMarks = (
       message: `Removed ${soundTagIssues} unusable sound tag${soundTagIssues === 1 ? '' : 's'} (unclosed, nested, empty, or naming no sound or no words) and kept the prose.`,
     });
   }
-  return { read, strandedTags, wordTagIssues, appearanceTagIssues, statusTagIssues, placeTagIssues, soundtracks };
+  return { read, strandedTags, wordTagIssues, appearanceTagIssues, statusTagIssues, placeTagIssues, tieTagIssues, soundtracks };
 };
 
 /**
@@ -570,6 +574,29 @@ const acceptedPlaces = (
 };
 
 /**
+ * Reads the tie tags into ties on the sentences they point at, as statuses
+ * are read. Tags it cannot read are flagged, never a reason to refuse a
+ * chapter. A chapter the tagger read keeps its ties even when it has none, so
+ * the record knows it was asked.
+ */
+const acceptedTies = (
+  marked: { read: ReadonlyArray<Pick<MarkReading, 'text' | 'wordTags'>>; tieTagIssues: number },
+  chapterNumber: number,
+  warnings: HarnessWarning[],
+  options: HarnessResponseAcceptanceOptions,
+): TieAttachment[] => {
+  const paragraphs = marked.read.map((paragraph, index) => ({ blockId: harnessParagraphBlockId(chapterNumber, index), text: paragraph.text, wordTags: paragraph.wordTags }));
+  const placement = placeTies({ paragraphs, locale: options.locale });
+  const unreadable = marked.tieTagIssues;
+  const problems = [
+    ...(unreadable ? [`${unreadable} tie tag${unreadable === 1 ? ' was' : 's were'} unreadable and removed`] : []),
+    ...placement.problems,
+  ];
+  if (problems.length) warnings.push({ code: 'tie_tags_incomplete', message: `${problems.join('; ')}.`.replace(/^./, letter => letter.toUpperCase()) });
+  return placement.ties;
+};
+
+/**
  * Reads the tags out of paragraphs that are already written, and places every
  * one of them: the tagger's path (`shared/tagger.ts`).
  *
@@ -601,6 +628,7 @@ export const acceptChapterTags = (
     appearances: acceptedAppearances(marked, chapterNumber, warnings, options),
     statuses: acceptedStatuses(marked, chapterNumber, warnings, options),
     places: acceptedPlaces(marked, chapterNumber, warnings, options),
+    ties: acceptedTies(marked, chapterNumber, warnings, options),
     scene: acceptedScene(marked.soundtracks, chapterNumber, warnings, options),
   };
 };
@@ -624,7 +652,7 @@ export const acceptHarnessModelResponse = (
     // writer's tags out of them, keeps the clean text exactly as written,
     // derives the readable prose from it, and places the Sound Cues its sound tags name.
     const source = acceptedChapterBody(parsed, warnings);
-    const marked = source ? readParagraphMarks(source, warnings, options.soundVocabulary, options.locale) : { read: [], strandedTags: 0, wordTagIssues: 0, appearanceTagIssues: 0, statusTagIssues: 0, placeTagIssues: 0, soundtracks: [] };
+    const marked = source ? readParagraphMarks(source, warnings, options.soundVocabulary, options.locale) : { read: [], strandedTags: 0, wordTagIssues: 0, appearanceTagIssues: 0, statusTagIssues: 0, placeTagIssues: 0, tieTagIssues: 0, soundtracks: [] };
     const body = marked.read.length ? harnessChapterBody(marked.read.map(reading => reading.text), options.paragraphTarget) : undefined;
     if (!body || looksLikeRefusal(body.prose)) {
       return {

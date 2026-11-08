@@ -5,6 +5,7 @@ import { deriveHoldings, holdingsSection } from './holdings';
 import { appearancesSection, deriveAppearances } from './appearances';
 import { deriveStatuses } from './statuses';
 import { derivePlaces } from './places';
+import { deriveTies } from './ties';
 import { storyPointOfView } from './pointOfView';
 import { protagonistNames } from './speakers';
 import { semanticReaderChanges } from './readerEdits';
@@ -182,7 +183,7 @@ export const compileStoryInformationPacket = (
   // again from the committed chapters' appearances: the most recently seen
   // first, as many as its own counts allow.
   const storyEntries = state.codexEntries.filter(entry => entry.storyId === story.id);
-  const appearances = appearancesSection(deriveAppearances({ entries: storyEntries, chapters }), deriveStatuses(chapters), storyEntries, derivePlaces(chapters, storyEntries));
+  const appearances = appearancesSection(deriveAppearances({ entries: storyEntries, chapters }), deriveStatuses(chapters), storyEntries, derivePlaces(chapters, storyEntries), deriveTies(chapters, storyEntries));
 
   const sections: PacketSectionMeasurement[] = [
     measure('currentStory', currentStory),

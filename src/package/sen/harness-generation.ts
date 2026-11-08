@@ -108,6 +108,7 @@ export { SEN_HOLDINGS_INSTRUCTIONS } from '../../components/harness-generation/s
 export { SEN_APPEARANCE_INSTRUCTIONS } from '../../components/harness-generation/shared/appearanceSkill';
 export { SEN_STATUS_INSTRUCTIONS } from '../../components/harness-generation/shared/statusSkill';
 export { SEN_PLACE_INSTRUCTIONS } from '../../components/harness-generation/shared/placeSkill';
+export { SEN_TIE_INSTRUCTIONS } from '../../components/harness-generation/shared/tieSkill';
 export { HARNESS_TAG_RULES } from '../../components/harness-generation/shared/tagRules';
 export { isStraySoundTag, settleStraySoundTags, trimLeadingStrayPunctuation } from '../../components/harness-generation/shared/soundTagRepair';
 export {
@@ -219,6 +220,20 @@ export {
   type ReadPlaceTag,
 } from '../../components/harness-generation/shared/places';
 export {
+  TAG_SUBJECT_TIES,
+  deriveTies,
+  placeTies,
+  readTieTag,
+  resolveTies,
+  tieKey,
+  tiesLine,
+  tiesOfEntry,
+  type CurrentTie,
+  type EntryTie,
+  type ReadTieTag,
+  type TiePlacement,
+} from '../../components/harness-generation/shared/ties';
+export {
   LOOK_DECLARED_CHARACTERS,
   LOOK_PASSAGE_CHARACTERS,
   LOOK_SUBJECT_LIMIT,
@@ -248,6 +263,7 @@ export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';
 export * from '../../narrative/statuses';
 export * from '../../narrative/places';
+export * from '../../narrative/ties';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
 export { HarnessReaderSession, type HarnessReaderWriting, type ReaderGenerationCost, type ReaderHostTools, type ReaderSoundAuthoring } from '../../components/harness-generation/development/HarnessReaderSession';

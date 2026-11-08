@@ -18,6 +18,7 @@ import { HOLDING_CHANGE_KIND, type HoldingChangeAttachment } from '../../../narr
 import { APPEARANCE_KIND, type AppearanceAttachment } from '../../../narrative/appearances';
 import { STATUS_KIND, type StatusAttachment } from '../../../narrative/statuses';
 import { PLACE_KIND, type PlaceAttachment } from '../../../narrative/places';
+import { TIE_KIND, type TieAttachment } from '../../../narrative/ties';
 import { harnessParagraphBlockId } from '../shared/chapterBody';
 import { chapterTagFindings, describeChapterTagging } from '../shared/chapterTagging';
 import type { CodexEntry } from '../../../narrative/holdings';
@@ -58,7 +59,7 @@ function chapterState(chapter: ReaderChapter, locale: string): ChapterState {
     createId: kind => kind === 'paragraph' ? harnessParagraphBlockId(chapter.chapterNumber, paragraph++) : createManuscriptId(kind),
   });
   return { manuscript, attachments: [
-    ...chapter.soundCues ?? [], ...chapter.speakers ?? [], ...chapter.holdingChanges ?? [], ...chapter.appearances ?? [], ...chapter.statuses ?? [], ...chapter.places ?? [], ...chapter.soundtrackChanges ?? [],
+    ...chapter.soundCues ?? [], ...chapter.speakers ?? [], ...chapter.holdingChanges ?? [], ...chapter.appearances ?? [], ...chapter.statuses ?? [], ...chapter.places ?? [], ...chapter.ties ?? [], ...chapter.soundtrackChanges ?? [],
     // Effects still waiting for a new spot from an earlier visit: off the page, so flagged.
     ...chapter.authoring?.waiting ?? [],
   ] };
@@ -87,6 +88,10 @@ function describeWaiting(attachment: ManuscriptAttachment<unknown>): { title: st
     const place = (attachment as PlaceAttachment).payload;
     return { title: `Place · ${place.subject.name} at ${place.place.name}`, detail: `${was}. It waits here until the chapter is sealed.` };
   }
+  if (attachment.kind === TIE_KIND) {
+    const tie = (attachment as TieAttachment).payload;
+    return { title: `Tie · ${tie.subject.name} and ${tie.other.name} ${tie.tie}`, detail: `${was}. It waits here until the chapter is sealed.` };
+  }
   const holding = (attachment as HoldingChangeAttachment).payload;
   return { title: `Holding change · ${holding.holder.name} ${holding.verb}${holding.target ? ` ${holding.target.name}` : ''}`, detail: `${was}. It waits here until the chapter is sealed.` };
 }
@@ -95,7 +100,7 @@ const placed = (state: ChapterState) => (attachment: ManuscriptAttachment<unknow
 
 const KIND_NAMES: Record<string, [string, string]> = {
   [SOUND_CUE_KIND]: ['Sound Cue', 'Sound Cues'], [SPEAKER_KIND]: ['speaker', 'speakers'], [HOLDING_CHANGE_KIND]: ['holding change', 'holding changes'],
-  [APPEARANCE_KIND]: ['appearance', 'appearances'], [STATUS_KIND]: ['status', 'statuses'], [PLACE_KIND]: ['place tag', 'place tags'],
+  [APPEARANCE_KIND]: ['appearance', 'appearances'], [STATUS_KIND]: ['status', 'statuses'], [PLACE_KIND]: ['place tag', 'place tags'], [TIE_KIND]: ['tie', 'ties'],
   [SOUNDSCAPE_CHANGE_KIND]: ['soundscape change', 'soundscape changes'], [ATMOSPHERE_CHANGE_KIND]: ['atmosphere change', 'atmosphere changes'],
 };
 
@@ -237,6 +242,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       appearances: kept.filter(attachment => attachment.kind === APPEARANCE_KIND) as AppearanceAttachment[],
       statuses: kept.filter(attachment => attachment.kind === STATUS_KIND) as StatusAttachment[],
       places: kept.filter(attachment => attachment.kind === PLACE_KIND) as PlaceAttachment[],
+      ties: kept.filter(attachment => attachment.kind === TIE_KIND) as TieAttachment[],
       soundtrackChanges: kept.filter(isSoundtrackChange) as SoundtrackChangeAttachment[],
       openingSound: nextOpening,
       waiting: waiting as Waiting[],
@@ -316,6 +322,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       holdingChanges: on(HOLDING_CHANGE_KIND) as HoldingChangeAttachment[], appearances: on(APPEARANCE_KIND) as AppearanceAttachment[],
       statuses: chapter.statuses ? on(STATUS_KIND) as StatusAttachment[] : undefined,
       places: chapter.places ? on(PLACE_KIND) as PlaceAttachment[] : undefined,
+      ties: chapter.ties ? on(TIE_KIND) as TieAttachment[] : undefined,
     };
     const findings = chapterTagFindings(live, { entries });
     const changes = (kind: SoundtrackChangeKind) => on(kind).length;
@@ -331,7 +338,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       soundscape: (opens[SOUNDSCAPE_CHANGE_KIND] ? 1 : 0) + changes(SOUNDSCAPE_CHANGE_KIND),
       atmosphere: (opens[ATMOSPHERE_CHANGE_KIND] ? 1 : 0) + changes(ATMOSPHERE_CHANGE_KIND),
       cues: live.soundCues.length, speakers: live.speakers.length, holdings: live.holdingChanges.length,
-      appearances: live.appearances.length, status: live.statuses?.length ?? 0, place: live.places?.length ?? 0,
+      appearances: live.appearances.length, status: live.statuses?.length ?? 0, place: live.places?.length ?? 0, ties: live.ties?.length ?? 0,
     };
     return createTagRows({ counts, findings, account });
   // eslint-disable-next-line react-hooks/exhaustive-deps -- opens is read from the chapter and its opening

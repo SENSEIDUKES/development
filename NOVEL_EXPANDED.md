@@ -1092,6 +1092,16 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
    needs to draw a panel. Its first piece is the cast plan before writing
    (Stage E3).
 5. **Ties:** allied, hostile, related, bound.
+   **Built (2026-11-08),** the way Status is built: the tagger tags the
+   sentence where a tie between two characters forms or changes,
+   `[[tie: Name | Other | how they stand now]]`, in a few plain words; the
+   second name may be a thing bound to them (a sword with a spirit). How a
+   pair stands now is its latest tie in story order, whichever of the two a
+   tag names first, never stored. The ties a story opens with are its world
+   cards' own (Ties and Tie to the main character); a tag records each
+   change. The tagger reads each character's ties beside their name, the
+   writer reads them in Appeared after each look, and the Codex card shows
+   each tie with the passage that showed it. Not yet proven with a real model.
 
 **The world at Chapter 0 (built 2026-10-22).** Before the tags below can
 complete the record, the world they add to has to exist: the Story Seed and the

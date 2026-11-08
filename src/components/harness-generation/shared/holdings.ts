@@ -15,6 +15,7 @@ import {
 import type { AppearanceAttachment } from '../../../narrative/appearances';
 import type { StatusAttachment } from '../../../narrative/statuses';
 import type { PlaceAttachment } from '../../../narrative/places';
+import type { TieAttachment } from '../../../narrative/ties';
 import { isHoldingTagWord, type WordTag } from '../../../narrative/marks';
 import type { CurrentStoryProjection } from '../../../narrative/generation';
 import { worldCardKey, type WorldCard, type WorldCardKindId, type WorldRecord } from '../../../narrative/worldRecord';
@@ -260,7 +261,7 @@ export interface CodexEntryResolver {
  * replaces its tags, so one chapter's leavings are found one way.
  */
 /** The tags of a chapter that name Codex entries. */
-type TagsNaming = { holdingChanges?: HoldingChangeAttachment[]; appearances?: AppearanceAttachment[]; statuses?: StatusAttachment[]; places?: PlaceAttachment[] };
+type TagsNaming = { holdingChanges?: HoldingChangeAttachment[]; appearances?: AppearanceAttachment[]; statuses?: StatusAttachment[]; places?: PlaceAttachment[]; ties?: TieAttachment[] };
 
 export function codexEntriesWithoutChapter({ entries, otherChapters, chapter, storyId }: {
   entries: readonly CodexEntry[];
@@ -274,6 +275,7 @@ export function codexEntriesWithoutChapter({ entries, otherChapters, chapter, st
     ...(entry.appearances ?? []).map(appearance => appearance.payload.subject.entryId),
     ...(entry.statuses ?? []).map(status => status.payload.subject.entryId),
     ...(entry.places ?? []).flatMap(place => [place.payload.subject.entryId, place.payload.place.entryId]),
+    ...(entry.ties ?? []).flatMap(tie => [tie.payload.subject.entryId, tie.payload.other.entryId]),
   ];
   const usedElsewhere = new Set(otherChapters.filter(other => other.storyId === storyId).flatMap(named));
   const usedHere = new Set(named(chapter));

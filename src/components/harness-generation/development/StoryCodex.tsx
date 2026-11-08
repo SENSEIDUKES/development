@@ -294,6 +294,8 @@ function CharacterProfile({ character, art, onBack, onReadPassage }: { character
       {character.place && <span data-testid="codex-place" className="contents">
         <PassageChip passage={character.place.passage} label={`At ${character.place.text} · Ch. ${character.place.passage.chapterNumber}`} onReadPassage={onReadPassage} />
       </span>}
+      {character.ties && <span data-testid="codex-ties" className="contents">{character.ties.map(tie =>
+        <PassageChip key={`${tie.with}:${tie.passage.blockId}`} passage={tie.passage} label={`${tie.with}: ${tie.text} · Ch. ${tie.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>

@@ -377,6 +377,22 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-08 (Ties, the fourth information tag):** SENSEI: "Add ties."
+  Built the way Status and Place are. The tagger tags the sentence where a
+  tie between two characters forms or changes, `[[tie: Name | Other | how
+  they stand now]]` (`SEN_TIE_INSTRUCTIONS`, `shared/tieSkill.ts`); the
+  HARNESS reads it (`readTieTag`, `placeTies`, `shared/ties.ts`), saves a
+  `TieAttachment` on its sentence (`HarnessChapter.ties`, schema 46, an
+  optional field), and resolves both names when the chapter commits
+  (`resolveTies`): the first a character, the second a character or a thing
+  the story has, never a place, never the same entry twice. How a pair stands
+  now is its latest tie in story order, whichever of the two a tag names
+  first (`deriveTies`, `tieKey`), never stored. The tagger reads each
+  character's ties beside their name ("— ties: Ning Hao (sworn enemies)"), the
+  writer reads them in Appeared after the look, the Codex card shows each tie
+  with its passage (and a tie meets both characters, as a status or place tag
+  meets its one), and Create mode lights Ties as its own Story info kind.
+  Recorded in the Writer Instructions history. No fixer check for ties yet.
 - **2026-11-08 (Front Desk):** `storyKnowledge.ts` takes its catalog shape from
   SEIHouse Front Desk (`@seihouse/front-desk/docs-knowledge`), where the docs look-up
   moved with the rest of the Familiar's system. SEN now peers on Front Desk; nothing

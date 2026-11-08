@@ -106,6 +106,8 @@ export interface AppearancesSectionEntry {
   status?: string;
   /** Where they are now, when a place tag gave one. */
   place?: string;
+  /** How they stand with others now, when a tie tag gave any: "Ning Hao (sworn enemies); Little Frost (bonded companion)". */
+  ties?: string;
 }
 
 /**

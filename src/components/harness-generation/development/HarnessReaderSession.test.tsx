@@ -1202,11 +1202,11 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     // Media and Story info apart, every kind lit.
     expect([...panel()!.querySelectorAll('[data-tag-group]')].map(group => group.getAttribute('data-tag-group'))).toEqual(['media', 'info']);
     expect([...panel()!.querySelectorAll('[data-tag-kind]')].map(kind => kind.getAttribute('data-tag-kind')))
-      .toEqual(['soundscape', 'atmosphere', 'cues', 'speakers', 'holdings', 'appearances', 'status', 'place']);
+      .toEqual(['soundscape', 'atmosphere', 'cues', 'speakers', 'holdings', 'appearances', 'status', 'place', 'ties']);
     expect(panel()!.getAttribute('data-lit')).toBe('all');
     // Each group is drawn its own way, and the legend's swatch shows which: Media highlighted, Story info underlined.
     expect([...panel()!.querySelectorAll('[data-tag-kind] [data-swatch]')].map(swatch => swatch.getAttribute('data-swatch')))
-      .toEqual(['fill', 'fill', 'fill', 'underline', 'underline', 'underline', 'underline-dotted', 'underline']);
+      .toEqual(['fill', 'fill', 'fill', 'underline', 'underline', 'underline', 'underline-dotted', 'underline', 'underline']);
     // Create mode stays on from chapter to chapter: the newest can be changed.
     await click(byLabel('Next Chapter'), 'Next Chapter');
     expect(create().getAttribute('aria-pressed')).toBe('true');

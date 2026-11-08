@@ -12,6 +12,7 @@ import { soundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import { SOUNDTRACK_TAG_WORDS, SOUND_TAG_WORDS, readMarks } from '../../../narrative/marks';
 import { statusOfEntry, type CurrentStatus } from './statuses';
 import { placeOfEntry, type CurrentPlace } from './places';
+import { TAG_SUBJECT_TIES, tiesOfEntry, type CurrentTie } from './ties';
 import { findSpokenLines } from '../../../narrative/speech';
 import { splitSentences } from '../../highlight-engine/shared/manuscript';
 import { normalizeIdentityLabel } from './canonicalProjection';
@@ -49,13 +50,15 @@ const CARD_KIND_SUBJECTS: ReadonlyArray<CodexEntryKind> = ['character', 'thing',
  * is listed once, and the Codex wins, because its entry is the identity a tag
  * actually resolves to.
  */
-export function tagSubjectsOfStory({ entries, world, statuses, places }: {
+export function tagSubjectsOfStory({ entries, world, statuses, places, ties }: {
   entries: readonly CodexEntry[];
   world?: WorldRecord;
   /** Each character's status going into the chapter. */
   statuses?: ReadonlyMap<string, CurrentStatus>;
   /** Where each character is going into the chapter. */
   places?: ReadonlyMap<string, CurrentPlace>;
+  /** How each pair stands going into the chapter. */
+  ties?: ReadonlyMap<string, CurrentTie>;
 }): HarnessTagSubject[] {
   const subjects: HarnessTagSubject[] = [];
   const taken = new Set<string>();
@@ -68,6 +71,7 @@ export function tagSubjectsOfStory({ entries, world, statuses, places }: {
   for (const entry of entries) {
     const status = entry.kind === 'character' && statuses ? statusOfEntry(statuses, entry)?.status : undefined;
     const place = entry.kind === 'character' && places ? placeOfEntry(places, entry)?.place : undefined;
+    const tied = entry.kind === 'character' && ties ? tiesOfEntry(ties, entry).slice(-TAG_SUBJECT_TIES).map(tie => ({ with: tie.with, tie: tie.tie })) : [];
     add({
       name: entry.name,
       kind: entry.kind,
@@ -75,6 +79,7 @@ export function tagSubjectsOfStory({ entries, world, statuses, places }: {
       ...(entry.mainCharacter ? { mainCharacter: true as const } : {}),
       ...(status ? { status } : {}),
       ...(place ? { place } : {}),
+      ...(tied.length ? { ties: tied } : {}),
     });
   }
   for (const kind of CARD_KIND_SUBJECTS) {
@@ -96,7 +101,7 @@ export function tagSubjectsOfStory({ entries, world, statuses, places }: {
  * which is what makes re-tagging an existing chapter the same operation as
  * tagging a new one.
  */
-export function planChapterTagging({ chapter, entries, world, holdings, statuses, places, soundWords, soundtrack, language, model, reasoningLevel, focus }: {
+export function planChapterTagging({ chapter, entries, world, holdings, statuses, places, ties, soundWords, soundtrack, language, model, reasoningLevel, focus }: {
   chapter: Pick<HarnessChapter, 'id' | 'storyId' | 'chapterNumber' | 'paragraphs'>;
   entries: readonly CodexEntry[];
   world?: WorldRecord;
@@ -106,6 +111,8 @@ export function planChapterTagging({ chapter, entries, world, holdings, statuses
   statuses?: ReadonlyMap<string, CurrentStatus>;
   /** Where each character was going into this chapter. */
   places?: ReadonlyMap<string, CurrentPlace>;
+  /** How each pair stood going into this chapter. */
+  ties?: ReadonlyMap<string, CurrentTie>;
   soundWords?: readonly SoundWord[];
   soundtrack?: SoundtrackVocabulary;
   language: string;
@@ -126,7 +133,7 @@ export function planChapterTagging({ chapter, entries, world, holdings, statuses
     ...(reasoningLevel ? { reasoningLevel } : {}),
     language,
     paragraphs: [...chapter.paragraphs],
-    subjects: media ? [] : tagSubjectsOfStory({ entries, world, statuses, places }),
+    subjects: media ? [] : tagSubjectsOfStory({ entries, world, statuses, places, ties }),
     ...(!media && holdings?.characters.length ? { holdings } : {}),
     ...(soundWords?.length ? { soundWords: [...soundWords] } : {}),
     ...(soundtrack ? { soundtrack } : {}),
@@ -202,6 +209,7 @@ export interface ChapterTags {
   appearances: ReturnType<typeof acceptChapterTags>['appearances'];
   statuses: ReturnType<typeof acceptChapterTags>['statuses'];
   places: ReturnType<typeof acceptChapterTags>['places'];
+  ties: ReturnType<typeof acceptChapterTags>['ties'];
   scene: ReturnType<typeof acceptChapterTags>['scene'];
 }
 
@@ -529,6 +537,7 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
           appearances: read.appearances,
           statuses: read.statuses,
           places: read.places,
+          ties: read.ties,
           scene: read.scene,
         },
       };

@@ -67,9 +67,9 @@ const GUIDES = [
   { id: 'seed', title: 'Start a story seed', line: 'Every story begins as a seed.' },
 ];
 const guidesButton = () => document.querySelector<HTMLButtonElement>('[aria-label="Guides"]');
-const card = () => document.querySelector<HTMLElement>('[data-familiar-welcome]');
+const card = () => document.querySelector<HTMLElement>('[data-front-desk-greeting]');
 const helperCard = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Familiar"]');
-const playing = () => document.querySelector<HTMLElement>('[data-familiar-guides-playing]');
+const playing = () => document.querySelector<HTMLElement>('[data-front-desk-guides-playing]');
 
 describe('Familiar sprite playback', () => {
   it.each(familiarCatalogue.map(entry => entry.definition))('holds every $displayName idle frame six times longer in companion mode', familiar => {
@@ -401,7 +401,7 @@ describe('Familiar tray', () => {
     // The tray has no Guides: they are this screen's quick action, beside the card's microphone.
     expect(document.querySelector('.familiar-actions [aria-label="Guides"]')).toBeNull();
     await click(document.querySelector('[aria-label="Talk to Familiar"]'));
-    expect(guidesButton()!.closest('.familiar-helper-bottom')).toBeTruthy();
+    expect(guidesButton()!.closest('.front-desk-card-bottom')).toBeTruthy();
     expect(playing()).toBeNull();
     // In Action mode the guide plays in Action mode: no extra step to switch.
     await click(helperCard()!.querySelector('[aria-label="Action"]'));
@@ -411,25 +411,25 @@ describe('Familiar tray', () => {
     // The guide plays in the Familiar's card, in place of its topics, with the microphone still under it. No second window.
     expect(card()).toBeNull();
     expect(playing()!.closest('[aria-label="Familiar"]')).toBe(helperCard());
-    expect(helperCard()!.querySelector('.familiar-helper-mic')).toBeTruthy();
-    expect(playing()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet');
-    expect(playing()!.querySelectorAll('.familiar-guide-progress > li')).toHaveLength(2);
+    expect(helperCard()!.querySelector('.front-desk-card-mic')).toBeTruthy();
+    expect(playing()!.querySelector('[data-front-desk-guide-open]')?.getAttribute('data-front-desk-guide-open')).toBe('meet');
+    expect(playing()!.querySelectorAll('.front-desk-guide-progress > li')).toHaveLength(2);
     // What the Familiar says shows two lines; a tap shows all of it.
-    const whole = playing()!.querySelector<HTMLButtonElement>('.familiar-guide-line-toggle')!;
+    const whole = playing()!.querySelector<HTMLButtonElement>('.front-desk-guide-line-toggle')!;
     expect(whole.getAttribute('aria-expanded')).toBe('false');
     await click(whole);
     expect(whole.getAttribute('aria-expanded')).toBe('true');
     // Back waits on the first guide, and Done comes on the last.
-    expect(playing()!.querySelector<HTMLButtonElement>('[data-familiar-guide-step="previous"]')!.disabled).toBe(true);
-    expect(playing()!.querySelector('[data-familiar-guides-done]')).toBeNull();
-    await click(playing()!.querySelector('[data-familiar-guide-step="next"]'));
-    expect(playing()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('seed');
-    expect(playing()!.querySelector('[data-familiar-guide-step="next"]')).toBeNull();
+    expect(playing()!.querySelector<HTMLButtonElement>('[data-front-desk-guide-step="previous"]')!.disabled).toBe(true);
+    expect(playing()!.querySelector('[data-front-desk-guides-done]')).toBeNull();
+    await click(playing()!.querySelector('[data-front-desk-guide-step="next"]'));
+    expect(playing()!.querySelector('[data-front-desk-guide-open]')?.getAttribute('data-front-desk-guide-open')).toBe('seed');
+    expect(playing()!.querySelector('[data-front-desk-guide-step="next"]')).toBeNull();
     // The last guide does not wrap around to the first.
-    act(() => { playing()!.querySelector('[data-familiar-guide-open]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
-    expect(playing()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('seed');
+    act(() => { playing()!.querySelector('[data-front-desk-guide-open]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
+    expect(playing()!.querySelector('[data-front-desk-guide-open]')?.getAttribute('data-front-desk-guide-open')).toBe('seed');
     // Done gives the card its actions back; the card stays open.
-    await click(playing()!.querySelector('[data-familiar-guides-done]'));
+    await click(playing()!.querySelector('[data-front-desk-guides-done]'));
     expect(playing()).toBeNull();
     expect(helperCard()).toBeTruthy();
     expect(window.location.href).toBe(before);
@@ -457,9 +457,9 @@ describe('Familiar tray', () => {
       <FamiliarCompanion familiar={celestialGuardian} />
     </FamiliarFrontDesk>));
     expect(card()?.textContent).toContain('I’m Celestial Guardian.');
-    await click(card()!.querySelector('[data-familiar-welcome-tour]'));
+    await click(card()!.querySelector('[data-front-desk-greeting-tour]'));
     expect(card()).toBeNull();
-    expect(playing()!.querySelector('[data-familiar-guide-open]')?.getAttribute('data-familiar-guide-open')).toBe('meet');
+    expect(playing()!.querySelector('[data-front-desk-guide-open]')?.getAttribute('data-front-desk-guide-open')).toBe('meet');
     expect(onWelcomed).toHaveBeenCalledOnce();
   });
 
@@ -727,7 +727,7 @@ describe('Header Familiar actions', () => {
     // The guides open in the Familiar's card, even while it waits in the header.
     expect(playing()).toBeTruthy();
     expect(onRecall).not.toHaveBeenCalled();
-    await click(playing()!.querySelector('[data-familiar-guides-close]'));
+    await click(playing()!.querySelector('[data-front-desk-guides-close]'));
     expect(playing()).toBeNull();
     await click(helperCard()!.querySelector('[aria-label="Close Familiar"]'));
     await click(container.querySelector('.familiar-recall')!);

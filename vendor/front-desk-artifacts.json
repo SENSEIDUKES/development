@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/SENSEIDUKES/seihouse-front-desk",
+  "sourceCommit": "54229cb7efc412854af4c7dd16156836238f0d87",
+  "artifacts": {
+    "@seihouse/front-desk": {
+      "version": "0.2.0",
+      "file": "vendor/seihouse-front-desk-0.2.0.tgz",
+      "integrity": "sha512-Zi5u2LRq9xGn3ZCuGv6AMtzdgKw4eUjFzXTqGB2dmx3SNdtMH60pZD9IJChfjhkUWYmICxuaItEcW5Vgb9Xe/w==",
+      "sourceCommit": "54229cb7efc412854af4c7dd16156836238f0d87",
+      "commit": "https://github.com/SENSEIDUKES/seihouse-front-desk/commit/54229cb7efc412854af4c7dd16156836238f0d87"
+    }
+  }
+}

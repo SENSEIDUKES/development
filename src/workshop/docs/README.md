@@ -38,7 +38,7 @@ name and is untouched.
   catalog and may say nothing it does not contain, so an entry written here is
   spoken to readers. It is given the topic names and looks an entry up when it
   needs one, rather than carrying the catalog in every exchange
-  ([SEIHouse Front Desk](../../front-desk/README.md#the-docs-look-up)).
+  (SEIHouse Front Desk's `lookUpDocs`, from `@seihouse/front-desk/docs-knowledge`).
 - Add `definition`, `howItFits`, and optional `related` topic IDs to an existing
   entry when its meaning is confirmed; unfilled topics show placeholders.
   Search includes explanation text automatically. Do not add a second entry,
@@ -62,7 +62,9 @@ History:
   always did and is unchanged for a reader.
 - 2026-11-08 the shape and lookup moved again, into SEIHouse Front Desk
   (`src/front-desk/core/docsKnowledge.ts`, `@seihouse/front-desk/docs-knowledge`),
-  with the rest of the Familiar's system. Unchanged for a reader.
+  with the rest of the Familiar's system. Unchanged for a reader. The same day
+  Front Desk moved to its own repository and is installed from `vendor/`; the page
+  reads it through `@seihouse/front-desk/docs-knowledge` as before.
 - 2026-11-05 retired the Celestial Library name. The single Library entry split into
   **NovelExpanded** (the product, new id `novel-expanded`) and **Library** (the code
   lane, keeping id `library`, so existing `&doc=library` links still resolve). Product

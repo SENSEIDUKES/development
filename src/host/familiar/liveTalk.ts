@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FrontDeskLive } from '@seihouse/front-desk';
 import { createGeminiLive, createOpenAiLive, createRealtimeLive } from '@seihouse/front-desk/engines';
+import { FAMILIAR_WHO } from '@seihouse/library/familiar';
 import { createSavedAccessToken } from '../generation/accessToken';
 import { chosenEnergyGrade, useModelPreference } from '../generation/modelPreference';
 import { recordUsage } from '../usage/usageLog';
@@ -22,9 +23,10 @@ const asProvider = (value: unknown): FamiliarLiveProvider => value === 'openai' 
  */
 export const createLive = (provider: FamiliarLiveProvider, model: string, saved = createSavedAccessToken()): FrontDeskLive => {
   const accessToken = () => saved.current;
-  return provider === 'openai' ? createOpenAiLive({ model, accessToken })
-    : provider === 'elevenlabs' ? createRealtimeLive({ model, label: 'ElevenLabs', accessToken })
-      : createGeminiLive({ model, accessToken });
+  // Its messages name the Familiar ("Your Familiar stopped talking."), as the card does.
+  return provider === 'openai' ? createOpenAiLive({ model, accessToken, who: FAMILIAR_WHO })
+    : provider === 'elevenlabs' ? createRealtimeLive({ model, label: 'ElevenLabs', accessToken, who: FAMILIAR_WHO })
+      : createGeminiLive({ model, accessToken, who: FAMILIAR_WHO });
 };
 
 /** The server's live talk offer, if any. Any failure reads as none, so the device voice stays. */

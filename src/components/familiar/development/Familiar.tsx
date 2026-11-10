@@ -51,7 +51,7 @@ export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onM
     <div className="familiar-dock">
       <button type="button" className="familiar-shadow" hidden={expanded} aria-label="Show Familiar actions" aria-expanded={expanded} aria-controls={actionsId} onClick={() => setPinned(true)}><span /></button>
       <div id={actionsId} className="familiar-actions" role="group" aria-label="Familiar actions" hidden={!expanded}>
-        <FrontDeskTalkButton />
+        <FrontDeskTalkButton className="familiar-action" />
         {onMinimize && <button type="button" className="familiar-action" aria-label="Minimize Familiar" title="Minimize Familiar" onClick={onMinimize}><ChevronDown aria-hidden="true" size={21} /></button>}
       </div>
     </div>

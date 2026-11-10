@@ -22,6 +22,17 @@ Use `npm ci` after refreshing these tarballs. `check:ui-artifacts` compares each
 
 No registry publication or repository visibility change is required.
 
+## SEIHouse Front Desk
+
+`seihouse-front-desk-0.2.0.tgz` is `@seihouse/front-desk` 0.2.0, built from the
+private `SENSEIDUKES/seihouse-front-desk` repository with `npm run verify` and
+`npm pack`. Its source commit and SHA-512 integrity are in
+`front-desk-artifacts.json`, and `npm run check:ui-artifacts` checks them as it
+checks the UI kit. Front Desk is the Familiar's controller, card and voice engines,
+shared beneath SEN and the Library. To change it, work in its repository, bump its
+version there, pack it into this folder, and update the record, the root
+`package.json` and `package-lock.json`, then run `npm ci`.
+
 ## SPP intake adapter
 
 `seihouse-productions-package-0.2.0.tgz` is built from the official standalone
@@ -67,6 +78,8 @@ Display under its own notices for authorized SEIHouse products. To refresh, pack
 release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm ci`.
 
 ## History
+
+- **2026-11-08:** Added SEIHouse Front Desk 0.2.0 (`seihouse-front-desk-0.2.0.tgz`), the Familiar's system lifted out of this repository into `SENSEIDUKES/seihouse-front-desk` (step 2 of `docs/front-desk-plan.md`), with `front-desk-artifacts.json`.
 
 - **2026-10-27:** Refreshed UI 0.12.0 and Library UI 0.10.1 from current UI main at `8371b71`, through UI [#94](https://github.com/SENSEIDUKES/UI/pull/94). Neither version moves from the #91 build below: only the bytes, the SHA-512 integrity in `ui-artifacts.json` and `package-lock.json`, and the recorded source provenance.
 

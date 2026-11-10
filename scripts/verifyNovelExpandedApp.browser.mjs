@@ -1251,12 +1251,12 @@ async function walk(browser, viewport, sample) {
   // The Familiar teaches the app from its Guides tab: one guide at a time, a dot for each, swiped or stepped through.
   await stage.locator('[data-familiar-tab="guides"]').click();
   const dots = stage.locator('[data-familiar-guides] [data-familiar-guide]');
-  await stage.locator('[data-familiar-guide-open]').waitFor();
+  await stage.locator('[data-front-desk-guide-open]').waitFor();
   check(await dots.count() >= 3, `The Guides tab should show a dot for each of the Familiar's guides, saw ${await dots.count()}.`);
-  check(Boolean((await stage.locator('[data-familiar-guide-line]').textContent())?.trim()), 'An open guide should show what the Familiar says.');
-  const firstGuide = await stage.locator('[data-familiar-guide-open]').getAttribute('data-familiar-guide-open');
-  await stage.locator('[data-familiar-guide-step="next"]').click();
-  check(await stage.locator('[data-familiar-guide-open]').getAttribute('data-familiar-guide-open') !== firstGuide, 'Next should show the next guide.');
+  check(Boolean((await stage.locator('[data-front-desk-guide-line]').textContent())?.trim()), 'An open guide should show what the Familiar says.');
+  const firstGuide = await stage.locator('[data-front-desk-guide-open]').getAttribute('data-front-desk-guide-open');
+  await stage.locator('[data-front-desk-guide-step="next"]').click();
+  check(await stage.locator('[data-front-desk-guide-open]').getAttribute('data-front-desk-guide-open') !== firstGuide, 'Next should show the next guide.');
   check(!(await page.evaluate(slidesSideways)), 'The Guides tab must never scroll sideways.');
   await shot('8d-familiar-guides');
   await stage.locator('[data-familiar-tab="bond"]').click();

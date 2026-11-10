@@ -800,9 +800,9 @@ describe('Cultivator Cave destinations', () => {
     expect(document.activeElement).toBe(toggle());
     // A guide goes when the phone's sheet closes, so its clip and its reading stop with it.
     await click(container.querySelector('[data-familiar-tab="guides"]')!);
-    expect(stage().querySelector('[data-familiar-guide-open]')).toBeTruthy();
+    expect(stage().querySelector('[data-front-desk-guide-open]')).toBeTruthy();
     await click(toggle());
-    expect(stage().querySelector('[data-familiar-guide-open]')).toBeNull();
+    expect(stage().querySelector('[data-front-desk-guide-open]')).toBeNull();
   });
 
   it('letters the name with the Active Familiar’s bond effect, which grows as QI cultivates the bond', async () => {

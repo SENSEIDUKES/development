@@ -78,10 +78,13 @@ merely because SEN uses it first.
 
 **SEIHouse Front Desk** (`@seihouse/front-desk`, 2026-11-08) is one of them: an app's
 front desk in one character (help, guides, actions it asks before taking, "Take me
-back", look-ups without spoilers, the browser voice and live talk). SENSEI is
-open-sourcing it. It imports nothing from SEN, the Library or the app; both may use
-it. Novel Expanded's character on it is the Familiar; SEA's will be the vocal
-director. [The plan](./docs/front-desk-plan.md).
+back", look-ups without spoilers, the browser voice and live talk). It is part of the
+SEIHouse ecosystem, like the UI kit, the fonts and the audio player, for creators
+inside SEIHouse to put their own character on. It lives in its own private repository
+(`SENSEIDUKES/seihouse-front-desk`) and is installed here from `vendor/`, like the UI
+kit; it imports nothing from SEN, the Library or the app, and both may use it. Novel
+Expanded's character on it is the Familiar; SEA's will be the vocal director.
+[The plan](./docs/front-desk-plan.md).
 
 ### SEN and SEA
 
@@ -682,9 +685,10 @@ entries run to 2026-11-06.
       lens, with on-device eye, blink and nod control. A fourth live talk engine
       made of open models can run on SEIHouse's own servers.
       **The Familiar runs on SEIHouse Front Desk (2026-11-08, SENSEI):** its
-      controller, card and voice engines are their own package, to be open-sourced;
-      the Library hands it Novel Expanded's docs, action list, codes and wording
-      (`FamiliarFrontDesk`). [The plan](./docs/front-desk-plan.md), eleven steps.
+      controller, card and voice engines are their own package, an ecosystem piece in
+      its own repository; the Library hands it Novel Expanded's docs, action list,
+      codes and wording, the Familiar's name included (`FamiliarFrontDesk`).
+      [The plan](./docs/front-desk-plan.md), eleven steps.
   - **Story Settings are in the app, off the developer page** (piece 4). The
     story's own settings, the only place a reader meets the HARNESS:
     - **On Story View**, closed until opened: the Story Language (fixed when the
@@ -1269,11 +1273,11 @@ where it stands; this list was checked against the code on 2026-11-06.
   them, Alter Fate adds real cards, and arc boundaries sort what carries on.
   None built; three phases, each with SENSEI's questions first.
 - [CTE consequences](./docs/cte-consequences.md): direction, none built.
-- [SEIHouse Front Desk](./docs/front-desk-plan.md), the Familiar's plan: step 1
-  (Front Desk separated inside this repository) and the media spot's phase A
-  (guides in the card) are built. Open, in order: 2, its own repository; 3, the
-  bridge for older people; 4, memory and first-meeting setup; 5, quiet mode and
-  hands-free listening; 6, pages handing it their content, and the Inbox; 7, the
+- [SEIHouse Front Desk](./docs/front-desk-plan.md), the Familiar's plan: steps 1
+  and 2 (Front Desk separated, then lifted into its own repository and vendored
+  back) and the media spot's phase A (guides in the card) are built. Later, when
+  there's time, in order: 3, the bridge for older people; 4, memory and
+  first-meeting setup; 5, quiet mode and hands-free listening; 6, pages handing it their content, and the Inbox; 7, the
   channel everywhere; 8, accessibility lenses; 9, the touch lens; 10, the rest of
   the media spot; 11, SEA's vocal director.
 - [Discover](./docs/discover-page.md): structure built on samples. Open: real

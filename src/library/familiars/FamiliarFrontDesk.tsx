@@ -72,7 +72,7 @@ function FamiliarFace({ option }: { option: FamiliarOption }) {
   const [failed, setFailed] = useState(false);
   return option.portraitUrl && !failed
     ? <img src={option.portraitUrl} alt="" decoding="async" onError={() => setFailed(true)} />
-    : <FamiliarHero option={option} active={false} className="familiar-tip-hero" />;
+    : <FamiliarHero option={option} active={false} />;
 }
 
 /** The floating Familiar on the page, so its greeting pops up beside it. */
@@ -125,7 +125,7 @@ export function FamiliarFrontDesk({ voice, live, wake, familiar, guides, languag
     welcome: guides.welcome,
     onWelcomed: guides.onWelcomed,
   }, [guides]);
-  return <FrontDeskProvider voice={lineVoice} live={live} wake={wake} wakeWord={FAMILIAR_WAKE_WORD} familiar={familiar} guides={deskGuides}
+  return <FrontDeskProvider voice={lineVoice} live={live} wake={wake} wakeWord={FAMILIAR_WAKE_WORD} character={familiar} guides={deskGuides}
     setup={familiarFrontDeskSetup} renderCode={renderCode} language={language} bottomInset={bottomInset}>
     <FamiliarCodes>{children}</FamiliarCodes>
   </FrontDeskProvider>;

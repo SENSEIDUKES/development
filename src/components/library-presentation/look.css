@@ -100,7 +100,7 @@
 .library-look option { background: #000; color: #fff; }
 /* Familiar sheets are portaled outside the page's shell, but only opt in while
    a page wearing the look is present. Route changes remove the skin without persisting a theme. */
-body:has(.library-look) :is(.familiar-helper, .familiar-energy-panel, .familiar-actions) {
+body:has(.library-look) :is(.front-desk-card, .familiar-energy-panel, .familiar-actions) {
   background: var(--library-material-control-fill);
   color: var(--library-material-text);
   border-color: var(--reader-glass-edge);
@@ -108,7 +108,7 @@ body:has(.library-look) :is(.familiar-helper, .familiar-energy-panel, .familiar-
   -webkit-backdrop-filter: var(--library-material-control-blur);
   backdrop-filter: var(--library-material-control-blur);
 }
-body:has(.library-look) :is(.familiar-helper-place, .familiar-helper-quiet) { color: var(--library-material-muted); }
+body:has(.library-look) :is(.front-desk-card-place, .front-desk-card-quiet) { color: var(--library-material-muted); }
 
 /* ── Discover ─────────────────────────────────────────────────────────────
    The catalogue's own containers take the outer-panel glass, its controls the

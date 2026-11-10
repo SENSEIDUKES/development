@@ -1,5 +1,12 @@
 # `@seihouse/library`
 
+**0.38.0 (2026-11-08, breaking):** Peers on `@seihouse/front-desk` **0.2.0**, now
+built in its own repository (step 2 of the Front Desk plan). The card's classes and
+hooks carry Front Desk's names (`.front-desk-card`, `data-front-desk-*`), so a host
+styling `.familiar-helper` must move to `.front-desk-card`. `FAMILIAR_WORDING` names
+the character (`who: 'Familiar'`) and holds the greeting's words, so the card still
+says "Talk to Familiar"; `./familiar` adds `FAMILIAR_WHO`.
+
 **0.37.0 (2026-11-08, breaking):** The Familiar runs on SEIHouse Front Desk
 (`@seihouse/front-desk` 0.1.0, a new peer). `./familiar` no longer exports the
 helper controller, spoken codes, `FamiliarHelperProvider`, the talk button, the

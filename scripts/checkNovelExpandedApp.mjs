@@ -25,6 +25,7 @@ const APP_SOURCE = 'src/novel-expanded/';
  * Familiar's card, its controller and its voice engines) joined on 2026-11-08,
  * when the owner approved separating it into its own package (step 1 of the
  * Front Desk plan): the app uses it as it used the Familiar's helper before.
+ * Since step 2 (2026-11-08) it is installed from `vendor/`, built in its own repository.
  */
 export const APP_ENTRIES = new Set([
   '@seihouse/library/stories', '@seihouse/library/story-seed', '@seihouse/library/home', '@seihouse/library/discover',

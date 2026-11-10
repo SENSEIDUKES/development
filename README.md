@@ -8,13 +8,13 @@ The central development and preview space for SEN and Library components and exp
 
 **Library is SEIHouse's first-party host application** — our own branded implementation of SEN. Library-specific visuals, language, cultivation/Qi progression, hub behavior, economy, services, and infrastructure belong to Library, not to the portable engine.
 
-SEN is therefore never "a Library feature". They ship as separate packages from this repository, with SEIHouse Front Desk beneath both:
+SEN is therefore never "a Library feature". They ship as separate packages from this repository, with SEIHouse Front Desk beneath both (built in its own repository, installed from `vendor/`):
 
 | Package | Entries | What it is |
 | --- | --- | --- |
 | `@seihouse/sen` | [`src/package/sen/`](./src/package/sen/README.md) | The portable expanded-narrative engine |
 | `@seihouse/library` | [`src/package/library/`](./src/package/library/README.md) | SEIHouse's first-party surfaces built on it |
-| `@seihouse/front-desk` | [`src/package/front-desk/`](./src/package/front-desk/README.md) | SEIHouse Front Desk: an app's front desk in one character, shared beneath both and to be open-sourced (the Familiar in Novel Expanded) |
+| `@seihouse/front-desk` | `vendor/seihouse-front-desk-0.2.0.tgz` (private `SENSEIDUKES/seihouse-front-desk`) | SEIHouse Front Desk: an app's front desk in one character, a SEIHouse ecosystem piece shared beneath both (the Familiar in Novel Expanded) |
 
 **Library may depend on SEN. SEN must never depend on Library. Front Desk depends on neither.** [`src/package/README.md`](./src/package/README.md) explains how a surface is assigned to a lane, and `npm run check:package-boundaries` enforces it.
 

@@ -22,7 +22,7 @@ export function FamiliarRecall({ familiar, onRecall }: { familiar: FamiliarDefin
       </SEIPopoverTrigger>
       <SEIPopoverContent className="familiar-actions familiar-header-actions" side="bottom" collisionPadding={12}>
         <SEIPopoverTitle className="familiar-sr-only">Familiar actions</SEIPopoverTitle>
-        <FrontDeskTalkButton onOpen={() => setOpen(false)} focusTarget={() => container.current?.querySelector('button') ?? null} />
+        <FrontDeskTalkButton className="familiar-action" onOpen={() => setOpen(false)} focusTarget={() => container.current?.querySelector('button') ?? null} />
         <button type="button" className="familiar-action" aria-label="Expand Familiar" title="Expand Familiar" onClick={onRecall}><Maximize2 aria-hidden="true" size={19} /></button>
       </SEIPopoverContent>
     </SEIPopover>

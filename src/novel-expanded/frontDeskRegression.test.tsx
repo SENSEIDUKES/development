@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 /**
- * Regression checks for separating SEIHouse Front Desk (step 1), asked for by
+ * Regression checks for separating SEIHouse Front Desk (step 1, kept for step 2,
+ * when it became a package installed from vendor/), asked for by
  * SENSEI at approval: Model Router selection, token handling and usage
  * tracking; the browser voice and the configured live engines; microphone
  * cleanup; and the hand-off between a guide's or a line's audio and a
@@ -12,12 +13,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FrontDeskController, FrontDeskProvider, FrontDeskTalkButton, useFrontDeskContext, useFrontDeskReadAloud, type FrontDeskContext, type FrontDeskLive, type FrontDeskLiveBrief, type FrontDeskLiveEvents, type FrontDeskVoice } from '@seihouse/front-desk';
 import * as engines from '@seihouse/front-desk/engines';
 import { NarrativeAudioProvider, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
-import { FamiliarFrontDesk } from '@seihouse/library/familiar';
+import { FamiliarFrontDesk, familiarFrontDeskSetup } from '@seihouse/library/familiar';
 import { GENERATION_CONSUMERS, PROVIDER_ADAPTERS } from '../server/model-router/catalog';
 import { chooseLiveModel, createLive, withLiveUsage, type FamiliarLiveOffer } from '../host/familiar/liveTalk';
 import { readUsage } from '../host/usage/usageLog';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+// Front Desk is an installed package, whose module namespace cannot be spied on: watch the
+// three live engines the app builds by wrapping each around Front Desk's own.
+vi.mock('@seihouse/front-desk/engines', async importOriginal => {
+  const actual = await importOriginal<typeof import('@seihouse/front-desk/engines')>();
+  return { ...actual, createGeminiLive: vi.fn(actual.createGeminiLive), createOpenAiLive: vi.fn(actual.createOpenAiLive), createRealtimeLive: vi.fn(actual.createRealtimeLive) };
+});
+const liveEngines = { gemini: vi.mocked(engines.createGeminiLive), openai: vi.mocked(engines.createOpenAiLive), elevenlabs: vi.mocked(engines.createRealtimeLive) };
+beforeEach(() => { for (const engine of Object.values(liveEngines)) engine.mockClear(); });
 
 const brief: FrontDeskLiveBrief = { familiar: { name: 'Quill', description: '' }, place: 'Home', language: 'en-US', topics: [], actions: [], docs: [] };
 const events = () => ({ connected: vi.fn(), caption: vi.fn(), call: vi.fn(async () => 'Done.'), ended: vi.fn(), notice: vi.fn() }) satisfies FrontDeskLiveEvents;
@@ -98,9 +108,10 @@ describe('Front Desk regression: Model Router, tokens and usage', () => {
     expect(chooseLiveModel(offer, 'openai/gpt-live')).toEqual({ id: 'openai/gpt-live', provider: 'openai' });
     expect(chooseLiveModel(offer, 'nobody/offers-this')).toEqual({ id: 'gemini/live', provider: 'gemini' });
     expect(chooseLiveModel(offer)).toEqual({ id: 'gemini/live', provider: 'gemini' });
-    // The Router's "Used by" lists live talk, following the Router's choice, and the browser ends now in Front Desk.
+    // The Router's "Used by" lists live talk, following the Router's choice. The browser ends are Front Desk's
+    // installed engines, which open only what the server's routes (registered here) allow.
     expect(GENERATION_CONSUMERS).toContainEqual(expect.objectContaining({ capability: 'live', entry: 'src/server/familiar-live/http.ts', modelChoice: 'router' }));
-    expect(PROVIDER_ADAPTERS).toEqual(expect.arrayContaining(['src/front-desk/engines/live.ts', 'src/front-desk/engines/realtimeLive.ts']));
+    expect(PROVIDER_ADAPTERS).toEqual(expect.arrayContaining(['src/server/familiar-live/openai.ts', 'src/server/familiar-live/elevenlabs.ts']));
   });
 
   it('sends the host\'s own access token to its live-talk route, and none when it has none', async () => {
@@ -120,9 +131,7 @@ describe('Front Desk regression: Model Router, tokens and usage', () => {
   });
 
   it('hands each of the app\'s live engines the owner\'s saved token, read when a conversation starts', async () => {
-    const gemini = vi.spyOn(engines, 'createGeminiLive');
-    const openai = vi.spyOn(engines, 'createOpenAiLive');
-    const realtime = vi.spyOn(engines, 'createRealtimeLive');
+    const { gemini, openai, elevenlabs: realtime } = liveEngines;
     const saved = { current: undefined as string | undefined };
     createLive('gemini', 'gemini/live', saved as never);
     createLive('openai', 'openai/gpt-live', saved as never);
@@ -130,6 +139,8 @@ describe('Front Desk regression: Model Router, tokens and usage', () => {
     expect(gemini).toHaveBeenCalledWith(expect.objectContaining({ model: 'gemini/live' }));
     expect(openai).toHaveBeenCalledWith(expect.objectContaining({ model: 'openai/gpt-live' }));
     expect(realtime).toHaveBeenCalledWith(expect.objectContaining({ model: 'elevenlabs/realtime', label: 'ElevenLabs' }));
+    // Each names the Familiar in its messages ("Your Familiar stopped talking."), as the card does.
+    for (const spy of [gemini, openai, realtime]) expect(spy).toHaveBeenCalledWith(expect.objectContaining({ who: 'Familiar' }));
     for (const spy of [gemini, openai, realtime]) {
       const { accessToken } = spy.mock.calls[0][0]!;
       expect(accessToken?.()).toBeUndefined();
@@ -170,11 +181,9 @@ describe('Front Desk regression: the browser voice and the configured live engin
 
   it('runs each configured engine through Front Desk: opens, answers the screen\'s calls, and closes', async () => {
     for (const provider of ['gemini', 'openai', 'elevenlabs'] as const) {
-      const spy = vi.spyOn(engines, provider === 'openai' ? 'createOpenAiLive' : provider === 'elevenlabs' ? 'createRealtimeLive' : 'createGeminiLive');
       const live = createLive(provider, `${provider}/model`, { current: undefined } as never);
-      expect(spy).toHaveBeenCalledOnce();
+      expect(liveEngines[provider]).toHaveBeenCalledOnce();
       expect(typeof live.start).toBe('function');
-      spy.mockRestore();
     }
     // The shared engine under all three: the request, a call from the model to the screen, and hanging up.
     const { plugged, made } = translator();
@@ -220,7 +229,7 @@ describe('Front Desk regression: the microphone is always given back', () => {
   it('ends the conversation when the page is hidden, as the app wires it', async () => {
     const { voice } = deviceVoice();
     const { live, ends } = liveTalk();
-    act(() => root.render(<StrictMode><FrontDeskProvider voice={voice} live={live}><Screen context={place} /><FrontDeskTalkButton /></FrontDeskProvider></StrictMode>));
+    act(() => root.render(<StrictMode><FrontDeskProvider voice={voice} live={live} setup={familiarFrontDeskSetup}><Screen context={place} /><FrontDeskTalkButton /></FrontDeskProvider></StrictMode>));
     await click('Talk to Familiar');
     await click('Talk with your Familiar');
     expect(live.start).toHaveBeenCalledOnce();

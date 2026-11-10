@@ -50,56 +50,69 @@ const readJson = (file) =>
   JSON.parse(readFileSync(path.join(root, file), 'utf8'));
 const manifest = readJson('package.json');
 const lock = readJson('package-lock.json');
-const provenance = readJson('vendor/ui-artifacts.json');
-assert.match(provenance.sourceCommit, /^[a-f0-9]{40}$/);
-assert.equal(provenance.repository, 'https://github.com/SENSEIDUKES/UI');
-for (const name of ['ui', 'library-ui']) {
-  const packageName = `@seihouse/${name}`;
-  const file = provenance.artifacts[packageName].file;
-  const integrity = `sha512-${createHash('sha512')
-    .update(readFileSync(path.join(root, file)))
-    .digest('base64')}`;
-  assert.equal(manifest.dependencies[packageName], `file:${file}`);
-  assert.equal(lock.packages[`node_modules/${packageName}`].version, provenance.artifacts[packageName].version);
-  assert.equal(
-    lock.packages[`node_modules/${packageName}`].integrity,
-    integrity,
-  );
-  assert.equal(provenance.artifacts[packageName].integrity, integrity);
-  assert.equal(provenance.artifacts[packageName].file, file);
-  const artifact = provenance.artifacts[packageName];
-  assert.match(artifact.sourceCommit, /^[a-f0-9]{40}$/, packageName + ' requires a source commit');
-  assert.match(artifact.pullRequest, /^https:\/\/github\.com\/SENSEIDUKES\/UI\/pull\/[1-9]\d*$/, packageName + ' requires a UI pull request');
-}
-// The vendored tarballs keep the same name and version across UI commits, so
-// `npm install` over a restored `node_modules` reports "up to date" and leaves
-// the previous build installed. Compare what is actually on disk, so a stale
-// install fails here with an explanation instead of surfacing as a missing
-// export halfway through a typecheck.
-for (const name of ['ui', 'library-ui']) {
-  const packageName = `@seihouse/${name}`;
-  const installed = path.join(root, 'node_modules', packageName);
-  if (!existsSync(installed)) continue;
-  const tarball = provenance.artifacts[packageName].file;
-  const entries = readTarball(path.join(root, tarball));
-  const stale = [];
-  for (const [entry, content] of entries) {
-    const file = path.join(installed, entry);
-    if (!existsSync(file) || !readFileSync(file).equals(content)) stale.push(entry);
+/**
+ * Vendored SEIHouse packages, each with its provenance record: the UI kit's two
+ * packages (built in SENSEIDUKES/UI, each release through a pull request) and
+ * SEIHouse Front Desk (built in SENSEIDUKES/seihouse-front-desk, named by commit).
+ */
+const VENDORED = [
+  { record: 'vendor/ui-artifacts.json', repository: 'https://github.com/SENSEIDUKES/UI', names: ['ui', 'library-ui'],
+    source: artifact => assert.match(artifact.pullRequest, /^https:\/\/github\.com\/SENSEIDUKES\/UI\/pull\/[1-9]\d*$/, 'requires a UI pull request') },
+  { record: 'vendor/front-desk-artifacts.json', repository: 'https://github.com/SENSEIDUKES/seihouse-front-desk', names: ['front-desk'],
+    source: artifact => assert.equal(artifact.commit, `https://github.com/SENSEIDUKES/seihouse-front-desk/commit/${artifact.sourceCommit}`, 'requires its source commit') },
+];
+for (const { record, repository, names, source } of VENDORED) {
+  const provenance = readJson(record);
+  assert.match(provenance.sourceCommit, /^[a-f0-9]{40}$/);
+  assert.equal(provenance.repository, repository);
+  for (const name of names) {
+    const packageName = `@seihouse/${name}`;
+    const file = provenance.artifacts[packageName].file;
+    const integrity = `sha512-${createHash('sha512')
+      .update(readFileSync(path.join(root, file)))
+      .digest('base64')}`;
+    assert.equal(manifest.dependencies[packageName], `file:${file}`);
+    assert.equal(lock.packages[`node_modules/${packageName}`].version, provenance.artifacts[packageName].version);
+    assert.equal(
+      lock.packages[`node_modules/${packageName}`].integrity,
+      integrity,
+    );
+    assert.equal(provenance.artifacts[packageName].integrity, integrity);
+    assert.equal(provenance.artifacts[packageName].file, file);
+    const artifact = provenance.artifacts[packageName];
+    assert.match(artifact.sourceCommit, /^[a-f0-9]{40}$/, packageName + ' requires a source commit');
+    source(artifact);
   }
-  // Both directions. A file the previous build shipped and this one dropped
-  // survives in node_modules, and comparing only the tarball's own entries
-  // would call that a match — the exact staleness this check exists to catch.
-  for (const entry of readInstalled(installed)) {
-    if (!entries.has(entry)) stale.push(`${entry} (not in the tarball)`);
+  // The vendored tarballs keep the same name and version across source commits, so
+  // `npm install` over a restored `node_modules` reports "up to date" and leaves
+  // the previous build installed. Compare what is actually on disk, so a stale
+  // install fails here with an explanation instead of surfacing as a missing
+  // export halfway through a typecheck.
+  for (const name of names) {
+    const packageName = `@seihouse/${name}`;
+    const installed = path.join(root, 'node_modules', packageName);
+    if (!existsSync(installed)) continue;
+    const tarball = provenance.artifacts[packageName].file;
+    const entries = readTarball(path.join(root, tarball));
+    const stale = [];
+    for (const [entry, content] of entries) {
+      const file = path.join(installed, entry);
+      if (!existsSync(file) || !readFileSync(file).equals(content)) stale.push(entry);
+    }
+    // Both directions. A file the previous build shipped and this one dropped
+    // survives in node_modules, and comparing only the tarball's own entries
+    // would call that a match — the exact staleness this check exists to catch.
+    for (const entry of readInstalled(installed)) {
+      if (!entries.has(entry)) stale.push(`${entry} (not in the tarball)`);
+    }
+    assert.equal(
+      stale.length,
+      0,
+      `${packageName} in node_modules does not match ${tarball} (${stale.length} file(s) differ, first: ${stale[0]}). Run \`npm ci\` — \`npm install\` will not replace a same-version file: dependency.`,
+    );
   }
-  assert.equal(
-    stale.length,
-    0,
-    `${packageName} in node_modules does not match ${tarball} (${stale.length} file(s) differ, first: ${stale[0]}). Run \`npm ci\` — \`npm install\` will not replace a same-version file: dependency.`,
-  );
 }
 
 console.log(
-  '[ui-artifacts] UI tarballs match the manifest, lockfile SHA-512 integrity, source provenance, and the installed packages.',
+  '[ui-artifacts] UI and Front Desk tarballs match the manifest, lockfile SHA-512 integrity, source provenance, and the installed packages.',
 );

@@ -12,7 +12,7 @@ export const MATERIALS: { id: MaterialId; name: string; usage: string; origin: s
   { archived: true, id: 'create', name: 'Create glass', usage: 'Origin fields and nested groups', origin: 'Library UI + Story Seed treatment', source: 'src/components/story-seed/development/materials.css · .seed-field-scope .glass-panel' },
   { archived: true, id: 'signin', name: 'Sign-in glass', usage: 'Your Destiny Awaits', origin: 'Library · local material', source: 'src/components/story-seed/development/materials.css · .story-auth-glass' },
   { archived: true, id: 'navigation', name: 'Midnight navigation', usage: 'Home and Create sidebars', origin: 'Library UI · shared', source: '@seihouse/library-ui · LibraryNavigationDrawerPanel (pathways)' },
-  { archived: true, id: 'familiar', name: 'Familiar blue', usage: 'Companion helper panel', origin: 'Library · local material', source: 'src/components/familiar/development/familiar.css · .familiar-helper' },
+  { archived: true, id: 'familiar', name: 'Familiar blue', usage: 'Companion helper panel', origin: 'Library · local material', source: '@seihouse/front-desk/styles.css · .front-desk-card' },
   { archived: true, id: 'button', name: 'Night-glass action', usage: 'Primary app actions', origin: 'Library UI + app override', source: 'src/components/library-presentation/night-glass.css · primary button' },
   { archived: true, id: 'secondary', name: 'Clear-glass action', usage: 'Secondary actions', origin: 'Library UI · package default', source: '@seihouse/library-ui · LibraryButton (secondary)' },
 ];
@@ -27,7 +27,7 @@ export function MaterialSurface({ id, style, children, className = '', disabled 
   if (id === 'home') return <LibraryPanel padding="none" {...props}>{content}</LibraryPanel>;
   if (id === 'create') return <div className="seed-field-scope pm-material-wrap"><div {...props} className={`glass-panel ${props.className}`}>{content}</div></div>;
   if (id === 'signin') return <div {...props} className={`story-auth-glass ${props.className}`}>{content}</div>;
-  if (id === 'familiar') return <div {...props} className={`familiar-helper ${props.className}`} style={{ position: 'relative', inset: 'auto', zIndex: 'auto', width: '100%', maxHeight: 'none', ...style }}>{content}</div>;
+  if (id === 'familiar') return <div {...props} className={`front-desk-card ${props.className}`} style={{ position: 'relative', inset: 'auto', zIndex: 'auto', width: '100%', maxHeight: 'none', ...style }}>{content}</div>;
   if (id === 'navigation') return <div className="pm-material-wrap">
     <LibraryNavigationDrawerPanel {...props} aria-label="Sample navigation" variant="pathways" sidebarMode="pinned" sidebarBehavior="double-tap"
       sections={[{ id: 'sample', label: 'Pathways', items: [

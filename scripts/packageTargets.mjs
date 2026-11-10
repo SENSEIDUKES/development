@@ -6,7 +6,6 @@ const NEVER_PUBLISHED = [
 ];
 /** Each package's own build configuration and declaration project. */
 const CONFIGS = {
-  'front-desk': { viteConfig: 'vite.front-desk.config.ts', tsconfig: 'tsconfig.front-desk.json' },
   sen: { viteConfig: 'vite.package.config.ts', tsconfig: 'tsconfig.package.json' },
   library: { viteConfig: 'vite.library.config.ts', tsconfig: 'tsconfig.library.json' },
 };
@@ -15,35 +14,11 @@ const common = id => ({
   styleSheet: id + '.css', ...CONFIGS[id], assets: [],
 });
 export const PACKAGE_TARGETS = {
-  'front-desk': {
-    ...common('front-desk'),
-    // Its card's stylesheet is imported once by the host (`@seihouse/front-desk/styles.css`), so every entry also runs outside a browser.
-    unstyledEntries: ['index', 'docs-knowledge', 'engines'],
-    forbiddenBundleContents: [...NEVER_PUBLISHED, ['@seihouse/sen', 'SEN dependency'], ['@seihouse/library', 'Library dependency'], ['media.seihouse.org', 'first-party media'], ['celestialaudio.seihouse.org', 'first-party catalog']],
-    typeDependencies: [], smokeDependencies: [],
-    smokeExports: {
-      '@seihouse/front-desk': ['FrontDeskController', 'FrontDeskProvider', 'FrontDeskTalkButton', 'FrontDeskGuideView', 'FrontDeskClip', 'FrontDeskGreeting', 'composeFrontDeskContext', 'useFrontDeskContext', 'useFrontDeskInUse', 'parseSpokenCode', 'FRONT_DESK_PACKAGE_VERSION'],
-      '@seihouse/front-desk/docs-knowledge': ['lookUpDocs', 'docsIndex', 'searchDocs'],
-      '@seihouse/front-desk/engines': ['createBrowserVoice', 'createWakeWord', 'createGeminiLive', 'createOpenAiLive', 'createRealtimeLive', 'createLiveEngine'],
-    },
-    smokeTypes: `
-      import type { FrontDeskAction, FrontDeskActionPolicy, FrontDeskContext, FrontDeskGuide, FrontDeskLive, FrontDeskSetup, FrontDeskVoice } from '@seihouse/front-desk';
-      import type { DocsCatalog } from '@seihouse/front-desk/docs-knowledge';
-      import type { LiveEngineDependencies } from '@seihouse/front-desk/engines';
-      const docs: DocsCatalog = [{ id: 'help', title: 'Help', description: 'How the app works', topics: [{ id: 'stamps', title: 'Stamps', aliases: [], definition: 'A stamp marks a page you liked.' }] }];
-      const policy: FrontDeskActionPolicy = { actionsFor: (_page, actions) => actions, frontCount: () => 1, instant: id => id === 'go-home' };
-      const setup: FrontDeskSetup = { docs, policy, codes: { P: ['p', 'page'] }, wording: { spoilerOffer: 'More later.' } };
-      const guide: FrontDeskGuide = { id: 'intro', title: 'Meet the desk', line: 'I go where you go.' };
-      const engine: LiveEngineDependencies = { endpoint: '/api/my-live', accessToken: () => 'owner' };
-      type All = [FrontDeskAction, FrontDeskContext, FrontDeskLive, FrontDeskVoice];
-      void setup; void guide; void engine;
-    `,
-  },
   sen: {
     ...common('sen'),
     unstyledEntries: ['index', 'audio', 'contracts', 'generation', 'reader-runtime', 'translation', 'arc-goals', 'harness-generation', 'presentation'],
     forbiddenBundleContents: [...NEVER_PUBLISHED, ['@seihouse/library', 'Library dependency'], ['celestialaudio.seihouse.org', 'first-party catalog'], ['library-auth-backdrop', 'Library auth artwork']],
-    typeDependencies: ['front-desk'], smokeDependencies: ['front-desk'],
+    typeDependencies: [], smokeDependencies: [],
     smokeExports: {
       '@seihouse/sen/highlight-engine': ['HighlightEngine', 'usePassageSelection', 'normalizePassageSelection', 'replacePassage', 'createManualSoundCue', 'ManualCuePicker'],
       '@seihouse/sen': ['NarrativePresentationProvider', 'SEN_PACKAGE_VERSION'],
@@ -106,7 +81,7 @@ export const PACKAGE_TARGETS = {
     ...common('library'),
     unstyledEntries: ['index', 'cultivation', 'energy', 'dao-pillar', 'media', 'presentation', 'model-router-server'],
     forbiddenBundleContents: NEVER_PUBLISHED,
-    typeDependencies: ['front-desk', 'sen'], smokeDependencies: ['front-desk', 'sen'],
+    typeDependencies: ['sen'], smokeDependencies: ['sen'],
     smokeExports: {
       '@seihouse/library': ['LIBRARY_PACKAGE_VERSION'],
       '@seihouse/library/presentation': ['LibraryPresentationProvider'],

@@ -17,6 +17,7 @@ import { factionNamed, type DeclaredFaction } from './factions';
 import { deriveAppearances, type AppearanceFlag, type AppearancePassage, type AppearanceSubject } from './appearances';
 import { deriveStatuses } from './statuses';
 import { derivePlaces } from './places';
+import { deriveTies, tiesOfEntry } from './ties';
 import {
   deriveHoldings,
   holdingTargetKind,
@@ -136,6 +137,8 @@ export interface CodexCharacter {
   status?: { text: string; passage: CodexPassage };
   /** Where they are now, from the latest place tag, with the passage where they arrived. Absent while no tag gave one. */
   place?: { text: string; passage: CodexPassage };
+  /** How they stand with others now, from each pair's latest tie tag, with the passage that showed it. Absent while no tag gave one. */
+  ties?: Array<{ with: string; text: string; passage: CodexPassage }>;
   /** Things they hold now, in the order they came to hold them. */
   things: HeldThing[];
   /** Abilities they are learning or know. */
@@ -218,7 +221,7 @@ export interface StoryCodexRecord {
 }
 
 /** What the Codex reads from a chapter. */
-export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'holdingChanges' | 'closingHoldings' | 'appearances' | 'looks' | 'statuses' | 'places'>;
+export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'holdingChanges' | 'closingHoldings' | 'appearances' | 'looks' | 'statuses' | 'places' | 'ties'>;
 
 const paragraphOrder = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
 const comesBefore = (left: CodexPassage, right: CodexPassage) =>
@@ -355,12 +358,16 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     if (!character.firstSeen || comesBefore(first, character.firstSeen) < 0) character.firstSeen = first;
   }
 
-  // Someone met only by a status or a place tag (a guard who falls, never
-  // tagged otherwise) is still met there: the tag's sentence is where the
-  // record first sees them. A group is never a character.
+  // Someone met only by a status, a place or a tie tag (a guard who falls,
+  // never tagged otherwise) is still met there: the tag's sentence is where
+  // the record first sees them. A tie names two, and meets both. A group is
+  // never a character.
   for (const chapter of ordered) {
-    for (const record of [...chapter.statuses ?? [], ...chapter.places ?? []]) {
-      const { subject } = record.payload;
+    const named = [
+      ...[...chapter.statuses ?? [], ...chapter.places ?? []].map(record => ({ record, subject: record.payload.subject })),
+      ...(chapter.ties ?? []).flatMap(record => [{ record, subject: record.payload.subject }, { record, subject: record.payload.other }]),
+    ];
+    for (const { record, subject } of named) {
       const entry = subject.entryId ? entries.find(candidate => candidate.id === subject.entryId) : undefined;
       if ((entry && entry.kind !== 'character') || factionNamed(subject.name, declaredFactions)) continue;
       const names = [entry?.name ?? subject.name, subject.name, ...(entry?.aliases ?? [])].map(normalizeIdentityLabel);
@@ -447,6 +454,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   const wherever = derivePlaces(ordered, entries);
   const placeFor = (character: Working) => wherever.get(character.key)
     ?? [...character.names].map(name => wherever.get(`character:${name}`)).find(Boolean);
+  const tied = deriveTies(ordered, entries);
   const known = [...characters.values()].filter(character => (character.firstSeen || character.atChapterZero) && reached(character));
   const roster: CodexCharacter[] = known
     .sort((left, right) => Number(right.mainCharacter) - Number(left.mainCharacter)
@@ -454,11 +462,13 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     .map(({ names, ...character }) => {
       const status = statusFor({ ...character, names });
       const place = placeFor({ ...character, names });
+      const ties = tiesOfEntry(tied, { id: character.key, name: character.name, aliases: [...names] });
       const passage = (from: { chapterNumber: number; blockId: string; text: string }) => ({ chapterNumber: from.chapterNumber, blockId: from.blockId, text: from.text });
       return {
         ...character,
         ...(status ? { status: { text: status.status, passage: passage(status.passage) } } : {}),
         ...(place ? { place: { text: place.place, passage: passage(place.passage) } } : {}),
+        ...(ties.length ? { ties: ties.map(tie => ({ with: tie.with, text: tie.tie, passage: passage(tie.passage) })) } : {}),
       };
     });
 

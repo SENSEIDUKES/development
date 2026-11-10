@@ -6,6 +6,7 @@ import type { WorldCard, WorldRecord } from './worldRecord';
 import type { AppearanceAttachment, AppearanceEntity, AppearanceEvent, AppearancesSection, ChapterLooks, Look } from './appearances';
 import type { StatusAttachment } from './statuses';
 import type { PlaceAttachment } from './places';
+import type { TieAttachment } from './ties';
 import type { SoundWord } from '../audio/soundWords';
 import type { AudioTags } from '../audio/audioTags';
 import type { SoundtrackVocabulary } from '../audio/soundtrackVocabulary';
@@ -42,8 +43,9 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * is refused instead of overwriting it; 42 adds each chapter's optional
  * statuses (how a character is now, from the status tag); 43 adds the
  * fixer's record checks and a name it gave; 44 adds each chapter's optional
- * places (where a character is now, from the place tag). */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 45 as const;
+ * places (where a character is now, from the place tag); 46 adds each
+ * chapter's optional ties (how two characters stand, from the tie tag). */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 46 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -595,7 +597,7 @@ export type HarnessModelPlan = string | {
  */
 export interface HarnessChapterAuthoring {
   editedAt: string;
-  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment | AppearanceAttachment | StatusAttachment | PlaceAttachment>;
+  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment | AppearanceAttachment | StatusAttachment | PlaceAttachment | TieAttachment>;
 }
 
 export interface HarnessChapterMetrics {
@@ -635,6 +637,8 @@ export interface HarnessAcceptedChapterDraft {
   statuses?: StatusAttachment[];
   /** Every place tag the tagger tagged (where a character is now), on the sentence its tag points at. Names resolve when the chapter commits. */
   places?: PlaceAttachment[];
+  /** Every tie the tagger tagged (how two characters stand now), on the sentence its tag points at. Names resolve when the chapter commits. */
+  ties?: TieAttachment[];
   /** The chapter's music and atmosphere, from the writer's soundscape and atmosphere tags. */
   scene?: HarnessChapterScene;
   title: string;
@@ -695,6 +699,7 @@ export interface HarnessWarning {
     | 'appearance_tags_incomplete'
     | 'status_tags_incomplete'
     | 'place_tags_incomplete'
+    | 'tie_tags_incomplete'
     /** A note the tagger wrote could not be placed on its paragraph (its words are not there, or not there once) and was dropped on its own. */
     | 'tag_note_dropped';
   message: string;
@@ -991,6 +996,12 @@ export interface HarnessChapter {
    * the place). Where each is now is worked out from these, never stored.
    */
   places?: PlaceAttachment[];
+  /**
+   * How two characters stand with each other now: one tie per tag, on the
+   * sentence where it forms or changes, with both names resolved to Codex
+   * entries. How each pair stands now is worked out from these, never stored.
+   */
+  ties?: TieAttachment[];
   /**
    * The looks the look step wrote down after the chapter committed, one per
    * appearance it read. Absent when it found nothing to describe, or did not run.
@@ -1431,6 +1442,8 @@ export interface HarnessTagSubject {
   status?: string;
   /** Where a character is going into the chapter, when a place tag ever gave one. */
   place?: string;
+  /** A character's ties going into the chapter, when a tie tag ever gave one: who with, and how they stand. */
+  ties?: Array<{ with: string; tie: string }>;
 }
 
 /**

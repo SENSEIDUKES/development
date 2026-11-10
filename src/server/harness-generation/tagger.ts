@@ -7,6 +7,7 @@ import {
   SEN_SPEAKERS_INSTRUCTIONS,
   SEN_STATUS_INSTRUCTIONS,
   SEN_PLACE_INSTRUCTIONS,
+  SEN_TIE_INSTRUCTIONS,
   presentSoundVocabulary,
   presentSoundtrackVocabulary,
   type HarnessGenerationResponse,
@@ -66,6 +67,7 @@ export const presentTaggerTagTeaching = (request: Pick<HarnessTagRequest, 'sound
     SEN_APPEARANCE_INSTRUCTIONS,
     SEN_STATUS_INSTRUCTIONS,
     SEN_PLACE_INSTRUCTIONS,
+    SEN_TIE_INSTRUCTIONS,
   ];
   return [
     HARNESS_TAG_RULES,
@@ -91,6 +93,7 @@ export const presentTagSubjects = (subjects: readonly HarnessTagSubject[]) => {
       subject.aliases?.length ? ` — also called: ${subject.aliases.join(', ')}` : '',
       subject.status ? ` — status: ${subject.status}` : '',
       subject.place ? ` — at: ${subject.place}` : '',
+      subject.ties?.length ? ` — ties: ${subject.ties.map(tie => `${tie.with} (${tie.tie})`).join('; ')}` : '',
     ].join(''))].join('\n')];
   });
   return lines.length ? lines.join('\n\n') : 'The story has nothing recorded yet: tag by the names the chapter itself uses.';

@@ -20,6 +20,7 @@ import { createCodexEntryResolver, holdingName, pointedSentence, type CodexEntry
 import { isMainCharacterTag } from './speakers';
 import type { CurrentStatus } from './statuses';
 import type { CurrentPlace } from './places';
+import { TAG_SUBJECT_TIES, tiesLine, tiesOfEntry, type CurrentTie } from './ties';
 import type { PlaceAttachment } from '../../../narrative/places';
 
 /**
@@ -141,7 +142,8 @@ export function resolveAppearances({ storyId, chapter, appearances, entries, dec
     const entry = event === 'appears'
       ? (entity === 'thing' || entity === 'place' ? resolver.entry(entity, subject.name) : resolver.character(subject.name))
       : resolver.existing(subject.name);
-    if (!entry) return appearance;
+    // An ability has no look: a look tag naming one is left as written.
+    if (!entry || entry.kind === 'ability') return appearance;
     return {
       ...appearance,
       payload: { ...appearance.payload, subject: { name: subject.name, entryId: entry.id }, entity: entry.kind === 'thing' || entry.kind === 'place' ? entry.kind : 'character' },
@@ -516,35 +518,46 @@ export const APPEARED_SECTION_PLACES = 10;
  * The Appeared section the writer reads: the main character first when they
  * have appeared, then the characters, the things and the places on the page,
  * those seen most recently first, each with its look's one line once it is
- * written down, and each character's status and place once a tag gave one.
- * Exact names only; how to use them is the Appearance skill's job.
+ * written down, and each character's status, place and ties once a tag gave
+ * them. Exact names only; how to use them is the Appearance skill's job.
  */
-export function appearancesSection(state: AppearancesState, statuses?: ReadonlyMap<string, CurrentStatus>, entries: readonly CodexEntry[] = [], places?: ReadonlyMap<string, CurrentPlace>): AppearancesSection {
+export function appearancesSection(state: AppearancesState, statuses?: ReadonlyMap<string, CurrentStatus>, entries: readonly CodexEntry[] = [], places?: ReadonlyMap<string, CurrentPlace>, ties?: ReadonlyMap<string, CurrentTie>): AppearancesSection {
   const statusOf = (key: string) => statuses?.get(key)?.status;
   const placeOf = (key: string) => places?.get(key)?.place;
-  const recordOf = (key: string) => ({
+  // A subject's key is its Codex entry once it has one, else its name: ties are found by either. The
+  // latest ones only, as many as the tagger reads, so a long story never outgrows the writer's packet.
+  const tiesOf = (key: string, name: string) => (ties?.size ? tiesLine(tiesOfEntry(ties, { id: key, name, aliases: entries.find(entry => entry.id === key)?.aliases }).slice(-TAG_SUBJECT_TIES)) : '');
+  const recordOf = (key: string, name: string) => ({
     ...(statusOf(key) ? { status: statusOf(key)! } : {}),
     ...(placeOf(key) ? { place: placeOf(key)! } : {}),
+    ...(tiesOf(key, name) ? { ties: tiesOf(key, name) } : {}),
   });
   const entryOf = (subject: AppearanceSubject): AppearancesSectionEntry => ({
     name: subject.name,
     entity: subject.entity,
     ...(subject.mainCharacter ? { mainCharacter: true as const } : {}),
     ...(appearedLookLine(subject) ? { look: appearedLookLine(subject)! } : {}),
-    ...(subject.entity === 'character' ? recordOf(subject.key) : {}),
+    ...(subject.entity === 'character' ? recordOf(subject.key, subject.name) : {}),
   });
   const recent = (left: AppearanceSubject, right: AppearanceSubject) => (state.recency.get(right.key) ?? 0) - (state.recency.get(left.key) ?? 0);
   const main = state.subjects.find(subject => subject.mainCharacter);
   const characters = state.subjects.filter(subject => subject.entity === 'character' && !subject.mainCharacter).sort(recent).slice(0, APPEARED_SECTION_CHARACTERS);
   const things = state.subjects.filter(subject => subject.entity === 'thing').sort(recent).slice(0, APPEARED_SECTION_THINGS);
   const placesShown = state.subjects.filter(subject => subject.entity === 'place').sort(recent).slice(0, APPEARED_SECTION_PLACES);
-  // Someone the story gave a status or a place but never tagged appearing still reaches the writer, with them,
-  // so a death or an arrival tagged on its own is never forgotten.
+  // Someone the story gave a status, a place or a tie but never tagged appearing still reaches the writer, with them,
+  // so a death, an arrival or a sworn oath tagged on its own is never forgotten.
   // Measured against who is actually listed, so a character the counts leave out still keeps theirs;
   // the most recent first, as many as the characters' own count.
   const listed = new Set([...(main ? [main] : []), ...characters].map(subject => subject.key));
   const latest = new Map<string, { name: string; chapterNumber: number }>();
-  for (const [key, current] of [...statuses ?? [], ...places ?? []]) {
+  // Each side of a tie that is a character, under the key a status or a place would keep them by.
+  const tieSides = [...ties?.values() ?? []].flatMap(tie => ([0, 1] as const).flatMap(side => {
+    const entryId = tie.entryIds[side];
+    const kind = entryId ? entries.find(entry => entry.id === entryId)?.kind : undefined;
+    if (kind && kind !== 'character') return [];
+    return [[entryId ?? `character:${normalizeIdentityLabel(tie.names[side])}`, { name: tie.names[side], passage: tie.passage }] as const];
+  }));
+  for (const [key, current] of [...statuses ?? [], ...places ?? [], ...tieSides]) {
     if (listed.has(key)) continue;
     const seen = latest.get(key);
     if (!seen || current.passage.chapterNumber > seen.chapterNumber) latest.set(key, { name: current.name, chapterNumber: current.passage.chapterNumber });
@@ -552,7 +565,7 @@ export function appearancesSection(state: AppearancesState, statuses?: ReadonlyM
   const everyRecordOnly = [...latest].sort(([, left], [, right]) => right.chapterNumber - left.chapterNumber)
     .map(([key, current]): AppearancesSectionEntry => {
       const entry = entries.find(candidate => candidate.id === key);
-      return { name: entry?.name ?? current.name, entity: 'character', ...(entry?.mainCharacter ? { mainCharacter: true as const } : {}), ...recordOf(key) };
+      return { name: entry?.name ?? current.name, entity: 'character', ...(entry?.mainCharacter ? { mainCharacter: true as const } : {}), ...recordOf(key, entry?.name ?? current.name) };
     });
   // The main character is never counted out: the count is the others'.
   const mainRecordOnly = everyRecordOnly.filter(entry => entry.mainCharacter);

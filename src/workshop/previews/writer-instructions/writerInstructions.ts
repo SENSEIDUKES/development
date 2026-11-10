@@ -13,6 +13,7 @@ import {
   SEN_SPEAKERS_INSTRUCTIONS,
   SEN_STATUS_INSTRUCTIONS,
   SEN_PLACE_INSTRUCTIONS,
+  SEN_TIE_INSTRUCTIONS,
   HARNESS_CHAPTER_TARGET_MAX_WORDS,
   HARNESS_CHAPTER_TARGET_MIN_WORDS,
   assembleCapaPrompt,
@@ -64,6 +65,7 @@ export type WriterInstructionId =
   | 'appearance'
   | 'status'
   | 'place'
+  | 'ties'
   | 'reading-guide'
   | 'return-format'
   | 'hard-rules'
@@ -236,6 +238,11 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
     text: SEN_PLACE_INSTRUCTIONS,
   },
   {
+    id: 'ties', title: 'Ties', source: 'HARNESS',
+    when: 'Every chapter the tagger reads. The tagger is told each character\'s ties so far beside their name.',
+    text: SEN_TIE_INSTRUCTIONS,
+  },
+  {
     id: 'sound-cues', title: 'Sound Cues', source: 'HARNESS',
     when: 'Every chapter of a story with sound words. The list is the story\'s own Sound Words that a recording plays; shown here with the Library\'s preset a new story starts with.',
     text: `${SEN_SOUND_CUES_INSTRUCTIONS}\n${DEFAULT_SOUND_LIST}`,
@@ -348,7 +355,7 @@ export const WHOLE_PROMPTS: Record<Exclude<PipelineStepId, 'writer'>, readonly P
     operation: 'tag-chapter', storyId: '', chapterId: '', chapterNumber: numberSlot('number'), model: '', language: slot('language'),
     paragraphs: [slot('the chapter\'s first paragraph'), slot('every paragraph after it, one by one')],
     subjects: [
-      { kind: 'character', name: slot('each character'), status: slot('their status so far'), place: slot('where they are so far') },
+      { kind: 'character', name: slot('each character'), status: slot('their status so far'), place: slot('where they are so far'), ties: [{ with: slot('each one they are tied to'), tie: slot('how they stand') }] },
       { kind: 'thing', name: slot('each thing') },
       { kind: 'ability', name: slot('each ability') },
       { kind: 'place', name: slot('each place') },
@@ -483,7 +490,7 @@ export const PIPELINE: readonly PipelineStep[] = [
       'The story\'s sound words, music and atmospheres',
     ],
     gives: ['Tags on the chapter: who speaks, what is held, who appears, status, place, sounds, music → checked by code, then saved into the Codex'],
-    groups: [{ label: 'What it reads, in order', blocks: blocksOf(['tagger', 'tag-rules', 'speakers', 'holdings', 'appearance', 'status', 'place', 'sound-cues', 'soundtrack']) }],
+    groups: [{ label: 'What it reads, in order', blocks: blocksOf(['tagger', 'tag-rules', 'speakers', 'holdings', 'appearance', 'status', 'place', 'ties', 'sound-cues', 'soundtrack']) }],
   },
   {
     id: 'fixer', name: 'Fixer', runs: 'Only when the checks find a problem',

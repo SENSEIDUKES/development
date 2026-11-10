@@ -21,6 +21,11 @@ export interface WriterInstructionsChange {
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
     date: '2026-11-08',
+    summary: 'Ties, the fourth information tag (SENSEI, 2026-11-08: "Add ties"). The tagger is taught one more kind: where the prose shows a tie between two characters form or change (they swear brotherhood, become master and disciple, turn enemies, betray, marry, bond), it tags that sentence [[tie: Name | Other | how they stand now]], in a few plain words. The second name may be a thing bound to them, like a sword with a spirit. Built the way Status and Place are: a pair\'s latest tie is how they stand now, worked out from every chapter, never stored. The tagger now reads each character\'s ties so far beside their name ("ties: Ning Hao (sworn enemies)"), and the writer reads them in Appeared after each character\'s look; its heading now names ties beside status and place. Nothing else changed.',
+    changed: { ties: '0ad6a55030ec8e' },
+  },
+  {
+    date: '2026-11-08',
     summary: 'A Sound Cue may now cover up to 12 words instead of 8 (SENSEI, 2026-11-08, from The Frost-Scaled Companion: "take off the 8-word cap for sound cues. Maybe make it 12 words instead"). The 8-word cap was setting aside sounds the tagger had placed well: all three cues it blocked in that story ran 9 or 10 words, such as "a whimper that rose and fell and rose again". The Sound Cues instruction now reads "tag up to 12 of its own words"; the same limit applies to a cue placed by hand. Nothing else changed.',
     changed: { 'sound-cues': '184d8b3300abf2' },
   },

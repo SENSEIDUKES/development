@@ -53,6 +53,7 @@ export const ATTACHMENT_COLORS: Readonly<Record<string, { label: string; tone: s
   appearance: { label: 'Appearance', tone: 'rgba(167, 139, 250, .45)' },
   status: { label: 'Status', tone: 'rgba(251, 146, 60, .45)' },
   place: { label: 'Place', tone: 'rgba(56, 189, 248, .45)' },
+  tie: { label: 'Tie', tone: 'rgba(244, 114, 182, .45)' },
 };
 
 /** The attachment kind each overlay shows. */

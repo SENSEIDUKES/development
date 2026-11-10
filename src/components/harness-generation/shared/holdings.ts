@@ -15,6 +15,7 @@ import {
 import type { AppearanceAttachment } from '../../../narrative/appearances';
 import type { StatusAttachment } from '../../../narrative/statuses';
 import type { PlaceAttachment } from '../../../narrative/places';
+import type { TieAttachment } from '../../../narrative/ties';
 import { isHoldingTagWord, type WordTag } from '../../../narrative/marks';
 import type { CurrentStoryProjection } from '../../../narrative/generation';
 import { worldCardKey, type WorldCard, type WorldCardKindId, type WorldRecord } from '../../../narrative/worldRecord';
@@ -239,7 +240,7 @@ export interface CodexEntryResolver {
   character(name: string): CodexEntry;
   /** The thing or ability a name names, made when it is new. */
   entry(kind: Exclude<CodexEntryKind, 'character'>, name: string): CodexEntry;
-  /** The entry a name already names, a character before a thing, a thing before a place; never made. */
+  /** The entry a name already names, a character before a thing, a thing before a place, a place before an ability; never made. */
   existing(name: string): CodexEntry | undefined;
   /** New entries, in the order the chapter first named them. */
   readonly created: CodexEntry[];
@@ -260,7 +261,7 @@ export interface CodexEntryResolver {
  * replaces its tags, so one chapter's leavings are found one way.
  */
 /** The tags of a chapter that name Codex entries. */
-type TagsNaming = { holdingChanges?: HoldingChangeAttachment[]; appearances?: AppearanceAttachment[]; statuses?: StatusAttachment[]; places?: PlaceAttachment[] };
+type TagsNaming = { holdingChanges?: HoldingChangeAttachment[]; appearances?: AppearanceAttachment[]; statuses?: StatusAttachment[]; places?: PlaceAttachment[]; ties?: TieAttachment[] };
 
 export function codexEntriesWithoutChapter({ entries, otherChapters, chapter, storyId }: {
   entries: readonly CodexEntry[];
@@ -274,6 +275,7 @@ export function codexEntriesWithoutChapter({ entries, otherChapters, chapter, st
     ...(entry.appearances ?? []).map(appearance => appearance.payload.subject.entryId),
     ...(entry.statuses ?? []).map(status => status.payload.subject.entryId),
     ...(entry.places ?? []).flatMap(place => [place.payload.subject.entryId, place.payload.place.entryId]),
+    ...(entry.ties ?? []).flatMap(tie => [tie.payload.subject.entryId, tie.payload.other.entryId]),
   ];
   const usedElsewhere = new Set(otherChapters.filter(other => other.storyId === storyId).flatMap(named));
   const usedHere = new Set(named(chapter));
@@ -323,7 +325,7 @@ export function createCodexEntryResolver({ storyId, chapter, entries, declared, 
         : make('character', name);
     },
     entry: (kind, name) => existingOfKind(kind, name) ?? make(kind, name),
-    existing: name => (namesMain(name) ? existingMain() : undefined) ?? existingOfKind('character', name) ?? existingOfKind('thing', name) ?? existingOfKind('place', name),
+    existing: name => (namesMain(name) ? existingMain() : undefined) ?? existingOfKind('character', name) ?? existingOfKind('thing', name) ?? existingOfKind('place', name) ?? existingOfKind('ability', name),
     created,
   };
 }

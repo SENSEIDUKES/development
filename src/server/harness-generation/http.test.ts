@@ -112,6 +112,10 @@ describe('Harness Generation HTTP boundary', () => {
       { ...tagRequest, paragraphs: [] },
       { ...tagRequest, paragraphs: ['A paragraph.', 7] },
       { ...tagRequest, subjects: [{ name: 'Ye Chen', kind: 'faction' }] },
+      { ...tagRequest, subjects: [{ name: 'Ye Chen', kind: 'character', ties: [{ with: 'Elder Qin', tie: 7 }] }] },
+      { ...tagRequest, subjects: [{ name: 'Ye Chen', kind: 'character', ties: [{ with: '  ', tie: 'allies' }] }] },
+      { ...tagRequest, subjects: [{ name: 'Ye Chen', kind: 'character', ties: [{ with: 'Elder Qin', tie: ' ' }] }] },
+      { ...tagRequest, subjects: [{ name: 'Ye Chen', kind: 'character', ties: Array.from({ length: 13 }, (_, index) => ({ with: `Elder ${index}`, tie: 'allies' })) }] },
       { ...tagRequest, chapterNumber: 0 },
       { ...tagRequest, language: '' },
     ]) {

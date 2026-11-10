@@ -133,21 +133,32 @@ export const PLACE_TAG_WORDS = {
 } as const satisfies Record<string, readonly string[]>;
 
 /**
+ * The Ties tag word: how two characters stand with each other now, on the
+ * sentence where it forms or changes (`[[tie: Lin Qingshan | Ning Hao | sworn
+ * enemies]]`). The two names come first, then how they stand.
+ */
+export const TIE_TAG_WORDS = {
+  tie: ['tie', 'ties', 'tied', 'relationship', 'bond', 'bound to'],
+} as const satisfies Record<string, readonly string[]>;
+
+/**
  * The tag words of the tiny SEN language: every word-tag kind's words, each
  * with the other spellings a writer may slip into.
  */
-export const TAG_WORDS = { ...HOLDING_TAG_WORDS, ...APPEARANCE_TAG_WORDS, ...STATUS_TAG_WORDS, ...PLACE_TAG_WORDS } as const;
+export const TAG_WORDS = { ...HOLDING_TAG_WORDS, ...APPEARANCE_TAG_WORDS, ...STATUS_TAG_WORDS, ...PLACE_TAG_WORDS, ...TIE_TAG_WORDS } as const;
 
 export type TagWord = keyof typeof TAG_WORDS;
 export type HoldingTagWord = keyof typeof HOLDING_TAG_WORDS;
 export type AppearanceTagWord = keyof typeof APPEARANCE_TAG_WORDS;
 export type StatusTagWord = keyof typeof STATUS_TAG_WORDS;
 export type PlaceTagWord = keyof typeof PLACE_TAG_WORDS;
+export type TieTagWord = keyof typeof TIE_TAG_WORDS;
 
 export const isHoldingTagWord = (word: TagWord): word is HoldingTagWord => word in HOLDING_TAG_WORDS;
 export const isAppearanceTagWord = (word: TagWord): word is AppearanceTagWord => word in APPEARANCE_TAG_WORDS;
 export const isStatusTagWord = (word: TagWord): word is StatusTagWord => word in STATUS_TAG_WORDS;
 export const isPlaceTagWord = (word: TagWord): word is PlaceTagWord => word in PLACE_TAG_WORDS;
+export const isTieTagWord = (word: TagWord): word is TieTagWord => word in TIE_TAG_WORDS;
 
 /** A word tag, and where it sat in the clean text: it points at what follows it. */
 export interface WordTag {
@@ -552,15 +563,20 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
       const wordTag = matchAt(WORD_TAG, source, index);
       const word = wordTag ? tagWordOf(wordTag[1]) : undefined;
       if (wordTag && (word || PIPE.test(wordTag[2]))) {
-        const parts = wordTag[2].split(PIPE).map(part => part.trim()).filter(Boolean);
+        const written = wordTag[2].split(PIPE).map(part => part.trim());
+        const parts = written.filter(Boolean);
         const spelling = wordTag[1].trim().toLowerCase().replace(/[\s-]+/g, ' ');
         if (!word) wordTagIssues.push({ kind: 'unknown', word: wordTag[1].trim() });
         else if (parts.length < 2) wordTagIssues.push({ kind: 'incomplete', word });
+        // A tie's parts are read by position (who, with whom, how), so an empty one cannot simply close up.
+        else if (isTieTagWord(word) && written.some(part => !part)) wordTagIssues.push({ kind: 'incomplete', word });
         else {
           wordTags.push({ word, ...(spelling !== word ? { spelling } : {}), parts, offset: text.length });
           // The name a tag names: a holding's thing (its second part), an appearance's, a status's or a
-          // place tag's subject (its first), never the main character's own tag, never a rank.
-          const named = isAppearanceTagWord(word) || isStatusTagWord(word) || isPlaceTagWord(word) ? (/^mc$/i.test(parts[0]) ? undefined : parts[0]) : word === 'rank' ? undefined : parts[1];
+          // place tag's subject (its first), never the main character's own tag, never a rank, and never
+          // a tie's: it names two, and stands only in the margin, so no name is ever put back into the prose.
+          const named = isTieTagWord(word) || word === 'rank' ? undefined
+            : isAppearanceTagWord(word) || isStatusTagWord(word) || isPlaceTagWord(word) ? (/^mc$/i.test(parts[0]) ? undefined : parts[0]) : parts[1];
           const name = namedInPlace(text, source.slice(index + wordTag[0].length), named);
           if (name) {
             // The tag stood where its name belongs: the name stays, with the text's own spacing around it.

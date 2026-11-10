@@ -12,11 +12,8 @@
 export {
   CelestialStorePanel,
   type CelestialStorePanelProps,
+  type CelestialStoreTab,
 } from '../../components/celestial-store/development/CelestialStorePanel';
-export {
-  ShopCard,
-  type ShopCardProps,
-} from '../../components/celestial-store/development/ShopCard';
 export {
   CELESTIAL_STORE_CONFIG,
   ENERGY_ELIGIBLE_FAMILIAR_IDS,

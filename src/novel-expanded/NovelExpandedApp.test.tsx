@@ -1775,7 +1775,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(address()).toBe(`/app/?page=profile&cave=${encodeURIComponent('/home/store')}`);
     const store = document.querySelector<HTMLElement>('[data-cave-destination="store"]')!;
     expect(store).toBeTruthy();
-    expect(store.querySelector('#cave-destination-store-title')?.textContent).toContain('Celestial Store');
+    expect(store.querySelector('.celestial-store-title')?.textContent).toContain('Celestial Store');
     expect(store.querySelector('[data-store-shelf="familiars"]')).toBeTruthy();
     expect(document.querySelector('[data-cave-destination="storefront"]')).toBeNull();
   });

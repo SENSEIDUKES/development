@@ -404,23 +404,21 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </UserProfileCaveDestination>
         );
       case 'store':
-        // The official Celestial Store's dedicated page. The creator's own
-        // User Store stays the public `storefront` destination above.
+        // The official Celestial Store's dedicated full-bleed stage. The creator's
+        // own User Store stays the public `storefront` destination above.
         return (
-          <UserProfileCaveDestination id="store" title="Celestial Store" subtitle="Familiars of the Celestial Library"
-            icon={<SENNavigationIcon name="store" size={18} />} onBack={returnHome}>
-            <CelestialStorePanel
-              options={familiarOptions}
-              cultivation={cultivation}
-              energy={energyAccount}
-              equippedFamiliarId={profile?.familiarId}
-              ownedFamiliarIds={storeAccount.ownedFamiliarIds}
-              onEquip={controller.handleFamiliarChange}
-              equipPending={controller.isSavingFamiliar}
-              onPurchase={celestialStore ? storeAccount.purchase : undefined}
-              purchasePending={storeAccount.pending}
-            />
-          </UserProfileCaveDestination>
+          <CelestialStorePanel
+            options={familiarOptions}
+            cultivation={cultivation}
+            energy={energyAccount}
+            equippedFamiliarId={profile?.familiarId}
+            ownedFamiliarIds={storeAccount.ownedFamiliarIds}
+            onEquip={controller.handleFamiliarChange}
+            equipPending={controller.isSavingFamiliar}
+            onPurchase={celestialStore ? storeAccount.purchase : undefined}
+            purchasePending={storeAccount.pending}
+            onBack={returnHome}
+          />
         );
       case 'energy':
         return (
@@ -556,8 +554,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     }
   };
 
-  // The Familiar page is a stage of its own, signed in and out of the public view only.
-  const stagePage = view === 'familiar' && !isPublicView && !isSignedOut;
+  // The Familiar and Celestial Store pages are stages of their own, signed in and out of the public view only.
+  const stagePage = (view === 'familiar' || view === 'store') && !isPublicView && !isSignedOut;
   const caveSidebarMounted = isPublicView || (!isSignedOut && !spiritLinkGateMounted);
   // On laptops the Pathways sidebar is the Library's navigation, so it is always
   // present; the Cave's own pages nest under Profile only once the Cave is open.

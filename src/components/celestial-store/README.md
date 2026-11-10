@@ -7,29 +7,32 @@ Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-ru
   account port, and the page), `src/host/familiar/catalogue.ts` (the one Familiar registry it
   reads), `src/library/cultivation/` and `src/components/energy/` (the balance reads)
 - **Workshop preview:** `?preview=celestial-store` for every Store state against preview props;
-  `?preview=user-profile&cave=/home/store` for the live Cave destination against the
-  development QI ledger and Energy account
+  `?preview=user-profile&cave=/home/store` and `/app/?page=profile&cave=%2Fhome%2Fstore` for the
+  live Cave stage against the development QI ledger and Energy account
 - **Created:** 2026-09-22
-- **Last recorded Workshop update:** 2026-09-22
-- **Historical source inspection:** 2026-09-22 (the attached reference art is the visual target; the
-  Familiar catalogue, Energy pricing, and profile Store stub were inspected in this repository)
-- **Status:** approved reconstruction (Workshop Replica Mode B), first rotation live
-- **Visual target:** the supplied Celestial Store reference — midnight navy, antique gold and
-  blue-purple seals, a two-column mobile card grid — rendered with the real integrated
-  Familiar assets and the existing Library design language, never the reference's generated
-  character art. The reference's split Energy/QI shelves were consolidated into one
-  Familiars shelf on 2026-09-22; the currency emblem on each price says how a Familiar is
-  bought, so the Store does not sort them into separate pens and name the obvious.
+- **Last recorded Workshop update:** 2026-11-10
+- **Historical source inspection:** 2026-09-22 (the Familiar catalogue, Energy pricing, and
+  profile Store stub were inspected in this repository)
+- **Status:** approved reconstruction (Workshop Replica Mode B), Genshin-inspired two-tab stage live
+- **Visual target:** Genshin Impact's shop simplicity adapted to the Celestial Library — a
+  viewport-locked (`100dvh`, `overflow: clip`) full-bleed stage with no scrolling card stacks and
+  no boxed character wells. Segmented top parchment tabs on phones shift to a left-side vertical
+  Shop rail on wider containers (`>= 42rem`), pairing a vertical showcase on tablet portrait with a
+  side-by-side showcase on landscape and desktop. `Home` spotlights today's lead unowned or
+  discounted offer above a sleek, compact purchase plinth with plain daily shop availability;
+  `Familiar` presents one companion large on the open celestial astrolabe stage with flanking
+  swipe/arrow controls, a 6-slot priced shop shelf (bright currency price tags on unowned items vs
+  recessed dimmed `Owned` / `Active` cards on purchased items), and weighted Buy vs compact Equip
+  actions.
 
-The Celestial Store is the official first-party Store, extracted from the bottom of the
-profile into its own dedicated Cave destination (`/home/store`). The profile's Home keeps its
-small Store entry button as the door; the page itself no longer lives on the profile. The
-creator **User Store** (`/public/creators/<uid>/storefront`) is a different surface and is
-untouched.
+The Celestial Store is the official first-party Store on its own dedicated Cave stage
+(`/home/store`). The profile's Home keeps its small Store entry button as the door; the page
+itself fills the viewport between the floating header and bottom navigation dock. The creator
+**User Store** (`/public/creators/<uid>/storefront`) is a different surface and is untouched.
 
-The first Store sells Familiars only. There are deliberately no placeholder sections for
-audio packs, themes, cave items, cosmetics, creator products, or bundles — future categories
-arrive as their own shelves when they are real.
+The Store currently sells Familiars only, organized into two tabs (`Home` and `Familiar`). There
+are deliberately no placeholder tabs or shelves for audio packs, themes, cave items, cosmetics,
+creator products, or bundles — future categories arrive as their own tabs when they are real.
 
 ## What lives where
 
@@ -38,9 +41,8 @@ arrive as their own shelves when they are real.
 | Offer configuration | `shared/storeConfig.ts` | Store merchandising policy only: the Energy/QI eligible pools, slot counts (2 Energy, 4 QI), and aliases to the shared current rarity prices (Energy Rare 300 / Epic 600 / Legendary 1,000; QI Common 500 / Rare 2,000 / Epic 8,000 / Legendary 25,000). Never a second Familiar registry. |
 | Daily rotation | `shared/rotation.ts` | One shared deterministic rotation per local calendar day: a seeded shuffle (xmur3 + mulberry32 on `celestial-store:<day>:<currency>`) of each currency pool, resolved against the host-supplied catalogue projection. Stable all day, reshuffles the next day. No personalization, probabilities, or offer engine. |
 | Account port | `shared/storeAccount.ts` | Ownership and purchases as host account state — never inferred from Store configuration. The default Familiar (Quill) is implicitly owned and never merchandised. |
-| The page | `development/CelestialStorePanel.tsx` | Live balances (QI ledger read + Energy account read), one framed shelf holding the whole rotation, and the focused detail dialog with Buy / Owned / Equip / Equipped. |
-| Shop card | `development/ShopCard.tsx` | One purchasable thing on a shelf: artwork well, name, tier badge, and the price or owned line. Deliberately generic — it knows nothing about Familiars; the caller supplies the artwork renderer and the price line, so a future Audio Pack or Theme reuses it unchanged. Published as part of `@seihouse/library/celestial-store` and expected to be worked on on its own. |
-| Styles | `development/celestialStore.css`, `development/shopCard.css` | Midnight-navy shelf in a gold frame with restrained glow; the card owns its own frame, artwork well, and badges. |
+| The stage | `development/CelestialStorePanel.tsx` | Viewport-locked two-tab stage (`Home` daily overview + `Familiar` showcase), live `BalancePills` (QI ledger read + Energy account read), unboxed portrait/hero stage artwork, 6-offer medallion quick picker, compact key-value rows, and in-place Buy / Owned / Equip / Equipped actions. |
+| Styles | `development/celestialStore.css` | Phone-first `dvh` stage shell (`overflow: clip`), safe-area clearances, translucent blurred HUD, container-queried Genshin left Shop rail on wider screens, and short-height viewport adaptations. |
 
 ## Boundaries
 
@@ -83,6 +85,15 @@ server-side. The Cave button is the current entry point; future bottom-navigatio
 placement remains undecided.
 
 ## Workshop history
+
+- **2026-11-10 Genshin-inspired viewport-locked stage** — Reimagined the Celestial Store as a
+  non-scrolling (`100dvh`, `overflow: clip`) native mobile stage with two tabs (`Home` and
+  `Familiar`), replacing the boxed two-column card grid (`ShopCard` retired) and popup purchase
+  dialog. `Home` spotlights today's featured companion with a compact daily summary; `Familiar`
+  displays one companion large on the open stage with swipe/arrow controls, a 6-medallion quick
+  picker strip, compact key-value rows, and in-place Buy/Equip actions. Segmented top pill tabs
+  on phones become Genshin's vertical left-side Shop rail on wider containers, and the Cave mounts
+  `/home/store` directly as a full-bleed stage between the header and bottom navigation dock.
 
 - **2026-09-22 current price schedule** — Confirmed the shared Energy and QI values as the
   authoritative current catalogue values. The Store still uses its existing

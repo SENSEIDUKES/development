@@ -377,6 +377,23 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-10 (Setting, in place of Scene):** SENSEI dropped the planned
+  Scene tag: where, who and mood were already recorded, and only when was
+  not. The tagger tags the sentence that says when it is or what it is like,
+  `[[setting: night | snow | a red moon]]` or `[[setting: three years later]]`
+  (`SEN_SETTING_INSTRUCTIONS`, `shared/settingSkill.ts`), only where the prose
+  says so. The HARNESS reads it (`readSettingTag`, `placeSettings`,
+  `shared/settings.ts`), matching each part to the fixed lists in
+  `src/narrative/settings.ts` (time of day, conditions, season; any other part
+  is the novel's own words), and saves a `SettingAttachment` on its sentence
+  (`HarnessChapter.settings`, schema 47, an optional field). A setting names
+  no one, so nothing resolves at commit, and it belongs to its chapter: no
+  Codex card carries it; `settingAt` adds up one chapter's settings (each
+  list part holds until named again, the own words only from the latest),
+  and the writer reads where each recent chapter ended as `endedIn` beside
+  its recap in Previously On. Create mode lights Setting as its own Story
+  info kind. Recorded in the Writer Instructions history. Its fixed lists are
+  what the planned living Codex views will draw from (NOVEL_EXPANDED).
 - **2026-11-08 (Ties, the fourth information tag):** SENSEI: "Add ties."
   Built the way Status and Place are. The tagger tags the sentence where a
   tie between two characters forms or changes, `[[tie: Name | Other | how

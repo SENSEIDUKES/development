@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createTagRows, litKinds, nextLit, type CreateTagKind } from './createTags';
 import type { ChapterTaggingAccount } from '../shared/chapterTagging';
 
-const none: Record<CreateTagKind, number> = { soundscape: 0, atmosphere: 0, cues: 0, speakers: 0, holdings: 0, appearances: 0, status: 0, place: 0, ties: 0 };
+const none: Record<CreateTagKind, number> = { soundscape: 0, atmosphere: 0, cues: 0, speakers: 0, holdings: 0, appearances: 0, status: 0, place: 0, ties: 0, setting: 0 };
 
 describe('Create mode\'s tags', () => {
   it('lights every kind, one kind alone, or none, and a second tap lights them all again', () => {
-    expect(litKinds('all')).toEqual(['soundscape', 'atmosphere', 'cues', 'speakers', 'holdings', 'appearances', 'status', 'place', 'ties']);
+    expect(litKinds('all')).toEqual(['soundscape', 'atmosphere', 'cues', 'speakers', 'holdings', 'appearances', 'status', 'place', 'ties', 'setting']);
     expect(litKinds('speakers')).toEqual(['speakers']);
     expect(litKinds('off')).toEqual([]);
     expect(nextLit('all', 'cues')).toBe('cues');
@@ -25,6 +25,7 @@ describe('Create mode\'s tags', () => {
         { kind: 'Status', said: 'Tagged before Status existed: tag it again to read it.', state: 'not-asked' },
         { kind: 'Place', said: 'Tagged before Place existed: tag it again to read it.', state: 'not-asked' },
         { kind: 'Ties', said: 'Tagged before Ties existed: tag it again to read it.', state: 'not-asked' },
+        { kind: 'Setting', said: 'Tagged before Setting existed: tag it again to read it.', state: 'not-asked' },
       ],
     };
     const rows = createTagRows({ counts: { ...none, speakers: 1 }, findings: { speakers: '1 spoken line: Ye Chen' }, account });
@@ -36,6 +37,7 @@ describe('Create mode\'s tags', () => {
       status: 'Tagged before Status existed: tag it again to read it.',
       place: 'Tagged before Place existed: tag it again to read it.',
       ties: 'Tagged before Ties existed: tag it again to read it.',
+      setting: 'Tagged before Setting existed: tag it again to read it.',
     });
     expect(rows.filter(row => row.found).map(row => row.kind)).toEqual(['speakers']);
   });
@@ -45,5 +47,12 @@ describe('Create mode\'s tags', () => {
     const account: ChapterTaggingAccount = { status: 'tagged', headline: 'Read', problems: [], kinds: [{ kind: 'Ties', said: summary, state: 'found' }] };
     const rows = createTagRows({ counts: { ...none, ties: 1 }, findings: { ties: summary }, account });
     expect(rows.find(row => row.kind === 'ties')).toEqual({ kind: 'ties', count: 1, said: summary, found: true });
+  });
+
+  it('shows a setting finding and its count', () => {
+    const summary = '1 setting: night · snow';
+    const account: ChapterTaggingAccount = { status: 'tagged', headline: 'Read', problems: [], kinds: [{ kind: 'Setting', said: summary, state: 'found' }] };
+    const rows = createTagRows({ counts: { ...none, setting: 1 }, findings: { settings: summary }, account });
+    expect(rows.find(row => row.kind === 'setting')).toEqual({ kind: 'setting', count: 1, said: summary, found: true });
   });
 });

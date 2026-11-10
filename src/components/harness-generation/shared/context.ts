@@ -13,6 +13,7 @@ import { GENERATION_PACKET_BUDGET, estimatePacketTokens } from './packetBudget';
 import { hasWorldRecord } from '../../../narrative/worldRecord';
 import { storyWorldRecord } from './foundation';
 import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from './ids';
+import { settingAt, settingLine } from './settings';
 import type { CurrentStoryProjection, HarnessStory, HarnessWorkspaceState, PacketSectionId, PacketSectionMeasurement, PreviouslyOnEntry, RhythmDirectionSection, StoryFoundationRevision, StoryInformationPacket } from '../../../narrative/generation';
 
 const text = (value: string | undefined) => value?.trim() ? value.trim() : undefined;
@@ -143,7 +144,10 @@ export const compileStoryInformationPacket = (
   const omitted: StoryInformationPacket['diagnostics']['omitted'] = [];
   const withRecap = chapters.filter(chapter => chapter.recap?.text);
   const previouslyOn: PreviouslyOnEntry[] = withRecap.slice(-GENERATION_PACKET_BUDGET.previouslyOnCount)
-    .map(chapter => ({ chapterNumber: chapter.chapterNumber, title: chapter.title, recap: chapter.recap!.text }));
+    .map(chapter => {
+      const endedIn = settingLine(settingAt(chapter));
+      return { chapterNumber: chapter.chapterNumber, title: chapter.title, recap: chapter.recap!.text, ...(endedIn ? { endedIn } : {}) };
+    });
   for (const chapter of withRecap.slice(0, Math.max(0, withRecap.length - GENERATION_PACKET_BUDGET.previouslyOnCount))) {
     omitted.push({ section: 'previouslyOn', label: `Chapter ${chapter.chapterNumber}: ${chapter.title}`, sourceRecordIds: [chapter.id],
       reason: `Older than the latest ${GENERATION_PACKET_BUDGET.previouslyOnCount} recaps; it remains saved with its chapter.` });

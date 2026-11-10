@@ -942,7 +942,8 @@ When a session asks "what now?", start here:
    story: **first appearance** (built 2026-10-14; its first test on Test Story -
    Blade is done and its fixes are in), **Status** (built 2026-10-31) and
    **Place** (built 2026-11-04). Is everyone new tagged, do the looks match the
-   prose, and do statuses and places hold? Then Stage E1 step 4, Scene.
+   prose, and do statuses and places hold? Ties (built 2026-11-08) and
+   Setting (built 2026-11-10) join that test.
 4. **Agent:** the next step of reading in every script (product track, item
    1): a reading font chosen on purpose for each remaining script. Right-to-left
    reading is built.
@@ -1089,12 +1090,22 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
    Codex card shows "At …" with its passage, and each place card its look
    and who is there now. The fixer gained its place check (someone who acts
    after the chapter names another place, with no place tag to take them
-   there), and its duplicate-name check now covers places. Where a scene is
-   stays with Scene. Not yet proven with a real model.
-4. **Scene:** where a story scene starts, where it is, when (time of day,
-   conditions) and who is present. With appearance, this is what an artist
-   needs to draw a panel. Its first piece is the cast plan before writing
-   (Stage E3).
+   there), and its duplicate-name check now covers places. Not yet proven
+   with a real model.
+4. **Setting, in place of Scene:** when it is and what it is like.
+   **Built (2026-11-10).** SENSEI dropped Scene as its own tag: where a scene
+   is (Place), who is in it (Appears, Speakers, Status and Place together)
+   and its mood (Atmosphere) were already recorded. What nothing recorded was
+   when: the tagger now tags the sentence that says it,
+   `[[setting: night | snow | a red moon]]` or `[[setting: three years later]]`,
+   only where the prose says so, since novels say it only sometimes. Its time
+   of day (dawn, day, dusk, night), conditions (clear, cloudy, rain, storm,
+   snow, fog, wind) and season come from fixed lists, so a view can draw them,
+   with the novel's own words beside them. Unlike every other information
+   tag, a setting belongs to its **chapter record**, not the world record: no
+   Codex card carries it, and nothing of it crosses into the next chapter
+   except where each recent chapter ended, which the writer reads as endedIn
+   beside its recap in Previously On. Not yet proven with a real model.
 5. **Ties:** allied, hostile, related, bound.
    **Built (2026-11-08),** the way Status is built: the tagger tags the
    sentence where a tie between two characters forms or changes,
@@ -1116,12 +1127,23 @@ The chapter writer now reads that world (THE WORLD AT CHAPTER 0 in Story
 Information). The CTE engine and the world judge are the phases after it, not
 built.
 
+**Later: the living Codex, themes and views (planned, SENSEI 2026-11-10).**
+Today's Codex is the plain, technical view of the record. Once the tags are
+consistent, the same record is presented in themes that suit each story's
+genre: a school drama's Codex might read like a diary or a yearbook, a LitRPG
+kingdom-builder's like stat sheets and a map. The facts stay the same;
+only how they are shown changes, which keeps the record medium-neutral
+([HARNESS_PRINCIPLES](./src/components/harness-generation/HARNESS_PRINCIPLES.md)).
+One view follows the reader: its backdrop is the chapter's Setting where they
+are reading (night with falling snow, dawn in fog, deep winter). Nothing of
+this is built yet; Setting's fixed lists are what it will draw from.
+
 **Stage E2: complete the Codex on the record.** The Codex is remade alongside
 the tags ("the Codex grows with the record", [How we build](#how-we-build)):
 since 2026-10-13 it has characters (with their holdings as one section of each
 character's sheet) and items, each fact linked to the passage that made it,
 and now abilities, places, factions, the Bestiary and world rules.
-Each tag of Stage E1 adds its part (looks, places, scenes, status, ties); what
+Each tag of Stage E1 adds its part (looks, places, status, ties; a setting belongs to its chapter, not a card); what
 remains here is the timeline and its finish. Done when the record passes the two tests in the principles: **the
 artist test** and **the save-game test**.
 
@@ -1214,8 +1236,9 @@ ever deleted; everything else waits in the full record.
   writer decides inside its one call, so a long-gone character who returns
   mid-chapter gets no card. First fix, no model: pull the card of every name
   in the reader's direction, the arc goal, the pins and the last recap. Full
-  fix: a small "who is in this chapter" call before writing, the first piece
-  of Scene (Stage E1, step 4).
+  fix: a small "who is in this chapter" call before writing. It was once
+  planned as Scene's first piece; Scene became Setting (Stage E1, step 4)
+  without it, so it stays here, unbuilt.
 - **Snapshots.** At 1,000 chapters, working everything out from every chapter
   each time is too slow: a snapshot of the record is saved at each arc's end,
   and at each branch point once Alter Fate branches exist (every branch is its

@@ -8,6 +8,7 @@ import {
   SEN_STATUS_INSTRUCTIONS,
   SEN_PLACE_INSTRUCTIONS,
   SEN_TIE_INSTRUCTIONS,
+  SEN_SETTING_INSTRUCTIONS,
   presentSoundVocabulary,
   presentSoundtrackVocabulary,
   type HarnessGenerationResponse,
@@ -38,7 +39,7 @@ import { CHAPTER_MODELS, lowestReasoningLevel, requireTextModelKey, type Reasoni
 
 /** Who the tagger is and what its job is, said first. */
 export const HARNESS_TAGGER_ROLE = [
-  'You tag a finished chapter of a novel. The chapter is already written and is not yours to change: you write the app\'s tags beside it, as notes in the margin, and nothing else. A tag marks where something happens in the prose — a sound, who speaks, a change to what someone has, someone stepping onto the page, how someone is now, where someone arrives — so the app can play it, voice it and record it.',
+  'You tag a finished chapter of a novel. The chapter is already written and is not yours to change: you write the app\'s tags beside it, as notes in the margin, and nothing else. A tag marks where something happens in the prose — a sound, who speaks, a change to what someone has, someone stepping onto the page, how someone is now, where someone arrives, when it is — so the app can play it, voice it and record it.',
 ].join('\n\n');
 
 /** What the tagger hands back: notes, never the chapter. */
@@ -68,6 +69,7 @@ export const presentTaggerTagTeaching = (request: Pick<HarnessTagRequest, 'sound
     SEN_STATUS_INSTRUCTIONS,
     SEN_PLACE_INSTRUCTIONS,
     SEN_TIE_INSTRUCTIONS,
+    SEN_SETTING_INSTRUCTIONS,
   ];
   return [
     HARNESS_TAG_RULES,

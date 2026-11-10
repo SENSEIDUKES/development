@@ -14,6 +14,7 @@ import {
   SEN_STATUS_INSTRUCTIONS,
   SEN_PLACE_INSTRUCTIONS,
   SEN_TIE_INSTRUCTIONS,
+  SEN_SETTING_INSTRUCTIONS,
   HARNESS_CHAPTER_TARGET_MAX_WORDS,
   HARNESS_CHAPTER_TARGET_MIN_WORDS,
   assembleCapaPrompt,
@@ -66,6 +67,7 @@ export type WriterInstructionId =
   | 'status'
   | 'place'
   | 'ties'
+  | 'setting'
   | 'reading-guide'
   | 'return-format'
   | 'hard-rules'
@@ -241,6 +243,11 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
     id: 'ties', title: 'Ties', source: 'HARNESS',
     when: 'Every chapter the tagger reads. The tagger is told each character\'s ties so far beside their name.',
     text: SEN_TIE_INSTRUCTIONS,
+  },
+  {
+    id: 'setting', title: 'Setting', source: 'HARNESS',
+    when: 'Every chapter the tagger reads. A setting belongs to its chapter: nothing of it is listed beside a name, and the writer reads only where each recent chapter ended, in Previously On.',
+    text: SEN_SETTING_INSTRUCTIONS,
   },
   {
     id: 'sound-cues', title: 'Sound Cues', source: 'HARNESS',
@@ -490,7 +497,7 @@ export const PIPELINE: readonly PipelineStep[] = [
       'The story\'s sound words, music and atmospheres',
     ],
     gives: ['Tags on the chapter: who speaks, what is held, who appears, status, place, sounds, music → checked by code, then saved into the Codex'],
-    groups: [{ label: 'What it reads, in order', blocks: blocksOf(['tagger', 'tag-rules', 'speakers', 'holdings', 'appearance', 'status', 'place', 'ties', 'sound-cues', 'soundtrack']) }],
+    groups: [{ label: 'What it reads, in order', blocks: blocksOf(['tagger', 'tag-rules', 'speakers', 'holdings', 'appearance', 'status', 'place', 'ties', 'setting', 'sound-cues', 'soundtrack']) }],
   },
   {
     id: 'fixer', name: 'Fixer', runs: 'Only when the checks find a problem',

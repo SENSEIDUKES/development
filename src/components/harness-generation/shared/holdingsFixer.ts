@@ -111,9 +111,9 @@ const paragraphIndexOf = (chapter: Pick<HarnessChapter, 'chapterNumber' | 'parag
 const overlaps = (anchor: { blockId: string; startOffset: number; endOffset: number }, blockId: string, start: number, end: number) =>
   anchor.blockId === blockId && anchor.startOffset < end && anchor.endOffset > start;
 
-/** Whether a Sound Cue, a speaker, an appearance, a status, a place tag or a tie sits on a sentence: such a sentence is never rewritten. */
+/** Whether a Sound Cue, a speaker, an appearance, a status, a place tag, a tie or a setting sits on a sentence: such a sentence is never rewritten. */
 const carriesSpans = (chapter: HarnessChapter, blockId: string, start: number, end: number) =>
-  [...(chapter.soundCues ?? []), ...(chapter.speakers ?? []), ...(chapter.appearances ?? []), ...(chapter.statuses ?? []), ...(chapter.places ?? []), ...(chapter.ties ?? [])].some(span => overlaps(span.anchor, blockId, start, end));
+  [...(chapter.soundCues ?? []), ...(chapter.speakers ?? []), ...(chapter.appearances ?? []), ...(chapter.statuses ?? []), ...(chapter.places ?? []), ...(chapter.ties ?? []), ...(chapter.settings ?? [])].some(span => overlaps(span.anchor, blockId, start, end));
 
 const thingLabel = (thing: CharacterHoldings['things'][number]) =>
   `${thing.name}${thing.count > 1 ? ` ×${thing.count}` : ''}${thing.equipped ? ' (in hand)' : ''}`;
@@ -491,7 +491,7 @@ export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixRes
     if (!replacement || /\[\[|\]\]/.test(replacement)) return { problem: 'no corrected sentence was given' };
     if (splitSentences(replacement, locale).length !== 1) return { problem: 'the correction was more than one sentence' };
     if (replacement.length > Math.max(sentence.length * 2, sentence.length + 120)) return { problem: 'the correction rewrote far more than the sentence' };
-    if (carriesSpans(chapter, blockId, start, end)) return { problem: 'a Sound Cue, a speaker, an appearance, a status, a place tag or a tie sits on the sentence' };
+    if (carriesSpans(chapter, blockId, start, end)) return { problem: 'a Sound Cue, a speaker, an appearance, a status, a place tag, a tie or a setting sits on the sentence' };
     const text = `${paragraph.slice(0, start)}${replacement}${paragraph.slice(end)}`;
     const move = <A extends { anchor: SpanAnchor }>(attachment: A): A => (attachment.anchor.blockId === blockId
       ? { ...attachment, anchor: rebaseSpan(attachment.anchor, start, end - start, replacement.length, text, locale ?? 'en') as SpanAnchor }
@@ -502,8 +502,9 @@ export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixRes
     const statuses = chapter.statuses?.map(move);
     const places = chapter.places?.map(move);
     const ties = chapter.ties?.map(move);
+    const settings = chapter.settings?.map(move);
     const movedChanges = kept.map(move);
-    if ([...(soundCues ?? []), ...(speakers ?? []), ...(appearances ?? []), ...(statuses ?? []), ...(places ?? []), ...(ties ?? []), ...movedChanges].some(span => span.anchor.detached)) {
+    if ([...(soundCues ?? []), ...(speakers ?? []), ...(appearances ?? []), ...(statuses ?? []), ...(places ?? []), ...(ties ?? []), ...(settings ?? []), ...movedChanges].some(span => span.anchor.detached)) {
       return { problem: 'something else sits across the sentence' };
     }
     const anchor: SpanAnchor = { level: 'span', blockId, startOffset: start, endOffset: start + replacement.length, selectedText: replacement };
@@ -511,7 +512,7 @@ export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixRes
     const body = harnessChapterBody(paragraphs, chapter.metrics.paragraphTarget);
     const draft: HarnessChapter = {
       ...chapter, paragraphs: body.paragraphs, prose: body.prose, metrics: body.metrics,
-      ...(soundCues ? { soundCues } : {}), ...(speakers ? { speakers } : {}), ...(appearances ? { appearances } : {}), ...(statuses ? { statuses } : {}), ...(places ? { places } : {}), ...(ties ? { ties } : {}),
+      ...(soundCues ? { soundCues } : {}), ...(speakers ? { speakers } : {}), ...(appearances ? { appearances } : {}), ...(statuses ? { statuses } : {}), ...(places ? { places } : {}), ...(ties ? { ties } : {}), ...(settings ? { settings } : {}),
     };
     const resolved = placed(withChanges(draft, movedChanges), entries, anchor, tags.changes);
     return {

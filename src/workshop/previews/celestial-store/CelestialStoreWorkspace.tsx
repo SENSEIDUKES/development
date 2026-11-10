@@ -123,11 +123,17 @@ function CelestialStorePreview({
     };
     updateHeight();
     window.addEventListener('resize', updateHeight);
-    const controls = document.querySelector('[data-workshop-controls]');
-    const observer = typeof ResizeObserver !== 'undefined' && controls
+
+    const observer = typeof ResizeObserver !== 'undefined'
       ? new ResizeObserver(updateHeight)
       : null;
-    if (controls && observer) observer.observe(controls);
+
+    if (observer) {
+      if (document.body) observer.observe(document.body);
+      const controls = document.querySelector('[data-workshop-controls]');
+      if (controls) observer.observe(controls);
+    }
+
     return () => {
       window.removeEventListener('resize', updateHeight);
       observer?.disconnect();

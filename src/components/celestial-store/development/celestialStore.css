@@ -956,6 +956,11 @@
 .celestial-store-status:empty {
   display: none;
 }
+.celestial-store-status[data-outcome="insufficient"],
+.celestial-store-status[data-outcome="already-owned"],
+.celestial-store-status[data-outcome="failed"] {
+  color: #fcd34d;
+}
 
 .celestial-store button:focus-visible {
   outline: 2px solid #7dd3ff;
@@ -1072,11 +1077,11 @@
 /* ==========================================================================
    Tier 3: Side-by-side Genshin Showcase Composition
    - Laptop & desktop (>= 58rem)
-   - OR Landscape phones / short windows (>= 42rem and max-height: 639px)
+   - OR Landscape phones / short windows (>= 48rem and max-height: 639px)
    ========================================================================== */
-@container celestial-store (min-width: 58rem) or ((min-width: 42rem) and (max-height: 639px)) {
+@container celestial-store (min-width: 58rem) or ((min-width: 48rem) and (max-height: 639px)) {
   .celestial-store-stage-content {
-    grid-template-columns: minmax(19.5rem, 1.22fr) minmax(15rem, 1fr);
+    grid-template-columns: minmax(14.5rem, 1.22fr) minmax(13.5rem, 1fr);
     grid-template-rows: minmax(0, 1fr);
     align-items: safe center;
     gap: clamp(0.65rem, 1.8cqw, 1.5rem);

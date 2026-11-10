@@ -256,24 +256,37 @@ export function CelestialStorePanel({
     equippedFamiliarId === offer.familiarId
     || ownsFamiliar(ownedFamiliarIds, offer.familiarId, offer.option.isDefault);
 
-  // Home is a Store front first: prioritize an unowned sale, then any configured
-  // sale, then the first unowned offer for sale today, falling back to the lead
-  // offer only when the player already owns all 6 of today's shop offers.
+  const [tab, setTab] = useState<CelestialStoreTab>(defaultTab);
+  const [lastPurchasedHomeOfferId, setLastPurchasedHomeOfferId] = useState<string | null>(null);
+
+  // Home is a Store front first: prioritize keeping a just-purchased offer featured
+  // through confirmation, then prioritize an unowned sale, then any configured sale,
+  // then the first unowned offer for sale today, falling back to the lead offer only
+  // when the player already owns all 6 of today's shop offers.
   const featuredOffer = useMemo(
-    () => (
-      offers.find(offer => !isFamiliarOwned(offer) && offer.salePrice !== undefined)
-      ?? offers.find(offer => offer.salePrice !== undefined)
-      ?? offers.find(offer => !isFamiliarOwned(offer))
-      ?? offers[0]
-      ?? null
-    ),
-    [offers, ownedFamiliarIds, equippedFamiliarId],
+    () => {
+      if (lastPurchasedHomeOfferId) {
+        const justBought = offers.find(offer => offer.familiarId === lastPurchasedHomeOfferId);
+        if (justBought) return justBought;
+      }
+      return (
+        offers.find(offer => !isFamiliarOwned(offer) && offer.salePrice !== undefined)
+        ?? offers.find(offer => offer.salePrice !== undefined)
+        ?? offers.find(offer => !isFamiliarOwned(offer))
+        ?? offers[0]
+        ?? null
+      );
+    },
+    [offers, ownedFamiliarIds, equippedFamiliarId, lastPurchasedHomeOfferId],
   );
 
-  const [tab, setTab] = useState<CelestialStoreTab>(defaultTab);
   const [focusedId, setFocusedId] = useState<string | null>(() => (offers[0]?.familiarId ?? null));
   const [direction, setDirection] = useState<'next' | 'previous' | null>(null);
-  const [purchaseStatus, setPurchaseStatus] = useState<{ termsKey: string; message: string } | null>(null);
+  const [purchaseStatus, setPurchaseStatus] = useState<{
+    termsKey: string;
+    message: string;
+    outcome: CelestialStorePurchaseResult['outcome'];
+  } | null>(null);
   const [failedPortraits, setFailedPortraits] = useState<ReadonlySet<string>>(() => new Set());
   const [failedThumbs, setFailedThumbs] = useState<ReadonlySet<string>>(() => new Set());
 
@@ -358,6 +371,8 @@ export function CelestialStorePanel({
     if (!next) return;
     event.preventDefault();
     setTab(next);
+    setLastPurchasedHomeOfferId(null);
+    setPurchaseStatus(null);
     tabRefs.current[next]?.focus();
   };
 
@@ -389,7 +404,10 @@ export function CelestialStorePanel({
     setPurchasing(true);
     try {
       const result = await onPurchase({ familiarId: offer.familiarId, currency: offer.currency, price });
-      setPurchaseStatus({ termsKey: key, message: result.message });
+      if (result.outcome === 'purchased' && tab === 'home') {
+        setLastPurchasedHomeOfferId(offer.familiarId);
+      }
+      setPurchaseStatus({ termsKey: key, message: result.message, outcome: result.outcome });
     } finally {
       purchaseLock.current = false;
       setPurchasing(false);
@@ -519,10 +537,12 @@ export function CelestialStorePanel({
                 type="button"
                 role="tab"
                 id={`${instanceId}-tab-${item.id}`}
+                aria-controls={`${instanceId}-panel-${item.id}`}
                 aria-selected={tab === item.id}
                 tabIndex={tab === item.id ? 0 : -1}
                 onClick={() => {
                   setTab(item.id);
+                  setLastPurchasedHomeOfferId(null);
                   setPurchaseStatus(null);
                 }}
                 data-store-tab-trigger={item.id}
@@ -608,6 +628,7 @@ export function CelestialStorePanel({
                           className="celestial-store-secondary-cta"
                           aria-label={`Browse all ${offers.length} daily shop offers`}
                           onClick={() => {
+                            setLastPurchasedHomeOfferId(null);
                             setFocusedId(featuredOffer.familiarId);
                             setTab('familiar');
                           }}
@@ -623,6 +644,7 @@ export function CelestialStorePanel({
                           type="button"
                           className="celestial-store-secondary-cta is-browse-wide"
                           onClick={() => {
+                            setLastPurchasedHomeOfferId(null);
                             setFocusedId(featuredOffer.familiarId);
                             setTab('familiar');
                           }}
@@ -637,7 +659,12 @@ export function CelestialStorePanel({
                   </div>
 
                   {tab === 'home' && (
-                    <p role="status" aria-live="polite" className="celestial-store-status">
+                    <p
+                      role="status"
+                      aria-live="polite"
+                      className="celestial-store-status"
+                      data-outcome={purchaseStatus?.outcome}
+                    >
                       {visibleMessage}
                     </p>
                   )}
@@ -854,7 +881,12 @@ export function CelestialStorePanel({
                   )}
 
                   {tab === 'familiar' && (
-                    <p role="status" aria-live="polite" className="celestial-store-status">
+                    <p
+                      role="status"
+                      aria-live="polite"
+                      className="celestial-store-status"
+                      data-outcome={purchaseStatus?.outcome}
+                    >
                       {visibleMessage}
                     </p>
                   )}

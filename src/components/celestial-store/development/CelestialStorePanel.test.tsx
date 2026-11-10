@@ -118,7 +118,7 @@ describe('CelestialStorePanel', () => {
     const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
     expect(tabs.map(tab => tab.textContent)).toEqual(['Home', 'Familiar']);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
-    expect(tabs[0].getAttribute('aria-controls')).toBeNull();
+    expect(tabs[0].getAttribute('aria-controls')).toBe(container.querySelector('[data-store-panel="home"]')?.closest('[role="tabpanel"]')?.id);
 
     const tablist = container.querySelector('[role="tablist"]')!;
     await keyDown(tablist, 'ArrowRight');
@@ -245,7 +245,83 @@ describe('CelestialStorePanel', () => {
     expect(buy.textContent).toBe(`Buy for ${offer.price.toLocaleString('en-US')} Energy`);
     await click(buy);
     expect(onPurchase).toHaveBeenCalledWith({ familiarId: offer.familiarId, currency: 'energy', price: offer.price });
-    expect(hud.querySelector('[role="status"]')?.textContent).toBe('It joins your cave.');
+    const status = hud.querySelector('[role="status"]')!;
+    expect(status.textContent).toBe('It joins your cave.');
+    expect(status.getAttribute('data-outcome')).toBe('purchased');
+  });
+
+  it('keeps the purchased companion featured on Home through confirmation and exposes Equip', async () => {
+    const rotation = dailyStoreRotation(OPTIONS, DAY);
+    const [firstOffer] = [...rotation.energy, ...rotation.qi];
+    let owned = [rotation.qi[0].familiarId];
+    const onPurchase = vi.fn().mockImplementation(async () => {
+      owned = [...owned, firstOffer.familiarId];
+      return { outcome: 'purchased', message: 'It joins your cave.' };
+    });
+    const onEquip = vi.fn();
+
+    await render(
+      <CelestialStorePanel
+        options={OPTIONS}
+        date={DAY}
+        defaultTab="home"
+        ownedFamiliarIds={owned}
+        cultivation={qiReady(100_000)}
+        energy={energyReady(2_000)}
+        onPurchase={onPurchase}
+        onEquip={onEquip}
+      />
+    );
+
+    const homeHud = container.querySelector('[data-store-hud="home"]')!;
+    expect(homeHud.getAttribute('data-store-featured')).toBe(firstOffer.familiarId);
+    const buy = homeHud.querySelector<HTMLButtonElement>('[data-store-action="buy"]')!;
+    await click(buy);
+
+    // Re-render with the updated ownership list that the host publishes upon purchase
+    await render(
+      <CelestialStorePanel
+        options={OPTIONS}
+        date={DAY}
+        defaultTab="home"
+        ownedFamiliarIds={owned}
+        cultivation={qiReady(100_000)}
+        energy={energyReady(2_000)}
+        onPurchase={onPurchase}
+        onEquip={onEquip}
+      />
+    );
+
+    const updatedHomeHud = container.querySelector('[data-store-hud="home"]')!;
+    expect(updatedHomeHud.getAttribute('data-store-featured')).toBe(firstOffer.familiarId);
+    const status = updatedHomeHud.querySelector('[role="status"]')!;
+    expect(status.textContent).toBe('It joins your cave.');
+    expect(status.getAttribute('data-outcome')).toBe('purchased');
+    const equip = updatedHomeHud.querySelector<HTMLButtonElement>('[data-store-action="equip"]')!;
+    expect(equip).not.toBeNull();
+    await click(equip);
+    expect(onEquip).toHaveBeenCalledWith(firstOffer.familiarId);
+  });
+
+  it('displays purchase failures with warning data-outcome', async () => {
+    const onPurchase = vi.fn().mockResolvedValue({ outcome: 'failed', message: 'A purchase is already in progress.' });
+    await render(
+      <CelestialStorePanel
+        options={OPTIONS}
+        date={DAY}
+        defaultTab="familiar"
+        cultivation={qiReady(100_000)}
+        energy={energyReady(2_000)}
+        onPurchase={onPurchase}
+      />
+    );
+    const offer = dailyStoreRotation(OPTIONS, DAY).energy[0];
+    await click(container.querySelector(`[data-store-offer="${offer.familiarId}"]`));
+    const hud = activeHud();
+    await click(hud.querySelector<HTMLButtonElement>('[data-store-action="buy"]')!);
+    const status = hud.querySelector('[role="status"]')!;
+    expect(status.textContent).toBe('A purchase is already in progress.');
+    expect(status.getAttribute('data-outcome')).toBe('failed');
   });
 
   it('disables Buy when the balance cannot cover the price', async () => {

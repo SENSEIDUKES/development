@@ -315,13 +315,13 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'library',
     status: 'active',
     title: 'Store',
-    description: 'The official Store extracted out of the profile into its own Cave destination: live QI and Energy balances over two framed shelves of daily Familiar offers — two Energy, four QI — with catalogue ranks, owned/equipped states, and a focused detail dialog for buying and equipping. Familiars only; the creator User Store on public profiles is a separate, untouched surface.',
+    description: 'The official Celestial Store on its dedicated Cave stage: a Genshin-inspired, viewport-locked showcase with live QI and Energy balance pills, two sections (Home daily spotlight and Familiar showcase), swipeable open-stage companion presentation with a 6-offer quick picker strip (two Energy, four QI), compact key-value details, and in-place buying and equipping. Familiars only; the creator User Store on public profiles is a separate, untouched surface.',
     category: 'other',
     version: 'v1.0',
     source: {
       repository: 'SENSEIDUKES/development',
       path: 'src/components/celestial-store/; src/host/familiar/catalogue.ts',
-      lastCompared: '2026-09-22',
+      lastCompared: '2026-11-10',
     },
   },
   {

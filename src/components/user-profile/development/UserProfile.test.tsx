@@ -541,14 +541,16 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('[data-cave-settings]')).not.toBeNull();
   });
 
-  it('serves the dedicated Celestial Store with ledger balances, split shelves, and a purchase-then-equip flow', async () => {
+  it('serves the dedicated Celestial Store stage with ledger balances, daily showcase, and an in-place purchase-then-equip flow', async () => {
     await renderCave({ energyClient: createLocalEnergyClient({ uid: 'workshop-cultivator' }), qiBalance: 28_400 });
     await navigateTo('/home/store');
     expect(container.querySelector('[data-cave-destination="store"]')).not.toBeNull();
+    expect(container.querySelector('.cave-workspace-stage .celestial-store')).not.toBeNull();
     // Balances come from the QI ledger and Energy server projections, never static copy.
-    expect(container.querySelector('[aria-label="QI balance 28,400"]')).not.toBeNull();
-    expect(container.querySelector('[aria-label="Energy balance 500"]')).not.toBeNull();
-    // Today's shared rotation on one shelf: two bought with Energy, four with QI.
+    expect(container.querySelector('[aria-label="28,400 QI available"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="500 Energy available"]')).not.toBeNull();
+    // Switch to the Familiar showcase: two bought with Energy, four with QI.
+    await click(container.querySelector('[data-store-tab-trigger="familiar"]')!);
     const cards = container.querySelectorAll('[data-store-shelf="familiars"] [data-store-offer]');
     expect(cards).toHaveLength(6);
     const currencies = [...cards].map(card => card.getAttribute('data-store-currency'));
@@ -558,25 +560,26 @@ describe('Cultivator Cave home', () => {
     for (const card of cards) {
       const id = card.getAttribute('data-store-offer')!;
       const catalogueRank = allFamiliarOptions.find(option => option.id === id)?.rarity;
-      expect(card.querySelector('.shop-card-rank')?.textContent).toBe(catalogueRank);
+      expect(card.getAttribute('data-rarity')).toBe(catalogueRank);
     }
-    // Purchase a QI offer (28,400 covers every provisional QI price), then equip it.
+    // Purchase a QI offer in-place (28,400 covers every QI price), then equip it.
     const offerId = [...cards].find(card => card.getAttribute('data-store-currency') === 'qi')!
       .getAttribute('data-store-offer')!;
-    await click(container.querySelector(`[data-store-offer="${offerId}"] button`)!);
-    const dialog = document.querySelector('.celestial-store-detail')!;
-    await click([...dialog.querySelectorAll('button')].find(button => button.textContent?.startsWith('Buy for'))!);
+    await click(container.querySelector(`[data-store-offer="${offerId}"]`)!);
+    const hud = container.querySelector('[data-store-hud="familiar"]')!;
+    await click(hud.querySelector('[data-store-action="buy"]')!);
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
-    expect(dialog.textContent).toContain('joins your cave');
-    const equip = [...dialog.querySelectorAll('button')].find(button => button.textContent?.startsWith('Equip'))!;
-    await click(equip);
+    expect(hud.textContent).toContain('joins your cave');
+    await click(hud.querySelector('[data-store-action="equip"]')!);
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
-    expect([...dialog.querySelectorAll('button')].some(button => button.textContent === 'Equipped' && button.disabled)).toBe(true);
-    // The owned state survives leaving and reopening the Store.
-    await click(document.querySelector('.celestial-store-detail [aria-label="Close dialog"], .celestial-store-detail [data-sei-dialog-close]') ?? dialog.querySelector('button')!);
+    const equippedButton = hud.querySelector<HTMLButtonElement>('[data-store-action="equip"]')!;
+    expect(equippedButton.textContent).toBe('Equipped');
+    expect(equippedButton.disabled).toBe(true);
+    // The owned/equipped state survives leaving and reopening the Store.
     await navigateTo('/home');
     await navigateTo('/home/store');
-    expect(container.querySelector(`[data-store-offer="${offerId}"]`)?.textContent).toContain('Equipped');
+    await click(container.querySelector('[data-store-tab-trigger="familiar"]')!);
+    expect(container.querySelector(`[data-store-offer="${offerId}"]`)?.getAttribute('data-store-state')).toBe('equipped');
   });
 
   it('does not invent an unavailable Energy balance or expose account controls publicly', async () => {

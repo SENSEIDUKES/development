@@ -178,7 +178,11 @@ function RewardLoop() {
                 onOffered={() => void account.refreshBalances()} />
             </div>
           )}
-          {tab === 'store' && <StoreTab equippedId={equippedId} onEquip={setEquippedId} />}
+          {tab === 'store' && (
+            <div className="overflow-hidden rounded-2xl border border-white/10" style={{ ['--celestial-store-height' as string]: '44rem' }}>
+              <StoreTab equippedId={equippedId} onEquip={setEquippedId} />
+            </div>
+          )}
         </div>
         <aside className="min-w-0 space-y-4">
           <WorkshopCard title="What connects to what">

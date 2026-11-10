@@ -221,8 +221,26 @@
   box-shadow: 0 0 0 2px #061022;
 }
 
-/* A stage page (the Familiar page) fills the space between the floating
+/* A stage page (Familiar or Celestial Store) fills the space between the floating
    header and the bottom navigation, which the shell already leaves clear. */
 .cave-workspace-stage .familiar-stage {
   --familiar-stage-height: calc(100dvh - var(--workspace-header-height, 0px) - var(--library-bottom-clearance, 0px));
+}
+.cave-workspace-stage .celestial-store {
+  --celestial-store-height: calc(100dvh - var(--workspace-header-height, 0px) - var(--library-bottom-clearance, 0px));
+}
+@media (max-width: 671px) {
+  /* On phone portrait, lift the floating music note into the open upper-right sky
+     corner of the Store stage so the compact bottom purchase plinth spans full width
+     without colliding with the note. */
+  .library-navigation-layout:has(.cave-workspace-stage .celestial-store) .library-sound-slot {
+    top: calc(var(--workspace-header-height, 3.8125rem) + 6.1rem);
+    inset-block-end: auto;
+    inset-inline-end: max(0.65rem, var(--sh-safe-right, env(safe-area-inset-right, 0px)));
+  }
+}
+@media (min-width: 672px) and (max-width: 1023px) {
+  .library-navigation-layout:has(.library-sound-slot:not(:empty)) .cave-workspace-stage .celestial-store {
+    --celestial-store-sound-clearance: 3.75rem;
+  }
 }

@@ -1,59 +1,1206 @@
-/* Celestial Store — midnight navy shelves, antique gold and blue-purple seals,
-   restrained glow. Rarity chips and hero framing reuse familiar.css. */
+/* Celestial Store — phone-first viewport-locked shop stage inspired by Genshin
+   Impact's Shop layout.
+   - Mobile portrait (< 42rem): compact top store bar + slim segmented pills,
+     commanding open companion stage, 6-slot priced shop shelf, and a sleek
+     compact purchase plinth at the foot.
+   - Tablet portrait (42rem..57.99rem, tall): left Genshin Shop rail + spacious
+     vertical companion stage + centered compact purchase plinth.
+   - Landscape phones & laptop/desktop (>= 58rem, or >= 42rem short height):
+     left Genshin Shop rail + side-by-side companion showcase and purchase plaque. */
 
-.celestial-store { display: flex; flex-direction: column; gap: 24px; }
-
-/* Live balances, framed like the reference's twin seals. */
-.celestial-store-balances { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.celestial-store-balance {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 52px; padding: 8px 12px;
-  border: 1px solid #d6bd8744; border-radius: 999px;
-  background: linear-gradient(160deg, #0d1a2ecc, #070f1ecc);
-  box-shadow: inset 0 1px 0 #f0e2bf14;
-  color: #eef7ff; font-variant-numeric: tabular-nums; font-weight: 600;
+.celestial-store {
+  --store-glow: #7dd3ff;
+  --store-gold: #e8cb74;
+  --store-cream: #f4ecda;
+  --store-cream-deep: #e7dbc1;
+  --store-ink: #121a2b;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: var(--celestial-store-height, 100dvh);
+  min-height: 0;
+  container: celestial-store / size;
+  overflow: hidden;
+  overflow: clip;
+  color: rgb(232 236 242);
+  background:
+    radial-gradient(72% 58% at 50% 36%, color-mix(in srgb, var(--store-glow) 24%, transparent) 0%, transparent 76%),
+    linear-gradient(180deg, rgba(6, 11, 22, 0.14) 0%, rgba(5, 10, 21, 0.34) 64%, rgba(3, 6, 13, 0) 100%);
 }
-.celestial-store-balance[data-store-balance="qi"] { border-color: #8f6fd955; }
-.celestial-store-balance-label { font-size: 13px; font-weight: 400; color: #b9c7d6; }
 
-.celestial-store-qi-amount { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
-.celestial-store-qi-amount .qi-glyph { color: #b78cff; font-size: 1.1em; line-height: 1; filter: drop-shadow(0 0 6px #7a4fd966); }
+.celestial-store[data-rarity="common"] { --store-glow: #7dd3ff; }
+.celestial-store[data-rarity="rare"] { --store-glow: #5fe0ae; }
+.celestial-store[data-rarity="epic"] { --store-glow: #c094ff; }
+.celestial-store[data-rarity="legendary"] { --store-glow: #f5d682; }
 
-/* One framed shelf holds every Familiar, whatever its currency. */
-.celestial-store-shelf {
-  padding: 18px 14px 20px;
-  border: 1px solid #d6bd8759;
-  border-radius: 20px;
-  background: linear-gradient(180deg, #0a1424f0, #081020f0);
-  box-shadow: inset 0 0 44px #d6bd870f;
+/* Ambient celestial sky behind the unboxed companion figure. */
+.celestial-store-sky {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
 }
-.celestial-store-shelf-header { text-align: center; }
-.celestial-store-shelf-title {
-  margin: 0; font-family: Georgia, serif; font-size: 22px; letter-spacing: 0.06em;
-  color: #f4e5bd; text-shadow: 0 0 14px #d6bd8733;
+.celestial-store-sky > span { position: absolute; inset: 0; }
+.celestial-store-sky > span:nth-child(1) {
+  inset: 6% 10% auto;
+  height: 56%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--store-glow) 30%, transparent), transparent);
+  filter: blur(30px);
+  transition: background 0.55s ease;
 }
-.celestial-store-shelf-tagline { margin: 4px 0 0; font-size: 13px; line-height: 1.6; color: #b9c7d6; }
-.celestial-store-shelf-empty { margin: 16px 0 0; text-align: center; font-size: 13px; color: #8fa0b5; }
+.celestial-store-sky > span:nth-child(2),
+.celestial-store-sky > span:nth-child(3) {
+  background-image:
+    radial-gradient(1.5px 1.5px at 16% 24%, color-mix(in srgb, var(--store-glow) 80%, white), transparent),
+    radial-gradient(1px 1px at 42% 62%, #ffffffb3, transparent),
+    radial-gradient(1.5px 1.5px at 76% 20%, color-mix(in srgb, var(--store-glow) 70%, white), transparent),
+    radial-gradient(1px 1px at 84% 58%, #ffffff99, transparent),
+    radial-gradient(2px 2px at 54% 34%, color-mix(in srgb, var(--store-glow) 60%, transparent), transparent),
+    radial-gradient(1px 1px at 26% 78%, #ffffff80, transparent);
+  animation: celestial-store-drift 34s linear infinite;
+  opacity: 0.7;
+}
+.celestial-store-sky > span:nth-child(3) {
+  transform: scale(1.5) rotate(16deg);
+  animation-duration: 50s;
+  opacity: 0.38;
+}
+@keyframes celestial-store-drift {
+  from { translate: 0 0; }
+  to { translate: 0 -10%; }
+}
 
-/* Mobile-first two-column card grid inside each shelf. */
-.celestial-store-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
-@media (min-width: 480px) { .celestial-store-grid { gap: 16px; } }
+/* Inner layout frame: phone portrait first (top bar -> slim segmented pills -> stage). */
+.celestial-store-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas:
+    "top"
+    "nav"
+    "stage";
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
 
-/* The card itself lives in shopCard.css; the Store only sizes its artwork well. */
-.shop-card .familiar-option-hero { max-height: none; }
+/* Top HUD bar: Back control + Store mark on the left, live balance pills on the right. */
+.celestial-store-topbar {
+  grid-area: top;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: max(0.35rem, env(safe-area-inset-top, 0px)) max(0.65rem, env(safe-area-inset-right, 0px)) 0.15rem max(0.65rem, env(safe-area-inset-left, 0px));
+}
+.celestial-store-topbar-start {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.celestial-store-title {
+  margin: 0;
+  font-family: var(--font-sc, inherit);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--store-gold);
+  outline: none;
+}
+.celestial-store-title:focus,
+.celestial-store-title:focus-visible { outline: none; box-shadow: none; }
 
-.celestial-store-price { display: inline-flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 5px; margin-top: 2px; font-size: 14px; color: #eef7ff; }
-.celestial-store-price-currency { font-size: 12px; color: #b9c7d6; }
-.celestial-store-price-was { font-size: 12px; color: #8fa0b5; }
+.celestial-store-topbar-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  flex: 1 1 auto;
+}
 
-/* Focused detail dialog. */
-.celestial-store-detail { width: min(420px, calc(100vw - 32px)); }
-.celestial-store-detail-title { font-family: Georgia, serif; color: #f0e2bf; }
-.celestial-store-detail-hero { margin-top: 12px; border: 1px solid #d6bd8744; border-radius: 16px; overflow: hidden; background: #080f1c; }
-.celestial-store-detail-hero[data-rarity="rare"] { border-color: #8f6fd977; }
-.celestial-store-detail-hero .familiar-option-hero { aspect-ratio: 4 / 3; max-height: 320px; }
-.celestial-store-detail-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; margin-top: 12px; }
-.celestial-store-detail-description { margin: 10px 0 0; font-size: 13px; line-height: 1.6; color: #b9c7d6; }
-.celestial-store-detail .celestial-store-price { margin-top: 12px; font-size: 16px; }
-.celestial-store-detail-actions { margin-top: 14px; }
-.celestial-store-detail-status { min-height: 1.2em; margin: 10px 0 0; font-size: 13px; color: #c3f0d6; }
+.celestial-store-icon-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(244, 236, 218, 0.2);
+  background: rgba(8, 14, 26, 0.66);
+  color: var(--store-cream);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+.celestial-store-icon-button:hover {
+  border-color: rgba(228, 198, 110, 0.65);
+  background: rgba(14, 23, 42, 0.82);
+}
+
+/* On narrow phones, keep "STORE" visible beside Back while folding "Celestial " visually
+   so screen readers still announce "Celestial Store" and wallet pills have full room. */
+@container celestial-store (max-width: 500px) {
+  .celestial-store-title-prefix {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .celestial-store-title {
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
+  }
+  .celestial-store-topbar-end .balance-pills {
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: flex-end;
+    gap: 0.35rem;
+  }
+  .celestial-store-topbar-end .balance-pill {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: 7.4rem;
+    min-width: 0;
+    overflow: hidden;
+    padding-inline: 0.42rem 0.55rem;
+    gap: 0.28rem;
+    font-size: 0.72rem;
+  }
+}
+
+@container celestial-store (max-width: 350px) {
+  .celestial-store-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* Slim segmented parchment tabs on phone portrait; Genshin Shop rail on >= 42rem. */
+.celestial-store-rail {
+  grid-area: nav;
+  display: flex;
+  justify-content: center;
+  padding: 0.05rem max(0.65rem, env(safe-area-inset-right, 0px)) 0.1rem max(0.65rem, env(safe-area-inset-left, 0px));
+}
+.celestial-store-rail-brand {
+  display: none;
+}
+.celestial-store-tablist {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.2rem;
+  width: min(100%, 15.5rem);
+  padding: 0.18rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(228, 198, 110, 0.24);
+  background: rgba(8, 14, 28, 0.74);
+  backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 6px 18px rgba(0, 0, 0, 0.24);
+}
+.celestial-store-tablist [role="tab"] {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  background: transparent;
+  color: rgba(226, 232, 240, 0.78);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.celestial-store-tablist [role="tab"]:hover:not([aria-selected="true"]) {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+.celestial-store-tablist [role="tab"][aria-selected="true"] {
+  background: linear-gradient(180deg, var(--store-cream) 0%, var(--store-cream-deep) 100%);
+  color: var(--store-ink);
+  border-color: rgba(212, 178, 92, 0.82);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+/* Genshin-inspired 4-point diamond ornament — drawn with borders so forced-colors
+   mode retains a crisp geometric active indicator. */
+.celestial-store-tablist [role="tab"][aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  width: 0.34rem;
+  height: 0.34rem;
+  translate: 0 -50%;
+  rotate: 45deg;
+  border: 1.5px solid rgba(138, 102, 26, 0.68);
+  background: rgba(212, 175, 55, 0.35);
+  pointer-events: none;
+}
+
+/* Main stage area: strictly contained so panels never bleed into the topbar. */
+.celestial-store-stage {
+  grid-area: stage;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  overflow: clip;
+}
+.celestial-store-tabpanel {
+  grid-area: 1 / 1;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+}
+.celestial-store-tabpanel[hidden] {
+  display: none;
+}
+
+.celestial-store-empty-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 1.5rem;
+  text-align: center;
+}
+.celestial-store-empty {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #9fb0c5;
+  text-wrap: pretty;
+}
+
+/* Phone portrait composition: large open companion stage above sleek purchase plinth.
+   `minmax(0, 1fr)` prevents the shelf strip from ever slipping behind the plinth. */
+.celestial-store-stage-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.35rem;
+  height: 100%;
+  min-height: 0;
+  padding: 0 max(0.6rem, env(safe-area-inset-right, 0px)) max(0.45rem, env(safe-area-inset-bottom, 0px)) max(0.6rem, env(safe-area-inset-left, 0px));
+}
+
+/* Open visual stage — the companion is the centerpiece, never boxed inside a card. */
+.celestial-store-visual {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  overflow: clip;
+}
+.celestial-store-visual.is-carousel {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.25rem;
+  align-items: stretch;
+  justify-items: stretch;
+}
+
+.celestial-store-figure {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 1.7rem 2.25rem 0.25rem;
+}
+.celestial-store-visual.is-carousel .celestial-store-figure {
+  padding: 0.25rem 3rem 0.2rem;
+}
+
+/* Floating stage seal at the top of the companion figure (Special Offer / Daily Featured / Purchased). */
+.celestial-store-ribbon {
+  position: absolute;
+  top: 0.25rem;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.18rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(228, 198, 110, 0.55);
+  background: linear-gradient(180deg, var(--store-cream) 0%, var(--store-cream-deep) 100%);
+  color: var(--store-ink);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+}
+.celestial-store-ribbon[data-tone="sale"] {
+  background: linear-gradient(180deg, #fbe8ae 0%, #e2be5d 100%);
+  border-color: rgba(250, 227, 156, 0.9);
+  color: #14120a;
+}
+.celestial-store-ribbon[data-tone="owned"] {
+  background: rgba(11, 19, 34, 0.84);
+  border-color: rgba(148, 163, 184, 0.32);
+  color: rgba(226, 232, 240, 0.88);
+  backdrop-filter: blur(10px);
+}
+
+/* Ornate astrolabe halo + grounded floor glow behind the unboxed companion. */
+.celestial-store-halo {
+  position: absolute;
+  width: min(74cqw, 46cqh, 19.5rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  color: color-mix(in srgb, var(--store-glow) 55%, var(--store-gold));
+  background: radial-gradient(circle, color-mix(in srgb, var(--store-glow) 24%, transparent) 0%, color-mix(in srgb, var(--store-gold) 10%, transparent) 50%, transparent 72%);
+  pointer-events: none;
+}
+.celestial-store-astrolabe {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.celestial-store-pedestal {
+  position: absolute;
+  top: calc(50% + min(30cqw, 20cqh, 7.75rem));
+  translate: 0 -50%;
+  width: min(46cqw, 12rem);
+  height: 1.3rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--store-glow) 34%, rgba(228, 198, 110, 0.22)), transparent);
+  filter: blur(6px);
+  pointer-events: none;
+}
+.celestial-store-figure picture {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.celestial-store-hero-image {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 22px color-mix(in srgb, var(--store-glow) 34%, transparent));
+  -webkit-user-drag: none;
+}
+
+/* Swipeable Familiar stage + flanking prev/next controls + 6-slot priced shop shelf. */
+.celestial-store-carousel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  touch-action: pan-y;
+  user-select: none;
+  outline: none;
+}
+.celestial-store-carousel:focus-visible {
+  box-shadow: inset 0 0 0 2px #7dd3ff;
+  border-radius: 1rem;
+}
+.celestial-store-slide {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.celestial-store-slide[data-direction="next"] { animation: celestial-store-slide-next 0.26s ease-out; }
+.celestial-store-slide[data-direction="previous"] { animation: celestial-store-slide-prev 0.26s ease-out; }
+@keyframes celestial-store-slide-next { from { opacity: 0; transform: translateX(12%); } }
+@keyframes celestial-store-slide-prev { from { opacity: 0; transform: translateX(-12%); } }
+
+/* Flanking left/right stage arrows — never stacked under the companion's feet. */
+.celestial-store-nav {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(244, 236, 218, 0.18);
+  background: rgba(7, 13, 25, 0.62);
+  color: var(--store-cream);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+.celestial-store-nav:hover {
+  border-color: rgba(228, 198, 110, 0.65);
+  background: rgba(14, 23, 42, 0.84);
+}
+.celestial-store-nav.is-previous { left: 0.1rem; }
+.celestial-store-nav.is-next { right: 0.1rem; }
+
+/* ==========================================================================
+   6-Slot Daily Shop Shelf — unmistakable visual weight difference:
+   - FOR SALE (`available`): Vivid brightness, warm gold shop frame, bold price band!
+   - OWNED / EQUIPPED: Dimmed portrait, recessed dark slate frame, muted `OWNED` tag!
+   ========================================================================== */
+.celestial-store-strip {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0.15rem 0.1rem 0.1rem;
+}
+.celestial-store-strip::-webkit-scrollbar { display: none; }
+
+.celestial-store-strip-track {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: max-content;
+  margin-inline: auto;
+  padding-inline: 0.1rem;
+}
+
+.celestial-store-strip-item {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  width: 3.1rem;
+  height: 3.85rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0.7rem;
+  border: 1.5px solid rgba(228, 198, 110, 0.52);
+  background: radial-gradient(circle at 50% 32%, rgba(44, 62, 98, 0.88), rgba(10, 17, 32, 0.96));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+/* Unowned rarity tinting keeps for-sale items vibrant and high-weight. */
+.celestial-store-strip-item[data-store-state="available"][data-rarity="epic"] {
+  border-color: rgba(192, 148, 255, 0.62);
+}
+.celestial-store-strip-item[data-store-state="available"][data-rarity="legendary"] {
+  border-color: rgba(245, 214, 130, 0.78);
+}
+
+/* Owned & Equipped items step back visually so items for sale command attention. */
+.celestial-store-strip-item[data-store-state="owned"],
+.celestial-store-strip-item[data-store-state="equipped"] {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(7, 12, 22, 0.76);
+  box-shadow: none;
+}
+.celestial-store-strip-item[data-store-state="owned"] .celestial-store-strip-avatar,
+.celestial-store-strip-item[data-store-state="equipped"] .celestial-store-strip-avatar {
+  opacity: 0.42;
+  filter: saturate(0.5) brightness(0.88);
+  transition: opacity 0.18s ease, filter 0.18s ease;
+}
+
+.celestial-store-strip-item:hover {
+  border-color: rgba(244, 236, 218, 0.72);
+}
+.celestial-store-strip-item[aria-pressed="true"] {
+  border-color: var(--store-cream);
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 2px rgba(228, 198, 110, 0.48), 0 6px 14px rgba(0, 0, 0, 0.42);
+}
+.celestial-store-strip-item[aria-pressed="true"] .celestial-store-strip-avatar {
+  opacity: 0.9;
+  filter: saturate(0.85);
+}
+.celestial-store-strip-item[data-store-state="available"][aria-pressed="true"] .celestial-store-strip-avatar {
+  opacity: 1;
+  filter: none;
+}
+
+.celestial-store-slot-art {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.14rem 0.18rem 0.06rem;
+}
+.celestial-store-strip-avatar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.celestial-store-slot-check {
+  position: absolute;
+  top: 0.14rem;
+  right: 0.14rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.82rem;
+  height: 0.82rem;
+  border-radius: 9999px;
+  background: rgba(30, 41, 59, 0.92);
+  border: 1px solid rgba(203, 213, 225, 0.35);
+  color: #cbd5e1;
+}
+.celestial-store-slot-check[data-equipped] {
+  background: rgba(16, 78, 58, 0.95);
+  border-color: rgba(95, 224, 174, 0.55);
+  color: #a7f3d0;
+}
+
+/* Bottom shop tag band on every slot: bold price for unowned, muted Owned for bought. */
+.celestial-store-slot-tag {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.16rem;
+  height: 1.02rem;
+  padding-inline: 0.15rem;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.celestial-store-slot-tag[data-tag="energy"] {
+  background: linear-gradient(180deg, rgba(247, 222, 148, 0.95), rgba(217, 176, 72, 0.95));
+  color: #171104;
+}
+.celestial-store-slot-tag[data-tag="qi"] {
+  background: linear-gradient(180deg, rgba(58, 38, 98, 0.95), rgba(36, 22, 66, 0.98));
+  border-top: 1px solid rgba(192, 148, 255, 0.38);
+  color: #ebd9ff;
+}
+.celestial-store-slot-tag[data-tag="owned"] {
+  background: rgba(15, 23, 42, 0.88);
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  color: rgba(148, 163, 184, 0.82);
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.celestial-store-slot-tag[data-tag="equipped"] {
+  background: rgba(10, 44, 34, 0.88);
+  border-top: 1px solid rgba(95, 224, 174, 0.22);
+  color: rgba(167, 243, 208, 0.88);
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.celestial-store-pip-qi {
+  font-size: 0.56rem;
+  line-height: 1;
+  color: #c9a4ff;
+}
+
+/* ==========================================================================
+   Sleek, Compact Store Purchase Plinth — less than half the height of a deep
+   stacked card on mobile so the Familiar stays the main point!
+   ========================================================================== */
+.celestial-store-hud {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  min-width: 0;
+  padding: 0.62rem 0.8rem 0.6rem;
+  border-radius: 1.05rem;
+  border: 1px solid rgba(228, 198, 110, 0.32);
+  background:
+    radial-gradient(110% 95% at 0% 0%, color-mix(in srgb, var(--store-glow) 9%, transparent), transparent 62%),
+    linear-gradient(180deg, rgba(12, 20, 38, 0.88) 0%, rgba(6, 11, 22, 0.95) 100%);
+  backdrop-filter: blur(18px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 28px rgba(0, 0, 0, 0.4);
+}
+.celestial-store-hud[data-owned] {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: linear-gradient(180deg, rgba(10, 17, 31, 0.84) 0%, rgba(6, 10, 20, 0.92) 100%);
+}
+
+.celestial-store-plinth-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.celestial-store-identity {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.celestial-store-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.celestial-store-rarity-crest {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.celestial-store-rarity-stars {
+  font-size: 0.56rem;
+  letter-spacing: 0.03em;
+}
+.celestial-store-rarity-crest[data-rarity="common"],
+.celestial-store-rank-value[data-rarity="common"] { color: #bae6fd; }
+.celestial-store-rarity-crest[data-rarity="rare"],
+.celestial-store-rank-value[data-rarity="rare"] { color: #86efac; }
+.celestial-store-rarity-crest[data-rarity="epic"],
+.celestial-store-rank-value[data-rarity="epic"] { color: #d8b4fe; }
+.celestial-store-rarity-crest[data-rarity="legendary"],
+.celestial-store-rank-value[data-rarity="legendary"] { color: #fde68a; }
+
+.celestial-store-shop-subnote {
+  margin: 0.14rem 0 0;
+  font-size: 0.65rem;
+  line-height: 1.3;
+  color: rgba(180, 196, 216, 0.84);
+  text-wrap: pretty;
+}
+
+.celestial-store-count {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.62rem;
+  color: rgba(168, 185, 206, 0.78);
+}
+
+.celestial-store-name {
+  margin: 0.1rem 0 0;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.06rem, 0.96rem + 0.7vw, 1.45rem);
+  line-height: 1.12;
+  color: #f7ebd2;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.celestial-store-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.42rem;
+  border-radius: 9999px;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.celestial-store-badge[data-tone="sale"] {
+  color: #14120a;
+  background: linear-gradient(180deg, #fbe8ae, #e2be5d);
+}
+
+/* Right-hand price or purchased stamp slot on the plinth header. */
+.celestial-store-tag-slot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.celestial-store-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.26rem 0.58rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(228, 198, 110, 0.36);
+  background: rgba(228, 198, 110, 0.1);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f8fafc;
+  white-space: nowrap;
+}
+.celestial-store-price[data-currency="qi"] {
+  border-color: rgba(192, 148, 255, 0.36);
+  background: rgba(155, 109, 255, 0.12);
+}
+.celestial-store-qi-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-variant-numeric: tabular-nums;
+}
+.celestial-store-qi-amount .qi-glyph {
+  color: #c094ff;
+  font-size: 1em;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px #7a4fd966);
+}
+.celestial-store-price-currency {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #dbe4f0;
+}
+.celestial-store-price-was {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.celestial-store-owned-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.24rem;
+  padding: 0.18rem 0.52rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(30, 41, 59, 0.65);
+  color: rgba(226, 232, 240, 0.86);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.celestial-store-owned-stamp[data-tone="equipped"] {
+  border-color: rgba(95, 224, 174, 0.34);
+  background: rgba(16, 68, 52, 0.55);
+  color: #bbf7d0;
+}
+
+/* Single-band Owned layout on Familiar tab: left identity + right compact Equip pill! */
+.celestial-store-owned-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  min-width: 0;
+}
+.celestial-store-owned-action {
+  flex: 0 0 auto;
+}
+
+/* Lore description is hidden by default on compact mobile screens so the card stays
+   ultra-sleek and the Familiar dominates the stage; shown only on roomy viewports. */
+.celestial-store-description {
+  display: none;
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: rgba(203, 215, 230, 0.86);
+  text-wrap: pretty;
+}
+
+@container celestial-store (max-width: 41.99rem) and (min-height: 670px) {
+  .celestial-store-description {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+}
+
+/* Thumb-zone actions: >= 44px touch targets.
+   - Buy CTA has dominant luminous gold shop weight.
+   - Owned Equip pill has light, receding outline weight so it never mimics Buy. */
+.celestial-store-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.celestial-store-actions.is-dual {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+}
+.celestial-store-actions.is-owned-home {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+}
+
+.celestial-store-cta,
+.celestial-store-secondary-cta,
+.celestial-store-equip-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+  transition: filter 0.16s ease, border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+/* Primary Buy CTA: warm champagne-gold shop button — highest visual weight on the page. */
+.celestial-store-cta.is-buy {
+  width: 100%;
+  border: 1px solid rgba(250, 227, 156, 0.8);
+  background: linear-gradient(180deg, #fae8a8 0%, #dfb956 100%);
+  color: var(--store-ink);
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+.celestial-store-cta.is-buy:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.celestial-store-cta.is-buy:disabled {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(226, 232, 240, 0.55);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Secondary Browse Shop pill. */
+.celestial-store-secondary-cta {
+  width: auto;
+  white-space: nowrap;
+  padding-inline: 0.85rem;
+  border: 1px solid rgba(228, 198, 110, 0.38);
+  background: rgba(20, 31, 52, 0.76);
+  color: #f4e6c3;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+.celestial-store-secondary-cta.is-browse-wide {
+  width: 100%;
+}
+.celestial-store-secondary-cta:hover {
+  border-color: rgba(228, 198, 110, 0.7);
+  background: rgba(28, 43, 70, 0.9);
+}
+
+/* Compact secondary Equip / Equipped pill — deliberately understated compared to Buy! */
+.celestial-store-equip-pill {
+  width: auto;
+  white-space: nowrap;
+  padding-inline: 0.95rem;
+  border: 1px solid rgba(226, 232, 240, 0.26);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+}
+.celestial-store-equip-pill:hover:not(:disabled) {
+  border-color: rgba(244, 236, 218, 0.6);
+  background: rgba(255, 255, 255, 0.12);
+}
+.celestial-store-equip-pill.is-equipped:disabled {
+  border-color: rgba(95, 224, 174, 0.34);
+  background: rgba(16, 68, 52, 0.42);
+  color: #a7f3d0;
+  cursor: default;
+}
+
+.celestial-store-status {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: #bbf7d0;
+  text-align: center;
+}
+.celestial-store-status:empty {
+  display: none;
+}
+
+.celestial-store button:focus-visible {
+  outline: 2px solid #7dd3ff;
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Tier 2 (>= 42rem): Genshin Impact's vertical left-side Shop rail opens!
+   ========================================================================== */
+@container celestial-store (min-width: 42rem) {
+  .celestial-store-frame {
+    grid-template-columns: clamp(8.75rem, 15.5cqw, 12.5rem) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "nav top"
+      "nav stage";
+  }
+
+  .celestial-store-rail {
+    position: relative;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.85rem;
+    padding: max(0.85rem, env(safe-area-inset-top, 0px)) 0.65rem max(0.85rem, env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px));
+    background: linear-gradient(180deg, rgba(11, 18, 34, 0.82) 0%, rgba(7, 12, 24, 0.68) 74%, rgba(6, 10, 20, 0) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 84%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 84%, transparent 100%);
+  }
+  .celestial-store-rail::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, rgba(228, 198, 110, 0.24) 0%, rgba(228, 198, 110, 0.16) 72%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .celestial-store-rail-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.2rem 0.5rem 0.6rem;
+    border-bottom: 1px solid rgba(228, 198, 110, 0.16);
+    font-family: var(--font-display, Georgia, serif);
+    font-size: 1.15rem;
+    letter-spacing: 0.03em;
+    color: var(--store-gold);
+  }
+
+  .celestial-store-tablist {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .celestial-store-tablist [role="tab"] {
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 2.85rem;
+    padding: 0 0.9rem;
+    border-radius: 0.7rem;
+    font-size: 0.85rem;
+  }
+  .celestial-store-tablist [role="tab"][aria-selected="true"]::after {
+    right: 0.65rem;
+    width: 0.4rem;
+    height: 0.4rem;
+  }
+
+  .celestial-store-topbar {
+    padding: max(0.5rem, env(safe-area-inset-top, 0px)) max(1.1rem, env(safe-area-inset-right, 0px)) 0.2rem 1.1rem;
+  }
+
+  .celestial-store-stage-content {
+    padding: 0.2rem max(1.1rem, var(--celestial-store-sound-clearance, 0px), env(safe-area-inset-right, 0px)) max(0.75rem, env(safe-area-inset-bottom, 0px)) 1.1rem;
+  }
+
+  .celestial-store-strip-item {
+    width: 3.35rem;
+    height: 4.15rem;
+  }
+  .celestial-store-strip-track {
+    gap: 0.42rem;
+  }
+
+  /* On tablet portrait, center the compact plinth cleanly. */
+  .celestial-store-hud {
+    width: 100%;
+    max-width: 30rem;
+    justify-self: center;
+    padding: 0.8rem 1rem;
+  }
+}
+
+@container celestial-store (min-width: 42rem) and (min-height: 640px) {
+  .celestial-store-description {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+}
+
+/* ==========================================================================
+   Tier 3: Side-by-side Genshin Showcase Composition
+   - Laptop & desktop (>= 58rem)
+   - OR Landscape phones / short windows (>= 42rem and max-height: 639px)
+   ========================================================================== */
+@container celestial-store (min-width: 58rem) or ((min-width: 42rem) and (max-height: 639px)) {
+  .celestial-store-stage-content {
+    grid-template-columns: minmax(19.5rem, 1.22fr) minmax(15rem, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: safe center;
+    gap: clamp(0.65rem, 1.8cqw, 1.5rem);
+  }
+
+  .celestial-store-visual {
+    height: 100%;
+  }
+
+  .celestial-store-halo {
+    width: min(42cqw, 70cqh, 21rem);
+  }
+
+  .celestial-store-pedestal {
+    top: calc(50% + min(19cqw, 30cqh, 9rem));
+  }
+
+  .celestial-store-hud {
+    max-width: none;
+    justify-self: stretch;
+    gap: 0.6rem;
+    padding: 0.95rem 1.1rem;
+    border-radius: 1.2rem;
+  }
+}
+
+@container celestial-store (min-width: 58rem) and (min-height: 460px) {
+  .celestial-store-description {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+}
+
+@container celestial-store (min-width: 70rem) {
+  .celestial-store-hud {
+    max-width: 26rem;
+  }
+}
+
+/* ==========================================================================
+   Landscape phones & compact split-screen windows (like 844×390 or 915×412).
+   ========================================================================== */
+@container celestial-store (min-width: 42rem) and (max-height: 430px) {
+  .celestial-store-topbar {
+    padding-block: 0.2rem 0.1rem;
+  }
+  .celestial-store-rail {
+    gap: 0.5rem;
+    padding-block: 0.5rem;
+  }
+  .celestial-store-rail-brand {
+    padding-bottom: 0.35rem;
+    font-size: 1rem;
+  }
+  .celestial-store-stage-content {
+    padding-block: 0.05rem 0.3rem;
+  }
+  .celestial-store-hud {
+    gap: 0.42rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 1rem;
+  }
+  .celestial-store-strip-item {
+    width: 2.85rem;
+    height: 3.45rem;
+  }
+  .celestial-store-strip-track {
+    gap: 0.3rem;
+  }
+}
+
+@container celestial-store (min-width: 42rem) and (max-height: 310px) {
+  .celestial-store-topbar {
+    padding-block: 0.12rem 0.05rem;
+  }
+  .celestial-store-stage-content {
+    padding-block: 0.05rem 0.2rem;
+  }
+  .celestial-store-visual.is-carousel {
+    gap: 0.12rem;
+  }
+  .celestial-store-visual.is-carousel .celestial-store-figure {
+    padding-block: 0.05rem 0.08rem;
+  }
+  .celestial-store-strip {
+    padding: 0.08rem;
+  }
+  .celestial-store-strip-item {
+    width: 2.75rem;
+    height: 3.15rem;
+  }
+  .celestial-store-hud {
+    gap: 0.32rem;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .celestial-store-tablist [role="tab"][aria-selected="true"] {
+    border-color: Highlight;
+  }
+  .celestial-store-tablist [role="tab"][aria-selected="true"]::after {
+    border-color: Highlight;
+  }
+  .celestial-store-strip-item[aria-pressed="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+  .celestial-store-cta.is-buy:not(:disabled) {
+    border-color: ButtonText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celestial-store-sky > span { animation: none !important; }
+  .celestial-store-slide[data-direction] { animation: none; }
+  .celestial-store-sky > span:nth-child(1),
+  .celestial-store-tablist [role="tab"],
+  .celestial-store-strip-item,
+  .celestial-store-cta,
+  .celestial-store-secondary-cta,
+  .celestial-store-equip-pill {
+    transition: none;
+  }
+}

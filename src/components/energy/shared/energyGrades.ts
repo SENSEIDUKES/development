@@ -48,6 +48,7 @@ export const MODEL_ENERGY_GRADES: Readonly<Record<string, EnergyGrade>> = {
   'openai/gpt-5.4-mini': 'immortal',
   'openai/gpt-5.2': 'heaven',
   'openai/gpt-5.2-pro': 'heaven',
+  'openai/chat-latest': 'heaven',
   'openai/gpt-image-2.6-sunburst': 'heaven',
   'openai/gpt-image-2.6-flare': 'immortal',
   'openai/gpt-image-2.5-sunburst': 'heaven',

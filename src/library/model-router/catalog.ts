@@ -110,6 +110,7 @@ export const CHAPTER_MODELS: readonly RoutedModel[] = [
   { id: 'openai/gpt-5.4-mini', label: 'GPT-5.4 Mini', provider: 'openai', stage: 'legacy', reasoning: { levels: ['none', 'low', 'medium', 'high', 'xhigh'], defaultLevel: 'low', sendDefault: true } },
   { id: 'openai/gpt-5.2', label: 'GPT-5.2', provider: 'openai', stage: 'legacy', reasoning: { levels: ['none', 'low', 'medium', 'high', 'xhigh'], defaultLevel: 'low', sendDefault: true } },
   { id: 'openai/gpt-5.2-pro', label: 'GPT-5.2 Pro', provider: 'openai', stage: 'legacy', reasoning: { levels: ['medium', 'high', 'xhigh'], defaultLevel: 'medium', sendDefault: true } },
+  { id: 'openai/chat-latest', label: 'Chat Latest', provider: 'openai', stage: 'current' },
 
   // Claude through Anthropic directly. Every model sends low effort unless the
   // reader chooses another; the API defaults (medium, or high on Sonnet) think longer.

@@ -14,7 +14,7 @@ describe('direct OpenAI routing', () => {
     expect(route({ OPENROUTER_API_KEY: 'or' }).models.some(model => model.id.startsWith('openai/'))).toBe(false);
     const configured = route({ OPENAI_API_KEY: 'direct' });
     expect(configured.keys.openai).toBe('direct');
-    expect(configured.models.filter(model => model.id.startsWith('openai/'))).toHaveLength(15);
+    expect(configured.models.filter(model => model.id.startsWith('openai/'))).toHaveLength(16);
     expect(configured.defaultModel).toBe('google/gemini-3.1-flash-lite');
     expect(textModelProvider('openai/gpt-image-2.6-flare')).toBeUndefined();
     expect(textModelProvider('openai/unknown')).toBeUndefined();
@@ -29,7 +29,9 @@ describe('direct OpenAI routing', () => {
     expect(url).toBe('https://api.openai.com/v1/responses');
     expect(init.headers).toMatchObject({ Authorization: 'Bearer direct' });
     const body = JSON.parse(init.body as string);
-    expect(body).toMatchObject({ model: model.id.slice(7), input: 'A story.', store: false, max_output_tokens: 4096, reasoning: { effort: model.reasoning!.defaultLevel } });
+    expect(body).toMatchObject({ model: model.id.slice(7), input: 'A story.', store: false, max_output_tokens: 4096 });
+    if (model.reasoning) expect(body.reasoning).toEqual({ effort: model.reasoning.defaultLevel });
+    else expect(body).not.toHaveProperty('reasoning');
     expect(body.instructions).toContain('"additionalProperties":true');
     expect(body).not.toHaveProperty('temperature');
     expect(body).not.toHaveProperty('text');

@@ -12,11 +12,11 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 
 ## Direct OpenAI
 
-Verified against the [OpenAI model catalog](https://developers.openai.com/api/docs/models/all) on 2026-11-10. Chapters offers GPT-6.1 Terra and Sol, GPT-6 Astra, Luna and Sol, GPT-5.6 Sol/Terra/Luna, GPT-5.5 and Pro, GPT-5.4/Pro/Mini, and GPT-5.2/Pro. Images offers GPT Image 2.6 and 2.5, each in Sunburst and Flare. GPT-Live 1 remains the connected live voice model.
+Verified against the [OpenAI model catalog](https://developers.openai.com/api/docs/models/all) on 2026-11-10. Chapters offers GPT-6.1 Terra and Sol, GPT-6 Astra, Luna and Sol, GPT-5.6 Sol/Terra/Luna, GPT-5.5 and Pro, GPT-5.4/Pro/Mini, GPT-5.2/Pro, and Chat Latest. Images offers GPT Image 2.6 and 2.5, each in Sunburst and Flare. GPT-Live 1 remains the connected live voice model.
 
 Direct `openai/<model>` routes use `OPENAI_API_KEY`, independently of OpenRouter credits. Text uses Responses with provider-supported reasoning (low, or medium for Pro models whose minimum is medium), no custom sampling, and the complete host schema in instructions. Host validation is authoritative. Pro models can exceed the existing chapter deadline. Images use generations for text and multipart edits for references, returning PNG through the existing storage paths; medium quality and the nearest square/portrait/landscape size are used. Existing default models and tier selections stay unchanged.
 
-This is the complete non-deprecated general-purpose writing and image catalog, not every specialized OpenAI endpoint. Embeddings, moderation, transcription, research/cyber access programs, open-weight models and ChatGPT-only aliases are not chapter/image models. Realtime models use a different protocol from the existing GPT-Live engine and are not advertised as connected. Retired/deprecated models are not newly offered. Configuration status means a key is present, not that every model is entitled or has available credit.
+This is the complete non-deprecated general-purpose writing and image catalog, not every specialized OpenAI endpoint. Embeddings, moderation, transcription, research/cyber access programs, and open-weight models are not chapter/image models. Realtime models use a different protocol from the existing GPT-Live engine and are not advertised as connected. Retired/deprecated models are not newly offered. Configuration status means a key is present, not that every model is entitled or has available credit.
 
 ## Capabilities
 

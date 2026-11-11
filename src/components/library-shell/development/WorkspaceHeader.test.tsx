@@ -55,7 +55,7 @@ it('keeps logo, Search, optional context and the Profile Portrait in document or
   expect(header.querySelector('.workspace-header-context')).not.toBeNull();
   expect(header.querySelector('input')).toBeNull();
   // Search reads as a field, and the Portrait sits in the header's profile slot at the end.
-  expect(button('Search for stories').querySelector('.workspace-search-placeholder')?.textContent).toBe('Search for stories');
+  expect(button('Search for stories').querySelector('.workspace-search-placeholder')?.textContent).toBe('Find a world');
   expect(button('Profile and preferences').closest('[data-slot="app-header-profile"]')).not.toBeNull();
   await render(<WorkspaceHeader title="Quiet page" contextualItem={false} />);
   expect(container.querySelector('.workspace-header-context')).toBeNull();

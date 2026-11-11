@@ -1,5 +1,17 @@
 # Library Shell
 
+- **2026-11-06** — Search wears the former logo's cyan, violet and gold spectrum as a glowing bottom line, with a neutral outline replacing its gold border. Shared by app and Workshop.
+
+- **2026-11-06** — Header search placeholder reads “Find a world” in the app and Workshop.
+
+- **2026-11-06** — Mobile and tablet headers reserve the Familiar recall's 44px space while it floats, keeping Search at the same compact width when the Familiar is minimized or expanded. Desktop search keeps its centered sizing; app and Workshop use the same accessory slot.
+
+- **2026-11-06** — Header logo now shows the enlarged white wordmark directly on the header, without a badge background, border or spectrum glow. Its Home link and focus treatment remain available in the app and Workshop.
+
+- **2026-11-06** — Laptop search now takes half the available action row, centered between the logo and utility controls, with a 640px cap. Phone and tablet sizing is unchanged; app and Workshop share the header styling.
+
+- **2026-11-06** — Enlarged the header wordmark within its existing badge by removing the extra artwork inset. App and Workshop share the refinement; the badge size, spectrum rim, Home link and adjacent controls keep their existing behavior.
+
 - **2026-10-30 (Sparks adopts the app preset)** — Uses the canonical Violet inset outer panel, Midnight violet premise card, Obsidian controls and Spectrum action, with the reusable Reader rim. The portal stays within its host `LibraryLook` so saved accent and background tint reach it. The existing Workshop preview wears that same look. Preserves PR #490's Creator Space and Story Seed placements and fill-Origin behavior alongside the simplified panel and revised prompts.
 
 - **2026-10-30 (night)** — From SENSEI: the header is back to its original box (straight edges, bottom hairline); the page still scrolls beneath it. The Portrait menu's Store opens the official Celestial Store at `/home/store` (it had pointed at `/store`, which landed on the creator's empty User Shop).

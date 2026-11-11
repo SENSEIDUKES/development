@@ -36,6 +36,23 @@
 }
 .workspace-header-logo-art,
 .novel-expanded-emblem-art { --ne-logo-height: 40px; }
+/* Show the wordmark directly on the header, keeping its enlarged artwork
+   and existing footprint. The surrounding Home link owns the touch target. */
+.workspace-header .ne-logo {
+  --ne-logo-art-height: var(--ne-logo-height);
+  width: calc(var(--ne-logo-height) * 0.7 * 1580 / 976 + var(--ne-logo-height) * 0.5 + 2px);
+}
+.workspace-header .ne-logo__aura,
+.workspace-header .ne-logo__ring { display: none; }
+.workspace-header .ne-logo__face {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.workspace-header .ne-logo__image {
+  flex: none;
+  max-width: none;
+}
 @media (max-width: 479px) {
   .workspace-header-badge { gap: 4px; }
   .workspace-header-logo-art,
@@ -75,31 +92,57 @@
 .workspace-header-actions, .workspace-header-command-area, .workspace-secondary-actions {
   display: flex; align-items: center; gap: 8px; min-width: 0;
 }
+.workspace-header-accessory { display: contents; }
+@media (max-width: 1023px) {
+  /* Reserve the Familiar's 44px slot even while it floats over the page, so
+     Search keeps the same compact width when the Familiar is minimized. */
+  .workspace-header-accessory {
+    display: flex;
+    align-items: center;
+    flex: none;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
 
 /* Search: a field-style trigger that fills the row after the logo, with a thin
    glowing underline. Below 6rem of room the words step aside for the glass alone. */
 .workspace-search { flex: 1 1 auto; min-width: 44px; container-type: inline-size; }
+@media (min-width: 1024px) {
+  .workspace-search {
+    flex: 0 1 50%;
+    max-width: 640px;
+    margin-inline: auto;
+  }
+}
 .workspace-search-field {
   position: relative;
   display: flex; align-items: center; gap: 10px;
   width: 100%; height: 44px; padding-inline: 16px;
   border-radius: 9999px;
   background: rgba(0, 0, 0, 0.95);
-  border: 1px solid rgba(214, 189, 135, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--color-neutral-400);
   font-family: var(--font-sans); font-size: 15px; text-align: start;
   cursor: text;
   transition: border-color 200ms ease, background-color 200ms ease;
 }
+.workspace-search-field::before,
 .workspace-search-field::after {
-  content: ""; position: absolute; inset-inline: 22px; bottom: -1px; height: 2px; border-radius: 2px;
-  background: linear-gradient(90deg, transparent, var(--color-sen-portal), var(--color-sen-gold-accent), transparent);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--color-sen-portal) 55%, transparent);
-  opacity: 0.7; transition: opacity 200ms ease;
+  content: ""; position: absolute; inset-inline: 22px; border-radius: 9999px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, #04acff 18%, #7c5cff 45%, rgba(212, 175, 55, 0.85) 72%, #04acff 88%, transparent);
+}
+.workspace-search-field::before {
+  bottom: -3px; height: 6px; filter: blur(6px); opacity: 0.65;
+}
+.workspace-search-field::after {
+  bottom: -1px; height: 2px;
+  opacity: 0.9; transition: opacity 200ms ease;
 }
 .workspace-search-field:is(:hover, :focus-visible) {
   background: #101018;
-  border-color: rgba(214, 189, 135, 0.45);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 .workspace-search-field:is(:hover, :focus-visible)::after { opacity: 1; }
 .workspace-search-field:focus-visible { outline-offset: 2px !important; }

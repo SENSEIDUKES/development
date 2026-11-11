@@ -106,6 +106,11 @@ Write the answer in the order it is asked for, so each card is written before th
 Lists
 Where a slot holds more than one name (holds, knows, ties, belongsTo, habitat), separate them with commas, and never put a comma inside a name. A count goes before its name: "3 Spirit Pills". knownRanks lists the ranks from lowest to highest, separated by commas. laws writes one law per line.
 
+Conditions
+A condition is one line: its name, its stages in order, how fast it moves, and what ends it, separated by " | ":
+Name | first stage > next stage > last stage | a stage every N chapters | ends if this happens; or this
+Each stage is what a reader would see at that point, in a few words. Leave out the stages and the pace for a condition that does not change by itself. End the stages with "gone" when it passes by itself.
+
 The cards, in the order to write them, and what each slot holds:
 
 ${CARD_ANSWERS.map(({ kind, field, limit, lead }) => {

@@ -30,7 +30,7 @@ describe('The Blueprint fills every Story Seed slot the creator left blank', () 
     const [qin, han] = filled.additionalCharacters!;
     // The creator's own values stay exactly theirs; every blank slot of the card is filled.
     expect(qin).toMatchObject({ ...seed.world.optional.worldFoundations.additionalCharacters![0], skinTone: 'Weathered bronze', eyeColor: 'Frost grey' });
-    expect(qin).toMatchObject({ location: 'Azure Hall', status: 'Well, one arm lost', holds: 'Iron Brush', belongsTo: 'Heavenly Sword Sect' });
+    expect(qin).toMatchObject({ location: 'Azure Hall', status: 'One arm lost', holds: 'Iron Brush', belongsTo: 'Heavenly Sword Sect' });
     expect(qin.aliases).toEqual(['The Iron Brush']);
     expect(han).toMatchObject({ name: 'Junior Sister Han', role: 'Ally', age: 'Seventeen', connectionToMC: 'Fellow quarry laborer' });
     expect(han).not.toHaveProperty('aliases');

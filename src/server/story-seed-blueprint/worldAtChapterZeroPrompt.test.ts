@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WORLD_CARD_KINDS } from '@seihouse/sen/contracts';
+import { WORLD_CARD_KINDS, readConditions } from '@seihouse/sen/contracts';
 import { SEN_BLUEPRINT_DEFAULT_SKILLS } from '@seihouse/sen/harness-generation';
 import { createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
 import { BLUEPRINT_PERMANENT_RULES, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintPrompt, buildWorldBlueprintSystemPrompt } from './prompt';
@@ -82,6 +82,28 @@ describe('The world builder asks for every Codex card kind', () => {
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toMatch(/\b(cub|fox|pendant|kitten)\b/i);
   });
 
+  it('asks for each condition with its whole course, written once at the start (SENSEI, 2026-11-11)', () => {
+    // A character's Status slot is their conditions now: each its own line, with the course code will run.
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('    status: each lasting condition they are in when the story opens, one per line, written as the Conditions rule says; blank when they are well');
+    // A thing's status is still its own one-word condition.
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('    status: what condition it is in: whole, damaged, sealed');
+    for (const rule of [
+      'Conditions\nA condition is one line: its name, its stages in order, how fast it moves, and what ends it, separated by " | ":',
+      'Name | first stage > next stage > last stage | a stage every N chapters | ends if this happens; or this',
+      'Leave out the stages and the pace for a condition that does not change by itself. End the stages with "gone" when it passes by itself.',
+    ]) {
+      expect(BLUEPRINT_PERMANENT_RULES).toContain(rule);
+      expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain(rule);
+    }
+    // The World skill says what one is and when to give one.
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('A condition is something lasting that a character carries into the story: a wound, an illness, a curse, a seal.');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('It then runs by itself as the chapters pass, whatever else happens, until something ends it. A mood is not a condition. Most characters have none.');
+    // The rule's own line is a pattern, so it reads back as a condition with a course.
+    expect(readConditions('Name | first stage > next stage > last stage | a stage every 3 chapters | ends if this happens; or this')).toEqual([
+      { name: 'Name', stages: ['first stage', 'next stage', 'last stage'], pace: 3, passes: false, endsIf: ['this happens', 'this'] },
+    ]);
+  });
+
   it('never asks the model for aliases, which are the author\'s alone and have no place in the answer', () => {
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toContain('aliases');
   });
@@ -95,7 +117,7 @@ describe('The world builder asks for every Codex card kind', () => {
     expect(swapped.startsWith('# ROLE AND MISSION\n\nYou are a celebrated Western fantasy novelist. Build the Blueprint')).toBe(true);
     expect(swapped).toContain('[Origin] Western Fantasy 1.0.0\nYou are writing the world of a Western fantasy novel');
     expect(swapped).not.toContain('Eastern fantasy');
-    expect(swapped).toContain('[World] SEN World Builder 1.4.0');
+    expect(swapped).toContain('[World] SEN World Builder 1.5.0');
     expect(swapped.endsWith(BLUEPRINT_PERMANENT_RULES)).toBe(true);
     // The same identity closes the request, in its Mission Reminder.
     const request = buildWorldBlueprintPrompt(createEmptyStorySeedInput(), undefined, 'You are a celebrated Western fantasy novelist.');

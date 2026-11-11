@@ -32,6 +32,8 @@ export const GENERATION_PACKET_BUDGET = {
     canonicalState: { tokens: 3_000, protected: false },
     // What each character has now: never trimmed, so the writer never forgets a sword or invents a second one.
     holdings: { protected: true },
+    // What each character carries now: never trimmed, so no wound is forgotten or healed by omission.
+    conditions: { protected: true },
     // Who and what is already on the page, with each look: bounded by its own counts, never trimmed further.
     appearances: { protected: true },
     missionReminder: { protected: true },
@@ -59,6 +61,7 @@ export const PACKET_SECTION_ORDER: readonly PacketSectionId[] = [
   'worldAtChapterZero',
   'canonicalState',
   'holdings',
+  'conditions',
   'appearances',
   // The chapter's request, then the Mission Reminder last, closing the call (SENSEI, 2026-10-16).
   'immediateChapterRequest',

@@ -6,4 +6,5 @@ export * from '../../narrative/usage';
 export * from '../../lib/language';
 export * from '../../narrative/readingMode';
 export * from '../../narrative/worldRecord';
+export * from '../../narrative/conditions';
 export { modelJsonCandidates, parseModelJson } from '../../narrative/modelJson';

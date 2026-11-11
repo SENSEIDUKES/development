@@ -1,5 +1,5 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Archive, ArrowUpCircle, Backpack, ChevronLeft, Eye, Flag, Footprints, Hand, LoaderCircle, Lock, MapPin, Package, PawPrint, PenLine, Scale, ScrollText, Sparkles, Sword, TriangleAlert, Users, WandSparkles } from 'lucide-react';
+import { Activity, Archive, ArrowUpCircle, Backpack, ChevronLeft, Eye, Flag, Footprints, Hand, LoaderCircle, Lock, MapPin, Package, PawPrint, PenLine, Scale, ScrollText, Sparkles, Sword, TriangleAlert, Users, WandSparkles } from 'lucide-react';
 import './story-codex.css';
 import { CodexCardButton, CodexProfileHeader, type CodexCardCategory } from './codexCardParts';
 import { CODEX_VERB_LABELS } from '../shared/storyKnowledge';
@@ -393,6 +393,12 @@ function CharacterProfile({ character, art, onBack, onReadPassage, onFillCard }:
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>
+    {character.conditions && character.conditions.length > 0 && <Section title="Conditions" icon={<Activity size={12} aria-hidden />} label={`${character.name}: Conditions`} testId="codex-conditions">
+      <ul className="grid gap-2">{character.conditions.map(condition => <li key={condition.name} className="min-w-0 rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] px-4 py-3">
+        <p className="break-words text-sm font-medium text-(--reader-text)">{condition.name}</p>
+        {condition.showing && <p className="mt-0.5 break-words text-sm text-(--reader-text-soft)">{condition.showing}</p>}
+      </li>)}</ul>
+    </Section>}
     {character.promoted
       ? <PromotedCard name={character.name} promoted={character.promoted} facts={character.atChapterZero ?? []} onFill={onFillCard} />
       : character.atChapterZero && <WorldAtTheStart name={character.name} facts={character.atChapterZero} />}

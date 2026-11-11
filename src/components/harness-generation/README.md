@@ -377,6 +377,23 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-11 (conditions: written once with their course, run by code):**
+  SENSEI, from how RimWorld keeps a colonist's health: each condition is its
+  own entry and the rules run it. A character card's Status slot holds their
+  conditions, one a line (`narrative/conditions.ts`): a name, its stages, how
+  many chapters each lasts, and what ends it; a name alone never changes by
+  itself, and stages that end in "gone" pass by themselves. Several stand side
+  by side. `deriveConditions` (`shared/conditions.ts`) works out what each
+  character carries at a chapter from the card and the chapter count alone;
+  nothing is stored and no model is asked. The writer's Story Information
+  Packet gains a Conditions section between Holdings and Appeared
+  (`conditionsSection`, `presentConditions`), never trimmed. The Codex lists
+  what a character carries now, without where the course goes next
+  (`CodexCharacter.conditions`); the card's own line is no longer a fact
+  (`worldCardFacts`). The Blueprint's words changed with SENSEI's approval
+  (SEN World Builder 1.5.0); they are in Writer Instructions' history. **Not
+  yet:** a condition that begins on the page, and one the story ends early,
+  are the tagger's to mark; until then a condition ends only by its course.
 - **2026-11-11 (the Blueprint builds Arc 1's whole world, as it stands before
   Chapter 1):** SENSEI approved four changes found in The Frost-Scaled
   Companion's cards. The World skill (SEN World Builder 1.4.0) says a card

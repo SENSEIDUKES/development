@@ -191,6 +191,16 @@ was held before Chapter 1.
 Promote is the one way a card is made after the story begins until Alter Fate
 and the arcs have theirs.
 
+**Condition** (`narrative/conditions.ts`, `shared/conditions.ts`): something
+lasting a character carries, written once on their card with its whole
+course: a name, its stages, how many chapters each lasts and what ends it,
+one a line in the card's Status slot (`CONDITIONS_SLOT`). Several stand side
+by side. Code works out the stage each has reached from the chapter count
+(`deriveConditions`); nothing is stored and no model is asked. The writer
+reads them in the packet's Conditions section and the Codex lists what each
+character carries now. A condition the page begins or ends is the tagger's
+to mark, and is not built yet.
+
 **Holdings** — what each character has, uses, knows and is, as four facts kept
 apart: a thing is *owned* (with a count) and may be *equipped* (in use);
 an ability is *learning* or *learned* (with a level), and a learned one may be

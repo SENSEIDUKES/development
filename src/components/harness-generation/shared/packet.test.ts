@@ -65,7 +65,8 @@ const setup = async (options: { throughHttp?: boolean } = {}) => {
         enteredInChapter: 0, slots: { bio: 'An outer-gate hopeful.', role: 'Disciple', eyeColor: 'Dark brown', rankLevel: 'Stage 1',
           holds: 'a cracked practice sword', knows: 'Azure Breathing', voice: 'an eager young man' } },
       { key: 'world:character:elder-mu', kind: 'character', name: 'Elder Mu', aliases: ['the Wall Keeper'],
-        enteredInChapter: 0, slots: { bio: 'Keeper of the outer wall.', role: 'Elder', voice: 'an old voice full of wisdom' } },
+        enteredInChapter: 0, slots: { bio: 'Keeper of the outer wall.', role: 'Elder', voice: 'an old voice full of wisdom',
+          status: 'Old wall wound | aches in the cold > opens again > will not close | a stage every 2 chapters | ends if a healer closes it\nBlind in one eye' } },
       { key: 'world:thing:cracked-practice-sword', kind: 'thing', name: 'Cracked Practice Sword',
         enteredInChapter: 0, slots: { appearance: 'A dull blade with a split hilt.', holder: 'Yi Chen' } },
       { key: 'world:ability:azure-breathing', kind: 'ability', name: 'Azure Breathing',
@@ -94,11 +95,15 @@ describe('Compact long-story generation packet', () => {
     await run.write();
     const prompt = buildHarnessGenerationPrompt(run.requests[1]);
     expect(prompt.measurement.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER);
-    const markers = ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'THE WORLD AT CHAPTER 0 (the world the story opens with', 'CURRENT CANONICAL STATE', 'HOLDINGS (what each character has now', 'IMMEDIATE CHAPTER REQUEST', '# MISSION REMINDER'];
+    const markers = ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'THE WORLD AT CHAPTER 0 (the world the story opens with', 'CURRENT CANONICAL STATE', 'HOLDINGS (what each character has now', 'CONDITIONS (what each character carries now', 'IMMEDIATE CHAPTER REQUEST', '# MISSION REMINDER'];
     const serialized = `${prompt.systemInstruction}\n\n${prompt.userPrompt}`;
     const positions = markers.map(marker => ({ marker, index: serialized.indexOf(marker), count: serialized.split(marker).length - 1 }));
     for (const position of positions) expect(position, position.marker).toMatchObject({ count: 1 });
     expect(positions.map(position => position.index)).toEqual([...positions.map(position => position.index)].sort((a, b) => a - b));
+    // What each character carries, at the stage Chapter 2 finds it: worked out from the card and the chapter count.
+    expect(prompt.userPrompt).toContain('- Elder Mu: Old wall wound, aches in the cold (stage 1 of 3; reaches the next stage in 1 chapter; ends if a healer closes it)\n- Elder Mu: Blind in one eye\n');
+    // The card's own line is never shown to the writer as a fact of the opening world.
+    expect(serialized).not.toContain('Old wall wound |');
     // Author-owned direction appears exactly once each.
     expect(prompt.userPrompt.split('Yi Chen leads the Azure Sect to glory.')).toHaveLength(2);
     expect(prompt.userPrompt.split('Make Yi Chen take the Azure Sect to glory throughout the entire story.')).toHaveLength(2);

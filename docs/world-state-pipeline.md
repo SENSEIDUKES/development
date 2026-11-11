@@ -241,9 +241,12 @@ to write one (see the Harness Generation README's history).
   list of names. Its wording has not changed from naming whoever appears to
   linking each appearance to a card, so it still tags statuses, places and
   ties for minor figures. The Codex does not show those for a minor figure.
-- **Conditions stack.** The status tag has no way to end a condition yet, so
-  stacking today would only pile up every passing moment. It is built with the
-  status tag's new words.
+- **Conditions the page begins or ends.** A character's card now states
+  their conditions with their whole course, several side by side, and code
+  runs them (built 2026-11-11; see the Harness Generation README's history).
+  The status tag still has no way to begin or end one, so a wound a fight
+  gives or a cure a chapter shows does not reach the record yet. It is built
+  with the status tag's new words.
 - **Cards carry their timing** (the arc a card is due in). The Blueprint has
   to fill it, which changes the Blueprint's words.
 
@@ -370,6 +373,11 @@ The table only maps the names; it renames nothing.
 
 ## History
 
+- **2026-11-11 (built):** conditions. A character's card states each lasting
+  condition with its stages, its pace in chapters and what ends it; code moves
+  it as chapters pass, the writer is told where each stands before every
+  chapter, and the Codex lists what each character carries. SENSEI approved
+  the words first.
 - **2026-11-11 (built):** the Blueprint builds Arc 1's whole world as it
   stands before Chapter 1: cards state nothing the story has yet to do,
   whoever the premise is about has a card, a look shows only what is held,

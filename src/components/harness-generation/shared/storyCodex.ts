@@ -16,6 +16,7 @@ import { harnessParagraphBlockId } from './chapterBody';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { factionNamed, type DeclaredFaction } from './factions';
 import { deriveAppearances, type AppearanceFlag, type AppearancePassage, type AppearanceSubject } from './appearances';
+import { deriveConditions } from './conditions';
 import { deriveStatuses } from './statuses';
 import { derivePlaces } from './places';
 import { deriveTies, tiesOfEntry } from './ties';
@@ -161,6 +162,12 @@ export interface CodexWorldCard {
   atChapterZero: CodexWorldFact[];
 }
 
+/** A condition a character carries now: its name, and how it shows at this point. */
+export interface CodexCondition {
+  name: string;
+  showing?: string;
+}
+
 export interface CodexCharacter {
   /** Stable for this story: the Codex entry's ID, or the name the record knows them by until one exists. */
   key: string;
@@ -177,6 +184,12 @@ export interface CodexCharacter {
   rank?: { text: string; events: HoldingEvent[] };
   /** How they are now, from the latest status tag, with the passage that showed it. Absent while no tag gave one. */
   status?: { text: string; passage: CodexPassage };
+  /**
+   * What they carry as of the latest chapter: each condition of their card
+   * that still stands, with how it shows at the stage its course has reached.
+   * Where the course goes next is the story's to tell, so it is not here.
+   */
+  conditions?: CodexCondition[];
   /** Where they are now, from the latest place tag, with the passage where they arrived. Absent while no tag gave one. */
   place?: { text: string; passage: CodexPassage };
   /** How they stand with others now, from each pair's latest tie tag, with the passage that showed it. Absent while no tag gave one. */
@@ -353,6 +366,10 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   const labelsOf = (card: { name: string; aliases?: string[] }) =>
     [card.name, ...(card.aliases ?? [])].map(normalizeIdentityLabel);
 
+  // What each character carries as of the latest chapter, by their card.
+  const carried = new Map(deriveConditions(world, ordered.at(-1)?.chapterNumber ?? 1)
+    .map(character => [character.cardKey, character.conditions.map(({ name, showing }): CodexCondition => ({ name, ...(showing ? { showing } : {}) }))]));
+
   // The world at Chapter 0 comes first: the Codex opens with the world the
   // story was given, and the chapters add to these same cards.
   for (const card of worldCardsOfKind(world, 'character')) {
@@ -368,6 +385,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
       mainCharacter: Boolean(card.mainCharacter || entry?.mainCharacter),
       atChapterZero: worldCardFacts(card),
       ...promotedOf(card),
+      ...(carried.get(card.key)?.length ? { conditions: carried.get(card.key)! } : {}),
       things: [], abilities: [], chronicle: [],
       names: new Set([...labels, ...(entry ? labelsOf(entry) : [])]),
     });

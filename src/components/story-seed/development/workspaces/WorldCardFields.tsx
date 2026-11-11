@@ -1,4 +1,4 @@
-import { WORLD_CARD_KINDS, type WorldCardKindId, type WorldCardSlot } from '@seihouse/sen/contracts';
+import { CONDITIONS_SLOT, WORLD_CARD_KINDS, type WorldCardKindId, type WorldCardSlot } from '@seihouse/sen/contracts';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 
 /**
@@ -14,6 +14,9 @@ import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBo
 
 /** Slots long enough to want a box of their own. */
 const WIDE_SLOTS = new Set(['appearance', 'bio', 'description', 'goals', 'ties', 'laws', 'era', 'holds', 'knows', 'kindOfWorld', 'whoRules']);
+
+/** How an author writes a condition: a name alone, or a name with its course. */
+const CONDITIONS_HINT = 'One per line: a name alone, or Name | stage > stage | a stage every 5 chapters | ends if this';
 
 export const worldCardSlots = (kind: WorldCardKindId, only?: readonly string[]): WorldCardSlot[] => {
   const slots = WORLD_CARD_KINDS.find(candidate => candidate.id === kind)!.slots.filter(slot => !slot.aliases);
@@ -32,17 +35,20 @@ export const WorldCardSlotFields = <Card extends object>({ kind, card, idPrefix,
   {worldCardSlots(kind, only).map(slot => {
     const value = (card as Record<string, unknown>)[slot.id];
     const id = `${idPrefix}-${slot.id}`;
+    const conditions = kind === 'character' && slot.id === CONDITIONS_SLOT;
     const common = {
       size: 'compact' as const,
       label: slot.label,
       id,
       value: typeof value === 'string' ? value : '',
       onChange: (next: string) => onChange({ [slot.id]: next }),
-      placeholder: slot.asks.charAt(0).toUpperCase() + slot.asks.slice(1),
+      // The Blueprint is told how a condition is written by its own rules; an author is shown it here.
+      placeholder: conditions ? CONDITIONS_HINT : slot.asks.charAt(0).toUpperCase() + slot.asks.slice(1),
     };
-    return WIDE_SLOTS.has(slot.id)
+    // A character's conditions are written one per line, so they take a box of their own.
+    return WIDE_SLOTS.has(slot.id) || conditions
       ? <div key={slot.id} className="col-span-1 sm:col-span-2 md:col-span-3">
-          <LibraryTextArea {...common} rows={2} maxLength={600} />
+          <LibraryTextArea {...common} rows={conditions ? 3 : 2} maxLength={600} />
         </div>
       : <LibraryTextBox key={slot.id} {...common} />;
   })}

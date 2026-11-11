@@ -3,7 +3,9 @@ import {
   SEN_NOVEL_AUTHOR_SKILL, SEN_READING_MODE_SKILLS,
   CAPA_SCHEMA, assembleCapaPrompt,
 } from '@seihouse/sen/harness-generation';
-import { HARNESS_PROMPT_HEADINGS, HARNESS_PROMPT_PARTS, composeHarnessSystemInstruction, composeHarnessUserPrompt } from './prompt';
+import { HARNESS_HARD_RULES, HARNESS_PROMPT_HEADINGS, HARNESS_PROMPT_PARTS, buildHarnessChapterResponseSchema, composeHarnessSystemInstruction, composeHarnessUserPrompt } from './prompt';
+import { createHarnessTextProvider } from './provider';
+import { vi } from 'vitest';
 
 /** The headings a prompt carries, in order: every line that is one of the skeleton's. */
 const headings = (text: string) => text.split('\n').filter(line => line.startsWith('# '));
@@ -14,6 +16,27 @@ const capa = (skills = [SEN_NOVEL_AUTHOR_SKILL, SEN_READING_MODE_SKILLS['Clear R
 });
 
 describe('The prompt skeleton (SENSEI, 2026-10-16)', () => {
+  it('keeps the complete OpenAI return schema inside its owned part through the actual adapter', async () => {
+    const schema = buildHarnessChapterResponseSchema(24);
+    const system = composeHarnessSystemInstruction(capa(), schema);
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+      status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: '{}' }] }],
+    })));
+    try {
+      await createHarnessTextProvider('openai/gpt-6.1-terra', { keys: { openai: 'key' } }).generate({
+        systemInstruction: system, userPrompt: 'Story information.', responseJsonSchema: schema,
+        responseFormat: 'text', temperature: 1, maxOutputTokens: 1000, timeoutMs: 1000,
+      });
+      const sent = JSON.parse(fetchMock.mock.calls[0][1]!.body as string).instructions as string;
+      expect(sent).toBe(system);
+      expect(headings(sent)).toEqual(HEADINGS.slice(0, 5));
+      expect(sent.indexOf(JSON.stringify(schema))).toBeGreaterThan(sent.indexOf(HARNESS_PROMPT_HEADINGS.returning));
+      expect(sent.indexOf(JSON.stringify(schema))).toBeLessThan(sent.indexOf(HARNESS_PROMPT_HEADINGS.hardRules));
+      expect(sent).toContain('"minItems":24,"maxItems":24');
+      expect(sent.endsWith(HARNESS_HARD_RULES)).toBe(true);
+    } finally { fetchMock.mockRestore(); }
+  });
+
   it('lays the system instruction out in its parts, each heading once, in order, and nothing before the role', () => {
     const system = composeHarnessSystemInstruction(capa());
     expect(headings(system)).toEqual(HEADINGS.slice(0, 5));

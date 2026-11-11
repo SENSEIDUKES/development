@@ -4,7 +4,7 @@ import { handleHarnessGenerationHttp } from './http';
 import type { HarnessTextGenerationRequest } from './provider';
 import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
 import { assembleCapaPrompt } from '@seihouse/sen/harness-generation';
-import { composeHarnessSystemInstruction } from './prompt';
+import { HARNESS_HARD_RULES, HARNESS_PROMPT_HEADINGS, buildHarnessGenerationPrompt, composeHarnessSystemInstruction } from './prompt';
 import { arcGenerationContext } from '@seihouse/sen/arc-goals';
 import { buildMissionReminder } from '@seihouse/sen/harness-generation';
 
@@ -49,6 +49,27 @@ const environment = { GEMINI_API_KEY: 'test-key' };
 const PLANNING = { arcNumber: 2, plannedArcCount: 2, finalArc: true, previousArcs: [], lookahead: [] };
 
 describe('Harness Generation HTTP boundary', () => {
+  it('sends the OpenAI chapter schema in How to return, with no adapter teaching after Hard Rules', async () => {
+    const input = { ...request(), model: 'openai/gpt-6.1-terra' };
+    const expected = buildHarnessGenerationPrompt(input, true);
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+      status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: '{}' }] }],
+    })));
+    try {
+      const result = await handleHarnessGenerationHttp({ method: 'POST', body: input }, { environment: { OPENAI_API_KEY: 'key' } });
+      expect(result.status).toBe(200);
+      const sent = JSON.parse(fetchMock.mock.calls[0][1]!.body as string);
+      expect(sent.instructions).toBe(expected.systemInstruction);
+      expect(sent.instructions.endsWith(HARNESS_HARD_RULES)).toBe(true);
+      const schemaAt = sent.instructions.indexOf(JSON.stringify(expected.responseJsonSchema));
+      expect(schemaAt).toBeGreaterThan(sent.instructions.indexOf(HARNESS_PROMPT_HEADINGS.returning));
+      expect(schemaAt).toBeLessThan(sent.instructions.indexOf(HARNESS_PROMPT_HEADINGS.hardRules));
+      expect(result.body).toMatchObject({ requestMeasurement: {
+        totalCharacters: sent.instructions.length + sent.input.length,
+      } });
+    } finally { fetchMock.mockRestore(); }
+  });
+
   it('passes the Router reasoning level to the provider only when the model accepts it', async () => {
     const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{}',
       providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-23', usage: { source: 'unavailable' as const } } }));

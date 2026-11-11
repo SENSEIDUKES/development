@@ -11,6 +11,7 @@ export interface HarnessTextGenerationRequest {
   maxOutputTokens: number;
   timeoutMs: number;
   responseJsonSchema?: unknown;
+  responseFormat?: 'text' | 'json';
   reasoningLevel?: ReasoningLevel;
 }
 export interface HarnessTextGenerationResult {
@@ -49,7 +50,7 @@ class RoutedHarnessTextProvider implements HarnessTextModelProvider {
         capability: 'text', model: this.model, systemInstruction: request.systemInstruction,
         userPrompt: request.userPrompt, temperature: request.temperature,
         maxOutputTokens: request.maxOutputTokens, timeoutMs,
-        responseFormat: 'json', responseJsonSchema: request.responseJsonSchema,
+        responseFormat: request.responseFormat ?? 'json', responseJsonSchema: request.responseJsonSchema,
         reasoningLevel: request.reasoningLevel ?? (this.reasoningEffort as ReasoningLevel | undefined),
       });
       if (result.capability !== 'text') throw new Error('Unexpected speech result.');

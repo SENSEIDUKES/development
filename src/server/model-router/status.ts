@@ -142,7 +142,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         description: 'Text-to-speech models that voice characters and Codex quotes.',
         consumers: consumersFor('tts'),
         defaultModel: ttsDefault,
-        providers: providerStatus(environment, ['elevenlabs']),
+        providers: providerStatus(environment, ['elevenlabs', 'minimax']),
         models: modelStatus(environment, ttsModels, ttsDefault, true),
       },
       {

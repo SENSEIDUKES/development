@@ -1,6 +1,6 @@
-import { CHAPTER_MODELS, IMAGE_MODELS, VIDEO_MODELS, providerModelName, resolveReasoningLevel } from './catalog';
+import { CHAPTER_MODELS, IMAGE_MODELS, VIDEO_MODELS, TTS_MODELS, providerModelName, resolveReasoningLevel } from './catalog';
 import { ModelRouterError } from './error';
-import type { ImageGenerationRequest, TextGenerationRequest, VideoGenerationRequest, VideoTaskRequest, VideoTaskResult } from './types';
+import type { ImageGenerationRequest, SpeechGenerationRequest, TextGenerationRequest, VideoGenerationRequest, VideoTaskRequest, VideoTaskResult } from './types';
 
 const ORIGIN = 'https://api.minimax.io';
 interface Json {
@@ -8,7 +8,7 @@ interface Json {
   base_resp?: { status_code?: number };
   choices?: Array<{ finish_reason?: string; error?: unknown; message?: { content?: unknown; refusal?: unknown } }>;
   usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
-  data?: { image_base64?: unknown[] };
+  data?: { image_base64?: unknown[]; audio?: unknown; status?: number } | Array<{ b64_json?: unknown }>;
   task_id?: unknown;
   task?: { model?: string; status?: string; content?: { url?: unknown } };
   status?: string;
@@ -76,20 +76,52 @@ export async function generateMiniMaxText(request: TextGenerationRequest, key: s
   } } : {}) };
 }
 
+export async function generateMiniMaxSpeech(request: SpeechGenerationRequest, key: string, signal: AbortSignal, fetchImpl: typeof fetch) {
+  if (!TTS_MODELS.some(model => model.id === request.model && model.provider === 'minimax')) throw new ModelRouterError('invalid-model', 'Choose a MiniMax speech model from the Router.');
+  if (!request.text.trim() || request.text.length >= 10000 || !request.voiceId.trim() || request.voiceId.length > 256) throw new ModelRouterError('invalid-model', 'Provide text under 10,000 characters and a MiniMax voice ID.');
+  const result = await call('/v1/t2a_v2', key, signal, fetchImpl, {
+    model: providerModelName(request.model), text: request.text, stream: false, output_format: 'hex',
+    voice_setting: { voice_id: request.voiceId, speed: 1, vol: 1, pitch: 0 },
+    audio_setting: { sample_rate: 32000, bitrate: 128000, format: 'mp3', channel: 1 },
+  });
+  const audio = !Array.isArray(result.data) ? result.data?.audio : undefined;
+  if (Array.isArray(result.data) || result.data?.status !== 2 || typeof audio !== 'string' || !audio.length
+    || audio.length > 20 * 1024 * 1024 || !/^(?:[0-9a-f]{2})+$/i.test(audio)) throw new ModelRouterError('provider-error', 'MiniMax returned no complete valid audio artifact.');
+  return new Uint8Array(Buffer.from(audio, 'hex'));
+}
+
 export async function generateMiniMaxImage(request: ImageGenerationRequest, key: string, signal: AbortSignal, fetchImpl: typeof fetch) {
   if (!IMAGE_MODELS.some(option => option.id === request.model && option.provider === 'minimax')) throw new ModelRouterError('invalid-model', 'Choose a MiniMax image model from the Router.');
-  if (!request.prompt.trim() || request.prompt.length > 1500) throw new ModelRouterError('invalid-model', 'MiniMax image prompts must contain 1–1,500 characters. Shorten the prompt and try again.');
-  if (request.aspectRatio && !['1:1', '16:9', '4:3', '3:2', '2:3', '3:4', '9:16', '21:9'].includes(request.aspectRatio)) throw new ModelRouterError('invalid-model', 'MiniMax does not support this image aspect ratio.');
-  if (request.model === 'minimax/image-01-live' && !request.referenceImages?.length) throw new ModelRouterError('invalid-model', 'MiniMax Image 01 Live requires a portrait reference. Choose Image 01 for text-only images.');
-  if (request.referenceImages?.some(image => !['image/png', 'image/jpeg'].includes(image.mimeType) || !image.data
-    || image.data.length >= 14 * 1024 * 1024 || !/^[A-Za-z0-9+/]+={0,2}$/.test(image.data)
-    || Buffer.from(image.data, 'base64').byteLength >= 10 * 1024 * 1024)) throw new ModelRouterError('invalid-model', 'MiniMax portrait references must be PNG or JPEG images under 10 MB.');
-  const result = await call('/v1/image_generation', key, signal, fetchImpl, {
+  const h3 = request.model.startsWith('minimax/MiniMax-H3-Image');
+  if (h3) {
+    if (!request.prompt.trim() || request.prompt.length > 32000) throw new ModelRouterError('invalid-model', 'MiniMax H3 image prompts must contain 1–32,000 characters.');
+    const ratio = /^(\d+):(\d+)$/.exec(request.aspectRatio ?? '1:1');
+    if (!ratio || ![ratio[1], ratio[2]].every(value => Number(value) >= 1 && Number(value) <= 300)
+      || Number(ratio[1]) / Number(ratio[2]) < 1 / 3 || Number(ratio[1]) / Number(ratio[2]) > 3) throw new ModelRouterError('invalid-model', 'MiniMax H3 image aspect ratios must be between 1:3 and 3:1.');
+    const references = request.referenceImages ?? [];
+    // Keep inline media bounded for the host routes, below the provider's 64 MiB request limit.
+    if (references.length > 16 || references.reduce((size, image) => size + image.data.length, 0) > 14 * 1024 * 1024
+      || references.some(image => !['image/png', 'image/jpeg', 'image/webp'].includes(image.mimeType)
+        || !image.data || !/^[A-Za-z0-9+/]+={0,2}$/.test(image.data))) throw new ModelRouterError('invalid-model', 'Provide at most 16 PNG, JPEG or WebP references totaling under 10 MB.');
+  }
+  if (!h3) {
+    if (!request.prompt.trim() || request.prompt.length > 1500) throw new ModelRouterError('invalid-model', 'MiniMax image prompts must contain 1–1,500 characters. Shorten the prompt and try again.');
+    if (request.aspectRatio && !['1:1', '16:9', '4:3', '3:2', '2:3', '3:4', '9:16', '21:9'].includes(request.aspectRatio)) throw new ModelRouterError('invalid-model', 'MiniMax does not support this image aspect ratio.');
+    if (request.model === 'minimax/image-01-live' && !request.referenceImages?.length) throw new ModelRouterError('invalid-model', 'MiniMax Image 01 Live requires a portrait reference. Choose Image 01 for text-only images.');
+    if (request.referenceImages?.some(image => !['image/png', 'image/jpeg'].includes(image.mimeType) || !image.data
+      || image.data.length >= 14 * 1024 * 1024 || !/^[A-Za-z0-9+/]+={0,2}$/.test(image.data)
+      || Buffer.from(image.data, 'base64').byteLength >= 10 * 1024 * 1024)) throw new ModelRouterError('invalid-model', 'MiniMax portrait references must be PNG or JPEG images under 10 MB.');
+  }
+  const result = await call(h3 ? (request.referenceImages?.length ? '/v1/images/edits' : '/v1/images/generations') : '/v1/image_generation', key, signal, fetchImpl, h3 ? {
+    model: providerModelName(request.model), prompt: request.prompt, response_format: 'b64_json', output_format: 'png', n: 1,
+    area: '1K', aspect_ratio: request.aspectRatio ?? '1:1',
+    ...(request.referenceImages?.length ? { images: request.referenceImages.map(image => ({ image_url: `data:${image.mimeType};base64,${image.data}` })) } : {}),
+  } : {
     model: providerModelName(request.model), prompt: request.prompt, response_format: 'base64', n: 1,
     ...(request.aspectRatio ? { aspect_ratio: request.aspectRatio } : {}),
     ...(request.referenceImages?.length ? { subject_reference: request.referenceImages.map(image => ({ type: 'character', image_file: `data:${image.mimeType};base64,${image.data}` })) } : {}),
   });
-  const data = result.data?.image_base64?.[0];
+  const data = Array.isArray(result.data) ? result.data[0]?.b64_json : result.data?.image_base64?.[0];
   if (typeof data !== 'string' || !data || data.length > 10 * 1024 * 1024 || !/^[A-Za-z0-9+/]+={0,2}$/.test(data)) throw new ModelRouterError('provider-error', 'MiniMax returned no valid image.');
   // The API returns raw base64 without a MIME field. Identify the actual bytes.
   const bytes = Buffer.from(data, 'base64');
@@ -112,14 +144,14 @@ const httpsUrl = (value: unknown): string => {
 /** Submit once and return the task ID. Hosts query it without resubmitting or charging again. */
 export async function createMiniMaxVideoTask(request: VideoGenerationRequest, key: string, signal: AbortSignal, fetchImpl: typeof fetch): Promise<VideoTaskResult> {
   const model = videoModel(request.model);
-  const v2 = model === 'MiniMax-H3' || model === 'MiniMax-H3-Max';
+  const v2 = model.startsWith('MiniMax-H3');
   if (!request.prompt.trim() || request.prompt.length > (v2 ? 7000 : 2000)) throw new ModelRouterError('invalid-model', `MiniMax video prompts must contain 1–${v2 ? '7,000' : '2,000'} characters.`);
   const duration = request.durationSeconds ?? 6;
   const resolution = request.resolution ?? (v2 || model.startsWith('MiniMax-Hailuo') ? '768P' : '720P');
   let body: object;
   if (v2) {
     if (!Number.isInteger(duration) || duration < (model === 'MiniMax-H3-Max' ? 5 : 4) || duration > 15
-      || !(model === 'MiniMax-H3-Max' ? ['480P', '768P'] : ['768P', '2K']).includes(resolution)) throw new ModelRouterError('invalid-model', 'This H3 model does not support the requested duration or resolution.');
+      || !(model === 'MiniMax-H3' ? ['768P', '2K'] : ['480P', '768P']).includes(resolution)) throw new ModelRouterError('invalid-model', 'This H3 model does not support the requested duration or resolution.');
     if (request.aspectRatio && !['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'].includes(request.aspectRatio)) throw new ModelRouterError('invalid-model', 'H3 does not support this video aspect ratio.');
     body = { model, content: [{ type: 'text', text: request.prompt }, ...(request.firstFrame ? [{ type: 'image_url', image_url: { url: request.firstFrame }, role: 'first_frame' }] : [])], duration, resolution, ratio: request.firstFrame ? 'adaptive' : request.aspectRatio ?? '16:9' };
   } else {
@@ -139,7 +171,7 @@ export async function createMiniMaxVideoTask(request: VideoGenerationRequest, ke
 export async function queryMiniMaxVideoTask(request: VideoTaskRequest, key: string, signal: AbortSignal, fetchImpl: typeof fetch): Promise<VideoTaskResult> {
   const model = videoModel(request.model);
   if (!/^[a-zA-Z0-9_-]{1,128}$/.test(request.taskId)) throw new ModelRouterError('invalid-model', 'Provide the MiniMax video task ID.');
-  const v2 = model === 'MiniMax-H3' || model === 'MiniMax-H3-Max';
+  const v2 = model.startsWith('MiniMax-H3');
   const result = await call(v2 ? `/v2/query/video_generation/${encodeURIComponent(request.taskId)}` : `/v1/query/video_generation?task_id=${encodeURIComponent(request.taskId)}`, key, signal, fetchImpl);
   const task = v2 ? result.task : result;
   const states: Record<string, VideoTaskResult['status']> = { queued: 'queued', running: 'running', succeeded: 'succeeded', failed: 'failed', cancelled: 'cancelled', Preparing: 'queued', Queueing: 'queued', Processing: 'running', Success: 'succeeded', Fail: 'failed' };

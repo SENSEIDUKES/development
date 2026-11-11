@@ -24,7 +24,7 @@ This is the complete non-deprecated general-purpose writing and image catalog, n
 | --- | --- | --- |
 | Chapters | Gemini, OpenRouter, MiniMax, Anthropic, OpenAI, local LM Studio | Harness Generation, Holdings Fixer, Look Describer, Chapter Tagger (its own choice, else the chapter model), Story Seed Blueprint, Story Spark, Reader Translation |
 | Images | Gemini, OpenRouter, MiniMax, OpenAI | Story Cover, Image Lab, Profile Picture |
-| TTS | ElevenLabs | Codex Voice Quote |
+| TTS | ElevenLabs, MiniMax | Codex Voice Quote uses ElevenLabs; MiniMax adapter available for server integrations |
 | Live voice | OpenAI, Gemini, ElevenLabs | Familiar Live Talk |
 | Audio | Gemini | none yet (catalog only) |
 | Video | Gemini, MiniMax | No feature yet; MiniMax task adapter implemented, Veo catalog only |
@@ -298,3 +298,5 @@ read it.
   as `thinkingLevel` or to OpenRouter as `reasoning.effort`.
 
 - 2026-11-10 - Added direct OpenAI text and image routing, model-specific reasoning, Blueprint routing, chapter attribution, image reference editing, provider status and Energy grades. Chapter schema teaching stays in the HARNESS-owned How to return the chapter part. Defaults remain unchanged. A hosted GPT Image 2.6 Flare request succeeded; per-model account access and live chapter output remain unverified.
+
+- 2026-11-10 - Added MiniMax H3 Image/Highspeed generation and reference editing, H3 Highspeed/Lite video tasks, and all eight documented synchronous speech models. Speech calls require MiniMax voice IDs; Codex quote voice assignments remain owned by ElevenLabs. H3 images use 1K PNG output to fit host response limits. API contracts verified against https://platform.minimax.io/docs/guides/image-generation, https://platform.minimax.io/docs/api-reference/video-generation-v2-create and https://platform.minimax.io/docs/api-reference/speech-t2a-http. Provider entitlement and live generation remain unverified.

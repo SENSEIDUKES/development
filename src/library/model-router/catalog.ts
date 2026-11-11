@@ -123,7 +123,7 @@ export const CHAPTER_MODELS: readonly RoutedModel[] = [
   { id: 'minimax/MiniMax-M3.1-Flash', label: 'MiniMax M3.1 Flash', provider: 'minimax', stage: 'current', reasoning: { levels: ['low', 'medium', 'high', 'xhigh', 'max'], defaultLevel: 'low', sendDefault: true } },
   ...['MiniMax-M3', 'MiniMax-M2.7', 'MiniMax-M2.7-highspeed', 'MiniMax-M2.5', 'MiniMax-M2.5-highspeed', 'MiniMax-M2.1', 'MiniMax-M2.1-highspeed', 'MiniMax-M2'].map(name => ({
     id: `minimax/${name}`, label: name.replace('MiniMax-', 'MiniMax '), provider: 'minimax' as const,
-    stage: name.startsWith('MiniMax-M3') || name.startsWith('MiniMax-M2.7') ? 'current' as const : 'legacy' as const,
+    stage: name.startsWith('MiniMax-M3') ? 'current' as const : 'legacy' as const,
   })),
   { id: 'google/gemini-3.8-flash', label: 'Gemini 3.8 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'low', sendDefault: true } },
   { id: 'google/gemini-3.7-flash', label: 'Gemini 3.7 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'low', sendDefault: true } },
@@ -168,6 +168,8 @@ export const IMAGE_MODELS: readonly RoutedModel[] = [
   { id: 'google/gemini-3-pro-image', label: 'Nano Banana Pro (Gemini 3 Pro Image)', provider: 'gemini', stage: 'current' },
   { id: 'google/gemini-3.1-flash-lite-image', label: 'Nano Banana 2 Lite (Gemini 3.1 Flash Lite Image)', provider: 'gemini', stage: 'current' },
   { id: 'openrouter/openai/gpt-5.4-image-2', label: 'GPT-5.4 Image 2 · OpenRouter', provider: 'openrouter', stage: 'current' },
+  { id: 'minimax/MiniMax-H3-Image', label: 'MiniMax H3 Image', provider: 'minimax', stage: 'current' },
+  { id: 'minimax/MiniMax-H3-Image-Highspeed', label: 'MiniMax H3 Image Highspeed', provider: 'minimax', stage: 'current' },
   { id: 'minimax/image-01', label: 'MiniMax Image 01', provider: 'minimax', stage: 'current' },
   { id: 'minimax/image-01-live', label: 'MiniMax Image 01 Live (portrait reference)', provider: 'minimax', stage: 'current' },
 ];
@@ -179,8 +181,12 @@ export const DEFAULT_IMAGE_MODEL = 'google/gemini-3.1-flash-lite-image';
 export const imageModelProvider = (model: string): ModelProviderId | undefined =>
   IMAGE_MODELS.find(option => option.id === model)?.provider;
 
-/** Text-to-speech models served by ElevenLabs. */
+/** Text-to-speech models; voice IDs must belong to the selected provider. */
 export const TTS_MODELS: readonly RoutedModel[] = [
+  ...['speech-2.8-hd', 'speech-2.8-turbo', 'speech-2.6-hd', 'speech-2.6-turbo', 'speech-02-hd', 'speech-02-turbo', 'speech-01-hd', 'speech-01-turbo'].map(name => ({
+    id: `minimax/${name}`, label: `MiniMax ${name}`, provider: 'minimax' as const,
+    stage: name.startsWith('speech-2.8') ? 'current' as const : 'legacy' as const,
+  })),
   { id: 'eleven_v3', label: 'Eleven v3', provider: 'elevenlabs', stage: 'current' },
   { id: 'eleven_multilingual_v2', label: 'Eleven Multilingual v2', provider: 'elevenlabs', stage: 'current' },
   { id: 'eleven_flash_v2_5', label: 'Eleven Flash v2.5', provider: 'elevenlabs', stage: 'current' },
@@ -211,7 +217,7 @@ export const AUDIO_MODELS: readonly RoutedModel[] = [
 
 /** Video models. MiniMax has a task adapter; Veo remains catalog only. No DEV surface calls video yet. */
 export const VIDEO_MODELS: readonly RoutedModel[] = [
-  ...['MiniMax-H3', 'MiniMax-H3-Max', 'MiniMax-Hailuo-2.3', 'MiniMax-Hailuo-2.3-Fast', 'MiniMax-Hailuo-02', 'T2V-01-Director', 'T2V-01', 'I2V-01-Director', 'I2V-01-live', 'I2V-01', 'S2V-01'].map(name => ({
+  ...['MiniMax-H3', 'MiniMax-H3-Highspeed', 'MiniMax-H3-Lite', 'MiniMax-H3-Max', 'MiniMax-Hailuo-2.3', 'MiniMax-Hailuo-2.3-Fast', 'MiniMax-Hailuo-02', 'T2V-01-Director', 'T2V-01', 'I2V-01-Director', 'I2V-01-live', 'I2V-01', 'S2V-01'].map(name => ({
     id: `minimax/${name}`, label: name, provider: 'minimax' as const,
     stage: name.startsWith('MiniMax-H3') || name.startsWith('MiniMax-Hailuo-2.3') ? 'current' as const : 'legacy' as const,
   })),

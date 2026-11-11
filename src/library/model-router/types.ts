@@ -72,7 +72,7 @@ export type GenerationRequest = TextGenerationRequest | SpeechGenerationRequest 
 export interface TokenUsage { inputTokens: number; outputTokens: number; totalTokens: number }
 export type GenerationResult =
   | { capability: 'text'; provider: TextProviderId; model: string; text: string; usage?: TokenUsage }
-  | { capability: 'tts'; provider: 'elevenlabs'; model: string; bytes: Uint8Array; mimeType: 'audio/mpeg' }
+  | { capability: 'tts'; provider: 'elevenlabs' | 'minimax'; model: string; bytes: Uint8Array; mimeType: 'audio/mpeg' }
   /** `data` is the image's bytes in base64, as the providers return them. */
   | { capability: 'image'; provider: 'gemini' | 'openrouter' | 'minimax' | 'openai'; model: string; data: string; mimeType: string }
   | VideoTaskResult;

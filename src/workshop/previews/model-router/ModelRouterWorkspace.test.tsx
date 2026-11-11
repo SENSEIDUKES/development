@@ -44,11 +44,15 @@ it('selects and remembers direct MiniMax writing and image models, and shows exe
   const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
   await click(tabs[1]);
   await click(provider('minimax'));
-  await click(row('minimax/image-01')!);
-  expect(readModelPreference('images')).toBe('minimax/image-01');
+  await click(row('minimax/MiniMax-H3-Image')!);
+  expect(readModelPreference('images')).toBe('minimax/MiniMax-H3-Image');
+  await click(tabs[2]);
+  await click(provider('minimax'));
+  expect(listedModels()).toHaveLength(8);
+  expect(document.querySelector('[data-model="minimax/speech-2.8-hd"]')!.textContent).not.toContain('Catalog only');
   await click(tabs[5]);
   await click(provider('minimax'));
-  expect(listedModels()).toHaveLength(11);
+  expect(listedModels()).toHaveLength(13);
   expect(document.querySelector('[data-model="minimax/MiniMax-H3"]')!.textContent).not.toContain('Catalog only');
   expect(document.body.textContent).toContain('No Workshop feature generates video yet');
   expect(document.body.textContent).not.toContain('secret');

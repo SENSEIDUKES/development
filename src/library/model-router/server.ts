@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenAI } from '@google/genai';
 import { geminiThinkingConfig } from './geminiThinking';
 import { generateOpenRouterImage, generateOpenRouterText } from './openRouter';
-import { createMiniMaxVideoTask, generateMiniMaxImage, generateMiniMaxText, queryMiniMaxVideoTask } from './minimax';
+import { createMiniMaxVideoTask, generateMiniMaxImage, generateMiniMaxText, generateMiniMaxSpeech, queryMiniMaxVideoTask } from './minimax';
 import { generateAnthropicText } from './anthropic';
 import { ModelRouterError } from './error';
 export { ModelRouterError } from './error';
@@ -170,6 +170,11 @@ export function createModelRouter(config: ModelRouterConfig) {
       }
     }
     if (request.capability === 'tts') {
+      if (request.model.startsWith('minimax/')) {
+        const key = requireCredential(config.credentials.minimax, 'MINIMAX_API_KEY');
+        const bytes = await withTimeout(request.timeoutMs, signal => generateMiniMaxSpeech(request, key, signal, fetchImpl));
+        return { capability: 'tts', provider: 'minimax', model: request.model, bytes, mimeType: 'audio/mpeg' };
+      }
       if (!isSpeechModel(request.model)) throw new ModelRouterError('invalid-model', `Model '${request.model}' cannot synthesize speech.`);
       const key = requireCredential(config.credentials.elevenlabs, 'ELEVENLABS_API_KEY');
       try {

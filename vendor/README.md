@@ -61,13 +61,15 @@ UI's `pnpm test:package` checks repeated-pack integrity and fresh ESM, TypeScrip
 
 From SEIHouse/FONT-LAB, recorded with source commits and integrity in `font-artifacts.json`:
 
-- `seihouse-seireader-0.39.0.tgz`: **SEIHouse Sans** 0.39 (formerly SEIReader), the reading
-  font: five weights with real italics. Packed as FONT-LAB's own distribution workflow packs it
-  (`npm pack --ignore-scripts` at its root at `93954df1686f0ea6c975bc953431ae839eeee493`) and audited there with
+- `seihouse-seireader-0.40.0.tgz`: **SEIHouse Sans** 0.40 (formerly SEIReader), the reading
+  font: five weights with real italics, plus the optional Night Regular and Italic faces.
+  This release rounds the `g` bowl and softens `S` and `?`, preserving advances and positioning.
+  Packed as FONT-LAB's own distribution workflow packs it
+  (`npm pack --ignore-scripts` at its root at `fb45fc0071774f3925240d3596625c32955d2b6d`) and audited there with
   `python3 verify_distribution.py <the web ZIP> --npm <the tarball>`.
-- `seihouse-living-titles-0.1.1.tgz`: the Living Titles package from `d7876fb31dd1c13106cdf0d0732e1a9c0d8f1849`, copied unchanged from
+- `seihouse-living-titles-0.1.2.tgz`: the Living Titles package from the same FONT-LAB commit, copied unchanged from
   `packages/living-titles/releases/` with its `release.json` (here
-  `seihouse-living-titles-0.1.1.release.json`). Development uses only its `fonts.css`: the four
+  `seihouse-living-titles-0.1.2.release.json`). Development uses only its `fonts.css`: the four
   **SEIHouse Display** cuts (Soft, Edge, Ink, Wide), Regular. Its runtime is not imported.
 
 The host theme (`src/host/styles/theme.css`) registers both families for the Workshop and the
@@ -78,6 +80,8 @@ Display under its own notices for authorized SEIHouse products. To refresh, pack
 release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm ci`.
 
 ## History
+
+- **2026-11-11:** Updated SEIHouse Sans to 0.40.0 and Living Titles to 0.1.2 from FONT-LAB #24. The shared host theme delivers the refined curves to NovelExpanded and the Workshop; recorded the new package integrity and upstream release provenance together.
 
 - **2026-11-08:** Added SEIHouse Front Desk 0.2.0 (`seihouse-front-desk-0.2.0.tgz`), the Familiar's system lifted out of this repository into `SENSEIDUKES/seihouse-front-desk` (step 2 of `docs/front-desk-plan.md`), with `front-desk-artifacts.json`.
 

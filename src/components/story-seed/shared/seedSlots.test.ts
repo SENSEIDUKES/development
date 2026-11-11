@@ -79,6 +79,16 @@ describe('The Blueprint fills every Story Seed slot the creator left blank', () 
     });
   });
 
+  it('keeps a place held by the hero when the creator left the hero unnamed and the Blueprint named them', () => {
+    const filled = fillBlankSeedSlots(createEmptyStorySeedInput(), readGeneratedSeedSlots({
+      mainCharacter: { name: 'Lin Qingshan', mainFlaw: 'Too trusting' },
+      places: [{ name: "Hunter's Hut", heldBy: 'Lin Qingshan' }, { name: 'Old Well', heldBy: 'Unclaimed' }],
+    })).world.optional.worldFoundations;
+    expect(filled.places?.map(place => place.heldBy)).toEqual(['Lin Qingshan', undefined]);
+    // The name only recognises the pointer: it is still the Blueprint's to carry, never written into the Seed here.
+    expect(filled.mainCharacter?.name).toBeUndefined();
+  });
+
   it('fills abilities, the World rules sheet and the main opposition only where they were blank', () => {
     const seed = createFilledStorySeedInput();
     delete seed.world.optional.worldFoundations.mainOpposition;

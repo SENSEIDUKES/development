@@ -526,6 +526,13 @@ export const SEED_WORLD_RULES_FIELDS = POWER_SYSTEM_FIELDS;
  */
 export interface GeneratedSeedSlots {
   mainCharacter?: Partial<Record<string, string>>;
+  /**
+   * The name the Blueprint gave the main character. Never written into the
+   * Seed from here (the Blueprint's own identity carries it): it only lets a
+   * card that points at the hero be recognised when the creator left the name
+   * blank.
+   */
+  mainCharacterName?: string;
   characters?: Array<{ name: string } & Partial<Record<string, string>>>;
   factions?: Array<{ name: string } & Partial<Record<string, string>>>;
   /** The world's Chapter 0 cards for the kinds the Seed keeps as lists of their own. */
@@ -1391,6 +1398,7 @@ export const readGeneratedSeedSlots = (value: unknown): GeneratedSeedSlots => {
     return name ? [{ name, ...pick(entry, fields) }] : [];
   });
   const mainCharacter = pick(source.mainCharacter, SEED_MAIN_CHARACTER_SLOT_FIELDS);
+  const mainCharacterName = isRecord(source.mainCharacter) ? text(source.mainCharacter.name) : undefined;
   const characters = named(source.characters, SEED_CHARACTER_SLOT_FIELDS);
   const factions = named(source.factions, SEED_FACTION_SLOT_FIELDS);
   const things = named(source.things, SEED_THING_SLOT_FIELDS);
@@ -1402,6 +1410,7 @@ export const readGeneratedSeedSlots = (value: unknown): GeneratedSeedSlots => {
   const mainOpposition = text(source.mainOpposition);
   return {
     ...(mainCharacter ? { mainCharacter } : {}),
+    ...(mainCharacterName ? { mainCharacterName } : {}),
     ...(characters.length ? { characters } : {}),
     ...(factions.length ? { factions } : {}),
     ...(things.length ? { things } : {}),
@@ -1453,7 +1462,9 @@ export const fillBlankSeedSlots = (seed: StorySeedInput, slots: GeneratedSeedSlo
   // its own) is cleared, so the record never points at nothing. What the
   // creator wrote is theirs and is never touched.
   const filledPlaces = fillCards(foundations.places ?? [], slots.places ?? [], SEED_PLACE_SLOT_FIELDS, SEED_PLACE_LIMIT, 'blueprint-place');
-  const peopleAndFactions = [...entityNames(factions), ...entityNames(additionalCharacters), ...(mainName ? [mainName] : [])];
+  // The hero is a card under the creator's name for them, or the Blueprint's when the creator left it blank.
+  const heroName = mainName ?? slots.mainCharacterName;
+  const peopleAndFactions = [...entityNames(factions), ...entityNames(additionalCharacters), ...(heroName ? [heroName] : [])];
   const places = filledPlaces.map(place => {
     const written = (foundations.places ?? []).find(card => card.id === place.id);
     const cards = [...entityNames(filledPlaces.filter(card => card.id !== place.id)), ...peopleAndFactions];

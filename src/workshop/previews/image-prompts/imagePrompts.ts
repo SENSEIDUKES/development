@@ -127,7 +127,7 @@ export const IMAGE_KINDS: ImageKind[] = [
       {
         id: 'cover',
         title: 'Cover art prompt',
-        source: 'src/server/story-cover/prompt.ts (COVER_PROMPT_TEMPLATE), the owner\'s approved template (2026-10-08)',
+        source: 'src/server/story-cover/prompt.ts (COVER_PROMPT_TEMPLATE), the owner\'s approved template (intro updated 2026-11-11)',
         when: 'Each cover made, once per cover. A line whose field the story does not have is left out. The braces are filled from the story: its title, Story Seed tradition, genre, Blueprint logline (else its premise), main character, tone, world facts and story tags; never its chapters. {title instruction} is one of the two title instructions below.',
         text: COVER_PROMPT_TEMPLATE,
       },

@@ -72,7 +72,7 @@ describe('The story cover route', () => {
 describe('The cover prompt', () => {
   it('fills the approved template from the story and draws the exact title once, on a story that has reached its ending', () => {
     const prompt = buildStoryCoverPrompt({ ...story, titled: true });
-    expect(prompt.startsWith('Create professional Eastern fantasy novel cover art')).toBe(true);
+    expect(prompt.startsWith('Create a professional Eastern fantasy novel cover art, high-quality animation, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration when appropriate to this story.')).toBe(true);
     expect(prompt).toContain('Title: The Drowned Name');
     expect(prompt).toContain('Tradition: Chinese webnovel');
     expect(prompt).toContain('Genre: Xianxia');

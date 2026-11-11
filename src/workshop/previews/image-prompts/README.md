@@ -128,6 +128,11 @@ image responses; this does not establish live-provider image quality.
 
 ## History
 
+- **2026-11-11** — Updated the live cover art, Codex character and Codex item
+  prompt intros to the owner's Eastern fantasy, high-quality animation wording,
+  drawing on the named illustration traditions when appropriate to the story.
+  The same intros apply across image models. Profile picture and the remaining
+  prompt instructions are unchanged.
 - **2026-11-08** — Reorganized the existing workspace around parent cards,
   image kinds and one prompt at a time. The Lab pairs its editor with results
   on laptops and stacks them on phones. Added explicit device saves with

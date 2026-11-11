@@ -4,12 +4,18 @@ import { handleImageLabHttp } from '../image-lab/http';
 import { handleProfilePictureHttp } from '../profile-picture/http';
 import { createWorldBlueprintProvider } from '../story-seed-blueprint/generate';
 import { createHarnessTextProvider } from '../harness-generation/provider';
-import { resolveHarnessGenerationConfig } from '../harness-generation/config';
+import { harnessGenerationServerInfo, resolveHarnessGenerationConfig } from '../harness-generation/config';
 import { modelRouterStatus } from './status';
 
 afterEach(() => vi.unstubAllGlobals());
 const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aSAAAAABJRU5ErkJggg==';
 const environment = { OPENAI_API_KEY: 'direct-secret', STORY_SEED_BLUEPRINT_ACCESS_TOKEN: 'access' };
+
+it('enables generation controls with only an OpenAI key, and disables them with no keys', () => {
+  expect(harnessGenerationServerInfo(environment)).toMatchObject({ configured: true });
+  expect(harnessGenerationServerInfo({}).configured).toBe(false);
+  expect(harnessGenerationServerInfo(environment).models).toContainEqual({ id: 'openai/gpt-6.1-terra', label: 'GPT-6.1 Terra' });
+});
 
 it('connects covers, Image Lab and reference-based profile pictures to direct OpenAI', async () => {
   const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [{ b64_json: png }] })));

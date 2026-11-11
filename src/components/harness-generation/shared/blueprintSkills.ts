@@ -7,7 +7,8 @@ import type { HarnessSkillManifest } from '../../../narrative/generation';
  * a publisher who licenses SEN could simply say 'Western Fantasy' for the
  * origin"). Each is a normal, replaceable skill; the Blueprint's permanent
  * rules are not, and live with its prompt. The words were approved by SENSEI
- * on 2026-11-05 before they were written here.
+ * on 2026-11-05 before they were written here, and each change since before
+ * it was made.
  */
 
 const ORIGIN_INSTRUCTIONS = `This is an Eastern fantasy web novel: cultivation, martial sects, clans, dynasties, spirit beasts, and a hero who rises through a hard world.
@@ -29,6 +30,8 @@ Whatever the style, give each person their own description; never the same phras
 
 const WORLD_INSTRUCTIONS = `Build the world as it stands the moment Chapter 1 opens: the people, places, things, powers and factions the opening of the story stands on. Chapters change the world afterwards and may add to it. What exists at the start is written here.
 
+A card says how things stand before Chapter 1 begins, and nothing after. What the premise or an Arc 1 goal brings about belongs to the story: a bond not yet formed, a rank not yet reached, a thing not yet found is never written as done. Write where each one starts instead.
+
 Two tests decide whether a card holds enough, and nothing beyond them belongs on one:
 - an artist must be able to draw the opening scene from these cards alone, without reading a chapter;
 - a game must be able to load the world exactly as it stands: who is where, holding what, in what condition, allied with whom.
@@ -42,6 +45,10 @@ A Look is what someone would notice about this person and no one else. Choose th
 A person's nature shows in how they look: in their face, how they hold themselves, how they dress and keep themselves. Write what is seen, never the trait's name.
 
 Leave Marks blank when they have none.
+
+Whoever the premise or an Arc 1 goal is about has a card of their own, person or beast, named or not: someone the hero has not met yet is still a character, written where they are when the story opens. One with no name yet goes by what the story will first call them. A species card describes a kind of creature and never stands in for one of them.
+
+The places cover the ground Arc 1 stands on: where the story opens, and wherever its Arc 1 goals will take it. When several places sit inside a larger one, the larger one has a card too.
 
 Choose the supporting cast and factions for the opening arc: the mentor, the rival, the elder, the enemy at the gate. Use fewer cards before you pad them; an empty card list is better than a filler card.
 
@@ -81,7 +88,7 @@ export const SEN_EASTERN_FANTASY_ORIGIN_SKILL: HarnessSkillManifest = {
 
 export const SEN_WORLD_BUILDER_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-world-builder',
-  version: '1.3.0',
+  version: '1.4.0',
   name: 'SEN World Builder',
   description: 'Builds the world as Chapter 1 opens: the cards an artist could draw it from and a game could load it from.',
   slot: 'world',

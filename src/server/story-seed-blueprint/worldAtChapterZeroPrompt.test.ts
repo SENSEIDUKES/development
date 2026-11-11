@@ -61,6 +61,27 @@ describe('The world builder asks for every Codex card kind', () => {
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toMatch(/\b(brows?|jade|porcelain|chin)\b/i);
   });
 
+  it('builds Arc 1\'s whole pool, as it stands before Chapter 1 (SENSEI, 2026-11-11)', () => {
+    // From The Frost-Scaled Companion: a card stated a bond the story only forms in Chapter 6, the cub the premise
+    // is about had no card, two looks showed a weapon no card held, and the places pointed at names with no card.
+    // The World skill says what to build.
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('A card says how things stand before Chapter 1 begins, and nothing after.');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('a bond not yet formed, a rank not yet reached, a thing not yet found is never written as done. Write where each one starts instead.');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Whoever the premise or an Arc 1 goal is about has a card of their own, person or beast, named or not');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('A species card describes a kind of creature and never stands in for one of them.');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('The places cover the ground Arc 1 stands on: where the story opens, and wherever its Arc 1 goals will take it. When several places sit inside a larger one, the larger one has a card too.');
+    // The Blueprint's own rules say how names point at cards, whichever skills it reads.
+    for (const rule of [
+      '- what a Look or Clothing shows someone carrying (a weapon, a staff, a token) is a thing card they hold, named in their holds; otherwise leave it out. Ordinary clothes need no card;',
+      'A slot that names a card is left blank when no card fits. Never fill it with a word such as none, unclaimed or unknown.',
+    ]) {
+      expect(BLUEPRINT_PERMANENT_RULES).toContain(rule);
+      expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain(rule);
+    }
+    // No example names a creature or a keepsake: a model copies what it is shown into every story.
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toMatch(/\b(cub|fox|pendant|kitten)\b/i);
+  });
+
   it('never asks the model for aliases, which are the author\'s alone and have no place in the answer', () => {
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toContain('aliases');
   });
@@ -74,7 +95,7 @@ describe('The world builder asks for every Codex card kind', () => {
     expect(swapped.startsWith('# ROLE AND MISSION\n\nYou are a celebrated Western fantasy novelist. Build the Blueprint')).toBe(true);
     expect(swapped).toContain('[Origin] Western Fantasy 1.0.0\nYou are writing the world of a Western fantasy novel');
     expect(swapped).not.toContain('Eastern fantasy');
-    expect(swapped).toContain('[World] SEN World Builder 1.3.0');
+    expect(swapped).toContain('[World] SEN World Builder 1.4.0');
     expect(swapped.endsWith(BLUEPRINT_PERMANENT_RULES)).toBe(true);
     // The same identity closes the request, in its Mission Reminder.
     const request = buildWorldBlueprintPrompt(createEmptyStorySeedInput(), undefined, 'You are a celebrated Western fantasy novelist.');

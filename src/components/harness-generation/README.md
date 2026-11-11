@@ -377,6 +377,17 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-11 (the Blueprint builds Arc 1's whole world, as it stands before
+  Chapter 1):** SENSEI approved four changes found in The Frost-Scaled
+  Companion's cards. The World skill (SEN World Builder 1.4.0) says a card
+  states how things stand before Chapter 1 and nothing after, whoever the
+  premise or an Arc 1 goal is about has a card of their own (a species card
+  never stands in for one of them), and the places cover the ground Arc 1
+  stands on. The Blueprint's own rules (`BLUEPRINT_RETURN_FORMAT`) say what a
+  Look or Clothing shows someone carrying is a thing card they hold, and a
+  slot that names a card is left blank when no card fits. Code clears a
+  place's Inside or Held by that names no card (Story Seed's
+  `fillBlankSeedSlots`). The words are in Writer Instructions' history.
 - **2026-11-11 (review fixes to the world entries work):** found by the
   automated reviews of the pull request. Promote and fill run one after
   another, so two quick promotions keep both cards. A tag that names a card a

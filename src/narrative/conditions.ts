@@ -56,14 +56,16 @@ const PACE = /\bevery\s+(\d+)\s+chapters?\b/i;
 const ENDS = /^ends?\s+(?:if|when)\s+/i;
 const GONE = /^(?:gone|it passes|passes)$/i;
 
-const clip = (value: string) => value.replace(/\s+/g, ' ').trim().slice(0, CONDITION_TEXT_CHARACTERS).trim();
+const tidy = (value: string) => value.replace(/\s+/g, ' ').trim();
+/** One piece of text (a name, one stage, one way out) within its limit. The line is taken apart first, so a long line never loses a stage or its ending. */
+const clip = (value: string) => tidy(value).slice(0, CONDITION_TEXT_CHARACTERS).trim();
 const label = (value: string) => clip(value).toLocaleLowerCase();
 
 /** Reads one line of a card's conditions. A line that says they are well is no condition. */
 const readCondition = (line: string): Condition | undefined => {
-  const [first, ...rest] = line.split('|').map(clip);
+  const [first, ...rest] = line.split('|').map(tidy);
   // A leading list mark is how a person writes a list, not part of the name.
-  const name = first?.replace(/^[-*•]\s*/, '');
+  const name = clip(first?.replace(/^[-*•]\s*/, '') ?? '');
   if (!name || WELL.has(label(name).replace(/[.!]$/, ''))) return undefined;
   const condition: Condition = { name, stages: [], passes: false, endsIf: [] };
   for (const part of rest) {
@@ -78,11 +80,14 @@ const readCondition = (line: string): Condition | undefined => {
       if (chapters >= 1) condition.pace = chapters;
       continue;
     }
-    if (!condition.stages.length) condition.stages = part.split('>').map(clip).filter(Boolean).slice(0, CONDITION_STAGE_LIMIT);
-  }
-  if (condition.stages.length && GONE.test(condition.stages.at(-1)!)) {
-    condition.stages.pop();
-    condition.passes = true;
+    if (condition.stages.length) continue;
+    // Whether it passes is read from the whole list, before any stage is cut or the list is shortened.
+    const stages = part.split('>').map(tidy).filter(Boolean);
+    if (stages.length && GONE.test(stages.at(-1)!)) {
+      stages.pop();
+      condition.passes = true;
+    }
+    condition.stages = stages.slice(0, CONDITION_STAGE_LIMIT).map(clip).filter(Boolean);
   }
   // A pace with nothing to move through moves nothing.
   if (!condition.stages.length) { delete condition.pace; condition.passes = false; }

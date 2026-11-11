@@ -41,6 +41,23 @@ describe('Reading a card\'s conditions', () => {
     expect(readConditions('Cursed | a stage every 4 chapters')).toEqual([{ name: 'Cursed', stages: [], passes: false, endsIf: [] }]);
   });
 
+  it('takes a long line apart before it shortens anything, so no stage or ending is lost', () => {
+    const long = (word: string) => `${word} ${'and it spreads further along the arm with every cold night that passes '.repeat(3)}`.trim();
+    const line = `Creeping frost | ${long('first')} > ${long('second')} > ${long('third')} > gone | a stage every 4 chapters | ends if ${long('thawed')}; or ${long('cut away')}`;
+    expect(line.length).toBeGreaterThan(900);
+    const [frost] = readConditions(line);
+    expect(frost.stages).toHaveLength(3);
+    expect(frost.stages.map(stage => stage.split(' ')[0])).toEqual(['first', 'second', 'third']);
+    expect(frost).toMatchObject({ pace: 4, passes: true });
+    expect(frost.endsIf.map(way => way.split(' ')[0])).toEqual(['thawed', 'cut']);
+    // Each piece is kept within its own limit.
+    for (const piece of [frost.name, ...frost.stages, ...frost.endsIf]) expect(piece.length).toBeLessThanOrEqual(160);
+    // More stages than a course keeps still pass when the list ends in "gone".
+    const many = readConditions(`Slow thaw | ${Array.from({ length: 12 }, (_, index) => `stage ${index + 1}`).join(' > ')} > gone | a stage every 2 chapters`)[0];
+    expect(many.stages).toHaveLength(8);
+    expect(many.passes).toBe(true);
+  });
+
   it('is only ever a character\'s: a thing\'s status is its own', () => {
     expect(worldCardConditions({ kind: 'character', slots: { status: 'Blind from birth' } })).toHaveLength(1);
     expect(worldCardConditions({ kind: 'thing', slots: { status: 'Damaged' } })).toEqual([]);

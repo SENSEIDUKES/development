@@ -3,6 +3,18 @@ import { createEmptyStorySeedInput, normalizeStorySeedInput } from './storySeedS
 import { applyStorySparkToSeed, parseStorySpark, parseStorySparkRequest, storySeedInputFromSpark, storySparkTags, STORY_SPARK_AVOID_LIMIT, STORY_SPARK_PREMISE_MAX_LENGTH } from './storySpark';
 
 describe('Story Sparks', () => {
+  it('plants chosen tags first, followed by inferred tags without duplicates', () => {
+    const spark = parseStorySpark({ premise: 'A disciple investigates a disappearance at an academy.', tags: ['romance'] },
+      parseStorySparkRequest({ genre: 'Mystery Cultivation', tags: [' Academy ', 'mystery', 'ACADEMY'] }));
+    expect(spark.tags).toEqual(['academy', 'mystery']);
+    for (const seed of [storySeedInputFromSpark(spark), applyStorySparkToSeed(createEmptyStorySeedInput(), spark)]) {
+      const tags = seed.story.required.storyTags;
+      expect(tags.slice(0, 2)).toEqual(['academy', 'mystery']);
+      expect(tags.length).toBeGreaterThan(2);
+      expect(new Set(tags).size).toBe(tags.length);
+      expect(tags.length).toBeLessThanOrEqual(12);
+    }
+  });
   it('accepts a protagonist preference in either genre mode and rejects invalid values', () => {
     expect(parseStorySparkRequest({ genre: 'Xianxia', protagonistGender: 'female' }))
       .toEqual({ genre: 'Xianxia', protagonistGender: 'female' });

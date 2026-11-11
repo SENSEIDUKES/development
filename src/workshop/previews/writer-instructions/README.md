@@ -16,10 +16,12 @@ robot to be able to look at, understand what you're seeing … it just needs to
 be made properly so I can actually use it"). One step of the pipeline at a
 time, never the whole wall:
 
-- **The pipeline:** World builder (once, before Chapter 1) → Writer (every
+- **The pipeline:** Story Spark (when requested, before a Story Seed) → World builder (once, before Chapter 1) → Writer (every
   chapter) → Tagger (after every chapter) → Checks (plain code, no model) →
   Fixer (only when the checks find a problem) → Look writer (only when asked).
   It opens on the Tagger.
+
+**2026-11-10:** Story Spark is shown from `buildStorySparkPrompt`: its unchanged system instruction (including SENSEI's flower example), all conditional request lines through alternative examples, and answer schema. The examples are alternatives, never sent together. Tags and each protagonist age meaning, including the unchosen-age reminder, are covered by the dated fingerprints.
 - **Each step:** its job in one sentence, what it is given and what it hands
   back (and which step reads that next), then its instructions as a row of
   chips in the order it reads them. The Tagger has one chip per tag.

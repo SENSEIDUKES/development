@@ -294,7 +294,9 @@ export function WriterInstructionsWorkspace() {
     } : undefined)
     : {
       messages: WHOLE_PROMPTS[step.id],
-      note: step.id === 'world'
+      note: step.id === 'spark'
+        ? 'The existing Story Spark call: its instructions, alternative request examples (only one is sent per call), and answer shape. Reader data is illustrative.'
+        : step.id === 'world'
         ? 'The whole request, with an empty Story Seed where yours goes.'
         : step.id === 'tagger'
           ? 'Everything the tagger is sent for one chapter, with the story\'s default sound words, music and atmospheres. The parts that change every chapter show their place.'

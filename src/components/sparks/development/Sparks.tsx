@@ -3,11 +3,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookmarkPlus, ChevronDown, ChevronLeft, Shuffle, Sparkles, X } from 'lucide-react';
-import { STORY_SPARK_IDEA_MAX_LENGTH, type StorySpark, type StorySparkRequest } from '../../story-seed/shared/storySpark';
+import { STORY_SPARK_IDEA_MAX_LENGTH, STORY_SPARK_TAG_LIMIT, storyStyleForGenre, type StorySpark, type StorySparkRequest } from '../../story-seed/shared/storySpark';
 import { CreationButton, NarrativeIcon, NarrativeTextArea } from '@seihouse/sen/presentation';
 import { OriginGenrePicker } from './StoryGenrePicker';
 import type { SparkHost, StorySparkUsage } from '../shared/SparkHost';
-import { DAO_GENRES, handSpark } from '../shared/builtInSparks';
+import { DAO_GENRES, EXAMPLE_SPARK } from '../shared/builtInSparks';
+import { SparkTags } from './SparkTags';
 
 /**
  * Sparks: a beginning for a Story Seed. The title and premise lead; the
@@ -24,14 +25,14 @@ import { DAO_GENRES, handSpark } from '../shared/builtInSparks';
  * and Story Seed's Origin.
  *
  * The writing comes from the host (`SparkHost`, a model behind the Story
- * Spark route). Without one the Dao offers its own hand-written sparks, and a
+ * Spark route). Without one it shows SENSEI's flower example, and a
  * Custom beginning is kept exactly as written.
  */
 
 type SparkMode = 'random' | 'custom';
 
 const RECENT_LIMIT = 6;
-/** The muttering beat before a spark lands, so even a hand-written one arrives. */
+/** A short settling beat before a spark lands. */
 const SETTLE_MS = 900;
 
 const genreName = (genre: string) => DAO_GENRES.find(preset => preset.id === genre)?.name ?? genre;
@@ -47,13 +48,18 @@ export const Sparks: React.FC<{
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<SparkMode>('random');
   const [protagonistGender, setProtagonistGender] = useState<'any' | 'male' | 'female'>('any');
+  const [protagonistAge, setProtagonistAge] = useState<'any' | 'young' | 'middle' | 'old'>('any');
   /** Empty: the Dao wanders any path. Otherwise a Story Seed path or the writer's own genre. */
   const [genre, setGenre] = useState('');
   const [conjuring, setConjuring] = useState(false);
   /** Story Paths open: the panel shows the paths in place of the spark. */
   const [pathsOpen, setPathsOpen] = useState(false);
   const [idea, setIdea] = useState('');
-  const [spark, setSpark] = useState<StorySpark>(() => handSpark({}));
+  const [spark, setSpark] = useState<StorySpark>(EXAMPLE_SPARK);
+  const isExample = spark === EXAMPLE_SPARK;
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const [tagError, setTagError] = useState<string | null>(null);
   const [seeking, setSeeking] = useState(false);
   const [connected, setConnected] = useState(false);
   const [message, setMessage] = useState<{ tone: 'error' | 'note'; text: string } | null>(null);
@@ -122,16 +128,16 @@ export const Sparks: React.FC<{
   };
 
   const seek = async () => {
-    if (seeking) return;
-    const beginning = idea.trim();
-    if (mode === 'custom' && !beginning) {
+    if (seeking || acting) return;
+    const beginning = idea;
+    if (mode === 'custom' && !beginning.trim()) {
       // The beginning is written beside the spark: go back there to write it.
       setPathsOpen(false);
       setMessage({ tone: 'error', text: 'Write the beginning of your idea first. A few words is enough.' });
       return;
     }
-    if (protagonistGender !== 'any' && (!connected || !host?.requestSpark)) {
-      setMessage({ tone: 'error', text: 'Choosing a protagonist needs a connected model. Choose Any to browse the built-in sparks.' });
+    if ((protagonistGender !== 'any' || protagonistAge !== 'any' || tags.length > 0) && (!connected || !host?.requestSpark)) {
+      setMessage({ tone: 'error', text: tags.length > 0 ? 'Choosing tags needs a connected model. Clear Tags to view the example.' : 'Choosing a protagonist needs a connected model. Choose Any to view the example.' });
       return;
     }
     const invent = conjuring;
@@ -141,6 +147,8 @@ export const Sparks: React.FC<{
     const custom = {
       ...(mode === 'custom' ? { idea: beginning } : {}),
       ...(protagonistGender !== 'any' ? { protagonistGender } : {}),
+      ...(protagonistAge !== 'any' ? { protagonistAge } : {}),
+      ...(tags.length ? { tags: [...tags] } : {}),
     };
     const avoid = recentRef.current.length ? { avoid: recentRef.current } : {};
     const request: StorySparkRequest = invent
@@ -165,27 +173,22 @@ export const Sparks: React.FC<{
         } catch (error) {
           if (controller.signal.aborted) return;
           const reason = error instanceof Error && error.message ? error.message : 'No spark arrived. Try again.';
-          if (mode === 'custom' || protagonistGender !== 'any') {
-            if (mountedRef.current) setMessage({ tone: 'error', text: reason });
-            return;
-          }
-          // A rambling never fails outright: an older spark surfaces instead.
-          note = `${reason} An older spark surfaced instead.`;
+          if (mountedRef.current) setMessage({ tone: 'error', text: reason });
+          return;
         }
       } else {
         await wait(SETTLE_MS);
       }
       if (!mountedRef.current || controller.signal.aborted) return;
       if (!next) {
-        const handWritten = handSpark(invent ? { inventGenre: true } : { genre: sparkGenre }, spark);
-        // The writer's own genre has no hand-written sparks: the premise is borrowed, the genre kept.
-        const fallback = !invent && handWritten.genre !== sparkGenre ? { ...handWritten, genre: sparkGenre! } : handWritten;
         next = mode === 'custom'
-          ? { ...fallback, premise: beginning.slice(0, 600), title: '', aside: 'Your words stand as you wrote them.' }
-          : fallback;
+          ? { premise: beginning, genre: sparkGenre ?? '', title: '', style: storyStyleForGenre(sparkGenre ?? ''), survival: false, inventedGenre: false }
+          : EXAMPLE_SPARK;
         if (mode === 'custom' && !note) note = 'No model is connected, so your beginning is kept as written.';
       }
-      remember(next);
+      // Hosts can return their own spark objects: keep the reader's choices with this result.
+      if (tags.length) next = { ...next, tags: [...tags] };
+      if (next !== EXAMPLE_SPARK) remember(next);
       setSpark(next);
       scrollRef.current?.scrollTo?.({ top: 0, behavior: 'smooth' });
       if (note) setMessage({ tone: 'note', text: note });
@@ -199,7 +202,7 @@ export const Sparks: React.FC<{
 
   const act = async (action: 'keep' | 'begin') => {
     const run = action === 'keep' ? host?.keepSpark : host?.beginSpark;
-    if (!run || acting) return;
+    if (!run || acting || isExample) return;
     setActing(action);
     setMessage(null);
     try {
@@ -301,7 +304,7 @@ export const Sparks: React.FC<{
                         className="dao-spark-scroll relative overflow-hidden rounded-2xl border border-[var(--spark-edge,#ffffff30)] p-4 sm:p-5">
                         <AnimatePresence mode="wait">
                           <motion.div key={sparkKey} initial={{ opacity: 0, y: 8 }} animate={{ opacity: seeking ? 0.35 : 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
-                            <p className="text-xs font-medium text-[var(--spark-accent,#a5b4fc)] break-words">{genreName(spark.genre)}</p>
+                            <p className="text-xs font-medium text-[var(--spark-accent,#a5b4fc)] break-words">{isExample ? 'Example' : genreName(spark.genre)}</p>
                             {spark.title && <h3 className="mt-2 font-sans text-xl font-semibold text-[var(--spark-text,#fff)] leading-snug break-words">{spark.title}</h3>}
                             <p className="mt-2 select-text whitespace-pre-wrap break-words font-sans text-[17px] leading-relaxed text-[var(--spark-text,#fff)] sm:text-lg">{spark.premise}</p>
                             {spark.genreNote && <p className="mt-3 text-[13px] leading-relaxed text-[var(--spark-muted,#b8b8c2)] break-words">{spark.genreNote}</p>}
@@ -348,6 +351,41 @@ export const Sparks: React.FC<{
                         </div>
                       </div>
 
+                      <div role="group" aria-label="Protagonist age" className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-[var(--spark-muted,#b8b8c2)]">Age</span>
+                        <div className="flex gap-1">
+                          {(['any', 'young', 'middle', 'old'] as const).map(value => (
+                            <button key={value} type="button" aria-pressed={protagonistAge === value} disabled={seeking}
+                              onClick={() => { setProtagonistAge(value); setMessage(null); }}
+                              className="dao-spark-control flex h-11 min-w-11 items-center justify-center rounded-lg border px-3 text-xs font-medium transition-colors disabled:opacity-60">
+                              {value === 'any' ? 'Any' : value === 'young' ? 'Young' : value === 'middle' ? 'Middle' : 'Old'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="min-w-0 space-y-2">
+                        <button type="button" aria-expanded={tagsOpen} aria-controls="spark-tags" disabled={seeking}
+                          onClick={() => setTagsOpen(open => !open)}
+                          className="dao-spark-control flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border px-3 text-xs">
+                          <span>Tags</span><span>{tags.length} / {STORY_SPARK_TAG_LIMIT} · Optional</span>
+                          <ChevronDown size={14} aria-hidden="true" />
+                        </button>
+                        {tags.length > 0 && <div className="flex gap-2 overflow-x-auto" aria-label="Chosen Spark Tags">
+                          {tags.map(tag => <button key={tag} type="button" disabled={seeking} aria-label={`Remove tag ${tag}`}
+                            onClick={() => { setTags(current => current.filter(item => item !== tag)); setTagError(null); setMessage(null); }}
+                            className="dao-spark-control min-h-11 shrink-0 rounded-lg border px-3 text-xs">{tag} ×</button>)}
+                        </div>}
+                        {tagsOpen && <div id="spark-tags"><SparkTags genre={conjuring ? undefined : genre} tags={tags} disabled={seeking}
+                          onToggle={tag => {
+                            if (tags.includes(tag)) setTags(current => current.filter(item => item !== tag));
+                            else if (tags.length >= STORY_SPARK_TAG_LIMIT) { setTagError(`Choose at most ${STORY_SPARK_TAG_LIMIT} Story Tags.`); return; }
+                            else setTags(current => [...current, tag]);
+                            setTagError(null); setMessage(null);
+                          }} /></div>}
+                        {tagError && <p role="alert" className="text-xs text-red-300">{tagError}</p>}
+                      </div>
+
                       {/* Custom: the writer's own beginning */}
                       {mode === 'custom' && (
                         <NarrativeTextArea id="dao-spark-beginning" aria-label="Your beginning" size="compact"
@@ -364,7 +402,7 @@ export const Sparks: React.FC<{
                   </p>}
                   {/* Seek and what to do with the spark, in one row within the thumb's reach. */}
                   <div className="dao-spark-actions flex shrink-0 items-center gap-2 border-t border-[var(--spark-edge,#ffffff30)] px-4 pt-2.5 sm:px-6 pb-[max(0.625rem,env(safe-area-inset-bottom))]">
-                    <button type="button" onClick={seek} disabled={seeking}
+                    <button type="button" onClick={seek} disabled={seeking || acting !== null}
                       className="dao-seek-button dao-spark-control flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-3 font-sc text-[13px] font-bold uppercase tracking-[0.12em] transition-all active:scale-[0.98] disabled:opacity-60">
                       <motion.span animate={{ rotate: seeking ? 360 : 0 }} transition={{ duration: 1.2, ease: 'linear', repeat: seeking ? Infinity : 0 }} className="hidden shrink-0 min-[360px]:flex">
                         <NarrativeIcon name="spark" size={19} aria-hidden="true" />
@@ -374,14 +412,14 @@ export const Sparks: React.FC<{
                         : <>Seek<span className="sr-only min-[420px]:not-sr-only"> a spark</span></>}</span>
                     </button>
                     {host?.beginSpark && (
-                      <CreationButton type="button" onClick={() => act('begin')} disabled={seeking || acting !== null}
-                        data-sen-spark="use" className="dao-spark-use h-11 min-w-0 flex-1 rounded-xl px-3 text-sm">
+                      <CreationButton type="button" onClick={() => act('begin')} disabled={isExample || seeking || acting !== null}
+                        data-sen-spark="use" className="dao-spark-use h-11 min-w-0 flex-1 rounded-xl px-3 text-sm disabled:opacity-40">
                         <NarrativeIcon name="generating" size={18} aria-hidden="true" className="hidden shrink-0 min-[360px]:block" />
                         <span className="truncate">{acting === 'begin' ? (purpose === 'fill-seed' ? 'Filling…' : 'Opening…') : <>Use<span className="sr-only min-[420px]:not-sr-only"> this spark</span></>}</span>
                       </CreationButton>
                     )}
                     {host?.keepSpark && (
-                      <button type="button" onClick={() => act('keep')} disabled={seeking || acting !== null || isKept}
+                      <button type="button" onClick={() => act('keep')} disabled={isExample || seeking || acting !== null || isKept}
                         aria-label={isKept ? 'Kept in your Story Bank' : 'Keep in Story Bank'} title={isKept ? 'Kept in your Story Bank' : 'Keep in Story Bank'}
                         className={sideAction}>
                         {isKept ? <NarrativeIcon name="save" size={18} className="text-emerald-400" aria-hidden="true" /> : <BookmarkPlus size={16} aria-hidden="true" />}

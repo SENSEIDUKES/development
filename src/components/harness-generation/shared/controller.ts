@@ -170,6 +170,7 @@ export class HarnessGenerationController {
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
   private generating = false;
+  private cardChanges: Promise<unknown> = Promise.resolve();
   private writing?: HarnessChapterWrite;
 
   constructor(options: HarnessGenerationControllerOptions) {
@@ -821,19 +822,35 @@ export class HarnessGenerationController {
    */
   async promoteCodexEntry(storyId: string, entryId: string): Promise<StoryWorldCard> {
     this.assertHydrated();
-    if (this.generating) throw new Error('Wait for the chapter being written before promoting to a card.');
-    const promoted = promoteMinorFigure(this.state, storyId, entryId);
-    await this.persist(promoted.state);
-    return promoted.card;
+    return this.changeCard(async () => {
+      if (this.generating) throw new Error('Wait for the chapter being written before promoting to a card.');
+      const promoted = promoteMinorFigure(this.state, storyId, entryId);
+      await this.persist(promoted.state);
+      return promoted.card;
+    });
   }
 
   /** Fills a card the reader promoted (`fillPromotedCard`): the reader fills, the rest stays blank. */
   async fillPromotedCard(storyId: string, cardKey: string, slots: Readonly<Record<string, string>>): Promise<StoryWorldCard> {
     this.assertHydrated();
-    if (this.generating) throw new Error('Wait for the chapter being written before changing a card.');
-    const filled = fillPromotedCard(this.state, storyId, cardKey, slots);
-    await this.persist(filled.state);
-    return filled.card;
+    return this.changeCard(async () => {
+      if (this.generating) throw new Error('Wait for the chapter being written before changing a card.');
+      const filled = fillPromotedCard(this.state, storyId, cardKey, slots);
+      await this.persist(filled.state);
+      return filled.card;
+    });
+  }
+
+  /**
+   * Card changes run one after another, each starting from what the one
+   * before it saved. Two figures promoted in quick succession both keep their
+   * cards: without this the second would start from the state before the
+   * first and save over it.
+   */
+  private changeCard<T>(change: () => Promise<T>): Promise<T> {
+    const run = this.cardChanges.then(change);
+    this.cardChanges = run.catch(() => undefined);
+    return run;
   }
 
   /** Reader/Codex edits use the same repository and correction journal as all HARNESS canon. */

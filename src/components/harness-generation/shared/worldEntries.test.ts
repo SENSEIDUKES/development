@@ -5,7 +5,9 @@ import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState } from '.
 import type { WorldCard, WorldRecord } from '../../../narrative/worldRecord';
 import { appearancesSection, deriveAppearances, worldCardLook } from './appearances';
 import { createHarnessStory, reviseStoryFoundation, storyWorldRecord } from './foundation';
-import { codexEntriesWithWorldCards, codexEntriesWithoutChapter, isMinorEntry } from './holdings';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { HarnessGenerationController } from './controller';
+import { codexEntriesWithWorldCards, codexEntriesWithoutChapter, deriveHoldings, isMinorEntry } from './holdings';
 import { planCodexLook } from './lookDescriber';
 import { fillPromotedCard, promoteMinorFigure } from './promotion';
 import { createEmptyHarnessWorkspaceState, migrateHarnessWorkspaceState } from './repository';
@@ -109,6 +111,16 @@ describe('Every world card is a Codex entry from the start', () => {
     // The entries the two worlds share keep their IDs.
     const idOf = (state: HarnessWorkspaceState, name: string) => state.codexEntries.find(entry => entry.name === name)?.id;
     expect(idOf(revised.state, 'Lin Qingshan')).toBe(idOf(created.state, 'Lin Qingshan'));
+  });
+
+  it('is still checked against a name a tag makes that is nearly its own, and never against another card', () => {
+    // A chapter that calls the pendant by a slightly different name makes a second entry. That is flagged,
+    // so the fixer can make the two one; two cards with close names are the author's, and are left alone.
+    const withCards = seeded([], [...cards, { key: 'world:thing:frost-bone-charm', kind: 'thing', name: 'Frost Bone Charm', enteredInChapter: 0, slots: {} }]);
+    const pendant = withCards.find(entry => entry.name === 'Frost Bone Pendant')!;
+    const entries = [...withCards, tagEntry('tagged-pendant', 'thing', 'Frost Bone Pendants')];
+    const duplicates = deriveHoldings({ entries, chapters: [], mainCharacterName: 'Lin Qingshan' }).flags.filter(flag => flag.kind === 'possible-duplicate');
+    expect(duplicates).toEqual([{ kind: 'possible-duplicate', entryIds: [pendant.id, 'tagged-pendant'], message: '‘Frost Bone Pendant’ and ‘Frost Bone Pendants’ may be the same thing.' }]);
   });
 
   it('is never taken away by a chapter that is rewritten or tagged again', () => {
@@ -293,5 +305,26 @@ describe('Promote', () => {
   it('never changes a card the world opened with', () => {
     const { state, storyId } = started();
     expect(() => fillPromotedCard(state, storyId, 'world:character:shen-mei', { role: 'enemy' })).toThrow('Only a card you promoted');
+  });
+
+  it('keeps every card when two figures are promoted, and one filled in, before the first save finishes', async () => {
+    const { state, storyId } = started();
+    const repository = new InMemoryHarnessGenerationRepository({ ...state, codexEntries: [...state.codexEntries, { ...tagEntry('porter', 'character', 'porter'), storyId }] });
+    const controller = new HarnessGenerationController({ repository, modelAdapter: {} as never });
+    await controller.hydrate();
+    // Nothing is awaited between them: each starts while the one before it is still saving.
+    const results = await Promise.allSettled([
+      controller.promoteCodexEntry(storyId, 'neighbor'),
+      controller.promoteCodexEntry(storyId, 'porter'),
+      controller.promoteCodexEntry(storyId, 'neighbor'),
+      controller.fillPromotedCard(storyId, 'world:character:neighbor', { role: 'witness' }),
+    ]);
+    // The second promotion of the same figure is refused, and does not hold up the fill behind it.
+    expect(results.map(result => result.status)).toEqual(['fulfilled', 'fulfilled', 'rejected', 'fulfilled']);
+    const saved = repository.snapshot();
+    const promoted = saved.worldCards.filter(card => card.storyId === storyId && card.enteredInChapter >= 1);
+    expect(promoted.map(card => [card.key, card.slots])).toEqual([['world:character:neighbor', { role: 'witness' }], ['world:character:porter', {}]]);
+    expect(saved.codexEntries.filter(entry => entry.id === 'neighbor' || entry.id === 'porter').map(entry => entry.cardKey)).toEqual(['world:character:neighbor', 'world:character:porter']);
+    expect(controller.snapshot().worldCards).toEqual(saved.worldCards);
   });
 });

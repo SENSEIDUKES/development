@@ -945,10 +945,13 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
   }
 
   // Names close enough to be one entry, where a tag made at least one of them.
-  const tagged = entries.filter(entry => entry.kind !== 'character' && entry.origin.source === 'tag');
-  for (const [index, left] of tagged.entries()) {
-    for (const right of tagged.slice(index + 1)) {
-      if (left.kind === right.kind && namesNearlyMatch(left.name, right.name)) {
+  // The other may be a world card's entry: a tag that names a card a little
+  // differently makes a second entry, and this is what notices it.
+  const tagMade = (entry: CodexEntry) => entry.origin.source === 'tag';
+  const comparable = entries.filter(entry => entry.kind !== 'character' && (tagMade(entry) || entry.origin.source === 'world'));
+  for (const [index, left] of comparable.entries()) {
+    for (const right of comparable.slice(index + 1)) {
+      if ((tagMade(left) || tagMade(right)) && left.kind === right.kind && namesNearlyMatch(left.name, right.name)) {
         flags.push({ kind: 'possible-duplicate', entryIds: [left.id, right.id], message: `‘${left.name}’ and ‘${right.name}’ may be the same ${left.kind}.` });
       }
     }

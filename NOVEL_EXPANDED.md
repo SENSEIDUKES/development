@@ -352,7 +352,7 @@ mode**. That means:
 
 The current implementation status, and the only section that says what is built.
 Update it whenever it changes. The heading's date is when the section began; its
-entries run to 2026-11-06.
+entries run to 2026-11-11.
 
 - **Built:**
   - Chapters are narration plus Sound Cues in the tiny SEN language (#295).
@@ -406,7 +406,9 @@ entries run to 2026-11-06.
   - **The Reader reads in the SEIHouse fonts:** chapters in **SEIHouse Sans**,
     the reading font from the font repo (SEIHouse/FONT-LAB), titles in a
     **SEIHouse Display** cut (Ink by default; Soft, Edge and Wide are there to
-    test), with the earlier Noto Serif and Alegreya still to choose. A slim top
+    test), with the earlier Noto Serif and Alegreya still to choose. Sans 0.40
+    and Living Titles 0.1.2 bring the rounded `g`, `S` and `?` curves to the app
+    and Workshop (2026-11-11). A slim top
     bar (Back, the story and chapter, the reader's **Familiar**, Reader
     Settings) stays
     at the top while reading, and a **bottom bar** stays at the

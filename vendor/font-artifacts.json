@@ -1,22 +1,23 @@
 {
   "repository": "https://github.com/SEIHouse/FONT-LAB",
-  "sourceCommit": "d7876fb31dd1c13106cdf0d0732e1a9c0d8f1849",
+  "sourceCommit": "fb45fc0071774f3925240d3596625c32955d2b6d",
   "artifacts": {
     "@seihouse/seireader": {
-      "sourceCommit": "93954df1686f0ea6c975bc953431ae839eeee493",
-      "version": "0.39.0",
+      "sourceCommit": "fb45fc0071774f3925240d3596625c32955d2b6d",
+      "version": "0.40.0",
       "family": "SEIHouse Sans",
-      "file": "vendor/seihouse-seireader-0.39.0.tgz",
-      "integrity": "sha512-622pqYqU0OdusD0bhPpyrUECLvmewnSe6SnngPJ+JhmN7fvhME5jw3HNF5+AciwnR04X0gkf0XDJxCVgMq3RUQ==",
+      "file": "vendor/seihouse-seireader-0.40.0.tgz",
+      "integrity": "sha512-PXx8Ym/h4rqtMaErdt9AfeFbwmSJjetbSqjPkg2wgo/ibQM0z3/cFjUrtxqM4+h91oCcMTC9362yi8zq/JksQg==",
       "built": "npm pack --ignore-scripts at the repository root; audited with verify_distribution.py --npm"
     },
     "@seihouse/living-titles": {
-      "version": "0.1.1",
+      "version": "0.1.2",
       "family": "SEIHouse Display Soft, Edge, Ink, Wide",
-      "file": "vendor/seihouse-living-titles-0.1.1.tgz",
-      "integrity": "sha512-Lfho1QBUN/QGMGdMrfs6W0ejLvOkb/CNxa874YLVzW2uyH/EBHA+YAoQsT2agNAGjDSOSetpu62+EX2gD1Rsww==",
-      "built": "packages/living-titles/releases/seihouse-living-titles-0.1.1.tgz, copied unchanged with its release.json",
-      "release": "vendor/seihouse-living-titles-0.1.1.release.json"
+      "file": "vendor/seihouse-living-titles-0.1.2.tgz",
+      "integrity": "sha512-fNKq1ouFnaoJKDy6TdrPDqoMNQ8ycFnhMf5wO8LKrOLUpzR+ZfeQDpiqCzbLvV6Rel7FyPX8PGQGI6in2hQiTQ==",
+      "built": "packages/living-titles/releases/seihouse-living-titles-0.1.2.tgz, copied unchanged with its release.json",
+      "release": "vendor/seihouse-living-titles-0.1.2.release.json",
+      "sourceCommit": "fb45fc0071774f3925240d3596625c32955d2b6d"
     }
   }
 }

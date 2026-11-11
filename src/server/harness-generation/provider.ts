@@ -72,7 +72,7 @@ class RoutedHarnessTextProvider implements HarnessTextModelProvider {
       if (error instanceof ModelRouterError && error.code === 'timeout') {
         throw new Error(`The provider exceeded the Harness Generation ${Math.ceil(timeoutMs / 1000)} second deadline.`);
       }
-      throw new Error(`${this.provider === 'lmstudio' ? 'LM Studio' : this.provider === 'gemini' ? 'Gemini' : this.provider === 'minimax' ? 'MiniMax' : this.provider === 'anthropic' ? 'Anthropic' : 'OpenRouter'} Harness Generation failed: ${message}`);
+      throw new Error(`${this.provider === 'lmstudio' ? 'LM Studio' : this.provider === 'gemini' ? 'Gemini' : this.provider === 'minimax' ? 'MiniMax' : this.provider === 'anthropic' ? 'Anthropic' : this.provider === 'openai' ? 'OpenAI' : 'OpenRouter'} Harness Generation failed: ${message}`);
     }
   }
 }

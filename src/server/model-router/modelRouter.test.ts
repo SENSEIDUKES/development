@@ -26,7 +26,8 @@ describe('Model Router catalog', () => {
     expect(textModelProvider('google/gemini-3.8-flash')).toBe('gemini');
     expect(textModelProvider('gemini-3.8-flash')).toBe('gemini');
     expect(textModelProvider('openrouter/openai/gpt-6-luna')).toBe('openrouter');
-    expect(textModelProvider('openai/gpt-6-luna')).toBeUndefined();
+    expect(textModelProvider('openai/gpt-6-luna')).toBe('openai');
+    expect(providerModelName('openai/gpt-6-luna')).toBe('gpt-6-luna');
     expect(providerModelName('google/gemini-3.8-flash')).toBe('gemini-3.8-flash');
     expect(providerModelName('openrouter/openai/gpt-6-luna')).toBe('openai/gpt-6-luna');
   });
@@ -150,7 +151,7 @@ describe('Model Router reasoning levels', () => {
   });
 
   it('sends low by default wherever a model offers it, and keeps lower levels where they finish chapters', () => {
-    expect(CHAPTER_MODELS.filter(model => model.reasoning?.sendDefault).map(model => [model.id, model.reasoning!.defaultLevel])).toEqual([
+    expect(CHAPTER_MODELS.filter(model => model.provider !== 'openai' && model.reasoning?.sendDefault).map(model => [model.id, model.reasoning!.defaultLevel])).toEqual([
       ['anthropic/claude-opus-5-5', 'low'],
       ['anthropic/claude-sonnet-5-5', 'low'],
       ['anthropic/claude-haiku-5-5', 'low'],
@@ -168,9 +169,9 @@ describe('Model Router reasoning levels', () => {
       ['openrouter/google/gemini-3.8-flash', 'low'],
       ['openrouter/anthropic/claude-haiku-5.5', 'low'],
     ]);
-    // No model is sent more reasoning than low unless the reader chooses it.
+    // Use low where supported; Pro models start at medium, their minimum.
     const order = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
-    expect(CHAPTER_MODELS.every(model => !model.reasoning || order.indexOf(model.reasoning.defaultLevel) <= order.indexOf('low'))).toBe(true);
+    expect(CHAPTER_MODELS.every(model => !model.reasoning || model.reasoning.defaultLevel === model.reasoning.levels[0] || order.indexOf(model.reasoning.defaultLevel) <= order.indexOf('low'))).toBe(true);
     expect(resolveReasoningLevel('google/gemini-3.8-flash', undefined)).toBe('low');
     expect(resolveReasoningLevel('google/gemini-3.8-flash', 'high')).toBe('high');
     expect(resolveReasoningLevel('openrouter/qwen/qwen3.8-flash', undefined)).toBe('none');

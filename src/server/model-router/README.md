@@ -10,12 +10,20 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 - **Last source comparison:** 2026-09-23 (DEV-native; no production counterpart)
 - **Status:** active (gear); Systems card archived; owner `deferred` (server/host infrastructure, in no package)
 
+## Direct OpenAI
+
+Verified against the [OpenAI model catalog](https://developers.openai.com/api/docs/models/all) on 2026-11-10. Chapters offers GPT-6.1 Terra and Sol, GPT-6 Astra, Luna and Sol, GPT-5.6 Sol/Terra/Luna, GPT-5.5 and Pro, GPT-5.4/Pro/Mini, and GPT-5.2/Pro. Images offers GPT Image 2.6 and 2.5, each in Sunburst and Flare. GPT-Live 1 remains the connected live voice model.
+
+Direct `openai/<model>` routes use `OPENAI_API_KEY`, independently of OpenRouter credits. Text uses Responses with provider-supported reasoning (low, or medium for Pro models whose minimum is medium), no custom sampling, and the complete host schema in instructions. Host validation is authoritative. Pro models can exceed the existing chapter deadline. Images use generations for text and multipart edits for references, returning PNG through the existing storage paths; medium quality and the nearest square/portrait/landscape size are used. Existing default models and tier selections stay unchanged.
+
+This is the complete non-deprecated general-purpose writing and image catalog, not every specialized OpenAI endpoint. Embeddings, moderation, transcription, research/cyber access programs, open-weight models and ChatGPT-only aliases are not chapter/image models. Realtime models use a different protocol from the existing GPT-Live engine and are not advertised as connected. Retired/deprecated models are not newly offered. Configuration status means a key is present, not that every model is entitled or has available credit.
+
 ## Capabilities
 
 | Capability | Providers | Consumers |
 | --- | --- | --- |
-| Chapters | Gemini, OpenRouter, MiniMax, Anthropic, local LM Studio | Harness Generation, Holdings Fixer, Look Describer, Chapter Tagger (its own choice, else the chapter model), Story Seed Blueprint, Story Spark, Reader Translation |
-| Images | Gemini, OpenRouter, MiniMax | Story Cover, Image Lab, Profile Picture |
+| Chapters | Gemini, OpenRouter, MiniMax, Anthropic, OpenAI, local LM Studio | Harness Generation, Holdings Fixer, Look Describer, Chapter Tagger (its own choice, else the chapter model), Story Seed Blueprint, Story Spark, Reader Translation |
+| Images | Gemini, OpenRouter, MiniMax, OpenAI | Story Cover, Image Lab, Profile Picture |
 | TTS | ElevenLabs | Codex Voice Quote |
 | Live voice | OpenAI, Gemini, ElevenLabs | Familiar Live Talk |
 | Audio | Gemini | none yet (catalog only) |
@@ -42,6 +50,7 @@ any model call that is not registered. See AGENTS.md.
 | Variable | Purpose |
 | --- | --- |
 | `GEMINI_API_KEY` | Gemini models |
+| `OPENAI_API_KEY` | Direct OpenAI writing, image generation/editing and GPT-Live; server only |
 | `Minimax` (or `MINIMAX_API_KEY`) | Direct MiniMax writing, image and video requests; the existing Vercel key is `Minimax` |
 | `claude_sen` (or `ANTHROPIC_API_KEY`) | Direct Claude writer models; they appear once set |
 | `OpenRouter-Dev` (or `OPENROUTER_API_KEY`) | OpenRouter chapter models appear once set |
@@ -287,3 +296,5 @@ read it.
   level is saved per model in the browser, sent with Harness and Chapter
   Generation requests, checked by `resolveReasoningLevel`, and passed to Gemini
   as `thinkingLevel` or to OpenRouter as `reasoning.effort`.
+
+- 2026-11-10 — Added direct OpenAI text and image routing, model-specific reasoning, Blueprint routing, chapter attribution, image reference editing, provider status and Energy grades. Defaults remain unchanged. Model access and real-provider output require verification with the hosted credential.

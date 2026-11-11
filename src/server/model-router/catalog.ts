@@ -7,7 +7,7 @@ import {
 } from '@seihouse/library/model-router-server';
 
 export { LOCAL_LM_STUDIO_MODEL, isLocalModelDevelopment, CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, LIVE_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, DEFAULT_LIVE_MODEL, lowestReasoningLevel, providerModelName, resolveReasoningLevel, textModelProvider, textModelLabel } from '@seihouse/library/model-router-server';
-export const isMissingKeyMessage = (message: string) => /(?:GEMINI_API_KEY|OPENROUTER_API_KEY|OpenRouter-Dev|MINIMAX_API_KEY|Minimax|ANTHROPIC_API_KEY|claude_sen) is not configured/.test(message);
+export const isMissingKeyMessage = (message: string) => /(?:OPENAI_API_KEY|GEMINI_API_KEY|OPENROUTER_API_KEY|OpenRouter-Dev|MINIMAX_API_KEY|Minimax|ANTHROPIC_API_KEY|claude_sen) is not configured/.test(message);
 import { MODEL_PROVIDERS as sharedProviders } from '@seihouse/library/model-router-server';
 export const MODEL_PROVIDERS = {
   ...sharedProviders,
@@ -74,6 +74,7 @@ export const PROVIDER_ADAPTERS: readonly string[] = [
   'src/library/model-router/server.ts',
   'src/library/model-router/minimax.ts',
   'src/library/model-router/anthropic.ts',
+  'src/library/model-router/openai.ts',
   'src/library/model-router/types.ts',
   'src/server/harness-generation/provider.ts',
   'src/server/story-seed-blueprint/generate.ts',

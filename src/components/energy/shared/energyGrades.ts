@@ -32,6 +32,27 @@ export const GRADED_ENERGY_PRICES: Record<GradedEnergyKind, Record<EnergyGrade, 
 
 /** Each model's grade, by the Model Router's model id. */
 export const MODEL_ENERGY_GRADES: Readonly<Record<string, EnergyGrade>> = {
+  // Direct OpenAI: same cost bands as the existing provider catalog.
+  'openai/gpt-6.1-terra': 'immortal',
+  'openai/gpt-6.1-sol': 'heaven',
+  'openai/gpt-6-astra': 'heaven',
+  'openai/gpt-6-luna': 'mortal',
+  'openai/gpt-6-sol': 'heaven',
+  'openai/gpt-5.6-sol': 'heaven',
+  'openai/gpt-5.6-terra': 'immortal',
+  'openai/gpt-5.6-luna': 'mortal',
+  'openai/gpt-5.5': 'heaven',
+  'openai/gpt-5.5-pro': 'heaven',
+  'openai/gpt-5.4': 'heaven',
+  'openai/gpt-5.4-pro': 'heaven',
+  'openai/gpt-5.4-mini': 'immortal',
+  'openai/gpt-5.2': 'heaven',
+  'openai/gpt-5.2-pro': 'heaven',
+  'openai/gpt-image-2.6-sunburst': 'heaven',
+  'openai/gpt-image-2.6-flare': 'immortal',
+  'openai/gpt-image-2.5-sunburst': 'heaven',
+  'openai/gpt-image-2.5-flare': 'immortal',
+
   // Chapters. About half a cent a chapter: Haiku, Luna, MiniMax, DeepSeek and the light models.
   'anthropic/claude-haiku-5-5': 'mortal',
   'openrouter/anthropic/claude-haiku-5.5': 'mortal',

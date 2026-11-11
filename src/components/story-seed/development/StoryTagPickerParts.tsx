@@ -50,4 +50,3 @@ export const matchesTagSearch = (entry: StoryTagMetadata, query: string) =>
   entry.label.toLowerCase().includes(query)
   || entry.category.toLowerCase().includes(query)
   || entry.aliases.some(alias => alias.toLowerCase().includes(query));
-

@@ -47,6 +47,12 @@ export interface ConditionNow {
 
 /** The most conditions one character carries, and the most text one part holds. */
 export const CONDITION_LIMIT = 6;
+/**
+ * The most text a card's conditions take in a form: room for every condition a
+ * character may carry, each with a course of ordinary length. A field for them
+ * allows this much, so an author can type whatever the reader accepts.
+ */
+export const CONDITIONS_TEXT_CHARACTERS = 1_500;
 const CONDITION_TEXT_CHARACTERS = 160;
 const CONDITION_STAGE_LIMIT = 8;
 

@@ -1,4 +1,4 @@
-import { CONDITIONS_SLOT, WORLD_CARD_KINDS, type WorldCardKindId, type WorldCardSlot } from '@seihouse/sen/contracts';
+import { CONDITIONS_SLOT, CONDITIONS_TEXT_CHARACTERS, WORLD_CARD_KINDS, type WorldCardKindId, type WorldCardSlot } from '@seihouse/sen/contracts';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 
 /**
@@ -48,7 +48,7 @@ export const WorldCardSlotFields = <Card extends object>({ kind, card, idPrefix,
     // A character's conditions are written one per line, so they take a box of their own.
     return WIDE_SLOTS.has(slot.id) || conditions
       ? <div key={slot.id} className="col-span-1 sm:col-span-2 md:col-span-3">
-          <LibraryTextArea {...common} rows={conditions ? 3 : 2} maxLength={600} />
+          <LibraryTextArea {...common} rows={conditions ? 3 : 2} maxLength={conditions ? CONDITIONS_TEXT_CHARACTERS : 600} />
         </div>
       : <LibraryTextBox key={slot.id} {...common} />;
   })}

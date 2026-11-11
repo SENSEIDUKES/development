@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CONDITION_LIMIT, conditionAfter, readConditions, worldCardConditions } from './conditions';
+import { CONDITION_LIMIT, CONDITIONS_TEXT_CHARACTERS, conditionAfter, readConditions, worldCardConditions } from './conditions';
 
 /**
  * Conditions (SENSEI, 2026-11-11): each one is its own entry on the character,
@@ -56,6 +56,14 @@ describe('Reading a card\'s conditions', () => {
     const many = readConditions(`Slow thaw | ${Array.from({ length: 12 }, (_, index) => `stage ${index + 1}`).join(' > ')} > gone | a stage every 2 chapters`)[0];
     expect(many.stages).toHaveLength(8);
     expect(many.passes).toBe(true);
+  });
+
+  it('leaves a form room for every condition a character may carry, each with its course', () => {
+    const line = (index: number) => `Condition ${index + 1} | it begins as a dull ache > it spreads and burns > it will not heal | a stage every 5 chapters | ends if a healer treats it; or the limb is cut away`;
+    const whole = Array.from({ length: CONDITION_LIMIT }, (_, index) => line(index)).join('\n');
+    expect(whole.length).toBeGreaterThan(600);
+    expect(whole.length).toBeLessThanOrEqual(CONDITIONS_TEXT_CHARACTERS);
+    expect(readConditions(whole)).toHaveLength(CONDITION_LIMIT);
   });
 
   it('is only ever a character\'s: a thing\'s status is its own', () => {

@@ -129,6 +129,7 @@ export const Sparks: React.FC<{
 
   const seek = async () => {
     if (seeking || acting) return;
+    setTagError(null);
     const beginning = idea;
     if (mode === 'custom' && !beginning.trim()) {
       // The beginning is written beside the spark: go back there to write it.

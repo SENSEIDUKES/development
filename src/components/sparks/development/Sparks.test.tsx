@@ -98,6 +98,7 @@ it('caps catalog tags at two and sends them with age, retaining them on Use and 
   await click(button(/Seek a spark/));
   await settle(1100);
   expect(requestSpark.mock.lastCall?.[0]).toMatchObject({ tags: ['mystery', 'academy'], protagonistAge: 'young' });
+  expect(dialog().querySelector('[role="alert"]')).toBeNull();
   await click(button(/Keep in Story Bank/));
   expect(keepSpark.mock.lastCall?.[0].tags).toEqual(['mystery', 'academy']);
   await click(button(/Use this spark/));

@@ -3,9 +3,9 @@ import { GENRE_PRESETS } from '../../story-seed/shared/storyGenres';
 
 export const DAO_GENRES = GENRE_PRESETS;
 
-/** SENSEI's showcase. Title and genre await his choice; never offered for planting. */
+/** SENSEI's flower premise supplies ghost text, never content to plant. */
 export const EXAMPLE_SPARK: StorySpark = {
-  title: 'Example spark (title pending)',
+  title: '',
   genre: '',
   premise: 'A nameless flower grows alone on a barren mountain, surviving storms, winters, and time by quietly absorbing sunlight and awakening faint consciousness.',
   style: 'chinese',

@@ -2,7 +2,7 @@
 
 SEN owns Sparks: a short beginning for a story, the panel and trigger, genre selection, protagonist preference, usage display and host contracts. Import `SparksButton` and `SparkHost` from `@seihouse/sen/story-seed`. Include `@seihouse/sen/styles.css` alongside the host's utility stylesheet, as with SEN's other narrative surfaces.
 
-The host supplies generation, availability/usage, Save and Use. SEN performs no network request and owns no account, quota, API key or persistence. The existing Development server and NovelExpanded host adapters implement those responsibilities. The panel opens on SENSEI's flower example, labelled Example, with Use and Save disabled. Its title is an explicit placeholder and genre is unset pending SENSEI's choice. Without a model, Random shows this showcase; Custom keeps the reader's own words exactly. A failed request shows its error and keeps the current spark.
+The host supplies generation, availability/usage, Save and Use. SEN performs no network request and owns no account, quota, API key or persistence. The existing Development server and NovelExpanded host adapters implement those responsibilities. The panel opens with SENSEI's flower premise as muted ghost text in an empty writing field, with no example label or title. Typing replaces the hint and selects Custom. Ghost text cannot be used or saved. Without a model, Random keeps this empty field; Custom keeps the reader's own words exactly. A failed request shows its error and keeps the current spark.
 
 Readers may choose zero to two catalog Story Tags and a protagonist gender and age (Any, Young, Middle, Old). Any preference needs a connected model. Inventing a genre for a Custom beginning also needs a model; offline, the reader chooses a genre and their words stand as written. The tag chooser uses Origin's extracted chip and search pieces, catalog and recommendations. Chosen tags travel with the generated spark and lead its planted Story Tags, followed by de-duplicated inferred tags within Story Seed's existing limit. No new model call is introduced. What the Models Read shows Story Spark's live system instruction and alternative requests, with dated fingerprints.
 
@@ -11,6 +11,8 @@ Readers may choose zero to two catalog Story Tags and a protagonist gender and a
 The canonical genre picker and genre list are shared by Sparks and Story Seed. The existing Workshop route remains `?preview=dao-insights`; its responses are explicit local fixtures. NovelExpanded uses the same component with real host actions.
 
 ## History
+
+- **2026-11-10:** Removed the visible example label and pending title. The flower is gray placeholder text in an empty field; typing selects Custom. The scrollable panel now uses the shared overlay scrollbar, with Library styling supplied by its host.
 
 - **2026-11-10:** Added optional catalog Story Tags (cap two, confirmed by SENSEI) and protagonist age. Replaced the hand-written demo bank and per-genre fallback picker with one non-plantable flower showcase. Preserved the flower prompt line and system instruction. Added Story Spark to What the Models Read and its dated history. Example usability, final title and genre remain pending owner decisions; this work stays in a draft PR.
 

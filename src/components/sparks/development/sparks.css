@@ -3,6 +3,10 @@
 .sen-spark-dialog button { min-height: 44px; }
 .dao-spark-panel { background: var(--spark-panel, #181820); }
 .dao-spark-scroll { background: var(--spark-premise, #242430); }
+.dao-spark-beginning { border: 0; padding: 0; }
+.dao-spark-beginning::placeholder { color: var(--spark-muted, #b8b8c2); opacity: .65; }
+.dao-spark-beginning:focus-visible { outline: none; }
+.dao-spark-scroll:has(.dao-spark-beginning:focus-visible) { outline: 2px solid var(--spark-accent, #a5b4fc); outline-offset: 2px; }
 .sen-genre-picker .glass-choice { border: 1px solid var(--spark-edge, #ffffff30); border-radius: .75rem; background: var(--spark-control, #17171f); }
 .sen-genre-picker .glass-choice[data-selected='true'] { border-color: var(--spark-accent, #a5b4fc); }
 @media (prefers-reduced-motion: reduce) { .sen-spark-dialog * { animation: none !important; transition: none !important; } }

@@ -74,7 +74,7 @@ it('requires a connected model for an age choice', async () => {
   await click(ageButton('Young'));
   await click(button(/Seek a spark/));
   expect(dialog().querySelector('[role="alert"]')?.textContent).toContain('needs a connected model');
-  expect(dialog().textContent).toContain(EXAMPLE_SPARK.premise);
+  expect(dialog().querySelector('textarea')?.placeholder).toBe(EXAMPLE_SPARK.premise);
 });
 
 const pickTag = async (tag: string) => {
@@ -114,7 +114,7 @@ it('requires a connected model for tags and lets the reader remove them', async 
   await click(button(/Remove tag mystery/));
   await click(button(/Seek a spark/));
   await settle(1100);
-  expect(dialog().textContent).toContain(EXAMPLE_SPARK.premise);
+  expect(dialog().querySelector('textarea')?.placeholder).toBe(EXAMPLE_SPARK.premise);
 });
 
 it('puts exact tag matches first and supports arrows through the swipe row', async () => {
@@ -170,6 +170,7 @@ it('keeps the overlay within the host look so saved appearance reaches portaled 
   await click(trigger());
   await settle();
   expect(dialog().closest('.library-look')).toBe(trigger()?.closest('.library-look'));
+  expect(dialog().closest('.library-scrollbars')).toBeTruthy();
   expect(dialog().closest<HTMLElement>('.library-appearance-scope')?.style.getPropertyValue('--library-accent')).toBe('#55aaff');
 });
 
@@ -182,18 +183,29 @@ const modelSpark = (request: StorySparkRequest): StorySpark => ({
   aside: 'Hm. Hm.', voice: 'Elder of Tests',
 });
 
-it('shows only the flower example and prevents planting or saving it', async () => {
+it('shows the flower only as ghost text without an example label or pending title', async () => {
   const beginSpark = vi.fn();
   const keepSpark = vi.fn();
   await open({ beginSpark, keepSpark });
-  expect(dialog().textContent).toContain('Example');
-  expect(dialog().textContent).toContain(EXAMPLE_SPARK.premise);
+  expect(dialog().textContent).not.toMatch(/Example|title pending/);
+  expect(dialog().querySelector('textarea')?.placeholder).toBe(EXAMPLE_SPARK.premise);
+  expect(dialog().querySelector('textarea')?.value).toBe('');
+  expect(dialog().querySelector('[data-dao-body][data-overlay-scroll="true"]')).toBeTruthy();
   expect(button(/Use this spark/)?.hasAttribute('disabled')).toBe(true);
   expect(button(/Keep in Story Bank/)?.hasAttribute('disabled')).toBe(true);
   await click(button(/Use this spark/));
   await click(button(/Keep in Story Bank/));
   expect(beginSpark).not.toHaveBeenCalled();
   expect(keepSpark).not.toHaveBeenCalled();
+});
+
+it('replaces ghost words with the reader’s typing and selects Custom without a second field', async () => {
+  await open();
+  await type(dialog().querySelector('textarea')!, 'My own flower story.');
+  expect(button(/^Custom/)?.getAttribute('aria-pressed')).toBe('true');
+  expect(dialog().querySelectorAll('textarea')).toHaveLength(1);
+  expect(dialog().querySelector('textarea')?.value).toBe('My own flower story.');
+  expect(dialog().textContent).not.toContain(EXAMPLE_SPARK.premise);
 });
 
 it('offers two modes and the genre first, then asks the host for a spark in the chosen genre', async () => {
@@ -329,8 +341,8 @@ it('without a model, Random shows the example and Custom keeps the writer\'s wor
   await choosePath(/Regression/);
   await click(button(/Seek a spark/));
   await settle(1100);
-  expect(dialog().textContent).toContain(EXAMPLE_SPARK.premise);
-  expect(dialog().textContent).toContain('Example');
+  expect(dialog().querySelector('textarea')?.placeholder).toBe(EXAMPLE_SPARK.premise);
+  expect(dialog().textContent).not.toMatch(/Example|title pending/);
   await click(button(/^Custom/));
   const ownWords = `  My own beginning.\n${'flower '.repeat(100)}  `;
   await type(dialog().querySelector('textarea')!, ownWords);
@@ -365,7 +377,7 @@ it('a failed Random request keeps the example and says why', async () => {
   await click(button(/Seek a spark/));
   await settle(1100);
   expect(dialog().querySelector('[role="alert"]')?.textContent).toContain('twenty sparks for today');
-  expect(dialog().textContent).toContain(EXAMPLE_SPARK.premise);
+  expect(dialog().querySelector('textarea')?.placeholder).toBe(EXAMPLE_SPARK.premise);
 });
 
 it('keeps a spark in the Story Bank once, and Begin hands it to the host and closes', async () => {

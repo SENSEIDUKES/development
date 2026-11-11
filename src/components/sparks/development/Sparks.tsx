@@ -9,6 +9,7 @@ import { OriginGenrePicker } from './StoryGenrePicker';
 import type { SparkHost, StorySparkUsage } from '../shared/SparkHost';
 import { DAO_GENRES, EXAMPLE_SPARK } from '../shared/builtInSparks';
 import { SparkTags } from './SparkTags';
+import { SEITextarea, useOverlayScrollbar } from '@seihouse/ui';
 
 /**
  * Sparks: a beginning for a Story Seed. The title and premise lead; the
@@ -73,7 +74,21 @@ export const Sparks: React.FC<{
   const mountedRef = useRef(true);
   const requestRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const scroller = useOverlayScrollbar<HTMLDivElement>({ fades: true }, scrollRef);
+  const beginningRef = useRef<HTMLTextAreaElement>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    const resize = () => {
+      const field = beginningRef.current;
+      if (!field) return;
+      field.style.height = 'auto';
+      field.style.height = `${field.scrollHeight}px`;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, [isOpen, isExample, pathsOpen, idea, mode]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -142,7 +157,7 @@ export const Sparks: React.FC<{
       return;
     }
     if ((protagonistGender !== 'any' || protagonistAge !== 'any' || tags.length > 0) && (!connected || !host?.requestSpark)) {
-      setMessage({ tone: 'error', text: tags.length > 0 ? 'Choosing tags needs a connected model. Clear Tags to view the example.' : 'Choosing a protagonist needs a connected model. Choose Any to view the example.' });
+      setMessage({ tone: 'error', text: tags.length > 0 ? 'Choosing tags needs a connected model. Clear Tags to continue without a model.' : 'Choosing a protagonist needs a connected model. Choose Any to continue without a model.' });
       return;
     }
     const invent = conjuring;
@@ -287,7 +302,7 @@ export const Sparks: React.FC<{
                     </div>
                   </div>
 
-                  <div ref={scrollRef} data-dao-body className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3 pt-1 sm:px-6 space-y-3">
+                  <div ref={scroller} data-dao-body className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3 pt-1 sm:px-6 space-y-3">
                     {pathsOpen ? (
                       /* Story Paths in the spark's place, so the grid never stacks under it. */
                       <div className="space-y-3">
@@ -307,14 +322,18 @@ export const Sparks: React.FC<{
                         data-seeking={seeking || undefined}
                         data-sen-spark="premise"
                         className="dao-spark-scroll relative overflow-hidden rounded-2xl border border-[var(--spark-edge,#ffffff30)] p-4 sm:p-5">
-                        <AnimatePresence mode="wait">
+                        {isExample ? <SEITextarea ref={beginningRef} unstyled id="dao-spark-beginning" aria-label="Your beginning"
+                          value={mode === 'custom' ? idea : ''} placeholder={EXAMPLE_SPARK.premise}
+                          maxLength={STORY_SPARK_IDEA_MAX_LENGTH} rows={6} disabled={seeking}
+                          onChange={event => { setIdea(event.target.value); setMode('custom'); setMessage(null); }}
+                          className="dao-spark-beginning w-full resize-none overflow-hidden bg-transparent font-sans text-[17px] leading-relaxed text-[var(--spark-text,#fff)] sm:text-lg" /> : <AnimatePresence mode="wait">
                           <motion.div key={sparkKey} initial={{ opacity: 0, y: 8 }} animate={{ opacity: seeking ? 0.35 : 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
-                            <p className="text-xs font-medium text-[var(--spark-accent,#a5b4fc)] break-words">{isExample ? 'Example' : genreName(spark.genre)}</p>
+                            <p className="text-xs font-medium text-[var(--spark-accent,#a5b4fc)] break-words">{genreName(spark.genre)}</p>
                             {spark.title && <h3 className="mt-2 font-sans text-xl font-semibold text-[var(--spark-text,#fff)] leading-snug break-words">{spark.title}</h3>}
                             <p className="mt-2 select-text whitespace-pre-wrap break-words font-sans text-[17px] leading-relaxed text-[var(--spark-text,#fff)] sm:text-lg">{spark.premise}</p>
                             {spark.genreNote && <p className="mt-3 text-[13px] leading-relaxed text-[var(--spark-muted,#b8b8c2)] break-words">{spark.genreNote}</p>}
                           </motion.div>
-                        </AnimatePresence>
+                        </AnimatePresence>}
                       </section>
 
                       {feedback}
@@ -392,7 +411,7 @@ export const Sparks: React.FC<{
                       </div>
 
                       {/* Custom: the writer's own beginning */}
-                      {mode === 'custom' && (
+                      {mode === 'custom' && !isExample && (
                         <NarrativeTextArea id="dao-spark-beginning" aria-label="Your beginning" size="compact"
                           value={idea} maxLength={STORY_SPARK_IDEA_MAX_LENGTH} rows={2}
                           onChange={value => { setIdea(value); if (message?.tone === 'error') setMessage(null); }}

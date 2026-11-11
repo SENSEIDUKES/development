@@ -1,7 +1,7 @@
 import { OriginIcon } from './seedSections';
 import type { FunctionComponent } from 'react';
 import { LibraryArcIcon, LibraryBankIcon, LibraryManifestingIcon, LibraryRelicIcon, LibraryStoriesIcon } from '@seihouse/library-ui';
-import { EnergySunIcon } from '../../energy/development/EnergySunIcon';
+import { EnergySunIcon } from '../../sen-icons/EnergySunIcon';
 import { LibraryGenreIcon, LibraryMortalPressureIcon, LibrarySurvivalIcon } from '../../sen-icons/LibraryIcons';
 import {
   Brain,

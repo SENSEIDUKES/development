@@ -131,7 +131,13 @@
 .workspace-search-field::after {
   content: ""; position: absolute; inset-inline: 22px; border-radius: 9999px;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent, #04acff 18%, #7c5cff 45%, rgba(212, 175, 55, 0.85) 72%, #04acff 88%, transparent);
+  /* Two identical color cycles make one continuous loop; the mask keeps the
+     faded ends stationary while both the line and its glow move together. */
+  background: linear-gradient(90deg, #04acff, #7c5cff, rgba(212, 175, 55, 0.85), #04acff, #7c5cff, rgba(212, 175, 55, 0.85), #04acff);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
 }
 .workspace-search-field::before {
   bottom: -3px; height: 6px; filter: blur(6px); opacity: 0.65;
@@ -139,6 +145,15 @@
 .workspace-search-field::after {
   bottom: -1px; height: 2px;
   opacity: 0.9; transition: opacity 200ms ease;
+}
+@keyframes workspace-search-spectrum {
+  to { background-position: 100% 50%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .workspace-search-field::before,
+  .workspace-search-field::after {
+    animation: workspace-search-spectrum 10s linear infinite;
+  }
 }
 .workspace-search-field:is(:hover, :focus-visible) {
   background: #101018;

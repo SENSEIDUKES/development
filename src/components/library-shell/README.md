@@ -1,5 +1,7 @@
 # Library Shell
 
+- **2026-11-11** — Search's rainbow underline and glow now flow together in a seamless ten-second loop. The faded edges and search dimensions stay fixed, and reduced-motion preferences keep the spectrum static in the app and Workshop.
+
 - **2026-11-06** — Search wears the former logo's cyan, violet and gold spectrum as a glowing bottom line, with a neutral outline replacing its gold border. Shared by app and Workshop.
 
 - **2026-11-06** — Header search placeholder reads “Find a world” in the app and Workshop.

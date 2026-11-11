@@ -43,7 +43,7 @@ export function WorkspaceHeaderSearch({ items }: { items: readonly HeaderSearchI
       <button ref={searchRef} type="button" className="workspace-search-field" aria-label="Search for stories"
         aria-haspopup="dialog" aria-expanded={open} onClick={openSearch}>
         <SENSearchIcon aria-hidden="true" size={20} className="workspace-search-emblem" />
-        <span className="workspace-search-placeholder">Search for stories</span>
+        <span className="workspace-search-placeholder">Find a world</span>
       </button>
     </div>
     <WorkspaceSheet open={open} onOpenChange={setOpen}

@@ -133,7 +133,7 @@ export function WorkspaceHeader({ title, emblem, home, back, primaryAction,
     actions={<>
       <WorkspaceHeaderSearch items={searchCommands} />
       {contextualItem != null && contextualItem !== false && contextualItem !== '' && <div className="workspace-header-context">{contextualItem}</div>}
-      {accessory}
+      <div className="workspace-header-accessory">{accessory}</div>
       {!soundPlace.floating && soundControl}
     </>}
     profileClassName="workspace-header-profile"

@@ -529,7 +529,8 @@ export function StoryCodex({ codex, storyTitle, pictures, manifestCost, onBack, 
    * Promotes a minor figure to a card, by its key. Without it the Minor list
    * offers no Promote. Rejects with a reason the reader can read.
    */
-  onPromote?: (key: string) => Promise<void>;
+  /** Promotes a minor figure. Resolves with the key its card is listed under when that is not the key it was promoted by. */
+  onPromote?: (key: string) => Promise<string | void>;
   /** Fills a card the reader promoted. Without it a promoted card cannot be filled in here. */
   onFillCard?: FillCard;
   /** The host's pictures for this story's cards. Without them, cards show their aura and offer no Manifest. */
@@ -585,8 +586,9 @@ export function StoryCodex({ codex, storyTitle, pictures, manifestCost, onBack, 
     setPromoting(current => ({ ...current, [minor.key]: true }));
     setPromoteProblems(({ [minor.key]: _, ...rest }) => rest);
     onPromote(minor.key)
-      // Its new card opens, so the reader can fill it in.
-      .then(() => { setTab(MINOR_TABS[minor.kind]); setOpen(minor.key); })
+      // Its new card opens, so the reader can fill it in: under the key the host
+      // names when promotion gave it a new one (someone only speaker tags named).
+      .then(listedAs => { setTab(MINOR_TABS[minor.kind]); setOpen(listedAs || minor.key); })
       .catch((error: unknown) => setPromoteProblems(current => ({ ...current, [minor.key]: error instanceof Error && error.message ? error.message : 'It could not be promoted. Please try again.' })))
       .finally(() => setPromoting(({ [minor.key]: _, ...rest }) => rest));
   };

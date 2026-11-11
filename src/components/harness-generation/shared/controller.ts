@@ -819,15 +819,16 @@ export class HarnessGenerationController {
   /**
    * Promote: a minor figure becomes a world card, as of the latest chapter
    * (`promoteMinorFigure`). No model is called: the card starts with its name.
-   * `entryId` is the key the Codex lists the figure under.
+   * `figure` is the key the Codex lists them under; `entryId` is the one it
+   * lists their card under, which differs for someone only speaker tags named.
    */
-  async promoteCodexEntry(storyId: string, entryId: string): Promise<StoryWorldCard> {
+  async promoteCodexEntry(storyId: string, figure: string): Promise<{ card: StoryWorldCard; entryId: string }> {
     this.assertHydrated();
     return this.changeCard(async () => {
       if (this.generating) throw new Error('Wait for the chapter being written before promoting to a card.');
-      const promoted = promoteMinorFigure(this.state, storyId, entryId, this.runtime.now());
+      const promoted = promoteMinorFigure(this.state, storyId, figure, this.runtime.now());
       await this.persist(promoted.state);
-      return promoted.card;
+      return { card: promoted.card, entryId: promoted.entryId };
     });
   }
 
@@ -846,12 +847,24 @@ export class HarnessGenerationController {
    * Card changes run one after another, each starting from what the one
    * before it saved. Two figures promoted in quick succession both keep their
    * cards: without this the second would start from the state before the
-   * first and save over it.
+   * first and save over it. Each also waits for any other save under way, so
+   * it never starts from a copy older than what is being saved.
    */
   private changeCard<T>(change: () => Promise<T>): Promise<T> {
-    const run = this.cardChanges.then(change);
+    const run = this.cardChanges.then(async () => {
+      await this.savesLanded();
+      return change();
+    });
     this.cardChanges = run.catch(() => undefined);
     return run;
+  }
+
+  /** Resolves once every save under way has landed, so the state read next is the saved one. */
+  private async savesLanded(): Promise<void> {
+    for (let pending = this.saving; ; pending = this.saving) {
+      await pending;
+      if (pending === this.saving) break;
+    }
   }
 
   /** Reader/Codex edits use the same repository and correction journal as all HARNESS canon. */
@@ -2079,10 +2092,7 @@ export class HarnessGenerationController {
     if (!look) problem ??= 'The answer held no look that could be read. Please try again.';
     // Kept on the entry, against the state as it is once every save under way has landed:
     // a chapter written meanwhile is kept, never overwritten by an older copy.
-    for (let pending = this.saving; ; pending = this.saving) {
-      await pending;
-      if (pending === this.saving) break;
-    }
+    await this.savesLanded();
     if (entry) {
       const candidate = cloneHarnessValue(this.state);
       const saved = candidate.codexEntries.find(candidateEntry => candidateEntry.id === entry.id);

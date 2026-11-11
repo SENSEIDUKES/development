@@ -55,9 +55,10 @@ const spokenName = (state: HarnessWorkspaceState, storyId: string, label: string
  * reason a reader can read. `figure` is the key the Codex lists them under:
  * their Codex entry's ID, or, for someone only speaker tags name, the
  * `character:` key of the name they speak under; their entry is then made with
- * the card, as every card's is.
+ * the card, as every card's is. `entryId` is the entry the card is, which is
+ * the key the Codex lists it under from now on.
  */
-export function promoteMinorFigure(state: HarnessWorkspaceState, storyId: string, figure: string, createdAt = new Date().toISOString()): { state: HarnessWorkspaceState; card: StoryWorldCard } {
+export function promoteMinorFigure(state: HarnessWorkspaceState, storyId: string, figure: string, createdAt = new Date().toISOString()): { state: HarnessWorkspaceState; card: StoryWorldCard; entryId: string } {
   const story = findStory(state, storyId);
   if (!story) throw new Error('This story is no longer available.');
   const world = storyWorldRecord(state, storyId);
@@ -84,9 +85,10 @@ export function promoteMinorFigure(state: HarnessWorkspaceState, storyId: string
   const next = cloneHarnessValue(state);
   next.worldCards.push(card);
   const saved = next.codexEntries.find(candidate => candidate.id === figure && candidate.storyId === storyId);
+  const entryId = saved?.id ?? stableHarnessId('hcx', storyId, key);
   if (saved) saved.cardKey = key;
-  else next.codexEntries.push({ id: stableHarnessId('hcx', storyId, key), storyId, kind, name, origin: { source: 'world' }, cardKey: key, createdAt });
-  return { state: next, card: cloneHarnessValue(card) };
+  else next.codexEntries.push({ id: entryId, storyId, kind, name, origin: { source: 'world' }, cardKey: key, createdAt });
+  return { state: next, card: cloneHarnessValue(card), entryId };
 }
 
 /**

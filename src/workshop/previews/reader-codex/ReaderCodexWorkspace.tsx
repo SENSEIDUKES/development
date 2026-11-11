@@ -212,7 +212,11 @@ function MinorFiguresPreviewPane() {
   return (
     <div className="mx-auto min-w-0 max-w-md overflow-hidden rounded-2xl border border-white/10 bg-neutral-950">
       <StoryCodex codex={record} storyTitle={scene.title} pictures={pictures}
-        onPromote={async key => setScene(current => ({ ...current, state: promoteMinorFigure(current.state, current.storyId, key).state }))}
+        onPromote={async key => {
+          const promoted = promoteMinorFigure(scene.state, scene.storyId, key);
+          setScene(current => ({ ...current, state: promoted.state }));
+          return promoted.entryId;
+        }}
         onFillCard={async (cardKey, slots) => setScene(current => ({ ...current, state: fillPromotedCard(current.state, current.storyId, cardKey, slots).state }))} />
     </div>
   );

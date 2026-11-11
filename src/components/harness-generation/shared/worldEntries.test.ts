@@ -379,6 +379,9 @@ describe('Promote', () => {
     const promoted = promoteMinorFigure(told, storyId, listed.key, at);
     expect(promoted.card).toMatchObject({ key: 'world:character:old-ferryman', kind: 'character', name: 'Old Ferryman', slots: {} });
     const entry = promoted.state.codexEntries.find(candidate => candidate.cardKey === 'world:character:old-ferryman')!;
+    // The card is listed under its new entry from now on, which is what a host opens.
+    expect(promoted.entryId).toBe(entry.id);
+    expect(promoteMinorFigure(told, storyId, 'neighbor').entryId).toBe('neighbor');
     expect(entry).toMatchObject({ storyId, kind: 'character', name: 'Old Ferryman', origin: { source: 'world' }, createdAt: at });
     // In the Codex they are a character now, with their lines, and no longer minor.
     const codex = deriveStoryCodex({ entries: promoted.state.codexEntries, chapters: [chapter], world: storyWorldRecord(promoted.state, storyId) });
@@ -440,5 +443,18 @@ describe('Promote', () => {
     expect(promoted.map(card => [card.key, card.slots])).toEqual([['world:character:neighbor', { role: 'witness' }], ['world:character:porter', {}]]);
     expect(saved.codexEntries.filter(entry => entry.id === 'neighbor' || entry.id === 'porter').map(entry => entry.cardKey)).toEqual(['world:character:neighbor', 'world:character:porter']);
     expect(controller.snapshot().worldCards).toEqual(saved.worldCards);
+    expect(results[0]).toMatchObject({ value: { card: { key: 'world:character:neighbor' }, entryId: 'neighbor' } });
+  });
+
+  it('starts from what another save under way is saving, so neither is lost', async () => {
+    const { state, storyId } = started();
+    const repository = new InMemoryHarnessGenerationRepository(state);
+    const controller = new HarnessGenerationController({ repository, modelAdapter: {} as never });
+    await controller.hydrate();
+    // The notes are still being saved when the promotion is asked for.
+    await Promise.all([controller.setAuthorNotes(storyId, 'Keep the neighbor kind.'), controller.promoteCodexEntry(storyId, 'neighbor')]);
+    const saved = repository.snapshot();
+    expect(saved.stories.find(story => story.id === storyId)?.authorNotes).toBe('Keep the neighbor kind.');
+    expect(saved.worldCards.some(card => card.key === 'world:character:neighbor')).toBe(true);
   });
 });

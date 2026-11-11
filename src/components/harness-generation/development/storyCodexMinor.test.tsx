@@ -77,6 +77,21 @@ it('promotes a minor figure and opens its new card to be filled in', async () =>
   act(() => view.root.unmount());
 });
 
+it('opens the card under the key the host names, for someone who had no entry until they were promoted', async () => {
+  // Someone only speaker tags named is listed by the name they speak under; promotion makes their entry, and the card is listed by it.
+  const ferryman: CodexMinor = { key: 'character:old ferryman', name: 'Old Ferryman', kind: 'character', introduced: passage, chapters: [1], promotable: true };
+  const promotedFerryman: CodexCharacter = { ...promotedGuard, key: 'hcx_ferryman', name: 'Old Ferryman', promoted: { key: 'world:character:old-ferryman', kind: 'character', enteredInChapter: 1, slots: {} } };
+  const onPromote = vi.fn(async () => 'hcx_ferryman');
+  const view = await mount(<StoryCodex codex={{ ...empty, characters: [lin], minor: [ferryman] }} storyTitle="Frost" onPromote={onPromote} />);
+  await act(async () => view.tab('Minor')!.click());
+  await act(async () => view.container.querySelector<HTMLElement>('button[aria-label="Promote Old Ferryman to a card"]')!.click());
+  expect(onPromote).toHaveBeenCalledWith('character:old ferryman');
+  await act(async () => view.root.render(<StoryCodex codex={{ ...empty, characters: [lin, promotedFerryman] }} storyTitle="Frost" onPromote={onPromote} />));
+  expect(view.container.querySelector('#codex-profile-name')!.textContent).toBe('Old Ferryman');
+  expect(view.container.querySelector('[data-testid="codex-promoted-card"]')).not.toBeNull();
+  act(() => view.root.unmount());
+});
+
 it('says a main card\'s look is its card\'s own, with no passage to read', async () => {
   const view = await mount(<StoryCodex codex={{ ...empty, characters: [lin] }} storyTitle="Frost" />);
   await act(async () => view.container.querySelector<HTMLElement>('[data-testid="codex-character"]')!.click());

@@ -655,7 +655,7 @@ export function HarnessReaderSession({
       }}
         onReadPassage={revealPassage} onReadChapter={revealChapter}
         // A reader's own story: they may promote a minor figure to a card and fill it in.
-        onPromote={creator ? async key => { await controller.promoteCodexEntry(storyId, key); } : undefined}
+        onPromote={creator ? async key => (await controller.promoteCodexEntry(storyId, key)).entryId : undefined}
         onFillCard={creator ? async (cardKey, slots) => { await controller.fillPromotedCard(storyId, cardKey, slots); } : undefined} />
     </ReaderPanel>
     <ReaderSettingsSheet open={layer?.id === 'settings'} onClose={closeLayer} readAloud={readAloud} language={language}
@@ -671,7 +671,7 @@ export function HarnessReaderSession({
  * the Codex is open.
  */
 function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, manifestCost, onBack, onReadPassage, onReadChapter, onPromote, onFillCard }: {
-  onPromote?: (key: string) => Promise<void>;
+  onPromote?: (key: string) => Promise<string | void>;
   onFillCard?: (cardKey: string, slots: Record<string, string>) => Promise<void>;
   state: HarnessWorkspaceState;
   pictures?: CodexPictures;

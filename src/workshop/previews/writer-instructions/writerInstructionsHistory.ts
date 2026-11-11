@@ -21,6 +21,11 @@ export interface WriterInstructionsChange {
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
     date: '2026-11-10',
+    summary: 'Story Spark now appears on What the Models Read, built from the same prompt builder that sends the existing call. The request adds up to two reader-chosen catalog tags and their requirement to deliver them, plus Young (teens to twenties), Middle (thirties to forties), Old (fifty and older, ancient beings included), or a reminder to vary age when none is chosen. The system instruction and SENSEI’s flower example are unchanged. Alternative requests record every conditional instruction, including chosen and invented genres, gender, the reader’s idea, Survival and recent premises. No new model call or chapter-writing change.',
+    changed: { 'story-spark-system': '167d47d0e49b1b', 'story-spark-requests': '07bbccea37754c' },
+  },
+  {
+    date: '2026-11-10',
     summary: 'Setting, a new tag in place of the planned Scene tag (SENSEI, 2026-11-10: Scene was redundant with Place, Appears and Atmosphere, but nothing recorded when it is). The tagger is taught one more kind: where the prose says when it is or what it is like (the time of day, the weather, the season, time passing, a date in the story), it tags that sentence [[setting: ...]], picking the time of day (dawn, day, dusk, night), the conditions (clear, cloudy, rain, storm, snow, fog, wind) and the season from fixed lists, so a themed Codex view can draw them, with a few of the novel\'s own words beside them. Novels say this only sometimes, so the tag follows the prose and never asks for more; it never names the place (the place tag) or the mood (the atmosphere). The tagger\'s role line now names "when it is" among what a tag marks. A setting belongs to its chapter: nothing of it is listed beside a name, and the writer reads only where each recent chapter ended, as endedIn beside its recap in Previously On; the writing rules now say to carry it on unless the prose lets time pass or the weather turn. Nothing else changed.',
     changed: { 'writing-rules': '0a1c382b91995e', tagger: '19e835797c4cc3', setting: '040871dc19db03' },
   },

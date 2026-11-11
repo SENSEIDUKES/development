@@ -8,11 +8,12 @@ import { resolveStorySeedBlueprintConfig } from "./config";
 import { BlueprintOutputLimitError } from "./generate";
 import { ModelRouterError } from "@seihouse/library/model-router-server";
 import { storySeedInputFromSpark } from '@seihouse/sen/story-seed';
-import { HAND_SPARKS } from '../../components/sparks/shared/builtInSparks';
 import type {
   WorldBlueprintModelProvider,
   WorldBlueprintModelRequest,
 } from "./generate";
+
+const blueprintSparkFixture = { title: 'The Swallowed Star', genre: 'Cosmic Cultivation', premise: 'Stars are the corpses of ancient cultivators. A boy who swallows a falling one inherits a dead god’s unfinished revenge.', style: 'chinese' as const, inventedGenre: false, survival: false };
 
 const environment = {
   GEMINI_API_KEY: "server-only-gemini-key",
@@ -165,7 +166,7 @@ const manifest = async (provider: RecordingProvider) => handleStorySeedBlueprint
 
 describe("protected Story Seed World Blueprint generation", () => {
   it.each([false, true])('routes the real Blueprint schema through Claude without weakening answer validation (incomplete=%s)', async incomplete => {
-    const seed = storySeedInputFromSpark(HAND_SPARKS.find(item => item.title === 'The Swallowed Star')!);
+    const seed = storySeedInputFromSpark(blueprintSparkFixture);
     const before = structuredClone(seed);
     let sent: Record<string, unknown> = {};
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
@@ -194,7 +195,7 @@ describe("protected Story Seed World Blueprint generation", () => {
   });
 
   it('reads a Blueprint Claude wraps in a Markdown code fence (SENSEI, 2026-10-31)', async () => {
-    const seed = storySeedInputFromSpark(HAND_SPARKS.find(item => item.title === 'The Swallowed Star')!);
+    const seed = storySeedInputFromSpark(blueprintSparkFixture);
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({
       choices: [{ message: { content: `\`\`\`json\n${JSON.stringify(generatedBlueprint())}\n\`\`\`` }, finish_reason: 'stop' }],
     })));
@@ -211,7 +212,7 @@ describe("protected Story Seed World Blueprint generation", () => {
   });
 
   it('takes The Swallowed Star through tag validation and into a complete Blueprint', async () => {
-    const spark = HAND_SPARKS.find(item => item.title === 'The Swallowed Star')!;
+    const spark = blueprintSparkFixture;
     const storySeed = storySeedInputFromSpark(spark);
     const before = structuredClone(storySeed);
     const provider = new RecordingProvider();
@@ -230,7 +231,7 @@ describe("protected Story Seed World Blueprint generation", () => {
     const model = 'openrouter/openai/gpt-6-luna';
     const failure = new ModelRouterError('provider-error', `OpenRouter 400: ${upstreamText}: private upstream details`);
     const onError = vi.fn();
-    const storySeed = storySeedInputFromSpark(HAND_SPARKS.find(item => item.title === 'The Swallowed Star')!);
+    const storySeed = storySeedInputFromSpark(blueprintSparkFixture);
     const before = structuredClone(storySeed);
     const response = await handleStorySeedBlueprintHttp({ method: 'POST',
       headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed, model },

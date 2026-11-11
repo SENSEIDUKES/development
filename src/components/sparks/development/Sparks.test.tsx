@@ -7,7 +7,7 @@ import { LibraryLook, LibraryPresentationProvider } from '@seihouse/library/pres
 import type { StorySpark, StorySparkRequest } from '@seihouse/sen/story-seed';
 import type { SparkHost } from '../shared/SparkHost';
 import { SparksButton } from './SparksButton';
-import { HAND_SPARKS, handSpark } from '../shared/builtInSparks';
+import { EXAMPLE_SPARK } from '../shared/builtInSparks';
 
 vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -54,9 +54,103 @@ const choosePath = async (name: RegExp) => {
     .find(item => name.test(item.textContent ?? '')));
 };
 
+const ageButton = (name: string) => Array.from(dialog().querySelectorAll<HTMLButtonElement>('[aria-label="Protagonist age"] button')).find(item => item.textContent === name)!;
+
+it('sends every age with aria-pressed selection and omits Any', async () => {
+  const requestSpark = vi.fn(async (request: StorySparkRequest) => modelSpark(request));
+  await open({ requestSpark });
+  expect(ageButton('Any').getAttribute('aria-pressed')).toBe('true');
+  for (const [label, value] of [['Young', 'young'], ['Middle', 'middle'], ['Old', 'old'], ['Any', undefined]]) {
+    await click(ageButton(label!));
+    expect(ageButton(label!).getAttribute('aria-pressed')).toBe('true');
+    await click(button(/Seek a spark/));
+    await settle(1100);
+    expect(requestSpark.mock.lastCall?.[0].protagonistAge).toBe(value);
+  }
+}, 15_000);
+
+it('requires a connected model for an age choice', async () => {
+  await open();
+  await click(ageButton('Young'));
+  await click(button(/Seek a spark/));
+  expect(dialog().querySelector('[role="alert"]')?.textContent).toContain('needs a connected model');
+  expect(dialog().querySelector('textarea')?.placeholder).toBe(EXAMPLE_SPARK.premise);
+});
+
+const pickTag = async (tag: string) => {
+  const input = dialog().querySelector<HTMLInputElement>('#spark-tag-search')!;
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+  await act(async () => { setter.call(input, tag); input.dispatchEvent(new Event('input', { bubbles: true })); });
+  await click(Array.from(dialog().querySelectorAll('fieldset button')).find(item => item.textContent?.trim() === `+ ${tag}`));
+};
+
+it('caps catalog tags at two and sends them with age, retaining them on Use and Save', async () => {
+  const requestSpark = vi.fn(async (request: StorySparkRequest) => modelSpark(request));
+  const keepSpark = vi.fn(async (_spark: StorySpark) => {});
+  const beginSpark = vi.fn(async (_spark: StorySpark) => {});
+  await open({ requestSpark, keepSpark, beginSpark });
+  await click(button(/^Tags/));
+  await pickTag('mystery');
+  await pickTag('academy');
+  await pickTag('adventure');
+  expect(dialog().querySelector('[role="alert"]')?.textContent).toContain('at most 2');
+  await click(ageButton('Young'));
+  await click(button(/Seek a spark/));
+  await settle(1100);
+  expect(requestSpark.mock.lastCall?.[0]).toMatchObject({ tags: ['mystery', 'academy'], protagonistAge: 'young' });
+  expect(dialog().querySelector('[role="alert"]')).toBeNull();
+  await click(button(/Keep in Story Bank/));
+  expect(keepSpark.mock.lastCall?.[0].tags).toEqual(['mystery', 'academy']);
+  await click(button(/Use this spark/));
+  expect(beginSpark.mock.lastCall?.[0].tags).toEqual(['mystery', 'academy']);
+});
+
+it('requires a connected model for tags and lets the reader remove them', async () => {
+  await open();
+  await click(button(/^Tags/));
+  await pickTag('mystery');
+  await click(button(/Seek a spark/));
+  expect(dialog().querySelector('[role="alert"]')?.textContent).toContain('Choosing tags needs a connected model');
+  await click(button(/Remove tag mystery/));
+  await click(button(/Seek a spark/));
+  await settle(1100);
+  expect(dialog().querySelector('textarea')?.placeholder).toBe(EXAMPLE_SPARK.premise);
+});
+
+it('puts exact tag matches first and supports arrows through the swipe row', async () => {
+  await open();
+  await click(button(/^Tags/));
+  await pickTag('academy');
+  const chips = Array.from(dialog().querySelectorAll<HTMLButtonElement>('fieldset button[aria-pressed]'));
+  expect(chips[0].textContent).toContain('academy');
+  const row = chips[0].parentElement!;
+  row.scrollBy = vi.fn();
+  await click(button(/^Next tags$/));
+  expect(row.scrollBy).toHaveBeenCalledWith({ left: 220, behavior: 'smooth' });
+  chips[0].focus();
+  await act(async () => { chips[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
+  expect(document.activeElement).toBe(chips[1]);
+  await act(async () => { chips[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })); });
+  expect(document.activeElement).toBe(chips[0]);
+});
+
+it('keeps a real spark and its actions usable after a failed request', async () => {
+  let fail = false;
+  const requestSpark = async (request: StorySparkRequest) => { if (fail) throw new Error('Try again.'); return modelSpark(request); };
+  await open({ requestSpark, beginSpark: async () => {} });
+  await click(button(/Seek a spark/));
+  await settle(1100);
+  fail = true;
+  await click(button(/Seek a spark/));
+  await settle(1100);
+  expect(dialog().textContent).toContain('A model premise.');
+  expect(dialog().querySelector('[role="alert"]')?.textContent).toBe('Try again.');
+  expect(button(/Use this spark/)?.hasAttribute('disabled')).toBe(false);
+});
+
 it('works as a standalone SEN surface without a Library presentation provider', async () => {
   const beginSpark = vi.fn(async (_spark: StorySpark) => {});
-  await act(async () => root.render(<SparksButton host={{ beginSpark }} />));
+  await act(async () => root.render(<SparksButton host={{ beginSpark, requestSpark: async request => modelSpark(request) }} />));
   await click(trigger());
   await settle();
   expect(dialog().textContent).toContain('Protagonist');
@@ -76,6 +170,7 @@ it('keeps the overlay within the host look so saved appearance reaches portaled 
   await click(trigger());
   await settle();
   expect(dialog().closest('.library-look')).toBe(trigger()?.closest('.library-look'));
+  expect(dialog().closest('.library-scrollbars')).toBeTruthy();
   expect(dialog().closest<HTMLElement>('.library-appearance-scope')?.style.getPropertyValue('--library-accent')).toBe('#55aaff');
 });
 
@@ -88,12 +183,29 @@ const modelSpark = (request: StorySparkRequest): StorySpark => ({
   aside: 'Hm. Hm.', voice: 'Elder of Tests',
 });
 
-it('has every Story Seed genre among its own sparks, and invented ones besides', () => {
-  const genres = new Set(HAND_SPARKS.filter(item => !item.inventedGenre).map(item => item.genre));
-  expect(genres.size).toBe(15);
-  expect(HAND_SPARKS.some(item => item.inventedGenre && item.genreNote)).toBe(true);
-  const current = handSpark({ genre: 'Regression' });
-  expect(handSpark({ genre: 'Regression' }, current).premise).not.toBe(current.premise);
+it('shows the flower only as ghost text without an example label or pending title', async () => {
+  const beginSpark = vi.fn();
+  const keepSpark = vi.fn();
+  await open({ beginSpark, keepSpark });
+  expect(dialog().textContent).not.toMatch(/Example|title pending/);
+  expect(dialog().querySelector('textarea')?.placeholder).toBe(EXAMPLE_SPARK.premise);
+  expect(dialog().querySelector('textarea')?.value).toBe('');
+  expect(dialog().querySelector('[data-dao-body][data-overlay-scroll="true"]')).toBeTruthy();
+  expect(button(/Use this spark/)?.hasAttribute('disabled')).toBe(true);
+  expect(button(/Keep in Story Bank/)?.hasAttribute('disabled')).toBe(true);
+  await click(button(/Use this spark/));
+  await click(button(/Keep in Story Bank/));
+  expect(beginSpark).not.toHaveBeenCalled();
+  expect(keepSpark).not.toHaveBeenCalled();
+});
+
+it('replaces ghost words with the reader’s typing and selects Custom without a second field', async () => {
+  await open();
+  await type(dialog().querySelector('textarea')!, 'My own flower story.');
+  expect(button(/^Custom/)?.getAttribute('aria-pressed')).toBe('true');
+  expect(dialog().querySelectorAll('textarea')).toHaveLength(1);
+  expect(dialog().querySelector('textarea')?.value).toBe('My own flower story.');
+  expect(dialog().textContent).not.toContain(EXAMPLE_SPARK.premise);
 });
 
 it('offers two modes and the genre first, then asks the host for a spark in the chosen genre', async () => {
@@ -208,6 +320,8 @@ it('keeps the Story Paths open while the writer types their own genre, even one 
 it('shows what an action did while the Story Paths are open, and an empty beginning returns to the spark', async () => {
   const keepSpark = vi.fn(async () => { throw new Error('The Story Bank is full.'); });
   await open({ checkSparks: async () => true, requestSpark: async request => modelSpark(request), keepSpark });
+  await click(button(/Seek a spark/));
+  await settle(1100);
   await click(button(/Pick a path$/));
   await click(button(/Keep in Story Bank/));
   expect(dialog().querySelector('[role="radiogroup"]')).toBeTruthy();
@@ -221,32 +335,57 @@ it('shows what an action did while the Story Paths are open, and an empty beginn
   expect(dialog().querySelector('[role="alert"]')?.textContent).toMatch(/beginning of your idea/);
 });
 
-it('without a model, Random offers the Dao\'s own sparks and Custom keeps the writer\'s words as written', async () => {
-  await open();
+it('without a model, Random shows the example and Custom keeps the writer\'s words as written', async () => {
+  const keepSpark = vi.fn(async (_spark: StorySpark) => {});
+  await open({ keepSpark });
   await choosePath(/Regression/);
   await click(button(/Seek a spark/));
   await settle(1100);
-  const premise = HAND_SPARKS.find(item => dialog().textContent?.includes(item.premise));
-  expect(premise?.genre).toBe('Regression');
+  expect(dialog().querySelector('textarea')?.placeholder).toBe(EXAMPLE_SPARK.premise);
+  expect(dialog().textContent).not.toMatch(/Example|title pending/);
   await click(button(/^Custom/));
-  await type(dialog().querySelector('textarea')!, 'my own half idea');
+  const ownWords = `  My own beginning.\n${'flower '.repeat(100)}  `;
+  await type(dialog().querySelector('textarea')!, ownWords);
   await click(button(/Shape my premise/));
   await settle(1100);
-  expect(dialog().textContent).toContain('my own half idea');
+  expect(dialog().querySelector('.select-text')?.textContent).toBe(ownWords);
   expect(dialog().querySelector('[role="status"]')?.textContent).toMatch(/kept as written/);
+  await click(button(/Keep in Story Bank/));
+  expect(keepSpark.mock.lastCall?.[0].premise).toBe(ownWords);
 });
 
-it('a failed Random request surfaces an older spark and says why', async () => {
+it('requires a model to invent a Custom genre and keeps the reader’s words for a chosen genre', async () => {
+  const keepSpark = vi.fn(async (_spark: StorySpark) => {});
+  await open({ keepSpark });
+  await click(button(/^Custom/));
+  const ownWords = '  A flower wakes.\nIt keeps growing.  ';
+  await type(dialog().querySelector('textarea')!, ownWords);
+  await choosePath(/Invent a genre/);
+  await click(button(/Shape my premise/));
+  expect(dialog().querySelector('[role="alert"]')?.textContent).toContain('Inventing a genre needs a connected model');
+  expect(dialog().querySelector('textarea')?.value).toBe(ownWords);
+  expect(button(/Keep in Story Bank/)?.hasAttribute('disabled')).toBe(true);
+  await choosePath(/Regression/);
+  await click(button(/Shape my premise/));
+  await settle(1100);
+  await click(button(/Keep in Story Bank/));
+  expect(keepSpark.mock.lastCall?.[0]).toMatchObject({ premise: ownWords, genre: 'Regression' });
+});
+
+it('a failed Random request keeps the example and says why', async () => {
   await open({ checkSparks: async () => true, requestSpark: async () => { throw new Error('The Dao has spoken its twenty sparks for today.'); } });
   await click(button(/Seek a spark/));
   await settle(1100);
-  expect(dialog().querySelector('[role="status"]')?.textContent).toMatch(/twenty sparks for today.*older spark/);
+  expect(dialog().querySelector('[role="alert"]')?.textContent).toContain('twenty sparks for today');
+  expect(dialog().querySelector('textarea')?.placeholder).toBe(EXAMPLE_SPARK.premise);
 });
 
 it('keeps a spark in the Story Bank once, and Begin hands it to the host and closes', async () => {
   const keepSpark = vi.fn(async (_spark: StorySpark) => {});
   const beginSpark = vi.fn(async (_spark: StorySpark) => {});
-  await open({ keepSpark, beginSpark });
+  await open({ keepSpark, beginSpark, requestSpark: async request => modelSpark(request) });
+  await click(button(/Seek a spark/));
+  await settle(1100);
   await click(button(/Keep in Story Bank/));
   expect(keepSpark).toHaveBeenCalledTimes(1);
   expect(button(/Kept in your Story Bank/)?.hasAttribute('disabled')).toBe(true);
@@ -274,7 +413,9 @@ it('opens from a spark icon button and never turns sparks over on its own', asyn
 
 it('inside a Story Seed, Use this spark hands the spark to the host to fill the Origin, without Keep', async () => {
   const beginSpark = vi.fn(async (_spark: StorySpark) => {});
-  await open({ beginSpark }, 'fill-seed');
+  await open({ beginSpark, requestSpark: async request => modelSpark(request) }, 'fill-seed');
+  await click(button(/Seek a spark/));
+  await settle(1100);
   expect(dialog().querySelector('[data-spark-fill-note]')?.textContent).toContain('replaces this seed');
   expect(button(/Keep in Story Bank/)).toBeUndefined();
   expect(button(/Begin this story/)).toBeUndefined();
@@ -384,7 +525,7 @@ it('keeps the current spark on model failure rather than ignoring the requested 
   expect(dialog().querySelector('[aria-label="Story spark"]')?.textContent).toBe(premise);
 });
 
-it('keeps the server count after a failed request falls back to an older spark', async () => {
+it('keeps the server count after a failed request', async () => {
   await open({ checkSparks: async () => ({ configured: true, usage: { unlimited: false, limit: 20, remaining: 1, resetsAt: null } }),
     requestSpark: async (_request, _signal, onUsage) => {
       onUsage?.({ unlimited: false, limit: 20, remaining: 0, resetsAt: null });
@@ -393,5 +534,5 @@ it('keeps the server count after a failed request falls back to an older spark',
   await click(button(/Seek a spark/));
   await settle(1100);
   expect(dialog().querySelector('[aria-label="Daily sparks"]')?.textContent).toBe('0 / 20 left');
-  expect(dialog().querySelector('[role="status"]')?.textContent).toContain('older spark');
+  expect(dialog().querySelector('[role="alert"]')?.textContent).toContain('The model failed.');
 });

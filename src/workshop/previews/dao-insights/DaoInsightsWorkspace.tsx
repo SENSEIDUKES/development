@@ -19,8 +19,8 @@ type SparkState = 'model' | 'no-model' | 'model-fails' | 'daily-limit';
 
 const STATES: { id: SparkState; label: string; description: string }[] = [
   { id: 'model', label: 'Model connected', description: 'Sparks come from a local stand-in for the Story Spark server after a short wait.' },
-  { id: 'no-model', label: 'No model', description: 'No model is configured: Random uses the Dao\'s hand-written sparks and Custom keeps the writer\'s words as written.' },
-  { id: 'model-fails', label: 'Model fails', description: 'Every request fails: Random surfaces an older spark and says why; Custom shows the error.' },
+  { id: 'no-model', label: 'No model', description: 'No model is configured: Random shows the flower example and Custom keeps the writer\'s words as written.' },
+  { id: 'model-fails', label: 'Model fails', description: 'Every request fails: The current spark stays and the error is shown.' },
   { id: 'daily-limit', label: 'Daily limit reached', description: 'The visitor has used their twenty free sparks today.' },
 ];
 
@@ -42,10 +42,12 @@ const hostFor = (state: SparkState, purpose: SparkPurpose, report: (message: str
     if (state === 'model-fails') throw new Error('The Dao was silent. Seek again.');
     if (exhausted) throw new Error('The Dao has spoken its twenty sparks for today. Seek again tomorrow, or plant one you already have.');
     const genre = request.inventGenre ? 'Fungal Kingdom Cultivation' : request.genre;
-    const mushroom = request.protagonistGender === 'male' ? 'a mushroom spirit boy' : request.protagonistGender === 'female' ? 'a mushroom spirit girl' : 'a small mushroom';
-    const gardener = request.protagonistGender === 'male' ? 'a young man' : request.protagonistGender === 'female' ? 'a young woman' : 'a young gardener';
+    const age = request.protagonistAge === 'middle' ? 'middle-aged' : request.protagonistAge === 'old' ? 'elderly' : 'young';
+    const mushroom = request.protagonistGender === 'male' ? `a ${age} male mushroom spirit` : request.protagonistGender === 'female' ? `a ${age} female mushroom spirit` : `a ${age} mushroom spirit`;
+    const gardener = request.protagonistGender === 'male' ? `a ${age} man` : request.protagonistGender === 'female' ? `a ${age} woman` : `a ${age} gardener`;
     return {
       genre,
+      ...(request.tags?.length ? { tags: [...request.tags] } : {}),
       inventedGenre: Boolean(request.inventGenre),
       title: request.idea ? '' : request.inventGenre ? 'Beneath the Mountain Shrine' : 'The Mountain Garden',
       style: storyStyleForGenre(genre),

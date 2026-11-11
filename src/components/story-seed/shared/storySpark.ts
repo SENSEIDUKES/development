@@ -13,9 +13,10 @@
  * How a spark is written (a model, a hand-written list) and how it is dressed
  * (the Library's Sparks) belong to the host.
  */
-import { createEmptyStorySeedInput, type StorySeedInput } from './storySeedSchema';
+import { createEmptyStorySeedInput, STORY_TAG_LIMIT, type StorySeedInput } from './storySeedSchema';
 import { normalizeStoryStyle, type StoryStyle } from './storyStyle';
 import { inferStoryTags } from './storyTagInference';
+import { getTagMetadata, normalizeStoryTagIdentity } from './storyTagCatalog';
 
 /** A spark's premise is a hook, never a synopsis. */
 export const STORY_SPARK_PREMISE_MAX_LENGTH = 600;
@@ -30,10 +31,13 @@ const ASIDE_MAX_LENGTH = 400;
 export const STORY_SPARK_IDEA_MAX_LENGTH = 1_000;
 /** Recent premises a request may name so the writer does not repeat them. */
 export const STORY_SPARK_AVOID_LIMIT = 6;
+export const STORY_SPARK_TAG_LIMIT = 2;
 
 interface StorySparkRequestBase {
   /** Omitted when the writer has no preference for the protagonist's gender. */
   protagonistGender?: 'male' | 'female';
+  protagonistAge?: 'young' | 'middle' | 'old';
+  tags?: string[];
   /**
    * The writer's own beginning of a premise, not yet worded into one. When
    * present the spark shapes it into a real premise in the genre and keeps its
@@ -56,6 +60,8 @@ export type StorySparkRequest =
   | (StorySparkRequestBase & { inventGenre: true; genre?: undefined });
 
 export interface StorySpark {
+  /** Reader-chosen catalog tags, carried from the request rather than invented by the model. */
+  tags?: string[];
   premise: string;
   genre: string;
   /** The novel's name. Empty when the writer's own words stand untitled. */
@@ -102,7 +108,18 @@ export const parseStorySparkRequest = (value: unknown): StorySparkRequest => {
   if (protagonistGender !== undefined && protagonistGender !== 'male' && protagonistGender !== 'female') {
     throw new Error('Choose Male, Female, or Any for the protagonist.');
   }
+  const protagonistAge = value.protagonistAge;
+  if (protagonistAge !== undefined && protagonistAge !== 'young' && protagonistAge !== 'middle' && protagonistAge !== 'old') {
+    throw new Error('Choose Young, Middle, Old, or Any for the protagonist age.');
+  }
+  if (value.tags !== undefined && (!Array.isArray(value.tags) || value.tags.some(tag => typeof tag !== 'string' || typeof getTagMetadata(normalizeStoryTagIdentity(tag))?.label !== 'string'))) {
+    throw new Error('Choose Story Tags from the catalog.');
+  }
+  const tags = [...new Set((value.tags as string[] | undefined ?? []).map(tag => getTagMetadata(normalizeStoryTagIdentity(tag))!.label))];
+  if (tags.length > STORY_SPARK_TAG_LIMIT) throw new Error(`Choose at most ${STORY_SPARK_TAG_LIMIT} Story Tags.`);
   const extra: StorySparkRequestBase = {
+    ...(tags.length ? { tags } : {}),
+    ...(protagonistAge ? { protagonistAge } : {}),
     ...(protagonistGender ? { protagonistGender } : {}),
     ...(idea ? { idea } : {}),
     ...(avoid.length ? { avoid } : {}),
@@ -135,15 +152,24 @@ export const parseStorySpark = (value: unknown, request: StorySparkRequest): Sto
     style: normalizeStoryStyle(value.style) ?? storyStyleForGenre(genre),
     survival: request.fateSurvival === true,
     inventedGenre: Boolean(request.inventGenre),
+    ...(request.tags?.length ? { tags: [...request.tags] } : {}),
     ...(genreNote ? { genreNote } : {}),
     ...(aside ? { aside } : {}),
     ...(voice ? { voice } : {}),
   };
 };
 
-/** The Story Tags a spark plants: Story Seed's own recommendations for its premise. */
-export const storySparkTags = (spark: Pick<StorySpark, 'premise' | 'genre' | 'style'>): string[] =>
-  inferStoryTags({ premise: spark.premise, genre: spark.genre, style: spark.style });
+/** Chosen tags first, then Story Seed's own recommendations, within its existing limit. */
+export const storySparkTags = (spark: Pick<StorySpark, 'premise' | 'genre' | 'style' | 'tags'>): string[] => {
+  const tags = [...(spark.tags ?? []), ...inferStoryTags({ premise: spark.premise, genre: spark.genre, style: spark.style })];
+  const seen = new Set<string>();
+  return tags.filter(tag => {
+    const identity = normalizeStoryTagIdentity(tag);
+    if (seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  }).slice(0, STORY_TAG_LIMIT);
+};
 
 /**
  * A Story Seed with its Origin replaced by the spark: the premise, genre, novel

@@ -45,6 +45,7 @@ import { BLUEPRINT_PERMANENT_RULES, BLUEPRINT_PROMPT_HEADINGS, WORLD_BLUEPRINT_S
 import { OFFICIAL_CAPA_DEFAULT_REFERENCES, OFFICIAL_STYLE_REFERENCES } from '../../../host/generation/capa/officialCapaSkills';
 import { HARNESS_TAGGER_RETURN, HARNESS_TAGGER_ROLE, buildHarnessTagPrompt } from '../../../server/harness-generation/tagger';
 import { LOOK_DESCRIBER_INSTRUCTIONS, buildLookDescriberPrompt } from '../../../server/harness-generation/lookDescriber';
+import { buildStorySparkPrompt, STORY_SPARK_RESPONSE_SCHEMA } from '../../../server/story-spark/prompt';
 
 /**
  * The writer's instructions, read from the live code: every block of text the
@@ -55,6 +56,8 @@ import { LOOK_DESCRIBER_INSTRUCTIONS, buildLookDescriberPrompt } from '../../../
  */
 
 export type WriterInstructionId =
+  | 'story-spark-system'
+  | 'story-spark-requests'
   | 'role'
   | 'author'
   | 'writing-rules'
@@ -266,7 +269,26 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
   },
 ];
 
-export const WRITER_INSTRUCTIONS: readonly WriterInstruction[] = [...EVERY_CHAPTER, ...SOME_STORIES, ...BEFORE_THE_STORY, ...AFTER_A_CHAPTER];
+/** Alternative requests: one is sent per Spark call, never all of them together. */
+const sparkPromptExamples = [
+  buildStorySparkPrompt({ genre: 'Mystery Cultivation' }),
+  buildStorySparkPrompt({ genre: 'Mystery Cultivation', tags: ['mystery', 'academy'], protagonistAge: 'young', protagonistGender: 'female', idea: '⟨the reader’s own idea⟩', avoid: ['⟨a recent premise⟩'], fateSurvival: true }),
+  buildStorySparkPrompt({ inventGenre: true, protagonistAge: 'middle', protagonistGender: 'male' }),
+  buildStorySparkPrompt({ genre: 'Xianxia', protagonistAge: 'old' }),
+];
+export const STORY_SPARK_INSTRUCTIONS: readonly WriterInstruction[] = [
+  {
+    id: 'story-spark-system', title: 'Story Spark instructions', source: 'Story Spark',
+    when: 'When the reader asks for a Spark, before a Story Seed exists. The existing Story Spark call, not the chapter writer.',
+    text: sparkPromptExamples[0].systemInstruction,
+  },
+  {
+    id: 'story-spark-requests', title: 'Story Spark request lines', source: 'Story Spark',
+    when: 'Alternative request examples built by the live prompt builder: no preferences; tags, young, female, own idea, survival and recent premises; invented genre, middle and male; old. Each call reads only its own request.',
+    text: sparkPromptExamples.map(prompt => prompt.userPrompt).join('\n\n'),
+  },
+];
+export const WRITER_INSTRUCTIONS: readonly WriterInstruction[] = [...STORY_SPARK_INSTRUCTIONS, ...EVERY_CHAPTER, ...SOME_STORIES, ...BEFORE_THE_STORY, ...AFTER_A_CHAPTER];
 
 /** Blocks no longer read, kept so the history can still name them. */
 export const RETIRED_WRITER_INSTRUCTIONS: ReadonlyMap<WriterInstructionId, string> = new Map([
@@ -396,6 +418,11 @@ export const WHOLE_PROMPTS: Record<Exclude<PipelineStepId, 'writer'>, readonly P
   });
   const seed = createEmptyStorySeedInput();
   return {
+    spark: [
+      { label: 'Its instructions', text: STORY_SPARK_INSTRUCTIONS[0].text },
+      { label: 'Alternative requests (one per call, with example reader data)', text: STORY_SPARK_INSTRUCTIONS[1].text },
+      answerShape(STORY_SPARK_RESPONSE_SCHEMA),
+    ],
     world: [
       { label: 'Its instructions', text: WORLD_BLUEPRINT_SYSTEM_PROMPT },
       { label: 'The next message, with an empty Story Seed where yours goes', text: buildWorldBlueprintPrompt(seed) },
@@ -439,7 +466,7 @@ export const fingerprintText = (text: string) => {
   return (4294967296 * (2097151 & second) + (first >>> 0)).toString(16).padStart(14, '0');
 };
 
-export type PipelineStepId = 'world' | 'writer' | 'tagger' | 'fixer' | 'look';
+export type PipelineStepId = 'spark' | 'world' | 'writer' | 'tagger' | 'fixer' | 'look';
 
 /** One model call in the story's pipeline, with every block it reads. */
 export interface PipelineStep {
@@ -466,6 +493,13 @@ const blocksOf = (ids: readonly WriterInstructionId[]) => ids.map(id => WRITER_I
  * other"). Every block of the page belongs to exactly one step.
  */
 export const PIPELINE: readonly PipelineStep[] = [
+  {
+    id: 'spark', name: 'Story Spark', runs: 'When you ask for a Spark',
+    job: 'Offers a short beginning for a Story Seed, shaped by the reader’s choices.',
+    reads: ['Genre or invent a genre, optional Story Tags, protagonist gender and age, the reader’s idea, Survival and recent premises'],
+    gives: ['A premise and title → used or saved as a Story Seed, with the chosen Story Tags first'],
+    groups: [{ label: 'What it reads', blocks: STORY_SPARK_INSTRUCTIONS }],
+  },
   {
     id: 'world', name: 'Blueprint', runs: 'Once, before Chapter 1',
     job: 'Builds the world the story opens with: every character, thing, ability, place and faction card in the Codex.',

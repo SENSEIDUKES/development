@@ -80,7 +80,10 @@ function Origin({ initial }: { initial: StorySeedInput }) {
   const [seed, setSeed] = useState(initial);
   current = seed;
   const sparks = <SparksButton purpose="fill-seed"
-    host={{ beginSpark: async spark => setSeed(fillOriginFromSpark(spark)) }} />;
+    host={{
+      requestSpark: async request => ({ premise: 'A disciple investigates an academy.', genre: request.genre ?? 'Invented', title: 'The Academy', style: 'chinese', survival: false, inventedGenre: false, tags: ['mystery', 'academy'] }),
+      beginSpark: async spark => setSeed(fillOriginFromSpark(spark)),
+    }} />;
   return <OriginSparksContext.Provider value={sparks}><OriginWorkspace seed={seed} updateSeed={setSeed} /></OriginSparksContext.Provider>;
 }
 
@@ -92,12 +95,16 @@ it('sits in Story Seed\'s Origin heading, and a chosen spark fills the open seed
   expect(heading.parentElement!.contains(trigger())).toBe(true);
   await click(trigger());
   await settle();
+  expect(Array.from(dialog()!.querySelectorAll('button')).find(button => /Use this spark/.test(button.textContent ?? ''))?.disabled).toBe(true);
+  await click(Array.from(dialog()!.querySelectorAll('button')).find(button => /Seek a spark/.test(button.textContent ?? '')));
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 1100)); });
   await click(Array.from(dialog()!.querySelectorAll('button')).find(button => /Use this spark/.test(button.textContent ?? '')));
   await settle();
   expect(dialog()).toBeNull();
   expect(current.story.required.premise).not.toBe('My own premise.');
   expect(current.story.required.premise.length).toBeGreaterThan(0);
   expect(current.story.required.genre).not.toBe('');
+  expect(current.story.required.storyTags.slice(0, 2)).toEqual(['mystery', 'academy']);
   // A writer's own seed stays theirs: it is not marked as started from a spark.
   expect(current.story.optional.startedFrom).toBe(initial.story.optional.startedFrom);
 });

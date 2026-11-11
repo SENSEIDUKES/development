@@ -112,7 +112,7 @@ export const parseStorySparkRequest = (value: unknown): StorySparkRequest => {
   if (protagonistAge !== undefined && protagonistAge !== 'young' && protagonistAge !== 'middle' && protagonistAge !== 'old') {
     throw new Error('Choose Young, Middle, Old, or Any for the protagonist age.');
   }
-  if (value.tags !== undefined && (!Array.isArray(value.tags) || value.tags.some(tag => typeof tag !== 'string' || !getTagMetadata(normalizeStoryTagIdentity(tag))))) {
+  if (value.tags !== undefined && (!Array.isArray(value.tags) || value.tags.some(tag => typeof tag !== 'string' || typeof getTagMetadata(normalizeStoryTagIdentity(tag))?.label !== 'string'))) {
     throw new Error('Choose Story Tags from the catalog.');
   }
   const tags = [...new Set((value.tags as string[] | undefined ?? []).map(tag => getTagMetadata(normalizeStoryTagIdentity(tag))!.label))];

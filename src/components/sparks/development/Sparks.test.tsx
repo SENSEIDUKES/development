@@ -116,6 +116,23 @@ it('requires a connected model for tags and lets the reader remove them', async 
   expect(dialog().textContent).toContain(EXAMPLE_SPARK.premise);
 });
 
+it('puts exact tag matches first and supports arrows through the swipe row', async () => {
+  await open();
+  await click(button(/^Tags/));
+  await pickTag('academy');
+  const chips = Array.from(dialog().querySelectorAll<HTMLButtonElement>('fieldset button[aria-pressed]'));
+  expect(chips[0].textContent).toContain('academy');
+  const row = chips[0].parentElement!;
+  row.scrollBy = vi.fn();
+  await click(button(/^Next tags$/));
+  expect(row.scrollBy).toHaveBeenCalledWith({ left: 220, behavior: 'smooth' });
+  chips[0].focus();
+  await act(async () => { chips[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
+  expect(document.activeElement).toBe(chips[1]);
+  await act(async () => { chips[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })); });
+  expect(document.activeElement).toBe(chips[0]);
+});
+
 it('keeps a real spark and its actions usable after a failed request', async () => {
   let fail = false;
   const requestSpark = async (request: StorySparkRequest) => { if (fail) throw new Error('Try again.'); return modelSpark(request); };

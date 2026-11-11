@@ -46,6 +46,8 @@ A person's nature shows in how they look: in their face, how they hold themselve
 
 Leave Marks blank when they have none.
 
+A condition is something lasting that a character carries into the story: a wound, an illness, a curse, a seal. Give one only where the story will feel it, and write its whole course now: how it shows at each stage, how fast it moves, and what would end it. It then runs by itself as the chapters pass, whatever else happens, until something ends it. A mood is not a condition. Most characters have none.
+
 Whoever the premise or an Arc 1 goal is about has a card of their own, person or beast, named or not: someone the hero has not met yet is still a character, written where they are when the story opens. One with no name yet goes by what the story will first call them. A species card describes a kind of creature and never stands in for one of them.
 
 The places cover the ground Arc 1 stands on: where the story opens, and wherever its Arc 1 goals will take it. When several places sit inside a larger one, the larger one has a card too.
@@ -88,7 +90,7 @@ export const SEN_EASTERN_FANTASY_ORIGIN_SKILL: HarnessSkillManifest = {
 
 export const SEN_WORLD_BUILDER_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-world-builder',
-  version: '1.4.0',
+  version: '1.5.0',
   name: 'SEN World Builder',
   description: 'Builds the world as Chapter 1 opens: the cards an artist could draw it from and a game could load it from.',
   slot: 'world',

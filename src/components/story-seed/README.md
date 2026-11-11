@@ -234,6 +234,7 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-11-11:** A character's Status field is now Conditions: each lasting condition on a line of its own, written with its course (`Name | first stage > next stage | a stage every N chapters | ends if this`), or as a name alone when it never changes by itself. It is a box of its own in the Seed and on the Blueprint's cast sheet, and the Blueprint fills it only where the story will feel it. A thing's Status is unchanged. The mock cast carries one of each kind.
 - **2026-11-11:** A place never points at nothing. When the Blueprint fills a place's Inside or Held by with a name no card has ("Unclaimed", a region with no card of its own), `fillBlankSeedSlots` leaves that slot blank. A sect's own grounds and a character who holds a place still name cards, and what the creator wrote is never touched. The Blueprint is also told to leave such a slot blank and to give a larger place its own card.
 - **2026-11-11:** A character card states its whole look. The Seed's main character and side characters gained Build, Face, Hair, Clothing, Marks and Bearing, from the Codex's one definition of a character card, so the Seed forms, the Blueprint's cast screen and the Codex all show them; every one is optional, and the Blueprint fills the blanks. The Look itself is a short portrait now. See the Harness Generation README.
 - **2026-11-06 (the world on its one World card):** From SENSEI's Story Form.

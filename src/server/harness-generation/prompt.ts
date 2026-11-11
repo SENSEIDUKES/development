@@ -103,7 +103,7 @@ export const HARNESS_WRITING_RULES = [
 
 /** How to read the story information and the chapter request that follow. */
 export const HARNESS_READING_GUIDE = [
-  'The packet arrives as ordered sections: Current Story Information, Destined Ending and Hard Pins, Active Arc Goal, Fate Pressure Rhythm Direction (only when the HARNESS chooses this chapter\'s path automatically), Previously On, The World at Chapter 0, Current Canonical State, Holdings, and Appeared. Each fact appears once, in its section. Hard Pins are the author\'s absolute story-wide intentions and hold for the entire story. The Destined Ending, the Hard Pins, the Fate Pressure, and the Arc Plan are author-owned: never rewrite, replace, weaken, or contradict them, and never return them as fields.',
+  'The packet arrives as ordered sections: Current Story Information, Destined Ending and Hard Pins, Active Arc Goal, Fate Pressure Rhythm Direction (only when the HARNESS chooses this chapter\'s path automatically), Previously On, The World at Chapter 0, Current Canonical State, Holdings, Conditions, and Appeared. Each fact appears once, in its section. Hard Pins are the author\'s absolute story-wide intentions and hold for the entire story. The Destined Ending, the Hard Pins, the Fate Pressure, and the Arc Plan are author-owned: never rewrite, replace, weaken, or contradict them, and never return them as fields.',
   'Current Story Information supplies the active Foundation: title, premise, opening setup, tone and author instructions, declared canon, story tags, foundational identities and world facts, and explicit corrections. Active Foundation edits take precedence over anything the story once planned.',
   'storyTags name the experience the author wants this novel to give its reader: its genres, its tone, and the tropes and elements they came for. Let them shape what happens and how it feels across the story. They are not established facts, not events, and not a checklist: no chapter has to show every tag, but the story as a whole must deliver them.',
   'The story travels toward the current Destined Ending, and its fateMode says what that promise means. regular: the Destined Ending is guaranteed as the story\'s standing direction. Every chapter keeps pursuing it and the story never fails its fate, but nothing forces the prose to reach it by a deadline: a missed Arc Goal only means the story is off track, so keep pursuing the ending from what actually happened. When the Active Arc Goal marks finalGoal, that goal is the story reaching the Destined Ending; write the ending into the prose when the story earns it. survival: the reader directs the protagonist and the Destined Ending is not guaranteed. Pursue it honestly through the reader\'s direction and the story\'s own logic; never rescue the protagonist, soften a consequence, or force success so a goal or the ending is reached. Failure, including the protagonist\'s death, is a legitimate outcome when the story earns it. In either mode, never plan or introduce a new destiny to replace the Destined Ending.',
@@ -193,6 +193,7 @@ export const presentStoryInformationPacketSections = (packet: StoryInformationPa
   ...(packet.worldAtChapterZero ? [{ section: 'worldAtChapterZero' as const, text: ['THE WORLD AT CHAPTER 0 (the world the story opens with, set down before any chapter was written)', presentWorldRecord(packet.worldAtChapterZero)].join('\n') }] : []),
   { section: 'canonicalState', text: ['CURRENT CANONICAL STATE (latest applicable state per resolved entity)', presentCanonicalState(packet.canonicalState)].join('\n') },
   ...(packet.holdings ? [{ section: 'holdings' as const, text: ['HOLDINGS (what each character has now, by exact name; the main character first)', presentHoldings(packet.holdings)].join('\n') }] : []),
+  ...(packet.conditions ? [{ section: 'conditions' as const, text: [CONDITIONS_HEADING, presentConditions(packet.conditions)].join('\n') }] : []),
   ...(packet.appearances ? [{ section: 'appearances' as const, text: ['APPEARED (every character, thing and place already on the page, by exact name, with its look, and each character\'s status, place and ties; the main character first)', presentAppearances(packet.appearances)].join('\n') }] : []),
 ];
 
@@ -221,6 +222,21 @@ export const presentWorldRecord = (world: WorldRecord) => {
     return lines.length ? [[`${kind.plural.toUpperCase()}:`, ...lines].join('\n')] : [];
   }).join('\n\n');
 };
+
+/** The Conditions section's heading: what it is, and that its course is not the writer's to move. */
+export const CONDITIONS_HEADING = 'CONDITIONS (what each character carries now; each runs its own course as the chapters pass. Write each at the stage given, and do not move it on or end it unless the chapter shows what ends it)';
+
+/** One condition per line: who carries it, how it shows now, then where its course stands and what would end it. */
+export const presentConditions = (conditions: NonNullable<StoryInformationPacket['conditions']>) => conditions.characters.flatMap(character =>
+  character.conditions.map(condition => {
+    const chapters = (count: number) => `${count} ${count === 1 ? 'chapter' : 'chapters'}`;
+    const notes = [
+      ...(condition.stage ? [`stage ${condition.stage} of ${condition.stages}${condition.movesIn ? '' : ', its last'}`] : []),
+      ...(condition.movesIn ? [`${condition.then === 'passes' ? 'passes' : 'reaches the next stage'} in ${chapters(condition.movesIn)}`] : []),
+      ...(condition.endsIf.length ? [`ends if ${condition.endsIf.join('; or ')}`] : []),
+    ];
+    return `- ${character.name}${character.mainCharacter ? ' (main character)' : ''}: ${condition.name}${condition.showing ? `, ${condition.showing}` : ''}${notes.length ? ` (${notes.join('; ')})` : ''}`;
+  })).join('\n');
 
 /** One character, thing or place per line: its name, what it is, a character's status and place, its look once written down, and a character's ties. */
 export const presentAppearances = (appearances: NonNullable<StoryInformationPacket['appearances']>) => appearances.entries.length

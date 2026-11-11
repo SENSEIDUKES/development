@@ -3,6 +3,7 @@ import { harnessArcContext, harnessStoryMode } from './arcState';
 import { projectCanonicalState } from './canonicalProjection';
 import { deriveHoldings, holdingsSection } from './holdings';
 import { appearancesSection, deriveAppearances } from './appearances';
+import { conditionsSection } from './conditions';
 import { deriveStatuses } from './statuses';
 import { derivePlaces } from './places';
 import { deriveTies } from './ties';
@@ -183,6 +184,9 @@ export const compileStoryInformationPacket = (
     mainCharacterName,
     worldAtChapterZero,
   }), mainCharacterName);
+  // What each character carries as this chapter is written: every condition at
+  // the stage its own course has reached, by the chapter count alone.
+  const conditions = conditionsSection(world, nextChapterNumber);
   // Beside it, who and what is already on the page, with each look, worked out
   // again from the committed chapters' appearances: the most recently seen
   // first, as many as its own counts allow.
@@ -198,6 +202,7 @@ export const compileStoryInformationPacket = (
     measure('worldAtChapterZero', worldAtChapterZero),
     measure('canonicalState', canonical.projection),
     measure('holdings', holdings),
+    measure('conditions', conditions),
     measure('appearances', appearances),
   ];
 
@@ -218,6 +223,7 @@ export const compileStoryInformationPacket = (
     ...(worldAtChapterZero ? { worldAtChapterZero } : {}),
     canonicalState: canonical.projection,
     holdings,
+    ...(conditions ? { conditions } : {}),
     appearances,
     diagnostics: {
       budgetSource: GENERATION_PACKET_BUDGET.source,

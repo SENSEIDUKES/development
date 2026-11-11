@@ -74,6 +74,9 @@ it('promotes a minor figure and opens its new card to be filled in', async () =>
   expect(cardKey).toBe('world:character:gate-guard');
   expect(slots.appearance).toBe('A stooped man in a dented helm.');
   expect(slots.role).toBe('');
+  // Conditions are written one a line, so their field keeps lines; every other slot is a single line.
+  expect(form.querySelector('[data-slot="status"]')!.tagName).toBe('TEXTAREA');
+  expect(form.querySelector('[data-slot="role"]')!.tagName).toBe('INPUT');
   act(() => view.root.unmount());
 });
 

@@ -1,5 +1,5 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Archive, ArrowUpCircle, Backpack, ChevronLeft, Eye, Flag, Footprints, Hand, LoaderCircle, Lock, MapPin, Package, PawPrint, PenLine, Scale, ScrollText, Sparkles, Sword, TriangleAlert, Users, WandSparkles } from 'lucide-react';
+import { Activity, Archive, ArrowUpCircle, Backpack, ChevronLeft, Eye, Flag, Footprints, Hand, LoaderCircle, Lock, MapPin, Package, PawPrint, PenLine, Scale, ScrollText, Sparkles, Sword, TriangleAlert, Users, WandSparkles } from 'lucide-react';
 import './story-codex.css';
 import { CodexCardButton, CodexProfileHeader, type CodexCardCategory } from './codexCardParts';
 import { CODEX_VERB_LABELS } from '../shared/storyKnowledge';
@@ -7,6 +7,8 @@ import { CHARACTER_LOOK_TRAITS, PLACE_LOOK_TRAITS, THING_LOOK_TRAITS, type LookT
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
 import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexMinor, CodexPassage, CodexPictureCard, CodexPictures, CodexPlace, CodexPromotedCard, CodexWorldCard, CodexWorldFact, StoryCodexRecord } from '../shared/storyCodex';
 import { PROMOTED_CARD_SLOT_CHARACTERS, promotedCardSlots } from '../shared/promotion';
+import { CONDITIONS_AUTHOR_HINT, CONDITIONS_TEXT_CHARACTERS } from '../../../narrative/conditions';
+import { CONDITIONS_SLOT } from '../../../narrative/worldRecord';
 import './reader-colors.css';
 
 /** How each change reads in the Codex. */
@@ -265,9 +267,14 @@ function PromotedCard({ name, promoted, facts, onFill }: {
       <p className="text-xs text-(--reader-text-dim)">Fill in what you know. Anything left blank stays blank.</p>
       {slots.map(slot => <label key={slot.id} className="block">
         <span className="text-[11px] uppercase tracking-[0.14em] text-(--reader-text-faint)">{slot.label}</span>
-        <input type="text" value={draft[slot.id] ?? ''} maxLength={PROMOTED_CARD_SLOT_CHARACTERS} placeholder={slot.asks} data-slot={slot.id}
-          onChange={event => setDraft(current => ({ ...current, [slot.id]: event.target.value }))}
-          className="mt-1 min-h-11 w-full min-w-0 rounded-lg border border-(--reader-light)/15 bg-(--reader-shade)/40 px-3 text-sm text-(--reader-text) placeholder:text-(--reader-text-faint) focus:border-(--reader-light)/40 focus:outline-none" />
+        {/* A character's conditions are written one a line, so they take a box that keeps lines. */}
+        {promoted.kind === 'character' && slot.id === CONDITIONS_SLOT
+          ? <textarea rows={3} value={draft[slot.id] ?? ''} maxLength={CONDITIONS_TEXT_CHARACTERS} placeholder={CONDITIONS_AUTHOR_HINT} data-slot={slot.id}
+              onChange={event => setDraft(current => ({ ...current, [slot.id]: event.target.value }))}
+              className="mt-1 w-full min-w-0 resize-y rounded-lg border border-(--reader-light)/15 bg-(--reader-shade)/40 px-3 py-2 text-sm text-(--reader-text) placeholder:text-(--reader-text-faint) focus:border-(--reader-light)/40 focus:outline-none" />
+          : <input type="text" value={draft[slot.id] ?? ''} maxLength={PROMOTED_CARD_SLOT_CHARACTERS} placeholder={slot.asks} data-slot={slot.id}
+              onChange={event => setDraft(current => ({ ...current, [slot.id]: event.target.value }))}
+              className="mt-1 min-h-11 w-full min-w-0 rounded-lg border border-(--reader-light)/15 bg-(--reader-shade)/40 px-3 text-sm text-(--reader-text) placeholder:text-(--reader-text-faint) focus:border-(--reader-light)/40 focus:outline-none" />}
       </label>)}
       {problem && <p role="alert" className="text-xs text-(--reader-warning-soft)">{problem}</p>}
       <div className="flex gap-2">
@@ -393,6 +400,12 @@ function CharacterProfile({ character, art, onBack, onReadPassage, onFillCard }:
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>
+    {character.conditions && character.conditions.length > 0 && <Section title="Conditions" icon={<Activity size={12} aria-hidden />} label={`${character.name}: Conditions`} testId="codex-conditions">
+      <ul className="grid gap-2">{character.conditions.map(condition => <li key={condition.name} className="min-w-0 rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] px-4 py-3">
+        <p className="break-words text-sm font-medium text-(--reader-text)">{condition.name}</p>
+        {condition.showing && <p className="mt-0.5 break-words text-sm text-(--reader-text-soft)">{condition.showing}</p>}
+      </li>)}</ul>
+    </Section>}
     {character.promoted
       ? <PromotedCard name={character.name} promoted={character.promoted} facts={character.atChapterZero ?? []} onFill={onFillCard} />
       : character.atChapterZero && <WorldAtTheStart name={character.name} facts={character.atChapterZero} />}

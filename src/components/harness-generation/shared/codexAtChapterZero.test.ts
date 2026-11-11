@@ -112,8 +112,9 @@ describe('A world open to its reader', () => {
       ['Who they are', 'A quarry laborer the sect wrote off.'],
       ['Where they are', 'Rift Quarry'],
       ['Holds', 'Jade Token'],
-      ['Status', 'Meridians destroyed'],
     ]);
+    // What they carry is read as their conditions, each as it stands now, never as the line the card wrote.
+    expect(codex.characters[0].conditions).toEqual([{ name: 'Meridians destroyed' }]);
     expect(codex.places[0].atChapterZero.map(fact => fact.slot.label)).toEqual(['Look', 'Condition']);
   });
 });

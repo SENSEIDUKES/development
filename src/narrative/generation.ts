@@ -838,9 +838,15 @@ export type PacketSectionId =
   | 'worldAtChapterZero'
   | 'canonicalState'
   | 'holdings'
+  | 'conditions'
   | 'appearances'
   | 'missionReminder'
   | 'immediateChapterRequest';
+
+/** What each character carries as a chapter is written: the main character first, each condition as it stands. */
+export interface ConditionsSection {
+  characters: Array<{ name: string; mainCharacter?: true; conditions: import('./conditions').ConditionNow[] }>;
+}
 
 export interface PacketSectionMeasurement {
   section: PacketSectionId;
@@ -922,6 +928,13 @@ export interface StoryInformationPacket {
    * from packets frozen before holdings existed.
    */
   holdings?: HoldingsSection;
+  /**
+   * Section 9, beside Holdings: what each character carries as this chapter
+   * is written, each condition at the stage its own course has reached. Worked
+   * out by code from the world's cards and the chapter count; never a model.
+   * Absent when no one carries anything.
+   */
+  conditions?: ConditionsSection;
   /**
    * Section 9, beside Holdings: every character and thing already on the
    * page, with its look, worked out from the committed chapters' appearances.

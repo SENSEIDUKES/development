@@ -1,6 +1,7 @@
 import type { HarnessWorkspaceState, StoryWorldCard } from '../../../narrative/generation';
 import { SPEAKER_KIND } from '../../../narrative/speech';
-import { worldCardFactSlots, worldCardKey, type WorldCardKindId, type WorldCardSlot } from '../../../narrative/worldRecord';
+import { conditionsText } from '../../../narrative/conditions';
+import { CONDITIONS_SLOT, worldCardFactSlots, worldCardKey, type WorldCardKindId, type WorldCardSlot } from '../../../narrative/worldRecord';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { findStory, storyWorldRecord } from './foundation';
 import { isMinorEntry } from './holdings';
@@ -94,7 +95,7 @@ export function promoteMinorFigure(state: HarnessWorkspaceState, storyId: string
 /**
  * The workspace with a promoted card's slots filled: only the slots a promoted
  * card of its kind has (`promotedCardSlots`), each on one line and within its
- * limit; an empty one is cleared. A card the world opened with is the author's
+ * limit (a character's conditions on a line each); an empty one is cleared. A card the world opened with is the author's
  * and is not changed here.
  */
 export function fillPromotedCard(state: HarnessWorkspaceState, storyId: string, cardKey: string, slots: Readonly<Record<string, string>>): { state: HarnessWorkspaceState; card: StoryWorldCard } {
@@ -104,7 +105,11 @@ export function fillPromotedCard(state: HarnessWorkspaceState, storyId: string, 
   const card = next.worldCards.find(entry => entry.storyId === storyId && entry.key === cardKey)!;
   for (const slot of promotedCardSlots(card.kind)) {
     if (!(slot.id in slots)) continue;
-    const value = String(slots[slot.id] ?? '').replace(/\s+/g, ' ').trim().slice(0, PROMOTED_CARD_SLOT_CHARACTERS);
+    const written = String(slots[slot.id] ?? '');
+    // A character's conditions stay one a line: the line breaks are what make them several.
+    const value = card.kind === 'character' && slot.id === CONDITIONS_SLOT
+      ? conditionsText(written)
+      : written.replace(/\s+/g, ' ').trim().slice(0, PROMOTED_CARD_SLOT_CHARACTERS);
     if (value) card.slots[slot.id] = value;
     else delete card.slots[slot.id];
   }

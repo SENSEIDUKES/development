@@ -57,6 +57,13 @@ export interface WorldCardKind {
  * and its numbers are the owner's to decide (the World at Chapter 0 plan,
  * phase C). No agent invents them.
  */
+/**
+ * The character card slot that holds their conditions: each lasting one on a
+ * line of its own, with its course (`narrative/conditions`). It keeps the id
+ * it had as a one-word status, so a saved card needs no change.
+ */
+export const CONDITIONS_SLOT = 'status';
+
 export const WORLD_CARD_KINDS: readonly WorldCardKind[] = [
   {
     id: 'character',
@@ -87,7 +94,7 @@ export const WORLD_CARD_KINDS: readonly WorldCardKind[] = [
       { id: 'rankLevel', label: 'Rank', test: 'both', changes: true, asks: "their rank on the world's ladder" },
       { id: 'holds', label: 'Holds', test: 'both', changes: true, asks: 'the things they already have, by name' },
       { id: 'knows', label: 'Knows', test: 'both', changes: true, asks: 'the abilities they already know, by name' },
-      { id: 'status', label: 'Status', test: 'both', changes: true, asks: 'what condition they are in: well, wounded, sealed, captive' },
+      { id: 'status', label: 'Conditions', test: 'both', changes: true, asks: 'each lasting condition they are in when the story opens, one per line, written as the Conditions rule says; blank when they are well' },
       { id: 'goals', label: 'Goals and debts', test: 'save-game', changes: true, asks: 'what they want, hold to, or owe' },
       { id: 'connectionToMC', label: 'Tie to the main character', test: 'save-game', changes: true, asks: 'how they stand with the main character' },
       { id: 'ties', label: 'Ties', test: 'save-game', changes: true, asks: 'who else they are allied, related, hostile or bound to' },
@@ -270,9 +277,15 @@ export const worldCardsOfKind = (
 export const worldRulesCard = (world: WorldRecord | undefined): WorldCard | undefined =>
   worldCardsOfKind(world, 'world-rules')[0];
 
-/** A card's filled facts, in the order its kind reads, with the label each shows under. */
+/**
+ * A card's filled facts, in the order its kind reads, with the label each
+ * shows under. A character's conditions are not among them: they are read as
+ * conditions (`worldCardConditions`), each at the stage it has reached, never
+ * as the line the card wrote them in.
+ */
 export const worldCardFacts = (card: WorldCard): Array<{ slot: WorldCardSlot; value: string }> =>
   worldCardFactSlots(card.kind).flatMap(slot => {
+    if (card.kind === 'character' && slot.id === CONDITIONS_SLOT) return [];
     const value = card.slots[slot.id]?.trim();
     return value ? [{ slot, value }] : [];
   });

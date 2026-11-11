@@ -162,6 +162,7 @@ export {
   type CodexFaction,
   type CodexItem,
   type CodexItemEvent,
+  type CodexCondition,
   type CodexMinor,
   type CodexPassage,
   type CodexPromotedCard,
@@ -304,6 +305,7 @@ export {
 } from '../../components/harness-generation/development/FatePanel';
 export { findStory, findFoundationRevision, findActiveFoundationRevision, storyWorldRecord } from '../../components/harness-generation/shared/foundation';
 export { createHarnessStory } from '../../components/harness-generation/shared/foundation';
+export { conditionsSection, deriveConditions, type CharacterConditions } from '../../components/harness-generation/shared/conditions';
 export { PROMOTED_CARD_SLOT_CHARACTERS, fillPromotedCard, promoteMinorFigure, promotedCardSlots } from '../../components/harness-generation/shared/promotion';
 export * from '../../components/harness-generation/shared/chapterSignals';
 export * from '../../components/harness-generation/shared/chapterBody';

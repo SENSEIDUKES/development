@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CHAPTER_MODELS, IMAGE_MODELS, VIDEO_MODELS, createModelRouter, resolveChapterModelRoute } from './server';
+import { CHAPTER_MODELS, IMAGE_MODELS, VIDEO_MODELS, TTS_MODELS, createModelRouter, resolveChapterModelRoute } from './server';
 import { modelRouterStatus } from '../../server/model-router/status';
 import { createHarnessTextProvider } from '../../server/harness-generation/provider';
 import { resolveHarnessGenerationConfig } from '../../server/harness-generation/config';
@@ -16,17 +16,60 @@ const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwM
 describe('MiniMax direct provider', () => {
   it('offers all documented models and resolves the existing Vercel alias without exposing the key', () => {
     expect(CHAPTER_MODELS.filter(m => m.provider === 'minimax')).toHaveLength(9);
-    expect(IMAGE_MODELS.filter(m => m.provider === 'minimax')).toHaveLength(2);
-    expect(VIDEO_MODELS.filter(m => m.provider === 'minimax')).toHaveLength(11);
+    expect(IMAGE_MODELS.filter(m => m.provider === 'minimax')).toHaveLength(4);
+    expect(VIDEO_MODELS.filter(m => m.provider === 'minimax')).toHaveLength(13);
+    expect(TTS_MODELS.filter(m => m.provider === 'minimax')).toHaveLength(8);
     expect(resolveChapterModelRoute({}, 'MODELS', 'DEFAULT').models.some(m => m.id.startsWith('minimax/'))).toBe(false);
     const status = modelRouterStatus({ Minimax: 'secret' });
     expect(JSON.stringify(status)).not.toContain('secret');
-    for (const capability of ['chapters', 'images', 'video']) {
+    for (const capability of ['chapters', 'images', 'video', 'tts']) {
       const models = status.capabilities.find(c => c.id === capability)!.models.filter(m => m.provider === 'minimax');
       expect(models.every(m => m.available && m.implemented)).toBe(true);
     }
     expect(status.capabilities.find(c => c.id === 'video')!.models.filter(m => m.provider === 'gemini').every(m => !m.implemented)).toBe(true);
     expect(resolveHarnessGenerationConfig({ Minimax: 'secret' }).keys.minimax).toBe('secret');
+  });
+
+  it.each(IMAGE_MODELS.filter(m => m.id.includes('H3-Image')))('routes $id through H3 generation and edits', async model => {
+    const fetchMock = vi.fn(async () => json({ data: [{ b64_json: png }] }));
+    const router = createModelRouter({ credentials: { minimax: 'secret' }, fetch: fetchMock });
+    expect(await router.generate({ ...image, model: model.id, prompt: 'x'.repeat(1600) })).toMatchObject({ data: png, mimeType: 'image/png' });
+    await router.generate({ ...image, model: model.id, referenceImages: [{ data: png, mimeType: 'image/webp' }] });
+    expect(fetchMock.mock.calls.map(call => (call as unknown as [string])[0])).toEqual(['https://api.minimax.io/v1/images/generations', 'https://api.minimax.io/v1/images/edits']);
+    const body = JSON.parse(String((fetchMock.mock.calls[1] as unknown as [string, RequestInit])[1].body));
+    expect(body).toMatchObject({ model: model.id.slice(8), area: '1K', response_format: 'b64_json', output_format: 'png', aspect_ratio: '2:3', images: [{ image_url: `data:image/webp;base64,${png}` }] });
+    for (const invalid of [{ prompt: 'x'.repeat(32001) }, { aspectRatio: '4:1' }, { referenceImages: Array.from({ length: 17 }, () => ({ data: png, mimeType: 'image/png' })) }]) {
+      await expect(router.generate({ ...image, model: model.id, ...invalid })).rejects.toMatchObject({ code: 'invalid-model' });
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(TTS_MODELS.filter(m => m.provider === 'minimax'))('synthesizes $id using the MiniMax voice and hex response', async model => {
+    const fetchMock = vi.fn(async () => json({ data: { audio: '494433010203', status: 2 }, base_resp: { status_code: 0 } }));
+    const result = await createModelRouter({ credentials: { minimax: 'secret' }, fetch: fetchMock }).generate({ capability: 'tts', model: model.id, text: 'Hello.', voiceId: 'English_expressive_narrator', timeoutMs: 1000 });
+    expect(result).toMatchObject({ capability: 'tts', provider: 'minimax', bytes: new Uint8Array([73, 68, 51, 1, 2, 3]), mimeType: 'audio/mpeg' });
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('https://api.minimax.io/v1/t2a_v2');
+    expect(JSON.parse(String(init.body))).toMatchObject({ model: model.id.slice(8), output_format: 'hex', stream: false, voice_setting: { voice_id: 'English_expressive_narrator' }, audio_setting: { format: 'mp3' } });
+  });
+
+  it('rejects malformed or incomplete speech and requires MiniMax credentials', async () => {
+    const request = { capability: 'tts' as const, model: 'minimax/speech-2.8-hd', text: 'Hello.', voiceId: 'English_expressive_narrator', timeoutMs: 1000 };
+    for (const data of [{ audio: 'xyz', status: 2 }, { audio: '494433', status: 1 }, { audio: '', status: 2 }]) {
+      await expect(createModelRouter({ credentials: { minimax: 'key' }, fetch: async () => json({ data }) }).generate(request)).rejects.toMatchObject({ code: 'provider-error' });
+    }
+    const fetchMock = vi.fn();
+    await expect(createModelRouter({ credentials: { elevenlabs: 'other' }, fetch: fetchMock }).generate(request)).rejects.toMatchObject({ code: 'missing-credential' });
+    await expect(createModelRouter({ credentials: { minimax: 'key' }, fetch: fetchMock }).generate({ ...request, text: 'x'.repeat(10000) })).rejects.toMatchObject({ code: 'invalid-model' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['MiniMax-H3-Highspeed', 'MiniMax-H3-Lite'])('applies %s video limits on the V2 task API', async model => {
+    const fetchMock = vi.fn(async () => json({ task_id: '123' }));
+    const router = createModelRouter({ credentials: { minimax: 'key' }, fetch: fetchMock });
+    await router.generate({ ...video, model: `minimax/${model}`, durationSeconds: 4, resolution: '480P' });
+    await expect(router.generate({ ...video, model: `minimax/${model}`, resolution: '2K' })).rejects.toMatchObject({ code: 'invalid-model' });
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 
   it.each(CHAPTER_MODELS.filter(m => m.provider === 'minimax'))('routes $id directly, with schemas in the instructions and reasoning separate', async model => {

@@ -87,6 +87,8 @@ export const MODEL_ENERGY_GRADES: Readonly<Record<string, EnergyGrade>> = {
   // Images.
   'google/gemini-3.1-flash-lite-image': 'mortal',
   'minimax/image-01': 'mortal',
+  'minimax/MiniMax-H3-Image': 'immortal',
+  'minimax/MiniMax-H3-Image-Highspeed': 'mortal',
   'minimax/image-01-live': 'mortal',
   'google/gemini-3.1-flash-image': 'immortal',
   'google/gemini-3-pro-image': 'heaven',

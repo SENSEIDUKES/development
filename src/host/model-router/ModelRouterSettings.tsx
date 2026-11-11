@@ -45,7 +45,7 @@ const CAPABILITY_LABELS = {
 
 /** Why a capability's model is not chosen here. */
 const SERVER_OWNED_NOTE: Partial<Record<ModelRouterCapabilityStatus['id'], string>> = {
-  tts: 'Reads written lines aloud. The voice model is set on the server (ELEVENLABS_MODEL_ID); Codex voice requests never accept a model from the browser.',
+  tts: 'Reads written lines aloud. Codex quotes use their curated ElevenLabs voices and server model (ELEVENLABS_MODEL_ID). MiniMax speech is available to server integrations using MiniMax voice IDs.',
   audio: 'Gemini Lyria models are listed for reference; audio generation is not connected to a Workshop feature yet.',
   video: 'MiniMax video models have a server adapter; Veo is catalog only. No Workshop feature generates video yet. MiniMax model access depends on your subscription tier.',
   '3d': 'Tripo models are listed for reference; 3D generation is not connected to a Workshop feature yet.',

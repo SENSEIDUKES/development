@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
-import { getStoryTagNiches } from '../shared/storyTagNiches';
-import { STORY_TAG_COLOR_ACCENTS, type StoryTagCategoryColor, type StoryTagMetadata } from '../shared/storyTagCatalog';
+import { getStoryTagNiches } from './storyTagNiches';
+import { STORY_TAG_COLOR_ACCENTS, type StoryTagCategoryColor, type StoryTagMetadata } from './storyTagCatalog';
 
 const TAG_COLOR_ACCENTS = STORY_TAG_COLOR_ACCENTS;
 

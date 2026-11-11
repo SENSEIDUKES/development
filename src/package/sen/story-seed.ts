@@ -11,6 +11,7 @@ export * from '../../components/story-seed/shared/types';
 export { generateUUID, generateId } from '../../narrative/id';
 export * from '../../components/story-seed/shared/storyTagCatalog';
 export * from '../../components/story-seed/shared/storyTagNiches';
+export { CatalogTagChip, CategoryColorDot, matchesTagSearch } from '../../components/story-seed/shared/StoryTagPickerParts';
 export * from '../../components/story-seed/shared/storySpark';
 export { StoryFoundationEditor } from '../../narrative/StoryFoundationEditor';
 

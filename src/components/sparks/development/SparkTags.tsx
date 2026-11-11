@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { CatalogTagChip, matchesTagSearch } from '../../story-seed/development/StoryTagPickerParts';
+import { CatalogTagChip, matchesTagSearch } from '../../story-seed/shared/StoryTagPickerParts';
 import { STORY_TAG_CATALOG, normalizeStoryTagIdentity } from '../../story-seed/shared/storyTagCatalog';
 import { recommendStoryTags } from '../../story-seed/shared/storyTagInference';
 import { NarrativeTextBox } from '@seihouse/sen/presentation';

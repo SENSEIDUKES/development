@@ -1,4 +1,4 @@
-import { CatalogTagChip, CategoryColorDot, matchesTagSearch } from '../../StoryTagPickerParts';
+import { CatalogTagChip, CategoryColorDot, matchesTagSearch } from '@seihouse/sen/story-seed';
 import {
   memo,
   useCallback,

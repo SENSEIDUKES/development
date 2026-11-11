@@ -42,8 +42,8 @@ const hostFor = (state: SparkState, purpose: SparkPurpose, report: (message: str
     if (state === 'model-fails') throw new Error('The Dao was silent. Seek again.');
     if (exhausted) throw new Error('The Dao has spoken its twenty sparks for today. Seek again tomorrow, or plant one you already have.');
     const genre = request.inventGenre ? 'Fungal Kingdom Cultivation' : request.genre;
-    const mushroom = request.protagonistGender === 'male' ? 'a mushroom spirit boy' : request.protagonistGender === 'female' ? 'a mushroom spirit girl' : 'a small mushroom';
     const age = request.protagonistAge === 'middle' ? 'middle-aged' : request.protagonistAge === 'old' ? 'elderly' : 'young';
+    const mushroom = request.protagonistGender === 'male' ? `a ${age} male mushroom spirit` : request.protagonistGender === 'female' ? `a ${age} female mushroom spirit` : `a ${age} mushroom spirit`;
     const gardener = request.protagonistGender === 'male' ? `a ${age} man` : request.protagonistGender === 'female' ? `a ${age} woman` : `a ${age} gardener`;
     return {
       genre,

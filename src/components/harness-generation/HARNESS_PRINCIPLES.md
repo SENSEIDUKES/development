@@ -108,7 +108,7 @@ state, read [NOVEL_EXPANDED.md](../../../NOVEL_EXPANDED.md#where-we-are-2026-10-
 | **Appearance** | What each entity looks like, and when that changes (a scar, new robes, a breakthrough) | Characters and things **have** (appears and look tags keep the writer's own description; a full look is written on demand). Places wait for the Place tag |
 | **State over time** | What everything is like at any chapter: holdings and rank; status (alive, wounded, transformed); where each character is | Holdings and rank **have**. Status and location missing |
 | **Ties** | Who is allied, hostile, related or bound to whom | **Missing** |
-| **Scenes** | Where a scene starts, where it is, when (time of day, conditions), and who is present | **Missing**. Each chapter has one musical scene today, not story scenes |
+| **Scenes** | Where a scene starts, where it is, when (time of day, conditions), and who is present | Where, who and mood come from Place, Appears, Speakers, Status and Atmosphere. **When** is the Setting tag (2026-11-10), kept on its chapter, never on a card |
 | **Moments** | The beats inside a scene that matter most, with their intensity | **Roughly have**: Sound Cues carry Energy |
 | **Voice** | Who says each line | **Have** (speaker tags) |
 | **Mood** | How it feels | **Have** (the chapter's soundtrack and atmosphere) |

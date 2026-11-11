@@ -55,6 +55,7 @@ describe('a chapter\'s tagging record, in words', () => {
       Status: ['not-asked', 'Tagged before Status existed: tag it again to read it.'],
       Place: ['not-asked', 'Tagged before Place existed: tag it again to read it.'],
       Ties: ['not-asked', 'Tagged before Ties existed: tag it again to read it.'],
+      Setting: ['not-asked', 'Tagged before Setting existed: tag it again to read it.'],
     });
   });
 
@@ -81,6 +82,7 @@ describe('a chapter\'s tagging record, in words', () => {
       statuses: [{ payload: { origin: 'harness', subject: { name: 'Elder Qin' }, status: 'dead' } }] as never,
       places: [{ payload: { origin: 'harness', subject: { name: 'MC', entryId: 'e-mc' }, place: { name: 'Summit Hall' } } }] as never,
       ties: [{ payload: { origin: 'harness', subject: { name: 'MC', entryId: 'e-mc' }, other: { name: 'Elder Qin' }, tie: 'master and disciple' } }] as never,
+      settings: [{ payload: { origin: 'harness', time: 'night', conditions: 'snow', words: 'a red moon' } }] as never,
     }), { entries, locale: 'en-US' });
     expect(account.notes).toBe('6 notes written · 5 placed · 1 dropped');
     expect(kinds(account)).toEqual({
@@ -92,6 +94,7 @@ describe('a chapter\'s tagging record, in words', () => {
       Status: ['found', '1 status: Elder Qin dead'],
       Place: ['found', '1 place tag: Ye Chen at Summit Hall'],
       Ties: ['found', '1 tie: Ye Chen and Elder Qin master and disciple'],
+      Setting: ['found', '1 setting: night · snow · a red moon'],
     });
     expect(account.problems).toEqual([
       'Dropped 1 of the tagger\'s 6 notes: [[@MC]] on paragraph 9: the paragraph has no such words.',

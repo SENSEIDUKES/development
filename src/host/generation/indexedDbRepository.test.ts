@@ -49,11 +49,12 @@ describe('planHarnessWorkspaceLoad', () => {
     // 44 adds only each chapter's places, an optional field.
     // 45 adds only a tagging record's media-only read, an optional field.
     // 46 adds only each chapter's ties, an optional field.
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(46);
-    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]) {
+    // 47 adds only each chapter's settings, an optional field.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(47);
+    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46]) {
       const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }], attempts: [{ id: 'a1', capaPrompt: { soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }] } }], chapters: [{ id: 'c1', soundCues: [{ id: 'sc1' }] }] };
       const plan = planHarnessWorkspaceLoad(stored, now);
-      expect(plan.state).toEqual({ ...stored, schemaVersion: 46, revision: 0, worldCards: [] });
+      expect(plan.state).toEqual({ ...stored, schemaVersion: 47, revision: 0, worldCards: [] });
       expect(plan.preserve).toEqual({
         key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:2026-09-24T12:00:00.000Z`,
         record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },
@@ -79,7 +80,7 @@ describe('planHarnessWorkspaceLoad', () => {
     const upgraded = { cards: [{ ...world.cards[0], key: 'world:character:ye-chen', enteredInChapter: 0 }] };
     expect(plan.state).toEqual({
       ...stored,
-      schemaVersion: 46,
+      schemaVersion: 47,
       revision: 0,
       foundations: [{ id: 'f1', input: { premise: 'A quarry laborer rises.', worldAtChapterZero: upgraded } }],
       attempts: [{ id: 'a1', storyInformation: { worldAtChapterZero: upgraded } }],

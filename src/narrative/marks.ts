@@ -142,10 +142,19 @@ export const TIE_TAG_WORDS = {
 } as const satisfies Record<string, readonly string[]>;
 
 /**
+ * The Setting tag word: when it is and what it is like, on the sentence that
+ * says so (`[[setting: night | snow]]`, `[[setting: three years later]]`). It
+ * names no one, and one part is enough.
+ */
+export const SETTING_TAG_WORDS = {
+  setting: ['setting', 'time', 'weather'],
+} as const satisfies Record<string, readonly string[]>;
+
+/**
  * The tag words of the tiny SEN language: every word-tag kind's words, each
  * with the other spellings a writer may slip into.
  */
-export const TAG_WORDS = { ...HOLDING_TAG_WORDS, ...APPEARANCE_TAG_WORDS, ...STATUS_TAG_WORDS, ...PLACE_TAG_WORDS, ...TIE_TAG_WORDS } as const;
+export const TAG_WORDS = { ...HOLDING_TAG_WORDS, ...APPEARANCE_TAG_WORDS, ...STATUS_TAG_WORDS, ...PLACE_TAG_WORDS, ...TIE_TAG_WORDS, ...SETTING_TAG_WORDS } as const;
 
 export type TagWord = keyof typeof TAG_WORDS;
 export type HoldingTagWord = keyof typeof HOLDING_TAG_WORDS;
@@ -153,12 +162,14 @@ export type AppearanceTagWord = keyof typeof APPEARANCE_TAG_WORDS;
 export type StatusTagWord = keyof typeof STATUS_TAG_WORDS;
 export type PlaceTagWord = keyof typeof PLACE_TAG_WORDS;
 export type TieTagWord = keyof typeof TIE_TAG_WORDS;
+export type SettingTagWord = keyof typeof SETTING_TAG_WORDS;
 
 export const isHoldingTagWord = (word: TagWord): word is HoldingTagWord => word in HOLDING_TAG_WORDS;
 export const isAppearanceTagWord = (word: TagWord): word is AppearanceTagWord => word in APPEARANCE_TAG_WORDS;
 export const isStatusTagWord = (word: TagWord): word is StatusTagWord => word in STATUS_TAG_WORDS;
 export const isPlaceTagWord = (word: TagWord): word is PlaceTagWord => word in PLACE_TAG_WORDS;
 export const isTieTagWord = (word: TagWord): word is TieTagWord => word in TIE_TAG_WORDS;
+export const isSettingTagWord = (word: TagWord): word is SettingTagWord => word in SETTING_TAG_WORDS;
 
 /** A word tag, and where it sat in the clean text: it points at what follows it. */
 export interface WordTag {
@@ -173,7 +184,7 @@ export interface WordTag {
 
 /** A word tag that could not be read. It was removed, so nothing of it leaks. */
 export type WordTagIssue =
-  /** A tag word with fewer than two parts. */
+  /** A tag word with fewer parts than its kind needs (two; one for a setting). */
   | { kind: 'incomplete'; word: TagWord }
   /** A tag word that never closed. */
   | { kind: 'unclosed'; word: TagWord }
@@ -567,7 +578,8 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
         const parts = written.filter(Boolean);
         const spelling = wordTag[1].trim().toLowerCase().replace(/[\s-]+/g, ' ');
         if (!word) wordTagIssues.push({ kind: 'unknown', word: wordTag[1].trim() });
-        else if (parts.length < 2) wordTagIssues.push({ kind: 'incomplete', word });
+        // A setting needs only one part ("three years later"); every other kind names someone, then what.
+        else if (parts.length < (isSettingTagWord(word) ? 1 : 2)) wordTagIssues.push({ kind: 'incomplete', word });
         // A tie's parts are read by position (who, with whom, how), so an empty one cannot simply close up.
         else if (isTieTagWord(word) && written.some(part => !part)) wordTagIssues.push({ kind: 'incomplete', word });
         else {
@@ -575,7 +587,8 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
           // The name a tag names: a holding's thing (its second part), an appearance's, a status's or a
           // place tag's subject (its first), never the main character's own tag, never a rank, and never
           // a tie's: it names two, and stands only in the margin, so no name is ever put back into the prose.
-          const named = isTieTagWord(word) || word === 'rank' ? undefined
+          // A setting names no one.
+          const named = isTieTagWord(word) || isSettingTagWord(word) || word === 'rank' ? undefined
             : isAppearanceTagWord(word) || isStatusTagWord(word) || isPlaceTagWord(word) ? (/^mc$/i.test(parts[0]) ? undefined : parts[0]) : parts[1];
           const name = namedInPlace(text, source.slice(index + wordTag[0].length), named);
           if (name) {

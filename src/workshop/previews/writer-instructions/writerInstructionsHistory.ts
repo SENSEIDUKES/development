@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-11-10',
+    summary: 'Setting, a new tag in place of the planned Scene tag (SENSEI, 2026-11-10: Scene was redundant with Place, Appears and Atmosphere, but nothing recorded when it is). The tagger is taught one more kind: where the prose says when it is or what it is like (the time of day, the weather, the season, time passing, a date in the story), it tags that sentence [[setting: ...]], picking the time of day (dawn, day, dusk, night), the conditions (clear, cloudy, rain, storm, snow, fog, wind) and the season from fixed lists, so a themed Codex view can draw them, with a few of the novel\'s own words beside them. Novels say this only sometimes, so the tag follows the prose and never asks for more; it never names the place (the place tag) or the mood (the atmosphere). The tagger\'s role line now names "when it is" among what a tag marks. A setting belongs to its chapter: nothing of it is listed beside a name, and the writer reads only where each recent chapter ended, as endedIn beside its recap in Previously On; the writing rules now say to carry it on unless the prose lets time pass or the weather turn. Nothing else changed.',
+    changed: { 'writing-rules': '0a1c382b91995e', tagger: '19e835797c4cc3', setting: '040871dc19db03' },
+  },
+  {
     date: '2026-11-08',
     summary: 'Ties, the fourth information tag (SENSEI, 2026-11-08: "Add ties"). The tagger is taught one more kind: where the prose shows a tie between two characters form or change (they swear brotherhood, become master and disciple, turn enemies, betray, marry, bond), it tags that sentence [[tie: Name | Other | how they stand now]], in a few plain words. The second name may be a thing bound to them, like a sword with a spirit. Built the way Status and Place are: a pair\'s latest tie is how they stand now, worked out from every chapter, never stored. The tagger now reads each character\'s ties so far beside their name ("ties: Ning Hao (sworn enemies)"), and the writer reads them in Appeared after each character\'s look; its heading now names ties beside status and place. Nothing else changed.',
     changed: { ties: '0ad6a55030ec8e' },

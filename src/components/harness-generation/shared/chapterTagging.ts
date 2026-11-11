@@ -2,6 +2,7 @@ import { soundVocabulary } from '../../../audio/media';
 import { soundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import type { CodexEntry } from '../../../narrative/holdings';
 import type { HarnessChapter, HarnessWarning } from '../../../narrative/generation';
+import { settingLine } from './settings';
 
 /**
  * A chapter's tagging record, in words for the page (SENSEI, 2026-10-29,
@@ -13,7 +14,7 @@ import type { HarnessChapter, HarnessWarning } from '../../../narrative/generati
  * those words, so a quiet chapter and a failed one never look alike.
  */
 
-export type ChapterTaggingKind = 'Soundscape and atmosphere' | 'Sound Cues' | 'Speakers' | 'Holdings' | 'Appearances' | 'Status' | 'Place' | 'Ties';
+export type ChapterTaggingKind = 'Soundscape and atmosphere' | 'Sound Cues' | 'Speakers' | 'Holdings' | 'Appearances' | 'Status' | 'Place' | 'Ties' | 'Setting';
 
 export interface ChapterTaggingKindLine {
   kind: ChapterTaggingKind;
@@ -50,6 +51,7 @@ const KIND_WARNINGS: Record<ChapterTaggingKind, ReadonlyArray<HarnessWarning['co
   Status: ['status_tags_incomplete'],
   Place: ['place_tags_incomplete'],
   Ties: ['tie_tags_incomplete'],
+  Setting: ['setting_tags_incomplete'],
 };
 
 const NOTHING_HERE = 'The tagger found nothing here.';
@@ -73,7 +75,7 @@ const when = (at: string, locale?: string) => {
 /**
  * What a chapter carries now, one line per kind, in words for the page: its
  * opening music and atmosphere, then its Sound Cues, speakers, holding
- * changes, appearances, statuses, place tags and ties, each counted and named. A kind with
+ * changes, appearances, statuses, place tags, ties and settings, each counted and named. A kind with
  * nothing on the page has no line. `entries` are the story's Codex entries,
  * so a tag written as `MC` reads by the main character's own name.
  */
@@ -87,10 +89,11 @@ export interface ChapterTagFindings {
   statuses?: string;
   places?: string;
   ties?: string;
+  settings?: string;
 }
 
 export function chapterTagFindings(
-  chapter: Pick<HarnessChapter, 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'ties' | 'scene'>,
+  chapter: Pick<HarnessChapter, 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'ties' | 'settings' | 'scene'>,
   { entries = [] }: { entries?: ReadonlyArray<Pick<CodexEntry, 'id' | 'name'>> } = {},
 ): ChapterTagFindings {
   const nameOf = (ref: { name: string; entryId?: string } | undefined) =>
@@ -118,6 +121,7 @@ export function chapterTagFindings(
   if (chapter.ties?.length) {
     findings.ties = `${count(chapter.ties.length, 'tie')}: ${few(chapter.ties.map(record => `${nameOf(record.payload.subject)} and ${nameOf(record.payload.other)} ${record.payload.tie}`))}`;
   }
+  if (chapter.settings?.length) findings.settings = `${count(chapter.settings.length, 'setting')}: ${few(chapter.settings.map(record => settingLine(record.payload)))}`;
   return findings;
 }
 
@@ -127,7 +131,7 @@ export function chapterTagFindings(
  * character's own name, as the Codex knows them.
  */
 export function describeChapterTagging(
-  chapter: Pick<HarnessChapter, 'tagging' | 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'ties' | 'scene'>,
+  chapter: Pick<HarnessChapter, 'tagging' | 'mediaLoadout' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statuses' | 'places' | 'ties' | 'settings' | 'scene'>,
   { entries = [], locale }: { entries?: ReadonlyArray<Pick<CodexEntry, 'id' | 'name'>>; locale?: string } = {},
 ): ChapterTaggingAccount {
   const record = chapter.tagging;
@@ -180,6 +184,10 @@ export function describeChapterTagging(
     chapter.ties
       ? line('Ties', found.ties)
       : { kind: 'Ties', said: 'Tagged before Ties existed: tag it again to read it.', state: 'not-asked' },
+    // Likewise for Setting.
+    chapter.settings
+      ? line('Setting', found.settings)
+      : { kind: 'Setting', said: 'Tagged before Setting existed: tag it again to read it.', state: 'not-asked' },
   ];
   // A media-only read since (Tag media again) is said after the full read it joined.
   const media = record.media ? ` · media read again${record.media.model ? ` by ${record.media.model}` : ''} · ${when(record.media.at, locale)}` : '';

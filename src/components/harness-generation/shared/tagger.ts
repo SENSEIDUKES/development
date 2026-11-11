@@ -210,6 +210,7 @@ export interface ChapterTags {
   statuses: ReturnType<typeof acceptChapterTags>['statuses'];
   places: ReturnType<typeof acceptChapterTags>['places'];
   ties: ReturnType<typeof acceptChapterTags>['ties'];
+  settings: ReturnType<typeof acceptChapterTags>['settings'];
   scene: ReturnType<typeof acceptChapterTags>['scene'];
 }
 
@@ -538,6 +539,7 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
           statuses: read.statuses,
           places: read.places,
           ties: read.ties,
+          settings: read.settings,
           scene: read.scene,
         },
       };

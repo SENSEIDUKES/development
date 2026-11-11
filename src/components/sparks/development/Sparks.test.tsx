@@ -342,6 +342,24 @@ it('without a model, Random shows the example and Custom keeps the writer\'s wor
   expect(keepSpark.mock.lastCall?.[0].premise).toBe(ownWords);
 });
 
+it('requires a model to invent a Custom genre and keeps the reader’s words for a chosen genre', async () => {
+  const keepSpark = vi.fn(async (_spark: StorySpark) => {});
+  await open({ keepSpark });
+  await click(button(/^Custom/));
+  const ownWords = '  A flower wakes.\nIt keeps growing.  ';
+  await type(dialog().querySelector('textarea')!, ownWords);
+  await choosePath(/Invent a genre/);
+  await click(button(/Shape my premise/));
+  expect(dialog().querySelector('[role="alert"]')?.textContent).toContain('Inventing a genre needs a connected model');
+  expect(dialog().querySelector('textarea')?.value).toBe(ownWords);
+  expect(button(/Keep in Story Bank/)?.hasAttribute('disabled')).toBe(true);
+  await choosePath(/Regression/);
+  await click(button(/Shape my premise/));
+  await settle(1100);
+  await click(button(/Keep in Story Bank/));
+  expect(keepSpark.mock.lastCall?.[0]).toMatchObject({ premise: ownWords, genre: 'Regression' });
+});
+
 it('a failed Random request keeps the example and says why', async () => {
   await open({ checkSparks: async () => true, requestSpark: async () => { throw new Error('The Dao has spoken its twenty sparks for today.'); } });
   await click(button(/Seek a spark/));

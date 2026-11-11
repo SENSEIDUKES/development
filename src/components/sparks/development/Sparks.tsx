@@ -137,6 +137,10 @@ export const Sparks: React.FC<{
       setMessage({ tone: 'error', text: 'Write the beginning of your idea first. A few words is enough.' });
       return;
     }
+    if (mode === 'custom' && conjuring && (!connected || !host?.requestSpark)) {
+      setMessage({ tone: 'error', text: 'Inventing a genre needs a connected model. Choose a genre to keep your beginning as written.' });
+      return;
+    }
     if ((protagonistGender !== 'any' || protagonistAge !== 'any' || tags.length > 0) && (!connected || !host?.requestSpark)) {
       setMessage({ tone: 'error', text: tags.length > 0 ? 'Choosing tags needs a connected model. Clear Tags to view the example.' : 'Choosing a protagonist needs a connected model. Choose Any to view the example.' });
       return;

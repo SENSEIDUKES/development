@@ -47,9 +47,9 @@ export interface CodexEntry {
   /**
    * The world card this entry is (`WorldCard.key`): set from the moment the
    * card is made, for the Blueprint's cards, and when a reader promotes a minor
-   * figure to a card. In a story with a world record, an entry a tag made that
-   * has no card is a minor figure (SENSEI, 2026-11-11): the story uses it
-   * without tracking it.
+   * figure to a card. In a story with a world record, an entry with no card
+   * is a minor figure (SENSEI, 2026-11-11): the story uses it without
+   * tracking it.
    */
   cardKey?: string;
   createdAt: string;

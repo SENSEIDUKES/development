@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { APPEARANCE_KIND, type AppearanceAttachment } from '../../../narrative/appearances';
+import { HOLDING_CHANGE_KIND, type HoldingChangeAttachment } from '../../../narrative/holdings';
+import { SPEAKER_KIND, type SpeakerAttachment } from '../../../narrative/speech';
 import type { CodexEntry } from '../../../narrative/holdings';
 import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState } from '../../../narrative/generation';
 import type { WorldCard, WorldRecord } from '../../../narrative/worldRecord';
-import { appearancesSection, deriveAppearances, worldCardLook } from './appearances';
+import { appearancesSection, cardLookStatement, deriveAppearances, worldCardLook } from './appearances';
 import { createHarnessStory, reviseStoryFoundation, storyWorldRecord } from './foundation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { HarnessGenerationController } from './controller';
 import { codexEntriesWithWorldCards, codexEntriesWithoutChapter, deriveHoldings, isMinorEntry } from './holdings';
 import { planCodexLook } from './lookDescriber';
-import { fillPromotedCard, promoteMinorFigure } from './promotion';
+import { fillPromotedCard, promoteMinorFigure, promotedCardSlots } from './promotion';
 import { createEmptyHarnessWorkspaceState, migrateHarnessWorkspaceState } from './repository';
 import { deriveStoryCodex, type StoryCodexChapter } from './storyCodex';
 
@@ -81,6 +83,17 @@ describe('Every world card is a Codex entry from the start', () => {
     expect(mei.aliases).toEqual(['Shen Mei']);
     expect(entries.find(entry => entry.id === 'old-main')).toMatchObject({ cardKey: 'world:character:lin-qingshan', mainCharacter: true, aliases: ['Lin Qingshan'] });
     expect(entries.filter(entry => entry.kind === 'character')).toHaveLength(2);
+  });
+
+  it('answers to a name the author gives a card later, so a tag that uses it still finds the card', () => {
+    const first = seeded();
+    const renamed = cards.map(card => (card.name === 'Frost Bone Pendant' ? { ...card, aliases: ['the Pendant of Frost'] } : card));
+    const again = seeded(first, renamed);
+    const pendant = again.find(entry => entry.name === 'Frost Bone Pendant')!;
+    expect(pendant).toMatchObject({ id: first.find(entry => entry.name === 'Frost Bone Pendant')!.id, aliases: ['the Pendant of Frost'] });
+    expect(again).toHaveLength(first.length);
+    // Shen Mei already answers to her alias: nothing is added twice.
+    expect(again.find(entry => entry.name === 'Shen Mei')?.aliases).toEqual(['Herbalist Shen']);
   });
 
   it('leaves other stories\' entries alone', () => {
@@ -185,12 +198,24 @@ describe('A card\'s look is its card\'s', () => {
     const request = planCodexLook({ subject, cardLook: { summary: subject.look!.summary, traits: subject.look!.traits } });
     expect(request.declared).toBe('A lean young man in patched brown hunting clothes with a bow on his back.; eyes: Dark brown; skin: Tanned');
     // Once that look is written and kept, it stands for the card and its changes.
-    const kept = entries.map(entry => (entry.id === main.id
-      ? { ...entry, look: { summary: 'A lean young man in patched hunting clothes, a frost scar across his hand.', traits: {}, from: changed.appearances.map(record => record.id), at } } : entry));
+    const written = { summary: 'A lean young man in patched hunting clothes, a frost scar across his hand.', traits: {}, from: changed.appearances.map(record => record.id), at };
+    const keeping = (look: typeof written & { cardLook?: string }) => entries.map(entry => (entry.id === main.id ? { ...entry, look } : entry));
+    const kept = keeping({ ...written, cardLook: cardLookStatement(worldCardLook(cards[0])!) });
     const after = deriveAppearances({ entries: kept, chapters: [changed], world }).subjects[0];
     expect(after.look).toMatchObject({ summary: 'A lean young man in patched hunting clothes, a frost scar across his hand.' });
     expect(after.look?.fromCard).toBeUndefined();
     expect(after.lookStale).toBeUndefined();
+
+    // The card's look is revised afterwards: the written look no longer stands for it, so the
+    // card's look is the look again and it is written anew from the card and the same changes.
+    const revised: WorldRecord = { cards: cards.map(card => (card.mainCharacter ? { ...card, slots: { ...card.slots, appearance: 'A broad young man in a grey wolf-fur cloak.' } } : card)) };
+    const edited = deriveAppearances({ entries: kept, chapters: [changed], world: revised }).subjects[0];
+    expect(edited.look).toMatchObject({ summary: 'A broad young man in a grey wolf-fur cloak.', fromCard: true });
+    expect(edited.lookStale).toBe(true);
+    // A look written before a card stated one is written again the same way.
+    const older = deriveAppearances({ entries: keeping(written), chapters: [changed], world }).subjects[0];
+    expect(older.look).toMatchObject({ summary: 'A lean young man in patched brown hunting clothes with a bow on his back.', fromCard: true });
+    expect(older.lookStale).toBe(true);
   });
 
   it('carries every look slot the card fills, as the trait it is, and none it leaves blank', () => {
@@ -241,6 +266,41 @@ describe('Minor figures', () => {
       { key: 'lantern', name: 'Lantern', kind: 'thing', introduced: { chapterNumber: 1, blockId: 'c1-p2', text: paragraphs[1] }, chapters: [1], promotable: true },
       { key: 'ridge', name: 'North Ridge', kind: 'place', introduced: { chapterNumber: 1, blockId: 'c1-p2', text: paragraphs[1] }, chapters: [1], promotable: true },
     ]);
+  });
+
+  it('include someone whose card the author took away after a chapter had named them, and they can be promoted again', () => {
+    const created = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A guide finds a fox cub.', worldAtChapterZero: world });
+    const storyId = created.story.id;
+    const shen = created.state.codexEntries.find(entry => entry.name === 'Shen Mei')!;
+    // The world is revised without her card; a chapter had tagged her, so her entry is kept.
+    const without = cards.filter(card => card.name !== 'Shen Mei');
+    const state: HarnessWorkspaceState = {
+      ...created.state,
+      stories: created.state.stories.map(story => ({ ...story, head: { nextChapterNumber: 2 } })),
+      worldCards: created.state.worldCards.filter(card => card.name !== 'Shen Mei'),
+      codexEntries: codexEntriesWithWorldCards({ storyId, entries: created.state.codexEntries, cards: without, usedEntryIds: new Set([shen.id]), createdAt: at, createId: () => 'unused' }),
+    };
+    const kept = state.codexEntries.find(entry => entry.id === shen.id)!;
+    expect(kept).toMatchObject({ origin: { source: 'world' } });
+    expect(kept.cardKey).toBeUndefined();
+    expect(isMinorEntry(kept, { cards: without })).toBe(true);
+    const shown: StoryCodexChapter = { id: 'chapter-1', chapterNumber: 1, paragraphs, appearances: [appears(1, 'Shen Mei', shen.id)] };
+    expect(deriveStoryCodex({ entries: state.codexEntries, chapters: [shown], world: { cards: without } }).minor)
+      .toEqual([{ key: shen.id, name: 'Shen Mei', kind: 'character', introduced: { chapterNumber: 1, blockId: 'c1-p2', text: paragraphs[1] }, chapters: [1], promotable: true }]);
+    expect(promoteMinorFigure(state, storyId, shen.id).card).toMatchObject({ key: 'world:character:shen-mei', enteredInChapter: 1, slots: {} });
+  });
+
+  it('reach an ability card when one of them is the only one to learn it', () => {
+    const art = seeded().find(entry => entry.kind === 'ability')!;
+    const learned: HoldingChangeAttachment = {
+      id: 'holding:c1-p2:0', kind: HOLDING_CHANGE_KIND,
+      anchor: { level: 'span', blockId: 'c1-p2', startOffset: 0, endOffset: paragraphs[1].length, selectedText: paragraphs[1] },
+      payload: { origin: 'harness', verb: 'learned', holder: { name: 'neighbor', entryId: 'neighbor' }, target: { name: 'Snowfall Tail Art', entryId: art.id } },
+    };
+    const reached = (holdingChanges: HoldingChangeAttachment[]) =>
+      deriveStoryCodex({ entries, chapters: [{ ...chapter, holdingChanges }], world }).abilities.map(ability => ability.name);
+    expect(reached([])).toEqual([]);
+    expect(reached([learned])).toEqual(['Snowfall Tail Art']);
   });
 
   it('do not exist in a story with no world record: everyone is a card, as before', () => {
@@ -300,6 +360,60 @@ describe('Promote', () => {
     const chapter = { id: 'chapter-1', chapterNumber: 1, paragraphs, appearances: [appears(1, 'neighbor', 'neighbor')] };
     const subject = deriveAppearances({ entries: filled.state.codexEntries, chapters: [chapter], world: storyWorldRecord(filled.state, storyId) }).subjects[0];
     expect(subject.look).toMatchObject({ summary: 'A stooped woman in a grey shawl.', fromCard: true });
+  });
+
+  it('promotes someone only speaker tags name: their entry is made with the card', () => {
+    const { state, storyId } = started();
+    const line = 'Mind the ice';
+    const speaks: SpeakerAttachment = {
+      id: 'speaker:c1-p2:0', kind: SPEAKER_KIND,
+      anchor: { level: 'span', blockId: 'c1-p2', startOffset: 0, endOffset: line.length, selectedText: line },
+      payload: { origin: 'harness', speaker: 'Old Ferryman', protagonist: false },
+    };
+    const text = [paragraphs[0], `${line}, the ferryman called.`];
+    const chapter: StoryCodexChapter = { id: 'chapter-1', chapterNumber: 1, paragraphs: text, speakers: [speaks] };
+    const told: HarnessWorkspaceState = { ...state, chapters: [{ id: 'chapter-1', storyId, chapterNumber: 1, paragraphs: text, speakers: [speaks] } as HarnessWorkspaceState['chapters'][number]] };
+    const listed = deriveStoryCodex({ entries: told.codexEntries, chapters: [chapter], world: storyWorldRecord(told, storyId) }).minor.find(minor => minor.name === 'Old Ferryman')!;
+    expect(listed).toMatchObject({ key: 'character:old ferryman', kind: 'character', promotable: true });
+
+    const promoted = promoteMinorFigure(told, storyId, listed.key, at);
+    expect(promoted.card).toMatchObject({ key: 'world:character:old-ferryman', kind: 'character', name: 'Old Ferryman', slots: {} });
+    const entry = promoted.state.codexEntries.find(candidate => candidate.cardKey === 'world:character:old-ferryman')!;
+    expect(entry).toMatchObject({ storyId, kind: 'character', name: 'Old Ferryman', origin: { source: 'world' }, createdAt: at });
+    // In the Codex they are a character now, with their lines, and no longer minor.
+    const codex = deriveStoryCodex({ entries: promoted.state.codexEntries, chapters: [chapter], world: storyWorldRecord(promoted.state, storyId) });
+    expect(codex.minor.map(minor => minor.name)).not.toContain('Old Ferryman');
+    expect(codex.characters.find(character => character.key === entry.id)).toMatchObject({ name: 'Old Ferryman', voice: { lines: 1 }, promoted: { key: 'world:character:old-ferryman' } });
+    // Not twice, and never someone the story does not have speaking.
+    expect(() => promoteMinorFigure(promoted.state, storyId, listed.key)).toThrow('Only a minor figure');
+    expect(() => promoteMinorFigure(told, storyId, 'character:nobody')).toThrow('Only a minor figure');
+  });
+
+  it('leaves what the story\'s tags already record off a promoted card, so nothing is counted twice', () => {
+    for (const id of ['rankLevel', 'holds', 'knows']) expect(promotedCardSlots('character').some(slot => slot.id === id)).toBe(false);
+    for (const id of ['holder', 'count']) expect(promotedCardSlots('thing').some(slot => slot.id === id)).toBe(false);
+    expect(promotedCardSlots('character').map(slot => slot.id)).toEqual(expect.arrayContaining(['appearance', 'role', 'bearing']));
+    const { state, storyId } = started();
+    const promoted = promoteMinorFigure(state, storyId, 'neighbor').state;
+    expect(fillPromotedCard(promoted, storyId, 'world:character:neighbor', { holds: 'Spear', knows: 'Snowfall Tail Art', role: 'guard' }).card.slots).toEqual({ role: 'guard' });
+
+    // A card made mid-story never states what was held before Chapter 1: the chapter that gave the spear is the record.
+    const guard = tagEntry('guard', 'character', 'Gate Guard', { cardKey: 'world:character:gate-guard' });
+    const spear = tagEntry('spear', 'thing', 'Spear');
+    const gained: HoldingChangeAttachment = {
+      id: 'holding:c2-p1:0', kind: HOLDING_CHANGE_KIND,
+      anchor: { level: 'span', blockId: 'c2-p1', startOffset: 0, endOffset: 5, selectedText: 'Spear' },
+      payload: { origin: 'harness', verb: 'gained', holder: { name: 'Gate Guard', entryId: 'guard' }, target: { name: 'Spear', entryId: 'spear' } },
+    };
+    const held = (enteredInChapter: number) => deriveHoldings({
+      entries: [...seeded(), guard, spear], chapters: [{ id: 'chapter-2', chapterNumber: 2, holdingChanges: [gained] }], mainCharacterName: 'Lin Qingshan',
+      worldAtChapterZero: { cards: [...cards, { key: 'world:character:gate-guard', kind: 'character', name: 'Gate Guard', enteredInChapter, slots: { holds: 'Spear' } }] },
+    });
+    const spears = (state: ReturnType<typeof deriveHoldings>) => state.characters.find(character => character.name === 'Gate Guard')!.things.map(thing => [thing.name, thing.count]);
+    expect(spears(held(3))).toEqual([['Spear', 1]]);
+    expect(held(3).flags).toEqual([]);
+    // A card the world opened with still does: a chapter that gains it again is flagged.
+    expect(held(0).flags.map(flag => flag.kind)).toContain('already-held');
   });
 
   it('never changes a card the world opened with', () => {

@@ -175,13 +175,19 @@ never takes it away (`codexEntriesWithoutChapter`). A story with no world
 record still gets a declared character's entry the first time a tag names
 them, with `origin: { source: 'foundation' }`.
 
-**Minor figure** (`isMinorEntry`): in a story with a world record, an entry a
-tag made that has no card. The story uses it without tracking it: the Codex
+**Minor figure** (`isMinorEntry`): in a story with a world record, an entry
+with no card: a tag brought it in, or the author took its card away after a
+chapter had named it. Someone only speaker tags name is one too, though they
+have no entry yet. The story uses it without tracking it: the Codex
 lists it under Minor (`StoryCodexRecord.minor`) with what the prose calls it,
 the sentence that introduced it and the chapters it was in. **Promote**
 (`promoteMinorFigure` in `shared/promotion.ts`, `controller.promoteCodexEntry`)
 makes it a world card as of the latest chapter, blank but for its name; its
 reader fills the card's slots (`fillPromotedCard`), and no model is called.
+A promoted card has its kind's slots without the ones the story's tags already
+record (`promotedCardSlots`): what a character holds, knows and ranks at, and
+who holds a thing and how many. Only a card the world opened with states what
+was held before Chapter 1.
 Promote is the one way a card is made after the story begins until Alter Fate
 and the arcs have theirs.
 

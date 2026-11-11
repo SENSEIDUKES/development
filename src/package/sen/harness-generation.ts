@@ -304,7 +304,7 @@ export {
 } from '../../components/harness-generation/development/FatePanel';
 export { findStory, findFoundationRevision, findActiveFoundationRevision, storyWorldRecord } from '../../components/harness-generation/shared/foundation';
 export { createHarnessStory } from '../../components/harness-generation/shared/foundation';
-export { PROMOTED_CARD_SLOT_CHARACTERS, fillPromotedCard, promoteMinorFigure } from '../../components/harness-generation/shared/promotion';
+export { PROMOTED_CARD_SLOT_CHARACTERS, fillPromotedCard, promoteMinorFigure, promotedCardSlots } from '../../components/harness-generation/shared/promotion';
 export * from '../../components/harness-generation/shared/chapterSignals';
 export * from '../../components/harness-generation/shared/chapterBody';
 export { chapterTitleText } from '../../narrative/chapterTitle';

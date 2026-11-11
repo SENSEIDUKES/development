@@ -25,6 +25,8 @@ export interface CodexEntryLook extends Look {
   from: string[];
   /** Where the passages contradict the look the story's author declared, in one short sentence. */
   conflict?: string;
+  /** The look its world card stated when this was written, as one line: when the card's look changes, it is written again. */
+  cardLook?: string;
   at: string;
   model?: string;
 }

@@ -332,7 +332,9 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   const minorOf = (kind: CodexMinor['kind'], card: { key: string; name: string; firstSeen?: CodexPassage }, more: readonly number[] = []): CodexMinor[] => (card.firstSeen ? [{
     key: card.key, name: card.name, kind, introduced: card.firstSeen,
     chapters: [...new Set([card.firstSeen.chapterNumber, ...(chaptersNaming.get(card.key) ?? []), ...more])].sort((left, right) => left - right),
-    promotable: minorEntryIds.has(card.key),
+    // Someone only speaker tags name has no Codex entry: the Codex lists them
+    // under the name they speak by, and promotion makes their entry with the card.
+    promotable: minorEntryIds.has(card.key) || (kind === 'character' && card.key.startsWith('character:')),
   }] : []);
 
   type Working = Omit<CodexCharacter, 'firstSeen'> & { firstSeen?: CodexPassage; names: Set<string> };
@@ -619,7 +621,8 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   const abilityIdentities = (card: { name: string; aliases?: string[] }) =>
     new Set(abilityNames(card).flatMap(name => [worldCardKey('ability', name), normalizeIdentityLabel(name)]));
   const abilityFirstSeen = new Map<string, CodexPassage>();
-  for (const character of roster) {
+  // Whoever learns it reaches it: a minor figure's chapters are the story's too.
+  for (const character of everyone) {
     for (const ability of character.abilities) {
       for (const event of ability.events) {
         for (const identity of [worldCardKey('ability', ability.name), normalizeIdentityLabel(ability.name)]) {

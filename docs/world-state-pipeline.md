@@ -224,7 +224,11 @@ Frost-Scaled Companion*:
 - **Promote** (`promoteMinorFigure`, `shared/promotion.ts`). The reader
   promotes a minor figure to a real card, as of the latest chapter. The card
   starts with its name only, and the reader fills its slots in the Codex
-  (`fillPromotedCard`); no model is called. Its entry keeps its ID.
+  (`fillPromotedCard`); no model is called. Its entry keeps its ID. Someone
+  only speaker tags name can be promoted too: their entry is made with the
+  card. A promoted card leaves out Holds, Knows and Rank (and a thing's Held
+  by and Count), because the story's tags already record those and a second
+  statement would be counted on top.
 
 **Also built (2026-11-11), with words SENSEI approved:** the character card
 states its whole look. It gained Build, Face, Hair, Clothing, Marks and

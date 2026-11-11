@@ -299,7 +299,8 @@ const codexKindOf = (kind: WorldCardKindId): CodexEntryKind | undefined => CODEX
  * it is made"). A card's entry is made with the card, so its permanent ID
  * exists before any chapter names it and a tag only ever finds it.
  *
- * - An entry already linked to a card (`cardKey`) stays as it is.
+ * - An entry already linked to a card (`cardKey`) stays as it is, and answers
+ *   to any name the card has gained since.
  * - An entry of the card's kind that answers to one of the card's names (a
  *   story saved before this, whose chapters made the entry by name) becomes
  *   the card's entry and keeps its ID, so every tag still points at it.
@@ -328,18 +329,25 @@ export function codexEntriesWithWorldCards({ storyId, entries, cards, usedEntryI
     const { cardKey: _gone, ...rest } = entry;
     return [rest];
   });
+  // Every name the card goes by is one its entry answers to, so a tag that
+  // uses an alias the author added later still finds the card.
+  const answerTo = (entry: CodexEntry, names: readonly string[]) => {
+    const known = new Set(namesOf(entry).map(normalizeIdentityLabel));
+    const added = names.filter(name => !known.has(normalizeIdentityLabel(name)));
+    if (added.length) entry.aliases = [...(entry.aliases ?? []), ...added];
+  };
   for (const card of cards) {
     const kind = codexKindOf(card.kind);
-    if (!kind || mine.some(entry => entry.cardKey === card.key)) continue;
+    if (!kind) continue;
     const names = [card.name, ...(card.aliases ?? [])];
+    const linked = mine.find(entry => entry.cardKey === card.key);
+    if (linked) { answerTo(linked, names); continue; }
     const found = (card.mainCharacter ? mine.find(entry => entry.kind === 'character' && entry.mainCharacter && !entry.cardKey) : undefined)
       ?? mine.find(entry => entry.kind === kind && !entry.cardKey && names.some(name => answersTo(namesOf(entry), name)));
     if (found) {
       found.cardKey = card.key;
       if (card.mainCharacter) found.mainCharacter = true;
-      const known = new Set(namesOf(found).map(normalizeIdentityLabel));
-      const added = names.filter(name => !known.has(normalizeIdentityLabel(name)));
-      if (added.length) found.aliases = [...(found.aliases ?? []), ...added];
+      answerTo(found, names);
       continue;
     }
     mine.push({
@@ -356,13 +364,14 @@ export function codexEntriesWithWorldCards({ storyId, entries, cards, usedEntryI
 
 /**
  * Whether an entry is a minor figure: in a story that has a world record,
- * someone or something a tag brought in that has no card (SENSEI, 2026-11-11).
- * The story uses it without tracking it; a reader may promote it to a card.
- * A story with no world record has no main cards to tell them from, so none
- * of its entries is minor.
+ * someone or something with no card (SENSEI, 2026-11-11). A tag brought it in,
+ * or the author took its card away after a chapter had named it. The story
+ * uses it without tracking it; a reader may promote it to a card. A story with
+ * no world record has no main cards to tell them from, so none of its entries
+ * is minor.
  */
-export const isMinorEntry = (entry: Pick<CodexEntry, 'origin' | 'cardKey' | 'mainCharacter'>, world: WorldRecord | undefined): boolean =>
-  Boolean(world?.cards.length) && entry.origin.source === 'tag' && !entry.cardKey && !entry.mainCharacter;
+export const isMinorEntry = (entry: Pick<CodexEntry, 'cardKey' | 'mainCharacter'>, world: WorldRecord | undefined): boolean =>
+  Boolean(world?.cards.length) && !entry.cardKey && !entry.mainCharacter;
 
 export function createCodexEntryResolver({ storyId, chapter, entries, declared, createdAt, createId }: {
   storyId: string;
@@ -784,8 +793,13 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
       state.abilities.set(key, { entryId: key, name, knownAs, stage: 'learned', sealed: false, usable: true, events: [] });
     };
 
+    // Only a card the world opened with says what was held before Chapter 1.
+    // A card made since (a reader's promotion) joins a story whose tags have
+    // already recorded what its owner gained, so nothing is counted twice.
+    const opened = (card: WorldCard) => card.enteredInChapter < 1;
     for (const card of characterCards) {
       const state = seeded(card);
+      if (!opened(card)) continue;
       const rank = slot(card, 'rankLevel');
       if (rank) state.rank = { text: rank, events: [] };
       for (const held of listedSlotHoldings(slot(card, 'holds'))) addThing(state, held.name, held.count);
@@ -795,7 +809,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
     // record rather than guessed from the holder's written list.
     for (const card of thingCards) {
       const holder = slot(card, 'holder');
-      if (!holder) continue;
+      if (!holder || !opened(card)) continue;
       const owner = cardNamed(characterCards, holder);
       if (!owner) continue;
       // The whole value is the quantity, so "1,000" is a thousand: reading the

@@ -377,6 +377,18 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-11 (review fixes to the world entries work):** found by the
+  automated reviews of the pull request. Promote and fill run one after
+  another, so two quick promotions keep both cards. A tag that names a card a
+  little differently is flagged as a possible duplicate again. An entry
+  answers to a name its card gains later. Anyone with no card is minor and
+  can be promoted, including someone whose card the author removed and
+  someone only speaker tags name. An ability a minor figure learns is
+  reached. A written look records the card look it was written from
+  (`CodexEntryLook.cardLook`), so revising the card's look has it written
+  again. A promoted card leaves out the slots the story's tags already record
+  (`promotedCardSlots`), and only a card the world opened with states what was
+  held before Chapter 1.
 - **2026-11-11 (a character card states its whole look):** SENSEI, reading the
   cards the Blueprint made for The Frost-Scaled Companion: each character had
   one outfit and one prop, and since a card's look is now the look everything

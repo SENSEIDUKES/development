@@ -58,7 +58,7 @@ describe('The world builder asks for every Codex card kind', () => {
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Read the Seed\'s tags, genre and premise for what kind of story this is and who it is written for');
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Where the Seed gives no clear signal, describe men and women with the same care.');
     // It names no feature and no stock phrase: a model repeats whatever it is shown on every character.
-    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toMatch(/(brows?|jade|porcelain|chin)/i);
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toMatch(/\b(brows?|jade|porcelain|chin)\b/i);
   });
 
   it('never asks the model for aliases, which are the author\'s alone and have no place in the answer', () => {

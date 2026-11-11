@@ -200,6 +200,10 @@ const CHARACTER_CARD_LOOK_TRAITS: ReadonlyArray<[slot: string, trait: LookTrait]
  * this is its look until a look tag changes it, whatever sentence first showed
  * it on the page.
  */
+/** A card's look as one line: what the look writer reads as declared, and what a written look records it was written from. */
+export const cardLookStatement = (look: Look): string =>
+  [look.summary, ...Object.entries(look.traits).map(([trait, value]) => `${trait}: ${value}`)].join('; ');
+
 export const worldCardLook = (card: Pick<WorldCard, 'kind' | 'slots'>): Look | undefined => {
   const summary = card.slots.appearance?.trim();
   if (!summary) return undefined;
@@ -429,7 +433,12 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [], wo
     // card's look and every change, and that one is kept.
     const card = entry?.cardKey ? cards.get(entry.cardKey) : undefined;
     const stated = card && worldCardLook(card);
-    if (stated && !(kept?.summary.trim() && subject.changes.length && kept.from.length > 1)) {
+    // A look written from the card and the story's changes stands for both, so
+    // it stands only while the card still states the look it was written from:
+    // a card filled in or revised since is the look again, to be written anew.
+    const writtenFromCard = Boolean(stated && kept?.summary.trim() && subject.changes.length && kept.from.length > 1
+      && kept.cardLook === cardLookStatement(stated));
+    if (stated && !writtenFromCard) {
       const recorded: RecordedLook = { ...stated, passage: subject.first, fromCard: true };
       subject.looks.push(recorded);
       subject.look = recorded;
@@ -444,7 +453,8 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [], wo
       const recorded: RecordedLook = { summary: kept.summary, traits: { ...kept.traits }, passage: latest, ...(kept.conflict ? { conflict: kept.conflict } : {}) };
       subject.looks.push(recorded);
       subject.look = recorded;
-      if (kept.from.join('|') !== sources.join('|')) subject.lookStale = true;
+      // Written from a card look the card no longer states: it is written again.
+      if (kept.from.join('|') !== sources.join('|') || (kept.cardLook && !stated)) subject.lookStale = true;
     } else if (subject.look && subject.changes.some(change => comesAfter(change.passage, subject.look!.passage))) subject.lookStale = true;
   }
 

@@ -14,7 +14,7 @@ import {
 import type { CodexEntry } from '../../../narrative/holdings';
 import type { CurrentStoryProjection, HarnessChapter, HarnessLookSubject } from '../../../narrative/generation';
 import { normalizeIdentityLabel } from './canonicalProjection';
-import { deriveAppearances, describableAppearances, type AppearanceSubject } from './appearances';
+import { cardLookStatement, deriveAppearances, describableAppearances, type AppearanceSubject } from './appearances';
 
 /**
  * The look step, after a chapter commits: each appearance the rules accept
@@ -202,7 +202,7 @@ export function planCodexLook({ subject, identities, names, cardLook }: {
     recent.unshift(line);
     room -= line.length + 1;
   }
-  const stated = cardLook && [cardLook.summary, ...Object.entries(cardLook.traits).map(([trait, value]) => `${trait}: ${value}`)].join('; ');
+  const stated = cardLook && cardLookStatement(cardLook);
   const declared = stated ? (stated.length <= LOOK_DECLARED_CHARACTERS ? stated : `${stated.slice(0, LOOK_DECLARED_CHARACTERS).trimEnd()}…`)
     : subject.entity === 'character' ? declaredNotes(identities, names ?? [subject.name]) : undefined;
   return {

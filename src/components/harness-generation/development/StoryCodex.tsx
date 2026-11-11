@@ -6,8 +6,7 @@ import { CODEX_VERB_LABELS } from '../shared/storyKnowledge';
 import { CHARACTER_LOOK_TRAITS, PLACE_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
 import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexMinor, CodexPassage, CodexPictureCard, CodexPictures, CodexPlace, CodexPromotedCard, CodexWorldCard, CodexWorldFact, StoryCodexRecord } from '../shared/storyCodex';
-import { worldCardFactSlots } from '../../../narrative/worldRecord';
-import { PROMOTED_CARD_SLOT_CHARACTERS } from '../shared/promotion';
+import { PROMOTED_CARD_SLOT_CHARACTERS, promotedCardSlots } from '../shared/promotion';
 import './reader-colors.css';
 
 /** How each change reads in the Codex. */
@@ -249,7 +248,7 @@ function PromotedCard({ name, promoted, facts, onFill }: {
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string>();
-  const slots = worldCardFactSlots(promoted.kind);
+  const slots = promotedCardSlots(promoted.kind);
   const title = `Card · since Chapter ${promoted.enteredInChapter}`;
   const start = () => { setDraft(Object.fromEntries(slots.map(slot => [slot.id, promoted.slots[slot.id] ?? '']))); setProblem(undefined); setEditing(true); };
   const save = () => {

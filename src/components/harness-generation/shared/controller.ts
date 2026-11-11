@@ -45,7 +45,7 @@ import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { codexEntriesWithoutChapter, createCodexEntryResolver, declaredCharacters, deriveHoldings, holdingsSection, resolveHoldingChanges } from './holdings';
 import { MEDIA_TAG_WARNING_CODES, planChapterTagging, readChapterTagging, retagChapterGap } from './tagger';
-import { appearanceSources, deriveAppearances, placeAppearancesFromPlaces, resolveAppearances, thingAppearancesFromHoldings, worldCardLook } from './appearances';
+import { appearanceSources, cardLookStatement, deriveAppearances, placeAppearancesFromPlaces, resolveAppearances, thingAppearancesFromHoldings, worldCardLook } from './appearances';
 import { deriveStatuses, resolveStatuses } from './statuses';
 import { derivePlaces, resolvePlaces } from './places';
 import { deriveTies, resolveTies } from './ties';
@@ -819,12 +819,13 @@ export class HarnessGenerationController {
   /**
    * Promote: a minor figure becomes a world card, as of the latest chapter
    * (`promoteMinorFigure`). No model is called: the card starts with its name.
+   * `entryId` is the key the Codex lists the figure under.
    */
   async promoteCodexEntry(storyId: string, entryId: string): Promise<StoryWorldCard> {
     this.assertHydrated();
     return this.changeCard(async () => {
       if (this.generating) throw new Error('Wait for the chapter being written before promoting to a card.');
-      const promoted = promoteMinorFigure(this.state, storyId, entryId);
+      const promoted = promoteMinorFigure(this.state, storyId, entryId, this.runtime.now());
       await this.persist(promoted.state);
       return promoted.card;
     });
@@ -2058,10 +2059,11 @@ export class HarnessGenerationController {
     const attempt = this.state.attempts.find(candidate => candidate.id === latest.attemptId);
     // A card's own look is what its author declared: the look is written from it and every change since.
     const card = entry?.cardKey ? world?.cards.find(candidate => candidate.key === entry.cardKey) : undefined;
+    const cardLook = card && worldCardLook(card);
     const request = planCodexLook({
       subject, identities: attempt?.storyInformation.currentStory.identities,
       names: entry ? [entry.name, ...(entry.aliases ?? [])] : [subject.name],
-      ...(card ? { cardLook: worldCardLook(card) } : {}),
+      ...(cardLook ? { cardLook } : {}),
     });
     let raw: string | undefined;
     let problem: string | undefined;
@@ -2087,7 +2089,8 @@ export class HarnessGenerationController {
       if (saved) {
         const at = this.runtime.now();
         if (look) {
-          saved.look = { summary: look.summary, traits: look.traits, from: appearanceSources(subject), at, model, ...(look.conflict ? { conflict: look.conflict } : {}) };
+          saved.look = { summary: look.summary, traits: look.traits, from: appearanceSources(subject), at, model, ...(look.conflict ? { conflict: look.conflict } : {}),
+            ...(cardLook ? { cardLook: cardLookStatement(cardLook) } : {}) };
           delete saved.lookFailure;
         } else saved.lookFailure = { at, model, problem: problem!, ...(raw ? { raw } : {}) };
         try { await this.persist(candidate); } catch { /* The look is still returned; it is written again when next asked for. */ }

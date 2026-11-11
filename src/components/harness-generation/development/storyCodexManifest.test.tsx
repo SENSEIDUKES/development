@@ -13,7 +13,7 @@ const passage = { chapterNumber: 1, blockId: 'c1-p1', text: 'Then.' };
 const look = { summary: 'A heavy black-iron broadsword veined with red.', traits: { material: 'black iron', colour: 'red veins' }, passage };
 const sword: CodexItem = { key: 'sword', name: 'Crimson Broadsword', count: 1, equipped: false, events: [], firstSeen: passage, appearance: { first: passage, look, changes: [] } };
 const voiceOnly: CodexCharacter = { key: 'wu', name: 'Old Wu', mainCharacter: false, firstSeen: passage, things: [], abilities: [], chronicle: [] };
-const codex: StoryCodexRecord = { characters: [voiceOnly], factions: [], abilities: [], places: [], species: [], checks: [], items: [sword] };
+const codex: StoryCodexRecord = { characters: [voiceOnly], factions: [], abilities: [], places: [], species: [], minor: [], checks: [], items: [sword] };
 
 const render = async (pictures?: CodexPictures) => {
   const container = document.createElement('div');

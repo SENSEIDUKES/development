@@ -653,7 +653,10 @@ export function HarnessReaderSession({
         // A card without a current look has it written first, from the story's own words, then pictured.
         manifest: async card => codexPictures.manifest({ ...card, look: card.look ?? await controller.describeCodexLook(storyId, card.key) }),
       }}
-        onReadPassage={revealPassage} onReadChapter={revealChapter} />
+        onReadPassage={revealPassage} onReadChapter={revealChapter}
+        // A reader's own story: they may promote a minor figure to a card and fill it in.
+        onPromote={creator ? async key => { await controller.promoteCodexEntry(storyId, key); } : undefined}
+        onFillCard={creator ? async (cardKey, slots) => { await controller.fillPromotedCard(storyId, cardKey, slots); } : undefined} />
     </ReaderPanel>
     <ReaderSettingsSheet open={layer?.id === 'settings'} onClose={closeLayer} readAloud={readAloud} language={language}
       mixer={mixer} section={layer?.id === 'settings' ? layer.section : undefined} soundtrack={{ choice: soundtrackChoice, onChoice: chooseSoundtrack, pieces: pieces ?? [] }}
@@ -667,7 +670,9 @@ export function HarnessReaderSession({
  * opened with and its chapters as they are now. It is worked out only while
  * the Codex is open.
  */
-function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, manifestCost, onBack, onReadPassage, onReadChapter }: {
+function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, manifestCost, onBack, onReadPassage, onReadChapter, onPromote, onFillCard }: {
+  onPromote?: (key: string) => Promise<void>;
+  onFillCard?: (cardKey: string, slots: Record<string, string>) => Promise<void>;
   state: HarnessWorkspaceState;
   pictures?: CodexPictures;
   /** The host's Energy price beside Manifest. */
@@ -681,5 +686,5 @@ function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, manifestC
 }) {
   // The same record the Familiar looks the story up in, worked out the same way.
   const codex = useMemo(() => storyCodexOf(state, storyId, chapters), [state, storyId, chapters]);
-  return <StoryCodex codex={codex} storyTitle={storyTitle} pictures={pictures} manifestCost={manifestCost} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />;
+  return <StoryCodex codex={codex} storyTitle={storyTitle} pictures={pictures} manifestCost={manifestCost} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} onPromote={onPromote} onFillCard={onFillCard} />;
 }

@@ -124,6 +124,8 @@ export {
   readHoldingTag,
   resolveHoldingChanges,
   createCodexEntryResolver,
+  codexEntriesWithWorldCards,
+  isMinorEntry,
   type CharacterHoldings,
   type CodexEntryResolver,
   type DeclaredCharacter,
@@ -160,7 +162,9 @@ export {
   type CodexFaction,
   type CodexItem,
   type CodexItemEvent,
+  type CodexMinor,
   type CodexPassage,
+  type CodexPromotedCard,
   type CodexPictureCard,
   type CodexPictures,
   type CodexPictureMade,
@@ -299,6 +303,8 @@ export {
   describeChapterPath,
 } from '../../components/harness-generation/development/FatePanel';
 export { findStory, findFoundationRevision, findActiveFoundationRevision, storyWorldRecord } from '../../components/harness-generation/shared/foundation';
+export { createHarnessStory } from '../../components/harness-generation/shared/foundation';
+export { PROMOTED_CARD_SLOT_CHARACTERS, fillPromotedCard, promoteMinorFigure } from '../../components/harness-generation/shared/promotion';
 export * from '../../components/harness-generation/shared/chapterSignals';
 export * from '../../components/harness-generation/shared/chapterBody';
 export { chapterTitleText } from '../../narrative/chapterTitle';

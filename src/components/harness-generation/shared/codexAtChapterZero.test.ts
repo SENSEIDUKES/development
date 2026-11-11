@@ -144,8 +144,11 @@ describe('The reader meets a card when the story reaches it', () => {
     expect(codex.characters.map(character => character.name)).toEqual(['Elder Qin']);
     expect(codex.characters[0].atChapterZero?.map(fact => fact.slot.id)).toEqual(['role', 'location']);
     expect(codex.characters[0].things.map(thing => thing.name)).toEqual(['Frost Blade']);
-    // The Jade Token is in the world, but no chapter has shown it.
-    expect(codex.items.map(item => item.name)).toEqual(['Frost Blade']);
+    // The Jade Token is in the world, but no chapter has shown it. The blade
+    // the chapter brought in has no card, so it is a minor figure (2026-11-11):
+    // still in Elder Qin's hands, above, and listed under Minor, not Items.
+    expect(codex.items.map(item => item.name)).toEqual([]);
+    expect(codex.minor.map(minor => [minor.kind, minor.name])).toEqual([['thing', 'Frost Blade']]);
   });
 
   it('opens an ability\'s own card once a chapter reaches it, and still waits on places and the Bestiary', () => {
@@ -259,7 +262,9 @@ describe('A card the world opened with and a chapter reaches is one card', () =>
     expect(qin[0].firstSeen?.chapterNumber).toBe(1);
     // The story's own order comes first: Elder Qin is met, Ye Chen is not yet.
     expect(codex.characters.map(character => character.name)).toEqual(['Ye Chen', 'Elder Qin']);
-    expect(codex.items.map(item => item.name)).toEqual(['Frost Blade', 'Jade Token']);
+    // The blade has no card, so it is a minor figure; the token is the world's own.
+    expect(codex.items.map(item => item.name)).toEqual(['Jade Token']);
+    expect(codex.minor.map(minor => minor.name)).toEqual(['Frost Blade']);
   });
 
   it('keeps one card for a thing the world opened with when a chapter names it', () => {

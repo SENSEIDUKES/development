@@ -7,6 +7,7 @@ import {
   worldCardsOfKind,
   worldIsOpenToTheReader,
   worldRulesCard,
+  type WorldCard,
   type WorldRecord,
   type WorldCardSlot,
 } from '../../../narrative/worldRecord';
@@ -19,8 +20,10 @@ import { deriveStatuses } from './statuses';
 import { derivePlaces } from './places';
 import { deriveTies, tiesOfEntry } from './ties';
 import {
+  codexEntryIdsNamedBy,
   deriveHoldings,
   holdingTargetKind,
+  isMinorEntry,
   type DeclaredCharacter,
   type HeldThing,
   type HoldingEvent,
@@ -81,6 +84,43 @@ export interface CodexLook extends Look {
   passage: CodexPassage;
   /** Where the passage differs from the look the story's author declared. */
   conflict?: string;
+  /** The look is its world card's own, not one read from a passage. */
+  fromCard?: true;
+}
+
+/**
+ * The world card behind a Codex card a reader promoted from a minor figure:
+ * it entered the world in the chapter it was promoted in, and its reader may
+ * fill its slots (SENSEI, 2026-11-11: "the reader fills, the rest stays blank").
+ */
+export interface CodexPromotedCard {
+  /** The world card's key. */
+  key: string;
+  kind: 'character' | 'thing' | 'place';
+  enteredInChapter: number;
+  /** Every slot filled so far, by field name. */
+  slots: Record<string, string>;
+}
+
+/**
+ * A minor figure: someone or something the story uses without tracking it
+ * (SENSEI, 2026-11-11). In a story with a world record, whoever and whatever a
+ * chapter brings in that has no card is kept this lightly: what the prose
+ * calls it, the sentence that introduced it, and the chapters it was in. No
+ * look, status, place or ties are shown for it. A reader who cares about one
+ * promotes it to a card.
+ */
+export interface CodexMinor {
+  /** Its Codex entry's ID, or its kind and name when no tag ever made it an entry. */
+  key: string;
+  name: string;
+  kind: 'character' | 'thing' | 'place';
+  /** The sentence that introduced it. */
+  introduced: CodexPassage;
+  /** The chapters it was in, in order. */
+  chapters: number[];
+  /** Whether it can be promoted: it has a Codex entry to become a card. */
+  promotable: boolean;
 }
 
 /** Where someone or something stepped onto the page, how it looks now, and each change to its look. */
@@ -130,6 +170,8 @@ export interface CodexCharacter {
   firstSeen?: CodexPassage;
   /** What the world already knew about them at Chapter 0. */
   atChapterZero?: CodexWorldFact[];
+  /** Their card, when a reader promoted them to one. */
+  promoted?: CodexPromotedCard;
   /** Their appearance on the page, and their look. Absent for someone met only by their words or holdings. */
   appearance?: CodexAppearance;
   rank?: { text: string; events: HoldingEvent[] };
@@ -167,6 +209,8 @@ export interface CodexItem {
   firstSeen?: CodexPassage;
   /** What the world already knew about it at Chapter 0. */
   atChapterZero?: CodexWorldFact[];
+  /** Its card, when a reader promoted it to one. */
+  promoted?: CodexPromotedCard;
   /** Its appearance on the page, and its look. */
   appearance?: CodexAppearance;
 }
@@ -177,6 +221,8 @@ export interface CodexItem {
  * record has there now.
  */
 export interface CodexPlace extends CodexWorldCard {
+  /** Its card, when a reader promoted it to one. */
+  promoted?: CodexPromotedCard;
   /** Its appearance on the page, and its look. */
   appearance?: CodexAppearance;
   /** Who is here now: everyone whose latest place tag names it. */
@@ -214,6 +260,8 @@ export interface StoryCodexRecord {
   places: CodexPlace[];
   /** The Bestiary: the species natural to this world. */
   species: CodexWorldCard[];
+  /** Minor figures: who and what the story used that has no card, in the order the story met them. Empty in a story with no world record. */
+  minor: CodexMinor[];
   /** The one World rules sheet every other card refers to, when the world states one. */
   worldRules?: CodexWorldFact[];
   /** What the record's plain rules flagged, for checking a story against its chapters. */
@@ -239,6 +287,7 @@ const appearanceOf = (subject: AppearanceSubject): CodexAppearance => ({
   ...(subject.look ? { look: {
     summary: subject.look.summary, traits: { ...subject.look.traits }, passage: appearancePassage(subject.look.passage),
     ...(subject.look.conflict ? { conflict: subject.look.conflict } : {}),
+    ...(subject.look.fromCard ? { fromCard: true as const } : {}),
   } } : {}),
   changes: subject.changes.map(change => ({ change: change.change, passage: appearancePassage(change.passage) })),
 });
@@ -267,7 +316,24 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // record's visibility that a tag naming a card reaches it whether or not the
   // holding moved, which is its own change to the no-spoiler rule.
   const holdings = deriveHoldings({ entries, chapters: ordered, mainCharacterName });
-  const appeared = deriveAppearances({ entries, chapters: ordered, declaredFactions });
+  const appeared = deriveAppearances({ entries, chapters: ordered, declaredFactions, world });
+
+  // A card a reader promoted entered after Chapter 0: it carries its slots so they can fill them.
+  const promotedOf = (card: WorldCard): { promoted?: CodexPromotedCard } => (card.enteredInChapter > 0 && (card.kind === 'character' || card.kind === 'thing' || card.kind === 'place')
+    ? { promoted: { key: card.key, kind: card.kind, enteredInChapter: card.enteredInChapter, slots: { ...card.slots } } } : {});
+  // Minor figures: in a story with a world record, whoever and whatever has no
+  // card. Each leaves its kind's list for the Minor one, below.
+  const hasWorld = Boolean(world?.cards.length);
+  const minorEntryIds = new Set(entries.filter(entry => isMinorEntry(entry, world)).map(entry => entry.id));
+  const chaptersNaming = new Map<string, Set<number>>();
+  for (const chapter of ordered) {
+    for (const id of codexEntryIdsNamedBy(chapter)) chaptersNaming.set(id, (chaptersNaming.get(id) ?? new Set<number>()).add(chapter.chapterNumber));
+  }
+  const minorOf = (kind: CodexMinor['kind'], card: { key: string; name: string; firstSeen?: CodexPassage }, more: readonly number[] = []): CodexMinor[] => (card.firstSeen ? [{
+    key: card.key, name: card.name, kind, introduced: card.firstSeen,
+    chapters: [...new Set([card.firstSeen.chapterNumber, ...(chaptersNaming.get(card.key) ?? []), ...more])].sort((left, right) => left - right),
+    promotable: minorEntryIds.has(card.key),
+  }] : []);
 
   type Working = Omit<CodexCharacter, 'firstSeen'> & { firstSeen?: CodexPassage; names: Set<string> };
   const characters = new Map<string, Working>();
@@ -293,6 +359,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
       name: entry?.name ?? card.name,
       mainCharacter: Boolean(card.mainCharacter || entry?.mainCharacter),
       atChapterZero: worldCardFacts(card),
+      ...promotedOf(card),
       things: [], abilities: [], chronicle: [],
       names: new Set([...labels, ...(entry ? labelsOf(entry) : [])]),
     });
@@ -455,7 +522,11 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   const placeFor = (character: Working) => wherever.get(character.key)
     ?? [...character.names].map(name => wherever.get(`character:${name}`)).find(Boolean);
   const tied = deriveTies(ordered, entries);
-  const known = [...characters.values()].filter(character => (character.firstSeen || character.atChapterZero) && reached(character));
+  const everyone = [...characters.values()].filter(character => (character.firstSeen || character.atChapterZero) && reached(character));
+  // Someone with no card, in a world that has cards, is a minor figure.
+  const isMinorCharacter = (character: Working) => hasWorld && !character.atChapterZero && !character.mainCharacter;
+  const minorCharacters = everyone.filter(isMinorCharacter).flatMap(character => minorOf('character', character, character.voice?.chapters));
+  const known = everyone.filter(character => !isMinorCharacter(character));
   const roster: CodexCharacter[] = known
     .sort((left, right) => Number(right.mainCharacter) - Number(left.mainCharacter)
       || inRecordOrder(left, right, character => known.indexOf(character)))
@@ -498,10 +569,13 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     // name keeps it.
     for (const label of labels) if (!chapterZeroItems.has(label)) chapterZeroItems.set(label, key);
     item.atChapterZero = worldCardFacts(card);
+    if (promotedOf(card).promoted) item.promoted = promotedOf(card).promoted;
     const count = Number(card.slots.count);
     if (Number.isInteger(count) && count > 0) item.count = count;
   }
-  for (const character of roster) {
+  // A minor figure's own things are still things the story showed: they are read from everyone, not only the roster.
+  const holders = [...roster, ...everyone.filter(isMinorCharacter)];
+  for (const character of holders) {
     for (const event of character.chronicle) {
       if (!event.targetId || !event.target || holdingTargetKind(event.verb) !== 'thing') continue;
       const item = itemOf(event.targetId, event.target);
@@ -525,8 +599,10 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     if (!item.firstSeen || comesBefore(first, item.firstSeen) < 0) item.firstSeen = first;
   }
   const itemOrder = [...items.values()];
+  const isMinorItem = (item: CodexItem) => hasWorld && !item.atChapterZero;
+  const minorItems = itemOrder.filter(item => reached(item) && isMinorItem(item)).flatMap(item => minorOf('thing', item, item.events.map(event => event.passage.chapterNumber)));
   const itemList = itemOrder
-    .filter(reached)
+    .filter(item => reached(item) && !isMinorItem(item))
     .map(item => ({ ...item, events: [...item.events].sort((left, right) => comesBefore(passageOf(left), passageOf(right))) }))
     .sort((left, right) => inRecordOrder(left, right, item => itemOrder.findIndex(candidate => candidate.key === item.key)));
 
@@ -598,6 +674,8 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // the one the story walks into, never a second card beside it.
   const places = new Map<string, CodexPlace>();
   const placeByLabel = new Map<string, string>();
+  // The places that are cards; any other place a tag named is a minor one.
+  const cardPlaces = new Set<string>();
   for (const card of worldCardsOfKind(world, 'place')) {
     const labels = labelsOf(card);
     const entry = entryNamed('place', labels);
@@ -605,8 +683,9 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     const key = places.has(named) ? card.key : named;
     places.set(key, {
       key, name: entry?.name ?? card.name, ...(card.aliases?.length ? { aliases: [...card.aliases] } : {}),
-      atChapterZero: worldCardFacts(card), here: [],
+      atChapterZero: worldCardFacts(card), ...promotedOf(card), here: [],
     });
+    cardPlaces.add(key);
     for (const label of [...labels, ...(entry ? labelsOf(entry) : [])]) if (!placeByLabel.has(label)) placeByLabel.set(label, key);
   }
   const placeOf = (entryId: string | undefined, name: string): CodexPlace => {
@@ -639,7 +718,10 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     if (now) placeOf(now.placeEntryId, now.place).here.push({ key: character.key, name: character.name, mainCharacter: character.mainCharacter });
   }
   const placeOrder = [...places.values()];
-  const placeList = placeOrder.filter(reached).sort((left, right) => inRecordOrder(left, right, place => placeOrder.indexOf(place)));
+  const isMinorPlace = (place: CodexPlace) => hasWorld && !cardPlaces.has(place.key);
+  const minorPlaces = placeOrder.filter(place => reached(place) && isMinorPlace(place)).flatMap(place => minorOf('place', place));
+  const placeList = placeOrder.filter(place => reached(place) && !isMinorPlace(place)).sort((left, right) => inRecordOrder(left, right, place => placeOrder.indexOf(place)));
+  const minor = [...minorCharacters, ...minorItems, ...minorPlaces].sort((left, right) => comesBefore(left.introduced, right.introduced));
 
   // The World rules are the world's frame, not a card the story reaches: the
   // ladder every rank is read against, and the age the story stands in.
@@ -661,6 +743,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     abilities: worldCards('ability'),
     places: placeList,
     species: worldCards('species'),
+    minor,
     ...(rules ? { worldRules: worldCardFacts(rules) } : {}),
     checks,
   };

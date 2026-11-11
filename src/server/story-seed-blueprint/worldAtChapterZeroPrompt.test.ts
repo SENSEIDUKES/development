@@ -39,6 +39,28 @@ describe('The world builder asks for every Codex card kind', () => {
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('never a panel, a camera, a frame count or an art style');
   });
 
+  it('asks for a character\'s whole look: a short portrait and each trait an artist draws from (SENSEI, 2026-11-11)', () => {
+    for (const slot of [
+      '    appearance: a short portrait of two or three sentences: what strikes the eye first, with their nature showing in it',
+      '    build: their height and build',
+      '    face: their face: its shape and what stands out in it',
+      '    hair: their hair: its colour, its length and how it is worn',
+      '    clothing: what they wear when the story opens',
+      '    marks: scars, marks or anything that sets them apart',
+      '    bearing: how their nature shows in the way they stand, move and look at people',
+    ]) expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain(slot);
+    // The World skill: a Look is the one slot that is not a single fact, and it is this person's alone.
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Keep every slot to one short, concrete fact, except a Look. A Look is a short portrait of two or three sentences.');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('No two people in the cast are described through the same features, and no Look opens the way another does.');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Write what is seen, never the trait\'s name.');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Leave Marks blank when they have none.');
+    // The Origin skill: how people are described follows the kind of story the Seed's tags, genre and premise show.
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Read the Seed\'s tags, genre and premise for what kind of story this is and who it is written for');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Where the Seed gives no clear signal, describe men and women with the same care.');
+    // It names no feature and no stock phrase: a model repeats whatever it is shown on every character.
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toMatch(/(brows?|jade|porcelain|chin)/i);
+  });
+
   it('never asks the model for aliases, which are the author\'s alone and have no place in the answer', () => {
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toContain('aliases');
   });
@@ -52,7 +74,7 @@ describe('The world builder asks for every Codex card kind', () => {
     expect(swapped.startsWith('# ROLE AND MISSION\n\nYou are a celebrated Western fantasy novelist. Build the Blueprint')).toBe(true);
     expect(swapped).toContain('[Origin] Western Fantasy 1.0.0\nYou are writing the world of a Western fantasy novel');
     expect(swapped).not.toContain('Eastern fantasy');
-    expect(swapped).toContain('[World] SEN World Builder 1.2.0');
+    expect(swapped).toContain('[World] SEN World Builder 1.3.0');
     expect(swapped.endsWith(BLUEPRINT_PERMANENT_RULES)).toBe(true);
     // The same identity closes the request, in its Mission Reminder.
     const request = buildWorldBlueprintPrompt(createEmptyStorySeedInput(), undefined, 'You are a celebrated Western fantasy novelist.');

@@ -172,6 +172,8 @@ describe('places in the Codex', () => {
   const world: WorldRecord = { cards: [
     { key: 'world:place:summit-hall', kind: 'place', name: 'Summit Hall', enteredInChapter: 0, slots: { appearance: 'a hall of black pillars', within: 'Lingxu Academy' } },
     { key: 'world:place:moon-well', kind: 'place', name: 'Moon Well', enteredInChapter: 0, slots: {} },
+    { key: 'world:place:lower-stacks', kind: 'place', name: 'Lower Stacks', enteredInChapter: 0, slots: {} },
+    { key: 'world:character:shen-yuan', kind: 'character', name: 'Shen Yuan', enteredInChapter: 0, slots: {} },
   ] };
 
   it('is one card with the Blueprint\'s place, opens when the story arrives, and says who is there now', () => {
@@ -191,6 +193,18 @@ describe('places in the Codex', () => {
     expect(codex.characters.find(character => character.name === 'Shen Yuan')?.place).toEqual({
       text: 'Lower Stacks', passage: { chapterNumber: 2, blockId: 'c2-p1', text: two },
     });
+  });
+
+  it('lists a place the world has no card for under Minor, not Places (2026-11-11)', () => {
+    const entries = [entry({ id: 'e-shen', name: 'Shen Yuan', kind: 'character' }), entry({ id: 'e-ridge', name: 'North Ridge', kind: 'place' })];
+    const one = 'Shen Yuan climbed the North Ridge.';
+    const codex = deriveStoryCodex({ entries, world, chapters: [
+      { id: 'c1', chapterNumber: 1, paragraphs: [one], places: [placeTag(1, 'c1-p1', one, { name: 'Shen Yuan', entryId: 'e-shen' }, { name: 'North Ridge', entryId: 'e-ridge' })] },
+    ] });
+    expect(codex.places).toEqual([]);
+    expect(codex.minor).toEqual([{ key: 'e-ridge', name: 'North Ridge', kind: 'place', introduced: { chapterNumber: 1, blockId: 'c1-p1', text: one }, chapters: [1], promotable: true }]);
+    // Where the character is still reads on their own card.
+    expect(codex.characters.find(character => character.name === 'Shen Yuan')?.place?.text).toBe('North Ridge');
   });
 });
 

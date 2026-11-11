@@ -8,6 +8,7 @@ import {
   type AppearanceEntity,
   type ChapterLooks,
   type DescribedLook,
+  type Look,
   type LookTrait,
 } from '../../../narrative/appearances';
 import type { CodexEntry } from '../../../narrative/holdings';
@@ -175,11 +176,13 @@ export const CODEX_LOOK_PASSAGE_CHARACTERS = 2_400;
  * each chapter committed; this reads only them, never a chapter. The subject's
  * id is its Codex entry's.
  */
-export function planCodexLook({ subject, identities, names }: {
+export function planCodexLook({ subject, identities, names, cardLook }: {
   subject: Pick<AppearanceSubject, 'entryId' | 'key' | 'name' | 'entity' | 'first' | 'changes'>;
   identities?: CurrentStoryProjection['identities'];
   /** The entry's names, its aliases included, to find the author's notes. */
   names?: readonly string[];
+  /** The look its world card states, when it is a card: what the author declared, ahead of any notes. */
+  cardLook?: Look;
 }): HarnessLookSubject {
   const lines = [
     `Chapter ${subject.first.chapterNumber}, first on the page: ${subject.first.description ?? subject.first.text}`,
@@ -199,7 +202,9 @@ export function planCodexLook({ subject, identities, names }: {
     recent.unshift(line);
     room -= line.length + 1;
   }
-  const declared = subject.entity === 'character' ? declaredNotes(identities, names ?? [subject.name]) : undefined;
+  const stated = cardLook && [cardLook.summary, ...Object.entries(cardLook.traits).map(([trait, value]) => `${trait}: ${value}`)].join('; ');
+  const declared = stated ? (stated.length <= LOOK_DECLARED_CHARACTERS ? stated : `${stated.slice(0, LOOK_DECLARED_CHARACTERS).trimEnd()}…`)
+    : subject.entity === 'character' ? declaredNotes(identities, names ?? [subject.name]) : undefined;
   return {
     id: subject.entryId ?? subject.key,
     name: subject.name,

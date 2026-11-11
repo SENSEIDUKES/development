@@ -10,6 +10,7 @@ import {
   type AppearancesSectionEntry,
   type ChapterLooks,
   type Look,
+  type LookTrait,
 } from '../../../narrative/appearances';
 import type { CodexEntry, HoldingChangeAttachment } from '../../../narrative/holdings';
 import { isAppearanceTagWord, type WordTag } from '../../../narrative/marks';
@@ -22,6 +23,7 @@ import type { CurrentStatus } from './statuses';
 import type { CurrentPlace } from './places';
 import { TAG_SUBJECT_TIES, tiesLine, tiesOfEntry, type CurrentTie } from './ties';
 import type { PlaceAttachment } from '../../../narrative/places';
+import type { WorldCard, WorldRecord } from '../../../narrative/worldRecord';
 
 /**
  * Appearances in the HARNESS: the writer's appears and look tags read into
@@ -181,7 +183,35 @@ export interface RecordedLook extends Look {
   passage: AppearancePassage;
   /** Where the passage contradicts the look the story's author declared. */
   conflict?: string;
+  /** The look is its world card's own, not one read from a passage: `passage` is only where the story first showed it. */
+  fromCard?: true;
 }
+
+/** The character card's slots that are traits of a look, by the trait each one is. */
+const CHARACTER_CARD_LOOK_TRAITS: ReadonlyArray<[slot: string, trait: LookTrait]> = [
+  ['build', 'build'], ['face', 'face'], ['eyeColor', 'eyes'], ['hair', 'hair'], ['skinTone', 'skin'],
+  ['clothing', 'clothing'], ['marks', 'marks'], ['bearing', 'bearing'],
+];
+
+/**
+ * The look a world card states: its Look, and for a character every trait its
+ * card gives (build, face, eyes, hair, skin, clothing, marks, bearing). A card
+ * is who or what it is from the moment it is made (SENSEI, 2026-11-08), so
+ * this is its look until a look tag changes it, whatever sentence first showed
+ * it on the page.
+ */
+export const worldCardLook = (card: Pick<WorldCard, 'kind' | 'slots'>): Look | undefined => {
+  const summary = card.slots.appearance?.trim();
+  if (!summary) return undefined;
+  const traits: Look['traits'] = {};
+  if (card.kind === 'character') {
+    for (const [slot, trait] of CHARACTER_CARD_LOOK_TRAITS) {
+      const value = card.slots[slot]?.trim();
+      if (value) traits[trait] = value;
+    }
+  }
+  return { summary, traits };
+};
 
 /** A change of look the writer tagged. */
 export interface LookChange {
@@ -256,13 +286,16 @@ const namesOf = (entry: Pick<CodexEntry, 'name' | 'aliases'>) => [entry.name, ..
  * them appearing is flagged, once a chapter. Nothing here is stored, so it
  * always reflects each chapter's current version.
  */
-export function deriveAppearances({ entries, chapters, declaredFactions = [] }: {
+export function deriveAppearances({ entries, chapters, declaredFactions = [], world }: {
   entries: readonly CodexEntry[];
   chapters: readonly AppearancesChapter[];
   /** Factions the story declares: a group that speaks is never a character who should have appeared. */
   declaredFactions?: readonly DeclaredFaction[];
+  /** The story's world record: a subject whose entry is a card looks the way its card says. */
+  world?: WorldRecord;
 }): AppearancesState {
   const byId = new Map(entries.map(entry => [entry.id, entry]));
+  const cards = new Map((world?.cards ?? []).map(card => [card.key, card]));
   const subjects = new Map<string, AppearanceSubject>();
   const recency = new Map<string, number>();
   const flags: AppearanceFlag[] = [];
@@ -388,7 +421,22 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
   // A look written on demand is kept on the Codex entry: it stands for the passages it was written from, and is stale once a tag adds another.
   for (const subject of subjects.values()) {
     const sources = appearanceSources(subject);
-    const kept = subject.entryId ? byId.get(subject.entryId)?.look : undefined;
+    const entry = subject.entryId ? byId.get(subject.entryId) : undefined;
+    const kept = entry?.look;
+    // A world card's look is its card's: the sentence that first showed it on
+    // the page is where the story met it, never what it looks like. It stands
+    // until a look tag changes it; then the look is written again from the
+    // card's look and every change, and that one is kept.
+    const card = entry?.cardKey ? cards.get(entry.cardKey) : undefined;
+    const stated = card && worldCardLook(card);
+    if (stated && !(kept?.summary.trim() && subject.changes.length && kept.from.length > 1)) {
+      const recorded: RecordedLook = { ...stated, passage: subject.first, fromCard: true };
+      subject.looks.push(recorded);
+      subject.look = recorded;
+      if (subject.changes.length) subject.lookStale = true;
+      else delete subject.lookStale;
+      continue;
+    }
     if (kept?.summary.trim()) {
       // The look stands at the last passage it was written from; a change after it is shown as "since then".
       const passages = [subject.first, ...subject.changes.map(change => change.passage)];

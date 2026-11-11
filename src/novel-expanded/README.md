@@ -376,6 +376,12 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-11** — **Minor figures and Promote in the Codex** (SENSEI). In a story made from a
+  World Blueprint, the Codex's card tabs hold only the world's cards. Whoever and whatever a
+  chapter brought in with no card is listed under a new **Minor** tab, with the sentence that
+  introduced it and its chapters. **Promote** makes one a real card and opens it; the reader
+  fills the card in, and anything left blank stays blank. A main card's look now comes from
+  its card and is marked "From its card". Only the story's creator sees Promote.
 - **2026-11-04** — **Each tag group its own style** (SENSEI). In Create mode, Media tags
   (Soundscape, Atmosphere, Sound Cues) keep the full highlight and Story info tags (Speakers,
   Holdings, Appearances, Status, Place) are drawn as a colored underline, so the two groups read

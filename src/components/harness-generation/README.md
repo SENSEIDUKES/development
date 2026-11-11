@@ -377,6 +377,35 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-11 (a character card states its whole look):** SENSEI, reading the
+  cards the Blueprint made for The Frost-Scaled Companion: each character had
+  one outfit and one prop, and since a card's look is now the look everything
+  uses, a thin card stays thin. The character card (`WORLD_CARD_KINDS`) gains
+  Build, Face, Hair, Clothing, Marks and Bearing beside Skin and Eyes, and its
+  Look asks for a short portrait of two or three sentences. `worldCardLook`
+  carries each filled slot as its trait, and `bearing` is a ninth character
+  look trait (`CHARACTER_LOOK_TRAITS`), so the Codex shows it and a picture is
+  asked for it. The World skill (SEN World Builder 1.3.0) says what a Look is;
+  the Origin skill (SEN Eastern Fantasy 1.3.0) says how these novels describe
+  people, taking its cue from the Seed's tags, genre and premise. Neither
+  names a feature or a stock phrase, because a model repeats what it is shown.
+  SENSEI approved the words first; they are in Writer Instructions' history.
+  A picture request's Look may now run to 600 characters, and so may a
+  promoted card's slot.
+- **2026-11-11 (the world state pipeline, phase 1's architecture):** SENSEI
+  asked for the missing architecture before any tagger work. Every card of
+  the world record is now a Codex entry from the moment the story is created
+  (`codexEntriesWithWorldCards`, `CodexEntry.cardKey`, `origin: world`), so a
+  tag finds a card and never makes one. A card's look is its card's
+  (`worldCardLook`), so a tagged sentence no longer becomes the main
+  character's look in Appeared or in the Codex. In a story with a world
+  record, an entry a tag made with no card is a minor figure
+  (`isMinorEntry`): the Codex lists it under Minor, and the reader may promote
+  it to a card and fill the card in (`shared/promotion.ts`), with no model
+  call. Schema 48 gives every saved story's cards their entries. No words a
+  model reads changed; the tagger's wording, stacking conditions, a card's arc
+  and the Blueprint's companion card are the second half
+  ([the plan](../../../docs/world-state-pipeline.md)).
 - **2026-11-10 (Setting, in place of Scene):** SENSEI dropped the planned
   Scene tag: where, who and mood were already recorded, and only when was
   not. The tagger tags the sentence that says when it is or what it is like,

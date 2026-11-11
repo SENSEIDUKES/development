@@ -11,7 +11,7 @@ import type { CodexCharacter, CodexPlace, CodexWorldCard, StoryCodexRecord } fro
  */
 
 const passage = { chapterNumber: 1, blockId: 'c1-p1', text: 'Then.' };
-const empty: StoryCodexRecord = { characters: [], factions: [], abilities: [], places: [], species: [], checks: [], items: [] };
+const empty: StoryCodexRecord = { characters: [], factions: [], abilities: [], places: [], species: [], minor: [], checks: [], items: [] };
 const chen: CodexCharacter = { key: 'chen', name: 'Ye Chen', mainCharacter: true, firstSeen: passage, things: [], abilities: [], chronicle: [] };
 const edict: CodexWorldCard = { key: 'world:ability:frostbrush-edict', name: 'Frostbrush Edict', firstSeen: passage, atChapterZero: [] };
 

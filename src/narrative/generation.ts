@@ -48,7 +48,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * chapter's optional ties (how two characters stand, from the tie tag); 47
  * adds each chapter's optional settings (when it is and what it is like, from
  * the setting tag). */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 47 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 48 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;

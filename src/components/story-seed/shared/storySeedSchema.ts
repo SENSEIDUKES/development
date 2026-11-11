@@ -170,10 +170,17 @@ export interface StorySeedCharacter {
   role?: string;
   gender?: string;
   age?: string;
-  /** How they look, in one line: the look an artist draws them from. */
+  /** How they look: a short portrait, with their nature showing in it. */
   appearance?: string;
+  build?: string;
+  face?: string;
+  hair?: string;
   skinTone?: string;
   eyeColor?: string;
+  clothing?: string;
+  marks?: string;
+  /** How their nature shows in the way they stand, move and look at people. */
+  bearing?: string;
   species?: string;
   /** The place they are in when the story opens. */
   location?: string;
@@ -252,8 +259,14 @@ export interface StorySeedMainCharacter {
   gender?: string;
   age?: string;
   appearance?: string;
+  build?: string;
+  face?: string;
+  hair?: string;
   skinTone?: string;
   eyeColor?: string;
+  clothing?: string;
+  marks?: string;
+  bearing?: string;
   species?: string;
   location?: string;
   powerType?: string;

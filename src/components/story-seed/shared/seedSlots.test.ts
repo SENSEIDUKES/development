@@ -16,6 +16,10 @@ describe('The Blueprint fills every Story Seed slot the creator left blank', () 
       // Blank before; the creator's identity, personality, advantage, weakness and bio stay theirs.
       mainFlaw: 'Cannot trust anyone who has not died beside him',
       moralAlignment: 'Pragmatic protector',
+      // The look slots a character card gained on 2026-11-11, blank in the creator's Seed.
+      build: 'Lean and wiry, a little under average height', face: 'Narrow and sharp, hollow under the cheekbones',
+      hair: 'Black, tied back with a strip of cloth', clothing: "A quarry laborer's grey hemp, worn through at the knees",
+      marks: 'A burn scar across one palm', bearing: 'Watchful, keeping a wall at his back',
     });
   });
 

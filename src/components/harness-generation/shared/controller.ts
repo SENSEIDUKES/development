@@ -45,7 +45,7 @@ import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { codexEntriesWithoutChapter, createCodexEntryResolver, declaredCharacters, deriveHoldings, holdingsSection, resolveHoldingChanges } from './holdings';
 import { MEDIA_TAG_WARNING_CODES, planChapterTagging, readChapterTagging, retagChapterGap } from './tagger';
-import { appearanceSources, deriveAppearances, placeAppearancesFromPlaces, resolveAppearances, thingAppearancesFromHoldings } from './appearances';
+import { appearanceSources, deriveAppearances, placeAppearancesFromPlaces, resolveAppearances, thingAppearancesFromHoldings, worldCardLook } from './appearances';
 import { deriveStatuses, resolveStatuses } from './statuses';
 import { derivePlaces, resolvePlaces } from './places';
 import { deriveTies, resolveTies } from './ties';
@@ -58,6 +58,8 @@ import {
   type HarnessGenerationRepository,
 } from './repository';
 import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
+import type { StoryWorldCard } from '../../../narrative/generation';
+import { fillPromotedCard, promoteMinorFigure } from './promotion';
 import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessTaggerChoice, HarnessTagFocus, HarnessTagRequest, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export interface HarnessGenerationControllerOptions {
@@ -811,6 +813,27 @@ export class HarnessGenerationController {
       await this.persist(corrected.state);
       return cloneHarnessValue(corrected.correction);
     } finally { this.generating = false; }
+  }
+
+  /**
+   * Promote: a minor figure becomes a world card, as of the latest chapter
+   * (`promoteMinorFigure`). No model is called: the card starts with its name.
+   */
+  async promoteCodexEntry(storyId: string, entryId: string): Promise<StoryWorldCard> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the chapter being written before promoting to a card.');
+    const promoted = promoteMinorFigure(this.state, storyId, entryId);
+    await this.persist(promoted.state);
+    return promoted.card;
+  }
+
+  /** Fills a card the reader promoted (`fillPromotedCard`): the reader fills, the rest stays blank. */
+  async fillPromotedCard(storyId: string, cardKey: string, slots: Readonly<Record<string, string>>): Promise<StoryWorldCard> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the chapter being written before changing a card.');
+    const filled = fillPromotedCard(this.state, storyId, cardKey, slots);
+    await this.persist(filled.state);
+    return filled.card;
   }
 
   /** Reader/Codex edits use the same repository and correction journal as all HARNESS canon. */
@@ -2007,7 +2030,8 @@ export class HarnessGenerationController {
     if (!story) throw new Error('This story is no longer available.');
     const chapters = this.state.chapters.filter(chapter => chapter.storyId === storyId);
     const entries = this.state.codexEntries.filter(entry => entry.storyId === storyId);
-    const subject = deriveAppearances({ entries, chapters }).subjects.find(candidate => (candidate.entryId ?? candidate.key) === key);
+    const world = storyWorldRecord(this.state, storyId);
+    const subject = deriveAppearances({ entries, chapters, world }).subjects.find(candidate => (candidate.entryId ?? candidate.key) === key);
     if (!subject) throw new Error('The story has not shown this one on the page yet, so it has no look to write.');
     if (subject.look && !subject.lookStale) return { summary: subject.look.summary, traits: { ...subject.look.traits } };
     const latest = latestStoryChapter(this.state, storyId);
@@ -2015,9 +2039,12 @@ export class HarnessGenerationController {
     if (!this.modelAdapter.describeLooks || !latest || !model) throw new Error('This host cannot write a look yet.');
     const entry = subject.entryId ? entries.find(candidate => candidate.id === subject.entryId) : undefined;
     const attempt = this.state.attempts.find(candidate => candidate.id === latest.attemptId);
+    // A card's own look is what its author declared: the look is written from it and every change since.
+    const card = entry?.cardKey ? world?.cards.find(candidate => candidate.key === entry.cardKey) : undefined;
     const request = planCodexLook({
       subject, identities: attempt?.storyInformation.currentStory.identities,
       names: entry ? [entry.name, ...(entry.aliases ?? [])] : [subject.name],
+      ...(card ? { cardLook: worldCardLook(card) } : {}),
     });
     let raw: string | undefined;
     let problem: string | undefined;

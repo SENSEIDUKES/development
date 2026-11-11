@@ -1,7 +1,9 @@
 import { cloneHarnessValue, stableHarnessId } from './ids';
 import { SEN_NOVEL_AUTHOR_SKILL } from './authorSkill';
 import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState } from '../../../narrative/generation';
-import { WORLD_CARD_KINDS, worldCardKey } from '../../../narrative/worldRecord';
+import { WORLD_CARD_KINDS, worldCardKey, type WorldCard } from '../../../narrative/worldRecord';
+import type { CodexEntry } from '../../../narrative/holdings';
+import { codexEntriesWithWorldCards } from './holdings';
 
 export const createEmptyHarnessWorkspaceState = (): HarnessWorkspaceState => ({
   schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION,
@@ -183,6 +185,36 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   45: stored => ({ ...stored, schemaVersion: 46 }),
   // 47 adds only an optional field (each chapter's settings): every saved story reads as it is.
   46: stored => ({ ...stored, schemaVersion: 47 }),
+  // 48 makes every world card a Codex entry from the moment it is made. A saved
+  // story's cards had an entry only once a chapter's tag named them, so each
+  // card without one gets its entry now, and an entry a tag made by a card's
+  // name becomes that card's entry and keeps its ID, so every tag still points
+  // at it. An entry with no card stays as it is: in a story with a world it now
+  // reads as a minor figure.
+  47: stored => ({ ...stored, codexEntries: codexEntriesOfSavedWorlds(stored), schemaVersion: 48 }),
+};
+
+/**
+ * Every saved story's Codex entries with one for each of its world cards. A
+ * new entry's ID is worked out from its story and its card, so upgrading the
+ * same storage twice gives the same entries.
+ */
+const codexEntriesOfSavedWorlds = (stored: StoredWorkspace): unknown[] => {
+  const rows = (field: string) => (Array.isArray(stored[field]) ? stored[field] as unknown[] : [])
+    .filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === 'object' && !Array.isArray(row));
+  let entries = rows('codexEntries') as unknown as CodexEntry[];
+  const cards = rows('worldCards') as unknown as Array<WorldCard & { storyId?: unknown }>;
+  for (const story of rows('stories')) {
+    if (typeof story.id !== 'string') continue;
+    const storyId = story.id;
+    entries = codexEntriesWithWorldCards({
+      storyId, entries,
+      cards: cards.filter(card => card.storyId === storyId && typeof card.key === 'string' && typeof card.name === 'string'),
+      createdAt: typeof story.createdAt === 'string' ? story.createdAt : '',
+      createId: card => stableHarnessId('hcx', storyId, card.key),
+    });
+  }
+  return entries;
 };
 
 /** The CAPA slots that left the schema when the tagger took the tags (schema 39). */

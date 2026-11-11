@@ -70,9 +70,17 @@ export const WORLD_CARD_KINDS: readonly WorldCardKind[] = [
       { id: 'role', label: 'Role', test: 'save-game', changes: false, asks: 'their part in the story: ally, rival, elder, master' },
       { id: 'gender', label: 'Gender', test: 'artist', changes: false, asks: 'their gender' },
       { id: 'age', label: 'Age', test: 'artist', changes: true, asks: 'their age' },
-      { id: 'appearance', label: 'Look', test: 'artist', changes: true, asks: 'how they look, in one line an artist could draw them from' },
+      // A character's look is a short portrait and the traits an artist draws from (SENSEI, 2026-11-11):
+      // a card's look is the look everything uses, so the card states it whole.
+      { id: 'appearance', label: 'Look', test: 'artist', changes: true, asks: 'a short portrait of two or three sentences: what strikes the eye first, with their nature showing in it' },
+      { id: 'build', label: 'Build', test: 'artist', changes: true, asks: 'their height and build' },
+      { id: 'face', label: 'Face', test: 'artist', changes: false, asks: 'their face: its shape and what stands out in it' },
+      { id: 'hair', label: 'Hair', test: 'artist', changes: true, asks: 'their hair: its colour, its length and how it is worn' },
       { id: 'skinTone', label: 'Skin', test: 'artist', changes: false, asks: 'their skin' },
       { id: 'eyeColor', label: 'Eyes', test: 'artist', changes: false, asks: 'their eyes' },
+      { id: 'clothing', label: 'Clothing', test: 'artist', changes: true, asks: 'what they wear when the story opens' },
+      { id: 'marks', label: 'Marks', test: 'artist', changes: true, asks: 'scars, marks or anything that sets them apart' },
+      { id: 'bearing', label: 'Bearing', test: 'artist', changes: true, asks: 'how their nature shows in the way they stand, move and look at people' },
       { id: 'species', label: 'Species', test: 'artist', changes: false, asks: 'their species, when they are not human' },
       { id: 'location', label: 'Where they are', test: 'save-game', changes: true, asks: 'the place they are in when the story opens' },
       { id: 'powerType', label: 'Power', test: 'both', changes: false, asks: 'the kind of power they use' },

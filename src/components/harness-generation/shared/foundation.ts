@@ -3,6 +3,7 @@ import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/la
 import { FATE_PRESSURE_TIERS, isFatePressure, normalizeFunSettings, validateHardPinInputs } from '../../../narrative/storyDirection';
 import { normalizeWorldRecord, type WorldRecord } from '../../../narrative/worldRecord';
 import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, stableHarnessId, type HarnessRuntime } from './ids';
+import { codexEntriesWithWorldCards, codexEntryIdsNamedBy } from './holdings';
 import type { HarnessStory, HarnessWorkspaceState, StoryFoundationInput, StoryFoundationRevision, StoryWorldCard, HarnessCanonicalRecord } from '../../../narrative/generation';
 
 export const foundationIdentityRecords = (foundation: StoryFoundationRevision): HarnessCanonicalRecord[] =>
@@ -194,6 +195,7 @@ export const createHarnessStory = (
     goalCompletions: [],
     hardPins: (normalizedInput.initialHardPins ?? []).map(pin => ({ ...pin, id: pin.id ?? runtime.createId('hpin'), createdAt, updatedAt: createdAt })),
   };
+  const opening = openingWorldCards(storyId, normalizedInput);
   return {
     state: {
       ...state,
@@ -201,7 +203,11 @@ export const createHarnessStory = (
       foundations: [...state.foundations, foundation],
       canonicalRecords: [...state.canonicalRecords, ...foundationIdentityRecords(foundation)],
       // The world the author wrote opens this story's record; the chapters add to it from here.
-      worldCards: [...state.worldCards, ...openingWorldCards(storyId, normalizedInput)],
+      worldCards: [...state.worldCards, ...opening],
+      // Every card is a Codex entry from the moment it is made: a tag finds it, never makes it.
+      codexEntries: codexEntriesWithWorldCards({
+        storyId, entries: state.codexEntries, cards: opening, createdAt, createId: () => runtime.createId('hcx'),
+      }),
     },
     story,
     foundation,
@@ -234,12 +240,20 @@ export const reviseStoryFoundation = (
     activeFoundationRevisionId: foundation.id,
     foundationRevisionIds: [...story.foundationRevisionIds, foundation.id],
   };
+  const worldCards = reseededWorldCards(state.worldCards, storyId, normalizedInput);
   return {
     state: {
       ...state,
       stories: state.stories.map(candidate => candidate.id === storyId ? revisedStory : candidate),
       foundations: [...state.foundations, foundation],
-      worldCards: reseededWorldCards(state.worldCards, storyId, normalizedInput),
+      worldCards,
+      // The entries follow the cards: a new card gets its entry, and an entry
+      // whose card the author removed goes with it unless a chapter tagged it.
+      codexEntries: codexEntriesWithWorldCards({
+        storyId, entries: state.codexEntries, cards: worldCards.filter(card => card.storyId === storyId),
+        usedEntryIds: new Set(state.chapters.filter(chapter => chapter.storyId === storyId).flatMap(codexEntryIdsNamedBy)),
+        createdAt, createId: () => runtime.createId('hcx'),
+      }),
       canonicalRecords: [
         ...state.canonicalRecords.map(record => record.storyId === storyId && record.sourceFoundationRevisionId && !record.supersededAt
           ? { ...record, supersededAt: createdAt } : record),

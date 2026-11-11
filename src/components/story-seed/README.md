@@ -234,6 +234,7 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-11-11:** A character card states its whole look. The Seed's main character and side characters gained Build, Face, Hair, Clothing, Marks and Bearing, from the Codex's one definition of a character card, so the Seed forms, the Blueprint's cast screen and the Codex all show them; every one is optional, and the Blueprint fills the blanks. The Look itself is a short portrait now. See the Harness Generation README.
 - **2026-11-06 (the world on its one World card):** From SENSEI's Story Form.
   The World rules card gains Kind of world (`kindOfWorld`) and Who rules
   (`whoRules`), read first. World Identity keeps only the title; its World

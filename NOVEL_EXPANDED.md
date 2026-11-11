@@ -1306,7 +1306,12 @@ where it stands; this list was checked against the code on 2026-11-06.
   half of the world at Chapter 0 (SENSEI, 2026-11-08). Every main card is a
   Codex entry from the start, the tagger uncovers cards instead of inventing
   them, Alter Fate adds real cards, and arc boundaries sort what carries on.
-  None built; three phases, each with SENSEI's questions first.
+  Phase 1's architecture is built (2026-11-11): every card is an entry when
+  the story is created, a card's look is its card's, and whoever a chapter
+  brings in with no card is a minor figure the reader may promote and fill
+  in. Open: phase 1's words (the tagger linking to cards, conditions that
+  stack, a card's arc, a companion's card from the Blueprint), then phases 2
+  and 3, each with SENSEI's questions first.
 - [CTE consequences](./docs/cte-consequences.md): direction, none built.
 - [SEIHouse Front Desk](./docs/front-desk-plan.md), the Familiar's plan: steps 1
   and 2 (Front Desk separated, then lifted into its own repository and vendored

@@ -39,7 +39,7 @@ No lettering, logos, signatures, or watermarks.`;
 export const CODEX_PICTURE_ASPECT_RATIO = '3:4';
 
 /** The most text each part of a card may carry; the story's fields keep the cover's limits. */
-export const CODEX_PICTURE_FIELD_LIMITS = { name: 120, look: 300, trait: 200 } as const;
+export const CODEX_PICTURE_FIELD_LIMITS = { name: 120, look: 600, trait: 200 } as const;
 
 const TRAITS: Record<CodexPictureRequest['card']['subject'], readonly LookTrait[]> = { character: CHARACTER_LOOK_TRAITS, thing: THING_LOOK_TRAITS };
 

@@ -75,6 +75,7 @@ export const STORY_KNOWLEDGE_CATEGORIES = {
   places: 'This story: places',
   abilities: 'This story: abilities',
   species: 'This story: species',
+  minor: 'This story: minor figures',
   world: 'This story: world',
   chapters: 'This story: chapters',
   spoilers: 'This story: spoilers',
@@ -184,6 +185,12 @@ export function storyKnowledge({ codex, chapters, openChapterNumber }: {
     { id: 'story-places', title: places, topics: codex.places.map((card, at) => topic('story-place', at, card.name, card.aliases, codexPlaceText(card))) },
     { id: 'story-abilities', title: abilities, topics: codex.abilities.map((card, at) => topic('story-ability', at, card.name, card.aliases, codexWorldCardText(card))) },
     { id: 'story-species', title: species, topics: codex.species.map((card, at) => topic('story-species', at, card.name, card.aliases, codexWorldCardText(card))) },
+    // Minor figures have no card: a companion knows only what the story's light record of them holds.
+    { id: 'story-minor', title: STORY_KNOWLEDGE_CATEGORIES.minor, topics: codex.minor.map((minor, at) => topic('story-minor', at, minor.name, [], joined([
+      sentence(`A minor ${minor.kind === 'character' ? 'figure' : minor.kind} the story uses without tracking`),
+      sentence(`In ${minor.chapters.length === 1 ? 'Chapter' : 'Chapters'} ${minor.chapters.join(', ')}`),
+      sentence(`Introduced: ${minor.introduced.text}`),
+    ]))) },
     { id: 'story-world', title: world, topics: codex.worldRules?.length
       ? [topic('story-world', 0, 'World rules', ['rules of the world', 'how the world works'], joined(facts(codex.worldRules)))] : [] },
     { id: 'story-chapters', title: STORY_KNOWLEDGE_CATEGORIES.chapters, topics: [...chapters]

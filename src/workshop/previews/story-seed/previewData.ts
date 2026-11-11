@@ -45,6 +45,9 @@ export const createMockSeedSlotAnswer = () => ({
   mainCharacter: {
     name: 'Ye Chen', age: 'Nineteen', personality: 'Ruthless but protective, chaotic neutral',
     appearance: 'Lean and wiry, with sharp, weary eyes and a burn scar across one palm.',
+    build: 'Lean and wiry, a little under average height', face: 'Narrow and sharp, hollow under the cheekbones',
+    hair: 'Black, tied back with a strip of cloth', clothing: "A quarry laborer's grey hemp, worn through at the knees",
+    marks: 'A burn scar across one palm', bearing: 'Watchful, keeping a wall at his back',
     backgroundProfile: 'Ye Chen remembers dying seven times beside the Ninth Prince; each timeline taught him one more name to fear.',
     startingIdentity: 'Crippled young master, secretly the reincarnated Ninth Prince',
     secretAdvantage: 'Foreknowledge of seven doomed timelines',
@@ -57,6 +60,9 @@ export const createMockSeedSlotAnswer = () => ({
     {
       name: 'Elder Qin', role: 'Sect Elder', age: 'Ancient', gender: 'Man', skinTone: 'Weathered bronze', eyeColor: 'Frost grey',
       appearance: 'A tall old man in frost-rimed grey robes, his left sleeve pinned empty, a brush case at his belt.',
+      build: 'Tall and spare', face: 'Long and deeply lined', hair: 'White, bound in a plain topknot',
+      clothing: 'Frost-rimed grey robes, the left sleeve pinned empty', marks: 'Left arm lost at the shoulder',
+      bearing: 'Stands very still and lets silences run long',
       powerType: 'Frost Dao', rankLevel: 'Nascent Soul', connectionToMC: 'Secret protector', bio: 'A retired enforcer.',
       location: 'Azure Hall', status: 'Well, one arm lost', holds: 'Iron Brush', knows: 'Frostbrush Edict',
       goals: "Repay a life debt to Ye Chen's father", ties: 'Sworn brother to the dead patriarch', belongsTo: 'Heavenly Sword Sect',
@@ -65,6 +71,8 @@ export const createMockSeedSlotAnswer = () => ({
     {
       name: 'Junior Sister Han', role: 'Ally', age: 'Seventeen', gender: 'Woman', skinTone: 'Pale', eyeColor: 'Amber',
       appearance: 'A slight girl in a patched outer-sect robe, ink on her fingers, talisman paper tucked in her sash.',
+      build: 'Slight and quick', face: 'Round, with a pointed chin', hair: 'Black, in two loose braids',
+      clothing: 'A patched outer-sect robe with talisman paper in the sash', bearing: 'Head down, hands always busy',
       powerType: 'Talisman craft', rankLevel: 'Qi Condensation 6', connectionToMC: 'Fellow quarry laborer',
       bio: 'A talisman prodigy hiding her talent from the inner sect.',
       location: 'Rift Quarry', status: 'Well', holds: 'Half-finished talisman roll', knows: 'Lesser Binding Script',

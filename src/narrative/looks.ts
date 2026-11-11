@@ -1,7 +1,7 @@
 // How a character, thing or place looks: kept apart so the Codex entry (holdings) can carry its look without importing appearances.
 
 /** The traits a character's look is told by. Each is a few words in the story's own language; any may be unknown. */
-export const CHARACTER_LOOK_TRAITS = ['build', 'face', 'eyes', 'hair', 'skin', 'clothing', 'marks', 'gear'] as const;
+export const CHARACTER_LOOK_TRAITS = ['build', 'face', 'eyes', 'hair', 'skin', 'clothing', 'marks', 'gear', 'bearing'] as const;
 /** The traits a thing's look is told by. */
 export const THING_LOOK_TRAITS = ['form', 'size', 'material', 'colour', 'condition', 'marks'] as const;
 /** The traits a place's look is told by: what the Blueprint's place card asks for, its land, its buildings, its light, its size. */
@@ -25,6 +25,8 @@ export interface CodexEntryLook extends Look {
   from: string[];
   /** Where the passages contradict the look the story's author declared, in one short sentence. */
   conflict?: string;
+  /** The look its world card stated when this was written, as one line: when the card's look changes, it is written again. */
+  cardLook?: string;
   at: string;
   model?: string;
 }

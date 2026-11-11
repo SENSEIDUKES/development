@@ -1,11 +1,12 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Archive, Backpack, ChevronLeft, Eye, Flag, Hand, LoaderCircle, Lock, MapPin, Package, PawPrint, Scale, ScrollText, Sparkles, Sword, TriangleAlert, Users, WandSparkles } from 'lucide-react';
+import { Archive, ArrowUpCircle, Backpack, ChevronLeft, Eye, Flag, Footprints, Hand, LoaderCircle, Lock, MapPin, Package, PawPrint, PenLine, Scale, ScrollText, Sparkles, Sword, TriangleAlert, Users, WandSparkles } from 'lucide-react';
 import './story-codex.css';
 import { CodexCardButton, CodexProfileHeader, type CodexCardCategory } from './codexCardParts';
 import { CODEX_VERB_LABELS } from '../shared/storyKnowledge';
 import { CHARACTER_LOOK_TRAITS, PLACE_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
-import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, CodexPictureCard, CodexPictures, CodexPlace, CodexWorldCard, CodexWorldFact, StoryCodexRecord } from '../shared/storyCodex';
+import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexMinor, CodexPassage, CodexPictureCard, CodexPictures, CodexPlace, CodexPromotedCard, CodexWorldCard, CodexWorldFact, StoryCodexRecord } from '../shared/storyCodex';
+import { PROMOTED_CARD_SLOT_CHARACTERS, promotedCardSlots } from '../shared/promotion';
 import './reader-colors.css';
 
 /** How each change reads in the Codex. */
@@ -13,7 +14,7 @@ const VERB_LABELS = CODEX_VERB_LABELS;
 
 /** How each trait of a look is named, in the order a look is read. */
 const TRAIT_LABELS: Record<LookTrait, string> = {
-  build: 'Build', face: 'Face', eyes: 'Eyes', hair: 'Hair', skin: 'Skin', clothing: 'Clothing', marks: 'Marks', gear: 'Gear',
+  build: 'Build', face: 'Face', eyes: 'Eyes', hair: 'Hair', skin: 'Skin', clothing: 'Clothing', marks: 'Marks', gear: 'Gear', bearing: 'Bearing',
   form: 'Form', size: 'Size', material: 'Material', colour: 'Colour', condition: 'Condition',
   land: 'Land', buildings: 'Buildings', light: 'Light',
 };
@@ -21,7 +22,8 @@ const TRAIT_LABELS: Record<LookTrait, string> = {
 /** Opens the chapter behind a fact, at its paragraph, with the Codex still open. */
 type ReadPassage = (chapterNumber: number, blockId: string) => void;
 
-type CodexTab = CodexCardCategory;
+/** The card kinds, then Minor: the figures the story used that have no card. */
+type CodexTab = CodexCardCategory | 'minor';
 
 /** The world a story opened with: its facts came from the Story Seed and the World Blueprint, before any chapter. */
 const AT_THE_START = 'In the world from the start';
@@ -48,7 +50,7 @@ function scrollBoxOf(element: HTMLElement | null): HTMLElement | undefined {
  * sit at its foot. Every category's cards are the same card.
  */
 function CodexCard({ category, name, line, badge, featured = false, testId, cardKey, picture, making, onOpen }: {
-  category: CodexTab; name: string; line: string; badge?: string; featured?: boolean; testId: string; cardKey: string; picture?: string; making?: boolean; onOpen: () => void;
+  category: CodexCardCategory; name: string; line: string; badge?: string; featured?: boolean; testId: string; cardKey: string; picture?: string; making?: boolean; onOpen: () => void;
 }) {
   return <li>
     <CodexCardButton category={category} name={name} line={line} badge={badge} featured={featured} picture={picture} making={making}
@@ -215,7 +217,10 @@ function LookSection({ name, appearance, traits, onReadPassage }: {
         : <p className="text-sm text-(--reader-text-dim)">No look written down yet.</p>}
     {look && appearance.lookStale && <p className="text-xs text-(--reader-text-faint)" data-testid="codex-look-stale">The story has changed this look since. Manifest writes it again.</p>}
     {look && <div className="flex flex-wrap gap-1.5">
-      <PassageChip passage={look.passage} label={`Look · Ch. ${look.passage.chapterNumber}`} onReadPassage={onReadPassage} />
+      {look.fromCard
+        // A card's look is its card's own: no passage wrote it.
+        ? <span data-testid="codex-look-from-card" className="inline-flex min-h-8 items-center rounded-full border border-(--reader-light)/12 bg-(--reader-light)/[0.04] px-2.5 text-[11px] text-(--reader-text-muted)">From its card</span>
+        : <PassageChip passage={look.passage} label={`Look · Ch. ${look.passage.chapterNumber}`} onReadPassage={onReadPassage} />}
     </div>}
     {appearance.changes.length > 0 && <details data-testid="codex-look-changes">
       <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-full px-1 text-[11px] text-(--reader-text-dim) hover:text-(--reader-text-soft)">Changes ({appearance.changes.length})</summary>
@@ -227,13 +232,102 @@ function LookSection({ name, appearance, traits, onReadPassage }: {
   </Section>;
 }
 
+/** Fills a promoted card's slots. Rejects with a reason the reader can read. */
+type FillCard = (cardKey: string, slots: Record<string, string>) => Promise<void>;
+
+/**
+ * The card of someone or something a reader promoted: what they have filled
+ * in, and a form for the rest. Every slot is optional; a blank one stays blank
+ * (SENSEI, 2026-11-11). The slots are the card kind's own, the same ones the
+ * Story Seed and the World Blueprint fill.
+ */
+function PromotedCard({ name, promoted, facts, onFill }: {
+  name: string; promoted: CodexPromotedCard; facts: readonly CodexWorldFact[]; onFill?: FillCard;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [problem, setProblem] = useState<string>();
+  const slots = promotedCardSlots(promoted.kind);
+  const title = `Card · since Chapter ${promoted.enteredInChapter}`;
+  const start = () => { setDraft(Object.fromEntries(slots.map(slot => [slot.id, promoted.slots[slot.id] ?? '']))); setProblem(undefined); setEditing(true); };
+  const save = () => {
+    if (!onFill || saving) return;
+    setSaving(true);
+    setProblem(undefined);
+    onFill(promoted.key, draft)
+      .then(() => setEditing(false))
+      .catch((error: unknown) => setProblem(error instanceof Error && error.message ? error.message : 'The card could not be saved. Please try again.'))
+      .finally(() => setSaving(false));
+  };
+  if (editing) return <Section title={title} icon={<PenLine size={12} aria-hidden />} label={`${name}: fill in card`} testId="codex-card-form">
+    <form className="space-y-3 rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] p-4" onSubmit={event => { event.preventDefault(); save(); }}>
+      <p className="text-xs text-(--reader-text-dim)">Fill in what you know. Anything left blank stays blank.</p>
+      {slots.map(slot => <label key={slot.id} className="block">
+        <span className="text-[11px] uppercase tracking-[0.14em] text-(--reader-text-faint)">{slot.label}</span>
+        <input type="text" value={draft[slot.id] ?? ''} maxLength={PROMOTED_CARD_SLOT_CHARACTERS} placeholder={slot.asks} data-slot={slot.id}
+          onChange={event => setDraft(current => ({ ...current, [slot.id]: event.target.value }))}
+          className="mt-1 min-h-11 w-full min-w-0 rounded-lg border border-(--reader-light)/15 bg-(--reader-shade)/40 px-3 text-sm text-(--reader-text) placeholder:text-(--reader-text-faint) focus:border-(--reader-light)/40 focus:outline-none" />
+      </label>)}
+      {problem && <p role="alert" className="text-xs text-(--reader-warning-soft)">{problem}</p>}
+      <div className="flex gap-2">
+        <button type="submit" disabled={saving} className="min-h-11 flex-1 rounded-full bg-(--reader-light)/90 px-4 text-sm font-medium text-(--reader-shade) hover:bg-(--reader-light) disabled:opacity-60">{saving ? 'Saving…' : 'Save card'}</button>
+        <button type="button" disabled={saving} onClick={() => setEditing(false)} className="min-h-11 flex-1 rounded-full border border-(--reader-light)/15 px-4 text-sm text-(--reader-text-soft) hover:border-(--reader-light)/30">Cancel</button>
+      </div>
+    </form>
+  </Section>;
+  return <div className="space-y-2" data-testid="codex-promoted-card">
+    {facts.length > 0
+      ? <WorldAtTheStart name={name} facts={facts} title={title} />
+      : <Section title={title} icon={<ScrollText size={12} aria-hidden />} label={`${name}: ${title}`}>
+          <p className="text-sm text-(--reader-text-dim)">You promoted {name} to a card. It is blank until you fill it in.</p>
+        </Section>}
+    {onFill && <button type="button" onClick={start} data-testid="codex-fill-card"
+      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-(--reader-light)/20 bg-(--reader-light)/[0.06] px-5 text-sm font-medium text-(--reader-light) hover:border-(--reader-light)/40">
+      <PenLine size={16} aria-hidden />{facts.length ? 'Edit card' : 'Fill in card'}
+    </button>}
+  </div>;
+}
+
+const MINOR_KIND_LABELS: Record<CodexMinor['kind'], string> = { character: 'Person', thing: 'Item', place: 'Place' };
+/** The most chapters a minor figure's line names before it counts the rest. */
+const MINOR_CHAPTERS_SHOWN = 6;
+const minorChapters = (chapters: readonly number[]) => (chapters.length <= MINOR_CHAPTERS_SHOWN
+  ? `Ch. ${chapters.join(', ')}`
+  : `Ch. ${chapters.slice(0, MINOR_CHAPTERS_SHOWN).join(', ')} and ${chapters.length - MINOR_CHAPTERS_SHOWN} more`);
+
+/**
+ * One minor figure: what the prose calls it, the chapters it was in, the
+ * sentence that introduced it, and Promote beside it.
+ */
+function MinorRow({ minor, promoting, problem, onPromote, onReadPassage }: {
+  minor: CodexMinor; promoting: boolean; problem?: string; onPromote?: () => void; onReadPassage?: ReadPassage;
+}) {
+  return <li className="rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] p-3" data-testid="codex-minor" data-card={minor.key}>
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="break-words text-sm text-(--reader-light)">{minor.name}</p>
+        <p className="mt-0.5 text-[11px] text-(--reader-text-dim)">{MINOR_KIND_LABELS[minor.kind]} · {minorChapters(minor.chapters)}</p>
+      </div>
+      {onPromote && minor.promotable && <button type="button" onClick={onPromote} disabled={promoting} aria-label={`Promote ${minor.name} to a card`}
+        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-(--reader-light)/20 bg-(--reader-light)/[0.06] px-4 text-sm font-medium text-(--reader-light) hover:border-(--reader-light)/40 disabled:opacity-60">
+        {promoting ? <LoaderCircle size={15} aria-hidden className="motion-safe:animate-spin" /> : <ArrowUpCircle size={15} aria-hidden />}
+        {promoting ? 'Promoting…' : 'Promote'}
+      </button>}
+    </div>
+    <blockquote className="mt-2 break-words text-sm italic leading-relaxed text-(--reader-text-soft)">{minor.introduced.text}</blockquote>
+    <div className="mt-2"><PassageChip passage={minor.introduced} label={`Introduced · Ch. ${minor.introduced.chapterNumber}`} onReadPassage={onReadPassage} /></div>
+    {problem && <p role="alert" className="mt-2 text-xs text-(--reader-warning-soft)">{problem}</p>}
+  </li>;
+}
+
 /**
  * An opened card: its art large at the top with its name, then everything the
  * record knows about it together, never scattered across pages. Every
  * category opens into this same profile.
  */
 function Profile({ category, name, line, badges, backLabel, onBack, art, children }: {
-  category: CodexTab; name: string; line: string; badges: readonly string[]; backLabel: string; onBack: () => void;
+  category: CodexCardCategory; name: string; line: string; badges: readonly string[]; backLabel: string; onBack: () => void;
   /** The card's picture and Manifest, when the host makes pictures. */
   art?: ProfileArt; children: ReactNode;
 }) {
@@ -278,7 +372,7 @@ function ManifestControl({ art, name }: { art: ProfileArt; name: string }) {
   </div>;
 }
 
-function CharacterProfile({ character, art, onBack, onReadPassage }: { character: CodexCharacter; art?: ProfileArt; onBack: () => void; onReadPassage?: ReadPassage }) {
+function CharacterProfile({ character, art, onBack, onReadPassage, onFillCard }: { character: CodexCharacter; art?: ProfileArt; onBack: () => void; onReadPassage?: ReadPassage; onFillCard?: FillCard }) {
   const equipped = character.things.filter(thing => thing.equipped);
   const carried = character.things.filter(thing => !thing.equipped);
   return <Profile category="characters" name={character.name} backLabel="All characters" onBack={onBack}
@@ -299,7 +393,9 @@ function CharacterProfile({ character, art, onBack, onReadPassage }: { character
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>
-    {character.atChapterZero && <WorldAtTheStart name={character.name} facts={character.atChapterZero} />}
+    {character.promoted
+      ? <PromotedCard name={character.name} promoted={character.promoted} facts={character.atChapterZero ?? []} onFill={onFillCard} />
+      : character.atChapterZero && <WorldAtTheStart name={character.name} facts={character.atChapterZero} />}
     {character.appearance && <LookSection name={character.name} appearance={character.appearance} traits={CHARACTER_LOOK_TRAITS} onReadPassage={onReadPassage} />}
     {character.voice && <div data-testid="codex-voice"><Words passage={character.voice.first} caption="First words" onReadPassage={onReadPassage} /></div>}
     {equipped.length > 0 && <Section title="Equipped" icon={<Hand size={12} aria-hidden />} label={`${character.name}: Equipped`}>
@@ -311,7 +407,7 @@ function CharacterProfile({ character, art, onBack, onReadPassage }: { character
     {character.abilities.length > 0 && <Section title="Abilities" icon={<Sparkles size={12} aria-hidden />} label={`${character.name}: Abilities`}>
       <ul className="space-y-2">{character.abilities.map(ability => <AbilityRow key={ability.entryId} ability={ability} onReadPassage={onReadPassage} />)}</ul>
     </Section>}
-    {!character.things.length && !character.abilities.length && !character.rank && !character.atChapterZero?.length
+    {!character.things.length && !character.abilities.length && !character.rank && !character.atChapterZero?.length && !character.promoted
       && <p className="text-sm text-(--reader-text-dim)">The story has not shown them holding or learning anything yet.</p>}
     {character.chronicle.length > 0 && <Chronicle events={character.chronicle} onReadPassage={onReadPassage}
       describe={event => `${eventLabel(event)}${event.target && event.verb !== 'rank' ? ` ${event.target}` : event.level ? ` ${event.level}` : ''}`} />}
@@ -332,7 +428,7 @@ function FactionProfile({ faction, onBack, onReadPassage }: { faction: CodexFact
  * of the Bestiary's species.
  */
 function WorldCardProfile({ category, card, backLabel, onBack }: {
-  category: CodexTab; card: CodexWorldCard; backLabel: string; onBack: () => void;
+  category: CodexCardCategory; card: CodexWorldCard; backLabel: string; onBack: () => void;
 }) {
   return <Profile category={category} name={card.name} line={worldFact(card.atChapterZero, 'within') ?? metLine(card)}
     badges={[]} backLabel={backLabel} onBack={onBack}>
@@ -342,7 +438,7 @@ function WorldCardProfile({ category, card, backLabel, onBack }: {
 }
 
 /** A place: the world's facts about it, its look once it stepped onto the page, and who is there now. */
-function PlaceProfile({ place, onBack, onReadPassage }: { place: CodexPlace; onBack: () => void; onReadPassage?: ReadPassage }) {
+function PlaceProfile({ place, onBack, onReadPassage, onFillCard }: { place: CodexPlace; onBack: () => void; onReadPassage?: ReadPassage; onFillCard?: FillCard }) {
   return <Profile category="places" name={place.name} line={worldFact(place.atChapterZero, 'within') ?? metLine(place)}
     badges={[]} backLabel="All places" onBack={onBack}>
     <div className="flex flex-wrap gap-1.5">
@@ -350,12 +446,14 @@ function PlaceProfile({ place, onBack, onReadPassage }: { place: CodexPlace; onB
         ? <PassageChip passage={place.firstSeen} label={`First seen · Ch. ${place.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
         : <span className="inline-flex min-h-8 items-center rounded-full border border-(--reader-light)/12 bg-(--reader-light)/[0.04] px-2.5 text-[11px] text-(--reader-text-muted)">{AT_THE_START}</span>}
     </div>
-    {place.atChapterZero.length > 0 && <WorldAtTheStart name={place.name} facts={place.atChapterZero} />}
+    {place.promoted
+      ? <PromotedCard name={place.name} promoted={place.promoted} facts={place.atChapterZero} onFill={onFillCard} />
+      : place.atChapterZero.length > 0 && <WorldAtTheStart name={place.name} facts={place.atChapterZero} />}
     {place.appearance && <LookSection name={place.name} appearance={place.appearance} traits={PLACE_LOOK_TRAITS} onReadPassage={onReadPassage} />}
     {place.here.length > 0 && <Section title="Here now" icon={<Users size={12} aria-hidden />} label={`${place.name}: Here now`} testId="codex-here">
       <p className="text-sm text-(--reader-text-soft)">{place.here.map(who => who.name).join(', ')}</p>
     </Section>}
-    {!place.atChapterZero.length && !place.appearance && <p className="text-sm text-(--reader-text-dim)">The world records nothing about it yet but its name.</p>}
+    {!place.atChapterZero.length && !place.appearance && !place.promoted && <p className="text-sm text-(--reader-text-dim)">The world records nothing about it yet but its name.</p>}
   </Profile>;
 }
 
@@ -366,14 +464,16 @@ const holderLine = (item: CodexItem) => (item.holder
   : item.events.length ? 'No longer held'
     : worldFact(item.atChapterZero, 'holder') ?? worldFact(item.atChapterZero, 'location') ?? 'Held by no one');
 
-function ItemProfile({ item, art, onBack, onReadPassage }: { item: CodexItem; art?: ProfileArt; onBack: () => void; onReadPassage?: ReadPassage }) {
+function ItemProfile({ item, art, onBack, onReadPassage, onFillCard }: { item: CodexItem; art?: ProfileArt; onBack: () => void; onReadPassage?: ReadPassage; onFillCard?: FillCard }) {
   return <Profile category="items" name={item.name} line={holderLine(item)} badges={isArchived(item) ? ['Archived'] : item.count > 1 ? [`×${item.count}`] : []} backLabel="All items" onBack={onBack} art={art}>
     <div className="flex flex-wrap gap-1.5">
       {item.firstSeen
         ? <PassageChip passage={item.firstSeen} label={`First seen · Ch. ${item.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
         : <span className="inline-flex min-h-8 items-center rounded-full border border-(--reader-light)/12 bg-(--reader-light)/[0.04] px-2.5 text-[11px] text-(--reader-text-muted)">{AT_THE_START}</span>}
     </div>
-    {item.atChapterZero && <WorldAtTheStart name={item.name} facts={item.atChapterZero} />}
+    {item.promoted
+      ? <PromotedCard name={item.name} promoted={item.promoted} facts={item.atChapterZero ?? []} onFill={onFillCard} />
+      : item.atChapterZero && <WorldAtTheStart name={item.name} facts={item.atChapterZero} />}
     {item.appearance && <LookSection name={item.name} appearance={item.appearance} traits={THING_LOOK_TRAITS} onReadPassage={onReadPassage} />}
     {item.events.length > 0 && <Chronicle events={item.events} onReadPassage={onReadPassage}
       describe={event => `${eventLabel(event)} · ${(event as CodexItem['events'][number]).holder}`} />}
@@ -406,6 +506,7 @@ const EMPTY: Record<CodexTab, string> = {
   factions: 'No sect, clan or faction has stepped forward yet.',
   species: 'The world records no species yet.',
   'world-rules': 'This world states no rules yet: no rank ladder, no laws, no age.',
+  minor: 'The story has used no one and nothing without a card yet.',
 };
 
 /**
@@ -422,8 +523,16 @@ const EMPTY: Record<CodexTab, string> = {
  * fact the world opened with has no passage to link. The record's checks close
  * the gallery, for testing.
  */
-export function StoryCodex({ codex, storyTitle, pictures, manifestCost, onBack, onReadPassage, onReadChapter }: {
+export function StoryCodex({ codex, storyTitle, pictures, manifestCost, onBack, onReadPassage, onReadChapter, onPromote, onFillCard }: {
   codex: StoryCodexRecord;
+  /**
+   * Promotes a minor figure to a card, by its key. Without it the Minor list
+   * offers no Promote. Rejects with a reason the reader can read.
+   */
+  /** Promotes a minor figure. Resolves with the key its card is listed under when that is not the key it was promoted by. */
+  onPromote?: (key: string) => Promise<string | void>;
+  /** Fills a card the reader promoted. Without it a promoted card cannot be filled in here. */
+  onFillCard?: FillCard;
   /** The host's pictures for this story's cards. Without them, cards show their aura and offer no Manifest. */
   pictures?: CodexPictures;
   /** The host's Energy price beside Manifest. */
@@ -468,6 +577,21 @@ export function StoryCodex({ codex, storyTitle, pictures, manifestCost, onBack, 
       ...(appearance || fromTheStart ? { onManifest: () => manifest({ key, subject, name, ...(current ? { look: current } : {}) }) } : {}),
     };
   };
+  // Minor figures being promoted, and why one could not be, by key.
+  const [promoting, setPromoting] = useState<Record<string, true>>({});
+  const [promoteProblems, setPromoteProblems] = useState<Record<string, string>>({});
+  const MINOR_TABS: Record<CodexMinor['kind'], CodexTab> = { character: 'characters', thing: 'items', place: 'places' };
+  const promote = (minor: CodexMinor) => {
+    if (!onPromote || promoting[minor.key]) return;
+    setPromoting(current => ({ ...current, [minor.key]: true }));
+    setPromoteProblems(({ [minor.key]: _, ...rest }) => rest);
+    onPromote(minor.key)
+      // Its new card opens, so the reader can fill it in: under the key the host
+      // names when promotion gave it a new one (someone only speaker tags named).
+      .then(listedAs => { setTab(MINOR_TABS[minor.kind]); setOpen(listedAs || minor.key); })
+      .catch((error: unknown) => setPromoteProblems(current => ({ ...current, [minor.key]: error instanceof Error && error.message ? error.message : 'It could not be promoted. Please try again.' })))
+      .finally(() => setPromoting(({ [minor.key]: _, ...rest }) => rest));
+  };
   const askToRead: ReadPassage | undefined = onReadPassage && ((chapterNumber, blockId) => setGoTo({ chapterNumber, blockId }));
   const askToReadChapter = onReadChapter && ((chapterNumber: number) => setGoTo({ chapterNumber }));
   const go = () => {
@@ -488,6 +612,7 @@ export function StoryCodex({ codex, storyTitle, pictures, manifestCost, onBack, 
     { id: 'factions', label: 'Factions', count: codex.factions.length, icon: <Flag size={15} aria-hidden /> },
     { id: 'species', label: 'Bestiary', count: codex.species.length, icon: <PawPrint size={15} aria-hidden /> },
     { id: 'world-rules', label: 'World rules', count: codex.worldRules?.length ?? 0, icon: <Scale size={15} aria-hidden /> },
+    { id: 'minor', label: 'Minor', count: codex.minor.length, icon: <Footprints size={15} aria-hidden /> },
   ] as const).filter(entry => entry.count > 0).map(entry => ({ ...entry }));
   // A category that empties while it is open (a world that closes to its
   // reader) hands the Codex to the first one that still holds something.
@@ -501,7 +626,7 @@ export function StoryCodex({ codex, storyTitle, pictures, manifestCost, onBack, 
     abilities: { cards: codex.abilities, backLabel: 'All abilities' },
     species: { cards: codex.species, backLabel: 'All species' },
   };
-  const worldGroup = worldGroups[tab];
+  const worldGroup = tab === 'minor' ? undefined : worldGroups[tab];
   const worldCard = worldGroup?.cards.find(entry => entry.key === open);
   const profileOpen = Boolean(character || faction || item || place || worldCard);
   // A new view starts at its top.
@@ -524,7 +649,7 @@ export function StoryCodex({ codex, storyTitle, pictures, manifestCost, onBack, 
         ? codex.places.map(entry => <CodexCard key={entry.key} category="places" testId="codex-places" cardKey={entry.key} name={entry.name} {...art(entry.key)}
             line={entry.appearance?.look?.summary ?? worldFact(entry.atChapterZero, 'appearance') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
       : worldGroup
-        ? worldGroup.cards.map(entry => <CodexCard key={entry.key} category={tab} testId={`codex-${tab}`} cardKey={entry.key} name={entry.name} {...art(entry.key)}
+        ? worldGroup.cards.map(entry => <CodexCard key={entry.key} category={tab as CodexCardCategory} testId={`codex-${tab}`} cardKey={entry.key} name={entry.name} {...art(entry.key)}
             line={worldFact(entry.atChapterZero, 'appearance') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
         : tab === 'items'
           ? codex.items.filter(entry => !isArchived(entry)).map(itemCard)
@@ -555,18 +680,27 @@ export function StoryCodex({ codex, storyTitle, pictures, manifestCost, onBack, 
       {tabs.length === 0 && <p data-testid="codex-empty" className="py-8 text-center text-sm text-(--reader-text-dim)">
         The Codex fills as the story reaches each person, thing and place.
       </p>}
-      {character && <CharacterProfile key={character.key} character={character} onBack={close} onReadPassage={askToRead}
+      {character && <CharacterProfile key={character.key} character={character} onBack={close} onReadPassage={askToRead} onFillCard={onFillCard}
         art={artOf(character.key, 'character', character.name, character.appearance, character.atChapterZero)} />}
       {faction && <FactionProfile key={faction.key} faction={faction} onBack={close} onReadPassage={askToRead} />}
-      {item && <ItemProfile key={item.key} item={item} onBack={close} onReadPassage={askToRead}
+      {item && <ItemProfile key={item.key} item={item} onBack={close} onReadPassage={askToRead} onFillCard={onFillCard}
         art={artOf(item.key, 'thing', item.name, item.appearance, item.atChapterZero)} />}
-      {place && <PlaceProfile key={place.key} place={place} onBack={close} onReadPassage={askToRead} />}
-      {worldCard && worldGroup && <WorldCardProfile key={worldCard.key} category={tab} card={worldCard} backLabel={worldGroup.backLabel} onBack={close} />}
+      {place && <PlaceProfile key={place.key} place={place} onBack={close} onReadPassage={askToRead} onFillCard={onFillCard} />}
+      {worldCard && worldGroup && <WorldCardProfile key={worldCard.key} category={tab as CodexCardCategory} card={worldCard} backLabel={worldGroup.backLabel} onBack={close} />}
       {/* The World rules are one sheet, not a gallery: every other card refers to them. */}
       {tab === 'world-rules'
         ? codex.worldRules?.length
           ? <div data-testid="codex-world-rules"><WorldAtTheStart name={storyTitle} facts={codex.worldRules} title="World rules" /></div>
           : <p className="py-8 text-center text-sm text-(--reader-text-dim)">{EMPTY[tab]}</p>
+        : tab === 'minor'
+          // Minor figures are a plain list, not a gallery: they have no card to show.
+          ? <div className="space-y-3" data-testid="codex-minor-list">
+              <p className="text-xs leading-relaxed text-(--reader-text-dim)">
+                The story used these without tracking them.{onPromote ? ' Promote one to give it a card of its own.' : ''}
+              </p>
+              <ul className="space-y-2">{codex.minor.map(minor => <MinorRow key={minor.key} minor={minor} promoting={Boolean(promoting[minor.key])}
+                problem={promoteProblems[minor.key]} onPromote={onPromote ? () => promote(minor) : undefined} onReadPassage={askToRead} />)}</ul>
+            </div>
         : !profileOpen && tabs.length > 0 && (cards.length || archived.length
           ? <ul className="grid grid-cols-2 gap-3">{cards}</ul>
           : <p className="py-8 text-center text-sm text-(--reader-text-dim)">{EMPTY[tab]}</p>)}

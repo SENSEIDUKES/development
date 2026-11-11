@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StoryCodex, declaredCharacters, deriveStoryCodex, type CodexPictureCard, type CodexPictures, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import {
+  APPEARANCE_KIND, StoryCodex, createCodexEntryResolver, createEmptyHarnessWorkspaceState, createHarnessStory, declaredCharacters, deriveStoryCodex,
+  fillPromotedCard, promoteMinorFigure, storyWorldRecord,
+  type AppearanceAttachment, type CodexPictureCard, type CodexPictures, type HarnessWorkspaceState, type StoryCodexChapter,
+} from '@seihouse/sen/harness-generation';
 import ReferenceReaderCodex from '../../../components/reader-codex/reference/ReaderCodex';
 import type {
   ReaderCodexStoryPatchUpdater,
@@ -139,6 +143,85 @@ const beforeChapterOne = (shown: StoryCodexShown) => {
   };
 };
 
+/** The one chapter the Minor figures scene reads: the main character, and three the world has no card for. */
+const MINOR_SCENE_PARAGRAPHS = [
+  'Ye Chen climbed out of the rift with glass dust on his sleeves.',
+  'A gate guard in a dented helm barred the stair with a rusted halberd.',
+  'Past him, the Ash Steps rose toward the hall, each one worn to a bowl.',
+];
+const minorSceneAppearance = (paragraph: number, name: string, entity: 'character' | 'thing' | 'place', entryId: string): AppearanceAttachment => ({
+  id: `appearance:c1-p${paragraph + 1}:0-${MINOR_SCENE_PARAGRAPHS[paragraph].length}:${entryId}`,
+  kind: APPEARANCE_KIND,
+  anchor: { level: 'span', blockId: `c1-p${paragraph + 1}`, startOffset: 0, endOffset: MINOR_SCENE_PARAGRAPHS[paragraph].length, selectedText: MINOR_SCENE_PARAGRAPHS[paragraph] },
+  payload: { origin: 'harness', event: 'appears', subject: { name, entryId }, entity },
+});
+
+/**
+ * The Minor figures scene's story, made the way the app makes one: the mock
+ * Seed and Blueprint's world creates the story, so every card is a Codex entry
+ * before Chapter 1; then one chapter's tags name the main character and three
+ * the world has no card for, resolved by the app's own resolver.
+ */
+const createMinorFiguresScene = () => {
+  const record = createMockStorySeedRecord();
+  const generated = finalizeGeneratedWorldBlueprint({ ...createMockBlueprint(), ...createMockSeedSlotAnswer() }, record.seed);
+  const { seed } = reconcileStorySeedBlueprint(fillBlankSeedSlots(record.seed, generated.generatedSeedSlots), generated);
+  const foundation = createHarnessFoundationFromStorySeed({ ...record, seed });
+  const created = createHarnessStory(createEmptyHarnessWorkspaceState(), foundation);
+  const storyId = created.story.id;
+  let made = 0;
+  const resolver = createCodexEntryResolver({
+    storyId, chapter: { id: 'minor-scene-chapter-1', chapterNumber: 1 }, entries: created.state.codexEntries,
+    declared: declaredCharacters(foundation), createdAt: created.story.createdAt, createId: () => `minor-scene-entry-${++made}`,
+  });
+  const chapter: StoryCodexChapter = {
+    id: 'minor-scene-chapter-1', chapterNumber: 1, paragraphs: MINOR_SCENE_PARAGRAPHS,
+    appearances: [
+      minorSceneAppearance(0, 'MC', 'character', resolver.character('MC').id),
+      minorSceneAppearance(1, 'gate guard', 'character', resolver.character('gate guard').id),
+      minorSceneAppearance(1, 'Rusted Halberd', 'thing', resolver.entry('thing', 'Rusted Halberd').id),
+      minorSceneAppearance(2, 'Ash Steps', 'place', resolver.entry('place', 'Ash Steps').id),
+    ],
+  };
+  const state: HarnessWorkspaceState = {
+    ...created.state,
+    stories: created.state.stories.map(story => ({ ...story, head: { nextChapterNumber: 2 } })),
+    codexEntries: [...created.state.codexEntries, ...resolver.created],
+  };
+  return { state, storyId, chapter, title: created.story.title, foundation };
+};
+
+/**
+ * Development, **Minor figures**: a story after its first chapter. The main
+ * character's look is his card's, and whoever the chapter brought in with no
+ * card is listed under Minor. Promote and the card form change this scene's
+ * own copy of the story, through the same functions the app's controller
+ * calls; nothing is saved.
+ */
+function MinorFiguresPreviewPane() {
+  const pictures = useStandInPictures();
+  const [scene, setScene] = useState(createMinorFiguresScene);
+  const record = useMemo(() => deriveStoryCodex({
+    entries: scene.state.codexEntries.filter(entry => entry.storyId === scene.storyId),
+    chapters: [scene.chapter],
+    world: storyWorldRecord(scene.state, scene.storyId),
+    mainCharacterName: scene.foundation.cast?.find(member => member.isMainCharacter)?.name,
+    declared: declaredCharacters(scene.foundation),
+    declaredFactions: scene.foundation.identities?.filter(identity => identity.kind === 'faction') ?? [],
+  }), [scene]);
+  return (
+    <div className="mx-auto min-w-0 max-w-md overflow-hidden rounded-2xl border border-white/10 bg-neutral-950">
+      <StoryCodex codex={record} storyTitle={scene.title} pictures={pictures}
+        onPromote={async key => {
+          const promoted = promoteMinorFigure(scene.state, scene.storyId, key);
+          setScene(current => ({ ...current, state: promoted.state }));
+          return promoted.entryId;
+        }}
+        onFillCard={async (cardKey, slots) => setScene(current => ({ ...current, state: fillPromotedCard(current.state, current.storyId, cardKey, slots).state }))} />
+    </div>
+  );
+}
+
 /**
  * Development: the Codex the Reader opens. **Before Chapter 1** shows the world
  * a Story Seed and its Blueprint made, with no chapter written yet;
@@ -147,7 +230,7 @@ const beforeChapterOne = (shown: StoryCodexShown) => {
  * behind the Codex. Manifest here makes a stand-in picture (no image model is
  * called); the app makes real ones.
  */
-function StoryCodexPreviewPane({ scene, shown }: { scene: StoryCodexScene; shown: StoryCodexShown }) {
+function StoryCodexPreviewPane({ scene, shown }: { scene: Exclude<StoryCodexScene, 'minor-figures'>; shown: StoryCodexShown }) {
   const pictures = useStandInPictures();
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [error, setError] = useState('');
@@ -185,13 +268,14 @@ function StoryCodexPreviewPane({ scene, shown }: { scene: StoryCodexScene; shown
 }
 
 /** Which story the Development Codex reads. */
-type StoryCodexScene = 'before-chapter-one' | 'sundered-heavens';
+type StoryCodexScene = 'before-chapter-one' | 'minor-figures' | 'sundered-heavens';
 
 /** How much of the world at Chapter 0 the Codex shows. */
 type StoryCodexShown = 'whole-world' | 'reader';
 
 const STORY_CODEX_SCENES: { id: StoryCodexScene; label: string }[] = [
   { id: 'before-chapter-one', label: 'Before Chapter 1' },
+  { id: 'minor-figures', label: 'Minor figures' },
   { id: 'sundered-heavens', label: 'Sundered Heavens' },
 ];
 
@@ -214,13 +298,13 @@ export function ReaderCodexWorkspace() {
       entry={entry}
       workshopControls={{
         defaultSection: 'scenes',
-        description: 'Development is the Codex the Reader opens. Before Chapter 1 shows the world a Story Seed and its World Blueprint made, with no chapter written. Sundered Heavens reads SENSEI\'s test story as the app saved it. The whole world opens the record for inspection, as an imported novel\'s world is open to the author who wrote it; what the reader sees is a generated story\'s own reader, who meets a card only once the story reaches it. Manifest on a card with a look makes a stand-in picture here, with no image model; the app makes the real one. The Original Reference pages drive the production Codex\'s real tabs.',
+        description: 'Development is the Codex the Reader opens. Before Chapter 1 shows the world a Story Seed and its World Blueprint made, with no chapter written. Minor figures is that story after one chapter: the main character\'s look is his card\'s, whoever the chapter brought in with no card is under Minor, and Promote and the card form work on this scene\'s own copy. Sundered Heavens reads SENSEI\'s test story as the app saved it. The whole world opens the record for inspection, as an imported novel\'s world is open to the author who wrote it; what the reader sees is a generated story\'s own reader, who meets a card only once the story reaches it. Manifest on a card with a look makes a stand-in picture here, with no image model; the app makes the real one. The Original Reference pages drive the production Codex\'s real tabs.',
         sections: [
           {
             id: 'scenes',
             content: (
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2" role="group" aria-label="Development Codex story">
+                <div className="grid grid-cols-3 gap-2" role="group" aria-label="Development Codex story">
                   {STORY_CODEX_SCENES.map(option => (
                     <button key={option.id} type="button" aria-pressed={scene === option.id}
                       onClick={() => setScene(option.id)} className={pill(scene === option.id)}>
@@ -264,7 +348,7 @@ export function ReaderCodexWorkspace() {
           <ReaderCodexPreviewPane Component={ReferenceReaderCodex} activePage={activePage} supportsBestiary={false} />
       )}
       renderDevelopment={() => (
-          <StoryCodexPreviewPane scene={scene} shown={shown} />
+          scene === 'minor-figures' ? <MinorFiguresPreviewPane /> : <StoryCodexPreviewPane scene={scene} shown={shown} />
       )}
     />
   );

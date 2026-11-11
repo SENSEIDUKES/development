@@ -35,6 +35,18 @@ describe('A Codex card\'s picture', () => {
     expect(prompt).toContain('Never sexualize anyone.');
   });
 
+  it('carries a card\'s whole look: a portrait of two or three sentences, and how they carry themselves', () => {
+    // A character card's Look is a short portrait now, and Bearing is what makes a proud rival look proud (SENSEI, 2026-11-11).
+    const portrait = 'A tall young man whose dark green silk never seems to crease, however far he has walked in it. '
+      + 'His eyes weigh everything by its price before they bother to settle on a face. '
+      + 'A gold pin holds his hair in a high knot, and snow does not seem to dare gather on his shoulders.';
+    expect(portrait.length).toBeGreaterThan(250);
+    const parsed = parseCodexPictureRequest({ card: { subject: 'character', name: 'Ning Hao', look: { summary: portrait, traits: { bearing: 'Looks past people rather than at them', hair: 'Black, bound high' } } } });
+    expect(parsed.card.look.summary).toBe(portrait);
+    const prompt = buildCodexPicturePrompt(parsed);
+    expect(prompt).toContain(`Look: ${portrait}\n- Hair: Black, bound high\n- Bearing: Looks past people rather than at them\n`);
+  });
+
   it('keeps only the traits of the card\'s kind and clips every field', () => {
     const parsed = parseCodexPictureRequest({
       card: { subject: 'thing', name: 'x'.repeat(500), look: { summary: 'y'.repeat(900), traits: { material: 'iron', hair: 'none', colour: 'z'.repeat(900) } } },

@@ -19,7 +19,13 @@ The Seed's style (story.required.style) is the novel tradition the creator chose
 - Korean: murim and modern-system fantasy. Clans, martial factions, regression, ranks and status windows. Korean names.
 - Japanese: light-novel fantasy. Academies, guilds, dungeons, adventurers, and named skills. Japanese names.
 
-Names, titles, ranks and places all follow the chosen tradition.`;
+Names, titles, ranks and places all follow the chosen tradition.
+
+These novels take their time over how people look, and readers expect it. How they do it depends on the kind of story. Read the Seed's tags, genre and premise for what kind of story this is and who it is written for, and describe its people the way that kind of story does: whom it lingers on, what it notices about men and about women, and the imagery it reaches for.
+
+Where the Seed gives no clear signal, describe men and women with the same care.
+
+Whatever the style, give each person their own description; never the same phrase for two characters.`;
 
 const WORLD_INSTRUCTIONS = `Build the world as it stands the moment Chapter 1 opens: the people, places, things, powers and factions the opening of the story stands on. Chapters change the world afterwards and may add to it. What exists at the start is written here.
 
@@ -29,7 +35,13 @@ Two tests decide whether a card holds enough, and nothing beyond them belongs on
 
 Write what the world is, never how it is shown: "at the North Ridge Gate, at dusk, wounded", never a panel, a camera, a frame count or an art style.
 
-Keep every slot to one short, concrete fact. The main character's backgroundProfile adds what the cards do not already say; it never repeats a card.
+Keep every slot to one short, concrete fact, except a Look. A Look is a short portrait of two or three sentences. The main character's backgroundProfile adds what the cards do not already say; it never repeats a card.
+
+A Look is what someone would notice about this person and no one else. Choose the few details that are theirs alone and leave the rest to the slots. No two people in the cast are described through the same features, and no Look opens the way another does.
+
+A person's nature shows in how they look: in their face, how they hold themselves, how they dress and keep themselves. Write what is seen, never the trait's name.
+
+Leave Marks blank when they have none.
 
 Choose the supporting cast and factions for the opening arc: the mentor, the rival, the elder, the enemy at the gate. Use fewer cards before you pad them; an empty card list is better than a filler card.
 
@@ -58,7 +70,7 @@ arcLookahead: one line each for Arc 2 and Arc 3 (never beyond the story's length
 
 export const SEN_EASTERN_FANTASY_ORIGIN_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-eastern-fantasy',
-  version: '1.2.0',
+  version: '1.3.0',
   name: 'SEN Eastern Fantasy',
   description: 'Builds the world of an Eastern fantasy web novel, in the Chinese, Korean or Japanese tradition the creator chose.',
   slot: 'origin',
@@ -69,7 +81,7 @@ export const SEN_EASTERN_FANTASY_ORIGIN_SKILL: HarnessSkillManifest = {
 
 export const SEN_WORLD_BUILDER_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-world-builder',
-  version: '1.2.0',
+  version: '1.3.0',
   name: 'SEN World Builder',
   description: 'Builds the world as Chapter 1 opens: the cards an artist could draw it from and a game could load it from.',
   slot: 'world',

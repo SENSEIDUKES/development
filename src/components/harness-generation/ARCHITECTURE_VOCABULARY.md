@@ -164,6 +164,33 @@ a new name gets one entry, reused by that exact name afterwards. Things and
 abilities stay separate entries even under one name. Two tagged entries whose
 names are forms of one name are flagged as possible duplicates.
 
+**World cards are Codex entries from the start** (2026-11-11, the
+[world state pipeline](../../../docs/world-state-pipeline.md)). When a story is
+created, each card of the world record of a kind a tag can name (character,
+thing, ability, place) gets its Codex entry, with `origin: { source: 'world' }`
+and `cardKey`, the card it is (`codexEntriesWithWorldCards` in
+`shared/holdings.ts`, run by `createHarnessStory` and `reviseStoryFoundation`).
+A tag only ever finds that entry. A chapter that is rewritten or tagged again
+never takes it away (`codexEntriesWithoutChapter`). A story with no world
+record still gets a declared character's entry the first time a tag names
+them, with `origin: { source: 'foundation' }`.
+
+**Minor figure** (`isMinorEntry`): in a story with a world record, an entry
+with no card: a tag brought it in, or the author took its card away after a
+chapter had named it. Someone only speaker tags name is one too, though they
+have no entry yet. The story uses it without tracking it: the Codex
+lists it under Minor (`StoryCodexRecord.minor`) with what the prose calls it,
+the sentence that introduced it and the chapters it was in. **Promote**
+(`promoteMinorFigure` in `shared/promotion.ts`, `controller.promoteCodexEntry`)
+makes it a world card as of the latest chapter, blank but for its name; its
+reader fills the card's slots (`fillPromotedCard`), and no model is called.
+A promoted card has its kind's slots without the ones the story's tags already
+record (`promotedCardSlots`): what a character holds, knows and ranks at, and
+who holds a thing and how many. Only a card the world opened with states what
+was held before Chapter 1.
+Promote is the one way a card is made after the story begins until Alter Fate
+and the arcs have theirs.
+
 **Holdings** — what each character has, uses, knows and is, as four facts kept
 apart: a thing is *owned* (with a count) and may be *equipped* (in use);
 an ability is *learning* or *learned* (with a level), and a learned one may be
@@ -294,6 +321,15 @@ appearance records it was written from) and reused until a new tag adds a
 passage (`lookStale`); a failure is kept as `CodexEntry.lookFailure`, with the
 model's own answer. Looks recorded on chapters before (`HarnessChapter.looks`)
 still read.
+
+**A card's look is its card's** (2026-11-11): for a subject whose entry is a
+world card with a Look, `deriveAppearances` (given the world record) takes the
+look from the card (`worldCardLook`: its Look, and every look slot a character
+card fills: build, face, eyes, hair, skin, clothing, marks and bearing), marked
+`fromCard`. The sentence an appears tag sits on is then only
+where the story met it. No look is written for it until a look tag changes it;
+then `describeCodexLook` writes one from the card's look, sent as the author's
+notes, and every change.
 
 ## Former structure (corrected record)
 

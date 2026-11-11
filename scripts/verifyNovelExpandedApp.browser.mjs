@@ -849,6 +849,30 @@ async function walk(browser, viewport, sample) {
   check(!(await page.evaluate(slidesSideways)), 'The Codex must not scroll sideways.');
   check((await codex.locator('[data-testid="codex-checks"] summary').textContent()).trim() === 'Record checks (1)', 'The closing list should leave one check.');
   await shot('6d-codex');
+  // Minor figures (2026-11-11): the key the chapter brought in has no card in this world, so it is
+  // listed under Minor with the sentence that introduced it, never as an Items card, and offers Promote.
+  check(await codex.getByRole('tab', { name: /^Items/ }).count() === 0, 'A thing the world has no card for must not be an Items card.');
+  await codex.getByRole('tab', { name: /^Minor/ }).click();
+  const minor = codex.getByTestId('codex-minor');
+  await minor.first().waitFor();
+  const minorText = await minor.allInnerTexts();
+  check(minorText.length === 1 && minorText[0].includes('Bell Key') && minorText[0].includes('Item · Ch. 1') && minorText[0].includes('Mara counted the bells that no longer rang.'),
+    `Minor should list the key with its chapter and the sentence that introduced it, got ${JSON.stringify(minorText)}.`);
+  check(await minor.getByRole('button', { name: 'Promote Bell Key to a card' }).count() === 1, 'A minor figure should offer Promote to the story\'s creator.');
+  check(!(await page.evaluate(slidesSideways)), 'The Minor list must not scroll sideways.');
+  check(await codex.getByRole('tab', { name: /^Minor/ }).getAttribute('aria-selected') === 'true', 'Minor should be the open tab.');
+  // The tab's highlight fades across; the picture waits for it.
+  await page.waitForTimeout(300);
+  await shot('6d-codex-minor');
+  await codex.getByRole('tab', { name: /^Characters/ }).click();
+  // A card's look is its card's own (2026-11-11): Junior Sister Han's card states her look, so her
+  // sheet shows that, never the line of speech her appears tag sits on, and no look is written for it.
+  await codex.getByTestId('codex-character').filter({ hasText: 'Junior Sister Han' }).click();
+  const hanLook = await codex.getByTestId('codex-profile').getByTestId('codex-look').innerText();
+  check(hanLook.includes('A slight girl in a patched outer-sect robe') && hanLook.includes('From its card') && !hanLook.includes('They are drowned'),
+    `A card with a Look should show its card's look, got ${hanLook}.`);
+  await codex.getByRole('button', { name: 'All characters' }).click();
+  // The main character's card in this sample states no Look, so his sheet keeps the story's own words, below.
   await codex.getByTestId('codex-character').first().click();
   const codexSheet = codex.getByTestId('codex-profile');
   await codexSheet.waitFor();

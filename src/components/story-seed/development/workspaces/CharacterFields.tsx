@@ -136,11 +136,12 @@ export const MainCharacterFields = ({ seed, updateSeed }: CharacterFieldsProps) 
  * card, so the Seed holds every slot the Codex shows.
  */
 export const CHAPTER_ZERO_MAIN_CHARACTER_SLOTS = [
-  'gender', 'skinTone', 'eyeColor', 'species', 'location',
+  'gender', 'build', 'face', 'hair', 'skinTone', 'eyeColor', 'clothing', 'marks', 'bearing', 'species', 'location',
   'powerType', 'rankLevel', 'status', 'holds', 'knows', 'goals', 'ties', 'belongsTo', 'voice',
 ];
 export const CHAPTER_ZERO_CHARACTER_SLOTS = [
-  'gender', 'species', 'location', 'status', 'appearance', 'holds', 'knows', 'goals', 'ties', 'belongsTo', 'voice',
+  'gender', 'species', 'location', 'status', 'appearance', 'build', 'face', 'hair', 'clothing', 'marks', 'bearing',
+  'holds', 'knows', 'goals', 'ties', 'belongsTo', 'voice',
 ];
 
 /**

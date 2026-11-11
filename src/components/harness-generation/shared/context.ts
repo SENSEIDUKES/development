@@ -187,7 +187,7 @@ export const compileStoryInformationPacket = (
   // again from the committed chapters' appearances: the most recently seen
   // first, as many as its own counts allow.
   const storyEntries = state.codexEntries.filter(entry => entry.storyId === story.id);
-  const appearances = appearancesSection(deriveAppearances({ entries: storyEntries, chapters }), deriveStatuses(chapters), storyEntries, derivePlaces(chapters, storyEntries), deriveTies(chapters, storyEntries));
+  const appearances = appearancesSection(deriveAppearances({ entries: storyEntries, chapters, world }), deriveStatuses(chapters), storyEntries, derivePlaces(chapters, storyEntries), deriveTies(chapters, storyEntries));
 
   const sections: PacketSectionMeasurement[] = [
     measure('currentStory', currentStory),

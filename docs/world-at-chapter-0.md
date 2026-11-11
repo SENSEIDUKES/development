@@ -205,7 +205,7 @@ Blueprint are the world as it stands at Chapter 0, written in that same schema.
    required.
 3. **What the author leaves blank is filled before generation.** The world is
    complete before Chapter 1, not filled in when something first appears.
-4. **Later arrivals stay Fate's.** *(Under review, 2026-11-08: [the world state pipeline](./world-state-pipeline.md) would make every main card through one way in instead.)* Characters, factions and anything else that
+4. **Later arrivals stay Fate's.** *(Reversed, 2026-11-11: under [the world state pipeline](./world-state-pipeline.md) a tag never makes a main card. Whoever a chapter brings in is a minor figure until the reader promotes them to a card.)* Characters, factions and anything else that
    enters after Chapter 0 are still created by the chapter planner, as now.
 5. **Breaking things to fix this is fine.** This is the development repo with
    no compatibility (SENSEI: "the whole point is to change the architecture").
@@ -316,7 +316,7 @@ else. Every slot is optional in the Seed; blanks are filled before Chapter 1.
 | Name, other names | both | rarely (a new title) | have |
 | Who they are, one line | artist | rarely | have |
 | Gender, age | artist | age with time | have |
-| Look: one line, then traits | artist | yes (look facts) | have |
+| Look: a short portrait, then Build, Face, Hair, Skin, Eyes, Clothing, Marks and Bearing (2026-11-11) | artist | yes (look facts) | have |
 | Species (if not human) | artist | no | **new** |
 | Where they are (a place) | save-game | yes | **new** |
 | Holds and knows (things, abilities), rank | both | yes | have |
@@ -571,11 +571,24 @@ The world is now recorded before Chapter 1, in the Codex's own card kinds.
   rules sheet carries the ladder and how power works instead of the world facts
   line. `storySeedHandoff.test.ts` is the guard.
 - **Deliberately not in it:** making Chapter 0 cards into Codex entries up
-  front. *(Under review, 2026-11-08: [the world state pipeline](./world-state-pipeline.md) makes them entries from the start.)* Nothing needs it yet — the two meet by name — and the lazy
+  front. *(Reversed and built, 2026-11-11: [the world state pipeline](./world-state-pipeline.md) makes every card a Codex entry when the story is created.)* Nothing needs it yet — the two meet by name — and the lazy
   foundation-origin entry the resolver already creates is the existing pattern.
 
 ## History
 
+- 2026-11-11: the character card states its whole look. It gained Build,
+  Face, Hair, Clothing, Marks and Bearing, and its Look became a short
+  portrait, because a card's look is now the look the writer, the Codex and
+  Manifest all use. The World skill says what a Look is; the Origin skill says
+  how this tradition describes people, read from the Seed's tags, genre and
+  premise. SENSEI approved the words.
+- 2026-11-11: [the world state pipeline](./world-state-pipeline.md)'s first
+  half is built on top of this plan: every card is a Codex entry from the
+  start, a card's look is its card's, and whoever a chapter brings in with no
+  card is a minor figure the reader may promote. That reverses decision 4 and
+  the "not Codex entries up front" choice of phase C, both marked above. It
+  also settles open question 5: a card's Codex entry, and so its picture's
+  key, exists before any chapter names it.
 - 2026-10-25: the record got a **home a chapter can write to**. It had lived
   only on the Foundation (the author's record, which they revise) and as a
   frozen copy on each attempt, so the shape added on 2026-10-24 could describe a

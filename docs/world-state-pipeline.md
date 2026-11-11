@@ -1,9 +1,10 @@
 # The world state pipeline: the missing half
 
-The owner's direction (SENSEI, 2026-11-08), written for a fresh agent. **This
-is a plan, and none of it is built.** Each phase has questions that SENSEI
-answers before it starts. Nothing here is decided beyond what the plan marks as
-agreed.
+The owner's direction (SENSEI, 2026-11-08), written for a fresh agent. **The
+architecture half of phase 1 is built (2026-11-11); the rest is a plan.** See
+[Where phase 1 stands](#where-phase-1-stands-2026-11-11). Each phase has
+questions that SENSEI answers before it starts. Nothing here is decided beyond
+what the plan marks as agreed.
 
 ## Read first
 
@@ -19,8 +20,8 @@ they change, every word a model reads recorded in the Writer Instructions
 history, no compatibility layers, SENSEI merges.
 
 **To hand this to a new chat:** "Read docs/world-state-pipeline.md, then
-docs/world-at-chapter-0.md. We are at phase 1; settle its questions with
-SENSEI first."
+docs/world-at-chapter-0.md. Phase 1's architecture is built. We are at its
+second half, the words the models read; show SENSEI each change first."
 
 ## Why this doc exists (SENSEI's context, 2026-11-08)
 
@@ -170,6 +171,107 @@ replaces them should say so plainly:
 conditions stack (see the questions below); what happens when the writer
 brings in someone who matters and was never planned.
 
+**Decided (SENSEI, 2026-11-11),** after the ten-chapter run of *The
+Frost-Scaled Companion*:
+
+- **Minor figures get a light profile.** A background person or item the
+  writer invents ("neighbor", "man with the net", "small bundle") gets a small
+  entry in its own Minor section of the Codex: what the prose calls it, the
+  sentence that introduced it, and the chapters it was in. No look, status,
+  place or ties are tracked. Promote turns one into a real card.
+- **Conditions stack.** Each lasting condition stays on the card until a tag
+  ends it. The status tag either adds a condition or ends one. A passing
+  moment ("buried in snow to the knees") is not a status.
+- **The reader promotes.** Someone unplanned who matters starts as a minor
+  figure and becomes a real card, as of that chapter, only when the reader
+  taps Promote, through the same way in as the Blueprint and Alter Fate.
+
+- **The reader fills a promoted card; the rest stays blank.** Promote makes
+  the card with its name and the sentence that introduced it. The reader fills
+  whichever slots they want. No model call fills the others. (This answers
+  open question 3 for Promote only; Alter Fate's Add character is Phase 2's.)
+
+- **Architecture first, the taggers second** (SENSEI, 2026-11-11: "Keep the
+  taggers as phase two. I would like to just focus on getting this part of the
+  architecture first"). Phase 1 is built in two halves: what needs no change
+  to any model's words, then the words.
+
+#### Where phase 1 stands (2026-11-11)
+
+**Built, with no change to any words a model reads:**
+
+- **Every card is a Codex entry from the start.** When a story is created,
+  each card of a kind a tag can name (character, thing, ability, place) gets
+  its Codex entry, with `origin: { source: 'world' }` and `cardKey`, the card
+  it is (`codexEntriesWithWorldCards`, `shared/holdings.ts`). A tag finds that
+  entry; it never makes one for a card. Revising the opening world keeps the
+  entries in step, and a chapter that is rewritten or tagged again never takes
+  a card's entry away. Schema 48 gives every saved story's cards their
+  entries; an entry a chapter had already made by a card's name becomes that
+  card's entry and keeps its ID.
+- **A card's look is its card's** (`worldCardLook`, `deriveAppearances`). The
+  sentence an appears tag sits on is where the story met them, never what they
+  look like. The writer reads the card's Look in Appeared, the Codex shows it
+  as "From its card", and Manifest pictures it with no call to the look
+  writer. Once a look tag changes it, the look is written again from the
+  card's look and every change. Someone with no card, or a card with no Look,
+  keeps the story's own words, as before.
+- **Minor figures.** In a story with a world record, an entry a tag made that
+  has no card is a minor figure (`isMinorEntry`). The Codex lists them under
+  **Minor**, with what the prose calls them, the sentence that introduced
+  them and the chapters they were in, and no card. A story with no world
+  record has no main cards to tell them from, so it reads as before.
+- **Promote** (`promoteMinorFigure`, `shared/promotion.ts`). The reader
+  promotes a minor figure to a real card, as of the latest chapter. The card
+  starts with its name only, and the reader fills its slots in the Codex
+  (`fillPromotedCard`); no model is called. Its entry keeps its ID. Someone
+  only speaker tags name can be promoted too: their entry is made with the
+  card. A promoted card leaves out Holds, Knows and Rank (and a thing's Held
+  by and Count), because the story's tags already record those and a second
+  statement would be counted on top.
+
+**Also built (2026-11-11), with words SENSEI approved:** the character card
+states its whole look. It gained Build, Face, Hair, Clothing, Marks and
+Bearing, its Look is a short portrait, and the World and Origin skills say how
+to write one (see the Harness Generation README's history).
+
+**Not built: each needs words a model reads, so SENSEI approves them first.**
+
+- **The tagger is told which cards are on the page.** It still reads the same
+  list of names. Its wording has not changed from naming whoever appears to
+  linking each appearance to a card, so it still tags statuses, places and
+  ties for minor figures. The Codex does not show those for a minor figure.
+- **Conditions stack.** The status tag has no way to end a condition yet, so
+  stacking today would only pile up every passing moment. It is built with the
+  status tag's new words.
+- **Cards carry their timing** (the arc a card is due in). The Blueprint has
+  to fill it, which changes the Blueprint's words.
+- **The Blueprint makes a card for a named companion.** In the test story it
+  made the Frost-Scaled Fox species but no card for the cub, so the story's
+  second lead is a minor figure until the reader promotes it.
+
+**Two gaps the plan did not name, found in the ten-chapter run:**
+
+- **A card that states the future.** Lin's Chapter 0 card said "Bonded to the
+  Frost-Scaled Fox", which happens in Chapter 6. The Blueprint wrote an arc's
+  outcome as an opening fact.
+- **Background places.** A place with no card that a tag names ("Cloudpeak
+  Mountains") is a minor figure too. Phase 3's arc cards are where new places
+  are meant to come from.
+
+**Blueprint words proposed to SENSEI on 2026-11-11 and not yet approved**, from
+the same cards:
+
+- **Before Chapter 1 only.** Cards stated what the story later makes happen
+  (the gap above).
+- **Who gets a card.** Whoever the premise or an Arc 1 goal is about, even
+  with no name yet (the cub).
+- **Look and holds agree.** Lin's look had a bow and Elder Bai's a staff,
+  while neither card held one, so the tagger made them minor items.
+- **Places.** All three places sat inside "Cloudpeak Mountains", which had no
+  card; none covered where Arc 1 happens; one was held by "Unclaimed", which
+  is no faction.
+
 **SENSEI sees:** a new test story's Codex, full before Chapter 1, with cards
 revealed as the chapters reach them, and no main card made by a tag.
 
@@ -264,6 +366,16 @@ The table only maps the names; it renames nothing.
 
 ## History
 
+- **2026-11-11 (built):** phase 1's architecture half: every card is a Codex
+  entry from the start, a card's look is its card's, minor figures, and
+  Promote with the reader filling the card. SENSEI asked for the architecture
+  before the taggers. No words a model reads changed. See
+  [Where phase 1 stands](#where-phase-1-stands-2026-11-11).
+- **2026-11-11:** SENSEI answered Phase 1's three questions (minor figures get
+  a light profile, conditions stack, the reader promotes); they are recorded
+  under Phase 1. This settles open questions 2, 5 and 7. He also decided that
+  the reader fills a promoted card and the rest stays blank, with no model
+  call. Nothing is built yet.
 - **2026-11-08:** Written from SENSEI's direction after *The Frost-Scaled
   Companion* test: the missing half of the World at Chapter 0 architecture.
   The tagger keeps its design and gets refined wording later. The remaining

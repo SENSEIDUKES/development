@@ -45,7 +45,7 @@ import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { codexEntriesWithoutChapter, createCodexEntryResolver, declaredCharacters, deriveHoldings, holdingsSection, resolveHoldingChanges } from './holdings';
 import { MEDIA_TAG_WARNING_CODES, planChapterTagging, readChapterTagging, retagChapterGap } from './tagger';
-import { appearanceSources, deriveAppearances, placeAppearancesFromPlaces, resolveAppearances, thingAppearancesFromHoldings } from './appearances';
+import { appearanceSources, cardLookStatement, deriveAppearances, placeAppearancesFromPlaces, resolveAppearances, thingAppearancesFromHoldings, worldCardLook } from './appearances';
 import { deriveStatuses, resolveStatuses } from './statuses';
 import { derivePlaces, resolvePlaces } from './places';
 import { deriveTies, resolveTies } from './ties';
@@ -58,6 +58,8 @@ import {
   type HarnessGenerationRepository,
 } from './repository';
 import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
+import type { StoryWorldCard } from '../../../narrative/generation';
+import { fillPromotedCard, promoteMinorFigure } from './promotion';
 import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessTaggerChoice, HarnessTagFocus, HarnessTagRequest, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export interface HarnessGenerationControllerOptions {
@@ -168,6 +170,7 @@ export class HarnessGenerationController {
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
   private generating = false;
+  private cardChanges: Promise<unknown> = Promise.resolve();
   private writing?: HarnessChapterWrite;
 
   constructor(options: HarnessGenerationControllerOptions) {
@@ -811,6 +814,57 @@ export class HarnessGenerationController {
       await this.persist(corrected.state);
       return cloneHarnessValue(corrected.correction);
     } finally { this.generating = false; }
+  }
+
+  /**
+   * Promote: a minor figure becomes a world card, as of the latest chapter
+   * (`promoteMinorFigure`). No model is called: the card starts with its name.
+   * `figure` is the key the Codex lists them under; `entryId` is the one it
+   * lists their card under, which differs for someone only speaker tags named.
+   */
+  async promoteCodexEntry(storyId: string, figure: string): Promise<{ card: StoryWorldCard; entryId: string }> {
+    this.assertHydrated();
+    return this.changeCard(async () => {
+      if (this.generating) throw new Error('Wait for the chapter being written before promoting to a card.');
+      const promoted = promoteMinorFigure(this.state, storyId, figure, this.runtime.now());
+      await this.persist(promoted.state);
+      return { card: promoted.card, entryId: promoted.entryId };
+    });
+  }
+
+  /** Fills a card the reader promoted (`fillPromotedCard`): the reader fills, the rest stays blank. */
+  async fillPromotedCard(storyId: string, cardKey: string, slots: Readonly<Record<string, string>>): Promise<StoryWorldCard> {
+    this.assertHydrated();
+    return this.changeCard(async () => {
+      if (this.generating) throw new Error('Wait for the chapter being written before changing a card.');
+      const filled = fillPromotedCard(this.state, storyId, cardKey, slots);
+      await this.persist(filled.state);
+      return filled.card;
+    });
+  }
+
+  /**
+   * Card changes run one after another, each starting from what the one
+   * before it saved. Two figures promoted in quick succession both keep their
+   * cards: without this the second would start from the state before the
+   * first and save over it. Each also waits for any other save under way, so
+   * it never starts from a copy older than what is being saved.
+   */
+  private changeCard<T>(change: () => Promise<T>): Promise<T> {
+    const run = this.cardChanges.then(async () => {
+      await this.savesLanded();
+      return change();
+    });
+    this.cardChanges = run.catch(() => undefined);
+    return run;
+  }
+
+  /** Resolves once every save under way has landed, so the state read next is the saved one. */
+  private async savesLanded(): Promise<void> {
+    for (let pending = this.saving; ; pending = this.saving) {
+      await pending;
+      if (pending === this.saving) break;
+    }
   }
 
   /** Reader/Codex edits use the same repository and correction journal as all HARNESS canon. */
@@ -2007,7 +2061,8 @@ export class HarnessGenerationController {
     if (!story) throw new Error('This story is no longer available.');
     const chapters = this.state.chapters.filter(chapter => chapter.storyId === storyId);
     const entries = this.state.codexEntries.filter(entry => entry.storyId === storyId);
-    const subject = deriveAppearances({ entries, chapters }).subjects.find(candidate => (candidate.entryId ?? candidate.key) === key);
+    const world = storyWorldRecord(this.state, storyId);
+    const subject = deriveAppearances({ entries, chapters, world }).subjects.find(candidate => (candidate.entryId ?? candidate.key) === key);
     if (!subject) throw new Error('The story has not shown this one on the page yet, so it has no look to write.');
     if (subject.look && !subject.lookStale) return { summary: subject.look.summary, traits: { ...subject.look.traits } };
     const latest = latestStoryChapter(this.state, storyId);
@@ -2015,9 +2070,13 @@ export class HarnessGenerationController {
     if (!this.modelAdapter.describeLooks || !latest || !model) throw new Error('This host cannot write a look yet.');
     const entry = subject.entryId ? entries.find(candidate => candidate.id === subject.entryId) : undefined;
     const attempt = this.state.attempts.find(candidate => candidate.id === latest.attemptId);
+    // A card's own look is what its author declared: the look is written from it and every change since.
+    const card = entry?.cardKey ? world?.cards.find(candidate => candidate.key === entry.cardKey) : undefined;
+    const cardLook = card && worldCardLook(card);
     const request = planCodexLook({
       subject, identities: attempt?.storyInformation.currentStory.identities,
       names: entry ? [entry.name, ...(entry.aliases ?? [])] : [subject.name],
+      ...(cardLook ? { cardLook } : {}),
     });
     let raw: string | undefined;
     let problem: string | undefined;
@@ -2033,17 +2092,15 @@ export class HarnessGenerationController {
     if (!look) problem ??= 'The answer held no look that could be read. Please try again.';
     // Kept on the entry, against the state as it is once every save under way has landed:
     // a chapter written meanwhile is kept, never overwritten by an older copy.
-    for (let pending = this.saving; ; pending = this.saving) {
-      await pending;
-      if (pending === this.saving) break;
-    }
+    await this.savesLanded();
     if (entry) {
       const candidate = cloneHarnessValue(this.state);
       const saved = candidate.codexEntries.find(candidateEntry => candidateEntry.id === entry.id);
       if (saved) {
         const at = this.runtime.now();
         if (look) {
-          saved.look = { summary: look.summary, traits: look.traits, from: appearanceSources(subject), at, model, ...(look.conflict ? { conflict: look.conflict } : {}) };
+          saved.look = { summary: look.summary, traits: look.traits, from: appearanceSources(subject), at, model, ...(look.conflict ? { conflict: look.conflict } : {}),
+            ...(cardLook ? { cardLook: cardLookStatement(cardLook) } : {}) };
           delete saved.lookFailure;
         } else saved.lookFailure = { at, model, problem: problem!, ...(raw ? { raw } : {}) };
         try { await this.persist(candidate); } catch { /* The look is still returned; it is written again when next asked for. */ }

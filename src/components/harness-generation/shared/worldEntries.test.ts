@@ -136,6 +136,28 @@ describe('Every world card is a Codex entry from the start', () => {
     expect(duplicates).toEqual([{ kind: 'possible-duplicate', entryIds: [pendant.id, 'tagged-pendant'], message: '‘Frost Bone Pendant’ and ‘Frost Bone Pendants’ may be the same thing.' }]);
   });
 
+  it('keeps two cards whose names read alike two in the Codex, each under its own entry', () => {
+    // A parenthetical is dropped when names are compared, so each pair reads alike: the entry made with a card is that card's.
+    const alike: WorldCard[] = [
+      { key: 'world:character:phoenix-east', kind: 'character', name: 'Phoenix (East)', enteredInChapter: 0, slots: { role: 'Warden of the sunrise gate' } },
+      { key: 'world:character:phoenix-west', kind: 'character', name: 'Phoenix (West)', enteredInChapter: 0, slots: { role: 'Warden of the sunset gate' } },
+      { key: 'world:thing:feather-east', kind: 'thing', name: 'Phoenix Feather (East)', enteredInChapter: 0, slots: {} },
+      { key: 'world:thing:feather-west', kind: 'thing', name: 'Phoenix Feather (West)', enteredInChapter: 0, slots: {} },
+      { key: 'world:place:gate-east', kind: 'place', name: 'Phoenix Gate (East)', enteredInChapter: 0, slots: {} },
+      { key: 'world:place:gate-west', kind: 'place', name: 'Phoenix Gate (West)', enteredInChapter: 0, slots: {} },
+    ];
+    const registered = seeded([], alike);
+    expect(registered.map(entry => entry.cardKey)).toEqual(alike.map(card => card.key));
+    const codex = deriveStoryCodex({ entries: registered, chapters: [], world: { openToTheReader: true, cards: alike } });
+    expect(codex.characters.map(character => [character.name, character.atChapterZero?.[0]?.value])).toEqual([
+      ['Phoenix (East)', 'Warden of the sunrise gate'], ['Phoenix (West)', 'Warden of the sunset gate'],
+    ]);
+    expect(codex.items.map(item => item.name)).toEqual(['Phoenix Feather (East)', 'Phoenix Feather (West)']);
+    expect(codex.places.map(place => place.name)).toEqual(['Phoenix Gate (East)', 'Phoenix Gate (West)']);
+    // Each is listed under its own entry's ID.
+    expect([...codex.characters, ...codex.items, ...codex.places].map(card => card.key)).toEqual(registered.map(entry => entry.id));
+  });
+
   it('is never taken away by a chapter that is rewritten or tagged again', () => {
     const entries = [...seeded(), tagEntry('neighbor', 'character', 'neighbor')];
     const chapter = { id: 'chapter-1', appearances: [appears(0, 'MC', entries[0].id), appears(1, 'neighbor', 'neighbor')] };

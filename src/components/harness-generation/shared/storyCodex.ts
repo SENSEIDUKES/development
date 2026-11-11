@@ -342,8 +342,14 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   const add = (character: Working) => { characters.set(character.key, character); return character; };
   // A card the world opened with takes its Codex entry's ID once one names it,
   // so one person is one card however the story reaches them.
-  const entryNamed = (kind: CodexEntry['kind'], names: readonly string[]) => entries.find(candidate =>
-    candidate.kind === kind && [candidate.name, ...(candidate.aliases ?? [])].some(other => names.includes(normalizeIdentityLabel(other))));
+  // The entry made with the card (`cardKey`) is the card's own, so two cards
+  // whose names read alike each keep theirs. A card with no entry of its own
+  // (a record read without its entries) is found by name, among the entries
+  // that are no other card's.
+  const entryOfCard = (kind: CodexEntry['kind'], card: { key: string }, names: readonly string[]) =>
+    entries.find(candidate => candidate.kind === kind && candidate.cardKey === card.key)
+    ?? entries.find(candidate => candidate.kind === kind && !candidate.cardKey
+      && [candidate.name, ...(candidate.aliases ?? [])].some(other => names.includes(normalizeIdentityLabel(other))));
   const labelsOf = (card: { name: string; aliases?: string[] }) =>
     [card.name, ...(card.aliases ?? [])].map(normalizeIdentityLabel);
 
@@ -351,7 +357,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // story was given, and the chapters add to these same cards.
   for (const card of worldCardsOfKind(world, 'character')) {
     const labels = labelsOf(card);
-    const entry = entryNamed('character', labels);
+    const entry = entryOfCard('character', card, labels);
     // Two cards whose names read alike once normalized ("Phoenix (East)" and
     // "Phoenix (West)") are still two people: the second keeps the key the
     // world gave it rather than taking the first's card.
@@ -560,7 +566,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   };
   for (const card of worldCardsOfKind(world, 'thing')) {
     const labels = labelsOf(card);
-    const entry = entryNamed('thing', labels);
+    const entry = entryOfCard('thing', card, labels);
     // As for a character: two things whose names normalize alike stay two
     // cards, so the world's own key carries the second.
     const named = entry?.id ?? `thing:${labels[0]}`;
@@ -681,7 +687,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   const cardPlaces = new Set<string>();
   for (const card of worldCardsOfKind(world, 'place')) {
     const labels = labelsOf(card);
-    const entry = entryNamed('place', labels);
+    const entry = entryOfCard('place', card, labels);
     const named = entry?.id ?? card.key;
     const key = places.has(named) ? card.key : named;
     places.set(key, {

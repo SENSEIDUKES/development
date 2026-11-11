@@ -246,9 +246,6 @@ to write one (see the Harness Generation README's history).
   status tag's new words.
 - **Cards carry their timing** (the arc a card is due in). The Blueprint has
   to fill it, which changes the Blueprint's words.
-- **The Blueprint makes a card for a named companion.** In the test story it
-  made the Frost-Scaled Fox species but no card for the cub, so the story's
-  second lead is a minor figure until the reader promotes it.
 
 **Two gaps the plan did not name, found in the ten-chapter run:**
 
@@ -259,8 +256,8 @@ to write one (see the Harness Generation README's history).
   Mountains") is a minor figure too. Phase 3's arc cards are where new places
   are meant to come from.
 
-**Blueprint words proposed to SENSEI on 2026-11-11 and not yet approved**, from
-the same cards:
+**Blueprint words SENSEI approved on 2026-11-11, now built** (SEN World
+Builder 1.4.0 and the Blueprint's own rules), from the same cards:
 
 - **Before Chapter 1 only.** Cards stated what the story later makes happen
   (the gap above).
@@ -271,6 +268,13 @@ the same cards:
 - **Places.** All three places sat inside "Cloudpeak Mountains", which had no
   card; none covered where Arc 1 happens; one was held by "Unclaimed", which
   is no faction.
+
+The first, second and fourth are in the World skill; the third and "a slot
+that names a card is left blank when no card fits" are in the Blueprint's own
+rules, which no skill replaces. Code backs the last: a place's Inside or Held
+by that the Blueprint filled with a name no card has is cleared
+(`fillBlankSeedSlots`), and what the creator wrote is never touched. Not yet
+tried with a real model.
 
 **SENSEI sees:** a new test story's Codex, full before Chapter 1, with cards
 revealed as the chapters reach them, and no main card made by a tag.
@@ -366,6 +370,10 @@ The table only maps the names; it renames nothing.
 
 ## History
 
+- **2026-11-11 (built):** the Blueprint builds Arc 1's whole world as it
+  stands before Chapter 1: cards state nothing the story has yet to do,
+  whoever the premise is about has a card, a look shows only what is held,
+  and places point at real cards. SENSEI approved the words first.
 - **2026-11-11 (built):** phase 1's architecture half: every card is a Codex
   entry from the start, a card's look is its card's, minor figures, and
   Promote with the reader filling the card. SENSEI asked for the architecture

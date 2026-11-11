@@ -1419,7 +1419,8 @@ export const readGeneratedSeedSlots = (value: unknown): GeneratedSeedSlots => {
  * A value the creator wrote is never changed, aliases are never written, and
  * the creator's own side characters and factions (matched by name, alias or
  * title) get their blanks filled. New cards are added only up to the Seed's
- * limits; the creator's are never trimmed.
+ * limits; the creator's are never trimmed. A place's Inside or Held by that
+ * the Blueprint filled with a name no card has is left blank.
  */
 export const fillBlankSeedSlots = (seed: StorySeedInput, slots: GeneratedSeedSlots | undefined): StorySeedInput => {
   const source = normalizeStorySeedInput(seed);
@@ -1445,16 +1446,32 @@ export const fillBlankSeedSlots = (seed: StorySeedInput, slots: GeneratedSeedSlo
     }
     return next;
   };
+  const additionalCharacters = fillCards(foundations.additionalCharacters ?? [], slots.characters ?? [], SEED_CHARACTER_SLOT_FIELDS, SEED_CHARACTER_LIMIT, 'blueprint-character', mainName ? [mainName] : []);
+  const factions = fillCards(foundations.factions ?? [], slots.factions ?? [], SEED_FACTION_SLOT_FIELDS, SEED_FACTION_LIMIT, 'blueprint-faction');
+  // A place's Inside and Held by each name a card. A value the Blueprint
+  // filled that names no card at all ("Unclaimed", a region with no card of
+  // its own) is cleared, so the record never points at nothing. What the
+  // creator wrote is theirs and is never touched.
+  const filledPlaces = fillCards(foundations.places ?? [], slots.places ?? [], SEED_PLACE_SLOT_FIELDS, SEED_PLACE_LIMIT, 'blueprint-place');
+  const peopleAndFactions = [...entityNames(factions), ...entityNames(additionalCharacters), ...(mainName ? [mainName] : [])];
+  const places = filledPlaces.map(place => {
+    const written = (foundations.places ?? []).find(card => card.id === place.id);
+    const cards = [...entityNames(filledPlaces.filter(card => card.id !== place.id)), ...peopleAndFactions];
+    const next = { ...place };
+    if (text(next.within) && !text(written?.within) && !namesKnownEntity(next.within!, cards)) delete next.within;
+    if (text(next.heldBy) && !text(written?.heldBy) && !namesKnownEntity(next.heldBy!, cards)) delete next.heldBy;
+    return next;
+  });
   return normalizeStorySeedInput({
     ...source,
     world: { ...source.world, optional: { ...source.world.optional, worldFoundations: {
       ...foundations,
       mainCharacter,
-      additionalCharacters: fillCards(foundations.additionalCharacters ?? [], slots.characters ?? [], SEED_CHARACTER_SLOT_FIELDS, SEED_CHARACTER_LIMIT, 'blueprint-character', mainName ? [mainName] : []),
-      factions: fillCards(foundations.factions ?? [], slots.factions ?? [], SEED_FACTION_SLOT_FIELDS, SEED_FACTION_LIMIT, 'blueprint-faction'),
+      additionalCharacters,
+      factions,
       things: fillCards(foundations.things ?? [], slots.things ?? [], SEED_THING_SLOT_FIELDS, SEED_THING_LIMIT, 'blueprint-thing'),
       startingAbilities: fillCards(foundations.startingAbilities ?? [], slots.startingAbilities ?? [], SEED_ABILITY_SLOT_FIELDS, SEED_ABILITY_LIMIT, 'blueprint-ability'),
-      places: fillCards(foundations.places ?? [], slots.places ?? [], SEED_PLACE_SLOT_FIELDS, SEED_PLACE_LIMIT, 'blueprint-place'),
+      places,
       species: fillCards(foundations.species ?? [], slots.species ?? [], SEED_SPECIES_SLOT_FIELDS, SEED_SPECIES_LIMIT, 'blueprint-species'),
       abilities: fillFields(foundations.abilities ?? {}, slots.abilities, ABILITY_FIELDS),
       powerSystem: fillFields(foundations.powerSystem ?? {}, slots.powerSystem, POWER_SYSTEM_FIELDS),

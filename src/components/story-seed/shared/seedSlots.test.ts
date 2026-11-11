@@ -49,6 +49,36 @@ describe('The Blueprint fills every Story Seed slot the creator left blank', () 
     expect(filled.species?.[0]).toMatchObject({ name: 'Cinder Serpent', habitat: 'Rift Quarry' });
   });
 
+  it('leaves a place\'s Inside and Held by blank when the Blueprint names no card there, and never touches the creator\'s', () => {
+    // The Frost-Scaled Companion: three places sat inside "Cloudpeak Mountains", which had no card, and one was held by "Unclaimed".
+    const seed: StorySeedInput = createEmptyStorySeedInput();
+    seed.world.optional.worldFoundations.mainCharacter = { name: 'Lin Qingshan' };
+    seed.world.optional.worldFoundations.places = [{ id: 'place-1', name: 'Old Shrine', within: 'The Northern Wastes', heldBy: 'No one living' }];
+    const filled = fillBlankSeedSlots(seed, readGeneratedSeedSlots({
+      factions: [{ name: 'Frost Sect Alliance' }],
+      characters: [{ name: 'Elder Bai Wuxin' }],
+      places: [
+        { name: 'Cloudpeak Mountains', within: 'Cloudpeak Mountains', heldBy: 'Unclaimed' },
+        { name: 'Cloudpeak Village', within: 'Cloudpeak Mountains', heldBy: 'Frost Sect Alliance' },
+        { name: 'Hidden Frost Cavern', within: 'The Frozen North', heldBy: 'Lin Qingshan' },
+        { name: 'Hermit Hut', within: 'Frost Sect Alliance', heldBy: 'Elder Bai Wuxin' },
+        { name: 'Old Shrine', within: 'Cloudpeak Mountains', heldBy: 'Unclaimed' },
+      ],
+    })).world.optional.worldFoundations.places!;
+    const pointers = Object.fromEntries(filled.map(place => [place.name, [place.within, place.heldBy]]));
+    expect(pointers).toEqual({
+      // The creator's own words stay, card or no card.
+      'Old Shrine': ['The Northern Wastes', 'No one living'],
+      // A place is never inside itself, and "Unclaimed" is no card.
+      'Cloudpeak Mountains': [undefined, undefined],
+      'Cloudpeak Village': ['Cloudpeak Mountains', 'Frost Sect Alliance'],
+      // A region with no card is cleared; the main character is a card.
+      'Hidden Frost Cavern': [undefined, 'Lin Qingshan'],
+      // A sect's own grounds and a character who holds a place both name cards.
+      'Hermit Hut': ['Frost Sect Alliance', 'Elder Bai Wuxin'],
+    });
+  });
+
   it('fills abilities, the World rules sheet and the main opposition only where they were blank', () => {
     const seed = createFilledStorySeedInput();
     delete seed.world.optional.worldFoundations.mainOpposition;

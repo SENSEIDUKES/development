@@ -93,10 +93,13 @@ export const BLUEPRINT_RETURN_FORMAT = `One name for one thing
 Every name a card points to is the exact name on that thing's own card:
 - a character's location names a place card, their holds names thing cards, their knows names ability cards, their belongsTo names faction cards;
 - a thing's holder names a character;
+- what a Look or Clothing shows someone carrying (a weapon, a staff, a token) is a thing card they hold, named in their holds; otherwise leave it out. Ordinary clothes need no card;
 - a place's heldBy names a faction card, and a place's within names another place card;
 - a faction's seat names a place card and its leader a character card;
 - ties name character or faction cards;
 - every rank, level and strength comes from powerSystem.knownRanks.
+
+A slot that names a card is left blank when no card fits. Never fill it with a word such as none, unclaimed or unknown.
 
 Write the answer in the order it is asked for, so each card is written before the cards that point to it.
 

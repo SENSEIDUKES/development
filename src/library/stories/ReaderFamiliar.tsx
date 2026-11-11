@@ -1,6 +1,7 @@
 import { useOptionalReaderMixer } from '@seihouse/audio-player';
 import { CHAPTER_DIRECTION_TEXT_LIMIT, CHAPTER_FUNCTION_LABELS, storyKnowledgeOf, type HarnessGenerationController, type HarnessWorkspaceState, type ReaderHostTools, type ReaderSoundAuthoring, type ChapterDirectionChoice } from '@seihouse/sen/harness-generation';
-import { AudioLines, Globe, PenLine, Swords, TrendingUp } from 'lucide-react';
+import { Globe, PenLine, Swords, TrendingUp } from 'lucide-react';
+import { LibraryCueIcon } from '../../components/sen-icons/LibraryIcons';
 import { useFrontDeskContext, type FrontDeskAction, type FrontDeskContext, type FrontDeskIcon, type FrontDeskTopic } from '@seihouse/front-desk';
 import { useFamiliarHelpTopics } from '../familiars/helpTopics';
 import { parseReaderSoundCommand } from './readerSoundCommand';
@@ -22,7 +23,7 @@ function soundAction(sounds: ReaderSoundAuthoring, playCue?: (url: string) => vo
   // The cue as shown for review, so "right there" never follows Listen to a later sentence before Confirm.
   const reviewed = (input: string, prepared: unknown) => (prepared as ReturnType<typeof resolve> | undefined) ?? resolve(input);
   return {
-    id: 'sound', label: 'Add sound', icon: AudioLines, detail: 'On words you name, or right there', phrases: ['add', 'put', 'place'],
+    id: 'sound', label: 'Add sound', icon: LibraryCueIcon, detail: 'On words you name, or right there', phrases: ['add', 'put', 'place'],
     input: { label: 'Sound and where it goes', maxLength: SOUND_REQUEST_LIMIT },
     check: input => { const result = resolve(input); return result.ok ? undefined : result.problem; },
     describe: input => {

@@ -1,24 +1,19 @@
 import { OriginIcon } from './seedSections';
+import type { FunctionComponent } from 'react';
+import { LibraryArcIcon, LibraryBankIcon, LibraryManifestingIcon, LibraryRelicIcon, LibraryStoriesIcon } from '@seihouse/library-ui';
+import { EnergySunIcon } from '../../sen-icons/EnergySunIcon';
+import { LibraryGenreIcon, LibraryMortalPressureIcon, LibrarySurvivalIcon } from '../../sen-icons/LibraryIcons';
 import {
-  BookOpen,
   Brain,
-  Drama,
-  Gem,
   GitBranch,
   Globe,
-  Landmark,
   Library,
   Lightbulb,
   PenLine,
-  Route,
-  ScrollText,
-  Shield,
   Sparkles,
   Sprout,
   Tag,
-  WandSparkles,
-  Zap,
-  type LucideIcon,
+  type LucideProps,
 } from "lucide-react";
 
 /**
@@ -54,7 +49,7 @@ export interface StorySeedHelpItem {
   id: string;
   /** Short topic label shown in the menu list. */
   label: string;
-  icon: LucideIcon;
+  icon: FunctionComponent<LucideProps>;
   /** Library pages where this topic should be prioritized. */
   contexts?: string[];
   /** Guidance per language. */
@@ -136,7 +131,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
   {
     id: "genre",
     label: "Genre",
-    icon: Drama,
+    icon: LibraryGenreIcon,
     contexts: ["story-seed"],
     translations: {
       en: {
@@ -171,7 +166,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
   {
     id: "arc",
     label: "ARC",
-    icon: Route,
+    icon: LibraryArcIcon,
     contexts: ["story-seed"],
     translations: {
       en: {
@@ -193,7 +188,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
   {
     id: "fate-survival",
     label: "Fate Survival",
-    icon: Shield,
+    icon: LibrarySurvivalIcon,
     contexts: ["story-seed", "fate"],
     translations: {
       en: {
@@ -226,7 +221,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
   {
     id: "manifest",
     label: "Manifest",
-    icon: WandSparkles,
+    icon: LibraryManifestingIcon,
     contexts: ["library", "story-seed", "reader"],
     translations: {
       en: {
@@ -237,7 +232,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
   {
     id: "seed-bank",
     label: "Seed Bank",
-    icon: Landmark,
+    icon: LibraryBankIcon,
     contexts: ["story-seed", "seed-bank"],
     translations: {
       en: {
@@ -248,7 +243,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
   {
     id: "world-blueprint",
     label: "World Blueprint",
-    icon: ScrollText,
+    icon: LibraryStoriesIcon,
     contexts: ["story-seed", "seed-bank"],
     translations: {
       en: {
@@ -259,7 +254,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
   {
     id: "energy",
     label: "Energy",
-    icon: Zap,
+    icon: EnergySunIcon,
     contexts: ["library", "story-seed"],
     translations: {
       en: {
@@ -292,7 +287,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
   {
     id: "relics",
     label: "Relics",
-    icon: Gem,
+    icon: LibraryRelicIcon,
     contexts: ["library", "relics"],
     translations: {
       en: {
@@ -303,7 +298,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
   {
     id: "pressure",
     label: "Pressure",
-    icon: BookOpen,
+    icon: LibraryMortalPressureIcon,
     contexts: ["story-seed", "fate"],
     translations: {
       en: {

@@ -38,6 +38,10 @@
 .familiar-header-actions { max-width: none; }
 .familiar-actions:has([aria-label="Talk to Familiar"]) { width: 148px; flex-shrink: 0; }
 .familiar-dock:has([aria-label="Talk to Familiar"]) { width: 148px; }
+/* Library presentation of the shared Front Desk card. */
+.front-desk-card .front-desk-card-modes button,
+.front-desk-card .front-desk-card-actions button.front-desk-card-more { min-height: 44px; }
+.front-desk-card-actions .sen-icon, .front-desk-card-topics .sen-icon { flex-shrink: 0; }
 /* Focus follows the Familiar's silhouette, without the header's blue box. */
 .familiar-recall-container .familiar-recall:focus-visible { outline: none; box-shadow: none; }
 .familiar-recall:focus-visible > span { filter: drop-shadow(0 0 3px #d6bd87); }

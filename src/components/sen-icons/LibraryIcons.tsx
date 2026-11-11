@@ -11,6 +11,8 @@ const settingsV2Url = new URL('./assets/SENSettingsv2.svg', import.meta.url).hre
 const manifestUrl = new URL('./assets/SENManifesting.svg', import.meta.url).href;
 const helpV2Url = new URL('./assets/SENHelpv2.svg', import.meta.url).href;
 const searchV2Url = new URL('./assets/SENSearchv2.svg', import.meta.url).href;
+const guidesUrl = new URL('./assets/SENGuides.svg', import.meta.url).href;
+const actionUrl = new URL('./assets/SENAction.svg', import.meta.url).href;
 
 export type LibraryGlyphProps = Omit<HighlightActionIconProps, 'name'>;
 
@@ -46,6 +48,8 @@ export const LIBRARY_ICON_CATALOG = [
   { source: 'remote' as const, key: 'local/SENInformation.svg', file: 'SENInformation.svg', group: 'Basic' as const, label: 'Information', url: informationUrl, libraryIcons: [], etag: undefined },
   { source: 'remote' as const, key: 'local/SENSettingsv2.svg', file: 'SENSettingsv2.svg', group: 'Basic' as const, label: 'SENSettingsv2', url: settingsV2Url, libraryIcons: ['header-settings'], etag: undefined },
   { source: 'remote' as const, key: 'local/SENOrigin.svg', file: 'SENOrigin.svg', group: 'Special' as const, label: 'Origin', url: originUrl, libraryIcons: [], etag: undefined },
+  { source: 'remote' as const, key: 'local/SENGuides.svg', file: 'SENGuides.svg', group: 'Basic' as const, label: 'Guides', url: guidesUrl, libraryIcons: [], etag: undefined },
+  { source: 'remote' as const, key: 'local/SENAction.svg', file: 'SENAction.svg', group: 'Basic' as const, label: 'Action', url: actionUrl, libraryIcons: [], etag: undefined },
   { source: 'bundled' as const, key: 'bundled/mortal-pressure', group: 'Special' as const, label: 'Mortal Pressure', exportName: 'LibraryMortalPressureIcon', Icon: LibraryMortalPressureIcon },
   { source: 'bundled' as const, key: 'bundled/immortal-pressure', group: 'Special' as const, label: 'Immortal Pressure', exportName: 'LibraryImmortalPressureIcon', Icon: LibraryImmortalPressureIcon },
   { source: 'bundled' as const, key: 'bundled/heaven-pressure', group: 'Special' as const, label: 'Heaven Pressure', exportName: 'LibraryHeavenPressureIcon', Icon: LibraryHeavenPressureIcon },

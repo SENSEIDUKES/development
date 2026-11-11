@@ -25,7 +25,7 @@ export function FamiliarPreview() {
       <span className="familiar-preview-tag" data-rarity={familiar.rarity}>{familiar.rarity}{familiar.isDefault ? ' · Default' : ''}</span>
     </header>
     <ProductFamiliarSession key={familiar.id} initialFamiliarId={familiar.id} initiallyMinimized={false}><ProductFamiliarSurface activity={activity || undefined} animation={animation || undefined} paused={paused}>
-      <div className="familiar-stage"><p>Drag your Familiar around this space. Tap for actions, then choose Energy.</p></div>
+      <div className="familiar-stage"><p>Drag your Familiar around this space. Tap to talk, then choose Explain, Action, or Guides.</p></div>
     </ProductFamiliarSurface></ProductFamiliarSession>
     <div className="familiar-preview-controls">
       <label htmlFor={familiarIdControl}>Inspect Familiar</label>

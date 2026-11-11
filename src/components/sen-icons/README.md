@@ -16,6 +16,8 @@ Original Reference panes carry `data-workshop-reference` and are excluded from a
 
 ## History
 
+- **2026-11-11:** Added Guides (open instruction book) and Action (click pointer) to the existing catalog and Familiar's Front Desk skin. The shared package retains its controls and behavior. Familiar topics, navigation and Add sound reuse the Library's existing artwork; Create keeps its pen.
+
 - **2026-10-26:** Audited NovelExpanded icon placement: aligned Origin help/Blueprint headings and Story Bank Survival/Genre badges; exposed all pressure, Survival, and Genre icons for Library reuse and added Origin to the catalog.
 
 - **2026-10-26:** Added a calligraphic Information icon with an open ring and serif foot. Library Info controls share the artwork; card information buttons use darker glass for contrast on covers.

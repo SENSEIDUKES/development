@@ -5,7 +5,7 @@ import { LibraryAtmosphereIcon, LIBRARY_ICON_CATALOG } from '@seihouse/library/p
 describe('reusable Library icons', () => {
   it('includes all named icons in the existing catalog categories', () => {
     const bundled = LIBRARY_ICON_CATALOG.filter(icon => icon.source === 'bundled');
-    expect(LIBRARY_ICON_CATALOG).toHaveLength(54);
+    expect(LIBRARY_ICON_CATALOG).toHaveLength(56);
     expect(bundled.map(icon => icon.label)).toEqual([
       'Mortal Pressure', 'Immortal Pressure', 'Heaven Pressure', 'Survival', 'Genre', 'Dao Insight', 'Edit', 'Copy', 'Media', 'Remove', 'Back', 'Audio', 'Cue', 'Soundscape', 'Atmosphere', 'Save', 'Undo', 'Delete',
     ]);

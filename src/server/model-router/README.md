@@ -297,4 +297,4 @@ read it.
   Generation requests, checked by `resolveReasoningLevel`, and passed to Gemini
   as `thinkingLevel` or to OpenRouter as `reasoning.effort`.
 
-- 2026-11-10 — Added direct OpenAI text and image routing, model-specific reasoning, Blueprint routing, chapter attribution, image reference editing, provider status and Energy grades. Defaults remain unchanged. Model access and real-provider output require verification with the hosted credential.
+- 2026-11-10 - Added direct OpenAI text and image routing, model-specific reasoning, Blueprint routing, chapter attribution, image reference editing, provider status and Energy grades. Chapter schema teaching stays in the HARNESS-owned How to return the chapter part. Defaults remain unchanged. A hosted GPT Image 2.6 Flare request succeeded; per-model account access and live chapter output remain unverified.

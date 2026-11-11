@@ -1,4 +1,4 @@
-import { CONDITIONS_SLOT, CONDITIONS_TEXT_CHARACTERS, WORLD_CARD_KINDS, type WorldCardKindId, type WorldCardSlot } from '@seihouse/sen/contracts';
+import { CONDITIONS_AUTHOR_HINT, CONDITIONS_SLOT, CONDITIONS_TEXT_CHARACTERS, WORLD_CARD_KINDS, type WorldCardKindId, type WorldCardSlot } from '@seihouse/sen/contracts';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 
 /**
@@ -14,9 +14,6 @@ import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBo
 
 /** Slots long enough to want a box of their own. */
 const WIDE_SLOTS = new Set(['appearance', 'bio', 'description', 'goals', 'ties', 'laws', 'era', 'holds', 'knows', 'kindOfWorld', 'whoRules']);
-
-/** How an author writes a condition: a name alone, or a name with its course. */
-const CONDITIONS_HINT = 'One per line: a name alone, or Name | stage > stage | a stage every 5 chapters | ends if this';
 
 export const worldCardSlots = (kind: WorldCardKindId, only?: readonly string[]): WorldCardSlot[] => {
   const slots = WORLD_CARD_KINDS.find(candidate => candidate.id === kind)!.slots.filter(slot => !slot.aliases);
@@ -43,7 +40,7 @@ export const WorldCardSlotFields = <Card extends object>({ kind, card, idPrefix,
       value: typeof value === 'string' ? value : '',
       onChange: (next: string) => onChange({ [slot.id]: next }),
       // The Blueprint is told how a condition is written by its own rules; an author is shown it here.
-      placeholder: conditions ? CONDITIONS_HINT : slot.asks.charAt(0).toUpperCase() + slot.asks.slice(1),
+      placeholder: conditions ? CONDITIONS_AUTHOR_HINT : slot.asks.charAt(0).toUpperCase() + slot.asks.slice(1),
     };
     // A character's conditions are written one per line, so they take a box of their own.
     return WIDE_SLOTS.has(slot.id) || conditions

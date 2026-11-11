@@ -9,6 +9,7 @@ import { appearancesSection, cardLookStatement, deriveAppearances, worldCardLook
 import { createHarnessStory, reviseStoryFoundation, storyWorldRecord } from './foundation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { HarnessGenerationController } from './controller';
+import { deriveConditions } from './conditions';
 import { codexEntriesWithWorldCards, codexEntriesWithoutChapter, deriveHoldings, isMinorEntry } from './holdings';
 import { planCodexLook } from './lookDescriber';
 import { fillPromotedCard, promoteMinorFigure, promotedCardSlots } from './promotion';
@@ -439,6 +440,20 @@ describe('Promote', () => {
     expect(held(3).flags).toEqual([]);
     // A card the world opened with still does: a chapter that gains it again is flagged.
     expect(held(0).flags.map(flag => flag.kind)).toContain('already-held');
+  });
+
+  it('keeps a promoted character\'s conditions one a line, so each runs by itself', () => {
+    const { state, storyId } = started();
+    const promoted = promoteMinorFigure(state, storyId, 'neighbor').state;
+    const filled = fillPromotedCard(promoted, storyId, 'world:character:neighbor', {
+      status: '  Arrow wound |  bleeding > festering | a stage every 3 chapters \r\n\r\n   Blind in one eye  ',
+      role: 'a  guard\nat the gate',
+    });
+    // The conditions keep their line break; every other slot is still one line.
+    expect(filled.card.slots).toEqual({ status: 'Arrow wound | bleeding > festering | a stage every 3 chapters\nBlind in one eye', role: 'a guard at the gate' });
+    // They entered in Chapter 3, so their conditions begin there, two side by side.
+    const carried = deriveConditions(storyWorldRecord(filled.state, storyId), 6).find(character => character.name === 'neighbor')!;
+    expect(carried.conditions.map(condition => [condition.name, condition.showing])).toEqual([['Arrow wound', 'festering'], ['Blind in one eye', undefined]]);
   });
 
   it('never changes a card the world opened with', () => {

@@ -7,6 +7,8 @@ import { CHARACTER_LOOK_TRAITS, PLACE_LOOK_TRAITS, THING_LOOK_TRAITS, type LookT
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
 import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexMinor, CodexPassage, CodexPictureCard, CodexPictures, CodexPlace, CodexPromotedCard, CodexWorldCard, CodexWorldFact, StoryCodexRecord } from '../shared/storyCodex';
 import { PROMOTED_CARD_SLOT_CHARACTERS, promotedCardSlots } from '../shared/promotion';
+import { CONDITIONS_AUTHOR_HINT, CONDITIONS_TEXT_CHARACTERS } from '../../../narrative/conditions';
+import { CONDITIONS_SLOT } from '../../../narrative/worldRecord';
 import './reader-colors.css';
 
 /** How each change reads in the Codex. */
@@ -265,9 +267,14 @@ function PromotedCard({ name, promoted, facts, onFill }: {
       <p className="text-xs text-(--reader-text-dim)">Fill in what you know. Anything left blank stays blank.</p>
       {slots.map(slot => <label key={slot.id} className="block">
         <span className="text-[11px] uppercase tracking-[0.14em] text-(--reader-text-faint)">{slot.label}</span>
-        <input type="text" value={draft[slot.id] ?? ''} maxLength={PROMOTED_CARD_SLOT_CHARACTERS} placeholder={slot.asks} data-slot={slot.id}
-          onChange={event => setDraft(current => ({ ...current, [slot.id]: event.target.value }))}
-          className="mt-1 min-h-11 w-full min-w-0 rounded-lg border border-(--reader-light)/15 bg-(--reader-shade)/40 px-3 text-sm text-(--reader-text) placeholder:text-(--reader-text-faint) focus:border-(--reader-light)/40 focus:outline-none" />
+        {/* A character's conditions are written one a line, so they take a box that keeps lines. */}
+        {promoted.kind === 'character' && slot.id === CONDITIONS_SLOT
+          ? <textarea rows={3} value={draft[slot.id] ?? ''} maxLength={CONDITIONS_TEXT_CHARACTERS} placeholder={CONDITIONS_AUTHOR_HINT} data-slot={slot.id}
+              onChange={event => setDraft(current => ({ ...current, [slot.id]: event.target.value }))}
+              className="mt-1 w-full min-w-0 resize-y rounded-lg border border-(--reader-light)/15 bg-(--reader-shade)/40 px-3 py-2 text-sm text-(--reader-text) placeholder:text-(--reader-text-faint) focus:border-(--reader-light)/40 focus:outline-none" />
+          : <input type="text" value={draft[slot.id] ?? ''} maxLength={PROMOTED_CARD_SLOT_CHARACTERS} placeholder={slot.asks} data-slot={slot.id}
+              onChange={event => setDraft(current => ({ ...current, [slot.id]: event.target.value }))}
+              className="mt-1 min-h-11 w-full min-w-0 rounded-lg border border-(--reader-light)/15 bg-(--reader-shade)/40 px-3 text-sm text-(--reader-text) placeholder:text-(--reader-text-faint) focus:border-(--reader-light)/40 focus:outline-none" />}
       </label>)}
       {problem && <p role="alert" className="text-xs text-(--reader-warning-soft)">{problem}</p>}
       <div className="flex gap-2">

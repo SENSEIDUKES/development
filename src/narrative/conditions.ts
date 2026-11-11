@@ -54,6 +54,8 @@ export const CONDITION_LIMIT = 6;
  * much, so an author can type everything that is read and nothing more.
  */
 export const CONDITIONS_TEXT_CHARACTERS = 1_500;
+/** How an author writes a condition, for a form's hint: a name alone, or a name with its course. */
+export const CONDITIONS_AUTHOR_HINT = 'One per line: a name alone, or Name | stage > stage | a stage every 5 chapters | ends if this';
 const CONDITION_TEXT_CHARACTERS = 160;
 const CONDITION_STAGE_LIMIT = 8;
 
@@ -67,6 +69,14 @@ const tidy = (value: string) => value.replace(/\s+/g, ' ').trim();
 /** One piece of text (a name, one stage, one way out) within its limit. The line is taken apart first, so a long line never loses a stage or its ending. */
 const clip = (value: string) => tidy(value).slice(0, CONDITION_TEXT_CHARACTERS).trim();
 const label = (value: string) => clip(value).toLocaleLowerCase();
+
+/**
+ * Conditions as an author typed them, ready to keep on a card: each on its
+ * own line still, its spacing tidied, blank lines gone, within the limit. The
+ * line breaks are what tell one condition from the next, so they are kept.
+ */
+export const conditionsText = (value: string): string =>
+  value.split(/\r?\n/).map(tidy).filter(Boolean).join('\n').slice(0, CONDITIONS_TEXT_CHARACTERS).trim();
 
 /** Reads one line of a card's conditions. A line that says they are well is no condition. */
 const readCondition = (line: string): Condition | undefined => {

@@ -1,7 +1,7 @@
 import type { StoryCoverRequest } from '@seihouse/library/stories';
 
-/** The owner's approved cover template (2026-10-08), with each story field shown as its brace. */
-export const COVER_PROMPT_TEMPLATE = `Create professional Eastern fantasy novel cover art, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.
+/** The owner's approved cover template (intro updated 2026-11-11), with each story field shown as its brace. */
+export const COVER_PROMPT_TEMPLATE = `Create a professional Eastern fantasy novel cover art, high-quality animation, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration when appropriate to this story.
 Title: {title}
 Tradition: {tradition}
 Genre: {genre}

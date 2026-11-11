@@ -66,6 +66,19 @@ describe('Reading a card\'s conditions', () => {
     expect(readConditions(whole)).toHaveLength(CONDITION_LIMIT);
   });
 
+  it('reads exactly as much as a form lets an author type, and cuts between lines, never through one', () => {
+    const pad = (name: string, length: number) => `${name} | ${'x'.repeat(length - name.length - 3)}`;
+    // Text of exactly the limit is read whole.
+    const exact = [pad('First', 700), pad('Second', 799)].join('\n');
+    expect(exact.length).toBe(CONDITIONS_TEXT_CHARACTERS);
+    expect(readConditions(exact).map(condition => condition.name)).toEqual(['First', 'Second']);
+    // One character more, and the line that no longer fits whole is left out rather than read in part.
+    const over = [pad('First', 700), pad('Second', 800), 'Third'].join('\n');
+    expect(readConditions(over).map(condition => condition.name)).toEqual(['First']);
+    // A single line longer than the limit is not a condition at all.
+    expect(readConditions(pad('Endless', CONDITIONS_TEXT_CHARACTERS + 1))).toEqual([]);
+  });
+
   it('is only ever a character\'s: a thing\'s status is its own', () => {
     expect(worldCardConditions({ kind: 'character', slots: { status: 'Blind from birth' } })).toHaveLength(1);
     expect(worldCardConditions({ kind: 'thing', slots: { status: 'Damaged' } })).toEqual([]);

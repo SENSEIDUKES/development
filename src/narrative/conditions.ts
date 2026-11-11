@@ -48,9 +48,10 @@ export interface ConditionNow {
 /** The most conditions one character carries, and the most text one part holds. */
 export const CONDITION_LIMIT = 6;
 /**
- * The most text a card's conditions take in a form: room for every condition a
- * character may carry, each with a course of ordinary length. A field for them
- * allows this much, so an author can type whatever the reader accepts.
+ * The most text a card's conditions hold: room for every condition a character
+ * may carry, each with a course of ordinary length. It is one limit for both
+ * sides: a field for conditions allows this much, and the reader reads this
+ * much, so an author can type everything that is read and nothing more.
  */
 export const CONDITIONS_TEXT_CHARACTERS = 1_500;
 const CONDITION_TEXT_CHARACTERS = 160;
@@ -103,7 +104,11 @@ const readCondition = (line: string): Condition | undefined => {
 /** A card's conditions, one for each line, in the order written; two of one name are one. */
 export function readConditions(value: string | undefined): Condition[] {
   const read: Condition[] = [];
-  for (const line of (value ?? '').split(/\r?\n/)) {
+  const text = value ?? '';
+  // Past the limit nothing is read, and the cut falls between lines: a line that
+  // does not fit whole is left out, since half a condition is a different one.
+  const within = text.length <= CONDITIONS_TEXT_CHARACTERS ? text : text.slice(0, text.lastIndexOf('\n', CONDITIONS_TEXT_CHARACTERS) + 1);
+  for (const line of within.split(/\r?\n/)) {
     const condition = readCondition(line);
     if (!condition || read.some(other => label(other.name) === label(condition.name))) continue;
     read.push(condition);

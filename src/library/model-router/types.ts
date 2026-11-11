@@ -5,7 +5,7 @@ import type { ReasoningLevel, TextProviderId } from './catalog';
 export interface ModelRouterConfig {
   /** Explicit host opt-in; also requires a development runtime, never a deployment. */
   localDevelopment?: boolean;
-  credentials: { gemini?: string; openrouter?: string; elevenlabs?: string; minimax?: string; anthropic?: string };
+  credentials: { openai?: string; gemini?: string; openrouter?: string; elevenlabs?: string; minimax?: string; anthropic?: string };
   openRouterAttribution?: { referer?: string; title?: string };
   fetch?: typeof fetch;
   createGeminiClient?: (apiKey: string) => Pick<GoogleGenAI, 'models'>;
@@ -74,5 +74,5 @@ export type GenerationResult =
   | { capability: 'text'; provider: TextProviderId; model: string; text: string; usage?: TokenUsage }
   | { capability: 'tts'; provider: 'elevenlabs'; model: string; bytes: Uint8Array; mimeType: 'audio/mpeg' }
   /** `data` is the image's bytes in base64, as the providers return them. */
-  | { capability: 'image'; provider: 'gemini' | 'openrouter' | 'minimax'; model: string; data: string; mimeType: string }
+  | { capability: 'image'; provider: 'gemini' | 'openrouter' | 'minimax' | 'openai'; model: string; data: string; mimeType: string }
   | VideoTaskResult;

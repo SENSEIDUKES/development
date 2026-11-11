@@ -1,3 +1,4 @@
+import { generateOpenAIText, generateOpenAIImage } from './openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenAI } from '@google/genai';
 import { geminiThinkingConfig } from './geminiThinking';
@@ -52,6 +53,11 @@ export function createModelRouter(config: ModelRouterConfig) {
     if (request.capability === 'text') {
       const provider = textModelProvider(request.model);
       if (!provider) throw new ModelRouterError('invalid-model', `Model '${request.model}' cannot generate text.`);
+      if (provider === 'openai') {
+        const key = requireCredential(config.credentials.openai, 'OPENAI_API_KEY');
+        const result = await withTimeout(request.timeoutMs, signal => generateOpenAIText(request, key, signal, fetchImpl));
+        return { capability: 'text', provider, model: request.model, ...result };
+      }
       if (provider === 'minimax') {
         const key = requireCredential(config.credentials.minimax, 'MINIMAX_API_KEY');
         const result = await withTimeout(request.timeoutMs, signal => generateMiniMaxText(request, key, signal, fetchImpl));
@@ -190,6 +196,11 @@ export function createModelRouter(config: ModelRouterConfig) {
     }
     if (request.capability === 'image') {
       const provider = imageModelProvider(request.model);
+      if (provider === 'openai') {
+        const key = requireCredential(config.credentials.openai, 'OPENAI_API_KEY');
+        const result = await withTimeout(request.timeoutMs, signal => generateOpenAIImage(request, key, signal, fetchImpl));
+        return { capability: 'image', provider, model: request.model, ...result };
+      }
       if (provider === 'minimax') {
         const key = requireCredential(config.credentials.minimax, 'MINIMAX_API_KEY');
         const result = await withTimeout(request.timeoutMs, signal => generateMiniMaxImage(request, key, signal, fetchImpl));

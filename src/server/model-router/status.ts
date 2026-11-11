@@ -124,7 +124,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         description: 'Text models that write chapters, Story Seed Blueprints, and reader translations.',
         consumers: consumersFor('chapters'),
         defaultModel: chapters.defaultModel,
-        providers: providerStatus(environment, ['gemini', 'openrouter', 'minimax', 'anthropic', ...(isLocalModelDevelopment(environment) ? ['lmstudio' as const] : [])]),
+        providers: providerStatus(environment, ['gemini', 'openrouter', 'minimax', 'anthropic', 'openai', ...(isLocalModelDevelopment(environment) ? ['lmstudio' as const] : [])]),
         models: modelStatus(environment, chapterModels, chapters.defaultModel, true),
       },
       {
@@ -133,7 +133,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         description: 'Image models for covers, portraits, and scene art.',
         consumers: consumersFor('images'),
         defaultModel: imageDefault,
-        providers: providerStatus(environment, ['gemini', 'openrouter', 'minimax']),
+        providers: providerStatus(environment, ['gemini', 'openrouter', 'minimax', 'openai']),
         models: modelStatus(environment, IMAGE_MODELS, imageDefault, true),
       },
       {

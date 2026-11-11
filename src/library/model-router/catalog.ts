@@ -11,6 +11,7 @@
  * - `openrouter/<vendor>/<model>` → OpenRouter (`OPENROUTER_API_KEY`)
  * - `minimax/<model>` → MiniMax directly (`MINIMAX_API_KEY`)
  * - `anthropic/<model>` → Anthropic directly (`ANTHROPIC_API_KEY`)
+ * - `openai/<model>` uses OpenAI directly (`OPENAI_API_KEY`).
  * - `eleven_…` → ElevenLabs (`ELEVENLABS_API_KEY`)
  * - `tripo-…` → Tripo API (`TRIPO_API_KEY`)
  */
@@ -19,7 +20,7 @@ export type ModelEnvironment = Record<string, string | undefined>;
 export type ModelCapability = 'chapters' | 'images' | 'tts' | 'live' | 'audio' | 'video' | '3d';
 export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo' | 'lmstudio' | 'minimax' | 'anthropic' | 'openai';
 /** Providers that serve chapter-capable text models. */
-export type TextProviderId = 'gemini' | 'openrouter' | 'lmstudio' | 'minimax' | 'anthropic';
+export type TextProviderId = 'openai' | 'gemini' | 'openrouter' | 'lmstudio' | 'minimax' | 'anthropic';
 export type ModelStage = 'current' | 'preview' | 'legacy';
 
 /** Reasoning (thinking) levels across providers, lowest to highest. */
@@ -93,6 +94,24 @@ const OPENROUTER_PATTERN = /^openrouter\/[a-z0-9][a-z0-9._-]*\/[a-z0-9~][a-z0-9.
 
 /** Text models for chapter generation, newest first within each provider. */
 export const CHAPTER_MODELS: readonly RoutedModel[] = [
+  // Direct OpenAI Responses models, verified against the API catalog on 2026-11-10.
+  { id: 'openai/gpt-6.1-terra', label: 'GPT-6.1 Terra', provider: 'openai', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-6.1-sol', label: 'GPT-6.1 Sol', provider: 'openai', stage: 'current', reasoning: { levels: ['low', 'medium', 'high', 'xhigh', 'max'], defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-6-astra', label: 'GPT-6 Astra', provider: 'openai', stage: 'current', reasoning: { levels: ['low', 'medium', 'high', 'xhigh', 'max'], defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-6-luna', label: 'GPT-6 Luna', provider: 'openai', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-6-sol', label: 'GPT-6 Sol', provider: 'openai', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'openai', stage: 'legacy', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-5.6-terra', label: 'GPT-5.6 Terra', provider: 'openai', stage: 'legacy', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'openai', stage: 'legacy', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-5.5', label: 'GPT-5.5', provider: 'openai', stage: 'legacy', reasoning: { levels: ['none', 'low', 'medium', 'high', 'xhigh'], defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-5.5-pro', label: 'GPT-5.5 Pro', provider: 'openai', stage: 'legacy', reasoning: { levels: ['medium', 'high', 'xhigh'], defaultLevel: 'medium', sendDefault: true } },
+  { id: 'openai/gpt-5.4', label: 'GPT-5.4', provider: 'openai', stage: 'legacy', reasoning: { levels: ['none', 'low', 'medium', 'high', 'xhigh'], defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-5.4-pro', label: 'GPT-5.4 Pro', provider: 'openai', stage: 'legacy', reasoning: { levels: ['medium', 'high', 'xhigh'], defaultLevel: 'medium', sendDefault: true } },
+  { id: 'openai/gpt-5.4-mini', label: 'GPT-5.4 Mini', provider: 'openai', stage: 'legacy', reasoning: { levels: ['none', 'low', 'medium', 'high', 'xhigh'], defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-5.2', label: 'GPT-5.2', provider: 'openai', stage: 'legacy', reasoning: { levels: ['none', 'low', 'medium', 'high', 'xhigh'], defaultLevel: 'low', sendDefault: true } },
+  { id: 'openai/gpt-5.2-pro', label: 'GPT-5.2 Pro', provider: 'openai', stage: 'legacy', reasoning: { levels: ['medium', 'high', 'xhigh'], defaultLevel: 'medium', sendDefault: true } },
+  { id: 'openai/chat-latest', label: 'Chat Latest', provider: 'openai', stage: 'current' },
+
   // Claude through Anthropic directly. Every model sends low effort unless the
   // reader chooses another; the API defaults (medium, or high on Sonnet) think longer.
   { id: 'anthropic/claude-opus-5-5', label: 'Claude Opus 5.5', provider: 'anthropic', stage: 'current', reasoning: { levels: CLAUDE_LEVELS, defaultLevel: 'low', sendDefault: true } },
@@ -140,6 +159,11 @@ export const DEFAULT_CHAPTER_MODEL = 'google/gemini-3.1-flash-lite';
 
 /** Image models, chosen in the Router's Images tab: story covers are made with the choice. */
 export const IMAGE_MODELS: readonly RoutedModel[] = [
+  { id: 'openai/gpt-image-2.6-sunburst', label: 'GPT Image 2.6 Sunburst', provider: 'openai', stage: 'current' },
+  { id: 'openai/gpt-image-2.6-flare', label: 'GPT Image 2.6 Flare', provider: 'openai', stage: 'current' },
+  { id: 'openai/gpt-image-2.5-sunburst', label: 'GPT Image 2.5 Sunburst', provider: 'openai', stage: 'current' },
+  { id: 'openai/gpt-image-2.5-flare', label: 'GPT Image 2.5 Flare', provider: 'openai', stage: 'current' },
+
   { id: 'google/gemini-3.1-flash-image', label: 'Nano Banana 2 (Gemini 3.1 Flash Image)', provider: 'gemini', stage: 'current' },
   { id: 'google/gemini-3-pro-image', label: 'Nano Banana Pro (Gemini 3 Pro Image)', provider: 'gemini', stage: 'current' },
   { id: 'google/gemini-3.1-flash-lite-image', label: 'Nano Banana 2 Lite (Gemini 3.1 Flash Lite Image)', provider: 'gemini', stage: 'current' },
@@ -222,7 +246,7 @@ export const providerKey = (environment: ModelEnvironment, provider: ModelProvid
 /** Which provider serves a chapter-capable text model id, or undefined when the id is not routable. */
 export const textModelProvider = (model: string): TextProviderId | undefined => {
   const listed = CHAPTER_MODELS.find(option => option.id === model)?.provider;
-  if (listed === 'minimax' || listed === 'anthropic') return listed;
+  if (listed === 'minimax' || listed === 'anthropic' || listed === 'openai') return listed;
   if (model === LOCAL_LM_STUDIO_MODEL) return 'lmstudio';
   if (GEMINI_TEXT_PATTERN.test(model)) return 'gemini';
   if (OPENROUTER_PATTERN.test(model)) return 'openrouter';
@@ -276,6 +300,7 @@ export const resolveChapterModelRoute = (
   defaultVariable: string,
 ): ChapterModelRoute => {
   const keys = {
+    openai: providerKey(environment, 'openai'),
     minimax: providerKey(environment, 'minimax'),
     anthropic: providerKey(environment, 'anthropic'),
     gemini: providerKey(environment, 'gemini'),
@@ -286,7 +311,7 @@ export const resolveChapterModelRoute = (
   const extras = csv(environment.OPENROUTER_MODELS).map(asOpenRouterId);
   const catalog = CHAPTER_MODELS
     .filter(model => (model.provider !== 'openrouter' || keys.openrouter) && (model.provider !== 'minimax' || keys.minimax)
-      && (model.provider !== 'anthropic' || keys.anthropic))
+      && (model.provider !== 'anthropic' || keys.anthropic) && (model.provider !== 'openai' || keys.openai))
     .map(model => model.id);
   const ids = [...new Set([...pinned, ...extras, ...catalog, ...(keys.lmstudio ? [LOCAL_LM_STUDIO_MODEL] : [])])]
     .filter(model => textModelProvider(model) && (textModelProvider(model) !== 'lmstudio' || keys.lmstudio));
@@ -336,4 +361,4 @@ export const lowestReasoningLevel = (model: string): ReasoningLevel | undefined 
   CHAPTER_MODELS.find(option => option.id === model)?.reasoning?.levels[0];
 
 export const isMissingKeyMessage = (message: string): boolean =>
-  /(?:GEMINI_API_KEY|OPENROUTER_API_KEY|MINIMAX_API_KEY|ANTHROPIC_API_KEY) is not configured/.test(message);
+  /(?:OPENAI_API_KEY|GEMINI_API_KEY|OPENROUTER_API_KEY|MINIMAX_API_KEY|ANTHROPIC_API_KEY) is not configured/.test(message);

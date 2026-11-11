@@ -5,7 +5,7 @@ import {
 } from './config';
 import { buildHarnessGenerationPrompt, buildHarnessArcPrompt } from './prompt';
 import { createHarnessTextProvider, type HarnessTextModelProvider } from './provider';
-import { requireTextModelKey, resolveReasoningLevel } from '../model-router/catalog';
+import { requireTextModelKey, resolveReasoningLevel, textModelProvider } from '../model-router/catalog';
 
 export type HarnessProviderFactory = (input: { apiKey: string; model: string }) => HarnessTextModelProvider;
 
@@ -29,13 +29,17 @@ export const executeHarnessGeneration = async (
   const provider = providerFactory
     ? providerFactory({ apiKey, model })
     : createHarnessTextProvider(model, config);
-  const chapter = 'operation' in request ? undefined : buildHarnessGenerationPrompt(request);
+  const schemaInInstructions = textModelProvider(model) === 'openai';
+  const chapter = 'operation' in request ? undefined : buildHarnessGenerationPrompt(request, schemaInInstructions);
   const prompt = chapter ?? buildHarnessArcPrompt(request as HarnessArcRequest);
   try {
     const result = await provider.generate({
       systemInstruction: prompt.systemInstruction,
       userPrompt: prompt.userPrompt,
       responseJsonSchema: prompt.responseJsonSchema,
+      // The chapter prompt already teaches JSON in How to return the chapter.
+      // Plain transport preserves that exact skeleton; HARNESS still validates the reply.
+      responseFormat: chapter && schemaInInstructions ? 'text' : 'json',
       reasoningLevel: resolveReasoningLevel(model, requestedReasoningLevel),
       temperature: 'operation' in request ? 0 : config.temperature,
       maxOutputTokens: config.maxOutputTokens,

@@ -62,7 +62,7 @@ export const harnessGenerationServerInfo = (
   const config = resolveHarnessGenerationConfig(environment);
   return {
     provider: config.provider,
-    configured: Boolean(config.keys.gemini || config.keys.openrouter || config.keys.lmstudio || config.keys.minimax),
+    configured: Object.values(config.keys).some(Boolean),
     models: config.models,
     defaultModel: config.defaultModel,
   };

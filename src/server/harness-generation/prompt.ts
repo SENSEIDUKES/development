@@ -327,11 +327,12 @@ export const presentImmediateChapterRequest = (request: ImmediateChapterRequest)
  * tagged carries its tag teaching inside HOW TO WRITE, where that attempt read
  * it; nothing replays a prompt the writer never saw.
  */
-export const composeHarnessSystemInstruction = (capaPrompt: Pick<CapaPrompt, 'text'>) => [
+export const composeHarnessSystemInstruction = (capaPrompt: Pick<CapaPrompt, 'text'>, responseJsonSchema?: unknown) => [
   HARNESS_PROMPT_HEADINGS.role, HARNESS_ROLE,
   HARNESS_PROMPT_HEADINGS.writing, capaPrompt.text.trim(), HARNESS_WRITING_RULES,
   HARNESS_PROMPT_HEADINGS.reading, HARNESS_READING_GUIDE,
   HARNESS_PROMPT_HEADINGS.returning, HARNESS_RETURN_FORMAT,
+  ...(responseJsonSchema ? [`Return JSON without Markdown fences matching this schema: ${JSON.stringify(responseJsonSchema)}`] : []),
   HARNESS_PROMPT_HEADINGS.hardRules, HARNESS_HARD_RULES,
 ].join('\n\n');
 
@@ -349,7 +350,7 @@ export const composeHarnessUserPrompt = ({ story, request, reminder }: { story: 
  * joined only here, at the provider boundary. Numbering authority, Reader
  * structures, and presentation contracts stay with the HARNESS.
  */
-export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) => {
+export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest, schemaInInstructions = false) => {
   if (!request.capaPrompt.text.trim()) throw new Error('Harness Generation requires an assembled CAPA Prompt.');
   if (!request.storyInformation.arc) throw new Error('Harness Generation requires an authoritative Arc Plan before a chapter model call.');
   if (!request.missionReminder?.text?.trim()) throw new Error('Harness Generation requires the frozen Mission Reminder.');
@@ -360,7 +361,9 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
     { section: 'missionReminder', text: presentMissionReminder(request.missionReminder) },
   ];
   const packetSections = sections.filter(section => !['capaPrompt', 'missionReminder', 'immediateChapterRequest'].includes(section.section));
-  const systemInstruction = composeHarnessSystemInstruction(request.capaPrompt);
+  const responseJsonSchema = buildHarnessChapterResponseSchema(request.immediateChapterRequest.chapterScale.paragraphs);
+  // Providers without this schema's structured-output support receive it in its owned part.
+  const systemInstruction = composeHarnessSystemInstruction(request.capaPrompt, schemaInInstructions ? responseJsonSchema : undefined);
   // The message is made from the measured sections themselves, so the measurement is of exactly what is sent.
   const sectionText = (id: PacketSectionId) => sections.find(section => section.section === id)!.text;
   const userPrompt = composeHarnessUserPrompt({
@@ -368,13 +371,13 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
     request: sectionText('immediateChapterRequest'),
     reminder: sectionText('missionReminder'),
   });
-  const responseJsonSchema = buildHarnessChapterResponseSchema(request.immediateChapterRequest.chapterScale.paragraphs);
+  const separateSchemaCharacters = schemaInInstructions ? 0 : JSON.stringify(responseJsonSchema).length;
   const measurement: HarnessRequestMeasurement = {
     systemInstructionCharacters: systemInstruction.length,
     userPromptCharacters: userPrompt.length,
     responseSchemaCharacters: JSON.stringify(responseJsonSchema).length,
-    totalCharacters: systemInstruction.length + userPrompt.length + JSON.stringify(responseJsonSchema).length,
-    estimatedTokens: Math.ceil((systemInstruction.length + userPrompt.length + JSON.stringify(responseJsonSchema).length) / GENERATION_PACKET_BUDGET.charactersPerToken),
+    totalCharacters: systemInstruction.length + userPrompt.length + separateSchemaCharacters,
+    estimatedTokens: Math.ceil((systemInstruction.length + userPrompt.length + separateSchemaCharacters) / GENERATION_PACKET_BUDGET.charactersPerToken),
     sections: sections.map(section => ({ section: section.section, characters: section.text.length })),
   };
   return { systemInstruction, userPrompt, responseJsonSchema, measurement };

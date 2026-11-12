@@ -1,9 +1,10 @@
 import { Component, createContext, lazy, Suspense, useContext, useEffect, useLayoutEffect, useState, type CSSProperties, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
+import FocusLock from 'react-focus-lock';
 import { SEISwitch } from '@seihouse/ui';
 import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { LibraryHelpIcon, LibraryNavigationIcon, LibraryProfileIcon } from '@seihouse/library-ui';
-import { Languages, LogIn, Music } from 'lucide-react';
+import { ChevronDown, Languages, LogIn, Music } from 'lucide-react';
 import { getActiveInterfaceLanguage, setFallbackInterfaceLanguage } from '../../../library/language/interfaceTranslation';
 import { WorkspaceSheet } from './WorkspaceSheet';
 import { useHeaderDisclosure, type HeaderAction } from './WorkspaceHeaderActions';
@@ -59,11 +60,14 @@ function ProfilePicture({ src, size }: { src?: string; size: number }) {
 const MENU_GAP = 12;
 const MENU_EDGE = 16;
 
-/** The menu sits under the Portrait, aligned to its right edge. */
-function menuPosition(anchor: HTMLElement): CSSProperties {
+/** Align with the Portrait’s inline end and clamp both edges to the viewport. */
+function menuPosition(anchor: HTMLElement, panel: HTMLElement): CSSProperties {
   const rect = anchor.getBoundingClientRect();
   const top = rect.bottom + MENU_GAP;
-  return { top, maxHeight: `calc(100dvh - ${top + MENU_EDGE}px)`, right: Math.max(MENU_EDGE, window.innerWidth - rect.right) };
+  const width = panel.getBoundingClientRect().width;
+  const rtl = getComputedStyle(anchor).direction === 'rtl';
+  const left = Math.max(MENU_EDGE, Math.min(rtl ? rect.left : rect.right - width, window.innerWidth - width - MENU_EDGE));
+  return { top, left, right: 'auto', maxHeight: `calc(100dvh - ${top + MENU_EDGE}px)` };
 }
 
 /**
@@ -78,7 +82,7 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
   help?: HeaderAction;
 }) {
   const profile = useContext(ProfileMenuContext);
-  const disclosure = useHeaderDisclosure();
+  const disclosure = useHeaderDisclosure({ contained: true });
   const [experience, setExperience] = useState<'help' | 'help-error' | null>(null);
   const [localLanguage, setLocalLanguage] = useState<SenLanguageCode>(() =>
     normalizeSenLanguageCode(preferences?.language ?? getActiveInterfaceLanguage()),
@@ -96,8 +100,17 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
   }, [preferences?.language, disclosure.open]);
   useLayoutEffect(() => {
     if (!disclosure.open) return;
-    if (disclosure.triggerRef.current) setPosition(menuPosition(disclosure.triggerRef.current));
-  }, [disclosure.open, disclosure.triggerRef]);
+    const update = () => {
+      if (disclosure.triggerRef.current && disclosure.panelRef.current) {
+        setPosition(menuPosition(disclosure.triggerRef.current, disclosure.panelRef.current));
+      }
+    };
+    update();
+    // Language can change while the panel is open; follow the document direction.
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['dir'] });
+    return () => observer.disconnect();
+  }, [disclosure.open, disclosure.triggerRef, disclosure.panelRef, preferences?.language, localLanguage]);
 
   const selectedLanguage = normalizeSenLanguageCode(preferences?.language ?? localLanguage);
   const handleLanguageChange = (next: SenLanguageCode) => {
@@ -109,12 +122,12 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
   const returnFocus = () => disclosure.triggerRef.current?.focus();
   // Each entry closes the menu first, so a page or dialog it opens takes focus from the Portrait.
   const choose = (action: () => void) => () => {
-    disclosure.setOpen(false);
+    flushSync(() => disclosure.setOpen(false));
     returnFocus();
     action();
   };
   const openHelp = () => {
-    disclosure.setOpen(false);
+    flushSync(() => disclosure.setOpen(false));
     returnFocus();
     if (help) help.onAction();
     else setExperience('help');
@@ -127,12 +140,12 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
 
   return <div className="workspace-profile" ref={disclosure.rootRef}>
     <button ref={disclosure.triggerRef} type="button" className="workspace-profile-portrait"
-      aria-label={label} title={label} aria-expanded={disclosure.open} aria-controls={disclosure.id}
+      aria-label={label} title={label} aria-haspopup="dialog" aria-expanded={disclosure.open} aria-controls={disclosure.id}
       onPointerEnter={help?.onIntent} onFocus={help?.onIntent}
       onClick={() => disclosure.setOpen(!disclosure.open)}>
       <ProfilePicture src={profile?.avatarUrl} size={22} />
     </button>
-    {disclosure.open && layer && createPortal(<div id={disclosure.id} ref={disclosure.panelRef}
+    {disclosure.open && layer && createPortal(<FocusLock autoFocus={false} returnFocus={false}><div id={disclosure.id} role="dialog" aria-label={label} tabIndex={-1} ref={disclosure.panelRef}
       className="workspace-profile-panel" data-testid="workspace-profile-menu" style={position}>
       <div role="group" aria-label={label} className="workspace-profile-sheet">
         {profile && <div className="workspace-profile-identity">
@@ -158,9 +171,13 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
           </button>}
         </div>}
         <div className="workspace-profile-group">
-          <div className="workspace-profile-row workspace-profile-setting">
+          <div className="workspace-profile-row workspace-profile-setting workspace-profile-language">
             <Languages aria-hidden="true" size={18} className="workspace-profile-row-icon" />
             <label htmlFor="header-preferred-language" className="workspace-profile-row-label">Language</label>
+            <span className="workspace-profile-language-value" aria-hidden="true">
+              {SEN_LANGUAGES.find(option => option.code === selectedLanguage)?.label}
+            </span>
+            <ChevronDown size={12} aria-hidden="true" className="workspace-profile-language-chevron" />
             <select id="header-preferred-language" name="interfaceLanguage" className="workspace-profile-select"
               value={selectedLanguage} onChange={event => handleLanguageChange(event.target.value as SenLanguageCode)}>
               {SEN_LANGUAGES.map(option => <option key={option.code} value={option.code}>{option.label}</option>)}
@@ -183,7 +200,7 @@ export function WorkspaceHeaderProfileMenu({ preferences, help }: {
           </button>
         </div>
       </div>
-    </div>, layer)}
+    </div></FocusLock>, layer)}
     {experience === 'help' && createPortal(<HelpBoundary onError={() => { setLibraryHelpMenu(() => lazy(loadHelpMenu)); setExperience('help-error'); }}>
       <Suspense fallback={<span role="status">Loading Help…</span>}>
         <LibraryHelpMenu open onClose={() => setExperience(null)} />

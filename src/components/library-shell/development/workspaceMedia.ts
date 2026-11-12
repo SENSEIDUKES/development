@@ -58,3 +58,11 @@ export function usePhone() {
     () => false,
   );
 }
+
+/** Keep in sync with the short-landscape rules in the shell stylesheets. */
+export const SHORT_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 480px)';
+const shortLandscapeSubscribe = subscribe(SHORT_LANDSCAPE_QUERY);
+export function useShortLandscape() {
+  return useSyncExternalStore(shortLandscapeSubscribe,
+    () => window.matchMedia(SHORT_LANDSCAPE_QUERY).matches, () => false);
+}

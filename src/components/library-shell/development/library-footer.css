@@ -253,19 +253,9 @@
   border-radius: 0.75rem;
 }
 
-/* Wide viewports have room to stand the three menus open side by side, so a
-   laptop never shows a tall stack of closed accordions beside a half-empty
-   identity column. The identity keeps a left rail with the social row and the
-   language pill beneath it; `display: contents` lets those three controls place
-   themselves in the page grid without a second markup tree. The width here
-   matches WIDE_FOOTER_QUERY in workspaceMedia.ts, which swaps the accordions
-   for the columns this layout expects. */
-/* Wide viewports keep the same single centred column the phone reads, rather
-   than setting the identity against a tall menu card: side by side, one half was
-   always carrying the other. The extra width goes to the menus, which sit as
-   three tabs in a row — closed the card is barely taller than its headings, and
-   opening one drops its links beneath that heading, in its own column. The
-   markup never changes; only this layout does. */
+/* Wide viewports keep the identity centred above the menus. Each visible menu
+   gets an equal-width column, so hosts with fewer groups leave no empty track.
+   Opening a menu drops its links beneath its own heading at every width. */
 @media (min-width: 1024px) {
   .library-footer {
     margin-top: 2rem;
@@ -277,7 +267,8 @@
   }
   .library-footer-disclosures {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     align-items: start;
     column-gap: 1.5rem;
     padding-inline: 1.5rem;

@@ -4,7 +4,6 @@ import { projectCanonicalState } from './canonicalProjection';
 import { deriveHoldings, holdingsSection } from './holdings';
 import { appearancesSection, deriveAppearances } from './appearances';
 import { conditionsSection } from './conditions';
-import { deriveStatuses } from './statuses';
 import { derivePlaces } from './places';
 import { deriveTies } from './ties';
 import { storyPointOfView } from './pointOfView';
@@ -184,14 +183,15 @@ export const compileStoryInformationPacket = (
     mainCharacterName,
     worldAtChapterZero,
   }), mainCharacterName);
-  // What each character carries as this chapter is written: every condition at
-  // the stage its own course has reached, by the chapter count alone.
-  const conditions = conditionsSection(world, nextChapterNumber);
+  // What each character carries as this chapter is written: their card's
+  // conditions at the stage the chapter count gives, and the ones the page
+  // began, less the ones it ended.
+  const storyEntries = state.codexEntries.filter(entry => entry.storyId === story.id);
+  const conditions = conditionsSection({ world, entries: storyEntries, chapters, chapterNumber: nextChapterNumber });
   // Beside it, who and what is already on the page, with each look, worked out
   // again from the committed chapters' appearances: the most recently seen
   // first, as many as its own counts allow.
-  const storyEntries = state.codexEntries.filter(entry => entry.storyId === story.id);
-  const appearances = appearancesSection(deriveAppearances({ entries: storyEntries, chapters, world }), deriveStatuses(chapters), storyEntries, derivePlaces(chapters, storyEntries), deriveTies(chapters, storyEntries));
+  const appearances = appearancesSection(deriveAppearances({ entries: storyEntries, chapters, world }), storyEntries, derivePlaces(chapters, storyEntries), deriveTies(chapters, storyEntries));
 
   const sections: PacketSectionMeasurement[] = [
     measure('currentStory', currentStory),

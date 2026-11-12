@@ -891,6 +891,14 @@ async function walk(browser, viewport, sample) {
   check(words.includes('Mara') && words.includes('In the story’s words.'), `The sheet should show the story's own words for the look, got ${words}.`);
   check(!(await page.evaluate(slidesSideways)), 'The character sheet must not scroll sideways.');
   await shot('6d-codex-profile');
+  // What the main character carries: their card's condition, at the stage Chapter 1 finds it. The line the card wrote is never shown.
+  const carried = codexSheet.getByTestId('codex-conditions');
+  await carried.scrollIntoViewIfNeeded();
+  const carriedText = await carried.innerText();
+  check(carriedText.includes('Destroyed meridians') && carriedText.includes('cannot gather qi') && !carriedText.includes('|'),
+    `The sheet should list the card's condition as it stands now, got ${carriedText}.`);
+  check(!(await page.evaluate(slidesSideways)), 'The conditions must not make the sheet scroll sideways.');
+  await shot('6d-codex-conditions');
   // Manifest first writes that one look (one quiet call with the token), then makes the card's picture from it, and the card wears it.
   await codexSheet.getByTestId('codex-manifest').getByRole('button', { name: 'Manifest' }).click();
   await codexSheet.locator('header img').waitFor();

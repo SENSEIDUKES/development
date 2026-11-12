@@ -19,7 +19,6 @@ import { normalizeIdentityLabel } from './canonicalProjection';
 import { factionNamed, type DeclaredFaction } from './factions';
 import { createCodexEntryResolver, holdingName, pointedSentence, type CodexEntryResolver, type DeclaredCharacter, type HoldingPassage } from './holdings';
 import { isMainCharacterTag } from './speakers';
-import type { CurrentStatus } from './statuses';
 import type { CurrentPlace } from './places';
 import { TAG_SUBJECT_TIES, tiesLine, tiesOfEntry, type CurrentTie } from './ties';
 import type { PlaceAttachment } from '../../../narrative/places';
@@ -576,17 +575,15 @@ export const APPEARED_SECTION_PLACES = 10;
  * The Appeared section the writer reads: the main character first when they
  * have appeared, then the characters, the things and the places on the page,
  * those seen most recently first, each with its look's one line once it is
- * written down, and each character's status, place and ties once a tag gave
- * them. Exact names only; how to use them is the Appearance skill's job.
+ * written down, and each character's place and ties once a tag gave them.
+ * What each carries is the Conditions section's. Exact names only; how to use them is the Appearance skill's job.
  */
-export function appearancesSection(state: AppearancesState, statuses?: ReadonlyMap<string, CurrentStatus>, entries: readonly CodexEntry[] = [], places?: ReadonlyMap<string, CurrentPlace>, ties?: ReadonlyMap<string, CurrentTie>): AppearancesSection {
-  const statusOf = (key: string) => statuses?.get(key)?.status;
+export function appearancesSection(state: AppearancesState, entries: readonly CodexEntry[] = [], places?: ReadonlyMap<string, CurrentPlace>, ties?: ReadonlyMap<string, CurrentTie>): AppearancesSection {
   const placeOf = (key: string) => places?.get(key)?.place;
   // A subject's key is its Codex entry once it has one, else its name: ties are found by either. The
   // latest ones only, as many as the tagger reads, so a long story never outgrows the writer's packet.
   const tiesOf = (key: string, name: string) => (ties?.size ? tiesLine(tiesOfEntry(ties, { id: key, name, aliases: entries.find(entry => entry.id === key)?.aliases }).slice(-TAG_SUBJECT_TIES)) : '');
   const recordOf = (key: string, name: string) => ({
-    ...(statusOf(key) ? { status: statusOf(key)! } : {}),
     ...(placeOf(key) ? { place: placeOf(key)! } : {}),
     ...(tiesOf(key, name) ? { ties: tiesOf(key, name) } : {}),
   });
@@ -602,8 +599,8 @@ export function appearancesSection(state: AppearancesState, statuses?: ReadonlyM
   const characters = state.subjects.filter(subject => subject.entity === 'character' && !subject.mainCharacter).sort(recent).slice(0, APPEARED_SECTION_CHARACTERS);
   const things = state.subjects.filter(subject => subject.entity === 'thing').sort(recent).slice(0, APPEARED_SECTION_THINGS);
   const placesShown = state.subjects.filter(subject => subject.entity === 'place').sort(recent).slice(0, APPEARED_SECTION_PLACES);
-  // Someone the story gave a status, a place or a tie but never tagged appearing still reaches the writer, with them,
-  // so a death, an arrival or a sworn oath tagged on its own is never forgotten.
+  // Someone the story gave a place or a tie but never tagged appearing still reaches the writer, with them,
+  // so an arrival or a sworn oath tagged on its own is never forgotten.
   // Measured against who is actually listed, so a character the counts leave out still keeps theirs;
   // the most recent first, as many as the characters' own count.
   const listed = new Set([...(main ? [main] : []), ...characters].map(subject => subject.key));
@@ -615,7 +612,7 @@ export function appearancesSection(state: AppearancesState, statuses?: ReadonlyM
     if (kind && kind !== 'character') return [];
     return [[entryId ?? `character:${normalizeIdentityLabel(tie.names[side])}`, { name: tie.names[side], passage: tie.passage }] as const];
   }));
-  for (const [key, current] of [...statuses ?? [], ...places ?? [], ...tieSides]) {
+  for (const [key, current] of [...places ?? [], ...tieSides]) {
     if (listed.has(key)) continue;
     const seen = latest.get(key);
     if (!seen || current.passage.chapterNumber > seen.chapterNumber) latest.set(key, { name: current.name, chapterNumber: current.passage.chapterNumber });

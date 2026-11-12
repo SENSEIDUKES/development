@@ -128,7 +128,7 @@ export function codexCharacterText(character: CodexCharacter): string {
     ...facts(character.atChapterZero),
     ...looks(character.appearance),
     character.rank ? sentence(`Rank: ${character.rank.text}`) : undefined,
-    character.status ? sentence(`Now: ${character.status.text}`) : undefined,
+    character.conditions?.length ? listed('Carries now', character.conditions.map(condition => `${condition.name}${condition.showing ? ` (${condition.showing})` : ''}`)) : undefined,
     character.place ? sentence(`Now at: ${character.place.text}`) : undefined,
     listed('Carries', character.things.map(thing => `${thing.count > 1 ? `${thing.count} ` : ''}${thing.name}${thing.equipped ? ' (in hand or worn)' : ''}`)),
     listed('Abilities', character.abilities.map(ability => `${ability.name}${ability.sealed ? ' (sealed)' : ability.stage === 'learning' ? ' (learning)' : ''}${ability.level ? `, ${ability.level}` : ''}`)),

@@ -93,7 +93,7 @@ export const presentTagSubjects = (subjects: readonly HarnessTagSubject[]) => {
       `- ${subject.name}`,
       subject.mainCharacter ? ' (the main character)' : '',
       subject.aliases?.length ? ` — also called: ${subject.aliases.join(', ')}` : '',
-      subject.status ? ` — status: ${subject.status}` : '',
+      subject.conditions?.length ? ` — conditions: ${subject.conditions.join('; ')}` : '',
       subject.place ? ` — at: ${subject.place}` : '',
       subject.ties?.length ? ` — ties: ${subject.ties.map(tie => `${tie.with} (${tie.tie})`).join('; ')}` : '',
     ].join(''))].join('\n')];

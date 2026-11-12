@@ -204,13 +204,10 @@ export {
   type ResolvedAppearances,
 } from '../../components/harness-generation/shared/appearances';
 export {
-  deriveStatuses,
   placeStatuses,
   readStatusTag,
   resolveStatuses,
   statusKey,
-  statusOfEntry,
-  type CurrentStatus,
   type ReadStatusTag,
   type StatusPlacement,
 } from '../../components/harness-generation/shared/statuses';
@@ -274,6 +271,7 @@ export {
   type PlacedTagNotes,
   type TagNote,
 } from '../../components/harness-generation/shared/tagger';
+export { TAG_SUBJECT_CONDITIONS } from '../../components/harness-generation/shared/tagger';
 export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';
 export * from '../../narrative/statuses';
@@ -305,7 +303,10 @@ export {
 } from '../../components/harness-generation/development/FatePanel';
 export { findStory, findFoundationRevision, findActiveFoundationRevision, storyWorldRecord } from '../../components/harness-generation/shared/foundation';
 export { createHarnessStory } from '../../components/harness-generation/shared/foundation';
-export { conditionsSection, deriveConditions, type CharacterConditions } from '../../components/harness-generation/shared/conditions';
+export {
+  conditionLabel, conditionsSection, deriveConditions,
+  type CarriedCondition, type CharacterConditions, type ConditionFlag, type ConditionsChapter, type ConditionsState,
+} from '../../components/harness-generation/shared/conditions';
 export { PROMOTED_CARD_SLOT_CHARACTERS, fillPromotedCard, promoteMinorFigure, promotedCardSlots } from '../../components/harness-generation/shared/promotion';
 export * from '../../components/harness-generation/shared/chapterSignals';
 export * from '../../components/harness-generation/shared/chapterBody';

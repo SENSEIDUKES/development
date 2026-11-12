@@ -533,6 +533,22 @@ describe('Fixer: the rest of the record', () => {
     expect(apply(state, latest, [{ case: 'c1', outcome: 'major', reason: 'He is simply alive.' }]).result.fixes[0]).toMatchObject({ outcome: 'major' });
   });
 
+  it('still asks when the chapter only ends some other condition before they speak', async () => {
+    const { state, latest } = await written(
+      reply(['[[appears: Elder Qin | character]] [[status: Elder Qin | dead]] Elder Qin slid down the pillar and did not rise again.']),
+      reply(['[[status: Elder Qin | fever | ended]] The fever had left the body.', '[[@Elder Qin]] “You forgot me,” he said.']));
+    expect(planHoldingsFix(inputFor(state, latest)).cases.map(planned => planned.case.problems)).toEqual([['‘Elder Qin’ is dead since Chapter 1, but speaks in this chapter.']]);
+  });
+
+  it('is quieted by the end of the death they carry, and never by an end that only has a death word in it', async () => {
+    const dead = reply(['[[appears: Elder Qin | character]] [[status: Elder Qin | dead]] Elder Qin slid down the pillar and did not rise again.']);
+    const speaks = '[[@Elder Qin]] “You forgot me,” he said.';
+    const tired = await written(dead, reply(['[[status: Elder Qin | dead tired | ended]] He had slept at last.', speaks]));
+    expect(planHoldingsFix(inputFor(tired.state, tired.latest)).cases).toHaveLength(1);
+    const back = await written(dead, reply(['[[status: Elder Qin | Dead | ended]] The pill burned, and Elder Qin breathed.', speaks]));
+    expect(planHoldingsFix(inputFor(back.state, back.latest)).cases).toEqual([]);
+  });
+
   it('never asks about someone dead whom the chapter brings back before they speak', async () => {
     const { state, latest } = await written(
       reply(['[[appears: Elder Qin | character]] [[status: Elder Qin | dead]] Elder Qin slid down the pillar and did not rise again.']),

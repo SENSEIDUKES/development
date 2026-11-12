@@ -4,6 +4,7 @@ import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState } from '.
 import { WORLD_CARD_KINDS, worldCardKey, type WorldCard } from '../../../narrative/worldRecord';
 import type { CodexEntry } from '../../../narrative/holdings';
 import { codexEntriesWithWorldCards } from './holdings';
+import { normalizeIdentityLabel } from './canonicalProjection';
 
 export const createEmptyHarnessWorkspaceState = (): HarnessWorkspaceState => ({
   schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION,
@@ -192,7 +193,92 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // at it. An entry with no card stays as it is: in a story with a world it now
   // reads as a minor figure.
   47: stored => ({ ...stored, codexEntries: codexEntriesOfSavedWorlds(stored), schemaVersion: 48 }),
+  // 49 changes what a status tag means. Until now a character's status was
+  // the latest tag, each one replacing the one before; now a tag begins a
+  // condition that stands until a tag marked `ended` ends it. A saved story
+  // says the same thing in the new terms: where a later status replaced an
+  // earlier one, the earlier one ends there, on that same sentence, so each
+  // character still carries exactly their latest. A packet frozen for a
+  // chapter not yet written carried a status in its Appeared entries, which
+  // the writer no longer reads there: it moves to the packet's Conditions.
+  48: stored => ({ ...stored, chapters: chaptersWithStatusEnds(stored), attempts: attemptsCarryingStatuses(stored), schemaVersion: 49 }),
 };
+
+const isRow = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+const rowsOf = (value: unknown): Array<Record<string, unknown>> => (Array.isArray(value) ? value : []).filter(isRow);
+const textOf = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+/** A status as conditions are compared: its own words, whole, so "wounded (left arm)" is not "wounded (right arm)". */
+const wholeName = (value: string) => value.toLocaleLowerCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * Every saved chapter, with an `ended` status wherever a later status replaced
+ * an earlier one for the same character. The end sits on the sentence of the
+ * status that replaced it, just before it, which is where the old reading had
+ * it stop standing.
+ */
+const chaptersWithStatusEnds = (stored: StoredWorkspace): unknown[] => {
+  const chapters = Array.isArray(stored.chapters) ? [...stored.chapters as unknown[]] : [];
+  const paragraphOf = (record: Record<string, unknown>) => Number(textOf((record.anchor as Record<string, unknown> | undefined)?.blockId).match(/-p(\d+)$/)?.[1] ?? 0);
+  const startOf = (record: Record<string, unknown>) => Number((record.anchor as Record<string, unknown> | undefined)?.startOffset ?? 0);
+  const stories = new Map<unknown, number[]>();
+  chapters.forEach((chapter, position) => {
+    if (isRow(chapter) && Array.isArray(chapter.statuses) && chapter.statuses.length) stories.set(chapter.storyId, [...(stories.get(chapter.storyId) ?? []), position]);
+  });
+  for (const positions of stories.values()) {
+    const latest = new Map<string, string>();
+    const inOrder = [...positions].sort((left, right) => Number((chapters[left] as Record<string, unknown>).chapterNumber ?? 0) - Number((chapters[right] as Record<string, unknown>).chapterNumber ?? 0));
+    for (const position of inOrder) {
+      const chapter = chapters[position] as Record<string, unknown>;
+      const statuses = chapter.statuses as unknown[];
+      const read = statuses.map((record, index) => ({ record, index })).filter((entry): entry is { record: Record<string, unknown>; index: number } => isRow(entry.record))
+        .sort((left, right) => paragraphOf(left.record) - paragraphOf(right.record) || startOf(left.record) - startOf(right.record) || left.index - right.index);
+      const endsBefore = new Map<number, Record<string, unknown>>();
+      for (const { record, index } of read) {
+        const payload = isRow(record.payload) ? record.payload : undefined;
+        const subject = payload && isRow(payload.subject) ? payload.subject : undefined;
+        const status = textOf(payload?.status);
+        if (!payload || !subject || !status || payload.ended) continue;
+        const key = textOf(subject.entryId) || `character:${normalizeIdentityLabel(textOf(subject.name))}`;
+        const earlier = latest.get(key);
+        if (earlier !== undefined && wholeName(earlier) !== wholeName(status)) {
+          endsBefore.set(index, {
+            ...record, id: `${textOf(record.id)}:ended`, anchor: cloneHarnessValue(record.anchor),
+            payload: { origin: 'harness', subject: cloneHarnessValue(subject), status: earlier, ended: true },
+          });
+        }
+        latest.set(key, status);
+      }
+      if (endsBefore.size) chapters[position] = { ...chapter, statuses: statuses.flatMap((record, index) => (endsBefore.has(index) ? [endsBefore.get(index)!, record] : [record])) };
+    }
+  }
+  return chapters;
+};
+
+/**
+ * Every saved attempt, with a status its frozen packet carried in an Appeared
+ * entry moved to that packet's Conditions section, where the writer reads what
+ * each character carries now. A retried chapter is sent its frozen packet as
+ * it stands, so a death recorded there is still told.
+ */
+const attemptsCarryingStatuses = (stored: StoredWorkspace): unknown[] => (Array.isArray(stored.attempts) ? stored.attempts as unknown[] : []).map(attempt => {
+  const packet = isRow(attempt) && isRow(attempt.storyInformation) ? attempt.storyInformation : undefined;
+  const appearances = packet && isRow(packet.appearances) ? packet.appearances : undefined;
+  if (!packet || !appearances || !Array.isArray(appearances.entries) || !rowsOf(appearances.entries).some(entry => textOf(entry.status))) return attempt;
+  type Carrier = Record<string, unknown> & { conditions: Array<Record<string, unknown>> };
+  const characters: Carrier[] = rowsOf(isRow(packet.conditions) ? packet.conditions.characters : undefined).map(character => ({ ...character, conditions: [...rowsOf(character.conditions)] }));
+  const entries = (appearances.entries as unknown[]).map(entry => {
+    if (!isRow(entry) || !textOf(entry.status)) return entry;
+    const { status, ...rest } = entry;
+    const known = characters.find(candidate => candidate.name === entry.name);
+    const character: Carrier = known ?? { name: entry.name, ...(entry.mainCharacter ? { mainCharacter: true } : {}), conditions: [] };
+    if (!known) characters.push(character);
+    if (!character.conditions.some(condition => normalizeIdentityLabel(textOf(condition.name)) === normalizeIdentityLabel(textOf(status)))) {
+      character.conditions.push({ name: textOf(status), endsIf: [] });
+    }
+    return rest;
+  });
+  return { ...(attempt as Record<string, unknown>), storyInformation: { ...packet, appearances: { ...appearances, entries }, conditions: { characters } } };
+});
 
 /**
  * Every saved story's Codex entries with one for each of its world cards. A

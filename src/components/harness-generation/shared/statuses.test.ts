@@ -144,6 +144,20 @@ describe('what the page begins and ends', () => {
     expect(readStatusTag(tag(`[[status: Elder Qin | ${listed}]] The frost took his hand.`))).toMatchObject({ ok: false });
   });
 
+  it('never lets a tag from before a card entered end a condition that card states', () => {
+    // Promoted in Chapter 8 and filled in with "Poisoned"; long before, the page had poisoned and cured them once already.
+    const world: WorldRecord = { cards: [{ key: 'world:character:elder-qin', kind: 'character', name: 'Elder Qin', enteredInChapter: 8, slots: { status: 'Poisoned' } }] };
+    const linked = [{ ...entries[0], cardKey: 'world:character:elder-qin' }];
+    const earlier = [chapter(1, tagAt(1, 1, 'Poisoned')), chapter(2, tagAt(2, 1, 'Poisoned', true))];
+    const at = (chapterNumber: number, chapters = earlier) => deriveConditions({ world, entries: linked, chapters, chapterNumber });
+    // In Chapter 1 it is the page's condition, with its sentence; the cure in Chapter 2 ends that one.
+    expect(at(1, [earlier[0]]).characters[0].conditions).toEqual([{ name: 'Poisoned', endsIf: [], began: began(1, 1) }]);
+    expect(at(5)).toEqual({ characters: [], flags: [] });
+    // From Chapter 8 the card's own stands, untouched by the old cure, until the page ends it again.
+    expect(at(8).characters[0].conditions).toEqual([{ name: 'Poisoned', endsIf: [] }]);
+    expect(at(12, [...earlier, chapter(10, tagAt(10, 1, 'poisoned', true))])).toEqual({ characters: [], flags: [] });
+  });
+
   it('keeps what a name in brackets tells apart, and lets a name that could be two conditions name neither', () => {
     const both = chapter(1, tagAt(1, 1, 'broken arm (left)'), tagAt(1, 2, 'broken arm (right)'));
     const after = (...more: ReturnType<typeof chapter>[]) => deriveConditions({ entries, chapters: [both, ...more], chapterNumber: 9 });

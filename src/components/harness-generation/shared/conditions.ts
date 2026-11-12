@@ -128,9 +128,14 @@ export function deriveConditions({ world, entries = [], chapters = [], chapterNu
     carriers.set(key, carrier);
     return carrier;
   };
-  /** A card's condition that is still carried in `chapter`: not ended by the page, and not passed by its own course. */
-  const standing = (carrier: Carrier, chapter: number) => carrier.card
-    .filter(entry => entry.endedIn === undefined && conditionAfter(entry.condition, chapter - carrier.since));
+  /**
+   * A card's condition that is carried in `chapter`: begun (their card had
+   * entered by then), not ended by the page, and not passed by its own course.
+   * Before the card entered, the page's tags are about what the page itself
+   * began, never about a condition the card would only state later.
+   */
+  const standing = (carrier: Carrier, chapter: number) => (chapter < carrier.since ? [] : carrier.card
+    .filter(entry => entry.endedIn === undefined && conditionAfter(entry.condition, chapter - carrier.since)));
   /**
    * The condition a tag names, among those the carrier has in `chapter`. Its
    * exact name wins: the name itself, or the name as the tagger's list shows

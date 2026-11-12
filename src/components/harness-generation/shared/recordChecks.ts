@@ -11,7 +11,7 @@ import { createCodexEntryResolver, pointedSentence, type DeclaredCharacter } fro
 import { placeAppearancesFromPlaces, resolveAppearances } from './appearances';
 import { isMainCharacterTag } from './speakers';
 import { readStatusTag, resolveStatuses } from './statuses';
-import { deriveConditions, namesCondition } from './conditions';
+import { deriveConditions, type CarriedCondition } from './conditions';
 import { factionNamed } from './factions';
 import { PLACE_KIND, placeId, type PlaceAttachment, type PlacePayload } from '../../../narrative/places';
 import { derivePlaces, readPlaceTag, resolvePlaces } from './places';
@@ -257,18 +257,26 @@ function firstAct(chapter: HarnessChapter, { entry, known, isThem }: {
 
 // ─── Someone dead who speaks or acts ──────────────────────────────────────
 
+/**
+ * The death someone carries, while it is the last thing the page said of them.
+ * Someone the story has since changed (a ghost, a puppet) or brought back
+ * carries a later condition, or no longer carries their death, and is as the
+ * record then says.
+ */
+const deathCarried = (conditions: readonly CarriedCondition[]): CarriedCondition | undefined => {
+  const said = conditions.filter(condition => condition.began);
+  const last = said.at(-1) ?? conditions.find(condition => DEAD_STATUS.test(condition.name));
+  return last && DEAD_STATUS.test(last.name) ? last : undefined;
+};
+
 function statusContradictions(input: RecordChecksInput, locale?: string): RecordFixPlanCase[] {
   const { chapter } = input;
   const entries = storyEntries(input);
   const earlier = earlierChapters(input);
   const cases: RecordFixPlanCase[] = [];
-  const carried = deriveConditions({ world: input.worldAtChapterZero, entries, chapters: earlier, chapterNumber: chapter.chapterNumber }).characters;
-  for (const character of carried) {
-    // Dead is asked about only while it is the last thing the page said of them: someone the story has
-    // since changed (a ghost, a puppet) or brought back carries a later condition, and is as that says.
-    const said = character.conditions.filter(condition => condition.began);
-    const last = said.at(-1) ?? character.conditions.find(condition => DEAD_STATUS.test(condition.name));
-    const dead = last && DEAD_STATUS.test(last.name) ? last : undefined;
+  const carriedAt = (chapters: readonly HarnessChapter[]) => deriveConditions({ world: input.worldAtChapterZero, entries, chapters, chapterNumber: chapter.chapterNumber }).characters;
+  for (const character of carriedAt(earlier)) {
+    const dead = deathCarried(character.conditions);
     if (!dead) continue;
     const statusKey = character.key;
     const entry = entries.find(candidate => candidate.id === statusKey);
@@ -276,11 +284,12 @@ function statusContradictions(input: RecordChecksInput, locale?: string): Record
     const isThem = (subject: { name: string; entryId?: string }) => (entry && subject.entryId ? subject.entryId === entry.id : answersTo(known, subject.name));
     const first = firstAct(chapter, { entry, known, isThem }, locale);
     if (!first) continue;
-    // A condition this chapter begins for them at or before that sentence already says how they are now, and so
-    // does the end of the death they carry. The end of any other condition says nothing about it.
-    const changed = (chapter.statuses ?? []).some(status => isThem(status.payload.subject) && !before(first, spanPlace(chapter, status.anchor))
-      && (!status.payload.ended || namesCondition(status.payload.status, dead.name)));
-    if (changed) continue;
+    // What this chapter's own tags say of them at or before that sentence counts, by the record's own rules: a
+    // condition it begins, or the end of their death, means they are no longer simply dead. The end of some other
+    // condition, or one that names no condition of theirs, changes nothing.
+    const upToThere = { ...chapter, statuses: (chapter.statuses ?? []).filter(status => !before(first, spanPlace(chapter, status.anchor))) };
+    const then = carriedAt([...earlier, upToThere]).find(candidate => candidate.key === character.key);
+    if (!then || !deathCarried(then.conditions)) continue;
     const sentence = sentenceAt(chapter, first.blockId, first.start, locale)!;
     const name = entry?.name ?? character.name;
     const since = dead.began ? `since Chapter ${dead.began.chapterNumber}` : 'since the story opened';

@@ -74,8 +74,6 @@ const conditionWords = (name: string) => name.toLocaleLowerCase().replace(/[-'â€
   .map(word => (word.length > 3 && word.endsWith('s') && !word.endsWith('ss') ? word.slice(0, -1) : word)).join(' ');
 /** Two names a tagger could mean one condition by: the same words, however they are spelled or counted. */
 const nearCondition = (left: string, right: string) => conditionWords(left) === conditionWords(right);
-/** Whether a tag's words name this condition: its name, whole, or the same words respelled. */
-export const namesCondition = (tagged: string, condition: string) => conditionKey(tagged) === conditionKey(condition) || nearCondition(tagged, condition);
 const paragraphIndex = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
 
 interface Carrier {

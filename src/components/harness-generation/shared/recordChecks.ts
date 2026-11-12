@@ -11,7 +11,7 @@ import { createCodexEntryResolver, pointedSentence, type DeclaredCharacter } fro
 import { placeAppearancesFromPlaces, resolveAppearances } from './appearances';
 import { isMainCharacterTag } from './speakers';
 import { readStatusTag, resolveStatuses } from './statuses';
-import { deriveConditions } from './conditions';
+import { deriveConditions, namesCondition } from './conditions';
 import { factionNamed } from './factions';
 import { PLACE_KIND, placeId, type PlaceAttachment, type PlacePayload } from '../../../narrative/places';
 import { derivePlaces, readPlaceTag, resolvePlaces } from './places';
@@ -277,9 +277,9 @@ function statusContradictions(input: RecordChecksInput, locale?: string): Record
     const first = firstAct(chapter, { entry, known, isThem }, locale);
     if (!first) continue;
     // A condition this chapter begins for them at or before that sentence already says how they are now, and so
-    // does the end of their death. The end of some other condition says nothing about it.
+    // does the end of the death they carry. The end of any other condition says nothing about it.
     const changed = (chapter.statuses ?? []).some(status => isThem(status.payload.subject) && !before(first, spanPlace(chapter, status.anchor))
-      && (!status.payload.ended || DEAD_STATUS.test(status.payload.status)));
+      && (!status.payload.ended || namesCondition(status.payload.status, dead.name)));
     if (changed) continue;
     const sentence = sentenceAt(chapter, first.blockId, first.start, locale)!;
     const name = entry?.name ?? character.name;

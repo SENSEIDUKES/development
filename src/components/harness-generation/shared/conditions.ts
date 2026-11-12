@@ -234,6 +234,13 @@ export function conditionsSection(input: Parameters<typeof deriveConditions>[0])
 
 /** The longest one condition reads in a list a model is given. */
 const CONDITION_LABEL_CHARACTERS = 200;
-/** A condition in a few words, for a list: its name, and how it shows now when its card says. */
-export const conditionLabel = (condition: Pick<ConditionNow, 'name' | 'showing'>) =>
-  `${condition.name}${condition.showing ? ` (${condition.showing})` : ''}`.slice(0, CONDITION_LABEL_CHARACTERS);
+/**
+ * A condition in a few words, for a list: its name, and how it shows now when
+ * its card says. The tagger ends a condition by the words it is listed under,
+ * so a label is never cut short: when the two together are too long, it is the
+ * name alone, which always names it.
+ */
+export const conditionLabel = (condition: Pick<ConditionNow, 'name' | 'showing'>) => {
+  const whole = `${condition.name}${condition.showing ? ` (${condition.showing})` : ''}`;
+  return whole.length <= CONDITION_LABEL_CHARACTERS ? whole : condition.name;
+};

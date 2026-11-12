@@ -176,6 +176,17 @@ describe('what the page begins and ends', () => {
     expect(at(12, [...earlier, chapter(10, tagAt(10, 1, 'poisoned', true))])).toEqual({ characters: [], flags: [] });
   });
 
+  it('lists a condition too long to show whole by its name alone, so an end tag can still name it', () => {
+    const name = 'Frost-burned left hand and forearm, from the night on the ridge';
+    const stage = `skin blackened ${'and cracked '.repeat(12)}up to the elbow`;
+    expect(`${name} (${stage})`.length).toBeGreaterThan(200);
+    const world: WorldRecord = { cards: [{ key: 'world:character:elder-qin', kind: 'character', name: 'Elder Qin', enteredInChapter: 0, slots: { status: `${name} | ${stage}` } }] };
+    const linked = [{ ...entries[0], cardKey: 'world:character:elder-qin' }];
+    const listed = conditionLabel(deriveConditions({ world, entries: linked, chapterNumber: 3 }).characters[0].conditions[0]);
+    expect(listed).toBe(name);
+    expect(deriveConditions({ world, entries: linked, chapters: [chapter(3, tagAt(3, 1, listed, true))], chapterNumber: 4 })).toEqual({ characters: [], flags: [] });
+  });
+
   it('keeps what a name in brackets tells apart, and lets a name that could be two conditions name neither', () => {
     const both = chapter(1, tagAt(1, 1, 'broken arm (left)'), tagAt(1, 2, 'broken arm (right)'));
     const after = (...more: ReturnType<typeof chapter>[]) => deriveConditions({ entries, chapters: [both, ...more], chapterNumber: 9 });
@@ -257,6 +268,15 @@ describe('a story saved before the page began and ended conditions', () => {
     ]);
     // Another story's statuses are its own.
     expect(tags('other')).toEqual([['status:x', 'asleep', false, 'c1-p1']]);
+  });
+
+  it('ends a superseded status that differs only in what it says in brackets', () => {
+    const arms = {
+      ...createEmptyHarnessWorkspaceState(), schemaVersion: 48, stories: [{ id: 's' }],
+      chapters: [{ id: 'c1', storyId: 's', chapterNumber: 1, statuses: [old('status:c1-p1:0', 1, 'Lin', 'e-lin', 'wounded (left arm)'), old('status:c1-p5:0', 5, 'Lin', 'e-lin', 'wounded (right arm)')] }],
+    };
+    const upgraded = migrateHarnessWorkspaceState(arms)!;
+    expect(deriveConditions({ chapters: upgraded.chapters, chapterNumber: 2 }).characters[0].conditions.map(condition => condition.name)).toEqual(['wounded (right arm)']);
   });
 
   it('moves a status a frozen packet carried in Appeared to its Conditions, so a retried chapter is still told', () => {

@@ -207,6 +207,8 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
 const isRow = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const rowsOf = (value: unknown): Array<Record<string, unknown>> => (Array.isArray(value) ? value : []).filter(isRow);
 const textOf = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+/** A status as conditions are compared: its own words, whole, so "wounded (left arm)" is not "wounded (right arm)". */
+const wholeName = (value: string) => value.toLocaleLowerCase().replace(/\s+/g, ' ').trim();
 
 /**
  * Every saved chapter, with an `ended` status wherever a later status replaced
@@ -238,7 +240,7 @@ const chaptersWithStatusEnds = (stored: StoredWorkspace): unknown[] => {
         if (!payload || !subject || !status || payload.ended) continue;
         const key = textOf(subject.entryId) || `character:${normalizeIdentityLabel(textOf(subject.name))}`;
         const earlier = latest.get(key);
-        if (earlier !== undefined && normalizeIdentityLabel(earlier) !== normalizeIdentityLabel(status)) {
+        if (earlier !== undefined && wholeName(earlier) !== wholeName(status)) {
           endsBefore.set(index, {
             ...record, id: `${textOf(record.id)}:ended`, anchor: cloneHarnessValue(record.anchor),
             payload: { origin: 'harness', subject: cloneHarnessValue(subject), status: earlier, ended: true },

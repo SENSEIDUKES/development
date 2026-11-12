@@ -1,6 +1,8 @@
 import {
   HARNESS_TAG_RULES,
+  HARNESS_TAG_RULES_WITHOUT_CARDS,
   SEN_APPEARANCE_INSTRUCTIONS,
+  SEN_APPEARANCE_INSTRUCTIONS_WITHOUT_CARDS,
   SEN_FATE_SURVIVAL_SKILL,
   SEN_HOLDINGS_INSTRUCTIONS,
   SEN_ARC_PLANNER_SKILL,
@@ -84,6 +86,9 @@ export type WriterInstructionId =
   | 'holdings-fixer'
   | 'look-step'
   | 'tagger'
+  /** What a story with no cards reads in place of the Tag rules and Appearance (SENSEI, 2026-11-11). */
+  | 'tag-rules-without-cards'
+  | 'appearance-without-cards'
   /** Retired 2026-11-05: split into the Origin, World and Arc skills and the Blueprint's permanent rules. */
   | 'world-builder'
   | 'blueprint-role'
@@ -209,12 +214,12 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
   },
   {
     id: 'tagger', title: 'Chapter tagger', source: 'HARNESS',
-    when: 'After a chapter is written: one call that reads the finished chapter and writes the app\'s tags for it as notes in the margin (a paragraph, the exact words, the tag), never handing the chapter back. It reads these words, the tag teaching below, who and what the story already has, and what each character was carrying. It is told nothing about how the story got here: no Foundation, no arc, no Destined Ending, no Story Information Packet, so it tags a chapter an author wrote themselves exactly as well as a generated one (SENSEI, 2026-10-24).',
+    when: 'After a chapter is written: one call that reads the finished chapter and writes the app\'s tags for it as notes in the margin (a paragraph, the exact words, the tag), never handing the chapter back. It reads these words, the tag teaching below, the story\'s cards and the minor figures it has already seen, and what each character was carrying. It is told nothing about how the story got here: no Foundation, no arc, no Destined Ending, no Story Information Packet, so it tags a chapter an author wrote themselves exactly as well as a generated one (SENSEI, 2026-10-24).',
     text: [HARNESS_TAGGER_ROLE, HARNESS_TAGGER_RETURN].join('\n\n'),
   },
   {
     id: 'tag-rules', title: 'Tag rules', source: 'HARNESS',
-    when: 'Every chapter the tagger reads, first among the tags: what holds for every kind. No skill can change them.',
+    when: 'Every chapter the tagger reads in a story with cards, first among the tags: what holds for every kind, that the tagger\'s work is to find the story\'s cards on the page, and that anyone else is a minor figure who gets only where they appear and what they say. No skill can change them.',
     text: HARNESS_TAG_RULES,
   },
   {
@@ -229,7 +234,7 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
   },
   {
     id: 'appearance', title: 'Appearance', source: 'HARNESS',
-    when: 'Every chapter the tagger reads.',
+    when: 'Every chapter the tagger reads in a story with cards. A thing or place steps onto the page only when it is a card.',
     text: SEN_APPEARANCE_INSTRUCTIONS,
   },
   {
@@ -261,6 +266,16 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
     id: 'soundtrack', title: 'Soundtrack', source: 'HARNESS',
     when: 'Every chapter of a story with music or atmospheres. The lists are the story\'s music and atmosphere categories; shown here with SEN Soundscapes and SEN Atmospheres, Volume 1.',
     text: `${SEN_SOUNDTRACK_INSTRUCTIONS}\n${presentSoundtrackVocabulary(DEFAULT_SOUNDTRACK_WORDS)}`,
+  },
+  {
+    id: 'tag-rules-without-cards', title: 'Tag rules, with no cards', source: 'HARNESS',
+    when: 'In place of the Tag rules, only when the story has no cards at all (chapters brought in from outside): there is no one to tell a minor figure from, so everyone the chapter names is tagged in full, as before 2026-11-11.',
+    text: HARNESS_TAG_RULES_WITHOUT_CARDS,
+  },
+  {
+    id: 'appearance-without-cards', title: 'Appearance, with no cards', source: 'HARNESS',
+    when: 'In place of Appearance, only when the story has no cards at all: any named thing or place may step onto the page, as before 2026-11-11.',
+    text: SEN_APPEARANCE_INSTRUCTIONS_WITHOUT_CARDS,
   },
   {
     id: 'look-step', title: 'Look writer', source: 'HARNESS',
@@ -384,10 +399,11 @@ export const WHOLE_PROMPTS: Record<Exclude<PipelineStepId, 'writer'>, readonly P
     operation: 'tag-chapter', storyId: '', chapterId: '', chapterNumber: numberSlot('number'), model: '', language: slot('language'),
     paragraphs: [slot('the chapter\'s first paragraph'), slot('every paragraph after it, one by one')],
     subjects: [
-      { kind: 'character', name: slot('each character'), conditions: [slot('each condition they carry so far')], place: slot('where they are so far'), ties: [{ with: slot('each one they are tied to'), tie: slot('how they stand') }] },
-      { kind: 'thing', name: slot('each thing') },
-      { kind: 'ability', name: slot('each ability') },
-      { kind: 'place', name: slot('each place') },
+      { kind: 'character', card: true, name: slot('each character who is a card'), who: slot('who they are, in their card\'s one line'), conditions: [slot('each condition they carry so far')], place: slot('where they are so far'), ties: [{ with: slot('each one they are tied to'), tie: slot('how they stand') }] },
+      { kind: 'thing', card: true, name: slot('each thing that is a card') },
+      { kind: 'ability', card: true, name: slot('each ability that is a card') },
+      { kind: 'place', card: true, name: slot('each place that is a card') },
+      { kind: 'character', name: slot('each minor figure already seen') },
     ],
     holdings: { characters: [{ name: slot('each character'), inHand: [slot('what they hold in hand')], carries: [slot('what they carry')], knows: [slot('what they know')] }] },
     soundWords: LIBRARY_SOUND_WORDS,
@@ -526,12 +542,16 @@ export const PIPELINE: readonly PipelineStep[] = [
     job: 'Reads the finished chapter and writes its tags in the margin. It never changes a word.',
     reads: [
       'The finished chapter, paragraph by paragraph',
-      'Who and what the story already has, each character with their status and place so far',
+      'The story\'s cards, each character with who they are, what they carry, their place and their ties so far',
+      'The minor figures the story has already seen, by name alone',
       'What each character was carrying going into the chapter',
       'The story\'s sound words, music and atmospheres',
     ],
     gives: ['Tags on the chapter: who speaks, what is held, who appears, status, place, sounds, music → checked by code, then saved into the Codex'],
-    groups: [{ label: 'What it reads, in order', blocks: blocksOf(['tagger', 'tag-rules', 'speakers', 'holdings', 'appearance', 'status', 'place', 'ties', 'setting', 'sound-cues', 'soundtrack']) }],
+    groups: [
+      { label: 'What it reads, in order', blocks: blocksOf(['tagger', 'tag-rules', 'speakers', 'holdings', 'appearance', 'status', 'place', 'ties', 'setting', 'sound-cues', 'soundtrack']) },
+      { label: 'Only in a story with no cards, in place of Tag rules and Appearance', blocks: blocksOf(['tag-rules-without-cards', 'appearance-without-cards']) },
+    ],
   },
   {
     id: 'fixer', name: 'Fixer', runs: 'Only when the checks find a problem',

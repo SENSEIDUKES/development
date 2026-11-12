@@ -311,7 +311,54 @@ describe('what the tagger is told about the story', () => {
     const subjects = tagSubjectsOfStory({ entries: [], world });
     expect(subjects.some(subject => subject.name === 'Ash Wolf')).toBe(false);
     // A place card is named by the place tag, under its own kind.
-    expect(subjects.find(subject => subject.name === 'Rift Quarry')).toEqual({ name: 'Rift Quarry', kind: 'place' });
+    expect(subjects.find(subject => subject.name === 'Rift Quarry')).toEqual({ name: 'Rift Quarry', kind: 'place', card: true });
+  });
+
+  it('hands the tagger the pool: each card marked, a card character with who they are, a minor figure by name alone', () => {
+    const world: WorldRecord = { cards: [...WORLD.cards,
+      { key: 'world:character:elder-qin', kind: 'character', name: 'Elder Qin', enteredInChapter: 0, slots: { bio: 'the sect\'s one-armed gatekeeper', role: 'elder' } },
+      { key: 'world:character:shen-mei', kind: 'character', name: 'Shen Mei', enteredInChapter: 0, slots: { role: 'rival' } },
+    ] };
+    const porter = entry({ name: 'Porter', kind: 'character', aliases: ['the stooped porter'], origin: { source: 'tag', chapterId: 'c1', chapterNumber: 1 } });
+    const coin = entry({ name: 'Jade Coin', kind: 'thing', origin: { source: 'tag', chapterId: 'c1', chapterNumber: 1 } });
+    const subjects = tagSubjectsOfStory({
+      entries: [entry({ name: 'Ye Chen', kind: 'character', mainCharacter: true, cardKey: 'world:character:ye-chen' }), porter, coin],
+      world,
+      // Whatever an earlier chapter recorded of a minor figure is not the record's to hand on.
+      places: new Map([[porter.id, { entryId: porter.id, name: 'Porter', place: 'Cold Gate' } as never]]),
+    });
+    expect(subjects.filter(subject => subject.card).map(subject => subject.name)).toEqual(['Ye Chen', 'Elder Qin', 'Shen Mei', 'Jade Token', 'Rift Quarry']);
+    // Who they are is their card's own line, or their part in the story when the card has none.
+    expect(subjects.find(subject => subject.name === 'Elder Qin')?.who).toBe('the sect\'s one-armed gatekeeper');
+    expect(subjects.find(subject => subject.name === 'Shen Mei')?.who).toBe('rival');
+    expect(subjects.find(subject => subject.name === 'Porter')).toEqual({ name: 'Porter', kind: 'character', aliases: ['the stooped porter'] });
+    expect(subjects.find(subject => subject.name === 'Jade Coin')).toEqual({ name: 'Jade Coin', kind: 'thing' });
+
+    const prompt = buildHarnessTagPrompt(request({ entries: [porter, coin], world }));
+    const cards = prompt.userPrompt.indexOf('THE STORY\'S CARDS (tag them by these names)');
+    const minor = prompt.userPrompt.indexOf('MINOR FIGURES ALREADY SEEN (not cards; use the same name when one comes back)');
+    expect(cards).toBeGreaterThan(-1);
+    expect(minor).toBeGreaterThan(cards);
+    expect(prompt.userPrompt.slice(cards, minor)).toContain('- Elder Qin — who: the sect\'s one-armed gatekeeper');
+    expect(prompt.userPrompt.slice(cards, minor)).toContain('- Ye Chen (the main character)');
+    expect(prompt.userPrompt.slice(cards, minor)).not.toContain('Porter');
+    expect(prompt.userPrompt.slice(minor)).toContain('CHARACTERS:\n- Porter — also called: the stooped porter\n\nTHINGS:\n- Jade Coin');
+    expect(prompt.userPrompt).not.toContain('WHO AND WHAT THE STORY ALREADY HAS');
+    expect(prompt.systemInstruction).toContain('Anyone who is not a card is a minor figure.');
+  });
+
+  it('lists the cards alone when the story has met no one else', () => {
+    const prompt = buildHarnessTagPrompt(request());
+    expect(prompt.userPrompt).toContain('THE STORY\'S CARDS (tag them by these names)');
+    expect(prompt.userPrompt).not.toContain('MINOR FIGURES ALREADY SEEN');
+  });
+
+  it('tags a story with no cards as before: one list, and everyone tagged in full', () => {
+    const prompt = buildHarnessTagPrompt(request({ world: undefined, entries: [entry({ name: 'Ye Chen', kind: 'character', mainCharacter: true }), entry({ name: 'Porter', kind: 'character' })] }));
+    expect(prompt.userPrompt).toContain('WHO AND WHAT THE STORY ALREADY HAS (tag by these names, never a new one for someone already here)\nCHARACTERS:\n- Ye Chen (the main character)\n- Porter');
+    expect(prompt.userPrompt).not.toMatch(/THE STORY'S CARDS|MINOR FIGURES/);
+    expect(prompt.systemInstruction).toContain('anyone else goes by the name the story already has, listed below.');
+    expect(prompt.systemInstruction).not.toContain('minor figure');
   });
 
   it('sends the chapter, who exists and what they carry, and never how the story got here', () => {

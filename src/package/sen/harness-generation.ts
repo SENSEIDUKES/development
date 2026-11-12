@@ -105,12 +105,12 @@ export { SEN_SOUNDTRACK_INSTRUCTIONS, presentSoundtrackVocabulary } from '../../
 export { chapterSoundtrack, type ChapterSoundtrackReading } from '../../components/harness-generation/shared/soundtrack';
 export { SEN_SPEAKERS_INSTRUCTIONS } from '../../components/harness-generation/shared/speakersSkill';
 export { SEN_HOLDINGS_INSTRUCTIONS } from '../../components/harness-generation/shared/holdingsSkill';
-export { SEN_APPEARANCE_INSTRUCTIONS } from '../../components/harness-generation/shared/appearanceSkill';
+export { SEN_APPEARANCE_INSTRUCTIONS, SEN_APPEARANCE_INSTRUCTIONS_WITHOUT_CARDS } from '../../components/harness-generation/shared/appearanceSkill';
 export { SEN_STATUS_INSTRUCTIONS } from '../../components/harness-generation/shared/statusSkill';
 export { SEN_PLACE_INSTRUCTIONS } from '../../components/harness-generation/shared/placeSkill';
 export { SEN_TIE_INSTRUCTIONS } from '../../components/harness-generation/shared/tieSkill';
 export { SEN_SETTING_INSTRUCTIONS } from '../../components/harness-generation/shared/settingSkill';
-export { HARNESS_TAG_RULES } from '../../components/harness-generation/shared/tagRules';
+export { HARNESS_TAG_RULES, HARNESS_TAG_RULES_WITHOUT_CARDS } from '../../components/harness-generation/shared/tagRules';
 export { isStraySoundTag, settleStraySoundTags, trimLeadingStrayPunctuation } from '../../components/harness-generation/shared/soundTagRepair';
 export {
   HOLDINGS_SECTION_OTHER_CHARACTERS,
@@ -271,7 +271,8 @@ export {
   type PlacedTagNotes,
   type TagNote,
 } from '../../components/harness-generation/shared/tagger';
-export { TAG_SUBJECT_CONDITIONS } from '../../components/harness-generation/shared/tagger';
+export { TAG_SUBJECT_CONDITIONS, TAG_SUBJECT_WHO_CHARACTERS } from '../../components/harness-generation/shared/tagger';
+export { leftOutTagFlags, tagsOfCards, type LeftOutTagFlag, type NamingTags, type TagsOfCards } from '../../components/harness-generation/shared/minorFigures';
 export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';
 export * from '../../narrative/statuses';

@@ -847,7 +847,11 @@ async function walk(browser, viewport, sample) {
   await codex.getByTestId('codex-character').first().waitFor();
   check(!(await page.evaluate(() => document.querySelector('[data-testid="harness-reader"]').hidden)), 'The chapter must stay on the page under the Codex.');
   check(!(await page.evaluate(slidesSideways)), 'The Codex must not scroll sideways.');
-  check((await codex.locator('[data-testid="codex-checks"] summary').textContent()).trim() === 'Record checks (1)', 'The closing list should leave one check.');
+  // Two checks: the closing list's, and the appears tag the tagger gave the key. The key has no card in this
+  // world, so that tag is left out and said here (2026-11-11); the key still steps onto the page by Mara's own tag.
+  check((await codex.locator('[data-testid="codex-checks"] summary').textContent()).trim() === 'Record checks (2)', 'The closing list and the left-out appears tag should leave two checks.');
+  check((await codex.getByTestId('codex-checks').textContent()).includes('‘Bell Key’ is not a card, so it steps onto the page only in a card character\'s own tag. [[appears: Bell Key | thing]] is left out.'),
+    'The Codex should say which tag was left out, and why.');
   await shot('6d-codex');
   // Minor figures (2026-11-11): the key the chapter brought in has no card in this world, so it is
   // listed under Minor with the sentence that introduced it, never as an Items card, and offers Promote.

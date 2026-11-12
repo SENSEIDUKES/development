@@ -1,5 +1,5 @@
 import { parseModelJson } from '../../../narrative/modelJson';
-import { worldCardsOfKind, type WorldRecord } from '../../../narrative/worldRecord';
+import { worldCardsOfKind, type WorldCard, type WorldRecord } from '../../../narrative/worldRecord';
 import type { CodexEntry, CodexEntryKind, HoldingsSection } from '../../../narrative/holdings';
 import type { HarnessChapter, HarnessChapterTagging, HarnessTagRequest, HarnessTagSubject, HarnessWorkspaceState } from '../../../narrative/generation';
 import { activeAttemptForStory } from './attempts';
@@ -16,7 +16,7 @@ import { TAG_SUBJECT_TIES, tiesOfEntry, type CurrentTie } from './ties';
 import { findSpokenLines } from '../../../narrative/speech';
 import { splitSentences } from '../../highlight-engine/shared/manuscript';
 import { normalizeIdentityLabel } from './canonicalProjection';
-import { pointedSentence } from './holdings';
+import { isMinorEntry, pointedSentence } from './holdings';
 import { acceptChapterTags, type HarnessResponseAcceptanceOptions } from './responseAcceptance';
 
 /**
@@ -42,6 +42,8 @@ import { acceptChapterTags, type HarnessResponseAcceptanceOptions } from './resp
 
 /** The most conditions one character's line lists for the tagger. */
 export const TAG_SUBJECT_CONDITIONS = 8;
+/** The longest "who they are" line a card character carries to the tagger. */
+export const TAG_SUBJECT_WHO_CHARACTERS = 200;
 
 /** The world card kinds that are also Codex kinds: the only ones a tag can name today. */
 const CARD_KIND_SUBJECTS: ReadonlyArray<CodexEntryKind> = ['character', 'thing', 'ability', 'place'];
@@ -52,6 +54,13 @@ const CARD_KIND_SUBJECTS: ReadonlyArray<CodexEntryKind> = ['character', 'thing',
  * cards for anything no chapter has tagged yet. A name the story holds twice
  * is listed once, and the Codex wins, because its entry is the identity a tag
  * actually resolves to.
+ *
+ * In a story with a world, the list is the pool the tagger uncovers (SENSEI,
+ * 2026-11-11): each card is marked as one, and a card character carries their
+ * card's one line of who they are, so the tagger knows them from a description
+ * before the prose names them. Anyone else is a minor figure, listed by name
+ * alone so one who comes back keeps the same name: what they carry, where they
+ * are and how they stand with anyone is not the record's to keep.
  */
 export function tagSubjectsOfStory({ entries, world, conditions, places, ties }: {
   entries: readonly CodexEntry[];
@@ -68,6 +77,11 @@ export function tagSubjectsOfStory({ entries, world, conditions, places, ties }:
   const conditionsOf = (entryId: string | undefined, cardKey: string | undefined) =>
     (conditions?.find(character => (entryId && character.key === entryId) || (cardKey && character.cardKey === cardKey))?.conditions ?? [])
       .slice(0, TAG_SUBJECT_CONDITIONS).map(conditionLabel);
+  const cardOf = (key: string | undefined) => (key ? world?.cards.find(card => card.key === key) : undefined);
+  // Who a card character is: their card's own line, or their part in the story when it has none.
+  const whoOf = (card: WorldCard | undefined) => (card?.kind === 'character'
+    ? (card.slots.bio?.trim() || card.slots.role?.trim() || '').slice(0, TAG_SUBJECT_WHO_CHARACTERS).trim() : '');
+  const hasCards = Boolean(world?.cards.length);
   const taken = new Set<string>();
   const add = (subject: HarnessTagSubject) => {
     const key = `${subject.kind}:${normalizeIdentityLabel(subject.name)}`;
@@ -76,14 +90,19 @@ export function tagSubjectsOfStory({ entries, world, conditions, places, ties }:
     subjects.push(subject);
   };
   for (const entry of entries) {
-    const carried = entry.kind === 'character' ? conditionsOf(entry.id, entry.cardKey) : [];
-    const place = entry.kind === 'character' && places ? placeOfEntry(places, entry)?.place : undefined;
-    const tied = entry.kind === 'character' && ties ? tiesOfEntry(ties, entry).slice(-TAG_SUBJECT_TIES).map(tie => ({ with: tie.with, tie: tie.tie })) : [];
+    // A minor figure is listed by name alone.
+    const tracked = entry.kind === 'character' && !isMinorEntry(entry, world);
+    const carried = tracked ? conditionsOf(entry.id, entry.cardKey) : [];
+    const place = tracked && places ? placeOfEntry(places, entry)?.place : undefined;
+    const tied = tracked && ties ? tiesOfEntry(ties, entry).slice(-TAG_SUBJECT_TIES).map(tie => ({ with: tie.with, tie: tie.tie })) : [];
+    const who = whoOf(cardOf(entry.cardKey));
     add({
       name: entry.name,
       kind: entry.kind,
       ...(entry.aliases?.length ? { aliases: [...entry.aliases] } : {}),
       ...(entry.mainCharacter ? { mainCharacter: true as const } : {}),
+      ...(hasCards && !isMinorEntry(entry, world) ? { card: true as const } : {}),
+      ...(who ? { who } : {}),
       ...(carried.length ? { conditions: carried } : {}),
       ...(place ? { place } : {}),
       ...(tied.length ? { ties: tied } : {}),
@@ -92,11 +111,14 @@ export function tagSubjectsOfStory({ entries, world, conditions, places, ties }:
   for (const kind of CARD_KIND_SUBJECTS) {
     for (const card of worldCardsOfKind(world, kind)) {
       const carried = kind === 'character' ? conditionsOf(undefined, card.key) : [];
+      const who = whoOf(card);
       add({
         name: card.name,
         kind,
         ...(card.aliases?.length ? { aliases: [...card.aliases] } : {}),
         ...(card.mainCharacter ? { mainCharacter: true as const } : {}),
+        card: true as const,
+        ...(who ? { who } : {}),
         ...(carried.length ? { conditions: carried } : {}),
       });
     }

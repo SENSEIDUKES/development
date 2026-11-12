@@ -202,6 +202,9 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // chapter not yet written carried a status in its Appeared entries, which
   // the writer no longer reads there: it moves to the packet's Conditions.
   48: stored => ({ ...stored, chapters: chaptersWithStatusEnds(stored), attempts: attemptsCarryingStatuses(stored), schemaVersion: 49 }),
+  // 50 adds only an optional field (a tagging record's tags left out because only a card carries them): every
+  // saved story reads as it is. A chapter tagged before keeps the tags it gave a minor figure until it is tagged again.
+  49: stored => ({ ...stored, schemaVersion: 50 }),
 };
 
 const isRow = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);

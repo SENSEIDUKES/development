@@ -48,7 +48,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * chapter's optional ties (how two characters stand, from the tie tag); 47
  * adds each chapter's optional settings (when it is and what it is like, from
  * the setting tag). */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 49 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 50 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -1319,6 +1319,27 @@ export interface HarnessChapterTagging {
     /** The tagger's reply as it came back, for inspection. */
     rawProviderResponse?: string;
   };
+  /**
+   * The tags this read placed that the chapter does not keep, because only a
+   * card carries them (SENSEI, 2026-11-11): a holding, condition, place, tie
+   * or look given to a minor figure, and an appears tag for a thing or place
+   * that is no card. The Codex lists each among its checks.
+   */
+  leftOut?: LeftOutTag[];
+}
+
+/** One tag the tagger placed that the chapter did not keep, with the sentence it sat on. */
+export interface LeftOutTag {
+  /** The id the tag would have been saved under. */
+  id: string;
+  /** The tag as the tagger wrote it. */
+  tag: string;
+  /** The paragraph it sat on. */
+  blockId: string;
+  /** Who or what it was about, as the tag named them. */
+  name: string;
+  /** Why: a minor figure was given what only a card carries, or a thing or place that is no card was given an appears tag. */
+  why: 'minor-figure' | 'not-a-card';
 }
 
 export interface HarnessWorkspaceState {
@@ -1465,6 +1486,14 @@ export interface HarnessTagSubject {
   aliases?: string[];
   /** The one subject whose tags use the main character's own tag instead of a name. */
   mainCharacter?: true;
+  /**
+   * One of the story's cards: who and what the story is about. Absent on a
+   * minor figure, someone or something a chapter named that has no card, and
+   * on every subject of a story that has no cards at all.
+   */
+  card?: true;
+  /** Who a card character is, in their card's one line, so the tagger knows them before the prose names them. */
+  who?: string;
   /** What a character carries going into the chapter, each condition in a few words: from their card and from the page. */
   conditions?: string[];
   /** Where a character is going into the chapter, when a place tag ever gave one. */

@@ -237,10 +237,12 @@ to write one (see the Harness Generation README's history).
 
 **Not built: each needs words a model reads, so SENSEI approves them first.**
 
-- **The tagger is told which cards are on the page.** It still reads the same
-  list of names. Its wording has not changed from naming whoever appears to
-  linking each appearance to a card, so it still tags statuses, places and
-  ties for minor figures. The Codex does not show those for a minor figure.
+- **The tagger is told which cards are on the page.** *(Built 2026-11-11,
+  step 3b.)* It reads the story's cards, each character with who they are,
+  and the minor figures already seen by name alone. Its words say to find the
+  cards on the page and that anyone else gets only where they appear and what
+  they say; a holding, condition, place, tie or look given to a minor figure
+  is left out and listed among the Codex's checks.
 - **Cards carry their timing** (the arc a card is due in). The Blueprint has
   to fill it, which changes the Blueprint's words.
 
@@ -367,6 +369,12 @@ The table only maps the names; it renames nothing.
 
 ## History
 
+- **2026-11-11 (built):** the tagger is handed the pool. It reads the story's
+  cards and the minor figures already seen as two lists, a minor figure gets
+  only an appears tag and their speaker tag, and a thing or place that is no
+  card gets no appears tag of its own. What the tagger gives anyone else is
+  left out and listed among the Codex's checks. SENSEI approved the words
+  first.
 - **2026-11-11 (built):** the page begins and ends conditions. The status tag
   marks where the prose gives someone a lasting condition and, with `ended`,
   where it ends one, a card's condition included, so a cure stops its course.

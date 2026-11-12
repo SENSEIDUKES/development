@@ -75,6 +75,7 @@ describe('Tag media again', () => {
     expect(requests[0].holdings).toBeUndefined();
     const prompt = buildHarnessTagPrompt(requests[0]);
     expect(prompt.userPrompt).not.toContain('WHO AND WHAT THE STORY ALREADY HAS');
+    expect(prompt.userPrompt).not.toMatch(/THE STORY'S CARDS|MINOR FIGURES/);
     expect(prompt.userPrompt).not.toContain('WHAT EACH CHARACTER HAD');
     expect(buildHarnessTagPrompt({ ...requests[0], focus: undefined }).systemInstruction.length).toBeGreaterThan(prompt.systemInstruction.length);
 

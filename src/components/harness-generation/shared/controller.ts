@@ -47,6 +47,7 @@ import { codexEntriesWithoutChapter, createCodexEntryResolver, declaredCharacter
 import { MEDIA_TAG_WARNING_CODES, planChapterTagging, readChapterTagging, retagChapterGap } from './tagger';
 import { appearanceSources, cardLookStatement, deriveAppearances, placeAppearancesFromPlaces, resolveAppearances, thingAppearancesFromHoldings, worldCardLook } from './appearances';
 import { resolveStatuses } from './statuses';
+import { tagsOfCards } from './minorFigures';
 import { deriveConditions } from './conditions';
 import { derivePlaces, resolvePlaces } from './places';
 import { deriveTies, resolveTies } from './ties';
@@ -1546,9 +1547,13 @@ export class HarnessGenerationController {
         createId: () => this.runtime.createId('hcx'),
       };
       const resolver = createCodexEntryResolver(resolving);
-      const appearances = resolveAppearances({ ...resolving, appearances: tagging.tags.appearances ?? [], resolver }).appearances;
-      const holdings = tagging.tags.holdingChanges.length
-        ? resolveHoldingChanges({ ...resolving, changes: tagging.tags.holdingChanges, resolver })
+      // Only a card carries a holding, a condition, a place, a tie or a look. What the tagger gave anyone
+      // else is left out here, before any of its names becomes an entry, and kept on the record to be shown.
+      const kept = tagsOfCards({ tags: tagging.tags, storyId, entries: candidate.codexEntries, world, declared: resolving.declared });
+      if (kept.leftOut.length) saved.tagging.leftOut = kept.leftOut;
+      const appearances = resolveAppearances({ ...resolving, appearances: kept.appearances, resolver }).appearances;
+      const holdings = kept.holdingChanges.length
+        ? resolveHoldingChanges({ ...resolving, changes: kept.holdingChanges, resolver })
         : undefined;
       if (holdings?.changes.length) {
         // A thing is "already on the page" by what came before this chapter in
@@ -1557,10 +1562,11 @@ export class HarnessGenerationController {
         // later chapter's duplicate, for that chapter to be read again.
         appearances.push(...thingAppearancesFromHoldings({
           chapter: { ...saved, holdingChanges: holdings.changes, appearances },
-          chapters: others.filter(entry => entry.chapterNumber < chapter.chapterNumber), entries: candidate.codexEntries,
+          // The entries this read made count too: a thing this chapter is the first to name steps onto the page here.
+          chapters: others.filter(entry => entry.chapterNumber < chapter.chapterNumber), entries: [...candidate.codexEntries, ...resolver.created],
         }));
       }
-      const places = resolvePlaces(tagging.tags.places ?? [], resolver);
+      const places = resolvePlaces(kept.places, resolver);
       // A place someone arrives in for the first time steps onto the page there, by what came before this chapter.
       appearances.push(...placeAppearancesFromPlaces({
         chapter: { ...saved, appearances, places },
@@ -1570,9 +1576,9 @@ export class HarnessGenerationController {
       saved.soundCues = tagging.tags.soundCues;
       saved.speakers = tagging.tags.speakers;
       saved.appearances = appearances;
-      saved.statuses = resolveStatuses(tagging.tags.statuses ?? [], resolver);
+      saved.statuses = resolveStatuses(kept.statuses, resolver);
       saved.places = places;
-      saved.ties = resolveTies(tagging.tags.ties ?? [], resolver, world);
+      saved.ties = resolveTies(kept.ties, resolver, world);
       // A setting names no one: it is saved as it was placed.
       saved.settings = tagging.tags.settings ?? [];
       if (holdings?.changes.length) saved.holdingChanges = holdings.changes;
@@ -1850,15 +1856,19 @@ export class HarnessGenerationController {
       createId: () => this.runtime.createId('hcx'),
     };
     const resolver = createCodexEntryResolver(resolving);
+    const committedWorld = storyWorldRecord(candidate, commitAttempt.storyId);
+    // Only a card carries a holding, a condition, a place, a tie or a look. What the tagger gave anyone
+    // else is left out here, before any of its names becomes an entry, and kept on the tagging record.
+    const kept = tagsOfCards({ tags: acceptedDraft, storyId: commitAttempt.storyId, entries: candidate.codexEntries, world: committedWorld, declared: resolving.declared });
     const appearances = acceptedDraft.appearances
-      ? resolveAppearances({ ...resolving, appearances: acceptedDraft.appearances, resolver }).appearances
+      ? resolveAppearances({ ...resolving, appearances: kept.appearances, resolver }).appearances
       : undefined;
-    const holdings = acceptedDraft.holdingChanges?.length
-      ? resolveHoldingChanges({ ...resolving, changes: acceptedDraft.holdingChanges, resolver })
+    const holdings = kept.holdingChanges.length
+      ? resolveHoldingChanges({ ...resolving, changes: kept.holdingChanges, resolver })
       : undefined;
-    const statuses = acceptedDraft.statuses ? resolveStatuses(acceptedDraft.statuses, resolver) : undefined;
-    const places = acceptedDraft.places ? resolvePlaces(acceptedDraft.places, resolver) : undefined;
-    const ties = acceptedDraft.ties ? resolveTies(acceptedDraft.ties, resolver, storyWorldRecord(candidate, commitAttempt.storyId)) : undefined;
+    const statuses = acceptedDraft.statuses ? resolveStatuses(kept.statuses, resolver) : undefined;
+    const places = acceptedDraft.places ? resolvePlaces(kept.places, resolver) : undefined;
+    const ties = acceptedDraft.ties ? resolveTies(kept.ties, resolver, committedWorld) : undefined;
     // A thing the chapter's holding tags show for the first time steps onto the page there.
     if (appearances && holdings?.changes.length) {
       appearances.push(...thingAppearancesFromHoldings({
@@ -1909,7 +1919,7 @@ export class HarnessGenerationController {
       committedAt,
       // What tagging this chapter came to, carried from the tagging stage. A
       // chapter whose tagging failed says so here and keeps every word.
-      ...(commitAttempt.tagging ? { tagging: cloneHarnessValue(commitAttempt.tagging) } : {}),
+      ...(commitAttempt.tagging ? { tagging: { ...cloneHarnessValue(commitAttempt.tagging), ...(kept.leftOut.length ? { leftOut: kept.leftOut } : {}) } } : {}),
     };
     candidate.chapters.push(chapter);
     if (resolver.created.length) candidate.codexEntries.push(...resolver.created);

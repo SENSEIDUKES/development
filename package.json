@@ -57,7 +57,7 @@
     "@seihouse/front-desk": "file:vendor/seihouse-front-desk-0.2.0.tgz",
     "@seihouse/library-ui": "file:vendor/seihouse-library-ui-0.10.1.tgz",
     "@seihouse/living-titles": "file:vendor/seihouse-living-titles-0.1.2.tgz",
-    "@seihouse/seireader": "file:vendor/seihouse-seireader-0.40.0.tgz",
+    "@seihouse/seireader": "file:vendor/seihouse-seireader-0.42.0.tgz",
     "@seihouse/ui": "file:vendor/seihouse-ui-0.12.0.tgz",
     "@vitejs/plugin-react": "latest",
     "fflate": "^0.8.3",

@@ -408,7 +408,8 @@ entries run to 2026-11-11.
     **SEIHouse Display** cut (Ink by default; Soft, Edge and Wide are there to
     test), with the earlier Noto Serif and Alegreya still to choose. Sans 0.40
     and Living Titles 0.1.2 bring the rounded `g`, `S` and `?` curves to the app
-    and Workshop (2026-11-11). A slim top
+    and Workshop (2026-11-11). Sans 0.42 ships Night faces for Light, Regular and
+    Medium; the Reader does not select them yet (2026-11-12). A slim top
     bar (Back, the story and chapter, the reader's **Familiar**, Reader
     Settings) stays
     at the top while reading, and a **bottom bar** stays at the

@@ -11,7 +11,7 @@ import { holdingName, pointedSentence, type CodexEntryResolver } from './holding
  * and from their card, is worked out in `conditions.ts`. Never a model.
  */
 
-/** More words than a status should carry: it says how someone is, not what happened. */
+/** More words than a condition that begins should carry: it says how someone is, not what happened. */
 const STATUS_WORD_LIMIT = 8;
 
 export type ReadStatusTag =
@@ -28,7 +28,9 @@ export function readStatusTag(tag: WordTag): ReadStatusTag {
   const ended = rest.length > 1 && /^ended$/i.test(rest.at(-1)!.trim());
   const status = (ended ? rest.slice(0, -1) : rest).join('; ').trim();
   if (!status) return { ok: false, problem: `a status tag for ${named.name} said nothing about how they are` };
-  if (status.split(/\s+/).length > STATUS_WORD_LIMIT) return { ok: false, problem: `a status tag for ${named.name} told what happened instead of how they are, so it was set aside` };
+  // An end names a condition already carried, by the words it is listed under, however many those are:
+  // only a beginning is held to a few words, since that is where a tag could tell what happened instead.
+  if (!ended && status.split(/\s+/).length > STATUS_WORD_LIMIT) return { ok: false, problem: `a status tag for ${named.name} told what happened instead of how they are, so it was set aside` };
   return { ok: true, status: { subject: { name: named.name }, status, ...(ended ? { ended: true as const } : {}) } };
 }
 

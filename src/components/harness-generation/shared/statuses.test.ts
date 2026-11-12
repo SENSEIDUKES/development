@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   HarnessGenerationController,
+  conditionLabel,
   conditionsSection,
   deriveConditions,
   deriveStoryCodex,
@@ -126,6 +127,21 @@ describe('what the page begins and ends', () => {
     expect(names([chapter(2, tagAt(2, 1, 'wound', true))])).toEqual(['Poisoned wound', 'Old wall wound']);
     // The name as the tagger's list shows it, with how it shows now, is that condition's name too.
     expect(names([chapter(3, tagAt(3, 1, 'Old wall wound (opens again)', true))])).toEqual(['Wound', 'Poisoned wound']);
+  });
+
+  it('ends a condition by the words the tagger\'s list shows it under, however long they are', () => {
+    const world: WorldRecord = { cards: [{ key: 'world:character:elder-qin', kind: 'character', name: 'Elder Qin', enteredInChapter: 0,
+      slots: { status: 'Frost-burned left hand | fingers numb to the second joint > skin blackened up to the wrist | a stage every 2 chapters' } }] };
+    const linked = [{ ...entries[0], cardKey: 'world:character:elder-qin' }];
+    // What the tagger is shown for it in Chapter 3, and returns in its end tag: more words than a beginning may have.
+    const listed = conditionLabel(deriveConditions({ world, entries: linked, chapterNumber: 3 }).characters[0].conditions[0]);
+    expect(listed).toBe('Frost-burned left hand (skin blackened up to the wrist)');
+    const read = readStatusTag(tag(`[[status: Elder Qin | ${listed} | ended]] The frost left his hand at last.`));
+    expect(read).toEqual({ ok: true, status: { subject: { name: 'Elder Qin' }, status: listed, ended: true } });
+    const ended = { ...tagAt(3, 1, listed, true) };
+    expect(deriveConditions({ world, entries: linked, chapters: [chapter(3, ended)], chapterNumber: 4 })).toEqual({ characters: [], flags: [] });
+    // A beginning that long still tells what happened, and is set aside.
+    expect(readStatusTag(tag(`[[status: Elder Qin | ${listed}]] The frost took his hand.`))).toMatchObject({ ok: false });
   });
 
   it('keeps what a name in brackets tells apart, and lets a name that could be two conditions name neither', () => {

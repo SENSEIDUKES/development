@@ -2,14 +2,16 @@ import type { ManuscriptAnchor, ManuscriptAttachment } from '../components/highl
 import type { HoldingRef } from './holdings';
 
 /**
- * Status: how a character is now (SENSEI, 2026-10-31, Stage E1 step 2).
+ * Status: where the page begins or ends a condition (SENSEI, 2026-10-31, Stage
+ * E1 step 2; a beginning or an end since 2026-11-11).
  *
- * The tagger tags the sentence where the prose shows a character's condition
- * change (`[[status: Elder Qin | dead]]`); the HARNESS saves each tag as a
- * status on that sentence, the same way it saves an appearance. A character's
- * status now is never stored: it is the latest status tag in story order,
- * worked out again from every chapter, so a rewritten chapter changes it.
- * Someone with no status tag is simply as the story first showed them.
+ * The tagger tags the sentence where the prose shows a lasting condition begin
+ * (`[[status: Elder Qin | dead]]`) and the sentence where it shows one end
+ * (`[[status: MC | poisoned | ended]]`); the HARNESS saves each tag as a status
+ * on that sentence, the same way it saves an appearance. What a character
+ * carries now is never stored: it is their card's conditions and the ones the
+ * page began, less the ones the page ended, worked out again from every
+ * chapter (`deriveConditions`), so a rewritten chapter changes it.
  */
 
 /** The attachment kind of a status. */
@@ -20,8 +22,10 @@ export interface StatusPayload {
   origin: 'harness' | 'manual';
   /** Who: as the tag wrote it, and the Codex entry it resolved to when its chapter committed. */
   subject: HoldingRef;
-  /** How they are now, in the tag's few words: "dead", "badly wounded", "sealed in the stone". */
+  /** The condition, in the tag's few words: "dead", "badly wounded", "sealed in the stone". */
   status: string;
+  /** The prose ends this condition here. Absent: the prose begins it here. */
+  ended?: true;
 }
 
 /** Where a status sits: the sentence its tag points at, as an exact span of its paragraph. */

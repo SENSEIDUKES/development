@@ -389,9 +389,6 @@ function CharacterProfile({ character, art, onBack, onReadPassage, onFillCard }:
       {character.firstSeen
         ? <PassageChip passage={character.firstSeen} label={`First seen · Ch. ${character.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
         : <span className="inline-flex min-h-8 items-center rounded-full border border-(--reader-light)/12 bg-(--reader-light)/[0.04] px-2.5 text-[11px] text-(--reader-text-muted)">{AT_THE_START}</span>}
-      {character.status && <span data-testid="codex-status" className="contents">
-        <PassageChip passage={character.status.passage} label={`${character.status.text} · Ch. ${character.status.passage.chapterNumber}`} onReadPassage={onReadPassage} />
-      </span>}
       {character.place && <span data-testid="codex-place" className="contents">
         <PassageChip passage={character.place.passage} label={`At ${character.place.text} · Ch. ${character.place.passage.chapterNumber}`} onReadPassage={onReadPassage} />
       </span>}
@@ -404,6 +401,7 @@ function CharacterProfile({ character, art, onBack, onReadPassage, onFillCard }:
       <ul className="grid gap-2">{character.conditions.map(condition => <li key={condition.name} className="min-w-0 rounded-xl border border-(--reader-light)/10 bg-(--reader-light)/[0.03] px-4 py-3">
         <p className="break-words text-sm font-medium text-(--reader-text)">{condition.name}</p>
         {condition.showing && <p className="mt-0.5 break-words text-sm text-(--reader-text-soft)">{condition.showing}</p>}
+        {condition.passage && <div className="mt-2"><PassageChip passage={condition.passage} label={`Since Ch. ${condition.passage.chapterNumber}`} onReadPassage={onReadPassage} /></div>}
       </li>)}</ul>
     </Section>}
     {character.promoted

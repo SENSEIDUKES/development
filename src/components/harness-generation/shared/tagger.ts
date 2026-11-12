@@ -10,7 +10,7 @@ import type { HarnessTagFocus, HarnessWarning } from '../../../narrative/generat
 import { soundVocabulary } from '../../../audio/media';
 import { soundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import { SOUNDTRACK_TAG_WORDS, SOUND_TAG_WORDS, readMarks } from '../../../narrative/marks';
-import { statusOfEntry, type CurrentStatus } from './statuses';
+import { conditionLabel, type CharacterConditions } from './conditions';
 import { placeOfEntry, type CurrentPlace } from './places';
 import { TAG_SUBJECT_TIES, tiesOfEntry, type CurrentTie } from './ties';
 import { findSpokenLines } from '../../../narrative/speech';
@@ -40,6 +40,9 @@ import { acceptChapterTags, type HarnessResponseAcceptanceOptions } from './resp
  * stand.
  */
 
+/** The most conditions one character's line lists for the tagger. */
+export const TAG_SUBJECT_CONDITIONS = 8;
+
 /** The world card kinds that are also Codex kinds: the only ones a tag can name today. */
 const CARD_KIND_SUBJECTS: ReadonlyArray<CodexEntryKind> = ['character', 'thing', 'ability', 'place'];
 
@@ -50,17 +53,21 @@ const CARD_KIND_SUBJECTS: ReadonlyArray<CodexEntryKind> = ['character', 'thing',
  * is listed once, and the Codex wins, because its entry is the identity a tag
  * actually resolves to.
  */
-export function tagSubjectsOfStory({ entries, world, statuses, places, ties }: {
+export function tagSubjectsOfStory({ entries, world, conditions, places, ties }: {
   entries: readonly CodexEntry[];
   world?: WorldRecord;
-  /** Each character's status going into the chapter. */
-  statuses?: ReadonlyMap<string, CurrentStatus>;
+  /** What each character carries going into the chapter. */
+  conditions?: readonly CharacterConditions[];
   /** Where each character is going into the chapter. */
   places?: ReadonlyMap<string, CurrentPlace>;
   /** How each pair stands going into the chapter. */
   ties?: ReadonlyMap<string, CurrentTie>;
 }): HarnessTagSubject[] {
   const subjects: HarnessTagSubject[] = [];
+  // What someone carries, by their entry or their card: each in a few words, as many as a list holds.
+  const conditionsOf = (entryId: string | undefined, cardKey: string | undefined) =>
+    (conditions?.find(character => (entryId && character.key === entryId) || (cardKey && character.cardKey === cardKey))?.conditions ?? [])
+      .slice(0, TAG_SUBJECT_CONDITIONS).map(conditionLabel);
   const taken = new Set<string>();
   const add = (subject: HarnessTagSubject) => {
     const key = `${subject.kind}:${normalizeIdentityLabel(subject.name)}`;
@@ -69,7 +76,7 @@ export function tagSubjectsOfStory({ entries, world, statuses, places, ties }: {
     subjects.push(subject);
   };
   for (const entry of entries) {
-    const status = entry.kind === 'character' && statuses ? statusOfEntry(statuses, entry)?.status : undefined;
+    const carried = entry.kind === 'character' ? conditionsOf(entry.id, entry.cardKey) : [];
     const place = entry.kind === 'character' && places ? placeOfEntry(places, entry)?.place : undefined;
     const tied = entry.kind === 'character' && ties ? tiesOfEntry(ties, entry).slice(-TAG_SUBJECT_TIES).map(tie => ({ with: tie.with, tie: tie.tie })) : [];
     add({
@@ -77,18 +84,20 @@ export function tagSubjectsOfStory({ entries, world, statuses, places, ties }: {
       kind: entry.kind,
       ...(entry.aliases?.length ? { aliases: [...entry.aliases] } : {}),
       ...(entry.mainCharacter ? { mainCharacter: true as const } : {}),
-      ...(status ? { status } : {}),
+      ...(carried.length ? { conditions: carried } : {}),
       ...(place ? { place } : {}),
       ...(tied.length ? { ties: tied } : {}),
     });
   }
   for (const kind of CARD_KIND_SUBJECTS) {
     for (const card of worldCardsOfKind(world, kind)) {
+      const carried = kind === 'character' ? conditionsOf(undefined, card.key) : [];
       add({
         name: card.name,
         kind,
         ...(card.aliases?.length ? { aliases: [...card.aliases] } : {}),
         ...(card.mainCharacter ? { mainCharacter: true as const } : {}),
+        ...(carried.length ? { conditions: carried } : {}),
       });
     }
   }
@@ -101,14 +110,14 @@ export function tagSubjectsOfStory({ entries, world, statuses, places, ties }: {
  * which is what makes re-tagging an existing chapter the same operation as
  * tagging a new one.
  */
-export function planChapterTagging({ chapter, entries, world, holdings, statuses, places, ties, soundWords, soundtrack, language, model, reasoningLevel, focus }: {
+export function planChapterTagging({ chapter, entries, world, holdings, conditions, places, ties, soundWords, soundtrack, language, model, reasoningLevel, focus }: {
   chapter: Pick<HarnessChapter, 'id' | 'storyId' | 'chapterNumber' | 'paragraphs'>;
   entries: readonly CodexEntry[];
   world?: WorldRecord;
   /** What each character had going into this chapter. */
   holdings?: HoldingsSection;
-  /** How each character was going into this chapter. */
-  statuses?: ReadonlyMap<string, CurrentStatus>;
+  /** What each character carried going into this chapter. */
+  conditions?: readonly CharacterConditions[];
   /** Where each character was going into this chapter. */
   places?: ReadonlyMap<string, CurrentPlace>;
   /** How each pair stood going into this chapter. */
@@ -133,7 +142,7 @@ export function planChapterTagging({ chapter, entries, world, holdings, statuses
     ...(reasoningLevel ? { reasoningLevel } : {}),
     language,
     paragraphs: [...chapter.paragraphs],
-    subjects: media ? [] : tagSubjectsOfStory({ entries, world, statuses, places, ties }),
+    subjects: media ? [] : tagSubjectsOfStory({ entries, world, conditions, places, ties }),
     ...(!media && holdings?.characters.length ? { holdings } : {}),
     ...(soundWords?.length ? { soundWords: [...soundWords] } : {}),
     ...(soundtrack ? { soundtrack } : {}),

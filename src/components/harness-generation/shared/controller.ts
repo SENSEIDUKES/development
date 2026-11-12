@@ -46,7 +46,8 @@ import { protagonistNames } from './speakers';
 import { codexEntriesWithoutChapter, createCodexEntryResolver, declaredCharacters, deriveHoldings, holdingsSection, resolveHoldingChanges } from './holdings';
 import { MEDIA_TAG_WARNING_CODES, planChapterTagging, readChapterTagging, retagChapterGap } from './tagger';
 import { appearanceSources, cardLookStatement, deriveAppearances, placeAppearancesFromPlaces, resolveAppearances, thingAppearancesFromHoldings, worldCardLook } from './appearances';
-import { deriveStatuses, resolveStatuses } from './statuses';
+import { resolveStatuses } from './statuses';
+import { deriveConditions } from './conditions';
 import { derivePlaces, resolvePlaces } from './places';
 import { deriveTies, resolveTies } from './ties';
 import type { Look } from '../../../narrative/appearances';
@@ -1481,7 +1482,10 @@ export class HarnessGenerationController {
     const request = planChapterTagging({
       chapter, entries: this.state.codexEntries.filter(entry => entry.storyId === storyId), world,
       holdings: before,
-      statuses: deriveStatuses(others.filter(entry => entry.chapterNumber < chapter.chapterNumber)),
+      conditions: deriveConditions({
+        world, entries: this.state.codexEntries.filter(entry => entry.storyId === storyId),
+        chapters: others.filter(entry => entry.chapterNumber < chapter.chapterNumber), chapterNumber: chapter.chapterNumber,
+      }).characters,
       places: derivePlaces(others.filter(entry => entry.chapterNumber < chapter.chapterNumber), this.state.codexEntries),
       ties: deriveTies(others.filter(entry => entry.chapterNumber < chapter.chapterNumber), this.state.codexEntries),
       soundWords: soundVocabulary(chapter.mediaLoadout),
@@ -1693,7 +1697,11 @@ export class HarnessGenerationController {
       world,
       holdings: before,
       // Only the chapters before this one: a rewrite's replaced chapter is still saved, and its statuses are not this chapter's past.
-      statuses: deriveStatuses(this.state.chapters.filter(chapter => chapter.storyId === story.id && chapter.chapterNumber < attempt.chapterNumber)),
+      conditions: deriveConditions({
+        world, entries: this.state.codexEntries.filter(entry => entry.storyId === story.id),
+        chapters: this.state.chapters.filter(chapter => chapter.storyId === story.id && chapter.chapterNumber < attempt.chapterNumber),
+        chapterNumber: attempt.chapterNumber,
+      }).characters,
       places: derivePlaces(this.state.chapters.filter(chapter => chapter.storyId === story.id && chapter.chapterNumber < attempt.chapterNumber), this.state.codexEntries),
       ties: deriveTies(this.state.chapters.filter(chapter => chapter.storyId === story.id && chapter.chapterNumber < attempt.chapterNumber), this.state.codexEntries),
       soundWords: soundVocabulary(attempt.mediaLoadout),

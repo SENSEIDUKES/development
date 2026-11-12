@@ -194,7 +194,7 @@ export const presentStoryInformationPacketSections = (packet: StoryInformationPa
   { section: 'canonicalState', text: ['CURRENT CANONICAL STATE (latest applicable state per resolved entity)', presentCanonicalState(packet.canonicalState)].join('\n') },
   ...(packet.holdings ? [{ section: 'holdings' as const, text: ['HOLDINGS (what each character has now, by exact name; the main character first)', presentHoldings(packet.holdings)].join('\n') }] : []),
   ...(packet.conditions ? [{ section: 'conditions' as const, text: [CONDITIONS_HEADING, presentConditions(packet.conditions)].join('\n') }] : []),
-  ...(packet.appearances ? [{ section: 'appearances' as const, text: ['APPEARED (every character, thing and place already on the page, by exact name, with its look, and each character\'s status, place and ties; the main character first)', presentAppearances(packet.appearances)].join('\n') }] : []),
+  ...(packet.appearances ? [{ section: 'appearances' as const, text: ['APPEARED (every character, thing and place already on the page, by exact name, with its look, and each character\'s place and ties; the main character first)', presentAppearances(packet.appearances)].join('\n') }] : []),
 ];
 
 /**
@@ -238,9 +238,9 @@ export const presentConditions = (conditions: NonNullable<StoryInformationPacket
     return `- ${character.name}${character.mainCharacter ? ' (main character)' : ''}: ${condition.name}${condition.showing ? `, ${condition.showing}` : ''}${notes.length ? ` (${notes.join('; ')})` : ''}`;
   })).join('\n');
 
-/** One character, thing or place per line: its name, what it is, a character's status and place, its look once written down, and a character's ties. */
+/** One character, thing or place per line: its name, what it is, a character's place, its look once written down, and a character's ties. */
 export const presentAppearances = (appearances: NonNullable<StoryInformationPacket['appearances']>) => appearances.entries.length
-  ? appearances.entries.map(entry => `- ${entry.name} (${entry.mainCharacter ? 'main character' : entry.entity}${entry.status ? `, ${entry.status}` : ''}${entry.place ? `, at ${entry.place}` : ''}): ${entry.look ?? 'look not written down yet'}${entry.ties ? ` · ties: ${entry.ties}` : ''}`).join('\n')
+  ? appearances.entries.map(entry => `- ${entry.name} (${entry.mainCharacter ? 'main character' : entry.entity}${entry.place ? `, at ${entry.place}` : ''}): ${entry.look ?? 'look not written down yet'}${entry.ties ? ` · ties: ${entry.ties}` : ''}`).join('\n')
   : 'Nobody and nothing has appeared yet.';
 
 /**

@@ -16,8 +16,7 @@ import { harnessParagraphBlockId } from './chapterBody';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { factionNamed, type DeclaredFaction } from './factions';
 import { deriveAppearances, type AppearanceFlag, type AppearancePassage, type AppearanceSubject } from './appearances';
-import { deriveConditions } from './conditions';
-import { deriveStatuses } from './statuses';
+import { deriveConditions, type ConditionFlag } from './conditions';
 import { derivePlaces } from './places';
 import { deriveTies, tiesOfEntry } from './ties';
 import {
@@ -162,10 +161,11 @@ export interface CodexWorldCard {
   atChapterZero: CodexWorldFact[];
 }
 
-/** A condition a character carries now: its name, and how it shows at this point. */
+/** A condition a character carries now: its name, how it shows at this point, and the sentence that began it when the page did. */
 export interface CodexCondition {
   name: string;
   showing?: string;
+  passage?: CodexPassage;
 }
 
 export interface CodexCharacter {
@@ -182,12 +182,12 @@ export interface CodexCharacter {
   /** Their appearance on the page, and their look. Absent for someone met only by their words or holdings. */
   appearance?: CodexAppearance;
   rank?: { text: string; events: HoldingEvent[] };
-  /** How they are now, from the latest status tag, with the passage that showed it. Absent while no tag gave one. */
-  status?: { text: string; passage: CodexPassage };
   /**
    * What they carry as of the latest chapter: each condition of their card
-   * that still stands, with how it shows at the stage its course has reached.
-   * Where the course goes next is the story's to tell, so it is not here.
+   * that still stands, with how it shows at the stage its course has reached,
+   * and each one the page began and has not ended, with the sentence that
+   * began it. Where a course goes next is the story's to tell, so it is not
+   * here.
    */
   conditions?: CodexCondition[];
   /** Where they are now, from the latest place tag, with the passage where they arrived. Absent while no tag gave one. */
@@ -242,8 +242,8 @@ export interface CodexPlace extends CodexWorldCard {
   here: Array<{ key: string; name: string; mainCharacter: boolean }>;
 }
 
-/** A check the record's plain rules flagged (holdings or appearances), with the paragraph it is about when it has one. */
-export type CodexCheck = (HoldingFlag | AppearanceFlag) & { blockId?: string };
+/** A check the record's plain rules flagged (holdings, appearances or conditions), with the paragraph it is about when it has one. */
+export type CodexCheck = (HoldingFlag | AppearanceFlag | ConditionFlag) & { blockId?: string };
 
 /**
  * A sect, clan, faction or other body the record knows: one the world opened
@@ -366,10 +366,8 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   const labelsOf = (card: { name: string; aliases?: string[] }) =>
     [card.name, ...(card.aliases ?? [])].map(normalizeIdentityLabel);
 
-  // What each character carries as of the latest chapter, by their card.
-  const carried = new Map(deriveConditions(world, ordered.at(-1)?.chapterNumber ?? 1)
-    .map(character => [character.cardKey, character.conditions.map(({ name, showing }): CodexCondition => ({ name, ...(showing ? { showing } : {}) }))]));
-
+  // The card each character is, by the key the Codex lists them under.
+  const cardOfCharacter = new Map<string, string>();
   // The world at Chapter 0 comes first: the Codex opens with the world the
   // story was given, and the chapters add to these same cards.
   for (const card of worldCardsOfKind(world, 'character')) {
@@ -379,13 +377,14 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     // "Phoenix (West)") are still two people: the second keeps the key the
     // world gave it rather than taking the first's card.
     const named = entry?.id ?? `character:${labels[0]}`;
+    const key = characters.has(named) ? card.key : named;
+    cardOfCharacter.set(key, card.key);
     add({
-      key: characters.has(named) ? card.key : named,
+      key,
       name: entry?.name ?? card.name,
       mainCharacter: Boolean(card.mainCharacter || entry?.mainCharacter),
       atChapterZero: worldCardFacts(card),
       ...promotedOf(card),
-      ...(carried.get(card.key)?.length ? { conditions: carried.get(card.key)! } : {}),
       things: [], abilities: [], chronicle: [],
       names: new Set([...labels, ...(entry ? labelsOf(entry) : [])]),
     });
@@ -541,9 +540,18 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     .sort((left, right) => inRecordOrder(left, right, faction => factionOrder.indexOf(faction)));
 
   // How each is now, and where: the latest status and place tags, by their entry or any name they answer to.
-  const statuses = deriveStatuses(ordered);
-  const statusFor = (character: Working) => statuses.get(character.key)
-    ?? [...character.names].map(name => statuses.get(`character:${name}`)).find(Boolean);
+  // What each character carries as of the latest chapter: their card's conditions at the stage the
+  // chapter count gives, and the ones the page began, less the ones it ended. By their entry or any name.
+  const carried = deriveConditions({ world, entries, chapters: ordered, chapterNumber: ordered.at(-1)?.chapterNumber ?? 1 });
+  const conditionsFor = (character: Working): CodexCondition[] => (cardOfCharacter.has(character.key)
+    // Someone with a card carries what that card's character carries, and no one else's, however alike two names read.
+    ? carried.characters.find(candidate => candidate.cardKey === cardOfCharacter.get(character.key))
+    : carried.characters.find(candidate => !candidate.cardKey && candidate.key === character.key)
+      ?? carried.characters.find(candidate => !candidate.cardKey && character.names.has(normalizeIdentityLabel(candidate.name))))?.conditions
+    .map(({ name, showing, began }) => ({
+      name, ...(showing ? { showing } : {}),
+      ...(began ? { passage: { chapterNumber: began.chapterNumber, blockId: began.blockId, text: began.text } } : {}),
+    })) ?? [];
   const wherever = derivePlaces(ordered, entries);
   const placeFor = (character: Working) => wherever.get(character.key)
     ?? [...character.names].map(name => wherever.get(`character:${name}`)).find(Boolean);
@@ -557,13 +565,13 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     .sort((left, right) => Number(right.mainCharacter) - Number(left.mainCharacter)
       || inRecordOrder(left, right, character => known.indexOf(character)))
     .map(({ names, ...character }) => {
-      const status = statusFor({ ...character, names });
+      const conditions = conditionsFor({ ...character, names });
       const place = placeFor({ ...character, names });
       const ties = tiesOfEntry(tied, { id: character.key, name: character.name, aliases: [...names] });
       const passage = (from: { chapterNumber: number; blockId: string; text: string }) => ({ chapterNumber: from.chapterNumber, blockId: from.blockId, text: from.text });
       return {
         ...character,
-        ...(status ? { status: { text: status.status, passage: passage(status.passage) } } : {}),
+        ...(conditions.length ? { conditions } : {}),
         ...(place ? { place: { text: place.place, passage: passage(place.passage) } } : {}),
         ...(ties.length ? { ties: ties.map(tie => ({ with: tie.with, text: tie.tie, passage: passage(tie.passage) })) } : {}),
       };
@@ -761,7 +769,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     return blockId ? { ...flag, blockId } : flag;
   });
   // In story order; a check about no one chapter (two names that may be one) comes first.
-  const checks = [...holdingChecks, ...appeared.flags].sort((left, right) => (left.chapterNumber ?? 0) - (right.chapterNumber ?? 0));
+  const checks = [...holdingChecks, ...appeared.flags, ...carried.flags].sort((left, right) => (left.chapterNumber ?? 0) - (right.chapterNumber ?? 0));
 
   return {
     characters: roster,

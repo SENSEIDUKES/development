@@ -10,7 +10,8 @@ import { harnessParagraphBlockId } from './chapterBody';
 import { createCodexEntryResolver, pointedSentence, type DeclaredCharacter } from './holdings';
 import { placeAppearancesFromPlaces, resolveAppearances } from './appearances';
 import { isMainCharacterTag } from './speakers';
-import { deriveStatuses, readStatusTag, resolveStatuses } from './statuses';
+import { readStatusTag, resolveStatuses } from './statuses';
+import { deriveConditions, type CarriedCondition } from './conditions';
 import { factionNamed } from './factions';
 import { PLACE_KIND, placeId, type PlaceAttachment, type PlacePayload } from '../../../narrative/places';
 import { derivePlaces, readPlaceTag, resolvePlaces } from './places';
@@ -256,31 +257,50 @@ function firstAct(chapter: HarnessChapter, { entry, known, isThem }: {
 
 // ─── Someone dead who speaks or acts ──────────────────────────────────────
 
+/**
+ * The death someone carries, while it is the last thing the page said of them.
+ * Someone the story has since changed (a ghost, a puppet) or brought back
+ * carries a later condition, or no longer carries their death, and is as the
+ * record then says.
+ */
+const deathCarried = (conditions: readonly CarriedCondition[]): CarriedCondition | undefined => {
+  const said = conditions.filter(condition => condition.began);
+  const last = said.at(-1) ?? conditions.find(condition => DEAD_STATUS.test(condition.name));
+  return last && DEAD_STATUS.test(last.name) ? last : undefined;
+};
+
 function statusContradictions(input: RecordChecksInput, locale?: string): RecordFixPlanCase[] {
   const { chapter } = input;
   const entries = storyEntries(input);
   const earlier = earlierChapters(input);
   const cases: RecordFixPlanCase[] = [];
-  for (const [statusKey, current] of deriveStatuses(earlier)) {
-    if (!DEAD_STATUS.test(current.status)) continue;
+  const carriedAt = (chapters: readonly HarnessChapter[]) => deriveConditions({ world: input.worldAtChapterZero, entries, chapters, chapterNumber: chapter.chapterNumber }).characters;
+  for (const character of carriedAt(earlier)) {
+    const dead = deathCarried(character.conditions);
+    if (!dead) continue;
+    const statusKey = character.key;
     const entry = entries.find(candidate => candidate.id === statusKey);
-    const known = entry ? namesOf(entry) : [current.name];
+    const known = entry ? namesOf(entry) : [character.name];
     const isThem = (subject: { name: string; entryId?: string }) => (entry && subject.entryId ? subject.entryId === entry.id : answersTo(known, subject.name));
     const first = firstAct(chapter, { entry, known, isThem }, locale);
     if (!first) continue;
-    // A status this chapter gives them at or before that sentence already says how they are now.
-    const changed = (chapter.statuses ?? []).some(status => isThem(status.payload.subject) && !before(first, spanPlace(chapter, status.anchor)));
-    if (changed) continue;
+    // What this chapter's own tags say of them at or before that sentence counts, by the record's own rules: a
+    // condition it begins, or the end of their death, means they are no longer simply dead. The end of some other
+    // condition, or one that names no condition of theirs, changes nothing.
+    const upToThere = { ...chapter, statuses: (chapter.statuses ?? []).filter(status => !before(first, spanPlace(chapter, status.anchor))) };
+    const then = carriedAt([...earlier, upToThere]).find(candidate => candidate.key === character.key);
+    if (!then || !deathCarried(then.conditions)) continue;
     const sentence = sentenceAt(chapter, first.blockId, first.start, locale)!;
-    const name = entry?.name ?? current.name;
-    const message = `‘${name}’ is ${current.status} since Chapter ${current.passage.chapterNumber}, but ${first.what} in this chapter.`;
+    const name = entry?.name ?? character.name;
+    const since = dead.began ? `since Chapter ${dead.began.chapterNumber}` : 'since the story opened';
+    const message = `‘${name}’ is ${dead.name} ${since}, but ${first.what} in this chapter.`;
     const tags = (chapter.statuses ?? []).filter(status => status.anchor.blockId === first.blockId && status.anchor.startOffset === first.start && status.anchor.endOffset === first.end).map(statusTagText).join(' ');
     cases.push({
       kind: 'status', name, blockId: first.blockId, start: first.start, end: first.end, text: sentence.text,
       flags: [{ kind: 'status-contradiction', message, key: `status-contradiction:${statusKey}` }],
       case: {
         id: '', problems: [message], passage: passageOf(sentence), tags,
-        record: [`${name}, Chapter ${current.passage.chapterNumber}: ${current.status}: “${current.passage.text}”`],
+        record: [dead.began ? `${name}, Chapter ${dead.began.chapterNumber}: ${dead.name}: “${dead.began.text}”` : `${name}: ${dead.name}, on their card`],
         answers: ['record', 'fine', 'major'],
       },
     });
@@ -289,7 +309,7 @@ function statusContradictions(input: RecordChecksInput, locale?: string): Record
 }
 
 /** A saved status written back as the tag the tagger writes. */
-export const statusTagText = ({ payload }: Pick<StatusAttachment, 'payload'>) => `[[status: ${payload.subject.name} | ${payload.status}]]`;
+export const statusTagText = ({ payload }: Pick<StatusAttachment, 'payload'>) => `[[status: ${payload.subject.name} | ${payload.status}${payload.ended ? ' | ended' : ''}]]`;
 
 // ─── Someone who acts somewhere the record does not have them ─────────────
 

@@ -116,6 +116,32 @@ describe('what the page begins and ends', () => {
     expect(cured).toEqual({ characters: [], flags: [] });
   });
 
+  it('ends the condition a tag names exactly, never one that only shares its words', () => {
+    const world: WorldRecord = { cards: [{ key: 'world:character:elder-qin', kind: 'character', name: 'Elder Qin', enteredInChapter: 0,
+      slots: { status: 'Wound\nPoisoned wound\nOld wall wound | aches in the cold > opens again | a stage every 2 chapters' } }] };
+    const linked = [{ ...entries[0], cardKey: 'world:character:elder-qin' }];
+    const names = (chapters: ReturnType<typeof chapter>[], chapterNumber = 4) =>
+      deriveConditions({ world, entries: linked, chapters, chapterNumber }).characters[0]?.conditions.map(condition => condition.name) ?? [];
+    expect(names([chapter(2, tagAt(2, 1, 'Poisoned wound', true))])).toEqual(['Wound', 'Old wall wound']);
+    expect(names([chapter(2, tagAt(2, 1, 'wound', true))])).toEqual(['Poisoned wound', 'Old wall wound']);
+    // The name as the tagger's list shows it, with how it shows now, is that condition's name too.
+    expect(names([chapter(3, tagAt(3, 1, 'Old wall wound (opens again)', true))])).toEqual(['Wound', 'Poisoned wound']);
+  });
+
+  it('keeps what a name in brackets tells apart, and lets a name that could be two conditions name neither', () => {
+    const both = chapter(1, tagAt(1, 1, 'broken arm (left)'), tagAt(1, 2, 'broken arm (right)'));
+    const after = (...more: ReturnType<typeof chapter>[]) => deriveConditions({ entries, chapters: [both, ...more], chapterNumber: 9 });
+    expect(after().characters[0].conditions.map(condition => condition.name)).toEqual(['broken arm (left)', 'broken arm (right)']);
+    expect(after(chapter(4, tagAt(4, 1, 'Broken arm (right)', true))).characters[0].conditions.map(condition => condition.name)).toEqual(['broken arm (left)']);
+    // "broken arm" could be either: it ends neither, and the record says so.
+    const unsure = after(chapter(4, tagAt(4, 1, 'broken arm', true)));
+    expect(unsure.characters[0].conditions).toHaveLength(2);
+    expect(unsure.flags.map(flag => flag.kind)).toEqual(['condition-not-carried']);
+    // A near name that is near only one still finds it.
+    const one = deriveConditions({ entries, chapters: [chapter(1, tagAt(1, 1, 'frost-burned hand')), chapter(2, tagAt(2, 1, 'frost-burned hands', true))], chapterNumber: 3 });
+    expect(one).toEqual({ characters: [], flags: [] });
+  });
+
   it('leaves out an end that ends nothing, and says so', () => {
     const state = deriveConditions({ entries, chapters: [chapter(4, tagAt(4, 2, 'poisoned', true))], chapterNumber: 5 });
     expect(state.characters).toEqual([]);

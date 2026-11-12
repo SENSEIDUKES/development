@@ -62,8 +62,13 @@ export interface ConditionsState {
 export type ConditionsChapter = { id: string; chapterNumber: number; statuses?: readonly StatusAttachment[] };
 
 const label = normalizeIdentityLabel;
-/** Whether two names are one condition: the same words, or close enough that a tagger meant the same. */
-const sameCondition = (left: string, right: string) => label(left) === label(right) || namesNearlyMatch(left, right);
+/** A condition's name as it is compared: its own words, whole, so "broken arm (left)" is never "broken arm (right)". */
+const conditionKey = (name: string) => name.toLocaleLowerCase().replace(/\s+/g, ' ').trim();
+/** What a name says in brackets: the part that tells two conditions of one name apart (left, right). */
+const inBrackets = (name: string) => (name.match(/\(([^)]*)\)/)?.[1] ?? '').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
+/** Two names a tagger could mean one condition by: near in their words, and never told apart by what each says in brackets. */
+const nearCondition = (left: string, right: string) => namesNearlyMatch(left, right)
+  && (!inBrackets(left) || !inBrackets(right) || inBrackets(left) === inBrackets(right));
 const paragraphIndex = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
 
 interface Carrier {
@@ -126,6 +131,28 @@ export function deriveConditions({ world, entries = [], chapters = [], chapterNu
   /** A card's condition that is still carried in `chapter`: not ended by the page, and not passed by its own course. */
   const standing = (carrier: Carrier, chapter: number) => carrier.card
     .filter(entry => entry.endedIn === undefined && conditionAfter(entry.condition, chapter - carrier.since));
+  /**
+   * The condition a tag names, among those the carrier has in `chapter`. Its
+   * exact name wins: the name itself, or the name as the tagger's list shows
+   * it, with how it shows now ("Old wall wound (opens again)"). Only when no
+   * name is exact does a near one count (a tagger's "frost-burned hands" for
+   * "frost-burned hand"), and only when it is near exactly one: a name that
+   * could be two conditions names neither.
+   */
+  const named = (carrier: Carrier, chapter: number, name: string): { page: number } | { card: Carrier['card'][number] } | undefined => {
+    const candidates = [
+      ...carrier.page.map((condition, page) => ({ found: { page }, name: condition.name, keys: [conditionKey(condition.name)] })),
+      ...standing(carrier, chapter).map(card => ({
+        found: { card }, name: card.condition.name,
+        keys: [conditionKey(card.condition.name), ...card.condition.stages.map(stage => conditionKey(`${card.condition.name} (${stage})`))],
+      })),
+    ];
+    const wanted = conditionKey(name);
+    const exact = candidates.find(candidate => candidate.keys.includes(wanted));
+    if (exact) return exact.found;
+    const near = candidates.filter(candidate => nearCondition(candidate.name, name));
+    return near.length === 1 ? near[0].found : undefined;
+  };
 
   for (const chapter of [...chapters].sort((left, right) => left.chapterNumber - right.chapterNumber)) {
     const ordered = [...chapter.statuses ?? []].filter(record => record.kind === STATUS_KIND)
@@ -133,11 +160,10 @@ export function deriveConditions({ world, entries = [], chapters = [], chapterNu
     for (const record of ordered) {
       const carrier = carrierOf(record.payload.subject);
       const name = record.payload.status;
-      const onPage = carrier.page.findIndex(condition => sameCondition(condition.name, name));
-      const onCard = standing(carrier, chapter.chapterNumber).find(entry => sameCondition(entry.condition.name, name));
+      const carried = named(carrier, chapter.chapterNumber, name);
       if (record.payload.ended) {
-        if (onPage >= 0) carrier.page.splice(onPage, 1);
-        else if (onCard) onCard.endedIn = chapter.chapterNumber;
+        if (carried && 'page' in carried) carrier.page.splice(carried.page, 1);
+        else if (carried) carried.card.endedIn = chapter.chapterNumber;
         else {
           flags.push({
             kind: 'condition-not-carried', chapterId: chapter.id, chapterNumber: chapter.chapterNumber, recordId: record.id, blockId: record.anchor.blockId, name: carrier.name,
@@ -147,7 +173,7 @@ export function deriveConditions({ world, entries = [], chapters = [], chapterNu
         continue;
       }
       // Already carried, by their card or from an earlier sentence: it is not carried twice.
-      if (onPage >= 0 || onCard) continue;
+      if (carried) continue;
       carrier.page.push({ name, began: { chapterId: chapter.id, chapterNumber: chapter.chapterNumber, recordId: record.id, blockId: record.anchor.blockId, text: record.anchor.selectedText } });
     }
   }

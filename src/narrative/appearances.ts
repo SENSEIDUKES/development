@@ -102,8 +102,6 @@ export interface AppearancesSectionEntry {
   mainCharacter?: true;
   /** The look's one line, once it is written down. */
   look?: string;
-  /** How they are now, when a status tag gave one. */
-  status?: string;
   /** Where they are now, when a place tag gave one. */
   place?: string;
   /** How they stand with others now, when a tie tag gave any: "Ning Hao (sworn enemies); Little Frost (bonded companion)". */

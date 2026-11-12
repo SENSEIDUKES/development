@@ -1,10 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  APPEARED_SECTION_CHARACTERS,
   HarnessGenerationController,
-  appearancesSection,
-  deriveAppearances,
-  deriveStatuses,
+  conditionsSection,
+  deriveConditions,
   deriveStoryCodex,
   notesOfTaggedChapter,
   placeStatuses,
@@ -13,7 +11,8 @@ import {
   type HarnessTagRequest,
 } from '@seihouse/sen/harness-generation';
 import { buildHarnessTagPrompt } from '../../../server/harness-generation/tagger';
-import { presentAppearances } from '../../../server/harness-generation/prompt';
+import { presentAppearances, presentConditions } from '../../../server/harness-generation/prompt';
+import type { WorldRecord } from '../../../narrative/worldRecord';
 import { readMarks } from '../../../narrative/marks';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
@@ -21,10 +20,12 @@ import { acceptChapterTags } from './responseAcceptance';
 
 /**
  * Status, the second information tag (SENSEI, 2026-10-31), built the way
- * appearances are: the tagger tags the sentence where a character's condition
- * changes (`[[status: Elder Qin | dead]]`), the HARNESS saves it on that
- * sentence, and a character's status now is the latest tag in story order.
- * The tagger and the writer are both told it, and the Codex card shows it.
+ * appearances are: the tagger tags the sentence where the prose begins a
+ * lasting condition (`[[status: Elder Qin | dead]]`) or ends one
+ * (`[[status: MC | poisoned | ended]]`, SENSEI, 2026-11-11), and the HARNESS
+ * saves it on that sentence. What a character carries is their card's
+ * conditions and the ones the page began, less the ones it ended. The tagger
+ * and the writer are both told it, and the Codex card shows it.
  */
 
 const tag = (text: string) => readMarks(text).wordTags[0];
@@ -65,51 +66,81 @@ describe('reading status tags', () => {
   });
 });
 
-describe('a character\'s status now', () => {
-  const at = (chapterNumber: number, blockId: string, start: number, status: string, entryId = 'e-qin') => ({
-    id: `c${chapterNumber}`, chapterNumber,
-    statuses: [{
-      id: `status:${blockId}:${start}`, kind: 'status' as const,
-      anchor: { level: 'span' as const, blockId, startOffset: start, endOffset: start + 5, selectedText: 'He fell.' },
-      payload: { origin: 'harness' as const, subject: { name: 'Elder Qin', entryId }, status },
-    }],
+describe('what the page begins and ends', () => {
+  const entries = [{ id: 'e-qin', storyId: 's', kind: 'character' as const, name: 'Elder Qin', origin: { source: 'foundation' as const }, createdAt: 'now' }];
+  const tagAt = (chapterNumber: number, paragraph: number, status: string, ended = false, subject: { name: string; entryId?: string } = { name: 'Elder Qin', entryId: 'e-qin' }) => ({
+    id: `status:c${chapterNumber}-p${paragraph}:0`, kind: 'status' as const,
+    anchor: { level: 'span' as const, blockId: `c${chapterNumber}-p${paragraph}`, startOffset: 0, endOffset: 8, selectedText: 'He fell.' },
+    payload: { origin: 'harness' as const, subject, status, ...(ended ? { ended: true as const } : {}) },
+  });
+  const chapter = (chapterNumber: number, ...statuses: ReturnType<typeof tagAt>[]) => ({ id: `c${chapterNumber}`, chapterNumber, statuses });
+  const began = (chapterNumber: number, paragraph: number) => ({ chapterId: `c${chapterNumber}`, chapterNumber, recordId: `status:c${chapterNumber}-p${paragraph}:0`, blockId: `c${chapterNumber}-p${paragraph}`, text: 'He fell.' });
+
+  it('reads a last part that says "ended" as the end of that condition', () => {
+    expect(readStatusTag(tag('[[status: MC | poisoned | ended]] The poison left him.'))).toEqual({ ok: true, status: { subject: { name: 'MC' }, status: 'poisoned', ended: true } });
+    expect(readStatusTag(tag('[[status: MC | poisoned | Ended]] The poison left him.'))).toMatchObject({ status: { status: 'poisoned', ended: true } });
+    // Only as the last part, after the condition's name: a condition called "ended" is not an end.
+    expect(readStatusTag(tag('[[status: MC | ended]] It was over.'))).toEqual({ ok: true, status: { subject: { name: 'MC' }, status: 'ended' } });
   });
 
-  it('is the latest status tag in story order, whatever order the chapters are given in', () => {
-    const now = deriveStatuses([at(3, 'c3-p1', 0, 'dead'), at(1, 'c1-p4', 0, 'wounded')]);
-    expect(now.get('e-qin')).toMatchObject({ status: 'dead', passage: { chapterNumber: 3 } });
-    expect(deriveStatuses([at(1, 'c1-p4', 0, 'wounded')]).get('e-qin')?.status).toBe('wounded');
+  it('lets conditions stand side by side until the page ends each, whatever order the chapters are given in', () => {
+    const state = deriveConditions({ entries, chapterNumber: 20, chapters: [
+      chapter(3, tagAt(3, 1, 'shoulder injured')),
+      chapter(1, tagAt(1, 4, 'wounded'), tagAt(1, 6, 'poisoned')),
+      chapter(5, tagAt(5, 2, 'poisoned', true)),
+    ] });
+    expect(state.characters).toEqual([{ key: 'e-qin', name: 'Elder Qin', mainCharacter: false, conditions: [
+      { name: 'wounded', endsIf: [], began: began(1, 4) },
+      { name: 'shoulder injured', endsIf: [], began: began(3, 1) },
+    ] }]);
+    expect(state.flags).toEqual([]);
   });
 
-  it('reaches the writer for someone never tagged appearing, so a death tagged on its own is never forgotten', () => {
-    const entries = [{ id: 'e-qin', storyId: 's', kind: 'character' as const, name: 'Elder Qin', origin: { source: 'foundation' as const }, createdAt: 'now' }];
-    const section = appearancesSection(deriveAppearances({ entries, chapters: [] }), deriveStatuses([at(2, 'c2-p1', 0, 'dead')]), entries);
-    expect(section.entries).toEqual([{ name: 'Elder Qin', entity: 'character', status: 'dead' }]);
+  it('never carries one twice, and ends it whatever the tag\'s capitals', () => {
+    const twice = [chapter(9, tagAt(9, 1, 'shoulder injured'), tagAt(9, 7, 'Shoulder injured'))];
+    expect(deriveConditions({ entries, chapters: twice, chapterNumber: 10 }).characters[0].conditions).toEqual([{ name: 'shoulder injured', endsIf: [], began: began(9, 1) }]);
+    expect(deriveConditions({ entries, chapters: [...twice, chapter(12, tagAt(12, 1, 'SHOULDER INJURED', true))], chapterNumber: 13 }).characters).toEqual([]);
   });
 
-  it('keeps the status of someone the Appeared counts leave out', () => {
-    // More characters have appeared than Appeared lists: the oldest is left out, but their death is not.
-    const entries = Array.from({ length: APPEARED_SECTION_CHARACTERS + 1 }, (_, index) => ({
-      id: `e-${index}`, storyId: 's', kind: 'character' as const, name: `Elder ${index}`, origin: { source: 'foundation' as const }, createdAt: 'now',
-    }));
-    const appeared = entries.map((entry, index) => ({
-      id: `appearance:${index}`, kind: 'appearance' as const,
-      anchor: { level: 'span' as const, blockId: `c${index + 1}-p1`, startOffset: 0, endOffset: 8, selectedText: 'He came.' },
-      payload: { origin: 'harness' as const, event: 'appears' as const, entity: 'character' as const, subject: { name: entry.name, entryId: entry.id } },
-    }));
-    const chapters = appeared.map((appearance, index) => ({ id: `c${index + 1}`, chapterNumber: index + 1, appearances: [appearance] }));
-    const section = appearancesSection(deriveAppearances({ entries, chapters }), deriveStatuses([at(30, 'c30-p1', 0, 'dead', 'e-0')]), entries);
-    expect(section.entries.filter(entry => entry.name === 'Elder 0')).toEqual([{ name: 'Elder 0', entity: 'character', status: 'dead' }]);
+  it('ends a card\'s condition too, so a cure stops its course', () => {
+    const world: WorldRecord = { cards: [{ key: 'world:character:elder-qin', kind: 'character', name: 'Elder Qin', enteredInChapter: 0,
+      slots: { status: 'Old wall wound | aches in the cold > opens again > will not close | a stage every 2 chapters | ends if a healer closes it' } }] };
+    const linked = [{ ...entries[0], cardKey: 'world:character:elder-qin' }];
+    // The card's condition runs its course, and a tag that names it again does not begin a second one.
+    const running = deriveConditions({ world, entries: linked, chapters: [chapter(2, tagAt(2, 1, 'old wall wound'))], chapterNumber: 4 });
+    expect(running.characters).toEqual([{ key: 'e-qin', cardKey: 'world:character:elder-qin', name: 'Elder Qin', mainCharacter: false, conditions: [
+      { name: 'Old wall wound', showing: 'opens again', stage: 2, stages: 3, movesIn: 1, then: 'next', endsIf: ['a healer closes it'] },
+    ] }]);
+    // The page ends it in Chapter 3: from then on it is gone, and it never reaches its last stage.
+    const cured = deriveConditions({ world, entries: linked, chapters: [chapter(3, tagAt(3, 1, 'old wall wound', true))], chapterNumber: 9 });
+    expect(cured).toEqual({ characters: [], flags: [] });
   });
 
-  it('reaches the writer in its Appeared list, beside the look', () => {
-    expect(presentAppearances({ entries: [{ name: 'Elder Qin', entity: 'character', status: 'dead', look: 'a stooped old man in grey' }] }))
-      .toBe('- Elder Qin (character, dead): a stooped old man in grey');
+  it('leaves out an end that ends nothing, and says so', () => {
+    const state = deriveConditions({ entries, chapters: [chapter(4, tagAt(4, 2, 'poisoned', true))], chapterNumber: 5 });
+    expect(state.characters).toEqual([]);
+    expect(state.flags).toEqual([{
+      kind: 'condition-not-carried', chapterId: 'c4', chapterNumber: 4, recordId: 'status:c4-p2:0', blockId: 'c4-p2', name: 'Elder Qin',
+      message: 'Chapter 4: a tag says ‘poisoned’ ended for Elder Qin, but they carried no such condition. It is left out.',
+    }]);
+  });
+
+  it('keeps what someone with no card and no entry carries, under the name the tag gave', () => {
+    const state = deriveConditions({ entries, chapters: [chapter(7, tagAt(7, 3, 'fever', false, { name: 'the boy' }))], chapterNumber: 8 });
+    expect(state.characters).toEqual([{ key: 'character:the boy', name: 'the boy', mainCharacter: false, conditions: [{ name: 'fever', endsIf: [], began: began(7, 3) }] }]);
+  });
+
+  it('reaches the writer in its Conditions section, for someone never tagged appearing, and no longer in Appeared', () => {
+    const section = conditionsSection({ entries, chapters: [chapter(2, tagAt(2, 1, 'dead'))], chapterNumber: 3 })!;
+    expect(section).toEqual({ characters: [{ name: 'Elder Qin', conditions: [{ name: 'dead', endsIf: [] }] }] });
+    expect(presentConditions(section)).toBe('- Elder Qin: dead');
+    expect(presentAppearances({ entries: [{ name: 'Elder Qin', entity: 'character', look: 'a stooped old man in grey' }] }))
+      .toBe('- Elder Qin (character): a stooped old man in grey');
   });
 });
 
 describe('a character met only by a status tag', () => {
-  it('has a Codex card, first seen where the tag was, with that status', () => {
+  it('has a Codex card, first seen where the tag was, carrying that condition', () => {
     const entries = [{ id: 'e-guard', storyId: 's', kind: 'character' as const, name: 'Guard Captain Mo', origin: { source: 'tag' as const, chapterId: 'c1', chapterNumber: 1 }, createdAt: 'now' }];
     const text = 'Guard Captain Mo fell from the wall.';
     const codex = deriveStoryCodex({ entries, chapters: [{
@@ -123,7 +154,7 @@ describe('a character met only by a status tag', () => {
     expect(codex.characters[0]).toMatchObject({
       key: 'e-guard', name: 'Guard Captain Mo',
       firstSeen: { chapterNumber: 1, blockId: 'c1-p1', text },
-      status: { text: 'dead', passage: { chapterNumber: 1, blockId: 'c1-p1', text } },
+      conditions: [{ name: 'dead', passage: { chapterNumber: 1, blockId: 'c1-p1', text } }],
     });
   });
 });
@@ -175,14 +206,16 @@ describe('status in the chapter flow', () => {
     expect(second.statuses?.[0].payload).toMatchObject({ subject: { entryId: qin.id }, status: 'dead' });
     // The second chapter's tagger read the status so far, beside the name.
     const secondRequest = tagChapter.mock.calls[1][0];
-    expect(secondRequest.subjects.find(subject => subject.name === 'Elder Qin')).toMatchObject({ status: 'wounded' });
-    expect(buildHarnessTagPrompt(secondRequest).userPrompt).toContain('- Elder Qin — status: wounded');
-    expect(buildHarnessTagPrompt(secondRequest).systemInstruction).toContain('[[status: Name | how they are now]]');
-    // The Codex card shows how they are now, with the passage that showed it.
+    expect(secondRequest.subjects.find(subject => subject.name === 'Elder Qin')).toMatchObject({ conditions: ['wounded'] });
+    expect(buildHarnessTagPrompt(secondRequest).userPrompt).toContain('- Elder Qin — conditions: wounded');
+    expect(buildHarnessTagPrompt(secondRequest).systemInstruction).toContain('[[status: Name | the condition]]');
+    expect(buildHarnessTagPrompt(secondRequest).systemInstruction).toContain('[[status: Name | the condition, as listed | ended]]');
+    // The Codex card lists what they carry, each with the sentence that began it.
     const codex = deriveStoryCodex({ entries: state.codexEntries, chapters: state.chapters });
-    expect(codex.characters.find(character => character.name === 'Elder Qin')?.status).toEqual({
-      text: 'dead', passage: { chapterNumber: 2, blockId: 'c2-p1', text: TWO },
-    });
+    expect(codex.characters.find(character => character.name === 'Elder Qin')?.conditions).toEqual([
+      { name: 'wounded', passage: { chapterNumber: 1, blockId: 'c1-p1', text: ONE } },
+      { name: 'dead', passage: { chapterNumber: 2, blockId: 'c2-p1', text: TWO } },
+    ]);
 
     // Create mode keeps a status on its words, and an edit that drops it keeps the chapter's list, empty.
     await controller.authorChapter(second.id, { paragraphs: second.paragraphs, statuses: second.statuses });
@@ -196,6 +229,6 @@ describe('status in the chapter flow', () => {
     generate.mockResolvedValueOnce({ rawProviderResponse: reply([TWO]), providerReceipt: receipt });
     await controller.rewriteLatestChapter(story.id, 'fixture', 'Again.');
     const rewriteRequest = tagChapter.mock.calls.at(-1)![0];
-    expect(rewriteRequest.subjects.find(subject => subject.name === 'Elder Qin')).toMatchObject({ status: 'wounded' });
+    expect(rewriteRequest.subjects.find(subject => subject.name === 'Elder Qin')).toMatchObject({ conditions: ['wounded'] });
   });
 });

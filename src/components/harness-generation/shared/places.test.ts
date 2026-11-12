@@ -106,13 +106,13 @@ describe('where a character is now', () => {
       ],
       places: [placeTag(1, 'c1-p1', text, { name: 'Shen Yuan', entryId: 'e-shen' }, { name: 'Summit Hall', entryId: 'e-hall' })],
     }];
-    const section = appearancesSection(deriveAppearances({ entries, chapters }), undefined, entries, derivePlaces(chapters, entries));
+    const section = appearancesSection(deriveAppearances({ entries, chapters }), entries, derivePlaces(chapters, entries));
     expect(section.entries.map(({ name, entity, place }) => ({ name, entity, place }))).toEqual([
       { name: 'Shen Yuan', entity: 'character', place: 'Summit Hall' },
       { name: 'Summit Hall', entity: 'place', place: undefined },
     ]);
-    expect(presentAppearances({ entries: [{ name: 'Shen Yuan', entity: 'character', status: 'wounded', place: 'Summit Hall', look: 'a thin sweeper in grey' }] }))
-      .toBe('- Shen Yuan (character, wounded, at Summit Hall): a thin sweeper in grey');
+    expect(presentAppearances({ entries: [{ name: 'Shen Yuan', entity: 'character', place: 'Summit Hall', look: 'a thin sweeper in grey' }] }))
+      .toBe('- Shen Yuan (character, at Summit Hall): a thin sweeper in grey');
   });
 
   it('brings a place back into Appeared when someone returns to it, however many places came between (review finding, Codex, 2026-11-04)', () => {
@@ -131,7 +131,7 @@ describe('where a character is now', () => {
     const back = 'He came back to Hall 1.';
     chapters.push({ id: 'c12', chapterNumber: 12, paragraphs: [back], appearances: [],
       places: [placeTag(12, 'c12-p1', back, { name: 'MC', entryId: 'e-mc' }, { name: 'Hall 1', entryId: 'e-1' })] });
-    const shown = appearancesSection(deriveAppearances({ entries, chapters }), undefined, entries).entries.map(shownEntry => shownEntry.name);
+    const shown = appearancesSection(deriveAppearances({ entries, chapters }), entries).entries.map(shownEntry => shownEntry.name);
     expect(shown).toHaveLength(10);
     expect(shown[0]).toBe('Hall 1');
     expect(shown).not.toContain('Hall 2');
@@ -152,7 +152,7 @@ describe('where a character is now', () => {
       { id: 'c1', chapterNumber: 1, places: [placeTag(1, 'c1-p1', 'In.', { name: 'MC', entryId: 'e-mc' }, { name: 'Summit Hall' })] },
       { id: 'c2', chapterNumber: 2, places: Array.from({ length: 25 }, (_, index) => ({ ...placeTag(2, 'c2-p1', 'In.', { name: `Guard ${index}`, entryId: `e-${index}` }, { name: 'Gate' }), id: `p${index}` })) },
     ];
-    const shown = appearancesSection(deriveAppearances({ entries, chapters }), undefined, entries, derivePlaces(chapters, entries)).entries;
+    const shown = appearancesSection(deriveAppearances({ entries, chapters }), entries, derivePlaces(chapters, entries)).entries;
     expect(shown[0]).toEqual({ name: 'Ye Chen', entity: 'character', mainCharacter: true, place: 'Summit Hall' });
     expect(shown).toHaveLength(21);
   });

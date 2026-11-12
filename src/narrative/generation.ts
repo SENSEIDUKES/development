@@ -1465,8 +1465,8 @@ export interface HarnessTagSubject {
   aliases?: string[];
   /** The one subject whose tags use the main character's own tag instead of a name. */
   mainCharacter?: true;
-  /** A character's status going into the chapter, when a status tag ever gave one. */
-  status?: string;
+  /** What a character carries going into the chapter, each condition in a few words: from their card and from the page. */
+  conditions?: string[];
   /** Where a character is going into the chapter, when a place tag ever gave one. */
   place?: string;
   /** A character's ties going into the chapter, when a tie tag ever gave one: who with, and how they stand. */

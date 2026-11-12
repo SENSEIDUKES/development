@@ -178,7 +178,7 @@ describe('how a pair stands now', () => {
     expect(subject.ties![0].with).toBe('Elder 1');
     expect(subject.ties!.at(-1)!.with).toBe(`Elder ${TAG_SUBJECT_TIES}`);
     // The writer reads the same latest ones (review finding, CodeRabbit, 2026-11-08).
-    const section = appearancesSection(deriveAppearances({ entries: [entries[0]], chapters: [] }), undefined, [entries[0], ...others], undefined, now);
+    const section = appearancesSection(deriveAppearances({ entries: [entries[0]], chapters: [] }), [entries[0], ...others], undefined, now);
     const line = section.entries.find(candidate => candidate.name === 'Lin Qingshan')!.ties!;
     expect(line.split('; ')).toHaveLength(TAG_SUBJECT_TIES);
     expect(line.startsWith('Elder 1 (allies)')).toBe(true);
@@ -186,7 +186,7 @@ describe('how a pair stands now', () => {
 
   it('reaches the writer for two who never had an appears tag, so a tie tagged on its own is never forgotten (review finding, Codex, 2026-11-08)', () => {
     const chapters = [{ id: 'c1', chapterNumber: 1, paragraphs: ['They bowed.'], appearances: [], ties: [tieTag('c1-p1', 'They bowed.', lin, ning, 'sworn brothers')] }];
-    const section = appearancesSection(deriveAppearances({ entries, chapters }), undefined, entries, undefined, deriveTies(chapters, entries));
+    const section = appearancesSection(deriveAppearances({ entries, chapters }), entries, undefined, deriveTies(chapters, entries));
     expect(section.entries.map(({ name, ties }) => [name, ties])).toEqual([
       ['Lin Qingshan', 'Ning Hao (sworn brothers)'], ['Ning Hao', 'Lin Qingshan (sworn brothers)'],
     ]);
@@ -200,7 +200,7 @@ describe('how a pair stands now', () => {
         payload: { origin: 'harness' as const, event: 'appears' as const, subject: lin, entity: 'character' as const } }],
       ties: [tieTag('c1-p1', text, lin, ning, 'sworn enemies')],
     }];
-    const section = appearancesSection(deriveAppearances({ entries, chapters }), undefined, entries, undefined, deriveTies(chapters, entries));
+    const section = appearancesSection(deriveAppearances({ entries, chapters }), entries, undefined, deriveTies(chapters, entries));
     expect(section.entries[0]).toMatchObject({ name: 'Lin Qingshan', ties: 'Ning Hao (sworn enemies)' });
     expect(presentAppearances({ entries: [{ name: 'Lin Qingshan', entity: 'character', look: 'a lean young hunter', ties: 'Ning Hao (sworn enemies)' }] }))
       .toBe('- Lin Qingshan (character): a lean young hunter · ties: Ning Hao (sworn enemies)');

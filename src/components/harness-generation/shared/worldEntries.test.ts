@@ -452,7 +452,7 @@ describe('Promote', () => {
     // The conditions keep their line break; every other slot is still one line.
     expect(filled.card.slots).toEqual({ status: 'Arrow wound | bleeding > festering | a stage every 3 chapters\nBlind in one eye', role: 'a guard at the gate' });
     // They entered in Chapter 3, so their conditions begin there, two side by side.
-    const carried = deriveConditions(storyWorldRecord(filled.state, storyId), 6).find(character => character.name === 'neighbor')!;
+    const carried = deriveConditions({ world: storyWorldRecord(filled.state, storyId), chapterNumber: 6 }).characters.find(character => character.name === 'neighbor')!;
     expect(carried.conditions.map(condition => [condition.name, condition.showing])).toEqual([['Arrow wound', 'festering'], ['Blind in one eye', undefined]]);
   });
 

@@ -234,7 +234,7 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
   },
   {
     id: 'status', title: 'Status', source: 'HARNESS',
-    when: 'Every chapter the tagger reads. The tagger is told each character\'s status so far beside their name.',
+    when: 'Every chapter the tagger reads. The tagger is told what each character carries so far beside their name.',
     text: SEN_STATUS_INSTRUCTIONS,
   },
   {
@@ -384,7 +384,7 @@ export const WHOLE_PROMPTS: Record<Exclude<PipelineStepId, 'writer'>, readonly P
     operation: 'tag-chapter', storyId: '', chapterId: '', chapterNumber: numberSlot('number'), model: '', language: slot('language'),
     paragraphs: [slot('the chapter\'s first paragraph'), slot('every paragraph after it, one by one')],
     subjects: [
-      { kind: 'character', name: slot('each character'), status: slot('their status so far'), place: slot('where they are so far'), ties: [{ with: slot('each one they are tied to'), tie: slot('how they stand') }] },
+      { kind: 'character', name: slot('each character'), conditions: [slot('each condition they carry so far')], place: slot('where they are so far'), ties: [{ with: slot('each one they are tied to'), tie: slot('how they stand') }] },
       { kind: 'thing', name: slot('each thing') },
       { kind: 'ability', name: slot('each ability') },
       { kind: 'place', name: slot('each place') },

@@ -1,4 +1,4 @@
-import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, HOLDINGS_FIXER_CASE_LIMIT, LOOK_DECLARED_CHARACTERS, LOOK_PASSAGE_CHARACTERS, LOOK_SUBJECT_LIMIT, TAG_SUBJECT_TIES, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessHoldingsFixRequest, type HarnessLookRequest, type HarnessTagRequest } from '@seihouse/sen/harness-generation';
+import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, HOLDINGS_FIXER_CASE_LIMIT, LOOK_DECLARED_CHARACTERS, LOOK_PASSAGE_CHARACTERS, LOOK_SUBJECT_LIMIT, TAG_SUBJECT_CONDITIONS, TAG_SUBJECT_TIES, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessHoldingsFixRequest, type HarnessLookRequest, type HarnessTagRequest } from '@seihouse/sen/harness-generation';
 import { validateSoundWords } from '@seihouse/sen/audio';
 import {
   harnessGenerationServerInfo,
@@ -134,7 +134,8 @@ const parseTagRequest = (parsed: Record<string, unknown>): HarnessTagRequest => 
     && subjects.every(subject => isRecord(subject) && within(subject.name, TAG_NAME_CHARACTERS) && Boolean((subject.name as string).trim())
       && TAG_SUBJECT_KINDS.has(subject.kind as string)
       && (subject.aliases === undefined || (Array.isArray(subject.aliases) && subject.aliases.every(alias => within(alias, TAG_NAME_CHARACTERS))))
-      && (subject.status === undefined || within(subject.status, TAG_NAME_CHARACTERS))
+      && (subject.conditions === undefined || (Array.isArray(subject.conditions) && subject.conditions.length <= TAG_SUBJECT_CONDITIONS
+        && subject.conditions.every(condition => within(condition, TAG_NAME_CHARACTERS) && Boolean((condition as string).trim()))))
       && (subject.place === undefined || within(subject.place, TAG_NAME_CHARACTERS))
       && (subject.ties === undefined || (Array.isArray(subject.ties) && subject.ties.length <= TAG_SUBJECT_TIES
         && subject.ties.every(tie => isRecord(tie) && within(tie.with, TAG_NAME_CHARACTERS) && Boolean((tie.with as string).trim())

@@ -377,6 +377,24 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-11 (the page begins and ends conditions):** SENSEI, from The
+  Frost-Scaled Companion, where status tags mixed real conditions, passing
+  moments ("trapped") and a condition getting better or worse, and each new
+  one replaced the last. A status tag now marks the sentence where the prose
+  begins a lasting condition, and one whose last part says `ended` the
+  sentence where it ends one (`StatusPayload.ended`, `readStatusTag`).
+  `deriveConditions` (`shared/conditions.ts`) puts a character's card
+  conditions and the ones the page began together, less the ones the page
+  ended: conditions stand side by side, one is never carried twice, and an end
+  stops a card's course too. An end that ends nothing is left out and reported
+  (`ConditionFlag`, among the Codex's checks). The single status is gone
+  (`deriveStatuses`, `CodexCharacter.status`, the Appeared line's status): the
+  tagger's list of who exists says what each carries (`HarnessTagSubject.conditions`),
+  the writer reads it in Conditions, and the Codex lists it, a page-begun one
+  with the sentence that began it. Someone dead who speaks is still asked
+  about, while death is the last thing the page said of them. The tagger's
+  Status words changed with SENSEI's approval; they are in Writer
+  Instructions' history.
 - **2026-11-11 (conditions: written once with their course, run by code):**
   SENSEI, from how RimWorld keeps a colonist's health: each condition is its
   own entry and the rules run it. A character card's Status slot holds their

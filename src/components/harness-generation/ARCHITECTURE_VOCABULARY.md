@@ -198,8 +198,12 @@ one a line in the card's Status slot (`CONDITIONS_SLOT`). Several stand side
 by side. Code works out the stage each has reached from the chapter count
 (`deriveConditions`); nothing is stored and no model is asked. The writer
 reads them in the packet's Conditions section and the Codex lists what each
-character carries now. A condition the page begins or ends is the tagger's
-to mark, and is not built yet.
+character carries now. The page begins and ends conditions too: a status tag
+marks the sentence where the prose gives someone a lasting condition, and one
+marked `ended` the sentence where it ends one, a card's condition included
+(`[[status: MC | poisoned | ended]]`). A condition the page began has no
+course and stands until the page ends it. An end that ends nothing is left out
+and reported among the Codex's checks.
 
 **Holdings** — what each character has, uses, knows and is, as four facts kept
 apart: a thing is *owned* (with a count) and may be *equipped* (in use);

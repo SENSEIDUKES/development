@@ -292,3 +292,24 @@ it('tells a host how much of the screen\'s bottom the bar and the floating note 
   offsetHeight.mockRestore();
   rect.mockRestore();
 });
+
+it('moves a single music note into the header in short landscape and restores it on rotation', async () => {
+  let landscape = false;
+  const listeners = new Set<() => void>();
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    get matches() { return landscape && query === '(orientation: landscape) and (max-height: 480px)'; },
+    addEventListener: (_: string, listener: () => void) => { listeners.add(listener); },
+    removeEventListener: (_: string, listener: () => void) => { listeners.delete(listener); },
+  }));
+  await render(<LibraryNavigation location={{ screen: 'home', collection: 'featured' }} onNavigate={vi.fn()}>
+    <WorkspaceHeader title="Home" sound={<button aria-label="Mute sound">Note</button>} />
+  </LibraryNavigation>);
+  const note = () => container.querySelector('button[aria-label="Mute sound"]')!;
+  expect(note().closest('[data-library-sound-slot]')).not.toBeNull();
+  await act(async () => { landscape = true; listeners.forEach(listener => listener()); });
+  expect(container.querySelectorAll('button[aria-label="Mute sound"]')).toHaveLength(1);
+  expect(note().closest('.workspace-header')).not.toBeNull();
+  expect(container.querySelector('[data-library-sound-slot]')!.childElementCount).toBe(0);
+  await act(async () => { landscape = false; listeners.forEach(listener => listener()); });
+  expect(note().closest('[data-library-sound-slot]')).not.toBeNull();
+});

@@ -1,5 +1,11 @@
 # Library Shell
 
+- **2026-11-12** — Short landscape screens (at most 480px high) move the music note into the header and compact header and navigation spacing while keeping 44px targets. Content clearance follows the measured bar. The Portrait Language row is a full-row native picker with a visible keyboard focus ring.
+
+- **2026-11-12** — Portrait menus follow the interface direction and stay within viewport gutters. Focus starts on the panel; Tab and Shift+Tab remain inside until dismissal, and Escape returns focus to the portrait.
+
+- **2026-11-12** — Wide footer menus size to the visible group count instead of reserving three columns. NovelExpanded's Explore and Support share the row evenly beneath the centred wordmark; one- and three-group hosts use the same layout. Phone accordions keep their stacked layout.
+
 - **2026-11-11** — Search's rainbow underline and glow now flow together in a seamless ten-second loop. The faded edges and search dimensions stay fixed, and reduced-motion preferences keep the spectrum static in the app and Workshop.
 
 - **2026-11-06** — Search wears the former logo's cyan, violet and gold spectrum as a glowing bottom line, with a neutral outline replacing its gold border. Shared by app and Workshop.

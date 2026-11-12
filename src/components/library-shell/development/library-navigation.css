@@ -89,3 +89,21 @@
   inset-block-end: calc(var(--library-bar-height, 5.125rem) + .5rem);
 }
 .library-sound-slot:empty { display: none; }
+
+/* Matches SHORT_LANDSCAPE_QUERY in workspaceMedia.ts. */
+@media (orientation: landscape) and (max-height: 480px) {
+  .library-navigation-layout {
+    --library-bottom-clearance: calc(var(--library-bar-height, 62px) + 4px);
+  }
+  .library-global-navigation {
+    padding-top: 4px !important;
+    padding-bottom: calc(4px + var(--sh-safe-bottom, env(safe-area-inset-bottom, 0px))) !important;
+  }
+  .library-global-navigation > div { padding: 4px !important; }
+  .library-global-navigation button {
+    min-height: 44px !important; flex-direction: row; gap: 4px; padding-block: 4px;
+  }
+  .library-global-navigation button > span:last-child {
+    min-width: 0; white-space: normal; overflow-wrap: break-word; line-height: 1.15;
+  }
+}

@@ -5,7 +5,7 @@ import {
   type LibraryNavigationDrawerSection, type LibraryNavigationDrawerPanelProps,
 } from '@seihouse/library-ui';
 import { activeLibraryDestination, LIBRARY_DESTINATIONS, libraryLocationKey, libraryNavigationMode, type LibraryDestination, type LibraryLocation, type LibraryNavigationMode } from './libraryRoutes';
-import { DESKTOP_NAVIGATION_QUERY, useDesktopNavigation, usePhone } from './workspaceMedia';
+import { DESKTOP_NAVIGATION_QUERY, useDesktopNavigation, usePhone, useShortLandscape } from './workspaceMedia';
 import { useLibrarySidebarMode, type LibrarySidebarMode } from './librarySidebarMode';
 import { useLibraryAssets } from '../../../library/assets';
 import './library-navigation.css';
@@ -178,7 +178,9 @@ export function useLibraryBottomBar() {
  */
 export function useLibrarySoundSlot(): { floating: boolean; slot: HTMLElement | null } {
   const { soundSlot = null } = useContext(Context);
-  const floating = useLibraryBottomBar();
+  const bottomBar = useLibraryBottomBar();
+  const shortLandscape = useShortLandscape();
+  const floating = bottomBar && !shortLandscape;
   return { floating, slot: floating ? soundSlot : null };
 }
 /**
@@ -318,13 +320,14 @@ function LibrarySoundSlot({ onSlot }: { onSlot: (slot: HTMLElement | null) => vo
     // The spot follows the bar; the page's bottom clearance covers both (see useLibraryBottomClearance).
     const follow = () => {
       slot.style.setProperty('--library-bar-height', `${bar.offsetHeight}px`);
+      slot.parentElement?.style.setProperty('--library-bar-height', `${bar.offsetHeight}px`);
       publishBottomClearance(Math.round(Math.max(coveredBelow(bar), coveredBelow(slot))));
     };
     follow();
     window.addEventListener('resize', follow);
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(follow);
     // The bar's size changes with the safe area and at the laptop breakpoint; the spot's, as the sound arrives or leaves.
-    observer?.observe(bar);
+    observer?.observe(bar, { box: 'border-box' });
     observer?.observe(slot);
     return () => {
       observer?.disconnect();

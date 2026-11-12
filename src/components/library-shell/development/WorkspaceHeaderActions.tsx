@@ -1,3 +1,4 @@
+import { flushSync } from 'react-dom';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton } from '@seihouse/sen/presentation';
 import { MoreHorizontal, type LucideIcon } from 'lucide-react';
@@ -45,9 +46,10 @@ export function HeaderActionButton({ action, primary = false }: { action: Header
 
 /**
  * Non-modal disclosure: normal Tab order; Escape returns focus, outside focus dismisses.
- * A panel drawn elsewhere (a portal) still counts as inside.
+ * A panel drawn elsewhere (a portal) still counts as inside. Contained panels
+ * supply their own focus lock and receive initial focus on the panel itself.
  */
-export function useHeaderDisclosure() {
+export function useHeaderDisclosure({ contained = false }: { contained?: boolean } = {}) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -56,10 +58,12 @@ export function useHeaderDisclosure() {
   useEffect(() => {
     if (!open) return;
     const close = (restoreFocus: boolean) => {
-      setOpen(false);
+      if (contained) flushSync(() => setOpen(false));
+      else setOpen(false);
       if (restoreFocus) triggerRef.current?.focus();
     };
-    panelRef.current?.querySelector<HTMLElement>('select:not(:disabled), button:not(:disabled), a[href]')?.focus();
+    if (contained) panelRef.current?.focus();
+    else panelRef.current?.querySelector<HTMLElement>('select:not(:disabled), button:not(:disabled), a[href]')?.focus();
     const inside = (target: Node) => Boolean(rootRef.current?.contains(target) || panelRef.current?.contains(target));
     const dismiss = (event: Event) => {
       if (!inside(event.target as Node)) close(false);
@@ -81,7 +85,7 @@ export function useHeaderDisclosure() {
     };
     window.addEventListener('resize', resize);
     document.addEventListener('pointerdown', dismiss);
-    document.addEventListener('focusin', dismiss);
+    if (!contained) document.addEventListener('focusin', dismiss);
     document.addEventListener('keydown', escape);
     return () => {
       window.removeEventListener('resize', resize);
@@ -89,7 +93,7 @@ export function useHeaderDisclosure() {
       document.removeEventListener('focusin', dismiss);
       document.removeEventListener('keydown', escape);
     };
-  }, [open]);
+  }, [open, contained]);
   return { open, setOpen, rootRef, triggerRef, panelRef, id };
 }
 

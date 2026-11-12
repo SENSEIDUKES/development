@@ -77,7 +77,7 @@ it('opens the Profile Portrait menu with the Preferences, updates Preferred Lang
   expect(card.textContent).not.toContain('Sign in');
   const select = card.querySelector<HTMLSelectElement>('#header-preferred-language')!;
   expect(select).not.toBeNull();
-  expect(document.activeElement).toBe(select);
+  expect(document.activeElement).toBe(card);
   expect(select.value).toBe('en');
   await act(async () => {
     select.value = 'ja';

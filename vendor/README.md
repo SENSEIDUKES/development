@@ -68,7 +68,7 @@ From SEIHouse/FONT-LAB, recorded with source commits and integrity in `font-arti
   The Reader does not select the Night family yet; it still sets `"SEIHouse Sans"`.
   This release also carries 0.41's 54 added Latin letters and accents.
   Packed as FONT-LAB's own distribution workflow packs it
-  (`npm pack --ignore-scripts` at its root at `a71e1d099e31b93a65eb7b68630d0b2bcfff68bb`) and audited there with
+  (`npm pack --ignore-scripts` at its root at `5f57f9d8656daeec4e2f7cf8a9cf29e312301ef2`) and audited there with
   `python3 verify_distribution.py <the web ZIP> --npm <the tarball>`.
 - `seihouse-living-titles-0.1.2.tgz`: the Living Titles package from FONT-LAB `fb45fc0071774f3925240d3596625c32955d2b6d`, copied unchanged from
   `packages/living-titles/releases/` with its `release.json` (here
@@ -84,7 +84,7 @@ release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm c
 
 ## History
 
-- **2026-11-12:** Updated SEIHouse Sans to 0.42.0 from FONT-LAB `a71e1d0`. It adds Night faces for Light and Medium beside Regular, so all three Reader weights have one, and brings 0.41's added Latin letters and accents. Existing letters keep their shapes and widths. The Reader does not use the Night family yet. Living Titles stays at 0.1.2.
+- **2026-11-12:** Updated SEIHouse Sans to 0.42.0 from FONT-LAB #27 (`5f57f9d`). It adds Night faces for Light and Medium beside Regular, so all three Reader weights have one, and brings 0.41's added Latin letters and accents. Existing letters keep their shapes and widths. The Reader does not use the Night family yet. Living Titles stays at 0.1.2.
 - **2026-11-11:** Updated SEIHouse Sans to 0.40.0 and Living Titles to 0.1.2 from FONT-LAB #24. The shared host theme delivers the refined curves to NovelExpanded and the Workshop; recorded the new package integrity and upstream release provenance together.
 
 - **2026-11-08:** Added SEIHouse Front Desk 0.2.0 (`seihouse-front-desk-0.2.0.tgz`), the Familiar's system lifted out of this repository into `SENSEIDUKES/seihouse-front-desk` (step 2 of `docs/front-desk-plan.md`), with `front-desk-artifacts.json`.

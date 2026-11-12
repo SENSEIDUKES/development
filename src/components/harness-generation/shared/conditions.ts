@@ -4,7 +4,7 @@ import type { CodexEntry } from '../../../narrative/holdings';
 import { STATUS_KIND, type StatusAttachment } from '../../../narrative/statuses';
 import { worldCardsOfKind, type WorldRecord } from '../../../narrative/worldRecord';
 import { normalizeIdentityLabel } from './canonicalProjection';
-import { namesNearlyMatch, type HoldingPassage } from './holdings';
+import type { HoldingPassage } from './holdings';
 
 /**
  * Conditions in the HARNESS: what each character carries at a chapter.
@@ -64,11 +64,16 @@ export type ConditionsChapter = { id: string; chapterNumber: number; statuses?: 
 const label = normalizeIdentityLabel;
 /** A condition's name as it is compared: its own words, whole, so "broken arm (left)" is never "broken arm (right)". */
 const conditionKey = (name: string) => name.toLocaleLowerCase().replace(/\s+/g, ' ').trim();
-/** What a name says in brackets: the part that tells two conditions of one name apart (left, right). */
-const inBrackets = (name: string) => (name.match(/\(([^)]*)\)/)?.[1] ?? '').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
-/** Two names a tagger could mean one condition by: near in their words, and never told apart by what each says in brackets. */
-const nearCondition = (left: string, right: string) => namesNearlyMatch(left, right)
-  && (!inBrackets(left) || !inBrackets(right) || inBrackets(left) === inBrackets(right));
+/**
+ * A name's words as a tagger might respell them: joined across a hyphen or an
+ * apostrophe, without other punctuation, each without a plural's "s". Every
+ * word counts, in order, so "Wound" is never "Poisoned wound" and "broken arm
+ * (left)" is never "broken arm (right)".
+ */
+const conditionWords = (name: string) => name.toLocaleLowerCase().replace(/[-'’]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(' ')
+  .map(word => (word.length > 3 && word.endsWith('s') && !word.endsWith('ss') ? word.slice(0, -1) : word)).join(' ');
+/** Two names a tagger could mean one condition by: the same words, however they are spelled or counted. */
+const nearCondition = (left: string, right: string) => conditionWords(left) === conditionWords(right);
 const paragraphIndex = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
 
 interface Carrier {
@@ -80,6 +85,8 @@ interface Carrier {
   since: number;
   card: Array<{ condition: Condition; endedIn?: number }>;
   page: Array<{ name: string; began: HoldingPassage }>;
+  /** Their card has entered, and its conditions have taken over the page's of the same name. */
+  entered?: true;
 }
 
 /**
@@ -107,7 +114,9 @@ export function deriveConditions({ world, entries = [], chapters = [], chapterNu
     const names = [card.name, ...(card.aliases ?? [])];
     const entry = characters.find(candidate => candidate.cardKey === card.key)
       ?? characters.find(candidate => !candidate.cardKey && names.some(name => [candidate.name, ...(candidate.aliases ?? [])].some(other => label(other) === label(name))));
-    const key = entry?.id ?? `character:${label(card.name)}`;
+    const named = entry?.id ?? `character:${label(card.name)}`;
+    // Two cards whose names read alike are still two people: the second keeps its card's own key.
+    const key = carriers.has(named) ? card.key : named;
     know(key, names);
     if (carriers.has(key)) continue;
     carriers.set(key, {
@@ -140,9 +149,10 @@ export function deriveConditions({ world, entries = [], chapters = [], chapterNu
    * The condition a tag names, among those the carrier has in `chapter`. Its
    * exact name wins: the name itself, or the name as the tagger's list shows
    * it, with how it shows now ("Old wall wound (opens again)"). Only when no
-   * name is exact does a near one count (a tagger's "frost-burned hands" for
-   * "frost-burned hand"), and only when it is near exactly one: a name that
-   * could be two conditions names neither.
+   * name is exact does a near one count: the same words spelled another way (a
+   * tagger's "frostburned hands" for "frost-burned hand"), and only when it is
+   * near exactly one. A name that only contains another's words is a different
+   * condition.
    */
   const named = (carrier: Carrier, chapter: number, name: string): { page: number } | { card: Carrier['card'][number] } | undefined => {
     const candidates = [
@@ -159,11 +169,24 @@ export function deriveConditions({ world, entries = [], chapters = [], chapterNu
     return near.length === 1 ? near[0].found : undefined;
   };
 
+  /**
+   * When a card enters, its conditions are the record of what its character
+   * carries: one the page had already begun under the same name is that same
+   * condition, so the card's takes its place and it is never carried twice.
+   */
+  const enter = (carrier: Carrier, chapter: number) => {
+    if (carrier.entered || chapter < carrier.since) return;
+    carrier.entered = true;
+    carrier.page = carrier.page.filter(condition => !carrier.card.some(entry =>
+      conditionKey(entry.condition.name) === conditionKey(condition.name) || nearCondition(entry.condition.name, condition.name)));
+  };
+
   for (const chapter of [...chapters].sort((left, right) => left.chapterNumber - right.chapterNumber)) {
     const ordered = [...chapter.statuses ?? []].filter(record => record.kind === STATUS_KIND)
       .sort((left, right) => paragraphIndex(left.anchor.blockId) - paragraphIndex(right.anchor.blockId) || left.anchor.startOffset - right.anchor.startOffset);
     for (const record of ordered) {
       const carrier = carrierOf(record.payload.subject);
+      enter(carrier, chapter.chapterNumber);
       const name = record.payload.status;
       const carried = named(carrier, chapter.chapterNumber, name);
       if (record.payload.ended) {
@@ -183,6 +206,7 @@ export function deriveConditions({ world, entries = [], chapters = [], chapterNu
     }
   }
 
+  for (const carrier of carriers.values()) enter(carrier, now);
   const carried = [...carriers.values()].map((carrier): CharacterConditions => ({
     key: carrier.key,
     ...(carrier.cardKey ? { cardKey: carrier.cardKey } : {}),

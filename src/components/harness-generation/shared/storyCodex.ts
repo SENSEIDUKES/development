@@ -366,6 +366,8 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   const labelsOf = (card: { name: string; aliases?: string[] }) =>
     [card.name, ...(card.aliases ?? [])].map(normalizeIdentityLabel);
 
+  // The card each character is, by the key the Codex lists them under.
+  const cardOfCharacter = new Map<string, string>();
   // The world at Chapter 0 comes first: the Codex opens with the world the
   // story was given, and the chapters add to these same cards.
   for (const card of worldCardsOfKind(world, 'character')) {
@@ -375,8 +377,10 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     // "Phoenix (West)") are still two people: the second keeps the key the
     // world gave it rather than taking the first's card.
     const named = entry?.id ?? `character:${labels[0]}`;
+    const key = characters.has(named) ? card.key : named;
+    cardOfCharacter.set(key, card.key);
     add({
-      key: characters.has(named) ? card.key : named,
+      key,
       name: entry?.name ?? card.name,
       mainCharacter: Boolean(card.mainCharacter || entry?.mainCharacter),
       atChapterZero: worldCardFacts(card),
@@ -539,8 +543,11 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // What each character carries as of the latest chapter: their card's conditions at the stage the
   // chapter count gives, and the ones the page began, less the ones it ended. By their entry or any name.
   const carried = deriveConditions({ world, entries, chapters: ordered, chapterNumber: ordered.at(-1)?.chapterNumber ?? 1 });
-  const conditionsFor = (character: Working): CodexCondition[] => (carried.characters.find(candidate => candidate.key === character.key)
-    ?? carried.characters.find(candidate => character.names.has(normalizeIdentityLabel(candidate.name))))?.conditions
+  const conditionsFor = (character: Working): CodexCondition[] => (cardOfCharacter.has(character.key)
+    // Someone with a card carries what that card's character carries, and no one else's, however alike two names read.
+    ? carried.characters.find(candidate => candidate.cardKey === cardOfCharacter.get(character.key))
+    : carried.characters.find(candidate => !candidate.cardKey && candidate.key === character.key)
+      ?? carried.characters.find(candidate => !candidate.cardKey && character.names.has(normalizeIdentityLabel(candidate.name))))?.conditions
     .map(({ name, showing, began }) => ({
       name, ...(showing ? { showing } : {}),
       ...(began ? { passage: { chapterNumber: began.chapterNumber, blockId: began.blockId, text: began.text } } : {}),

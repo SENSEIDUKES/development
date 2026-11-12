@@ -276,8 +276,10 @@ function statusContradictions(input: RecordChecksInput, locale?: string): Record
     const isThem = (subject: { name: string; entryId?: string }) => (entry && subject.entryId ? subject.entryId === entry.id : answersTo(known, subject.name));
     const first = firstAct(chapter, { entry, known, isThem }, locale);
     if (!first) continue;
-    // A status this chapter gives them at or before that sentence already says how they are now.
-    const changed = (chapter.statuses ?? []).some(status => isThem(status.payload.subject) && !before(first, spanPlace(chapter, status.anchor)));
+    // A condition this chapter begins for them at or before that sentence already says how they are now, and so
+    // does the end of their death. The end of some other condition says nothing about it.
+    const changed = (chapter.statuses ?? []).some(status => isThem(status.payload.subject) && !before(first, spanPlace(chapter, status.anchor))
+      && (!status.payload.ended || DEAD_STATUS.test(status.payload.status)));
     if (changed) continue;
     const sentence = sentenceAt(chapter, first.blockId, first.start, locale)!;
     const name = entry?.name ?? character.name;

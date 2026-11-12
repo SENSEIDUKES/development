@@ -14,6 +14,8 @@ import {
 import { buildHarnessTagPrompt } from '../../../server/harness-generation/tagger';
 import { presentAppearances, presentConditions } from '../../../server/harness-generation/prompt';
 import type { WorldRecord } from '../../../narrative/worldRecord';
+import { HARNESS_GENERATION_SCHEMA_VERSION, type StoryInformationPacket } from '../../../narrative/generation';
+import { createEmptyHarnessWorkspaceState, migrateHarnessWorkspaceState } from './repository';
 import { readMarks } from '../../../narrative/marks';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
@@ -144,6 +146,22 @@ describe('what the page begins and ends', () => {
     expect(readStatusTag(tag(`[[status: Elder Qin | ${listed}]] The frost took his hand.`))).toMatchObject({ ok: false });
   });
 
+  it('carries a condition whose name only contains another\'s as its own', () => {
+    const state = deriveConditions({ entries, chapters: [chapter(1, tagAt(1, 1, 'Wound')), chapter(2, tagAt(2, 1, 'Poisoned wound'))], chapterNumber: 3 });
+    expect(state.characters[0].conditions.map(condition => condition.name)).toEqual(['Wound', 'Poisoned wound']);
+  });
+
+  it('lets a card\'s condition take the place of the page\'s of the same name when the card enters, never both', () => {
+    const world: WorldRecord = { cards: [{ key: 'world:character:elder-qin', kind: 'character', name: 'Elder Qin', enteredInChapter: 8, slots: { status: 'Poisoned' } }] };
+    const linked = [{ ...entries[0], cardKey: 'world:character:elder-qin' }];
+    const poisoned = [chapter(3, tagAt(3, 1, 'poisoned'), tagAt(3, 4, 'limping'))];
+    const names = (chapterNumber: number, chapters = poisoned) => deriveConditions({ world, entries: linked, chapters, chapterNumber }).characters[0]?.conditions ?? [];
+    expect(names(5)).toEqual([{ name: 'poisoned', endsIf: [], began: began(3, 1) }, { name: 'limping', endsIf: [], began: began(3, 4) }]);
+    expect(names(8)).toEqual([{ name: 'Poisoned', endsIf: [] }, { name: 'limping', endsIf: [], began: began(3, 4) }]);
+    // One cure ends the one condition.
+    expect(names(12, [...poisoned, chapter(10, tagAt(10, 1, 'poisoned', true))])).toEqual([{ name: 'limping', endsIf: [], began: began(3, 4) }]);
+  });
+
   it('never lets a tag from before a card entered end a condition that card states', () => {
     // Promoted in Chapter 8 and filled in with "Poisoned"; long before, the page had poisoned and cured them once already.
     const world: WorldRecord = { cards: [{ key: 'world:character:elder-qin', kind: 'character', name: 'Elder Qin', enteredInChapter: 8, slots: { status: 'Poisoned' } }] };
@@ -192,6 +210,75 @@ describe('what the page begins and ends', () => {
     expect(presentConditions(section)).toBe('- Elder Qin: dead');
     expect(presentAppearances({ entries: [{ name: 'Elder Qin', entity: 'character', look: 'a stooped old man in grey' }] }))
       .toBe('- Elder Qin (character): a stooped old man in grey');
+  });
+});
+
+describe('a story saved before the page began and ended conditions', () => {
+  const old = (id: string, paragraph: number, name: string, entryId: string | undefined, status: string) => ({
+    id, kind: 'status', anchor: { level: 'span', blockId: `c1-p${paragraph}`, startOffset: 0, endOffset: 8, selectedText: 'He fell.' },
+    payload: { origin: 'harness', subject: { name, ...(entryId ? { entryId } : {}) }, status },
+  });
+  const stored = {
+    ...createEmptyHarnessWorkspaceState(), schemaVersion: 48,
+    stories: [{ id: 's' }],
+    chapters: [
+      // Saved out of story order, with its statuses out of reading order, as storage may hold them.
+      { id: 'c2', storyId: 's', chapterNumber: 2, statuses: [
+        { ...old('status:c2-p5:0', 5, 'Lin', 'e-lin', 'freed from the cavern'), anchor: { level: 'span', blockId: 'c2-p5', startOffset: 0, endOffset: 8, selectedText: 'He fell.' } },
+        { ...old('status:c2-p2:0', 2, 'frost cub', undefined, 'wound treated'), anchor: { level: 'span', blockId: 'c2-p2', startOffset: 0, endOffset: 8, selectedText: 'He fell.' } },
+      ] },
+      { id: 'c1', storyId: 's', chapterNumber: 1, statuses: [
+        old('status:c1-p3:0', 3, 'Lin', 'e-lin', 'frost-burned hand'), old('status:c1-p9:0', 9, 'Lin', 'e-lin', 'trapped'),
+        old('status:c1-p4:0', 4, 'frost cub', undefined, 'injured'), old('status:c1-p6:0', 6, 'Frost Cub', undefined, 'injured'),
+      ] },
+      { id: 'other', storyId: 'another', chapterNumber: 1, statuses: [old('status:x', 1, 'Lin', 'e-lin', 'asleep')] },
+    ],
+  };
+
+  it('is upgraded so each character still carries exactly their latest status, as they did', () => {
+    const upgraded = migrateHarnessWorkspaceState(stored)!;
+    expect(upgraded.schemaVersion).toBe(HARNESS_GENERATION_SCHEMA_VERSION);
+    const carried = deriveConditions({ chapters: upgraded.chapters.filter(chapter => chapter.storyId === 's'), chapterNumber: 3 });
+    expect(carried.characters.map(character => [character.name, character.conditions.map(condition => condition.name)]))
+      .toEqual([['Lin', ['freed from the cavern']], ['frost cub', ['wound treated']]]);
+    expect(carried.flags).toEqual([]);
+    // Where a later status replaced an earlier one, the earlier one ends there, on that sentence, just before it.
+    const tags = (id: string) => upgraded.chapters.find(chapter => chapter.id === id)!.statuses!.map(status => [status.id, status.payload.status, status.payload.ended ?? false, status.anchor.blockId]);
+    expect(tags('c1')).toEqual([
+      ['status:c1-p3:0', 'frost-burned hand', false, 'c1-p3'],
+      ['status:c1-p9:0:ended', 'frost-burned hand', true, 'c1-p9'], ['status:c1-p9:0', 'trapped', false, 'c1-p9'],
+      ['status:c1-p4:0', 'injured', false, 'c1-p4'],
+      // The same status said again replaces nothing.
+      ['status:c1-p6:0', 'injured', false, 'c1-p6'],
+    ]);
+    expect(tags('c2')).toEqual([
+      ['status:c2-p5:0:ended', 'trapped', true, 'c2-p5'], ['status:c2-p5:0', 'freed from the cavern', false, 'c2-p5'],
+      ['status:c2-p2:0:ended', 'injured', true, 'c2-p2'], ['status:c2-p2:0', 'wound treated', false, 'c2-p2'],
+    ]);
+    // Another story's statuses are its own.
+    expect(tags('other')).toEqual([['status:x', 'asleep', false, 'c1-p1']]);
+  });
+
+  it('moves a status a frozen packet carried in Appeared to its Conditions, so a retried chapter is still told', () => {
+    const frozen = {
+      ...createEmptyHarnessWorkspaceState(), schemaVersion: 48,
+      attempts: [
+        { id: 'a1', storyInformation: {
+          appearances: { entries: [{ name: 'Elder Qin', entity: 'character', status: 'dead', look: 'a stooped old man in grey' }, { name: 'Lin', entity: 'character', mainCharacter: true, status: 'wounded' }, { name: 'Iron Key', entity: 'thing' }] },
+          conditions: { characters: [{ name: 'Lin', mainCharacter: true, conditions: [{ name: 'Frost-burned hand', showing: 'numb', endsIf: [] }] }] },
+        } },
+        { id: 'a2', storyInformation: { appearances: { entries: [{ name: 'Iron Key', entity: 'thing' }] } } },
+      ],
+    };
+    const [first, second] = migrateHarnessWorkspaceState(frozen)!.attempts as unknown as Array<{ storyInformation: StoryInformationPacket }>;
+    expect(first.storyInformation.appearances!.entries).toEqual([
+      { name: 'Elder Qin', entity: 'character', look: 'a stooped old man in grey' }, { name: 'Lin', entity: 'character', mainCharacter: true }, { name: 'Iron Key', entity: 'thing' },
+    ]);
+    expect(presentConditions(first.storyInformation.conditions!)).toBe([
+      '- Lin (main character): Frost-burned hand, numb', '- Lin (main character): wounded', '- Elder Qin: dead',
+    ].join('\n'));
+    // A packet with no status in it is left exactly as it was.
+    expect(second).toEqual(frozen.attempts[1]);
   });
 });
 

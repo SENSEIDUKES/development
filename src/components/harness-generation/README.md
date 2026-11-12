@@ -395,6 +395,16 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
   about, while death is the last thing the page said of them. The tagger's
   Status words changed with SENSEI's approval; they are in Writer
   Instructions' history.
+  **Saved stories (schema 49):** a story saved under the old meaning is
+  upgraded to say the same thing in the new terms: where a later status
+  replaced an earlier one, the earlier one ends there, on that sentence
+  (`chaptersWithStatusEnds`), so each character still carries exactly their
+  latest; a status a frozen packet carried in Appeared moves to its
+  Conditions (`attemptsCarryingStatuses`). **Matching a tag to a condition:**
+  its exact name wins, whole; a near name is the same words respelled, never
+  a name that only contains another's; a card's condition is matched only
+  from the chapter its card entered, where it takes the place of the page's
+  of the same name.
 - **2026-11-11 (conditions: written once with their course, run by code):**
   SENSEI, from how RimWorld keeps a colonist's health: each condition is its
   own entry and the rules run it. A character card's Status slot holds their

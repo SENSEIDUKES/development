@@ -105,6 +105,23 @@ describe('What the tagger is told', () => {
   });
 });
 
+describe('Two cards whose names read alike', () => {
+  it('each carry their own conditions, in the record and in the Codex', () => {
+    const alike: WorldRecord = { openToTheReader: true, cards: [
+      { key: 'world:character:phoenix-east', kind: 'character', name: 'Phoenix (East)', enteredInChapter: 0, slots: { status: 'Clipped wing' } },
+      { key: 'world:character:phoenix-west', kind: 'character', name: 'Phoenix (West)', enteredInChapter: 0, slots: {} },
+      { key: 'world:character:phoenix-north', kind: 'character', name: 'Phoenix (North)', enteredInChapter: 0, slots: { status: 'Blind' } },
+    ] };
+    expect(carried(alike, 1).map(character => [character.cardKey, character.conditions.map(condition => condition.name)])).toEqual([
+      ['world:character:phoenix-east', ['Clipped wing']], ['world:character:phoenix-north', ['Blind']],
+    ]);
+    const codex = deriveStoryCodex({ entries: [], chapters: [], world: alike });
+    expect(codex.characters.map(character => [character.name, character.conditions?.map(condition => condition.name)])).toEqual([
+      ['Phoenix (East)', ['Clipped wing']], ['Phoenix (West)', undefined], ['Phoenix (North)', ['Blind']],
+    ]);
+  });
+});
+
 describe('What the Codex shows', () => {
   it('lists a condition the page began with the sentence that began it, and reports an end that ended nothing', () => {
     const entries = codexEntriesWithWorldCards({ storyId: 'story-1', entries: [], cards: world.cards, createdAt: '2026-11-11T00:00:00.000Z', createId: card => `entry:${card.key}` });

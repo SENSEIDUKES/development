@@ -1,6 +1,8 @@
 import {
   HARNESS_TAG_RULES,
+  HARNESS_TAG_RULES_WITHOUT_CARDS,
   SEN_APPEARANCE_INSTRUCTIONS,
+  SEN_APPEARANCE_INSTRUCTIONS_WITHOUT_CARDS,
   SEN_HOLDINGS_INSTRUCTIONS,
   SEN_SOUNDTRACK_INSTRUCTIONS,
   SEN_SOUND_CUES_INSTRUCTIONS,
@@ -57,27 +59,43 @@ const HEADINGS = {
  * with no sound words is never taught to tag a sound it cannot name. A media
  * read (`focus: 'media'`) is taught the sound tags alone: the same sections,
  * word for word, with the information tags left out.
+ *
+ * A story with cards is taught to uncover them, and that anyone else is a
+ * minor figure (SENSEI, 2026-11-11). A story with no cards at all has no one
+ * to tell a minor figure from, so it reads the naming line and the appears
+ * teaching it always had; a media read names no one and reads those too.
  */
-export const presentTaggerTagTeaching = (request: Pick<HarnessTagRequest, 'soundWords' | 'soundtrack' | 'focus'>) => {
+export const presentTaggerTagTeaching = (request: Pick<HarnessTagRequest, 'soundWords' | 'soundtrack' | 'focus'> & Partial<Pick<HarnessTagRequest, 'subjects'>>) => {
   const soundWords = request.soundWords ?? [];
   const soundtrack = request.soundtrack;
   const hasSoundtrack = Boolean(soundtrack?.music?.length || soundtrack?.atmospheres?.length);
+  const cards = storyHasCards(request.subjects ?? []);
   const information = request.focus === 'media' ? [] : [
     SEN_SPEAKERS_INSTRUCTIONS,
     SEN_HOLDINGS_INSTRUCTIONS,
-    SEN_APPEARANCE_INSTRUCTIONS,
+    cards ? SEN_APPEARANCE_INSTRUCTIONS : SEN_APPEARANCE_INSTRUCTIONS_WITHOUT_CARDS,
     SEN_STATUS_INSTRUCTIONS,
     SEN_PLACE_INSTRUCTIONS,
     SEN_TIE_INSTRUCTIONS,
     SEN_SETTING_INSTRUCTIONS,
   ];
   return [
-    HARNESS_TAG_RULES,
+    cards ? HARNESS_TAG_RULES : HARNESS_TAG_RULES_WITHOUT_CARDS,
     ...information,
     ...(soundWords.length ? [[SEN_SOUND_CUES_INSTRUCTIONS, presentSoundVocabulary(soundWords)].filter(Boolean).join('\n')] : []),
     ...(hasSoundtrack ? [[SEN_SOUNDTRACK_INSTRUCTIONS, presentSoundtrackVocabulary(soundtrack!)].filter(Boolean).join('\n')] : []),
   ].join('\n\n');
 };
+
+/** Whether the story the tagger reads has cards: its list then marks each one. */
+export const storyHasCards = (subjects: readonly HarnessTagSubject[]) => subjects.some(subject => subject.card);
+
+/** The headings of the tagger's list: the story's cards and its minor figures, or, with no cards, everyone it has. */
+export const TAG_SUBJECT_HEADINGS = {
+  cards: 'THE STORY\'S CARDS (tag them by these names)',
+  minor: 'MINOR FIGURES ALREADY SEEN (not cards; use the same name when one comes back)',
+  everyone: 'WHO AND WHAT THE STORY ALREADY HAS (tag by these names, never a new one for someone already here)',
+} as const;
 
 /**
  * Who and what the story already has, one per line under its kind. This is the
@@ -93,12 +111,29 @@ export const presentTagSubjects = (subjects: readonly HarnessTagSubject[]) => {
       `- ${subject.name}`,
       subject.mainCharacter ? ' (the main character)' : '',
       subject.aliases?.length ? ` — also called: ${subject.aliases.join(', ')}` : '',
+      subject.who ? ` — who: ${subject.who}` : '',
       subject.conditions?.length ? ` — conditions: ${subject.conditions.join('; ')}` : '',
       subject.place ? ` — at: ${subject.place}` : '',
       subject.ties?.length ? ` — ties: ${subject.ties.map(tie => `${tie.with} (${tie.tie})`).join('; ')}` : '',
     ].join(''))].join('\n')];
   });
   return lines.length ? lines.join('\n\n') : 'The story has nothing recorded yet: tag by the names the chapter itself uses.';
+};
+
+/**
+ * The tagger's list under its headings. A story with cards gets two lists: its
+ * cards, each character with who they are, and the minor figures it has
+ * already seen, by name alone. A story with no cards gets the one list it
+ * always had.
+ */
+export const presentTagWho = (subjects: readonly HarnessTagSubject[]) => {
+  if (!storyHasCards(subjects)) return [TAG_SUBJECT_HEADINGS.everyone, presentTagSubjects(subjects)].join('\n');
+  const minor = subjects.filter(subject => !subject.card)
+    .map(({ name, kind, aliases }): HarnessTagSubject => ({ name, kind, ...(aliases?.length ? { aliases } : {}) }));
+  return [
+    [TAG_SUBJECT_HEADINGS.cards, presentTagSubjects(subjects.filter(subject => subject.card))].join('\n'),
+    ...(minor.length ? [[TAG_SUBJECT_HEADINGS.minor, presentTagSubjects(minor)].join('\n')] : []),
+  ].join('\n\n');
 };
 
 /** What each character was carrying going into this chapter, so nothing already theirs reads as newly got. */
@@ -172,7 +207,7 @@ export const buildHarnessTagPrompt = (request: HarnessTagRequest) => ({
     `CHAPTER ${request.chapterNumber} · Language: ${request.language} · ${request.paragraphs.length} paragraph${request.paragraphs.length === 1 ? '' : 's'}`,
     // A media read names no one, so it is sent neither who the story has nor what they carry.
     ...request.focus === 'media' ? [] : [
-      ['WHO AND WHAT THE STORY ALREADY HAS (tag by these names, never a new one for someone already here)', presentTagSubjects(request.subjects)].join('\n'),
+      presentTagWho(request.subjects),
       ['WHAT EACH CHARACTER HAD GOING INTO THIS CHAPTER', presentTagHoldings(request.holdings)].join('\n'),
     ],
     ['THE CHAPTER', presentTagChapter(request.paragraphs)].join('\n'),

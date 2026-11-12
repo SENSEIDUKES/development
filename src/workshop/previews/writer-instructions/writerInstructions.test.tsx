@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { HARNESS_PROMPT_HEADINGS } from '../../../server/harness-generation/prompt';
+import { buildHarnessTagPrompt } from '../../../server/harness-generation/tagger';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { OFFICIAL_STYLE_REFERENCES, installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
@@ -83,10 +84,23 @@ describe('Writer Instructions', () => {
     expect(WHOLE_PROMPTS.look[1].text).toMatch(/SUBJECT ⟨id⟩ · ⟨name⟩ · a character · first appearance\nPassage:/);
     for (const step of PIPELINE.filter(item => item.id !== 'writer')) {
       const whole = WHOLE_PROMPTS[step.id as Exclude<typeof step.id, 'writer'>].map(message => message.text).join('\n\n');
-      for (const item of step.groups.flatMap(group => group.blocks)) {
+      // What a story with no cards reads in place of two blocks is checked against its own prompt, below.
+      for (const item of step.groups.flatMap(group => group.blocks).filter(block => !block.id.endsWith('-without-cards'))) {
         for (const line of item.text.split('\n').filter(Boolean)) expect(whole, `${step.id}: ${item.id}`).toContain(line);
       }
     }
+  });
+
+  it('shows what the tagger reads in a story with no cards, built by the code that sends it', () => {
+    const prompt = buildHarnessTagPrompt({
+      operation: 'tag-chapter', storyId: '', chapterId: '', chapterNumber: 1, model: '', language: 'English',
+      paragraphs: ['A paragraph.'], subjects: [{ kind: 'character', name: 'Someone' }],
+    });
+    const instead = WRITER_INSTRUCTIONS.filter(item => item.id.endsWith('-without-cards'));
+    expect(instead.map(item => item.id)).toEqual(['tag-rules-without-cards', 'appearance-without-cards']);
+    for (const item of instead) expect(prompt.systemInstruction, item.id).toContain(item.text);
+    // And never the words a story with cards reads in their place.
+    for (const id of ['tag-rules', 'appearance']) expect(prompt.systemInstruction, id).not.toContain(WRITER_INSTRUCTIONS.find(item => item.id === id)!.text);
   });
 
   it('puts every block in exactly one step of the pipeline', () => {

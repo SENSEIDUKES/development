@@ -377,6 +377,31 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-11 (the tagger is handed the pool; minor figures appear and speak):**
+  SENSEI, "the taggers are not inventing… they're uncovering" (step 3b). The
+  tagger's list (`tagSubjectsOfStory`) marks each card (`card`) and gives a
+  card character their card's one line (`who`, from the Who they are slot, or
+  the Role when it is blank); a minor figure is listed by name alone. The
+  server prints two lists (`presentTagWho`): THE STORY'S CARDS and MINOR
+  FIGURES ALREADY SEEN. The Tag rules and the Appearance teaching say that
+  the tagger's work is to find the cards on the page, that anyone else is a
+  minor figure who gets appears and their speaker tag only, and that a thing
+  or place that is no card gets no appears tag. `tagsOfCards`
+  (`shared/minorFigures.ts`) holds a read to that before any of its names
+  becomes a Codex entry, when a chapter commits and when it is tagged again:
+  a holding, condition, place, tie or look given to a minor figure, and an
+  appears tag for a thing or place that is no card, are left out and kept on
+  the chapter's tagging record (`tagging.leftOut`), and the Codex lists each
+  among its checks (`leftOutTagFlags`). A tie is kept while either of the two
+  is a card. A thing a card character gains, or a place they arrive in, still
+  becomes a minor entry by that tag and steps onto the page there, as before
+  (`thingAppearancesFromHoldings`, `placeAppearancesFromPlaces`), so the
+  Codex's Minor list still shows it and a reader may promote it. A story
+  with no cards at all keeps every tag, the one list and the words it had
+  (`HARNESS_TAG_RULES_WITHOUT_CARDS`, `SEN_APPEARANCE_INSTRUCTIONS_WITHOUT_CARDS`).
+  Schema 50 adds only the optional `leftOut`; a chapter tagged before keeps
+  what it gave a minor figure until it is tagged again. Not done here: the
+  fixer still applies its own tags without this rule (step 3c).
 - **2026-11-11 (the page begins and ends conditions):** SENSEI, from The
   Frost-Scaled Companion, where status tags mixed real conditions, passing
   moments ("trapped") and a condition getting better or worse, and each new

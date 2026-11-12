@@ -180,7 +180,12 @@ with no card: a tag brought it in, or the author took its card away after a
 chapter had named it. Someone only speaker tags name is one too, though they
 have no entry yet. The story uses it without tracking it: the Codex
 lists it under Minor (`StoryCodexRecord.minor`) with what the prose calls it,
-the sentence that introduced it and the chapters it was in. **Promote**
+the sentence that introduced it and the chapters it was in. The tagger is
+handed the cards as the pool it uncovers and the minor figures by name alone,
+and is told a minor figure gets only an appears tag and their speaker tag;
+`tagsOfCards` in `shared/minorFigures.ts` leaves out any other tag given to
+one, and an appears tag for a thing or place that is no card, and the Codex
+lists each among its checks. **Promote**
 (`promoteMinorFigure` in `shared/promotion.ts`, `controller.promoteCodexEntry`)
 makes it a world card as of the latest chapter, blank but for its name; its
 reader fills the card's slots (`fillPromotedCard`), and no model is called.

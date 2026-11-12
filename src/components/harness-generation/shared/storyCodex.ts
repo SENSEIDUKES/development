@@ -17,6 +17,7 @@ import { normalizeIdentityLabel } from './canonicalProjection';
 import { factionNamed, type DeclaredFaction } from './factions';
 import { deriveAppearances, type AppearanceFlag, type AppearancePassage, type AppearanceSubject } from './appearances';
 import { deriveConditions, type ConditionFlag } from './conditions';
+import { leftOutTagFlags, type LeftOutTagFlag } from './minorFigures';
 import { derivePlaces } from './places';
 import { deriveTies, tiesOfEntry } from './ties';
 import {
@@ -243,7 +244,7 @@ export interface CodexPlace extends CodexWorldCard {
 }
 
 /** A check the record's plain rules flagged (holdings, appearances or conditions), with the paragraph it is about when it has one. */
-export type CodexCheck = (HoldingFlag | AppearanceFlag | ConditionFlag) & { blockId?: string };
+export type CodexCheck = (HoldingFlag | AppearanceFlag | ConditionFlag | LeftOutTagFlag) & { blockId?: string };
 
 /**
  * A sect, clan, faction or other body the record knows: one the world opened
@@ -769,7 +770,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     return blockId ? { ...flag, blockId } : flag;
   });
   // In story order; a check about no one chapter (two names that may be one) comes first.
-  const checks = [...holdingChecks, ...appeared.flags, ...carried.flags].sort((left, right) => (left.chapterNumber ?? 0) - (right.chapterNumber ?? 0));
+  const checks = [...holdingChecks, ...appeared.flags, ...carried.flags, ...leftOutTagFlags(ordered)].sort((left, right) => (left.chapterNumber ?? 0) - (right.chapterNumber ?? 0));
 
   return {
     characters: roster,

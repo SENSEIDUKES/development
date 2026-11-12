@@ -85,6 +85,10 @@ and the fingerprint to record. To change the writer's instructions:
 
 ## Workshop history
 
+- **2026-11-11:** The Tagger step gains a second group, "Only in a story with
+  no cards, in place of Tag rules and Appearance", holding the two blocks a
+  story with no cards reads instead. Its whole prompt is shown for a story
+  with cards: the cards with who each character is, then a minor figure.
 - **2026-10-29:** The Chapter tagger block loses its bridging sentence: the
   tag teaching is written for the tagger now, which returns notes in the
   margin and never the chapter. Same blocks, same order.

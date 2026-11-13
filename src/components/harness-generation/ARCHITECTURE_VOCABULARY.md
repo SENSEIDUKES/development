@@ -298,8 +298,9 @@ holdings are no worse. Each new information tag brings its own rules here.
 
 **Appearances** (2026-10-14) — who and what is on the page, and how each
 looks. The tag words: `appears` (`[[appears: Name | character]]` for a person
-or named creature, `[[appears: Thing | thing]]` for a named object, the moment
-it first steps onto the page) and `look` (`[[look: Name | what changed]]`, a
+or named creature, `[[appears: Thing | thing]]` for a named object: on the
+page in this chapter, tagged once a chapter in a story with cards since
+2026-11-13, so the story's first one is where it stepped onto the page) and `look` (`[[look: Name | what changed]]`, a
 change of look: a scar, new clothes, a breakthrough, an injury). The Chapter
 Tagger reads the appearance teaching (`SEN_APPEARANCE_INSTRUCTIONS` in
 `shared/appearanceSkill.ts`) and returns tag notes. Appearance is not a CAPA
@@ -310,7 +311,8 @@ is a manuscript span attachment on its sentence; its name resolves to the
 same Codex entry holdings use. Who has appeared is never stored:
 `deriveAppearances` (`shared/appearances.ts`) works it out again from each
 chapter's appearances, speaker lines and holding changes in reading order.
-Its rules flag and leave out an appears tag for someone already on the page,
+An appears tag for someone already met only shows them on the page again
+(their first one, and their look, stand). Its rules flag and leave out
 a look tag for someone who never appeared, and an appears tag of no known
 kind; in a chapter written with the skill, someone who speaks before any tag
 shows them appearing is flagged once a chapter (a group is never). The flags

@@ -85,6 +85,9 @@ and the fingerprint to record. To change the writer's instructions:
 
 ## Workshop history
 
+- **2026-11-13:** Appearance (in a story with cards) now asks for everyone on
+  the page once in each chapter; its note says code keeps the first time. The
+  no-card block is unchanged.
 - **2026-11-11:** The Tagger step gains a second group, "Only in a story with
   no cards, in place of Tag rules and Appearance", holding the two blocks a
   story with no cards reads instead. Its whole prompt is shown for a story

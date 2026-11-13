@@ -283,8 +283,10 @@ const namesOf = (entry: Pick<CodexEntry, 'name' | 'aliases'>) => [entry.name, ..
 /**
  * Works out who and what is on the page: each committed chapter in order,
  * each appearance, speaker line and holding change in reading order. An
- * appears tag for someone already on the page and a look tag for someone who
- * never appeared are flagged and left out, as their looks are. In a chapter
+ * appears tag says who is on the page in its chapter: the story's first one
+ * for someone is where they stepped onto the page, and each one after only
+ * shows them there again (SENSEI, 2026-11-13). A look tag for someone who
+ * never appeared is flagged and left out, as its look is. In a chapter
  * written with the Appearance skill, someone who speaks before any tag shows
  * them appearing is flagged, once a chapter. Nothing here is stored, so it
  * always reflects each chapter's current version.
@@ -378,10 +380,8 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [], wo
       if (kind === 'appears') {
         if (!entity) { flag('unknown-kind', `the appears tag for ‘${subject.name}’ names no kind of entry.`, record, subject.name); continue; }
         const key = keyOf(subject, entity);
-        if (subjects.has(key)) {
-          flag('already-appeared', `‘${subjects.get(key)!.name}’ appears again, but is already on the page. It is not counted twice.`, record, subject.name);
-          continue;
-        }
+        // Already met: they are on the page again. Where they first stepped onto it, and their look, stand.
+        if (subjects.has(key)) { seen(key); continue; }
         const entry = subject.entryId ? byId.get(subject.entryId) : undefined;
         const appeared: AppearanceSubject = {
           key, ...(subject.entryId ? { entryId: subject.entryId } : {}), name: entry?.name ?? subject.name, entity,

@@ -269,14 +269,35 @@ describe('Who is on the page', () => {
     ];
     const state = deriveAppearances({ entries, chapters });
     expect(state.flags.map(flag => [flag.kind, flag.chapterNumber, flag.message])).toEqual([
-      ['already-appeared', 2, 'Chapter 2: ‘Ye Chen’ appears again, but is already on the page. It is not counted twice.'],
       ['look-unseen', 2, 'Chapter 2: the look of ‘Elder Qin’ changes, but no tag shows them appearing. The change is left out.'],
       ['unknown-kind', 2, 'Chapter 2: the appears tag for ‘Mist’ names no kind of entry.'],
       ['speaks-unseen', 2, 'Chapter 2: ‘Old Wu’ speaks before any tag shows them appearing.'],
     ]);
-    expect(state.flags[3]).toMatchObject({ recordId: 's3', blockId: 'c2-p5', name: 'Old Wu' });
-    // The look of an appearance the rules left out is never kept.
-    expect(state.subjects.map(subject => [subject.name, subject.look])).toEqual([['Ye Chen', undefined]]);
+    expect(state.flags[2]).toMatchObject({ recordId: 's3', blockId: 'c2-p5', name: 'Old Wu' });
+    // A second appears tag for someone already met is no mistake, and its look is never kept: the first stands.
+    expect(state.subjects.map(subject => [subject.name, subject.first.recordId, subject.look])).toEqual([['Ye Chen', 'a1', undefined]]);
+  });
+
+  it('reads an appears tag for someone already met as on the page again: nothing flagged, the first one stands (SENSEI, 2026-11-13)', () => {
+    const wu = entry('wu', 'Old Wu');
+    const chapters: AppearancesChapter[] = [
+      { id: 'ch1', chapterNumber: 1, appearances: [appears('a1', 'c1-p1', 0, 'mc', 'MC'), appears('a2', 'c1-p2', 0, 'wu', 'Old Wu')] },
+      // Old Wu is away; the main character is tagged again, as the tagger does once in each chapter.
+      { id: 'ch2', chapterNumber: 2, appearances: [appears('b1', 'c2-p3', 0, 'mc', 'MC')] },
+      { id: 'ch3', chapterNumber: 3, appearances: [appears('c1', 'c3-p1', 0, 'wu', 'Old Wu'), appears('c2', 'c3-p2', 0, 'wu', 'Old Wu')] },
+    ];
+    const state = deriveAppearances({ entries: [...entries, wu], chapters });
+    expect(state.flags).toEqual([]);
+    // Each is one subject, first met where the story first showed them.
+    expect(state.subjects.map(subject => [subject.name, subject.first.chapterNumber, subject.first.recordId, subject.changes.length])).toEqual([
+      ['Ye Chen', 1, 'a1', 0], ['Old Wu', 1, 'a2', 0],
+    ]);
+    // Being tagged again brings them back to the page's recent past: Old Wu, in Chapter 3, was seen after the main character.
+    expect(state.recency.get('wu')!).toBeGreaterThan(state.recency.get('mc')!);
+    // Only the chapter that first showed someone has a look of theirs to describe.
+    expect(describableAppearances(state, 'ch1').map(found => found.appearanceId)).toEqual(['a1', 'a2']);
+    expect(describableAppearances(state, 'ch2')).toEqual([]);
+    expect(describableAppearances(state, 'ch3')).toEqual([]);
   });
 
   it('shows the writer the main character first, then the characters and the things seen most recently, each with its look', () => {

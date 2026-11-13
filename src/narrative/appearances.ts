@@ -5,10 +5,12 @@ import type { AppearanceTagWord } from './marks';
 /**
  * Appearances: who and what is on the page, and how each looks.
  *
- * The writer tags the moment a character or thing first steps onto the page
+ * The tagger tags who and what is on the page in each chapter
  * (`[[appears: Lin Feng | character]]`) and each change to a look
  * (`[[look: Lin Feng | a scar across his left cheek]]`); the HARNESS saves each
- * tag as an appearance on the sentence it points at. A small step after the
+ * tag as an appearance on the sentence it points at. The story's first appears
+ * tag for someone is where they stepped onto the page; each later one only
+ * shows them on the page again. A small step after the
  * chapter is saved reads those sentences and writes each look down
  * (`ChapterLooks`). Who has appeared and how each looks now is never stored:
  * it is worked out again, in story order, from every chapter's current
@@ -86,8 +88,6 @@ export interface ChapterLooks {
 
 /** The checks the appearance rules run, by kind: what each flag says cannot be true. */
 export type AppearanceFlagKind =
-  /** An appears tag for someone or something already on the record's page. */
-  | 'already-appeared'
   /** A look tag for someone or something that has not appeared. */
   | 'look-unseen'
   /** Someone speaks in a chapter written with the Appearance skill before any tag shows them appearing. */

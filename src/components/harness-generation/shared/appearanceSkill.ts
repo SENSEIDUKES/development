@@ -16,10 +16,17 @@ import { MAIN_CHARACTER_SPEAKER_TAG } from '../../../narrative/speech';
  * onto the page only when it is a card, and a minor figure goes by what the
  * chapter calls them (SENSEI, 2026-11-11); a story with no cards keeps the
  * teaching it had (`SEN_APPEARANCE_INSTRUCTIONS_WITHOUT_CARDS`).
+ *
+ * In a story with cards, appears means "on the page in this chapter", tagged
+ * once a chapter (SENSEI, 2026-11-13, from Tethered Paths of the Immortal Sun:
+ * told to tag only the first time in the story, with no way to know who the
+ * story had shown before, the tagger tagged its people again in every chapter
+ * and each repeat was flagged). The first time is worked out by code
+ * (`deriveAppearances`), never asked of the tagger.
  */
-const appearanceInstructions = (who: string, naming: string) => `${who}
+const appearanceInstructions = (who: string, kept: string, naming: string) => `${who}
 [[appears: Name | character]]  [[appears: Thing | thing]] (a thing no one holds)  [[appears: Place | place]]
-That sentence is kept as their look. Choose the first one that describes them, even when their name only comes later; never one that only says their name, speaks for them or tells their past. When nothing describes them, the sentence where they are first on the page.
+${kept}
 Example: {"paragraph": 2, "words": "A gaunt figure in ash-grey robes stepped out.", "tag": "[[appears: Old Wen | character]]"} (named Old Wen two paragraphs later)
 When the prose shows a look changing (a scar, new clothes, a breakthrough), tag that sentence: [[look: Name | what changed]]
 Example: {"paragraph": 9, "words": "The cut had closed into a pale line down his cheek.", "tag": "[[look: ${MAIN_CHARACTER_SPEAKER_TAG} | a pale scar down the left cheek]]"}
@@ -27,12 +34,14 @@ ${naming} Only who is on the page, not mentioned or remembered.`;
 
 /** The appears teaching of a story with cards. */
 export const SEN_APPEARANCE_INSTRUCTIONS = appearanceInstructions(
-  'When a character, or a thing or place that is a card, steps onto the page for the first time in the story, tag the sentence that shows what they look like:',
+  'Once in each chapter, tag every character on the page, and every thing or place that is a card, whether or not the story has shown them before. Tag the sentence in this chapter that shows what they look like:',
+  'Choose the first one that describes them, even when their name only comes later; never one that only says their name, speaks for them or tells their past. When nothing describes them, the sentence where they are first on the page in this chapter. The first time the story shows them, that sentence is kept as their look.',
   'Use the card\'s name. A minor figure goes by the name the chapter calls them most, or by what it calls them when it gives no name (the innkeeper).',
 );
 
 /** The appears teaching of a story with no cards at all, as before. */
 export const SEN_APPEARANCE_INSTRUCTIONS_WITHOUT_CARDS = appearanceInstructions(
   'When someone, a named thing or a named place steps onto the page for the first time in the story, tag the sentence that shows what they look like:',
+  'That sentence is kept as their look. Choose the first one that describes them, even when their name only comes later; never one that only says their name, speaks for them or tells their past. When nothing describes them, the sentence where they are first on the page.',
   'Use the full name the story will keep using.',
 );

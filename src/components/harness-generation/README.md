@@ -377,6 +377,21 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-13 (appears means on the page in this chapter):** SENSEI, from
+  his eight-chapter run of *Tethered Paths of the Immortal Sun*, noticed the
+  same people marked as appearing again in every chapter. The tagger was told
+  to tag only the first time the story shows someone, but with cards it reads
+  the whole pool and is never told which cards the story has already shown, so
+  it tagged them each chapter and `deriveAppearances` flagged every repeat
+  (`already-appeared`). The teaching in a story with cards
+  (`SEN_APPEARANCE_INSTRUCTIONS`) now asks for everyone on the page once in
+  each chapter, and code works out the first time: a later appears tag only
+  brings its subject back to the page's recent past (`recency`), its first
+  passage and look stand, and the `already-appeared` flag is gone. Nothing new
+  is stored and no schema changes; each chapter's appears tags are now the
+  record of who was in it, which the arc's cast and deep memory will read.
+  A story with no cards keeps its teaching. The tie the tagger read into a
+  kiss in the same run is not touched here.
 - **2026-11-11 (the tagger is handed the pool; minor figures appear and speak):**
   SENSEI, "the taggers are not inventing… they're uncovering" (step 3b). The
   tagger's list (`tagSubjectsOfStory`) marks each card (`card`) and gives a

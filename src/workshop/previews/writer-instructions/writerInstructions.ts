@@ -234,7 +234,7 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
   },
   {
     id: 'appearance', title: 'Appearance', source: 'HARNESS',
-    when: 'Every chapter the tagger reads in a story with cards. A thing or place steps onto the page only when it is a card.',
+    when: 'Every chapter the tagger reads in a story with cards. Everyone on the page is tagged once in each chapter, and code keeps the first time as where they stepped onto the page. A thing or place steps onto the page only when it is a card.',
     text: SEN_APPEARANCE_INSTRUCTIONS,
   },
   {

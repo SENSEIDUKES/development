@@ -66,10 +66,13 @@ describe('HARNESS tag rules', () => {
       'In every tag, Name is MC for the main character; anyone else goes by the name the story already has, listed below.',
       'Each example below is one note, written as you return it.',
     ]);
-    // The appears teaching differs in its first line and its naming line, and nowhere else.
+    // The appears teaching differs in its first line, the line that says which sentence, and its naming line, and nowhere else.
     const [cards, none] = [SEN_APPEARANCE_INSTRUCTIONS, SEN_APPEARANCE_INSTRUCTIONS_WITHOUT_CARDS].map(text => text.split('\n'));
-    expect(cards.map((line, index) => line === none[index])).toEqual([false, true, true, true, true, true, false]);
-    expect(cards[0]).toBe('When a character, or a thing or place that is a card, steps onto the page for the first time in the story, tag the sentence that shows what they look like:');
+    expect(cards.map((line, index) => line === none[index])).toEqual([false, true, false, true, true, true, false]);
+    // With cards, appears is "on the page in this chapter", once a chapter; the first time is worked out by code (SENSEI, 2026-11-13).
+    expect(cards[0]).toBe('Once in each chapter, tag every character on the page, and every thing or place that is a card, whether or not the story has shown them before. Tag the sentence in this chapter that shows what they look like:');
+    expect(cards[2]).toBe('Choose the first one that describes them, even when their name only comes later; never one that only says their name, speaks for them or tells their past. When nothing describes them, the sentence where they are first on the page in this chapter. The first time the story shows them, that sentence is kept as their look.');
+    expect(none[2]).toBe('That sentence is kept as their look. Choose the first one that describes them, even when their name only comes later; never one that only says their name, speaks for them or tells their past. When nothing describes them, the sentence where they are first on the page.');
     expect(cards.at(-1)).toBe('Use the card\'s name. A minor figure goes by the name the chapter calls them most, or by what it calls them when it gives no name (the innkeeper). Only who is on the page, not mentioned or remembered.');
     expect(none[0]).toBe('When someone, a named thing or a named place steps onto the page for the first time in the story, tag the sentence that shows what they look like:');
     expect(none.at(-1)).toBe('Use the full name the story will keep using. Only who is on the page, not mentioned or remembered.');

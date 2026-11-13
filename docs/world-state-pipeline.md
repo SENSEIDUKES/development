@@ -369,6 +369,12 @@ The table only maps the names; it renames nothing.
 
 ## History
 
+- **2026-11-13 (built):** appears means "on the page in this chapter". From
+  SENSEI's run of *Tethered Paths of the Immortal Sun*: the tagger tagged its
+  people as appearing in every chapter, because it reads every card and is
+  never told which the story has shown. It now tags everyone on the page once
+  in each chapter, and code works out the first time, so a repeat is no longer
+  flagged.
 - **2026-11-11 (built):** the tagger is handed the pool. It reads the story's
   cards and the minor figures already seen as two lists, a minor figure gets
   only an appears tag and their speaker tag, and a thing or place that is no

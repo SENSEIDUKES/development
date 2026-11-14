@@ -124,7 +124,7 @@ const declarations = (brief: FrontDeskLiveBrief) => [
       type: 'OBJECT',
       properties: {
         action_id: { type: 'STRING', enum: brief.actions.map(action => action.id) },
-        input: { type: 'STRING', description: 'The reader\'s own words, for actions that need them; otherwise empty.' },
+        input: { type: 'STRING', description: 'For actions that need text: the finished text, written out in full (the idea itself when the reader points back at the conversation). Otherwise empty.' },
       },
       required: ['action_id'],
     },

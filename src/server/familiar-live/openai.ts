@@ -5,7 +5,7 @@
  * exchanges it with OpenAI for the answer, so the API key never leaves it.
  */
 import type { FrontDeskLiveBrief } from '@seihouse/front-desk';
-import { FAMILIAR_NO_SPOILERS, familiarLiveActions, familiarLiveCharacter, familiarLiveDocsIndex } from './prompt';
+import { FAMILIAR_NO_SPOILERS, familiarLiveAbilities, familiarLiveActions, familiarLiveCharacter, familiarLiveDocsIndex } from './prompt';
 
 const LIVE_SESSIONS_URL = 'https://api.openai.com/v1/live/sessions';
 /** A built-in voice the owner chose in the playground (2026-11-01); `FAMILIAR_LIVE_OPENAI_VOICE` changes it. */
@@ -45,7 +45,7 @@ export function openAiLiveTools(brief: FrontDeskLiveBrief) {
         type: 'object',
         properties: {
           action_id: { type: 'string', enum: brief.actions.map(action => action.id) },
-          input: { type: 'string', description: 'The reader\'s own words, for actions that need them; otherwise empty.' },
+          input: { type: 'string', description: 'For actions that need text: the finished text, written out in full (the idea itself when the reader points back at the conversation). Otherwise empty.' },
         },
         required: ['action_id'],
         additionalProperties: false,
@@ -72,6 +72,12 @@ export function openAiLiveSession(brief: FrontDeskLiveBrief, options: { model: s
       tools.length
         ? 'Answer from the facts above when they already cover the question. Everything else goes to the backend: it reads the docs for you, shows topics on their screen, and puts changes there for the reader to confirm. Send it any question the page\'s topics do not answer rather than guessing, say what it found in your own words, and never say a change is made before they confirm it.'
         : 'Answer questions about the app yourself, from the facts above. Nothing on this page can be changed by voice; if asked, say so kindly.',
+      // SENSEI, 2026-11-14: without the list, the voice did not know Custom Fate existed and went to find out.
+      // The backend only gets what the voice hands it, so the voice spells out the idea, never "put that in".
+      ...(brief.actions.length
+        ? [familiarLiveAbilities(brief.actions).replace('only through propose_action', 'through the backend'),
+          'You know these are possible: never check first. When the reader asks for one, hand it to the backend at once with everything it needs: the action, and any text written out in full. When they point back at the conversation ("put that in", "what we discussed"), write out the idea itself, never their request; and say whether they already told you to go ahead.']
+        : []),
     ].join('\n\n'),
     audio: { output: { voice: options.voice } },
     delegation: {

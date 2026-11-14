@@ -14,7 +14,6 @@ import {
   MainCharacterFields,
 } from '../workspaces/CharacterFields';
 import { worldCardSlots } from '../workspaces/WorldCardFields';
-import { FateDecides } from '../FateDecides';
 import { BlueprintSectionHeading, EditableChip } from './BlueprintDossierPrimitives';
 import { BlueprintCardSheet } from './BlueprintCardSheet';
 import { CodexCardButton, CodexProfileHeader } from '@seihouse/sen/harness-generation';
@@ -55,7 +54,7 @@ const Chips = ({ value }: { value: string }) => {
   const items = value.split(/[,;\n]/).map(item => item.trim()).filter(Boolean);
   return items.length
     ? <span className="bp-chips">{items.map(item => <span key={item}>{item}</span>)}</span>
-    : <FateDecides />;
+    : null;
 };
 
 /** The hero's right column, like a Star Rail character's Light Cone and Traces. */
@@ -63,7 +62,7 @@ const HeroPanels = ({ card }: { card: Card }) => (
   <div className="bp-hero-panels">
     <section className="bp-mini" aria-label="Power">
       <p className="bp-mini-title"><Zap size={12} aria-hidden="true" />Power</p>
-      <p className="bp-mini-value">{text(card, 'powerType') || <FateDecides />}</p>
+      <p className="bp-mini-value">{text(card, 'powerType')}</p>
       <p className="bp-mini-sub">{text(card, 'rankLevel') ? `Rank · ${text(card, 'rankLevel')}` : null}</p>
     </section>
     <section className="bp-mini" aria-label="Holds and knows">
@@ -184,7 +183,7 @@ export const CastScreen = ({ seed, updateSeed, backgroundProfile, onBackgroundPr
 
       <section aria-labelledby="blueprint-cast-bio-heading" className="bp-section">
         <BlueprintSectionHeading id="blueprint-cast-bio-heading" icon={ScrollText} title="Biography" />
-        <p className="bp-prose">{text(card, 'bio') || <FateDecides />}</p>
+        <p className="bp-prose">{text(card, 'bio')}</p>
         {showingMain && (
           <div className="blueprint-key-field mt-4">
             <LibraryTextArea

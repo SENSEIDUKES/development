@@ -17,7 +17,6 @@ import {
 import { setFactions, setPlaces, setSpecies, setStartingAbilities, setThings, worldFoundations, type SeedUpdate, type UpdateSeed } from '../seedState';
 import { FactionFields } from '../workspaces/FactionFields';
 import { WorldCardFields, type WorldListCard } from '../workspaces/WorldCardFields';
-import { FateDecides } from '../FateDecides';
 import { BlueprintSectionHeading } from './BlueprintDossierPrimitives';
 import { BlueprintCardSheet } from './BlueprintCardSheet';
 import { CodexCardButton, type CodexCardCategory } from '@seihouse/sen/harness-generation';
@@ -114,7 +113,6 @@ export const WorldListGrid = ({ seed, updateSeed, field, readOnly = false, headi
           <span className="bp-card-add-count">{cards.length}/{list.limit}</span>
         </button>
       )}
-      {readOnly && cards.length === 0 && <p className="bp-tiles-empty"><FateDecides /></p>}
     </div>
   );
   return (

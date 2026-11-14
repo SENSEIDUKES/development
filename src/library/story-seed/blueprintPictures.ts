@@ -49,7 +49,7 @@ export function storyPortraitCharacters(state: HarnessWorkspaceState, storyId: s
     const character = entry && (characterPortrait({ ...card, key: entry.id }) ?? {
       key: entry.id, name: card.name, subject: 'character' as const, mainCharacter: Boolean(card.mainCharacter),
       relationship: [card.slots.gender, card.slots.connectionToMC || card.slots.role].filter(Boolean).join('; '),
-      look: { summary: '', traits: {} },
+      look: entry.look ? { summary: entry.look.summary, traits: entry.look.traits } : { summary: '', traits: {} },
     });
     return character ? [character] : [];
   });

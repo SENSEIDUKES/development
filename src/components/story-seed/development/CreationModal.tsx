@@ -224,6 +224,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const previousSeedOwnerIdRef = useRef<string | null>(seedOwnerId);
   const seedOwnerIdRef = useRef<string | null>(seedOwnerId);
   const currentSeedRef = useRef<StorySeedRecord | null>(null);
+  const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
   const persistRequestIdRef = useRef(0);
   seedOwnerIdRef.current = seedOwnerId;
 
@@ -370,33 +371,41 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   ): Promise<StorySeedRecord | null> => {
     if (!seedOwnerId) throw new Error('Sign in to save this story seed to your account.');
     const ownerAtStart = seedOwnerId;
-    const activeRecord = currentSeedRef.current;
-    const requestId = ++persistRequestIdRef.current;
-    const saved = activeRecord && activeRecord.userId === ownerAtStart
-      ? await runtime.repository.update(ownerAtStart, activeRecord, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsRef.current })
-      : await runtime.repository.create(seedOwnerId, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsRef.current });
-    const currentRecord = currentSeedRef.current;
-    const stillActive = requestId === persistRequestIdRef.current
-      && seedOwnerIdRef.current === ownerAtStart
-      && (activeRecord ? currentRecord?.id === activeRecord.id : currentRecord === null);
-    rememberSeed(saved, stillActive);
-    if (stillActive) {
-      resolveOriginalLanguage(saved.originalLanguage);
-      resolveReadingMode();
+    const previousSave = persistQueueRef.current;
+    let releaseSave!: () => void;
+    persistQueueRef.current = new Promise<void>(resolve => { releaseSave = resolve; });
+    await previousSave;
+    try {
+      const activeRecord = currentSeedRef.current;
+      const requestId = ++persistRequestIdRef.current;
+      const saved = activeRecord && activeRecord.userId === ownerAtStart
+        ? await runtime.repository.update(ownerAtStart, activeRecord, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsRef.current })
+        : await runtime.repository.create(ownerAtStart, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsRef.current });
+      const currentRecord = currentSeedRef.current;
+      const stillActive = requestId === persistRequestIdRef.current
+        && seedOwnerIdRef.current === ownerAtStart
+        && (activeRecord ? currentRecord?.id === activeRecord.id : currentRecord === null);
+      rememberSeed(saved, stillActive);
+      if (stillActive) {
+        resolveOriginalLanguage(saved.originalLanguage);
+        resolveReadingMode();
+      }
+      if (saved.blueprint && stillActive) {
+        // Persistence can be remote. Merge only trusted record metadata into
+        // the latest state so edits made while this request was in flight are
+        // never replaced by the older saved snapshot.
+        setBlueprint(current => current ? {
+          ...current,
+          blueprintVersion: current.blueprintVersion || saved.blueprint?.blueprintVersion || 'v1.0',
+          ...(currentUser?.displayName ? { creator: currentUser.displayName } : {}),
+          createdAt: current.createdAt || saved.createdAt,
+          updatedAt: saved.updatedAt,
+        } : current);
+      }
+      return saved;
+    } finally {
+      releaseSave();
     }
-    if (saved.blueprint && stillActive) {
-      // Persistence can be remote. Merge only trusted record metadata into
-      // the latest state so edits made while this request was in flight are
-      // never replaced by the older saved snapshot.
-      setBlueprint(current => current ? {
-        ...current,
-        blueprintVersion: current.blueprintVersion || saved.blueprint?.blueprintVersion || 'v1.0',
-        ...(currentUser?.displayName ? { creator: currentUser.displayName } : {}),
-        createdAt: current.createdAt || saved.createdAt,
-        updatedAt: saved.updatedAt,
-      } : current);
-    }
-    return saved;
   };
 
   /**

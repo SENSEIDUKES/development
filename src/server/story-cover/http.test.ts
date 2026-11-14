@@ -101,10 +101,19 @@ describe('Character reference covers', () => {
   });
   it('refuses missing, reversed, malformed and oversized references before invoking a model', async () => {
     const generate = vi.fn(async () => image);
-    for (const characters of [undefined, [], [{ ...story.characters[0], role: 'counterpart' }], [{ ...story.characters[0], image: { data: 'invalid!', mimeType: 'image/png' } }], [{ ...story.characters[0], image: { data: 'YQ=='.repeat(500000), mimeType: 'image/png' } }]]) {
+    for (const characters of [undefined, [], [{ ...story.characters[0], role: 'counterpart' }], [{ ...story.characters[0], image: { data: 'invalid!', mimeType: 'image/png' } }]]) {
       const result = await handleStoryCoverHttp({ method: 'POST', body: { story: { ...story, characters } } }, { environment, generate });
       expect(result.status).toBe(400);
     }
+    const singleOversize = await handleStoryCoverHttp({ method: 'POST', body: { story: { ...story, characters: [
+      { ...story.characters[0], image: { data: 'A'.repeat(1_800_004), mimeType: 'image/png' } },
+    ] } } }, { environment, generate });
+    expect(singleOversize).toMatchObject({ status: 400, body: { error: 'The image is too large. Use a smaller photo.' } });
+    const aggregateOversize = await handleStoryCoverHttp({ method: 'POST', body: { story: { ...story, characters: [
+      { ...story.characters[0], image: { data: 'A'.repeat(850_004), mimeType: 'image/png' } },
+      { name: 'Shen Yue', role: 'counterpart', image: { data: 'A'.repeat(850_004), mimeType: 'image/png' } },
+    ] } } }, { environment, generate });
+    expect(aggregateOversize).toMatchObject({ status: 400, body: { error: 'The character portraits are too large. Use smaller images.' } });
     expect(generate).not.toHaveBeenCalled();
   });
 });

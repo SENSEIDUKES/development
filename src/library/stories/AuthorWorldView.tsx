@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { ArrowLeft, BookOpen, Check, ChevronRight, Download, Globe, LoaderCircle, Sparkles, Square } from 'lucide-react';
 import { SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
 import { describeChapterTagging, findStory, storyTaggingSummary, type HarnessChapter } from '@seihouse/sen/harness-generation';
@@ -10,6 +10,7 @@ import { EnergyActionCost } from '../../components/energy/development/EnergyActi
 import { useActionEnergyPrice } from '../../components/energy/shared/energyModels';
 import { getEnergyPriceEntry } from '../../components/energy/shared/energyContracts';
 import { StoryBlueprintPage } from './StoryBlueprint';
+import { inheritBlueprintPictures } from '../story-seed/blueprintPictures';
 import { StorySettings } from './settings/StorySettings';
 import { isStoryPublished, storyOrigin } from './storyView';
 import { downloadHarnessStory } from './storyExport';
@@ -249,6 +250,11 @@ function WorldBlueprint({ stories, storyId, codexPictures }: { stories: LibraryS
   const { state } = stories;
   const story = state ? findStory(state, storyId) : undefined;
   const input = state && story ? state.foundations.find(entry => entry.id === story.activeFoundationRevisionId)?.input : undefined;
+  const foundationId = story?.activeFoundationRevisionId;
+  useEffect(() => {
+    if (!state || !codexPictures) return;
+    void inheritBlueprintPictures(state, storyId, codexPictures).catch(() => undefined);
+  }, [storyId, foundationId, codexPictures]);
   if (input?.sourceSnapshot?.kind !== 'story-seed' || !input.sourceSnapshot.blueprint) {
     return <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-neutral-300" data-testid="author-world-no-blueprint">
       This world has no Blueprint. An imported novel doesn&rsquo;t have one, and neither does a novel begun from a premise.

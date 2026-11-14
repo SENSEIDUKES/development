@@ -2,7 +2,8 @@ import { expect, it, vi } from 'vitest';
 import { createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
 import type { HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import type { CodexPictureService } from '../stories/storyCover';
-import { characterPortrait, blueprintCharacters, blueprintPictureKey, blueprintPictureOwner, inheritBlueprintPictures } from './blueprintPictures';
+import { characterPortrait, blueprintCharacters, blueprintPictureKey, blueprintPictureOwner, inheritBlueprintPictures, storyPortraitCharacters } from './blueprintPictures';
+import { worldCardKey } from '@seihouse/sen/contracts';
 
 function seed() {
   const input = createEmptyStorySeedInput();
@@ -48,4 +49,17 @@ it('keeps named Blueprint cards addressable when only the Codex has a saved port
   const input = createEmptyStorySeedInput();
   input.world.optional.worldFoundations.mainCharacter = { name: 'Lin Wei' };
   expect(blueprintCharacters(input)).toMatchObject([{ key: 'main', name: 'Lin Wei', look: { summary: '' } }]);
+});
+
+it('uses the Codex look when a Blueprint card has no visual traits of its own', () => {
+  const cardKey = worldCardKey('character', 'Lin Wei');
+  const state = {
+    worldCards: [{ storyId: 'story', key: cardKey, kind: 'character', name: 'Lin Wei', mainCharacter: true, slots: {} }],
+    codexEntries: [{ storyId: 'story', id: 'lin-entry', cardKey,
+      look: { summary: 'A lean young man in dark robes.', traits: { hair: 'ink black' }, from: [], at: 'now' } }],
+    stories: [], foundations: [], chapters: [],
+  } as unknown as HarnessWorkspaceState;
+  expect(storyPortraitCharacters(state, 'story')).toMatchObject([
+    { key: 'lin-entry', mainCharacter: true, look: { summary: 'A lean young man in dark robes.', traits: { hair: 'ink black' } } },
+  ]);
 });

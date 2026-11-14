@@ -922,12 +922,18 @@ async function walk(browser, viewport, sample) {
   check(!(await page.evaluate(slidesSideways)), 'The conditions must not make the sheet scroll sideways.');
   await shot('6d-codex-conditions');
   // Manifest first writes that one look (one quiet call with the token), then makes the card's picture from it, and the card wears it.
+  const writtenLook = codexSheet.getByTestId('codex-look').filter({ hasText: ', as the drowned city first saw them.' });
+  const pictureResponse = page.waitForResponse(response => {
+    const request = response.request();
+    return new URL(response.url()).pathname === '/api/story-cover' && request.postDataJSON()?.card?.subject === 'character';
+  });
   await codexSheet.getByTestId('codex-manifest').getByRole('button', { name: 'Manifest' }).click();
-  await codexSheet.locator('header img').waitFor();
+  await writtenLook.waitFor();
   check(counts.looks.length === 1 && counts.looks[0].token && counts.looks[0].subjects.length === 1,
     `Manifest should write one look, in one quiet call with the token, got ${JSON.stringify(counts.looks)}.`);
   const look = await codexSheet.getByTestId('codex-look').innerText();
   check(look.includes(', as the drowned city first saw them.') && /hair/i.test(look) && look.includes('salt-white'), `The sheet should show the look written down, got ${look}.`);
+  await pictureResponse;
   const picture = counts.pictures.at(-1);
   check(picture?.token && picture.body.card.subject === 'character' && picture.body.card.look.summary.includes(', as the drowned city first saw them.'),
     `Manifest should ask for one picture from the card's look, with the token, got ${JSON.stringify(picture)}.`);

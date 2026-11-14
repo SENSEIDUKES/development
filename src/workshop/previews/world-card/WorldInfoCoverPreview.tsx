@@ -1,9 +1,9 @@
-import { useState, type ComponentProps } from 'react';
+import { useCallback, useState, type ComponentProps } from 'react';
 import { StoryDetailScreen } from '@seihouse/library/home';
 import { blueprintCharacters } from '@seihouse/library/story-seed';
 import { useStoryCoverManifest } from '@seihouse/library/stories';
 import { useCodexPictures } from '../../../host/media/codexPictures';
-import { IndexedDbStoryCoverStore, useStoryCovers } from '../../../host/media/storyCovers';
+import { IndexedDbStoryCoverStore, useStoryCovers, type StoryCoverMaker } from '../../../host/media/storyCovers';
 import { requestCodexPicture, requestStoryCover } from '../../../host/media/storyCoverClient';
 import { createSavedAccessToken } from '../../../host/generation/accessToken';
 import { readModelPreference } from '../../../host/generation/modelPreference';
@@ -18,11 +18,13 @@ export function WorldInfoCoverPreview(props: ComponentProps<typeof StoryDetailSc
   const characters = blueprintCharacters(fillBlankSeedSlots(record.seed, createMockSeedSlotAnswer()));
   const options = () => ({ model: readModelPreference('images') ?? undefined, accessToken: createSavedAccessToken().current });
   const pictures = useCodexPictures(store, request => requestCodexPicture(request, options()));
-  const covers = useStoryCovers(coverStore, async (story, count) => {
-    const results = await Promise.allSettled(Array.from({ length: count }, () => requestStoryCover(story, options())));
+  const makeCovers = useCallback<StoryCoverMaker>(async (story, count) => {
+    const requestOptions = { model: readModelPreference('images') ?? undefined, accessToken: createSavedAccessToken().current };
+    const results = await Promise.allSettled(Array.from({ length: count }, () => requestStoryCover(story, requestOptions)));
     return { images: results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []),
       problem: results.find(result => result.status === 'rejected')?.reason?.message };
-  });
+  }, []);
+  const covers = useStoryCovers(coverStore, makeCovers);
   const storyId = `world-card-preview:${props.story.id}`;
   const request = { title: props.story.title, synopsis: props.story.synopsis, genre: record.seed.story.required.genre, style: record.seed.story.required.style };
   const flow = useStoryCoverManifest({ covers, storyId, request, characters,

@@ -34,6 +34,7 @@ import { APP_DESTINATIONS } from './appPlaces';
 import { AppShell } from './AppShell';
 import { codexPictureMakerWithAccessToken, coverMakerWithAccessToken, portraitMakerWithAccessToken, writerWithAccessToken, type AskForAccessToken } from './accessToken';
 import { useStoryCovers } from '../host/media/storyCovers';
+import { blueprintPictureOwner, blueprintPictureKey } from '@seihouse/library/story-seed';
 import { useCodexPictures } from '../host/media/codexPictures';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
@@ -274,7 +275,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   if (route.page === 'world') return withFamiliar(missingWorld ? null : <AppShell route={{ page: 'create' }} navigate={navigate} stories={worlds}
     readerProfile={profile} mainLabel="Create">
     <div className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6">
-      <AuthorWorldView stories={stories} worlds={creatorWorlds} storyId={route.storyId}
+      <AuthorWorldView codexPictures={codexPictures} stories={stories} worlds={creatorWorlds} storyId={route.storyId}
         onChooseWorld={id => navigate({ page: 'world', storyId: id }, { replace: true })}
         // A chapter opens in the creator's Reader, in Create mode with its tags lit: what a reader will get, with every tag on it.
         onOpenChapter={chapterNumber => navigate({ page: 'write', storyId: route.storyId, chapterNumber, create: true })}
@@ -289,6 +290,14 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
 
   if (route.page === 'create') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     seedId={route.seedId} accentColor={profile.accentColor}
+    blueprintPictures={{
+      pictureOf: (seedId, character) => codexPictures.pictureOf(blueprintPictureOwner(seedId), blueprintPictureKey(character)),
+      manifest: (record, character) => codexPictures.manifest(blueprintPictureOwner(record.id), blueprintPictureKey(character), {
+        card: character,
+        story: { style: record.seed.story.required.style, genre: record.seed.story.required.genre,
+          world: record.seed.world.optional.worldFoundations.powerSystem?.kindOfWorld },
+      }),
+    }}
     // Sparks inside the open Story Seed: a chosen spark fills its Origin.
     originSparks={fillOrigin => <SparksButton purpose="fill-seed"
       host={{ checkSparks: sparks.checkSparks, requestSpark: sparks.requestSpark, beginSpark: async spark => fillOrigin(spark) }} />}

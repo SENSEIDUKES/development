@@ -121,3 +121,13 @@
   .story-cover-choice-wrap, .story-cover-stage img { animation: none; opacity: 1; }
   .story-cover-manifest, .story-cover-option, .story-cover-choice, .story-cover-choice img { transition: none; }
 }
+
+/* Character references stay compact in the phone's existing cover sheet. */
+.story-cover-references { display: grid; gap: .75rem; min-width: 0; }
+.story-cover-reference { width: 10rem; max-width: 100%; margin-inline: auto; }
+.story-cover-reference h3 { font-size: 1.1rem; }
+.story-cover-second { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1.2fr) 44px; align-items: center; gap: .25rem; font-size: .8rem; touch-action: pan-y; }
+.story-cover-second button { min-width: 44px; min-height: 44px; border: 1px solid #ffffff22; border-radius: .5rem; }
+.story-cover-second-value { display: flex; align-items: center; gap: .4rem; min-width: 0; overflow-wrap: anywhere; }
+.story-cover-second-value img { width: 2rem; height: 2.5rem; object-fit: cover; border-radius: .25rem; }
+.story-cover-option:disabled { opacity: .45; cursor: default; }

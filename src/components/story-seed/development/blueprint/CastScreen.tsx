@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import type { CodexPictureMaker } from '@seihouse/sen/harness-generation';
+import { blueprintCharacters } from '../../../../library/story-seed/blueprintPictures';
+import { CharacterPortrait } from '../../../../library/stories/CharacterPortrait';
 import { Eye, HeartCrack, Hourglass, Pencil, Plus, Scale, ScrollText, Shield, ShieldAlert, Sparkles, Star, User, Users, Zap } from 'lucide-react';
 import { SEED_CHARACTER_LIMIT, type StorySeedCharacter, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { normalizeCodexAliases } from '@seihouse/sen/story-seed';
@@ -78,13 +81,14 @@ const HeroPanels = ({ card }: { card: Card }) => (
  * character's portrait card, its stat table, and where it stands when the
  * story opens. Every field is the Seed's own and is edited in a sheet.
  */
-export const CastScreen = ({ seed, updateSeed, backgroundProfile, onBackgroundProfileChange, readOnly = false }: {
+export const CastScreen = ({ seed, updateSeed, backgroundProfile, onBackgroundProfileChange, readOnly = false, pictures }: {
   seed: StorySeedInput;
   updateSeed: UpdateSeed;
   /** The Blueprint's narrative background for the main character. */
   backgroundProfile: string;
   onBackgroundProfileChange: (backgroundProfile: string) => void;
   readOnly?: boolean;
+  pictures?: CodexPictureMaker;
 }) => {
   const foundations = worldFoundations(seed);
   const main = (foundations.mainCharacter ?? {}) as Card;
@@ -96,6 +100,8 @@ export const CastScreen = ({ seed, updateSeed, backgroundProfile, onBackgroundPr
   const showingMain = !side;
   const card = (side ?? main) as Card;
   const name = text(card, 'name');
+  const characters = blueprintCharacters(seed);
+  const portrait = characters.find(character => character.key === (showingMain ? 'main' : selected));
 
   const updateSide = (patch: Partial<StorySeedCharacter>) => {
     if (sideIndex < 0) return;
@@ -133,6 +139,7 @@ export const CastScreen = ({ seed, updateSeed, backgroundProfile, onBackgroundPr
             return (
               <div key={entry.id} className="bp-cast-pick">
                 <CodexCardButton category="characters" name={entryName || 'Unnamed'}
+                  picture={pictures?.pictureOf(entry.id)}
                   line={entry.main ? 'Main character' : text(entry.card, 'role') || 'Character'}
                   featured={selected === entry.id || (entry.main && showingMain)}
                   aria-pressed={selected === entry.id || (entry.main && showingMain)}
@@ -153,9 +160,10 @@ export const CastScreen = ({ seed, updateSeed, backgroundProfile, onBackgroundPr
       </div>
 
       <div className="bp-hero">
-        <CodexProfileHeader category="characters" name={name || 'Unnamed'}
+        {portrait && pictures ? <CharacterPortrait key={portrait.key} character={portrait} pictures={pictures} readOnly={readOnly} /> : <CodexProfileHeader category="characters" name={name || 'Unnamed'}
           line={[showingMain ? text(card, 'startingIdentity') || 'Main character' : text(card, 'role') || 'Character', text(card, 'age') && `Age ${text(card, 'age')}`].filter(Boolean).join(' · ')}
-          badges={[showingMain ? 'Main character' : '', text(card, 'species')].filter(Boolean)} />
+          badges={[showingMain ? 'Main character' : '', text(card, 'species')].filter(Boolean)} />}
+        {pictures && !portrait && !readOnly && <p className="text-sm text-amber-200">Add this character’s name and appearance to manifest their portrait.</p>}
         <HeroPanels card={card} />
       </div>
 

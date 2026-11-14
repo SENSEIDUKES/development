@@ -10,6 +10,7 @@ import {
   type SetStateAction,
 } from 'react';
 import './story-seed.css';
+import { blueprintCharacters, type BlueprintPictureService } from '../../../library/story-seed/blueprintPictures';
 import { motion } from 'motion/react';
 import { type StorySpark, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { generateUUID } from '@seihouse/sen/story-seed';
@@ -81,6 +82,7 @@ export interface CreationModalProps {
   renderStoryPlugins?: (seed: { seed: StorySeedInput; originalLanguage: SenLanguageCode }) => ReactNode;
   /** Shown beside the Manifest button, such as the host's price for a World Blueprint. */
   manifestAside?: ReactNode;
+  blueprintPictures?: BlueprintPictureService;
   /**
    * A saved Story Seed to open for editing when Create opens, such as a spark
    * the host just planted in the Story Bank. An id the bank does not hold
@@ -163,7 +165,7 @@ const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalSt
   libraryStories: state.stories,
 });
 
-export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, renderStoryPlugins, manifestAside, initialSeedId, originSparks }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, renderStoryPlugins, manifestAside, initialSeedId, originSparks, blueprintPictures }: CreationModalProps) {
   const runtime = useStoryCreationRuntime();
   const guestWorkspace = Boolean(runtime.guestOwnerId);
   const storeIsGenerating = useStoryCreationStore(state => state.isGenerating);
@@ -222,6 +224,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const previousSeedOwnerIdRef = useRef<string | null>(seedOwnerId);
   const seedOwnerIdRef = useRef<string | null>(seedOwnerId);
   const currentSeedRef = useRef<StorySeedRecord | null>(null);
+  const seedSessionIdRef = useRef(0);
+  const seedSessionRecordsRef = useRef(new Map<number, StorySeedRecord>());
+  const seedRecordsRef = useRef(new Map<string, StorySeedRecord>());
+  const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
   const persistRequestIdRef = useRef(0);
   seedOwnerIdRef.current = seedOwnerId;
 
@@ -231,6 +237,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   // seeds and their Blueprints — toggled from the bottom navigation's Story
   // Bank tab (mobile) and the header's Story Bank button (desktop).
   const [showStoryBank, setShowStoryBank] = useState(false);
+  const [portraitPending, setPortraitPending] = useState(0);
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [confirmedTabs, setConfirmedTabsState] = useState<string[]>([]);
   const confirmedTabsRef = useRef<string[]>([]);
@@ -256,7 +263,12 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const latestReviewRef = useRef<{ seed: StorySeedInput; blueprint: WorldBlueprint | null }>({ seed, blueprint });
   latestReviewRef.current = { seed, blueprint };
 
-  const setActiveSeed = useCallback((record: StorySeedRecord | null) => {
+  const setActiveSeed = useCallback((record: StorySeedRecord | null, preserveSession = false) => {
+    if (!preserveSession) seedSessionIdRef.current += 1;
+    if (record) {
+      seedRecordsRef.current.set(record.id, record);
+      seedSessionRecordsRef.current.set(seedSessionIdRef.current, record);
+    }
     currentSeedRef.current = record;
     setCurrentSeed(record);
   }, []);
@@ -349,8 +361,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     if (savedFeedbackTimer.current) window.clearTimeout(savedFeedbackTimer.current);
   }, []);
 
-  const rememberSeed = (record: StorySeedRecord, makeCurrent = true) => {
-    if (makeCurrent) setActiveSeed(record);
+  const rememberSeed = (record: StorySeedRecord, makeCurrent = true, sessionId = seedSessionIdRef.current) => {
+    seedRecordsRef.current.set(record.id, record);
+    seedSessionRecordsRef.current.set(sessionId, record);
+    if (makeCurrent) setActiveSeed(record, true);
     setSavedSeeds(previous => [record, ...previous.filter(item => item.id !== record.id)]);
   };
 
@@ -367,33 +381,48 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   ): Promise<StorySeedRecord | null> => {
     if (!seedOwnerId) throw new Error('Sign in to save this story seed to your account.');
     const ownerAtStart = seedOwnerId;
-    const activeRecord = currentSeedRef.current;
-    const requestId = ++persistRequestIdRef.current;
-    const saved = activeRecord && activeRecord.userId === ownerAtStart
-      ? await runtime.repository.update(ownerAtStart, activeRecord, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsRef.current })
-      : await runtime.repository.create(seedOwnerId, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsRef.current });
-    const currentRecord = currentSeedRef.current;
-    const stillActive = requestId === persistRequestIdRef.current
-      && seedOwnerIdRef.current === ownerAtStart
-      && (activeRecord ? currentRecord?.id === activeRecord.id : currentRecord === null);
-    rememberSeed(saved, stillActive);
-    if (stillActive) {
-      resolveOriginalLanguage(saved.originalLanguage);
-      resolveReadingMode();
+    const sessionAtStart = seedSessionIdRef.current;
+    const recordAtStart = currentSeedRef.current;
+    const requestedRecordId = recordAtStart?.id ?? seedSessionRecordsRef.current.get(sessionAtStart)?.id;
+    const confirmedTabsAtStart = [...confirmedTabsRef.current];
+    const previousSave = persistQueueRef.current;
+    let releaseSave!: () => void;
+    persistQueueRef.current = new Promise<void>(resolve => { releaseSave = resolve; });
+    await previousSave;
+    try {
+      const activeRecord = requestedRecordId
+        ? seedRecordsRef.current.get(requestedRecordId) ?? (recordAtStart?.id === requestedRecordId ? recordAtStart : null)
+        : seedSessionRecordsRef.current.get(sessionAtStart) ?? null;
+      const requestId = ++persistRequestIdRef.current;
+      const saved = activeRecord && activeRecord.userId === ownerAtStart
+        ? await runtime.repository.update(ownerAtStart, activeRecord, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsAtStart })
+        : await runtime.repository.create(ownerAtStart, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsAtStart });
+      const currentRecord = currentSeedRef.current;
+      const stillActive = requestId === persistRequestIdRef.current
+        && seedOwnerIdRef.current === ownerAtStart
+        && seedSessionIdRef.current === sessionAtStart
+        && (activeRecord ? currentRecord?.id === activeRecord.id : currentRecord === null);
+      rememberSeed(saved, stillActive, sessionAtStart);
+      if (stillActive) {
+        resolveOriginalLanguage(saved.originalLanguage);
+        resolveReadingMode();
+      }
+      if (saved.blueprint && stillActive) {
+        // Persistence can be remote. Merge only trusted record metadata into
+        // the latest state so edits made while this request was in flight are
+        // never replaced by the older saved snapshot.
+        setBlueprint(current => current ? {
+          ...current,
+          blueprintVersion: current.blueprintVersion || saved.blueprint?.blueprintVersion || 'v1.0',
+          ...(currentUser?.displayName ? { creator: currentUser.displayName } : {}),
+          createdAt: current.createdAt || saved.createdAt,
+          updatedAt: saved.updatedAt,
+        } : current);
+      }
+      return saved;
+    } finally {
+      releaseSave();
     }
-    if (saved.blueprint && stillActive) {
-      // Persistence can be remote. Merge only trusted record metadata into
-      // the latest state so edits made while this request was in flight are
-      // never replaced by the older saved snapshot.
-      setBlueprint(current => current ? {
-        ...current,
-        blueprintVersion: current.blueprintVersion || saved.blueprint?.blueprintVersion || 'v1.0',
-        ...(currentUser?.displayName ? { creator: currentUser.displayName } : {}),
-        createdAt: current.createdAt || saved.createdAt,
-        updatedAt: saved.updatedAt,
-      } : current);
-    }
-    return saved;
   };
 
   /**
@@ -845,7 +874,24 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         <div className="px-4 pt-4 sm:px-6 sm:pt-6" ref={creatorRootRef}>
           {errorBanner && <div className="mx-auto mb-5 max-w-4xl">{errorBanner}</div>}
           <DeferredStorySeedView label="World Blueprint">
-            <BlueprintReview
+            <BlueprintReview portraitBusy={portraitPending > 0}
+              pictures={blueprintPictures ? {
+                pictureOf: key => {
+                  const character = blueprintCharacters(seed).find(entry => entry.key === key);
+                  return currentSeed && character ? blueprintPictures.pictureOf(currentSeed.id, character) : undefined;
+                },
+                manifest: async card => {
+                  setPortraitPending(value => value + 1);
+                  try {
+                    const reconciled = reconcileStorySeedBlueprint(seed, blueprint!);
+                    const record = await persistSeed(reconciled.seed, reconciled.blueprint, originalLanguage);
+                    if (!record) throw new Error('Save this Blueprint before manifesting a character.');
+                    const character = blueprintCharacters(record.seed).find(entry => entry.key === card.key);
+                    if (!character) throw new Error('Add this character’s name and appearance first.');
+                    await blueprintPictures.manifest(record, character);
+                  } finally { setPortraitPending(value => value - 1); }
+                },
+              } : undefined}
               blueprint={blueprint}
               setBlueprint={updateBlueprint}
               seed={seed}

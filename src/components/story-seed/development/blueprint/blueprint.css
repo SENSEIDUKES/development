@@ -197,3 +197,5 @@
 @media (prefers-reduced-motion: reduce) {
   .bp-tab { transition: none; }
 }
+
+.bp-hero > div:first-child:not(.bp-hero-panels) { width: min(100%, 18rem); margin-inline: auto; }

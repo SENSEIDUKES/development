@@ -1,3 +1,6 @@
+import { CharacterPortrait } from './CharacterPortrait';
+import type { PortraitCharacter } from '../story-seed/blueprintPictures';
+import type { CodexPictureMaker } from '@seihouse/sen/harness-generation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, Download } from 'lucide-react';
 import { SEIDialog, SEIDialogContent, SEIDialogDescription, SEIDialogTitle } from '@seihouse/ui';
@@ -46,13 +49,27 @@ const coverFileName = (title: string, index?: number) =>
  * Returns what sits on the cover (for World Info's cover slot) and what opens
  * above the page (the choice, the veil and the picker).
  */
-export function useStoryCoverManifest({ covers, storyId, request, agent }: {
+export function useStoryCoverManifest({ covers, storyId, request, agent, characters = [], pictures, referenceOf }: {
   covers: StoryCoverService;
   storyId: string;
   request: StoryCoverRequest;
+  characters?: PortraitCharacter[];
+  pictures?: CodexPictureMaker;
+  referenceOf?: (key: string) => Promise<{ data: string; mimeType: string } | undefined>;
   /** The Familiar's agent the veil shows; without one, the cover itself says it is manifesting. */
   agent?: LoadingAgentPresentation;
 }): { onCover: ReactNode; overPage: ReactNode } {
+  const swipeStart = useRef(0);
+  const coverPending = useRef(false);
+  const [secondKey, setSecondKey] = useState<string>();
+  const protagonist = characters.find(character => character.mainCharacter);
+  const others = characters.filter(character => !character.mainCharacter && pictures?.pictureOf(character.key));
+  const second = others.find(character => character.key === secondKey);
+  const choices = [undefined, ...others];
+  const chooseSecond = (step: number) => {
+    const index = choices.findIndex(character => character?.key === second?.key);
+    setSecondKey(choices[(index + step + choices.length) % choices.length]?.key);
+  };
   const [phase, setPhase] = useState<Phase>('idle');
   const [asset, setAsset] = useState<RevealedMediaAsset | null>(null);
   const [made, setMade] = useState<string[]>([]);
@@ -76,11 +93,20 @@ export function useStoryCoverManifest({ covers, storyId, request, agent }: {
   const holdMade = (urls: string[]) => { madeRef.current = urls; setMade(urls); };
 
   const manifest = async (count: StoryCoverChoice) => {
+    if (coverPending.current) return;
+    coverPending.current = true;
     setPhase('making');
     setAsset(null);
     setProblem(undefined);
     try {
-      const result = await covers.make(storyId, request, count);
+      if (!protagonist || !pictures?.pictureOf(protagonist.key) || !referenceOf) throw new Error('Manifest the main character before making a cover.');
+      const references: NonNullable<StoryCoverRequest['characters']> = [];
+      for (const character of [protagonist, ...(second ? [second] : [])]) {
+        const image = await referenceOf(character.key);
+        if (!image) throw new Error(`The portrait for ${character.name} could not be opened. Please try again.`);
+        references.push({ name: character.name, role: character.mainCharacter ? 'protagonist' : 'counterpart', relationship: character.relationship, image });
+      }
+      const result = await covers.make(storyId, { ...request, characters: references }, count);
       if (!result.urls.length) {
         setPhase('idle');
         setProblem(result.problem ?? 'The cover could not be made. Please try again.');
@@ -102,7 +128,7 @@ export function useStoryCoverManifest({ covers, storyId, request, agent }: {
     } catch (error) {
       setPhase('idle');
       setProblem(error instanceof Error ? error.message : 'The cover could not be made. Please try again.');
-    }
+    } finally { coverPending.current = false; }
   };
 
   const keepChosen = async () => {
@@ -157,9 +183,24 @@ export function useStoryCoverManifest({ covers, storyId, request, agent }: {
         <SEIDialogDescription className="story-cover-dialog-intro">{request.titled
           ? 'Your story has reached its ending, so its cover now carries its title.'
           : "Cover art made from your story's own words. Its title is added when the story reaches its ending."}</SEIDialogDescription>
+        {protagonist && pictures ? <div className="story-cover-references">
+          <p className="text-sm text-neutral-200">Your main character’s portrait guides the cover.</p>
+          <div className="story-cover-reference">
+            <CharacterPortrait key={protagonist.key} character={protagonist} pictures={pictures} cost={<EnergyActionCost price={imagePrice} />} />
+          </div>
+          {others.length > 0 && <div className="story-cover-second" tabIndex={0} role="group" aria-label="Second cover character"
+            onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); chooseSecond(event.key === 'ArrowLeft' ? -1 : 1); } }}
+            onTouchStart={event => { swipeStart.current = event.touches[0].clientX; }}
+            onTouchEnd={event => { const delta = event.changedTouches[0].clientX - swipeStart.current; if (Math.abs(delta) > 40) chooseSecond(delta < 0 ? 1 : -1); }}>
+            <span>Second character</span>
+            <button type="button" aria-label="Previous cover character" onClick={() => chooseSecond(-1)}>◀</button>
+            <span className="story-cover-second-value">{second && <img src={pictures.pictureOf(second.key)} alt="" />}<span>{second?.name ?? 'None'}</span></span>
+            <button type="button" aria-label="Next cover character" onClick={() => chooseSecond(1)}>▶</button>
+          </div>}
+        </div> : <p role="status" className="text-sm text-amber-200">Add a named main character and their appearance in the Blueprint before making a cover.</p>}
         <div className="story-cover-options" role="group" aria-label="How many covers">
           {STORY_COVER_CHOICES.map(count => <button key={count} type="button" className="story-cover-option" data-count={count}
-            onClick={() => void manifest(count)}>
+            onClick={() => void manifest(count)} disabled={!protagonist || !pictures?.pictureOf(protagonist.key) || !referenceOf}>
             <span className="story-cover-option-stack" aria-hidden="true">
               {Array.from({ length: count }, (_, index) => <span key={index} />)}
             </span>

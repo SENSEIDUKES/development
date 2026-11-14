@@ -3,7 +3,7 @@ import { handleStoryCoverHttp, STORY_COVER_TIMEOUT_MS } from './http';
 import { buildStoryCoverPrompt } from './prompt';
 import { ModelRouterError } from '@seihouse/library/model-router-server';
 
-const story = { title: 'The Drowned Name', genre: 'Xianxia', style: 'chinese', synopsis: 'A courier returns to the drowned city.', mainCharacter: 'Mara', tags: ['revenge', 'water'] };
+const story = { characters: [{ name: 'Mara', role: 'protagonist', image: { data: 'aW1hZ2U=', mimeType: 'image/png' } }], title: 'The Drowned Name', genre: 'Xianxia', style: 'chinese', synopsis: 'A courier returns to the drowned city.', mainCharacter: 'Mara', tags: ['revenge', 'water'] };
 const image = { capability: 'image' as const, provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite-image', data: 'aW1hZ2U=', mimeType: 'image/png' };
 const environment = { GEMINI_API_KEY: 'secret-gemini' };
 
@@ -86,5 +86,34 @@ describe('The cover prompt', () => {
     expect(plain).not.toContain('Tradition:');
     expect(plain).not.toContain('Genre:');
     expect(plain).toContain('No lettering. The title will appear beneath the artwork.');
+  });
+});
+
+
+describe('Character reference covers', () => {
+  it('sends the ordered protagonist and counterpart bytes with their names and relationship', async () => {
+    const characters = [...story.characters, { name: 'Shen Yue', role: 'counterpart', relationship: 'female; spirit-bound rival', image: { data: 'c2hlbg==', mimeType: 'image/jpeg' } }];
+    const generate = vi.fn(async () => image);
+    const result = await handleStoryCoverHttp({ method: 'POST', body: { story: { ...story, characters } } }, { environment, generate });
+    expect(result.status).toBe(200);
+    expect(generate).toHaveBeenCalledWith(expect.objectContaining({ referenceImages: characters.map(character => character.image), prompt: expect.stringContaining('Reference 2: Shen Yue — counterpart; female; spirit-bound rival') }));
+    expect(generate).toHaveBeenCalledWith(expect.objectContaining({ prompt: expect.stringContaining('Keep their identities separate') }));
+  });
+  it('refuses missing, reversed, malformed and oversized references before invoking a model', async () => {
+    const generate = vi.fn(async () => image);
+    for (const characters of [undefined, [], [{ ...story.characters[0], role: 'counterpart' }], [{ ...story.characters[0], image: { data: 'invalid!', mimeType: 'image/png' } }]]) {
+      const result = await handleStoryCoverHttp({ method: 'POST', body: { story: { ...story, characters } } }, { environment, generate });
+      expect(result.status).toBe(400);
+    }
+    const singleOversize = await handleStoryCoverHttp({ method: 'POST', body: { story: { ...story, characters: [
+      { ...story.characters[0], image: { data: 'A'.repeat(1_800_004), mimeType: 'image/png' } },
+    ] } } }, { environment, generate });
+    expect(singleOversize).toMatchObject({ status: 400, body: { error: 'The image is too large. Use a smaller photo.' } });
+    const aggregateOversize = await handleStoryCoverHttp({ method: 'POST', body: { story: { ...story, characters: [
+      { ...story.characters[0], image: { data: 'A'.repeat(850_004), mimeType: 'image/png' } },
+      { name: 'Shen Yue', role: 'counterpart', image: { data: 'A'.repeat(850_004), mimeType: 'image/png' } },
+    ] } } }, { environment, generate });
+    expect(aggregateOversize).toMatchObject({ status: 400, body: { error: 'The character portraits are too large. Use smaller images.' } });
+    expect(generate).not.toHaveBeenCalled();
   });
 });

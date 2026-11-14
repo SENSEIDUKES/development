@@ -15,6 +15,11 @@ export interface ImagePromptsChange {
  */
 export const IMAGE_PROMPTS_HISTORY: ImagePromptsChange[] = [
   {
+    date: '2026-11-13',
+    summary: 'SENSEI: covers now require a manifested protagonist portrait, with one optional second character. Ordered image references preserve recognizable character identities while the short story prompt guides composition. Blueprint characters use the existing Codex picture prompt.',
+    changed: { cover: '0dbc3d0e0f33b3', 'cover-references': '1d515d3c38da6c' },
+  },
+  {
     date: '2026-11-11',
     summary: 'SENSEI: cover art and Codex character and item intros now request professional Eastern fantasy art, high-quality animation, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration when appropriate to the story. This shared wording applies whichever image model is selected. The profile picture prompt and the remaining instructions are unchanged.',
     changed: {

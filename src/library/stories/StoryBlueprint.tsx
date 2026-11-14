@@ -1,3 +1,6 @@
+import { blueprintCharacters, storyPortraitCharacters } from '../story-seed/blueprintPictures';
+import { codexPictureRequest, type CodexPictureService } from './storyCover';
+import type { CodexPictureMaker } from '@seihouse/sen/harness-generation';
 import { useMemo, useState } from 'react';
 import { ArrowLeft, Copy, Lock } from 'lucide-react';
 import { LibraryButton } from '@seihouse/library-ui';
@@ -17,6 +20,7 @@ export type StoryBlueprintAccess =
   | { view: 'reader'; creatorName?: string; copy: boolean };
 
 export interface StoryBlueprintViewProps {
+  pictures?: CodexPictureMaker;
   title: string;
   /** The novel's saved Seed and Blueprint; absent for a novel begun from a premise. */
   snapshot?: NovelBlueprintSnapshot;
@@ -40,7 +44,7 @@ export interface StoryBlueprintViewProps {
  * its creator while the novel is private, view-only otherwise, with Copy when
  * a reader may keep their own.
  */
-export function StoryBlueprintView({ title, snapshot, destinedEnding, access, isPrivate, busy, onBack, backLabel = 'Back to World Info', onSave, onCopy }: StoryBlueprintViewProps) {
+export function StoryBlueprintView({ title, snapshot, pictures, destinedEnding, access, isPrivate, busy, onBack, backLabel = 'Back to World Info', onSave, onCopy }: StoryBlueprintViewProps) {
   const editable = access.view === 'creator' && isPrivate && Boolean(onSave);
   const canCopy = access.view === 'reader' && access.copy && Boolean(onCopy);
   const [copying, setCopying] = useState(false);
@@ -92,7 +96,7 @@ export function StoryBlueprintView({ title, snapshot, destinedEnding, access, is
       {copyState && <p role={copyState.ok ? 'status' : 'alert'} className={`text-sm ${copyState.ok ? 'text-emerald-200' : 'text-amber-200'}`}>{copyState.message}</p>}
     </header>
     {snapshot
-      ? <NovelBlueprintEditor snapshot={snapshot} destinedEnding={destinedEnding} busy={busy}
+      ? <NovelBlueprintEditor pictures={pictures} snapshot={snapshot} destinedEnding={destinedEnding} busy={busy}
           readOnly={!editable} onSave={editable ? onSave : undefined} />
       : <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-neutral-300" data-testid="story-blueprint-none">
           This novel began from a premise, not a Story Seed, so it has no World Blueprint.
@@ -101,8 +105,9 @@ export function StoryBlueprintView({ title, snapshot, destinedEnding, access, is
 }
 
 /** A HARNESS story's Blueprint page, read from the story's active Foundation revision. */
-export function StoryBlueprintPage({ stories, storyId, access, onBack, backLabel, onCopy }: {
+export function StoryBlueprintPage({ stories, storyId, access, onBack, backLabel, onCopy, codexPictures }: {
   stories: LibraryStories;
+  codexPictures?: CodexPictureService;
   storyId: string;
   access: StoryBlueprintAccess;
   onBack?: () => void;
@@ -119,7 +124,21 @@ export function StoryBlueprintPage({ stories, storyId, access, onBack, backLabel
     : undefined,
   [foundation?.id]);
   if (!story) return <p role="alert" className="text-sm text-amber-200">This story is no longer available.</p>;
-  return <StoryBlueprintView title={story.title} snapshot={snapshot} destinedEnding={input?.destinedEnding}
+  const characters = snapshot ? blueprintCharacters(snapshot.seed) : [];
+  const saved = state ? storyPortraitCharacters(state, storyId) : [];
+  const entryFor = (key: string) => {
+    const character = characters.find(candidate => candidate.key === key);
+    return saved.find(candidate => character?.mainCharacter ? candidate.mainCharacter : candidate.name === character?.name);
+  };
+  const pictures: CodexPictureMaker | undefined = codexPictures && state ? {
+    pictureOf: key => { const character = entryFor(key); return character ? codexPictures.pictureOf(storyId, character.key) : undefined; },
+    manifest: async card => {
+      const character = storyPortraitCharacters(controller.snapshot(), storyId).find(candidate => card.key === 'main' ? candidate.mainCharacter : candidate.name === card.name);
+      if (!character) throw new Error('Save the Blueprint before manifesting this character.');
+      await codexPictures.manifest(storyId, character.key, codexPictureRequest(controller.snapshot(), storyId, { ...card, key: character.key }));
+    },
+  } : undefined;
+  return <StoryBlueprintView pictures={pictures} title={story.title} snapshot={snapshot} destinedEnding={input?.destinedEnding}
     access={access} isPrivate={(story.visibility ?? 'private') === 'private'}
     onBack={onBack} backLabel={backLabel} onCopy={onCopy}
     onSave={input ? async next => { await controller.saveFoundationRevision(storyId, foundationFromNovelBlueprint(input, next, story)); } : undefined} />;

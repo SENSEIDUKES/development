@@ -33,13 +33,14 @@ export interface CreatePageProps {
   seedId?: string;
   /** The Sparks button in the Origin heading: a chosen spark fills this seed's Origin. */
   originSparks?: CreationModalProps['originSparks'];
+  blueprintPictures?: CreationModalProps['blueprintPictures'];
   onHome: () => void;
   /** Create Story: the host starts the story and shows it. */
   onStartStory: (payload: InitialStoryGenerationPayload) => Promise<void>;
 }
 
 /** Create: the Story Seed and its World Blueprint, the same journey the Library ships. */
-export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, renderStoryPlugins, accentColor, seedId, originSparks, onHome, onStartStory }: CreatePageProps) {
+export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, renderStoryPlugins, accentColor, seedId, originSparks, onHome, onStartStory, blueprintPictures }: CreatePageProps) {
   const runtime = useNovelExpandedStoryCreation(services.storySeeds, startedSeedIds);
   const activeRequest = useRef<AbortController | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -80,7 +81,7 @@ export function CreatePage({ services, askForToken, startedSeedIds, chapterModel
 
   return <StoryCreationProvider value={runtime}>
     <LibraryLook accentColor={accentColor} className="min-h-screen bg-void" data-testid="novel-expanded-create">
-      <CreationModal onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
+      <CreationModal blueprintPictures={blueprintPictures} onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
         accountDefaultLanguage={accountDefaultLanguage} accountDefaultChapterWritingStyle={accountDefaultChapterWritingStyle}
         renderStorySettings={renderStorySettings} renderStoryPlugins={renderStoryPlugins} manifestAside={<BlueprintEnergyCost />} initialSeedId={seedId} originSparks={originSparks}
         onGenerateBlueprint={payload => isLocalDevelopmentModel(chapterModel)

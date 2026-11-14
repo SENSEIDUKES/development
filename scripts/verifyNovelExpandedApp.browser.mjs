@@ -62,7 +62,7 @@ const slidesSideways = () => document.documentElement.scrollWidth > window.inner
 const BASE = (process.argv[2] ?? process.env.NOVEL_EXPANDED_URL ?? 'http://localhost:5173').replace(/\/$/, '');
 const OUTPUT = 'output/playwright/novel-expanded';
 const TOKEN = 'browser-walk-token';
-const VIEWPORTS = [{ name: 'phone', width: 390, height: 844 }, { name: 'laptop', width: 1440, height: 900 }];
+const VIEWPORTS = [{ name: 'phone', width: 390, height: 844 }, { name: 'laptop', width: 1280, height: 800 }];
 const SHARED_READER_CONTRACTS = /\/src\/components\/reader-(?:chamber\/shared\/(?:readerLanguage|manifestationEligibility|cinematicScroll\/anchors|cinematicScroll\/useSemanticReadingPosition)|codex\/shared\/types)\.ts/;
 const FORBIDDEN_MODULE = /\/src\/(?:workshop\/|library\/generation\/|components\/reader-(?:chamber|codex)\/|host\/reader\/webSpeechNarration)/;
 
@@ -304,6 +304,11 @@ async function walk(browser, viewport, sample) {
     const request = route.request();
     // A Codex card's picture rides the cover route; it carries the card.
     const body = request.postDataJSON();
+    if (!body.card) {
+      check(body.story.characters?.[0]?.role === 'protagonist', 'A cover must attach the protagonist first.');
+      check(body.story.characters[0].image.data.length > 0, 'A cover must carry actual image bytes.');
+      check(body.story.characters[1]?.name === 'Junior Sister Han', 'The cover must attach the selected second character.');
+    }
     (body.card ? counts.pictures : counts.covers).push({ body, token: request.headers().authorization === `Bearer ${TOKEN}` });
     await new Promise(resolve => setTimeout(resolve, 1500));
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ image: COVER.toString('base64'), mimeType: 'image/jpeg', model: 'google/gemini-3.1-flash-image' }) });
@@ -489,6 +494,16 @@ async function walk(browser, viewport, sample) {
   }
   check(screenText.includes('Born as the son of a fallen patriarch'), "The creator's own Biography must stay.");
   check(!screenText.includes('A laborer in the outer quarry'), "The model's Biography must not replace the creator's.");
+  await page.getByRole('tab', { name: 'Cast', exact: true }).click();
+  await shot('3-blueprint-before-portrait');
+  await page.getByRole('button', { name: /^Manifest .+ portrait$/ }).click();
+  await page.getByRole('button', { name: /^Manifest .+ portrait$/ }).filter({ hasText: 'Manifest again' }).waitFor();
+  check(counts.pictures.length === 1, 'Blueprint manifestation should make exactly one portrait.');
+  await page.getByRole('button', { name: 'Junior Sister Han', exact: true }).click();
+  await page.getByRole('button', { name: 'Manifest Junior Sister Han portrait' }).click();
+  await page.getByRole('button', { name: 'Manifest Junior Sister Han portrait' }).filter({ hasText: 'Manifest again' }).waitFor();
+  await page.getByRole('button', { name: 'Ye Chen, main character', exact: true }).click();
+  await shot('3-blueprint-portrait');
   await shot('3-blueprint');
   // Create Story keeps the new book in Create: its World Info opens first, its creator's; Start Story
   // opens the creator's Reader, which writes Chapter 1 under the veil.
@@ -907,16 +922,23 @@ async function walk(browser, viewport, sample) {
   check(!(await page.evaluate(slidesSideways)), 'The conditions must not make the sheet scroll sideways.');
   await shot('6d-codex-conditions');
   // Manifest first writes that one look (one quiet call with the token), then makes the card's picture from it, and the card wears it.
+  const writtenLook = codexSheet.getByTestId('codex-look').filter({ hasText: ', as the drowned city first saw them.' });
+  const pictureResponse = page.waitForResponse(response => {
+    const request = response.request();
+    return new URL(response.url()).pathname === '/api/story-cover' && request.postDataJSON()?.card?.subject === 'character';
+  });
   await codexSheet.getByTestId('codex-manifest').getByRole('button', { name: 'Manifest' }).click();
-  await codexSheet.locator('header img').waitFor();
+  await writtenLook.waitFor();
   check(counts.looks.length === 1 && counts.looks[0].token && counts.looks[0].subjects.length === 1,
     `Manifest should write one look, in one quiet call with the token, got ${JSON.stringify(counts.looks)}.`);
   const look = await codexSheet.getByTestId('codex-look').innerText();
   check(look.includes(', as the drowned city first saw them.') && /hair/i.test(look) && look.includes('salt-white'), `The sheet should show the look written down, got ${look}.`);
+  await pictureResponse;
   const picture = counts.pictures.at(-1);
   check(picture?.token && picture.body.card.subject === 'character' && picture.body.card.look.summary.includes(', as the drowned city first saw them.'),
     `Manifest should ask for one picture from the card's look, with the token, got ${JSON.stringify(picture)}.`);
   const manifestAgain = codexSheet.getByTestId('codex-manifest').getByRole('button');
+  await manifestAgain.filter({ hasText: 'Manifest again' }).waitFor();
   // Its words, then the picture's Energy price riding on it.
   check((await manifestAgain.textContent()).startsWith('Manifest again'), 'A manifested card should offer Manifest again.');
   check(await manifestAgain.locator('[data-energy-action="image.generate"]').count() === 1, 'Manifest should carry a picture\'s Energy price.');
@@ -1035,8 +1057,12 @@ async function walk(browser, viewport, sample) {
   await coverManifest.click();
   const threeCovers = page.locator('.story-cover-option[data-count="3"]');
   await threeCovers.waitFor();
+  await page.waitForFunction(() => !document.querySelector('.story-cover-option[data-count="3"]')?.disabled);
+  check(counts.pictures.length >= 1, 'The cover should reuse the Blueprint protagonist portrait.');
+
   check((await page.locator('.story-cover-option[data-count="1"]').textContent())?.includes('5'), 'One cover should cost 5 Energy.');
   check((await threeCovers.textContent())?.includes('15'), 'Three covers should cost 15 Energy.');
+  await page.getByRole('button', { name: 'Next cover character' }).click();
   await page.waitForTimeout(500);
   await shot('4e-cover-choice');
   await threeCovers.click();

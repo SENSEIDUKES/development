@@ -1,5 +1,5 @@
 import {
-  COVER_PROMPT_TEMPLATE,
+  COVER_PROMPT_TEMPLATE, COVER_REFERENCE_RULES, COVER_SINGLE_CHARACTER, COVER_TWO_CHARACTERS,
   COVER_TITLE_OFF,
   COVER_TITLE_ON,
   COVER_TRADITIONS,
@@ -26,6 +26,7 @@ export { CODEX_CHARACTER_PROMPT_TEMPLATE, CODEX_THING_PROMPT_TEMPLATE, COVER_PRO
 
 export type ImagePromptId =
   | 'cover'
+  | 'cover-references'
   | 'cover-title-on'
   | 'cover-title-off'
   | 'cover-current'
@@ -130,6 +131,13 @@ export const IMAGE_KINDS: ImageKind[] = [
         source: 'src/server/story-cover/prompt.ts (COVER_PROMPT_TEMPLATE), the owner\'s approved template (intro updated 2026-11-11)',
         when: 'Each cover made, once per cover. A line whose field the story does not have is left out. The braces are filled from the story: its title, Story Seed tradition, genre, Blueprint logline (else its premise), main character, tone, world facts and story tags; never its chapters. {title instruction} is one of the two title instructions below.',
         text: COVER_PROMPT_TEMPLATE,
+      },
+      {
+        id: 'cover-references',
+        title: 'Character reference instructions',
+        source: 'src/server/story-cover/prompt.ts',
+        when: 'One or two labeled portraits accompany every cover: protagonist first, then the selected counterpart.',
+        text: [COVER_REFERENCE_RULES, COVER_SINGLE_CHARACTER, COVER_TWO_CHARACTERS].join('\n'),
       },
       {
         id: 'cover-title-on',

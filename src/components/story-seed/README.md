@@ -72,6 +72,17 @@ one owner at `world.optional.worldIdentity.title`; Blueprint title editing
 updates that same value. The Blueprint keeps creator-authored Origin
 provenance separate from generated story direction.
 
+## Character portraits
+
+The Blueprint Cast screen offers Manifest on a named character with an appearance.
+The host supplies `BlueprintPictureService`; the same Codex image call reads the
+card’s identity and visual traits, with no look-describer call. Saving the Blueprint
+precedes generation. Portraits are stored by seed and stable character ID plus visual
+input, so changing a character’s appearance or replacing the Blueprint does not reuse
+unrelated artwork. The app carries those saved bytes into the story’s Codex entries.
+The existing Workshop preview uses its own device image store and real image API;
+its access-token control applies to pictures as well as Blueprint generation.
+
 ## Current ownership
 
 ```text
@@ -680,3 +691,5 @@ of occupying the form column. Section titles retain their Library typography and
 guidance at a smaller scale. Phone navigation and inline Back/Next are unchanged.
 The app and Workshop share this surface; browser checks include 1024px and assert
 that the first choices fit fully in the upper half of the viewport.
+
+- **2026-11-13:** Blueprint Cast gains saved character portraits through the existing Codex image service; those images carry into a created novel and serve as cover references.

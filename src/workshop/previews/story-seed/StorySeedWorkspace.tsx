@@ -1,3 +1,7 @@
+import { blueprintPictureOwner, blueprintPictureKey } from '@seihouse/library/story-seed';
+import { useCodexPictures } from '../../../host/media/codexPictures';
+import { IndexedDbStoryCoverStore } from '../../../host/media/storyCovers';
+import { requestCodexPicture } from '../../../host/media/storyCoverClient';
 import { startWorkshopHarnessStory } from '../harness-generation/storySeedHandoff';
 import type { InitialStoryGenerationPayload, StorySeedInput, StorySpark } from '@seihouse/sen/story-seed';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
@@ -236,6 +240,8 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
   const [activeCategory, setActiveCategory] = useState<PreviewCategory>('intake');
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('development');
   const [blueprintAccessToken, setBlueprintAccessToken] = useState('');
+  const [pictureStore] = useState(() => new IndexedDbStoryCoverStore('workshop-codex-pictures-v1'));
+  const pictures = useCodexPictures(pictureStore, request => requestCodexPicture(request, { model: readModelPreference('images') ?? undefined, accessToken: blueprintAccessToken || createSavedAccessToken().current }));
   const [blueprintGenerating, setBlueprintGenerating] = useState(false);
   const activeBlueprintRequestRef = useRef<AbortController | null>(null);
   const currentUser = useAppStore(state => state.currentUser);
@@ -316,6 +322,12 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
   // The Writer plugins chosen on Plugins, applied when Start Story creates the story.
   const [pluginsDraft, setPluginsDraft] = useState<StorySettingsDraft>({});
   const developmentChamberProps = {
+    blueprintPictures: {
+      pictureOf: (seedId: string, character: import('@seihouse/library/story-seed').PortraitCharacter) => pictures.pictureOf(blueprintPictureOwner(seedId), blueprintPictureKey(character)),
+      manifest: (record: import('@seihouse/sen/story-seed').StorySeedRecord, character: import('@seihouse/library/story-seed').PortraitCharacter) => pictures.manifest(blueprintPictureOwner(record.id), blueprintPictureKey(character), {
+        card: character, story: { style: record.seed.story.required.style, genre: record.seed.story.required.genre, world: record.seed.world.optional.worldFoundations.powerSystem?.kindOfWorld },
+      }),
+    },
     onNavigateHome: () => navigateLibraryPreview(LIBRARY_DESTINATIONS[0].location),
     // Plugins shows the Writer skills here as it does in the app.
     renderStoryPlugins: ({ seed, originalLanguage }: { seed: StorySeedInput; originalLanguage: SenLanguageCode }) =>

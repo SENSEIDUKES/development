@@ -1298,11 +1298,19 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     const requestStoryCover = vi.fn(async () => new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' }));
     const writer = scriptedWriter();
     const services = appServices(writer.writer, { storyCovers, requestStoryCover });
-    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, writer.writer);
+    const record = regularSeedRecord();
+    record.seed.world.optional.worldFoundations.mainCharacter!.appearance = 'A lean young man with black hair and pale blue robes.';
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, writer.writer, record);
     await render(services, `/app/?story=${created.id}`);
 
     // The cover itself says Manifest; one cover is made and worn.
     await click(worldInfo()!.querySelector('[aria-label="Manifest cover art"]'), 'Manifest on the cover', 20);
+    expect(document.querySelector<HTMLButtonElement>('.story-cover-option[data-count="1"]')?.disabled).toBe(true);
+    await click(document.querySelector('button[aria-label^="Manifest "][aria-label$=" portrait"]'), 'Manifest protagonist', 40);
+    expect(services.requestCodexPicture).toHaveBeenCalledTimes(1);
+    expect(document.querySelector<HTMLButtonElement>('.story-cover-option[data-count="1"]')?.disabled, document.querySelector('[role="dialog"]')?.textContent).toBe(false);
+
+
     await click(document.querySelector('.story-cover-option[data-count="1"]'), 'One cover', 20);
     expect(requestStoryCover).toHaveBeenCalledTimes(1);
     expect(requestStoryCover).toHaveBeenCalledWith(expect.objectContaining({ title: created.title }), { model: 'google/gemini-3-pro-image', accessToken: undefined });
@@ -1322,9 +1330,17 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     });
     const writer = scriptedWriter();
     const services = appServices(writer.writer, { requestStoryCover: requestStoryCover as unknown as NovelExpandedServices['requestStoryCover'] });
-    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, writer.writer);
+    const record = regularSeedRecord();
+    record.seed.world.optional.worldFoundations.mainCharacter!.appearance = 'A lean young man with black hair and pale blue robes.';
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, writer.writer, record);
     await render(services, `/app/?story=${created.id}`);
     await click(worldInfo()!.querySelector('[aria-label="Manifest cover art"]'), 'Manifest on the cover', 20);
+    expect(document.querySelector<HTMLButtonElement>('.story-cover-option[data-count="1"]')?.disabled).toBe(true);
+    await click(document.querySelector('button[aria-label^="Manifest "][aria-label$=" portrait"]'), 'Manifest protagonist', 40);
+    expect(services.requestCodexPicture).toHaveBeenCalledTimes(1);
+    expect(document.querySelector<HTMLButtonElement>('.story-cover-option[data-count="1"]')?.disabled, document.querySelector('[role="dialog"]')?.textContent).toBe(false);
+
+
     await click(document.querySelector('.story-cover-option[data-count="3"]'), 'Three to choose from', 20);
     const sheet = document.querySelector<HTMLFormElement>('[data-testid="access-token-sheet"]')!;
     expect(sheet.textContent).toContain('covers are limited to 3 every 30 minutes');

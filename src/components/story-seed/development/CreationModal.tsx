@@ -384,6 +384,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const sessionAtStart = seedSessionIdRef.current;
     const recordAtStart = currentSeedRef.current;
     const requestedRecordId = recordAtStart?.id ?? seedSessionRecordsRef.current.get(sessionAtStart)?.id;
+    const confirmedTabsAtStart = [...confirmedTabsRef.current];
     const previousSave = persistQueueRef.current;
     let releaseSave!: () => void;
     persistQueueRef.current = new Promise<void>(resolve => { releaseSave = resolve; });
@@ -394,8 +395,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         : seedSessionRecordsRef.current.get(sessionAtStart) ?? null;
       const requestId = ++persistRequestIdRef.current;
       const saved = activeRecord && activeRecord.userId === ownerAtStart
-        ? await runtime.repository.update(ownerAtStart, activeRecord, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsRef.current })
-        : await runtime.repository.create(ownerAtStart, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsRef.current });
+        ? await runtime.repository.update(ownerAtStart, activeRecord, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsAtStart })
+        : await runtime.repository.create(ownerAtStart, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsAtStart });
       const currentRecord = currentSeedRef.current;
       const stillActive = requestId === persistRequestIdRef.current
         && seedOwnerIdRef.current === ownerAtStart

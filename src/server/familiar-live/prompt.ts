@@ -55,6 +55,13 @@ export function familiarLiveCharacter(brief: FrontDeskLiveBrief): string[] {
   ];
 }
 
+/** The list of what can be done on this page, as both the speaking model and the one that acts are told it. */
+export function familiarLiveAbilities(actions: FrontDeskLiveBrief['actions']): string {
+  return ['What you can do here, only through propose_action:',
+    ...actions.map(action => `- ${action.id}: ${action.label}${action.detail ? `. ${action.detail}` : ''}${action.instant ? '. Takes them there at once, no confirmation.' : ''}${action.input ? `. Needs the text for "${action.input.label}" in input, at most ${action.input.maxLength} characters.` : ''}`),
+  ].join('\n');
+}
+
 /** What the Familiar can do here, through its functions, and the rule that the screen confirms every change. */
 export function familiarLiveActions(brief: FrontDeskLiveBrief): string {
   const { topics, actions, docs } = brief;
@@ -65,11 +72,16 @@ export function familiarLiveActions(brief: FrontDeskLiveBrief): string {
     ...(docs.length ? ['To read what the docs say about something, call look_up with the name it has in the list of docs above, in the language that list is written in — never the reader\'s own wording, which the docs will not match. Work out which name the reader means, look it up, then tell them what it says in their language. It answers with the entries themselves, or with nothing when the docs do not cover it.'] : []),
     ...(topics.length ? ['When showing a topic would help, call show_topic so it appears on their screen.'] : []),
     ...(actions.length
-      ? ['What you can do here, only through propose_action:',
-        ...actions.map(action => `- ${action.id}: ${action.label}${action.detail ? `. ${action.detail}` : ''}${action.instant ? '. Takes them there at once, no confirmation.' : ''}${action.input ? `. Needs their words for "${action.input.label}", at most ${action.input.maxLength} characters, in input.` : ''}`),
+      ? [familiarLiveAbilities(actions),
+        'Everything on that list is yours to do: never check first whether you can. When the reader asks for one, call propose_action straight away.',
+        ...(actions.some(action => action.input)
+          // SENSEI, 2026-11-14: "put that in there" went in word for word, instead of the idea just discussed.
+          ? ['You write input yourself: the finished words that belong there, never the reader\'s request. When they point back at the conversation ("that", "what we discussed", "your idea"), write that idea out in full in input.']
+          : []),
         ...(actions.some(action => action.instant) ? ['An action that takes them somewhere happens as soon as you call propose_action; say where you took them.'] : []),
         `${actions.some(action => action.instant) ? 'Every other' : ''} propose_action never changes anything: it shows the change on the reader's screen to confirm. Never say you did something before it is confirmed.`.trim(),
-        'Call answer_proposal with confirm only when the reader clearly tells you to confirm or go ahead; with cancel when they decline; with hear when they want to hear it first.']
+        // SENSEI, 2026-11-14: asking to alter Fate took three or four exchanges; one is enough when they already said do it.
+        'When the reader\'s request already tells you to go ahead ("do it", "put that in", "set it"), call answer_proposal with confirm right after propose_action, in the same turn, then tell them in a sentence what was set. Otherwise call answer_proposal with confirm only when they clearly tell you to confirm or go ahead; with cancel when they decline; with hear when they want to hear it first.']
       : ['You cannot change anything on this page. If asked to, say so kindly.']),
   ].join('\n');
 }

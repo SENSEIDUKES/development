@@ -46,7 +46,13 @@ describe('Familiar live talk route', () => {
     const instruction: string = config.liveConnectConstraints.config.systemInstruction.parts[0].text;
     expect(instruction).toContain('You are Celestial Guardian');
     expect(instruction).toContain('- Energy (energy): Energy is the currency used for manifesting.');
-    expect(instruction).toContain('- custom: Custom. Your own direction. Needs their words for "Direction", at most 1200 characters');
+    expect(instruction).toContain('- custom: Custom. Your own direction. Needs the text for "Direction" in input, at most 1200 characters');
+    // SENSEI, 2026-11-14: "put that in there" went in word for word. The Familiar writes the idea itself,
+    // knows what it can do without checking, and a request that already says go ahead is confirmed at once.
+    expect(instruction).toContain('write that idea out in full in input');
+    expect(instruction).toContain('never check first whether you can');
+    expect(instruction).toContain('call answer_proposal with confirm right after propose_action, in the same turn');
+    expect(instruction).toContain('Never say you did something before it is confirmed.');
     // Beyond the page, the docs are its facts: it is given their names, and looks an entry up when it needs one.
     expect(instruction).toContain('- Story: Story Seed, Arc Goal');
     // The catalog is written in one language; a reader speaking another must still reach it,
@@ -135,6 +141,11 @@ describe('Familiar live talk route', () => {
       model: 'gpt-5.4-mini', tool_choice: 'auto', parallel_tool_calls: false, reasoning: { effort: 'low' },
     } });
     expect(sent.session.delegation.responses.instructions).toContain('- custom: Custom. Your own direction.');
+    expect(sent.session.delegation.responses.instructions).toContain('write that idea out in full in input');
+    // SENSEI, 2026-11-14: the voice knows what the page can do, and hands the backend the idea itself.
+    expect(sent.session.instructions).toContain('What you can do here, through the backend:\n- custom: Custom. Your own direction.');
+    expect(sent.session.instructions).toContain('write out the idea itself, never their request');
+    expect(sent.session.instructions).not.toContain('propose_action');
     expect(sent.session.delegation.responses.tools.map((tool: { name: string }) => tool.name)).toEqual(['look_up', 'show_topic', 'propose_action', 'answer_proposal']);
     expect(sent.session.delegation.responses.tools[1]).toMatchObject({ type: 'function', parameters: { type: 'object', properties: { topic_id: { enum: ['energy'] } } } });
   });

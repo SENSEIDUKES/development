@@ -40,7 +40,8 @@ Story Seed is one creation flow with these visible destinations:
   information around it is the Blueprint's own, in the Library's headings and
   glass. A card opens its fields in a sheet; the fields are the Seed's own
   per-entry forms (`AdditionalCharacterFields`, `FactionFields`,
-  `WorldCardFields`). Blanks read Fate Will Decide. Refine Details and
+  `WorldCardFields`). A blank stays blank here: Fate Will Decide belongs to the
+  Seed's live card, before generation. Refine Details and
   **Create Story** are pinned in equal cells on the workspace bar. Every page
   stays mounted, so field ids hold.
 
@@ -693,3 +694,4 @@ The app and Workshop share this surface; browser checks include 1024px and asser
 that the first choices fit fully in the upper half of the viewport.
 
 - **2026-11-13:** Blueprint Cast gains saved character portraits through the existing Codex image service; those images carry into a created novel and serve as cover references.
+- **2026-11-14:** Fate Will Decide stays before generation. Once a World Blueprint exists (its Review and the view-only Blueprint after Chapter 1), a character, world card or biography slot the Blueprint left blank stays blank instead of reading Fate Will Decide. The Seed's live card and the Create step keep it, since there it still describes what generation will do.

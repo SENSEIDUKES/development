@@ -169,7 +169,6 @@
 .bp-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 @media (min-width: 640px) { .bp-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 1280px) { .bp-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.bp-tiles-empty { grid-column: 1 / -1; margin: 0; }
 
 /* ── Cover: the record's chips, two to a row on a phone ─────────────── */
 .bp-record { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }

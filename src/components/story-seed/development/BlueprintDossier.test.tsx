@@ -65,7 +65,9 @@ describe('World Blueprint as a character screen', () => {
   it('shows the chosen character, and edits made in its sheet save to the Seed', () => {
     act(() => root.render(<Review seed={seedWithCast()} />));
     expect(stat('startingIdentity')).toBe('Exiled heir');
-    expect(stat('age')).toBe('Fate Will Decide');
+    // The Blueprint comes after generation, so a blank stays blank.
+    expect(stat('age')).toBe('');
+    expect(container.textContent).not.toContain('Fate Will Decide');
     press('[data-testid="blueprint-cast"] button[aria-label="Elder Qin"]');
     expect(stat('role')).toBe('Protector');
     press('[data-testid="blueprint-cast-edit"]');

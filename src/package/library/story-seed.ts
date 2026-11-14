@@ -1,3 +1,5 @@
+export { blueprintCharacters, blueprintPictureOwner, blueprintPictureKey, characterPortrait, storyPortraitCharacters, inheritBlueprintPictures, type PortraitCharacter, type BlueprintPictureService } from '../../library/story-seed/blueprintPictures';
+
 /** Library's branded, host-authenticated Story Seed journey. */
 import '../../components/story-seed/development/story-seed.css';
 

@@ -185,6 +185,7 @@ export {
   APPEARED_SECTION_CHARACTERS,
   APPEARED_SECTION_THINGS,
   appearancesSection,
+  worldCardLook,
   deriveAppearances,
   describableAppearances,
   placeAppearances,

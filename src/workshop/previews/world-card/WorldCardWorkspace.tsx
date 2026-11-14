@@ -13,7 +13,8 @@ import {
   type WorldCardBlueprintPreview, type WorldCardChapterMapPreview, type WorldCardCover, type WorldCardSashPreview, type WorldCardDestinations, type WorldCardPreviewState,
   type WorldCardCataloguePreview, type WorldCardHeroPreview, type WorldCardReaderLanguage, WORLD_CARD_READER_LANGUAGES, type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
-import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/home';
+import { WorldInfoCoverPreview } from './WorldInfoCoverPreview';
+import { type WorldActivityStatus } from '@seihouse/library/home';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 
@@ -101,7 +102,7 @@ function WorldCardStageCards({ view, state, onAction }: {
 
   return <div className="mx-auto max-w-5xl space-y-12 px-4 py-6 sm:px-8" data-world-card-stage="development">
     {(openedWorld || show('info')) && <Stage title="Info page">
-      <StoryDetailScreen story={infoWorld}
+      <WorldInfoCoverPreview story={infoWorld}
             backLabel={openedWorld ? 'Back to cards' : 'Back to novels'}
             onBack={openedWorld ? () => setOpenedWorld(null) : () => onAction('Back to novels')}
             readingPosition={state.reading === 'chapter-7' ? { chapterNumber: previewReadingChapter(state.chapterMap) } : undefined}

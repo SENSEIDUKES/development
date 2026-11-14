@@ -42,3 +42,5 @@ export {
   type StorySettingsDraft,
 } from '../../library/stories/settings/storySettingsDraft';
 export { STORY_COVER_CHOICES, codexPictureRequest, storyCoverRequest, type CodexPictureRequest, type CodexPictureService, type MadeStoryCovers, type StoryCoverChoice, type StoryCoverRequest, type StoryCoverService } from '../../library/stories/storyCover';
+
+export { useStoryCoverManifest } from '../../library/stories/StoryCoverManifest';

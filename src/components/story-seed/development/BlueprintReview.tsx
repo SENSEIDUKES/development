@@ -33,7 +33,11 @@ import { PinnedFooter } from './creator/PinnedFooter';
 import './blueprint/blueprint.css';
 import { getSenLanguageLabel, normalizeChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 
+import type { CodexPictureMaker } from '@seihouse/sen/harness-generation';
+
 interface BlueprintReviewProps {
+  pictures?: CodexPictureMaker;
+  portraitBusy?: boolean;
   blueprint: WorldBlueprint;
   setBlueprint: Dispatch<SetStateAction<WorldBlueprint>>;
   seed: StorySeedInput;
@@ -61,7 +65,7 @@ export const BlueprintReview = ({
   isGenerating,
   onRegenerateBlueprint,
   originalLanguage,
-  price,
+  price, pictures, portraitBusy,
 }: BlueprintReviewProps) => {
   const runtime = useStoryCreationRuntime();
   const activeAgentId = useStoryCreationStore(state => state.activeAgentId);
@@ -270,7 +274,7 @@ export const BlueprintReview = ({
         <div {...panel('cast')}>
           {/* The cast, as a Star Rail character screen: the Seed's own
               characters plus the Blueprint's background prose. */}
-          <CastScreen
+          <CastScreen pictures={pictures}
             seed={seed}
             updateSeed={updateSeed}
             backgroundProfile={mainCharacter.backgroundProfile}
@@ -307,7 +311,7 @@ export const BlueprintReview = ({
       <PinnedFooter data-blueprint-footer>
         <div className="seed-creator-footer-inner">
           <div className="seed-creator-footer-cell">
-            <LibraryButton variant="ghost" size="md" fullWidth icon={ArrowLeft} onClick={onBack} disabled={isGenerating}>
+            <LibraryButton variant="ghost" size="md" fullWidth icon={ArrowLeft} onClick={onBack} disabled={portraitBusy || isGenerating}>
               Refine Details
             </LibraryButton>
           </div>
@@ -318,7 +322,7 @@ export const BlueprintReview = ({
               fullWidth
               icon={SENManifestingIcon}
               onClick={onStartStory}
-              disabled={Boolean(arcProblem) || regenerating}
+              disabled={portraitBusy || Boolean(arcProblem) || regenerating}
               loading={isGenerating && !regenerating}
               loadingIndicator={activeAgentId === 'versa' ? (
                 <img src={runtime.authorMarkUrl} className="size-5 animate-pulse object-contain" alt="" aria-hidden="true" />

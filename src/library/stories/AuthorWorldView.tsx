@@ -45,7 +45,8 @@ function fallbackCover(id: string, images: readonly string[]) {
   return images[hash % images.length];
 }
 
-export function AuthorWorldView({ stories, worlds, storyId, onChooseWorld, onOpenChapter, onBack, onRead }: {
+export function AuthorWorldView({ codexPictures, stories, worlds, storyId, onChooseWorld, onOpenChapter, onBack, onRead }: {
+  codexPictures?: import('./storyCover').CodexPictureService;
   stories: LibraryStories;
   /** Every world the author has, as Create's Your worlds shows them. */
   worlds: readonly CreatorWorld[];
@@ -101,7 +102,7 @@ export function AuthorWorldView({ stories, worlds, storyId, onChooseWorld, onOpe
         </div>
         <div className="mt-5" role="tabpanel" aria-label={TABS.find(entry => entry.id === shown)!.label}>
           {shown === 'chapters' && <ChapterTable key={storyId} stories={stories} storyId={storyId} onOpenChapter={onOpenChapter} />}
-          {shown === 'blueprint' && <WorldBlueprint stories={stories} storyId={storyId} />}
+          {shown === 'blueprint' && <WorldBlueprint codexPictures={codexPictures} stories={stories} storyId={storyId} />}
           {shown === 'codex' && <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-neutral-300" data-testid="author-world-codex">
             Coming soon: every card and every picture of this world, all in one place, ahead of what a reader has reached.
           </p>}
@@ -121,6 +122,7 @@ export function AuthorWorldView({ stories, worlds, storyId, onChooseWorld, onOpe
  * with user agreements and a subscription, so it is never a button up here.
  */
 function WorldHeader({ stories, storyId, title, onRead }: {
+  codexPictures?: import('./storyCover').CodexPictureService;
   stories: LibraryStories; storyId: string; title?: string; onRead?: () => void;
 }) {
   const story = stories.state ? findStory(stories.state, storyId) : undefined;
@@ -243,7 +245,7 @@ function WorldInfoTab({ stories, storyId }: { stories: LibraryStories; storyId: 
 }
 
 /** The world's Blueprint, or a plain note when the world has none (an imported novel, or one begun from a premise). */
-function WorldBlueprint({ stories, storyId }: { stories: LibraryStories; storyId: string }) {
+function WorldBlueprint({ stories, storyId, codexPictures }: { stories: LibraryStories; storyId: string; codexPictures?: import('./storyCover').CodexPictureService }) {
   const { state } = stories;
   const story = state ? findStory(state, storyId) : undefined;
   const input = state && story ? state.foundations.find(entry => entry.id === story.activeFoundationRevisionId)?.input : undefined;
@@ -252,7 +254,7 @@ function WorldBlueprint({ stories, storyId }: { stories: LibraryStories; storyId
       This world has no Blueprint. An imported novel doesn&rsquo;t have one, and neither does a novel begun from a premise.
     </p>;
   }
-  return <StoryBlueprintPage stories={stories} storyId={storyId} access={{ view: 'creator' }} />;
+  return <StoryBlueprintPage codexPictures={codexPictures} stories={stories} storyId={storyId} access={{ view: 'creator' }} />;
 }
 
 type RowState = { label: string; tone: 'done' | 'quiet' | 'warn' | 'busy' };

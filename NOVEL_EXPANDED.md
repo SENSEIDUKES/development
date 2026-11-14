@@ -722,6 +722,11 @@ entries run to 2026-11-11.
     Router's image choice, **Nano Banana 2 Lite** unless the reader picks another;
     visitors may make 3 every 30 minutes and the owner's access token lifts the
     limit. Until the database, a cover is kept on the device, beside the stories.
+    Since 2026-11-13, the protagonist’s manifested portrait is required before a
+    cover is made, with one optional second character chosen by the reader.
+    Blueprint Cast can manifest portraits before the novel exists; those same
+    bytes become its Codex pictures. Covers receive labeled image references
+    beside the short story prompt, with no extra analysis call.
   - **Story Length is set from the start:** the Story Seed's ARC page asks how many
     arcs of 30 chapters the story should run, 10 to 40 (300 to 1,200 chapters); left
     blank, the World Blueprint suggests one in that range, written by the same model

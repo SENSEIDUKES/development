@@ -10,6 +10,7 @@ import {
   type SetStateAction,
 } from 'react';
 import './story-seed.css';
+import { blueprintCharacters, type BlueprintPictureService } from '../../../library/story-seed/blueprintPictures';
 import { motion } from 'motion/react';
 import { type StorySpark, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { generateUUID } from '@seihouse/sen/story-seed';
@@ -81,6 +82,7 @@ export interface CreationModalProps {
   renderStoryPlugins?: (seed: { seed: StorySeedInput; originalLanguage: SenLanguageCode }) => ReactNode;
   /** Shown beside the Manifest button, such as the host's price for a World Blueprint. */
   manifestAside?: ReactNode;
+  blueprintPictures?: BlueprintPictureService;
   /**
    * A saved Story Seed to open for editing when Create opens, such as a spark
    * the host just planted in the Story Bank. An id the bank does not hold
@@ -163,7 +165,7 @@ const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalSt
   libraryStories: state.stories,
 });
 
-export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, renderStoryPlugins, manifestAside, initialSeedId, originSparks }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, renderStoryPlugins, manifestAside, initialSeedId, originSparks, blueprintPictures }: CreationModalProps) {
   const runtime = useStoryCreationRuntime();
   const guestWorkspace = Boolean(runtime.guestOwnerId);
   const storeIsGenerating = useStoryCreationStore(state => state.isGenerating);
@@ -231,6 +233,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   // seeds and their Blueprints — toggled from the bottom navigation's Story
   // Bank tab (mobile) and the header's Story Bank button (desktop).
   const [showStoryBank, setShowStoryBank] = useState(false);
+  const [portraitPending, setPortraitPending] = useState(0);
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [confirmedTabs, setConfirmedTabsState] = useState<string[]>([]);
   const confirmedTabsRef = useRef<string[]>([]);
@@ -845,7 +848,24 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         <div className="px-4 pt-4 sm:px-6 sm:pt-6" ref={creatorRootRef}>
           {errorBanner && <div className="mx-auto mb-5 max-w-4xl">{errorBanner}</div>}
           <DeferredStorySeedView label="World Blueprint">
-            <BlueprintReview
+            <BlueprintReview portraitBusy={portraitPending > 0}
+              pictures={blueprintPictures ? {
+                pictureOf: key => {
+                  const character = blueprintCharacters(seed).find(entry => entry.key === key);
+                  return currentSeed && character ? blueprintPictures.pictureOf(currentSeed.id, character) : undefined;
+                },
+                manifest: async card => {
+                  setPortraitPending(value => value + 1);
+                  try {
+                    const reconciled = reconcileStorySeedBlueprint(seed, blueprint!);
+                    const record = await persistSeed(reconciled.seed, reconciled.blueprint, originalLanguage);
+                    if (!record) throw new Error('Save this Blueprint before manifesting a character.');
+                    const character = blueprintCharacters(record.seed).find(entry => entry.key === card.key);
+                    if (!character) throw new Error('Add this character’s name and appearance first.');
+                    await blueprintPictures.manifest(record, character);
+                  } finally { setPortraitPending(value => value - 1); }
+                },
+              } : undefined}
               blueprint={blueprint}
               setBlueprint={updateBlueprint}
               seed={seed}

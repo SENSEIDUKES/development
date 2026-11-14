@@ -25,6 +25,7 @@ export interface NovelBlueprintSnapshot {
 }
 
 export interface NovelBlueprintEditorProps {
+  pictures?: import('@seihouse/sen/harness-generation').CodexPictureMaker;
   snapshot: NovelBlueprintSnapshot;
   /** The novel's fixed destination, shown but never edited here. */
   destinedEnding?: string;
@@ -50,7 +51,7 @@ export interface NovelBlueprintEditorProps {
  * tradition, tags) and the story's original language. Arc Goals are edited
  * beside this editor under the novel's mode rules.
  */
-export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, readOnly = false, onSave }: NovelBlueprintEditorProps) {
+export function NovelBlueprintEditor({ snapshot, pictures, destinedEnding, busy = false, readOnly = false, onSave }: NovelBlueprintEditorProps) {
   const initial = useMemo(() => reconcileStorySeedBlueprint(snapshot.seed, snapshot.blueprint), [snapshot]);
   const [seed, setSeed] = useState<StorySeedInput>(initial.seed);
   const [blueprint, setBlueprintState] = useState<WorldBlueprint>(initial.blueprint);
@@ -121,7 +122,16 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, r
         ) : null}
       </LibraryPanel>
       </fieldset>
-      <CastScreen
+      <CastScreen pictures={pictures && {
+        pictureOf: pictures.pictureOf,
+        manifest: async card => {
+          if (dirty) {
+            if (!onSave) throw new Error('This Blueprint cannot be saved here.');
+            await onSave(reconcileStorySeedBlueprint(seed, blueprint));
+          }
+          await pictures.manifest(card);
+        },
+      }}
         seed={seed}
         updateSeed={updateSeed}
         readOnly={readOnly}

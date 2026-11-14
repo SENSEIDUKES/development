@@ -34,6 +34,19 @@ export const blobToDataUrl = (image: Blob) => new Promise<string>((resolve, reje
 /** The image's bytes in base64, without the data URL's prefix. */
 export const blobToBase64 = async (image: Blob) => (await blobToDataUrl(image)).replace(/^data:[^,]*,/, '');
 
+/** A portrait attachment small enough that two fit the existing 2 MB request limit. */
+export async function readCharacterReference(image: Blob): Promise<{ data: string; mimeType: string }> {
+  for (const side of [1024, 768, 512]) {
+    const resized = await shrinkImage(image, side, 0.86);
+    const file = resized ?? image;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) throw new Error('The character portrait must be a PNG, JPEG or WebP image.');
+    const data = await blobToBase64(file);
+    if (data.length <= 850_000) return { data, mimeType: file.type };
+    if (!resized) break;
+  }
+  throw new Error('The character portrait is too large to send. Please manifest it again.');
+}
+
 /** Base64 bytes back into an image. */
 export const base64ToBlob = (base64: string, mimeType: string): Blob => {
   const binary = atob(base64);

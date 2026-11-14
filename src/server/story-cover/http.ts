@@ -1,5 +1,6 @@
 import type { StoryCoverRequest } from '@seihouse/library/stories';
 import { createModelRouter, DEFAULT_IMAGE_MODEL, IMAGE_MODELS, ModelRouterError } from '@seihouse/library/model-router-server';
+import { parseAttachedImage } from '../shared/imageAttachments';
 import { MODEL_PROVIDERS, providerKey, type ModelEnvironment } from '../model-router/catalog';
 import { buildStoryCoverPrompt, STORY_COVER_ASPECT_RATIO, STORY_COVER_FIELD_LIMITS } from './prompt';
 import { buildCodexPicturePrompt, CODEX_PICTURE_ASPECT_RATIO, parseCodexPictureRequest } from './codexPicture';
@@ -47,7 +48,7 @@ const clip = (value: unknown, limit: number): string | undefined => {
 };
 
 /** What the route makes: a cover, or a Codex card's picture (the request carries a card). */
-interface ImageJob { prompt: string; aspectRatio: string; noun: 'cover' | 'picture'; model?: string }
+interface ImageJob { prompt: string; aspectRatio: string; noun: 'cover' | 'picture'; model?: string; referenceImages?: Array<{ data: string; mimeType: string }> }
 
 /** Reads a request: a Codex card's picture when it carries a card, else a cover. */
 const parseRequest = (body: unknown): ImageJob => {
@@ -58,7 +59,7 @@ const parseRequest = (body: unknown): ImageJob => {
     return { prompt: buildCodexPicturePrompt(picture), aspectRatio: CODEX_PICTURE_ASPECT_RATIO, noun: 'picture', ...(parsed.model ? { model: parsed.model as string } : {}) };
   }
   const cover = parseCoverRequest(parsed);
-  return { prompt: buildStoryCoverPrompt(cover.story), aspectRatio: STORY_COVER_ASPECT_RATIO, noun: 'cover', ...(cover.model ? { model: cover.model } : {}) };
+  return { prompt: buildStoryCoverPrompt(cover.story), aspectRatio: STORY_COVER_ASPECT_RATIO, noun: 'cover', referenceImages: cover.story.characters!.map(character => character.image), ...(cover.model ? { model: cover.model } : {}) };
 };
 
 /** Reads a cover request: the story's own words, each clipped to its limit, and an optional model. */
@@ -72,6 +73,20 @@ const parseCoverRequest = (parsed: unknown): { story: StoryCoverRequest; model?:
     const text = clip(source[field], LIMITS[field]);
     if (text) story[field] = text;
   }
+  if (!Array.isArray(source.characters) || source.characters.length < 1 || source.characters.length > 2) throw new Error('Manifest the main character before making a cover. Attach one or two character portraits.');
+  let attachmentSize = 0;
+  story.characters = source.characters.map((character, index) => {
+    if (!isRecord(character)) throw new Error('Each portrait needs its character’s name and role.');
+    const name = clip(character.name, 120);
+    const role = clip(character.role, 40);
+    if (!name || role !== (index === 0 ? 'protagonist' : 'counterpart')) throw new Error('Attach the protagonist first, then an optional second character.');
+    const parsed = parseAttachedImage(character.image);
+    if ('error' in parsed) throw new Error(parsed.error);
+    attachmentSize += parsed.image.data.length;
+    const relationship = clip(character.relationship, 200);
+    return { name, role, ...(relationship ? { relationship } : {}), image: parsed.image };
+  });
+  if (attachmentSize > 1_700_000) throw new Error('The character portraits are too large. Use smaller images.');
   if (source.titled !== undefined && typeof source.titled !== 'boolean') throw new Error('Whether the cover carries its title must be true or false.');
   if (source.titled) story.titled = true;
   if (source.tags !== undefined) {
@@ -113,7 +128,7 @@ export async function handleStoryCoverHttp(
   const started = Date.now();
   try {
     const result = await generate({
-      capability: 'image', model, prompt: parsed.prompt, aspectRatio: parsed.aspectRatio, timeoutMs: STORY_COVER_TIMEOUT_MS,
+      capability: 'image', model, prompt: parsed.prompt, ...(parsed.referenceImages ? { referenceImages: parsed.referenceImages } : {}), aspectRatio: parsed.aspectRatio, timeoutMs: STORY_COVER_TIMEOUT_MS,
     });
     if (result.capability !== 'image') throw new ModelRouterError('provider-error', 'The configured model returned no image.');
     dependencies.onAnswer?.({ model, durationMs: Date.now() - started });

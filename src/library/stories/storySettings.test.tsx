@@ -9,7 +9,7 @@ import { findStory, HarnessGenerationController, type HarnessGenerationModelAdap
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import {
   applyStorySettingsDraft, readStorySettingsDraft, StoryPages, storyCoverRequest, storyHomeWorlds, useLibraryStories, writeStorySettingsDraft,
-  STORY_SETTINGS_DRAFT_KEY, type LibraryStories, type LibraryStoriesOptions, type StoryCoverService,
+  STORY_SETTINGS_DRAFT_KEY, type LibraryStories, type LibraryStoriesOptions, type CodexPictureService, type StoryCoverService,
 } from '@seihouse/library/stories';
 import { LIBRARY_BASE_MEDIA } from '../../host/media/libraryCatalog';
 import { createMemoryDeviceMediaPackStore, DeviceMediaUrls } from '../../host/media/deviceMediaPacks';
@@ -49,12 +49,19 @@ const createStory = async (repository: InMemoryHarnessGenerationRepository, adap
   return setup.createStory({
     title: 'The Drowned Name', premise: 'A courier returns to the drowned city that erased her name.', genre: 'Xianxia',
     destinedEnding: 'Mara reclaims her name.', initialArcPlan: GOAL,
+    worldAtChapterZero: { cards: [{ key: 'world:character:mara', name: 'Mara', kind: 'character', mainCharacter: true, enteredInChapter: 0, slots: { appearance: 'A young woman in blue robes.', gender: 'female' } }] },
     cast: [{ name: 'Mara', role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self' }],
   });
 };
 
 let latest: LibraryStories | undefined;
 let latestCovers: StoryCoverService | undefined;
+const portraitBytes = new Blob(['portrait'], { type: 'image/png' });
+const portraits: CodexPictureService = {
+  pictureOf: () => 'blob:protagonist', imageOf: async () => portraitBytes,
+  referenceOf: async () => ({ data: btoa('portrait'), mimeType: 'image/png' }),
+  keep: async () => undefined, manifest: async () => undefined,
+};
 const keep = vi.fn();
 const letGo = vi.fn();
 function Host({ repository, adapter, storyId, makeCover, options = {} }: {
@@ -74,7 +81,7 @@ function Host({ repository, adapter, storyId, makeCover, options = {} }: {
     letGo,
   }, [makeCover, urls]);
   latestCovers = covers;
-  return <StoryPages stories={stories} storyId={storyId} page="info" writingAgent={VERSA} covers={covers}
+  return <StoryPages stories={stories} storyId={storyId} page="info" writingAgent={VERSA} covers={covers} codexPictures={makeCover ? portraits : undefined}
     onOpenReader={() => undefined} onCloseReader={() => undefined} onBack={() => undefined} />;
 }
 

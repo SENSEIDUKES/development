@@ -12,6 +12,7 @@ World: {world facts}
 Themes: {story tags}
 Let the story details guide the art style, clothing, setting, colors, and atmosphere. Feature a compelling character, scene, or symbol that captures this novel.
 Vertical 2:3 composition, striking focal point, detailed illustration, readable at thumbnail size.
+{character references}
 {title instruction}
 No logos, signatures, or watermarks.`;
 
@@ -19,6 +20,10 @@ No logos, signatures, or watermarks.`;
 export const COVER_TITLE_ON = 'The only lettering is the exact title “{title}”, displayed once in expressive, clearly readable typography suited to the cover. Do not invent subtitles, volume numbers, author names, or other lettering.';
 /** {title instruction} until the story has reached its ending: the title is shown beneath the artwork instead. */
 export const COVER_TITLE_OFF = 'No lettering. The title will appear beneath the artwork.';
+
+export const COVER_REFERENCE_RULES = 'Use the referenced characters in this cover. Preserve each character’s recognizable face, hair, gender and defining appearance. Adapt pose, expression, lighting and composition to the story; do not copy the portrait’s background or framing.';
+export const COVER_SINGLE_CHARACTER = 'Feature the referenced protagonist as the sole character focus; use the setting and story symbols around them. Do not invent a second lead.';
+export const COVER_TWO_CHARACTERS = 'Feature these two distinct characters. Keep their identities separate; do not merge or swap their features.';
 
 /** Each Story Seed tradition, as the cover prompt names it. */
 export const COVER_TRADITIONS: Record<string, string> = {
@@ -52,6 +57,11 @@ export function buildStoryCoverPrompt(request: StoryCoverRequest, options: { tit
   };
   const titleInstruction = (options.title ?? request.titled === true) ? COVER_TITLE_ON.replace('{title}', request.title) : COVER_TITLE_OFF;
   return COVER_PROMPT_TEMPLATE.split('\n').flatMap(line => {
+    if (line === '{character references}') return request.characters?.length ? [
+      ...request.characters.map((character, index) => `Reference ${index + 1}: ${character.name} — ${character.role}${character.relationship ? `; ${character.relationship}` : ''}.`),
+      COVER_REFERENCE_RULES,
+      request.characters.length === 1 ? COVER_SINGLE_CHARACTER : COVER_TWO_CHARACTERS,
+    ] : [];
     if (line === '{title instruction}') return [titleInstruction];
     const brace = Object.keys(fields).find(key => line.includes(key));
     if (!brace) return [line];

@@ -22,6 +22,9 @@ export interface StoryCoverRequest {
    * ending, destined or failed; until then its covers carry no lettering.
    */
   titled?: boolean;
+  /** Ordered character references: protagonist first, then an optional second lead. */
+  characters?: Array<{ name: string; role: string; relationship?: string; image: { data: string; mimeType: string } }>;
+
 }
 
 const text = (value: unknown): string | undefined => {
@@ -62,7 +65,7 @@ export function storyCoverRequest(state: HarnessWorkspaceState, storyId: string)
     facts,
   ].filter(Boolean).join('\n');
   const request: StoryCoverRequest = { title: text(story.title) ?? 'Untitled' };
-  const fields: Array<[Exclude<keyof StoryCoverRequest, 'title' | 'tags' | 'titled'>, unknown]> = [
+  const fields: Array<[Exclude<keyof StoryCoverRequest, 'title' | 'tags' | 'titled' | 'characters'>, unknown]> = [
     ['genre', input?.genre],
     ['style', seed?.story?.required?.style],
     ['synopsis', text(blueprint?.logline) ?? input?.premise],
@@ -133,6 +136,13 @@ export function codexPictureRequest(state: HarnessWorkspaceState, storyId: strin
 export interface CodexPictureService {
   /** A card's kept picture, as an address an `<img>` can show, or undefined. */
   pictureOf: (storyId: string, cardKey: string) => string | undefined;
+  /** Saved bytes, never a browser-only object URL. Waits for device hydration. */
+  imageOf: (storyId: string, cardKey: string) => Promise<Blob | undefined>;
+  /** A bounded image attachment prepared by the host for the cover provider. */
+  referenceOf: (storyId: string, cardKey: string) => Promise<{ data: string; mimeType: string } | undefined>;
+  /** Keeps existing bytes, including a Blueprint portrait adopted by a story. */
+  keep: (storyId: string, cardKey: string, image: Blob) => Promise<void>;
+
   /** Makes a card's picture and keeps it, replacing any before it. Rejects with a reason the reader can read. */
   manifest: (storyId: string, cardKey: string, request: CodexPictureRequest) => Promise<void>;
 }

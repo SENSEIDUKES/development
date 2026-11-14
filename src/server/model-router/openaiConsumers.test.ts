@@ -21,7 +21,7 @@ it('connects covers, Image Lab and reference-based profile pictures to direct Op
   const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [{ b64_json: png }] })));
   vi.stubGlobal('fetch', fetchMock);
   const model = 'openai/gpt-image-2.6-flare';
-  const cover = await handleStoryCoverHttp({ method: 'POST', body: { story: { title: 'The Wind', synopsis: 'A journey.' }, model } }, { environment });
+  const cover = await handleStoryCoverHttp({ method: 'POST', body: { story: { characters: [{ name: 'Mara', role: 'protagonist', image: { data: png, mimeType: 'image/png' } }], title: 'The Wind', synopsis: 'A journey.' }, model } }, { environment });
   const lab = await handleImageLabHttp({ method: 'POST', headers: { authorization: 'Bearer access' }, body: { prompt: 'A mountain.', model } }, { environment });
   const portrait = await handleProfilePictureHttp({ method: 'POST', body: { photo: { data: png, mimeType: 'image/png' }, model } }, { environment });
   for (const result of [cover, lab, portrait]) {
@@ -29,7 +29,7 @@ it('connects covers, Image Lab and reference-based profile pictures to direct Op
     expect(JSON.stringify(result)).not.toContain('direct-secret');
   }
   expect(fetchMock.mock.calls.map(call => (call as unknown as [string])[0])).toEqual([
-    'https://api.openai.com/v1/images/generations', 'https://api.openai.com/v1/images/generations', 'https://api.openai.com/v1/images/edits',
+    'https://api.openai.com/v1/images/edits', 'https://api.openai.com/v1/images/generations', 'https://api.openai.com/v1/images/edits',
   ]);
 });
 

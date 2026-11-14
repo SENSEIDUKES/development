@@ -1,4 +1,5 @@
-import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import { inheritBlueprintPictures, storyPortraitCharacters } from '../story-seed/blueprintPictures';
 import { findStory, HarnessReaderSession } from '@seihouse/sen/harness-generation';
 import { type ReaderPreferenceStorage, type ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
@@ -93,6 +94,22 @@ const keepVeilOpen = () => undefined;
  */
 export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint, creator = true, openAtChapter, openInCreate = false, beginOnOpen = false }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
+  const portraitHandoff = useRef<Promise<void>>(Promise.resolve());
+  const [portraitProblem, setPortraitProblem] = useState<string>();
+  const [portraitRetry, setPortraitRetry] = useState(0);
+  const foundationId = state?.stories.find(story => story.id === storyId)?.activeFoundationRevisionId;
+  useEffect(() => {
+    if (!state || !codexPictures) return;
+    let active = true;
+    const handoff = portraitHandoff.current.catch(() => undefined).then(() => inheritBlueprintPictures(state, storyId, codexPictures));
+    portraitHandoff.current = handoff;
+    handoff.then(() => { if (active) setPortraitProblem(undefined); }, error => {
+      if (active) setPortraitProblem(error instanceof Error ? error.message : 'The Blueprint portraits could not be opened.');
+    });
+    return () => { active = false; };
+    // A portrait can finish after leaving the Blueprint. Recheck on image updates;
+    // the serialized handoff only writes missing images.
+  }, [storyId, foundationId, codexPictures, portraitRetry]);
   /** Set by World Info's chapter map: the Reader opens at that chapter, which becomes the reader's place. */
   const [chosenChapter, setChosenChapter] = useState<number>();
   // The choice is for one visit to the Reader: leaving it any way (its Back, or the browser's) forgets it,
@@ -132,7 +149,10 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     <p role="alert" className="text-sm text-amber-200">This story is no longer available.</p>
   </main>;
   // The stories are open but the writer did not answer: reading still works.
-  const writerAlert = loadError && <div className="mx-auto max-w-3xl px-4 pt-4"><LoadAlert message={loadError} onRetry={stories.retry} /></div>;
+  const writerAlert = <>
+    {loadError && <div className="mx-auto max-w-3xl px-4 pt-4"><LoadAlert message={loadError} onRetry={stories.retry} /></div>}
+    {portraitProblem && <LoadAlert message={`The Blueprint portraits could not be carried over: ${portraitProblem}`} onRetry={() => setPortraitRetry(value => value + 1)} />}
+  </>;
 
   // Only the creator's Reader writes: a reader who does not control the novel never generates in it.
   const writes = creator && stories.canGenerate;
@@ -191,7 +211,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       {writerAlert}
       <Page className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-story-blueprint">
         <StoryBlueprintPage stories={stories} storyId={storyId} access={blueprintAccess}
-          onBack={onCloseBlueprint ?? onBack} onCopy={onCopyBlueprint} />
+          onBack={onCloseBlueprint ?? onBack} onCopy={onCopyBlueprint} codexPictures={codexPictures} />
       </Page>
     </>;
     return frame ? <>{frame(blueprint)}</> : blueprint;
@@ -204,6 +224,12 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     <Page className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-world-info">
       {covers
         ? <CoveredStoryDetail key={storyId} covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent}
+            characters={storyPortraitCharacters(state, storyId)}
+            pictures={codexPictures ? {
+              pictureOf: key => codexPictures.pictureOf(storyId, key),
+              manifest: card => codexPictures.manifest(storyId, card.key, codexPictureRequest(state, storyId, card)),
+            } : undefined}
+            referenceOf={codexPictures ? key => codexPictures.referenceOf(storyId, key) : undefined}
             story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
             chapters={chapters} arcs={arcs} onOpenChapter={openChapter} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
@@ -233,9 +259,9 @@ function LoadAlert({ message, onRetry }: { message: string; onRetry: () => void 
 }
 
 /** World Info with its cover made on the cover itself (Manifest, the choice, the reveal and the picker). */
-function CoveredStoryDetail({ covers, storyId, request, agent, ...detail }: Parameters<typeof useStoryCoverManifest>[0]
+function CoveredStoryDetail({ covers, storyId, request, agent, characters, pictures, referenceOf, ...detail }: Parameters<typeof useStoryCoverManifest>[0]
   & Omit<ComponentProps<typeof StoryDetailScreen>, 'coverAction'>) {
-  const { onCover, overPage } = useStoryCoverManifest({ covers, storyId, request, agent });
+  const { onCover, overPage } = useStoryCoverManifest({ covers, storyId, request, agent, characters, pictures, referenceOf });
   return <>
     <StoryDetailScreen {...detail} coverAction={onCover} />
     {overPage}

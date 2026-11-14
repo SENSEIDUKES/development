@@ -62,7 +62,7 @@ const slidesSideways = () => document.documentElement.scrollWidth > window.inner
 const BASE = (process.argv[2] ?? process.env.NOVEL_EXPANDED_URL ?? 'http://localhost:5173').replace(/\/$/, '');
 const OUTPUT = 'output/playwright/novel-expanded';
 const TOKEN = 'browser-walk-token';
-const VIEWPORTS = [{ name: 'phone', width: 390, height: 844 }, { name: 'laptop', width: 1440, height: 900 }];
+const VIEWPORTS = [{ name: 'phone', width: 390, height: 844 }, { name: 'laptop', width: 1280, height: 800 }];
 const SHARED_READER_CONTRACTS = /\/src\/components\/reader-(?:chamber\/shared\/(?:readerLanguage|manifestationEligibility|cinematicScroll\/anchors|cinematicScroll\/useSemanticReadingPosition)|codex\/shared\/types)\.ts/;
 const FORBIDDEN_MODULE = /\/src\/(?:workshop\/|library\/generation\/|components\/reader-(?:chamber|codex)\/|host\/reader\/webSpeechNarration)/;
 
@@ -304,6 +304,11 @@ async function walk(browser, viewport, sample) {
     const request = route.request();
     // A Codex card's picture rides the cover route; it carries the card.
     const body = request.postDataJSON();
+    if (!body.card) {
+      check(body.story.characters?.[0]?.role === 'protagonist', 'A cover must attach the protagonist first.');
+      check(body.story.characters[0].image.data.length > 0, 'A cover must carry actual image bytes.');
+      check(body.story.characters[1]?.name === 'Junior Sister Han', 'The cover must attach the selected second character.');
+    }
     (body.card ? counts.pictures : counts.covers).push({ body, token: request.headers().authorization === `Bearer ${TOKEN}` });
     await new Promise(resolve => setTimeout(resolve, 1500));
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ image: COVER.toString('base64'), mimeType: 'image/jpeg', model: 'google/gemini-3.1-flash-image' }) });
@@ -489,6 +494,16 @@ async function walk(browser, viewport, sample) {
   }
   check(screenText.includes('Born as the son of a fallen patriarch'), "The creator's own Biography must stay.");
   check(!screenText.includes('A laborer in the outer quarry'), "The model's Biography must not replace the creator's.");
+  await page.getByRole('tab', { name: 'Cast', exact: true }).click();
+  await shot('3-blueprint-before-portrait');
+  await page.getByRole('button', { name: /^Manifest .+ portrait$/ }).click();
+  await page.getByRole('button', { name: /^Manifest .+ portrait$/ }).filter({ hasText: 'Manifest again' }).waitFor();
+  check(counts.pictures.length === 1, 'Blueprint manifestation should make exactly one portrait.');
+  await page.getByRole('button', { name: 'Junior Sister Han', exact: true }).click();
+  await page.getByRole('button', { name: 'Manifest Junior Sister Han portrait' }).click();
+  await page.getByRole('button', { name: 'Manifest Junior Sister Han portrait' }).filter({ hasText: 'Manifest again' }).waitFor();
+  await page.getByRole('button', { name: 'Ye Chen, main character', exact: true }).click();
+  await shot('3-blueprint-portrait');
   await shot('3-blueprint');
   // Create Story keeps the new book in Create: its World Info opens first, its creator's; Start Story
   // opens the creator's Reader, which writes Chapter 1 under the veil.
@@ -1035,8 +1050,12 @@ async function walk(browser, viewport, sample) {
   await coverManifest.click();
   const threeCovers = page.locator('.story-cover-option[data-count="3"]');
   await threeCovers.waitFor();
+  await page.waitForFunction(() => !document.querySelector('.story-cover-option[data-count="3"]')?.disabled);
+  check(counts.pictures.length >= 1, 'The cover should reuse the Blueprint protagonist portrait.');
+
   check((await page.locator('.story-cover-option[data-count="1"]').textContent())?.includes('5'), 'One cover should cost 5 Energy.');
   check((await threeCovers.textContent())?.includes('15'), 'Three covers should cost 15 Energy.');
+  await page.getByRole('button', { name: 'Next cover character' }).click();
   await page.waitForTimeout(500);
   await shot('4e-cover-choice');
   await threeCovers.click();

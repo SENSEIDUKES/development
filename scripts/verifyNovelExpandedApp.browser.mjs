@@ -105,7 +105,10 @@ const chapter = {
   ],
   // The writer's own closing list, the one thing beside the prose it is still
   // asked for: one name no tag recorded, so the Codex has one record check.
-  mainCharacterHoldings: ['Bell Key', 'Silver Bell'],
+  // Ye Chen opens the story holding the Jade Token (his Blueprint card), and
+  // the Codex checks read the whole record, Chapter 0 included (2026-11-14),
+  // so the list names it as the writer is told to.
+  mainCharacterHoldings: ["Ninth Prince's Jade Token", 'Bell Key', 'Silver Bell'],
   arcCompletion: { goalId: 'none', completed: false, evidence: '' },
   recap: 'Mara returns to the drowned city.',
   chapterFunction: 'progression',
@@ -140,7 +143,7 @@ const rewritten = {
     '“Ring the bells,” Ye Chen said.',
     chapter.paragraphs.at(-1),
   ],
-  mainCharacterHoldings: ['Bell Key'],
+  mainCharacterHoldings: ["Ninth Prince's Jade Token", 'Bell Key'],
   recap: 'Mara hides the bell key.',
 };
 const rewrittenNotes = [

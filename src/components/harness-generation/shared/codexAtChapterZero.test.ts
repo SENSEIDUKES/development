@@ -291,3 +291,40 @@ describe('A card the world opened with and a chapter reaches is one card', () =>
     expect(jade.atChapterZero?.map(fact => fact.slot.id)).toEqual(['appearance', 'holder']);
   });
 });
+
+describe('The Codex check list reads the full record, Chapter 0 included', () => {
+  const opening: WorldRecord = {
+    cards: [
+      {
+        key: 'world:character:lin-wei', kind: 'character', name: 'Lin Wei', mainCharacter: true,
+        enteredInChapter: 0, slots: { knows: 'Sun Breath Sword Art, Azure Meridian Method', holds: 'Storage Ring' },
+      },
+      { key: 'world:ability:sun-breath', kind: 'ability', name: 'Sun Breath Sword Art', enteredInChapter: 0, slots: {} },
+      { key: 'world:ability:azure-meridian', kind: 'ability', name: 'Azure Meridian Method', enteredInChapter: 0, slots: {} },
+      { key: 'world:thing:storage-ring', kind: 'thing', name: 'Storage Ring', enteredInChapter: 0, slots: {} },
+    ],
+  };
+  const chapter = (chapterNumber: number): StoryCodexChapter => ({
+    id: `chapter-${chapterNumber}`, chapterNumber,
+    paragraphs: ['Lin Wei drew breath and the sun answered his blade.'],
+    closingHoldings: ['Sun Breath Sword Art', 'Azure Meridian Method', 'Storage Ring'],
+  });
+
+  it('never flags what the hero opened the story with, in any chapter', () => {
+    const codex = deriveStoryCodex({ entries: [], chapters: [chapter(1), chapter(2), chapter(3)], world: opening, mainCharacterName: 'Lin Wei' });
+    expect(codex.checks).toEqual([]);
+  });
+
+  it('still keeps a starting card hidden until a chapter reaches it', () => {
+    const codex = deriveStoryCodex({ entries: [], chapters: [chapter(1)], world: opening, mainCharacterName: 'Lin Wei' });
+    expect(codex.abilities).toEqual([]);
+    expect(codex.items).toEqual([]);
+  });
+
+  it('still flags what the closing list adds that neither the world nor a tag gave', () => {
+    const extra = { ...chapter(1), closingHoldings: [...chapter(1).closingHoldings!, 'Phoenix Pill'] };
+    const codex = deriveStoryCodex({ entries: [], chapters: [extra], world: opening, mainCharacterName: 'Lin Wei' });
+    expect(codex.checks.map(check => check.kind)).toEqual(['closing-untagged']);
+    expect(codex.checks[0].message).toContain('Phoenix Pill');
+  });
+});

@@ -330,6 +330,12 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // record's visibility that a tag naming a card reaches it whether or not the
   // holding moved, which is its own change to the no-spoiler rule.
   const holdings = deriveHoldings({ entries, chapters: ordered, mainCharacterName });
+  // The check list is not about what a reader may see yet: it asks whether a
+  // chapter's changes can be true, so it reads the full record, Chapter 0
+  // included — the same record the writer and the Holdings fixer read. Read
+  // from the chapters alone, a technique the hero opens the story knowing is
+  // flagged as unlearned in every chapter that uses it.
+  const checked = world ? deriveHoldings({ entries, chapters: ordered, mainCharacterName, worldAtChapterZero: world }) : holdings;
   const appeared = deriveAppearances({ entries, chapters: ordered, declaredFactions, world });
 
   // A card a reader promoted entered after Chapter 0: it carries its slots so they can fill them.
@@ -763,7 +769,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // ladder every rank is read against, and the age the story stands in.
   const rules = worldRulesCard(world);
 
-  const holdingChecks = holdings.flags.map((flag): CodexCheck => {
+  const holdingChecks = checked.flags.map((flag): CodexCheck => {
     const blockId = flag.recordId
       ? ordered.find(chapter => chapter.id === flag.chapterId)?.holdingChanges?.find(change => change.id === flag.recordId)?.anchor.blockId
       : undefined;

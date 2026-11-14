@@ -377,6 +377,18 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-14 (the Codex check list reads the whole record):** SENSEI's
+  test story: Lin Wei's card says he opens the story knowing Sun Breath Sword
+  Art and Azure Meridian Method. The writer is handed that correctly, so its
+  closing list was right, but the Codex check list flagged both in every
+  chapter (`closing-untagged`): `deriveStoryCodex` read its checks from the
+  chapter-only holdings, the view the Codex keeps on purpose so a card stays
+  hidden until the story reaches it. His ring escaped only because Chapter 1
+  happened to tag it. The checks are now read from the full record, Chapter 0
+  included (`worldAtChapterZero`), the same record the writer and the Holdings
+  fixer read; what the reader sees in the Codex is unchanged. No words any
+  model reads change and nothing new is stored. On the test story, 16 checks
+  go to none, and none appear.
 - **2026-11-13 (appears means on the page in this chapter):** SENSEI, from
   his eight-chapter run of *Tethered Paths of the Immortal Sun*, noticed the
   same people marked as appearing again in every chapter. The tagger was told

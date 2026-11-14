@@ -224,6 +224,9 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const previousSeedOwnerIdRef = useRef<string | null>(seedOwnerId);
   const seedOwnerIdRef = useRef<string | null>(seedOwnerId);
   const currentSeedRef = useRef<StorySeedRecord | null>(null);
+  const seedSessionIdRef = useRef(0);
+  const seedSessionRecordsRef = useRef(new Map<number, StorySeedRecord>());
+  const seedRecordsRef = useRef(new Map<string, StorySeedRecord>());
   const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
   const persistRequestIdRef = useRef(0);
   seedOwnerIdRef.current = seedOwnerId;
@@ -260,7 +263,12 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const latestReviewRef = useRef<{ seed: StorySeedInput; blueprint: WorldBlueprint | null }>({ seed, blueprint });
   latestReviewRef.current = { seed, blueprint };
 
-  const setActiveSeed = useCallback((record: StorySeedRecord | null) => {
+  const setActiveSeed = useCallback((record: StorySeedRecord | null, preserveSession = false) => {
+    if (!preserveSession) seedSessionIdRef.current += 1;
+    if (record) {
+      seedRecordsRef.current.set(record.id, record);
+      seedSessionRecordsRef.current.set(seedSessionIdRef.current, record);
+    }
     currentSeedRef.current = record;
     setCurrentSeed(record);
   }, []);
@@ -353,8 +361,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     if (savedFeedbackTimer.current) window.clearTimeout(savedFeedbackTimer.current);
   }, []);
 
-  const rememberSeed = (record: StorySeedRecord, makeCurrent = true) => {
-    if (makeCurrent) setActiveSeed(record);
+  const rememberSeed = (record: StorySeedRecord, makeCurrent = true, sessionId = seedSessionIdRef.current) => {
+    seedRecordsRef.current.set(record.id, record);
+    seedSessionRecordsRef.current.set(sessionId, record);
+    if (makeCurrent) setActiveSeed(record, true);
     setSavedSeeds(previous => [record, ...previous.filter(item => item.id !== record.id)]);
   };
 
@@ -371,12 +381,17 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   ): Promise<StorySeedRecord | null> => {
     if (!seedOwnerId) throw new Error('Sign in to save this story seed to your account.');
     const ownerAtStart = seedOwnerId;
+    const sessionAtStart = seedSessionIdRef.current;
+    const recordAtStart = currentSeedRef.current;
+    const requestedRecordId = recordAtStart?.id ?? seedSessionRecordsRef.current.get(sessionAtStart)?.id;
     const previousSave = persistQueueRef.current;
     let releaseSave!: () => void;
     persistQueueRef.current = new Promise<void>(resolve => { releaseSave = resolve; });
     await previousSave;
     try {
-      const activeRecord = currentSeedRef.current;
+      const activeRecord = requestedRecordId
+        ? seedRecordsRef.current.get(requestedRecordId) ?? (recordAtStart?.id === requestedRecordId ? recordAtStart : null)
+        : seedSessionRecordsRef.current.get(sessionAtStart) ?? null;
       const requestId = ++persistRequestIdRef.current;
       const saved = activeRecord && activeRecord.userId === ownerAtStart
         ? await runtime.repository.update(ownerAtStart, activeRecord, payload, blueprintArtifact, language, { confirmedTabs: confirmedTabsRef.current })
@@ -384,8 +399,9 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       const currentRecord = currentSeedRef.current;
       const stillActive = requestId === persistRequestIdRef.current
         && seedOwnerIdRef.current === ownerAtStart
+        && seedSessionIdRef.current === sessionAtStart
         && (activeRecord ? currentRecord?.id === activeRecord.id : currentRecord === null);
-      rememberSeed(saved, stillActive);
+      rememberSeed(saved, stillActive, sessionAtStart);
       if (stillActive) {
         resolveOriginalLanguage(saved.originalLanguage);
         resolveReadingMode();

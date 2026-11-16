@@ -32,6 +32,12 @@ export interface ChapterVoiceCharacter {
   voice?: string;
   bio?: string;
   mainCharacter?: boolean;
+  /**
+   * On a card a reader promoted from a minor figure: the key their voice was
+   * kept under while they had no card, so they keep the voice they already
+   * speak with instead of being cast a second time.
+   */
+  was?: string;
 }
 
 export interface ChapterVoicePlan {
@@ -109,7 +115,11 @@ export function chapterVoicePlan(state: HarnessWorkspaceState, chapter: HarnessC
     if (speaking.has(key)) continue;
     if (card) {
       const { gender, age, voice, bio } = card.slots;
-      speaking.set(key, { key, name: card.name, gender, age, voice, bio, ...(card.mainCharacter ? { mainCharacter: true } : {}) });
+      speaking.set(key, {
+        key, name: card.name, gender, age, voice, bio, ...(card.mainCharacter ? { mainCharacter: true } : {}),
+        // A card that entered after the story began was a minor figure first, under the name they spoke by.
+        ...(card.enteredInChapter > 0 ? { was: minorKey(line.speaker) } : {}),
+      });
     } else {
       const figures = shown(state, chapter.storyId);
       const seen = figures.seen.get(identity(line.speaker));

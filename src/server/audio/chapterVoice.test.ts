@@ -41,6 +41,14 @@ describe('casting character voices', () => {
     expect(kept.b.voiceKey).toBe(first.a.voiceKey);
     expect(kept.a.voiceKey).not.toBe(first.a.voiceKey);
   });
+
+  it('gives a character cast in a later chapter a voice no one in the story already has', () => {
+    const earlier = castChapterVoices([{ key: 'a', gender: 'male', age: '30' }]);
+    // Only the new speaker is in this chapter; the story's saved cast still reserves the first one's voice.
+    const later = castChapterVoices([{ key: 'b', gender: 'male', age: '30' }], { a: earlier.a.voiceKey });
+    expect(later.b.voiceKey).not.toBe(earlier.a.voiceKey);
+    expect(later.a).toBeUndefined();
+  });
 });
 
 describe('the chapter voice endpoint', () => {

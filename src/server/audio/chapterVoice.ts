@@ -108,7 +108,8 @@ export function castChapterVoices(
     .filter(voice => voice.classification === 'flexible')
     .sort((left, right) => left.internalKey.localeCompare(right.internalKey));
   const cast: Record<string, ChapterVoiceChoice> = {};
-  const taken = new Set<string>();
+  // Every voice the story's cast already uses is taken, whether or not its character is in this request.
+  const taken = new Set(Object.values(kept).filter(voiceKey => available.some(voice => voice.internalKey === voiceKey)));
   const ordered = [...characters].sort((left, right) => Number(Boolean(right.mainCharacter)) - Number(Boolean(left.mainCharacter)));
   for (const character of ordered) {
     const keptVoice = available.find(voice => voice.internalKey === kept[character.key]);

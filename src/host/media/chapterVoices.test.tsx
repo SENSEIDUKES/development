@@ -105,8 +105,9 @@ describe('character voices kept on the device', () => {
 
     // Promoted: the same person now speaks by a card. They are not cast again, and the next line is in the same voice.
     const asCard: ChapterVoicePlan = {
-      lines: [{ key: 'c2-p1:0-8', text: '"Wait."', speaker: 'the keeper', cardKey: 'world:character:the-keeper' }],
-      cast: [{ key: 'world:character:the-keeper', name: 'the keeper', was: 'minor:the keeper' }], unvoiced: 0,
+      lines: [{ key: 'c2-p1:0-8', text: '"Wait."', speaker: 'Keeper', cardKey: 'world:character:keeper' }],
+      // The card now goes by Keeper; the name they spoke under as a minor figure is among the names it answers to.
+      cast: [{ key: 'world:character:keeper', name: 'Keeper', was: ['minor:keeper', 'minor:the keeper'] }], unvoiced: 0,
     };
     await act(async () => { await service.voice('story', 'chapter-2', asCard); });
     expect(cast).toHaveBeenCalledTimes(1);

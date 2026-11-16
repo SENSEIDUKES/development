@@ -90,8 +90,10 @@ export function useChapterVoices(store: StoryCoverStore, client: ChapterVoiceCli
     // Each character keeps the voice it was first given; only new speakers are cast.
     const saved = casts.current.get(storyId) ?? {};
     // A minor figure promoted to a card keeps the voice they already speak with.
-    const carried = Object.fromEntries(plan.cast.flatMap(character =>
-      (character.was && !saved[character.key] && saved[character.was] ? [[character.key, saved[character.was]]] : [])));
+    const carried = Object.fromEntries(plan.cast.flatMap(character => {
+      const earlier = saved[character.key] ? undefined : character.was?.map(key => saved[key]).find(Boolean);
+      return earlier ? [[character.key, earlier]] : [];
+    }));
     const kept = { ...saved, ...carried };
     let cast = kept;
     if (Object.keys(carried).length && !plan.cast.some(character => !kept[character.key])) {

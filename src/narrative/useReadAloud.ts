@@ -53,6 +53,8 @@ export interface SpeechEngine {
   speak(request: SpeechRequest, events: SpeechEvents): void;
   cancel(): void;
   isSpeaking(): boolean;
+  /** Whether the line is still waiting for its sound to be made: nothing gives up on it while it is. */
+  isWaiting?(): boolean;
 }
 
 type SpeechScope = { speechSynthesis?: SpeechSynthesis; SpeechSynthesisUtterance?: typeof SpeechSynthesisUtterance };
@@ -370,12 +372,15 @@ export function useReadAloud({
           speakAt(index + 1, 0);
         },
       });
-      later(() => {
+      const awaitStart = (ms: number) => later(() => {
         if (token !== state.token || state.started) return;
+        // A sound still being made has not started late: it is looked at again, however long it takes.
+        if (engine.isWaiting?.()) { awaitStart(START_TIMEOUT_MS.next); return; }
         if (engine.isSpeaking()) { watch(0); return; }
         // Nothing began: the browser wants a fresh tap, or its speech died.
         pauseForTap();
-      }, state.firstLine ? START_TIMEOUT_MS.first : START_TIMEOUT_MS.next);
+      }, ms);
+      awaitStart(state.firstLine ? START_TIMEOUT_MS.first : START_TIMEOUT_MS.next);
     };
     // A line spoken right after a cancellation can be dropped by Chrome; the first one is spoken at once (iOS).
     if (wait === undefined) begin();

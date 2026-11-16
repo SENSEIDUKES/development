@@ -54,6 +54,8 @@ export function createClipSpeechEngine(
   let audio: ClipAudio | undefined;
   let woken = false;
   let playing = false;
+  // A clip still being made: the line is neither speaking nor late.
+  let waiting = false;
   // Each clip started has its own number: a late answer from an earlier one is ignored.
   let turn = 0;
   const detach = () => {
@@ -64,6 +66,7 @@ export function createClipSpeechEngine(
     detach();
     if (audio && playing) audio.pause();
     playing = false;
+    waiting = false;
   };
   const wake = () => {
     if (woken) return;
@@ -107,13 +110,13 @@ export function createClipSpeechEngine(
       if (typeof clip === 'string') { base.cancel(); playClip(clip, request, events); return; }
       wake();
       if (!clip) { base.speak(request, events); return; }
-      // A clip still being made: the line waits for it, and counts as speaking so nothing skips it.
+      // A clip still being made: the line waits for it, and Read Aloud does not time it as speech.
       base.cancel();
-      playing = true;
+      waiting = true;
       const mine = turn;
       const ready = (url: string | undefined) => {
         if (mine !== turn) return;
-        playing = false;
+        waiting = false;
         if (url) playClip(url, request, events);
         else base.speak(request, events);
       };
@@ -123,6 +126,7 @@ export function createClipSpeechEngine(
       silence();
       base.cancel();
     },
-    isSpeaking: () => playing || base.isSpeaking(),
+    isSpeaking: () => playing || waiting || base.isSpeaking(),
+    isWaiting: () => waiting,
   };
 }

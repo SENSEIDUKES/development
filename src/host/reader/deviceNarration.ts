@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import type { ReadAloudLine, ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import type { KokoroDevice, KokoroWorkerMessage, KokoroWorkerRequest } from './kokoroWorker';
 
@@ -62,7 +62,7 @@ export interface DeviceNarration {
   clip(line: ReadAloudLine, upcoming: readonly ReadAloudLine[]): string | Promise<string | undefined> | undefined;
 }
 
-interface Job { key: string; text: string; voice: string; resolve: (url: string | undefined) => void }
+interface Job { key: string; text: string; voice: string; resolve: (url: string | undefined) => void; letGo?: boolean }
 
 const browserWorker = (): KokoroWorkerLike =>
   new Worker(new URL('./kokoroWorker.ts', import.meta.url), { type: 'module' }) as unknown as KokoroWorkerLike;
@@ -97,7 +97,7 @@ export function createDeviceNarration({ preferences, createWorker = browserWorke
   let made = { audioSeconds: 0, tookSeconds: 0 };
 
   const pump = () => {
-    if (working || state.model !== 'ready' || !worker) return;
+    if (working || !state.on || state.model !== 'ready' || !worker) return;
     working = queue.shift();
     if (working) worker.postMessage({ type: 'speak', id: (nextId += 1), text: working.text, voice: working.voice });
   };
@@ -105,8 +105,12 @@ export function createDeviceNarration({ preferences, createWorker = browserWorke
     const job = working;
     working = undefined;
     if (job) {
-      if (url) clips.set(job.key, url); else clips.delete(job.key);
-      job.resolve(url);
+      // A line let go while it was being made (Kokoro switched off) is not kept.
+      if (job.letGo) { if (url) revokeUrl(url); }
+      else {
+        if (url) clips.set(job.key, url); else clips.delete(job.key);
+        job.resolve(url);
+      }
       // The oldest made clips go first; one still being made is never dropped.
       for (const [key, clip] of clips) {
         if (clips.size <= CLIPS_KEPT) break;
@@ -164,7 +168,10 @@ export function createDeviceNarration({ preferences, createWorker = browserWorke
     setOn(on) {
       try { if (on) preferences?.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on'); else preferences?.remove(DEVICE_NARRATION_PREFERENCE_KEY); } catch { /* remembered for this visit only */ }
       set({ on });
-      if (on) load();
+      if (on) { load(); return; }
+      // Off: every line still waiting goes to the device's own voice now, and nothing more is made.
+      const waiting = [...(working ? [working] : []), ...queue.splice(0)];
+      for (const job of waiting) { job.letGo = true; clips.delete(job.key); job.resolve(undefined); }
     },
     clip(line, upcoming) {
       if (!state.on) return undefined;
@@ -190,6 +197,15 @@ export function createDeviceNarration({ preferences, createWorker = browserWorke
 /** The narration's state, for a component. */
 export const useDeviceNarrationState = (narration: DeviceNarration): DeviceNarrationState =>
   useSyncExternalStore(narration.subscribe, narration.getState, narration.getState);
+
+/** Kokoro as the Reader's setting and voice, for the app and its Workshop preview. */
+export function useDeviceNarrationService(narration: DeviceNarration) {
+  const state = useDeviceNarrationState(narration);
+  return useMemo(() => ({
+    name: 'Kokoro voices', on: state.on, setOn: narration.setOn,
+    status: (english: boolean) => deviceNarrationStatus(state, english), clip: narration.clip,
+  }), [state, narration]);
+}
 
 /** One line saying where the device's voice stands, for Reader Settings. */
 export function deviceNarrationStatus(state: DeviceNarrationState, english: boolean): string {

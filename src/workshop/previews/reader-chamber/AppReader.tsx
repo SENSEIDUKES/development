@@ -5,6 +5,7 @@ import { StoryPages, useLibraryStories } from '@seihouse/library/stories';
 import { AGENTS } from '../../../lib/agents';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { LIBRARY_SOUND_WORDS_PRESET } from '../../../host/media/soundWordPacks';
+import { createDeviceNarration, useDeviceNarrationService } from '../../../host/reader/deviceNarration';
 import { createDeviceProfileStore } from '../../../host/profile/deviceProfile';
 import { AppFamiliar } from '../../../novel-expanded/AppFamiliar';
 import type { ReaderMixer } from '@seihouse/audio-player';
@@ -52,6 +53,9 @@ export function AppReader({ run, skills, readerPreferences, page, audio }: AppRe
   const [view, setView] = useState<'read' | 'info'>('read');
   const containerRef = useRef<HTMLDivElement>(null);
   // An isolated preview profile, using the app's default equipped Familiar.
+  // Kokoro, as in the app: the same setting and voices, remembered with this preview's reader preferences.
+  const [kokoro] = useState(() => createDeviceNarration({ preferences: readerPreferences }));
+  const deviceNarration = useDeviceNarrationService(kokoro);
   const [profile] = useState(() => createDeviceProfileStore({
     uid: 'workshop-reader', storage: { read: () => null, write: () => {}, remove: () => {} },
   }).read());
@@ -99,7 +103,7 @@ export function AppReader({ run, skills, readerPreferences, page, audio }: AppRe
     <AppFamiliar profile={profile} present reading={view === 'read'} place={view === 'read' ? { title: 'Reader', help: 'reader' } : { title: 'World Info', help: 'library' }} boundaryRef={containerRef}>
     <StoryPages key={page?.request ?? 0} stories={stories} storyId={run.storyId} page={view}
       readerStateRepository={run.readerPlace} readerPreferences={readerPreferences} soundscapes={SOUNDSCAPES}
-      writingAgent={AGENTS.VERSA} backLabel="Back to the Reader"
+      writingAgent={AGENTS.VERSA} deviceNarration={deviceNarration} backLabel="Back to the Reader"
       onOpenReader={() => setView('read')} onCloseReader={() => setView('info')} onBack={() => setView('read')} />
     </AppFamiliar>
   </div>;

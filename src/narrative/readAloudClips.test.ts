@@ -109,9 +109,12 @@ describe('saved voice clips in Read Aloud', () => {
     engine.speak(request(line('a', 'narrator')), heard);
     // Counted as speaking while it waits, so nothing skips the line; the device has not spoken it.
     expect(engine.isSpeaking()).toBe(true);
+    // Told apart from speech: Read Aloud does not time a line that has not begun to sound.
+    expect(engine.isWaiting?.()).toBe(true);
     expect(base.speak).not.toHaveBeenCalled();
     ready('blob:made');
     await Promise.resolve();
+    expect(engine.isWaiting?.()).toBe(false);
     expect(audio.src).toBe('blob:made');
     audio.onplaying!();
     expect(heard.onStart).toHaveBeenCalledTimes(1);

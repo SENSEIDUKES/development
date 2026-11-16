@@ -217,6 +217,22 @@ describe('useReadAloud', () => {
     expect(player.notice).toBeUndefined();
   });
 
+  it('waits as long as it takes for a line whose sound is still being made', () => {
+    let waiting = true;
+    const base = engine;
+    engine = { ...base, getVoices: () => base.getVoices(), isSpeaking: () => waiting, isWaiting: () => waiting };
+    mount();
+    act(() => player.play(1));
+    // Far past every limit a spoken line has: the line is neither skipped nor paused.
+    act(() => { vi.advanceTimersByTime(180_000); });
+    expect(player.status).toBe('playing');
+    expect(lastSpoken().text).toBe('The tide went out.');
+    // The sound never comes and nothing is waiting any more: the reader is asked for a tap, as before.
+    waiting = false;
+    act(() => { vi.advanceTimersByTime(4_000); });
+    expect(player.status).toBe('paused');
+  });
+
   it('sets a failing voice aside and reads the line again with the next one, until none is left, then skips the line', () => {
     mount();
     act(() => player.play(1));

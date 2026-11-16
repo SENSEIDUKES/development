@@ -93,6 +93,26 @@ describe('narration made on the device', () => {
     await expect(failing).resolves.toBeUndefined();
   });
 
+  it('hands every waiting line to the device and makes nothing more when it is switched off', async () => {
+    const { service, sent, answer, spoken, revoked } = narration();
+    service.setOn(true);
+    answer({ type: 'ready', device: 'wasm' });
+    const reading = service.clip(line('One.'), [line('Two.'), line('Three.')]);
+    service.setOn(false);
+    // The line being read does not wait for a voice that was switched off.
+    await expect(reading).resolves.toBeUndefined();
+    // The line the device was already making is thrown away; the lines after it are never started.
+    spoken();
+    expect(revoked).toEqual(['blob:kokoro-1']);
+    expect(sent.filter(message => message.type === 'speak')).toHaveLength(1);
+
+    // On again: the lines are made afresh.
+    service.setOn(true);
+    const again = service.clip(line('One.'), []);
+    expect(spoken()).toMatchObject({ text: 'One.' });
+    await expect(again).resolves.toBe('blob:kokoro-2');
+  });
+
   it('loads on the first Listen when it was left on, and says plainly where it stands', () => {
     const preferences = memory();
     preferences.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');

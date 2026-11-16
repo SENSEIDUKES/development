@@ -47,7 +47,8 @@ export interface GenerationConsumer {
   name: string;
   capability: ModelCapability;
   entry: string;
-  modelChoice: 'router' | 'server-default';
+  /** `device`: a model that runs on the reader's own device, with no server call or key. */
+  modelChoice: 'router' | 'server-default' | 'device';
 }
 
 // HARNESS registers chapter writing and arc planning through one shared entry; memory extraction is retired.
@@ -62,6 +63,7 @@ export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   { name: 'Reader Translation', capability: 'chapters', entry: 'src/server/reader-translation/http.ts', modelChoice: 'server-default' },
   { name: 'Codex Voice Quote', capability: 'tts', entry: 'src/server/audio/codexVoiceQuote.ts', modelChoice: 'server-default' },
   { name: 'Chapter Voices', capability: 'tts', entry: 'src/server/audio/chapterVoice.ts', modelChoice: 'server-default' },
+  { name: 'Kokoro Voices', capability: 'tts', entry: 'src/host/reader/kokoroWorker.ts', modelChoice: 'device' },
   { name: 'Familiar Live Talk', capability: 'live', entry: 'src/server/familiar-live/http.ts', modelChoice: 'router' },
   { name: 'Story Cover', capability: 'images', entry: 'src/server/story-cover/http.ts', modelChoice: 'router' },
   { name: 'Codex Picture', capability: 'images', entry: 'src/server/story-cover/codexPicture.ts', modelChoice: 'router' },

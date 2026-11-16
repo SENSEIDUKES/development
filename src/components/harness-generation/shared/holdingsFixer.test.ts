@@ -64,7 +64,7 @@ const written = async (...replies: string[]) => {
 const inputFor = (state: HarnessWorkspaceState, chapter: HarnessChapter, policy: HarnessHoldingsFixerPolicy = 'records-and-sentences') => ({
   chapter, chapters: state.chapters, entries: state.codexEntries, mainCharacterName: 'Ye Chen', locale: 'en', policy,
 });
-const apply = (state: HarnessWorkspaceState, chapter: HarnessChapter, answers: unknown[], policy?: HarnessHoldingsFixerPolicy, extra: { error?: string } = {}) => {
+const apply = (state: HarnessWorkspaceState, chapter: HarnessChapter, answers: unknown[], policy?: HarnessHoldingsFixerPolicy, extra: { error?: string; world?: WorldRecord } = {}) => {
   const input = inputFor(state, chapter, policy);
   const plan = planHoldingsFix(input);
   return {
@@ -554,6 +554,58 @@ describe('Fixer: the rest of the record', () => {
       reply(['[[appears: Elder Qin | character]] [[status: Elder Qin | dead]] Elder Qin slid down the pillar and did not rise again.']),
       reply(['[[status: Elder Qin | revived]] The pill burned, and Elder Qin breathed.', '[[@Elder Qin]] “You forgot me,” he said.']));
     expect(planHoldingsFix(inputFor(state, latest)).cases).toEqual([]);
+  });
+});
+
+describe('Fixer: minor figures (step 3c)', () => {
+  /**
+   * The tagger keeps to the cards (step 3b): only a card carries a holding, a
+   * condition, a place, a tie or a look. The fixer writes tags too, so it keeps
+   * to the same rule: a fix that gives a minor figure what only a card carries
+   * does not stand, and the case is recorded as skipped with why.
+   */
+  const WORLD: WorldRecord = {
+    cards: [{ key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, enteredInChapter: 0, slots: {} }],
+  };
+  const AGAIN = reply(['[[gained: MC | Rusted Iron Sword]] He picked up the rusted sword again.']);
+
+  it('never lets a holding fix give a minor figure a holding, and still lets it correct the card\'s', async () => {
+    const { state, latest } = await written(reply([SWORD]), AGAIN);
+    const sneaked = { case: 'c1', outcome: 'record', tags: '[[has: MC | Rusted Iron Sword]] [[gained: Elder Qin | Spirit Pill]]', reason: 'x' };
+    const refused = apply(state, latest, [sneaked], undefined, { world: WORLD }).result;
+    expect(refused.fixes).toEqual([expect.objectContaining({
+      outcome: 'skipped',
+      reason: 'Nothing was changed: ‘Elder Qin’ is a minor figure, who keeps only where they appear and what they say, so [[gained: Elder Qin | Spirit Pill]] cannot stand.',
+    })]);
+    expect(refused.chapter).toEqual(latest);
+    expect(refused.entries).toEqual(state.codexEntries);
+
+    // The same fix the card alone carries stands, as before.
+    const fixed = apply(state, latest, [{ case: 'c1', outcome: 'record', tags: '[[has: MC | Rusted Iron Sword]]', reason: 'He already had it.' }], undefined, { world: WORLD }).result;
+    expect(fixed.fixes[0]).toMatchObject({ outcome: 'fixed-tags', after: '[[has: MC | Rusted Iron Sword]]' });
+    // A story with no cards keeps every tag a fix writes.
+    expect(apply(state, latest, [sneaked]).result.fixes[0]).toMatchObject({ outcome: 'fixed-tags' });
+  });
+
+  it('never lets a sentence fix give a minor figure a holding either', async () => {
+    const { state, latest } = await written(reply([SWORD]), AGAIN);
+    const refused = apply(state, latest, [{
+      case: 'c1', outcome: 'prose', replacement: 'Elder Qin handed him a spirit pill.', tags: '[[gained: Elder Qin | Spirit Pill]]', reason: 'x',
+    }], undefined, { world: WORLD }).result;
+    expect(refused.fixes[0]).toMatchObject({ outcome: 'skipped' });
+    expect(refused.fixes[0].reason).toContain('‘Elder Qin’ is a minor figure');
+    expect(refused.chapter).toEqual(latest);
+  });
+
+  it('never lets a record fix give a minor figure a condition', async () => {
+    const { state, latest } = await written(
+      reply(['[[appears: Elder Qin | character]] [[status: Elder Qin | dead]] Elder Qin slid down the pillar and did not rise again.']),
+      reply(['Mist gathered over the grave.', '[[@Elder Qin]] “You forgot me,” said the pale shape of Elder Qin.']));
+    const answer = { case: 'c1', outcome: 'record', tags: '[[status: Elder Qin | a ghost]]', reason: 'He returns as a ghost.' };
+    const refused = apply(state, latest, [answer], undefined, { world: WORLD }).result;
+    expect(refused.fixes[0]).toMatchObject({ checks: ['status-contradiction'], outcome: 'skipped' });
+    expect(refused.fixes[0].reason).toContain('[[status: Elder Qin | a ghost]] cannot stand');
+    expect(refused.chapter).toEqual(latest);
   });
 });
 

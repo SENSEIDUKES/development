@@ -32,10 +32,11 @@ import { FAMILIAR_GUIDES } from '../host/familiar/guides';
 import { AppSignIn } from './AppSignIn';
 import { APP_DESTINATIONS } from './appPlaces';
 import { AppShell } from './AppShell';
-import { codexPictureMakerWithAccessToken, coverMakerWithAccessToken, portraitMakerWithAccessToken, writerWithAccessToken, type AskForAccessToken } from './accessToken';
+import { chapterVoiceClientWithAccessToken, codexPictureMakerWithAccessToken, coverMakerWithAccessToken, portraitMakerWithAccessToken, writerWithAccessToken, type AskForAccessToken } from './accessToken';
 import { useStoryCovers } from '../host/media/storyCovers';
 import { blueprintPictureOwner, blueprintPictureKey } from '@seihouse/library/story-seed';
 import { useCodexPictures } from '../host/media/codexPictures';
+import { useChapterVoices } from '../host/media/chapterVoices';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
 import { CreateHubPage, creatorWorldsOf } from './CreateHubPage';
@@ -155,6 +156,9 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   // Codex pictures: the same image choice, token and server as covers.
   const makeCodexPicture = useMemo(() => codexPictureMakerWithAccessToken(services.requestCodexPicture, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
   const codexPictures = useCodexPictures(services.codexPictures, makeCodexPicture);
+  // Character voices: a chapter's spoken lines in their cast voices, with the same token.
+  const voiceClient = useMemo(() => chapterVoiceClientWithAccessToken(services.chapterVoiceServer, services.accessToken, askForToken), [services, askForToken]);
+  const chapterVoices = useChapterVoices(services.chapterVoices, voiceClient);
   // The profile picture uses the same image choice and token.
   const portraits = useMemo(() => portraitMakerWithAccessToken(services.requestProfilePicture, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();
@@ -275,7 +279,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   if (route.page === 'world') return withFamiliar(missingWorld ? null : <AppShell route={{ page: 'create' }} navigate={navigate} stories={worlds}
     readerProfile={profile} mainLabel="Create">
     <div className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6">
-      <AuthorWorldView codexPictures={codexPictures} stories={stories} worlds={creatorWorlds} storyId={route.storyId}
+      <AuthorWorldView codexPictures={codexPictures} chapterVoices={chapterVoices} stories={stories} worlds={creatorWorlds} storyId={route.storyId}
         onChooseWorld={id => navigate({ page: 'world', storyId: id }, { replace: true })}
         // A chapter opens in the creator's Reader, in Create mode with its tags lit: what a reader will get, with every tag on it.
         onOpenChapter={chapterNumber => navigate({ page: 'write', storyId: route.storyId, chapterNumber, create: true })}
@@ -336,7 +340,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     creator={route.page === 'write'} beginOnOpen={route.page === 'write'}
     openAtChapter={route.page === 'write' ? route.chapterNumber : undefined} openInCreate={route.page === 'write' && route.create} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
-    writingAgent={AGENTS.VERSA} covers={covers} codexPictures={codexPictures}
+    writingAgent={AGENTS.VERSA} covers={covers} codexPictures={codexPictures} chapterVoices={chapterVoices}
     // World Info sits in the Library Shell; the Reader never does.
     frame={info => <AppShell route={{ page: 'story', storyId, ...(creatorInfo ? { inCreate: true } : {}) }} navigate={navigate} stories={worlds}
       readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}

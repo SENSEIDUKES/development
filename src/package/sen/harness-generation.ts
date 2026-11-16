@@ -312,6 +312,7 @@ export {
 export { PROMOTED_CARD_SLOT_CHARACTERS, fillPromotedCard, promoteMinorFigure, promotedCardSlots } from '../../components/harness-generation/shared/promotion';
 export * from '../../components/harness-generation/shared/chapterSignals';
 export * from '../../components/harness-generation/shared/chapterBody';
+export * from '../../components/harness-generation/shared/chapterReadAloud';
 export { chapterTitleText } from '../../narrative/chapterTitle';
 export {
   chapterTagFindings,

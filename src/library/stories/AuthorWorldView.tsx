@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
-import { ArrowLeft, BookOpen, Check, ChevronRight, Download, Globe, LoaderCircle, Sparkles, Square } from 'lucide-react';
+import { ArrowLeft, BookOpen, Check, ChevronRight, Download, Globe, LoaderCircle, Mic, Sparkles, Square } from 'lucide-react';
 import { SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
-import { describeChapterTagging, findStory, storyTaggingSummary, type HarnessChapter } from '@seihouse/sen/harness-generation';
+import { describeChapterTagging, findStory, storyTaggingSummary, type HarnessChapter, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { LibraryButton, ManifestButton } from '@seihouse/library-ui';
 import type { CreatorWorld } from '../../components/creator-space/shared/creatorSpaceContracts';
 import { WorldCard } from '../../components/world-card/development/WorldCard';
@@ -15,6 +15,7 @@ import { StorySettings } from './settings/StorySettings';
 import { isStoryPublished, storyOrigin } from './storyView';
 import { downloadHarnessStory } from './storyExport';
 import type { LibraryStories } from './useLibraryStories';
+import { chapterVoiceEnergy, chapterVoicePlan, type ChapterVoiceService } from './chapterVoices';
 
 /**
  * The author's world view (SENSEI, 2026-10-30): what a world opens to when
@@ -46,8 +47,10 @@ function fallbackCover(id: string, images: readonly string[]) {
   return images[hash % images.length];
 }
 
-export function AuthorWorldView({ codexPictures, stories, worlds, storyId, onChooseWorld, onOpenChapter, onBack, onRead }: {
+export function AuthorWorldView({ codexPictures, chapterVoices, stories, worlds, storyId, onChooseWorld, onOpenChapter, onBack, onRead }: {
   codexPictures?: import('./storyCover').CodexPictureService;
+  /** The host's character voices: each chapter offers its spoken lines voiced, at their Energy price. Without it, chapters offer none. */
+  chapterVoices?: ChapterVoiceService;
   stories: LibraryStories;
   /** Every world the author has, as Create's Your worlds shows them. */
   worlds: readonly CreatorWorld[];
@@ -102,7 +105,7 @@ export function AuthorWorldView({ codexPictures, stories, worlds, storyId, onCho
           </button>)}
         </div>
         <div className="mt-5" role="tabpanel" aria-label={TABS.find(entry => entry.id === shown)!.label}>
-          {shown === 'chapters' && <ChapterTable key={storyId} stories={stories} storyId={storyId} onOpenChapter={onOpenChapter} />}
+          {shown === 'chapters' && <ChapterTable key={storyId} stories={stories} storyId={storyId} onOpenChapter={onOpenChapter} voices={chapterVoices} />}
           {shown === 'blueprint' && <WorldBlueprint codexPictures={codexPictures} stories={stories} storyId={storyId} />}
           {shown === 'codex' && <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-neutral-300" data-testid="author-world-codex">
             Coming soon: every card and every picture of this world, all in one place, ahead of what a reader has reached.
@@ -263,6 +266,54 @@ function WorldBlueprint({ stories, storyId, codexPictures }: { stories: LibraryS
   return <StoryBlueprintPage codexPictures={codexPictures} stories={stories} storyId={storyId} access={{ view: 'creator' }} />;
 }
 
+/**
+ * A chapter's character voices: one button that voices its spoken lines in
+ * their characters' cast voices, with the Energy that costs, then says they
+ * are voiced. Only the lines a character with a Codex card says are voiced;
+ * the device reads the narration. A chapter stopped partway keeps its lines
+ * and prices only the rest.
+ */
+function ChapterVoiceControl({ voices, state, chapter }: { voices: ChapterVoiceService; state: HarnessWorkspaceState; chapter: HarnessChapter }) {
+  const plan = useMemo(() => chapterVoicePlan(state, chapter), [state, chapter]);
+  const [progress, setProgress] = useState<{ kept: number; total: number }>();
+  const [problem, setProblem] = useState<string>();
+  if (!plan.lines.length) return null;
+  const missing = voices.missing(chapter.storyId, chapter.id, plan.lines);
+  const total = plan.lines.length;
+  const lineCount = (count: number) => (count === 1 ? '1 spoken line' : `${count} spoken lines`);
+  if (!missing.length && !progress) {
+    return <span className="mt-1 flex items-center gap-1.5 text-xs text-emerald-200/80" data-testid="chapter-voices-done">
+      <Mic size={13} aria-hidden="true" />Voiced · {total === 1 ? '1 line' : `${total} lines`}
+    </span>;
+  }
+  const price = chapterVoiceEnergy(missing, voices.model);
+  const start = async () => {
+    setProblem(undefined);
+    setProgress({ kept: total - missing.length, total });
+    try {
+      await voices.voice(chapter.storyId, chapter.id, plan, (kept, all) => setProgress({ kept, total: all }));
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : 'The lines could not be voiced.');
+    }
+    setProgress(undefined);
+  };
+  return <span className="mt-1 block" onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()}>
+    {progress
+      ? <span className="flex min-h-11 items-center gap-2 text-xs text-cyan-200" role="status" data-testid="chapter-voices-progress">
+          <LoaderCircle size={14} aria-hidden="true" className="animate-spin" />Voicing {Math.min(progress.kept + 1, progress.total)} of {progress.total}
+        </span>
+      : <button type="button" data-testid="chapter-voices-make"
+          aria-label={`Voice Chapter ${chapter.chapterNumber}'s ${lineCount(missing.length)} in their characters' voices, ${price} Energy`}
+          className="inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full border border-white/15 px-3 text-xs text-neutral-100 hover:border-[#d4af37]/60 hover:text-white"
+          onClick={() => void start()}>
+          <Mic size={14} aria-hidden="true" />
+          {missing.length === total ? `Voice ${total === 1 ? '1 line' : `${total} lines`}` : `Voice the last ${missing.length}`}
+          <EnergyActionCost price={price} projected />
+        </button>}
+    {problem && <span role="alert" className="mt-1 block text-xs text-amber-200">{problem}</span>}
+  </span>;
+}
+
 type RowState = { label: string; tone: 'done' | 'quiet' | 'warn' | 'busy' };
 
 const rowState = (chapter: HarnessChapter, current: boolean, queued: boolean): RowState => {
@@ -278,7 +329,7 @@ const rowState = (chapter: HarnessChapter, current: boolean, queued: boolean): R
  * each, and every row changes as its chapter lands. Stop finishes the chapter
  * being read and tags no more. Double-click a row, or its arrow, to open it.
  */
-function ChapterTable({ stories, storyId, onOpenChapter }: { stories: LibraryStories; storyId: string; onOpenChapter: (chapterNumber: number) => void }) {
+function ChapterTable({ stories, storyId, onOpenChapter, voices }: { stories: LibraryStories; storyId: string; onOpenChapter: (chapterNumber: number) => void; voices?: ChapterVoiceService }) {
   const { state, controller, canGenerate } = stories;
   // Each chapter tagged is one tagging call, at the catalog's price (one Energy).
   const tagPrice = useActionEnergyPrice('chapter.tag');
@@ -400,6 +451,7 @@ function ChapterTable({ stories, storyId, onOpenChapter }: { stories: LibrarySto
               {gap
                 ? <span className="block text-xs text-neutral-500">{gap}</span>
                 : found.length > 0 && <span className="block truncate text-xs text-neutral-500">{found.join(' · ')}</span>}
+              {voices?.available && <ChapterVoiceControl voices={voices} state={state} chapter={chapter} />}
             </td>
             <td className="hidden py-2.5 pe-4 text-right align-top tabular-nums text-neutral-400 sm:table-cell">{chapter.metrics.wordCount.toLocaleString()}</td>
             <td className={`py-2.5 pe-1 text-right align-top text-xs ${status.tone === 'done' ? 'text-emerald-200/80' : status.tone === 'warn' ? 'text-amber-200' : status.tone === 'busy' ? 'text-cyan-200' : 'text-neutral-500'}`}

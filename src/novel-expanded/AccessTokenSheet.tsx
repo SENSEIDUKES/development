@@ -5,7 +5,7 @@ import { NarrativeButton, NarrativeTextBox } from '@seihouse/sen/presentation';
 /** An open request for the token; `resolve` answers it with the token, or nothing when cancelled. */
 export interface AccessTokenRequest {
   /** What needs it: a World Blueprint, or chapters, covers, Codex pictures or portraits past the visitor limit. */
-  reason: 'blueprint' | 'chapters' | 'covers' | 'pictures' | 'portraits';
+  reason: 'blueprint' | 'chapters' | 'covers' | 'pictures' | 'portraits' | 'voices';
   /** The server did not accept the last token. */
   rejected: boolean;
   resolve: (token: string | undefined) => void;
@@ -37,6 +37,8 @@ export function AccessTokenSheet({ request }: { request?: AccessTokenRequest }) 
             ? 'Without your access token, covers are limited to 3 every 30 minutes. Enter it to make more.'
             : request?.reason === 'pictures'
               ? 'Without your access token, Codex pictures and covers share a limit of 3 every 30 minutes. Enter it to make more.'
+            : request?.reason === 'voices'
+              ? 'Without your access token, character voices are limited to 60 spoken lines an hour. Enter it to voice more.'
             : request?.reason === 'portraits'
               ? 'Without your access token, profile pictures are limited to 2 sets of 3 every 30 minutes. Enter it to make more.'
               : 'World Blueprints are still in development, so the server asks for your access token.'}

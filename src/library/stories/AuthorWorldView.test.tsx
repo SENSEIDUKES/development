@@ -8,6 +8,7 @@ import { HarnessGenerationController, type HarnessGenerationModelAdapter, type H
 import type { CreatorWorld } from '../../components/creator-space/shared/creatorSpaceContracts';
 import { AuthorWorldView } from './AuthorWorldView';
 import { useLibraryStories } from './useLibraryStories';
+import { chapterVoiceEnergy, chapterVoicePlan, type ChapterVoiceLine, type ChapterVoiceService } from './chapterVoices';
 
 /**
  * The author's world view (SENSEI, 2026-10-30): what a world opens to in
@@ -65,13 +66,13 @@ const threeChapters = async () => {
   return { repository, storyId: story.id };
 };
 
-function Host({ repository, adapter, storyId, worlds, onOpenChapter = () => undefined }: {
+function Host({ repository, adapter, storyId, worlds, onOpenChapter = () => undefined, chapterVoices }: {
   repository: InMemoryHarnessGenerationRepository; adapter: HarnessGenerationModelAdapter; storyId: string; worlds: CreatorWorld[];
-  onOpenChapter?: (chapterNumber: number) => void;
+  onOpenChapter?: (chapterNumber: number) => void; chapterVoices?: ChapterVoiceService;
 }) {
   const stories = useLibraryStories({ repository, modelAdapter: adapter });
   if (!stories.state) return null;
-  return <AuthorWorldView stories={stories} worlds={worlds} storyId={storyId}
+  return <AuthorWorldView stories={stories} worlds={worlds} storyId={storyId} chapterVoices={chapterVoices}
     onChooseWorld={() => undefined} onOpenChapter={onOpenChapter} onBack={() => undefined} />;
 }
 
@@ -167,5 +168,68 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
     const assets = view().querySelector<HTMLElement>('[data-testid="story-assets"]')!;
     expect(assets).toBeTruthy();
     expect(assets.textContent).not.toContain('Language and Reading Mode');
+  });
+
+  it('voices a chapter\'s spoken lines, never its narration, at the Energy of what is spoken', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const generate = vi.fn<HarnessGenerationModelAdapter['generate']>();
+    const adapter: HarnessGenerationModelAdapter = {
+      getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'fixture', label: 'Fixture' }], defaultModel: 'fixture' }),
+      generate,
+      arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
+    };
+    const writer = new HarnessGenerationController({ repository, modelAdapter: adapter });
+    await writer.hydrate();
+    const story = await writer.createStory({
+      title: 'The Drowned Name', premise: 'A courier returns to the drowned city.', destinedEnding: 'Mara reclaims her name.', initialArcPlan: GOAL,
+      cast: [{ name: 'Mara', role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self' }],
+      worldAtChapterZero: { cards: [{ key: 'world:character:mara', kind: 'character', name: 'Mara', mainCharacter: true, enteredInChapter: 0, slots: { gender: 'female', age: '24' } }] },
+    });
+    generate.mockResolvedValueOnce({ rawProviderResponse: reply('Bell 1', '"I came back for my name," Mara said, and the gate did not answer.'), providerReceipt: receipt });
+    await writer.generateNextChapter(story.id, 'fixture');
+    generate.mockResolvedValueOnce({ rawProviderResponse: reply('Bell 2', 'Nobody spoke at the tower.'), providerReceipt: receipt });
+    await writer.generateNextChapter(story.id, 'fixture');
+
+    // The plan: Mara's one spoken line, hers by her Codex card; the narration around it is not in it.
+    const state = writer.snapshot();
+    const first = state.chapters.find(chapter => chapter.chapterNumber === 1)!;
+    const plan = chapterVoicePlan(state, first);
+    expect(plan.lines.map(line => line.text)).toEqual(['"I came back for my name,"']);
+    expect(plan.cast.map(character => character.mainCharacter)).toEqual([true]);
+    expect(chapterVoicePlan(state, state.chapters.find(chapter => chapter.chapterNumber === 2)!).lines).toEqual([]);
+
+    const kept = new Set<string>();
+    const voice = vi.fn<ChapterVoiceService['voice']>(async (_story, _chapter, voicedPlan, onLine) => {
+      for (const line of voicedPlan.lines) kept.add(line.key);
+      onLine?.(voicedPlan.lines.length, voicedPlan.lines.length);
+    });
+    const missing = (_story: string, _chapter: string, lines: readonly ChapterVoiceLine[]) => lines.filter(line => !kept.has(line.key));
+    const voices = (): ChapterVoiceService => ({
+      available: true, model: 'eleven_multilingual_v2', missing,
+      voiced: (storyId, chapterId, lines) => lines.length - missing(storyId, chapterId, lines).length,
+      clip: () => undefined, voice,
+    });
+    const show = async () => {
+      await act(async () => { root.render(<Host repository={repository} adapter={adapter} storyId={story.id} worlds={[]} chapterVoices={voices()} />); });
+      await flush(20);
+    };
+    await show();
+
+    // The chapter with a spoken line offers it, with its price; the chapter with none offers nothing.
+    const make = row(1).querySelector<HTMLButtonElement>('[data-testid="chapter-voices-make"]');
+    expect(make?.textContent).toContain('Voice 1 line');
+    const price = chapterVoiceEnergy(plan.lines, 'eleven_multilingual_v2');
+    expect(price).toBe(1);
+    expect(make?.getAttribute('aria-label')).toBe(`Voice Chapter 1's 1 spoken line in their characters' voices, ${price} Energy`);
+    expect(row(2).querySelector('[data-testid="chapter-voices-make"]')).toBeNull();
+
+    // Voicing it never checks the row for tagging, and the row then says it is voiced.
+    await click(make, 'Voice Chapter 1');
+    expect(voice).toHaveBeenCalledTimes(1);
+    expect(voice.mock.calls[0][1]).toBe(first.id);
+    expect(row(1).dataset.checked).toBe('false');
+    await show();
+    expect(row(1).querySelector('[data-testid="chapter-voices-done"]')?.textContent).toBe('Voiced · 1 line');
+    expect(row(1).querySelector('[data-testid="chapter-voices-make"]')).toBeNull();
   });
 });

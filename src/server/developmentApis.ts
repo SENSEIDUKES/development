@@ -12,6 +12,7 @@ import { STORY_SPARK_VISITOR_LIMIT, storySparkUsageHeaders } from '../server/sto
 import { handleFamiliarLiveHttp } from '../server/familiar-live/http';
 import { FAMILIAR_LIVE_VISITOR_LIMIT } from '../server/familiar-live/limits';
 import { handleCodexVoiceQuoteHttp } from '../server/audio/codexVoiceQuoteHttp';
+import { CHAPTER_VOICE_VISITOR_LIMIT, handleChapterVoiceHttp } from '../server/audio/chapterVoiceHttp';
 import { createConfiguredCodexVoiceQuoteService } from '../server/audio/codexVoiceQuote';
 import { modelRouterStatus } from '../server/model-router/status';
 import {
@@ -66,6 +67,7 @@ export const generationApis = (
     limit: 8,
     windowMs: 60 * 60 * 1_000,
   });
+  const guardChapterVoice = createPublicGenerationGuard(CHAPTER_VOICE_VISITOR_LIMIT);
   const guardReaderTranslation = createPublicGenerationGuard({
     key: 'reader-translation',
     limit: 12,
@@ -113,6 +115,7 @@ export const generationApis = (
         && pathname !== '/api/image-lab'
         && pathname !== '/api/profile-picture'
         && pathname !== '/api/codex-voice-quote'
+        && pathname !== '/api/chapter-voice'
         && pathname !== '/api/reader-translation'
         && pathname !== '/api/story-spark'
         && pathname !== '/api/familiar-live'
@@ -132,6 +135,8 @@ export const generationApis = (
               ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardProfilePicture(request)
             : pathname === '/api/codex-voice-quote'
               ? guardCodexVoiceQuote(request)
+            : pathname === '/api/chapter-voice'
+              ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardChapterVoice(request)
             : pathname === '/api/reader-translation'
               ? guardReaderTranslation(request)
             : pathname === '/api/story-spark'
@@ -197,6 +202,14 @@ export const generationApis = (
               onError: error => console.error('[image-lab]', error),
               onAnswer: ({ model, durationMs }) => console.info(`[image-lab] ${model} answered in ${Math.round(durationMs / 1000)}s`),
             },
+          );
+          writeJson(response, result.status, result.body, result.headers);
+          return;
+        }
+        if (pathname === '/api/chapter-voice') {
+          const result = await handleChapterVoiceHttp(
+            { method: request.method, body },
+            { environment, onError: error => console.error('[chapter-voice]', error) },
           );
           writeJson(response, result.status, result.body, result.headers);
           return;

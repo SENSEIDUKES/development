@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { CHAPTER_MODELS, IMAGE_MODELS, LIVE_MODELS } from '../../../library/model-router/catalog';
+import { CHAPTER_MODELS, IMAGE_MODELS, LIVE_MODELS, TTS_MODELS } from '../../../library/model-router/catalog';
 import { ENERGY_PRICE_CATALOG } from './energyContracts';
-import { GRADED_ENERGY_PRICES, MODEL_ENERGY_GRADES, gradedEnergyPrice, liveTalkEnergy, modelEnergyGrade } from './energyGrades';
+import { ENERGY_USD, GRADED_ENERGY_PRICES, MODEL_ENERGY_GRADES, VOICE_ENERGY_MARGIN, VOICE_USD_PER_1000_CHARACTERS, gradedEnergyPrice, liveTalkEnergy, modelEnergyGrade, voiceEnergyPrice } from './energyGrades';
 
 describe('Energy grades', () => {
   it('prices Mortal the same as the shared catalog, and each grade above the one below', () => {
@@ -37,5 +37,25 @@ describe('Energy grades', () => {
     expect(liveTalkEnergy('google/gemini-3.8-live', 60)).toBe(3);
     expect(liveTalkEnergy('openai/gpt-live-1', 20)).toBe(2);
     expect(liveTalkEnergy('openai/gpt-live-1', 125)).toBe(14);
+  });
+
+  it('prices character voices at four times the provider\'s price for what is spoken, in whole Energy', () => {
+    expect(ENERGY_USD).toBe(0.02);
+    expect(VOICE_ENERGY_MARGIN).toBe(4);
+    // 1,000 characters at $0.08 cost SEIHouse 8 cents: 32 cents charged, 16 Energy.
+    expect(voiceEnergyPrice(1000, 'eleven_multilingual_v2')).toBe(16);
+    expect(voiceEnergyPrice(1000, 'eleven_flash_v2_5')).toBe(8);
+    // Rounded up, and a single short line is never free.
+    expect(voiceEnergyPrice(985, 'eleven_multilingual_v2')).toBe(16);
+    expect(voiceEnergyPrice(1001, 'eleven_multilingual_v2')).toBe(17);
+    expect(voiceEnergyPrice(20, 'eleven_multilingual_v2')).toBe(1);
+    expect(voiceEnergyPrice(0, 'eleven_multilingual_v2')).toBe(0);
+    // A model with no listed price is charged at the dearest one.
+    expect(voiceEnergyPrice(1000, 'someone/new-voice')).toBe(16);
+    expect(voiceEnergyPrice(1000, undefined)).toBe(16);
+    // Every ElevenLabs voice model in the Router has its provider price here.
+    const unpriced = TTS_MODELS.filter(model => model.provider === 'elevenlabs').map(model => model.id)
+      .filter(id => !Object.hasOwn(VOICE_USD_PER_1000_CHARACTERS, id));
+    expect(unpriced).toEqual([]);
   });
 });

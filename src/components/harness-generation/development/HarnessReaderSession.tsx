@@ -11,7 +11,8 @@ import {
   DEFAULT_READER_FONTS,
   READ_ALOUD_SCRIPT_VERSION,
   applyReaderStatePatch,
-  buildReadAloudScript,
+  createClipSpeechEngine,
+  createWebSpeechEngine,
   createReaderStoryState,
   readReaderTextSettings,
   readSoundtrackChoice,
@@ -21,6 +22,7 @@ import {
   useReadAloud,
   writeReaderTextSettings,
   writeSoundtrackChoice,
+  type ReadAloudLine,
   type ReadAloudScript,
   type ReadAloudVoicePicks,
   type ReaderFonts,
@@ -30,12 +32,11 @@ import {
   type ReaderTextSettings,
   type SoundtrackChoice,
 } from '@seihouse/sen/reader-runtime';
-import { harnessParagraphBlockId } from '../shared/chapterBody';
+import { chapterReadAloudBlocks, chapterReadAloudScript } from '../shared/chapterReadAloud';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
 import { harnessStoryMode, nextArcStep } from '../shared/arcState';
 import { pendingChapterDirection } from '../shared/chapterDirection';
 import { chapterRewriteGap, latestStoryChapter } from '../shared/chapterRewrite';
-import { protagonistNames } from '../shared/speakers';
 import { type CodexPictureMaker, type CodexPictures } from '../shared/storyCodex';
 import { storyCodexOf } from '../shared/storyKnowledge';
 import { BlueprintArcPage } from './BlueprintArcPage';
@@ -113,9 +114,7 @@ const navButton = 'min-h-11 rounded-full border px-4 text-sm disabled:cursor-not
 const NO_SCRIPT: ReadAloudScript = { version: READ_ALOUD_SCRIPT_VERSION, lines: [] };
 
 /** The engine blocks of one chapter, under the ids its Sound Cues and speaker records use. */
-const chapterBlocks = (chapter: ReaderChapter): TextHighlightBlock[] => chapter.paragraphs.map((text, index) => ({
-  id: harnessParagraphBlockId(chapter.chapterNumber, index), text,
-}));
+const chapterBlocks = (chapter: ReaderChapter): TextHighlightBlock[] => chapterReadAloudBlocks(chapter);
 
 /**
  * The first line to read when the reader taps Listen: the chapter title while
@@ -164,7 +163,7 @@ export type ReaderGenerationCost = 'chapter' | 'tag' | 'picture';
 
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
-  readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
+  readerPreferences, readAloudVoices, readAloudClip, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
   creator = true, openAtChapter, openInCreate = false, onTagChapter, onTagChapterMedia, renderCost,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
@@ -209,6 +208,8 @@ export function HarnessReaderSession({
   readerPreferences?: ReaderPreferenceStorage;
   /** The host's preferred narration voices, by story language and role. SEN prefers none. */
   readAloudVoices?: ReadAloudVoicePicks;
+  /** The host's saved voice clip for a spoken line of a chapter, as an address to play; without one the device reads the line. */
+  readAloudClip?: (chapterId: string, line: ReadAloudLine) => string | undefined;
   /**
    * The host's soundscapes: the Reader's own music before the story has a
    * chapter to take its pieces from (Chapter 1 being written). Without them,
@@ -437,20 +438,22 @@ export function HarnessReaderSession({
   // The story's language sets the frame's direction: a right-to-left story reads, and is steered, right to left.
   const direction = getSenTextDirection(language);
   const blocks = useMemo(() => (chapter ? chapterBlocks(chapter) : []), [chapter]);
-  // The main character as this chapter's writer was told: speech it left untagged is voiced from its narration.
-  const attempt = chapter && state.attempts.find(item => item.id === chapter.attemptId);
-  const mainCharacter = useMemo(() => (attempt
-    ? protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters) : undefined), [attempt]);
   const mixer = useOptionalReaderMixer();
+  // A spoken line the host has a saved clip for plays that clip; every other line is read by the device.
+  const clipSource = useRef<{ chapterId?: string; clip?: typeof readAloudClip }>({});
+  clipSource.current = { chapterId: chapter?.id, clip: readAloudClip };
+  const hasClips = Boolean(readAloudClip);
+  const speech = useMemo(() => (hasClips ? createClipSpeechEngine(createWebSpeechEngine(), line => {
+    const { chapterId, clip } = clipSource.current;
+    return chapterId && clip ? clip(chapterId, line) : undefined;
+  }) : undefined), [hasClips]);
   const scriptRevision = useMemo(() => JSON.stringify([chapter?.paragraphs, chapter?.speakers, chapter?.soundCues]),
     [chapter?.paragraphs, chapter?.speakers, chapter?.soundCues]);
   const readAloud = useReadAloud({
     scriptKey: chapter?.id ?? 'no-chapter',
     scriptRevision,
-    buildScript: () => (chapter ? buildReadAloudScript({
-      chapterNumber: chapter.chapterNumber, title: chapter.title, language, paragraphs: blocks, speakers: chapter.speakers, mainCharacter, soundCues: chapter.soundCues,
-    }) : NO_SCRIPT),
-    language, preferences: readerPreferences, picks: readAloudVoices,
+    buildScript: () => (chapter ? chapterReadAloudScript(state, chapter) : NO_SCRIPT),
+    language, preferences: readerPreferences, picks: readAloudVoices, engine: speech,
     suspended: covered,
     onSoundCue: cue => {
       const playable = resolvePlayableSoundCue(cue);

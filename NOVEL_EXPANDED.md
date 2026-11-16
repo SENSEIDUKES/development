@@ -369,7 +369,21 @@ mode**. That means:
     ElevenLabs are the expensive tier.
   - Never propose a whole chapter voiced at the paid rate, one long audio file
     of a chapter, or a paid narrator, as the way audio works. Ask the owner.
-  - Not built. Not decided: Kokoro or the browser's voice for the narrator.
+  - Priced by what is spoken: the provider's price for those characters, four
+    times over, in whole Energy (1 Energy is 2 cents). On ElevenLabs
+    Multilingual v2 (8 cents for 1,000 characters) that is 16 Energy for 1,000
+    spoken characters.
+  - **The first test is built** (2026-11-16): in the creator's world, each
+    chapter in Chapters has one button that voices its spoken lines with the
+    ElevenLabs cast, showing its Energy first (practice: nothing is taken yet),
+    and Listen then plays those lines in their characters' voices, with the
+    device's voice for everything else. Each character's voice is chosen from
+    its Codex card (sex, age, how it sounds) and kept for the story; the clips
+    and the cast are kept on the device. Not built: choosing or changing a
+    voice on the Codex card, the cast as a Blueprint CAPA skill, voices for a
+    reader who is not the creator, and Create mode's line-by-line tools. Not
+    tested with real voices or on a real phone. Not decided: Kokoro or the
+    browser's voice for the narrator.
 
 ## Where we are (2026-10-10)
 

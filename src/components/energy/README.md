@@ -98,6 +98,11 @@ or verified against a production deployment.
 
 ## Workshop history
 
+- **2026-11-16 character voices** — A chapter's spoken lines are priced by what is spoken
+  (`voiceEnergyPrice`): the voice provider's price for those characters times `VOICE_ENERGY_MARGIN`
+  (4), in whole Energy at `ENERGY_USD` ($0.02). `VOICE_USD_PER_1000_CHARACTERS` holds each voice
+  model's provider price (ElevenLabs' API list: Multilingual v2 and v3 $0.08, Flash v2.5 $0.04), so
+  1,000 spoken characters on Multilingual v2 are 16 Energy. Narration is never priced: it is free.
 - **2026-11-04 chapter tagging** — `chapter.tag` joins the catalog at 1 Energy (SENSEI: tagging a
   chapter is one Energy; tagging by hand is free, only the AI tagger costs), with the
   `20261104_001` migration widening the reservation allowlist. Every generation control in the app

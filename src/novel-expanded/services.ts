@@ -18,6 +18,7 @@ import { createDeviceProfileStore, type DeviceProfileStore } from '../host/profi
 import { requestCodexPicture, requestStoryCover } from '../host/media/storyCoverClient';
 import { requestProfilePicture } from '../host/media/profilePictureClient';
 import { IndexedDbStoryCoverStore, type StoryCoverStore } from '../host/media/storyCovers';
+import { readChapterVoiceInfo, requestChapterVoiceCast, requestChapterVoiceLine } from '../host/media/chapterVoiceClient';
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
 
 /**
@@ -30,6 +31,7 @@ export const NOVEL_EXPANDED_STORAGE = {
   readerState: 'novelexpanded-reader-state-v1',
   storySeeds: 'novelexpanded-story-seeds-v1',
   storyCovers: 'novelexpanded-story-covers-v1',
+  chapterVoices: 'novelexpanded-chapter-voices-v1',
   /** The Codex cards' pictures, by story and card. */
   codexPictures: 'novelexpanded-codex-pictures-v1',
   /** The Sound Words presets installed from `.spp` packages. */
@@ -84,6 +86,10 @@ export interface NovelExpandedServices {
   requestCodexPicture: typeof requestCodexPicture;
   /** The profile picture server: one portrait from the reader's photo, with the Router's image model. */
   requestProfilePicture: typeof requestProfilePicture;
+  /** Character voices (a clip per spoken line, and each story's cast), kept on this device until the database keeps them. */
+  chapterVoices: StoryCoverStore;
+  /** The voice server: whether it can make voices, a cast from Codex cards, and one spoken line in a cast voice. */
+  chapterVoiceServer: { info: typeof readChapterVoiceInfo; cast: typeof requestChapterVoiceCast; line: typeof requestChapterVoiceLine };
 }
 
 /** The skills the reader installed on this device; a damaged inventory reads as none. */
@@ -123,5 +129,7 @@ export function createNovelExpandedServices(): NovelExpandedServices {
     codexPictures: new IndexedDbStoryCoverStore(NOVEL_EXPANDED_STORAGE.codexPictures),
     requestCodexPicture,
     requestProfilePicture,
+    chapterVoices: new IndexedDbStoryCoverStore(NOVEL_EXPANDED_STORAGE.chapterVoices),
+    chapterVoiceServer: { info: readChapterVoiceInfo, cast: requestChapterVoiceCast, line: requestChapterVoiceLine },
   };
 }

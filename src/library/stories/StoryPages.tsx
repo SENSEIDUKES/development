@@ -11,6 +11,7 @@ import { LIBRARY_READER_FONTS } from './readerFonts';
 import { StorySettings } from './settings/StorySettings';
 import { useStoryCoverManifest } from './StoryCoverManifest';
 import { codexPictureRequest, storyCoverRequest, type CodexPictureService, type StoryCoverService } from './storyCover';
+import type { ChapterVoiceService } from './chapterVoices';
 import { downloadHarnessStory } from './storyExport';
 import { harnessStoryDisplay } from './storyView';
 import { worldInfoChapterMap } from './worldInfoChapterMap';
@@ -65,6 +66,8 @@ export interface StoryPagesProps {
   covers?: StoryCoverService;
   /** The host's Codex pictures: the Reader's Codex shows them and offers Manifest. Without it, cards show their aura. */
   codexPictures?: CodexPictureService;
+  /** The host's character voices: Listen plays a spoken line's kept clip in its character's voice. Without it, the device reads every line. */
+  chapterVoices?: ChapterVoiceService;
   /**
    * Whether the Reader is the creator's: Fate and Create together, and the
    * story's next chapter written from it. Anyone else's Reader has Fate alone
@@ -92,7 +95,7 @@ const keepVeilOpen = () => undefined;
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint, creator = true, openAtChapter, openInCreate = false, beginOnOpen = false }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, chapterVoices, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint, creator = true, openAtChapter, openInCreate = false, beginOnOpen = false }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   const portraitHandoff = useRef<Promise<void>>(Promise.resolve());
   const [portraitProblem, setPortraitProblem] = useState<string>();
@@ -165,6 +168,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
         pictureOf: key => codexPictures.pictureOf(storyId, key),
         manifest: card => codexPictures.manifest(storyId, card.key, codexPictureRequest(state, storyId, card)),
       }}
+      readAloudClip={chapterVoices && ((chapterId, line) => chapterVoices.clip(storyId, chapterId, line))}
       readerPreferences={readerPreferences} readAloudVoices={LIBRARY_READ_ALOUD_VOICES} readerFonts={LIBRARY_READER_FONTS} soundscapes={soundscapes}
       onGenerateNextChapter={writes ? () => stories.generateNextChapter(storyId) : undefined}
       onRewriteChapter={writes ? note => stories.rewriteLatestChapter(storyId, note) : undefined}

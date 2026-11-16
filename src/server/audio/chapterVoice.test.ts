@@ -66,13 +66,18 @@ describe('casting character voices', () => {
       internalKey, fileName: `${internalKey}.mp3`, archetype: internalKey, gender, classification: 'flexible' as const,
       compatibleRoles: [], description: '', ageRange: '20-40', ageYears: [20, 40] as const, ttsAvailable: true,
     });
-    const pair = [voice('a-woman', 'female'), voice('b-man', 'male')];
-    const chosen = (name: string) => castChapterVoices([{ key: 'x', name, age: '30' }], {}, pair).x.voiceKey;
-    const neutral = chosen('Feng');
-    expect(chosen('He Feng')).toBe(neutral);
-    expect(chosen('Her Feng')).toBe(neutral);
-    // A plain word in the name is read: each of these is told apart by it alone.
-    expect([chosen('the old man'), chosen('the veiled woman')]).toEqual(['b-man', 'a-woman']);
+    // Whichever sex a neutral name falls to (the first key), a pronoun surname must fall to it too: tried both ways round,
+    // so "He" read as a man fails where the woman comes first, and "Her" read as a woman fails where the man does.
+    for (const [woman, man] of [['a-woman', 'b-man'], ['b-woman', 'a-man']]) {
+      const pair = [voice(woman, 'female'), voice(man, 'male')];
+      const chosen = (name: string) => castChapterVoices([{ key: 'x', name, age: '30' }], {}, pair).x.voiceKey;
+      const neutral = chosen('Feng');
+      expect(neutral).toBe([woman, man].sort()[0]);
+      expect(chosen('He Feng')).toBe(neutral);
+      expect(chosen('Her Feng')).toBe(neutral);
+      // A plain word in the name is read: each of these is told apart by it alone.
+      expect([chosen('the old man'), chosen('the veiled woman')]).toEqual([man, woman]);
+    }
   });
 
   it('gives a character cast in a later chapter a voice no one in the story already has', () => {

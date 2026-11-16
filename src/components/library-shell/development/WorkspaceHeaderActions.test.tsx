@@ -55,7 +55,7 @@ it('keeps universal Search and the Profile Portrait without a header badge, cont
   // so the document outline still starts at the page's own content.
   expect(container.querySelector('h1')).toBeNull();
   expect(container.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
-  expect(container.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
+  expect(container.querySelector('[data-slot="novel-expanded-icon"]')).not.toBeNull();
   expect(Array.from(container.querySelectorAll('button')).map(button => button.getAttribute('aria-label'))).toEqual(['Search for stories', 'Profile and preferences']);
   expect(container.querySelector('.workspace-header-context')).toBeNull();
   expect(container.querySelector('[role="status"]')).toBeNull();

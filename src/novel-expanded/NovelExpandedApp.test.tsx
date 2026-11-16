@@ -519,7 +519,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
 
     // Home: the Library header, the navigation and the footer around the reader's stories.
     const header = shell()!.querySelector('header')!;
-    expect(header.querySelector('.novel-expanded-emblem [data-slot="novel-expanded-logo"]')).not.toBeNull();
+    expect(header.querySelector('.novel-expanded-emblem [data-slot="novel-expanded-icon"]')).not.toBeNull();
     expect(header.querySelector('.novel-expanded-wordmark')).toBeNull();
     expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
     expect(header.querySelector('button[aria-label="Profile and preferences"]')).toBeTruthy();
@@ -740,7 +740,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
       const header = document.querySelector<HTMLElement>('.workspace-header')!;
       expect(header).toBeTruthy();
       expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
-      expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
+      expect(header.querySelector('[data-slot="novel-expanded-icon"]')).not.toBeNull();
       // Sparks lives in Create, never in the header.
       expect(header.querySelector('.dao-sparks-trigger')).toBeNull();
       expect(

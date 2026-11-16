@@ -17,7 +17,7 @@ const results = [];
 async function checkHeader(frame, label) {
   await frame.locator('.workspace-search-field').waitFor();
   await frame.locator('.workspace-profile-portrait').waitFor();
-  await frame.locator('.novel-expanded-emblem-art img').waitFor({ state: 'attached' });
+  await frame.locator('svg.novel-expanded-emblem-art').waitFor({ state: 'attached' });
   // Give fonts and React's resulting update a frame each before judging the
   // new viewport; WebKit can otherwise expose the previous width.
   await frame.locator('.workspace-header').evaluate(async header => {

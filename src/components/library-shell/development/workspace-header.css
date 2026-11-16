@@ -35,28 +35,16 @@
   border-radius: 12px;
 }
 .workspace-header-logo-art,
-.novel-expanded-emblem-art { --ne-logo-height: 40px; }
-/* Show the wordmark directly on the header, keeping its enlarged artwork
-   and existing footprint. The surrounding Home link owns the touch target. */
-.workspace-header .ne-logo {
-  --ne-logo-art-height: var(--ne-logo-height);
-  width: calc(var(--ne-logo-height) * 0.7 * 1580 / 976 + var(--ne-logo-height) * 0.5 + 2px);
-}
-.workspace-header .ne-logo__aura,
-.workspace-header .ne-logo__ring { display: none; }
-.workspace-header .ne-logo__face {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-}
-.workspace-header .ne-logo__image {
-  flex: none;
-  max-width: none;
+.novel-expanded-emblem-art {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
 }
 @media (max-width: 479px) {
   .workspace-header-badge { gap: 4px; }
   .workspace-header-logo-art,
-  .novel-expanded-emblem-art { --ne-logo-height: 32px; }
+  .novel-expanded-emblem-art { width: 36px; height: 36px; border-radius: 9px; }
   .workspace-header .workspace-header-inner {
     padding-inline: max(8px, var(--sh-safe-left, env(safe-area-inset-left))) max(8px, var(--sh-safe-right, env(safe-area-inset-right)));
     gap: 4px;

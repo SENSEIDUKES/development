@@ -2035,6 +2035,8 @@ export class HarnessGenerationController {
       const fixed = applyHoldingsFixes({
         ...input, plan, reply: response?.rawProviderResponse, error,
         declared: declaredCharacters(attempt.storyInformation.currentStory),
+        // The world the commit kept tags against: a fix keeps to the same rule for minor figures.
+        world: storyWorldRecord(this.state, story.id),
         createdAt: now, createId: () => this.runtime.createId('hcx'),
       });
       const candidate = cloneHarnessValue(this.state);

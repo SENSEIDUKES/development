@@ -388,6 +388,19 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
   to show a part keeping it; the Codex's Minor list says it. The Reader takes
   a host's saved clip for a spoken line (`readAloudClip`). Not tested with a
   real tagger.
+- **2026-11-16 (the fixer keeps to the cards too; step 3c):** the tagger was
+  held to the cards on 2026-11-11 (step 3b), but the Holdings fixer wrote its
+  own holding, status and place tags with no such rule, so the repair path could
+  give a minor figure what the tagger may not. Every fix now says which tags it
+  wrote, and `applyHoldingsFixes` reads them with the same `tagsOfCards` the
+  commit uses, against the story's world (`HoldingsFixApplyInput.world`): a fix
+  that gives a minor figure a holding, a condition or a place does not stand,
+  and the case is kept on the chapter's fixer record as skipped, with the tag
+  and why. A fix that touches only a card stands as before, and a story with no
+  cards keeps every tag a fix writes. No words any model reads change, nothing
+  new is stored and no schema changes. `holdingTagText` moved to `holdings.ts`
+  beside `readHoldingTag`, so the fixer and the minor-figure rule do not import
+  each other; the package still exports it.
 - **2026-11-14 (the Codex check list reads the whole record):** SENSEI's
   test story: Lin Wei's card says he opens the story knowing Sun Breath Sword
   Art and Azure Meridian Method. The writer is handed that correctly, so its

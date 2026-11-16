@@ -6,8 +6,7 @@ import type { StatusAttachment } from '../../../narrative/statuses';
 import type { TieAttachment } from '../../../narrative/ties';
 import type { WorldRecord } from '../../../narrative/worldRecord';
 import { normalizeIdentityLabel } from './canonicalProjection';
-import { isMinorEntry, type DeclaredCharacter } from './holdings';
-import { holdingTagText } from './holdingsFixer';
+import { holdingTagText, isMinorEntry, type DeclaredCharacter } from './holdings';
 import { placeTagText, statusTagText } from './recordChecks';
 import { isMainCharacterTag } from './speakers';
 
@@ -28,7 +27,9 @@ import { isMainCharacterTag } from './speakers';
  * takes one read's tags before any of their names becomes a Codex entry, keeps
  * the ones a card carries, and names every other one, so the Codex can list
  * what was left out among its checks. A story with no cards at all has nothing
- * to tell a minor figure from, and keeps every tag.
+ * to tell a minor figure from, and keeps every tag. The Holdings fixer writes
+ * tags too, and reads the ones each fix wrote here as well (step 3c): a fix
+ * that gives a minor figure what only a card carries does not stand.
  */
 
 /** The tags of one read that name someone or something. */

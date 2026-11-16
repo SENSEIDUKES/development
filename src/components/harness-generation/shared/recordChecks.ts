@@ -408,7 +408,8 @@ export interface RecordFixContext {
 }
 
 export type RecordFixAttempt =
-  | { chapter: HarnessChapter; entries: CodexEntry[]; fix: Pick<HarnessHoldingsFix, 'outcome' | 'blockId' | 'before' | 'after' | 'named'> }
+  /** `written`: the tags the fix wrote, which the fixer holds to the tagger's rule for minor figures. */
+  | { chapter: HarnessChapter; entries: CodexEntry[]; written?: { appearances?: AppearanceAttachment[]; statuses?: StatusAttachment[]; places?: PlaceAttachment[] }; fix: Pick<HarnessHoldingsFix, 'outcome' | 'blockId' | 'before' | 'after' | 'named'> }
   | { problem: string };
 
 /**
@@ -490,6 +491,7 @@ export function attemptRecordFix(planned: RecordFixPlanCase, answer: RecordFixAn
     return {
       chapter: { ...chapter, appearances: [...(chapter.appearances ?? []), ...resolved.appearances] },
       entries: [...entries, ...resolved.created],
+      written: { appearances: resolved.appearances },
       fix: { outcome: 'fixed-tags', blockId: anchor.blockId, before: anchor.selectedText, after: `[[appears: ${planned.name} | character]]` },
     };
   }
@@ -522,6 +524,7 @@ export function attemptRecordFix(planned: RecordFixPlanCase, answer: RecordFixAn
     return {
       chapter: { ...chapter, places, appearances },
       entries: [...entries, ...resolver.created],
+      written: { places: resolved },
       fix: { outcome: 'fixed-tags', blockId: anchor.blockId, before: anchor.selectedText, after: resolved.map(placeTagText).join(' ') },
     };
   }
@@ -543,6 +546,7 @@ export function attemptRecordFix(planned: RecordFixPlanCase, answer: RecordFixAn
   return {
     chapter: { ...chapter, statuses: [...(chapter.statuses ?? []), ...resolved] },
     entries: [...entries, ...resolver.created],
+    written: { statuses: resolved },
     fix: { outcome: 'fixed-tags', blockId: anchor.blockId, before: anchor.selectedText, after: resolved.map(statusTagText).join(' ') },
   };
 }

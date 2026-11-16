@@ -10,7 +10,7 @@ import type { StoryCoverStore } from './storyCovers';
  * database.
  */
 
-/** A short fingerprint of a line's words: a clip is only played for the words it voiced. */
+/** A short fingerprint of a line's words and speaker: a clip is only played for the words it voiced, said by who it voiced. */
 const fingerprint = (text: string): string => {
   let hash = 0x811c9dc5;
   for (let index = 0; index < text.length; index += 1) {
@@ -20,8 +20,8 @@ const fingerprint = (text: string): string => {
   return (hash >>> 0).toString(36);
 };
 
-const clipKey = (storyId: string, chapterId: string, line: { key: string; text: string }) =>
-  JSON.stringify(['clip', storyId, chapterId, line.key, fingerprint(line.text)]);
+const clipKey = (storyId: string, chapterId: string, line: { key: string; text: string; speaker?: string }) =>
+  JSON.stringify(['clip', storyId, chapterId, line.key, fingerprint(`${line.speaker ?? ''}\n${line.text}`)]);
 const castKey = (storyId: string) => JSON.stringify(['cast', storyId]);
 
 const readCast = async (blob: Blob): Promise<Record<string, string>> => {

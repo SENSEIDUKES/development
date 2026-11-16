@@ -34,8 +34,8 @@ afterEach(() => {
 
 const plan: ChapterVoicePlan = {
   lines: [
-    { key: 'c1-p1:0-10', text: '"Hello."', cardKey: 'mara' },
-    { key: 'c1-p2:0-12', text: '"Go away."', cardKey: 'keeper' },
+    { key: 'c1-p1:0-10', text: '"Hello."', speaker: 'Mara', cardKey: 'mara' },
+    { key: 'c1-p2:0-12', text: '"Go away."', speaker: 'The keeper', cardKey: 'keeper' },
   ],
   cast: [{ key: 'mara', gender: 'female' }, { key: 'keeper', gender: 'male' }],
   unvoiced: 0,
@@ -70,9 +70,12 @@ describe('character voices kept on the device', () => {
     expect(service.missing('story', 'chapter', plan.lines)).toEqual([]);
 
     // The Reader gets a clip only for the words that were voiced.
-    expect(service.clip('story', 'chapter', { key: 'c1-p1:0-10', text: '"Hello."' })).toMatch(/^blob:clip-/);
-    expect(service.clip('story', 'chapter', { key: 'c1-p1:0-10', text: '"Hello there."' })).toBeUndefined();
-    expect(service.clip('story', 'other-chapter', { key: 'c1-p1:0-10', text: '"Hello."' })).toBeUndefined();
+    expect(service.clip('story', 'chapter', { key: 'c1-p1:0-10', text: '"Hello."', speaker: 'Mara' })).toMatch(/^blob:clip-/);
+    expect(service.clip('story', 'chapter', { key: 'c1-p1:0-10', text: '"Hello there."', speaker: 'Mara' })).toBeUndefined();
+    expect(service.clip('story', 'other-chapter', { key: 'c1-p1:0-10', text: '"Hello."', speaker: 'Mara' })).toBeUndefined();
+    // The same words given to another speaker (a chapter tagged again) are a line still to voice.
+    expect(service.clip('story', 'chapter', { key: 'c1-p1:0-10', text: '"Hello."', speaker: 'The keeper' })).toBeUndefined();
+    expect(service.missing('story', 'chapter', [{ ...plan.lines[0], speaker: 'The keeper', cardKey: 'keeper' }])).toHaveLength(1);
 
     // Another visit: the clips and the cast are still on the device, so nothing is made or cast again.
     act(() => root.unmount());
@@ -80,7 +83,7 @@ describe('character voices kept on the device', () => {
     await act(async () => { root.render(<Probe store={store} client={client} />); });
     await flush();
     expect(service.missing('story', 'chapter', plan.lines)).toEqual([]);
-    const later: ChapterVoicePlan = { ...plan, lines: [...plan.lines, { key: 'c2-p1:0-9', text: '"Again."', cardKey: 'mara' }] };
+    const later: ChapterVoicePlan = { ...plan, lines: [...plan.lines, { key: 'c2-p1:0-9', text: '"Again."', speaker: 'Mara', cardKey: 'mara' }] };
     await act(async () => { await service.voice('story', 'chapter-2', later); });
     expect(cast).toHaveBeenCalledTimes(1);
     expect(line.mock.calls.at(-1)![0]).toEqual({ text: '"Again."', voiceKey: 'bright-heroine-female' });

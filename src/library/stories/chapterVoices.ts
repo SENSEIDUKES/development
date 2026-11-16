@@ -13,6 +13,8 @@ export interface ChapterVoiceLine {
   /** The Read Aloud line's key, which the Reader finds its clip by. */
   key: string;
   text: string;
+  /** Who the chapter's speaker record says speaks it. A line said by someone else is a different line. */
+  speaker: string;
   /** The speaking character's Codex card. */
   cardKey: string;
 }
@@ -32,7 +34,7 @@ export interface ChapterVoicePlan {
   lines: ChapterVoiceLine[];
   /** The characters who speak those lines. */
   cast: ChapterVoiceCharacter[];
-  /** Spoken lines by someone with no Codex card: the device reads them. */
+  /** Spoken lines with no speaker record, or said by someone with no Codex card: the device reads them. */
   unvoiced: number;
 }
 
@@ -46,7 +48,12 @@ const scriptOf = (state: HarnessWorkspaceState, chapter: HarnessChapter) => {
 
 const nameKey = (name: string) => name.normalize('NFKC').toLowerCase().replace(/\s+/gu, ' ').trim();
 
-/** The chapter's spoken lines that a character with a Codex card says, and those characters. */
+/**
+ * The chapter's spoken lines that a speaker record gives to a character with a
+ * Codex card, and those characters. Quoted words nobody was recorded as saying
+ * (a sign, a remembered phrase) are never voiced: Read Aloud's own guess at who
+ * speaks them is good enough for the device's voice, not for a paid one.
+ */
 export function chapterVoicePlan(state: HarnessWorkspaceState, chapter: HarnessChapter): ChapterVoicePlan {
   const cards = state.worldCards.filter(card => card.storyId === chapter.storyId && card.kind === 'character');
   const main = cards.find(card => card.mainCharacter);
@@ -55,9 +62,9 @@ export function chapterVoicePlan(state: HarnessWorkspaceState, chapter: HarnessC
   const speaking = new Map<string, ChapterVoiceCharacter>();
   let unvoiced = 0;
   for (const line of spokenReadAloudLines(scriptOf(state, chapter))) {
-    const card = (line.speaker ? byName.get(nameKey(line.speaker)) : undefined) ?? (line.role === 'protagonist' ? main : undefined);
-    if (!card) { unvoiced += 1; continue; }
-    lines.push({ key: line.key, text: line.text, cardKey: card.key });
+    const card = line.speaker ? byName.get(nameKey(line.speaker)) ?? (line.role === 'protagonist' ? main : undefined) : undefined;
+    if (!line.speaker || !card) { unvoiced += 1; continue; }
+    lines.push({ key: line.key, text: line.text, speaker: line.speaker, cardKey: card.key });
     if (!speaking.has(card.key)) {
       const { gender, age, voice, bio } = card.slots;
       speaking.set(card.key, { key: card.key, name: card.name, gender, age, voice, bio, ...(card.mainCharacter ? { mainCharacter: true } : {}) });
@@ -80,8 +87,8 @@ export interface ChapterVoiceService {
   voiced(storyId: string, chapterId: string, lines: readonly ChapterVoiceLine[]): number;
   /** The lines of these that have no kept clip yet. */
   missing(storyId: string, chapterId: string, lines: readonly ChapterVoiceLine[]): ChapterVoiceLine[];
-  /** A kept clip's address for a Read Aloud line, when its words are still the ones voiced. */
-  clip(storyId: string, chapterId: string, line: Pick<ReadAloudLine, 'key' | 'text'>): string | undefined;
+  /** A kept clip's address for a Read Aloud line, when its words and its speaker are still the ones voiced. */
+  clip(storyId: string, chapterId: string, line: Pick<ReadAloudLine, 'key' | 'text' | 'speaker'>): string | undefined;
   /**
    * Voices the plan's lines that have no clip yet, one line a call, keeping each
    * as it arrives. `onLine` reports each line kept. Rejects with a reason the

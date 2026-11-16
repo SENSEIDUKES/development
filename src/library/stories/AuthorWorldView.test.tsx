@@ -185,7 +185,12 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
       cast: [{ name: 'Mara', role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self' }],
       worldAtChapterZero: { cards: [{ key: 'world:character:mara', kind: 'character', name: 'Mara', mainCharacter: true, enteredInChapter: 0, slots: { gender: 'female', age: '24' } }] },
     });
-    generate.mockResolvedValueOnce({ rawProviderResponse: reply('Bell 1', '"I came back for my name," Mara said, and the gate did not answer.'), providerReceipt: receipt });
+    // Mara's line carries her speaker tag; the sign's words are quoted but nobody says them.
+    generate.mockResolvedValueOnce({ rawProviderResponse: writtenChapterReply(JSON.stringify({
+      title: 'Bell 1', paragraphs: ['[[@MC]] "I came back for my name," Mara said, and the gate did not answer.', 'The sign on the gate read "Keep out."'],
+      arcCompletion: { goalId: 'arc-1-name', completed: false, evidence: '' }, recap: 'Mara returns.', chapterFunction: 'progression',
+      nextProgression: 'Mara climbs.', nextWorldBuilding: 'The keeper explains.', nextConflict: 'The wardens close in.',
+    })), providerReceipt: receipt });
     await writer.generateNextChapter(story.id, 'fixture');
     generate.mockResolvedValueOnce({ rawProviderResponse: reply('Bell 2', 'Nobody spoke at the tower.'), providerReceipt: receipt });
     await writer.generateNextChapter(story.id, 'fixture');
@@ -195,6 +200,9 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
     const first = state.chapters.find(chapter => chapter.chapterNumber === 1)!;
     const plan = chapterVoicePlan(state, first);
     expect(plan.lines.map(line => line.text)).toEqual(['"I came back for my name,"']);
+    expect(plan.lines[0].speaker).toBe('Mara');
+    // The sign is quoted with no speaker record: the device reads it, and nothing is paid for it.
+    expect(plan.unvoiced).toBe(1);
     expect(plan.cast.map(character => character.mainCharacter)).toEqual([true]);
     expect(chapterVoicePlan(state, state.chapters.find(chapter => chapter.chapterNumber === 2)!).lines).toEqual([]);
 

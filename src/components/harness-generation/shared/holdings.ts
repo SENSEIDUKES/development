@@ -108,6 +108,14 @@ export type ReadHoldingTag =
  * level or a reason. A lost tag written with another spelling ("consumed",
  * "sold") keeps that word as its reason.
  */
+/** A saved change written back as the tag a writer writes. */
+export function holdingTagText({ payload }: Pick<HoldingChangeAttachment, 'payload'>): string {
+  const { verb, holder, target, count, level, reason } = payload;
+  if (verb === 'rank') return `[[rank: ${holder.name} | ${level ?? ''}]]`;
+  const parts = [holder.name, target?.name, count ? String(count) : undefined, level, reason].filter((part): part is string => Boolean(part));
+  return `[[${verb}: ${parts.join(' | ')}]]`;
+}
+
 export function readHoldingTag(tag: WordTag): ReadHoldingTag {
   if (!isHoldingTagWord(tag.word)) return { ok: false, problem: `a ${tag.word} tag is not a holding change` };
   const [holderName, second, ...rest] = tag.parts;

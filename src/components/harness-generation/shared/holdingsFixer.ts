@@ -15,6 +15,7 @@ import { normalizeIdentityLabel } from './canonicalProjection';
 import { harnessChapterBody, harnessParagraphBlockId } from './chapterBody';
 import {
   deriveHoldings,
+  holdingTagText,
   namesNearlyMatch,
   readHoldingTag,
   resolveHoldingChanges,
@@ -23,6 +24,7 @@ import {
   type HoldingFlag,
   type HoldingsState,
 } from './holdings';
+import { tagsOfCards, type NamingTags } from './minorFigures';
 import { attemptRecordFix, isRecordCase, planRecordChecks, recordFlagKeys, type RecordFixPlanCase } from './recordChecks';
 
 /**
@@ -86,14 +88,6 @@ export interface HoldingsFixInput {
 
 const withoutChapterLabel = (message: string) => message.replace(/^Chapter \d+: /, '');
 const unique = <T>(values: readonly T[]) => [...new Set(values)];
-
-/** A saved change written back as the tag a writer writes. */
-export function holdingTagText({ payload }: Pick<HoldingChangeAttachment, 'payload'>): string {
-  const { verb, holder, target, count, level, reason } = payload;
-  if (verb === 'rank') return `[[rank: ${holder.name} | ${level ?? ''}]]`;
-  const parts = [holder.name, target?.name, count ? String(count) : undefined, level, reason].filter((part): part is string => Boolean(part));
-  return `[[${verb}: ${parts.join(' | ')}]]`;
-}
 
 /** The entries a chapter's own tags created. */
 const createdIn = (entries: readonly CodexEntry[], chapterId: string) =>
@@ -360,6 +354,12 @@ export interface HoldingsFixApplyInput extends HoldingsFixInput {
   error?: string;
   /** The characters the chapter's writer was told about: names resolve to them as the chapter's own did. */
   declared: readonly DeclaredCharacter[];
+  /**
+   * The story's world, so a fix keeps to the rule the tagger keeps to: only a
+   * card carries a holding, a condition or a place (`tagsOfCards`). A story
+   * with no cards keeps every tag a fix writes.
+   */
+  world?: WorldRecord;
   createdAt: string;
   createId: () => string;
 }
@@ -371,7 +371,8 @@ export interface HoldingsFixResult {
   fixes: HarnessHoldingsFix[];
 }
 
-type Attempted = { chapter: HarnessChapter; entries: CodexEntry[]; fix: Pick<HarnessHoldingsFix, 'outcome' | 'blockId' | 'before' | 'after' | 'merged' | 'named'> } | { problem: string };
+/** A fix tried on a draft: the chapter and entries it would leave, and the tags it wrote, which must be a card's. */
+type Attempted = { chapter: HarnessChapter; entries: CodexEntry[]; written?: NamingTags; fix: Pick<HarnessHoldingsFix, 'outcome' | 'blockId' | 'before' | 'after' | 'merged' | 'named'> } | { problem: string };
 
 const withChanges = (chapter: HarnessChapter, changes: HoldingChangeAttachment[]): HarnessChapter => {
   const next: HarnessChapter = { ...chapter };
@@ -388,7 +389,7 @@ const withChanges = (chapter: HarnessChapter, changes: HoldingChangeAttachment[]
  * entries and the record of every case.
  */
 export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixResult {
-  const { plan, policy, locale, declared, createdAt, createId, mainCharacterName, worldAtChapterZero } = input;
+  const { plan, policy, locale, declared, world, createdAt, createId, mainCharacterName, worldAtChapterZero } = input;
   let chapter: HarnessChapter = structuredClone(input.chapter);
   let entries: CodexEntry[] = structuredClone([...input.entries]);
   const others = input.chapters.filter(entry => entry.storyId === chapter.storyId && entry.id !== chapter.id);
@@ -460,6 +461,7 @@ export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixRes
       return {
         chapter: withChanges(chapter, [...changes, ...resolved.changes]),
         entries: [...entries, ...resolved.created],
+        written: { holdingChanges: resolved.changes },
         fix: { outcome: 'fixed-tags', blockId: mention.blockId, before: anchor.selectedText, after: resolved.changes.map(holdingTagText).join(' ') },
       };
     }
@@ -477,6 +479,7 @@ export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixRes
       return {
         chapter: withChanges(chapter, [...kept.slice(0, at), ...resolved.changes, ...kept.slice(at)]),
         entries: [...entries, ...resolved.created],
+        written: { holdingChanges: resolved.changes },
         fix: { outcome: 'fixed-tags', blockId, before: tagText(replaced), after: tagText(resolved.changes) },
       };
     }
@@ -518,6 +521,7 @@ export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixRes
     return {
       chapter: withChanges(draft, [...movedChanges.slice(0, at), ...resolved.changes, ...movedChanges.slice(at)]),
       entries: [...entries, ...resolved.created],
+      written: { holdingChanges: resolved.changes },
       fix: { outcome: 'fixed-sentence', blockId, before: sentence, after: replacement },
     };
   };
@@ -545,6 +549,17 @@ export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixRes
     const tried = attempt(planned, answer);
     if ('problem' in tried) {
       fixes.push({ ...base, outcome: 'skipped', reason: `Nothing was changed: ${tried.problem}.` });
+      continue;
+    }
+    // The fixer keeps to the tagger's rule (step 3c): a fix that gives a minor figure what only a
+    // card carries does not stand, so the repair path cannot write what the tagger may not.
+    const outside = tried.written
+      ? tagsOfCards({ tags: tried.written, storyId: chapter.storyId, entries, world, declared }).leftOut
+      : [];
+    if (outside.length) {
+      fixes.push({ ...base, outcome: 'skipped', reason: `Nothing was changed: ${outside.map(left => left.why === 'not-a-card'
+        ? `‘${left.name}’ is not a card, so ${left.tag} cannot stand`
+        : `‘${left.name}’ is a minor figure, who keeps only where they appear and what they say, so ${left.tag} cannot stand`).join('; ')}.` });
       continue;
     }
     const after = problemsOf(tried.chapter, tried.entries);

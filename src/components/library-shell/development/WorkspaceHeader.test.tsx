@@ -51,7 +51,7 @@ it('keeps logo, Search, optional context and the Profile Portrait in document or
   const header = container.querySelector('header')!;
   expect(Array.from(header.querySelectorAll('a, button')).map(element => element.getAttribute('aria-label') ?? element.textContent)).toEqual(['Home', 'Search for stories', 'Page context', 'Profile and preferences']);
   expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
-  expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
+  expect(header.querySelector('[data-slot="novel-expanded-icon"]')).not.toBeNull();
   expect(header.querySelector('.workspace-header-context')).not.toBeNull();
   expect(header.querySelector('input')).toBeNull();
   // Search reads as a field, and the Portrait sits in the header's profile slot at the end.
@@ -152,7 +152,7 @@ it.each(TEST_WIDTHS)('regression: keeps Search and the Profile Portrait separate
   expect(button('Profile and preferences').className).toContain('workspace-profile-portrait');
   // The header carries the logo without a page badge.
   expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
-  expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
+  expect(header.querySelector('[data-slot="novel-expanded-icon"]')).not.toBeNull();
   expect(header.getAttribute('data-slot')).toBe('app-header');
 
   await click(button('Profile and preferences'));

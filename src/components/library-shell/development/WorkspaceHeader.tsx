@@ -2,8 +2,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { SEIAppHeader, SEIToolbar } from '@seihouse/ui';
 import { NarrativeButton as LibraryButton } from '@seihouse/sen/presentation';
-import { NovelExpandedLogo } from '@library-studios/brand';
-import '@library-studios/brand/styles.css';
+import { NovelExpandedIcon } from './NovelExpandedIcon';
 import { ArrowLeft } from 'lucide-react';
 import { HeaderActionButton, HeaderOverflow, type HeaderAction } from './WorkspaceHeaderActions';
 import { useCompactHeader } from './workspaceMedia';
@@ -57,7 +56,7 @@ export interface WorkspaceHeaderProps {
   /** @deprecated Header badges and subtitles were removed; place page subtitles in the page body below the header. */
   subtitle?: string;
   emblem?: {
-    /** @deprecated The canonical `NovelExpandedLogo` renders the wordmark directly; only `alt` is read when `home` is omitted. */
+    /** @deprecated The canonical `NovelExpandedIcon` renders the app icon directly; only `alt` is read when `home` is omitted. */
     src?: string;
     alt: string;
   };
@@ -125,9 +124,9 @@ export function WorkspaceHeader({ title, emblem, home, back, primaryAction,
             home.onNavigate();
           }
         }}>
-        <NovelExpandedLogo className="workspace-header-logo-art novel-expanded-emblem-art" alt="" />
+        <NovelExpandedIcon className="workspace-header-logo-art novel-expanded-emblem-art" alt="" />
       </a> : <span className="workspace-header-logo novel-expanded-emblem">
-        <NovelExpandedLogo className="workspace-header-logo-art novel-expanded-emblem-art" alt={emblem?.alt ?? 'NovelExpanded'} />
+        <NovelExpandedIcon className="workspace-header-logo-art novel-expanded-emblem-art" alt={emblem?.alt ?? 'NovelExpanded'} />
       </span>}
     </div>}
     actions={<>

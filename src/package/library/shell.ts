@@ -6,6 +6,7 @@ export * from '../../components/library-shell/development/LibraryNavigation';
 export * from '../../components/library-shell/development/librarySidebarMode';
 export * from '../../components/library-shell/development/LibraryFooter';
 export * from '../../components/library-shell/development/WorkspaceHeader';
+export * from '../../components/library-shell/development/NovelExpandedIcon';
 export * from '../../components/library-shell/development/HeaderSoundControl';
 export * from '../../library/sound/menuMusic';
 export * from '../../components/library-shell/development/WorkspaceHeaderActions';

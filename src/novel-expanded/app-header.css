@@ -14,8 +14,6 @@
   border-radius: 12px;
 }
 
-.novel-expanded-emblem-art { --ne-logo-height: 32px; }
-
 .novel-expanded-footer-wordmark {
   display: block;
   width: min(260px, 100%);
@@ -32,5 +30,4 @@
 
 @media (min-width: 480px) {
   .novel-expanded-header-identity { gap: 8px; }
-  .novel-expanded-emblem-art { --ne-logo-height: 40px; }
 }

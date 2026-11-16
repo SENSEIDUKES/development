@@ -153,10 +153,9 @@ it('runs Story Seed in the Library Shell workspace mode instead of a navigation 
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Story Seed settings');
   await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   await settle();
-  // Story Seed's header matches every Library page: the Novel Expanded logo, home through the host.
-  const emblem = container.querySelector<HTMLImageElement>('header a img')!;
-  expect(emblem.closest('[data-slot="novel-expanded-logo"]')).not.toBeNull();
-  expect(emblem.getAttribute('src')).toContain('novel-expanded-320.webp');
+  // Story Seed's header matches every Library page: the NovelExpanded app icon, home through the host.
+  const emblem = container.querySelector('header a [data-slot="novel-expanded-icon"]')!;
+  expect(emblem).not.toBeNull();
   expect(emblem.closest('a')!.getAttribute('aria-label')).toBe('Return to Library');
   await click(emblem.closest('a')!);
   expect(home).toHaveBeenCalledTimes(1);

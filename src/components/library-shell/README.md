@@ -235,6 +235,13 @@ The existing local files named by this inventory are:
 
 ## Workshop history
 
+- **2026-11-15 (compact app icon in the header):** From SENSEI: the header now
+  shows the compact NovelExpanded app icon (`NovelExpandedIcon`, from the brand
+  master `ne_icon_master.svg`) instead of the long wordmark, on every page that
+  uses `WorkspaceHeader` and in the app's own shell. The footer keeps the long
+  wordmark. The favicons (`favicon.svg`, `favicon.ico`, `apple-touch-icon.png`,
+  `icon-192/512.png`, `site.webmanifest`) use the same artwork.
+
 - **2026-10-28 (locked capture removed):** With the owner's approval, the old
   production copy (`reference/main-library/`, `reference/story-seed/`), its
   Original Reference and Compare panes, the locked capture and its

@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { NovelExpandedLogo } from '@library-studios/brand';
-import '@library-studios/brand/styles.css';
 import { LibraryStoriesIcon, LibraryBookIcon, LibraryDiscoveryIcon, LibraryStoryIcon, LibrarySettingsIcon, LibraryProfileIcon } from '@seihouse/library-ui';
 import {
-  LibraryFooter, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader, WorkspaceShell,
+  LibraryFooter, LibraryNavigation, LibrarySectionSidebar, NovelExpandedIcon, WorkspaceHeader, WorkspaceShell,
   useLibraryDesktopNavigation, useLibraryLegalDocuments,
   type HeaderSearchItem, type LibraryFooterGroup,
 } from '@seihouse/library/shell';
@@ -90,7 +88,7 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
                   home();
                 }
               }}>
-              <NovelExpandedLogo className="novel-expanded-emblem-art" alt="" />
+              <NovelExpandedIcon className="novel-expanded-emblem-art" alt="" />
             </a>
           </div>}
           home={{ href: routeHref(HOME_ROUTE), label: 'Return to your stories', onNavigate: home }}

@@ -50,14 +50,25 @@ const text = (value: unknown, limit = CARD_TEXT_LIMIT): string | undefined =>
 
 const cardGender = (value: string | undefined): 'female' | 'male' | undefined => {
   if (!value) return undefined;
-  if (/\b(?:female|woman|girl|she|her)\b/iu.test(value)) return 'female';
+  if (/\b(?:female|woman|girl|lady|she|her)\b/iu.test(value)) return 'female';
   if (/\b(?:male|man|boy|he|him)\b/iu.test(value)) return 'male';
+  return undefined;
+};
+
+/** The years a minor figure's age word stands for: all the record says of them is young, middle-aged or old. */
+const AGE_WORD_YEARS: ReadonlyArray<[RegExp, number]> = [[/\b(?:young|boy|girl|child)\b/iu, 20], [/\bmiddle[- ]aged?\b/iu, 45], [/\b(?:old|elder|elderly)\b/iu, 70]];
+/** What a name itself says ("the veiled woman"): only a plain word, never a pronoun, which is a surname in some stories (He, Her). */
+const nameGender = (name: string | undefined): 'female' | 'male' | undefined => {
+  if (!name) return undefined;
+  if (/\b(?:woman|girl|lady)\b/iu.test(name)) return 'female';
+  if (/\b(?:man|boy)\b/iu.test(name)) return 'male';
   return undefined;
 };
 
 const cardAge = (value: string | undefined): number | undefined => {
   const years = value?.match(/\d{1,4}/u)?.[0];
-  return years === undefined ? undefined : Number(years);
+  if (years !== undefined) return Number(years);
+  return value ? AGE_WORD_YEARS.find(([word]) => word.test(value))?.[1] : undefined;
 };
 
 const STOP_WORDS = new Set(['with', 'that', 'this', 'from', 'their', 'whose', 'voice', 'tone', 'delivery', 'character', 'young', 'into', 'always', 'never', 'full']);
@@ -72,9 +83,10 @@ const OLDEST_VOICE_AGE = 80;
 /** How well a cast voice suits a character: the same sex first, then the nearest age, then shared words. */
 const voiceScore = (character: ChapterVoiceCharacter, voice: PublicVoiceMeta, taken: ReadonlySet<string>): number => {
   let score = 0;
-  const gender = cardGender(character.gender);
+  // A minor figure the record says little of is read from the name they go by ("the veiled woman", "elder").
+  const gender = cardGender(character.gender) ?? nameGender(character.name);
   if (gender) score += voice.gender === gender ? 1_000 : voice.gender === 'unisex' ? 100 : 0;
-  const written = cardAge(character.age);
+  const written = cardAge(character.age) ?? cardAge(character.name?.replace(/\d+/gu, ''));
   if (written !== undefined) {
     const age = Math.min(written, OLDEST_VOICE_AGE);
     if (!voice.ageYears) score -= 60;

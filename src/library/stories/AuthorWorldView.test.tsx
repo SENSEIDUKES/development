@@ -173,10 +173,20 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
   it('voices a chapter\'s spoken lines, never its narration, at the Energy of what is spoken', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const generate = vi.fn<HarnessGenerationModelAdapter['generate']>();
+    // The tagger's notes for Chapter 1: who says each line, and the keeper as the chapter shows him. Chapter 2 has nothing to note.
+    const tagChapter = vi.fn(async (request: HarnessTagRequest) => ({
+      rawProviderResponse: JSON.stringify({ notes: request.paragraphs.some(text => text.includes('keeper')) ? [
+        { paragraph: 1, words: '"I came back for my name,"', tag: '[[@MC]]' },
+        { paragraph: 3, words: 'A stooped old keeper leaned from the gatehouse.', tag: '[[appears: the keeper | character | man | old]]' },
+        { paragraph: 3, words: '"Go back,"', tag: '[[@the keeper]]' },
+      ] : [] }),
+      providerReceipt: receipt,
+    }));
     const adapter: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'fixture', label: 'Fixture' }], defaultModel: 'fixture' }),
       generate,
       arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
+      tagChapter,
     };
     const writer = new HarnessGenerationController({ repository, modelAdapter: adapter });
     await writer.hydrate();
@@ -185,9 +195,14 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
       cast: [{ name: 'Mara', role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self' }],
       worldAtChapterZero: { cards: [{ key: 'world:character:mara', kind: 'character', name: 'Mara', mainCharacter: true, enteredInChapter: 0, slots: { gender: 'female', age: '24' } }] },
     });
-    // Mara's line carries her speaker tag; the sign's words are quoted but nobody says them.
+    // Mara's line and the keeper's are tagged with who says them; the sign's words are quoted but nobody says them.
     generate.mockResolvedValueOnce({ rawProviderResponse: writtenChapterReply(JSON.stringify({
-      title: 'Bell 1', paragraphs: ['[[@MC]] "I came back for my name," Mara said, and the gate did not answer.', 'The sign on the gate read "Keep out."'],
+      title: 'Bell 1', paragraphs: [
+        '"I came back for my name," Mara said, and the gate did not answer.',
+        'The sign on the gate read "Keep out."',
+        // A minor figure: no card, but the chapter shows an old man, and he speaks.
+        'A stooped old keeper leaned from the gatehouse. "Go back," he said.',
+      ],
       arcCompletion: { goalId: 'arc-1-name', completed: false, evidence: '' }, recap: 'Mara returns.', chapterFunction: 'progression',
       nextProgression: 'Mara climbs.', nextWorldBuilding: 'The keeper explains.', nextConflict: 'The wardens close in.',
     })), providerReceipt: receipt });
@@ -199,11 +214,16 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
     const state = writer.snapshot();
     const first = state.chapters.find(chapter => chapter.chapterNumber === 1)!;
     const plan = chapterVoicePlan(state, first);
-    expect(plan.lines.map(line => line.text)).toEqual(['"I came back for my name,"']);
-    expect(plan.lines[0].speaker).toBe('Mara');
+    expect(plan.lines.map(line => [line.text, line.speaker, line.cardKey])).toEqual([
+      ['"I came back for my name,"', 'Mara', 'world:character:mara'],
+      // The minor figure's line is voiced too, so no spoken line drops back to the device's voice (SENSEI, 2026-11-16).
+      ['"Go back,"', 'the keeper', 'minor:the keeper'],
+    ]);
+    // He is cast from what the chapter shows of him and the sentence that introduced him.
+    expect(plan.cast[1]).toEqual({ key: 'minor:the keeper', name: 'the keeper', gender: 'man', age: 'old', bio: 'A stooped old keeper leaned from the gatehouse.' });
     // The sign is quoted with no speaker record: the device reads it, and nothing is paid for it.
     expect(plan.unvoiced).toBe(1);
-    expect(plan.cast.map(character => character.mainCharacter)).toEqual([true]);
+    expect(plan.cast.map(character => character.mainCharacter)).toEqual([true, undefined]);
     expect(chapterVoicePlan(state, state.chapters.find(chapter => chapter.chapterNumber === 2)!).lines).toEqual([]);
 
     const kept = new Set<string>();
@@ -225,10 +245,10 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
 
     // The chapter with a spoken line offers it, with its price; the chapter with none offers nothing.
     const make = row(1).querySelector<HTMLButtonElement>('[data-testid="chapter-voices-make"]');
-    expect(make?.textContent).toContain('Voice 1 line');
+    expect(make?.textContent).toContain('Voice 2 lines');
     const price = chapterVoiceEnergy(plan.lines, 'eleven_multilingual_v2');
     expect(price).toBe(1);
-    expect(make?.getAttribute('aria-label')).toBe(`Voice Chapter 1's 1 spoken line in their characters' voices, ${price} Energy`);
+    expect(make?.getAttribute('aria-label')).toBe(`Voice Chapter 1's 2 spoken lines in their characters' voices, ${price} Energy`);
     expect(row(2).querySelector('[data-testid="chapter-voices-make"]')).toBeNull();
 
     // Voicing it never checks the row for tagging, and the row then says it is voiced.
@@ -237,7 +257,7 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
     expect(voice.mock.calls[0][1]).toBe(first.id);
     expect(row(1).dataset.checked).toBe('false');
     await show();
-    expect(row(1).querySelector('[data-testid="chapter-voices-done"]')?.textContent).toBe('Voiced · 1 line');
+    expect(row(1).querySelector('[data-testid="chapter-voices-done"]')?.textContent).toBe('Voiced · 2 lines');
     expect(row(1).querySelector('[data-testid="chapter-voices-make"]')).toBeNull();
   });
 });

@@ -88,4 +88,31 @@ describe('character voices kept on the device', () => {
     expect(cast).toHaveBeenCalledTimes(1);
     expect(line.mock.calls.at(-1)![0]).toEqual({ text: '"Again."', voiceKey: 'bright-heroine-female' });
   });
+
+  it('keeps a promoted minor figure in the voice they already speak with', async () => {
+    const store = createMemoryStoryCoverStore();
+    const line = vi.fn<ChapterVoiceClient['line']>(async () => new Blob([new Uint8Array([1])], { type: 'audio/mpeg' }));
+    const cast = vi.fn<ChapterVoiceClient['cast']>(async characters => Object.fromEntries(characters.map(character => [character.key, 'old-grandmaster-male'])));
+    const client: ChapterVoiceClient = { info: async () => ({ available: true }), cast, line };
+    await act(async () => { root.render(<Probe store={store} client={client} />); });
+    await flush();
+    const asMinor: ChapterVoicePlan = {
+      lines: [{ key: 'c1-p1:0-10', text: '"Go back."', speaker: 'the keeper', cardKey: 'minor:the keeper' }],
+      cast: [{ key: 'minor:the keeper', name: 'the keeper', gender: 'man', age: 'old' }], unvoiced: 0,
+    };
+    await act(async () => { await service.voice('story', 'chapter-1', asMinor); });
+    expect(cast).toHaveBeenCalledTimes(1);
+
+    // Promoted: the same person now speaks by a card. They are not cast again, and the next line is in the same voice.
+    const asCard: ChapterVoicePlan = {
+      lines: [{ key: 'c2-p1:0-8', text: '"Wait."', speaker: 'Keeper', cardKey: 'world:character:keeper' }],
+      // The card now goes by Keeper; the name they spoke under as a minor figure is among the names it answers to.
+      cast: [{ key: 'world:character:keeper', name: 'Keeper', was: ['minor:keeper', 'minor:the keeper'] }], unvoiced: 0,
+    };
+    await act(async () => { await service.voice('story', 'chapter-2', asCard); });
+    expect(cast).toHaveBeenCalledTimes(1);
+    expect(line.mock.calls.at(-1)![0]).toEqual({ text: '"Wait."', voiceKey: 'old-grandmaster-male' });
+    // The clip made while they were a minor figure still plays: it is kept by the line and its speaker.
+    expect(service.clip('story', 'chapter-1', { key: 'c1-p1:0-10', text: '"Go back."', speaker: 'the keeper' })).toMatch(/^blob:clip-/);
+  });
 });

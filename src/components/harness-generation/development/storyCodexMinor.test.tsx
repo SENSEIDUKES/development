@@ -49,6 +49,18 @@ it('lists a minor figure under Minor, with its chapters and the sentence that in
   act(() => view.root.unmount());
 });
 
+it('says what the chapters show of a minor character, and nothing for what they do not', async () => {
+  const view = await mount(<StoryCodex codex={{ ...empty, characters: [lin], minor: [
+    { ...guard, seen: { sex: 'man', age: 'old' } },
+    { ...guard, key: 'maid', name: 'a maid', seen: { sex: 'woman' } },
+  ] }} storyTitle="Frost" />);
+  await act(async () => view.tab('Minor')!.click());
+  const rows = [...view.container.querySelectorAll('[data-testid="codex-minor"]')].map(row => row.textContent);
+  expect(rows[0]).toContain('Person · Man · Old · Ch. 1, 3');
+  expect(rows[1]).toContain('Person · Woman · Ch. 1, 3');
+  act(() => view.root.unmount());
+});
+
 it('promotes a minor figure and opens its new card to be filled in', async () => {
   const onPromote = vi.fn(async () => undefined);
   const onFillCard = vi.fn(async () => undefined);

@@ -31,6 +31,19 @@ export const APPEARANCE_KIND = 'appearance';
 /** An appearance's event is its tag word: on the page (`appears`), or a changed look (`look`). */
 export type AppearanceEvent = AppearanceTagWord;
 
+/**
+ * What a chapter shows of a minor figure (SENSEI, 2026-11-16): a man or a
+ * woman, and young, middle-aged or old. The tagger writes down only what is on
+ * the page; a part the chapter does not show is left out here, never decided.
+ * It is what a minor figure's voice is chosen from. A card has its own slots.
+ */
+export const SEEN_SEXES = ['man', 'woman'] as const;
+export const SEEN_AGES = ['young', 'middle-aged', 'old'] as const;
+export interface AppearanceSeen {
+  sex?: (typeof SEEN_SEXES)[number];
+  age?: (typeof SEEN_AGES)[number];
+}
+
 export interface AppearancePayload {
   /** Who placed it: the HARNESS from a writer's tag, or a person. */
   origin: 'harness' | 'manual';
@@ -41,6 +54,8 @@ export interface AppearancePayload {
   entity?: AppearanceEntity;
   /** A look tag's change, in the writer's few words. */
   change?: string;
+  /** On a minor figure's appears tag: what the chapter shows of them. */
+  seen?: AppearanceSeen;
 }
 
 /** Where an appearance sits: the sentence its tag points at, as an exact span of its paragraph. */

@@ -1,5 +1,5 @@
-import { chapterReadAloudScript, type HarnessChapter, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
-import { spokenReadAloudLines, type ReadAloudLine, type ReadAloudScript } from '@seihouse/sen/reader-runtime';
+import { chapterReadAloudBlocks, chapterReadAloudScript, minorFiguresSeen, normalizeIdentityLabel as identity, type HarnessChapter, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import { isSpeakerOnText, spokenReadAloudLines, type ReadAloudLine, type ReadAloudScript } from '@seihouse/sen/reader-runtime';
 import { voiceEnergyPrice } from '../../components/energy/shared/energyGrades';
 
 /**
@@ -8,18 +8,22 @@ import { voiceEnergyPrice } from '../../components/energy/shared/energyGrades';
  * voiced this way; the device reads it (NOVEL_EXPANDED.md, How we build).
  */
 
-/** A spoken line that gets a paid voice: whose it is, by Codex card. */
+/** A spoken line that gets a paid voice, and whose voice it is. */
 export interface ChapterVoiceLine {
   /** The Read Aloud line's key, which the Reader finds its clip by. */
   key: string;
   text: string;
   /** Who the chapter's speaker record says speaks it. A line said by someone else is a different line. */
   speaker: string;
-  /** The speaking character's Codex card. */
+  /** Whose voice speaks it: the character's Codex card, or a minor figure by the name they speak under. */
   cardKey: string;
 }
 
-/** What a character's Codex card says that a cast voice is chosen from. */
+/**
+ * What a cast voice is chosen from: a character's Codex card, or, for a minor
+ * figure, what the chapters show of them (a man or a woman; young, middle-aged
+ * or old) and the sentence that introduced them.
+ */
 export interface ChapterVoiceCharacter {
   key: string;
   name?: string;
@@ -28,13 +32,20 @@ export interface ChapterVoiceCharacter {
   voice?: string;
   bio?: string;
   mainCharacter?: boolean;
+  /**
+   * On a card a reader promoted from a minor figure: the keys their voice may
+   * have been kept under while they had no card (its name first, then each
+   * other name it answers to), so they keep the voice they already speak with
+   * instead of being cast a second time.
+   */
+  was?: string[];
 }
 
 export interface ChapterVoicePlan {
   lines: ChapterVoiceLine[];
   /** The characters who speak those lines. */
   cast: ChapterVoiceCharacter[];
-  /** Spoken lines with no speaker record, or said by someone with no Codex card: the device reads them. */
+  /** Spoken lines with no speaker record: the device reads them. */
   unvoiced: number;
 }
 
@@ -46,11 +57,41 @@ const scriptOf = (state: HarnessWorkspaceState, chapter: HarnessChapter) => {
   return script;
 };
 
+/** What the record holds of the story's minor figures: what its chapters show of each, and the sentence that introduced them. */
+interface MinorFigures {
+  seen: ReturnType<typeof minorFiguresSeen>;
+  introduced: Map<string, string>;
+}
+// Worked out once per saved workspace.
+const figuresByState = new WeakMap<HarnessWorkspaceState, Map<string, MinorFigures>>();
+const shown = (state: HarnessWorkspaceState, storyId: string): MinorFigures => {
+  let stories = figuresByState.get(state);
+  if (!stories) { stories = new Map(); figuresByState.set(state, stories); }
+  let figures = stories.get(storyId);
+  if (!figures) {
+    const chapters = state.chapters.filter(chapter => chapter.storyId === storyId).sort((left, right) => left.chapterNumber - right.chapterNumber);
+    const introduced = new Map<string, string>();
+    for (const chapter of chapters) {
+      for (const { payload, anchor } of chapter.appearances ?? []) {
+        const key = identity(payload.subject.name);
+        if (payload.event === 'appears' && key && !introduced.has(key)) introduced.set(key, anchor.selectedText);
+      }
+    }
+    figures = { seen: minorFiguresSeen(chapters), introduced };
+    stories.set(storyId, figures);
+  }
+  return figures;
+};
 const nameKey = (name: string) => name.normalize('NFKC').toLowerCase().replace(/\s+/gu, ' ').trim();
 
+/** The key a minor figure's voice is kept under: the name they speak by. */
+const minorKey = (speaker: string) => `minor:${nameKey(speaker)}`;
+
 /**
- * The chapter's spoken lines that a speaker record gives to a character with a
- * Codex card, and those characters. Quoted words nobody was recorded as saying
+ * The chapter's spoken lines that a speaker record gives to someone, and those
+ * speakers: a character by their Codex card, anyone else as a minor figure, so
+ * no spoken line drops back to the device's voice between two characters
+ * (SENSEI, 2026-11-16). Quoted words nobody was recorded as saying
  * (a sign, a remembered phrase) are never voiced: Read Aloud's own guess at who
  * speaks them is good enough for the device's voice, not for a paid one.
  */
@@ -61,13 +102,29 @@ export function chapterVoicePlan(state: HarnessWorkspaceState, chapter: HarnessC
   const lines: ChapterVoiceLine[] = [];
   const speaking = new Map<string, ChapterVoiceCharacter>();
   let unvoiced = 0;
+  // Only a line the chapter's own speaker record covers is voiced: Read Aloud's guess from the narration is not a record,
+  // and neither is a record whose words the paragraph no longer holds.
+  const paragraphs = new Map(chapterReadAloudBlocks(chapter).map(block => [block.id, block.text]));
+  const recorded = (line: ReadAloudLine) => (chapter.speakers ?? []).some(record =>
+    line.blockId !== undefined && isSpeakerOnText(record, line.blockId, paragraphs.get(line.blockId) ?? '')
+    && record.anchor.startOffset < line.end && record.anchor.endOffset > line.start);
   for (const line of spokenReadAloudLines(scriptOf(state, chapter))) {
-    const card = line.speaker ? byName.get(nameKey(line.speaker)) ?? (line.role === 'protagonist' ? main : undefined) : undefined;
-    if (!line.speaker || !card) { unvoiced += 1; continue; }
-    lines.push({ key: line.key, text: line.text, speaker: line.speaker, cardKey: card.key });
-    if (!speaking.has(card.key)) {
+    if (!line.speaker || !recorded(line)) { unvoiced += 1; continue; }
+    const card = byName.get(nameKey(line.speaker)) ?? (line.role === 'protagonist' ? main : undefined);
+    const key = card?.key ?? minorKey(line.speaker);
+    lines.push({ key: line.key, text: line.text, speaker: line.speaker, cardKey: key });
+    if (speaking.has(key)) continue;
+    if (card) {
       const { gender, age, voice, bio } = card.slots;
-      speaking.set(card.key, { key: card.key, name: card.name, gender, age, voice, bio, ...(card.mainCharacter ? { mainCharacter: true } : {}) });
+      speaking.set(key, {
+        key, name: card.name, gender, age, voice, bio, ...(card.mainCharacter ? { mainCharacter: true } : {}),
+        // A card that entered after the story began was a minor figure first, under one of the names it answers to.
+        ...(card.enteredInChapter > 0 ? { was: [...new Set([card.name, ...(card.aliases ?? []), line.speaker].map(minorKey))] } : {}),
+      });
+    } else {
+      const figures = shown(state, chapter.storyId);
+      const seen = figures.seen.get(identity(line.speaker));
+      speaking.set(key, { key, name: line.speaker, gender: seen?.sex, age: seen?.age, bio: figures.introduced.get(identity(line.speaker)) });
     }
   }
   return { lines, cast: [...speaking.values()], unvoiced };

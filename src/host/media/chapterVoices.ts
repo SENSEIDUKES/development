@@ -88,8 +88,18 @@ export function useChapterVoices(store: StoryCoverStore, client: ChapterVoiceCli
   const voiceNow: ChapterVoiceService['voice'] = async (storyId, chapterId, plan, onLine) => {
     await hydration.current;
     // Each character keeps the voice it was first given; only new speakers are cast.
-    const kept = casts.current.get(storyId) ?? {};
+    const saved = casts.current.get(storyId) ?? {};
+    // A minor figure promoted to a card keeps the voice they already speak with.
+    const carried = Object.fromEntries(plan.cast.flatMap(character => {
+      const earlier = saved[character.key] ? undefined : character.was?.map(key => saved[key]).find(Boolean);
+      return earlier ? [[character.key, earlier]] : [];
+    }));
+    const kept = { ...saved, ...carried };
     let cast = kept;
+    if (Object.keys(carried).length && !plan.cast.some(character => !kept[character.key])) {
+      await store.save(castKey(storyId), new Blob([JSON.stringify(kept)], { type: 'application/json' }));
+      casts.current.set(storyId, kept);
+    }
     if (plan.cast.some(character => !kept[character.key])) {
       cast = { ...kept, ...await client.cast(plan.cast, kept) };
       await store.save(castKey(storyId), new Blob([JSON.stringify(cast)], { type: 'application/json' }));

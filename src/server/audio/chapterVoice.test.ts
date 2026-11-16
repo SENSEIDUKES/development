@@ -42,6 +42,44 @@ describe('casting character voices', () => {
     expect(kept.a.voiceKey).not.toBe(first.a.voiceKey);
   });
 
+  it('casts a minor figure from the little the record shows of them: a man or a woman, and young, middle-aged or old', () => {
+    const cast = castChapterVoices([
+      { key: 'minor:the herald', name: 'the herald', gender: 'man', age: 'old' },
+      { key: 'minor:a maid', name: 'a maid', gender: 'woman', age: 'young' },
+      { key: 'minor:the clerk', name: 'the clerk', gender: 'man', age: 'middle-aged' },
+      // Nothing recorded: what they are called is all there is to go by.
+      { key: 'minor:the veiled woman', name: 'the veiled woman' },
+      { key: 'minor:elder', name: 'elder' },
+    ]);
+    const of = (key: string) => voiceOf(cast[key].voiceKey);
+    expect([of('minor:the herald').gender, of('minor:the herald').ageYears![0] >= 50]).toEqual(['male', true]);
+    expect([of('minor:a maid').gender, of('minor:a maid').ageYears![1] <= 35]).toEqual(['female', true]);
+    const clerk = of('minor:the clerk').ageYears!;
+    expect([of('minor:the clerk').gender, clerk[0] <= 45 && clerk[1] >= 45]).toEqual(['male', true]);
+    expect(of('minor:the veiled woman').gender).toBe('female');
+    expect(of('minor:elder').ageYears![0]).toBeGreaterThanOrEqual(50);
+  });
+
+  it('never reads a pronoun in a name as a sex: He and Her are surnames in some stories', () => {
+    // Two voices that differ only in sex, so nothing but a sex read from the name could tell them apart.
+    const voice = (internalKey: string, gender: 'male' | 'female') => ({
+      internalKey, fileName: `${internalKey}.mp3`, archetype: internalKey, gender, classification: 'flexible' as const,
+      compatibleRoles: [], description: '', ageRange: '20-40', ageYears: [20, 40] as const, ttsAvailable: true,
+    });
+    // Whichever sex a neutral name falls to (the first key), a pronoun surname must fall to it too: tried both ways round,
+    // so "He" read as a man fails where the woman comes first, and "Her" read as a woman fails where the man does.
+    for (const [woman, man] of [['a-woman', 'b-man'], ['b-woman', 'a-man']]) {
+      const pair = [voice(woman, 'female'), voice(man, 'male')];
+      const chosen = (name: string) => castChapterVoices([{ key: 'x', name, age: '30' }], {}, pair).x.voiceKey;
+      const neutral = chosen('Feng');
+      expect(neutral).toBe([woman, man].sort()[0]);
+      expect(chosen('He Feng')).toBe(neutral);
+      expect(chosen('Her Feng')).toBe(neutral);
+      // A plain word in the name is read: each of these is told apart by it alone.
+      expect([chosen('the old man'), chosen('the veiled woman')]).toEqual([man, woman]);
+    }
+  });
+
   it('gives a character cast in a later chapter a voice no one in the story already has', () => {
     const earlier = castChapterVoices([{ key: 'a', gender: 'male', age: '30' }]);
     // Only the new speaker is in this chapter; the story's saved cast still reserves the first one's voice.

@@ -182,7 +182,15 @@ have no entry yet. The story uses it without tracking it: the Codex
 lists it under Minor (`StoryCodexRecord.minor`) with what the prose calls it,
 the sentence that introduced it and the chapters it was in. The tagger is
 handed the cards as the pool it uncovers and the minor figures by name alone,
-and is told a minor figure gets only an appears tag and their speaker tag;
+and is told a minor figure gets only an appears tag and their speaker tag.
+A minor figure's appears tag also writes down what the chapter shows of them
+(SENSEI, 2026-11-16), in two more parts: a man or a woman, and young,
+middle-aged or old, each `unknown` unless the chapter's own words show it
+(`[[appears: the herald | character | man | old]]`, `AppearancePayload.seen`).
+The tagger documents; it never decides a fact. `unknown` records nothing, the
+first chapter to show a part keeps it (`minorFiguresSeen`), the Codex's Minor
+list says it, and a minor figure's voice is chosen from it. A card never keeps
+these parts: it has its own slots.
 `tagsOfCards` in `shared/minorFigures.ts` leaves out any other tag given to
 one, and an appears tag for a thing or place that is no card, and the Codex
 lists each among its checks. **Promote**

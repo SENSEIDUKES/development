@@ -6,6 +6,7 @@ import {
   type AppearanceEntity,
   type AppearanceFlagKind,
   type AppearancePayload,
+  type AppearanceSeen,
   type AppearancesSection,
   type AppearancesSectionEntry,
   type ChapterLooks,
@@ -47,6 +48,28 @@ const entityOf = (written: string | undefined): AppearanceEntity | undefined => 
   return (Object.keys(ENTITY_WORDS) as AppearanceEntity[]).find(entity => ENTITY_WORDS[entity].includes(word ?? ''));
 };
 
+/** The words a minor figure's appears tag may use for what the chapter shows of them; anything else, "unknown" included, records nothing. */
+const SEEN_SEX_WORDS: Readonly<Record<NonNullable<AppearanceSeen['sex']>, readonly string[]>> = {
+  man: ['man', 'male', 'boy'],
+  woman: ['woman', 'female', 'girl'],
+};
+const SEEN_AGE_WORDS: Readonly<Record<NonNullable<AppearanceSeen['age']>, readonly string[]>> = {
+  young: ['young', 'youth', 'child', 'teen', 'teenager'],
+  // Never 'adult': an adult may be young or old, so the word shows no age.
+  'middle-aged': ['middle-aged', 'middle aged', 'middle age', 'middle-age'],
+  old: ['old', 'elderly', 'aged'],
+};
+const seenWord = <T extends string>(words: Readonly<Record<T, readonly string[]>>, written: string) =>
+  (Object.keys(words) as T[]).find(word => words[word].includes(written));
+/** What the parts after an appears tag's kind say the chapter shows, in either order. */
+const seenOf = (parts: readonly string[]): AppearanceSeen | undefined => {
+  const written = parts.map(part => part.trim().toLowerCase());
+  const sex = written.map(word => seenWord(SEEN_SEX_WORDS, word)).find(Boolean);
+  const age = written.map(word => seenWord(SEEN_AGE_WORDS, word)).find(Boolean);
+  // A part the chapter does not show is left out, never kept as an empty one.
+  return sex || age ? { ...(sex ? { sex } : {}), ...(age ? { age } : {}) } : undefined;
+};
+
 /** More words than any change of look a tag should carry. */
 const CHANGE_WORD_LIMIT = 16;
 
@@ -68,8 +91,9 @@ export function readAppearanceTag(tag: WordTag): ReadAppearanceTag {
   if (tag.word === 'appears') {
     const entity = entityOf(second);
     if (entity && entity !== 'character' && isMainCharacterTag(named.name)) return { ok: false, problem: `an appears tag named the main character as a ${entity}` };
+    const seen = entity === 'character' ? seenOf(rest) : undefined;
     return entity
-      ? { ok: true, appearance: { event: 'appears', subject, entity } }
+      ? { ok: true, appearance: { event: 'appears', subject, entity, ...(seen ? { seen } : {}) } }
       : { ok: false, problem: `an appears tag for ${named.name} named ‘${second}’, not a character, a thing or a place` };
   }
   const change = [second, ...rest].join('; ').trim();

@@ -5,7 +5,7 @@ import { StoryPages, useLibraryStories } from '@seihouse/library/stories';
 import { AGENTS } from '../../../lib/agents';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { LIBRARY_SOUND_WORDS_PRESET } from '../../../host/media/soundWordPacks';
-import { createDeviceNarration, useDeviceNarrationService } from '../../../host/reader/deviceNarration';
+import { createDeviceNarration, useDeviceNarrationService, type DeviceNarration } from '../../../host/reader/deviceNarration';
 import { createDeviceProfileStore } from '../../../host/profile/deviceProfile';
 import { AppFamiliar } from '../../../novel-expanded/AppFamiliar';
 import type { ReaderMixer } from '@seihouse/audio-player';
@@ -27,6 +27,14 @@ export function applyReaderAudioState(mixer: ReaderMixer, state: 'on' | 'muted')
     mixer.unlock();
   }
 }
+
+/** One Kokoro for each set of reader preferences: changing scene keeps the voice already loaded, as the app keeps its one. */
+const KOKORO = new WeakMap<ReaderPreferenceStorage, DeviceNarration>();
+const kokoroFor = (preferences: ReaderPreferenceStorage): DeviceNarration => {
+  const kept = KOKORO.get(preferences) ?? createDeviceNarration({ preferences });
+  KOKORO.set(preferences, kept);
+  return kept;
+};
 
 export interface AppReaderProps {
   /** The scene's story, reading place and replaying writer. */
@@ -54,8 +62,7 @@ export function AppReader({ run, skills, readerPreferences, page, audio }: AppRe
   const containerRef = useRef<HTMLDivElement>(null);
   // An isolated preview profile, using the app's default equipped Familiar.
   // Kokoro, as in the app: the same setting and voices, remembered with this preview's reader preferences.
-  const [kokoro] = useState(() => createDeviceNarration({ preferences: readerPreferences }));
-  const deviceNarration = useDeviceNarrationService(kokoro);
+  const deviceNarration = useDeviceNarrationService(kokoroFor(readerPreferences));
   const [profile] = useState(() => createDeviceProfileStore({
     uid: 'workshop-reader', storage: { read: () => null, write: () => {}, remove: () => {} },
   }).read());

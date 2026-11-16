@@ -361,6 +361,14 @@ mode**. That means:
     cast when the character first appears, by matching the character to the
     plainly named voices, and the creator changes it from the card. The cast
     is SEIHouse's own to begin with; creators bring their own later.
+  - **Every spoken line with a speaker gets a cast voice, minor figure or not**
+    (SENSEI, 2026-11-16): the narrator in the device's voice is fine, but
+    spoken lines going back and forth between a paid voice and the device's is
+    not. A minor figure has no card, so the tagger writes down what the
+    chapter shows of them on their appears tag: a man or a woman, and young,
+    middle-aged or old, each `unknown` unless the chapter's own words show it.
+    The tagger documents; it never invents a fact. Their voice is chosen from
+    that.
   - A paid line is saved against the spoken line it voices in the manuscript,
     so Listen, cinematic scrolling, Sound Cues and the sequential-art view all
     use it the same way. Listen plays it where it plays the browser's
@@ -379,10 +387,15 @@ mode**. That means:
     and Listen then plays those lines in their characters' voices, with the
     device's voice for everything else. Each character's voice is chosen from
     its Codex card (sex, age, how it sounds) and kept for the story; the clips
-    and the cast are kept on the device. Not built: choosing or changing a
+    and the cast are kept on the device. Minor figures' lines are voiced too
+    (2026-11-16), cast from what their appears tag shows of them, which the
+    Codex's Minor list says; a chapter tagged before that has nothing written
+    down until it is tagged again, and its minor figures are cast from the
+    name they go by. Not built: choosing or changing a
     voice on the Codex card, the cast as a Blueprint CAPA skill, voices for a
     reader who is not the creator, and Create mode's line-by-line tools. Not
-    tested with real voices or on a real phone. Not decided: Kokoro or the
+    tested with real voices or on a real phone, and the minor figure's two
+    new tag parts are not tested with a real tagger. Not decided: Kokoro or the
     browser's voice for the narrator.
 
 ## Where we are (2026-10-10)

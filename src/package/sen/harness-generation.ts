@@ -273,7 +273,7 @@ export {
   type TagNote,
 } from '../../components/harness-generation/shared/tagger';
 export { TAG_SUBJECT_CONDITIONS, TAG_SUBJECT_WHO_CHARACTERS } from '../../components/harness-generation/shared/tagger';
-export { leftOutTagFlags, tagsOfCards, type LeftOutTagFlag, type NamingTags, type TagsOfCards } from '../../components/harness-generation/shared/minorFigures';
+export { leftOutTagFlags, minorFiguresSeen, tagsOfCards, type MinorFiguresSeen, type LeftOutTagFlag, type NamingTags, type TagsOfCards } from '../../components/harness-generation/shared/minorFigures';
 export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';
 export * from '../../narrative/statuses';

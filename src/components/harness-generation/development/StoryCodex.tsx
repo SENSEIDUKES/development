@@ -303,6 +303,10 @@ const minorChapters = (chapters: readonly number[]) => (chapters.length <= MINOR
   ? `Ch. ${chapters.join(', ')}`
   : `Ch. ${chapters.slice(0, MINOR_CHAPTERS_SHOWN).join(', ')} and ${chapters.length - MINOR_CHAPTERS_SHOWN} more`);
 
+/** What the chapters show of a minor character, as the row says it: "Man", "Old". */
+const SEEN_LABELS = { man: 'Man', woman: 'Woman', young: 'Young', 'middle-aged': 'Middle-aged', old: 'Old' } as const;
+const minorSeen = ({ seen }: Pick<CodexMinor, 'seen'>): string[] => [seen?.sex, seen?.age].flatMap(word => (word ? [SEEN_LABELS[word]] : []));
+
 /**
  * One minor figure: what the prose calls it, the chapters it was in, the
  * sentence that introduced it, and Promote beside it.
@@ -314,7 +318,7 @@ function MinorRow({ minor, promoting, problem, onPromote, onReadPassage }: {
     <div className="flex items-center justify-between gap-3">
       <div className="min-w-0">
         <p className="break-words text-sm text-(--reader-light)">{minor.name}</p>
-        <p className="mt-0.5 text-[11px] text-(--reader-text-dim)">{MINOR_KIND_LABELS[minor.kind]} · {minorChapters(minor.chapters)}</p>
+        <p className="mt-0.5 text-[11px] text-(--reader-text-dim)">{[MINOR_KIND_LABELS[minor.kind], ...minorSeen(minor), minorChapters(minor.chapters)].join(' · ')}</p>
       </div>
       {onPromote && minor.promotable && <button type="button" onClick={onPromote} disabled={promoting} aria-label={`Promote ${minor.name} to a card`}
         className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-(--reader-light)/20 bg-(--reader-light)/[0.06] px-4 text-sm font-medium text-(--reader-light) hover:border-(--reader-light)/40 disabled:opacity-60">

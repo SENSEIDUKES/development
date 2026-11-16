@@ -377,6 +377,17 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-16 (a minor figure's appears tag says what the chapter shows of them):**
+  SENSEI: every spoken line gets a cast voice, minor figure or not, and "it's
+  not the tagger's job to create content or facts". A minor figure's appears
+  tag takes two more parts, a man or a woman and young, middle-aged or old,
+  each `unknown` unless the chapter's own words show it
+  (`[[appears: the herald | character | man | old]]`). `readAppearanceTag`
+  keeps only those words (`AppearancePayload.seen`); `tagsOfCards` drops them
+  from a card's tag; `minorFiguresSeen` reads the story's chapters, the first
+  to show a part keeping it; the Codex's Minor list says it. The Reader takes
+  a host's saved clip for a spoken line (`readAloudClip`). Not tested with a
+  real tagger.
 - **2026-11-14 (the Codex check list reads the whole record):** SENSEI's
   test story: Lin Wei's card says he opens the story knowing Sun Breath Sword
   Art and Azure Meridian Method. The writer is handed that correctly, so its

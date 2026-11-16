@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-11-16',
+    summary: 'A minor figure\'s appears tag now writes down what the chapter shows of them (SENSEI, 2026-11-16: every spoken line gets a cast voice, minor figure or not, and "it\'s not the tagger\'s job to create content or facts"). A minor figure has no card, so nothing said whether they were a man or a woman, or how old, and their voice could only be guessed. In a story with cards, the appears teaching ends with three more lines: on a minor figure\'s appears tag, two more parts, man, woman or unknown, then young, middle-aged, old or unknown; unknown unless the chapter\'s own words show it; a card never gets them. The tagger documents what is on the page and never decides it. Not tested with a real tagger yet.',
+    changed: { appearance: '1dd6bd2e82a7a4' },
+  },
+  {
     date: '2026-11-13',
     summary: 'Appears now means "on the page in this chapter" (SENSEI, 2026-11-13, from Tethered Paths of the Immortal Sun, where he noticed the same people marked as appearing again in every chapter). The tagger was told to tag someone only the first time the story shows them, but in a story with cards it is handed every card and is never told which ones the story has already shown, so it could not know, and it tagged them again each chapter; code then flagged every repeat as a mistake. Appearance\'s first line now reads "Once in each chapter, tag every character on the page, and every thing or place that is a card, whether or not the story has shown them before. Tag the sentence in this chapter that shows what they look like:". The line about which sentence to choose keeps its words, adds "in this chapter" to where they are first on the page, and its opening "That sentence is kept as their look." moves to the end as "The first time the story shows them, that sentence is kept as their look." Code works out the first time; a later tag only shows them on the page again and is no longer flagged. SENSEI approved the meaning before it was built; the exact words were his to read in the pull request, which he merges. A story with no cards reads its Appearance teaching exactly as it was. Nothing else changed.',
     changed: { appearance: '03c77b3704634c' },

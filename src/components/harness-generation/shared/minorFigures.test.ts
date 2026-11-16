@@ -5,6 +5,7 @@ import {
   deriveStoryCodex,
   leftOutTagFlags,
   notesOfTaggedChapter,
+  minorFiguresSeen,
   tagsOfCards,
   type HarnessTagRequest,
 } from '@seihouse/sen/harness-generation';
@@ -99,6 +100,31 @@ describe('the tags only a card carries', () => {
       ['[[tie: Porter | Neighbor | brothers]]', 'Porter', 'minor-figure'],
     ]);
     expect(new Set(result.leftOut.map(left => left.blockId)).size).toBe(1);
+  });
+
+  it('keeps what a chapter shows of a minor figure, and never on a card', () => {
+    const result = kept([
+      note(2, '[[appears: Porter | character | man | old]]'),
+      // A card has its own slots: the parts are dropped from its tag.
+      note(5, '[[appears: Elder Qin | character | man | old]]'),
+      note(1, '[[appears: MC | character | man | young]]'),
+    ]);
+    expect(result.appearances.map(({ payload }) => [payload.subject.name, payload.seen])).toEqual([
+      ['MC', undefined], ['Porter', { sex: 'man', age: 'old' }], ['Elder Qin', undefined],
+    ]);
+    expect(result.leftOut).toEqual([]);
+  });
+
+  it('reads what the chapters show of each minor figure: the first to show a part keeps it, and a later one fills what was unknown', () => {
+    const appears = (name: string, seen?: { sex?: 'man' | 'woman'; age?: 'young' | 'middle-aged' | 'old' }) =>
+      ({ payload: { origin: 'harness' as const, event: 'appears' as const, subject: { name }, entity: 'character' as const, ...(seen ? { seen } : {}) } }) as unknown as NonNullable<Parameters<typeof minorFiguresSeen>[0][number]['appearances']>[number];
+    const seen = minorFiguresSeen([
+      { chapterNumber: 3, appearances: [appears('The Herald', { sex: 'woman', age: 'old' })] },
+      { chapterNumber: 1, appearances: [appears('the herald', { sex: 'man' }), appears('Porter')] },
+    ]);
+    // Chapter 1 said a man; Chapter 3 never changes that, and adds the age Chapter 1 did not show.
+    expect(seen.get('the herald')).toEqual({ sex: 'man', age: 'old' });
+    expect(seen.has('porter')).toBe(false);
   });
 
   it('gives a thing or place that is no card no appears tag of its own', () => {

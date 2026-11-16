@@ -1,5 +1,5 @@
 import type { CodexEntry } from '../../../narrative/holdings';
-import type { Look } from '../../../narrative/appearances';
+import type { AppearanceSeen, Look } from '../../../narrative/appearances';
 import type { HarnessChapter } from '../../../narrative/generation';
 import {
   worldCardFacts,
@@ -17,7 +17,7 @@ import { normalizeIdentityLabel } from './canonicalProjection';
 import { factionNamed, type DeclaredFaction } from './factions';
 import { deriveAppearances, type AppearanceFlag, type AppearancePassage, type AppearanceSubject } from './appearances';
 import { deriveConditions, type ConditionFlag } from './conditions';
-import { leftOutTagFlags, type LeftOutTagFlag } from './minorFigures';
+import { leftOutTagFlags, minorFiguresSeen, type LeftOutTagFlag } from './minorFigures';
 import { derivePlaces } from './places';
 import { deriveTies, tiesOfEntry } from './ties';
 import {
@@ -122,6 +122,8 @@ export interface CodexMinor {
   chapters: number[];
   /** Whether it can be promoted: it has a Codex entry to become a card. */
   promotable: boolean;
+  /** A minor character: what the chapters show of them (a man or a woman; young, middle-aged or old), when any does. */
+  seen?: AppearanceSeen;
 }
 
 /** Where someone or something stepped onto the page, how it looks now, and each change to its look. */
@@ -349,8 +351,10 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   for (const chapter of ordered) {
     for (const id of codexEntryIdsNamedBy(chapter)) chaptersNaming.set(id, (chaptersNaming.get(id) ?? new Set<number>()).add(chapter.chapterNumber));
   }
+  const shown = minorFiguresSeen(ordered);
   const minorOf = (kind: CodexMinor['kind'], card: { key: string; name: string; firstSeen?: CodexPassage }, more: readonly number[] = []): CodexMinor[] => (card.firstSeen ? [{
     key: card.key, name: card.name, kind, introduced: card.firstSeen,
+    ...(kind === 'character' && shown.get(normalizeIdentityLabel(card.name)) ? { seen: shown.get(normalizeIdentityLabel(card.name)) } : {}),
     chapters: [...new Set([card.firstSeen.chapterNumber, ...(chaptersNaming.get(card.key) ?? []), ...more])].sort((left, right) => left - right),
     // Someone only speaker tags name has no Codex entry: the Codex lists them
     // under the name they speak by, and promotion makes their entry with the card.

@@ -63,6 +63,17 @@ describe('Reading appearance tags', () => {
     expect(readAppearanceTag(tag('[[appears: Old Wu | character]] x'))).toEqual({ ok: true, appearance: { event: 'appears', subject: { name: 'Old Wu' }, entity: 'character' } });
     expect(readAppearanceTag(tag('[[appears: Crimson Broadsword | weapon]] x'))).toEqual({ ok: true, appearance: { event: 'appears', subject: { name: 'Crimson Broadsword' }, entity: 'thing' } });
     expect(readAppearanceTag(tag('[[appears: Silver Lotus | beast]] x'))).toMatchObject({ ok: true, appearance: { entity: 'character' } });
+    // What the chapter shows of a minor figure: a man or a woman, and young, middle-aged or old. Unknown records nothing.
+    expect(readAppearanceTag(tag('[[appears: the herald | character | man | old]] x'))).toEqual({ ok: true, appearance: { event: 'appears', subject: { name: 'the herald' }, entity: 'character', seen: { sex: 'man', age: 'old' } } });
+    expect(readAppearanceTag(tag('[[appears: the veiled woman | character | Woman | unknown]] x'))).toMatchObject({ ok: true, appearance: { seen: { sex: 'woman' } } });
+    expect(readAppearanceTag(tag('[[appears: a porter | character | unknown | middle aged]] x'))).toMatchObject({ ok: true, appearance: { seen: { age: 'middle-aged' } } });
+    const unknown = readAppearanceTag(tag('[[appears: a voice | character | unknown | unknown]] x'));
+    expect(unknown.ok && 'seen' in unknown.appearance).toBe(false);
+    // A word that is neither is not kept as a fact, and a thing has no such parts.
+    const guessed = readAppearanceTag(tag('[[appears: the guard | character | probably a man | about 40]] x'));
+    expect(guessed.ok && 'seen' in guessed.appearance).toBe(false);
+    const thing = readAppearanceTag(tag('[[appears: Old Blade | thing | man | old]] x'));
+    expect(thing.ok && 'seen' in thing.appearance).toBe(false);
     expect(readAppearanceTag(tag('[[look: MC | a scar | across the cheek]] x'))).toEqual({ ok: true, appearance: { event: 'look', subject: { name: 'MC' }, change: 'a scar; across the cheek' } });
     expect(readAppearanceTag(tag('[[appears: Iron Gate | place]] x'))).toEqual({ ok: true, appearance: { event: 'appears', subject: { name: 'Iron Gate' }, entity: 'place' } });
     expect(readAppearanceTag(tag('[[appears: Iron Gate | feeling]] x'))).toEqual({ ok: false, problem: 'an appears tag for Iron Gate named ‘feeling’, not a character, a thing or a place' });

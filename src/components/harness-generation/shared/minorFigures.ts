@@ -1,4 +1,4 @@
-import type { AppearanceAttachment } from '../../../narrative/appearances';
+import type { AppearanceAttachment, AppearanceSeen } from '../../../narrative/appearances';
 import type { CodexEntry, CodexEntryKind, HoldingChangeAttachment } from '../../../narrative/holdings';
 import type { HarnessChapter, LeftOutTag } from '../../../narrative/generation';
 import type { PlaceAttachment } from '../../../narrative/places';
@@ -50,6 +50,29 @@ export interface TagsOfCards {
   leftOut: LeftOutTag[];
 }
 
+/** What the story's chapters show of each minor figure, by the name its appears tags use (`normalizeIdentityLabel`). */
+export type MinorFiguresSeen = ReadonlyMap<string, AppearanceSeen>;
+
+/**
+ * What the chapters show of the figures their appears tags describe: a man or
+ * a woman, and young, middle-aged or old. The first chapter to show each part
+ * keeps it, in story order; a later chapter fills in what an earlier one left
+ * unknown and never changes what one said.
+ */
+export function minorFiguresSeen(chapters: readonly Pick<HarnessChapter, 'chapterNumber' | 'appearances'>[]): MinorFiguresSeen {
+  const seen = new Map<string, AppearanceSeen>();
+  for (const chapter of [...chapters].sort((left, right) => left.chapterNumber - right.chapterNumber)) {
+    for (const { payload } of chapter.appearances ?? []) {
+      if (payload.event !== 'appears' || !payload.seen) continue;
+      const key = normalizeIdentityLabel(payload.subject.name);
+      if (!key) continue;
+      const known = seen.get(key) ?? {};
+      seen.set(key, { ...payload.seen, ...known });
+    }
+  }
+  return seen;
+}
+
 const appearanceTagText = ({ payload }: Pick<AppearanceAttachment, 'payload'>) => payload.event === 'look'
   ? `[[look: ${payload.subject.name} | ${payload.change ?? ''}]]`
   : `[[appears: ${payload.subject.name} | ${payload.entity ?? 'character'}]]`;
@@ -95,7 +118,12 @@ export function tagsOfCards({ tags, storyId, entries, world, declared }: {
 
   return {
     holdingChanges: keep(all.holdingChanges, change => isCardCharacter(change.payload.holder.name), change => minor(change.payload.holder.name, holdingTagText(change))),
-    appearances: keep(all.appearances, ({ payload }) => {
+    // What a chapter shows of someone is a minor figure's: a card has its own slots.
+    appearances: keep(all.appearances.map(appearance => {
+      if (!appearance.payload.seen || !isCardCharacter(appearance.payload.subject.name)) return appearance;
+      const { seen: _seen, ...payload } = appearance.payload;
+      return { ...appearance, payload };
+    }), ({ payload }) => {
       // A changed look is a card's. Anyone may step onto the page; a thing or a place does only when it is a card.
       if (payload.event === 'look') return isCardCharacter(payload.subject.name) || isCard(payload.subject.name);
       const entity = payload.entity ?? 'character';

@@ -389,6 +389,12 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-16** — **Minor figures speak in cast voices too** (SENSEI). A chapter's Voice button
+  now counts every spoken line a speaker tag names, card or no card, so a spoken line never drops
+  back to the device's voice between two characters. A minor figure is cast from what the tagger
+  wrote down of them on their appears tag (a man or a woman; young, middle-aged or old; `unknown`
+  when the chapter does not show it), with the sentence that introduced them; the Codex's Minor
+  list says it. A line only Read Aloud's own guess gives a speaker is not voiced.
 - **2026-11-16** — **Character voices, a first test** (SENSEI). In a world's Chapters, each chapter
   with spoken lines has one button, **Voice N lines**, with its Energy (the provider's price for
   what is spoken, four times over; practice, nothing is taken yet). It voices only the lines a

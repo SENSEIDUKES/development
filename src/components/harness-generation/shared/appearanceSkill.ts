@@ -24,19 +24,31 @@ import { MAIN_CHARACTER_SPEAKER_TAG } from '../../../narrative/speech';
  * and each repeat was flagged). The first time is worked out by code
  * (`deriveAppearances`), never asked of the tagger.
  */
-const appearanceInstructions = (who: string, kept: string, naming: string) => `${who}
+const appearanceInstructions = (who: string, kept: string, naming: string, minor = '') => `${who}
 [[appears: Name | character]]  [[appears: Thing | thing]] (a thing no one holds)  [[appears: Place | place]]
 ${kept}
 Example: {"paragraph": 2, "words": "A gaunt figure in ash-grey robes stepped out.", "tag": "[[appears: Old Wen | character]]"} (named Old Wen two paragraphs later)
 When the prose shows a look changing (a scar, new clothes, a breakthrough), tag that sentence: [[look: Name | what changed]]
 Example: {"paragraph": 9, "words": "The cut had closed into a pale line down his cheek.", "tag": "[[look: ${MAIN_CHARACTER_SPEAKER_TAG} | a pale scar down the left cheek]]"}
-${naming} Only who is on the page, not mentioned or remembered.`;
+${naming} Only who is on the page, not mentioned or remembered.${minor}`;
+
+/**
+ * What a minor figure's appears tag also says (SENSEI, 2026-11-16): a man or a
+ * woman, and young, middle-aged or old, as this chapter shows them, so their
+ * spoken lines can be given a voice. The tagger writes down what is on the
+ * page and never decides it: what the chapter does not show is `unknown`.
+ */
+const MINOR_FIGURE_SEEN = `
+On a minor figure's appears tag, also write down what this chapter shows of them, in two more parts: man, woman or unknown, then young, middle-aged, old or unknown.
+[[appears: Name | character | man | old]]  [[appears: Name | character | unknown | unknown]]
+Write unknown unless the chapter's own words show it (he or she, a boy, an old woman, grey hair). You are writing down what is on the page, never deciding it. A card never gets these parts.`;
 
 /** The appears teaching of a story with cards. */
 export const SEN_APPEARANCE_INSTRUCTIONS = appearanceInstructions(
   'Once in each chapter, tag every character on the page, and every thing or place that is a card, whether or not the story has shown them before. Tag the sentence in this chapter that shows what they look like:',
   'Choose the first one that describes them, even when their name only comes later; never one that only says their name, speaks for them or tells their past. When nothing describes them, the sentence where they are first on the page in this chapter. The first time the story shows them, that sentence is kept as their look.',
   'Use the card\'s name. A minor figure goes by the name the chapter calls them most, or by what it calls them when it gives no name (the innkeeper).',
+  MINOR_FIGURE_SEEN,
 );
 
 /** The appears teaching of a story with no cards at all, as before. */

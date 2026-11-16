@@ -42,6 +42,32 @@ describe('casting character voices', () => {
     expect(kept.a.voiceKey).not.toBe(first.a.voiceKey);
   });
 
+  it('casts a minor figure from the little the record shows of them: a man or a woman, and young, middle-aged or old', () => {
+    const cast = castChapterVoices([
+      { key: 'minor:the herald', name: 'the herald', gender: 'man', age: 'old' },
+      { key: 'minor:a maid', name: 'a maid', gender: 'woman', age: 'young' },
+      { key: 'minor:the clerk', name: 'the clerk', gender: 'man', age: 'middle-aged' },
+      // Nothing recorded: what they are called is all there is to go by.
+      { key: 'minor:the veiled woman', name: 'the veiled woman' },
+      { key: 'minor:elder', name: 'elder' },
+    ]);
+    const of = (key: string) => voiceOf(cast[key].voiceKey);
+    expect([of('minor:the herald').gender, of('minor:the herald').ageYears![0] >= 50]).toEqual(['male', true]);
+    expect([of('minor:a maid').gender, of('minor:a maid').ageYears![1] <= 35]).toEqual(['female', true]);
+    const clerk = of('minor:the clerk').ageYears!;
+    expect([of('minor:the clerk').gender, clerk[0] <= 45 && clerk[1] >= 45]).toEqual(['male', true]);
+    expect(of('minor:the veiled woman').gender).toBe('female');
+    expect(of('minor:elder').ageYears![0]).toBeGreaterThanOrEqual(50);
+  });
+
+  it('never reads a pronoun in a name as a sex: He and Her are surnames in some stories', () => {
+    const scores = castChapterVoices([{ key: 'a', name: 'He Feng', age: '30' }, { key: 'b', name: 'He Feng', gender: 'female', age: '30' }]);
+    expect(voiceOf(scores.b.voiceKey).gender).toBe('female');
+    // With no sex recorded, the name's "He" decides nothing: the age alone does.
+    const age = voiceOf(scores.a.voiceKey).ageYears!;
+    expect(age[0] <= 30 && age[1] >= 30).toBe(true);
+  });
+
   it('gives a character cast in a later chapter a voice no one in the story already has', () => {
     const earlier = castChapterVoices([{ key: 'a', gender: 'male', age: '30' }]);
     // Only the new speaker is in this chapter; the story's saved cast still reserves the first one's voice.

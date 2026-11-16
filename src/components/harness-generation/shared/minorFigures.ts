@@ -66,8 +66,10 @@ export function minorFiguresSeen(chapters: readonly Pick<HarnessChapter, 'chapte
       if (payload.event !== 'appears' || !payload.seen) continue;
       const key = normalizeIdentityLabel(payload.subject.name);
       if (!key) continue;
-      const known = seen.get(key) ?? {};
-      seen.set(key, { ...payload.seen, ...known });
+      const known = seen.get(key);
+      const sex = known?.sex ?? payload.seen.sex;
+      const age = known?.age ?? payload.seen.age;
+      seen.set(key, { ...(sex ? { sex } : {}), ...(age ? { age } : {}) });
     }
   }
   return seen;

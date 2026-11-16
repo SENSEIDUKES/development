@@ -61,11 +61,18 @@ describe('casting character voices', () => {
   });
 
   it('never reads a pronoun in a name as a sex: He and Her are surnames in some stories', () => {
-    const scores = castChapterVoices([{ key: 'a', name: 'He Feng', age: '30' }, { key: 'b', name: 'He Feng', gender: 'female', age: '30' }]);
-    expect(voiceOf(scores.b.voiceKey).gender).toBe('female');
-    // With no sex recorded, the name's "He" decides nothing: the age alone does.
-    const age = voiceOf(scores.a.voiceKey).ageYears!;
-    expect(age[0] <= 30 && age[1] >= 30).toBe(true);
+    // Two voices that differ only in sex, so nothing but a sex read from the name could tell them apart.
+    const voice = (internalKey: string, gender: 'male' | 'female') => ({
+      internalKey, fileName: `${internalKey}.mp3`, archetype: internalKey, gender, classification: 'flexible' as const,
+      compatibleRoles: [], description: '', ageRange: '20-40', ageYears: [20, 40] as const, ttsAvailable: true,
+    });
+    const pair = [voice('a-woman', 'female'), voice('b-man', 'male')];
+    const chosen = (name: string) => castChapterVoices([{ key: 'x', name, age: '30' }], {}, pair).x.voiceKey;
+    const neutral = chosen('Feng');
+    expect(chosen('He Feng')).toBe(neutral);
+    expect(chosen('Her Feng')).toBe(neutral);
+    // A plain word in the name is read: each of these is told apart by it alone.
+    expect([chosen('the old man'), chosen('the veiled woman')]).toEqual(['b-man', 'a-woman']);
   });
 
   it('gives a character cast in a later chapter a voice no one in the story already has', () => {

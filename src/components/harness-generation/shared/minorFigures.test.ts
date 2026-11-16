@@ -127,6 +127,20 @@ describe('the tags only a card carries', () => {
     expect(seen.has('porter')).toBe(false);
   });
 
+  it('keeps a part a later chapter shows when the first chapter read it as unknown, from the tags as they are read', () => {
+    const read = (text: string) => {
+      const tags = tagsOf([note(2, text)]);
+      return tags.appearances!;
+    };
+    const seen = minorFiguresSeen([
+      { chapterNumber: 1, appearances: read('[[appears: Porter | character | man | unknown]]') },
+      { chapterNumber: 2, appearances: read('[[appears: Porter | character | unknown | old]]') },
+    ]);
+    expect(seen.get('porter')).toEqual({ sex: 'man', age: 'old' });
+    // An adult may be young or old: the word shows no age, so none is kept.
+    expect(read('[[appears: Porter | character | man | adult]]')[0].payload.seen).toEqual({ sex: 'man' });
+  });
+
   it('gives a thing or place that is no card no appears tag of its own', () => {
     const result = kept([note(4, '[[appears: Cold Gate | place]]'), note(4, '[[appears: Jade Coin | thing]]')]);
     expect(result.appearances).toEqual([]);

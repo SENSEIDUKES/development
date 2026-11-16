@@ -1,5 +1,5 @@
-import { chapterReadAloudScript, minorFiguresSeen, normalizeIdentityLabel as identity, type HarnessChapter, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
-import { spokenReadAloudLines, type ReadAloudLine, type ReadAloudScript } from '@seihouse/sen/reader-runtime';
+import { chapterReadAloudBlocks, chapterReadAloudScript, minorFiguresSeen, normalizeIdentityLabel as identity, type HarnessChapter, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import { isSpeakerOnText, spokenReadAloudLines, type ReadAloudLine, type ReadAloudScript } from '@seihouse/sen/reader-runtime';
 import { voiceEnergyPrice } from '../../components/energy/shared/energyGrades';
 
 /**
@@ -95,9 +95,12 @@ export function chapterVoicePlan(state: HarnessWorkspaceState, chapter: HarnessC
   const lines: ChapterVoiceLine[] = [];
   const speaking = new Map<string, ChapterVoiceCharacter>();
   let unvoiced = 0;
-  // Only a line the chapter's own speaker record covers is voiced: Read Aloud's guess from the narration is not a record.
-  const recorded = (line: ReadAloudLine) => (chapter.speakers ?? []).some(({ anchor }) =>
-    anchor.blockId === line.blockId && anchor.startOffset < line.end && anchor.endOffset > line.start);
+  // Only a line the chapter's own speaker record covers is voiced: Read Aloud's guess from the narration is not a record,
+  // and neither is a record whose words the paragraph no longer holds.
+  const paragraphs = new Map(chapterReadAloudBlocks(chapter).map(block => [block.id, block.text]));
+  const recorded = (line: ReadAloudLine) => (chapter.speakers ?? []).some(record =>
+    line.blockId !== undefined && isSpeakerOnText(record, line.blockId, paragraphs.get(line.blockId) ?? '')
+    && record.anchor.startOffset < line.end && record.anchor.endOffset > line.start);
   for (const line of spokenReadAloudLines(scriptOf(state, chapter))) {
     if (!line.speaker || !recorded(line)) { unvoiced += 1; continue; }
     const card = byName.get(nameKey(line.speaker)) ?? (line.role === 'protagonist' ? main : undefined);

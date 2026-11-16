@@ -55,20 +55,19 @@ const SEEN_SEX_WORDS: Readonly<Record<NonNullable<AppearanceSeen['sex']>, readon
 };
 const SEEN_AGE_WORDS: Readonly<Record<NonNullable<AppearanceSeen['age']>, readonly string[]>> = {
   young: ['young', 'youth', 'child', 'teen', 'teenager'],
-  'middle-aged': ['middle-aged', 'middle aged', 'middle age', 'middle-age', 'adult'],
+  // Never 'adult': an adult may be young or old, so the word shows no age.
+  'middle-aged': ['middle-aged', 'middle aged', 'middle age', 'middle-age'],
   old: ['old', 'elderly', 'aged'],
 };
 const seenWord = <T extends string>(words: Readonly<Record<T, readonly string[]>>, written: string) =>
   (Object.keys(words) as T[]).find(word => words[word].includes(written));
 /** What the parts after an appears tag's kind say the chapter shows, in either order. */
 const seenOf = (parts: readonly string[]): AppearanceSeen | undefined => {
-  const seen: AppearanceSeen = {};
-  for (const part of parts) {
-    const written = part.trim().toLowerCase();
-    seen.sex ??= seenWord(SEEN_SEX_WORDS, written);
-    seen.age ??= seenWord(SEEN_AGE_WORDS, written);
-  }
-  return seen.sex || seen.age ? seen : undefined;
+  const written = parts.map(part => part.trim().toLowerCase());
+  const sex = written.map(word => seenWord(SEEN_SEX_WORDS, word)).find(Boolean);
+  const age = written.map(word => seenWord(SEEN_AGE_WORDS, word)).find(Boolean);
+  // A part the chapter does not show is left out, never kept as an empty one.
+  return sex || age ? { ...(sex ? { sex } : {}), ...(age ? { age } : {}) } : undefined;
 };
 
 /** More words than any change of look a tag should carry. */

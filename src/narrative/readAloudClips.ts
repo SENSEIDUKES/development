@@ -4,8 +4,9 @@ import type { SpeechEngine, SpeechEvents, SpeechRequest } from './useReadAloud';
 /**
  * Saved voice clips for Read Aloud. A host that has recorded a spoken line in
  * a character's own voice hands Read Aloud the clip; the line plays it where
- * it would have spoken with the device's voice. Narration never has a clip:
- * it is always read by the device.
+ * it would have spoken with the device's voice. A cast voice's clips cover
+ * only the lines a character says; clips a host makes on the device can cover
+ * any line, the narration included.
  */
 
 /** The lines a character says: every line of a script that is not narration. */

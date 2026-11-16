@@ -42,7 +42,6 @@ const build = (device: KokoroDevice) => KokoroTTS.from_pretrained(MODEL, {
 
 let model: Promise<KokoroTTS> | undefined;
 let running: KokoroDevice = 'wasm';
-/** The graphics chip when the browser offers one, and the processor when it does not or the chip fails. */
 /**
  * Whether this browser has a graphics chip it can really use. Some say they
  * do and then hand none over, and a voice that failed to start on the chip

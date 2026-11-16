@@ -129,7 +129,11 @@ export function createDeviceNarration({ preferences, createWorker = browserWorke
       return;
     }
     worker.onmessage = ({ data }) => {
-      if (data.type === 'progress') set({ progress: data.total ? data.loaded / data.total : undefined });
+      if (data.type === 'progress') {
+        // Whole percents only: the download reports far more often than the status line changes.
+        const progress = data.total ? Math.round((data.loaded / data.total) * 100) / 100 : undefined;
+        if (progress !== state.progress) set({ progress });
+      }
       else if (data.type === 'ready') { set({ model: 'ready', device: data.device, progress: 1, problem: undefined }); pump(); }
       else if (data.type === 'failed') set({ model: 'failed', problem: data.message });
       else if (data.type === 'spoken') {
@@ -139,6 +143,9 @@ export function createDeviceNarration({ preferences, createWorker = browserWorke
       } else finish(undefined);
     };
     worker.onerror = () => {
+      // A worker that broke cannot load again: the next try starts a new one.
+      worker?.terminate();
+      worker = undefined;
       set({ model: 'failed', problem: 'The voice stopped on this device.' });
       const waiting = [...(working ? [working] : []), ...queue.splice(0)];
       working = undefined;

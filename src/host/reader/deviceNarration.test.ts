@@ -113,6 +113,30 @@ describe('narration made on the device', () => {
     await expect(again).resolves.toBe('blob:kokoro-2');
   });
 
+  it('starts a new worker after the voice breaks, and does not report every byte of the download', () => {
+    const fake = fakeWorker();
+    const terminate = vi.spyOn(fake.worker, 'terminate');
+    const createWorker = vi.fn(() => fake.worker);
+    const service = createDeviceNarration({ createWorker, hasGraphicsChip: async () => false });
+    const told = vi.fn();
+    service.subscribe(told);
+    service.setOn(true);
+    told.mockClear();
+    fake.answer({ type: 'progress', loaded: 451, total: 1000 });
+    fake.answer({ type: 'progress', loaded: 452, total: 1000 });
+    fake.answer({ type: 'progress', loaded: 453, total: 1000 });
+    expect(told).toHaveBeenCalledTimes(1);
+    expect(service.getState().progress).toBe(0.45);
+
+    fake.worker.onerror?.(new Error('gone'));
+    expect(service.getState()).toMatchObject({ model: 'failed' });
+    expect(terminate).toHaveBeenCalledTimes(1);
+    service.setOn(false);
+    service.setOn(true);
+    expect(createWorker).toHaveBeenCalledTimes(2);
+    expect(service.getState()).toMatchObject({ model: 'loading' });
+  });
+
   it('loads on the first Listen when it was left on, and says plainly where it stands', () => {
     const preferences = memory();
     preferences.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');

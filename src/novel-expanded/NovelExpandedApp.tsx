@@ -37,6 +37,7 @@ import { useStoryCovers } from '../host/media/storyCovers';
 import { blueprintPictureOwner, blueprintPictureKey } from '@seihouse/library/story-seed';
 import { useCodexPictures } from '../host/media/codexPictures';
 import { useChapterVoices } from '../host/media/chapterVoices';
+import { deviceNarrationStatus, useDeviceNarrationState } from '../host/reader/deviceNarration';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
 import { CreateHubPage, creatorWorldsOf } from './CreateHubPage';
@@ -159,6 +160,12 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   // Character voices: a chapter's spoken lines in their cast voices, with the same token.
   const voiceClient = useMemo(() => chapterVoiceClientWithAccessToken(services.chapterVoiceServer, services.accessToken, askForToken), [services, askForToken]);
   const chapterVoices = useChapterVoices(services.chapterVoices, voiceClient);
+  // Kokoro on this device: free voices for every line with no cast voice, switched on in the Reader's Narration settings.
+  const kokoro = useDeviceNarrationState(services.deviceNarration);
+  const deviceNarration = useMemo(() => ({
+    name: 'Kokoro voices', on: kokoro.on, setOn: services.deviceNarration.setOn,
+    status: (english: boolean) => deviceNarrationStatus(kokoro, english), clip: services.deviceNarration.clip,
+  }), [kokoro, services]);
   // The profile picture uses the same image choice and token.
   const portraits = useMemo(() => portraitMakerWithAccessToken(services.requestProfilePicture, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();
@@ -340,7 +347,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     creator={route.page === 'write'} beginOnOpen={route.page === 'write'}
     openAtChapter={route.page === 'write' ? route.chapterNumber : undefined} openInCreate={route.page === 'write' && route.create} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
-    writingAgent={AGENTS.VERSA} covers={covers} codexPictures={codexPictures} chapterVoices={chapterVoices}
+    writingAgent={AGENTS.VERSA} covers={covers} codexPictures={codexPictures} chapterVoices={chapterVoices} deviceNarration={deviceNarration}
     // World Info sits in the Library Shell; the Reader never does.
     frame={info => <AppShell route={{ page: 'story', storyId, ...(creatorInfo ? { inCreate: true } : {}) }} navigate={navigate} stories={worlds}
       readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}

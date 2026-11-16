@@ -351,8 +351,8 @@ mode**. That means:
   2026-11-16). This is what makes audio affordable for everyone, so no design
   may undo it. Only the quoted lines the manuscript marks with a speaker are
   made with a paid voice. The narration, most of every chapter, is read by a
-  voice that costs nothing per chapter (the browser's own, or Kokoro), and
-  the narrator has no Codex card. Measured on Chapter 1 of a test story
+  voice that costs nothing per chapter (Kokoro on the reader's device, or the
+  browser's own where Kokoro cannot run), and the narrator has no Codex card. Measured on Chapter 1 of a test story
   (2026-11-16): spoken lines were about 1,000 of 6,900 characters, 1 cent
   against 7 cents at Fish Audio's promotional API price and 5 cents against
   34 cents at its regular price. That is the difference between a chapter
@@ -395,8 +395,35 @@ mode**. That means:
     voice on the Codex card, the cast as a Blueprint CAPA skill, voices for a
     reader who is not the creator, and Create mode's line-by-line tools. Not
     tested with real voices or on a real phone, and the minor figure's two
-    new tag parts are not tested with a real tagger. Not decided: Kokoro or the
-    browser's voice for the narrator.
+    new tag parts are not tested with a real tagger.
+  - **The free voice is Kokoro, made on the reader's own device** (SENSEI,
+    2026-11-16). Kokoro is a small open voice model (Apache 2.0) a device can
+    run itself: downloaded once, then every line is made there at no charge,
+    and the words never leave the device. It reads the narration and every
+    spoken line that has no paid voice; the device's own robotic voice is only
+    what reads when Kokoro cannot (another language, a device too slow, the
+    download not finished). SEIHouse's first cast was made with Kokoro's
+    voices.
+    - **Made once, kept, reused** (SENSEI, 2026-11-16): audio is made by the
+      first reader who needs it, saved, and reused by everyone after, so it
+      need not be perfect or instant. That needs the shared storage the
+      database brings; until then a clip lives on the device that made it.
+    - **Both the web and the store apps** (SENSEI, 2026-11-16): the app is
+      web today and will be regular Apple and Google store apps. Kokoro runs
+      in the browser now and natively in the store apps later; both sit
+      behind the Reader's one way of taking a clip for a line, so neither
+      changes how Listen works.
+    - **A first test is built** (2026-11-16): Reader Settings, Narration,
+      **Kokoro voices**, On. The browser downloads the model once (about 90
+      MB on the processor; about 330 MB where it can use the graphics chip,
+      which is far faster), then Listen is read in three voices of the first
+      Kokoro cast, one each for the narrator, the main character and everyone
+      else, made a few lines ahead of the reader. The setting says how many
+      seconds of speech the device makes in a second. English stories only.
+      Not built: a Kokoro voice per character, keeping or sharing the clips,
+      the store apps, other languages. Not tested on a real phone: a cloud
+      test machine with no graphics chip made 0.3 seconds of speech a second,
+      too slow to keep up, and says nothing about a phone.
 
 ## Where we are (2026-10-10)
 

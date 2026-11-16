@@ -99,4 +99,37 @@ describe('saved voice clips in Read Aloud', () => {
     broken.onerror!();
     expect(base.speak).toHaveBeenCalledTimes(1);
   });
+
+  it('waits for a clip still being made, and reads the line with the device when none comes', async () => {
+    const base = baseEngine();
+    const audio = fakeAudio();
+    let ready!: (url: string | undefined) => void;
+    const engine = createClipSpeechEngine(base, () => new Promise<string | undefined>(resolve => { ready = resolve; }), () => audio);
+    const heard = events();
+    engine.speak(request(line('a', 'narrator')), heard);
+    // Counted as speaking while it waits, so nothing skips the line; the device has not spoken it.
+    expect(engine.isSpeaking()).toBe(true);
+    expect(base.speak).not.toHaveBeenCalled();
+    ready('blob:made');
+    await Promise.resolve();
+    expect(audio.src).toBe('blob:made');
+    audio.onplaying!();
+    expect(heard.onStart).toHaveBeenCalledTimes(1);
+
+    // No clip came: the device reads it.
+    const none = createClipSpeechEngine(base, () => Promise.resolve(undefined), () => fakeAudio());
+    none.speak(request(line('b', 'narrator')), events());
+    await Promise.resolve();
+    expect(base.speak).toHaveBeenCalledTimes(1);
+
+    // Cancelled while waiting: the clip that arrives late is never played.
+    const late = fakeAudio();
+    let arrive!: (url: string | undefined) => void;
+    const cancelled = createClipSpeechEngine(baseEngine(), () => new Promise<string | undefined>(resolve => { arrive = resolve; }), () => late);
+    cancelled.speak(request(line('c', 'narrator')), events());
+    cancelled.cancel();
+    arrive('blob:late');
+    await Promise.resolve();
+    expect(late.src).not.toBe('blob:late');
+  });
 });

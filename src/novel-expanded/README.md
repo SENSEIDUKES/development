@@ -389,6 +389,15 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-16** — **Kokoro voices, made on the device: a first test** (SENSEI). Reader Settings'
+  Narration has a **Kokoro voices** switch. On, the browser downloads the Kokoro voice model once
+  from Hugging Face (about 90 MB, or about 330 MB where it can use the graphics chip) and Listen
+  is read with three voices of SEIHouse's first Kokoro cast (narrator, main character, everyone
+  else), made in a worker a few lines ahead of the reader, at no charge. A line with a paid cast
+  voice keeps it. The setting says where the download stands and how fast this device makes
+  speech; the device's own voice reads whenever Kokoro cannot (not ready, too slow to start, a
+  story that is not in English). `src/host/reader/deviceNarration.ts`, `kokoroWorker.ts`
+  (`kokoro-js`). Clips are held for the visit only. Not tested on a real phone.
 - **2026-11-16** — **Minor figures speak in cast voices too** (SENSEI). A chapter's Voice button
   now counts every spoken line a speaker tag names, card or no card, so a spoken line never drops
   back to the device's voice between two characters. A minor figure is cast from what the tagger

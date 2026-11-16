@@ -48,7 +48,7 @@ import { ProseChapterBody } from './ProseChapterBody';
 import { ReaderBottomBar } from './ReaderBottomBar';
 import type { ReaderChapter, ReaderChapterBody } from './readerChapterBody';
 import { ReaderPanel } from './ReaderPanel';
-import { ReaderSettingsSheet } from './ReaderSettingsSheet';
+import { ReaderSettingsSheet, type ReaderDeviceNarration } from './ReaderSettingsSheet';
 import { ReaderTopBar } from './ReaderTopBar';
 import { StoryCodex } from './StoryCodex';
 import { useFollowNarration, type NarrationHighlight } from './useFollowNarration';
@@ -111,6 +111,9 @@ export type ReaderLayer =
 
 const navButton = 'min-h-11 rounded-full border px-4 text-sm disabled:cursor-not-allowed disabled:opacity-40';
 
+/** How many lines after the one being read the host is told about, to make their voices ahead. */
+const CLIPS_AHEAD = 4;
+
 const NO_SCRIPT: ReadAloudScript = { version: READ_ALOUD_SCRIPT_VERSION, lines: [] };
 
 /** The engine blocks of one chapter, under the ids its Sound Cues and speaker records use. */
@@ -163,7 +166,7 @@ export type ReaderGenerationCost = 'chapter' | 'tag' | 'picture';
 
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
-  readerPreferences, readAloudVoices, readAloudClip, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
+  readerPreferences, readAloudVoices, readAloudClip, deviceNarration, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
   creator = true, openAtChapter, openInCreate = false, onTagChapter, onTagChapterMedia, renderCost,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
@@ -209,7 +212,9 @@ export function HarnessReaderSession({
   /** The host's preferred narration voices, by story language and role. SEN prefers none. */
   readAloudVoices?: ReadAloudVoicePicks;
   /** The host's saved voice clip for a spoken line of a chapter, as an address to play; without one the device reads the line. */
-  readAloudClip?: (chapterId: string, line: ReadAloudLine) => string | undefined;
+  readAloudClip?: (chapterId: string, line: ReadAloudLine, upcoming: readonly ReadAloudLine[]) => string | Promise<string | undefined> | undefined;
+  /** The host's narration made on this device, when it has one: its switch in Reader Settings' Narration. */
+  deviceNarration?: ReaderDeviceNarration;
   /**
    * The host's soundscapes: the Reader's own music before the story has a
    * chapter to take its pieces from (Chapter 1 being written). Without them,
@@ -440,12 +445,16 @@ export function HarnessReaderSession({
   const blocks = useMemo(() => (chapter ? chapterBlocks(chapter) : []), [chapter]);
   const mixer = useOptionalReaderMixer();
   // A spoken line the host has a saved clip for plays that clip; every other line is read by the device.
-  const clipSource = useRef<{ chapterId?: string; clip?: typeof readAloudClip }>({});
-  clipSource.current = { chapterId: chapter?.id, clip: readAloudClip };
+  // The host is also told the lines that follow, so a voice made on the device can be made ahead of the reader.
+  const clipSource = useRef<{ chapterId?: string; clip?: typeof readAloudClip; lines?: () => readonly ReadAloudLine[] }>({});
+  clipSource.current = { ...clipSource.current, chapterId: chapter?.id, clip: readAloudClip };
   const hasClips = Boolean(readAloudClip);
   const speech = useMemo(() => (hasClips ? createClipSpeechEngine(createWebSpeechEngine(), line => {
-    const { chapterId, clip } = clipSource.current;
-    return chapterId && clip ? clip(chapterId, line) : undefined;
+    const { chapterId, clip, lines } = clipSource.current;
+    if (!chapterId || !clip) return undefined;
+    const script = lines?.() ?? [];
+    const at = script.indexOf(line);
+    return clip(chapterId, line, at < 0 ? [] : script.slice(at + 1, at + 1 + CLIPS_AHEAD));
   }) : undefined), [hasClips]);
   const scriptRevision = useMemo(() => JSON.stringify([chapter?.paragraphs, chapter?.speakers, chapter?.soundCues]),
     [chapter?.paragraphs, chapter?.speakers, chapter?.soundCues]);
@@ -461,6 +470,7 @@ export function HarnessReaderSession({
     },
     onStopSoundCues: () => mixer?.stopCues(),
   });
+  clipSource.current.lines = () => readAloud.script().lines;
   const reading = readAloud.status === 'playing' || readAloud.status === 'paused';
   const spoken = reading ? readAloud.line : undefined;
   // One highlight per sentence: a voice change mid-sentence keeps the same light.
@@ -663,7 +673,7 @@ export function HarnessReaderSession({
     </ReaderPanel>
     <ReaderSettingsSheet open={layer?.id === 'settings'} onClose={closeLayer} readAloud={readAloud} language={language}
       mixer={mixer} section={layer?.id === 'settings' ? layer.section : undefined} soundtrack={{ choice: soundtrackChoice, onChoice: chooseSoundtrack, pieces: pieces ?? [] }}
-      text={{ settings: textSettings, onChange: changeText, fonts: readerFonts }} />
+      text={{ settings: textSettings, onChange: changeText, fonts: readerFonts }} deviceNarration={deviceNarration} />
     {writing}
   </>;
 }

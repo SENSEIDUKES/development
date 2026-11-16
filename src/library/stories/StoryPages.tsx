@@ -11,7 +11,7 @@ import { LIBRARY_READER_FONTS } from './readerFonts';
 import { StorySettings } from './settings/StorySettings';
 import { useStoryCoverManifest } from './StoryCoverManifest';
 import { codexPictureRequest, storyCoverRequest, type CodexPictureService, type StoryCoverService } from './storyCover';
-import type { ChapterVoiceService } from './chapterVoices';
+import type { ChapterVoiceService, DeviceNarrationService } from './chapterVoices';
 import { downloadHarnessStory } from './storyExport';
 import { harnessStoryDisplay } from './storyView';
 import { worldInfoChapterMap } from './worldInfoChapterMap';
@@ -68,6 +68,8 @@ export interface StoryPagesProps {
   codexPictures?: CodexPictureService;
   /** The host's character voices: Listen plays a spoken line's kept clip in its character's voice. Without it, the device reads every line. */
   chapterVoices?: ChapterVoiceService;
+  /** The host's narration made on the device: it reads every line that has no cast voice. Without it, the device's own voice does. */
+  deviceNarration?: DeviceNarrationService;
   /**
    * Whether the Reader is the creator's: Fate and Create together, and the
    * story's next chapter written from it. Anyone else's Reader has Fate alone
@@ -95,7 +97,7 @@ const keepVeilOpen = () => undefined;
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, chapterVoices, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint, creator = true, openAtChapter, openInCreate = false, beginOnOpen = false }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, chapterVoices, deviceNarration, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint, creator = true, openAtChapter, openInCreate = false, beginOnOpen = false }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   const portraitHandoff = useRef<Promise<void>>(Promise.resolve());
   const [portraitProblem, setPortraitProblem] = useState<string>();
@@ -157,6 +159,8 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     {portraitProblem && <LoadAlert message={`The Blueprint portraits could not be carried over: ${portraitProblem}`} onRetry={() => setPortraitRetry(value => value + 1)} />}
   </>;
 
+  // The device's narration reads English: a story in another language is read by the device's own voice.
+  const english = (findStory(state, storyId)?.originalLanguage ?? 'en') === 'en';
   // Only the creator's Reader writes: a reader who does not control the novel never generates in it.
   const writes = creator && stories.canGenerate;
   if (page === 'read') return <>
@@ -168,7 +172,10 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
         pictureOf: key => codexPictures.pictureOf(storyId, key),
         manifest: card => codexPictures.manifest(storyId, card.key, codexPictureRequest(state, storyId, card)),
       }}
-      readAloudClip={chapterVoices && ((chapterId, line) => chapterVoices.clip(storyId, chapterId, line))}
+      // A line's cast voice first; any other line is made on the device when the reader has that on.
+      readAloudClip={(chapterVoices || deviceNarration) && ((chapterId, line, upcoming) => chapterVoices?.clip(storyId, chapterId, line)
+        ?? (english ? deviceNarration?.clip(line, upcoming) : undefined))}
+      deviceNarration={deviceNarration && { name: deviceNarration.name, on: deviceNarration.on, onChange: deviceNarration.setOn, status: deviceNarration.status(english) }}
       readerPreferences={readerPreferences} readAloudVoices={LIBRARY_READ_ALOUD_VOICES} readerFonts={LIBRARY_READER_FONTS} soundscapes={soundscapes}
       onGenerateNextChapter={writes ? () => stories.generateNextChapter(storyId) : undefined}
       onRewriteChapter={writes ? note => stories.rewriteLatestChapter(storyId, note) : undefined}

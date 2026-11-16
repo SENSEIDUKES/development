@@ -106,6 +106,9 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
     codexPictures: createMemoryStoryCoverStore(),
     requestCodexPicture: vi.fn(async () => new Blob([new Uint8Array([7, 8, 9])], { type: 'image/png' })),
     requestProfilePicture: vi.fn(async () => new Blob([new Uint8Array([4, 5, 6])], { type: 'image/png' })),
+    chapterVoices: createMemoryStoryCoverStore(),
+    // A server without the voice provider: chapters offer no voices unless a test supplies one.
+    chapterVoiceServer: { info: vi.fn(async () => ({ available: false })), cast: vi.fn(async () => ({})), line: vi.fn(async () => new Blob([new Uint8Array([1])], { type: 'audio/mpeg' })) },
     ...overrides,
   };
 };

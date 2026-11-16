@@ -347,6 +347,43 @@ mode**. That means:
   is built, an opened Codex card offers Manifest, so the owner can see how well
   the looks the story wrote down bring its characters and items to life. It
   uses the prompts manifesting while reading will use.
+- **Premium voice is for spoken lines; the narrator is free** (SENSEI,
+  2026-11-16). This is what makes audio affordable for everyone, so no design
+  may undo it. Only the quoted lines the manuscript marks with a speaker are
+  made with a paid voice. The narration, most of every chapter, is read by a
+  voice that costs nothing per chapter (the browser's own, or Kokoro), and
+  the narrator has no Codex card. Measured on Chapter 1 of a test story
+  (2026-11-16): spoken lines were about 1,000 of 6,900 characters, 1 cent
+  against 7 cents at Fish Audio's promotional API price and 5 cents against
+  34 cents at its regular price. That is the difference between a chapter
+  that costs about 5 Energy with audio and one that costs about 40.
+  - A character's voice belongs to its Codex card. It is assigned from the
+    cast when the character first appears, by matching the character to the
+    plainly named voices, and the creator changes it from the card. The cast
+    is SEIHouse's own to begin with; creators bring their own later.
+  - A paid line is saved against the spoken line it voices in the manuscript,
+    so Listen, cinematic scrolling, Sound Cues and the sequential-art view all
+    use it the same way. Listen plays it where it plays the browser's
+    character voice today.
+  - Affordable voice services come first (MiniMax, Gemini). Fish Audio and
+    ElevenLabs are the expensive tier.
+  - Never propose a whole chapter voiced at the paid rate, one long audio file
+    of a chapter, or a paid narrator, as the way audio works. Ask the owner.
+  - Priced by what is spoken: the provider's price for those characters, four
+    times over, in whole Energy (1 Energy is 2 cents). On ElevenLabs
+    Multilingual v2 (8 cents for 1,000 characters) that is 16 Energy for 1,000
+    spoken characters.
+  - **The first test is built** (2026-11-16): in the creator's world, each
+    chapter in Chapters has one button that voices its spoken lines with the
+    ElevenLabs cast, showing its Energy first (practice: nothing is taken yet),
+    and Listen then plays those lines in their characters' voices, with the
+    device's voice for everything else. Each character's voice is chosen from
+    its Codex card (sex, age, how it sounds) and kept for the story; the clips
+    and the cast are kept on the device. Not built: choosing or changing a
+    voice on the Codex card, the cast as a Blueprint CAPA skill, voices for a
+    reader who is not the creator, and Create mode's line-by-line tools. Not
+    tested with real voices or on a real phone. Not decided: Kokoro or the
+    browser's voice for the narrator.
 
 ## Where we are (2026-10-10)
 
@@ -1029,8 +1066,8 @@ When a session asks "what now?", start here:
    (`reader-chamber/reference/`, described in `PRODUCTION_READER.md`) shows its
    spring glide, its hand-back and its Resume pill, but it guessed each
    paragraph's length; this one follows the manuscript's spoken sentences.
-   AI narration (generated once per language, stored and shared) comes after,
-   on the same script.
+   Paid voices for the spoken lines come after, on the same script; the
+   narrator stays free ([the rule](#how-we-build)).
 
 ### The engine track: the world record and the Codex
 

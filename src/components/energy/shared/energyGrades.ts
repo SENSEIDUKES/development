@@ -30,6 +30,37 @@ export const GRADED_ENERGY_PRICES: Record<GradedEnergyKind, Record<EnergyGrade, 
   'live-minute': { mortal: 3, immortal: 6, heaven: 9 },
 };
 
+/** What one Energy is worth, in US dollars. */
+export const ENERGY_USD = 0.02;
+
+/**
+ * Character voices are priced by what is spoken, never by the chapter: the
+ * provider's own price for those characters, times the margin, in whole Energy.
+ * Only spoken lines are ever voiced this way; narration is free
+ * (NOVEL_EXPANDED.md, How we build).
+ */
+export const VOICE_ENERGY_MARGIN = 4;
+
+/**
+ * What each voice model's provider charges for 1,000 characters, in US dollars,
+ * by the Model Router's model id (ElevenLabs' API price list, 2026-11-16). A
+ * model the table does not name is priced at the dearest rate here.
+ */
+export const VOICE_USD_PER_1000_CHARACTERS: Readonly<Record<string, number>> = {
+  eleven_v3: 0.08,
+  eleven_multilingual_v2: 0.08,
+  eleven_flash_v2_5: 0.04,
+};
+
+/** The Energy for `characters` of speech on `model`: provider price × margin, rounded up, never free. */
+export const voiceEnergyPrice = (characters: number, model: string | undefined): number => {
+  if (!(characters > 0)) return 0;
+  const rate = (model && Object.hasOwn(VOICE_USD_PER_1000_CHARACTERS, model) ? VOICE_USD_PER_1000_CHARACTERS[model] : undefined)
+    ?? Math.max(...Object.values(VOICE_USD_PER_1000_CHARACTERS));
+  // Rounded to a millionth first, so a price that is a whole Energy stays one.
+  return Math.max(1, Math.ceil(Number(((characters / 1000) * rate * VOICE_ENERGY_MARGIN / ENERGY_USD).toFixed(6))));
+};
+
 /** Each model's grade, by the Model Router's model id. */
 export const MODEL_ENERGY_GRADES: Readonly<Record<string, EnergyGrade>> = {
   // Direct OpenAI: same cost bands as the existing provider catalog.

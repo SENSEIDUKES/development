@@ -26,6 +26,8 @@ import {
 
 export interface SpeechRequest {
   text: string;
+  /** The script line being spoken; absent for a voice sample. An engine with saved clips finds its clip by it. */
+  line?: ReadAloudLine;
   /** The voice to read with; without one, the device picks a voice for `lang`. */
   voice?: ReadAloudVoice;
   lang: string;
@@ -344,7 +346,7 @@ export function useReadAloud({
       if (token !== state.token) return;
       const { rate, language: storyLanguage } = latest.current;
       const voice = castNow()[line.role];
-      engine.speak({ text: line.text, voice, lang: voice?.lang ?? speechLanguageTag(storyLanguage), rate, pitch: 1, volume: READ_ALOUD_VOLUME }, {
+      engine.speak({ text: line.text, line, voice, lang: voice?.lang ?? speechLanguageTag(storyLanguage), rate, pitch: 1, volume: READ_ALOUD_VOLUME }, {
         onStart: () => {
           if (token !== state.token) return;
           state.started = true;

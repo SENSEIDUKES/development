@@ -389,6 +389,15 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-16** — **Character voices, a first test** (SENSEI). In a world's Chapters, each chapter
+  with spoken lines has one button, **Voice N lines**, with its Energy (the provider's price for
+  what is spoken, four times over; practice, nothing is taken yet). It voices only the lines a
+  character with a Codex card says, one call a line, with the ElevenLabs cast: each character's
+  voice is chosen on the server from its card and kept for the story. The Reader's Listen then
+  plays those lines in their voices and reads the rest with the device's voice. Clips and the cast
+  are kept on this device (`novelexpanded-chapter-voices-v1`); a chapter stopped partway keeps its
+  lines and prices only the rest. `/api/chapter-voice` allows a visitor 60 lines an hour; the
+  owner's access token lifts that. Not checked with real voices or on a real phone.
 - **2026-11-11** — **Minor figures and Promote in the Codex** (SENSEI). In a story made from a
   World Blueprint, the Codex's card tabs hold only the world's cards. Whoever and whatever a
   chapter brought in with no card is listed under a new **Minor** tab, with the sentence that

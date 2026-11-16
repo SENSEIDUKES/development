@@ -3,6 +3,7 @@ import type { AccessTokenStore } from '../host/generation/accessToken';
 import { HarnessGenerationRequestError } from '../host/generation/httpClient';
 import { StoryCoverRequestError, type requestCodexPicture, type requestStoryCover } from '../host/media/storyCoverClient';
 import type { CodexPictureMaker } from '../host/media/codexPictures';
+import { ChapterVoiceRequestError, type ChapterVoiceClient, type readChapterVoiceInfo, type requestChapterVoiceCast, type requestChapterVoiceLine } from '../host/media/chapterVoiceClient';
 import type { StoryCoverMaker } from '../host/media/storyCovers';
 import { PROFILE_PICTURE_CHOICES, ProfilePictureRequestError, keptPortrait, readProfilePhoto, type requestProfilePicture } from '../host/media/profilePictureClient';
 import { blobToDataUrl } from '../host/media/imageFiles';
@@ -144,3 +145,35 @@ export const portraitMakerWithAccessToken = (
   },
   keep: async portrait => blobToDataUrl(await keptPortrait(portrait)),
 });
+
+/**
+ * The voice server with the owner's access token. A line refused for the
+ * visitor limit without a token (429), or for a token the server did not
+ * accept (401), asks for the token and is sent again with it: the server
+ * refused it before any voice was made, so nothing is paid for twice.
+ */
+export const chapterVoiceClientWithAccessToken = (
+  server: { info: typeof readChapterVoiceInfo; cast: typeof requestChapterVoiceCast; line: typeof requestChapterVoiceLine },
+  token: AccessTokenStore,
+  ask: AskForAccessToken,
+): ChapterVoiceClient => {
+  const withToken = async <T,>(send: () => Promise<T>): Promise<T> => {
+    for (;;) {
+      try {
+        return await send();
+      } catch (error) {
+        const status = error instanceof ChapterVoiceRequestError ? error.status : undefined;
+        if (status !== 401 && !(status === 429 && !token.current)) throw error;
+        if (status === 401) token.current = undefined;
+        const entered = await ask({ reason: 'voices', rejected: status === 401 });
+        if (!entered) throw error;
+        token.current = entered;
+      }
+    }
+  };
+  return {
+    info: () => server.info(),
+    cast: (characters, kept) => withToken(() => server.cast(characters, kept, { accessToken: token.current })),
+    line: line => withToken(() => server.line(line, { accessToken: token.current })),
+  };
+};

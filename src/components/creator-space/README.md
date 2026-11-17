@@ -42,8 +42,9 @@ screen:
    (Style Packs) and Media (Soundscapes, Cues, Atmospheres), search, Mine (packs installed on this
    device), "See all" into one kind, and a pack's detail with what is inside: each file's name and
    description, with its trigger word or group beside it. Each pack is the official plugin card; a built-in pack's cover is its kind's
-   Toolkit art (`coverUrl`), and an installed pack gets the card's own drawn cover. The page adds
-   Back to Create and `.spp` skill and audio pack import. Without `onBrowseToolkit`, a Preview tag and one honest status
+   Toolkit art (`coverUrl`), and an installed pack gets the card's own drawn cover. The top stays
+   short on a phone (a back link, the title, search and the switches), and the page closes with
+   **Import your own**: `.spp` audio and skill pack import, with its messages beside the buttons. Without `onBrowseToolkit`, a Preview tag and one honest status
    line appear instead.
 3. **Your worlds** — the main focus. A native, swipeable scroll-snap row of Home-style
    `LibraryCard` covers with title and "Ch. N · Draft/Shared/Public/Complete", the most
@@ -147,6 +148,9 @@ reduced motion. Evidence: `output/playwright/creator-space/`.
   a pack opens in the page's own detail sheet (from the bottom on a phone, from the side on
   a wide screen), raised above the bottom navigation. The URL, the props hosts pass and both
   importers are unchanged, so the app and the Workshop preview changed together.
+  Later the same day, from SENSEI on a phone: the top was cut down (no description, a slim
+  back link, a smaller title) so plugins start on the first screen, and importing moved to
+  the foot of the page.
 
 - **2026-11-01 (Toolkit plugins & Creator Plugins view):** Added **Cues** and **Atmospheres**
   beside Style Packs and Soundscapes in the Creator Toolkit, switched the Toolkit from a

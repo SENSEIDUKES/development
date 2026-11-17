@@ -232,6 +232,30 @@ it('shows parent .spp packs on the Plugins Page and reveals their files only whe
   expect(onBack).toHaveBeenCalledTimes(1);
 });
 
+it('keeps the top of Creator Plugins short and puts importing at the foot of the page', () => {
+  const catalog: CreatorPluginCatalog = { packages: [] };
+  const mount = (importer: boolean) => act(() => root.render(
+    <LibraryPresentationProvider>
+      <CreatorPlugins catalog={catalog} onBack={() => {}} onImportMediaPack={importer ? vi.fn() : undefined} />
+    </LibraryPresentationProvider>,
+  ));
+
+  mount(true);
+  const browser = container.querySelector('[data-slot="spp-plugin-browser"]')!;
+  const importing = container.querySelector('[data-testid="creator-plugins-import"]')!;
+  // The page's header carries only its title, search and switches: no description, no importers.
+  expect(browser.querySelector('header')?.textContent).not.toContain('Import');
+  expect(browser.querySelector('header p:not([role="status"])')).toBeNull();
+  // Importing closes the page, after the plugins.
+  expect(browser.compareDocumentPosition(importing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(importing.textContent).toContain('Import audio .spp');
+  expect(importing.querySelector('[data-testid="creator-plugins-media-import"]')).not.toBeNull();
+
+  // A host with no importers shows no import section.
+  mount(false);
+  expect(container.querySelector('[data-testid="creator-plugins-import"]')).toBeNull();
+});
+
 it('distinguishes loading, empty and failed worlds without inventing numbers', () => {
   renderPage({ worlds: { status: 'loading' }, energy: { status: 'loading', snapshot: null } });
   expect(container.querySelector('[aria-label="Loading your worlds"]')).not.toBeNull();

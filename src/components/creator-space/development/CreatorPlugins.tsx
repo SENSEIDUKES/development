@@ -6,7 +6,6 @@ import {
   type SPPPluginBrowserGroup,
   type SPPPluginBrowserItem,
 } from '@seihouse/ui';
-import { LibraryButton } from '@seihouse/library-ui';
 import type { MediaPack } from '../../../library/media/mediaPacks';
 import { SkillPackageImport } from '../../../library/stories/settings/SkillPackageImport';
 import type {
@@ -94,7 +93,8 @@ function toPlugin(pack: CreatorPluginPackage): SPPPluginBrowserItem {
  * Creator Plugins: the SEIHouse Plugins Page (`SPPPluginBrowser`) over the
  * Library's parent `.spp` packages, built-in and installed on this device. One
  * row per kind, "See all" into one kind, and a package opens its detail with
- * what is inside. The page adds the way back to Create and the two importers.
+ * what is inside. The page adds the way back to Create above it and, at its
+ * foot, the two importers.
  */
 export function CreatorPlugins({
   catalog,
@@ -139,7 +139,7 @@ export function CreatorPlugins({
     try {
       const pack = await onImportMediaPack(file);
       const targetKind = PACK_KIND_MAP[pack.type];
-      setStatusMessage(`Installed “${pack.displayName}” (v${pack.version}). Open its card below to see what is inside.`);
+      setStatusMessage(`Installed “${pack.displayName}” (v${pack.version}). Find its card above to see what is inside.`);
       if (openPackId) selectPack(null);
       if (filter !== 'all' && filter !== targetKind) selectFilter(targetKind);
     } catch (error) {
@@ -152,41 +152,20 @@ export function CreatorPlugins({
   const canImportSkill = Boolean(skillIntake && onInstallSkill);
 
   return (
-    <div data-creator-space data-creator-plugins className="creator-space space-y-4 pb-8 text-signal" data-testid="creator-plugins">
-      <LibraryButton type="button" variant="ghost" size="sm" icon={ArrowLeft} onClick={onBack} className="-ml-2">
-        Back to Create
-      </LibraryButton>
-
-      {statusMessage && (
-        <p role="status" className="flex items-center gap-2 rounded-xl border border-emerald-300/30 bg-emerald-400/10 px-4 py-3 font-sans text-xs text-emerald-100 sm:text-sm">
-          <Check size={16} className="shrink-0 text-emerald-300" aria-hidden="true" />
-          <span>{statusMessage}</span>
-        </p>
-      )}
-      {errorMessage && (
-        <p role="alert" className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 font-sans text-xs whitespace-pre-wrap text-red-200 sm:text-sm">
-          {errorMessage}
-        </p>
-      )}
-
-      {skillImportOpen && skillIntake && onInstallSkill && (
-        <div className="creator-plugin-panel rounded-2xl border border-white/15 bg-black/40 p-4">
-          <SkillPackageImport
-            intake={skillIntake}
-            busy={false}
-            destinationSlot={filter === 'style' ? 'style' : undefined}
-            onInstall={async skill => {
-              await onInstallSkill(skill);
-              setStatusMessage(`Installed skill “${skill.name}” (v${skill.version}).`);
-              setSkillImportOpen(false);
-            }}
-          />
-        </div>
-      )}
+    <div data-creator-space data-creator-plugins className="creator-space space-y-1 pb-8 text-signal" data-testid="creator-plugins">
+      {/* The top stays short on a phone, so plugins start within the first screen. */}
+      <button
+        type="button"
+        onClick={onBack}
+        aria-label="Back to Create"
+        className="creator-plugins-back -ml-1 inline-flex min-h-11 items-center gap-1.5 rounded-lg pr-3 pl-1 font-sans text-sm text-neutral-300 hover:text-white"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        Create
+      </button>
 
       <SPPPluginBrowser
         title="Creator Plugins"
-        description="The .spp packs your stories are made with. Open one to see what is inside, or import your own."
         noun="plugin"
         nounPlural="plugins"
         groups={GROUPS}
@@ -196,8 +175,17 @@ export function CreatorPlugins({
         onCategoryChange={next => selectFilter(next && KINDS.has(next) ? next as CreatorToolkitKind : 'all')}
         openPlugin={openPackId ?? null}
         onOpenPluginChange={selectPack}
-        headerActions={(onImportMediaPack || canImportSkill) && (
-          <>
+        className="max-sm:[&_h1]:!text-2xl"
+      />
+
+      {(onImportMediaPack || canImportSkill) && (
+        <section aria-labelledby="creator-plugins-import" className="creator-plugin-panel !mt-8 space-y-3 rounded-2xl border border-white/15 p-4" data-testid="creator-plugins-import">
+          <div>
+            <h2 id="creator-plugins-import" className="font-display text-lg font-bold text-signal">Import your own</h2>
+            <p className="mt-0.5 font-sans text-xs text-neutral-300 sm:text-sm">Add a .spp audio or skill pack from this device.</p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
             {onImportMediaPack && (
               <>
                 <input
@@ -236,9 +224,34 @@ export function CreatorPlugins({
                 {skillImportOpen ? 'Hide skill .spp' : 'Import skill .spp'}
               </button>
             )}
-          </>
-        )}
-      />
+          </div>
+
+          {statusMessage && (
+            <p role="status" className="flex items-center gap-2 rounded-xl border border-emerald-300/30 bg-emerald-400/10 px-4 py-3 font-sans text-xs text-emerald-100 sm:text-sm">
+              <Check size={16} className="shrink-0 text-emerald-300" aria-hidden="true" />
+              <span>{statusMessage}</span>
+            </p>
+          )}
+          {errorMessage && (
+            <p role="alert" className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 font-sans text-xs whitespace-pre-wrap text-red-200 sm:text-sm">
+              {errorMessage}
+            </p>
+          )}
+
+          {skillImportOpen && skillIntake && onInstallSkill && (
+            <SkillPackageImport
+              intake={skillIntake}
+              busy={false}
+              destinationSlot={filter === 'style' ? 'style' : undefined}
+              onInstall={async skill => {
+                await onInstallSkill(skill);
+                setStatusMessage(`Installed skill “${skill.name}” (v${skill.version}).`);
+                setSkillImportOpen(false);
+              }}
+            />
+          )}
+        </section>
+      )}
     </div>
   );
 }

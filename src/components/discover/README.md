@@ -26,7 +26,8 @@ beside All / My updates inside the results panel and stacks on narrow screens.
 | Creators | Host-supplied creators expanding to their story cards; followed creators in My updates |
 | Codex | Characters and Items only; expandable entries with descriptions and source-story cards; tracked entries in My updates |
 | Genres | Cover-backed tiles for Stories or Creators, counting the current feed; selecting a tile opens that genre's catalogue |
-| Heavenly Rankings | A separate overall view for stories, creators, characters or items; genres preserve original ranks; returning to Browse restores its feed; Events expands below the board |
+| Heavenly Rankings | A separate overall view for stories, creators, characters or items; genres preserve original ranks; returning to Browse restores its feed |
+| Events | Themed announcements with their own Discover tab and address |
 | Lore | Directly opens the encyclopedia: 398 terms with alias search, a category rail, localized articles and Write it as with Copy on every term; no genres or rankings |
 
 NovelExpanded (`src/novel-expanded/DiscoverPage.tsx`) shows only the app's published
@@ -60,6 +61,8 @@ fabricates a personal term list. See the direction document for
 mode behavior and translation-review limits.
 
 ## History
+
+- **2026-11-17:** Gave Events its own Discover tab with the existing announcements.
 
 - **2026-11-17** — Removed the prototype format selector and catalogue search,
   fitted the four destination tabs to phone widths, and moved Genre beside the

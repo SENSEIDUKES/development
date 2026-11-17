@@ -1,6 +1,6 @@
 import type { DiscoverEvent } from '@seihouse/library/discover';
 
-/** Sample announcements, displayed under Discover Rankings until events are connected. */
+/** Sample announcements, displayed in the Discover Events tab until events are connected. */
 export const DISCOVER_EVENTS: readonly DiscoverEvent[] = [
   { id: 'mystery-week', title: 'Mystery Week', when: 'Coming soon', imageUrl: '/manifest-backdrops/immortal-land-3.jpg',
     description: 'Seven days of locked rooms, lies and lost heirs, for creators and readers.' },

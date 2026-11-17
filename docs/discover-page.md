@@ -73,7 +73,7 @@ both something to chase.
 - **Rankings:** leaderboards like Webtoon's character rankings, extended to
   items, beasts, pets and Familiars. Cultivation stories already run on ranking
   lists, so the audience knows this language. Working name: Heavenly Rankings.
-- **Events (under Discover Rankings):** themed challenges such as Mystery Week or Dark Fantasy
+- **Events (in Discover):** themed challenges such as Mystery Week or Dark Fantasy
   Week, for creators and readers.
 
 ## Platform guardrails Discover relies on
@@ -140,7 +140,7 @@ preferences. Its sample-opening notice is also Workshop-only.
 - **Heavenly Rankings:** a relevant overall board in Stories, Creators and Codex,
   with character/item choices for Codex. Genre filtering preserves original
   rank numbers, independently of My updates. Returning to Browse restores its feed.
-- **Events** moved from Home into **Rankings**, below the board. The existing
+- **Events** opens from its own Discover tab. The existing
   expandable Coming soon announcements remain. They are absent from Browse,
   Genres and Lore, and Home now starts with Featured.
 - **Lore** has its authored encyclopedia, language and Reading Mode preferences,

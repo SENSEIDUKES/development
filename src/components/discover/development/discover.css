@@ -22,10 +22,10 @@
 [data-discover] .discover-sample-notice summary::-webkit-details-marker { display: none; }
 [data-discover] .discover-sample-notice p { position: absolute; z-index: 5; inset-inline-end: 0; top: 100%; width: min(17rem, 75vw); padding: .875rem; border: 1px solid var(--discover-hairline); border-radius: .5rem; background: #171a22; box-shadow: 0 12px 28px #0008; }
 
-/* The four destinations stay in reach inside the Library's scrolling main panel. */
+/* The five destinations stay in reach inside the Library's scrolling main panel. */
 [data-discover] .discover-navigation {
   position: sticky; top: var(--workspace-header-height, 0px); z-index: 4;
-  display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); min-width: 0;
+  display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); min-width: 0;
   border-bottom: 1px solid var(--discover-hairline);
   background: rgba(8,11,17,.96); backdrop-filter: blur(12px);
   scroll-margin-block-start: .5rem;
@@ -107,7 +107,7 @@
   [data-discover] .discover-directory-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 @container (min-width: 720px) {
-  [data-discover] .discover-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  [data-discover] .discover-grid { grid-template-columns: repeat(5,minmax(0,1fr)); }
   [data-discover] .discover-genre-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
   [data-discover] .discover-list, [data-discover] .discover-ranking-list { grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 1.5rem; }
   [data-discover] .discover-directory-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }

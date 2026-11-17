@@ -201,7 +201,7 @@ body:has(.library-look) :is(.front-desk-card-place, .front-desk-card-quiet) { co
   backdrop-filter: var(--library-material-control-blur);
 }
 
-.library-look [data-creator-space] .creator-plugin-panel {
+.library-look [data-creator-space] :is(.creator-plugin-panel, .creator-space-studios) {
   background: var(--library-material-card-fill);
   border-color: var(--reader-glass-edge);
   box-shadow: var(--library-material-card-shadow);

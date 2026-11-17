@@ -13,7 +13,7 @@ import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SEN
 import '../shared/home.css';
 /** Existing LibraryScreen Home presentation. Data and navigation belong to the host. */
 export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, onVisibleWorldsChange, emptyState, featuredWorlds = [], children }: LightNovelsHomeProps) {
-  // Featured: the Carve New Destiny slide first, then each featured world's Feature card,
+  // Featured: the Create A World slide first, then each featured world's Feature card,
   // moving the way every Feature card moves (the shared World Card carousel).
   const [currentSlide, setCurrentSlide] = useState(0);
   const heroActive = active && currentSlide === 0;
@@ -96,7 +96,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
     >
       <WorldCardFeatureCarousel data-home-featured className="home-featured" active={active} onSlideChange={setCurrentSlide}
         slides={[{
-          id: 'carve-new-destiny', label: 'Defying the Heavens',
+          id: 'carve-new-destiny', label: 'Welcome to NovelExpanded',
           // Stays mounted while a world shows, so its video resumes where it was.
           keepMounted: true,
           render: () => <>
@@ -168,7 +168,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
             <div className="relative z-10 px-5 pt-5 pb-12 sm:px-12 sm:pt-12 sm:pb-14 w-full flex justify-between items-end">
               <div className="max-w-2xl space-y-2 sm:space-y-3">
                 <h2 className="font-display font-bold text-2xl sm:text-4xl md:text-5xl text-signal leading-tight tracking-tight drop-shadow-lg">
-                  Defying the Heavens
+                  Welcome to NovelExpanded
                 </h2>
                 <p className="text-neutral-300 font-serif text-xs sm:text-sm leading-relaxed max-w-xl shadow-black drop-shadow-md hidden xs:block">
                   A mortal rises. The sects tremble. Write your own destiny and
@@ -177,12 +177,12 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
                 </p>
                 <div className="pt-2 sm:pt-4 flex flex-wrap gap-4">
                   <ManifestButton
-                    aria-label="Carve New Destiny"
+                    aria-label="Create A World"
                     icon={SENManifestingIcon}
                     size="md"
                     onClick={() => onCreateStory()}
                   >
-                    Carve New Destiny
+                    Create A World
                   </ManifestButton>
                 </div>
               </div>
@@ -256,7 +256,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
                     icon={SENDiscoveryIcon}
                     titleAs="h4"
                     title={emptyState?.title ?? 'Awaiting Manifestations'}
-                    description={emptyState?.description ?? 'Curated worlds will return after their chapters are published to the current library format.'}
+                    description={emptyState ? emptyState.description : 'Curated worlds will return after their chapters are published to the current library format.'}
                   />
                 </LibraryPanel>
               ) : (

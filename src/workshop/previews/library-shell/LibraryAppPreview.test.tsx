@@ -39,7 +39,7 @@ it('opens standalone Home by default and preserves filters across Create, Discov
   const companionLeft = companion.parentElement!.style.left;
   expect(homeVisible()).toBe(true);
   expect(current()).toBe('Home');
-  expect(container.textContent).toContain('Defying the Heavens');
+  expect(container.textContent).toContain('Welcome to NovelExpanded');
   const sort = container.querySelector<HTMLSelectElement>('[aria-label="Ascension Order"]')!;
   await act(async () => { sort.value = 'newest'; sort.dispatchEvent(new Event('change', { bubbles: true })); });
   await click('Create');
@@ -80,7 +80,7 @@ it('keeps the source hero action and directs header Library search separately fr
   await render();
   const listener = vi.fn((event: Event) => event.preventDefault());
   window.addEventListener('library-preview-navigate', listener);
-  await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Carve New Destiny"]')!.click());
+  await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Create A World"]')!.click());
   expect((listener.mock.calls[0][0] as CustomEvent).detail).toEqual({ screen: 'creator' });
   window.removeEventListener('library-preview-navigate', listener);
   await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Search for stories"]')!.click());

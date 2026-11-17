@@ -26,40 +26,22 @@ The Library's Create tab. It replaces the bottom-strip **Library** tab, which on
 Home with its My Library collection selected. My Library itself is unchanged and still
 reachable from header Search and the footer.
 
-The page has three parts and a closing action, in this order, sized so the worlds row is inside the first phone
-screen:
+The page leads with a normal-sized **Create** button beside the title and Sparks,
+followed by Energy and In progress. Create opens the existing Story Seed flow.
 
-1. **Creator Space** — the page title and two readings: **Energy** (the live available balance; opens the
-   Cave's Energy page) and **In progress** (worlds that have not reached their ending; a
-   plain reading with no destination). "Ready to share" is deliberately absent until
-   publishing exists.
-2. **Creator Toolkit** — a responsive grid of **Style Packs** (the official Chinese,
-   Korean and Japanese writing styles), **Soundscapes** (the first-party ambient catalog), **Cues** (the
-   first-party inline sound effects) and **Atmospheres** (the first-party weather and place sounds).
-   When the host supplies `onBrowseToolkit`, **Browse plugins** and each card open **Creator Plugins**
-   (`CreatorPlugins`): the SEIHouse Plugins Page (`SPPPluginBrowser` from `@seihouse/ui`) over the
-   built-in and installed `.spp` packs. One sideways row per kind, a switch between Information
-   (Style Packs) and Media (Soundscapes, Cues, Atmospheres), search, Mine (packs installed on this
-   device), "See all" into one kind, and a pack's detail with what is inside: each file's name and
-   description, with its trigger word or group beside it. Each pack is the official plugin card; a built-in pack's cover is its kind's
-   Toolkit art (`coverUrl`), and an installed pack gets the card's own drawn cover. The top stays
-   short on a phone (a back link, the title, search and the switches), and the page closes with
-   **Import your own**: `.spp` audio and skill pack import, with its messages beside the buttons. Without `onBrowseToolkit`, a Preview tag and one honest status
-   line appear instead.
-3. **Your worlds** — the main focus. A native, swipeable scroll-snap row of Home-style
-   `LibraryCard` covers with title and "Ch. N · Draft/Shared/Public/Complete", the most
-   recently changed world first and selected. Tapping a card selects it; beneath the row
-   sit its title and exactly two actions:
-   - **Continue** — keep writing: the world's chapter workspace, landed on its Generate
-     Chapter panel. Disabled, with a note, for a world that reached its ending.
-   - **Studio** — the same world's full workspace from the top (story direction, CAPA
-     skills, media, Blueprint).
+**Your worlds** comes next: the most recently changed world is selected first,
+with **Continue | Edit** beneath the swipeable covers. Continue opens the creator's
+Reader; Edit opens the world's existing in-house editing destination (World Info
+in the app). Completed worlds keep Edit available and disable Continue.
+Loading, empty and failed-read states remain distinct.
 
-   The count reads "N worlds". Loading, empty ("No worlds yet") and failed-read states are
-   distinct. A world without cover art shows the Library's own celestial art, dimmed; an
-   unreachable image leaves the card's own blue-gold wash rather than a broken image.
-4. **Create** — the page closes on one full-width Manifest button, below the worlds and
-   their actions, that opens Story Seed to start a new world.
+**Creator Toolkit** groups two destinations below the worlds. One large **Browse
+plugins** card opens the SEIHouse Plugins Page, which retains the style, soundscape, cue and
+atmosphere catalogs and existing audio/skill `.spp` import controls. The **Studios**
+card links to `https://studio.novelexpanded.com` in a new tab and offers **Import
+plugins** back into that same plugin browser. Studio always refers to the external
+creation app, never the in-house world editor. Without a host plugin browser, the
+preview shows an honest availability notice and omits Import plugins.
 
 ## Ownership and contracts
 
@@ -72,7 +54,7 @@ destination:
 | `worlds` | The creator's worlds with a request lifecycle (`loading` / `ready` / `error`) |
 | `energy` | The `useEnergyAccount` read; the page never computes a balance |
 | `toolkit` | Preview items (title, description, kind, art) |
-| `onCreate`, `onOpenEnergy`, `onContinueWorld`, `onOpenStudio` | Existing destinations |
+| `onCreate`, `onOpenEnergy`, `onContinueWorld`, `onEditWorld` | Existing destinations |
 | `onBrowseToolkit`, `onRetryWorlds` | Optional; `onBrowseToolkit(kind?)` opens `CreatorPlugins`, omitted means "not built" |
 
 The selected world is local UI state. The shell keeps the page mounted after its first visit,
@@ -88,16 +70,16 @@ Each `HarnessStory` becomes a world: distinct committed chapter numbers are its 
 count, `conclusion` makes it Complete, and `visibility` public/shared are shown as such
 (private is Draft). Stories carry no cover art or genre yet. Energy comes from the Energy
 client the shell already mounts. Continue opens
-`/?preview=harness-generation&story=<id>&focus=next-chapter` and Studio
+`/?preview=harness-generation&story=<id>&focus=next-chapter` and Edit
 `/?preview=harness-generation&story=<id>`, in the top window so a Workshop frame is left.
 
 `worlds=sample` swaps in six Workshop sample worlds (`previewData.ts`, existing local art,
 one finished, one without a cover). Sample worlds are not in the chapter workspace, so
-Continue/Studio report where they would go instead of navigating. The Workshop entry
+Continue/Edit report where they would go instead of navigating. The Workshop entry
 defaults to the app's own Create (`/app/?page=create`, this browser's stories); the
 sample composition is a layout aid behind the Worlds control.
 
-To support Continue and Studio, the Library chapter workspace gained two additive props,
+To support Continue and Edit, the Library chapter workspace gained two additive props,
 `initialStoryId` and `initialFocus: 'next-chapter'`, read from the `story`/`focus` URL
 parameters by its Workshop wrapper. Story Seed's existing "start story" handoff already
 sent `story=<id>`; it now opens that story instead of the list's first.
@@ -140,6 +122,8 @@ destinations, tab switches and history, empty and local states, 320/768/1440 wid
 reduced motion. Evidence: `output/playwright/creator-space/`.
 
 ## Workshop history
+
+- **2026-11-17:** Moved Create to the top, consolidated Browse plugins, and added a Studios card. Worlds use Continue and Edit.
 
 - **2026-11-17 (the official Plugins Page):** From SENSEI, Creator Plugins is now the
   Plugins Page from the UI repository (`SPPPluginBrowser`, `@seihouse/ui` 0.25.0) with the

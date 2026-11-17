@@ -120,10 +120,14 @@ export interface CreatorSpaceProps {
   onContinueWorld: (worldId: string) => void;
   /** Opens the selected world's Info page. */
   onOpenWorld: (world: CreatorWorld) => void;
-  /** The world's full Studio workspace. */
-  onOpenStudio: (worldId: string) => void;
+  /** Opens the world's in-house editing destination. */
+  onEditWorld: (worldId: string) => void;
   /** Opens the plugin browser, optionally focused on one clicked plugin kind. */
   onBrowseToolkit?: (kind?: CreatorToolkitKind) => void;
+  /** Native destination when the host opens the plugin browser on a route. */
+  browseToolkitHref?: string;
+  /** Set only when the destination can install audio or skill packages. */
+  canImportPlugins?: boolean;
   /** Re-reads the worlds after an error. */
   onRetryWorlds?: () => void;
   /** The host's Sparks button (SEN: `SparksButton`), beside the page title. */

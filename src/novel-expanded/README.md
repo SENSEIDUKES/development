@@ -43,9 +43,9 @@ rewrites and every page survives a reload.
 
 | Page | Address | What it is |
 | --- | --- | --- |
-| Home | `/app/` | Featured, the reader's stories, newest first, and Carve New Destiny |
-| Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); phone-fitting section navigation, left browsing rail, scoped All / My updates beside Genre, and Events under Rankings outside Lore |
-| Create | `/app/?page=create` | The Library's Creator Space: the reader's worlds (Continue, Studio), Energy, the Creator Toolkit previews and Create |
+| Home | `/app/` | Welcome to NovelExpanded, Create A World, and the reader's stories, newest first |
+| Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); phone-fitting section navigation, left browsing rail, scoped All / My updates beside Genre, and a dedicated Events tab |
+| Create | `/app/?page=create` | The Library's Creator Space: a compact Create action, the reader's worlds (Continue, Edit), Browse plugins and Studios |
 | A world, for its author | `/app/?page=create&world=<id>` | What a world opens to when its author taps it under Your worlds: the author's worlds as mini world cards, Novel (Sequential Art later), and Blueprint, Chapters, Codex (coming), Assets and Info (`AuthorWorldView`). Chapters is the iTunes list where chapters are checked and tagged a few at a time; a chapter opens in the creator's Reader, below, in Create mode with its tags lit |
 | Story Seed | `/app/?page=create&seed=new` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story; `&seed=<id>` opens a saved seed |
 | The creator's Reader | `/app/?page=create&world=<id>&read=1` (`&chapter=<n>` to open at a chapter, `&create=1` for Create mode with its tags lit) | The Reader with Fate and Create together, where the creator writes the next chapter and tags each chapter (Create mode); opened by Start Story, Continue and a chapter in the world's Chapters. Back returns to Chapters for a chapter opened there, else to the book's World Info in Create |
@@ -362,8 +362,8 @@ task needs something the list does not allow.
 | `routes.ts` | Addresses and history |
 | `services.ts` | Storage, the writer, the official skills, the Blueprint client, the reader's profile and the practice economy |
 | `HomePage.tsx` | Home: the reader's stories, in `AppShell` |
-| `DiscoverPage.tsx` | Discover (`@seihouse/library/discover`) in `AppShell`, with published stories, genre filtering and Events under Rankings; Lore uses the authored encyclopedia. Workshop injects its own sample catalogue into this shared composition |
-| `discoverEvents.ts` | Coming soon announcements supplied to Discover Rankings |
+| `DiscoverPage.tsx` | Discover (`@seihouse/library/discover`) in `AppShell`, with published stories, genre filtering and a dedicated Events tab; Lore uses the authored encyclopedia. Workshop injects its own sample catalogue into this shared composition |
+| `discoverEvents.ts` | Coming soon announcements supplied to the Discover Events tab |
 | `CreatePage.tsx` | Create: `CreationModal` in a guest Story Seed runtime, starting new seeds from the profile's defaults; asks for the token before a Blueprint |
 | `AccessTokenSheet.tsx` | The access token sheet, one for the whole app |
 | `accessToken.ts` | The chapter writer with the owner's token: a chapter at the limit asks for it and is sent again |

@@ -90,7 +90,7 @@ export function CreatorSpaceHost({ onNavigate, onOpenWorld, sparks, source = rea
   const act = (worldId: string, focusNextChapter: boolean) => {
     if (source !== 'sample') { openChapterWorkspace(worldId, focusNextChapter); return; }
     const world = SAMPLE_CREATOR_WORLDS.find(item => item.id === worldId);
-    setSampleNotice(`Sample world: with a real story, ${focusNextChapter ? 'Continue' : 'Studio'} opens “${world?.title}” in its chapter workspace${focusNextChapter ? `, ready for Chapter ${(world?.chapterCount ?? 0) + 1}` : ''}.`);
+    setSampleNotice(`Sample world: with a real story, ${focusNextChapter ? 'Continue' : 'Edit'} opens “${world?.title}” in its chapter workspace${focusNextChapter ? `, ready for Chapter ${(world?.chapterCount ?? 0) + 1}` : ''}.`);
   };
 
   // A spark begun here would open a new Story Seed; the preview says so instead.
@@ -112,7 +112,7 @@ export function CreatorSpaceHost({ onNavigate, onOpenWorld, sparks, source = rea
           onBrowseToolkit={kind => setPluginsFilter(kind ?? 'all')}
           onContinueWorld={id => act(id, true)}
           onOpenWorld={onOpenWorld}
-          onOpenStudio={id => act(id, false)}
+          onEditWorld={id => act(id, false)}
           onRetryWorlds={() => setAttempt(value => value + 1)} />}
     <p role="status" className="mt-3 font-sans text-xs text-neutral-400 empty:hidden">{sampleNotice}</p>
   </>;

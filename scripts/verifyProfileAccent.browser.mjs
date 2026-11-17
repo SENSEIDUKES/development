@@ -53,7 +53,7 @@ try {
     });
     assert.equal(chrome.color, 'rgba(11, 14, 30, 0.9)');
     const panelImage = await page.locator('[data-home-panel]').nth(1).evaluate(element => getComputedStyle(element).backgroundImage);
-    assert.equal(await page.getByRole('button', { name: 'Carve New Destiny', exact: true }).evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(0, 0, 0, 0.95)');
+    assert.equal(await page.getByRole('button', { name: 'Create A World', exact: true }).evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(0, 0, 0, 0.95)');
     await page.screenshot({ path: `${output}/home-${width}.png` });
     await page.goto(`${base}/app/?page=create&seed=new`);
     const seed = page.locator('.seed-field-scope .glass-panel').first();

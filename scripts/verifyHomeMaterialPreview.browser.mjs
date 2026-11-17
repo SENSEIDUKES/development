@@ -71,7 +71,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.getByRole('combobox', { name: 'Panel', exact: true }).selectOption('violet-panel');
       const beforeHero = await frame.locator('.home-featured [data-home-panel]').evaluate(paint);
       assert.equal(await frame.locator('video').count(), 0, 'Steady still-image comparisons');
-      const spectrum = await frame.getByRole('button', { name: 'Carve New Destiny', exact: true }).evaluate(e => getComputedStyle(e, '::before').backgroundImage);
+      const spectrum = await frame.getByRole('button', { name: 'Create A World', exact: true }).evaluate(e => getComputedStyle(e, '::before').backgroundImage);
       assert.notEqual(spectrum, 'none');
       // One editor drives both the sample and the Home composition.
       if (await nav.isVisible()) await nav.getByRole('button', { name: 'Materials', exact: true }).click();
@@ -86,8 +86,8 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.waitForFunction(() => { const element = document.querySelector('.pm-home-frame')?.contentDocument?.querySelector('[data-home-panel]:not(.home-featured [data-home-panel])'); return element && getComputedStyle(element).backdropFilter === 'blur(39px)'; });
       assert.equal((await frame.locator('[data-home-panel]:not(.home-featured [data-home-panel])').evaluate(paint))[0], 'rgba(11, 14, 30, 0.87)');
       assert.deepEqual(await frame.locator('.home-featured [data-home-panel]').evaluate(paint), beforeHero, 'Editing plain panels leaves media unchanged');
-      assert.equal(await frame.getByRole('button', { name: 'Carve New Destiny', exact: true }).evaluate(e => getComputedStyle(e, '::before').backgroundImage), spectrum, 'Rainbow is retained');
-      await frame.getByRole('button', { name: 'Carve New Destiny', exact: true }).click();
+      assert.equal(await frame.getByRole('button', { name: 'Create A World', exact: true }).evaluate(e => getComputedStyle(e, '::before').backgroundImage), spectrum, 'Rainbow is retained');
+      await frame.getByRole('button', { name: 'Create A World', exact: true }).click();
       await frame.getByRole('status').filter({ hasText: 'preview only' }).waitFor();
       assert.match(page.url(), /preview=palette-materials$/);
       assert.match(canvas.url(), /source=palette-materials$/);

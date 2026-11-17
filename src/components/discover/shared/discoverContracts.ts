@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 
-export type DiscoverSection = 'stories' | 'creators' | 'codex' | 'lore';
+export type DiscoverSection = 'stories' | 'creators' | 'codex' | 'lore' | 'events';
 
 /** A Library event announcement; dates and availability are supplied by the host. */
 export interface DiscoverEvent {

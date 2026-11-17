@@ -733,8 +733,7 @@ entries run to 2026-11-11.
     fitted to four equal phone tabs. The prototype format selector and catalogue
     search are removed. Genre sits beside All / My updates, stacking on narrow
     screens. A left rail offers Browse, Genres and Rankings for Stories and
-    Creators, Characters, Items and Rankings for Codex. Events expands only
-    under Rankings, no longer on Home. The app lists its published stories and
+    Creators, Characters, Items and Rankings for Codex. Events has its own Discover tab. The app lists its published stories and
     opens their World Info. Only Workshop supplies sample stories, releases,
     creators, Codex entries, follows and rankings to the same page and AppShell.
     Lore opens the authored encyclopedia directly; term tracking is not built,

@@ -42,3 +42,22 @@ describe('story vocabulary', () => {
     expect(translateInterfaceText('Japanese tradition', 'ja')).toBe(japanese.traditions['Japanese tradition']);
   });
 });
+
+
+describe('Home, Create and Discover interface copy', () => {
+  it.each(languages)('provides the new navigation and hero labels in %s', async code => {
+    const pack = await loadLanguagePack(code);
+    for (const label of ['Welcome to NovelExpanded', 'Create A World', 'Edit', 'Browse plugins', 'Import plugins', 'Studios', 'Open Studio', 'Events']) {
+      expect(pack?.strings[label]?.trim(), `${code}: ${label}`).toBeTruthy();
+    }
+  });
+
+  it('translates the exact Home and Create labels and preserves their English originals', async () => {
+    await loadLanguagePack('ja');
+    expect(translateInterfaceText('Welcome to NovelExpanded', 'ja')).toBe('NovelExpandedへようこそ');
+    expect(translateInterfaceText('Create A World', 'ja')).toBe('世界を作る');
+    expect(translateInterfaceText('Edit', 'ja')).toBe('編集');
+    expect(translateInterfaceText('Events', 'ja')).toBe('イベント');
+    expect(translateInterfaceText('Create A World', 'en')).toBe('Create A World');
+  });
+});

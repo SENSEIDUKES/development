@@ -46,7 +46,7 @@ try {
     await page.goto(`${base}/app/`);
     await page.getByTestId('novel-expanded-home').waitFor();
     await assertClear(page);
-    const cta = page.getByRole('button', { name: 'Carve New Destiny', exact: true });
+    const cta = page.getByRole('button', { name: 'Create A World', exact: true });
     assert.equal(await cta.evaluate(element => getComputedStyle(element.parentElement.parentElement).backdropFilter), 'none');
     await page.waitForFunction(() => {
       const video = document.querySelector('video');

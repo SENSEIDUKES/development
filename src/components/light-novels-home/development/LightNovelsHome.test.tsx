@@ -16,7 +16,7 @@ const world = (id: string, title: string): HomeWorld => ({
   mcName: 'Ye Chen', powerStage: 'Foundation', synopsis: `${title} begins.`,
 });
 
-it('keeps the Carve New Destiny slide and cycles to each featured world in the shared Feature carousel', () => {
+it('keeps the Create A World slide and cycles to each featured world in the shared Feature carousel', () => {
   const onOpenWorld = vi.fn();
   const featured = [world('lotus', 'The Last Lotus'), world('moons', 'Nine Moons')];
   // Inactive: the slides do not advance on their own and the hero's motion stays off.
@@ -25,18 +25,18 @@ it('keeps the Carve New Destiny slide and cycles to each featured world in the s
 
   const hero = () => container.querySelector('[data-home-featured] > [aria-hidden]') ;
   const dots = () => [...container.querySelectorAll<HTMLButtonElement>('.world-card-carousel-segment')];
-  expect(dots().map(dot => dot.getAttribute('aria-label'))).toEqual(['Defying the Heavens', 'The Last Lotus', 'Nine Moons']);
+  expect(dots().map(dot => dot.getAttribute('aria-label'))).toEqual(['Welcome to NovelExpanded', 'The Last Lotus', 'Nine Moons']);
   expect(dots()[0].getAttribute('aria-current')).toBe('true');
   expect(container.querySelector('[data-home-featured]')?.getAttribute('aria-label')).toBe('Featured');
   expect(container.textContent).not.toContain('Featured Ascension');
-  expect(container.textContent).toContain('Carve New Destiny');
+  expect(container.textContent).toContain('Create A World');
   expect(container.querySelector('[data-world-card="feature"]')).toBeNull();
 
   act(() => container.querySelector<HTMLButtonElement>('[aria-label="Next featured"]')!.click());
   expect(hero()).not.toBeNull();
   expect(container.querySelector('[data-world-card="feature"] h3')?.textContent).toBe('The Last Lotus');
   expect(dots()[1].getAttribute('aria-current')).toBe('true');
-  // Each world's hero names itself Featured; the Carve New Destiny slide carries its own heading.
+  // Each world's hero names itself Featured; the Create A World slide carries its own heading.
   expect(container.querySelector('.world-card-banner-eyebrow')?.textContent).toBe('Featured');
 
   act(() => dots()[2].click());
@@ -52,7 +52,7 @@ it('keeps the Carve New Destiny slide and cycles to each featured world in the s
   expect(container.querySelector('[data-world-card="feature"] h3')?.textContent).toBe('Nine Moons');
 });
 
-it('leaves the Carve New Destiny slide alone without featured worlds', () => {
+it('leaves the Create A World slide alone without featured worlds', () => {
   act(() => root.render(<LightNovelsHome active={false} worlds={[]} onCreateStory={() => {}} onOpenWorld={() => {}} />));
   expect(container.querySelector('[data-home-featured]')?.getAttribute('aria-label')).toBe('Featured');
   expect(container.querySelector('.world-card-carousel-segment')).toBeNull();

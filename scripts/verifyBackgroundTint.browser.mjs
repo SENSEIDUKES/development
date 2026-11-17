@@ -38,7 +38,7 @@ try {
     const inset = await page.locator('[data-slot="empty-state"]').evaluate(fill);
     assert.equal(panel[0], 'rgba(11, 14, 30, 0.35)', 'V2 outer panels use Violet inset at 35% opacity');
     assert.equal(inset[0], 'rgba(11, 14, 30, 0.9)', 'V2 nested cards use Midnight violet at 90% opacity');
-    const cta = page.getByRole('button', { name: 'Carve New Destiny', exact: true });
+    const cta = page.getByRole('button', { name: 'Create A World', exact: true });
     const ring = await cta.evaluate(rainbow);
     await page.goto(`${base}${settings}`);
     await open(page, 'Accent color');

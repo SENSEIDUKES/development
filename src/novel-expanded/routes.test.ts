@@ -3,7 +3,7 @@ import { parseRoute, routeSearch, type NovelExpandedRoute } from './routes';
 
 describe('NovelExpanded addresses', () => {
   it('retains Discover destinations on reload and treats Lore addresses as the encyclopedia', () => {
-    for (const section of ['creators', 'codex'] as const) {
+    for (const section of ['creators', 'codex', 'events'] as const) {
       const route = { page: 'discover', section } as const;
       expect(parseRoute(routeSearch(route))).toEqual(route);
     }

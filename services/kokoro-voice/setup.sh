@@ -38,7 +38,7 @@ gcloud run deploy "${SERVICE}" \
   --region "${REGION}" \
   --no-invoker-iam-check \
   --cpu 4 --memory 4Gi \
-  --concurrency 8 --max-instances 2 --timeout 120 \
+  --concurrency 40 --max-instances 2 --timeout 120 \
   --set-env-vars "KOKORO_BUCKET=${BUCKET},KOKORO_TOKEN=${TOKEN}" \
   --quiet
 

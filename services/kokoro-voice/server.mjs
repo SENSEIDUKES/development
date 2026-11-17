@@ -43,7 +43,8 @@ const store = BUCKET.startsWith('local:')
 let model;
 const tts = () => (model ??= loadModel().catch(error => { model = undefined; throw error; }));
 
-// One line is made at a time: the model already uses every core.
+// One line is made at a time: the model already uses every core. Lines waiting here still hold a
+// request slot, so the server takes many requests at once (setup.sh) and playing a kept clip is never stuck behind them.
 let line = Promise.resolve();
 const oneAtATime = work => {
   const next = line.then(work, work);
@@ -55,12 +56,14 @@ const making = new Map();
 
 const clipName = (voice, text) => `${MODEL_VERSION}/${voice}/${createHash('sha256').update(text).digest('hex')}.mp3`;
 
-/** 16-bit samples to a small MP3: a few kilobytes a second, which every phone plays. */
+/** 32-bit float samples to a small MP3: a few kilobytes a second, which every phone plays. */
 const toMp3 = (samples, rate) => new Promise((resolve, reject) => {
   const ffmpeg = spawn('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-f', 'f32le', '-ar', String(rate), '-ac', '1', '-i', 'pipe:0', '-codec:a', 'libmp3lame', '-b:a', '64k', '-f', 'mp3', 'pipe:1']);
   const chunks = [];
   ffmpeg.stdout.on('data', chunk => chunks.push(chunk));
   ffmpeg.on('error', reject);
+  // ffmpeg stopping early breaks its input; the close handler reports the failed run, and the server stays up.
+  ffmpeg.stdin.on('error', () => undefined);
   ffmpeg.on('close', code => (code === 0 ? resolve(Buffer.concat(chunks)) : reject(new Error(`ffmpeg ended with ${code}`))));
   ffmpeg.stdin.end(Buffer.from(samples.buffer, samples.byteOffset, samples.byteLength));
 });

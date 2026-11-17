@@ -102,6 +102,8 @@ export function createKokoroNarration({ preferences, requestLine }: {
   const letGoAll = () => {
     letGo();
     for (const job of asked) { job.letGo = true; clips.delete(job.key); job.resolve(undefined); }
+    // Their places are free at once: a request that never answers cannot keep new lines from being asked.
+    asked.clear();
   };
 
   const ask = (line: ReadAloudLine, first: boolean) => {

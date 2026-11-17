@@ -14,6 +14,8 @@ export class ChapterVoiceRequestError extends Error {
 interface VoiceRequestOptions {
   accessToken?: string;
   fetchImpl?: typeof fetch;
+  /** Gives up after this long, so a stalled connection cannot hold a line forever. */
+  timeoutMs?: number;
 }
 
 async function post(body: Record<string, unknown>, options: VoiceRequestOptions): Promise<Record<string, unknown>> {
@@ -24,6 +26,7 @@ async function post(body: Record<string, unknown>, options: VoiceRequestOptions)
       ...(options.accessToken ? { Authorization: `Bearer ${options.accessToken}` } : {}),
     },
     body: JSON.stringify(body),
+    ...(options.timeoutMs ? { signal: AbortSignal.timeout(options.timeoutMs) } : {}),
   });
   const answer = await response.json().catch(() => undefined) as Record<string, unknown> | undefined;
   if (!response.ok) {
@@ -66,7 +69,8 @@ export async function requestChapterVoiceLine(line: { text: string; voiceKey: st
 
 /** A free Kokoro line from SEIHouse's voice server: the saved clip's address, and whether it was made just now. */
 export async function requestKokoroLine(line: { text: string; voice: string }, options: VoiceRequestOptions = {}): Promise<{ url: string; made: boolean }> {
-  const answer = await post({ kokoro: line }, options);
+  // A little longer than the app's server waits for the voice server (90 s).
+  const answer = await post({ kokoro: line }, { timeoutMs: 100_000, ...options });
   if (typeof answer.url !== 'string' || !/^https:\/\//.test(answer.url)) throw new ChapterVoiceRequestError('The voice server answered without a clip.', 502);
   return { url: answer.url, made: answer.made === true };
 }

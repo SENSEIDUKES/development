@@ -109,6 +109,18 @@ describe('Kokoro voices from the voice server', () => {
     expect(voice.asked.at(-1)!.text).toBe('One.');
   });
 
+  it('frees both places when switched off, even while two requests never answer', () => {
+    const voice = server();
+    const narration = createKokoroNarration({ requestLine: voice.requestLine });
+    narration.setOn(true);
+    void narration.clip(line('One.'), [line('Two.')]);
+    expect(voice.asked).toHaveLength(2);
+    narration.setOn(false);
+    narration.setOn(true);
+    void narration.clip(line('Three.'), [line('Four.')]);
+    expect(voice.asked.map(({ text }) => text)).toEqual(['One.', 'Two.', 'Three.', 'Four.']);
+  });
+
   it('says plainly where it stands', () => {
     expect(kokoroNarrationStatus({ on: false, made: 0, kept: 0 }, true)).toContain('made once on SEIHouse\'s voice server');
     expect(kokoroNarrationStatus({ on: true, made: 0, kept: 0 }, true)).toContain('Press Listen');

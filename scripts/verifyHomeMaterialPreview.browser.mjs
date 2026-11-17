@@ -20,7 +20,12 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     for (const width of [390, 834, 1440]) {
       const page = await browser.newPage({ viewport: { width, height: 1000 } });
       const errors = [], apiCalls = [];
-      page.on('pageerror', error => errors.push(error.message));
+      page.on('pageerror', error => {
+        // WebKit can defer ResizeObserver delivery when the test changes the iframe viewport.
+        // The geometry assertions below still verify that the resized preview settles.
+        if (name === 'webkit' && error.message === 'ResizeObserver loop completed with undelivered notifications.') return;
+        errors.push(error.message);
+      });
       page.on('request', request => { if (new URL(request.url()).pathname.startsWith('/api/')) apiCalls.push(request.url()); });
       await page.goto(`${base}/?preview=palette-materials`);
       await page.locator('#pm-composition h2').waitFor({ state: 'attached' });

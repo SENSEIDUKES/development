@@ -113,8 +113,8 @@ it('says honestly that the plugin browser is not open yet, unless the host suppl
   const browse = vi.fn();
   renderPage({ onBrowseToolkit: browse });
   click(button(/^Browse plugins/));
-  click(button(/^Import plugins/));
-  expect(browse.mock.calls).toEqual([[], []]);
+  expect(browse).toHaveBeenCalledOnce();
+  expect(container.textContent).not.toContain('Import plugins');
   expect(container.querySelectorAll('button.creator-space-tool')).toHaveLength(1);
   const studio = container.querySelector<HTMLAnchorElement>('a[href="https://studio.novelexpanded.com"]')!;
   expect(studio.target).toBe('_blank');

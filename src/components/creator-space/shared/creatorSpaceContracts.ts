@@ -124,6 +124,10 @@ export interface CreatorSpaceProps {
   onEditWorld: (worldId: string) => void;
   /** Opens the plugin browser, optionally focused on one clicked plugin kind. */
   onBrowseToolkit?: (kind?: CreatorToolkitKind) => void;
+  /** Native destination when the host opens the plugin browser on a route. */
+  browseToolkitHref?: string;
+  /** Set only when the destination can install audio or skill packages. */
+  canImportPlugins?: boolean;
   /** Re-reads the worlds after an error. */
   onRetryWorlds?: () => void;
   /** The host's Sparks button (SEN: `SparksButton`), beside the page title. */

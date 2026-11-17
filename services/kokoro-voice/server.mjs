@@ -5,7 +5,7 @@
 // a made line to anyone: every reader after the first hears the saved file.
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { createReadStream, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { createReadStream, existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { Storage } from '@google-cloud/storage';
@@ -28,16 +28,20 @@ const store = BUCKET.startsWith('local:')
     const at = name => path.join(root, name);
     return {
       exists: async name => existsSync(at(name)),
+      size: async name => (existsSync(at(name)) ? statSync(at(name)).size : undefined),
       save: async (name, bytes) => { mkdirSync(path.dirname(at(name)), { recursive: true }); writeFileSync(at(name), bytes); },
-      read: name => createReadStream(at(name)),
+      read: (name, range) => createReadStream(at(name), range),
     };
   })()
   : (() => {
     const bucket = new Storage().bucket(BUCKET);
     return {
       exists: async name => (await bucket.file(name).exists())[0],
+      size: async name => {
+        try { return Number((await bucket.file(name).getMetadata())[0].size); } catch (error) { if (error?.code === 404) return undefined; throw error; }
+      },
       save: (name, bytes) => bucket.file(name).save(bytes, { contentType: 'audio/mpeg', resumable: false, metadata: { cacheControl: 'public, max-age=31536000, immutable' } }),
-      read: name => bucket.file(name).createReadStream(),
+      read: (name, range) => bucket.file(name).createReadStream(range ?? {}),
     };
   })();
 let model;
@@ -103,8 +107,24 @@ createServer(async (request, response) => {
     if (request.method === 'GET' && url.pathname.startsWith('/clip/')) {
       const name = decodeURIComponent(url.pathname.slice('/clip/'.length));
       if (!/^[\w.-]+\/[a-z]{2}_[a-z]+\/[0-9a-f]{64}\.mp3$/.test(name)) { send(response, 404, { error: 'No such clip.' }); return; }
-      if (!(await store.exists(name))) { send(response, 404, { error: 'No such clip.' }); return; }
-      response.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=31536000, immutable', 'Access-Control-Allow-Origin': '*' });
+      const size = await store.size(name);
+      if (size === undefined) { send(response, 404, { error: 'No such clip.' }); return; }
+      const headers = { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=31536000, immutable', 'Access-Control-Allow-Origin': '*', 'Accept-Ranges': 'bytes' };
+      // Safari on an iPhone plays audio only from a server that answers for a part of the file.
+      const asked = /^bytes=(\d*)-(\d*)$/.exec(request.headers.range ?? '');
+      if (asked && (asked[1] || asked[2])) {
+        const start = asked[1] ? Number(asked[1]) : Math.max(0, size - Number(asked[2]));
+        const end = asked[1] && asked[2] ? Math.min(Number(asked[2]), size - 1) : size - 1;
+        if (start > end || start >= size) {
+          response.writeHead(416, { ...headers, 'Content-Range': `bytes */${size}` });
+          response.end();
+          return;
+        }
+        response.writeHead(206, { ...headers, 'Content-Range': `bytes ${start}-${end}/${size}`, 'Content-Length': String(end - start + 1) });
+        store.read(name, { start, end }).on('error', () => response.destroy()).pipe(response);
+        return;
+      }
+      response.writeHead(200, { ...headers, 'Content-Length': String(size) });
       store.read(name).on('error', () => response.destroy()).pipe(response);
       return;
     }

@@ -142,7 +142,10 @@ try {
   await mkdir(join(consumerDirectory, 'src'));
   await writeFile(join(consumerDirectory, 'src/main.js'), [
     ...imports,
-    `document.querySelector('#app').textContent = String([${bindings.join(', ')}].length);`,
+    // Retain the actual exports: a constant array length lets Vite erase every
+    // import, including the entry styles this consumer is meant to exercise.
+    `window.packageSmokeExports = [${bindings.join(', ')}];`,
+    `document.querySelector('#app').textContent = String(window.packageSmokeExports.length);`,
   ].join('\n'));
   await writeFile(join(consumerDirectory, 'src/typecheck.ts'), target.smokeTypes);
   run(
@@ -152,6 +155,13 @@ try {
   );
 
   if (target.id === 'library') {
+    // External hosts must receive the title layers' styling without host theme.css.
+    const libraryStyles = await readFile(join(consumerDirectory, 'node_modules/@seihouse/library/dist/library.css'), 'utf8');
+    assert(libraryStyles.includes('.elemental-title'), 'Library must distribute Elemental Title styles');
+    const assets = await readdir(join(consumerDirectory, 'dist/assets'));
+    const consumerStyles = (await Promise.all(assets.filter(name => name.endsWith('.css'))
+      .map(name => readFile(join(consumerDirectory, 'dist/assets', name), 'utf8')))).join('\n');
+    assert(consumerStyles.includes('.elemental-title'), 'Library entries must load Elemental Title styles in a standalone consumer');
     // The Familiar's card is Front Desk's: the installed Library's Familiar loads Front Desk's own stylesheet, which holds the card's styles.
     const installed = join(consumerDirectory, 'node_modules/@seihouse');
     assert((await readFile(join(installed, 'library/dist/familiar.js'), 'utf8')).includes('import "@seihouse/front-desk/styles.css"'), "the Library's Familiar must load Front Desk's stylesheet");

@@ -143,17 +143,25 @@ for (const [name, engine, device] of [
     const stage = moving.locator('.workspace-header [data-slot="search-stage"]');
     await stage.waitFor();
     await moving.waitForFunction(() => document.querySelector('.workspace-header [data-slot="search-stage"]')?.getAttribute('data-playback') === 'playing');
-    await stage.evaluate(el => { window.headerEffects = el.getAnimations({ subtree: true }); });
+    // Hold the real animations during Search interactions: slow CI must not
+    // exhaust the 4.8-second performance before the identity assertion.
+    await stage.evaluate(el => {
+      window.headerEffects = el.getAnimations({ subtree: true });
+      window.headerEffects.forEach(effect => effect.pause());
+    });
     await moving.getByRole('button', { name: 'Search for stories', exact: true }).click();
     const search = moving.getByRole('dialog', { name: 'Search', exact: true });
     await search.getByRole('searchbox').fill('Create');
     await search.getByRole('button', { name: 'Create a story', exact: true }).waitFor();
     assert(await stage.evaluate(el => {
       const current = el.getAnimations({ subtree: true });
-      return current.length > 0 && current.every((effect, i) => effect === window.headerEffects[i]);
+      return current.length > 0 && current.length === window.headerEffects.length
+        && current.every((effect, i) => effect === window.headerEffects[i]);
     }), `${name}: typing replaced or stopped the header performance`);
     await moving.keyboard.press('Escape');
     await moving.waitForFunction(() => document.activeElement?.matches('.workspace-search-field'));
+    // Resume those same animations and verify their normal completion cleanup.
+    await stage.evaluate(() => window.headerEffects.forEach(effect => effect.play()));
     await moving.waitForFunction(() => document.querySelector('.workspace-header [data-slot="search-stage"]')?.getAttribute('data-playback') === 'still');
     assert.equal(await stage.evaluate(el => el.getAnimations({ subtree: true }).length), 0);
     await moving.screenshot({ path: `${output}/${name}-integrated-header-390.png`, scale: 'css' });

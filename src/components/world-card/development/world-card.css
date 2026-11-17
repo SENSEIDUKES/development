@@ -1,3 +1,5 @@
+@import '@seihouse/elemental-title/styles.css';
+
 /* World Card — one card renderer with full and compact faces. */
 
 .world-card-base {

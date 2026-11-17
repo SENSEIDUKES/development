@@ -103,7 +103,7 @@
     }
   },
   "peerDependencies": {
-    "@seihouse/sen": ">=0.41.0",
+    "@seihouse/sen": ">=0.44.0",
     "lucide-react": ">=1",
     "motion": ">=12",
     "react": "^19.0.0",

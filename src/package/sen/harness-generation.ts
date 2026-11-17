@@ -287,6 +287,7 @@ export { ProseChapterBody } from '../../components/harness-generation/developmen
 export { ReaderAudioNote } from '../../components/harness-generation/development/ReaderAudioNote';
 export { ReaderPanel, useWideReader } from '../../components/harness-generation/development/ReaderPanel';
 export type { ReaderLayer } from '../../components/harness-generation/development/HarnessReaderSession';
+export type { ReaderDeviceNarration } from '../../components/harness-generation/development/ReaderSettingsSheet';
 export type { ReaderChapter, ReaderChapterBody, ReaderChapterBodyProps } from '../../components/harness-generation/development/readerChapterBody';
 export type { NarrationHighlight } from '../../components/harness-generation/development/useFollowNarration';
 export { FatePage } from '../../components/harness-generation/development/FatePage';

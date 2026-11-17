@@ -4,16 +4,21 @@ import type { SpeechEngine, SpeechEvents, SpeechRequest } from './useReadAloud';
 /**
  * Saved voice clips for Read Aloud. A host that has recorded a spoken line in
  * a character's own voice hands Read Aloud the clip; the line plays it where
- * it would have spoken with the device's voice. Narration never has a clip:
- * it is always read by the device.
+ * it would have spoken with the device's voice. A cast voice's clips cover
+ * only the lines a character says; clips a host makes on the device can cover
+ * any line, the narration included.
  */
 
 /** The lines a character says: every line of a script that is not narration. */
 export const spokenReadAloudLines = (script: ReadAloudScript): ReadAloudLine[] =>
   script.lines.filter(line => line.role !== 'narrator');
 
-/** A saved clip's address for a line, when the host has one. */
-export type ReadAloudClipSource = (line: ReadAloudLine) => string | undefined;
+/**
+ * A clip's address for a line, when the host has one, or will have one in a
+ * moment (a voice made on this device as the reader listens). A promise that
+ * settles with nothing, or fails, leaves the line to the device's voice.
+ */
+export type ReadAloudClipSource = (line: ReadAloudLine) => string | Promise<string | undefined> | undefined;
 
 /** The part of an audio element a clip player drives; a stand-in in tests. */
 export interface ClipAudio {
@@ -50,6 +55,8 @@ export function createClipSpeechEngine(
   let audio: ClipAudio | undefined;
   let woken = false;
   let playing = false;
+  // A clip still being made: the line is neither speaking nor late.
+  let waiting = false;
   // Each clip started has its own number: a late answer from an earlier one is ignored.
   let turn = 0;
   const detach = () => {
@@ -60,6 +67,7 @@ export function createClipSpeechEngine(
     detach();
     if (audio && playing) audio.pause();
     playing = false;
+    waiting = false;
   };
   const wake = () => {
     if (woken) return;
@@ -99,15 +107,27 @@ export function createClipSpeechEngine(
     onVoicesChanged: listener => base.onVoicesChanged(listener),
     speak(request, events) {
       silence();
-      const url = request.line && clipFor(request.line);
-      if (url) { base.cancel(); playClip(url, request, events); return; }
+      const clip = request.line && clipFor(request.line);
+      if (typeof clip === 'string') { base.cancel(); playClip(clip, request, events); return; }
       wake();
-      base.speak(request, events);
+      if (!clip) { base.speak(request, events); return; }
+      // A clip still being made: the line waits for it, and Read Aloud does not time it as speech.
+      base.cancel();
+      waiting = true;
+      const mine = turn;
+      const ready = (url: string | undefined) => {
+        if (mine !== turn) return;
+        waiting = false;
+        if (url) playClip(url, request, events);
+        else base.speak(request, events);
+      };
+      clip.then(ready, () => ready(undefined));
     },
     cancel() {
       silence();
       base.cancel();
     },
-    isSpeaking: () => playing || base.isSpeaking(),
+    isSpeaking: () => playing || waiting || base.isSpeaking(),
+    isWaiting: () => waiting,
   };
 }

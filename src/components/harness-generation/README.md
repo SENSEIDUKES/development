@@ -377,6 +377,12 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-16 (the Reader takes a clip that is still being made):** for a
+  host's voice made on the reader's device. `readAloudClip` may answer with a
+  promise and is told the lines that follow, so the host can make them ahead;
+  Read Aloud waits for the clip and reads the line with the device's voice if
+  none comes. Reader Settings' Narration shows a host's `deviceNarration`
+  switch and its one status line first.
 - **2026-11-16 (a minor figure's appears tag says what the chapter shows of them):**
   SENSEI: every spoken line gets a cast voice, minor figure or not, and "it's
   not the tagger's job to create content or facts". A minor figure's appears

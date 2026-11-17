@@ -134,6 +134,22 @@ export function chapterVoicePlan(state: HarnessWorkspaceState, chapter: HarnessC
 export const chapterVoiceEnergy = (lines: readonly Pick<ChapterVoiceLine, 'text'>[], model: string | undefined): number =>
   voiceEnergyPrice(lines.reduce((total, line) => total + line.text.length, 0), model);
 
+/**
+ * The host's narration made on the reader's own device (Kokoro): free voices
+ * for every line that has no cast voice, in place of the device's robotic
+ * one. The Reader shows its switch in Narration.
+ */
+export interface DeviceNarrationService {
+  /** What the setting is called. */
+  name: string;
+  on: boolean;
+  setOn: (on: boolean) => void;
+  /** One line saying where it stands, for a story it can read (`english`) or cannot. */
+  status: (english: boolean) => string;
+  /** A line's clip: its address, a promise while it is made, or nothing when this cannot read it. */
+  clip: (line: ReadAloudLine, upcoming: readonly ReadAloudLine[]) => string | Promise<string | undefined> | undefined;
+}
+
 /** The host's character voices: making them, keeping them, and handing the Reader a line's clip. */
 export interface ChapterVoiceService {
   /** Whether voices can be made here; undefined until the server has answered. */

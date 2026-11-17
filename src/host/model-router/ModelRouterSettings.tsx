@@ -360,7 +360,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
               <li key={consumer.name} className="rounded-md border border-white/10 px-2 py-0.5 text-[11px] text-white/75">
                 {consumer.name}
                 <span className={`ml-1.5 font-mono text-[9px] uppercase ${consumer.modelChoice === 'router' ? 'text-cyan-300' : 'text-white/35'}`}>
-                  {consumer.modelChoice === 'router' ? 'follows router' : 'server default'}
+                  {consumer.modelChoice === 'router' ? 'follows router' : consumer.modelChoice === 'device' ? 'on the device' : 'server default'}
                 </span>
               </li>
             ))}

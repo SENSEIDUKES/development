@@ -123,13 +123,27 @@ function AudioPresets({ mixer }: { mixer: ReaderMixer }) {
 type SettingsSection = 'text' | 'audio' | 'narration';
 
 /**
+ * A host's narration made on the reader's own device (a voice model the
+ * browser downloads once): its switch, and one line saying where it stands
+ * (downloading, ready and how fast, or why it cannot run here). SEN shows the
+ * switch; the host owns the voice.
+ */
+export interface ReaderDeviceNarration {
+  /** What the setting is called: "Kokoro voices". */
+  name: string;
+  on: boolean;
+  onChange: (on: boolean) => void;
+  status: string;
+}
+
+/**
  * Reader Settings: one of the Reader's panels, beside the chapter on laptops
  * and a sheet from the bottom on phones, so the chapter stays in view and
  * shows each text change as it is made. Persistent category tabs expose one
  * task at a time: Text, Audio, or Narration. The mixer and saved preferences
  * remain the owners of all changes; switching tabs does not reset them.
  */
-export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer, section, soundtrack, text }: {
+export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer, section, soundtrack, text, deviceNarration }: {
   open: boolean;
   onClose: () => void;
   readAloud: ReadAloud;
@@ -143,6 +157,8 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer,
   soundtrack?: { choice: SoundtrackChoice; onChoice: (choice: SoundtrackChoice) => void; pieces: readonly SceneAudioTrack[] };
   /** The reader's text settings and the fonts on offer. Without them there is no Text section. */
   text?: { settings: ReaderTextSettings; onChange: (next: ReaderTextSettings) => void; fonts: ReaderFonts };
+  /** The host's narration made on this device, when it has one: shown first in Narration. */
+  deviceNarration?: ReaderDeviceNarration;
 }) {
   const initialSection: SettingsSection = section === 'audio' && mixer ? 'audio'
     : section === 'narration' ? 'narration' : text ? 'text' : mixer ? 'audio' : 'narration';
@@ -185,6 +201,12 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer,
         <section aria-labelledby="reader-settings-narration" data-testid="reader-settings-narration">
           <h3 id="reader-settings-narration" className="sr-only">Narration</h3>
           <p className="reader-settings-help mb-3">Voices and speed for reading aloud in {plainLanguage(language)}.</p>
+          {deviceNarration && <div className="reader-settings-group" data-testid="reader-device-narration">
+            <PillChoice title={deviceNarration.name} name="device-narration" value={deviceNarration.on ? 'on' : 'off'}
+              onChange={value => deviceNarration.onChange(value === 'on')}
+              options={[{ value: 'off', label: 'Off' }, { value: 'on', label: 'On' }]} />
+            <p className="reader-settings-help" role="status" data-testid="reader-device-narration-status">{deviceNarration.status}</p>
+          </div>}
           {!readAloud.supported
             ? <p role="note" className="mt-3 text-sm text-(--reader-warning-soft)">This browser can't read aloud.</p>
             : <>

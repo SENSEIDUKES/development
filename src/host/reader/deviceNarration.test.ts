@@ -105,12 +105,27 @@ describe('narration made on the device', () => {
       shared.write(DEVICE_NARRATION_WORKING_KEY, `live:${Date.now()}`);
       const other = narration(shared);
       void other.service.clip(line('One.'), []);
-      vi.advanceTimersByTime(1_000);
-      shared.write(DEVICE_NARRATION_WORKING_KEY, `live:${Date.now()}`);
-      vi.advanceTimersByTime(5_000);
+      // The other tab renews its mark every second, as a working tab does.
+      for (let second = 0; second < 6; second += 1) {
+        vi.advanceTimersByTime(1_000);
+        shared.write(DEVICE_NARRATION_WORKING_KEY, `live:${Date.now()}`);
+      }
       await vi.runOnlyPendingTimersAsync();
       expect(other.sent).toEqual([{ type: 'load', device: 'wasm' }]);
       expect(other.service.getState().stopped).toBeUndefined();
+
+      // Renewed once early in the wait, then that tab closed: still caught.
+      const once = memory();
+      once.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');
+      once.write(DEVICE_NARRATION_WORKING_KEY, `brief:${Date.now()}`);
+      const late = narration(once);
+      void late.service.clip(line('One.'), []);
+      vi.advanceTimersByTime(500);
+      once.write(DEVICE_NARRATION_WORKING_KEY, `brief:${Date.now()}`);
+      vi.advanceTimersByTime(5_500);
+      await vi.runOnlyPendingTimersAsync();
+      expect(late.sent).toEqual([]);
+      expect(late.service.getState()).toMatchObject({ on: false, stopped: true });
     } finally { vi.useRealTimers(); }
   });
 

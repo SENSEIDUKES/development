@@ -188,8 +188,11 @@ export function createDeviceNarration({ preferences, createWorker = browserWorke
       set({ model: 'loading', progress: 0, problem: undefined, stopped: undefined });
       setTimeout(() => {
         if (!state.on) { set({ model: 'idle' }); return; }
-        if (read(DEVICE_NARRATION_WORKING_KEY) === foreign) { stop(); return; }
-        // Renewed or cleared: that tab is alive, and this one starts its own voice.
+        const now = read(DEVICE_NARRATION_WORKING_KEY);
+        if (now === foreign) { stop(); return; }
+        // Renewed, but not lately: that tab closed during the wait. A live one renews every second.
+        if (now && !now.startsWith(`${visit}:`) && !(Date.now() - Number(now.split(':')[1]) <= 2 * MARK_RENEWED_MS)) { stop(); return; }
+        // Renewed just now, or cleared: that tab is alive or done, and this one starts its own voice.
         set({ model: 'idle' });
         start();
       }, MARK_LEFT_MS + MARK_RENEWED_MS);

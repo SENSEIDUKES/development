@@ -18,6 +18,14 @@
       "built": "packages/living-titles/releases/seihouse-living-titles-0.1.2.tgz, copied unchanged with its release.json",
       "release": "vendor/seihouse-living-titles-0.1.2.release.json",
       "sourceCommit": "fb45fc0071774f3925240d3596625c32955d2b6d"
+    },
+    "@seihouse/elemental-title": {
+      "version": "0.1.0",
+      "file": "vendor/seihouse-elemental-title-0.1.0.tgz",
+      "integrity": "sha512-I+fhYGzuEFLHW729NNTWY0cwuAoQEEZsHEXmCqve2XulTZZsaeoBJvXOuvSOdFfXY5H4dNZM3n2N7tBhat0gDA==",
+      "sourceCommit": "a21972add2f9b880780a7e59748f75ac5d115aab",
+      "release": "vendor/seihouse-elemental-title-0.1.0.release.json",
+      "built": "Official Font Lab release archive, copied unchanged"
     }
   }
 }

@@ -1,14 +1,14 @@
 import type { CSSProperties } from 'react';
-// ElementalTitle now lives in the universal UI Text family (UI commit 7c144a5).
+// ElementalTitle is consumed from its canonical Font Lab package.
 import {
   ElementalTitle,
   type ElementalTitleEffect,
   type ElementalTitleSize,
-} from '@seihouse/ui';
+} from '@seihouse/elemental-title';
 import type { FamiliarCosmeticEffect, FamiliarElement } from '../../../library/familiars/contracts';
 import { SIGNATURE_PIECES } from './signaturePieces';
 
-/** The current UI package has authored treatments for these elements only. */
+/** Keep the existing Familiar effect selection while consuming Font Lab lettering. */
 const AUTHORED_TITLE_EFFECTS: readonly ElementalTitleEffect[] = ['fire', 'lightning', 'frost', 'celestial', 'void'];
 
 const authoredTitleEffect = (element: FamiliarElement): ElementalTitleEffect =>

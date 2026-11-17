@@ -69,17 +69,18 @@ try {
   const tarballPath = pack(target);
   const audioPlayer = await packAudioPlayer();
   // Front Desk is vendored like the UI kit: the exact tarball the root manifest locks.
+  const uiTarball = join(root, JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).dependencies['@seihouse/ui'].replace(/^file:/, ''));
   const frontDeskTarball = join(root, JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).dependencies['@seihouse/front-desk'].replace(/^file:/, ''));
 
   await writeFile(join(consumerDirectory, 'package.json'), JSON.stringify({
     name: `${target.id}-package-smoke-consumer`,
     private: true,
     type: 'module',
-    // The locked audio build still declares UI 0.10.1; validate the host's scoped override.
-    overrides: { '@seihouse/audio-player': { '@seihouse/ui': `file:${join(root, 'vendor/seihouse-ui-0.12.0.tgz')}` } },
+    // Validate the host overrides for consumers that pin older UI peers.
+    overrides: { '@seihouse/audio-player': { '@seihouse/ui': `file:${uiTarball}` }, '@seihouse/library-ui': { '@seihouse/ui': `file:${uiTarball}` }, '@seihouse/front-desk': { '@seihouse/ui': `file:${uiTarball}` } },
   }, null, 2));
   runNpm(
-    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.12.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.10.1.tgz'), join(root, 'vendor/library-studios-brand-0.1.0.tgz')] : []), audioPlayer, frontDeskTarball, ...dependencyTarballs, tarballPath],
+    ['install', '--ignore-scripts', ...peers, uiTarball, join(root, 'vendor/seihouse-elemental-title-0.1.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.10.1.tgz'), join(root, 'vendor/library-studios-brand-0.1.0.tgz')] : []), audioPlayer, frontDeskTarball, ...dependencyTarballs, tarballPath],
     consumerDirectory,
   );
 
@@ -141,7 +142,10 @@ try {
   await mkdir(join(consumerDirectory, 'src'));
   await writeFile(join(consumerDirectory, 'src/main.js'), [
     ...imports,
-    `document.querySelector('#app').textContent = String([${bindings.join(', ')}].length);`,
+    // Retain the actual exports: a constant array length lets Vite erase every
+    // import, including the entry styles this consumer is meant to exercise.
+    `window.packageSmokeExports = [${bindings.join(', ')}];`,
+    `document.querySelector('#app').textContent = String(window.packageSmokeExports.length);`,
   ].join('\n'));
   await writeFile(join(consumerDirectory, 'src/typecheck.ts'), target.smokeTypes);
   run(
@@ -151,6 +155,13 @@ try {
   );
 
   if (target.id === 'library') {
+    // External hosts must receive the title layers' styling without host theme.css.
+    const libraryStyles = await readFile(join(consumerDirectory, 'node_modules/@seihouse/library/dist/library.css'), 'utf8');
+    assert(libraryStyles.includes('.elemental-title'), 'Library must distribute Elemental Title styles');
+    const assets = await readdir(join(consumerDirectory, 'dist/assets'));
+    const consumerStyles = (await Promise.all(assets.filter(name => name.endsWith('.css'))
+      .map(name => readFile(join(consumerDirectory, 'dist/assets', name), 'utf8')))).join('\n');
+    assert(consumerStyles.includes('.elemental-title'), 'Library entries must load Elemental Title styles in a standalone consumer');
     // The Familiar's card is Front Desk's: the installed Library's Familiar loads Front Desk's own stylesheet, which holds the card's styles.
     const installed = join(consumerDirectory, 'node_modules/@seihouse');
     assert((await readFile(join(installed, 'library/dist/familiar.js'), 'utf8')).includes('import "@seihouse/front-desk/styles.css"'), "the Library's Familiar must load Front Desk's stylesheet");

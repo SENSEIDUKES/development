@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ElementalTitle } from '@seihouse/ui';
+import { ElementalTitle } from '@seihouse/elemental-title';
 import type { WorldCardMenuProps } from '../shared/worldCardContracts';
 import { WorldCardActivityMark } from './WorldCardActivityMark';
 import { WorldCardCover } from './WorldCardCover';

@@ -1,14 +1,14 @@
 {
   "repository": "https://github.com/SENSEIDUKES/UI",
-  "sourceCommit": "8371b71aea79e52d591072bb65bd5590d3c21911",
-  "pullRequest": "https://github.com/SENSEIDUKES/UI/pull/94",
+  "sourceCommit": "8321596193b13c1f18066153d09511197247da50",
+  "pullRequest": "https://github.com/SENSEIDUKES/UI/pull/120",
   "artifacts": {
     "@seihouse/ui": {
-      "version": "0.12.0",
-      "file": "vendor/seihouse-ui-0.12.0.tgz",
-      "integrity": "sha512-gT1T70V4pAjX443RxOx3CMA2SAUWKJpZVsInHpC+PdVdhPkCd+6gL6PvdSF8waiIiI+EU1eG+H7dDAqOhC+cbg==",
-      "sourceCommit": "8371b71aea79e52d591072bb65bd5590d3c21911",
-      "pullRequest": "https://github.com/SENSEIDUKES/UI/pull/94"
+      "version": "0.25.0",
+      "file": "vendor/seihouse-ui-0.25.0.tgz",
+      "integrity": "sha512-7EyIPUZVgTJ9YX81TLnRRl1MF+yJrokc1TPpN6gkbljWLjMDeUMEurstneHTV9yd4fw6wGthoXXvTh70CsIviQ==",
+      "sourceCommit": "8321596193b13c1f18066153d09511197247da50",
+      "pullRequest": "https://github.com/SENSEIDUKES/UI/pull/120"
     },
     "@seihouse/library-ui": {
       "version": "0.10.1",

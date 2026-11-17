@@ -62,6 +62,8 @@ rewrites and every page survives a reload.
 
 ## The Library Shell
 
+- **2026-11-16** — Adopted the reviewed UI #120 header scene through `WorkspaceHeader`: a continuous wuxia landscape behind the existing controls, with one bounded sword performance. The existing Home Workshop iframe loads this same app composition.
+
 - **2026-10-12** — Home carries Dao Insights under the featured area at every
   width. Its sparks come from `/api/story-spark` (the server's default text
   model, registered in the Model Router as Story Spark; free, twenty a day per

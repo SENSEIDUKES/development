@@ -1,11 +1,11 @@
 # Private UI artifacts
 
-Both UI tarballs are built from UI main through PR [#94](https://github.com/SENSEIDUKES/UI/pull/94), source commit `8371b71aea79e52d591072bb65bd5590d3c21911`:
+The shared UI artifact is built from reviewed UI PR [#120](https://github.com/SENSEIDUKES/UI/pull/120), merged source `8321596193b13c1f18066153d09511197247da50`:
 
-- `@seihouse/ui@0.12.0`: universal SEIHouse primitives and experience tokens, including the application shell, shared overlay scrollbar and Pathways panel. The opt-in `double-tap` sidebar behavior toggles both widths and offers a keyboard-focus-only control; `automatic` and `click` remain available.
-- `@seihouse/library-ui@0.10.1`: stateless Celestial Library presentation. Its `@seihouse/ui` peer is `^0.11.0 || ^0.12.0`; its navigation skin supplies scroll-only gold thumbs and a stationary gold-and-cyan edge bevel. Domain behavior and persistence remain in `@seihouse/library` and its host.
+- `@seihouse/ui@0.25.0` supplies the full-header decorative layer, shared choreography player and opt-in NovelExpanded artwork. The source PR's complete CI passed and both review threads were resolved before adoption.
+- `@seihouse/library-ui@0.10.1` keeps its existing artifact from `8371b71aea79e52d591072bb65bd5590d3c21911` (UI #94). Its old UI peer range is explicitly overridden to the root artifact, alongside Front Desk 0.2.0's exact 0.12.0 UI peer. Package consumers apply the same overrides and verify the current distribution together.
 
-The locked `@seihouse/audio-player@4.0.0` build declares an exact optional UI
+The locked `@seihouse/audio-player@5.2.0` build declares an exact optional UI
 0.10.1 peer. Development scopes an npm override to that package's UI peer, using
 the root UI tarball, and the packed-consumer smoke checks apply the same override.
 Hosts combining these SEN/Library releases with that audio build need the same
@@ -59,6 +59,8 @@ UI's `pnpm test:package` checks repeated-pack integrity and fresh ESM, TypeScrip
 
 ## SEIHouse fonts
 
+- `@seihouse/elemental-title@0.1.0` now supplies the lettering formerly imported from UI. Its official Font Lab archive and release metadata are copied unchanged from `a21972add2f9b880780a7e59748f75ac5d115aab`; SHA-512 and release SHA-256 are checked by `check:ui-artifacts`. Both narrative packages declare it as a peer and keep it external. The host imports its stylesheet once.
+
 From SEIHouse/FONT-LAB, recorded with source commits and integrity in `font-artifacts.json`:
 
 - `seihouse-seireader-0.42.0.tgz`: **SEIHouse Sans** 0.42 (formerly SEIReader), the reading
@@ -83,6 +85,8 @@ Display under its own notices for authorized SEIHouse products. To refresh, pack
 release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm ci`.
 
 ## History
+
+- **2026-11-16:** Adopted UI 0.25.0 from merged UI #120 for the integrated NovelExpanded header. Updated the root dependency, lockfile and per-artifact provenance. Library UI and Front Desk retain their existing artifacts with explicit UI peer overrides.
 
 - **2026-11-12:** Updated SEIHouse Sans to 0.42.0 from FONT-LAB #27 (`5f57f9d`). It adds Night faces for Light and Medium beside Regular, so all three Reader weights have one, and brings 0.41's added Latin letters and accents. Existing letters keep their shapes and widths. The Reader does not use the Night family yet. Living Titles stays at 0.1.2.
 - **2026-11-11:** Updated SEIHouse Sans to 0.40.0 and Living Titles to 0.1.2 from FONT-LAB #24. The shared host theme delivers the refined curves to NovelExpanded and the Workshop; recorded the new package integrity and upstream release provenance together.

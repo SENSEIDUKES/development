@@ -163,7 +163,8 @@ export function useStoryCoverManifest({ covers, storyId, request, agent, charact
   const making = phase === 'making';
   const chancesLeft = unlimited ? Infinity : Math.max(0, STORY_COVER_CHANCES - covers.madeCount(storyId));
   const ready = Boolean(protagonist && pictures?.pictureOf(protagonist.key) && referenceOf) && chancesLeft > 0;
-  const cycle = (step: number) => setChosen(index => (index + step + made.length) % made.length);
+  // Not while the chosen cover is being kept: what is shown is what is kept.
+  const cycle = (step: number) => { if (!saving) setChosen(index => (index + step + made.length) % made.length); };
   const swipe = (step: (direction: number) => void) => ({
     onTouchStart: (event: TouchEvent) => { swipeStart.current = event.touches[0].clientX; },
     onTouchEnd: (event: TouchEvent) => { const delta = event.changedTouches[0].clientX - swipeStart.current; if (Math.abs(delta) > 40) step(delta < 0 ? 1 : -1); },

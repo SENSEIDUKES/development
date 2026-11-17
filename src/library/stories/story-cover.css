@@ -101,16 +101,21 @@
 
 /* The picker: one cover at a time, large, as World Info will wear it; arrows, swipe or keys move through them. */
 .story-cover-picker { width: min(30rem, calc(100vw - 24px)); }
-.story-cover-carousel { display: grid; grid-template-columns: 2.75rem minmax(0, auto) 2.75rem; align-items: center; justify-content: center; gap: 0.35rem; touch-action: pan-y; }
+.story-cover-carousel { position: relative; display: flex; justify-content: center; touch-action: pan-y; }
 .story-cover-carousel:focus-visible { outline: 2px solid #04acff; outline-offset: 4px; border-radius: 1.1rem; }
 .story-cover-cycle {
-  display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border: 1px solid rgb(227 246 255 / 0.18); border-radius: 999px;
-  background: rgb(9 11 22 / 0.55); color: #e6f6ff; cursor: pointer; transition: border-color 150ms ease-out;
+  /* Over the cover's edges, so the cover keeps the sheet's whole width on a phone. */
+  position: absolute; z-index: 1; top: 50%; left: 0; transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border: 1px solid rgb(227 246 255 / 0.28); border-radius: 999px;
+  background: rgb(5 11 18 / 0.6); color: #e6f6ff; cursor: pointer; transition: border-color 150ms ease-out;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
 }
+.story-cover-cycle:last-child { left: auto; right: 0; }
 .story-cover-cycle:hover, .story-cover-cycle:focus-visible { border-color: #8fd8ff; }
 .story-cover-cycle:focus-visible { outline: 2px solid #04acff; outline-offset: 2px; }
 .story-cover-stage {
-  position: relative; height: min(54dvh, 30rem); max-width: 100%; aspect-ratio: 2 / 3; margin: 0; overflow: hidden;
+  /* Sized from its width, so the 2:3 cover is never cropped on a narrow sheet. */
+  position: relative; width: min(100%, calc(min(54dvh, 30rem) * 2 / 3)); aspect-ratio: 2 / 3; margin: 0; overflow: hidden;
   border: 1px solid var(--reader-glass-edge, #d6bd8766); border-radius: 1.1rem; background: #07111d;
   box-shadow: inset 0 1px 0 #e3f6ff26, 0 18px 40px rgb(2 11 32 / 0.6);
 }

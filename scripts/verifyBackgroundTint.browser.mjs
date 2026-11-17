@@ -93,7 +93,7 @@ try {
       await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }] });
       const reduced = await page.locator('.workspace-header').evaluate(fill);
       assert.equal(reduced[0], 'rgb(50, 21, 35)'); assert.equal(reduced[2], 'none');
-      for (const selector of ['[data-home-panel]:not(.home-featured [data-home-panel])', '[data-slot="empty-state"]']) {
+      for (const selector of ['[data-home-panel]:has(.home-filter-label)', '[data-slot="empty-state"]']) {
         await page.waitForFunction(({ selector, color }) => getComputedStyle(document.querySelector(selector)).backgroundColor === color, { selector, color: reduced[0] });
         const solid = await page.locator(selector).evaluate(fill);
         assert.equal(solid[0], reduced[0]); assert.equal(solid[2], 'none');

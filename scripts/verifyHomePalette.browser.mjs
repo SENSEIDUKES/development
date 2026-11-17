@@ -11,7 +11,7 @@ const base = process.argv[2] ?? 'http://localhost:5173';
 const output = 'output/playwright/home-palette-regression';
 mkdirSync(output, { recursive: true });
 const results = [];
-const media = '.home-featured [data-home-panel], .world-card-base, .world-card-base-media, .world-card-banner, .world-card-banner-backdrop, .world-card-banner-video, .world-card-banner-wash';
+const media = '.home-featured [data-home-panel], .world-card-base-media, .world-card-banner, .world-card-banner-backdrop, .world-card-banner-video, .world-card-banner-wash';
 const nativeColors = '[data-slot="navigation-label"], [data-slot="navigation-account-name"], .home-featured-label, .home-filter-label';
 const assertClear = async page => {
   const surfaces = await page.locator(media).evaluateAll(elements => elements.map(element => {
@@ -125,11 +125,12 @@ try {
       for (const title of ['Quiet mountains', 'A distant shore']) {
         const story = await controller.createStory({ title, premise: 'A courier finds her way home.', genre: 'Fantasy' });
         await covers.save(story.id, image);
+        await controller.setStoryVisibility(story.id, 'public');
       }
     });
     await page.reload();
     await page.locator('.world-card-tile').first().waitFor();
-    await page.locator('.home-featured-dot').nth(1).click();
+    await page.locator('.home-featured .world-card-carousel-step[data-side="next"]').click();
     await page.locator('.world-card-banner').waitFor();
     await assertClear(page);
     await page.screenshot({ path: `${output}/cards-${width}.png` });

@@ -36,10 +36,10 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await openPreview(page);
       const frame = page.frameLocator('iframe[title="Home material preview"]');
       await frame.getByTestId('novel-expanded-home').waitFor();
-      await frame.locator('[data-home-panel]:not(.home-featured [data-home-panel])').waitFor();
+      await frame.locator('[data-home-panel]:has(.home-filter-label)').waitFor();
       await page.waitForFunction(() => {
         const doc = document.querySelector('.pm-home-frame').contentDocument;
-        return getComputedStyle(doc.querySelector('[data-home-panel]:not(.home-featured [data-home-panel])')).backgroundColor === 'rgba(11, 14, 30, 0.35)';
+        return getComputedStyle(doc.querySelector('[data-home-panel]:has(.home-filter-label)')).backgroundColor === 'rgba(11, 14, 30, 0.35)';
       });
       const canvas = page.frames().find(child => child.url().includes('source=palette-materials'));
       const previewWidth = await canvas.evaluate(() => innerWidth);
@@ -50,7 +50,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       });
       await actual.goto(`${base}/app/`);
       await actual.getByTestId('novel-expanded-home').waitFor();
-      for (const selector of ['[data-home-panel]:not(.home-featured [data-home-panel])', '[data-slot="empty-state"]', '.workspace-header', '.library-footer']) {
+      for (const selector of ['[data-home-panel]:has(.home-filter-label)', '[data-slot="empty-state"]', '.workspace-header', '.library-footer']) {
         assert.deepEqual(await frame.locator(selector).first().evaluate(paint), await actual.locator(selector).first().evaluate(paint), `${name} ${width}: ${selector} starts with Home's actual material`);
       }
       await actual.close();
@@ -83,8 +83,8 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.getByRole('slider', { name: 'Background blur', exact: true }).fill('39');
       await page.getByRole('slider', { name: 'Opacity', exact: true }).fill('87');
       await openPreview(page);
-      await page.waitForFunction(() => { const element = document.querySelector('.pm-home-frame')?.contentDocument?.querySelector('[data-home-panel]:not(.home-featured [data-home-panel])'); return element && getComputedStyle(element).backdropFilter === 'blur(39px)'; });
-      assert.equal((await frame.locator('[data-home-panel]:not(.home-featured [data-home-panel])').evaluate(paint))[0], 'rgba(11, 14, 30, 0.87)');
+      await page.waitForFunction(() => { const element = document.querySelector('.pm-home-frame')?.contentDocument?.querySelector('[data-home-panel]:has(.home-filter-label)'); return element && getComputedStyle(element).backdropFilter === 'blur(39px)' && getComputedStyle(element).backgroundColor === 'rgba(11, 14, 30, 0.87)'; });
+      assert.equal((await frame.locator('[data-home-panel]:has(.home-filter-label)').evaluate(paint))[0], 'rgba(11, 14, 30, 0.87)');
       assert.deepEqual(await frame.locator('.home-featured [data-home-panel]').evaluate(paint), beforeHero, 'Editing plain panels leaves media unchanged');
       assert.equal(await frame.getByRole('button', { name: 'Create A World', exact: true }).evaluate(e => getComputedStyle(e, '::before').backgroundImage), spectrum, 'Rainbow is retained');
       await frame.getByRole('button', { name: 'Create A World', exact: true }).click();
@@ -99,7 +99,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.reload();
       await page.locator('#pm-composition h2').waitFor({ state: 'attached' });
       await openPreview(page);
-      await page.waitForFunction(() => { const element = document.querySelector('.pm-home-frame')?.contentDocument?.querySelector('[data-home-panel]:not(.home-featured [data-home-panel])'); return element && getComputedStyle(element).backdropFilter === 'blur(39px)'; });
+      await page.waitForFunction(() => { const element = document.querySelector('.pm-home-frame')?.contentDocument?.querySelector('[data-home-panel]:has(.home-filter-label)'); return element && getComputedStyle(element).backdropFilter === 'blur(39px)'; });
       // Resizing exercises the frame's real responsive navigation, not scaled CSS guesses.
       await page.getByRole('combobox', { name: 'Home preview size' }).selectOption('834');
       await page.waitForFunction(() => document.querySelector('.pm-home-frame').contentWindow.innerWidth === 834);

@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { GitBranch } from 'lucide-react';
-import { ElementalTitle } from '@seihouse/ui';
+import { ElementalTitle } from '@seihouse/elemental-title';
 import { LibraryCard, LibraryCardMedia } from '@seihouse/library-ui';
 import { MotionPicture, useDominantColor } from '@seihouse/sen/motion-picture';
 import type { WorldCardCompactProps, WorldCardInfoCoverProps, WorldCardProps } from '../shared/worldCardContracts';

@@ -11,6 +11,7 @@
    A face downloads only when text on the page uses it. */
 @import "@seihouse/seireader/sans.css";
 @import "@seihouse/living-titles/fonts.css";
+@import "@seihouse/elemental-title/styles.css";
 /* The interface's fonts and lettering for scripts beyond Latin and Cyrillic. */
 @import "./script-lettering.css";
 @import "tailwindcss";

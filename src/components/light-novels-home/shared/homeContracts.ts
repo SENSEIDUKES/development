@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/ui';
+import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/elemental-title';
 /**
  * How busy a world is with its people: readers reading, branching and continuing it in a recent
  * window. It is not the original creator's publishing pace; on SEN a world carries on wherever its

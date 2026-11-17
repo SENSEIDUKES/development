@@ -21,6 +21,7 @@ import { packageAliases } from './scripts/packageAliases.mjs';
 
 /** Everything a consuming application provides, not the package. */
 export const HOST_PROVIDED = [
+  /^@seihouse\/elemental-title(\/.*)?$/,
   /^@library-studios\/brand(\/.*)?$/,
   /^@seihouse\/(ui|library-ui)(\/.*)?$/,
   'react',

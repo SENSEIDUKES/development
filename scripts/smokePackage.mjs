@@ -69,17 +69,18 @@ try {
   const tarballPath = pack(target);
   const audioPlayer = await packAudioPlayer();
   // Front Desk is vendored like the UI kit: the exact tarball the root manifest locks.
+  const uiTarball = join(root, JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).dependencies['@seihouse/ui'].replace(/^file:/, ''));
   const frontDeskTarball = join(root, JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).dependencies['@seihouse/front-desk'].replace(/^file:/, ''));
 
   await writeFile(join(consumerDirectory, 'package.json'), JSON.stringify({
     name: `${target.id}-package-smoke-consumer`,
     private: true,
     type: 'module',
-    // The locked audio build still declares UI 0.10.1; validate the host's scoped override.
-    overrides: { '@seihouse/audio-player': { '@seihouse/ui': `file:${join(root, 'vendor/seihouse-ui-0.12.0.tgz')}` } },
+    // Validate the host overrides for consumers that pin older UI peers.
+    overrides: { '@seihouse/audio-player': { '@seihouse/ui': `file:${uiTarball}` }, '@seihouse/library-ui': { '@seihouse/ui': `file:${uiTarball}` }, '@seihouse/front-desk': { '@seihouse/ui': `file:${uiTarball}` } },
   }, null, 2));
   runNpm(
-    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.12.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.10.1.tgz'), join(root, 'vendor/library-studios-brand-0.1.0.tgz')] : []), audioPlayer, frontDeskTarball, ...dependencyTarballs, tarballPath],
+    ['install', '--ignore-scripts', ...peers, uiTarball, join(root, 'vendor/seihouse-elemental-title-0.1.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.10.1.tgz'), join(root, 'vendor/library-studios-brand-0.1.0.tgz')] : []), audioPlayer, frontDeskTarball, ...dependencyTarballs, tarballPath],
     consumerDirectory,
   );
 

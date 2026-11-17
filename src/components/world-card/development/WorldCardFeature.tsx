@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { GitBranch } from 'lucide-react';
-import { ElementalTitle } from '@seihouse/ui';
+import { ElementalTitle } from '@seihouse/elemental-title';
 import { useDominantColor } from '@seihouse/sen/motion-picture';
 import type { WorldCardFeatureProps } from '../shared/worldCardContracts';
 import { prefersReducedMotion, WorldCardBackdropVideo, type WorldCardBackdropVideoHandle } from './WorldCardBackdropVideo';

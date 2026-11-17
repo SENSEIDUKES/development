@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { HarnessSkillManifest } from '@seihouse/sen/harness-generation';
-import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/ui';
+import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/elemental-title';
 import type { MediaPack } from '../../../library/media/mediaPacks';
 import type { SkillPackageIntake } from '../../../library/stories/settings/SkillPackageImport';
 import type { EnergyAccountState } from '../../energy/shared/useEnergyAccount';

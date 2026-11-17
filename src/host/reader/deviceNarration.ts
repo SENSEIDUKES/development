@@ -173,15 +173,31 @@ export function createDeviceNarration({ preferences, createWorker = browserWorke
     pump();
   };
 
+  const stop = () => {
+    forget(DEVICE_NARRATION_WORKING_KEY);
+    forget(DEVICE_NARRATION_PREFERENCE_KEY);
+    set({ on: false, model: 'idle', progress: undefined, stopped: true });
+  };
   const load = () => {
-    // The page closed under the voice moments ago and reopened faster than the mark could be read as left.
-    if (left()) {
-      forget(DEVICE_NARRATION_WORKING_KEY);
-      forget(DEVICE_NARRATION_PREFERENCE_KEY);
-      set({ on: false, stopped: true });
+    if (state.model === 'loading' || state.model === 'ready') return;
+    const foreign = read(DEVICE_NARRATION_WORKING_KEY);
+    if (foreign && !foreign.startsWith(`${visit}:`)) {
+      if (left()) { stop(); return; }
+      // Another visit's mark, still fresh: a tab working now, or a page that closed seconds ago and was
+      // reopened at once. Only a mark that is renewed belongs to a live tab, so wait to see.
+      set({ model: 'loading', progress: 0, problem: undefined, stopped: undefined });
+      setTimeout(() => {
+        if (!state.on) { set({ model: 'idle' }); return; }
+        if (read(DEVICE_NARRATION_WORKING_KEY) === foreign) { stop(); return; }
+        // Renewed or cleared: that tab is alive, and this one starts its own voice.
+        set({ model: 'idle' });
+        start();
+      }, MARK_LEFT_MS + MARK_RENEWED_MS);
       return;
     }
-    if (state.model === 'loading' || state.model === 'ready') return;
+    start();
+  };
+  const start = () => {
     try {
       worker ??= createWorker();
     } catch {

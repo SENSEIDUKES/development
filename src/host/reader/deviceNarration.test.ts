@@ -83,6 +83,37 @@ describe('narration made on the device', () => {
     } finally { vi.useRealTimers(); }
   });
 
+  it('waits to see whether a fresh mark from another visit is renewed before loading', async () => {
+    vi.useFakeTimers();
+    try {
+      // Reopened and Listen pressed within a second of the page closing under the voice.
+      const preferences = memory();
+      preferences.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');
+      preferences.write(DEVICE_NARRATION_WORKING_KEY, `gone:${Date.now() - 1_000}`);
+      const next = narration(preferences);
+      expect(next.service.clip(line('One.'), [])).toBeUndefined();
+      // The mark is kept as it was, not overwritten, and nothing is loaded while it is watched.
+      expect(preferences.kept.get(DEVICE_NARRATION_WORKING_KEY)).toMatch(/^gone:/);
+      expect(next.service.getState()).toMatchObject({ on: true, model: 'loading' });
+      vi.advanceTimersByTime(6_000);
+      expect(next.sent).toEqual([]);
+      expect(next.service.getState()).toMatchObject({ on: false, model: 'idle', stopped: true });
+
+      // A live tab renews its mark: once it is seen to move, this one loads.
+      const shared = memory();
+      shared.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');
+      shared.write(DEVICE_NARRATION_WORKING_KEY, `live:${Date.now()}`);
+      const other = narration(shared);
+      void other.service.clip(line('One.'), []);
+      vi.advanceTimersByTime(1_000);
+      shared.write(DEVICE_NARRATION_WORKING_KEY, `live:${Date.now()}`);
+      vi.advanceTimersByTime(5_000);
+      await vi.runOnlyPendingTimersAsync();
+      expect(other.sent).toEqual([{ type: 'load', device: 'wasm' }]);
+      expect(other.service.getState().stopped).toBeUndefined();
+    } finally { vi.useRealTimers(); }
+  });
+
   it('keeps its mark only while the voice works', async () => {
     const calm = narration(memory());
     calm.service.setOn(true);

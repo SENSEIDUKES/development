@@ -75,6 +75,9 @@ export function createMemoryStoryCoverStore(): StoryCoverStore {
   };
 }
 
+/** A story's count of cover makings is kept in the same store, under the story's id with this ending. */
+const MADE_COUNT_SUFFIX = '#cover-makings';
+
 /**
  * The Library's cover service over the host's store and cover server. Covers
  * just made are shown through object URLs until the reader keeps one; the kept
@@ -83,6 +86,13 @@ export function createMemoryStoryCoverStore(): StoryCoverStore {
  */
 export function useStoryCovers(store: StoryCoverStore, maker: StoryCoverMaker): StoryCoverService {
   const [urls, setUrls] = useState<Record<string, string>>({});
+  /** How many times covers were made for each story; the Library counts a story's chances from it. */
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const countsRef = useRef<Record<string, number>>({});
+  const count = useCallback((storyId: string, times: number) => {
+    countsRef.current = { ...countsRef.current, [storyId]: Math.max(times, countsRef.current[storyId] ?? 0) };
+    setCounts(countsRef.current);
+  }, []);
   const shown = useRef(new Map<string, string>());
   /** Covers made and not yet kept or let go, by their address. */
   const made = useRef(new Map<string, Blob>());
@@ -99,10 +109,13 @@ export function useStoryCovers(store: StoryCoverStore, maker: StoryCoverMaker): 
     let active = true;
     void store.loadAll().then(covers => {
       // A cover made while the device was still opening its covers is the newer one.
-      if (active) for (const cover of covers) if (!shown.current.has(cover.storyId)) show(cover.storyId, cover.image);
+      if (active) for (const cover of covers) {
+        if (cover.storyId.endsWith(MADE_COUNT_SUFFIX)) void cover.image.text().then(text => { if (active) count(cover.storyId.slice(0, -MADE_COUNT_SUFFIX.length), Number(text) || 0); });
+        else if (!shown.current.has(cover.storyId)) show(cover.storyId, cover.image);
+      }
     }, () => undefined);
     return () => { active = false; };
-  }, [store, show]);
+  }, [store, show, count]);
   useEffect(() => {
     const urlsShown = shown.current;
     const urlsMade = made.current;
@@ -113,15 +126,21 @@ export function useStoryCovers(store: StoryCoverStore, maker: StoryCoverMaker): 
     };
   }, []);
 
-  const make = useCallback(async (_storyId: string, story: StoryCoverRequest, count: StoryCoverChoice) => {
-    const { images, problem } = await maker(story, count);
+  const make = useCallback(async (storyId: string, story: StoryCoverRequest, howMany: StoryCoverChoice) => {
+    const { images, problem } = await maker(story, howMany);
+    if (images.length) {
+      // Covers were made: one of the story's chances is used, kept beside its cover.
+      const times = (countsRef.current[storyId] ?? 0) + 1;
+      count(storyId, times);
+      void store.save(storyId + MADE_COUNT_SUFFIX, new Blob([String(times)], { type: 'text/plain' })).catch(() => undefined);
+    }
     const madeUrls = images.map(image => {
       const url = URL.createObjectURL(image);
       made.current.set(url, image);
       return url;
     });
     return { urls: madeUrls, ...(problem ? { problem } : {}) };
-  }, [maker]);
+  }, [maker, store, count]);
 
   const letGo = useCallback((madeUrls: readonly string[]) => {
     for (const url of madeUrls) {
@@ -138,5 +157,5 @@ export function useStoryCovers(store: StoryCoverStore, maker: StoryCoverMaker): 
     letGo([madeUrl]);
   }, [store, show, letGo]);
 
-  return useMemo(() => ({ coverUrl: (storyId: string) => urls[storyId], make, keep, letGo }), [urls, make, keep, letGo]);
+  return useMemo(() => ({ coverUrl: (storyId: string) => urls[storyId], madeCount: (storyId: string) => counts[storyId] ?? 0, make, keep, letGo }), [urls, counts, make, keep, letGo]);
 }

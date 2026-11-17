@@ -46,30 +46,71 @@
 .story-cover-dialog .story-cover-dialog-intro { margin: -0.5rem 0 0; color: #b9c0cf; font-size: 0.85rem; }
 .story-cover-dialog-note { margin: 0; color: #fde68a; font-size: 0.8rem; }
 
-/* One or three: a card each, with a little stack of covers and the Energy it costs. */
-.story-cover-options { display: grid; gap: 0.6rem; }
-.story-cover-option {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.9rem; min-height: 4.5rem; padding: 0.8rem 1rem;
-  border: 1px solid rgb(255 255 255 / 0.14); border-radius: 1rem; background: rgb(9 11 22 / 0.55); color: #f5f5f5; text-align: left; cursor: pointer;
-  transition: border-color 150ms ease-out, background-color 150ms ease-out;
-}
-.story-cover-option:hover, .story-cover-option:focus-visible { border-color: rgb(4 172 255 / 0.5); background: rgb(18 20 38 / 0.7); }
-.story-cover-option:focus-visible { outline: 2px solid #04acff; outline-offset: 2px; }
-.story-cover-option-text { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-.story-cover-option-text strong { font-family: var(--font-display, serif); font-size: 1rem; }
-.story-cover-option-text small { color: #aeb7c6; font-size: 0.78rem; }
-.story-cover-option-stack { position: relative; width: 2.6rem; height: 2.6rem; }
-.story-cover-option-stack > span {
-  position: absolute; top: 0.1rem; left: 0.75rem; width: 1.6rem; height: 2.4rem; border: 1px solid rgb(232 200 114 / 0.75); border-radius: 0.3rem;
-  background: linear-gradient(160deg, rgb(30 30 82 / 0.95), rgb(8 11 28 / 0.95));
-}
-.story-cover-option[data-count='3'] .story-cover-option-stack > span:nth-child(1) { transform: translateX(-0.65rem) rotate(-9deg); }
-.story-cover-option[data-count='3'] .story-cover-option-stack > span:nth-child(3) { transform: translateX(0.65rem) rotate(9deg); }
+/* The obvious sign: three chances for this novel, as three lights and how many are left. */
+.story-cover-chances { display: flex; align-items: center; gap: 0.85rem; padding: 0.75rem 0.9rem; border: 1px solid rgb(143 216 255 / 0.28); border-radius: 0.9rem; background: rgb(73 201 250 / 0.08); }
+.story-cover-chances-pips { display: inline-flex; flex: none; gap: 0.35rem; }
+.story-cover-chances-pips > span { width: 0.7rem; height: 1.05rem; border: 1px solid rgb(143 216 255 / 0.5); border-radius: 0.2rem; }
+.story-cover-chances-pips > span[data-on] { background: #8fd8ff; box-shadow: 0 0 8px rgb(73 201 250 / 0.6); }
+.story-cover-chances-text { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.story-cover-chances-text strong { color: #f7f3e6; font-size: 0.9rem; }
+.story-cover-chances-text small { color: #b9c0cf; font-size: 0.75rem; line-height: 1.4; }
+.story-cover-chances[data-left='1'] { border-color: rgb(253 230 138 / 0.5); background: rgb(253 230 138 / 0.08); }
+.story-cover-chances[data-left='0'] { border-color: rgb(255 255 255 / 0.16); background: rgb(9 11 22 / 0.5); }
 
-/* The picker: the chosen cover large, as World Info will wear it, over a row of all three. */
+/* What the cover needs, as a console options list: name on the left, control on the right. */
+.story-cover-settings { display: grid; border-block: 1px solid rgb(255 255 255 / 0.1); }
+.story-cover-setting { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; min-height: 3.25rem; color: #e6e9f0; font-size: 0.9rem; touch-action: pan-y; }
+.story-cover-setting + .story-cover-setting { border-top: 1px solid rgb(255 255 255 / 0.08); }
+.story-cover-setting:focus-visible { outline: 2px solid #04acff; outline-offset: 2px; }
+.story-cover-onoff { display: inline-flex; min-height: 2.75rem; padding: 0.2rem; border: 1px solid rgb(255 255 255 / 0.2); border-radius: 999px; background: rgb(9 11 22 / 0.55); cursor: pointer; }
+.story-cover-onoff > span { display: inline-flex; align-items: center; padding: 0 0.85rem; border-radius: 999px; color: #8b94a6; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.story-cover-onoff > span[data-on] { background: #8fd8ff; color: #0c1c32; }
+.story-cover-onoff:focus-visible { outline: 2px solid #04acff; outline-offset: 2px; }
+.story-cover-stepper { display: inline-flex; align-items: center; min-width: 0; border: 1px solid rgb(255 255 255 / 0.2); border-radius: 999px; background: rgb(9 11 22 / 0.55); }
+.story-cover-stepper > button { flex: none; width: 2.75rem; height: 2.75rem; color: #e6e9f0; font-size: 0.7rem; cursor: pointer; }
+.story-cover-second-value { display: flex; align-items: center; justify-content: center; gap: 0.4rem; min-width: 4.5rem; max-width: 9rem; font-size: 0.85rem; }
+.story-cover-second-value > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.story-cover-second-value img { flex: none; width: 1.6rem; height: 2rem; object-fit: cover; border-radius: 0.25rem; }
+
+/* One or three: a tile each, side by side, with a little fan of covers and the Energy it costs. */
+.story-cover-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
+.story-cover-option {
+  display: flex; flex-direction: column; align-items: center; gap: 0.7rem; padding: 1.1rem 0.6rem 0.9rem;
+  border: 1px solid rgb(227 246 255 / 0.16); border-radius: 1.1rem; color: #f5f5f5; text-align: center; cursor: pointer;
+  background: radial-gradient(120% 70% at 50% 0%, rgb(73 201 250 / 0.14), transparent 70%), rgb(9 11 22 / 0.6);
+  box-shadow: inset 0 1px 0 #e3f6ff1f;
+  transition: border-color 150ms ease-out, transform 150ms ease-out, box-shadow 150ms ease-out;
+}
+.story-cover-option:not(:disabled):hover, .story-cover-option:focus-visible { border-color: #8fd8ff; box-shadow: inset 0 1px 0 #e3f6ff1f, 0 0 18px rgb(73 201 250 / 0.25); }
+.story-cover-option:not(:disabled):active { transform: scale(0.98); }
+.story-cover-option:focus-visible { outline: 2px solid #04acff; outline-offset: 2px; }
+.story-cover-option:disabled { opacity: 0.45; cursor: default; }
+.story-cover-option-text { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.story-cover-option-text strong { font-family: var(--font-display, serif); font-size: 1rem; line-height: 1.2; }
+.story-cover-option-text small { color: #aeb7c6; font-size: 0.75rem; }
+.story-cover-option .energy-action-cost { margin-top: auto; }
+.story-cover-option-stack { position: relative; width: 5.5rem; height: 5.4rem; }
+.story-cover-option-stack > span {
+  position: absolute; top: 0.2rem; left: 1.1rem; width: 3.3rem; height: 4.95rem; border: 1px solid rgb(143 216 255 / 0.7); border-radius: 0.45rem;
+  background: radial-gradient(90% 60% at 50% 30%, rgb(73 201 250 / 0.35), transparent 70%), linear-gradient(160deg, rgb(30 30 82 / 0.95), rgb(8 11 28 / 0.95));
+  box-shadow: 0 6px 14px rgb(2 11 32 / 0.55);
+}
+.story-cover-option[data-count='3'] .story-cover-option-stack > span:nth-child(1) { transform: translateX(-0.95rem) rotate(-10deg) scale(0.94); }
+.story-cover-option[data-count='3'] .story-cover-option-stack > span:nth-child(2) { transform: translateX(0.95rem) rotate(10deg) scale(0.94); }
+.story-cover-option[data-count='3'] .story-cover-option-stack > span:nth-child(3) { z-index: 1; }
+
+/* The picker: one cover at a time, large, as World Info will wear it; arrows, swipe or keys move through them. */
 .story-cover-picker { width: min(30rem, calc(100vw - 24px)); }
+.story-cover-carousel { display: grid; grid-template-columns: 2.75rem minmax(0, auto) 2.75rem; align-items: center; justify-content: center; gap: 0.35rem; touch-action: pan-y; }
+.story-cover-carousel:focus-visible { outline: 2px solid #04acff; outline-offset: 4px; border-radius: 1.1rem; }
+.story-cover-cycle {
+  display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border: 1px solid rgb(227 246 255 / 0.18); border-radius: 999px;
+  background: rgb(9 11 22 / 0.55); color: #e6f6ff; cursor: pointer; transition: border-color 150ms ease-out;
+}
+.story-cover-cycle:hover, .story-cover-cycle:focus-visible { border-color: #8fd8ff; }
+.story-cover-cycle:focus-visible { outline: 2px solid #04acff; outline-offset: 2px; }
 .story-cover-stage {
-  position: relative; align-self: center; height: min(42dvh, 24rem); max-width: 100%; aspect-ratio: 2 / 3; margin: 0.25rem 0 0; overflow: hidden;
+  position: relative; height: min(54dvh, 30rem); max-width: 100%; aspect-ratio: 2 / 3; margin: 0; overflow: hidden;
   border: 1px solid var(--reader-glass-edge, #d6bd8766); border-radius: 1.1rem; background: #07111d;
   box-shadow: inset 0 1px 0 #e3f6ff26, 0 18px 40px rgb(2 11 32 / 0.6);
 }
@@ -83,51 +124,24 @@
   background: rgb(5 11 18 / 0.45); color: #f5f5f5; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
 }
+.story-cover-dots { display: flex; justify-content: center; gap: 0.45rem; }
+.story-cover-dots > span { width: 0.45rem; height: 0.45rem; border-radius: 999px; background: rgb(227 246 255 / 0.25); transition: background-color 150ms ease-out, width 150ms ease-out; }
+.story-cover-dots > span[data-on] { width: 1.3rem; background: #8fd8ff; }
 
-/* The three, small, coming alive one after another; the chosen one lights in the portal blue. */
-.story-cover-choices { display: flex; justify-content: center; gap: 0.75rem; }
-.story-cover-choice-wrap { position: relative; flex: none; width: 5rem; opacity: 0; animation: story-cover-alive 900ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
-.story-cover-choice {
-  position: relative; display: block; width: 100%; aspect-ratio: 2 / 3; overflow: hidden; padding: 0;
-  border: 1px solid rgb(227 246 255 / 0.16); border-radius: 0.7rem; background: #07111d; cursor: pointer;
-  transition: border-color 150ms ease-out, box-shadow 150ms ease-out, transform 150ms ease-out;
-}
-@keyframes story-cover-alive {
-  0% { opacity: 0; transform: scale(0.9); filter: blur(8px) brightness(1.8); }
-  60% { opacity: 1; filter: blur(0) brightness(1.15); }
-  100% { opacity: 1; transform: none; filter: none; }
-}
-.story-cover-choice img { width: 100%; height: 100%; object-fit: cover; object-position: center top; opacity: 0.6; transition: opacity 150ms ease-out; }
-.story-cover-choice:hover img, .story-cover-choice[aria-pressed='true'] img { opacity: 1; }
-.story-cover-choice[aria-pressed='true'] { border-color: #8fd8ff; box-shadow: 0 0 0 1px #8fd8ff99, 0 0 14px rgb(73 201 250 / 0.3); }
-.story-cover-choice-mark {
-  position: absolute; top: 0.3rem; right: 0.3rem; display: inline-flex; align-items: center; justify-content: center;
-  width: 1.1rem; height: 1.1rem; border-radius: 999px; background: #8fd8ff; color: #0c1c32;
-}
-.story-cover-choice:focus-visible { outline: 2px solid #04acff; outline-offset: 2px; }
-.story-cover-dialog-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-top: 0.15rem; }
-.story-cover-dialog-actions > * { width: 100%; }
-
-/* Like the World Card's own corner controls they reuse: a kept cover's Manifest
-   takes the top-left corner, opposite MP, and each cover in the picker carries its download. */
+/* Like the World Card's own corner controls they reuse: a recast cover's Manifest takes the
+   top-left corner, opposite MP, and the cover on the picker's stage carries its download. */
 .world-card-info-cover .story-cover-recast { top: 0.65rem; left: 0.65rem; }
-.story-cover-choice-wrap .story-cover-choice-download { top: auto; left: auto; right: 0.3rem; bottom: 0.3rem; min-width: 1.5rem; min-height: 1.5rem; height: 1.5rem; }
+.story-cover-stage .story-cover-stage-download { top: auto; left: auto; right: 0.65rem; bottom: 0.65rem; min-width: 2.75rem; min-height: 2.75rem; height: 2.75rem; }
 
 /* Use this cover: the Library's night glass, as World Info's Continue wears it. */
-.story-cover-dialog .library-glass-button.story-cover-keep { border-radius: 999px; }
+.story-cover-dialog .library-glass-button.story-cover-keep { width: 100%; border-radius: 999px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .story-cover-manifest svg { animation: none; }
-  .story-cover-choice-wrap, .story-cover-stage img { animation: none; opacity: 1; }
-  .story-cover-manifest, .story-cover-option, .story-cover-choice, .story-cover-choice img { transition: none; }
+  .story-cover-manifest svg, .story-cover-stage img { animation: none; }
+  .story-cover-manifest, .story-cover-option, .story-cover-onoff > span, .story-cover-dots > span { transition: none; }
 }
 
-/* Character references stay compact in the phone's existing cover sheet. */
+/* A missing main portrait is made here, compact in the phone's cover sheet. */
 .story-cover-references { display: grid; gap: .75rem; min-width: 0; }
 .story-cover-reference { width: 10rem; max-width: 100%; margin-inline: auto; }
 .story-cover-reference h3 { font-size: 1.1rem; }
-.story-cover-second { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1.2fr) 44px; align-items: center; gap: .25rem; font-size: .8rem; touch-action: pan-y; }
-.story-cover-second button { min-width: 44px; min-height: 44px; border: 1px solid #ffffff22; border-radius: .5rem; }
-.story-cover-second-value { display: flex; align-items: center; gap: .4rem; min-width: 0; overflow-wrap: anywhere; }
-.story-cover-second-value img { width: 2rem; height: 2.5rem; object-fit: cover; border-radius: .25rem; }
-.story-cover-option:disabled { opacity: .45; cursor: default; }

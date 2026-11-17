@@ -17,10 +17,7 @@ export interface StoryCoverRequest {
   tone?: string;
   /** The world, in a few lines. */
   world?: string;
-  /**
-   * Letter the title on the cover. A title is what a story earns by reaching its
-   * ending, destined or failed; until then its covers carry no lettering.
-   */
+  /** Letter the title on the cover: the reader's choice when the cover is made. */
   titled?: boolean;
   /** Ordered character references: protagonist first, then an optional second lead. */
   characters?: Array<{ name: string; role: string; relationship?: string; image: { data: string; mimeType: string } }>;
@@ -36,8 +33,7 @@ const text = (value: unknown): string | undefined => {
 /**
  * A story's cover request, from what the story already knows: its title and
  * genre, its Story Seed's tradition and tags, its Blueprint logline (else its
- * premise), its main character, tone and world. A story that has reached its
- * ending asks for its title on the cover. The cover server clips each field to
+ * premise), its main character, tone and world. The cover server clips each field to
  * its own limit.
  */
 export function storyCoverRequest(state: HarnessWorkspaceState, storyId: string): StoryCoverRequest | undefined {
@@ -79,13 +75,18 @@ export function storyCoverRequest(state: HarnessWorkspaceState, storyId: string)
   }
   const tagList = Array.isArray(tags) ? tags.flatMap(tag => text(tag) ?? []) : [];
   if (tagList.length) request.tags = tagList;
-  if (story.conclusion) request.titled = true;
   return request;
 }
 
 /** How many covers a reader may ask for at once: one, or three to choose from. */
 export const STORY_COVER_CHOICES = [1, 3] as const;
 export type StoryCoverChoice = typeof STORY_COVER_CHOICES[number];
+
+/**
+ * How many times cover art may be made for one story (each time is one cover,
+ * or three to choose from). After that the cover stays as it is.
+ */
+export const STORY_COVER_CHANCES = 3;
 
 /** Covers just made: each address shows one until it is kept or let go. */
 export interface MadeStoryCovers {
@@ -102,6 +103,8 @@ export interface MadeStoryCovers {
 export interface StoryCoverService {
   /** The story's kept cover, as an address an `<img>` can show, or undefined. */
   coverUrl: (storyId: string) => string | undefined;
+  /** How many times covers have been made for the story: each uses one of its `STORY_COVER_CHANCES`. */
+  madeCount: (storyId: string) => number;
   /** Makes `count` covers from the request. None is kept yet; each made address shows one. */
   make: (storyId: string, request: StoryCoverRequest, count: StoryCoverChoice) => Promise<MadeStoryCovers>;
   /** Keeps one made cover as the story's cover, replacing any cover before it. */

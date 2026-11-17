@@ -27,13 +27,13 @@ export function WorldInfoCoverPreview(props: ComponentProps<typeof StoryDetailSc
   const covers = useStoryCovers(coverStore, makeCovers);
   const storyId = `world-card-preview:${props.story.id}`;
   const request = { title: props.story.title, synopsis: props.story.synopsis, genre: record.seed.story.required.genre, style: record.seed.story.required.style };
-  const flow = useStoryCoverManifest({ covers, storyId, request, characters,
+  const flow = useStoryCoverManifest({ covers, storyId, request, characters, unlimited: true,
     pictures: { pictureOf: key => pictures.pictureOf(storyId, key),
       manifest: card => pictures.manifest(storyId, card.key, { card, story: { genre: request.genre, style: request.style } }) },
     referenceOf: key => pictures.referenceOf(storyId, key),
   });
   return <>
-    <p className="mb-3 text-xs text-neutral-400">Cover test: sample characters, separate Workshop device storage, real image generation and request limits.</p>
+    <p className="mb-3 text-xs text-neutral-400">Cover test: sample characters, separate Workshop device storage, real image generation and request limits. The app gives each story 3 chances; here there is no limit.</p>
     <StoryDetailScreen {...props} story={{ ...props.story, imageUrl: covers.coverUrl(storyId) ?? props.story.imageUrl ?? '' }} coverAction={flow.onCover} />
     {flow.overPage}
   </>;

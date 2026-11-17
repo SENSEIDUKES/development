@@ -16,9 +16,9 @@ Vertical 2:3 composition, striking focal point, detailed illustration, readable 
 {title instruction}
 No logos, signatures, or watermarks.`;
 
-/** {title instruction} once the story has reached its ending, destined or failed: the title is drawn on the cover. */
+/** {title instruction} when the reader turns Title on the cover on: the title is drawn on the cover. */
 export const COVER_TITLE_ON = 'The only lettering is the exact title “{title}”, displayed once in expressive, clearly readable typography suited to the cover. Do not invent subtitles, volume numbers, author names, or other lettering.';
-/** {title instruction} until the story has reached its ending: the title is shown beneath the artwork instead. */
+/** {title instruction} otherwise: the title is shown beneath the artwork instead. */
 export const COVER_TITLE_OFF = 'No lettering. The title will appear beneath the artwork.';
 
 export const COVER_REFERENCE_RULES = 'Use the referenced characters in this cover. Preserve each character’s recognizable face, hair, gender and defining appearance. Adapt pose, expression, lighting and composition to the story; do not copy the portrait’s background or framing.';
@@ -41,7 +41,7 @@ export const STORY_COVER_FIELD_LIMITS = { title: 160, genre: 80, style: 20, syno
 /**
  * The cover prompt: the approved template filled from the story's own words.
  * A line whose field the story does not have is left out. The exact title is
- * drawn once only on a titled cover (a story that has reached its ending, or
+ * drawn once only on a titled cover (the reader's choice when it is made, or
  * `title: true`); otherwise the art carries no lettering.
  */
 export function buildStoryCoverPrompt(request: StoryCoverRequest, options: { title?: boolean } = {}): string {

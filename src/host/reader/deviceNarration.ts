@@ -30,6 +30,13 @@ export const DEVICE_NARRATION_PREFERENCE_KEY = 'device-narration';
  * repeats on every reload. Kokoro is then switched off so the app can open.
  */
 export const DEVICE_NARRATION_WORKING_KEY = 'device-narration-working';
+/**
+ * The mark names its visit and is renewed every second while the voice works,
+ * so a second tab of the app sees a live mark and leaves it alone; only a mark
+ * nobody has renewed for a while was left by a page that closed.
+ */
+const MARK_RENEWED_MS = 1_000;
+const MARK_LEFT_MS = 5_000;
 /** The most clips kept at once: a chapter's worth behind and ahead of the reader. */
 const CLIPS_KEPT = 120;
 
@@ -105,8 +112,15 @@ export function createDeviceNarration({ preferences, createWorker = browserWorke
 }): DeviceNarration {
   const read = (key: string) => { try { return preferences?.read(key) ?? null; } catch { return null; } };
   const forget = (key: string) => { try { preferences?.remove(key); } catch { /* nothing more to do */ } };
-  // Working when the page last closed: it was closed under the voice, so the voice stays off.
-  const stopped = read(DEVICE_NARRATION_WORKING_KEY) !== null;
+  const visit = Math.random().toString(36).slice(2);
+  // A mark from another visit that stopped being renewed: that page closed while the voice worked.
+  const left = () => {
+    const mark = read(DEVICE_NARRATION_WORKING_KEY);
+    if (!mark) return false;
+    const [owner, at] = mark.split(':');
+    return owner !== visit && !(Date.now() - Number(at) <= MARK_LEFT_MS);
+  };
+  const stopped = left();
   if (stopped) { forget(DEVICE_NARRATION_WORKING_KEY); forget(DEVICE_NARRATION_PREFERENCE_KEY); }
   let state: DeviceNarrationState = stopped ? { on: false, model: 'idle', stopped } : { on: read(DEVICE_NARRATION_PREFERENCE_KEY) === 'on', model: 'idle' };
   const listeners = new Set<() => void>();
@@ -114,8 +128,14 @@ export function createDeviceNarration({ preferences, createWorker = browserWorke
 
   const graphicsChip = hasGraphicsChip().catch(() => false);
   void graphicsChip.then(chip => set({ graphicsChip: chip }));
+  let renewing: ReturnType<typeof setInterval> | undefined;
+  const mark = () => { try { preferences?.write(DEVICE_NARRATION_WORKING_KEY, `${visit}:${Date.now()}`); } catch { /* the guard is lost for this visit only */ } };
   const working = (busy: boolean) => {
-    try { if (busy) preferences?.write(DEVICE_NARRATION_WORKING_KEY, String(Date.now())); else preferences?.remove(DEVICE_NARRATION_WORKING_KEY); } catch { /* the guard is lost for this visit only */ }
+    if (busy) { mark(); renewing ??= setInterval(mark, MARK_RENEWED_MS); return; }
+    clearInterval(renewing);
+    renewing = undefined;
+    // Another tab's mark is its own to clear.
+    if (read(DEVICE_NARRATION_WORKING_KEY)?.startsWith(`${visit}:`)) forget(DEVICE_NARRATION_WORKING_KEY);
   };
 
   let worker: KokoroWorkerLike | undefined;
@@ -154,6 +174,13 @@ export function createDeviceNarration({ preferences, createWorker = browserWorke
   };
 
   const load = () => {
+    // The page closed under the voice moments ago and reopened faster than the mark could be read as left.
+    if (left()) {
+      forget(DEVICE_NARRATION_WORKING_KEY);
+      forget(DEVICE_NARRATION_PREFERENCE_KEY);
+      set({ on: false, stopped: true });
+      return;
+    }
     if (state.model === 'loading' || state.model === 'ready') return;
     try {
       worker ??= createWorker();

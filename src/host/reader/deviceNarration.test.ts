@@ -36,12 +36,9 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 0));
 describe('narration made on the device', () => {
   it('switches itself off when the app closed while the voice was working, so a phone cannot be stuck closing it', async () => {
     const preferences = memory();
-    const first = narration(preferences);
-    first.service.setOn(true);
-    await settle();
-    // Starting: the mark is set; the page closes here (an iPhone out of memory) and nothing clears it.
-    expect(preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(true);
-
+    preferences.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');
+    // Left by a page that closed under the voice: nobody has renewed it for ten seconds.
+    preferences.write(DEVICE_NARRATION_WORKING_KEY, `gone:${Date.now() - 10_000}`);
     const next = narration(preferences);
     expect(next.service.getState()).toMatchObject({ on: false, stopped: true });
     expect(preferences.kept.has(DEVICE_NARRATION_PREFERENCE_KEY)).toBe(false);
@@ -50,18 +47,53 @@ describe('narration made on the device', () => {
     expect(next.service.clip(line('One.'), [])).toBeUndefined();
     expect(next.sent).toEqual([]);
     expect(deviceNarrationStatus(next.service.getState(), true)).toContain('ran out of memory');
+  });
 
-    // A visit that ends normally leaves no mark: ready, a line made, nothing working.
+  it('leaves another open tab alone while its voice is working', async () => {
+    const preferences = memory();
+    const first = narration(preferences);
+    first.service.setOn(true);
+    await settle();
+    expect(preferences.kept.get(DEVICE_NARRATION_WORKING_KEY)).toMatch(/:\d+$/);
+    // A second tab opens while the first is still downloading: the mark is fresh, so nothing is switched off.
+    const second = narration(preferences);
+    expect(second.service.getState()).toMatchObject({ on: true });
+    expect(second.service.getState().stopped).toBeUndefined();
+    expect(preferences.kept.get(DEVICE_NARRATION_PREFERENCE_KEY)).toBe('on');
+    // The first tab's mark is its own: the second never clears it, and the first does when it is ready.
+    expect(preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(true);
+    first.answer({ type: 'ready', device: 'wasm' });
+    expect(preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(false);
+  });
+
+  it('notices a mark left moments ago when the voice is next started', async () => {
+    vi.useFakeTimers();
+    try {
+      const preferences = memory();
+      preferences.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');
+      // The page reopened at once: the mark still looks fresh, so the app opens with Kokoro on.
+      preferences.write(DEVICE_NARRATION_WORKING_KEY, `gone:${Date.now()}`);
+      const next = narration(preferences);
+      expect(next.service.getState()).toMatchObject({ on: true });
+      // By the first Listen the mark has gone unrenewed: Kokoro is switched off instead of loaded.
+      vi.advanceTimersByTime(6_000);
+      expect(next.service.clip(line('One.'), [])).toBeUndefined();
+      expect(next.sent).toEqual([]);
+      expect(next.service.getState()).toMatchObject({ on: false, stopped: true });
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('keeps its mark only while the voice works', async () => {
     const calm = narration(memory());
     calm.service.setOn(true);
     await settle();
     calm.answer({ type: 'ready', device: 'wasm' });
+    expect(calm.preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(false);
     void calm.service.clip(line('One.'), []);
     expect(calm.preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(true);
     calm.spoken();
     expect(calm.preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(false);
   });
-
 
   it('is off until the reader turns it on, downloads once, and is remembered', async () => {
     const { service, sent, answer, preferences } = narration();

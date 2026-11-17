@@ -1,5 +1,5 @@
 /**
- * Kokoro voices from SEIHouse's own voice server (SENSEI, 2026-11-17): the free
+ * Kokoro voices from SEIHouse's own voice server (SENSEI, 2026-11-17): the foundation
  * voice for narration and every line without a paid cast voice. The voice
  * server (`services/kokoro-voice`, on Google Cloud Run) makes a line once,
  * keeps it, and serves the saved file to every reader after, so a line is only

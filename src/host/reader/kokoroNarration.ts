@@ -5,8 +5,8 @@ import type { ReadAloudLine, ReaderPreferenceStorage } from '@seihouse/sen/reade
  * Kokoro voices from SEIHouse's own voice server (SENSEI, 2026-11-17). Made in
  * the reader's browser, Kokoro was far too slow on a phone, so the voice server
  * makes each line instead: once, for the first reader who hears it, and keeps
- * it, so every reader after hears the saved file at once. No charge to the
- * reader. A line with a paid cast voice keeps that voice; this reads everything
+ * it, so every reader after hears the saved file at once. A foundation voice:
+ * cheaper than a premium voice, not free (SENSEI, 2026-11-17). A line with a paid cast voice keeps that voice; this reads everything
  * else, where the device's own robotic voice read before.
  *
  * The three voices are from SEIHouse's first Kokoro cast, one for each part
@@ -162,7 +162,7 @@ export function useKokoroNarrationService(narration: KokoroNarration) {
 /** One line saying where Kokoro stands, for Reader Settings. */
 export function kokoroNarrationStatus(state: KokoroNarrationState, english: boolean): string {
   if (!english) return 'Kokoro reads English. This story is read by your device\'s own voice.';
-  if (!state.on) return 'Free voices for every line, in place of your device\'s robotic one. Each line is made once on SEIHouse\'s voice server and kept for every reader.';
+  if (!state.on) return 'Natural voices for every line, in place of your device\'s robotic one. Each line is made once on SEIHouse\'s voice server and kept for every reader.';
   if (state.problem) return `The voice server stopped answering, so your device's own voice reads on. Switch Kokoro off and on to try again. ${state.problem}`.trim();
   const heard = state.made + state.kept;
   if (!heard) return 'On. Press Listen: the first line can take a few seconds while the voice server wakes.';

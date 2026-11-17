@@ -135,7 +135,7 @@ export const chapterVoiceEnergy = (lines: readonly Pick<ChapterVoiceLine, 'text'
   voiceEnergyPrice(lines.reduce((total, line) => total + line.text.length, 0), model);
 
 /**
- * The host's own free narration (NovelExpanded: Kokoro, made once on SEIHouse's
+ * The host's own narration voice (NovelExpanded: Kokoro, made once on SEIHouse's
  * voice server and kept for every reader): voices for every line that has no
  * cast voice, in place of the device's robotic one. The Reader shows its
  * switch in Narration.

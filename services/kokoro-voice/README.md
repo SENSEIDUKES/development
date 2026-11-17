@@ -1,6 +1,6 @@
 # Kokoro voice server
 
-SEIHouse's free voice for NovelExpanded (SENSEI, 2026-11-17). It reads the
+SEIHouse's foundation voice for NovelExpanded (SENSEI, 2026-11-17): the guaranteed floor, not the ceiling, and not free (it carries an Energy price; premium voices such as ElevenLabs stay above it). It reads the
 narration and every line that has no paid cast voice, with Kokoro-82M (Apache
 2.0). It makes a line once, keeps it in Cloud Storage, and serves the saved file
 to every reader after, so a line is only ever made one time.

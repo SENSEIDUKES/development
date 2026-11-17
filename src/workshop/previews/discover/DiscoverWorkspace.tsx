@@ -39,7 +39,7 @@ export function DiscoverWorkspace() {
   return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'discover')!}
     renderDevelopment={render}
     workshopControls={{
-      description: 'Development shares the app’s Discover page and shell: Stories, Creators, Codex and Lore with a left browsing rail and genre filter beside the feed controls. Events appear under Rankings. Sample stories, creators, Codex entries, follows and rankings exist only in Workshop. This preview reads the app’s saved profile preferences; sample worlds stay isolated, and navigation outside Discover opens the real app.',
+      description: 'Development runs the full app host with its working Familiar, header preferences and sound controls: Stories, Creators, Codex and Lore with a left browsing rail and genre filter beside the feed controls. Events appear under Rankings. Sample stories, creators, Codex entries, follows and rankings exist only in Workshop. This preview reads the app’s saved profile preferences; sample worlds stay isolated while all other pages use the app’s real services and browser storage.',
       defaultSection: 'pages',
       sections: [{
         id: 'pages',

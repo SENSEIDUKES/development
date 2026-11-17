@@ -32,8 +32,8 @@ beside All / My updates inside the results panel and stacks on narrow screens.
 NovelExpanded (`src/novel-expanded/DiscoverPage.tsx`) shows only the app's published
 stories. Empty catalogues have an explicit empty state. Releases, creator/Codex
 public projections, follows and ranking boards are not connected in the app.
-The existing Workshop at `?preview=discover` shares that same page and AppShell,
-injecting its sample catalogue from `src/workshop/previews/discover/previewData.ts`.
+The existing Workshop at `?preview=discover` runs the full `NovelExpandedApp` host, including the working Familiar, profile
+actions, language/music preferences and sound controls, injecting its sample catalogue from `src/workshop/previews/discover/previewData.ts`.
 Its iframe uses the same feature route with `canvas=1`; samples and sample-opening
 feedback never enter the app's import graph. No `reference/` folder.
 

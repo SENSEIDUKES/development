@@ -75,6 +75,7 @@ export function DiscoverPage({
           events={DISCOVER_EVENTS}
           onOpenWorld={(storyId) => navigate({ page: 'story', storyId })}
           {...catalogue}
+          notice={route.lore ? undefined : catalogue?.notice}
         />
       </div>
     </AppShell>

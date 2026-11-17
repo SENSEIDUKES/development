@@ -421,8 +421,10 @@ mode**. That means:
       download them straight from R2: R2 charges nothing to send files out,
       and sending audio to listeners is the cost that grows with readers.
       SENSEI has an R2 account; it is not set up for development yet. The
-      voice server makes lines on Cloud Run either way, and the app does not
-      change, because it only receives a line's address.
+      voice server makes lines on Cloud Run either way. The app's server
+      (`src/server/audio/kokoroVoice.ts`) must accept the R2 address, since it
+      takes only `/clip/` paths today; the Reader does not change, because it
+      only receives a line's address.
     - **Built** (2026-11-17): Reader Settings, Narration, **Kokoro voices**,
       On. Listen is read in three voices of the first Kokoro cast, one each
       for the narrator, the main character and everyone else, asked for a few

@@ -30,7 +30,7 @@ What that change is:
 - Copy any lines already kept in `gs://seihouse-core-kokoro-voices` across,
   or let them be made again.
 
-The app and the Reader do not change: they only receive a line's address.
+The Reader does not change: it only receives a line's address. The app's server does (`kokoroVoice.ts`, above).
 
 ## How the app uses it
 

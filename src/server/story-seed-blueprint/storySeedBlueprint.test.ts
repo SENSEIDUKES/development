@@ -621,7 +621,7 @@ describe("Blueprint story length", () => {
     expect(response.status).toBe(200);
     expect(provider.requests[0].responseJsonSchema.properties.estimatedArcs).toMatchObject({ minimum: 10, maximum: 40 });
     expect(provider.requests[0].userPrompt).not.toContain("estimatedArcs is exactly");
-    expect(provider.requests[0].systemInstruction).toContain("Choose a length the Destined Ending honestly needs.");
+    expect(provider.requests[0].systemInstruction).toContain("Choose the scale from the premise, the cast's relationships, the breadth of the conflict and the journey to the Destined Ending.");
     // A suggestion in range keeps its look-ahead.
     expect((response.body as WorldBlueprint).arcLookahead?.map(entry => entry.arcNumber)).toEqual([2, 3]);
     // A provider that ignores the range costs no Blueprint: the suggestion is kept inside it, and Arc 1 stays the opening.
@@ -684,6 +684,23 @@ describe("Cleaned-up Blueprint instructions", () => {
   };
   const count = (haystack: string, needle: string) => haystack.split(needle).length - 1;
 
+  it('passes the selected relationship and political tags with the cast-first schema in one provider call', async () => {
+    const seed = canonicalSeed();
+    seed.story.required.storyTags = ['regression', 'enemies to lovers', 'political romance', 'sect politics'];
+    const provider = new RecordingProvider();
+    const response = await post({ storySeed: seed }, provider);
+    expect(response.status).toBe(200);
+    expect(provider.requests).toHaveLength(1);
+    const { userPrompt, systemInstruction, responseJsonSchema } = provider.requests[0];
+    const sentSeed = JSON.parse(userPrompt.slice(userPrompt.indexOf('{'), userPrompt.indexOf('\n\n# THIS BLUEPRINT')));
+    expect(sentSeed.story.required.storyTags).toEqual(seed.story.required.storyTags);
+    expect(sentSeed.story.required.premise).toBe(seed.story.required.premise);
+    const fields = Object.keys(responseJsonSchema.properties);
+    expect(fields.indexOf('characters')).toBeLessThan(fields.indexOf('destinedEnding'));
+    expect(fields.indexOf('mainOpposition')).toBeLessThan(fields.indexOf('destinedEnding'));
+    expect(systemInstruction).toContain('Finish their cards before proceeding.');
+  });
+
   it("states each rule once and drops dead conditions, internal labels, and app words", async () => {
     const { systemInstruction, userPrompt, both } = await promptFor(canonicalSeed());
     for (const rule of [
@@ -705,7 +722,7 @@ describe("Cleaned-up Blueprint instructions", () => {
     ]) expect(both).not.toContain(removed);
     // The writer's skeleton (SENSEI, 2026-11-06): who it is, then the Origin, World and Arc skills
     // under How to build, then how to read the Seed, how to return the Blueprint, and the hard rules.
-    const order = ["# ROLE AND MISSION", "# HOW TO BUILD", "[Origin] SEN Eastern Fantasy 1.3.0", "[World] SEN World Builder 1.5.0", "[Arc] SEN Arc Planner 1.1.0",
+    const order = ["# ROLE AND MISSION", "# HOW TO BUILD", "Complete these steps in order.", "[Origin] SEN Eastern Fantasy 1.4.0", "[World] SEN World Builder 1.7.0", "[Arc] SEN Arc Planner 1.3.0",
       "# HOW TO READ THE STORY SEED", "The creator's words\n", "# HOW TO RETURN THE BLUEPRINT", "One name for one thing\n", "# HARD RULES"]
       .map(heading => systemInstruction.indexOf(heading));
     expect(order.every(index => index >= 0)).toBe(true);

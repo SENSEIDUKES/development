@@ -37,8 +37,14 @@ screen:
    Korean and Japanese writing styles), **Soundscapes** (the first-party ambient catalog), **Cues** (the
    first-party inline sound effects) and **Atmospheres** (the first-party weather and place sounds).
    When the host supplies `onBrowseToolkit`, **Browse plugins** and each card open **Creator Plugins**
-   (`CreatorPlugins`), showing the built-in Style Packs, Soundscapes, Cues and Atmospheres alongside
-   `.spp` skill and audio pack import. Without `onBrowseToolkit`, a Preview tag and one honest status
+   (`CreatorPlugins`): the SEIHouse Plugins Page (`SPPPluginBrowser` from `@seihouse/ui`) over the
+   built-in and installed `.spp` packs. One sideways row per kind, a switch between Information
+   (Style Packs) and Media (Soundscapes, Cues, Atmospheres), search, Mine (packs installed on this
+   device), "See all" into one kind, and a pack's detail with what is inside: each file's name and
+   description, with its trigger word or group beside it. Each pack is the official plugin card; a built-in pack's cover is its kind's
+   Toolkit art (`coverUrl`), and an installed pack gets the card's own drawn cover. The top stays
+   short on a phone (a back link, the title, search and the switches), and the page closes with
+   **Import your own**: `.spp` audio and skill pack import, with its messages beside the buttons. Without `onBrowseToolkit`, a Preview tag and one honest status
    line appear instead.
 3. **Your worlds** — the main focus. A native, swipeable scroll-snap row of Home-style
    `LibraryCard` covers with title and "Ch. N · Draft/Shared/Public/Complete", the most
@@ -134,6 +140,17 @@ destinations, tab switches and history, empty and local states, 320/768/1440 wid
 reduced motion. Evidence: `output/playwright/creator-space/`.
 
 ## Workshop history
+
+- **2026-11-17 (the official Plugins Page):** From SENSEI, Creator Plugins is now the
+  Plugins Page from the UI repository (`SPPPluginBrowser`, `@seihouse/ui` 0.25.0) with the
+  official plugin card and its real cover image, replacing this folder's own pack card,
+  filter chips and full-page pack view. Built-in packs wear their kind's Creator Toolkit art;
+  a pack opens in the page's own detail sheet (from the bottom on a phone, from the side on
+  a wide screen), raised above the bottom navigation. The URL, the props hosts pass and both
+  importers are unchanged, so the app and the Workshop preview changed together.
+  Later the same day, from SENSEI on a phone: the top was cut down (no description, a slim
+  back link, a smaller title) so plugins start on the first screen, and importing moved to
+  the foot of the page.
 
 - **2026-11-01 (Toolkit plugins & Creator Plugins view):** Added **Cues** and **Atmospheres**
   beside Style Packs and Soundscapes in the Creator Toolkit, switched the Toolkit from a

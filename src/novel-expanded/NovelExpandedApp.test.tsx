@@ -37,7 +37,7 @@ import { READER_MUSIC_MOOD } from '../components/harness-generation/development/
 import { installFakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 import { NovelExpandedApp } from './NovelExpandedApp';
 import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
-import { createDeviceNarration } from '../host/reader/deviceNarration';
+import { createKokoroNarration } from '../host/reader/kokoroNarration';
 import { createMemoryStoryCoverStore } from '../host/media/storyCovers';
 import { readStorySettingsDraft, writeStorySettingsDraft } from '@seihouse/library/stories';
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
@@ -111,7 +111,7 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
     // A server without the voice provider: chapters offer no voices unless a test supplies one.
     chapterVoiceServer: { info: vi.fn(async () => ({ available: false })), cast: vi.fn(async () => ({})), line: vi.fn(async () => new Blob([new Uint8Array([1])], { type: 'audio/mpeg' })) },
     // Off, and never asked to load: no test downloads a voice model.
-    deviceNarration: createDeviceNarration({ hasGraphicsChip: async () => false, createWorker: () => { throw new Error('no worker in tests'); } }),
+    kokoroNarration: createKokoroNarration({ requestLine: async () => { throw new Error('no voice server in tests'); } }),
     ...overrides,
   };
 };

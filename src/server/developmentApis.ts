@@ -12,7 +12,7 @@ import { STORY_SPARK_VISITOR_LIMIT, storySparkUsageHeaders } from '../server/sto
 import { handleFamiliarLiveHttp } from '../server/familiar-live/http';
 import { FAMILIAR_LIVE_VISITOR_LIMIT } from '../server/familiar-live/limits';
 import { handleCodexVoiceQuoteHttp } from '../server/audio/codexVoiceQuoteHttp';
-import { CHAPTER_VOICE_VISITOR_LIMIT, handleChapterVoiceHttp } from '../server/audio/chapterVoiceHttp';
+import { CHAPTER_VOICE_VISITOR_LIMIT, KOKORO_VOICE_VISITOR_LIMIT, handleChapterVoiceHttp, isKokoroVoiceRequest } from '../server/audio/chapterVoiceHttp';
 import { createConfiguredCodexVoiceQuoteService } from '../server/audio/codexVoiceQuote';
 import { modelRouterStatus } from '../server/model-router/status';
 import {
@@ -68,6 +68,7 @@ export const generationApis = (
     windowMs: 60 * 60 * 1_000,
   });
   const guardChapterVoice = createPublicGenerationGuard(CHAPTER_VOICE_VISITOR_LIMIT);
+  const guardKokoroVoice = createPublicGenerationGuard(KOKORO_VOICE_VISITOR_LIMIT);
   const guardReaderTranslation = createPublicGenerationGuard({
     key: 'reader-translation',
     limit: 12,
@@ -136,7 +137,8 @@ export const generationApis = (
             : pathname === '/api/codex-voice-quote'
               ? guardCodexVoiceQuote(request)
             : pathname === '/api/chapter-voice'
-              ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardChapterVoice(request)
+              // Its limit depends on what is asked (a paid line or a free Kokoro one), so it is checked with the body below.
+              ? { allowed: true }
             : pathname === '/api/reader-translation'
               ? guardReaderTranslation(request)
             : pathname === '/api/story-spark'
@@ -207,6 +209,16 @@ export const generationApis = (
           return;
         }
         if (pathname === '/api/chapter-voice') {
+          const voiceAdmission: PublicGenerationGuardResult = request.method?.toUpperCase() === 'POST'
+            ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? (isKokoroVoiceRequest(body) ? guardKokoroVoice : guardChapterVoice)(request)
+            : { allowed: true };
+          if (!voiceAdmission.allowed) {
+            writeJson(response, voiceAdmission.status ?? 403, { error: voiceAdmission.error ?? 'This Development action is unavailable.' }, {
+              'Cache-Control': 'no-store',
+              ...(voiceAdmission.retryAfterSeconds ? { 'Retry-After': String(voiceAdmission.retryAfterSeconds) } : {}),
+            });
+            return;
+          }
           const result = await handleChapterVoiceHttp(
             { method: request.method, body },
             { environment, onError: error => console.error('[chapter-voice]', error) },

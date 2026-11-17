@@ -1,4 +1,4 @@
-import { CHAPTER_VOICE_VISITOR_LIMIT, handleChapterVoiceHttp } from './chapterVoiceHttp';
+import { CHAPTER_VOICE_VISITOR_LIMIT, KOKORO_VOICE_VISITOR_LIMIT, handleChapterVoiceHttp, isKokoroVoiceRequest } from './chapterVoiceHttp';
 import {
   createPublicGenerationGuard,
   developmentAccessToken,
@@ -9,6 +9,7 @@ import {
 export const maxDuration = 120;
 
 const guardChapterVoice = createPublicGenerationGuard(CHAPTER_VOICE_VISITOR_LIMIT);
+const guardKokoroVoice = createPublicGenerationGuard(KOKORO_VOICE_VISITOR_LIMIT);
 
 interface RequestLike {
   method?: string;
@@ -24,7 +25,7 @@ interface ResponseLike {
 
 export default async function chapterVoiceHandler(request: RequestLike, response: ResponseLike) {
   const admission: PublicGenerationGuardResult = request.method?.toUpperCase() === 'POST'
-    ? ownerTokenAdmission(request, developmentAccessToken(process.env)) ?? guardChapterVoice(request)
+    ? ownerTokenAdmission(request, developmentAccessToken(process.env)) ?? (isKokoroVoiceRequest(request.body) ? guardKokoroVoice : guardChapterVoice)(request)
     : { allowed: true };
   const result = admission.allowed
     ? await handleChapterVoiceHttp(

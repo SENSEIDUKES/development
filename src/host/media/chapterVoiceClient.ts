@@ -64,6 +64,13 @@ export async function requestChapterVoiceLine(line: { text: string; voiceKey: st
   return base64ToBlob(audio.base64, audio.mimeType);
 }
 
+/** A free Kokoro line from SEIHouse's voice server: the saved clip's address, and whether it was made just now. */
+export async function requestKokoroLine(line: { text: string; voice: string }, options: VoiceRequestOptions = {}): Promise<{ url: string; made: boolean }> {
+  const answer = await post({ kokoro: line }, options);
+  if (typeof answer.url !== 'string' || !/^https:\/\//.test(answer.url)) throw new ChapterVoiceRequestError('The voice server answered without a clip.', 502);
+  return { url: answer.url, made: answer.made === true };
+}
+
 /** The voice server as the device's voices use it. */
 export interface ChapterVoiceClient {
   info(): Promise<{ available: boolean; model?: string }>;

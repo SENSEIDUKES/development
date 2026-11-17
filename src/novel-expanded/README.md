@@ -404,6 +404,12 @@ request through the Library's `planArc`; the reader reviews or edits the goals
   with the sample preview.
 
 - **2026-11-17** — **The cover flow, refined** (SENSEI). The Manifest cover sheet no longer shows the main character's portrait (only a missing one, to be made there): it shows the chances left, Title on the cover (On | Off), the optional second character, and two tiles, one cover or three, with their Energy. Three covers are auditioned one at a time, large, with arrows, swipe or keys, instead of a large cover over three thumbnails. Each novel has **three chances** to make cover art, counted in the sheet; after the third the cover is locked. The title is now chosen when the cover is made, replacing the earned title and **Regenerate with a title** (2026-10-12).
+- **2026-11-17** — **Kokoro moves to SEIHouse's voice server** (SENSEI). Made in the browser,
+  Kokoro worked on an iPhone but far too slowly. The Kokoro voices switch now asks SEIHouse's
+  voice server (`services/kokoro-voice`, Google Cloud Run) for each line, through
+  `/api/chapter-voice` (`{ kokoro: { text, voice } }`, its own visitor limit of 1,500 lines an
+  hour). The server makes a line once, keeps it, and serves the saved file to every reader after.
+  The in-browser model, its worker and the crash guard are removed.
 - **2026-11-17** — **Kokoro no longer closes the app on a phone** (SENSEI's iPhone test). The
   iPhone loaded the large graphics-chip model and Safari closed the app over and over. Phones and
   tablets now always take the small model on the processor, and a mark kept while Kokoro is

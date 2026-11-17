@@ -37,7 +37,7 @@ import { useStoryCovers } from '../host/media/storyCovers';
 import { blueprintPictureOwner, blueprintPictureKey } from '@seihouse/library/story-seed';
 import { useCodexPictures } from '../host/media/codexPictures';
 import { useChapterVoices } from '../host/media/chapterVoices';
-import { useDeviceNarrationService } from '../host/reader/deviceNarration';
+import { useKokoroNarrationService } from '../host/reader/kokoroNarration';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
 import { CreateHubPage, creatorWorldsOf } from './CreateHubPage';
@@ -170,7 +170,7 @@ function NovelExpandedRoutes({ services, writer, askForToken, discoverCatalogue,
   const voiceClient = useMemo(() => chapterVoiceClientWithAccessToken(services.chapterVoiceServer, services.accessToken, askForToken), [services, askForToken]);
   const chapterVoices = useChapterVoices(services.chapterVoices, voiceClient);
   // Kokoro on this device: free voices for every line with no cast voice, switched on in the Reader's Narration settings.
-  const deviceNarration = useDeviceNarrationService(services.deviceNarration);
+  const deviceNarration = useKokoroNarrationService(services.kokoroNarration);
   // The profile picture uses the same image choice and token.
   const portraits = useMemo(() => portraitMakerWithAccessToken(services.requestProfilePicture, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();

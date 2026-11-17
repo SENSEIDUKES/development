@@ -123,10 +123,11 @@ function AudioPresets({ mixer }: { mixer: ReaderMixer }) {
 type SettingsSection = 'text' | 'audio' | 'narration';
 
 /**
- * A host's narration made on the reader's own device (a voice model the
- * browser downloads once): its switch, and one line saying where it stands
- * (downloading, ready and how fast, or why it cannot run here). SEN shows the
- * switch; the host owns the voice.
+ * A host's own free narration, used in place of the device's voice (NovelExpanded:
+ * Kokoro, made on SEIHouse's voice server): its switch, and one line saying
+ * where it stands. SEN shows the switch; the host owns the voice and where it
+ * is made. The name keeps "device" from the first test, which made it in the
+ * reader's browser.
  */
 export interface ReaderDeviceNarration {
   /** What the setting is called: "Kokoro voices". */

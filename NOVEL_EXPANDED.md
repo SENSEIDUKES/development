@@ -802,10 +802,12 @@ entries run to 2026-11-11.
     empty cover says **Manifest**; the reader chooses one cover (5 Energy) or three
     to choose from (15). Covers come from the story's own words (its title, genre,
     tradition, logline, main character, tone, world and tags; never its chapters)
-    with the owner's approved cover template, the title drawn on, behind the Aura
-    Veil's media reveal. One is revealed and worn; three come alive in a picker and
-    the reader keeps one. World Info and Home's card wear it; a kept cover keeps a
-    small Manifest and a download on its corner. Covers are made with the Model
+    with the owner's approved cover template, behind the Aura Veil's media reveal.
+    One is revealed and worn; three open a picker that shows one cover at a time,
+    and the reader keeps one. World Info and Home's card wear it. Since 2026-11-17
+    each novel has three chances to make cover art, counted in the Manifest cover
+    sheet (after the third the cover is locked), and the title is drawn on only
+    when the reader turns Title on the cover on. Covers are made with the Model
     Router's image choice, **Nano Banana 2 Lite** unless the reader picks another;
     visitors may make 3 every 30 minutes and the owner's access token lifts the
     limit. Until the database, a cover is kept on the device, beside the stories.

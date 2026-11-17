@@ -1320,7 +1320,8 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     await click(document.querySelector('.story-cover-option[data-count="1"]'), 'One cover', 20);
     expect(requestStoryCover).toHaveBeenCalledTimes(1);
     expect(requestStoryCover).toHaveBeenCalledWith(expect.objectContaining({ title: created.title }), { model: 'google/gemini-3-pro-image', accessToken: undefined });
-    expect((await storyCovers.loadAll()).map(cover => cover.storyId)).toEqual([created.id]);
+    // The cover, and beside it the one chance the story has used.
+    expect((await storyCovers.loadAll()).map(cover => cover.storyId).sort()).toEqual([created.id, `${created.id}#cover-makings`]);
     expect(worldInfo()!.querySelector('[data-world-card="info-cover"] img')?.getAttribute('src')).toBe('blob:cover-1');
 
     await click(document.querySelector('button[aria-label="Back to your stories"]'), 'Back to your stories', 20);
@@ -1355,7 +1356,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     // Asked for once; the three refused are asked for again with the token.
     expect(requestStoryCover.mock.calls.map(call => call[1]?.accessToken)).toEqual([undefined, undefined, undefined, 'owner-token', 'owner-token', 'owner-token']);
     expect(services.accessToken.current).toBe('owner-token');
-    expect(document.querySelectorAll('.story-cover-choice')).toHaveLength(3);
+    expect(document.querySelector('[data-testid="story-cover-stage"]')?.textContent).toContain('Cover 1 of 3');
   });
 });
 

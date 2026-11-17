@@ -42,6 +42,6 @@ export {
   type StorySettingsDraft,
 } from '../../library/stories/settings/storySettingsDraft';
 export { chapterVoiceEnergy, chapterVoicePlan, type ChapterVoiceCharacter, type ChapterVoiceLine, type ChapterVoicePlan, type ChapterVoiceService, type DeviceNarrationService } from '../../library/stories/chapterVoices';
-export { STORY_COVER_CHOICES, codexPictureRequest, storyCoverRequest, type CodexPictureRequest, type CodexPictureService, type MadeStoryCovers, type StoryCoverChoice, type StoryCoverRequest, type StoryCoverService } from '../../library/stories/storyCover';
+export { STORY_COVER_CHANCES, STORY_COVER_CHOICES, codexPictureRequest, storyCoverRequest, type CodexPictureRequest, type CodexPictureService, type MadeStoryCovers, type StoryCoverChoice, type StoryCoverRequest, type StoryCoverService } from '../../library/stories/storyCover';
 
 export { useStoryCoverManifest } from '../../library/stories/StoryCoverManifest';

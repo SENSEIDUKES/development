@@ -1050,7 +1050,7 @@ async function walk(browser, viewport, sample) {
   check(!(await page.evaluate(slidesSideways)), 'Settings must never scroll sideways.');
   await shot('4c-story-settings');
   await settingsCard.click();
-  // Manifest on the cover: one cover or three; three unseal behind the veil, then the picker, then World Info and Home wear the one kept.
+  // Manifest on the cover: one cover or three; three unseal behind the veil, then the picker (one cover at a time), then World Info and Home wear the one kept.
   const coverManifest = page.locator('[data-world-card="info"] [aria-label="Manifest cover art"]');
   await coverManifest.scrollIntoViewIfNeeded();
   await shot('4d-cover-manifest');
@@ -1067,15 +1067,14 @@ async function walk(browser, viewport, sample) {
   await shot('4e-cover-choice');
   await threeCovers.click();
   await page.locator('[data-testid="generation-overlay"]').waitFor();
-  await page.locator('.story-cover-choice').nth(2).waitFor({ timeout: 15_000 });
-  await page.waitForTimeout(1200);
-  await page.getByTestId('story-cover-stage').waitFor();
+  await page.getByTestId('story-cover-stage').waitFor({ timeout: 15_000 });
   await page.waitForTimeout(1_000);
   await shot('4f-cover-picker');
   check(!(await page.evaluate(slidesSideways)), 'The cover picker must never scroll sideways.');
-  await page.locator('.story-cover-choice').nth(1).click();
+  await page.getByRole('button', { name: 'Next cover' }).click();
+  check((await page.getByTestId('story-cover-stage').textContent())?.includes('Cover 2 of 3'), 'Next cover should show the second cover.');
   await visibleButton('Use this cover').click();
-  await page.locator('.story-cover-choice').first().waitFor({ state: 'detached' });
+  await page.getByTestId('story-cover-stage').waitFor({ state: 'detached' });
   await page.waitForTimeout(500);
   check(counts.covers.length === 3, `Three cover requests expected, saw ${counts.covers.length}.`);
   check(counts.covers.every(cover => cover.token), 'Each cover should carry the owner\'s token, which lifts the visitor limit.');
@@ -1084,7 +1083,13 @@ async function walk(browser, viewport, sample) {
   await infoCover.waitFor();
   check((await infoCover.getAttribute('src'))?.startsWith('blob:'), 'World Info should wear the new cover.');
   check(await infoCover.evaluate(image => image.complete && image.naturalWidth > 0), 'The cover should load on World Info.');
-  check(await page.locator('[data-world-card="info"] [aria-label="Manifest a new cover"]').count() === 1, 'A kept cover should keep a small Manifest in its corner.');
+  const recast = page.locator('[data-world-card="info"] [aria-label="Manifest a new cover"]');
+  check(await recast.count() === 1, 'A kept cover with chances left should keep a small Manifest in its corner.');
+  await recast.click();
+  check((await page.getByTestId('story-cover-chances').textContent())?.includes('2 of 3 chances left'), 'The cover sheet should say how many chances are left.');
+  await shot('4f2-cover-chances');
+  await page.keyboard.press('Escape');
+  await page.getByTestId('story-cover-chances').waitFor({ state: 'detached' });
   check(await page.locator('[data-world-card="info"] [data-testid="story-cover"] a[download]').count() === 0, 'A kept cover should carry no download; the Codex recovers covers.');
   await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: 0 }));
   await shot('4g-story-view-cover');

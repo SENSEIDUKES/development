@@ -179,9 +179,10 @@ Library's `StorySettings` and `CreateStorySettings`, `@seihouse/library/stories`
 
 A cover requires the protagonist’s manifested portrait. Blueprint Cast can manifest
 characters before the novel exists; the same bytes are adopted into its Codex and
-remain available after reload. The cover dialog also offers Manifest when the main
-portrait is missing, then waits for the reader to choose one or three covers.
-One optional second manifested character can be selected with swipe, arrows or keys.
+remain available after reload. The cover sheet shows the main portrait only when it
+is missing, to be manifested there; then it waits for the reader to choose one or
+three covers. One optional second manifested character can be selected with swipe,
+arrows or keys.
 The request labels attached images in protagonist/counterpart order and sends actual
 bounded image bytes with the existing short story prompt. One reference makes a
 protagonist-focused cover; two references use both distinct characters. No analysis
@@ -191,21 +192,27 @@ another image call. Image and cover limits still apply per generation. Portraits
 in the existing device store; JSON story/Blueprint exports do not embed the images.
 
 The cover on World Info is where covers are made. A story without one shows
-**Manifest** across its cover; tapping it offers **One cover** (5 Energy) or
-**Three to choose from** (15 Energy). The covers are made from the story's own
-words (title, genre, tradition, logline, main character, tone, world and tags;
-never its chapters) with the owner's approved cover template, through
-`/api/story-cover`, one request per cover, behind the Aura Veil's
-media reveal. One cover is kept and revealed; three open a picker where they
-come alive one after another, and the reader keeps one ("Use this cover"; the
-others are let go, and each can be downloaded first). A kept cover shows a
-small Manifest and a download in its lower corners, and World Info and Home's
-card wear it.
+**Manifest** across its cover; tapping it opens a short sheet: the chances left,
+**Title on the cover** (On | Off), the optional **Second character**, and two
+tiles, **One cover** (5 Energy) or **Three to choose from** (15 Energy). The
+covers are made from the story's own words (title, genre, tradition, logline,
+main character, tone, world and tags; never its chapters) with the owner's
+approved cover template, through `/api/story-cover`, one request per cover,
+behind the Aura Veil's media reveal. One cover is kept and revealed; three open
+a picker that shows one cover at a time, large, to cycle through (swipe, arrows
+or keys), each with its download, and the reader keeps one ("Use this cover";
+the others are let go). World Info and Home's card wear the kept cover.
 
-- **A title is earned.** Until the story reaches its ending (the destined ending,
-  or a failed fate: either is a finished story) its covers carry no lettering.
-  Once it has, the request asks for the title (`titled`), and the Manifest on a
-  kept cover offers **Regenerate with a title**.
+- **Three chances per novel** (`STORY_COVER_CHANCES`). Each time covers are made,
+  one cover or three, uses one. The sheet says so, with three lights and how
+  many are left ("Last chance" on the third). While chances remain, a kept cover
+  keeps a small Manifest on its top-left corner; once they are used the cover is
+  locked, and the sheet says to message SEIHouse for another. The count is kept
+  on the device beside the cover. The Workshop's cover test has no limit
+  (`unlimited`).
+- **The title is the reader's choice** when the cover is made: Title on the cover
+  is off unless they turn it on (`titled`). It is no longer earned by reaching
+  the ending.
 - The image model is the Model Router's Images choice (`useModelPreference('images')`),
   Nano Banana 2 Lite unless the reader picks another.
 - Visitors may make 3 covers every 30 minutes, so three to choose from uses the
@@ -391,6 +398,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-17** — **The cover flow, refined** (SENSEI). The Manifest cover sheet no longer shows the main character's portrait (only a missing one, to be made there): it shows the chances left, Title on the cover (On | Off), the optional second character, and two tiles, one cover or three, with their Energy. Three covers are auditioned one at a time, large, with arrows, swipe or keys, instead of a large cover over three thumbnails. Each novel has **three chances** to make cover art, counted in the sheet; after the third the cover is locked. The title is now chosen when the cover is made, replacing the earned title and **Regenerate with a title** (2026-10-12).
 - **2026-11-17** — **Kokoro no longer closes the app on a phone** (SENSEI's iPhone test). The
   iPhone loaded the large graphics-chip model and Safari closed the app over and over. Phones and
   tablets now always take the small model on the processor, and a mark kept while Kokoro is

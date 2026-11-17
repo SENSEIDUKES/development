@@ -62,6 +62,18 @@ export const BLUEPRINT_PROMPT_HEADINGS = {
 export const BLUEPRINT_PROMPT_PARTS = ['role', 'building', 'reading', 'returning', 'hardRules', 'seed', 'request', 'reminder'] as const;
 export type BlueprintPromptPart = (typeof BLUEPRINT_PROMPT_PARTS)[number];
 
+/** The work order inside How to build, shared by every Blueprint skill loadout. */
+export const BLUEPRINT_BUILD_SEQUENCE = `Complete these steps in order. Finish each checkpoint before moving to the next step.
+
+1. Origin: read the creator's premise, genre, selected tags and chosen tradition together. Establish what kind of story this is and what relationships and conflicts it promises.
+Checkpoint: carry all of those choices into building the world; none is optional background decoration.
+
+2. World: create the world cards and complete the main character, principal supporting cast and main opposition from that Origin. Write their circumstances as Chapter 1 opens. Any ending or goals the creator already wrote remain constraints; do not invent the Destined Ending or plan arcs yet.
+Checkpoint: the cast contains the people needed for the promised relationships and conflicts, including the main antagonist when the opposition is a character. Finish their cards before proceeding.
+
+3. Arc: use the completed cast, world and opposition to write the title, logline, Destined Ending and story length. Then plan Arc 1 and the look-ahead with those established people.
+Checkpoint: the ending addresses the established main opposition, and the arc plan uses the cast already made. Do not introduce a missing principal figure only in the ending or arc plan.`;
+
 const BLUEPRINT_MISSION = 'Build the Blueprint for this novel from the creator\'s Story Seed: the world it opens with, as Codex cards, its Destined Ending and length, and Arc 1.';
 
 /**
@@ -101,7 +113,7 @@ Every name a card points to is the exact name on that thing's own card:
 
 A slot that names a card is left blank when no card fits. Never fill it with a word such as none, unclaimed or unknown.
 
-Write the answer in the order it is asked for, so each card is written before the cards that point to it.
+Write the answer in the schema's field order: complete the world cards, cast and mainOpposition before title, logline, destinedEnding and estimatedArcs, then arcOne and arcLookahead. References between cards use the same exact names whichever card is written first.
 
 Lists
 Where a slot holds more than one name (holds, knows, ties, belongsTo, habitat), separate them with commas, and never put a comma inside a name. A count goes before its name: "3 Spirit Pills". knownRanks lists the ranks from lowest to highest, separated by commas. laws writes one law per line.
@@ -146,7 +158,7 @@ export const buildWorldBlueprintSystemPrompt = (
   identity: string = SEN_AUTHOR_IDENTITY,
 ): string => [
   BLUEPRINT_PROMPT_HEADINGS.role, blueprintRole(identity),
-  BLUEPRINT_PROMPT_HEADINGS.building, assembleBlueprintSkills(skills),
+  BLUEPRINT_PROMPT_HEADINGS.building, BLUEPRINT_BUILD_SEQUENCE, assembleBlueprintSkills(skills),
   BLUEPRINT_PERMANENT_RULES,
 ].join('\n\n');
 
@@ -209,14 +221,9 @@ const cardList = (fields: readonly string[], limit: number, minItems = 0) => ({
 export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
   type: "object",
   additionalProperties: false,
-  // The order the model writes its answer in: each part comes before the
-  // parts that point to it, so a name is set on its own card before another
-  // card uses it, and the Destined Ending before the arcs that travel to it.
+  // Complete the World step, including the cast and opposition, before the
+  // Arc step writes an ending or goals. Both schema lists use this order.
   required: [
-    "title",
-    "logline",
-    "destinedEnding",
-    "estimatedArcs",
     "powerSystem",
     // The world at Chapter 0: a card kind left out of the answer would leave
     // the world short of it, so every one is asked for.
@@ -229,14 +236,14 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     "abilities",
     "characters",
     "mainOpposition",
+    "title",
+    "logline",
+    "destinedEnding",
+    "estimatedArcs",
     "arcOne",
     "arcLookahead",
   ],
   properties: {
-    title: { type: "string", minLength: 1 },
-    logline: { type: "string", minLength: 1 },
-    destinedEnding: { type: "string", minLength: 1 },
-    estimatedArcs: { type: "integer", minimum: exactArcs ?? STORY_LENGTH_ARCS.min, maximum: exactArcs ?? STORY_LENGTH_ARCS.max },
     // The World rules sheet, which the Seed keeps in its power-system family.
     powerSystem: { type: "object", additionalProperties: false, required: SEED_WORLD_RULES_FIELDS, properties: textSlots(SEED_WORLD_RULES_FIELDS) },
     places: cardList(SEED_PLACE_SLOT_FIELDS, SEED_PLACE_LIMIT, 1),
@@ -261,6 +268,10 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     // The supporting cast, written last of the cards: the creator's own by name first, then supporting ones.
     characters: cardList(SEED_CHARACTER_SLOT_FIELDS, SEED_CHARACTER_LIMIT, 1),
     mainOpposition: { type: "string" },
+    title: { type: "string", minLength: 1 },
+    logline: { type: "string", minLength: 1 },
+    destinedEnding: { type: "string", minLength: 1 },
+    estimatedArcs: { type: "integer", minimum: exactArcs ?? STORY_LENGTH_ARCS.min, maximum: exactArcs ?? STORY_LENGTH_ARCS.max },
     arcOne: ARC_PLAN_DRAFT_SCHEMA,
     arcLookahead: ARC_LOOKAHEAD_SCHEMA,
   },

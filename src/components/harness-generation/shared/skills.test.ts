@@ -319,9 +319,9 @@ describe('Harness installed skills', () => {
   it('assembles the World Blueprint\'s skills in schema order under plain headings, one per slot', () => {
     const [origin, world, arc] = SEN_BLUEPRINT_DEFAULT_SKILLS;
     const text = assembleBlueprintSkills([arc, origin, world]);
-    expect(text.indexOf('[Origin] SEN Eastern Fantasy 1.3.0\n')).toBe(0);
-    expect(text.indexOf('[World] SEN World Builder 1.5.0\n')).toBeGreaterThan(0);
-    expect(text.indexOf('[Arc] SEN Arc Planner 1.1.0\n')).toBeGreaterThan(text.indexOf('[World]'));
+    expect(text.indexOf('[Origin] SEN Eastern Fantasy 1.4.0\n')).toBe(0);
+    expect(text.indexOf('[World] SEN World Builder 1.7.0\n')).toBeGreaterThan(0);
+    expect(text.indexOf('[Arc] SEN Arc Planner 1.3.0\n')).toBeGreaterThan(text.indexOf('[World]'));
     expect(text).not.toMatch(/CAPA|HARNESS/);
     expect(() => assembleBlueprintSkills([origin, world])).toThrow('exactly one Arc skill');
     expect(() => assembleBlueprintSkills([origin, origin, world, arc])).toThrow('exactly one Origin skill');
@@ -335,5 +335,9 @@ describe('Harness installed skills', () => {
     expect(arc).toContain(`together they take exactly ${ARC_LENGTH}`);
     expect(arc).toContain(`as 1 to ${MAX_ARC_GOALS} goals in order`);
     expect(MAX_ARC_LOOKAHEAD).toBe(2);
+    for (const [scale, arcs] of [['Short', 10], ['Medium', 20], ['Long', 30]] as const) {
+      expect(arc).toContain(`${scale} novel: about ${arcs * ARC_LENGTH} chapters, or ${arcs} arcs.`);
+    }
+    expect(arc).toContain('When the creator chose a length, use it exactly.');
   });
 });

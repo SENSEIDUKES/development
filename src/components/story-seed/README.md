@@ -16,6 +16,17 @@ cleaner, and canonical production Blueprint fields were verified against
 
 ## Finalized product contract
 
+Length estimates use approximate short, medium and long novel scales of 300,
+600 and 900 chapters (10, 20 and 30 arcs), unless the creator chose a length.
+
+Blueprint generation builds in three ordered steps within its existing single
+model call: Origin, then the world and complete principal cast, then the Destined
+Ending and arc plan using that cast. The cast follows the chosen style, premise,
+genre and selected tags. Cards describe the world as Chapter 1 opens, without
+scheduling appearances. The prompt checkpoints
+and response field order guide this sequence; they are not separate model calls
+or runtime approval gates.
+
 Story Seed is one creation flow with these visible destinations:
 
 - **Origin** presents Style, Genre, Fun Settings (Face Slap, Plot Armor, Recognition), Title, Synopsis, Pressure, Survival, and Tags, in that order on every viewport.
@@ -695,3 +706,4 @@ that the first choices fit fully in the upper half of the viewport.
 
 - **2026-11-13:** Blueprint Cast gains saved character portraits through the existing Codex image service; those images carry into a created novel and serve as cover references.
 - **2026-11-14:** Fate Will Decide stays before generation. Once a World Blueprint exists (its Review and the view-only Blueprint after Chapter 1), a character, world card or biography slot the Blueprint left blank stays blank instead of reading Fate Will Decide. The Seed's live card and the Create step keep it, since there it still describes what generation will do.
+- **2026-11-16:** Blueprint instructions and response order complete the principal cast and main opposition from the Origin before generating the Destined Ending and arc plan. The chosen style, premise, genre and tags shape the cast as Chapter 1 opens, without scheduling appearances. Length guidance gives approximate 10/20/30-arc scales. The call count, card limits and saved data shape are unchanged.

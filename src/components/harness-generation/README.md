@@ -377,6 +377,28 @@ From SENSEI, step one toward themed Reader Chambers: every color the Reader pain
 
 ## History
 
+- **2026-11-16 (Origin, opening cast and length guidance):** SENSEI's wording
+  review reduces Origin to the Eastern fantasy category, leaving the chosen
+  style, premise, genre and tags to shape the world. World Builder establishes
+  the cast and opposition at Chapter 1 without scheduling their appearances.
+  Arc Planner gives approximate short/medium/long scales of 300/600/900 chapters
+  (10/20/30 arcs); the creator's chosen length still wins. Skill versions are
+  Origin 1.4.0, World 1.7.0 and Arc 1.3.0. An arc number on imported cards is a
+  separate design idea, not implemented here.
+
+- **2026-11-16 (cast before ending and arcs):** From SENSEI's Echoes of the
+  Ascendant Elder test: the saved Seed included romance and political tags,
+  but the Blueprint supplied only the hero and his master. How to build gives the existing
+  single call three ordered steps with checkpoints: interpret the Origin,
+  complete the world and principal cast, then use them for the ending and arc
+  plan. SEN World Builder 1.6.0 casts from the premise, genre and selected tags
+  and establishes the main opposition, including principal figures first seen
+  in later arcs, as they stand before Chapter 1. SEN Arc Planner 1.2.0 uses that
+  completed cast. The response schema puts all cards and mainOpposition before
+  the title, logline, Destined Ending, length and arc plan. These are model
+  instructions and output ordering within one call, not separate calls or
+  runtime approval gates. No cast quota or saved-story shape changed.
+
 - **2026-11-16 (the Reader takes a clip that is still being made):** for a
   host's voice made on the reader's device. `readAloudClip` may answer with a
   promise and is told the lines that follow, so the host can make them ahead;

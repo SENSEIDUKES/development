@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { WORLD_CARD_KINDS, readConditions } from '@seihouse/sen/contracts';
 import { SEN_BLUEPRINT_DEFAULT_SKILLS } from '@seihouse/sen/harness-generation';
 import { createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
-import { BLUEPRINT_PERMANENT_RULES, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintPrompt, buildWorldBlueprintSystemPrompt } from './prompt';
+import { BLUEPRINT_BUILD_SEQUENCE, BLUEPRINT_PERMANENT_RULES, WORLD_BLUEPRINT_SYSTEM_PROMPT, buildWorldBlueprintPrompt, buildWorldBlueprintSystemPrompt } from './prompt';
 import { worldBlueprintResponseSchema } from './prompt';
 
 /**
@@ -23,6 +23,11 @@ const ANSWER_FIELDS: Record<string, string> = {
 };
 
 describe('The world builder asks for every Codex card kind', () => {
+  it('keeps Origin to its broad fiction category, leaving the Seed to choose the world and style', () => {
+    const origin = SEN_BLUEPRINT_DEFAULT_SKILLS.find(skill => skill.slot === 'origin')!;
+    expect(origin.instructions).toBe('This is an Eastern fantasy web novel.');
+    expect(BLUEPRINT_BUILD_SEQUENCE).not.toContain('Include principal figures who enter the story in later arcs.');
+  });
   it('names every card kind and every slot of it', () => {
     for (const kind of WORLD_CARD_KINDS) {
       expect(BLUEPRINT_PERMANENT_RULES, kind.label).toContain(`- ${ANSWER_FIELDS[kind.id]}`);
@@ -54,9 +59,6 @@ describe('The world builder asks for every Codex card kind', () => {
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('No two people in the cast are described through the same features, and no Look opens the way another does.');
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Write what is seen, never the trait\'s name.');
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Leave Marks blank when they have none.');
-    // The Origin skill: how people are described follows the kind of story the Seed's tags, genre and premise show.
-    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Read the Seed\'s tags, genre and premise for what kind of story this is and who it is written for');
-    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Where the Seed gives no clear signal, describe men and women with the same care.');
     // It names no feature and no stock phrase: a model repeats whatever it is shown on every character.
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toMatch(/\b(brows?|jade|porcelain|chin)\b/i);
   });
@@ -67,9 +69,9 @@ describe('The world builder asks for every Codex card kind', () => {
     // The World skill says what to build.
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('A card says how things stand before Chapter 1 begins, and nothing after.');
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('a bond not yet formed, a rank not yet reached, a thing not yet found is never written as done. Write where each one starts instead.');
-    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Whoever the premise or an Arc 1 goal is about has a card of their own, person or beast, named or not');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Whoever the premise, selected tags or a creator-supplied arc goal calls for has a card of their own, person or beast, named or not');
     expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('A species card describes a kind of creature and never stands in for one of them.');
-    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('The places cover the ground Arc 1 stands on: where the story opens, and wherever its Arc 1 goals will take it. When several places sit inside a larger one, the larger one has a card too.');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).toContain('Build the places the opening, premise, selected tags and any creator-supplied Arc 1 goals need. The Arc skill plans on this established ground afterwards. When several places sit inside a larger one, the larger one has a card too.');
     // The Blueprint's own rules say how names point at cards, whichever skills it reads.
     for (const rule of [
       '- what a Look or Clothing shows someone carrying (a weapon, a staff, a token) is a thing card they hold, named in their holds; otherwise leave it out. Ordinary clothes need no card;',
@@ -117,12 +119,40 @@ describe('The world builder asks for every Codex card kind', () => {
     expect(swapped.startsWith('# ROLE AND MISSION\n\nYou are a celebrated Western fantasy novelist. Build the Blueprint')).toBe(true);
     expect(swapped).toContain('[Origin] Western Fantasy 1.0.0\nYou are writing the world of a Western fantasy novel');
     expect(swapped).not.toContain('Eastern fantasy');
-    expect(swapped).toContain('[World] SEN World Builder 1.5.0');
+    expect(swapped).toContain('[World] SEN World Builder 1.7.0');
+    expect(swapped).toContain(BLUEPRINT_BUILD_SEQUENCE);
     expect(swapped.endsWith(BLUEPRINT_PERMANENT_RULES)).toBe(true);
     // The same identity closes the request, in its Mission Reminder.
     const request = buildWorldBlueprintPrompt(createEmptyStorySeedInput(), undefined, 'You are a celebrated Western fantasy novelist.');
     expect(request).toContain('# MISSION REMINDER\n\nYou are a celebrated Western fantasy novelist. Build this novel');
     expect(request).not.toContain('Eastern fantasy');
+  });
+
+  it('finishes the cast and opposition before generating an ending or arc, in both schema orders', () => {
+    const schema = worldBlueprintResponseSchema();
+    const fields = Object.keys(schema.properties);
+    expect(fields).toEqual(schema.required);
+    for (const field of ['mainCharacter', 'characters', 'mainOpposition', ...Object.values(ANSWER_FIELDS)]) {
+      expect(fields.indexOf(field), field).toBeLessThan(fields.indexOf('destinedEnding'));
+      expect(fields.indexOf(field), field).toBeLessThan(fields.indexOf('title'));
+    }
+    expect(fields.indexOf('destinedEnding')).toBeLessThan(fields.indexOf('arcOne'));
+    expect(fields.indexOf('arcOne')).toBeLessThan(fields.indexOf('arcLookahead'));
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT.indexOf(BLUEPRINT_BUILD_SEQUENCE)).toBeLessThan(WORLD_BLUEPRINT_SYSTEM_PROMPT.indexOf('[Origin]'));
+    expect(BLUEPRINT_BUILD_SEQUENCE).toContain('Finish their cards before proceeding.');
+    expect(WORLD_BLUEPRINT_SYSTEM_PROMPT).not.toContain('Decide where the story ends before you plan how it begins.');
+  });
+
+  it('casts from the Seed and establishes opposition in the opening world without scheduling appearances', () => {
+    const world = SEN_BLUEPRINT_DEFAULT_SKILLS.find(skill => skill.slot === 'world')!.instructions!;
+    const arc = SEN_BLUEPRINT_DEFAULT_SKILLS.find(skill => skill.slot === 'arc')!.instructions!;
+    expect(world).toContain('chosen style, premise, genre and selected tags, within the Origin');
+    expect(world).toContain('Give the relationships and conflicts those choices promise the people who will carry them.');
+    expect(world).not.toMatch(/later arc|Arc 3|first appear/);
+    expect(world).toContain('Their cards state their relationships and circumstances when the story opens.');
+    expect(world).toContain('A law of the world or the Heavens need not become a person');
+    expect(world).toContain('do not add filler to meet a count');
+    expect(arc).toContain('Begin only after the World skill has completed the cast, world cards and main opposition.');
   });
 
   it('has a place in the answer for every slot of every card kind', () => {

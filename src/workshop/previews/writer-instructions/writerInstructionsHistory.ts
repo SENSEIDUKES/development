@@ -21,6 +21,16 @@ export interface WriterInstructionsChange {
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
     date: '2026-11-16',
+    summary: 'SENSEI reviewed the Blueprint wording: Origin should set the Eastern fantasy category without prescribing cultivation tropes or repeating style guidance; the cast should describe the world at Chapter 1 without considering appearance schedules; and length estimates need short, medium and long anchors. Origin 1.4.0 is one sentence. World 1.7.0 reads the chosen style, premise, genre and tags and retains the main opposition while removing later-arc appearance wording. The build checkpoint also describes Chapter 1. Arc 1.3.0 gives approximate 300/600/900-chapter scales (10/20/30 arcs), allows other appropriate lengths and preserves a creator-selected length. An arc number on imported cards remains a separate design idea. Existing Arc 1 planning and brief look-ahead remain unchanged.',
+    changed: { 'blueprint-sequence': '171406a0d2efed', 'origin-skill': '0a5a990a512e15', 'world-skill': '1b7dd7344c172d', 'arc-skill': '0c8767bff7122b' },
+  },
+  {
+    date: '2026-11-16',
+    summary: 'Build the cast before the ending and arcs (SENSEI, from Echoes of the Ascendant Elder: the Blueprint omitted the people its romance and political tags called for). How to build gains three ordered steps and checkpoints inside the existing single call: interpret the Origin, complete the world and principal cast, then use them to write the ending and arc plan. SEN World Builder 1.6.0 casts from the premise, genre and selected tags and establishes the main opposition, including principal figures first seen in later arcs, as they stand before Chapter 1. It owns mainOpposition, previously described by the Arc skill. SEN Arc Planner 1.2.0 begins with the completed cast and opposition. The response schema and return instructions put every world card and mainOpposition before the title, logline, Destined Ending, length and arc plan. The Origin skill, call count, card limits and saved data shape are unchanged. These checkpoints guide the model; they are not separate calls or runtime approval gates.',
+    changed: { 'blueprint-sequence': '077e8a7967e787', 'world-skill': '02bbd83879b291', 'arc-skill': '0a8c42d7800642', 'blueprint-rules': '06ed6aa008cb71' },
+  },
+  {
+    date: '2026-11-16',
     summary: 'A minor figure\'s appears tag now writes down what the chapter shows of them (SENSEI, 2026-11-16: every spoken line gets a cast voice, minor figure or not, and "it\'s not the tagger\'s job to create content or facts"). A minor figure has no card, so nothing said whether they were a man or a woman, or how old, and their voice could only be guessed. In a story with cards, the appears teaching ends with three more lines: on a minor figure\'s appears tag, two more parts, man, woman or unknown, then young, middle-aged, old or unknown; unknown unless the chapter\'s own words show it; a card never gets them. The tagger documents what is on the page and never decides it. Not tested with a real tagger yet.',
     changed: { appearance: '1dd6bd2e82a7a4' },
   },

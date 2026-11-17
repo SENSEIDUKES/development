@@ -5,11 +5,22 @@ chapter writer reads before the story, and every dated change to them.
 Open it at `?preview=writer-instructions` (Systems section).
 
 - **Created:** 2026-10-04
-- **Last Workshop update:** 2026-11-05
+- **Last Workshop update:** 2026-11-16
 - **Last source comparison:** not applicable; the page reads the live code
 - **Status:** active, Workshop-owned reference surface
 
 ## What it shows
+
+**2026-11-16 (wording review):** Origin now states only the Eastern fantasy
+category. World Builder describes the cast at Chapter 1 without scheduling
+appearances. Arc Planner supplies short/medium/long length guidance of
+10/20/30 arcs. The live blocks and history show this revision.
+
+**2026-11-16:** World builder now shows its build order and checkpoints before
+Origin, World and Arc: interpret the Origin, complete the principal cast and
+world, then generate the ending and arc plan. The blocks and full prompt read
+the live code, and the dated history records World Builder 1.6.0, Arc Planner
+1.2.0 and the changed response order. All three steps remain inside one call.
 
 Titled **What the Models Read** since 2026-11-05 (SENSEI: "you got to be a
 robot to be able to look at, understand what you're seeing … it just needs to

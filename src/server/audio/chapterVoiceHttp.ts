@@ -34,11 +34,15 @@ export const CHAPTER_VOICE_VISITOR_LIMIT = { key: 'chapter-voice', limit: 60, wi
 /** A visitor's free Kokoro lines an hour: a chapter is a few hundred lines, and a kept line is still one request. */
 export const KOKORO_VOICE_VISITOR_LIMIT = { key: 'kokoro-voice', limit: 1_500, windowMs: 60 * 60 * 1_000 } as const;
 
-/** Whether a voice request asks for a free Kokoro line, which has its own, larger visitor limit. */
+/**
+ * Whether a voice request asks for a free Kokoro line, which has its own, larger
+ * visitor limit. The same test chooses what the request does below, so a request
+ * counted as Kokoro can only ever make a Kokoro line.
+ */
 export function isKokoroVoiceRequest(body: unknown): boolean {
   try {
     const parsed: unknown = typeof body === 'string' ? JSON.parse(body) : body;
-    return Boolean(parsed) && typeof parsed === 'object' && 'kokoro' in (parsed as object);
+    return isRecord(parsed) && isRecord(parsed.kokoro);
   } catch {
     return false;
   }

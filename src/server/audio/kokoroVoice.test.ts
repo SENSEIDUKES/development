@@ -54,5 +54,8 @@ describe('Kokoro voices through the app\'s server', () => {
     expect(isKokoroVoiceRequest(JSON.stringify({ kokoro: {} }))).toBe(true);
     expect(isKokoroVoiceRequest({ line: { text: 'a', voiceKey: 'v' } })).toBe(false);
     expect(isKokoroVoiceRequest('not json')).toBe(false);
+    // A paid line cannot be counted as Kokoro: what is counted is what is made.
+    expect(isKokoroVoiceRequest({ kokoro: null, line: { text: 'a', voiceKey: 'v' } })).toBe(false);
+    expect(isKokoroVoiceRequest({ kokoro: 'yes', line: { text: 'a', voiceKey: 'v' } })).toBe(false);
   });
 });

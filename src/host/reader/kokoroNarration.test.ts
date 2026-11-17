@@ -91,14 +91,22 @@ describe('Kokoro voices from the voice server', () => {
     expect(voice.asked.at(-1)!.text).toBe('Four.');
   });
 
-  it('hands waiting lines to the device when switched off', async () => {
+  it('hands every line to the device when switched off, even one the server is still making', async () => {
     const voice = server();
     const narration = createKokoroNarration({ requestLine: voice.requestLine });
     narration.setOn(true);
-    void narration.clip(line('One.'), [line('Two.'), line('Three.')]);
+    const reading = narration.clip(line('One.'), [line('Two.'), line('Three.')]);
     const waiting = narration.clip(line('Three.'), []);
     narration.setOn(false);
+    await expect(reading).resolves.toBeUndefined();
     await expect(waiting).resolves.toBeUndefined();
+    // The server's late answer changes nothing.
+    voice.asked[0].answer();
+    await settle();
+    expect(narration.getState()).toMatchObject({ made: 0, kept: 0 });
+    narration.setOn(true);
+    void narration.clip(line('One.'), []);
+    expect(voice.asked.at(-1)!.text).toBe('One.');
   });
 
   it('says plainly where it stands', () => {

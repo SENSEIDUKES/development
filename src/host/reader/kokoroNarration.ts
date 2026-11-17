@@ -54,7 +54,7 @@ export interface KokoroNarration {
 /** What the app's server answers for one line: the saved clip's address, and whether it was made just now. */
 export type KokoroLineRequest = (line: { text: string; voice: string }) => Promise<{ url: string; made: boolean }>;
 
-interface Job { key: string; text: string; voice: string; resolve: (url: string | undefined) => void }
+interface Job { key: string; text: string; voice: string; resolve: (url: string | undefined) => void; letGo?: boolean }
 
 export function createKokoroNarration({ preferences, requestLine }: {
   preferences?: ReaderPreferenceStorage;
@@ -68,21 +68,24 @@ export function createKokoroNarration({ preferences, requestLine }: {
   // Each line's clip, by its voice and words: the same words in the same voice are asked for once.
   const clips = new Map<string, string | Promise<string | undefined>>();
   const queue: Job[] = [];
-  let asking = 0;
+  const asked = new Set<Job>();
   let failures = 0;
   const keyOf = (line: ReadAloudLine) => `${KOKORO_ROLE_VOICES[line.role]}\n${line.text}`;
 
   const pump = () => {
-    while (asking < AT_ONCE && state.on && !state.problem) {
+    while (asked.size < AT_ONCE && state.on && !state.problem) {
       const job = queue.shift();
       if (!job) return;
-      asking += 1;
+      asked.add(job);
       requestLine({ text: job.text, voice: job.voice }).then(({ url, made }) => {
+        // Switched off while it was asked for: the device has already read it.
+        if (job.letGo) return;
         failures = 0;
         clips.set(job.key, url);
         set(made ? { made: state.made + 1 } : { kept: state.kept + 1 });
         job.resolve(url);
       }, (error: unknown) => {
+        if (job.letGo) return;
         failures += 1;
         clips.delete(job.key);
         job.resolve(undefined);
@@ -90,11 +93,16 @@ export function createKokoroNarration({ preferences, requestLine }: {
           set({ problem: error instanceof Error ? error.message : 'The voice server did not answer.' });
           letGo();
         }
-      }).finally(() => { asking -= 1; pump(); });
+      }).finally(() => { asked.delete(job); pump(); });
     }
   };
   // Every line still waiting is read by the device's own voice instead.
   const letGo = () => { for (const job of queue.splice(0)) { clips.delete(job.key); job.resolve(undefined); } };
+  // Switched off: the lines already asked for are let go too, and whatever the server answers later is ignored.
+  const letGoAll = () => {
+    letGo();
+    for (const job of asked) { job.letGo = true; clips.delete(job.key); job.resolve(undefined); }
+  };
 
   const ask = (line: ReadAloudLine, first: boolean) => {
     const key = keyOf(line);
@@ -116,7 +124,7 @@ export function createKokoroNarration({ preferences, requestLine }: {
       try { if (on) preferences?.write(KOKORO_NARRATION_PREFERENCE_KEY, 'on'); else preferences?.remove(KOKORO_NARRATION_PREFERENCE_KEY); } catch { /* remembered for this visit only */ }
       failures = 0;
       set({ on, problem: undefined });
-      if (!on) letGo();
+      if (!on) letGoAll();
     },
     clip(line, upcoming) {
       if (!state.on || state.problem) return undefined;

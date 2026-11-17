@@ -5,7 +5,7 @@ narration and every line that has no paid cast voice, with Kokoro-82M (Apache
 2.0). It makes a line once, keeps it in Cloud Storage, and serves the saved file
 to every reader after, so a line is only ever made one time.
 
-It runs on Google Cloud Run in the `seihouse-tts` project and sleeps when nobody
+It runs on Google Cloud Run in the `seihouse-core` project and sleeps when nobody
 is listening. On four processor cores it makes about 3.5 seconds of speech a
 second with the full model.
 
@@ -28,7 +28,7 @@ In the Google Cloud console's Cloud Shell:
 
 ```bash
 git clone --depth 1 https://github.com/SENSEIDUKES/development.git seihouse
-bash seihouse/services/kokoro-voice/setup.sh seihouse-tts
+bash seihouse/services/kokoro-voice/setup.sh seihouse-core
 ```
 
 It turns on the services it needs, makes the storage bucket, builds and starts

@@ -47,8 +47,11 @@ const store = BUCKET.startsWith('local:')
 let model;
 const tts = () => (model ??= loadModel().catch(error => { model = undefined; throw error; }));
 
-// One line is made at a time: the model already uses every core. Lines waiting here still hold a
-// request slot, so the server takes many requests at once (setup.sh) and playing a kept clip is never stuck behind them.
+// One line is made at a time: the model already uses every core. Lines waiting here hold a request
+// slot each, so no more than WAITING_LIMIT may wait: past it a line is refused at once (the Reader then
+// reads it with the device) and the rest of the server's slots stay free for playing kept clips.
+const WAITING_LIMIT = 16;
+let waiting = 0;
 let line = Promise.resolve();
 const oneAtATime = work => {
   const next = line.then(work, work);
@@ -139,7 +142,9 @@ createServer(async (request, response) => {
       const key = `${voice}\n${text}`;
       let work = making.get(key);
       if (!work) {
-        work = makeLine(voice, text).finally(() => making.delete(key));
+        if (waiting >= WAITING_LIMIT) { send(response, 503, { error: 'The voice server is busy.' }, { 'Retry-After': '5' }); return; }
+        waiting += 1;
+        work = makeLine(voice, text).finally(() => { waiting -= 1; making.delete(key); });
         making.set(key, work);
       }
       const result = await work;

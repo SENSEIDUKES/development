@@ -409,7 +409,7 @@ mode**. That means:
       the reader's browser (built and tested 2026-11-16) worked on an iPhone
       but was far too slow, and the larger model made Safari close the app.
       The voice server (`services/kokoro-voice`, Google Cloud Run in the
-      `seihouse-tts` project, paid by SENSEI's Google AI Ultra Cloud credit)
+      `seihouse-core` project, paid by SENSEI's Google AI Ultra Cloud credit)
       makes about 3.5 seconds of speech a second on four processor cores, and
       sleeps when nobody is listening. It serves the web app and the future
       Apple and Google store apps alike; a store app may later run Kokoro

@@ -6,7 +6,7 @@
 # sharing policy often refuses the usual public setting, and the app's own key guards making lines.
 set -euo pipefail
 
-PROJECT="${1:?Give the project id, for example: bash setup.sh seihouse-tts}"
+PROJECT="${1:?Give the project id, for example: bash setup.sh seihouse-core}"
 REGION="us-central1"
 SERVICE="kokoro-voice"
 BUCKET="${PROJECT}-kokoro-voices"
@@ -22,7 +22,16 @@ NUMBER="$(gcloud projects describe "${PROJECT}" --format='value(projectNumber)')
 ACCOUNT="${NUMBER}-compute@developer.gserviceaccount.com"
 
 echo "== Letting the project build and run the server"
-gcloud projects add-iam-policy-binding "${PROJECT}" --member="serviceAccount:${ACCOUNT}" --role="roles/run.builder" --condition=None >/dev/null
+# The account Cloud Build builds with: the project's own default, which an organization may leave
+# without any role at all, so it is given exactly what a source deploy needs.
+BUILDER="$(gcloud builds get-default-service-account --format='value(serviceAccountEmail)' 2>/dev/null | sed 's#.*/##')"
+for MEMBER in "${ACCOUNT}" ${BUILDER:+"${BUILDER}"}; do
+  for ROLE in roles/run.builder roles/serviceusage.serviceUsageConsumer; do
+    gcloud projects add-iam-policy-binding "${PROJECT}" --member="serviceAccount:${MEMBER}" --role="${ROLE}" --condition=None >/dev/null
+  done
+done
+echo "== Waiting a minute for Google to apply those permissions"
+sleep 60
 
 echo "== Making the storage for made lines (gs://${BUCKET})"
 if ! gcloud storage buckets describe "gs://${BUCKET}" >/dev/null 2>&1; then

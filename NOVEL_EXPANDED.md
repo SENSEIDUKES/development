@@ -347,12 +347,13 @@ mode**. That means:
   is built, an opened Codex card offers Manifest, so the owner can see how well
   the looks the story wrote down bring its characters and items to life. It
   uses the prompts manifesting while reading will use.
-- **Premium voice is for spoken lines; the narrator is free** (SENSEI,
-  2026-11-16). This is what makes audio affordable for everyone, so no design
-  may undo it. Only the quoted lines the manuscript marks with a speaker are
-  made with a paid voice. The narration, most of every chapter, is read by a
-  voice that costs nothing per chapter (Kokoro, made once on SEIHouse's voice
-  server and kept, or the device's own where Kokoro cannot), and the narrator has no Codex card. Measured on Chapter 1 of a test story
+- **Premium voice is for spoken lines; the narrator uses a foundation voice**
+  (SENSEI, 2026-11-16; "foundation" 2026-11-17). This is what makes audio
+  affordable for everyone, so no design may undo it. Only the quoted lines the
+  manuscript marks with a speaker are made with a premium voice. The
+  narration, most of every chapter, is read by a foundation voice that costs a
+  small fraction of a premium one (Kokoro, made once on SEIHouse's voice server
+  and kept, or the device's own where Kokoro cannot), and the narrator has no Codex card. Measured on Chapter 1 of a test story
   (2026-11-16): spoken lines were about 1,000 of 6,900 characters, 1 cent
   against 7 cents at Fish Audio's promotional API price and 5 cents against
   34 cents at its regular price. That is the difference between a chapter
@@ -396,7 +397,19 @@ mode**. That means:
     reader who is not the creator, and Create mode's line-by-line tools. Not
     tested with real voices or on a real phone, and the minor figure's two
     new tag parts are not tested with a real tagger.
-  - **The free voice is Kokoro, made once on SEIHouse's voice server** (SENSEI,
+  - **Voices come in tiers: foundation and premium** (SENSEI, 2026-11-17).
+    Foundation voices are open models SEIHouse runs itself (Kokoro now;
+    Qwen3-TTS, with voices designed from a description, if it proves out).
+    They are the quality SEIHouse can guarantee to every reader, cheap enough
+    that people everywhere, including readers who rely on audio for
+    accessibility, can take part. They are the floor, not the ceiling, and
+    they are **not free**: their servers cost SEIHouse money, so they carry
+    an Energy price like everything else (not decided yet). Never call them
+    free in the product or the docs. Premium voices (ElevenLabs, Fish Audio
+    and the like) stay: they are the ceiling, for readers who pay for them,
+    and a foundation voice never replaces them. Every voice, foundation or
+    premium, is chosen through the Model Router.
+  - **The foundation voice is Kokoro, made once on SEIHouse's voice server** (SENSEI,
     2026-11-17). Kokoro is a small open voice model (Apache 2.0). It reads the
     narration and every spoken line that has no paid voice; the device's own
     robotic voice is only what reads when Kokoro cannot (another language, the
@@ -414,6 +427,17 @@ mode**. That means:
       sleeps when nobody is listening. It serves the web app and the future
       Apple and Google store apps alike; a store app may later run Kokoro
       itself for listening offline, behind the same Reader setting.
+    - **Public release keeps the audio on Cloudflare R2** (SENSEI,
+      2026-11-17). For development the made lines sit in a Google Cloud
+      Storage bucket (`seihouse-core-kokoro-voices`), which is fine for
+      testing. Before NovelExpanded goes public, they move to R2, and readers
+      download them straight from R2: R2 charges nothing to send files out,
+      and sending audio to listeners is the cost that grows with readers.
+      SENSEI has an R2 account; it is not set up for development yet. The
+      voice server makes lines on Cloud Run either way. The app's server
+      (`src/server/audio/kokoroVoice.ts`) must accept the R2 address, since it
+      takes only `/clip/` paths today; the Reader does not change, because it
+      only receives a line's address.
     - **Built** (2026-11-17): Reader Settings, Narration, **Kokoro voices**,
       On. Listen is read in three voices of the first Kokoro cast, one each
       for the narrator, the main character and everyone else, asked for a few

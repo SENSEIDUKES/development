@@ -123,7 +123,7 @@ function AudioPresets({ mixer }: { mixer: ReaderMixer }) {
 type SettingsSection = 'text' | 'audio' | 'narration';
 
 /**
- * A host's own free narration, used in place of the device's voice (NovelExpanded:
+ * A host's own narration voice, used in place of the device's voice (NovelExpanded:
  * Kokoro, made on SEIHouse's voice server): its switch, and one line saying
  * where it stands. SEN shows the switch; the host owns the voice and where it
  * is made. The name keeps "device" from the first test, which made it in the

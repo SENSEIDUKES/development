@@ -404,6 +404,10 @@ request through the Library's `planArc`; the reader reviews or edits the goals
   with the sample preview.
 
 - **2026-11-17** — **The cover flow, refined** (SENSEI). The Manifest cover sheet no longer shows the main character's portrait (only a missing one, to be made there): it shows the chances left, Title on the cover (On | Off), the optional second character, and two tiles, one cover or three, with their Energy. Three covers are auditioned one at a time, large, with arrows, swipe or keys, instead of a large cover over three thumbnails. Each novel has **three chances** to make cover art, counted in the sheet; after the third the cover is locked. The title is now chosen when the cover is made, replacing the earned title and **Regenerate with a title** (2026-10-12).
+- **2026-11-17** — **Kokoro is a foundation voice, not a free one** (SENSEI). Foundation voices
+  (Kokoro, possibly Qwen3-TTS) are the floor SEIHouse guarantees every reader; premium voices
+  (ElevenLabs, Fish Audio) stay above them for readers who pay. Foundation voices cost server time
+  and will carry an Energy price, so the Reader no longer calls Kokoro free.
 - **2026-11-17** — **Kokoro moves to SEIHouse's voice server** (SENSEI). Made in the browser,
   Kokoro worked on an iPhone but far too slowly. The Kokoro voices switch now asks SEIHouse's
   voice server (`services/kokoro-voice`, Google Cloud Run) for each line, through

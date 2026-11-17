@@ -119,7 +119,7 @@ it('says honestly that the plugin browser is not open yet, unless the host suppl
   expect(browse.mock.calls).toEqual([[undefined], ['style'], ['cue'], ['atmosphere']]);
 });
 
-it('lists parent .spp packs first and reveals individual files only when a parent .spp is clicked', () => {
+it('shows parent .spp packs on the Plugins Page and reveals their files only when one is opened', () => {
   const catalog: CreatorPluginCatalog = {
     packages: [
       {
@@ -188,38 +188,38 @@ it('lists parent .spp packs first and reveals individual files only when a paren
   };
   const onBack = vi.fn();
   const onFilterChange = vi.fn();
+  const onSelectPack = vi.fn();
   act(() => root.render(
     <LibraryPresentationProvider>
-      <CreatorPlugins catalog={catalog} initialFilter="all" onFilterChange={onFilterChange} onBack={onBack} />
+      <CreatorPlugins catalog={catalog} initialFilter="all" onFilterChange={onFilterChange} onSelectPack={onSelectPack} onBack={onBack} />
     </LibraryPresentationProvider>,
   ));
 
-  // Top level shows parent .spp packages and group counts, NOT individual files.
+  // Top level is one row per kind, each parent .spp as a plugin card, NOT individual files.
+  const railTitles = () => [...container.querySelectorAll('[data-slot="spp-plugin-rail"] h2')].map(node => node.textContent);
+  const detail = () => document.querySelector('[data-slot="spp-plugin-browser-detail"]');
   expect(container.querySelector('h1')?.textContent).toBe('Creator Plugins');
+  expect(railTitles()).toEqual(['Style Packs', 'Soundscapes', 'Cues', 'Atmospheres']);
   expect(container.textContent).toContain('NovelExpanded Soundscapes Vol. 1');
-  expect(container.textContent).toContain('Adventure (3)');
-  expect(container.textContent).toContain('Ambient (2)');
-  expect(container.textContent).not.toContain('Adventure 4 Banished');
-  expect(container.textContent).not.toContain('Blade Unsheathe 1');
+  expect(document.body.textContent).not.toContain('Adventure 4 Banished');
 
-  // Clicking the parent .spp opens it and reveals its groups and individual files.
-  click(container.querySelector<HTMLElement>('[data-testid="plugin-spp-ne-soundscapes-vol-1"]') ?? undefined);
-  expect(container.querySelector('h1')?.textContent).toBe('NovelExpanded Soundscapes Vol. 1');
-  expect(container.textContent).toContain('Adventure 4 Banished');
-  expect(container.textContent).toContain('Ambient Night');
+  // The switch keeps media apart from information.
+  click(container.querySelector<HTMLElement>('[data-slot="spp-plugin-browser-groups"] [data-value="media"]') ?? undefined);
+  expect(railTitles()).toEqual(['Soundscapes', 'Cues', 'Atmospheres']);
+  click(container.querySelector<HTMLElement>('[data-slot="spp-plugin-browser-groups"] [data-value="all"]') ?? undefined);
 
-  // Filtering by a group inside the .spp narrows to that group's files.
-  click(button('Ambient (2)'));
-  expect(container.textContent).toContain('Ambient Night');
-  expect(container.textContent).not.toContain('Adventure 4 Banished');
+  // Opening a parent .spp shows what is inside, each file under its group's name.
+  click(container.querySelector<HTMLElement>('[data-plugin-id="ne-soundscapes-vol-1"] button, button[data-plugin-id="ne-soundscapes-vol-1"]') ?? undefined);
+  expect(onSelectPack).toHaveBeenLastCalledWith('ne-soundscapes-vol-1');
+  expect(detail()?.textContent).toContain('NovelExpanded Soundscapes Vol. 1');
+  expect(detail()?.textContent).toContain('Adventure 4 Banished');
+  expect(detail()?.textContent).toContain('Ambient Night');
+  expect(detail()?.textContent).toContain('Ambient');
 
-  // Back returns to the parent .spp list, and Back again returns to Create.
-  click(button('Back to Creator Plugins'));
-  expect(container.querySelector('h1')?.textContent).toBe('Creator Plugins');
-  expect(container.textContent).not.toContain('Ambient Night');
-
-  click(button('Cues'));
+  // "See all" opens one kind and tells the host; a kind change closes the open pack.
+  click(container.querySelectorAll<HTMLElement>('[data-slot="spp-plugin-rail-see-all"]')[2]);
   expect(onFilterChange).toHaveBeenCalledWith('cue');
+  expect(onSelectPack).toHaveBeenLastCalledWith(null);
   expect(container.textContent).toContain('NovelExpanded Cues Vol. 1');
   expect(container.textContent).not.toContain('NovelExpanded Chinese Style');
 

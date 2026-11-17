@@ -80,6 +80,8 @@ export interface CreatorPluginPackage {
   description: string;
   version: string;
   builtIn?: boolean;
+  /** Cover art for the package's card. Without one the card draws its own cover. */
+  coverUrl?: string;
   unitSingular: string;
   unitPlural: string;
   groups: readonly CreatorPluginGroup[];

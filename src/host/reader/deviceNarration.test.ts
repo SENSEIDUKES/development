@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ReadAloudLine } from '@seihouse/sen/reader-runtime';
-import { createDeviceNarration, deviceNarrationStatus, DEVICE_NARRATION_PREFERENCE_KEY, type KokoroWorkerLike } from './deviceNarration';
+import { createDeviceNarration, deviceNarrationStatus, DEVICE_NARRATION_PREFERENCE_KEY, DEVICE_NARRATION_WORKING_KEY, type KokoroWorkerLike } from './deviceNarration';
 import type { KokoroWorkerMessage, KokoroWorkerRequest } from './kokoroWorker';
 
 /** Narration made on the reader's device with Kokoro: downloaded once, then every line made here, free. */
@@ -31,8 +31,117 @@ const narration = (preferences = memory()) => {
   return { ...fake, service, preferences, revoked };
 };
 
+const settle = () => new Promise(resolve => setTimeout(resolve, 0));
+
 describe('narration made on the device', () => {
-  it('is off until the reader turns it on, downloads once, and is remembered', () => {
+  it('switches itself off when the app closed while the voice was working, so a phone cannot be stuck closing it', async () => {
+    const preferences = memory();
+    preferences.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');
+    // Left by a page that closed under the voice: nobody has renewed it for ten seconds.
+    preferences.write(DEVICE_NARRATION_WORKING_KEY, `gone:${Date.now() - 10_000}`);
+    const next = narration(preferences);
+    expect(next.service.getState()).toMatchObject({ on: false, stopped: true });
+    expect(preferences.kept.has(DEVICE_NARRATION_PREFERENCE_KEY)).toBe(false);
+    expect(preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(false);
+    // Nothing is loaded on Listen, and the reader is told why.
+    expect(next.service.clip(line('One.'), [])).toBeUndefined();
+    expect(next.sent).toEqual([]);
+    expect(deviceNarrationStatus(next.service.getState(), true)).toContain('ran out of memory');
+  });
+
+  it('leaves another open tab alone while its voice is working', async () => {
+    const preferences = memory();
+    const first = narration(preferences);
+    first.service.setOn(true);
+    await settle();
+    expect(preferences.kept.get(DEVICE_NARRATION_WORKING_KEY)).toMatch(/:\d+$/);
+    // A second tab opens while the first is still downloading: the mark is fresh, so nothing is switched off.
+    const second = narration(preferences);
+    expect(second.service.getState()).toMatchObject({ on: true });
+    expect(second.service.getState().stopped).toBeUndefined();
+    expect(preferences.kept.get(DEVICE_NARRATION_PREFERENCE_KEY)).toBe('on');
+    // The first tab's mark is its own: the second never clears it, and the first does when it is ready.
+    expect(preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(true);
+    first.answer({ type: 'ready', device: 'wasm' });
+    expect(preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(false);
+  });
+
+  it('notices a mark left moments ago when the voice is next started', async () => {
+    vi.useFakeTimers();
+    try {
+      const preferences = memory();
+      preferences.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');
+      // The page reopened at once: the mark still looks fresh, so the app opens with Kokoro on.
+      preferences.write(DEVICE_NARRATION_WORKING_KEY, `gone:${Date.now()}`);
+      const next = narration(preferences);
+      expect(next.service.getState()).toMatchObject({ on: true });
+      // By the first Listen the mark has gone unrenewed: Kokoro is switched off instead of loaded.
+      vi.advanceTimersByTime(6_000);
+      expect(next.service.clip(line('One.'), [])).toBeUndefined();
+      expect(next.sent).toEqual([]);
+      expect(next.service.getState()).toMatchObject({ on: false, stopped: true });
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('waits to see whether a fresh mark from another visit is renewed before loading', async () => {
+    vi.useFakeTimers();
+    try {
+      // Reopened and Listen pressed within a second of the page closing under the voice.
+      const preferences = memory();
+      preferences.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');
+      preferences.write(DEVICE_NARRATION_WORKING_KEY, `gone:${Date.now() - 1_000}`);
+      const next = narration(preferences);
+      expect(next.service.clip(line('One.'), [])).toBeUndefined();
+      // The mark is kept as it was, not overwritten, and nothing is loaded while it is watched.
+      expect(preferences.kept.get(DEVICE_NARRATION_WORKING_KEY)).toMatch(/^gone:/);
+      expect(next.service.getState()).toMatchObject({ on: true, model: 'loading' });
+      vi.advanceTimersByTime(6_000);
+      expect(next.sent).toEqual([]);
+      expect(next.service.getState()).toMatchObject({ on: false, model: 'idle', stopped: true });
+
+      // A live tab renews its mark: once it is seen to move, this one loads.
+      const shared = memory();
+      shared.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');
+      shared.write(DEVICE_NARRATION_WORKING_KEY, `live:${Date.now()}`);
+      const other = narration(shared);
+      void other.service.clip(line('One.'), []);
+      // The other tab renews its mark every second, as a working tab does.
+      for (let second = 0; second < 6; second += 1) {
+        vi.advanceTimersByTime(1_000);
+        shared.write(DEVICE_NARRATION_WORKING_KEY, `live:${Date.now()}`);
+      }
+      await vi.runOnlyPendingTimersAsync();
+      expect(other.sent).toEqual([{ type: 'load', device: 'wasm' }]);
+      expect(other.service.getState().stopped).toBeUndefined();
+
+      // Renewed once early in the wait, then that tab closed: still caught.
+      const once = memory();
+      once.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');
+      once.write(DEVICE_NARRATION_WORKING_KEY, `brief:${Date.now()}`);
+      const late = narration(once);
+      void late.service.clip(line('One.'), []);
+      vi.advanceTimersByTime(500);
+      once.write(DEVICE_NARRATION_WORKING_KEY, `brief:${Date.now()}`);
+      vi.advanceTimersByTime(5_500);
+      await vi.runOnlyPendingTimersAsync();
+      expect(late.sent).toEqual([]);
+      expect(late.service.getState()).toMatchObject({ on: false, stopped: true });
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('keeps its mark only while the voice works', async () => {
+    const calm = narration(memory());
+    calm.service.setOn(true);
+    await settle();
+    calm.answer({ type: 'ready', device: 'wasm' });
+    expect(calm.preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(false);
+    void calm.service.clip(line('One.'), []);
+    expect(calm.preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(true);
+    calm.spoken();
+    expect(calm.preferences.kept.has(DEVICE_NARRATION_WORKING_KEY)).toBe(false);
+  });
+
+  it('is off until the reader turns it on, downloads once, and is remembered', async () => {
     const { service, sent, answer, preferences } = narration();
     expect(service.getState()).toEqual({ on: false, model: 'idle' });
     // Off: Listen is given nothing, so the device's own voice reads, and nothing is downloaded.
@@ -40,7 +149,9 @@ describe('narration made on the device', () => {
     expect(sent).toEqual([]);
 
     service.setOn(true);
-    expect(sent).toEqual([{ type: 'load' }]);
+    await settle();
+    // No graphics chip: the small model, on the processor.
+    expect(sent).toEqual([{ type: 'load', device: 'wasm' }]);
     expect(preferences.kept.get(DEVICE_NARRATION_PREFERENCE_KEY)).toBe('on');
     answer({ type: 'progress', loaded: 45, total: 90 });
     expect(service.getState()).toMatchObject({ model: 'loading', progress: 0.5 });
@@ -137,14 +248,15 @@ describe('narration made on the device', () => {
     expect(service.getState()).toMatchObject({ model: 'loading' });
   });
 
-  it('loads on the first Listen when it was left on, and says plainly where it stands', () => {
+  it('loads on the first Listen when it was left on, and says plainly where it stands', async () => {
     const preferences = memory();
     preferences.write(DEVICE_NARRATION_PREFERENCE_KEY, 'on');
     const { service, sent, answer } = narration(preferences);
     expect(service.getState()).toMatchObject({ on: true, model: 'idle' });
     expect(sent).toEqual([]);
     expect(service.clip(line('One.'), [])).toBeUndefined();
-    expect(sent).toEqual([{ type: 'load' }]);
+    await settle();
+    expect(sent).toEqual([{ type: 'load', device: 'wasm' }]);
 
     expect(deviceNarrationStatus({ on: false, model: 'idle' }, true)).toBe('Free voices made on this device, in place of its robotic one. Downloads about 90 MB once.');
     expect(deviceNarrationStatus({ on: false, model: 'idle', graphicsChip: true }, true)).toContain('about 330 MB');

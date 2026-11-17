@@ -389,6 +389,11 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-17** — **Kokoro no longer closes the app on a phone** (SENSEI's iPhone test). The
+  iPhone loaded the large graphics-chip model and Safari closed the app over and over. Phones and
+  tablets now always take the small model on the processor, and a mark kept while Kokoro is
+  starting or making a line switches Kokoro off on the next visit if the app closed under it,
+  with a line in Reader Settings saying so.
 - **2026-11-16** — **Kokoro voices, made on the device: a first test** (SENSEI). Reader Settings'
   Narration has a **Kokoro voices** switch. On, the browser downloads the Kokoro voice model once
   from Hugging Face (about 90 MB, or about 330 MB where it can use the graphics chip) and Listen

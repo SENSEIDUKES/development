@@ -171,7 +171,7 @@ it('shows parent .spp packs on the Plugins Page and reveals their files only whe
         builtIn: true,
         unitSingular: 'effect',
         unitPlural: 'effects',
-        groups: [{ id: 'weapons', label: 'Weapons', files: [{ id: 'c1', title: 'Blade Unsheathe 1', badge: 'blade drawn' }] }],
+        groups: [{ id: 'weapons', label: 'Weapons', files: [{ id: 'c1', title: 'Blade Unsheathe 1', badge: 'blade drawn', detail: 'A sword leaves its sheath.' }] }],
       },
       {
         id: 'ne-atmospheres-vol-1',
@@ -215,6 +215,11 @@ it('shows parent .spp packs on the Plugins Page and reveals their files only whe
   expect(detail()?.textContent).toContain('Adventure 4 Banished');
   expect(detail()?.textContent).toContain('Ambient Night');
   expect(detail()?.textContent).toContain('Ambient');
+
+  // A file's own words stay with it: what it is, and its trigger word beside its group.
+  click(container.querySelector<HTMLElement>('[data-plugin-id="ne-cues-vol-1"] button, button[data-plugin-id="ne-cues-vol-1"]') ?? undefined);
+  expect(detail()?.textContent).toContain('Blade Unsheathe 1 — A sword leaves its sheath. — Weapons');
+  expect(detail()?.textContent).toContain('blade drawn');
 
   // "See all" opens one kind and tells the host; a kind change closes the open pack.
   click(container.querySelectorAll<HTMLElement>('[data-slot="spp-plugin-rail-see-all"]')[2]);

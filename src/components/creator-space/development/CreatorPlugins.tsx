@@ -78,7 +78,15 @@ function toPlugin(pack: CreatorPluginPackage): SPPPluginBrowserItem {
     coverAlt: pack.coverUrl ? '' : undefined,
     // "Mine" is what the creator installed on this device; built-in packs come with the app.
     added: !pack.builtIn,
-    contents: pack.groups.flatMap(group => group.files.map(file => ({ label: file.title, detail: group.label }))),
+    // The detail lists every file. Its right-hand slot never wraps, so it holds only the
+    // short word: the file's trigger word, or its group. Everything else is the line's text.
+    contents: pack.groups.flatMap(group => group.files.map(file => {
+      const badge = file.badge && file.badge !== group.label ? file.badge : undefined;
+      return {
+        label: [file.title, file.detail, badge && group.label].filter(Boolean).join(' — '),
+        detail: badge ?? group.label,
+      };
+    })),
   };
 }
 

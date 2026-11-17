@@ -40,8 +40,8 @@ screen:
    (`CreatorPlugins`): the SEIHouse Plugins Page (`SPPPluginBrowser` from `@seihouse/ui`) over the
    built-in and installed `.spp` packs. One sideways row per kind, a switch between Information
    (Style Packs) and Media (Soundscapes, Cues, Atmospheres), search, Mine (packs installed on this
-   device), "See all" into one kind, and a pack's detail with what is inside, each file under its
-   group's name. Each pack is the official plugin card; a built-in pack's cover is its kind's
+   device), "See all" into one kind, and a pack's detail with what is inside: each file's name and
+   description, with its trigger word or group beside it. Each pack is the official plugin card; a built-in pack's cover is its kind's
    Toolkit art (`coverUrl`), and an installed pack gets the card's own drawn cover. The page adds
    Back to Create and `.spp` skill and audio pack import. Without `onBrowseToolkit`, a Preview tag and one honest status
    line appear instead.

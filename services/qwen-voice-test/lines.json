@@ -1,0 +1,53 @@
+{
+ "story": "Tethered Paths of the Immortal Sun",
+ "voices": [
+  {
+   "name": "Narrator",
+   "instruct": "Male, around 60 years old. A warm, measured storyteller with a low, clear voice and an unhurried pace, like an elder reading an old tome aloud by lamplight.",
+   "lines": [
+    "The trial grounds of the Azure Sun Sect lay at the foot of Immortal Sun Peak, a bowl of pale stone where the morning mist burned away early under the golden halo of the mountain. Lin Wei stood at its eastern edge with his hands tucked into his loose sleeves, watching the inner disciples gather on the terraces above as though they were birds settling on a roof they already owned.",
+    "Below them, the outer disciples stood in their plain pale blue robes, shoulder to shoulder and careful not to look too eager. Lin Wei did not bother to be careful. He had learned long ago that eagerness was a debt other people would collect later, with interest."
+   ]
+  },
+  {
+   "name": "Lin Wei",
+   "instruct": "Male, 19 years old. A cool, dry young man with a mocking lilt. Easy, unhurried movements with a half-smile that never reaches the eyes. A lean young man with sharp, unsmiling features whose calm gaze holds a constant faint mockery, his posture always easy and slightly apart from others.",
+   "lines": [
+    "Only the ones who deserve it",
+    "That leaves you safe, Tan Mu.",
+    "Then you have read it carefully",
+    "Most people only read the wins."
+   ]
+  },
+  {
+   "name": "Shen Yue",
+   "instruct": "Female, 18 years old. A clear, steady young woman with quiet conviction. Upright and composed, meeting others' eyes without flinching. A poised young woman whose upright carriage and clear, steady eyes give her the air of someone who never doubts her path.",
+   "lines": [
+    "I have read your trial record. You have lost four duels to inner disciples by withdrawing before the final exchange.",
+    "Withdrawing is not a shame",
+    "Abandoning your partner is.",
+    "Good. Then you will not need to be told when to move."
+   ]
+  },
+  {
+   "name": "Sect Master Yun Zhaoming",
+   "instruct": "Male, 142 years old. An old voice full of wisdom. Still and deliberate, speaking only when others have finished. A tall elder whose silver beard and calm, weighing gaze suggest long years of quiet calculation.",
+   "lines": [
+    "The Heavens do not grant immortality to the idle",
+    "You have been bound. Now you will be tested as one.",
+    "The Sun Stair has shown me its memory",
+    "Your rings flared together yesterday, and the flare was not the cost of one cultivator alone. It was shared. Do you understand what that means?"
+   ]
+  },
+  {
+   "name": "Hua Qingfeng",
+   "instruct": "Male, 45 years old. A smooth, confident voice with a sharp edge. Confident and loose-limbed, always watching the room. A handsome man in dark crimson, with an easy smile and a restless glint in his eyes.",
+   "lines": [
+    "Or the Crimson Lotus Pavilion has chosen to watch them.",
+    "I came to see the famous pair the Sun Stair could not stop talking about.",
+    "I am only a guest who lost his way. Your sect is so large that a man can wander for days before anyone notices.",
+    "Sharp tongue. Your rival said you had one. I did not believe her."
+   ]
+  }
+ ]
+}

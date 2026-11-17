@@ -424,6 +424,16 @@ mode**. That means:
       the store apps, other languages. Not tested on a real phone: a cloud
       test machine with no graphics chip made 0.3 seconds of speech a second,
       too slow to keep up, and says nothing about a phone.
+    - **First phone test** (2026-11-17, iPhone): the app closed and Safari
+      would not reopen it ("A problem repeatedly occurred"), and no Kokoro
+      audio played. The iPhone offered its graphics chip, so the large model
+      was loaded, and Safari closes a page that uses too much memory. Phones
+      and tablets now always take the small model on the processor, and if
+      the app ever closes while Kokoro is working, Kokoro is switched off on
+      the next visit and says why, so the app always opens again. Even the
+      small model adds roughly 600 to 700 MB in a desktop browser, so the web
+      app may stay too heavy or too slow on some phones; the store apps run
+      Kokoro natively, where it is far lighter and faster.
 
 ## Where we are (2026-10-10)
 

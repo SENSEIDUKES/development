@@ -18,7 +18,7 @@ export type KokoroDevice = 'webgpu' | 'wasm';
 const BUILDS: Readonly<Record<KokoroDevice, 'fp32' | 'q8'>> = { webgpu: 'fp32', wasm: 'q8' };
 
 export type KokoroWorkerRequest =
-  | { type: 'load' }
+  | { type: 'load'; device: KokoroDevice }
   | { type: 'speak'; id: number; text: string; voice: string };
 
 export type KokoroWorkerMessage =
@@ -41,24 +41,13 @@ const build = (device: KokoroDevice) => KokoroTTS.from_pretrained(MODEL, {
 });
 
 let model: Promise<KokoroTTS> | undefined;
+// The page chooses where the voice runs (it knows whether this is a phone) and says so with `load`.
 let running: KokoroDevice = 'wasm';
-/**
- * Whether this browser has a graphics chip it can really use. Some say they
- * do and then hand none over, and a voice that failed to start on the chip
- * cannot start on the processor afterwards, so it is asked for first.
- */
-const hasGraphicsChip = async (): Promise<boolean> => {
-  const gpu = (scope.navigator as Navigator & { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
-  if (!gpu) return false;
-  try { return Boolean(await gpu.requestAdapter()); } catch { return false; }
-};
-const load = () => (model ??= (async () => {
-  running = await hasGraphicsChip() ? 'webgpu' : 'wasm';
-  return build(running);
-})());
+const load = () => (model ??= build(running));
 
 scope.onmessage = async ({ data }: MessageEvent<KokoroWorkerRequest>) => {
   if (data.type === 'load') {
+    if (!model) running = data.device;
     try { await load(); post({ type: 'ready', device: running }); }
     catch (error) { model = undefined; post({ type: 'failed', message: error instanceof Error ? error.message : 'The voice could not be loaded.' }); }
     return;

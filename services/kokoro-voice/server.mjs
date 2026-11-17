@@ -21,7 +21,11 @@ if (!TOKEN || !BUCKET) {
   process.exit(1);
 }
 
-/** Where made lines are kept: the Cloud Storage bucket, or a folder (`local:<folder>`) when testing on a computer. */
+/**
+ * Where made lines are kept: the Cloud Storage bucket, or a folder (`local:<folder>`) when testing on a computer.
+ * Development only: before going public the lines move to Cloudflare R2, served straight from R2 (SENSEI,
+ * 2026-11-17; see README, "Before going public").
+ */
 const store = BUCKET.startsWith('local:')
   ? (() => {
     const root = BUCKET.slice('local:'.length);

@@ -9,6 +9,29 @@ It runs on Google Cloud Run in the `seihouse-core` project and sleeps when nobod
 is listening. On four processor cores it makes about 3.5 seconds of speech a
 second with the full model.
 
+## Before going public: the audio moves to R2
+
+**Decided by SENSEI, 2026-11-17.** The Google Cloud Storage bucket is the
+development shelf only. Before NovelExpanded is public, made lines are kept on
+Cloudflare R2 and readers download them straight from R2, not through this
+server: R2 charges nothing for sending files out, and sending audio to
+listeners is the cost that grows with readers (about 4 MB a chapter).
+
+What that change is:
+
+- `server.mjs`: add an R2 store beside the Cloud Storage and local ones (R2
+  speaks the S3 API), keyed the same way (`<model>/<voice>/<sha256>.mp3`).
+- `POST /line` answers the clip's public R2 address instead of `/clip/...`.
+  `src/server/audio/kokoroVoice.ts` must then accept that address rather than
+  only `/clip/` paths.
+- The R2 keys go to Cloud Run as secrets (Secret Manager), never in
+  `setup.sh` or the repository. SENSEI has an R2 account; it is not set up
+  for this yet.
+- Copy any lines already kept in `gs://seihouse-core-kokoro-voices` across,
+  or let them be made again.
+
+The app and the Reader do not change: they only receive a line's address.
+
 ## How the app uses it
 
 The browser never talks to it with the key. The Reader asks the app's own
@@ -47,5 +70,6 @@ KOKORO_TOKEN=test KOKORO_BUCKET=local:/tmp/kokoro-clips node server.mjs
 
 ## History
 
+- **2026-11-17** — Public release keeps the audio on R2 (SENSEI); the Cloud Storage bucket is for development only.
 - **2026-11-17** — Built (SENSEI). Kokoro made in the reader's browser was far
   too slow on an iPhone, so lines are made here instead, once each, and kept.

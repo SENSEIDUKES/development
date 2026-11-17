@@ -414,6 +414,15 @@ mode**. That means:
       sleeps when nobody is listening. It serves the web app and the future
       Apple and Google store apps alike; a store app may later run Kokoro
       itself for listening offline, behind the same Reader setting.
+    - **Public release keeps the audio on Cloudflare R2** (SENSEI,
+      2026-11-17). For development the made lines sit in a Google Cloud
+      Storage bucket (`seihouse-core-kokoro-voices`), which is fine for
+      testing. Before NovelExpanded goes public, they move to R2, and readers
+      download them straight from R2: R2 charges nothing to send files out,
+      and sending audio to listeners is the cost that grows with readers.
+      SENSEI has an R2 account; it is not set up for development yet. The
+      voice server makes lines on Cloud Run either way, and the app does not
+      change, because it only receives a line's address.
     - **Built** (2026-11-17): Reader Settings, Narration, **Kokoro voices**,
       On. Listen is read in three voices of the first Kokoro cast, one each
       for the narrator, the main character and everyone else, asked for a few

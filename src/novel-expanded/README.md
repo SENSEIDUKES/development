@@ -43,8 +43,8 @@ rewrites and every page survives a reload.
 
 | Page | Address | What it is |
 | --- | --- | --- |
-| Home | `/app/` | Events above Featured, the reader's stories, newest first, and Carve New Destiny |
-| Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); Novel / Manga / Game / Video (`medium`) above section navigation, left browsing rail, scoped All / My updates, genres and rankings outside Lore |
+| Home | `/app/` | Featured, the reader's stories, newest first, and Carve New Destiny |
+| Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); phone-fitting section navigation, left browsing rail, scoped All / My updates beside Genre, and Events under Rankings outside Lore |
 | Create | `/app/?page=create` | The Library's Creator Space: the reader's worlds (Continue, Studio), Energy, the Creator Toolkit previews and Create |
 | A world, for its author | `/app/?page=create&world=<id>` | What a world opens to when its author taps it under Your worlds: the author's worlds as mini world cards, Novel (Sequential Art later), and Blueprint, Chapters, Codex (coming), Assets and Info (`AuthorWorldView`). Chapters is the iTunes list where chapters are checked and tagged a few at a time; a chapter opens in the creator's Reader, below, in Create mode with its tags lit |
 | Story Seed | `/app/?page=create&seed=new` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story; `&seed=<id>` opens a saved seed |
@@ -362,8 +362,8 @@ task needs something the list does not allow.
 | `routes.ts` | Addresses and history |
 | `services.ts` | Storage, the writer, the official skills, the Blueprint client, the reader's profile and the practice economy |
 | `HomePage.tsx` | Home: the reader's stories, in `AppShell` |
-| `DiscoverPage.tsx`, `discoverSamples.ts` | Discover (`@seihouse/library/discover`) in `AppShell`, with medium selection and sample stories, creators, Codex projections, follows, releases and boards; Lore uses the authored encyclopedia |
-| `homeEvents.ts` | Coming soon sample announcements supplied to Home's Events notice |
+| `DiscoverPage.tsx` | Discover (`@seihouse/library/discover`) in `AppShell`, with published stories, genre filtering and Events under Rankings; Lore uses the authored encyclopedia. Workshop injects its own sample catalogue into this shared composition |
+| `discoverEvents.ts` | Coming soon announcements supplied to Discover Rankings |
 | `CreatePage.tsx` | Create: `CreationModal` in a guest Story Seed runtime, starting new seeds from the profile's defaults; asks for the token before a Blueprint |
 | `AccessTokenSheet.tsx` | The access token sheet, one for the whole app |
 | `accessToken.ts` | The chapter writer with the owner's token: a chapter at the limit asks for it and is sent again |
@@ -385,7 +385,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 ## Not in the app yet
 
 - Accounts and server-side storage: the database, and with it a kept economy, sync, backup, codes, the Inbox and sign-out.
-- Real worlds on Discover. Its page (`?page=discover`, `DiscoverPage.tsx`) shows sample worlds (`discoverSamples.ts`) while its look and feel is refined; opening one says it is a sample.
+- A global public catalogue on Discover. The app currently shows this device’s published stories; shared public worlds, public releases, directory projections, follows and ranking boards are not connected. Workshop alone supplies the sample catalogue.
 
 ## Verification
 
@@ -397,6 +397,11 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs (a stand-in cover among them) and a stand-in for the browser's speech (headless Chromium has no voices): Create's Story Settings, Story View's Story Settings, and Manifest on the cover (three to choose from, the picker) to World Info and Home.
 
 ## History
+
+- **2026-11-17** — Simplified Discovery controls and phone tabs, moved Events
+  from Home into Rankings, and kept catalogue samples only in Workshop.
+  The app lists published stories and shares its Discover page and shell
+  with the sample preview.
 
 - **2026-11-17** — **The cover flow, refined** (SENSEI). The Manifest cover sheet no longer shows the main character's portrait (only a missing one, to be made there): it shows the chances left, Title on the cover (On | Off), the optional second character, and two tiles, one cover or three, with their Energy. Three covers are auditioned one at a time, large, with arrows, swipe or keys, instead of a large cover over three thumbnails. Each novel has **three chances** to make cover art, counted in the sheet; after the third the cover is locked. The title is now chosen when the cover is made, replacing the earned title and **Regenerate with a title** (2026-10-12).
 - **2026-11-17** — **Kokoro no longer closes the app on a phone** (SENSEI's iPhone test). The

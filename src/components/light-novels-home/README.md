@@ -14,10 +14,8 @@ Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-ru
 
 ## Boundary and ownership
 
-Home includes the expandable Events notice above Featured. `HomeEvents` and its
-display contract live in this Home owner; NovelExpanded supplies the Coming soon
-sample announcements from `homeEvents.ts`. Discover no longer owns or displays
-Events. The Home Workshop's app iframe shows this same placement.
+Events are now owned by Discover and appear only under Rankings; Home opens
+with Featured. The existing Home Workshop iframe reflects the same app composition.
 
 The Home workspace's **Development** pane loads the actual NovelExpanded `/app/`
 document at the selected mobile, tablet or laptop viewport. This reuses
@@ -96,6 +94,9 @@ See `docs/history/standalone-home/` for local production browser evidence and th
 The build, focused navigation/header/profile/Workshop tests, package boundary checks, and existing locked-capture guard pass. No full production Library/Discover body or production account/backend behavior is claimed as covered.
 
 ## Workshop history
+
+- **2026-11-17:** Moved Events out of Home and into Discover Rankings. Featured
+  now leads the page in both the app and its existing Workshop iframe.
 
 - **2026-10-28, Original Reference removed:** With the owner's approval, the old
   production copy (`reference/LightNovelsHome.tsx`, `reference/StoryDetailScreen.tsx`),

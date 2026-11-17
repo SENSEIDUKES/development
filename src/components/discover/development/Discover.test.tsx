@@ -21,7 +21,6 @@ const WORLDS = [world('lotus', 'Last Lotus', 'Xianxia', ['sect politics']), worl
 
 function renderPage(overrides: Partial<DiscoverProps> = {}) {
   const props: DiscoverProps = {
-    medium: 'novel', onMediumChange: vi.fn(),
     section: 'stories', sectionHref: section => `?section=${section}`, onSectionChange: vi.fn(), renderLore: () => <p>Encyclopedia</p>,
     worlds: WORLDS, now: NOW, onOpenWorld: vi.fn(),
     releases: [
@@ -61,14 +60,10 @@ it('says the Tracker is not here yet when the host supplies no tracked series', 
   expect(container.textContent).not.toContain('Track a series');
 });
 
-it('names a search, not the tracked series, when a search empties My updates', () => {
+it('describes a genre filter that empties My updates', () => {
   renderPage();
   act(() => tab('My updates').click());
-  const input = container.querySelector<HTMLInputElement>('input[type="search"]')!;
-  act(() => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'moon');
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-  });
+  chooseGenre('Dark Fantasy');
   expect(container.textContent).toContain('No tracked chapters match');
 });
 
@@ -82,15 +77,12 @@ it('gives Fate Survival its own spotlight and opens worlds through the host', ()
   expect(props.onOpenWorld).toHaveBeenCalledWith('trial');
 });
 
-it('searches titles, creators, genres and tags across the page', () => {
+it('keeps genre filtering beside the feed with no prototype format selector or catalogue search', () => {
   renderPage();
-  const input = container.querySelector<HTMLInputElement>('input[type="search"]')!;
-  act(() => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'politics');
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-  });
-  expect(releaseTitles()).toEqual(['Last Lotus']);
-  expect(container.querySelector('.discover-fate')).toBeNull();
+  expect(container.querySelector('.discover-medium-switcher')).toBeNull();
+  expect(container.querySelector('input[type="search"]')).toBeNull();
+  expect(container.querySelector('.discover-controls [aria-label="Stories feed"]')).toBeTruthy();
+  expect(container.querySelector('.discover-controls .discover-genre-select')).toBeTruthy();
 });
 
 it('shows only the section\'s board, in the host\'s order, and retains ranks while filtering', () => {
@@ -249,50 +241,26 @@ it('opens the encyclopedia under Lore without genre filters or leaderboards', ()
   expect(container.textContent).toContain('Lore updates');
 });
 
-it('places the medium switcher above the section feed and displays unavailable following honestly', () => {
-  const props = renderPage({ section: 'creators', creators: CREATORS });
-  const switcher = container.querySelector('.discover-medium-switcher')!;
-  const content = container.querySelector('.discover-content')!;
-  expect(switcher.compareDocumentPosition(content) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect([...switcher.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Novel', 'Manga', 'Game', 'Video']);
-  act(() => switcher.querySelectorAll<HTMLButtonElement>('button')[1].click());
-  expect(props.onMediumChange).toHaveBeenCalledWith('manga');
+it('displays unavailable creator following honestly', () => {
+  renderPage({ section: 'creators', creators: CREATORS });
   act(() => tab('My updates').click());
   expect(container.textContent).toContain('Creators updates are not available yet');
 });
 
-it('uses the selected medium for stories, creator sources, Codex and rankings', () => {
-  const manga = { ...world('manga', 'Lotus Illustrated', 'Xianxia'), format: 'Manga' };
-  const props = { medium: 'manga' as const, worlds: [...WORLDS, manga], creators: [{ ...CREATORS[0], worldIds: ['lotus', 'manga'] }, CREATORS[1]], codexEntries: [...ENTRIES, { ...ENTRIES[0], id: 'drawn-hero', worldId: 'manga', name: 'Drawn Keeper' }], rankingBoards: [{ id: 'stories', kind: 'stories' as const, label: 'Worlds', description: 'Sample', worldIds: ['lotus', 'manga'] }] };
-  renderPage(props);
-  expect(container.querySelector('ul[aria-label="Stories"]')?.textContent).toContain('Lotus Illustrated');
-  expect(container.textContent).not.toContain('Last Lotus');
+it('keeps Events inside Rankings and preserves its expandable announcements', () => {
+  renderPage({ events: [{ id: 'mystery', title: 'Mystery Week', when: 'Coming soon', description: 'A week of mysteries.' }] });
+  expect(container.querySelector('[data-discover-events]')).toBeNull();
   chooseView('Rankings');
-  expect(container.querySelector('ol[aria-label="Worlds ranking"]')?.textContent).toContain('Lotus Illustrated');
-  expect(container.textContent).not.toContain('Last Lotus');
-  renderPage({ ...props, section: 'creators' });
-  expect(container.querySelector('ul[aria-label="Creators"]')?.textContent).toContain('First Author');
-  expect(container.textContent).not.toContain('Second Author');
-  expect(container.textContent).not.toContain('Last Lotus');
-  renderPage({ ...props, section: 'codex' });
-  expect(container.querySelector('ul[aria-label="Codex characters"]')?.textContent).toContain('Drawn Keeper');
-  expect(container.textContent).not.toContain('Lotus Keeper');
-});
-
-it('keeps the same browsing controls for upcoming mediums and keeps Lore shared', () => {
-  for (const medium of ['manga', 'game', 'video'] as const) {
-    renderPage({ medium });
-    expect(container.textContent).toContain('catalogue coming soon');
-    expect(container.querySelector('[aria-label="Stories views"]')).toBeTruthy();
-    expect(container.querySelector('.discover-genre-select')).toBeTruthy();
-    expect(container.querySelector('ul[aria-label="Stories"]')).toBeNull();
-    chooseView('Rankings');
-    expect(container.textContent).toContain('Heavenly Rankings');
-    renderPage({ medium, section: 'lore' });
-    expect(container.textContent).toContain('Encyclopedia');
-    expect(container.textContent).toContain('Lore is shared across all mediums');
-    expect(container.textContent).not.toContain('catalogue coming soon');
-  }
+  const events = container.querySelector<HTMLDetailsElement>('[data-discover-events]')!;
+  expect(events.open).toBe(false);
+  act(() => events.querySelector('summary')!.click());
+  expect(events.open).toBe(true);
+  expect(events.textContent).toContain('Mystery Week');
+  expect(events.textContent).toContain('Coming soon');
+  chooseView('Browse');
+  expect(container.querySelector('[data-discover-events]')).toBeNull();
+  renderPage({ section: 'lore' });
+  expect(container.querySelector('[data-discover-events]')).toBeNull();
 });
 
 it('words release ages plainly', () => {

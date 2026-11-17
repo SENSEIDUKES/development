@@ -3,8 +3,8 @@ import type { HomeWorld } from '@seihouse/library/home';
 
 /**
  * Sample worlds for Discover while the page's look and feel is refined. None
- * of them is a real story: there are no public worlds yet, and Discover says
- * so on the page. Release times are set back from when the app loads, so the
+ * of them is a real story: there are no public worlds yet, and the Workshop says
+ * so on the page. Release times are set back from when the preview loads, so the
  * feed always reads as live.
  */
 const sample = (world: Omit<HomeWorld, 'reads' | 'mcName' | 'powerStage' | 'format'> & Partial<HomeWorld>): HomeWorld => ({

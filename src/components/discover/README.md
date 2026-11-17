@@ -6,33 +6,36 @@ The Library's Discover page, Expanded Novels' front door. Direction:
 `Discover` (`@seihouse/library/discover`) draws the page over host-supplied data:
 worlds (`HomeWorld`, shown on the shared `WorldCard`), creator and Codex directory
 projections, releases, section-specific follows, Fate Survival worlds,
-Heavenly Rankings boards and the selected medium. It never ranks or
+Heavenly Rankings boards and event announcements. It never ranks or
 recommends: New Chapters orders by release time alone, and Rankings keep the host's order. Every world opens
 through the host's `onOpenWorld`.
 
 The page has a compact header, sticky destination links, and a left browsing
 rail beside the current results, including on phones. Stories and Creators
 offer Browse, Genres and Rankings; Codex offers Characters, Items and Rankings.
-Novel / Manga / Game / Video sits first, with Stories / Creators / Codex /
-Lore underneath it. Card columns follow their available panel width. The host owns the
-selected medium and its address; catalogue content uses each world's declared
-format. Lore remains shared, with its local language and mode preserved.
+Stories / Creators / Codex / Lore are four equal-width destinations, with icons
+above labels on phones. Card columns follow their available panel width. The
+prototype format selector and catalogue search have been removed; Genre sits
+beside All / My updates inside the results panel and stacks on narrow screens.
 
 | Shelf | What it shows |
 | --- | --- |
-| Header and navigation | Discover, then the medium switcher, followed by Stories / Creators / Codex / Lore as native links |
-| Medium | Novel / Manga / Game / Video above section navigation; the same layout and honest upcoming states for unconnected catalogues |
-| Section controls | All / My updates, with search and Genre outside Lore; filters reset on destination changes |
-| Stories | Catalogue first, then New Chapters ordered by time, Featured and Fate Survival; tracked stories in My updates |
+| Header and navigation | Discover, followed by Stories / Creators / Codex / Lore as native links |
+| Section controls | All / My updates and Genre together outside Lore; filters reset on destination changes |
+| Stories | Catalogue first, then New Chapters ordered by time and Fate Survival; tracked stories in My updates |
 | Creators | Host-supplied creators expanding to their story cards; followed creators in My updates |
 | Codex | Characters and Items only; expandable entries with descriptions and source-story cards; tracked entries in My updates |
-| Genres | Cover-backed tiles for Stories or Creators, counting the current search and feed; selecting a tile opens that genre's catalogue |
-| Heavenly Rankings | A separate overall view for stories, creators, characters or items; search and genres preserve original ranks; returning to Browse restores its feed |
+| Genres | Cover-backed tiles for Stories or Creators, counting the current feed; selecting a tile opens that genre's catalogue |
+| Heavenly Rankings | A separate overall view for stories, creators, characters or items; genres preserve original ranks; returning to Browse restores its feed; Events expands below the board |
 | Lore | Directly opens the encyclopedia: 398 terms with alias search, a category rail, localized articles and Write it as with Copy on every term; no genres or rankings |
 
-NovelExpanded (`src/novel-expanded/DiscoverPage.tsx`) shows it with sample worlds
-while its look and feel is refined. The Workshop previews that page at
-`?preview=discover`. New feature: no `reference/` folder.
+NovelExpanded (`src/novel-expanded/DiscoverPage.tsx`) shows only the app's published
+stories. Empty catalogues have an explicit empty state. Releases, creator/Codex
+public projections, follows and ranking boards are not connected in the app.
+The existing Workshop at `?preview=discover` shares that same page and AppShell,
+injecting its sample catalogue from `src/workshop/previews/discover/previewData.ts`.
+Its iframe uses the same feature route with `canvas=1`; samples and sample-opening
+feedback never enter the app's import graph. No `reference/` folder.
 
 `DiscoverEncyclopedia` uses that same package entry; the old doorway has been
 replaced by the Lore navigation link. The host supplies URLs, navigation and existing profile language/Reading
@@ -51,12 +54,18 @@ The directory and articles live under Discover's `lore` query parameter, with
 `q` and `category` retained on article navigation. Local language/mode overrides
 last for the visit. No story Codex, generation, account or persistence system
 is added. The Workshop iframe shares the app's real browser profile settings,
-while its story, creator and Codex directories and follows still show samples.
+while its story, creator and Codex directories and follows use isolated Workshop samples.
 Lore's My updates explicitly says term tracking is not available; it never
 fabricates a personal term list. See the direction document for
 mode behavior and translation-review limits.
 
 ## History
+
+- **2026-11-17** — Removed the prototype format selector and catalogue search,
+  fitted the four destination tabs to phone widths, and moved Genre beside the
+  feed controls. Events moved from Home into Rankings. The app now browses its
+  published stories; sample stories, directories, follows, releases, rankings and
+  sample-opening notices live only in Workshop, using the same page and shell.
 
 - **2026-10-30 (Lore as a translator's reference)** — Loaded SENSEI's master
   glossary into Lore: 398 terms in eleven categories, with permanent ids that

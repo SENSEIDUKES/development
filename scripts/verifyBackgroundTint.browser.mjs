@@ -83,8 +83,7 @@ try {
     assert.deepEqual(await cta.evaluate(rainbow), ring, 'Rainbow effects are unchanged');
     assert.equal(await page.locator('.home-filter-label').evaluate(e => getComputedStyle(e).color), 'rgb(167, 139, 250)', 'Background tint preserves the independent accent');
     assert.match(await page.locator('.library-look').evaluate(e => getComputedStyle(e).backgroundImage), /url\(/, 'Artwork remains visible');
-    await page.locator('[data-home-events] summary').click();
-    const media = await page.locator('.home-event-art, .home-event-body, .world-card-banner-backdrop, .world-card-banner-video').evaluateAll(elements => elements.map(e => [getComputedStyle(e).filter, getComputedStyle(e).backdropFilter]));
+    const media = await page.locator('.home-featured [data-home-panel], .world-card-banner-backdrop, .world-card-banner-video').evaluateAll(elements => elements.map(e => [getComputedStyle(e).filter, getComputedStyle(e).backdropFilter]));
     assert.ok(media.length > 0);
     assert.ok(media.every(([filter, backdrop]) => filter === 'none' && backdrop === 'none'));
     await page.screenshot({ path: `${output}/home-${width}.png` });
@@ -94,7 +93,7 @@ try {
       await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }] });
       const reduced = await page.locator('.workspace-header').evaluate(fill);
       assert.equal(reduced[0], 'rgb(50, 21, 35)'); assert.equal(reduced[2], 'none');
-      for (const selector of ['[data-home-events]', '[data-slot="empty-state"]']) {
+      for (const selector of ['[data-home-panel]:not(.home-featured [data-home-panel])', '[data-slot="empty-state"]']) {
         await page.waitForFunction(({ selector, color }) => getComputedStyle(document.querySelector(selector)).backgroundColor === color, { selector, color: reduced[0] });
         const solid = await page.locator(selector).evaluate(fill);
         assert.equal(solid[0], reduced[0]); assert.equal(solid[2], 'none');
@@ -107,9 +106,9 @@ try {
     await page.locator('.seed-field-scope .glass-panel').first().waitFor();
     assert.equal(await page.locator('.seed-field-scope .glass-panel').first().evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(50, 21, 35, 0.35)', 'Create wears the look: its panels are outer panels and take the shared tint');
     await page.goto(`${base}/app/?page=discover`);
-    await page.locator('.discover-medium-switcher').waitFor();
+    await page.locator('.discover-navigation').waitFor();
     assert.equal(await page.locator('.workspace-header').evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(50, 21, 35, 0.9)', 'Discover wears the look: its header takes the shared tint');
-    assert.equal(await page.locator('.discover-medium-switcher').evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(50, 21, 35, 0.35)', 'Discover containers are outer panels');
+    assert.equal(await page.locator('.discover-navigation').evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(50, 21, 35, 0.35)', 'Discover containers are outer panels');
     // The standalone Profile Workshop uses the same controls with its mock profile.
     await page.goto(`${base}/?preview=user-profile&cave=/settings`);
     await open(page, 'Background tint');

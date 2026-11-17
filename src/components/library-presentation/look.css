@@ -21,17 +21,17 @@
 }
 /* Keep the artwork behind the content; the plain footer shares the chrome tint. */
 .library-look .workspace-shell { background: transparent; }
-.library-look :is([data-home-panel], [data-home-events]) {
+.library-look :is([data-home-panel], [data-discover-events]) {
   background: var(--library-material-card-fill);
   border: 1px solid var(--reader-glass-edge);
   box-shadow: var(--library-material-card-shadow);
   -webkit-backdrop-filter: var(--library-material-card-blur);
   backdrop-filter: var(--library-material-card-blur);
 }
-.library-look :is([data-home-events], .home-event, [data-slot='empty-state']) { position: relative; }
-.library-look [data-home-events] { border-radius: 1.35rem; padding: .5rem 1rem; }
+.library-look :is([data-discover-events], .discover-event, [data-slot='empty-state']) { position: relative; }
+.library-look [data-discover-events] { border-radius: 1.35rem; padding: .5rem 1rem; }
 .library-look [data-home-panel]::before { display: none; }
-.library-look :is([data-slot='empty-state'], .home-event) {
+.library-look :is([data-slot='empty-state'], .discover-event) {
   background: var(--library-material-shell-fill);
   color: var(--library-material-text);
   border-color: var(--reader-glass-edge);
@@ -41,13 +41,13 @@
 }
 /* Media keeps the original clear backing; tint applies to the surrounding glass. */
 .library-look .home-featured [data-home-panel] { background: var(--library-material-archived-blue-fill); }
-.library-look .home-event:has(.home-event-art) {
+.library-look .discover-event:has(.discover-event-art) {
   background: var(--library-material-archived-smoked-fill);
 }
 /* Media cards keep their artwork clear, including still images. Text uses
    the original contrast gradients, with no glass sheet over the media. */
 .library-look .home-featured [data-home-panel],
-.library-look .home-event {
+.library-look .discover-event {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -117,17 +117,16 @@ body:has(.library-look) :is(.front-desk-card-place, .front-desk-card-quiet) { co
   --discover-hairline: var(--reader-glass-edge);
   --discover-glass: var(--library-material-card-fill);
 }
-.library-look :is(.discover-navigation, .discover-medium-switcher, .discover-fate, .discover-sample-notice p) {
+.library-look :is(.discover-navigation, .discover-fate, .discover-sample-notice p) {
   background: var(--library-material-card-fill);
   border-color: var(--reader-glass-edge);
   box-shadow: var(--library-material-card-shadow);
   -webkit-backdrop-filter: var(--library-material-card-blur);
   backdrop-filter: var(--library-material-card-blur);
 }
-.library-look :is(.discover-medium-switcher, .discover-fate) { position: relative; }
-.library-look .discover-medium-switcher { border-radius: 1.35rem; }
+.library-look .discover-fate { position: relative; }
 .library-look .discover-fate { border: 1px solid var(--reader-glass-edge); border-radius: 1.35rem; }
-.library-look :is(.discover-search, .discover-segmented, .discover-genre-select select) {
+.library-look :is(.encyclopedia-search, .discover-segmented, .discover-genre-select select) {
   background: var(--library-material-control-fill);
   border: 1px solid var(--reader-glass-edge);
   color: var(--library-material-text);

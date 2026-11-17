@@ -2,8 +2,8 @@
 
 - **Created:** 2026-10-19
 - **Owner:** SENSEI
-- **Status:** structure built, with sample worlds (2026-10-20); the look and
-  feel is being refined. The features below are a working list; the
+- **Status:** refined 2026-11-17; the app lists published stories, while samples
+  remain in Workshop. The features below are a working list; the
   philosophy is what's locked in. [`NOVEL_EXPANDED.md`](../NOVEL_EXPANDED.md)
   stays the source of truth for what is built.
 
@@ -73,7 +73,7 @@ both something to chase.
 - **Rankings:** leaderboards like Webtoon's character rankings, extended to
   items, beasts, pets and Familiars. Cultivation stories already run on ranking
   lists, so the audience knows this language. Working name: Heavenly Rankings.
-- **Events (on Home):** themed challenges such as Mystery Week or Dark Fantasy
+- **Events (under Discover Rankings):** themed challenges such as Mystery Week or Dark Fantasy
   Week, for creators and readers.
 
 ## Platform guardrails Discover relies on
@@ -108,61 +108,49 @@ Together they make botting cost real money per account.
 - Search, series status (ongoing, completed, hiatus) and content warnings: in or
   out?
 
-## What's built (updated 2026-10-26)
+## What's built (updated 2026-11-17)
 
-The page's structure, for refining how it looks and feels. It is the Library's
-`@seihouse/library/discover` (`src/components/discover/`), at `/app/?page=discover`
-in the app and `?preview=discover` in the Workshop. Every world on it is a sample
-(`src/novel-expanded/discoverSamples.ts`); opening one says so.
+Discover is the Library's `@seihouse/library/discover` (`src/components/discover/`),
+at `/app/?page=discover` in the app and `?preview=discover` in Workshop.
+Both share `DiscoverPage` and `AppShell`. The app uses this device's published
+stories and opens their real World Info; drafts remain in Create. Sample
+stories, releases, creators, Codex entries, follows and ranking boards live only
+in `src/workshop/previews/discover/previewData.ts`. Workshop's iframe uses its
+existing feature route with `canvas=1` and preserves the app's saved profile
+preferences. Its sample-opening notice is also Workshop-only.
 
-Discover uses a compact header, a persistent row of destinations and a left
-browsing rail beside the results. **Novel / Manga / Game / Video** is the first
-navigation layer, with **Stories / Creators / Codex / Lore** directly underneath.
-Readers choose a medium, then what to explore within it. Every medium uses the same
-layout. Novel has the current sample catalogue; the other mediums show coming
-soon states until their catalogues are supplied. The `medium` address parameter
-keeps the selection across destinations, reload and browser Back.
+- **Navigation:** Stories | Creators | Codex | Lore, in four equal columns, with
+  icons above the labels on phones. Stories is the default; Creators and Codex
+  retain their reloadable `section` addresses. Lore opens the authored
+  encyclopedia at `?page=discover&lore=index`.
+- The prototype **Novel / Manga / Game / Video** selector and its medium routing
+  are removed. Catalogue browsing has no separate search bar; the shared header
+  keeps Search, and the encyclopedia keeps its dedicated term search.
+- **Genre** sits inside the results panel beside **All / My updates**, stacking
+  beneath the feed control only when needed on narrow screens. Genre scopes
+  stories, creator source stories and Codex source stories. Main destination
+  changes reset temporary filters.
+- **Stories and Creators** offer Browse, Genres and Rankings in the left rail.
+  Genre tiles count the current feed, and selecting one opens its catalogue.
+  **Codex** offers Characters, Items and Rankings. Each directory entry can
+  expand to show its description and source stories, when supplied by the host.
+- **Stories:** the catalogue comes first, then New Chapters in release-time order
+  and Fate Survival when the host supplies it. All / My updates scopes these
+  shelves together; unavailable follows have an explicit empty state.
+- **Heavenly Rankings:** a relevant overall board in Stories, Creators and Codex,
+  with character/item choices for Codex. Genre filtering preserves original
+  rank numbers, independently of My updates. Returning to Browse restores its feed.
+- **Events** moved from Home into **Rankings**, below the board. The existing
+  expandable Coming soon announcements remain. They are absent from Browse,
+  Genres and Lore, and Home now starts with Featured.
+- **Lore** has its authored encyclopedia, language and Reading Mode preferences,
+  alias search and linked articles. Its My updates explicitly says term tracking
+  is unavailable; it has no genre filter or rankings.
 
-- **Navigation:** Stories | Creators | Codex | Lore, in that order. Stories
-  is the default; Creators and Codex have reloadable `section` addresses. Lore
-  links directly to the existing encyclopedia at `?page=discover&lore=index`.
-- **Events** have moved to Home, above Featured, as an expandable row with the
-  existing Coming soon event cards. Discover no longer displays them.
-- **All / My updates** follows the selected section: stories use tracked series,
-  creators use followed creators, and Codex uses tracked entries. These follows
-  are host-supplied samples. Lore's My updates explains that term tracking is
-  not available yet; All opens the complete glossary. Article pages keep the
-  navigation without the directory's feed toggle. Rankings have a separate,
-  explicitly overall view; returning to browsing restores the selected feed.
-- **Search and Genre** filter Stories, Creators and Codex. Creator genres come
-  from their listed stories; Codex genres come from their source stories.
-  Changing the main destination resets its temporary filters.
-  Changing medium also resets those filters. Stories, creator source stories,
-  Codex entries, releases and rankings are restricted to the selected medium.
-  Lore is shared across all mediums and preserves its language, Reading Mode
-  and article/search context when the medium changes.
-- **Stories and Creators** share Browse, Genres and Rankings in the left rail.
-  Genres shows cover-backed tiles with counts for the current search and feed;
-  choosing one opens that genre's catalogue. The rail stays beside the content
-  on phones, and expands to labeled rows on desktop.
-- **Stories:** the complete story catalogue comes first, then New Chapters ordered
-  newest first, Featured and Fate Survival. All / My updates scopes these shelves together.
-- **Creators:** eight sample creators, each expandable to their stories using
-  the shared World Card family.
-- **Codex:** Characters and Items only, with four sample entries in each.
-  Each expands to a description and its source story. These are public sample
-  projections, not copies of the reader's private story records. Characters,
-  Items and Rankings are its left-rail choices.
-- **Fate Survival**, its own editorial feature. Its draw is a chapter-by-chapter
-  narrative experience with consequences: every choice carries forward.
-- **Heavenly Rankings:** a relevant board in Stories, Creators and Codex;
-  Codex switches between character and item boards. Search and genre filter the
-  host-supplied order while retaining the original rank numbers. The boards
-  are labeled Overall ranking and are independent of My updates. Lore has
-  neither genres nor leaderboards; its rail uses the encyclopedia's categories.
-
-Not built: real worlds and releases, the Tracker, signals, community
-lists, credits pages, branch lineage, curated reviews.
+Not connected in the app: a shared public catalogue, public releases, creator and
+Codex directory projections, the Tracker, signals, ranking boards, community
+lists, credits pages, branch lineage and curated reviews. Workshop supplies
+samples for the existing display states, never as real public activity.
 
 ## Eastern Fantasy Encyclopedia (2026-10-26)
 
@@ -242,6 +230,6 @@ story's own Codex.
 
 Ownership stays in `src/components/discover/`, exported through the existing
 `@seihouse/library/discover` entry. The app supplies navigation and the current
-profile. The existing `?preview=discover` Workshop iframe shows this same app
-and uses its real saved profile preferences. Discover's world shelves remain
-the existing sample worlds.
+profile. The existing `?preview=discover` Workshop shares the same Discover page and shell
+and reads the app’s saved profile preferences. Its catalogue samples are isolated
+from the app’s published-story catalogue.

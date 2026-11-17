@@ -710,8 +710,8 @@ entries run to 2026-11-11.
     workspace mode (Sections, Story Bank, Blueprint, Settings, Back), laid out
     as a character creator: Origin → World → ARC → Create, with a live story
     card, and the World Blueprint inside the same shell (2026-10-26). The Reader stays
-    full-screen. Discover is in the navigation too (2026-10-20), with sample
-    worlds: its structure is in and its look and feel is being refined
+    full-screen. Discover is in the navigation too (2026-10-20); since 2026-11-17
+    the app shows only its published stories and samples stay in Workshop
     ([`docs/discover-page.md`](./docs/discover-page.md)).
   - **Discover's Eastern Fantasy Encyclopedia** (2026-10-26) is a global genre
     reference inside Discover, separate from story Codexes: 36 core terms in
@@ -720,19 +720,16 @@ entries run to 2026-11-11.
     reading languages. It follows the profile's language and Reading Mode
     defaults. The same Discover Workshop preview opens the real app surface.
     The starter translations have not had professional editorial review.
-  - **Discover navigation** (2026-10-26) is Stories, Creators, Codex, Lore.
-    Novel / Manga / Game / Video is the first navigation layer, followed by
-    Stories / Creators / Codex / Lore. The medium stays selected in the address. Novel has
-    the sample catalogue; the other mediums use the same layout with coming
-    soon states. Lore stays shared. A compact left rail offers Browse, Genres and Rankings for Stories
-    and Creators, Characters, Items and Rankings for Codex, and encyclopedia
-    categories for Lore. The story catalogue appears first. Lore opens that
-    encyclopedia directly. Events now expand from one row on Home, above Featured; the other
-    three destinations have genre filtering and relevant Heavenly Rankings.
-    All / My updates follows each section's sample catalogue. Creators expand
-    to their stories, and Codex is split into Characters and Items. Public
-    catalogues, follows and rankings remain samples; Lore term tracking is not
-    built, and its My updates says so.
+  - **Discover navigation** (refined 2026-11-17) is Stories, Creators, Codex, Lore,
+    fitted to four equal phone tabs. The prototype format selector and catalogue
+    search are removed. Genre sits beside All / My updates, stacking on narrow
+    screens. A left rail offers Browse, Genres and Rankings for Stories and
+    Creators, Characters, Items and Rankings for Codex. Events expands only
+    under Rankings, no longer on Home. The app lists its published stories and
+    opens their World Info. Only Workshop supplies sample stories, releases,
+    creators, Codex entries, follows and rankings to the same page and AppShell.
+    Lore opens the authored encyclopedia directly; term tracking is not built,
+    and its My updates says so.
   - **Profile is in the app, with what it connects to,** so the pieces can be
     seen working together and refined there. Profile is a place in the
     navigation (Home, Create, Discover, Profile, with Settings beside it); it is the
@@ -1006,8 +1003,9 @@ entries run to 2026-11-11.
     Creator Space, and the author's world view with its Chapters tagging list
     is in. Not built yet: the manuscript way in (import), the world's Codex
     tab, a whole-story tagging run with resume, and Clear tags.
-  - Discover's world shelves use samples only: no public worlds,
-    releases, Tracker, signals, Rankings or Events are real yet.
+  - Discover lists this device's published stories; the shared public catalogue,
+    releases, Tracker, signals and ranking boards are not connected. Samples
+    live only in Workshop; Events remain Coming soon announcements.
 - **Not rebuilt yet:**
   - manifestations;
   - System Panels, including the Fate Survival result card;
@@ -1082,7 +1080,8 @@ When a session asks "what now?", start here:
    View, and piece 5, cover art on Story View through the media reveal. Next
    pieces:
    - a Workshop switch to inspect the app's stories;
-   - Discover: its structure is in with sample worlds (2026-10-20); next, the
+   - Discover: its structure is in; the app lists published stories and samples stay
+     in Workshop (2026-11-17); next, the
      owner refines its look and feel, then real worlds replace the samples.
 
    **The owner's plan:** assemble the app here, a piece at a time, until it is

@@ -17,7 +17,7 @@
   --sh-nav-active-shadow: 0 0 18px -7px color-mix(in srgb, var(--library-accent) 60%, transparent), inset 0 -12px 22px -18px color-mix(in srgb, var(--library-accent) 60%, white);
 }
 .library-custom-accent [data-light-novels-home] :is(.home-filter-label, .text-gold-accent),
-.library-custom-accent [data-home-events] .home-events-label,
+.library-custom-accent [data-discover-events] .discover-events-label,
 .library-custom-accent .dao-sparks-trigger {
   color: var(--library-accent);
 }

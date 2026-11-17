@@ -244,7 +244,7 @@ export function DiscoverEncyclopedia({ location, hrefFor, onNavigate, readingLan
     </article> : catalogue.terms || catalogue.failed ? <div className="encyclopedia-empty"><p>{labels.missing}</p>{link(directoryLocation, labels.directory)}</div> : null : updatesOnly ? <div className="encyclopedia-empty" lang="en" dir="ltr">
       <h2>No followed Lore terms yet</h2><p>Term tracking is not available yet. Choose All to search the encyclopedia.</p>
     </div> : <>
-      <label className="discover-search encyclopedia-search"><Search aria-hidden="true" size={20} /><span className="sr-only">{labels.search}</span>
+      <label className="encyclopedia-search"><Search aria-hidden="true" size={20} /><span className="sr-only">{labels.search}</span>
         <input type="search" value={location.query ?? ''} onChange={event => onNavigate({ ...directoryLocation, query: event.target.value }, true)} placeholder={labels.search} />
       </label>
       <div className="encyclopedia-directory">

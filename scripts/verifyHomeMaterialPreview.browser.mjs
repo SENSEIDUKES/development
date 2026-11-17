@@ -36,10 +36,10 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await openPreview(page);
       const frame = page.frameLocator('iframe[title="Home material preview"]');
       await frame.getByTestId('novel-expanded-home').waitFor();
-      await frame.locator('[data-home-events]').waitFor();
+      await frame.locator('[data-home-panel]:not(.home-featured [data-home-panel])').waitFor();
       await page.waitForFunction(() => {
         const doc = document.querySelector('.pm-home-frame').contentDocument;
-        return getComputedStyle(doc.querySelector('[data-home-events]')).backgroundColor === 'rgba(11, 14, 30, 0.35)';
+        return getComputedStyle(doc.querySelector('[data-home-panel]:not(.home-featured [data-home-panel])')).backgroundColor === 'rgba(11, 14, 30, 0.35)';
       });
       const canvas = page.frames().find(child => child.url().includes('source=palette-materials'));
       const previewWidth = await canvas.evaluate(() => innerWidth);
@@ -50,7 +50,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       });
       await actual.goto(`${base}/app/`);
       await actual.getByTestId('novel-expanded-home').waitFor();
-      for (const selector of ['[data-home-events]', '[data-home-panel]:not(.home-featured [data-home-panel])', '[data-slot="empty-state"]', '.workspace-header', '.library-footer']) {
+      for (const selector of ['[data-home-panel]:not(.home-featured [data-home-panel])', '[data-slot="empty-state"]', '.workspace-header', '.library-footer']) {
         assert.deepEqual(await frame.locator(selector).first().evaluate(paint), await actual.locator(selector).first().evaluate(paint), `${name} ${width}: ${selector} starts with Home's actual material`);
       }
       await actual.close();
@@ -70,9 +70,6 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.getByLabel('Accent', { exact: true }).fill('#04acff');
       await page.getByRole('combobox', { name: 'Panel', exact: true }).selectOption('violet-panel');
       const beforeHero = await frame.locator('.home-featured [data-home-panel]').evaluate(paint);
-      await frame.locator('[data-home-events] summary').focus();
-      await frame.locator('[data-home-events] summary').press('Enter');
-      const beforeEvent = await frame.locator('.home-event').first().evaluate(paint);
       assert.equal(await frame.locator('video').count(), 0, 'Steady still-image comparisons');
       const spectrum = await frame.getByRole('button', { name: 'Carve New Destiny', exact: true }).evaluate(e => getComputedStyle(e, '::before').backgroundImage);
       assert.notEqual(spectrum, 'none');
@@ -86,10 +83,9 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.getByRole('slider', { name: 'Background blur', exact: true }).fill('39');
       await page.getByRole('slider', { name: 'Opacity', exact: true }).fill('87');
       await openPreview(page);
-      await page.waitForFunction(() => { const element = document.querySelector('.pm-home-frame')?.contentDocument?.querySelector('[data-home-events]'); return element && getComputedStyle(element).backdropFilter === 'blur(39px)'; });
-      assert.equal((await frame.locator('[data-home-events]').evaluate(paint))[0], 'rgba(11, 14, 30, 0.87)');
+      await page.waitForFunction(() => { const element = document.querySelector('.pm-home-frame')?.contentDocument?.querySelector('[data-home-panel]:not(.home-featured [data-home-panel])'); return element && getComputedStyle(element).backdropFilter === 'blur(39px)'; });
+      assert.equal((await frame.locator('[data-home-panel]:not(.home-featured [data-home-panel])').evaluate(paint))[0], 'rgba(11, 14, 30, 0.87)');
       assert.deepEqual(await frame.locator('.home-featured [data-home-panel]').evaluate(paint), beforeHero, 'Editing plain panels leaves media unchanged');
-      assert.deepEqual(await frame.locator('.home-event').first().evaluate(paint), beforeEvent, 'Event media is unchanged');
       assert.equal(await frame.getByRole('button', { name: 'Carve New Destiny', exact: true }).evaluate(e => getComputedStyle(e, '::before').backgroundImage), spectrum, 'Rainbow is retained');
       await frame.getByRole('button', { name: 'Carve New Destiny', exact: true }).click();
       await frame.getByRole('status').filter({ hasText: 'preview only' }).waitFor();
@@ -103,7 +99,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.reload();
       await page.locator('#pm-composition h2').waitFor({ state: 'attached' });
       await openPreview(page);
-      await page.waitForFunction(() => { const element = document.querySelector('.pm-home-frame')?.contentDocument?.querySelector('[data-home-events]'); return element && getComputedStyle(element).backdropFilter === 'blur(39px)'; });
+      await page.waitForFunction(() => { const element = document.querySelector('.pm-home-frame')?.contentDocument?.querySelector('[data-home-panel]:not(.home-featured [data-home-panel])'); return element && getComputedStyle(element).backdropFilter === 'blur(39px)'; });
       // Resizing exercises the frame's real responsive navigation, not scaled CSS guesses.
       await page.getByRole('combobox', { name: 'Home preview size' }).selectOption('834');
       await page.waitForFunction(() => document.querySelector('.pm-home-frame').contentWindow.innerWidth === 834);

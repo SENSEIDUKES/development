@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { CreatorToolkitFilter } from '@seihouse/library/creator-space';
-import type { DiscoverMedium } from '@seihouse/library/discover';
 
 const TOOLKIT_FILTERS: ReadonlySet<string> = new Set<CreatorToolkitFilter>(['all', 'style', 'soundscape', 'cue', 'atmosphere']);
 const isToolkitFilter = (value: string | null): value is CreatorToolkitFilter => Boolean(value && TOOLKIT_FILTERS.has(value));
@@ -32,7 +31,7 @@ const isToolkitFilter = (value: string | null): value is CreatorToolkitFilter =>
  */
 export type NovelExpandedRoute =
   | { page: 'home' }
-  | { page: 'discover'; section?: 'creators' | 'codex'; medium?: DiscoverMedium; lore?: string; query?: string; category?: string }
+  | { page: 'discover'; section?: 'creators' | 'codex'; lore?: string; query?: string; category?: string }
   | { page: 'create'; seedId?: string; newSeed?: boolean; plugins?: CreatorToolkitFilter; pluginPack?: string }
   /** A world as its author sees it in Create: its Blueprint, Chapters, Codex, Assets and Info. */
   | { page: 'world'; storyId: string }
@@ -60,8 +59,7 @@ export function parseRoute(search: string): NovelExpandedRoute {
   if (query.get('page') === 'discover') {
     const lore = query.get('lore')?.trim();
     const section = query.get('section');
-    const medium = query.get('medium');
-    const base: Extract<NovelExpandedRoute, { page: 'discover' }> = { page: 'discover', ...((medium === 'novel' || medium === 'manga' || medium === 'game' || medium === 'video') ? { medium } : {}) };
+    const base = { page: 'discover' } as const;
     return lore ? { ...base, lore, ...(query.get('q') ? { query: query.get('q')! } : {}), ...(query.get('category') ? { category: query.get('category')! } : {}) }
       : section === 'creators' || section === 'codex' ? { ...base, section } : base;
   }
@@ -94,7 +92,7 @@ export function parseRoute(search: string): NovelExpandedRoute {
 export function routeSearch(route: NovelExpandedRoute): string {
   switch (route.page) {
     case 'home': return '';
-    case 'discover': return `?${new URLSearchParams({ page: 'discover', ...(route.lore ? { lore: route.lore, ...(route.query ? { q: route.query } : {}), ...(route.category ? { category: route.category } : {}) } : route.section ? { section: route.section } : {}), ...(route.medium ? { medium: route.medium } : {}) })}`;
+    case 'discover': return `?${new URLSearchParams({ page: 'discover', ...(route.lore ? { lore: route.lore, ...(route.query ? { q: route.query } : {}), ...(route.category ? { category: route.category } : {}) } : route.section ? { section: route.section } : {}) })}`;
     case 'create': return route.seedId ? `?${new URLSearchParams({ page: 'create', seed: route.seedId })}`
       : route.newSeed ? '?page=create&seed=new'
       : route.plugins ? `?${new URLSearchParams({ page: 'create', plugins: route.plugins, ...(route.pluginPack ? { pack: route.pluginPack } : {}) })}`
@@ -143,7 +141,7 @@ export function goBack(navigate: Navigate) {
  * the browser's Back and Forward walk the same pages; `replace` swaps the
  * current entry instead (a started story replaces Create, so Back goes Home).
  */
-export function useAppRoute(): [NovelExpandedRoute, Navigate] {
+export function useAppRoute(hrefFor: (route: NovelExpandedRoute) => string = routeHref): [NovelExpandedRoute, Navigate] {
   const [route, setRoute] = useState(() => parseRoute(window.location.search));
   useEffect(() => {
     const follow = () => setRoute(parseRoute(window.location.search));
@@ -151,13 +149,13 @@ export function useAppRoute(): [NovelExpandedRoute, Navigate] {
     return () => window.removeEventListener('popstate', follow);
   }, []);
   const navigate = useCallback<Navigate>((next, { replace = false, scroll = true } = {}) => {
-    const url = routeHref(next);
+    const url = hrefFor(next);
     if (replace) window.history.replaceState({ depth: historyDepth() }, '', url);
     else window.history.pushState({ depth: historyDepth() + 1 }, '', url);
     // A fresh object even for the same page (Home from Home), so the app redraws and sees the new history depth.
     setRoute({ ...next });
     // A new page starts at its top.
     if (scroll) window.scrollTo({ top: 0 });
-  }, []);
+  }, [hrefFor]);
   return [route, navigate];
 }

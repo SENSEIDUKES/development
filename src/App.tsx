@@ -200,7 +200,7 @@ export default function App() {
         <Workspace />
       </DeferredWorkspace>
     );
-    return preview === 'world-card' && params.get('canvas') === '1' ? content : (
+    return (preview === 'world-card' || preview === 'discover') && params.get('canvas') === '1' ? content : (
       <PreviewLayout>
         {content}
       </PreviewLayout>

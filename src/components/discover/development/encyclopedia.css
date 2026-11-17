@@ -68,3 +68,10 @@
   .encyclopedia-categories button { flex-direction: row; align-items: center; justify-content: space-between; font-size: .8125rem; padding: .75rem; }
   .encyclopedia-article { grid-template-columns: 17rem minmax(0, 1fr); gap: 2.5rem; }
 }
+
+/* Term search belongs to the encyclopedia, separate from catalogue browsing. */
+.encyclopedia-search { display: flex; align-items: center; gap: .5rem; min-height: 44px; padding: 0 .75rem; border-radius: .625rem; background: rgba(255,255,255,.065); color: var(--discover-muted); }
+.encyclopedia-search svg { flex-shrink: 0; }
+.encyclopedia-search:focus-within { box-shadow: 0 0 0 2px rgba(4,172,255,.55); }
+.encyclopedia-search input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--discover-ink); font-size: .8125rem; }
+.encyclopedia-search input::placeholder { color: var(--discover-muted); }

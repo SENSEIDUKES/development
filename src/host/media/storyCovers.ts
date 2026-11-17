@@ -130,7 +130,9 @@ export function useStoryCovers(store: StoryCoverStore, maker: StoryCoverMaker): 
     const { images, problem } = await maker(story, howMany);
     if (images.length) {
       // Covers were made: one of the story's chances is used, kept beside its cover.
-      const times = (countsRef.current[storyId] ?? 0) + 1;
+      // Another tab may have used chances since this one opened: count on from the device's own number, never back.
+      const kept = await store.loadAll().then(all => all.find(entry => entry.storyId === storyId + MADE_COUNT_SUFFIX)?.image.text(), () => undefined);
+      const times = Math.max(countsRef.current[storyId] ?? 0, Number(kept) || 0) + 1;
       count(storyId, times);
       void store.save(storyId + MADE_COUNT_SUFFIX, new Blob([String(times)], { type: 'text/plain' })).catch(() => undefined);
     }

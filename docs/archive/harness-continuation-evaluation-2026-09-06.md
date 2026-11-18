@@ -1,7 +1,7 @@
 # Steered continuation evaluation — 2026-09-06
 
 > Terms like HARNESS, Story Information, and context selection are defined
-> once in [ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md); this
+> once in [ARCHITECTURE_VOCABULARY.md](../../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md); this
 > file does not redefine them.
 
 The ordinary Harness cycle still uses one writing call per chapter. This work adds

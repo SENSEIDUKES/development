@@ -1,10 +1,13 @@
 # The World at Chapter 0 (living plan)
 
-**Status:** the owner's working plan. **Phase B, the World at Chapter 0, is
-built** (2026-10-22; see the History at the end). The phases after it are not.
-Any agent picking this up should read it top to bottom, then
-[HARNESS_PRINCIPLES](../src/components/harness-generation/HARNESS_PRINCIPLES.md)
-and the [vocabulary](../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md).
+**Working plan.** Phase B built the World at Chapter 0 on 2026-10-22. The
+chapter writer has read that world since 2026-10-24. The phase table tracks
+the CTE work. See the [world state pipeline](./world-state-pipeline.md) for
+the follow-on Codex work.
+
+Read this plan top to bottom, then
+[HARNESS_PRINCIPLES](../../src/components/harness-generation/HARNESS_PRINCIPLES.md)
+and the [vocabulary](../../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md).
 
 The chapter loop's own design document was rolled back with its code on
 2026-10-22 ([#421](https://github.com/SENSEIDUKES/development/pull/421)), so
@@ -48,7 +51,7 @@ each with its own approval: **what the chapter writer reads from this world**
 built" below), and a character's **starting CTE state**, which is phase C's and
 whose numbers are the owner's.
 
-**To hand this to a new chat:** "Read docs/world-at-chapter-0.md. Phase B is
+**To hand this to a new chat:** "Read docs/plans/world-at-chapter-0.md. Phase B is
 built. We are at phase C." Attach the CGT v1.5 PDF before phase C.
 
 ## The problem, in SENSEI's words (2026-10-21)
@@ -72,7 +75,7 @@ built. We are at phase C." Attach the CGT v1.5 PDF before phase C.
 
 SENSEI (2026-10-21): "What exactly would make this not multimedia? How do we
 take it to a manga and recreate it one for one? That's the line." This was
-decided in [HARNESS_PRINCIPLES](../src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record)
+decided in [HARNESS_PRINCIPLES](../../src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record)
 and is the only measure of the Codex. **No fields beyond it.**
 
 **Two tests for "enough":**

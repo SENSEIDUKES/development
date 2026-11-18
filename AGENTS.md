@@ -2,9 +2,10 @@
 
 Read this file before making changes.
 
-Read the relevant feature guide for current ownership and behavior. Dated histories
-and audits record earlier states; consult them when the task needs that history,
-and verify any open finding against current code before acting on it.
+Use the [documentation index](./docs/README.md) to find guides, plans, research,
+and archived reports. Read the relevant feature guide for current ownership and behavior.
+Dated histories and audits record earlier states. Consult them when the task needs that
+history, and verify any open finding against current code before acting on it.
 
 ## Purpose
 

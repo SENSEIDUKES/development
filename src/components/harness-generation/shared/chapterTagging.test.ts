@@ -3,7 +3,7 @@ import type { HarnessChapter } from '../../../narrative/generation';
 import { describeChapterTagging, storyTaggingSummary } from './chapterTagging';
 
 /**
- * The tagging record in words for the page (docs/create-hub.md, phase B,
+ * The tagging record in words for the page (docs/plans/create-hub.md, phase B,
  * decision 4): a quiet chapter and a failed one never look alike, and a kind
  * the tagger was never taught says so instead of "found nothing".
  */

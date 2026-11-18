@@ -15,10 +15,10 @@ Updated local main by fast-forward from `0682f09` to `24cb248` before implementa
 | `src/components/light-novels-home/README.md` | Source commit, dates, boundary, history, and transfer instructions. |
 | `src/workshop/previews/light-novels-home/LightNovelsHomeWorkspace.tsx` | Standalone Home entry with Reference/Development/Compare and direct responsive link. |
 | `src/workshop/previews/library-shell/LibraryAppPreview.test.tsx` | Route selection, fixtures, filter retention, Profile round-trip, hero action, header search, and history regression coverage. |
-| `docs/history/standalone-home/home-mobile.png` | Home screenshot at a 390 by 844 CSS viewport, captured at the browser host's display scale. |
-| `docs/history/standalone-home/library-mobile.png` | Existing Library Shell screenshot at the same mobile viewport. |
-| `docs/history/standalone-home/navigation-browser.json` | Sixteen browser checks covering four destinations at 320, 390, 768, and 1440 CSS pixels. |
-| `docs/history/standalone-home/changes.md` | This exact inventory and validation report. |
+| `docs/archive/standalone-home/home-mobile.png` | Home screenshot at a 390 by 844 CSS viewport, captured at the browser host's display scale. |
+| `docs/archive/standalone-home/library-mobile.png` | Existing Library Shell screenshot at the same mobile viewport. |
+| `docs/archive/standalone-home/navigation-browser.json` | Sixteen browser checks covering four destinations at 320, 390, 768, and 1440 CSS pixels. |
+| `docs/archive/standalone-home/changes.md` | This exact inventory and validation report. |
 
 ## Files modified
 

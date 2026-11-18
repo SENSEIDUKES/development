@@ -91,7 +91,7 @@ release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm c
 - **2026-11-12:** Updated SEIHouse Sans to 0.42.0 from FONT-LAB #27 (`5f57f9d`). It adds Night faces for Light and Medium beside Regular, so all three Reader weights have one, and brings 0.41's added Latin letters and accents. Existing letters keep their shapes and widths. The Reader does not use the Night family yet. Living Titles stays at 0.1.2.
 - **2026-11-11:** Updated SEIHouse Sans to 0.40.0 and Living Titles to 0.1.2 from FONT-LAB #24. The shared host theme delivers the refined curves to NovelExpanded and the Workshop; recorded the new package integrity and upstream release provenance together.
 
-- **2026-11-08:** Added SEIHouse Front Desk 0.2.0 (`seihouse-front-desk-0.2.0.tgz`), the Familiar's system lifted out of this repository into `SENSEIDUKES/seihouse-front-desk` (step 2 of `docs/front-desk-plan.md`), with `front-desk-artifacts.json`.
+- **2026-11-08:** Added SEIHouse Front Desk 0.2.0 (`seihouse-front-desk-0.2.0.tgz`), the Familiar's system lifted out of this repository into `SENSEIDUKES/seihouse-front-desk` (step 2 of `docs/plans/front-desk-plan.md`), with `front-desk-artifacts.json`.
 
 - **2026-10-27:** Refreshed UI 0.12.0 and Library UI 0.10.1 from current UI main at `8371b71`, through UI [#94](https://github.com/SENSEIDUKES/UI/pull/94). Neither version moves from the #91 build below: only the bytes, the SHA-512 integrity in `ui-artifacts.json` and `package-lock.json`, and the recorded source provenance.
 

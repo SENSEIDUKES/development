@@ -6,7 +6,7 @@ import { settingLine } from './settings';
 
 /**
  * A chapter's tagging record, in words for the page (SENSEI, 2026-10-29,
- * `docs/create-hub.md` phase B and decision 4): whether the tagger read the
+ * `docs/plans/create-hub.md` phase B and decision 4): whether the tagger read the
  * chapter, by which model and when, how many notes it wrote and how many
  * landed, and then one line per kind of tag. A kind the tagger was never
  * taught (no Sound Words equipped, no soundscapes equipped) says so; a kind it

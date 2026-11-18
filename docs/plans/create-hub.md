@@ -7,9 +7,9 @@ own model choice ([#484](https://github.com/SENSEIDUKES/development/pull/484)).
 Phase B is built (the author's world view, below); the Phases table says where
 each phase stands (checked against the code 2026-11-06). Any agent
 picking this up should read it top to bottom, then
-[NOVEL_EXPANDED.md](../NOVEL_EXPANDED.md) (the product map and How we build),
-[HARNESS_PRINCIPLES](../src/components/harness-generation/HARNESS_PRINCIPLES.md)
-and the [vocabulary](../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md).
+[NOVEL_EXPANDED.md](../../NOVEL_EXPANDED.md) (the product map and How we build),
+[HARNESS_PRINCIPLES](../../src/components/harness-generation/HARNESS_PRINCIPLES.md)
+and the [vocabulary](../../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md).
 
 ## How to use this (read first)
 
@@ -18,7 +18,7 @@ word a model reads, and judges results by seeing and hearing them in the app,
 never by reading code. Every phase below ends with something SENSEI can open,
 and no phase starts on an undecided question.
 
-**To hand this to a new chat:** "Read docs/create-hub.md. The author's world
+**To hand this to a new chat:** "Read docs/plans/create-hub.md. The author's world
 view is designed and waiting on SENSEI's approval; once approved it is built,
 and phase B closes on SENSEI's run in it."
 

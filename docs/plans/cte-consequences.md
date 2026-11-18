@@ -3,7 +3,7 @@
 - **Created:** 2026-10-19
 - **Owner:** SENSEI
 - **Status:** direction, not built. Details are still being worked out.
-  [`NOVEL_EXPANDED.md`](../NOVEL_EXPANDED.md) stays the source of truth for what
+  [`NOVEL_EXPANDED.md`](../../NOVEL_EXPANDED.md) stays the source of truth for what
   is built.
 - **Sources:** *The Consciousness Garden Theory* v1.5 (sections 12–15, the
   Consciousness Translation Engine) and the *Fragmentation Checker —

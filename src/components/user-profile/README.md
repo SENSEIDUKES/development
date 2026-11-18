@@ -294,7 +294,7 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 - **2026-09-09 regression fix:** Restored the Relics connection on Cave Home. Relics is a full-width destination directly beneath the Daily Dao Pillar and above the Store / Settings pair, showing the inventory count and opening the existing `/relics` route — the same `UserProfileInventoryPanel`, the same navigation entry, no second relic implementation or state. The public view is unchanged.
 
 - **2026-09-09 follow-up:** Removed Section from the main global strip, leaving Home, Library, Discover and Profile. Cave destinations remain in top Search and the existing desktop rail; Search releases focus before navigation. Story Seed retains its Sections control. This supersedes the global Section menu described in the earlier entry below.
-- **2026-09-09:** Migrated the Cave's bottom destinations into the Library Shell Section menu. The shared global strip is Section, Home, Library, Discover, Profile; Profile stays active for every Cave route. The existing desktop rail reads the same Section definition. Private Settings stays beneath Daily Dao Pillar, public Exit keeps its previous destination, and all existing pages and internal UI are unchanged. The host now supplies `onNavigateLibrary(location)` for leaving the Cave. See [Library navigation](../../../docs/library-navigation.md).
+- **2026-09-09:** Migrated the Cave's bottom destinations into the Library Shell Section menu. The shared global strip is Section, Home, Library, Discover, Profile; Profile stays active for every Cave route. The existing desktop rail reads the same Section definition. Private Settings stays beneath Daily Dao Pillar, public Exit keeps its previous destination, and all existing pages and internal UI are unchanged. The host now supplies `onNavigateLibrary(location)` for leaving the Cave. See [Library navigation](../../../docs/guides/library-navigation.md).
 
 - **2026-09-09:** Wired the Cave to the shared top navigation, using the optional contextual slot for Public View and existing destinations/actions for Search. Universal Help reuses Library guidance. Page content, visibility rules and bottom navigation are unchanged.
 
@@ -653,7 +653,7 @@ The old 13rem sticky aside inside `.cave-workspace-body` is replaced by the shel
 
 ## Development shell integration — 2026-09-08
 
-Connected WorkspaceHeader to Cultivator Cave emblem/home and its existing consolidated Settings panel. Cave destinations, portrait, Qi and role rules remain unchanged; no Story Seed sidebar or bottom controls were added. See [shared contracts](../../../docs/library-header-family.md). Locked references and source-comparison dates are unchanged.
+Connected WorkspaceHeader to Cultivator Cave emblem/home and its existing consolidated Settings panel. Cave destinations, portrait, Qi and role rules remain unchanged; no Story Seed sidebar or bottom controls were added. See [shared contracts](../../../docs/guides/library-header-family.md). Locked references and source-comparison dates are unchanged.
 
 
 ## Four-destination Cave workspace — 2026-09-08
@@ -669,7 +669,7 @@ approved or finalized by this change.
 `LibrarySectionSidebar` reads the retained page definition in the existing 14rem rail
 from 1024px. The global strip remains available at every width, with shell-owned clearance.
 Settings remains the existing button beneath Daily Dao Pillar. See the current
-[navigation contract](../../../docs/library-navigation.md).
+[navigation contract](../../../docs/guides/library-navigation.md).
 
 Routes coexist with the existing preview query and preserve unrelated URL parameters, hash,
 and host history state:
@@ -965,7 +965,7 @@ state. The same choice drives the app's shared menu-page backgrounds and Profile
 backdrop, survives reload, and preserves unfinished identity edits and all tint
 settings. Home art is the default when no image is saved. Existing image IDs remain
 valid; source locations remain host assets. The replaced Cave-only catalog (and its
-unused motto/stage helpers) is preserved in `docs/history/profile-cave-environment.md`.
+unused motto/stage helpers) is preserved in `docs/archive/profile-cave-environment.md`.
 Historical reference files remain unchanged. Ambient spirit motes retain their
 existing Profile-only behavior.
 

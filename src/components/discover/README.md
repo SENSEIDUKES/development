@@ -1,7 +1,7 @@
 # Discover
 
 The Library's Discover page, Expanded Novels' front door. Direction:
-[`docs/discover-page.md`](../../../docs/discover-page.md).
+[`docs/plans/discover-page.md`](../../../docs/plans/discover-page.md).
 
 `Discover` (`@seihouse/library/discover`) draws the page over host-supplied data:
 worlds (`HomeWorld`, shown on the shared `WorldCard`), creator and Codex directory

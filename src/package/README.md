@@ -20,7 +20,7 @@ the Library.
 
 The UI repository owns `@seihouse/ui@0.12.0` (universal primitives and experience tokens) and `@seihouse/library-ui@0.10.1` (stateless Celestial Library presentation). Development pins reproducible private tarballs in `vendor/`. SEN depends on universal UI, exposes `NarrativePresentationProvider`, and has no Library UI import, re-export, or dependency. Library's `LibraryPresentationProvider` supplies the branded components and host asset locations without copying either into SEN.
 
-The old `@seihouse/sen/ui` and `@seihouse/sen/library` UI entries are removed in SEN 0.4.0; import components directly from Library UI. All narrative feature entries remain. See [migration evidence](../../docs/history/library-ui-migration.md).
+The old `@seihouse/sen/ui` and `@seihouse/sen/library` UI entries are removed in SEN 0.4.0; import components directly from Library UI. All narrative feature entries remain. See [migration evidence](../../docs/archive/library-ui-migration.md).
 
 ## Which lane does a surface belong to?
 

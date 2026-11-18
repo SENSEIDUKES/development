@@ -4,7 +4,7 @@
 - **Owner:** SENSEI
 - **Status:** refined 2026-11-17; the app lists published stories, while samples
   remain in Workshop. The features below are a working list; the
-  philosophy is what's locked in. [`NOVEL_EXPANDED.md`](../NOVEL_EXPANDED.md)
+  philosophy is what's locked in. [`NOVEL_EXPANDED.md`](../../NOVEL_EXPANDED.md)
   stays the source of truth for what is built.
 
 ## Purpose and philosophy

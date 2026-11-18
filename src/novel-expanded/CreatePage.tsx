@@ -85,7 +85,7 @@ export function CreatePage({ services, askForToken, startedSeedIds, chapterModel
     <LibraryLook accentColor={accentColor} className="min-h-screen bg-void" data-testid="novel-expanded-create">
       <CreationModal blueprintPictures={blueprintPictures} onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
         accountDefaultLanguage={accountDefaultLanguage} accountDefaultChapterWritingStyle={accountDefaultChapterWritingStyle}
-        renderStorySettings={renderStorySettings} renderStoryPlugins={renderStoryPlugins} manifestAside={<BlueprintEnergyCost />} initialSeedId={seedId} originSparks={originSparks}
+        renderStorySettings={renderStorySettings} renderStoryPlugins={renderStoryPlugins} manifestAside={<BlueprintEnergyCost model={blueprint.model} />} initialSeedId={seedId} originSparks={originSparks}
         onGenerateBlueprint={payload => isLocalDevelopmentModel(blueprintModel)
           ? track(signal => services.requestWorldBlueprint(payload, '', signal, blueprintModel))
           : withToken('The World Blueprint needs the development access token. Nothing was changed.',

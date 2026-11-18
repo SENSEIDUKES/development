@@ -398,6 +398,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-18** — **Kokoro casts each character by gender** (SENSEI's chapter test: women were read in a man's voice). Kokoro had three voices, narrator, main character and one man's voice for everyone else. Now each speaking character gets their own Kokoro voice, a woman's or a man's as their Codex card or the chapters say, the same one every time and on every device so kept lines are shared. A heroine gets a woman's main voice. Library's `storySpeakers` says who speaks each line; the narrator keeps one voice.
 - **2026-11-17** — Simplified Discovery controls and phone tabs, moved Events
   from Home into Rankings, and kept catalogue samples only in Workshop.
   The app lists published stories and shares its Discover page and shell

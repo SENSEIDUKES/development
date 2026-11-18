@@ -64,6 +64,8 @@ export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   { name: 'Chapter Voices', capability: 'tts', entry: 'src/server/audio/chapterVoice.ts', modelChoice: 'server-default' },
   // Kokoro on SEIHouse's own voice server (services/kokoro-voice); the voice server holds the model, not a provider key.
   { name: 'Kokoro Voices', capability: 'tts', entry: 'src/server/audio/kokoroVoice.ts', modelChoice: 'server-default' },
+  // A one-off trial of Qwen3-TTS as a foundation voice, run as a Cloud Run GPU job (services/qwen-voice-test).
+  { name: 'Qwen Voice Trial', capability: 'tts', entry: 'services/qwen-voice-test/test.py', modelChoice: 'server-default' },
   { name: 'Familiar Live Talk', capability: 'live', entry: 'src/server/familiar-live/http.ts', modelChoice: 'router' },
   { name: 'Story Cover', capability: 'images', entry: 'src/server/story-cover/http.ts', modelChoice: 'router' },
   { name: 'Codex Picture', capability: 'images', entry: 'src/server/story-cover/codexPicture.ts', modelChoice: 'router' },

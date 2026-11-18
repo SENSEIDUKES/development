@@ -213,7 +213,7 @@ export function HarnessReaderSession({
   readAloudVoices?: ReadAloudVoicePicks;
   /** The host's saved voice clip for a spoken line of a chapter, as an address to play; without one the device reads the line. */
   readAloudClip?: (chapterId: string, line: ReadAloudLine, upcoming: readonly ReadAloudLine[]) => string | Promise<string | undefined> | undefined;
-  /** The host's narration made on this device, when it has one: its switch in Reader Settings' Narration. */
+  /** The host's own narration voice, when it has one: its switch in Reader Settings' Narration. */
   deviceNarration?: ReaderDeviceNarration;
   /**
    * The host's soundscapes: the Reader's own music before the story has a

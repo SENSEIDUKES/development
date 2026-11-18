@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type MouseEvent, type ReactNode, type RefObject } from 'react';
 import { ArrowRight, ChevronRight, ExternalLink, Landmark, Package, Pencil, Play } from 'lucide-react';
 import {
   LibraryButton, LibraryPanel,
@@ -32,7 +32,7 @@ function fallbackCover(id: string, images: readonly string[]) {
  * presents them and reports which world the creator wants to work on.
  */
 export function CreatorSpace({
-  worlds, energy, toolkit, onCreate, onOpenEnergy, onContinueWorld, onOpenWorld, onEditWorld, onBrowseToolkit, onRetryWorlds, sparks,
+  worlds, energy, toolkit, onCreate, onOpenEnergy, onContinueWorld, onOpenWorld, onEditWorld, onBrowseToolkit, browseToolkitHref, canImportPlugins, onRetryWorlds, sparks,
 }: CreatorSpaceProps) {
   const items = useMemo(() => worlds.status === 'ready'
     ? [...worlds.items].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
@@ -78,7 +78,7 @@ export function CreatorSpace({
         onContinueWorld={onContinueWorld} onOpenWorld={onOpenWorld} onEditWorld={onEditWorld} />}
     </section>
 
-    <CreatorToolkit items={toolkit} onBrowse={onBrowseToolkit} />
+    <CreatorToolkit items={toolkit} onBrowse={onBrowseToolkit} browseHref={browseToolkitHref} canImport={canImportPlugins} />
   </div>;
 }
 
@@ -99,24 +99,37 @@ function CreatorStat({ icon, label, value, note, onSelect }: {
     : <div className="creator-space-stat">{body}</div>;
 }
 
-function CreatorToolkit({ items, onBrowse }: { items: readonly CreatorToolkitItem[]; onBrowse?: (kind?: CreatorToolkitKind) => void }) {
+function CreatorToolkit({ items, onBrowse, browseHref, canImport }: {
+  items: readonly CreatorToolkitItem[];
+  onBrowse?: (kind?: CreatorToolkitKind) => void;
+  browseHref?: string;
+  canImport?: boolean;
+}) {
   const [notice, setNotice] = useState(false);
   const browse = () => { if (onBrowse) onBrowse(); else setNotice(true); };
+  const follow = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!onBrowse || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    onBrowse();
+  };
   const art = items.find(item => item.imageUrl)?.imageUrl;
+  const browseContent = <>
+    {art && <img src={art} alt="" className="creator-space-tool-art" loading="lazy" referrerPolicy="no-referrer" />}
+    <span className="relative z-[1] flex flex-col items-start gap-2 text-left">
+      <span className="creator-space-tool-icon"><Package size={18} aria-hidden="true" /></span>
+      <span className="flex items-center gap-3 font-display text-xl font-semibold text-signal">Browse plugins <ArrowRight size={18} aria-hidden="true" /></span>
+      <span className="max-w-64 font-sans text-sm leading-relaxed text-neutral-300">Style packs, soundscapes, cues and atmospheres for your worlds.</span>
+    </span>
+  </>;
   return <section aria-labelledby="creator-toolkit-title" className="space-y-3">
     <div className="flex items-center gap-2">
       <h2 id="creator-toolkit-title" className="font-display text-xl font-bold text-signal sm:text-2xl">Creator Toolkit</h2>
-      {!onBrowse && <span className="creator-space-tag">Preview</span>}
+      {!onBrowse && !browseHref && <span className="creator-space-tag">Preview</span>}
     </div>
     <div className="creator-space-toolkit">
-      <button type="button" className="creator-space-tool" onClick={browse}>
-        {art && <img src={art} alt="" className="creator-space-tool-art" loading="lazy" referrerPolicy="no-referrer" />}
-        <span className="relative z-[1] flex flex-col items-start gap-2 text-left">
-          <span className="creator-space-tool-icon"><Package size={18} aria-hidden="true" /></span>
-          <span className="flex items-center gap-3 font-display text-xl font-semibold text-signal">Browse plugins <ArrowRight size={18} aria-hidden="true" /></span>
-          <span className="max-w-64 font-sans text-sm leading-relaxed text-neutral-300">Style packs, soundscapes, cues and atmospheres for your worlds.</span>
-        </span>
-      </button>
+      {browseHref
+        ? <a href={browseHref} className="creator-space-tool" onClick={follow}>{browseContent}</a>
+        : <button type="button" className="creator-space-tool" onClick={browse}>{browseContent}</button>}
       <div className="creator-space-studios">
         <span className="creator-space-tool-icon"><Landmark size={18} aria-hidden="true" /></span>
         <h3 className="font-display text-xl font-semibold text-signal">Studios</h3>
@@ -125,7 +138,7 @@ function CreatorToolkit({ items, onBrowse }: { items: readonly CreatorToolkitIte
           <a className="creator-space-link" href="https://studio.novelexpanded.com" target="_blank" rel="noopener noreferrer">
             Open Studio <ExternalLink size={16} aria-hidden="true" /><span className="sr-only"> (opens in a new tab)</span>
           </a>
-          {onBrowse && <button type="button" className="creator-space-link" onClick={browse}>Import plugins <ArrowRight size={16} aria-hidden="true" /></button>}
+          {canImport && browseHref && <a href={browseHref} className="creator-space-link" onClick={follow}>Import plugins <ArrowRight size={16} aria-hidden="true" /></a>}
         </div>
       </div>
     </div>

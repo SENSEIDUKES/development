@@ -201,7 +201,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'library',
     status: 'active',
     title: 'Create',
-    description: 'The Library’s Create tab: a compact top Create action, live Energy and In progress readings, Your worlds with Continue and Edit, one Browse plugins card, and a dedicated Studios card linking to external creation and the existing package import flow.',
+    description: 'A compact Create action, Your worlds with Continue and Edit, one Browse plugins card, and a Studios card linking to external creation and package import.',
     category: 'other',
     version: 'v1.0',
     source: {
@@ -228,7 +228,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'discover', section: 'pages', group: 'discover', owner: 'library', status: 'active', title: 'Discover',
-    description: 'The Expanded Novels front door, in the live app with sample worlds: store-front shelves for Featured worlds, New Chapters and My updates (newest first, no algorithm), the Fate Survival feature, Heavenly Rankings, Events and Browse by Genre. The structure is in; its look and feel is being refined.',
+    description: 'The Expanded Novels front door: Stories, Creators, Codex and Lore with genre browsing and a dedicated Events tab. The app shows published stories; this Workshop uses the same page and shell with an isolated sample catalogue.',
     category: 'other', version: 'v1.0',
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/discover/; src/novel-expanded/DiscoverPage.tsx', lastCompared: 'Not applicable — live app route' },
   },

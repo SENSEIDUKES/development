@@ -117,17 +117,16 @@ body:has(.library-look) :is(.front-desk-card-place, .front-desk-card-quiet) { co
   --discover-hairline: var(--reader-glass-edge);
   --discover-glass: var(--library-material-card-fill);
 }
-.library-look :is(.discover-navigation, .discover-medium-switcher, .discover-fate, .discover-sample-notice p) {
+.library-look :is(.discover-navigation, .discover-fate, .discover-sample-notice p) {
   background: var(--library-material-card-fill);
   border-color: var(--reader-glass-edge);
   box-shadow: var(--library-material-card-shadow);
   -webkit-backdrop-filter: var(--library-material-card-blur);
   backdrop-filter: var(--library-material-card-blur);
 }
-.library-look :is(.discover-medium-switcher, .discover-fate) { position: relative; }
-.library-look .discover-medium-switcher { border-radius: 1.35rem; }
+.library-look .discover-fate { position: relative; }
 .library-look .discover-fate { border: 1px solid var(--reader-glass-edge); border-radius: 1.35rem; }
-.library-look :is(.discover-search, .discover-segmented, .discover-genre-select select) {
+.library-look :is(.encyclopedia-search, .discover-segmented, .discover-genre-select select) {
   background: var(--library-material-control-fill);
   border: 1px solid var(--reader-glass-edge);
   color: var(--library-material-text);
@@ -185,7 +184,7 @@ body:has(.library-look) :is(.front-desk-card-place, .front-desk-card-quiet) { co
 
 /* ── Create (Creator Space) ───────────────────────────────────────────────
    The creator's tiles are nested cards, Browse plugins a black control; the
-   Browse plugins card keeps its art and the worlds row is World Cards (media). */
+   Toolkit cards keep their art and the worlds row is World Cards (media). */
 .library-look [data-creator-space] .creator-space-stat {
   background: var(--library-material-shell-fill);
   border-color: var(--reader-glass-edge);
@@ -193,7 +192,7 @@ body:has(.library-look) :is(.front-desk-card-place, .front-desk-card-quiet) { co
   -webkit-backdrop-filter: var(--library-look-blur);
   backdrop-filter: var(--library-look-blur);
 }
-.library-look [data-creator-space] :is(.creator-space-link, .creator-plugin-filter) {
+.library-look [data-creator-space] .creator-space-link {
   color: var(--library-material-text);
   box-shadow: var(--library-material-control-shadow);
   background: var(--library-material-control-fill);
@@ -202,23 +201,12 @@ body:has(.library-look) :is(.front-desk-card-place, .front-desk-card-quiet) { co
   backdrop-filter: var(--library-material-control-blur);
 }
 
-.library-look [data-creator-space] .creator-plugin-filter[data-active] {
-  border-color: var(--library-accent, var(--color-gold-accent));
-  color: var(--library-accent, var(--color-gold-accent));
-}
 .library-look [data-creator-space] :is(.creator-plugin-panel, .creator-space-studios) {
   background: var(--library-material-card-fill);
   border-color: var(--reader-glass-edge);
   box-shadow: var(--library-material-card-shadow);
   -webkit-backdrop-filter: var(--library-material-card-blur);
   backdrop-filter: var(--library-material-card-blur);
-}
-.library-look [data-creator-space] :is(.creator-plugin-card, .creator-plugin-spp) {
-  background: var(--library-material-shell-fill);
-  border-color: var(--reader-glass-edge);
-}
-.library-look [data-creator-space] .creator-plugin-spp:hover {
-  border-color: var(--library-accent, var(--color-gold-accent));
 }
 
 /* ── Sign-in (the OAuth screen) ────────────────────────────────────────────

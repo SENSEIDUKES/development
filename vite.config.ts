@@ -63,8 +63,6 @@ export default defineConfig(({ mode }) => {
       developmentApisPlugin(serverEnvironment),
     ],
     resolve: { alias: packageAliases },
-    // The Kokoro voice worker finds its own files by its address (`import.meta.url`), which only a module worker keeps.
-    worker: { format: 'es' },
     // Agent worktrees under .claude/ are other checkouts; their tests are not this one's.
     test: { exclude: [...configDefaults.exclude, '.claude/**'] },
   };

@@ -1,5 +1,7 @@
 # Library Shell
 
+- **2026-11-16** — The canonical UI 0.25 header owns NovelExpanded's continuous mountain landscape and sword performance behind Logo, Search, Familiar and Profile. The row uses 72px before its hairline and safe area; short landscape retains its compact targets. Search opens its existing sheet while the performance continues; reduced motion rests on the same landscape. This replaces the looping search underline. App and Workshop share this composition.
+
 - **2026-11-12** — Short landscape screens (at most 480px high) move the music note into the header and compact header and navigation spacing while keeping 44px targets. Content clearance follows the measured bar. The Portrait Language row is a full-row native picker with a visible keyboard focus ring.
 
 - **2026-11-12** — Portrait menus follow the interface direction and stay within viewport gutters. Focus starts on the panel; Tab and Shift+Tab remain inside until dismissal, and Escape returns focus to the portrait.

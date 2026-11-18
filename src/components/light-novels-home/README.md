@@ -14,10 +14,8 @@ Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-ru
 
 ## Boundary and ownership
 
-Home's opening hero says **Welcome to NovelExpanded**, with **Create A World**
-opening Story Seed. Events lives in Discover's **Events** tab; the existing event
-announcements and display contract moved to Discover's owner. The Home Workshop
-continues loading the app directly, so it shows this same wording and placement.
+Events are now owned by Discover and have a dedicated Discover tab; Home opens
+with Featured. The existing Home Workshop iframe reflects the same app composition.
 
 The Home workspace's **Development** pane loads the actual NovelExpanded `/app/`
 document at the selected mobile, tablet or laptop viewport. This reuses
@@ -47,7 +45,7 @@ The extraction retains the source hero JSX, video sequence, six-second backdrop 
 - Profile: the existing Cultivator Cave, including its own nested routes and shared chrome.
 - Novel detail: `screen=detail`, the existing destination, now populated for the sole featured mock novel. Direct loading and reloading select that fixture. Back/Forward and Back to novels preserve Home filters; returning from the detail restores card focus.
 
-These compatibility values are retained. Home and Profile remain mounted while inactive so navigation does not discard unrelated local edits or Home filters. Only the active screen's header and global strip are visible. Back/Forward updates the current destination. Story Seed keeps its existing separate document and specialized navigation. The Home hero's Carve New Destiny opens that existing local Story Seed preview.
+These compatibility values are retained. Home and Profile remain mounted while inactive so navigation does not discard unrelated local edits or Home filters. Only the active screen's header and global strip are visible. Back/Forward updates the current destination. Story Seed keeps its existing separate document and specialized navigation. The Home hero's Create A World opens that existing local Story Seed preview.
 
 
 
@@ -96,6 +94,9 @@ See `docs/history/standalone-home/` for local production browser evidence and th
 The build, focused navigation/header/profile/Workshop tests, package boundary checks, and existing locked-capture guard pass. No full production Library/Discover body or production account/backend behavior is claimed as covered.
 
 ## Workshop history
+
+- **2026-11-17:** Moved Events out of Home and into Discover Rankings. Featured
+  now leads the page in both the app and its existing Workshop iframe.
 
 - **2026-10-28, Original Reference removed:** With the owner's approval, the old
   production copy (`reference/LightNovelsHome.tsx`, `reference/StoryDetailScreen.tsx`),
@@ -217,4 +218,4 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
   `.library-look`, worn by every page in the shell through `LibraryLook`. Home's
   own rules (clear media, navigation states, footer clearance) are unchanged there.
 
-- **2026-11-17:** Renamed the hero to Welcome to NovelExpanded and its action to Create A World. Moved Events and its existing announcements into Discover’s Events tab.
+- **2026-11-17:** Home welcomes readers with Welcome to NovelExpanded and Create A World.

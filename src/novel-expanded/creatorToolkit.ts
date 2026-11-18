@@ -6,6 +6,7 @@ import type {
   CreatorPluginGroup,
   CreatorPluginPackage,
   CreatorToolkitItem,
+  CreatorToolkitKind,
 } from '@seihouse/library/creator-space';
 import type { LibraryStories } from '@seihouse/library/stories';
 import { OFFICIAL_CAPA_PACKAGES, OFFICIAL_STYLE_REFERENCES } from '../host/generation/capa/officialCapaSkills';
@@ -287,6 +288,14 @@ function mediaPackToPluginPackage(pack: LibraryStories['mediaPacks'][number]): C
   };
 }
 
+/** The art each kind of plugin wears: on its Creator Toolkit card and on its built-in packs' covers. */
+const TOOLKIT_ART: Record<CreatorToolkitKind, string> = {
+  style: '/manifest-backdrops/immortal-land-2.jpg',
+  soundscape: '/manifest-backdrops/immortal-land-4.jpg',
+  cue: '/manifest-backdrops/immortal-land-5.jpg',
+  atmosphere: '/manifest-backdrops/immortal-land-3.jpg',
+};
+
 /**
  * Builds the live Creator Plugins catalog from the Library's built-in parent
  * `.spp` packs plus any custom `.spp` skills or media packs installed locally.
@@ -333,7 +342,8 @@ export function buildCreatorPluginCatalog(options?: {
       ...customMediaPackages.filter(pack => pack.kind === 'cue'),
       BUILTIN_ATMOSPHERES_PACKAGE,
       ...customMediaPackages.filter(pack => pack.kind === 'atmosphere'),
-    ],
+      // A built-in pack wears its kind's Creator Toolkit art; an installed pack has no cover of its own yet.
+    ].map(pack => (pack.builtIn ? { ...pack, coverUrl: TOOLKIT_ART[pack.kind] } : pack)),
   };
 }
 
@@ -344,14 +354,14 @@ export function buildCreatorPluginCatalog(options?: {
 export const CREATOR_TOOLKIT: readonly CreatorToolkitItem[] = [
   { id: 'style-packs', kind: 'style', title: 'Style Packs',
     description: `${styles.slice(0, -1).join(', ')} and ${styles.at(-1)} writing styles.`,
-    imageUrl: '/manifest-backdrops/immortal-land-2.jpg' },
+    imageUrl: TOOLKIT_ART.style },
   { id: 'soundscapes', kind: 'soundscape', title: 'Soundscapes',
     description: `${SEN_SOUNDSCAPES.length} ambient scores for your scenes.`,
-    imageUrl: '/manifest-backdrops/immortal-land-4.jpg' },
+    imageUrl: TOOLKIT_ART.soundscape },
   { id: 'cues', kind: 'cue', title: 'Cues',
     description: `${LIBRARY_BASE_MEDIA.soundCues.length} sound effects for story moments.`,
-    imageUrl: '/manifest-backdrops/immortal-land-5.jpg' },
+    imageUrl: TOOLKIT_ART.cue },
   { id: 'atmospheres', kind: 'atmosphere', title: 'Atmospheres',
     description: `${SEN_ATMOSPHERES.length} weather and place sounds for your worlds.`,
-    imageUrl: '/manifest-backdrops/immortal-land-3.jpg' },
+    imageUrl: TOOLKIT_ART.atmosphere },
 ];

@@ -37,7 +37,7 @@ import { READER_MUSIC_MOOD } from '../components/harness-generation/development/
 import { installFakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 import { NovelExpandedApp } from './NovelExpandedApp';
 import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
-import { createDeviceNarration } from '../host/reader/deviceNarration';
+import { createKokoroNarration } from '../host/reader/kokoroNarration';
 import { createMemoryStoryCoverStore } from '../host/media/storyCovers';
 import { readStorySettingsDraft, writeStorySettingsDraft } from '@seihouse/library/stories';
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
@@ -111,7 +111,7 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
     // A server without the voice provider: chapters offer no voices unless a test supplies one.
     chapterVoiceServer: { info: vi.fn(async () => ({ available: false })), cast: vi.fn(async () => ({})), line: vi.fn(async () => new Blob([new Uint8Array([1])], { type: 'audio/mpeg' })) },
     // Off, and never asked to load: no test downloads a voice model.
-    deviceNarration: createDeviceNarration({ hasGraphicsChip: async () => false, createWorker: () => { throw new Error('no worker in tests'); } }),
+    kokoroNarration: createKokoroNarration({ requestLine: async () => { throw new Error('no voice server in tests'); } }),
     ...overrides,
   };
 };
@@ -1320,7 +1320,8 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     await click(document.querySelector('.story-cover-option[data-count="1"]'), 'One cover', 20);
     expect(requestStoryCover).toHaveBeenCalledTimes(1);
     expect(requestStoryCover).toHaveBeenCalledWith(expect.objectContaining({ title: created.title }), { model: 'google/gemini-3-pro-image', accessToken: undefined });
-    expect((await storyCovers.loadAll()).map(cover => cover.storyId)).toEqual([created.id]);
+    // The cover, and beside it the one chance the story has used.
+    expect((await storyCovers.loadAll()).map(cover => cover.storyId).sort()).toEqual([created.id, `${created.id}#cover-makings`]);
     expect(worldInfo()!.querySelector('[data-world-card="info-cover"] img')?.getAttribute('src')).toBe('blob:cover-1');
 
     await click(document.querySelector('button[aria-label="Back to your stories"]'), 'Back to your stories', 20);
@@ -1355,7 +1356,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     // Asked for once; the three refused are asked for again with the token.
     expect(requestStoryCover.mock.calls.map(call => call[1]?.accessToken)).toEqual([undefined, undefined, undefined, 'owner-token', 'owner-token', 'owner-token']);
     expect(services.accessToken.current).toBe('owner-token');
-    expect(document.querySelectorAll('.story-cover-choice')).toHaveLength(3);
+    expect(document.querySelector('[data-testid="story-cover-stage"]')?.textContent).toContain('Cover 1 of 3');
   });
 });
 
@@ -1395,66 +1396,60 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(address()).toBe('/app/');
   });
 
-  it('opens Discover from the navigation, with its sample worlds', async () => {
+  it('opens Discover from navigation without mock catalogue content', async () => {
     await render(appServices(scriptedWriter().writer));
     await click(buttonByText('Discover', strip()!), 'Discover in the navigation', 20);
     expect(address()).toBe('/app/?page=discover');
     expect(document.querySelector('[data-testid="novel-expanded-discover"]')).toBeTruthy();
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Discover');
-    expect(document.body.textContent).toContain('Explore sample stories, creators and Codex entries');
-    expect(document.querySelector('.discover-fate')?.textContent).toContain('Fate Survival');
-    // Opening a sample world says so just above the bottom bar.
-    await click(document.querySelector<HTMLButtonElement>('.discover-fate .world-card-base-open, .discover-fate button')!, 'a Fate Survival world', 20);
-    expect(document.querySelector('[data-testid="discover-sample-note"]')?.textContent).toContain('is a sample world');
+    expect(document.querySelector('.discover-sample-notice')).toBeNull();
+    expect(document.querySelector('.discover-fate')).toBeNull();
+    expect(document.querySelector('[data-testid="discover-sample-note"]')).toBeNull();
+    expect(document.querySelector('ul[aria-label="Stories"]')).toBeNull();
+    expect(document.body.textContent).not.toContain('The Last Lotus of the Jade Empire');
     // Selecting Discover again on Discover adds no history entry.
     const entries = window.history.length;
     await click(buttonByText('Discover', strip()!), 'Discover again', 20);
     expect(window.history.length).toBe(entries);
   });
 
-  it('places Events in Discover and retains the selected medium through tabs and Lore', async () => {
+  it('shows event announcements only in the Discover Events tab', async () => {
     await render(appServices(scriptedWriter().writer));
     expect(document.querySelector('[data-discover-events]')).toBeNull();
     await click(buttonByText('Discover', strip()!), 'Discover');
+    await click(buttonByText('Rankings', document.querySelector('.discover-view-rail')!), 'Rankings');
+    expect(document.querySelector('[data-discover-events]')).toBeNull();
     await click(document.querySelector('.discover-navigation a[href*="section=events"]'), 'Events');
     expect(address()).toBe('/app/?page=discover&section=events');
     const events = document.querySelector('[data-discover-events]')!;
     expect(events.textContent).toContain('Mystery Week');
     expect(events.textContent).toContain('Coming soon');
-    expect(document.querySelector('.discover-filter-bar')).toBeNull();
-    await click(document.querySelector('.discover-navigation a[href="/app/?page=discover"]'), 'Stories');
-    const medium = () => document.querySelector('.discover-medium-switcher')!;
-    await click(buttonByText('Manga', medium()), 'Manga');
-    expect(address()).toBe('/app/?page=discover&medium=manga');
-    expect(document.body.textContent).toContain('Manga catalogue coming soon');
-    await click(document.querySelector('.discover-navigation a[href*="section=creators"]'), 'Creators');
-    expect(address()).toBe('/app/?page=discover&section=creators&medium=manga');
-    expect(document.querySelector('ul[aria-label="Creators"]')).toBeNull();
-    await click(document.querySelector('.discover-navigation a[href*="lore=index"]'), 'Lore');
-    const encyclopedia = () => document.querySelector('[data-encyclopedia]')!;
-    await typeInto(encyclopedia().querySelector('input')!, 'Origin Infant');
-    await click(encyclopedia().querySelector('.encyclopedia-result'), 'Nascent Soul');
-    expect(new URLSearchParams(window.location.search).get('medium')).toBe('manga');
-    const language = encyclopedia().querySelector('select')!;
-    await act(async () => {
-      language.value = 'ja'; language.dispatchEvent(new Event('change', { bubbles: true }));
-      await import('../components/discover/shared/loreLocales').then(module => module.loadLoreLocale('ja'));
-    });
-    await click(buttonByText('Video', medium()), 'Video');
-    expect(new URLSearchParams(window.location.search).get('medium')).toBe('video');
-    expect(new URLSearchParams(window.location.search).get('lore')).toBe('nascent-soul');
-    expect(new URLSearchParams(window.location.search).get('q')).toBe('Origin Infant');
-    expect(encyclopedia().querySelector('select')?.value).toBe('ja');
-    await click(document.querySelector('.discover-navigation a[href*="page=discover&medium=video"]'), 'Stories');
-    await click(buttonByText('Novel', medium()), 'Novel');
-    expect(address()).toBe('/app/?page=discover');
-    expect(document.querySelector('ul[aria-label="Stories"]')).toBeTruthy();
+    expect(document.querySelector('.discover-view-rail')).toBeNull();
+  });
+
+  it('discovers published stories and opens their real World Info, keeping drafts private', async () => {
+    const services = appServices(scriptedWriter().writer);
+    const repository = services.stories as InMemoryHarnessGenerationRepository;
+    const published = await startedStory(repository, services.writer);
+    const draftSeed = regularSeedRecord();
+    draftSeed.seed.world.optional.worldIdentity.title = 'Unpublished book';
+    draftSeed.blueprint!.title = 'Unpublished book';
+    const draft = await startedStory(repository, services.writer, draftSeed, { draft: true });
+    await render(services, '/app/?page=discover');
+    const catalogue = document.querySelector('ul[aria-label="Stories"]')!;
+    expect(catalogue.textContent).toContain(published.title);
+    expect(catalogue.textContent).not.toContain(draft.title);
+    expect(catalogue.querySelectorAll('[data-world-card="compact-tile"]')).toHaveLength(1);
+    await click(catalogue.querySelector('button'), 'Published story');
+    expect(address()).toBe(`/app/?story=${published.id}`);
+    expect(worldInfo()).toBeTruthy();
+    expect(document.querySelector('[data-testid="discover-sample-note"]')).toBeNull();
   });
 
   it('keeps encyclopedia articles, alias searches and reading defaults inside Discover', async () => {
     const services = appServices(scriptedWriter().writer);
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
-    await render(services, '/app/?page=discover');
+    await render(services, '/app/?page=discover&section=events');
     await click(document.querySelector('.discover-navigation a[href*="lore=index"]'), 'Lore in Discover navigation', 20);
     await act(async () => { await import('../components/discover/shared/loreLocales').then(module => module.loadLoreLocale('ja')); });
     expect(address()).toBe('/app/?page=discover&lore=index');
@@ -1471,11 +1466,12 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(new URLSearchParams(window.location.search).get('q')).toBe('Origin Infant');
     expect(encyclopedia().querySelector('[data-reading-mode]')?.getAttribute('data-reading-mode')).toBe('Easy Read');
     expect(encyclopedia().textContent).toContain('元婴');
+    expect(encyclopedia().querySelector('.encyclopedia-prose div[lang="ja"]')?.textContent).toMatch(/[ぁ-ゖァ-ヺ]/u);
     await click(encyclopedia().querySelectorAll('.encyclopedia-breadcrumb a')[1], 'back to the directory');
     expect(encyclopedia().querySelector<HTMLInputElement>('input')?.value).toBe('Origin Infant');
     await click(document.querySelector('.discover-navigation a[href="/app/?page=discover"]'), 'back to Discover stories');
     expect(address()).toBe('/app/?page=discover');
-    expect(document.querySelector('.discover-fate')).toBeTruthy();
+    expect(document.querySelector('.discover-fate')).toBeNull();
     expect(services.profile.read()).toMatchObject({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
     expect(services.writer.generate).not.toHaveBeenCalled();
   });
@@ -1483,12 +1479,12 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
   it('navigates Discover creators and Codex while keeping Lore a direct encyclopedia link', async () => {
     await render(appServices(scriptedWriter().writer), '/app/?page=discover&section=creators');
     expect(document.querySelector('.discover-navigation [aria-current="page"]')?.textContent).toBe('Creators');
-    expect(document.querySelector('ul[aria-label="Creators"]')?.querySelectorAll('summary')).toHaveLength(8);
+    expect(document.querySelector('ul[aria-label="Creators"]')).toBeNull();
     await click(document.querySelector('.discover-navigation a[href*="section=codex"]'), 'Codex');
     expect(address()).toBe('/app/?page=discover&section=codex');
-    expect(document.querySelector('ul[aria-label="Codex characters"]')).toBeTruthy();
+    expect(document.querySelector('ul[aria-label="Codex characters"]')).toBeNull();
     await click(buttonByText('Items', document.querySelector('.discover-view-rail')!), 'Items');
-    expect(document.querySelector('ul[aria-label="Codex items"]')).toBeTruthy();
+    expect(document.querySelector('ul[aria-label="Codex items"]')).toBeNull();
     await click(document.querySelector('.discover-navigation a[href*="lore=index"]'), 'Lore');
     expect(address()).toBe('/app/?page=discover&lore=index');
     expect(document.querySelector('[data-encyclopedia]')).toBeTruthy();

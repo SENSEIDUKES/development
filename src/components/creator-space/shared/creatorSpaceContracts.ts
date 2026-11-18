@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { HarnessSkillManifest } from '@seihouse/sen/harness-generation';
-import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/ui';
+import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/elemental-title';
 import type { MediaPack } from '../../../library/media/mediaPacks';
 import type { SkillPackageIntake } from '../../../library/stories/settings/SkillPackageImport';
 import type { EnergyAccountState } from '../../energy/shared/useEnergyAccount';
@@ -80,6 +80,8 @@ export interface CreatorPluginPackage {
   description: string;
   version: string;
   builtIn?: boolean;
+  /** Cover art for the package's card. Without one the card draws its own cover. */
+  coverUrl?: string;
   unitSingular: string;
   unitPlural: string;
   groups: readonly CreatorPluginGroup[];
@@ -122,8 +124,12 @@ export interface CreatorSpaceProps {
   onEditWorld: (worldId: string) => void;
   /** Opens the plugin browser, optionally focused on one clicked plugin kind. */
   onBrowseToolkit?: (kind?: CreatorToolkitKind) => void;
+  /** Native destination when the host opens the plugin browser on a route. */
+  browseToolkitHref?: string;
+  /** Set only when the destination can install audio or skill packages. */
+  canImportPlugins?: boolean;
   /** Re-reads the worlds after an error. */
   onRetryWorlds?: () => void;
-  /** The host's Sparks button (SEN: `SparksButton`), beside Create at the top of the page. */
+  /** The host's Sparks button (SEN: `SparksButton`), beside the page title. */
   sparks?: ReactNode;
 }

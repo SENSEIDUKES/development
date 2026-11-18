@@ -44,8 +44,8 @@ rewrites and every page survives a reload.
 | Page | Address | What it is |
 | --- | --- | --- |
 | Home | `/app/` | Welcome to NovelExpanded, Create A World, and the reader's stories, newest first |
-| Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`), Events (`section=events`); Novel / Manga / Game / Video (`medium`) above section navigation, left browsing rail, scoped All / My updates, genres and rankings outside Lore |
-| Create | `/app/?page=create` | The Library's Creator Space: a compact Create action, Energy, the reader's worlds (Continue, Edit), Browse plugins and external Studios |
+| Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); phone-fitting section navigation, left browsing rail, scoped All / My updates beside Genre, and a dedicated Events tab |
+| Create | `/app/?page=create` | The Library's Creator Space: a compact Create action, the reader's worlds (Continue, Edit), Browse plugins and Studios |
 | A world, for its author | `/app/?page=create&world=<id>` | What a world opens to when its author taps it under Your worlds: the author's worlds as mini world cards, Novel (Sequential Art later), and Blueprint, Chapters, Codex (coming), Assets and Info (`AuthorWorldView`). Chapters is the iTunes list where chapters are checked and tagged a few at a time; a chapter opens in the creator's Reader, below, in Create mode with its tags lit |
 | Story Seed | `/app/?page=create&seed=new` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story; `&seed=<id>` opens a saved seed |
 | The creator's Reader | `/app/?page=create&world=<id>&read=1` (`&chapter=<n>` to open at a chapter, `&create=1` for Create mode with its tags lit) | The Reader with Fate and Create together, where the creator writes the next chapter and tags each chapter (Create mode); opened by Start Story, Continue and a chapter in the world's Chapters. Back returns to Chapters for a chapter opened there, else to the book's World Info in Create |
@@ -61,6 +61,8 @@ rewrites and every page survives a reload.
 - A story id the app does not have goes Home.
 
 ## The Library Shell
+
+- **2026-11-16** — Adopted the reviewed UI #120 header scene through `WorkspaceHeader`: a continuous wuxia landscape behind the existing controls, with one bounded sword performance. The existing Home Workshop iframe loads this same app composition.
 
 - **2026-10-12** — Home carries Dao Insights under the featured area at every
   width. Its sparks come from `/api/story-spark` (the server's default text
@@ -177,9 +179,10 @@ Library's `StorySettings` and `CreateStorySettings`, `@seihouse/library/stories`
 
 A cover requires the protagonist’s manifested portrait. Blueprint Cast can manifest
 characters before the novel exists; the same bytes are adopted into its Codex and
-remain available after reload. The cover dialog also offers Manifest when the main
-portrait is missing, then waits for the reader to choose one or three covers.
-One optional second manifested character can be selected with swipe, arrows or keys.
+remain available after reload. The cover sheet shows the main portrait only when it
+is missing, to be manifested there; then it waits for the reader to choose one or
+three covers. One optional second manifested character can be selected with swipe,
+arrows or keys.
 The request labels attached images in protagonist/counterpart order and sends actual
 bounded image bytes with the existing short story prompt. One reference makes a
 protagonist-focused cover; two references use both distinct characters. No analysis
@@ -189,21 +192,27 @@ another image call. Image and cover limits still apply per generation. Portraits
 in the existing device store; JSON story/Blueprint exports do not embed the images.
 
 The cover on World Info is where covers are made. A story without one shows
-**Manifest** across its cover; tapping it offers **One cover** (5 Energy) or
-**Three to choose from** (15 Energy). The covers are made from the story's own
-words (title, genre, tradition, logline, main character, tone, world and tags;
-never its chapters) with the owner's approved cover template, through
-`/api/story-cover`, one request per cover, behind the Aura Veil's
-media reveal. One cover is kept and revealed; three open a picker where they
-come alive one after another, and the reader keeps one ("Use this cover"; the
-others are let go, and each can be downloaded first). A kept cover shows a
-small Manifest and a download in its lower corners, and World Info and Home's
-card wear it.
+**Manifest** across its cover; tapping it opens a short sheet: the chances left,
+**Title on the cover** (On | Off), the optional **Second character**, and two
+tiles, **One cover** (5 Energy) or **Three to choose from** (15 Energy). The
+covers are made from the story's own words (title, genre, tradition, logline,
+main character, tone, world and tags; never its chapters) with the owner's
+approved cover template, through `/api/story-cover`, one request per cover,
+behind the Aura Veil's media reveal. One cover is kept and revealed; three open
+a picker that shows one cover at a time, large, to cycle through (swipe, arrows
+or keys), each with its download, and the reader keeps one ("Use this cover";
+the others are let go). World Info and Home's card wear the kept cover.
 
-- **A title is earned.** Until the story reaches its ending (the destined ending,
-  or a failed fate: either is a finished story) its covers carry no lettering.
-  Once it has, the request asks for the title (`titled`), and the Manifest on a
-  kept cover offers **Regenerate with a title**.
+- **Three chances per novel** (`STORY_COVER_CHANCES`). Each time covers are made,
+  one cover or three, uses one. The sheet says so, with three lights and how
+  many are left ("Last chance" on the third). While chances remain, a kept cover
+  keeps a small Manifest on its top-left corner; once they are used the cover is
+  locked, and the sheet says to message SEIHouse for another. The count is kept
+  on the device beside the cover. The Workshop's cover test has no limit
+  (`unlimited`).
+- **The title is the reader's choice** when the cover is made: Title on the cover
+  is off unless they turn it on (`titled`). It is no longer earned by reaching
+  the ending.
 - The image model is the Model Router's Images choice (`useModelPreference('images')`),
   Nano Banana 2 Lite unless the reader picks another.
 - Visitors may make 3 covers every 30 minutes, so three to choose from uses the
@@ -353,8 +362,8 @@ task needs something the list does not allow.
 | `routes.ts` | Addresses and history |
 | `services.ts` | Storage, the writer, the official skills, the Blueprint client, the reader's profile and the practice economy |
 | `HomePage.tsx` | Home: the reader's stories, in `AppShell` |
-| `DiscoverPage.tsx`, `discoverSamples.ts` | Discover (`@seihouse/library/discover`) in `AppShell`, with medium selection and sample stories, creators, Codex projections, follows, releases and boards; Lore uses the authored encyclopedia |
-| `discoverEvents.ts` | Coming soon sample announcements supplied to Discover's Events tab |
+| `DiscoverPage.tsx` | Discover (`@seihouse/library/discover`) in `AppShell`, with published stories, genre filtering and a dedicated Events tab; Lore uses the authored encyclopedia. Workshop injects its own sample catalogue into this shared composition |
+| `discoverEvents.ts` | Coming soon announcements supplied to the Discover Events tab |
 | `CreatePage.tsx` | Create: `CreationModal` in a guest Story Seed runtime, starting new seeds from the profile's defaults; asks for the token before a Blueprint |
 | `AccessTokenSheet.tsx` | The access token sheet, one for the whole app |
 | `accessToken.ts` | The chapter writer with the owner's token: a chapter at the limit asks for it and is sent again |
@@ -376,7 +385,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 ## Not in the app yet
 
 - Accounts and server-side storage: the database, and with it a kept economy, sync, backup, codes, the Inbox and sign-out.
-- Real worlds on Discover. Its page (`?page=discover`, `DiscoverPage.tsx`) shows sample worlds (`discoverSamples.ts`) while its look and feel is refined; opening one says it is a sample.
+- A global public catalogue on Discover. The app currently shows this device’s published stories; shared public worlds, public releases, directory projections, follows and ranking boards are not connected. Workshop alone supplies the sample catalogue.
 
 ## Verification
 
@@ -389,6 +398,27 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-17** — Simplified Discovery controls and phone tabs, moved Events
+  from Home into Rankings, and kept catalogue samples only in Workshop.
+  The app lists published stories and shares its Discover page and shell
+  with the sample preview.
+
+- **2026-11-17** — **The cover flow, refined** (SENSEI). The Manifest cover sheet no longer shows the main character's portrait (only a missing one, to be made there): it shows the chances left, Title on the cover (On | Off), the optional second character, and two tiles, one cover or three, with their Energy. Three covers are auditioned one at a time, large, with arrows, swipe or keys, instead of a large cover over three thumbnails. Each novel has **three chances** to make cover art, counted in the sheet; after the third the cover is locked. The title is now chosen when the cover is made, replacing the earned title and **Regenerate with a title** (2026-10-12).
+- **2026-11-17** — **Kokoro is a foundation voice, not a free one** (SENSEI). Foundation voices
+  (Kokoro, possibly Qwen3-TTS) are the floor SEIHouse guarantees every reader; premium voices
+  (ElevenLabs, Fish Audio) stay above them for readers who pay. Foundation voices cost server time
+  and will carry an Energy price, so the Reader no longer calls Kokoro free.
+- **2026-11-17** — **Kokoro moves to SEIHouse's voice server** (SENSEI). Made in the browser,
+  Kokoro worked on an iPhone but far too slowly. The Kokoro voices switch now asks SEIHouse's
+  voice server (`services/kokoro-voice`, Google Cloud Run) for each line, through
+  `/api/chapter-voice` (`{ kokoro: { text, voice } }`, its own visitor limit of 1,500 lines an
+  hour). The server makes a line once, keeps it, and serves the saved file to every reader after.
+  The in-browser model, its worker and the crash guard are removed.
+- **2026-11-17** — **Kokoro no longer closes the app on a phone** (SENSEI's iPhone test). The
+  iPhone loaded the large graphics-chip model and Safari closed the app over and over. Phones and
+  tablets now always take the small model on the processor, and a mark kept while Kokoro is
+  starting or making a line switches Kokoro off on the next visit if the app closed under it,
+  with a line in Reader Settings saying so.
 - **2026-11-16** — **Kokoro voices, made on the device: a first test** (SENSEI). Reader Settings'
   Narration has a **Kokoro voices** switch. On, the browser downloads the Kokoro voice model once
   from Hugging Face (about 90 MB, or about 330 MB where it can use the graphics chip) and Listen
@@ -671,11 +701,3 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - **2026-11-02** — Story Seed keeps compact Back/Next actions in the form and the styled Library navigation below it on phones and tablets. Its order is Origin → World → ARC → Create; Fun Settings follows Style in Origin. Sections opens the drawer with Save Draft, story preview, Story Bank, Blueprint, Settings and Home. Completion checks stay visible on active tabs and saved drafts retain confirmations of defaults or deliberate blanks. The Workshop uses the same shared surface with isolated preview storage.
 
 - **2026-11-13:** Blueprint portraits survive into the Codex; covers require the main character image and support a selected second image through the Router’s existing reference input.
-
-- **2026-11-17 (Create layout):** Create is a compact top action; Your worlds
-  precedes one Browse plugins card and a dedicated Studios card. Edit keeps the
-  world's existing World Info destination. Open Studio opens
-  `https://studio.novelexpanded.com` in a new tab, while Import plugins opens the
-  existing Creator Plugins audio/skill package import view.
-
-- **2026-11-17 (Home and Events):** Home now welcomes readers with Welcome to NovelExpanded and Create A World. Events is a dedicated Discover tab; the existing Coming soon announcements moved with it, and its address survives reload.

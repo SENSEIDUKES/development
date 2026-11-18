@@ -18,8 +18,8 @@ import { createDeviceProfileStore, type DeviceProfileStore } from '../host/profi
 import { requestCodexPicture, requestStoryCover } from '../host/media/storyCoverClient';
 import { requestProfilePicture } from '../host/media/profilePictureClient';
 import { IndexedDbStoryCoverStore, type StoryCoverStore } from '../host/media/storyCovers';
-import { createDeviceNarration, type DeviceNarration } from '../host/reader/deviceNarration';
-import { readChapterVoiceInfo, requestChapterVoiceCast, requestChapterVoiceLine } from '../host/media/chapterVoiceClient';
+import { createKokoroNarration, type KokoroNarration } from '../host/reader/kokoroNarration';
+import { readChapterVoiceInfo, requestChapterVoiceCast, requestChapterVoiceLine, requestKokoroLine } from '../host/media/chapterVoiceClient';
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
 
 /**
@@ -92,7 +92,7 @@ export interface NovelExpandedServices {
   /** The voice server: whether it can make voices, a cast from Codex cards, and one spoken line in a cast voice. */
   chapterVoiceServer: { info: typeof readChapterVoiceInfo; cast: typeof requestChapterVoiceCast; line: typeof requestChapterVoiceLine };
   /** Narration made on this device with Kokoro, downloaded once: free voices in place of the device's own. */
-  deviceNarration: DeviceNarration;
+  kokoroNarration: KokoroNarration;
 }
 
 /** The skills the reader installed on this device; a damaged inventory reads as none. */
@@ -134,6 +134,7 @@ export function createNovelExpandedServices(): NovelExpandedServices {
     requestProfilePicture,
     chapterVoices: new IndexedDbStoryCoverStore(NOVEL_EXPANDED_STORAGE.chapterVoices),
     chapterVoiceServer: { info: readChapterVoiceInfo, cast: requestChapterVoiceCast, line: requestChapterVoiceLine },
-    deviceNarration: createDeviceNarration({ preferences: readerPreferences }),
+    // Free Kokoro lines from SEIHouse's voice server, with the owner's token when there is one.
+    kokoroNarration: createKokoroNarration({ preferences: readerPreferences, requestLine: line => requestKokoroLine(line, { accessToken: accessToken.current }) }),
   };
 }

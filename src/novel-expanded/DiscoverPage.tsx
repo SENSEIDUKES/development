@@ -1,67 +1,45 @@
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   Discover,
   DiscoverEncyclopedia,
   type DiscoverLoreLocation,
   type DiscoverSection,
+  type DiscoverProps,
 } from '@seihouse/library/discover';
 import type { UserProfile } from '@seihouse/library/profile';
-import { useLibraryBottomClearance } from '@seihouse/library/shell';
+import type { HomeWorld } from '@seihouse/library/home';
+import { DISCOVER_EVENTS } from './discoverEvents';
 import { AppShell } from './AppShell';
-import { DISCOVER_SAMPLE_EVENTS } from './discoverEvents';
-import {
-  DISCOVER_RANKING_BOARDS,
-  DISCOVER_SAMPLE_FATE_SURVIVAL,
-  DISCOVER_SAMPLE_RELEASES,
-  DISCOVER_SAMPLE_TRACKED,
-  DISCOVER_SAMPLE_WORLDS,
-  DISCOVER_SAMPLE_CREATORS,
-  DISCOVER_SAMPLE_CODEX,
-  DISCOVER_SAMPLE_FOLLOWED_CREATORS,
-  DISCOVER_SAMPLE_TRACKED_CODEX,
-} from './discoverSamples';
 import { routeHref, type Navigate, type NovelExpandedRoute } from './routes';
 
-/** How long the sample-world note stays after a world is opened. */
-const SAMPLE_NOTE_MS = 4000;
+/** Host-supplied catalogue data; Workshop supplies its isolated samples here. */
+export type DiscoverCatalogue = Pick<DiscoverProps,
+  'worlds' | 'releases' | 'trackedWorldIds' | 'fateSurvivalWorldIds' | 'creators' |
+  'codexEntries' | 'followedCreatorIds' | 'trackedCodexIds' | 'rankingBoards' | 'onOpenWorld' | 'notice'
+>;
 
-/**
- * Discover, inside the Library Shell. Until public worlds exist it shows
- * sample worlds, and says so: opening one shows a short note just above the
- * bottom bar, where the reader is looking, instead of opening a Story View
- * that does not exist.
- */
+/** The shared Discover composition, using only published worlds in the app. */
 export function DiscoverPage({
   navigate,
   stories,
   readerProfile,
   route,
+  catalogue,
+  hrefFor = routeHref,
 }: {
   navigate: Navigate;
   route: Extract<NovelExpandedRoute, { page: 'discover' }>;
-  /** The reader's own stories, which header Search can open. */
-  stories: readonly { id: string; title: string }[];
+  /** Published stories, also available through the header's Search. */
+  stories: readonly HomeWorld[];
+  catalogue?: DiscoverCatalogue;
+  hrefFor?: (route: NovelExpandedRoute) => string;
   readerProfile: UserProfile;
 }) {
-  // `at` restarts the note's timer when the same world is opened twice.
-  const [opened, setOpened] = useState<{ title: string; at: number }>();
-  const clearance = useLibraryBottomClearance();
-  useEffect(() => {
-    if (!opened) return;
-    const timer = setTimeout(() => setOpened(undefined), SAMPLE_NOTE_MS);
-    return () => clearTimeout(timer);
-  }, [opened]);
-  const open = (worldId: string) => {
-    const title = DISCOVER_SAMPLE_WORLDS.find((world) => world.id === worldId)?.title;
-    if (title) setOpened({ title, at: Date.now() });
-  };
   const loreRoute = (location?: DiscoverLoreLocation): Extract<NovelExpandedRoute, { page: 'discover' }> =>
     location
-      ? { page: 'discover', lore: location.term ?? 'index', query: location.query, category: location.category, medium: route.medium }
-      : { page: 'discover', medium: route.medium };
+      ? { page: 'discover', lore: location.term ?? 'index', query: location.query, category: location.category }
+      : { page: 'discover' };
   const sectionRoute = (section: DiscoverSection): Extract<NovelExpandedRoute, { page: 'discover' }> =>
-    section === 'lore' ? loreRoute({}) : section === 'stories' ? { page: 'discover', medium: route.medium } : { page: 'discover', section, medium: route.medium };
+    section === 'lore' ? loreRoute({}) : section === 'stories' ? { page: 'discover' } : { page: 'discover', section };
   return (
     <AppShell
       route={{ page: 'discover' }}
@@ -73,9 +51,7 @@ export function DiscoverPage({
       <div className="mx-auto w-full max-w-7xl px-4 py-4" data-testid="novel-expanded-discover">
         <Discover
           section={route.lore ? 'lore' : (route.section ?? 'stories')}
-          medium={route.medium ?? 'novel'}
-          onMediumChange={medium => navigate({ ...route, medium: medium === 'novel' ? undefined : medium })}
-          sectionHref={(section) => routeHref(sectionRoute(section))}
+          sectionHref={(section) => hrefFor(sectionRoute(section))}
           onSectionChange={(section) => navigate(sectionRoute(section))}
           loreArticle={Boolean(route.lore && route.lore !== 'index')}
           renderLore={(updatesOnly) => (
@@ -87,47 +63,21 @@ export function DiscoverPage({
                 query: route.query,
                 category: route.category as DiscoverLoreLocation['category'],
               }}
-              hrefFor={(location) => routeHref(loreRoute(location))}
+              hrefFor={(location) => hrefFor(loreRoute(location))}
               onNavigate={(location, replace) => navigate(loreRoute(location), { replace, scroll: !replace })}
               readingLanguage={readerProfile.defaultReadingLanguage}
               interfaceLanguage={readerProfile.interfaceLanguage}
               readingMode={readerProfile.defaultChapterWritingStyle}
             />
           )}
-          events={DISCOVER_SAMPLE_EVENTS}
-          worlds={DISCOVER_SAMPLE_WORLDS}
-          releases={DISCOVER_SAMPLE_RELEASES}
-          trackedWorldIds={DISCOVER_SAMPLE_TRACKED}
-          fateSurvivalWorldIds={DISCOVER_SAMPLE_FATE_SURVIVAL}
-          creators={DISCOVER_SAMPLE_CREATORS}
-          codexEntries={DISCOVER_SAMPLE_CODEX}
-          followedCreatorIds={DISCOVER_SAMPLE_FOLLOWED_CREATORS}
-          trackedCodexIds={DISCOVER_SAMPLE_TRACKED_CODEX}
-          rankingBoards={DISCOVER_RANKING_BOARDS}
-          onOpenWorld={open}
-          notice={
-            route.lore || route.section === 'events' ? undefined : (
-              <details className="discover-sample-notice">
-                <summary>Sample catalogue</summary>
-                <p>Explore sample stories, creators and Codex entries. Rankings and follows are examples.</p>
-              </details>
-            )
-          }
+          worlds={stories}
+          releases={[]}
+          events={DISCOVER_EVENTS}
+          onOpenWorld={(storyId) => navigate({ page: 'story', storyId })}
+          {...catalogue}
+          notice={route.lore ? undefined : catalogue?.notice}
         />
       </div>
-      {createPortal(
-        <p
-          role="status"
-          data-testid="discover-sample-note"
-          className={`pointer-events-none fixed left-1/2 z-50 w-[min(26rem,calc(100%-2rem))] -translate-x-1/2 rounded-xl bg-[#14161c]/95 px-4 py-3 text-center font-serif text-sm text-[#f3eee7] shadow-lg shadow-black/50 ring-1 ring-white/10 transition-opacity duration-200 motion-reduce:transition-none ${opened ? 'opacity-100' : 'opacity-0'}`}
-          style={{ bottom: clearance + 16 }}
-        >
-          {opened && (
-            <>“{opened.title}” is a sample world. Real worlds will open straight into their World Info and Reader.</>
-          )}
-        </p>,
-        document.body,
-      )}
     </AppShell>
   );
 }

@@ -96,8 +96,8 @@ describe('the chapter voice endpoint', () => {
   const voiceKey = castChapterVoices([{ key: 'a', gender: 'female', age: '25' }]).a.voiceKey;
 
   it('says whether voices can be made and with which model, without spending anything', async () => {
-    expect((await handleChapterVoiceHttp({ method: 'GET' }, dependencies)).body).toEqual({ available: true, model: 'eleven_multilingual_v2' });
-    expect((await handleChapterVoiceHttp({ method: 'GET' }, { environment: {} })).body).toEqual({ available: false });
+    expect((await handleChapterVoiceHttp({ method: 'GET' }, dependencies)).body).toEqual({ available: true, model: 'eleven_multilingual_v2', kokoro: false });
+    expect((await handleChapterVoiceHttp({ method: 'GET' }, { environment: {} })).body).toEqual({ available: false, kokoro: false });
     expect((await handleChapterVoiceHttp({ method: 'POST', body: { line: { text: 'Hello.', voiceKey } } }, { environment: {} })).status).toBe(503);
     expect(synthesize).not.toHaveBeenCalled();
   });

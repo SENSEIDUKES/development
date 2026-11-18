@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/ui';
+import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/elemental-title';
 /**
  * How busy a world is with its people: readers reading, branching and continuing it in a recent
  * window. It is not the original creator's publishing pace; on SEN a world carries on wherever its
@@ -52,7 +52,7 @@ export interface LightNovelsHomeProps {
   /** The worlds in the order shown (after sorting and filtering), for spoken codes: N1 is the first. */
   onVisibleWorldsChange?: (ids: readonly string[]) => void;
   /** What the list says while it has no worlds. Without it, Home keeps the catalog's wording. */
-  emptyState?: { title: string; description: string };
+  emptyState?: { title: string; description?: string };
   /**
    * Worlds the Featured hero cycles through after Featured Ascension, each as a Feature card.
    * Without them, Featured Ascension stands alone.

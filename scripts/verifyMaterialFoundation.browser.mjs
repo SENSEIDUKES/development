@@ -20,7 +20,7 @@ try {
   await page.goto(`${base}/app/`);
   await page.getByTestId('novel-expanded-home').waitFor();
   const shell = await page.locator('.workspace-header').evaluate(material);
-  const panel = await page.locator('[data-home-panel]').nth(1).evaluate(material);
+  const panel = await page.locator('[data-home-panel]:has(.home-filter-label)').evaluate(material);
   const card = await page.locator('[data-slot="empty-state"]').evaluate(material);
   await page.goto(`${base}/?preview=palette-materials`);
   await page.locator('.pm-workbench').waitFor();
@@ -70,10 +70,10 @@ try {
   if (width < 650) await page.getByRole('button', { name: /^Saved/ }).click();
   await page.getByRole('button', { name: 'V2 · Default preset', exact: true }).click();
   const composition = page.frameLocator('iframe[title="Home material preview"]');
-  await composition.locator('[data-home-panel]:not(.home-featured [data-home-panel])').waitFor();
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('.pm-home-frame').contentDocument.querySelector('[data-home-panel]:not(.home-featured [data-home-panel])')).backgroundColor === 'rgba(11, 14, 30, 0.35)');
+  await composition.locator('[data-home-panel]:has(.home-filter-label)').waitFor();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.pm-home-frame').contentDocument.querySelector('[data-home-panel]:has(.home-filter-label)')).backgroundColor === 'rgba(11, 14, 30, 0.35)');
   const fills = [];
-  for (const selector of ['.workspace-header', '[data-home-panel]:not(.home-featured [data-home-panel])', '[data-slot="empty-state"]']) fills.push(await composition.locator(selector).evaluate(e => getComputedStyle(e).backgroundColor));
+  for (const selector of ['.workspace-header', '[data-home-panel]:has(.home-filter-label)', '[data-slot="empty-state"]']) fills.push(await composition.locator(selector).evaluate(e => getComputedStyle(e).backgroundColor));
   assert.ok(fills.every(color => color.match(/[\d.]+/g).slice(0, 3).join(',') === fills[0].match(/[\d.]+/g).slice(0, 3).join(',')), 'Default preset shares hue while retaining role opacity');
   if (width < 650) await page.getByRole('button', { name: 'Effects', exact: true }).click();
   else await page.locator('#pm-effects').scrollIntoViewIfNeeded();

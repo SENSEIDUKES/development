@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DiscoverPreview } from './DiscoverPreview';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 
@@ -6,15 +7,16 @@ import { workshopEntries } from '../../manifest';
 const viewports = {
   mobile: { label: 'Mobile', width: 390, height: 844 },
   tablet: { label: 'Tablet', width: 768, height: 1024 },
-  laptop: { label: 'Laptop', width: 1280, height: 800 },
+  laptop: { label: 'Laptop', width: 1440, height: 900 },
 } as const;
 type Viewport = keyof typeof viewports;
 
-/** Development loads the app's own Discover page, shell and all. Discover is new, so it has no Original Reference. */
-const SRC = '/app/?page=discover';
+/** Development shares the app's Discover page and shell, with Workshop-only sample data. */
+const SRC = '/?preview=discover&canvas=1&page=discover';
 
 export function DiscoverWorkspace() {
   const [viewport, setViewport] = useState<Viewport>('mobile');
+  if (new URLSearchParams(window.location.search).get('canvas') === '1') return <DiscoverPreview />;
   const { label, width, height } = viewports[viewport];
   const title = `Discover ${viewport}`;
   const caption = `${label} · ${width} × ${height}`;
@@ -37,7 +39,7 @@ export function DiscoverWorkspace() {
   return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'discover')!}
     renderDevelopment={render}
     workshopControls={{
-      description: 'Development opens the app’s Discover page: Novel / Manga / Game / Video first, then Stories, Creators, Codex, Lore and Events. Novel has the sample catalogue; the other mediums show coming soon states. Events shows the existing Coming soon announcements. Lore is authored reference content shared across mediums. This preview uses the app’s saved language and Reading Mode preferences.',
+      description: 'Development runs the full app host with its working Familiar, header preferences and sound controls: Stories, Creators, Codex and Lore with a left browsing rail and genre filter beside the feed controls. The Events tab shows the existing Coming soon announcements. Sample stories, creators, Codex entries, follows and rankings exist only in Workshop. This preview reads the app’s saved profile preferences; sample worlds stay isolated while all other pages use the app’s real services and browser storage.',
       defaultSection: 'pages',
       sections: [{
         id: 'pages',

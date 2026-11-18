@@ -56,6 +56,12 @@ const lock = readJson('package-lock.json');
  * SEIHouse Front Desk (built in SENSEIDUKES/seihouse-front-desk, named by commit).
  */
 const VENDORED = [
+  { record: 'vendor/font-artifacts.json', repository: 'https://github.com/SEIHouse/FONT-LAB', names: ['elemental-title'],
+    source: artifact => {
+      const release = readJson(artifact.release);
+      assert.equal(release.integrity, artifact.integrity, 'Elemental Title release integrity');
+      assert.equal(release.sha256, createHash('sha256').update(readFileSync(path.join(root, artifact.file))).digest('hex'), 'Elemental Title release archive');
+    } },
   { record: 'vendor/ui-artifacts.json', repository: 'https://github.com/SENSEIDUKES/UI', names: ['ui', 'library-ui'],
     source: artifact => assert.match(artifact.pullRequest, /^https:\/\/github\.com\/SENSEIDUKES\/UI\/pull\/[1-9]\d*$/, 'requires a UI pull request') },
   { record: 'vendor/front-desk-artifacts.json', repository: 'https://github.com/SENSEIDUKES/seihouse-front-desk', names: ['front-desk'],
@@ -114,5 +120,5 @@ for (const { record, repository, names, source } of VENDORED) {
 }
 
 console.log(
-  '[ui-artifacts] UI and Front Desk tarballs match the manifest, lockfile SHA-512 integrity, source provenance, and the installed packages.',
+  '[ui-artifacts] UI, Elemental Title and Front Desk tarballs match the manifest, lockfile SHA-512 integrity, source provenance, and the installed packages.',
 );

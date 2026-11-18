@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { ElementalTitle } from '@seihouse/ui';
+import { ElementalTitle } from '@seihouse/elemental-title';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldCardActivityMark } from './WorldCardActivityMark';
 import { WorldCardCover } from './WorldCardCover';

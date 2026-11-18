@@ -256,7 +256,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
                     icon={SENDiscoveryIcon}
                     titleAs="h4"
                     title={emptyState?.title ?? 'Awaiting Manifestations'}
-                    description={emptyState?.description ?? 'Curated worlds will return after their chapters are published to the current library format.'}
+                    description={emptyState ? emptyState.description : 'Curated worlds will return after their chapters are published to the current library format.'}
                   />
                 </LibraryPanel>
               ) : (

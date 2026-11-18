@@ -347,12 +347,13 @@ mode**. That means:
   is built, an opened Codex card offers Manifest, so the owner can see how well
   the looks the story wrote down bring its characters and items to life. It
   uses the prompts manifesting while reading will use.
-- **Premium voice is for spoken lines; the narrator is free** (SENSEI,
-  2026-11-16). This is what makes audio affordable for everyone, so no design
-  may undo it. Only the quoted lines the manuscript marks with a speaker are
-  made with a paid voice. The narration, most of every chapter, is read by a
-  voice that costs nothing per chapter (Kokoro on the reader's device, or the
-  browser's own where Kokoro cannot run), and the narrator has no Codex card. Measured on Chapter 1 of a test story
+- **Premium voice is for spoken lines; the narrator uses a foundation voice**
+  (SENSEI, 2026-11-16; "foundation" 2026-11-17). This is what makes audio
+  affordable for everyone, so no design may undo it. Only the quoted lines the
+  manuscript marks with a speaker are made with a premium voice. The
+  narration, most of every chapter, is read by a foundation voice that costs a
+  small fraction of a premium one (Kokoro, made once on SEIHouse's voice server
+  and kept, or the device's own where Kokoro cannot), and the narrator has no Codex card. Measured on Chapter 1 of a test story
   (2026-11-16): spoken lines were about 1,000 of 6,900 characters, 1 cent
   against 7 cents at Fish Audio's promotional API price and 5 cents against
   34 cents at its regular price. That is the difference between a chapter
@@ -396,34 +397,52 @@ mode**. That means:
     reader who is not the creator, and Create mode's line-by-line tools. Not
     tested with real voices or on a real phone, and the minor figure's two
     new tag parts are not tested with a real tagger.
-  - **The free voice is Kokoro, made on the reader's own device** (SENSEI,
-    2026-11-16). Kokoro is a small open voice model (Apache 2.0) a device can
-    run itself: downloaded once, then every line is made there at no charge,
-    and the words never leave the device. It reads the narration and every
-    spoken line that has no paid voice; the device's own robotic voice is only
-    what reads when Kokoro cannot (another language, a device too slow, the
-    download not finished). SEIHouse's first cast was made with Kokoro's
-    voices.
-    - **Made once, kept, reused** (SENSEI, 2026-11-16): audio is made by the
-      first reader who needs it, saved, and reused by everyone after, so it
-      need not be perfect or instant. That needs the shared storage the
-      database brings; until then a clip lives on the device that made it.
-    - **Both the web and the store apps** (SENSEI, 2026-11-16): the app is
-      web today and will be regular Apple and Google store apps. Kokoro runs
-      in the browser now and natively in the store apps later; both sit
-      behind the Reader's one way of taking a clip for a line, so neither
-      changes how Listen works.
-    - **A first test is built** (2026-11-16): Reader Settings, Narration,
-      **Kokoro voices**, On. The browser downloads the model once (about 90
-      MB on the processor; about 330 MB where it can use the graphics chip,
-      which is far faster), then Listen is read in three voices of the first
-      Kokoro cast, one each for the narrator, the main character and everyone
-      else, made a few lines ahead of the reader. The setting says how many
-      seconds of speech the device makes in a second. English stories only.
-      Not built: a Kokoro voice per character, keeping or sharing the clips,
-      the store apps, other languages. Not tested on a real phone: a cloud
-      test machine with no graphics chip made 0.3 seconds of speech a second,
-      too slow to keep up, and says nothing about a phone.
+  - **Voices come in tiers: foundation and premium** (SENSEI, 2026-11-17).
+    Foundation voices are open models SEIHouse runs itself (Kokoro now;
+    Qwen3-TTS, with voices designed from a description, if it proves out).
+    They are the quality SEIHouse can guarantee to every reader, cheap enough
+    that people everywhere, including readers who rely on audio for
+    accessibility, can take part. They are the floor, not the ceiling, and
+    they are **not free**: their servers cost SEIHouse money, so they carry
+    an Energy price like everything else (not decided yet). Never call them
+    free in the product or the docs. Premium voices (ElevenLabs, Fish Audio
+    and the like) stay: they are the ceiling, for readers who pay for them,
+    and a foundation voice never replaces them. Every voice, foundation or
+    premium, is chosen through the Model Router.
+  - **The foundation voice is Kokoro, made once on SEIHouse's voice server** (SENSEI,
+    2026-11-17). Kokoro is a small open voice model (Apache 2.0). It reads the
+    narration and every spoken line that has no paid voice; the device's own
+    robotic voice is only what reads when Kokoro cannot (another language, the
+    voice server down). SEIHouse's first cast was made with Kokoro's voices.
+    - **Made once, kept, reused** (SENSEI, 2026-11-16): a line is made for the
+      first reader who needs it, saved, and every reader after hears the saved
+      file at once, so it need not be perfect or instant. The voice server
+      keeps every line it makes, so this already holds for Kokoro.
+    - **On a server, not in the browser** (SENSEI, 2026-11-17): Kokoro made in
+      the reader's browser (built and tested 2026-11-16) worked on an iPhone
+      but was far too slow, and the larger model made Safari close the app.
+      The voice server (`services/kokoro-voice`, Google Cloud Run in the
+      `seihouse-core` project, paid by SENSEI's Google AI Ultra Cloud credit)
+      makes about 3.5 seconds of speech a second on four processor cores, and
+      sleeps when nobody is listening. It serves the web app and the future
+      Apple and Google store apps alike; a store app may later run Kokoro
+      itself for listening offline, behind the same Reader setting.
+    - **Public release keeps the audio on Cloudflare R2** (SENSEI,
+      2026-11-17). For development the made lines sit in a Google Cloud
+      Storage bucket (`seihouse-core-kokoro-voices`), which is fine for
+      testing. Before NovelExpanded goes public, they move to R2, and readers
+      download them straight from R2: R2 charges nothing to send files out,
+      and sending audio to listeners is the cost that grows with readers.
+      SENSEI has an R2 account; it is not set up for development yet. The
+      voice server makes lines on Cloud Run either way. The app's server
+      (`src/server/audio/kokoroVoice.ts`) must accept the R2 address, since it
+      takes only `/clip/` paths today; the Reader does not change, because it
+      only receives a line's address.
+    - **Built** (2026-11-17): Reader Settings, Narration, **Kokoro voices**,
+      On. Listen is read in three voices of the first Kokoro cast, one each
+      for the narrator, the main character and everyone else, asked for a few
+      lines ahead of the reader. English stories only. Not built: a Kokoro
+      voice per character, other languages, a store app.
 
 ## Where we are (2026-10-10)
 
@@ -700,8 +719,8 @@ entries run to 2026-11-11.
     workspace mode (Sections, Story Bank, Blueprint, Settings, Back), laid out
     as a character creator: Origin → World → ARC → Create, with a live story
     card, and the World Blueprint inside the same shell (2026-10-26). The Reader stays
-    full-screen. Discover is in the navigation too (2026-10-20), with sample
-    worlds: its structure is in and its look and feel is being refined
+    full-screen. Discover is in the navigation too (2026-10-20); since 2026-11-17
+    the app shows only its published stories and samples stay in Workshop
     ([`docs/discover-page.md`](./docs/discover-page.md)).
   - **Discover's Eastern Fantasy Encyclopedia** (2026-10-26) is a global genre
     reference inside Discover, separate from story Codexes: 36 core terms in
@@ -710,19 +729,15 @@ entries run to 2026-11-11.
     reading languages. It follows the profile's language and Reading Mode
     defaults. The same Discover Workshop preview opens the real app surface.
     The starter translations have not had professional editorial review.
-  - **Discover navigation** (2026-10-26) is Stories, Creators, Codex, Lore.
-    Novel / Manga / Game / Video is the first navigation layer, followed by
-    Stories / Creators / Codex / Lore. The medium stays selected in the address. Novel has
-    the sample catalogue; the other mediums use the same layout with coming
-    soon states. Lore stays shared. A compact left rail offers Browse, Genres and Rankings for Stories
-    and Creators, Characters, Items and Rankings for Codex, and encyclopedia
-    categories for Lore. The story catalogue appears first. Lore opens that
-    encyclopedia directly. Events has its own Discover tab (owner correction, 2026-11-17); the other
-    three destinations have genre filtering and relevant Heavenly Rankings.
-    All / My updates follows each section's sample catalogue. Creators expand
-    to their stories, and Codex is split into Characters and Items. Public
-    catalogues, follows and rankings remain samples; Lore term tracking is not
-    built, and its My updates says so.
+  - **Discover navigation** (refined 2026-11-17) is Stories, Creators, Codex, Lore,
+    fitted to four equal phone tabs. The prototype format selector and catalogue
+    search are removed. Genre sits beside All / My updates, stacking on narrow
+    screens. A left rail offers Browse, Genres and Rankings for Stories and
+    Creators, Characters, Items and Rankings for Codex. Events has its own Discover tab. The app lists its published stories and
+    opens their World Info. Only Workshop supplies sample stories, releases,
+    creators, Codex entries, follows and rankings to the same page and AppShell.
+    Lore opens the authored encyclopedia directly; term tracking is not built,
+    and its My updates says so.
   - **Profile is in the app, with what it connects to,** so the pieces can be
     seen working together and refined there. Profile is a place in the
     navigation (Home, Create, Discover, Profile, with Settings beside it); it is the
@@ -792,10 +807,12 @@ entries run to 2026-11-11.
     empty cover says **Manifest**; the reader chooses one cover (5 Energy) or three
     to choose from (15). Covers come from the story's own words (its title, genre,
     tradition, logline, main character, tone, world and tags; never its chapters)
-    with the owner's approved cover template, the title drawn on, behind the Aura
-    Veil's media reveal. One is revealed and worn; three come alive in a picker and
-    the reader keeps one. World Info and Home's card wear it; a kept cover keeps a
-    small Manifest and a download on its corner. Covers are made with the Model
+    with the owner's approved cover template, behind the Aura Veil's media reveal.
+    One is revealed and worn; three open a picker that shows one cover at a time,
+    and the reader keeps one. World Info and Home's card wear it. Since 2026-11-17
+    each novel has three chances to make cover art, counted in the Manifest cover
+    sheet (after the third the cover is locked), and the title is drawn on only
+    when the reader turns Title on the cover on. Covers are made with the Model
     Router's image choice, **Nano Banana 2 Lite** unless the reader picks another;
     visitors may make 3 every 30 minutes and the owner's access token lifts the
     limit. Until the database, a cover is kept on the device, beside the stories.
@@ -994,8 +1011,9 @@ entries run to 2026-11-11.
     Creator Space, and the author's world view with its Chapters tagging list
     is in. Not built yet: the manuscript way in (import), the world's Codex
     tab, a whole-story tagging run with resume, and Clear tags.
-  - Discover's world shelves use samples only: no public worlds,
-    releases, Tracker, signals, Rankings or Events are real yet.
+  - Discover lists this device's published stories; the shared public catalogue,
+    releases, Tracker, signals and ranking boards are not connected. Samples
+    live only in Workshop; Events remain Coming soon announcements.
 - **Not rebuilt yet:**
   - manifestations;
   - System Panels, including the Fate Survival result card;
@@ -1070,7 +1088,8 @@ When a session asks "what now?", start here:
    View, and piece 5, cover art on Story View through the media reveal. Next
    pieces:
    - a Workshop switch to inspect the app's stories;
-   - Discover: its structure is in with sample worlds (2026-10-20); next, the
+   - Discover: its structure is in; the app lists published stories and samples stay
+     in Workshop (2026-11-17); next, the
      owner refines its look and feel, then real worlds replace the samples.
 
    **The owner's plan:** assemble the app here, a piece at a time, until it is

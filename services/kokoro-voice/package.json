@@ -1,0 +1,16 @@
+{
+  "name": "seihouse-kokoro-voice",
+  "private": true,
+  "description": "SEIHouse's Kokoro voice server: makes a line of narration once, keeps it, and serves it to every reader after.",
+  "type": "module",
+  "main": "server.mjs",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.mjs",
+    "prefetch": "node prefetch.mjs"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "7.22.0",
+    "kokoro-js": "1.2.1"
+  }
+}

@@ -68,7 +68,7 @@ export interface StoryPagesProps {
   codexPictures?: CodexPictureService;
   /** The host's character voices: Listen plays a spoken line's kept clip in its character's voice. Without it, the device reads every line. */
   chapterVoices?: ChapterVoiceService;
-  /** The host's narration made on the device: it reads every line that has no cast voice. Without it, the device's own voice does. */
+  /** The host's own narration voice: it reads every line that has no cast voice. Without it, the device's own voice does. */
   deviceNarration?: DeviceNarrationService;
   /**
    * Whether the Reader is the creator's: Fate and Create together, and the

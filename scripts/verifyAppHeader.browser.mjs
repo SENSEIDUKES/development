@@ -15,6 +15,7 @@ mkdirSync(output, { recursive: true });
 const results = [];
 
 async function checkHeader(frame, label) {
+  console.log(`Checking ${label}`);
   await frame.locator('.workspace-search-field').waitFor();
   await frame.locator('.workspace-profile-portrait').waitFor();
   await frame.locator('svg.novel-expanded-emblem-art').waitFor({ state: 'attached' });
@@ -67,6 +68,8 @@ for (const [name, engine, device] of [
     await context.addInitScript(() => {
       if (!localStorage.getItem('novelexpanded-reader-profile')) localStorage.setItem('novelexpanded-reader-profile', JSON.stringify({ familiarWelcomed: true }));
     });
+    context.setDefaultTimeout(30_000);
+    context.setDefaultNavigationTimeout(30_000);
     const page = await context.newPage();
     await page.goto(`${base}/app/`);
     for (const width of [320, 360, 393, 430, 640, 768, 1024, 1440]) {
@@ -130,6 +133,42 @@ for (const [name, engine, device] of [
     await checkHeader(home, `${name} Workshop laptop`);
     await page.screenshot({ path: `${output}/${name}-workshop-laptop.png`, scale: 'css' });
     await context.close();
+
+    // Full-header choreography is the real UI package player, also while Search is open.
+    const animated = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await animated.addInitScript(() => localStorage.setItem('novelexpanded-reader-profile', JSON.stringify({ familiarWelcomed: true })));
+    animated.setDefaultTimeout(30_000);
+    const moving = await animated.newPage();
+    await moving.goto(`${base}/app/`, { waitUntil: 'domcontentloaded' });
+    const stage = moving.locator('.workspace-header [data-slot="search-stage"]');
+    await stage.waitFor();
+    await moving.waitForFunction(() => document.querySelector('.workspace-header [data-slot="search-stage"]')?.getAttribute('data-playback') === 'playing');
+    // Hold the real animations during Search interactions: slow CI must not
+    // exhaust the 4.8-second performance before the identity assertion.
+    await stage.evaluate(el => {
+      window.headerEffects = el.getAnimations({ subtree: true });
+      window.headerEffects.forEach(effect => effect.pause());
+    });
+    await moving.getByRole('button', { name: 'Search for stories', exact: true }).click();
+    const search = moving.getByRole('dialog', { name: 'Search', exact: true });
+    await search.getByRole('searchbox').fill('Create');
+    await search.getByRole('button', { name: 'Create a story', exact: true }).waitFor();
+    assert(await stage.evaluate(el => {
+      const current = el.getAnimations({ subtree: true });
+      return current.length > 0 && current.length === window.headerEffects.length
+        && current.every((effect, i) => effect === window.headerEffects[i]);
+    }), `${name}: typing replaced or stopped the header performance`);
+    await moving.keyboard.press('Escape');
+    await moving.waitForFunction(() => document.activeElement?.matches('.workspace-search-field'));
+    // Resume those same animations and verify their normal completion cleanup.
+    await stage.evaluate(() => window.headerEffects.forEach(effect => effect.play()));
+    await moving.waitForFunction(() => document.querySelector('.workspace-header [data-slot="search-stage"]')?.getAttribute('data-playback') === 'still');
+    assert.equal(await stage.evaluate(el => el.getAnimations({ subtree: true }).length), 0);
+    await moving.screenshot({ path: `${output}/${name}-integrated-header-390.png`, scale: 'css' });
+    await moving.setViewportSize({ width: 1280, height: 800 });
+    await checkHeader(moving, `${name} integrated header 1280`);
+    await moving.screenshot({ path: `${output}/${name}-integrated-header-1280.png`, scale: 'css' });
+    await animated.close();
   } finally {
     await browser.close();
   }

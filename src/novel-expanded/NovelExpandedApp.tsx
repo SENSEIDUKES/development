@@ -37,17 +37,25 @@ import { useStoryCovers } from '../host/media/storyCovers';
 import { blueprintPictureOwner, blueprintPictureKey } from '@seihouse/library/story-seed';
 import { useCodexPictures } from '../host/media/codexPictures';
 import { useChapterVoices } from '../host/media/chapterVoices';
-import { useDeviceNarrationService } from '../host/reader/deviceNarration';
+import { useKokoroNarrationService } from '../host/reader/kokoroNarration';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
 import { CreateHubPage, creatorWorldsOf } from './CreateHubPage';
-import { DiscoverPage } from './DiscoverPage';
+import { DiscoverPage, type DiscoverCatalogue } from './DiscoverPage';
 import { HomePage } from './HomePage';
 import { useDaoSparks } from './daoSparks';
 import { ProfilePage } from './ProfilePage';
-import { HOME_ROUTE, useAppRoute } from './routes';
+import { HOME_ROUTE, useAppRoute, type NovelExpandedRoute } from './routes';
 import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
 import { NOVEL_EXPANDED_READER_ID, startedSeedIds, storySourceSeedId } from './storyCreationRuntime';
+
+interface AppHostOptions {
+  /** Optional host catalogue; omitted in the app, which uses its published stories. */
+  discoverCatalogue?: DiscoverCatalogue;
+  /** Host-owned addresses, allowing the same app composition inside an embedded preview. */
+  hrefFor?: (route: NovelExpandedRoute) => string;
+}
+
 
 /**
  * NovelExpanded: Home → Create (Story Seed and World Blueprint) → Story View
@@ -70,10 +78,11 @@ import { NOVEL_EXPANDED_READER_ID, startedSeedIds, storySourceSeedId } from './s
  * Story Seeds from its defaults. Every page shares the one economy account
  * (`services.economy`).
  */
-export function NovelExpandedApp({ services, readerMixer }: {
+
+export function NovelExpandedApp({ services, readerMixer, ...hostOptions }: {
   services: NovelExpandedServices;
   readerMixer: ReaderMixer;
-}) {
+} & AppHostOptions) {
   const profile = useDeviceProfile(services.profile);
   useInterfaceLanguageTranslation(profile.interfaceLanguage);
   const loadingFamiliar = useMemo(() => loadingFamiliarPresentation(
@@ -90,7 +99,7 @@ export function NovelExpandedApp({ services, readerMixer }: {
           {/* The music note in every Library header, Story Seed's and the Cave's included, while Menu music is on. */}
           <WorkspaceHeaderSoundProvider sound={menuMusic ? <HeaderSoundControl /> : null}>
             <EconomyClientProviders clients={services.economy}>
-              <NovelExpandedPages services={services} />
+              <NovelExpandedPages services={services} {...hostOptions} />
             </EconomyClientProviders>
           </WorkspaceHeaderSoundProvider>
         </LibraryDestinationsProvider>
@@ -115,7 +124,7 @@ function familiarPlace(page: ReturnType<typeof useAppRoute>[0]['page']): { title
   }
 }
 
-function NovelExpandedPages({ services }: { services: NovelExpandedServices }) {
+function NovelExpandedPages({ services, ...hostOptions }: { services: NovelExpandedServices } & AppHostOptions) {
   const [tokenRequest, setTokenRequest] = useState<AccessTokenRequest>();
   const pendingToken = useRef<Promise<string | undefined> | undefined>(undefined);
   // One sheet for the whole app: a Blueprint and a chapter past the visitor
@@ -135,17 +144,17 @@ function NovelExpandedPages({ services }: { services: NovelExpandedServices }) {
   }, []);
   const writer = useMemo(() => writerWithAccessToken(services.writer, services.accessToken, askForToken), [services, askForToken]);
   return <>
-    <NovelExpandedRoutes services={services} writer={writer} askForToken={askForToken} />
+    <NovelExpandedRoutes services={services} writer={writer} askForToken={askForToken} {...hostOptions} />
     <AccessTokenSheet request={tokenRequest} />
   </>;
 }
 
-function NovelExpandedRoutes({ services, writer, askForToken }: {
+function NovelExpandedRoutes({ services, writer, askForToken, discoverCatalogue, hrefFor }: {
   services: NovelExpandedServices;
   writer: NovelExpandedServices['writer'];
   askForToken: AskForAccessToken;
-}): ReactNode {
-  const [route, navigate] = useAppRoute();
+} & AppHostOptions): ReactNode {
+  const [route, navigate] = useAppRoute(hrefFor);
   const profile = useDeviceProfile(services.profile);
   const [chapterModel] = useModelPreference('chapters');
   // The Chapter Tagger reads each chapter with the Router's own choice for it, when there is one.
@@ -161,7 +170,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const voiceClient = useMemo(() => chapterVoiceClientWithAccessToken(services.chapterVoiceServer, services.accessToken, askForToken), [services, askForToken]);
   const chapterVoices = useChapterVoices(services.chapterVoices, voiceClient);
   // Kokoro on this device: free voices for every line with no cast voice, switched on in the Reader's Narration settings.
-  const deviceNarration = useDeviceNarrationService(services.deviceNarration);
+  const deviceNarration = useKokoroNarrationService(services.kokoroNarration);
   // The profile picture uses the same image choice and token.
   const portraits = useMemo(() => portraitMakerWithAccessToken(services.requestProfilePicture, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();
@@ -358,6 +367,6 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     backLabel={creatorInfo ? 'Back to the book in Create' : 'Back to your stories'}
     onBack={() => navigate(creatorInfo ? { page: 'world', storyId } : HOME_ROUTE)} />);
 
-  if (route.page === 'discover') return withFamiliar(<DiscoverPage route={route} navigate={navigate} stories={worlds} readerProfile={profile} />);
+  if (route.page === 'discover') return withFamiliar(<DiscoverPage route={route} navigate={navigate} stories={worlds} readerProfile={profile} catalogue={discoverCatalogue} hrefFor={hrefFor} />);
   return withFamiliar(<HomePage worlds={worlds} navigate={navigate} readerProfile={profile} />);
 }

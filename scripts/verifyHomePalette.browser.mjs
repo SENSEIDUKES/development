@@ -11,14 +11,15 @@ const base = process.argv[2] ?? 'http://localhost:5173';
 const output = 'output/playwright/home-palette-regression';
 mkdirSync(output, { recursive: true });
 const results = [];
-const media = '.world-card-base, .world-card-base-media, .world-card-banner, .world-card-banner-backdrop, .world-card-banner-video, .world-card-banner-wash';
+const welcomeMedia = '.home-featured [data-home-panel]';
+const worldMedia = '.world-card-base-media, .world-card-banner, .world-card-banner-still, .world-card-banner-video, .world-card-banner-wash';
 const nativeColors = '[data-slot="navigation-label"], [data-slot="navigation-account-name"], .home-featured-label, .home-filter-label';
-const assertClear = async page => {
-  const surfaces = await page.locator(media).evaluateAll(elements => elements.map(element => {
+const assertClear = async (page, selector) => {
+  const surfaces = await page.locator(selector).evaluateAll(elements => elements.map(element => {
     const style = getComputedStyle(element);
     return { surface: element.className, filter: style.filter, backdrop: style.backdropFilter };
   }));
-  assert.ok(surfaces.length >= 6, 'Expanded Events must be present');
+  assert.ok(surfaces.length > 0, `Home media must be present for ${selector}`);
   for (const surface of surfaces) {
     assert.equal(surface.filter, 'none', `${surface.surface}: no image/video blur`);
     assert.equal(surface.backdrop, 'none', `${surface.surface}: no frosted media overlay`);
@@ -45,7 +46,7 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${base}/app/`);
     await page.getByTestId('novel-expanded-home').waitFor();
-    await assertClear(page);
+    await assertClear(page, welcomeMedia);
     const cta = page.getByRole('button', { name: 'Create A World', exact: true });
     assert.equal(await cta.evaluate(element => getComputedStyle(element.parentElement.parentElement).backdropFilter), 'none');
     await page.waitForFunction(() => {
@@ -125,19 +126,23 @@ try {
       for (const title of ['Quiet mountains', 'A distant shore']) {
         const story = await controller.createStory({ title, premise: 'A courier finds her way home.', genre: 'Fantasy' });
         await covers.save(story.id, image);
+        await controller.setStoryVisibility(story.id, 'public');
       }
     });
     await page.reload();
     await page.locator('.world-card-tile').first().waitFor();
-    await page.locator('.home-featured-dot').nth(1).click();
+    await page.locator('.home-featured .world-card-carousel-step[data-side="next"]').click();
     await page.locator('.world-card-banner').waitFor();
-    await assertClear(page);
+    await assertClear(page, worldMedia);
     await page.screenshot({ path: `${output}/cards-${width}.png` });
     await page.goto(`${base}/?preview=light-novels-home`);
     const frame = page.frameLocator('iframe[title*="development"]');
     await frame.getByTestId('novel-expanded-home').waitFor();
     if (width >= 1024) await page.getByRole('combobox', { name: /^Viewport/ }).selectOption('laptop');
-    await assertClear(frame);
+    await assertClear(frame, welcomeMedia);
+    await frame.locator('.home-featured .world-card-carousel-step[data-side="next"]').click();
+    await frame.locator('.world-card-banner').waitFor();
+    await assertClear(frame, worldMedia);
     assert.deepEqual(errors, []);
     results.push({ width, mediaClear: true, navigationEffectsPreserved: true, nativeTextColors: true, whiteIcons: true, workshopChecked: true });
     await context.close();

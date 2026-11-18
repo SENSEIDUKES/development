@@ -7,7 +7,6 @@ import type { Navigate } from './routes';
 
 const EMPTY_LIST = {
   title: 'Your stories appear here',
-  description: 'Create A World to plant a Story Seed and shape its World Blueprint. Every story you start waits here, ready to read and continue.',
 };
 
 /** How many of the reader's stories the Featured hero cycles through after Featured Ascension. */

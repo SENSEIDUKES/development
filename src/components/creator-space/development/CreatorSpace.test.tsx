@@ -113,15 +113,15 @@ it('says honestly that the plugin browser is not open yet, unless the host suppl
   const browse = vi.fn();
   renderPage({ onBrowseToolkit: browse });
   click(button(/^Browse plugins/));
-  click(button(/^Import plugins/));
-  expect(browse.mock.calls).toEqual([[], []]);
+  expect(browse).toHaveBeenCalledOnce();
+  expect(container.textContent).not.toContain('Import plugins');
   expect(container.querySelectorAll('button.creator-space-tool')).toHaveLength(1);
   const studio = container.querySelector<HTMLAnchorElement>('a[href="https://studio.novelexpanded.com"]')!;
   expect(studio.target).toBe('_blank');
   expect(studio.rel).toContain('noopener');
 });
 
-it('lists parent .spp packs first and reveals individual files only when a parent .spp is clicked', () => {
+it('shows parent .spp packs on the Plugins Page and reveals their files only when one is opened', () => {
   const catalog: CreatorPluginCatalog = {
     packages: [
       {
@@ -173,7 +173,7 @@ it('lists parent .spp packs first and reveals individual files only when a paren
         builtIn: true,
         unitSingular: 'effect',
         unitPlural: 'effects',
-        groups: [{ id: 'weapons', label: 'Weapons', files: [{ id: 'c1', title: 'Blade Unsheathe 1', badge: 'blade drawn' }] }],
+        groups: [{ id: 'weapons', label: 'Weapons', files: [{ id: 'c1', title: 'Blade Unsheathe 1', badge: 'blade drawn', detail: 'A sword leaves its sheath.' }] }],
       },
       {
         id: 'ne-atmospheres-vol-1',
@@ -190,43 +190,72 @@ it('lists parent .spp packs first and reveals individual files only when a paren
   };
   const onBack = vi.fn();
   const onFilterChange = vi.fn();
+  const onSelectPack = vi.fn();
   act(() => root.render(
     <LibraryPresentationProvider>
-      <CreatorPlugins catalog={catalog} initialFilter="all" onFilterChange={onFilterChange} onBack={onBack} />
+      <CreatorPlugins catalog={catalog} initialFilter="all" onFilterChange={onFilterChange} onSelectPack={onSelectPack} onBack={onBack} />
     </LibraryPresentationProvider>,
   ));
 
-  // Top level shows parent .spp packages and group counts, NOT individual files.
+  // Top level is one row per kind, each parent .spp as a plugin card, NOT individual files.
+  const railTitles = () => [...container.querySelectorAll('[data-slot="spp-plugin-rail"] h2')].map(node => node.textContent);
+  const detail = () => document.querySelector('[data-slot="spp-plugin-browser-detail"]');
   expect(container.querySelector('h1')?.textContent).toBe('Creator Plugins');
+  expect(railTitles()).toEqual(['Style Packs', 'Soundscapes', 'Cues', 'Atmospheres']);
   expect(container.textContent).toContain('NovelExpanded Soundscapes Vol. 1');
-  expect(container.textContent).toContain('Adventure (3)');
-  expect(container.textContent).toContain('Ambient (2)');
-  expect(container.textContent).not.toContain('Adventure 4 Banished');
-  expect(container.textContent).not.toContain('Blade Unsheathe 1');
+  expect(document.body.textContent).not.toContain('Adventure 4 Banished');
 
-  // Clicking the parent .spp opens it and reveals its groups and individual files.
-  click(container.querySelector<HTMLElement>('[data-testid="plugin-spp-ne-soundscapes-vol-1"]') ?? undefined);
-  expect(container.querySelector('h1')?.textContent).toBe('NovelExpanded Soundscapes Vol. 1');
-  expect(container.textContent).toContain('Adventure 4 Banished');
-  expect(container.textContent).toContain('Ambient Night');
+  // The switch keeps media apart from information.
+  click(container.querySelector<HTMLElement>('[data-slot="spp-plugin-browser-groups"] [data-value="media"]') ?? undefined);
+  expect(railTitles()).toEqual(['Soundscapes', 'Cues', 'Atmospheres']);
+  click(container.querySelector<HTMLElement>('[data-slot="spp-plugin-browser-groups"] [data-value="all"]') ?? undefined);
 
-  // Filtering by a group inside the .spp narrows to that group's files.
-  click(button('Ambient (2)'));
-  expect(container.textContent).toContain('Ambient Night');
-  expect(container.textContent).not.toContain('Adventure 4 Banished');
+  // Opening a parent .spp shows what is inside, each file under its group's name.
+  click(container.querySelector<HTMLElement>('[data-plugin-id="ne-soundscapes-vol-1"] button, button[data-plugin-id="ne-soundscapes-vol-1"]') ?? undefined);
+  expect(onSelectPack).toHaveBeenLastCalledWith('ne-soundscapes-vol-1');
+  expect(detail()?.textContent).toContain('NovelExpanded Soundscapes Vol. 1');
+  expect(detail()?.textContent).toContain('Adventure 4 Banished');
+  expect(detail()?.textContent).toContain('Ambient Night');
+  expect(detail()?.textContent).toContain('Ambient');
 
-  // Back returns to the parent .spp list, and Back again returns to Create.
-  click(button('Back to Creator Plugins'));
-  expect(container.querySelector('h1')?.textContent).toBe('Creator Plugins');
-  expect(container.textContent).not.toContain('Ambient Night');
+  // A file's own words stay with it: what it is, and its trigger word beside its group.
+  click(container.querySelector<HTMLElement>('[data-plugin-id="ne-cues-vol-1"] button, button[data-plugin-id="ne-cues-vol-1"]') ?? undefined);
+  expect(detail()?.textContent).toContain('Blade Unsheathe 1 — A sword leaves its sheath. — Weapons');
+  expect(detail()?.textContent).toContain('blade drawn');
 
-  click(button('Cues'));
+  // "See all" opens one kind and tells the host; a kind change closes the open pack.
+  click(container.querySelectorAll<HTMLElement>('[data-slot="spp-plugin-rail-see-all"]')[2]);
   expect(onFilterChange).toHaveBeenCalledWith('cue');
+  expect(onSelectPack).toHaveBeenLastCalledWith(null);
   expect(container.textContent).toContain('NovelExpanded Cues Vol. 1');
   expect(container.textContent).not.toContain('NovelExpanded Chinese Style');
 
   click(button('Back to Create'));
   expect(onBack).toHaveBeenCalledTimes(1);
+});
+
+it('keeps the top of Creator Plugins short and puts importing at the foot of the page', () => {
+  const catalog: CreatorPluginCatalog = { packages: [] };
+  const mount = (importer: boolean) => act(() => root.render(
+    <LibraryPresentationProvider>
+      <CreatorPlugins catalog={catalog} onBack={() => {}} onImportMediaPack={importer ? vi.fn() : undefined} />
+    </LibraryPresentationProvider>,
+  ));
+
+  mount(true);
+  const browser = container.querySelector('[data-slot="spp-plugin-browser"]')!;
+  const importing = container.querySelector('[data-testid="creator-plugins-import"]')!;
+  // The page's header carries only its title, search and switches: no description, no importers.
+  expect(browser.querySelector('header')?.textContent).not.toContain('Import');
+  expect(browser.querySelector('header p:not([role="status"])')).toBeNull();
+  // Importing closes the page, after the plugins.
+  expect(browser.compareDocumentPosition(importing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(importing.textContent).toContain('Import audio .spp');
+  expect(importing.querySelector('[data-testid="creator-plugins-media-import"]')).not.toBeNull();
+
+  // A host with no importers shows no import section.
+  mount(false);
+  expect(container.querySelector('[data-testid="creator-plugins-import"]')).toBeNull();
 });
 
 it('distinguishes loading, empty and failed worlds without inventing numbers', () => {

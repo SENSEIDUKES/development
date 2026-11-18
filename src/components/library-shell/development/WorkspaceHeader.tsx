@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { SEIAppHeader, SEIToolbar } from '@seihouse/ui';
+import { novelExpandedHeaderDecoration, NovelExpandedHeaderLandscape } from '@seihouse/ui/search-scenes/novel-expanded';
 import { NarrativeButton as LibraryButton } from '@seihouse/sen/presentation';
 import { NovelExpandedIcon } from './NovelExpandedIcon';
 import { ArrowLeft } from 'lucide-react';
@@ -108,6 +109,8 @@ export function WorkspaceHeader({ title, emblem, home, back, primaryAction,
   const searchCommands = [...searchItems, ...commands.filter(action => !searchItems.some(item => item.id === action.id))];
   return <>
   <SEIAppHeader
+    decoration={novelExpandedHeaderDecoration}
+    backgroundArtwork={<NovelExpandedHeaderLandscape />}
     landmark={landmark}
     aria-label={landmark === 'banner' ? `${title} workspace header` : undefined}
     className="workspace-header"

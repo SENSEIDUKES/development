@@ -33,7 +33,7 @@ export function homeMaterialStyles(settings: PaletteSettings, measured: Material
     .pm-home-canvas .library-look { ${settings.colors.text.toLowerCase() === '#ffffff' ? '' : `--color-signal: ${settings.colors.text}; --sh-text-primary: ${settings.colors.text}; --library-material-text: ${settings.colors.text};`} }
     .pm-home-canvas .home-filter-label { color: ${settings.colors.accent}; }
     /* Keep the original media backing and contrast layers, even with fully opaque paints. */
-    .pm-home-canvas :is(.home-event, .home-featured [data-home-panel], .world-card-base, .world-card-banner) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+    .pm-home-canvas :is(.home-featured [data-home-panel], .world-card-base, .world-card-banner) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
     @media (prefers-reduced-transparency: reduce) {
       .pm-home-canvas ${Object.values(selectors).join(', .pm-home-canvas ')} { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background-color: #111820 !important; background-image: none !important; }
     }

@@ -15,7 +15,7 @@ Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-ru
   `/library-shell.html?variant=development&source=main-library&screen=creator-space`
   (add `&worlds=sample` for the sample set)
 - **Created:** 2026-09-26
-- **Last recorded Workshop update:** 2026-11-17
+- **Last recorded Workshop update:** 2026-11-01
 - **Historical source inspection:** 2026-09-26 (Library shell navigation, Home cards, Energy,
   and the chapter workspace were inspected in this repository)
 - **Status:** approved reconstruction (Workshop Replica Mode B), first usable pass
@@ -36,7 +36,7 @@ in the app). Completed worlds keep Edit available and disable Continue.
 Loading, empty and failed-read states remain distinct.
 
 **Creator Toolkit** groups two destinations below the worlds. One large **Browse
-plugins** card opens Creator Plugins, which retains the style, soundscape, cue and
+plugins** card opens the SEIHouse Plugins Page, which retains the style, soundscape, cue and
 atmosphere catalogs and existing audio/skill `.spp` import controls. The **Studios**
 card links to `https://studio.novelexpanded.com` in a new tab and offers **Import
 plugins** back into that same plugin browser. Studio always refers to the external
@@ -123,11 +123,18 @@ reduced motion. Evidence: `output/playwright/creator-space/`.
 
 ## Workshop history
 
-- **2026-11-17 (Create layout):** Moved Create to a compact top action, brought
-  Your worlds ahead of the toolkit, and renamed the story action to Edit. Replaced
-  four plugin preview cards with one Browse plugins card and added a dedicated
-  Studios card with the external Studio link and a return path to package import.
-  The app and existing Workshop preview share this Library surface.
+- **2026-11-17:** Moved Create to the top, consolidated Browse plugins, and added a Studios card. Worlds use Continue and Edit.
+
+- **2026-11-17 (the official Plugins Page):** From SENSEI, Creator Plugins is now the
+  Plugins Page from the UI repository (`SPPPluginBrowser`, `@seihouse/ui` 0.25.0) with the
+  official plugin card and its real cover image, replacing this folder's own pack card,
+  filter chips and full-page pack view. Built-in packs wear their kind's Creator Toolkit art;
+  a pack opens in the page's own detail sheet (from the bottom on a phone, from the side on
+  a wide screen), raised above the bottom navigation. The URL, the props hosts pass and both
+  importers are unchanged, so the app and the Workshop preview changed together.
+  Later the same day, from SENSEI on a phone: the top was cut down (no description, a slim
+  back link, a smaller title) so plugins start on the first screen, and importing moved to
+  the foot of the page.
 
 - **2026-11-01 (Toolkit plugins & Creator Plugins view):** Added **Cues** and **Atmospheres**
   beside Style Packs and Soundscapes in the Creator Toolkit, switched the Toolkit from a

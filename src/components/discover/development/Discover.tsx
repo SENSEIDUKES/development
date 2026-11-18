@@ -3,11 +3,7 @@ import {
   BookOpen,
   CalendarDays,
   ChevronDown,
-  Film,
-  Gamepad2,
   LayoutGrid,
-  PanelsTopLeft,
-  Search,
   Shapes,
   Sparkles,
   Swords,
@@ -16,22 +12,16 @@ import {
 } from 'lucide-react';
 import { LibraryPanel, LibraryDiscoveryIcon } from '@seihouse/library-ui';
 import { SEIEmptyState } from '@seihouse/ui';
+import { DiscoverEvents } from './DiscoverEvents';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldCard } from '../../world-card/development/WorldCard';
 import { WorldCardCompactGrid, WorldCardCompactTile } from '../../world-card/development/WorldCardCompactTile';
 import { WorldCardMenu } from '../../world-card/development/WorldCardMenu';
 import type { DiscoverCodexEntry, DiscoverCreator, DiscoverProps } from '../shared/discoverContracts';
 import './discover.css';
-import { DiscoverEvents } from './DiscoverEvents';
 
 type Feed = 'all' | 'mine';
 type BrowseView = 'browse' | 'genres' | 'rankings';
-const MEDIUMS = [
-  { id: 'novel', label: 'Novel', icon: BookOpen },
-  { id: 'manga', label: 'Manga', icon: PanelsTopLeft },
-  { id: 'game', label: 'Game', icon: Gamepad2 },
-  { id: 'video', label: 'Video', icon: Film },
-] as const;
 const SECTIONS = [
   { id: 'stories', label: 'Stories', icon: BookOpen },
   { id: 'creators', label: 'Creators', icon: Users },
@@ -53,50 +43,29 @@ export function releaseAge(releasedAt: string, now: Date): string {
 
 const publicStatus = (world: HomeWorld) =>
   world.publicationStatus ? { view: 'public' as const, value: world.publicationStatus } : undefined;
-const matchesText = (query: string, ...values: (string | undefined)[]) =>
-  !query || values.some((value) => value?.toLocaleLowerCase().includes(query));
-
 /** One Discover shell. Destinations and catalogue truth stay with the host. */
 export function Discover(props: DiscoverProps) {
-  const { section, sectionHref, onSectionChange, medium, onMediumChange, notice, loreArticle } = props;
+  const { section, sectionHref, onSectionChange, notice, loreArticle } = props;
   const surface = useRef<HTMLDivElement>(null);
   const previousSection = useRef(section);
   const previousArticle = useRef(loreArticle);
-  const previousMedium = useRef(medium);
   useEffect(() => {
     // Scroll the surface, not the sticky navigation's current on-screen position.
     if (
       previousSection.current !== section ||
-      previousMedium.current !== medium ||
       (previousArticle.current && !loreArticle)
     ) {
       surface.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
     }
     previousSection.current = section;
     previousArticle.current = loreArticle;
-    previousMedium.current = medium;
-  }, [section, loreArticle, medium]);
+  }, [section, loreArticle]);
   return (
     <div ref={surface} data-discover className="discover discover-hub pb-12 text-signal">
       <header className="discover-header">
         <h1 className="discover-title font-display font-bold">Discover</h1>
         {notice && <div className="discover-notice">{notice}</div>}
       </header>
-      <div role="group" aria-label="Medium" className="discover-medium-switcher">
-        {MEDIUMS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            aria-pressed={medium === id}
-            onClick={() => {
-              if (medium !== id) onMediumChange(id);
-            }}
-          >
-            <Icon aria-hidden="true" size={18} />
-            <span>{label}</span>
-          </button>
-        ))}
-      </div>
       <nav aria-label="Discover sections" className="discover-navigation">
         {SECTIONS.map(({ id, label, icon: Icon }) => (
           <a
@@ -114,8 +83,9 @@ export function Discover(props: DiscoverProps) {
           </a>
         ))}
       </nav>
-      {section === 'events' ? <DiscoverEvents events={props.events ?? []} />
-        : <DiscoverContent key={section === 'lore' ? section : `${section}:${medium}`} {...props} />}
+      {section === 'events'
+        ? <DiscoverEvents events={props.events ?? []} />
+        : <DiscoverContent key={section} {...props} />}
     </div>
   );
 }
@@ -123,8 +93,7 @@ export function Discover(props: DiscoverProps) {
 /** Filters reset on a destination change; the host's route owns the destination. */
 function DiscoverContent({
   section,
-  medium,
-  worlds: allWorlds,
+  worlds,
   creators: allCreators = [],
   codexEntries = [],
   releases,
@@ -140,7 +109,6 @@ function DiscoverContent({
 }: DiscoverProps) {
   const ids = useId();
   const [feed, setFeed] = useState<Feed>('all');
-  const [query, setQuery] = useState('');
   const [genre, setGenre] = useState('');
   const [view, setView] = useState<BrowseView>('browse');
   const [codexKind, setCodexKind] = useState<DiscoverCodexEntry['kind']>('characters');
@@ -150,17 +118,13 @@ function DiscoverContent({
     if (kind) setCodexKind(kind);
     contentTop.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
   };
-  const search = query.trim().toLocaleLowerCase();
-  const mediumLabel = MEDIUMS.find((option) => option.id === medium)!.label;
-  const worlds = allWorlds.filter((world) => world.format?.trim().toLowerCase() === medium);
   const worldById = new Map(worlds.map((world) => [world.id, world]));
   const creators = allCreators.filter((creator) => creator.worldIds.some((id) => worldById.has(id)));
   const tracked = new Set(trackedWorldIds ?? []);
   const followed = new Set(followedCreatorIds ?? []);
   const trackedEntries = new Set(trackedCodexIds ?? []);
   const worldMatches = (world: HomeWorld, genreFilter = genre) =>
-    (!genreFilter || world.genre === genreFilter) &&
-    matchesText(search, world.title, ...Object.values(world.titleTranslations ?? {}), world.creatorName, world.genre, ...(world.tags ?? []));
+    !genreFilter || world.genre === genreFilter;
   const storyMatches = (world: HomeWorld) => worldMatches(world) && (feed === 'all' || tracked.has(world.id));
   const creatorWorlds = (creator: DiscoverCreator) =>
     creator.worldIds.flatMap((id) => (worldById.get(id) ? [worldById.get(id)!] : []));
@@ -168,12 +132,6 @@ function DiscoverContent({
     const titles = creatorWorlds(creator);
     return (
       (!genreFilter || titles.some((world) => world.genre === genreFilter)) &&
-      matchesText(
-        search,
-        creator.name,
-        creator.description,
-        ...titles.flatMap((world) => [world.title, world.genre, ...(world.tags ?? [])]),
-      ) &&
       (!updates || feed === 'all' || followed.has(creator.id))
     );
   };
@@ -182,7 +140,6 @@ function DiscoverContent({
     return Boolean(
       world &&
       (!genre || world.genre === genre) &&
-      matchesText(search, entry.name, entry.description, world.title, world.genre, world.creatorName) &&
       (!updates || feed === 'all' || trackedEntries.has(entry.id)),
     );
   };
@@ -202,7 +159,7 @@ function DiscoverContent({
     })
     .sort((a, b) => new Date(b.release.releasedAt).getTime() - new Date(a.release.releasedAt).getTime());
   const genres = Array.from(new Set(worlds.map((world) => world.genre))).sort();
-  // Genre browsing uses the current search/follows, independent of the selected genre.
+  // Genre browsing uses the current follows, independent of the selected genre.
   const genreChoices = genres
     .map((value) => {
       const genreWorlds = worlds.filter((world) => world.genre === value);
@@ -223,13 +180,17 @@ function DiscoverContent({
   const emptyTitle =
     feed === 'mine' && !trackingAvailable
       ? `${sectionName} updates are not available yet`
-      : `No ${section === 'codex' ? codexKind : section} match`;
+      : !worlds.length && feed === 'all'
+        ? section === 'stories' ? 'No published stories yet' : `No ${section === 'codex' ? codexKind : section} yet`
+        : `No ${section === 'codex' ? codexKind : section} match`;
   const emptyDescription =
     feed === 'mine' && !trackingAvailable
       ? 'Updates will appear here when following is available.'
-      : feed === 'mine' && !search && !genre
+      : feed === 'mine' && !genre
         ? `Updates from the ${section === 'codex' ? codexKind : section} you follow will gather here.`
-        : 'Try another search, genre, or switch to All.';
+        : !worlds.length
+          ? 'Published stories will appear here as the catalogue grows.'
+          : 'Try another genre, or switch to All.';
   const boardKind = section === 'codex' ? codexKind : section;
   const board = rankingBoards.find((value) => value.kind === boardKind);
   const showFeed = !(section === 'lore' && loreArticle) && view !== 'rankings';
@@ -276,39 +237,11 @@ function DiscoverContent({
     <div ref={contentTop} className="discover-content" data-discover-section={section}>
       {section === 'lore' ? (
         <>
-          <p className="discover-medium-note">Lore is shared across all mediums.</p>
           {showFeed && <div className="discover-feed-row">{feedControl}</div>}
           {renderLore(feed === 'mine')}
         </>
       ) : (
         <>
-          <div className="discover-filter-bar">
-            <label className="discover-search">
-              <Search aria-hidden="true" size={18} />
-              <span className="sr-only">Search {sectionName.toLowerCase()}</span>
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={
-                  section === 'stories'
-                    ? 'Search stories, tags'
-                    : section === 'creators'
-                      ? 'Search creators'
-                      : 'Search Codex'
-                }
-              />
-            </label>
-            <label className="discover-genre-select">
-              <span className="sr-only">Genre</span>
-              <select value={genre} onChange={(event) => setGenre(event.target.value)}>
-                <option value="">All genres</option>
-                {genres.map((value) => (
-                  <option key={value}>{value}</option>
-                ))}
-              </select>
-            </label>
-          </div>
           <div className="discover-browser">
             <div role="group" aria-label={`${sectionName} views`} className="discover-view-rail">
               {section === 'codex' ? (
@@ -360,28 +293,17 @@ function DiscoverContent({
               </button>
             </div>
             <div id={`${ids}-results`} className="discover-main">
-              {showFeed && <div className="discover-feed-row">{feedControl}</div>}
-              {worlds.length === 0 && medium !== 'novel' ? (
-                <Shelf
-                  id={`${ids}-upcoming`}
-                  title={
-                    view === 'rankings'
-                      ? 'Heavenly Rankings'
-                      : view === 'genres'
-                        ? 'Explore genres'
-                        : section === 'codex'
-                          ? codexKind === 'characters'
-                            ? 'Characters'
-                            : 'Items'
-                          : sectionName
-                  }
-                >
-                  <Empty
-                    title={`${mediumLabel} catalogue coming soon`}
-                    description={`There are no ${mediumLabel.toLowerCase()} stories, creators or Codex entries to browse yet. Choose Novel to explore the current catalogue.`}
-                  />
-                </Shelf>
-              ) : view === 'genres' ? (
+              <div className="discover-controls">
+                {showFeed && feedControl}
+                <label className="discover-genre-select">
+                  <span className="sr-only">Genre</span>
+                  <select value={genre} onChange={(event) => setGenre(event.target.value)}>
+                    <option value="">All genres</option>
+                    {genres.map((value) => <option key={value}>{value}</option>)}
+                  </select>
+                </label>
+              </div>
+              {view === 'genres' ? (
                 <Shelf
                   id={`${ids}-genres`}
                   title="Explore genres"
@@ -473,7 +395,7 @@ function DiscoverContent({
                     ) : (
                       <Empty
                         title={
-                          genre || search ? 'No rankings match' : `${board?.label ?? sectionName} rankings open soon`
+                          genre ? 'No rankings match' : `${board?.label ?? sectionName} rankings open soon`
                         }
                         description="Rankings follow what readers do and spend, not star ratings."
                       />
@@ -527,7 +449,7 @@ function DiscoverContent({
                         title={
                           feed === 'mine' && !trackingAvailable
                             ? 'My updates arrives with the Tracker'
-                            : search || genre
+                            : genre
                               ? feed === 'mine'
                                 ? 'No tracked chapters match'
                                 : 'No new chapters match'

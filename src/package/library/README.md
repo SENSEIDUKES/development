@@ -1,5 +1,9 @@
 # `@seihouse/library`
 
+**Unreleased (2026-11-17):** Library requires SEN **>=0.44.0** to share UI
+0.25.0. Elemental Title styling ships in Library's stylesheet, so World Cards
+and Familiar name effects also render correctly in external hosts.
+
 **0.38.0 (2026-11-08, breaking):** Peers on `@seihouse/front-desk` **0.2.0**, now
 built in its own repository (step 2 of the Front Desk plan). The card's classes and
 hooks carry Front Desk's names (`.front-desk-card`, `data-front-desk-*`), so a host

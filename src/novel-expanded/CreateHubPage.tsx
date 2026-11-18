@@ -8,7 +8,7 @@ import type { LibraryStories } from '@seihouse/library/stories';
 import type { HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { AppShell } from './AppShell';
 import { CREATOR_TOOLKIT, buildCreatorPluginCatalog } from './creatorToolkit';
-import type { Navigate } from './routes';
+import { routeHref, type Navigate } from './routes';
 
 /**
  * The reader's stories as the Creator Space shows them: Home's cards (title,
@@ -63,6 +63,8 @@ export function CreateHubPage({ worlds, stories, navigate, readerProfile, sparks
   pluginStories?: Pick<LibraryStories, 'skills' | 'mediaPacks' | 'importMediaPack' | 'skillIntake' | 'installSkill'>;
 }) {
   const energy = useEnergyAccount();
+  const pluginsHref = routeHref({ page: 'create', plugins: 'all' });
+  const canImport = Boolean(pluginStories?.importMediaPack || (pluginStories?.skillIntake && pluginStories.installSkill));
   const catalog = useMemo(
     () => buildCreatorPluginCatalog({ skills: pluginStories?.skills, mediaPacks: pluginStories?.mediaPacks }),
     [pluginStories?.skills, pluginStories?.mediaPacks],
@@ -87,7 +89,9 @@ export function CreateHubPage({ worlds, stories, navigate, readerProfile, sparks
             sparks={<SparksButton host={sparks} />}
             onCreate={() => navigate({ page: 'create', newSeed: true })}
             onOpenEnergy={() => navigate({ page: 'profile', cave: '/home/energy' })}
-            onBrowseToolkit={kind => navigate({ page: 'create', plugins: kind ?? 'all' })}
+            onBrowseToolkit={() => navigate({ page: 'create', plugins: 'all' })}
+            browseToolkitHref={pluginsHref}
+            canImportPlugins={canImport}
             onContinueWorld={storyId => navigate({ page: 'write', storyId })}
             onOpenWorld={world => navigate({ page: 'world', storyId: world.id })}
             onEditWorld={storyId => navigate({ page: 'story', storyId, inCreate: true })} />}

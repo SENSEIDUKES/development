@@ -22,6 +22,14 @@ export const ENERGY_GRADE_LABELS: Record<EnergyGrade, string> = {
 /** The kinds of generation that cost Energy by grade. `live-minute` is the price a minute, charged by the started 20 seconds. */
 export type GradedEnergyKind = 'chapter' | 'image' | 'live-minute';
 
+/** Classify a rounded Router quote. Live speech uses its own tier schedule. */
+export function quotedEnergyGrade(kind: GradedEnergyKind | undefined, amount: number | undefined): EnergyGrade | undefined {
+  if (amount === undefined || (kind !== 'chapter' && kind !== 'image')) return undefined;
+  const [mortalMax, immortalMax] = kind === 'chapter' ? [2, 8] : [5, 12];
+  if (amount <= mortalMax) return 'mortal';
+  return amount <= immortalMax ? 'immortal' : 'heaven';
+}
+
 export const GRADED_ENERGY_PRICES: Record<GradedEnergyKind, Record<EnergyGrade, number>> = {
   chapter: { mortal: 2, immortal: 4, heaven: 8 },
   image: { mortal: 5, immortal: 10, heaven: 20 },
@@ -39,7 +47,8 @@ export const ENERGY_USD = 0.02;
  * Only spoken lines are ever voiced this way; narration is free
  * (NOVEL_EXPANDED.md, How we build).
  */
-export const VOICE_ENERGY_MARGIN = 4;
+export const GENERATION_ENERGY_MARGIN = 4;
+export const VOICE_ENERGY_MARGIN = GENERATION_ENERGY_MARGIN;
 
 /**
  * What each voice model's provider charges for 1,000 characters, in US dollars,

@@ -1,5 +1,5 @@
 import { type BlueprintGenerationPayload, type WorldBlueprint } from '@seihouse/sen/story-seed';
-import { isLocalDevelopmentModel, readReasoningPreference } from '../generation/modelPreference';
+import { isLocalDevelopmentModel, readReasoningPreference, readTextRolePreference } from '../generation/modelPreference';
 import { recordUsage } from '../usage/usageLog';
 import { chosenEnergyGrade } from '../generation/modelPreference';
 
@@ -40,10 +40,10 @@ const requestSignalWithTimeout = (callerSignal?: AbortSignal, timeoutMs = REQUES
   };
 };
 
-const withChapterModel = (payload: BlueprintGenerationPayload, model?: string) => {
-  if (!model) return payload;
-  const reasoningLevel = typeof window === 'undefined' ? undefined : readReasoningPreference(model);
-  return { ...payload, model, ...(reasoningLevel ? { reasoningLevel } : {}) };
+const withBlueprintModel = (payload: BlueprintGenerationPayload, model?: string) => {
+  const blueprint = readTextRolePreference('blueprint');
+  const reasoningLevel = blueprint.reasoningLevel ?? (model && !blueprint.model ? readReasoningPreference(model) : undefined);
+  return { ...payload, ...(model ? { model } : {}), ...(reasoningLevel ? { reasoningLevel } : {}) };
 };
 
 const readResponseBody = async (response: Response): Promise<unknown> => {
@@ -61,7 +61,7 @@ const postBlueprintRequest = async (
   accessToken: string,
   messages: { missingToken: string; failed: (status: number) => string; timedOut: string },
   signal?: AbortSignal,
-): Promise<Record<string, unknown>> => {
+): Promise<{ blueprint: WorldBlueprint; headers: Headers }> => {
   const token = accessToken.trim();
   if (!token && !isLocalDevelopmentModel(payload.model)) throw new Error(messages.missingToken);
   const request = requestSignalWithTimeout(signal, isLocalDevelopmentModel(payload.model) ? 15 * 60_000 + 20_000 : REQUEST_TIMEOUT_MS);
@@ -87,7 +87,7 @@ const postBlueprintRequest = async (
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       throw new Error('The World Blueprint server returned an invalid response.');
     }
-    return body as Record<string, unknown>;
+    return { blueprint: body as WorldBlueprint, headers: response.headers };
   } catch (error) {
     if (request.didTimeOut()) throw new Error(messages.timedOut);
     throw error;
@@ -97,10 +97,7 @@ const postBlueprintRequest = async (
 };
 
 /**
- * Generates a World Blueprint. `model` is the chapter model the reader chose
- * (the Model Router): the Blueprint is written by the same model as the
- * chapters, at the reasoning level saved for it. Without one, the server's
- * Blueprint model writes it.
+ * An explicit Blueprint choice uses its own reasoning. Otherwise it follows Chapter.
  */
 export const requestWorldBlueprint = async (
   payload: BlueprintGenerationPayload,
@@ -108,11 +105,17 @@ export const requestWorldBlueprint = async (
   signal?: AbortSignal,
   model?: string,
 ): Promise<WorldBlueprint> => {
-  const blueprint = await postBlueprintRequest(withChapterModel(payload, model), accessToken, {
+  const grade = readTextRolePreference('blueprint').model ? undefined : chosenEnergyGrade('chapters', model);
+  const { blueprint, headers } = await postBlueprintRequest(withBlueprintModel(payload, model), accessToken, {
     missingToken: 'Enter the Development access token before manifesting the World Blueprint.',
     failed: status => `World Blueprint generation failed with status ${status}.`,
     timedOut: 'World Blueprint generation timed out. No Story Seed data was changed; please retry.',
   }, signal);
-  recordUsage({ kind: 'blueprint', model, grade: chosenEnergyGrade('chapters', model) });
-  return blueprint as unknown as WorldBlueprint;
+  const tokens = (name: string) => {
+    const raw = headers.get('X-Blueprint-' + name + '-Tokens');
+    const count = Number(raw);
+    return raw && Number.isSafeInteger(count) && count >= 0 ? count : undefined;
+  };
+  recordUsage({ kind: 'blueprint', model, grade, inputTokens: tokens('Input'), outputTokens: tokens('Output'), totalTokens: tokens('Total') });
+  return blueprint;
 };

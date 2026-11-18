@@ -156,15 +156,20 @@ export async function handleStorySeedBlueprintHttp(
 
   const started = Date.now();
   try {
+    const headers: Record<string, string> = { 'Cache-Control': 'no-store' };
     const provider = dependencies.providerFactory
       ? dependencies.providerFactory(chosen.apiKey, model)
-      : createWorldBlueprintProvider(chosen);
+      : createWorldBlueprintProvider(chosen, usage => {
+        headers['X-Blueprint-Input-Tokens'] = String(usage.inputTokens);
+        headers['X-Blueprint-Output-Tokens'] = String(usage.outputTokens);
+        headers['X-Blueprint-Total-Tokens'] = String(usage.totalTokens);
+      });
     const body = await generateWorldBlueprint({ storySeed: parsed.storySeed }, chosen, provider, resolveReasoningLevel(model, parsed.reasoningLevel));
     dependencies.onAnswer?.({ model, durationMs: Date.now() - started });
     return {
       status: 200,
       body,
-      headers: { "Cache-Control": "no-store" },
+      headers,
     };
   } catch (error) {
     dependencies.onError?.(error, { model });

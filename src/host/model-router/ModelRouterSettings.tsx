@@ -1,21 +1,12 @@
-/**
- * The Model Router: pick a capability, then a provider, then a model. Opened
- * from the Workshop's gear and from the app's Settings → Advanced → Model
- * Router, one router for both. Chapters, Images and Live speech models are
- * selectable; the choice is saved in this browser and the features marked
- * "follows router" use it. Text to speech and the rest are shown for
- * reference.
- * "Used by" comes from `GENERATION_CONSUMERS` in the server catalog. The
- * Advanced button tunes the selected model's reasoning level.
- */
 import { useCallback, useEffect, useState } from 'react';
-import { AudioLines, BookOpenText, Box, Check, Image as ImageIcon, Music2, Settings, SlidersHorizontal, Video, Volume2 } from 'lucide-react';
+import { Check, Settings } from 'lucide-react';
 import type {
   ModelRouterCapabilityStatus,
   ModelRouterStatus,
 } from '../../server/model-router/status';
-import { costsMoreThanTier, ENERGY_GRADE_LABELS, ENERGY_GRADES, ENERGY_TIER_MODELS, GRADED_ENERGY_PRICES, modelEnergyGrade, type EnergyGrade, type GradedEnergyKind } from '@seihouse/library/energy';
-import { useModelPreference, useReasoningPreferences, useTaggerPreference, useTierPreference, writeTierModel, writeTierPreference, type ModelPreferenceCapability } from '../generation/modelPreference';
+import { quotedEnergyGrade, EnergyActionCost, ENERGY_GRADE_LABELS, ENERGY_GRADES, ENERGY_TIER_MODELS, ENERGY_USD, GENERATION_ENERGY_MARGIN, type GradedEnergyKind } from '@seihouse/library/energy';
+import { selectQuotedModel, useModelPreference, useReasoningPreferences, useTextRolePreference, useTierPreference, writeTierModel, writeTierPreference, type ModelPreferenceCapability } from '../generation/modelPreference';
+import { useUsageLog } from '../usage/usageLog';
 import { TierBadge } from './TierBadge';
 import { HostDialog } from '../dialog/HostDialog';
 
@@ -24,17 +15,8 @@ type Load =
   | { state: 'ready'; status: ModelRouterStatus }
   | { state: 'error'; message: string };
 
-const CAPABILITY_ICONS = {
-  chapters: BookOpenText,
-  images: ImageIcon,
-  tts: Volume2,
-  live: AudioLines,
-  audio: Music2,
-  video: Video,
-  '3d': Box,
-} as const;
 const CAPABILITY_LABELS = {
-  chapters: 'Chapters',
+  chapters: 'Text',
   images: 'Images',
   tts: 'Text to speech',
   live: 'Live speech',
@@ -57,321 +39,262 @@ const isStatus = (value: unknown): value is ModelRouterStatus =>
 type RouterModel = ModelRouterCapabilityStatus['models'][number];
 type RouterProvider = ModelRouterCapabilityStatus['providers'][number];
 
-/** The capabilities priced in Energy by grade, and how one is counted. */
-const ENERGY_PRICED: Partial<Record<ModelRouterCapabilityStatus['id'], { kind: GradedEnergyKind }>> = {
-  chapters: { kind: 'chapter' },
-  images: { kind: 'image' },
-  live: { kind: 'live-minute' },
-};
-const pricePer = (kind: GradedEnergyKind, grade: EnergyGrade) => `${GRADED_ENERGY_PRICES[kind][grade]}${kind === 'live-minute' ? '/min' : ''}`;
+const field = 'block min-h-11 w-full min-w-0 rounded-lg border border-white/15 bg-[#0c1018] px-3 text-base text-white/90 sm:text-sm';
+const label = 'mb-1 block text-xs font-medium text-white/65';
+const disclosure = 'min-h-11 cursor-pointer content-center text-sm font-medium text-white/75';
+const nameOf = (model: RouterModel) => model.label.replace(/ · OpenRouter$/, '');
 
-/** A model's own grade and what one costs on it, e.g. "Immortal · 4". */
-function EnergyBadge({ model, kind }: { model: string; kind: GradedEnergyKind }) {
-  const grade = modelEnergyGrade(model);
-  return <TierBadge grade={grade}> · {pricePer(kind, grade)}</TierBadge>;
+type TextJob = 'Chapter' | 'Tagger' | 'Blueprint';
+
+function useQuoteWorkload(job: TextJob) {
+  const entries = useUsageLog();
+  // Use a comparable, reported workload at standard context rates. Without a
+  // receipt, the reference is the measured chapter scale in HARNESS_PRINCIPLES.
+  const receipt = entries.slice().reverse().find(entry => !entry.tokensEstimated
+    && (job === 'Chapter' ? entry.kind === 'chapter' : job === 'Tagger' ? entry.task === 'Tagging' : entry.kind === 'blueprint')
+    && Number.isSafeInteger(entry.inputTokens) && entry.inputTokens! > 0 && entry.inputTokens! < 100_000
+    && Number.isSafeInteger(entry.outputTokens) && entry.outputTokens! > 0);
+  const input = receipt?.inputTokens ?? 9000;
+  const output = receipt ? Math.max(receipt.outputTokens!, (receipt.totalTokens ?? 0) - input) : 3500;
+  const basis = (receipt ? 'Last ' + job.toLowerCase() + ' receipt' : 'Reference workload') +
+    ' · ' + input.toLocaleString() + ' input / ' + output.toLocaleString() + ' output tokens';
+  return { input, output, basis };
 }
 
-function ModelRow({ model, selected, selectable, reasoningLevel, energy, onSelect }: {
-  model: RouterModel;
-  /** Present when the capability costs Energy by grade. */
-  energy?: GradedEnergyKind;
-  selected: boolean;
-  selectable: boolean;
-  /** A non-default reasoning level saved in Advanced settings. */
-  reasoningLevel?: string;
-  onSelect: () => void;
-}) {
-  const body = (
-    <>
-      <span className="min-w-0 flex-1 text-left">
-        <span className={`block truncate text-[13px] leading-tight ${model.available ? 'text-white/90' : 'text-white/40'}`}>{model.label.replace(/ · OpenRouter$/, '')}</span>
-        <span className="block truncate font-mono text-[10px] leading-tight text-white/30">{model.id}</span>
-      </span>
-      <span className="flex shrink-0 items-center gap-1 font-mono text-[9px] uppercase tracking-wider">
-        {energy && <EnergyBadge model={model.id} kind={energy} />}
-        {model.stage !== 'current' && <span className="rounded border border-amber-400/30 px-1 py-px text-amber-200">{model.stage}</span>}
-        {model.isDefault && !selected && <span className="rounded border border-white/15 px-1 py-px text-white/50">Default</span>}
-        {reasoningLevel && <span className="rounded border border-violet-400/35 px-1 py-px text-violet-200" title="Reasoning level">{reasoningLevel}</span>}
-        {!model.available && <span className="rounded border border-white/10 px-1 py-px text-white/40">No key</span>}
-        {!model.implemented && <span className="rounded border border-white/10 px-1 py-px text-white/40">Catalog only</span>}
-        {selected && <Check aria-label="Selected" className="text-cyan-300" size={15} />}
-      </span>
-    </>
-  );
-  if (!selectable) {
-    return <li data-model={model.id} className="flex items-center gap-2 px-2.5 py-1.5">{body}</li>;
-  }
-  return (
-    <li data-model={model.id}>
-      <button type="button" role="radio" aria-checked={selected} disabled={!model.available} onClick={onSelect}
-        className={`host-touch flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 transition-colors disabled:cursor-not-allowed ${selected
-          ? 'border-cyan-400/40 bg-cyan-500/10'
-          : 'border-transparent hover:bg-white/5'}`}>
-        {body}
-      </button>
-    </li>
-  );
+type Workload = ReturnType<typeof useQuoteWorkload>;
+
+function quote(model: RouterModel | undefined, workload: Workload) {
+  const price = model?.price;
+  if (!price) return { amount: undefined, minimum: false, basis: 'No verified estimate for this model.' };
+  const usd = 'usd' in price ? price.usd : (price.input * workload.input + price.output * workload.output) / 1_000_000;
+  const energy = Math.ceil(Number((usd * GENERATION_ENERGY_MARGIN / ENERGY_USD).toPrecision(15)));
+  const minimum = 'minimum' in price && price.minimum;
+  return {
+    amount: energy, minimum,
+    basis: ('basis' in price ? price.basis : workload.basis) + ' · $' + Number(usd.toPrecision(4)) + ' provider cost',
+  };
 }
 
-function ProviderPicker({ providers, models, active, onPick }: {
-  providers: RouterProvider[];
-  models: RouterModel[];
-  active: string;
-  onPick: (provider: RouterProvider['id']) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Providers">
-      {providers.map(provider => {
-        const count = models.filter(model => model.provider === provider.id).length;
-        return (
-          <button key={provider.id} type="button" role="tab" aria-selected={active === provider.id} data-provider={provider.id}
-            onClick={() => onPick(provider.id)}
-            title={provider.id === 'lmstudio' ? 'Local development · no API key needed' : provider.configured ? 'Key configured' : `Needs ${provider.keyVariable}`}
-            className={`host-touch flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${active === provider.id
-              ? 'border-cyan-400/40 bg-cyan-500/15 text-cyan-50'
-              : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
-            <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${provider.configured ? 'bg-emerald-400' : 'bg-white/25'}`} />
-            {provider.label}
-            <span className="font-mono text-[10px] text-white/40">{count}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
+function EnergyQuote({ estimate, perMinute = false }: { estimate: ReturnType<typeof quote>; perMinute?: boolean }) {
+  const { amount, minimum } = estimate;
+  if (amount === undefined) return <span className="text-xs text-amber-200">Price unavailable</span>;
+  const description = (minimum ? 'From ' : 'Approximately ') + amount + ' Energy' + (perMinute ? '/min' : '');
+  return <span role="img" aria-label={description} title={description} className="inline-flex shrink-0 items-center gap-1 text-xs text-amber-200">
+    <span aria-hidden="true">{minimum ? 'From' : '≈'}</span>
+    <EnergyActionCost price={amount} projected />
+    {perMinute && <span aria-hidden="true">/min</span>}
+  </span>;
 }
 
-/** Advanced settings for the selected model: its reasoning level, when it has one. */
-function AdvancedSettings({ model, level, onChange }: {
-  model?: RouterModel;
-  level?: string;
-  onChange: (level: string | undefined) => void;
+const byName = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+const sortedProviders = (capability: ModelRouterCapabilityStatus) =>
+  [...capability.providers].sort((a, b) => byName.compare(a.label, b.label));
+const providerModels = (capability: ModelRouterCapabilityStatus, provider: RouterProvider['id']) =>
+  capability.models.filter(model => model.provider === provider).sort((a, b) => byName.compare(nameOf(a), nameOf(b)));
+
+function ModelOptions({ capability }: { capability: ModelRouterCapabilityStatus }) {
+  return sortedProviders(capability).map(provider => {
+    const models = providerModels(capability, provider.id).filter(model => model.available);
+    return models.length ? <optgroup key={provider.id} label={provider.label}>
+      {models.map(model => <option key={model.id} value={model.id}>{nameOf(model)}</option>)}
+    </optgroup> : null;
+  });
+}
+
+function Reasoning({ model, value, defaultLevel, onChange }: {
+  model?: RouterModel; value?: string; defaultLevel?: string; onChange: (level?: string) => void;
 }) {
   const reasoning = model?.reasoning;
-  const option = (value: string | undefined, label: string) => {
-    const active = (level ?? undefined) === value;
-    return (
-      <button key={label} type="button" role="radio" aria-checked={active} onClick={() => onChange(value)}
-        className={`host-touch rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
-          ? 'border-violet-400/45 bg-violet-500/15 text-violet-50'
-          : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
-        {label}
-      </button>
-    );
-  };
-  return (
-    <section aria-label="Advanced settings" className="rounded-lg border border-violet-400/20 bg-violet-500/[0.04] px-2.5 py-2">
-      <h3 className="font-mono text-[9px] uppercase tracking-[0.2em] text-violet-200/70">
-        Reasoning{model ? ` · ${model.label.replace(/ · OpenRouter$/, '')}` : ''}
-      </h3>
-      {reasoning ? (
-        <>
-          <div className="mt-1.5 flex flex-wrap gap-1" role="radiogroup" aria-label="Reasoning level">
-            {option(undefined, `Default (${reasoning.defaultLevel})`)}
-            {reasoning.levels.map(value => option(value, value))}
-          </div>
-          <p className="mt-1.5 text-[10px] leading-snug text-white/40">
-            Higher levels think longer before writing: slower and costlier, often more careful. Saved per model in this browser.
-          </p>
-        </>
-      ) : (
-        <p className="mt-1 text-[11px] text-white/45">{model ? 'This model has no reasoning controls.' : 'Select a model first.'}</p>
-      )}
-    </section>
-  );
+  if (!reasoning) return null;
+  return <label className="block">
+    <span className={label}>Reasoning</span>
+    <select aria-label="Reasoning" className={field} value={reasoning.levels.some(level => level === value) ? value : ''}
+      onChange={event => onChange(event.target.value || undefined)}>
+      <option value="">Default ({defaultLevel ?? reasoning.defaultLevel})</option>
+      {reasoning.levels.map(level => <option key={level} value={level}>{level}</option>)}
+    </select>
+  </label>;
 }
 
-/**
- * The Chapter Tagger's own choice: the model that reads each finished chapter
- * for its tags, and how hard it thinks. By default it is the chapter's own
- * writer, thinking as little as it allows; the owner's experiment (2026-10-29)
- * is whether a cheap model with high reasoning tags better than an expensive
- * one with none. Saved in this browser, apart from the chapter model's level,
- * so one model can write at one level and tag at another.
- */
-function TaggerSettings({ models, chapterModel }: { models: RouterModel[]; chapterModel?: RouterModel }) {
-  const [tagger, setTagger] = useTaggerPreference();
-  const offered = models.filter(model => model.available);
-  const chosen = tagger.model && offered.some(model => model.id === tagger.model) ? tagger.model : '';
-  const reads = chosen ? offered.find(model => model.id === chosen) : chapterModel;
-  const reasoning = reads?.reasoning;
-  const level = tagger.reasoningLevel && reasoning?.levels.some(value => value === tagger.reasoningLevel) ? tagger.reasoningLevel : undefined;
-  const lowest = reasoning?.levels[0];
-  const option = (value: string | undefined, label: string) => {
-    const active = level === value;
-    return (
-      <button key={label} type="button" role="radio" aria-checked={active} onClick={() => setTagger({ ...(chosen ? { model: chosen } : {}), ...(value ? { reasoningLevel: value } : {}) })}
-        className={`host-touch rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
-          ? 'border-violet-400/45 bg-violet-500/15 text-violet-50'
-          : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
-        {label}
-      </button>
-    );
-  };
-  const providers = [...new Set(offered.map(model => model.provider))];
-  const providerLabel: Record<RouterModel['provider'], string> = {
-    gemini: 'Google Gemini', openrouter: 'OpenRouter', minimax: 'MiniMax', anthropic: 'Anthropic', lmstudio: 'Local (LM Studio)', elevenlabs: 'ElevenLabs', tripo: 'Tripo AI', openai: 'OpenAI',
-  };
-  return (
-    <section aria-label="Chapter Tagger" className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-2">
-      <h3 className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Chapter Tagger</h3>
-      <p className="mt-1 text-[10px] leading-snug text-white/40">Reads each finished chapter for its tags: who speaks, sounds, holdings, appearances. By default the chapter's own writer, thinking as little as it allows.</p>
-      <label className="mt-1.5 block">
-        <span className="sr-only">Chapter Tagger model</span>
-        <select aria-label="Chapter Tagger model" value={chosen}
-          onChange={event => setTagger({ ...(event.target.value ? { model: event.target.value } : {}), ...(tagger.reasoningLevel ? { reasoningLevel: tagger.reasoningLevel } : {}) })}
-          className="host-touch w-full rounded-md border border-white/10 bg-[#0b0e16] px-2 py-1.5 text-base text-white/85 sm:text-[12px]">
-          <option value="">Same as chapters{chapterModel ? ` (${chapterModel.label.replace(/ · OpenRouter$/, '')})` : ''}</option>
-          {providers.map(provider => (
-            <optgroup key={provider} label={providerLabel[provider]}>
-              {offered.filter(model => model.provider === provider).map(model => (
-                <option key={model.id} value={model.id}>{model.label.replace(/ · OpenRouter$/, '')}</option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </label>
-      {reasoning ? (
-        <div className="mt-1.5 flex flex-wrap gap-1" role="radiogroup" aria-label="Chapter Tagger reasoning level">
-          {option(undefined, `Default (${lowest})`)}
-          {reasoning.levels.map(value => option(value, value))}
-        </div>
-      ) : (
-        <p className="mt-1.5 text-[11px] text-white/45">{reads ? 'This model has no reasoning controls.' : 'Choose a chapter model first.'}</p>
-      )}
-    </section>
-  );
+function QuoteDetails({ model, workload, kind }: { model?: RouterModel; workload: Workload; kind?: GradedEnergyKind }) {
+  const estimate = quote(model, workload);
+  const grade = quotedEnergyGrade(kind, estimate.amount);
+  return <div className="rounded-lg bg-white/[0.04] px-3 py-2.5 text-xs text-white/65">
+    <div className="flex items-center justify-between gap-2"><span className="flex items-center gap-2">Estimated Energy {grade && <TierBadge grade={grade} />}</span><EnergyQuote estimate={estimate} /></div>
+    <p className="mt-1">{estimate.basis}</p>
+    {model?.price && <p className="mt-1">Provider cost × {GENERATION_ENERGY_MARGIN}, rounded up at ${ENERGY_USD.toFixed(2)} per Energy.</p>}
+  </div>;
+}
+
+function TextRoleSettings({ job, capability, chapter, workload }: {
+  job: 'Tagger' | 'Blueprint'; capability: ModelRouterCapabilityStatus; chapter?: RouterModel; workload: Workload;
+}) {
+  const [choice, setChoice] = useTextRolePreference(job === 'Tagger' ? 'tagger' : 'blueprint');
+  const [levels] = useReasoningPreferences();
+  const own = capability.models.find(model => model.available && model.id === choice.model);
+  const unavailableBlueprint = job === 'Blueprint' && !!choice.model && !own;
+  const model = unavailableBlueprint ? undefined : own ?? chapter;
+  const providers = sortedProviders(capability).filter(item => capability.models.some(model => model.available && model.provider === item.id));
+  const [provider, setProvider] = useState(model?.provider ?? providers[0]?.id);
+  const browsingOther = !!own && own.provider !== provider;
+  const defaultLevel = job === 'Tagger' ? model?.reasoning?.levels[0] : !own && model ? levels[model.id] : undefined;
+  return <div className="space-y-3">
+    <label className="block"><span className={label}>Provider</span>
+      <select aria-label="Provider" className={field} value={provider ?? ''} onChange={event => setProvider(event.target.value as RouterProvider['id'])}>
+        {providers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+      </select>
+    </label>
+    <label className="block"><span className={label}>{job} model</span>
+      <select aria-label={job + ' model'} className={field} value={browsingOther ? 'browse' : (unavailableBlueprint ? choice.model : own?.id) ?? ''} onChange={event => {
+        const next = event.target.value || undefined;
+        const nextModel = capability.models.find(item => item.id === next) ?? chapter;
+        const level = nextModel?.reasoning?.levels.find(level => level === choice.reasoningLevel);
+        setChoice({ model: next, reasoningLevel: level });
+      }}>
+        {browsingOther && <option value="browse" disabled>Current · {nameOf(own)}</option>}
+        <option value="">Follow Chapter{chapter ? ' · ' + nameOf(chapter) : ''}</option>
+        {unavailableBlueprint && <option value={choice.model} disabled>{choice.model} · unavailable</option>}
+        {provider && providerModels(capability, provider).filter(item => item.available).map(item =>
+          <option key={item.id} value={item.id}>{nameOf(item)}</option>)}
+      </select>
+    </label>
+    <Reasoning model={model} value={choice.reasoningLevel} defaultLevel={defaultLevel}
+      onChange={reasoningLevel => setChoice({ model: own?.id, reasoningLevel })} />
+    <QuoteDetails kind="chapter" model={model} workload={workload} />
+  </div>;
 }
 
 /** Capabilities whose model the reader chooses here; the rest are set on the server. */
-const SELECTABLE: Partial<Record<ModelRouterCapabilityStatus['id'], { preference: ModelPreferenceCapability; noun: string; note?: string }>> = {
-  chapters: { preference: 'chapters', noun: 'chapter' },
-  images: { preference: 'images', noun: 'image' },
-  live: { preference: 'live', noun: 'live speech', note: 'Hears and answers in one conversation: the Familiar\'s live talk (Familiar page → settings → Live talk) uses the model chosen here.' },
+const SELECTABLE: Partial<Record<ModelRouterCapabilityStatus['id'], { preference: ModelPreferenceCapability; note?: string }>> = {
+  chapters: { preference: 'chapters' },
+  images: { preference: 'images' },
+  live: { preference: 'live', note: 'Hears and answers in one conversation: the Familiar\'s live talk (Familiar page → settings → Live talk) uses the model chosen here.' },
 };
 
-/**
- * The three tiers for one job: readers choose a tier, and the team sets the
- * model behind each (here on this device, to try; for everyone in
- * `ENERGY_TIER_MODELS`). A model picked exactly in the list below wins over
- * the tier and costs its own grade. A tier model that costs more to run than
- * the tier brings in is flagged.
- */
-function TiersSection({ capability, kind, preference }: { capability: ModelRouterCapabilityStatus; kind: GradedEnergyKind; preference: ModelPreferenceCapability }) {
+const ENERGY_KIND: Partial<Record<ModelRouterCapabilityStatus['id'], GradedEnergyKind>> = {
+  chapters: 'chapter', images: 'image', live: 'live-minute',
+};
+
+function TierSettings({ capability, kind, preference, selected, workload }: {
+  capability: ModelRouterCapabilityStatus; kind: GradedEnergyKind; preference: ModelPreferenceCapability;
+  selected?: RouterModel; workload: Workload;
+}) {
   const tiers = useTierPreference(preference);
-  const active = tiers.exact ? undefined : tiers.tier ?? 'mortal';
-  const name = (id?: string) => (id ? capability.models.find(model => model.id === id)?.label.replace(/ · OpenRouter$/, '') ?? id : 'None yet');
-  const offered = capability.models.filter(model => model.available);
-  return (
-    <section aria-label="Tiers" className="space-y-1.5 rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-2">
-      <h3 className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Tiers</h3>
-      <div role="radiogroup" aria-label={`${capability.label} tier`} className="space-y-1">
+  return <section aria-label="Tiers" className="space-y-2">
+    <h3 className={label}>Generation tier</h3>
+    <div className="space-y-1" role="group" aria-label="Choose tier">
+      {ENERGY_GRADES.map(grade => {
+        const model = capability.models.find(item => item.id === tiers.models[grade]);
+        const active = !tiers.exact && (tiers.tier ?? 'mortal') === grade && !!selected && selected.id === model?.id;
+        return <button key={grade} type="button" data-tier={grade} aria-pressed={active} disabled={!model?.available}
+          onClick={() => writeTierPreference(preference, grade)}
+          className={'flex min-h-12 w-full items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left disabled:opacity-50 ' +
+            (active ? 'border-cyan-400/45 bg-cyan-400/10' : 'border-white/10 bg-white/[0.025]')}>
+          <span className="min-w-0 flex-1">
+            <TierBadge grade={grade} className="text-[10px] uppercase tracking-wider" />
+            <span className="mt-0.5 block break-words text-xs text-white/75">{model ? nameOf(model) : 'Unassigned'}{model && !model.available && ' · unavailable'}</span>
+          </span>
+          <EnergyQuote estimate={quote(model, workload)} perMinute={kind === 'live-minute'} />
+          {active && <Check size={15} aria-hidden="true" className="text-cyan-300" />}
+        </button>;
+      })}
+    </div>
+    <details className="border-b border-white/10">
+      <summary className={disclosure}>Edit tier models</summary>
+      <div className="space-y-2 pb-3">
         {ENERGY_GRADES.map(grade => {
-          const model = tiers.models[grade];
-          const loses = Boolean(model) && costsMoreThanTier(model, grade);
-          return (
-            <div key={grade} data-tier={grade} className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <button type="button" role="radio" aria-checked={active === grade} disabled={!model} onClick={() => writeTierPreference(preference, grade)}
-                  className={`host-touch flex min-w-[7.5rem] shrink-0 items-center rounded-md border px-1.5 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors disabled:opacity-40 ${active === grade
-                    ? 'border-cyan-400/40 bg-cyan-500/10'
-                    : 'border-transparent hover:bg-white/5'}`}>
-                  <TierBadge grade={grade}> · {pricePer(kind, grade)}</TierBadge>
-                </button>
-                <select aria-label={`${ENERGY_GRADE_LABELS[grade]} model`} value={tiers.local[grade] ?? ''}
-                  onChange={event => writeTierModel(preference, grade, event.target.value || undefined)}
-                  className="host-touch min-w-0 flex-1 rounded-md border border-white/10 bg-[#05070d] px-1.5 py-1 text-[12px] text-white/85">
-                  <option value="">Team: {name(ENERGY_TIER_MODELS[kind][grade])}</option>
-                  {offered.map(option => <option key={option.id} value={option.id}>{name(option.id)}</option>)}
-                </select>
-              </div>
-              {loses && <p data-tier-warning className="pl-1 text-[10px] leading-snug text-amber-300">{name(model)} costs more to run than {ENERGY_GRADE_LABELS[grade]} brings in.</p>}
-            </div>
-          );
+          const team = capability.models.find(model => model.id === ENERGY_TIER_MODELS[kind][grade]);
+          return <label key={grade} className="block"><span className={label}>{ENERGY_GRADE_LABELS[grade]} model</span>
+            <select aria-label={ENERGY_GRADE_LABELS[grade] + ' model'} className={field} value={tiers.local[grade] ?? ''} onChange={event => writeTierModel(preference, grade, event.target.value || undefined,
+                grade === 'mortal' && !tiers.exact && !tiers.tier && !!selected && selected.id === tiers.models[grade])}>
+              <option value="">Team default · {team ? nameOf(team) : 'Unassigned'}</option>
+              <ModelOptions capability={capability} />
+            </select>
+          </label>;
         })}
+        <p className="text-xs text-white/55">Tier assignments are saved on this device.</p>
       </div>
-      {tiers.exact && (
-        <p data-exact-pick className="flex flex-wrap items-center gap-x-2 text-[11px] text-white/60">
-          <span>Using your own pick: {name(tiers.exact)}, at its own grade.</span>
-          <button type="button" onClick={() => writeTierPreference(preference, tiers.tier ?? 'mortal')} className="host-touch rounded-md border border-white/10 px-2 py-0.5 text-white/80 hover:bg-white/5">Use tiers</button>
-        </p>
-      )}
-      <p className="text-[10px] leading-snug text-white/35">Readers choose a tier; the team sets its model. A tier model changed here applies on this device. Picking a model below uses it exactly, at its own grade.</p>
-    </section>
-  );
+    </details>
+  </section>;
 }
 
 function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStatus }) {
   const choice = SELECTABLE[capability.id];
-  const selectable = Boolean(choice);
   const [saved, setSaved] = useModelPreference(choice?.preference ?? 'chapters');
-  const savedIsOffered = selectable && capability.models.some(model => model.id === saved && model.available);
-  const selectedId = selectable && savedIsOffered ? saved : capability.defaultModel;
-  const selectedProvider = capability.models.find(model => model.id === selectedId)?.provider;
-  const [provider, setProvider] = useState<RouterProvider['id']>(
-    () => selectedProvider ?? capability.providers.find(item => item.configured)?.id ?? capability.providers[0].id,
-  );
-  const activeProvider = capability.providers.find(item => item.id === provider) ?? capability.providers[0];
-  const models = capability.models.filter(model => model.provider === activeProvider.id);
-  const note = choice?.note ?? SERVER_OWNED_NOTE[capability.id];
+  const selected = capability.models.find(model => model.available && model.id === saved)
+    ?? capability.models.find(model => model.id === capability.defaultModel);
+  const [provider, setProvider] = useState(selected?.provider ?? capability.providers[0].id);
+  const activeProvider = capability.providers.find(item => item.id === provider)!;
   const [reasoning, setReasoning] = useReasoningPreferences();
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const selectedModel = capability.models.find(model => model.id === selectedId);
-  const priced = ENERGY_PRICED[capability.id];
+  const [job, setJob] = useState<TextJob>('Chapter');
+  const workload = useQuoteWorkload(job);
+  const isText = capability.id === 'chapters';
+  const kind = ENERGY_KIND[capability.id];
+  const note = choice?.note ?? SERVER_OWNED_NOTE[capability.id];
+  const consumers = capability.consumers.filter(consumer => !isText || (consumer.textJob ?? 'Chapter') === job);
+  const browser = <div className="space-y-2 pb-2">
+    <label className="block"><span className={label}>Provider</span>
+      <select aria-label="Provider" className={field} value={provider} onChange={event => setProvider(event.target.value as RouterProvider['id'])}>
+        {sortedProviders(capability).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+      </select>
+    </label>
+    {!activeProvider.configured && <p className="text-xs text-white/60">Add {activeProvider.keyVariable} in Vercel to use these models.</p>}
+    {provider === 'lmstudio' && <p className="text-xs text-white/60">Uses the model loaded in LM Studio on port 1234.</p>}
+    <h3 className={label}>{activeProvider.label} models</h3>
+    <ul className="divide-y divide-white/10 rounded-lg border border-white/10">
+      {providerModels(capability, provider).map(model => {
+        const estimate = quote(model, workload);
+        const grade = quotedEnergyGrade(kind, estimate.amount);
+        const selectedHere = selected?.id === model.id;
+        const body = <><span className="min-w-0 flex-1">
+          <span className="block text-sm">{nameOf(model)}</span>
+          <span className="block break-all font-mono text-[10px] text-white/55">{model.id}</span>
+          {model.stage !== 'current' && <span className="text-xs text-amber-200">{model.stage} </span>}
+          {!model.implemented && <span className="text-xs text-white/55">Catalog only</span>}
+        </span>
+        {grade && <TierBadge grade={grade} className="text-[10px]" />}
+        {kind && <EnergyQuote estimate={estimate} perMinute={kind === 'live-minute'} />}
+        {selectedHere && <Check size={14} aria-label="Selected" className="shrink-0 text-cyan-300" />}</>;
+        return <li key={model.id} data-model={model.id}>{choice
+          ? <button type="button" aria-pressed={selectedHere} disabled={!model.available} onClick={() => {
+              if (capability.id === 'chapters' || capability.id === 'images') selectQuotedModel(capability.id, model.id, grade);
+              else setSaved(model.id);
+            }}
+              className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left disabled:opacity-45">{body}</button>
+          : <div className="flex items-center gap-2 px-3 py-2">{body}</div>}</li>;
+      })}
+    </ul>
+  </div>;
 
-  return (
-    <div className="space-y-2.5" role="tabpanel" aria-label={`${capability.label} router`}>
-      {priced && choice && <TiersSection capability={capability} kind={priced.kind} preference={choice.preference} />}
-      <div className="flex items-start justify-between gap-2">
-        <ProviderPicker providers={capability.providers} models={capability.models} active={activeProvider.id} onPick={setProvider} />
-        {capability.id === 'chapters' && (
-          <button type="button" aria-label="Advanced settings" aria-expanded={advancedOpen} title="Advanced settings"
-            onClick={() => setAdvancedOpen(open => !open)}
-            className={`host-touch grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors ${advancedOpen
-              ? 'border-violet-400/45 bg-violet-500/15 text-violet-100'
-              : 'border-white/10 text-white/55 hover:bg-white/5 hover:text-white/85'}`}>
-            <SlidersHorizontal aria-hidden="true" size={13} />
-          </button>
-        )}
-      </div>
-      {capability.id === 'chapters' && advancedOpen && (
-        <AdvancedSettings model={selectedModel} level={selectedModel ? reasoning[selectedModel.id] : undefined}
-          onChange={level => selectedModel && setReasoning(selectedModel.id, level)} />
-      )}
-      {!activeProvider.configured && (
-        <p className="text-[11px] text-white/45">Add <span className="font-mono">{activeProvider.keyVariable}</span> in Vercel to use these models.</p>
-      )}
-      {activeProvider.id === 'lmstudio' && <p className="text-[11px] leading-snug text-white/45">Uses the text model currently loaded in LM Studio at localhost:1234. Start its server and keep one text model loaded. No API key needed; local development only.</p>}
-      {note && <p className="text-[11px] leading-snug text-white/45">{note}</p>}
-      <ul className="space-y-0.5 rounded-lg border border-white/10 bg-white/[0.02] p-1"
-        role={selectable ? 'radiogroup' : undefined} aria-label={choice ? `${activeProvider.label} ${choice.noun} models` : undefined}>
-        {models.map(model => (
-          <ModelRow key={model.id} model={model} selectable={selectable} energy={priced?.kind}
-            reasoningLevel={selectable && model.reasoning?.levels.some(level => level === reasoning[model.id]) ? reasoning[model.id] : undefined}
-            selected={model.id === selectedId} onSelect={() => setSaved(model.id)} />
-        ))}
-        {!models.length && <li className="px-2.5 py-1.5 text-xs text-white/40">No models from this provider.</li>}
-      </ul>
-      {capability.id === 'chapters' && <TaggerSettings models={capability.models} chapterModel={selectedModel} />}
-      <section aria-label="Used by" className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-2">
-        <h3 className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Used by</h3>
-        {capability.consumers.length ? (
-          <ul className="mt-1.5 flex flex-wrap gap-1.5">
-            {capability.consumers.map(consumer => (
-              <li key={consumer.name} className="rounded-md border border-white/10 px-2 py-0.5 text-[11px] text-white/75">
-                {consumer.name}
-                <span className={`ml-1.5 font-mono text-[9px] uppercase ${consumer.modelChoice === 'router' ? 'text-cyan-300' : 'text-white/35'}`}>
-                  {consumer.modelChoice === 'router' ? 'follows router' : 'server default'}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : <p className="mt-1 text-[11px] text-white/45">No Workshop feature generates with this yet.</p>}
-      </section>
-    </div>
-  );
+  return <div className="space-y-3" aria-label={capability.label + ' router'}>
+    {isText && <div role="group" aria-label="Text task" className="grid grid-cols-3 gap-1 rounded-lg border border-white/10 bg-white/[0.025] p-1">
+      {(['Chapter', 'Tagger', 'Blueprint'] as const).map(item => <button key={item} type="button" aria-pressed={job === item}
+        className={'min-h-11 rounded-md text-sm ' + (job === item ? 'bg-cyan-400/15 font-semibold text-cyan-100' : 'text-white/65')}
+        onClick={() => setJob(item)}>{item}</button>)}
+    </div>}
+    {isText && job !== 'Chapter' ? <TextRoleSettings key={job} job={job} capability={capability} chapter={selected} workload={workload} /> : <>
+      {choice && kind && <>
+        <p className="text-sm text-white/80"><span className="text-white/55">Active model · </span>{selected ? nameOf(selected) : 'None selected'}</p>
+        {browser}
+        {kind === 'live-minute' && <TierSettings capability={capability} preference={choice.preference} kind={kind} selected={selected} workload={workload} />}
+        <div className="space-y-2">
+          {isText && <Reasoning model={selected} value={selected && reasoning[selected.id]} onChange={level => selected && setReasoning(selected.id, level)} />}
+          <QuoteDetails kind={kind} model={selected} workload={workload} />
+        </div>
+      </>}
+      {!choice && browser}
+      {note && <p className="text-xs text-white/60">{note}</p>}
+    </>}
+    <details aria-label="Used by" className="border-t border-white/10">
+      <summary className={disclosure}>Used by</summary>
+      {consumers.length ? <ul className="space-y-1.5 pb-2 text-xs text-white/70">
+        {consumers.map(consumer => <li key={consumer.name}>{consumer.name} · {consumer.modelChoice === 'router' ? 'follows router' : 'server default'}</li>)}
+      </ul> : <p className="text-xs text-white/55">No connected feature yet.</p>}
+    </details>
+  </div>;
 }
 
-/** The router's content: capability tabs over live server status. */
+/** The router's content: capability and task selection over live server status. */
 export function ModelRouterPanel({ endpoint = '/api/model-router' }: { endpoint?: string }) {
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [active, setActive] = useState<ModelRouterCapabilityStatus['id']>('chapters');
@@ -395,21 +318,11 @@ export function ModelRouterPanel({ endpoint = '/api/model-router' }: { endpoint?
 
   return (
     <div className="space-y-3">
-      {/* Words and pictures, then speech (read aloud, and live), then the rest. */}
-      <div className="grid grid-cols-6 gap-1 rounded-lg border border-white/10 bg-white/[0.02] p-0.5" role="tablist" aria-label="Router capabilities">
-        {(['chapters', 'images', 'tts', 'live', 'audio', 'video', '3d'] as const).map(id => {
-          const Icon = CAPABILITY_ICONS[id];
-          return (
-            <button key={id} type="button" role="tab" aria-selected={active === id} onClick={() => setActive(id)}
-              className={`host-touch flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors ${['audio', 'video', '3d'].includes(id) ? 'col-span-2' : 'col-span-3'} ${active === id
-                ? 'bg-cyan-500/15 text-cyan-100'
-                : 'text-white/55 hover:bg-white/5 hover:text-white/85'}`}>
-              <Icon aria-hidden="true" size={13} />
-              {CAPABILITY_LABELS[id]}
-            </button>
-          );
-        })}
-      </div>
+      <label className="block"><span className={label}>Capability</span>
+        <select aria-label="Capability" className={field} value={active} onChange={event => setActive(event.target.value as typeof active)}>
+          {Object.entries(CAPABILITY_LABELS).map(([id, title]) => <option key={id} value={id}>{title}</option>)}
+        </select>
+      </label>
 
       {load.state === 'loading' && <p className="text-xs text-white/50">Reading the router…</p>}
       {load.state === 'error' && (
@@ -425,7 +338,7 @@ export function ModelRouterPanel({ endpoint = '/api/model-router' }: { endpoint?
 
 /** The Model Router over the page (see `HostDialog`). */
 export function ModelRouterDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  return <HostDialog open={open} onClose={onClose} title="Model Router"><ModelRouterPanel /></HostDialog>;
+  return <HostDialog fullScreen open={open} onClose={onClose} title="Model Router"><ModelRouterPanel /></HostDialog>;
 }
 
 /** Gear button that opens the Model Router over any Workshop page. */

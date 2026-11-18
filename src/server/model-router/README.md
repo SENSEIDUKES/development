@@ -2,17 +2,25 @@
 
 Server-side catalog that routes implemented generation models to their provider,
 grouped by capability. Opened from the Model Router gear in the Workshop header
-and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
+and on every preview (`src/host/model-router/ModelRouterSettings.tsx`); the old
 `?preview=model-router` page is archived but still reachable.
 
 - **Created:** 2026-09-23
-- **Last Workshop update:** 2026-10-19
+- **Last Workshop update:** 2026-11-18
 - **Last source comparison:** 2026-09-23 (DEV-native; no production counterpart)
 - **Status:** active (gear); Systems card archived; owner `deferred` (server/host infrastructure, in no package)
 
+## Text routing and Energy estimates
+
+Chapter selects the writer. Tagger and Blueprint each have their own model and reasoning control. An unset model follows Chapter. Tagger defaults to the lowest supported reasoning level. An inherited Blueprint also follows the chapter reasoning level unless the creator overrides it. The app and Workshop save these choices in the same browser preference.
+
+The Router compares assigned models at four times the estimated provider cost, rounded up to whole Energy at $0.02 each. Text uses the last provider-reported workload for that task within the standard context band, or a labelled reference of 9,000 input and 3,500 output tokens from the documented chapter measurements. Successful Blueprint responses carry available provider token counts in response headers for the device’s usage record. Image estimates name their size or provider example. Connected-minute base prices are marked “From” when model tokens are additional. These comparisons are separate from the Library's practice Usage totals and ledger schedule.
+
+Direct routes use the standard rate card in `pricing.ts`. OpenRouter text routes refresh from the public catalog hourly per server instance. Missing rates display “Price unavailable”. Pricing sources are [OpenAI](https://developers.openai.com/api/docs/pricing), [OpenAI image calculator](https://developers.openai.com/api/docs/guides/image-generation#calculating-costs), [Google](https://ai.google.dev/gemini-api/docs/pricing), [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing), [MiniMax](https://platform.minimax.io/docs/pricing/overview), [ElevenLabs](https://elevenlabs.io/pricing/api), [OpenRouter](https://openrouter.ai/api/v1/models), and the [OpenRouter image example](https://openrouter.ai/openai/gpt-5.4-image-2).
+
 ## Direct OpenAI
 
-Verified against the [OpenAI model catalog](https://developers.openai.com/api/docs/models/all) on 2026-11-10. Chapters offers GPT-6.1 Terra and Sol, GPT-6 Astra, Luna and Sol, GPT-5.6 Sol/Terra/Luna, GPT-5.5 and Pro, GPT-5.4/Pro/Mini, GPT-5.2/Pro, and Chat Latest. Images offers GPT Image 2.6 and 2.5, each in Sunburst and Flare. GPT-Live 1 remains the connected live voice model.
+Verified against the [OpenAI model catalog](https://developers.openai.com/api/docs/models/all) on 2026-11-10. Text offers GPT-6.1 Terra and Sol, GPT-6 Astra, Luna and Sol, GPT-5.6 Sol/Terra/Luna, GPT-5.5 and Pro, GPT-5.4/Pro/Mini, GPT-5.2/Pro, and Chat Latest. Images offers GPT Image 2.6 and 2.5, each in Sunburst and Flare. GPT-Live 1 remains the connected live voice model.
 
 Direct `openai/<model>` routes use `OPENAI_API_KEY`, independently of OpenRouter credits. Text uses Responses with provider-supported reasoning (low, or medium for Pro models whose minimum is medium), no custom sampling, and the complete host schema in instructions. Host validation is authoritative. Pro models can exceed the existing chapter deadline. Images use generations for text and multipart edits for references, returning PNG through the existing storage paths; medium quality and the nearest square/portrait/landscape size are used. Existing default models and tier selections stay unchanged.
 
@@ -22,7 +30,7 @@ This is the complete non-deprecated general-purpose writing and image catalog, n
 
 | Capability | Providers | Consumers |
 | --- | --- | --- |
-| Chapters | Gemini, OpenRouter, MiniMax, Anthropic, OpenAI, local LM Studio | Harness Generation, Holdings Fixer, Look Describer, Chapter Tagger (its own choice, else the chapter model), Story Seed Blueprint, Story Spark, Reader Translation |
+| Text | Gemini, OpenRouter, MiniMax, Anthropic, OpenAI, local LM Studio | Harness Generation, Holdings Fixer, Look Describer, Chapter Tagger (its own choice, else the chapter model), Story Seed Blueprint, Story Spark, Reader Translation |
 | Images | Gemini, OpenRouter, MiniMax, OpenAI | Story Cover, Image Lab, Profile Picture |
 | TTS | ElevenLabs, MiniMax | Codex Voice Quote uses ElevenLabs; MiniMax adapter available for server integrations |
 | Live voice | OpenAI, Gemini, ElevenLabs | Familiar Live Talk |
@@ -76,7 +84,7 @@ any model call that is not registered. See AGENTS.md.
 - `src/library/model-router/geminiThinking.ts` — maps Router reasoning levels to Gemini `thinkingLevel`
 - `status.ts` — capability status for the Workshop
 - `vercelHandler.ts` → `api/model-router.js` (built by `scripts/buildModelRouterApi.mjs`)
-- Workshop gear and panel: `src/workshop/ModelRouterSettings.tsx`
+- Workshop gear and panel: `src/host/model-router/ModelRouterSettings.tsx`
 - Saved chapter-model choice (this browser): `src/host/generation/modelPreference.ts`
 
 ## Other apps
@@ -93,7 +101,7 @@ feature currently consumes them.
 
 ## Local (LM Studio)
 
-During `npm run dev`, Chapters includes **Local (LM Studio)** → **Currently
+During `npm run dev`, Text includes **Local (LM Studio)** → **Currently
 loaded model**. The saved `lmstudio/loaded` choice follows whichever text model
 is loaded when generation starts; no model name or API key is configured here.
 Start LM Studio's server on port 1234 and keep one text model loaded. Chapters,
@@ -146,7 +154,7 @@ are unchanged.
 
 ## The Chapter Tagger's own choice
 
-The Chapters tab carries a **Chapter Tagger** section: the model that reads
+Text → Tagger selects the model that reads
 each finished chapter for its tags, and how hard it thinks. By default it is
 the chapter's own writer, thinking as little as the model allows. The owner's
 experiment (2026-10-29): a cheap model with high reasoning may tag better than
@@ -161,6 +169,8 @@ to the chapter's writer. The chapter's tagging record names the model that
 read it.
 
 ## Workshop history
+
+- 2026-11-18 — Split Text into Chapter, Tagger and Blueprint. Provider lists show each model’s rounded Energy estimate. Text grades change above 2 and 8 Energy, and image grades above 5 and 12. Picking a priced Chapter or Images model selects its grade automatically. Tagger and Blueprint use their own workloads for the displayed grade.
 
 - 2026-11-08 — SEIHouse Front Desk moved to its own repository and is installed from `vendor/`, so its browser live engines left `PROVIDER_ADAPTERS` (no source here to scan). They still open only the conversation the server's token allows; the Router still chooses the live model (`src/host/familiar/liveTalk.ts`) and the server routes (`src/server/familiar-live/`) stay registered.
 - 2026-11-08 — Live talk's browser engines moved with SEIHouse Front Desk: `src/host/familiar/live.ts` and `realtimeLive.ts` are now `src/front-desk/engines/live.ts` and `realtimeLive.ts` in `PROVIDER_ADAPTERS`. The Router still chooses the live model (`src/host/familiar/liveTalk.ts`), and the host hands each engine the owner's saved token.

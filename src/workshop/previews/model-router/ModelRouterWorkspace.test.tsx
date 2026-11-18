@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
+import { quotedEnergyGrade } from '@seihouse/library/energy';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ModelRouterGear } from '../../../host/model-router/ModelRouterSettings';
-import { chosenEnergyGrade, readExactModel, readModelPreference, readReasoningPreference, readTaggerPreference, readTierPreference } from '../../../host/generation/modelPreference';
+import { readExactModel, readModelPreference, readReasoningPreference, readTaggerPreference, readTextRolePreference, readTierPreference } from '../../../host/generation/modelPreference';
+import { recordUsage } from '../../../host/usage/usageLog';
 import { modelRouterStatus } from '../../../server/model-router/status';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -21,37 +23,42 @@ const openRouter = async (environment: Record<string, string>) => {
   await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Model Router settings"]')!.click());
 };
 const click = (element: HTMLElement) => act(async () => element.click());
-const provider = (id: string) => document.querySelector<HTMLButtonElement>(`[data-provider="${id}"]`)!;
+const select = (name: string) => document.querySelector<HTMLSelectElement>('select[aria-label="' + name + '"]')!;
+const pick = (name: string, value: string) => act(async () => {
+  select(name).value = value;
+  select(name).dispatchEvent(new Event('change', { bubbles: true }));
+});
+const switchJob = (job: string) => click([...document.querySelectorAll<HTMLButtonElement>('[aria-label="Text task"] button')].find(button => button.textContent === job)!);
 const row = (id: string) => document.querySelector<HTMLButtonElement>(`[data-model="${id}"] button`);
 const listedModels = () => [...document.querySelectorAll('[data-model]')].map(item => item.getAttribute('data-model'));
 
-it('opens from the gear with tabs for each model capability', async () => {
+it('opens from the gear with a selector for each model capability', async () => {
   await openRouter({ GEMINI_API_KEY: 'g' });
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
-  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
-  expect(tabs.map(tab => tab.textContent)).toEqual(['Chapters', 'Images', 'Text to speech', 'Live speech', 'Audio', 'Video', '3D']);
-  await click(tabs[2]);
+
+  expect([...select('Capability').options].map(option => option.textContent)).toEqual(['Text', 'Images', 'Text to speech', 'Live speech', 'Audio', 'Video', '3D']);
+  await pick('Capability', 'tts');
   expect(document.querySelector('[data-model="eleven_multilingual_v2"] [aria-label="Selected"]')).not.toBeNull();
   expect(row('eleven_v3')).toBeNull();
 });
 
 it('selects and remembers direct MiniMax writing and image models, and shows executable video models', async () => {
   await openRouter({ Minimax: 'secret' });
-  await click(provider('minimax'));
+  await pick('Provider', 'minimax');
   expect(listedModels()).toHaveLength(9);
   await click(row('minimax/MiniMax-M2.7')!);
   expect(readModelPreference('chapters')).toBe('minimax/MiniMax-M2.7');
-  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
-  await click(tabs[1]);
-  await click(provider('minimax'));
+
+  await pick('Capability', 'images');
+  await pick('Provider', 'minimax');
   await click(row('minimax/MiniMax-H3-Image')!);
   expect(readModelPreference('images')).toBe('minimax/MiniMax-H3-Image');
-  await click(tabs[2]);
-  await click(provider('minimax'));
+  await pick('Capability', 'tts');
+  await pick('Provider', 'minimax');
   expect(listedModels()).toHaveLength(8);
   expect(document.querySelector('[data-model="minimax/speech-2.8-hd"]')!.textContent).not.toContain('Catalog only');
-  await click(tabs[5]);
-  await click(provider('minimax'));
+  await pick('Capability', 'video');
+  await pick('Provider', 'minimax');
   expect(listedModels()).toHaveLength(13);
   expect(document.querySelector('[data-model="minimax/MiniMax-H3"]')!.textContent).not.toContain('Catalog only');
   expect(document.body.textContent).toContain('No Workshop feature generates video yet');
@@ -60,112 +67,95 @@ it('selects and remembers direct MiniMax writing and image models, and shows exe
 
 it('chooses the live speech model the Familiar\'s live talk uses, from the providers with a key', async () => {
   await openRouter({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' });
-  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
-  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
+
+  await pick('Capability', 'live');
   // GPT-Live serves by default when its key is set.
-  expect(provider('openai').getAttribute('aria-selected')).toBe('true');
-  expect(row('openai/gpt-live-1')!.getAttribute('aria-checked')).toBe('true');
+  expect(select('Provider').value).toBe('openai');
+  expect(row('openai/gpt-live-1')!.getAttribute('aria-pressed')).toBe('true');
   expect(document.body.textContent).toContain('Familiar\'s live talk');
-  await click(provider('gemini'));
+  await pick('Provider', 'gemini');
   await click(row('google/gemini-3.8-live')!);
   expect(readModelPreference('live')).toBe('google/gemini-3.8-live');
   // Read aloud is its own tab, set on the server.
-  await click(tabs.find(tab => tab.textContent === 'Text to speech')!);
+  await pick('Capability', 'tts');
   expect(document.querySelector('[data-model="eleven_v3"] button')).toBeNull();
 });
 
-it('shows each model\'s grade and its Energy price', async () => {
-  await openRouter({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' });
-  const grade = (id: string) => document.querySelector(`[data-model="${id}"] [data-energy-grade]`)?.textContent;
-  expect(grade('google/gemini-3.1-flash-lite')).toBe('Mortal · 2');
-  expect(grade('google/gemini-3.8-flash')).toBe('Immortal · 4');
-  expect(grade('google/gemini-3.1-pro-preview')).toBe('Heaven · 8');
-  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
-  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
-  expect(grade('openai/gpt-live-1')).toBe('Immortal · 6/min');
-  // Text to speech is not priced by grade.
-  await click(tabs.find(tab => tab.textContent === 'Text to speech')!);
-  expect(document.querySelector('[data-energy-grade]')).toBeNull();
+it('grades rounded Text and Image quotes at their inclusive cutoffs', () => {
+  expect([0, 2, 3, 8, 9].map(n => quotedEnergyGrade('chapter', n))).toEqual(['mortal', 'mortal', 'immortal', 'immortal', 'heaven']);
+  expect([0, 5, 6, 12, 13].map(n => quotedEnergyGrade('image', n))).toEqual(['mortal', 'mortal', 'immortal', 'immortal', 'heaven']);
 });
 
-it('lets the reader choose a tier and the team set the model behind each, warning when a tier would lose money', async () => {
-  await openRouter({ GEMINI_API_KEY: 'g', ANTHROPIC_API_KEY: 'a' });
-  const tiers = document.querySelector('[aria-label="Tiers"]')!;
-  const tier = (grade: string) => tiers.querySelector<HTMLButtonElement>(`[data-tier="${grade}"] [role="radio"]`)!;
-  const slot = (grade: string) => tiers.querySelector<HTMLSelectElement>(`[data-tier="${grade}"] select`)!;
-  // The tiers wear Story Seed's Fate Pressure flames, with their price.
-  expect(tier('mortal').textContent).toBe('Mortal · 2');
-  expect(tier('heaven').textContent).toBe('Heaven · 8');
-  expect(tier('heaven').querySelector('svg')).not.toBeNull();
-  // Nothing chosen: Mortal, the server's default model.
-  expect(tier('mortal').getAttribute('aria-checked')).toBe('true');
-  expect(readModelPreference('chapters')).toBeUndefined();
-  expect(slot('heaven').options[0].textContent).toBe('Team: Claude Opus 5.5');
-  // Heaven: the team's Heaven model writes, at Heaven's price.
-  await click(tier('heaven'));
-  expect(readTierPreference('chapters')).toBe('heaven');
-  expect(readModelPreference('chapters')).toBe('anthropic/claude-opus-5-5');
-  expect(row('anthropic/claude-opus-5-5')).toBeNull(); // another provider's list
-  // The team tries another model behind Heaven on this device; its price stays Heaven's.
-  await act(async () => { slot('heaven').value = 'google/gemini-3.1-flash-lite'; slot('heaven').dispatchEvent(new Event('change', { bubbles: true })); });
-  expect(readModelPreference('chapters')).toBe('google/gemini-3.1-flash-lite');
-  expect(chosenEnergyGrade('chapters', 'google/gemini-3.1-flash-lite')).toBe('heaven');
-  // A model that costs more than its tier brings in is flagged.
-  await act(async () => { slot('mortal').value = 'anthropic/claude-opus-5-5'; slot('mortal').dispatchEvent(new Event('change', { bubbles: true })); });
-  expect(tiers.querySelector('[data-tier="mortal"] [data-tier-warning]')?.textContent).toBe('Claude Opus 5.5 costs more to run than Mortal brings in.');
-  // An exact pick wins over the tier, at its own grade, until the reader goes back to tiers.
+it('selects the model and its quoted tier together', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g', ANTHROPIC_API_KEY: 'a', OPENAI_API_KEY: 'o', 'OpenRouter-Dev': 'r' });
+  const tier = (grade: string) => document.querySelector<HTMLButtonElement>('[data-tier="' + grade + '"]')!;
   await click(row('google/gemini-3.8-flash')!);
-  expect(readExactModel('chapters')).toBe('google/gemini-3.8-flash');
-  expect(chosenEnergyGrade('chapters', 'google/gemini-3.8-flash')).toBe('immortal');
-  expect(tier('heaven').getAttribute('aria-checked')).toBe('false');
-  await click([...tiers.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'Use tiers')!);
-  expect(readExactModel('chapters')).toBeUndefined();
-  expect(readModelPreference('chapters')).toBe('google/gemini-3.1-flash-lite');
-  // Live speech: Heaven is ElevenLabs Realtime.
-  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
-  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
-  expect(document.querySelector<HTMLSelectElement>('[aria-label="Tiers"] [data-tier="heaven"] select')!.options[0].textContent).toBe('Team: Eleven Realtime v1 Mini');
-  await click(document.querySelector<HTMLButtonElement>('[aria-label="Tiers"] [data-tier="heaven"] [role="radio"]')!);
-  expect(readModelPreference('live')).toBe('elevenlabs/eleven_realtime_v1_mini');
+  expect(readTierPreference('chapters')).toBe('immortal');
+  expect(readModelPreference('chapters')).toBe('google/gemini-3.8-flash');
+  await pick('Provider', 'openrouter');
+  await click(row('openrouter/openai/gpt-6-luna')!);
+  expect(readExactModel('chapters')).toBe('openrouter/openai/gpt-6-luna');
+  expect(readTierPreference('chapters')).toBeUndefined();
+  await pick('Capability', 'images');
+  await pick('Provider', 'openai');
+  await click(row('openai/gpt-image-2.6-flare')!);
+  expect(readTierPreference('images')).toBe('immortal');
+  await pick('Capability', 'live');
+  expect(tier('heaven').disabled).toBe(true);
+  expect(tier('immortal').querySelector('[aria-label="From 10 Energy/min"] .energy-action-cost.energy-badge')).toBeTruthy();
+});
+
+it('uses the selected task’s reported workload, including thinking tokens, for the quote', async () => {
+  recordUsage({ kind: 'chapter', inputTokens: 14_000, outputTokens: 7_000, totalTokens: 22_000 });
+  recordUsage({ kind: 'blueprint', inputTokens: 10_000, outputTokens: 8_000 });
+  await openRouter({ OPENAI_API_KEY: 'o' });
+  await pick('Provider', 'openai');
+  await click(row('openai/gpt-6-luna')!);
+  expect(document.body.textContent).toContain('$0.0054 provider cost');
+  expect(row('openai/gpt-6-luna')!.querySelector('[aria-label="Approximately 2 Energy"] .energy-action-cost.energy-badge')).toBeTruthy();
+  await switchJob('Blueprint');
+  expect(document.body.textContent).toContain('Last blueprint receipt');
+  expect(document.body.textContent).toContain('$0.005 provider cost');
+  expect(document.body.querySelector('[aria-label="Approximately 1 Energy"] .energy-action-cost.energy-badge')).toBeTruthy();
 });
 
 it('lets an ElevenLabs live model be picked exactly, once its key is set', async () => {
   await openRouter({ GEMINI_API_KEY: 'g', ELEVENLABS_API_KEY: 'e' });
-  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
-  await click(tabs.find(tab => tab.textContent === 'Live speech')!);
-  await click(provider('elevenlabs'));
-  expect(listedModels()).toEqual(['elevenlabs/eleven_realtime_v1_mini', 'elevenlabs/eleven_realtime_v1_max']);
+
+  await pick('Capability', 'live');
+  await pick('Provider', 'elevenlabs');
+  expect(listedModels()).toEqual(['elevenlabs/eleven_realtime_v1_max', 'elevenlabs/eleven_realtime_v1_mini']);
   await click(row('elevenlabs/eleven_realtime_v1_max')!);
   expect(readModelPreference('live')).toBe('elevenlabs/eleven_realtime_v1_max');
 });
 
 it('shows one provider at a time, starting with the provider of the selected model', async () => {
   await openRouter({ GEMINI_API_KEY: 'g', 'OpenRouter-Dev': 'o' });
-  expect(provider('gemini').getAttribute('aria-selected')).toBe('true');
+  expect(select('Provider').value).toBe('gemini');
   expect(listedModels().every(id => id!.startsWith('google/'))).toBe(true);
-  await click(provider('openrouter'));
+  await pick('Provider', 'openrouter');
   expect(listedModels()).toEqual([
+    'openrouter/anthropic/claude-haiku-5.5', 'openrouter/deepseek/deepseek-v4.1-flash',
+    'openrouter/google/gemini-3.8-flash', 'openrouter/z-ai/glm-5.3-flash',
     'openrouter/openai/gpt-6-luna', 'openrouter/openai/gpt-6-luna-pro',
-    'openrouter/z-ai/glm-5.3-flash', 'openrouter/qwen/qwen3.8-flash',
-    'openrouter/minimax/minimax-m2.7', 'openrouter/arcee-ai/trinity-large-thinking',
-    'openrouter/deepseek/deepseek-v4.1-flash', 'openrouter/google/gemini-3.8-flash',
-    'openrouter/anthropic/claude-haiku-5.5',
+    'openrouter/minimax/minimax-m2.7', 'openrouter/qwen/qwen3.8-flash',
+    'openrouter/arcee-ai/trinity-large-thinking',
   ]);
   for (const id of listedModels()) {
     await click(row(id!)!);
     expect(readModelPreference('chapters')).toBe(id);
-    expect(row(id!)!.getAttribute('aria-checked')).toBe('true');
+    expect(row(id!)!.getAttribute('aria-pressed')).toBe('true');
   }
 });
 
 it('selects a chapter model, saves it, and blocks models without a key', async () => {
   await openRouter({ GEMINI_API_KEY: 'g' });
-  expect(row('google/gemini-3.1-flash-lite')!.getAttribute('aria-checked')).toBe('true');
+  expect(row('google/gemini-3.1-flash-lite')!.getAttribute('aria-pressed')).toBe('true');
   await click(row('google/gemini-3.8-flash')!);
   expect(readModelPreference('chapters')).toBe('google/gemini-3.8-flash');
-  expect(row('google/gemini-3.8-flash')!.getAttribute('aria-checked')).toBe('true');
-  expect(row('google/gemini-3.1-flash-lite')!.getAttribute('aria-checked')).toBe('false');
-  await click(provider('openrouter'));
+  expect(row('google/gemini-3.8-flash')!.getAttribute('aria-pressed')).toBe('true');
+  expect(row('google/gemini-3.1-flash-lite')!.getAttribute('aria-pressed')).toBe('false');
+  await pick('Provider', 'openrouter');
   expect(document.body.textContent).toContain('Add OpenRouter-Dev in Vercel');
   expect(row('openrouter/openai/gpt-6-luna')!.disabled).toBe(true);
 });
@@ -175,58 +165,46 @@ it('lists what uses each capability and whether it follows the router', async ()
   const usedBy = document.querySelector('[aria-label="Used by"]')!.textContent;
   expect(usedBy).toContain('Harness Generation');
   expect(usedBy).toContain('follows router');
-  expect(usedBy).toContain('Story Seed Blueprint');
+  expect(usedBy).not.toContain('Story Seed Blueprint');
   expect(usedBy).toContain('server default');
 });
 
 it('lets GPT-6 Luna be selected once the OpenRouter key exists, and closes with Escape', async () => {
   await openRouter({ GEMINI_API_KEY: 'g', 'OpenRouter-Dev': 'o' });
-  await click(provider('openrouter'));
+  await pick('Provider', 'openrouter');
   await click(row('openrouter/openai/gpt-6-luna')!);
   expect(readModelPreference('chapters')).toBe('openrouter/openai/gpt-6-luna');
   await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
   expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
 
-it('tunes the selected model\'s reasoning from Advanced settings', async () => {
-  await openRouter({ GEMINI_API_KEY: 'g' });
+it('keeps all three text jobs independent and remembers them after reopening', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' });
   await click(row('google/gemini-3.8-flash')!);
-  await click(document.querySelector<HTMLButtonElement>('[aria-label="Advanced settings"]')!);
-  const levels = () => [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Reasoning level"] button')];
-  expect(levels().map(button => button.textContent)).toEqual(['Default (low)', 'low', 'medium', 'high']);
-  await click(levels().find(button => button.textContent === 'high')!);
+  await pick('Reasoning', 'high');
+  await switchJob('Tagger');
+  expect(select('Tagger model').value).toBe('');
+  expect(select('Reasoning').options[0].textContent).toBe('Default (low)');
+  expect([...select('Tagger model').options].some(item => item.value.startsWith('openrouter/'))).toBe(false);
+  await pick('Provider', 'openai');
+  await pick('Tagger model', 'openai/gpt-6-luna');
+  await pick('Reasoning', 'medium');
+  await switchJob('Blueprint');
+  expect(select('Blueprint model').value).toBe('');
+  expect(select('Reasoning').options[0].textContent).toBe('Default (high)');
+  expect(document.querySelector('[aria-label="Used by"]')?.textContent).toContain('Story Seed Blueprint');
+  await pick('Provider', 'gemini');
+  await pick('Blueprint model', 'google/gemini-3.5-flash-lite');
+  await pick('Reasoning', 'minimal');
+  expect(readTextRolePreference('blueprint')).toEqual({ model: 'google/gemini-3.5-flash-lite', reasoningLevel: 'minimal' });
+  expect(readTaggerPreference()).toEqual({ model: 'openai/gpt-6-luna', reasoningLevel: 'medium' });
   expect(readReasoningPreference('google/gemini-3.8-flash')).toBe('high');
-  expect(document.querySelector('[data-model="google/gemini-3.8-flash"]')?.textContent).toContain('high');
-  await click(levels()[0]);
-  expect(readReasoningPreference('google/gemini-3.8-flash')).toBeUndefined();
-});
-
-it('chooses the Chapter Tagger\'s own model and reasoning level, apart from the chapter model\'s', async () => {
-  await openRouter({ GEMINI_API_KEY: 'g' });
-  const select = () => document.querySelector<HTMLSelectElement>('[aria-label="Chapter Tagger model"]')!;
-  const levels = () => [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Chapter Tagger reasoning level"] button')];
-  // By default the chapter's own writer tags, thinking as little as it allows.
-  expect(select().value).toBe('');
-  expect(select().options[0].textContent).toContain('Same as chapters (Gemini 3.1 Flash Lite)');
-  expect(levels().map(button => button.textContent)).toEqual(['Default (minimal)', 'minimal', 'low', 'medium', 'high']);
-  expect(readTaggerPreference()).toEqual({});
-  // A cheap model with high reasoning, the owner's experiment.
-  await act(async () => {
-    select().value = 'google/gemini-3.5-flash-lite';
-    select().dispatchEvent(new Event('change', { bubbles: true }));
-  });
-  expect(readTaggerPreference()).toEqual({ model: 'google/gemini-3.5-flash-lite' });
-  await click(levels().find(button => button.textContent === 'high')!);
-  expect(readTaggerPreference()).toEqual({ model: 'google/gemini-3.5-flash-lite', reasoningLevel: 'high' });
-  // The chapter model's own level is untouched by the tagger's.
-  expect(readReasoningPreference('google/gemini-3.5-flash-lite')).toBeUndefined();
-  expect(readModelPreference('chapters')).toBeUndefined();
-  // Back to the chapter's writer, keeping the level.
-  await act(async () => {
-    select().value = '';
-    select().dispatchEvent(new Event('change', { bubbles: true }));
-  });
-  expect(readTaggerPreference()).toEqual({ reasoningLevel: 'high' });
-  // A model without a key is never offered to the tagger.
-  expect([...select().options].some(option => option.value.startsWith('openrouter/'))).toBe(false);
+  await click(document.querySelector<HTMLButtonElement>('[aria-label="Close Model Router"]')!);
+  await click(container.querySelector<HTMLButtonElement>('[aria-label="Model Router settings"]')!);
+  await switchJob('Blueprint');
+  expect(select('Blueprint model').value).toBe('google/gemini-3.5-flash-lite');
+  expect(select('Reasoning').value).toBe('minimal');
+  await pick('Blueprint model', '');
+  await pick('Reasoning', '');
+  expect(select('Reasoning').options[0].textContent).toBe('Default (high)');
 });

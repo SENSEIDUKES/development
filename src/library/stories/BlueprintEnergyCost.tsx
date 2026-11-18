@@ -1,10 +1,14 @@
 import { EnergyActionCost } from '../../components/energy/development/EnergyActionCost';
 
+import { GRADED_ENERGY_PRICES, modelEnergyGrade } from '../../components/energy/shared/energyGrades';
+
 /**
  * The World Blueprint's Energy badge, for Story Seed's Manifest. A Blueprint
- * has no price of its own yet, so it shows a chapter's (practice: nothing is
- * taken yet).
+ * uses the chapter price schedule with its selected model's grade. An
+ * inherited model uses the active Chapter price.
  */
-export function BlueprintEnergyCost() {
-  return <EnergyActionCost actionId="chapter.generate" />;
+export function BlueprintEnergyCost({ model }: { model?: string } = {}) {
+  return model
+    ? <EnergyActionCost price={GRADED_ENERGY_PRICES.chapter[modelEnergyGrade(model)]} />
+    : <EnergyActionCost actionId="chapter.generate" />;
 }

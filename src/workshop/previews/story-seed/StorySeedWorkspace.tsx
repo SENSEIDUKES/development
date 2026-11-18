@@ -12,7 +12,7 @@ import { CreationModal as DevelopmentCreationModal } from '@seihouse/library/sto
 import { LibraryLook } from '@seihouse/library/presentation';
 import { requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
 import { createSavedAccessToken } from '../../../host/generation/accessToken';
-import { readModelPreference } from '../../../host/generation/modelPreference';
+import { readModelPreference, readTextRolePreference } from '../../../host/generation/modelPreference';
 import { resetStorySeedRepository, setStorySeedRepository } from './storySeedStorage';
 import { finalizeGeneratedWorldBlueprint, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
 import {
@@ -355,9 +355,8 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
             payload.storySeed,
           );
         }
-        // The chapter model chosen in the Model Router writes the Blueprint too.
         // An empty token box uses the access token saved on this device.
-        return await requestWorldBlueprint(payload, blueprintAccessToken || createSavedAccessToken().current || '', controller.signal, readModelPreference('chapters'));
+        return await requestWorldBlueprint(payload, blueprintAccessToken || createSavedAccessToken().current || '', controller.signal, readTextRolePreference('blueprint').model ?? readModelPreference('chapters'));
       } finally {
         if (activeBlueprintRequestRef.current === controller) {
           activeBlueprintRequestRef.current = null;

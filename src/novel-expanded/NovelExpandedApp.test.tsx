@@ -14,7 +14,7 @@ import { installAudioMediaStubs } from '../test-utils/renderWithDevAudio';
 import { createMockStorySeedRecord } from '../workshop/previews/story-seed/previewData';
 import { createOfficialCapaDefaultLoadout, installOfficialCapaSkillsInMemory, OFFICIAL_CAPA_DEFAULT_REFERENCES } from '../host/generation/capa/officialCapaSkills';
 import { HarnessGenerationRequestError } from '../host/generation/httpClient';
-import { writeModelPreference } from '../host/generation/modelPreference';
+import { writeModelPreference, writeTextRolePreference } from '../host/generation/modelPreference';
 import { modelRouterStatus } from '../server/model-router/status';
 import { recordUsage } from '../host/usage/usageLog';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
@@ -802,9 +802,8 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     const seeds = createLocalStorySeedRepository({ storageKey: 'test-novelexpanded-seeds' });
     seeds.reset([withoutBlueprint]);
     const requestWorldBlueprint = vi.fn(async () => blueprint!);
-    const writer = { ...scriptedWriter().writer, getServerInfo: async () => ({ provider: 'lmstudio', configured: true,
-      models: [{ id: 'lmstudio/loaded', label: 'Currently loaded model' }], defaultModel: 'lmstudio/loaded' }) };
-    const services = appServices(writer, { storySeeds: seeds, requestWorldBlueprint });
+    writeTextRolePreference('blueprint', { model: 'lmstudio/loaded' });
+    const services = appServices(scriptedWriter().writer, { storySeeds: seeds, requestWorldBlueprint });
     await render(services, '/app/?page=create&seed=new');
     await click(buttonByText('Story Bank', container), 'Story Bank', 200);
     await click(buttonByText('Use Seed', container), 'Use Seed', 200);

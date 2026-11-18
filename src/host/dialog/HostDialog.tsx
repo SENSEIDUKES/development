@@ -9,11 +9,12 @@ import './hostDialog.css';
  * phones, a dialog on larger screens. Tab stays inside it; Escape, the close
  * button or a tap outside closes it, and focus goes back where it came from.
  */
-export function HostDialog({ open, onClose, title, children }: {
+export function HostDialog({ open, onClose, title, children, fullScreen = false }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
+  fullScreen?: boolean;
 }) {
   const titleId = useId();
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -37,7 +38,7 @@ export function HostDialog({ open, onClose, title, children }: {
 
   if (!open) return null;
   return createPortal(
-    <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-6"
+    <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-6" data-full-screen={fullScreen || undefined}
       onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
       {/* Keeps Tab inside the page; this component itself focuses the close button and returns focus. */}
       <FocusLock autoFocus={false} returnFocus={false} className="contents">
@@ -51,7 +52,7 @@ export function HostDialog({ open, onClose, title, children }: {
             <X aria-hidden="true" size={15} />
           </button>
         </div>
-        {children}
+        {fullScreen ? <div className="router-dialog-content">{children}</div> : children}
       </div>
       </FocusLock>
     </div>,

@@ -46,6 +46,7 @@ export const resolveChapterModelRoute = (
 export interface GenerationConsumer {
   name: string;
   capability: ModelCapability;
+  textJob?: 'Tagger' | 'Blueprint';
   entry: string;
   modelChoice: 'router' | 'server-default';
 }
@@ -56,8 +57,8 @@ export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   { name: 'Harness Generation', capability: 'chapters', entry: 'src/server/harness-generation/execute.ts', modelChoice: 'router' },
   { name: 'Holdings Fixer', capability: 'chapters', entry: 'src/server/harness-generation/holdingsFixer.ts', modelChoice: 'router' },
   { name: 'Look Describer', capability: 'chapters', entry: 'src/server/harness-generation/lookDescriber.ts', modelChoice: 'router' },
-  { name: 'Chapter Tagger', capability: 'chapters', entry: 'src/server/harness-generation/tagger.ts', modelChoice: 'router' },
-  { name: 'Story Seed Blueprint', capability: 'chapters', entry: 'src/server/story-seed-blueprint/http.ts', modelChoice: 'router' },
+  { name: 'Chapter Tagger', textJob: 'Tagger', capability: 'chapters', entry: 'src/server/harness-generation/tagger.ts', modelChoice: 'router' },
+  { name: 'Story Seed Blueprint', textJob: 'Blueprint', capability: 'chapters', entry: 'src/server/story-seed-blueprint/http.ts', modelChoice: 'router' },
   { name: 'Story Spark', capability: 'chapters', entry: 'src/server/story-spark/http.ts', modelChoice: 'server-default' },
   { name: 'Reader Translation', capability: 'chapters', entry: 'src/server/reader-translation/http.ts', modelChoice: 'server-default' },
   { name: 'Codex Voice Quote', capability: 'tts', entry: 'src/server/audio/codexVoiceQuote.ts', modelChoice: 'server-default' },

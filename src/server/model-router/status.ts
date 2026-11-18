@@ -1,3 +1,4 @@
+import { publishedModelPrice, openRouterRates, type RouterPrice } from './pricing';
 import {
   isLocalModelDevelopment,
   textModelProvider,
@@ -41,6 +42,7 @@ export interface ModelRouterModelStatus {
   /** A server adapter exists for this capability. */
   implemented: boolean;
   isDefault: boolean;
+  price?: RouterPrice;
   /** Tunable reasoning levels, when the model has them. */
   reasoning?: ModelReasoning;
 }
@@ -50,7 +52,7 @@ export interface ModelRouterCapabilityStatus {
   label: string;
   description: string;
   /** Features that currently generate through this capability (from `GENERATION_CONSUMERS`). */
-  consumers: Array<Pick<GenerationConsumer, 'name' | 'modelChoice'>>;
+  consumers: Array<Pick<GenerationConsumer, 'name' | 'modelChoice' | 'textJob'>>;
   defaultModel?: string;
   providers: ModelRouterProviderStatus[];
   models: ModelRouterModelStatus[];
@@ -62,7 +64,7 @@ export interface ModelRouterStatus {
 
 const consumersFor = (capability: ModelCapability) => GENERATION_CONSUMERS
   .filter(consumer => consumer.capability === capability)
-  .map(({ name, modelChoice }) => ({ name, modelChoice }));
+  .map(({ name, modelChoice, textJob }) => ({ name, modelChoice, ...(textJob ? { textJob } : {}) }));
 
 const providerStatus = (environment: ModelEnvironment, ids: ModelProviderId[]): ModelRouterProviderStatus[] =>
   ids.map(id => ({ id, label: MODEL_PROVIDERS[id].label, keyVariable: MODEL_PROVIDERS[id].keyVariable, configured: Boolean(providerKey(environment, id)) }));
@@ -74,6 +76,7 @@ const modelStatus = (
   implemented = false,
 ): ModelRouterModelStatus[] => models.map(model => ({
   ...model,
+  price: publishedModelPrice(model.id),
   available: Boolean(providerKey(environment, model.provider)),
   implemented,
   isDefault: model.id === defaultModel,
@@ -95,7 +98,7 @@ export const liveModelProvider = (model: string): ModelProviderId =>
   LIVE_MODELS.find(option => option.id === model)?.provider ?? 'gemini';
 
 /** Read-only view of the Model Router for the Workshop. Never includes a key value. */
-export function modelRouterStatus(environment: ModelEnvironment): ModelRouterStatus {
+export function modelRouterStatus(environment: ModelEnvironment, routedRates?: ReadonlyMap<string, RouterPrice>): ModelRouterStatus {
   const chapters = resolveChapterModelRoute(environment, 'HARNESS_GENERATION_MODELS', 'HARNESS_GENERATION_DEFAULT_MODEL');
   const chapterModels: RoutedModel[] = [
     ...CHAPTER_MODELS,
@@ -120,12 +123,13 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
     capabilities: [
       {
         id: 'chapters',
-        label: 'Chapters',
+        label: 'Text',
         description: 'Text models that write chapters, Story Seed Blueprints, and reader translations.',
         consumers: consumersFor('chapters'),
         defaultModel: chapters.defaultModel,
         providers: providerStatus(environment, ['gemini', 'openrouter', 'minimax', 'anthropic', 'openai', ...(isLocalModelDevelopment(environment) ? ['lmstudio' as const] : [])]),
-        models: modelStatus(environment, chapterModels, chapters.defaultModel, true),
+        models: modelStatus(environment, chapterModels, chapters.defaultModel, true).map(model =>
+          model.provider === 'openrouter' ? { ...model, price: routedRates?.get(model.id) } : model),
       },
       {
         id: 'images',
@@ -180,4 +184,8 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
       },
     ],
   };
+}
+
+export async function pricedModelRouterStatus(environment: ModelEnvironment): Promise<ModelRouterStatus> {
+  return modelRouterStatus(environment, await openRouterRates());
 }

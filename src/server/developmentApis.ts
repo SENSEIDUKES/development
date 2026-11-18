@@ -14,7 +14,7 @@ import { FAMILIAR_LIVE_VISITOR_LIMIT } from '../server/familiar-live/limits';
 import { handleCodexVoiceQuoteHttp } from '../server/audio/codexVoiceQuoteHttp';
 import { CHAPTER_VOICE_VISITOR_LIMIT, KOKORO_VOICE_VISITOR_LIMIT, handleChapterVoiceHttp, isKokoroVoiceRequest } from '../server/audio/chapterVoiceHttp';
 import { createConfiguredCodexVoiceQuoteService } from '../server/audio/codexVoiceQuote';
-import { modelRouterStatus } from '../server/model-router/status';
+import { pricedModelRouterStatus } from '../server/model-router/status';
 import {
   createPublicGenerationGuard,
   developmentAccessToken,
@@ -106,7 +106,7 @@ export const generationApis = (
         return;
       }
       if (pathname === '/api/model-router') {
-        writeJson(response, 200, modelRouterStatus(environment), { 'Cache-Control': 'no-store' });
+        writeJson(response, 200, await pricedModelRouterStatus(environment), { 'Cache-Control': 'no-store' });
         return;
       }
       if (

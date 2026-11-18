@@ -16,14 +16,8 @@ export const isLocalDevelopmentModel = (model?: string): boolean =>
 const STORAGE_KEY = 'seihouse.model-router.selection.v1';
 const CHANGE_EVENT = 'seihouse:model-router-selection';
 
-/**
- * The Router's Chapter Tagger choice: a model of its own for the tagging call
- * (absent: the same model that wrote the chapter) and how hard it thinks
- * (absent: as little as that model allows). Kept apart from the chapter
- * model's reasoning so the same model can write at one level and tag at
- * another.
- */
-export interface TaggerPreference {
+/** An optional model and reasoning override for a text job that can follow Chapter. */
+export interface TextRolePreference {
   model?: string;
   reasoningLevel?: string;
 }
@@ -38,7 +32,8 @@ type Selection = Partial<Record<ModelPreferenceCapability, string>> & {
   tierModels?: Partial<Record<ModelPreferenceCapability, Partial<Record<EnergyGrade, string>>>>;
   /** Router Advanced settings: reasoning level per model id. */
   reasoning?: Record<string, string>;
-  tagger?: TaggerPreference;
+  tagger?: TextRolePreference;
+  blueprint?: TextRolePreference;
 };
 
 const readAll = (): Selection => {
@@ -106,6 +101,21 @@ export const chosenEnergyGrade = (capability: ModelPreferenceCapability, model?:
 export const writeModelPreference = (capability: ModelPreferenceCapability, model: string): void =>
   save({ ...readAll(), [capability]: model }, { capability, model });
 
+/** Select a priced model and its cost band together. An unquoted model stays an exact pick. */
+export function selectQuotedModel(capability: 'chapters' | 'images', model: string, grade?: EnergyGrade) {
+  const current = readAll();
+  const tier = { ...current.tier };
+  if (!grade) {
+    delete tier[capability];
+    save({ ...current, [capability]: model, tier }, { capability, model });
+    return;
+  }
+  delete current[capability];
+  tier[capability] = grade;
+  const models = { ...current.tierModels?.[capability], [grade]: model };
+  save({ ...current, tier, tierModels: { ...current.tierModels, [capability]: models } }, { capability, model, tier: grade });
+}
+
 /** Choose a tier: its model is used from now on, and any exact pick is cleared. */
 export const writeTierPreference = (capability: ModelPreferenceCapability, tier: EnergyGrade): void => {
   const current = readAll();
@@ -114,11 +124,11 @@ export const writeTierPreference = (capability: ModelPreferenceCapability, tier:
 };
 
 /** Set the model behind a tier on this device; `undefined` returns it to the team's. */
-export const writeTierModel = (capability: ModelPreferenceCapability, tier: EnergyGrade, model: string | undefined): void => {
+export const writeTierModel = (capability: ModelPreferenceCapability, tier: EnergyGrade, model: string | undefined, activate = false): void => {
   const current = readAll();
   const forCapability = { ...(current.tierModels?.[capability] ?? {}) };
   if (model) forCapability[tier] = model; else delete forCapability[tier];
-  save({ ...current, tierModels: { ...(current.tierModels ?? {}), [capability]: forCapability } }, { capability, tier, model });
+  save({ ...current, ...(activate ? { tier: { ...current.tier, [capability]: tier } } : {}), tierModels: { ...(current.tierModels ?? {}), [capability]: forCapability } }, { capability, tier, model });
 };
 
 /** The saved reasoning level for a model, or undefined for the model's own default. */
@@ -136,23 +146,22 @@ export const writeReasoningPreference = (model: string, level: string | undefine
   save({ ...current, reasoning }, { model, reasoning: level });
 };
 
-const readTagger = (selection: Selection): TaggerPreference => {
-  const tagger = selection.tagger;
-  if (!tagger || typeof tagger !== 'object') return {};
+type TextRole = 'tagger' | 'blueprint';
+
+export const readTextRolePreference = (role: TextRole): TextRolePreference => {
+  const choice = readAll()[role];
+  if (!choice || typeof choice !== 'object') return {};
   return {
-    ...(typeof tagger.model === 'string' && tagger.model ? { model: tagger.model } : {}),
-    ...(typeof tagger.reasoningLevel === 'string' && tagger.reasoningLevel ? { reasoningLevel: tagger.reasoningLevel } : {}),
+    ...(typeof choice.model === 'string' && choice.model ? { model: choice.model } : {}),
+    ...(typeof choice.reasoningLevel === 'string' && choice.reasoningLevel ? { reasoningLevel: choice.reasoningLevel } : {}),
   };
 };
 
-/** The saved Chapter Tagger choice; `{}` means the chapter's own writer, thinking as little as it allows. */
-export const readTaggerPreference = (): TaggerPreference => readTagger(readAll());
+export const writeTextRolePreference = (role: TextRole, choice: TextRolePreference): void =>
+  save({ ...readAll(), [role]: choice }, { [role]: choice });
 
-/** Save the Chapter Tagger choice; an absent model or level returns that part to its default. */
-export const writeTaggerPreference = (tagger: TaggerPreference): void => {
-  const next = readTagger({ tagger });
-  save({ ...readAll(), tagger: next }, { tagger: next });
-};
+export const readTaggerPreference = () => readTextRolePreference('tagger');
+export const writeTaggerPreference = (choice: TextRolePreference) => writeTextRolePreference('tagger', choice);
 
 /** The saved choice when the server still offers it, otherwise the server default. */
 export const preferredModel = (
@@ -197,11 +206,13 @@ export function useTierPreference(capability: ModelPreferenceCapability) {
 }
 
 /** React binding: the saved Chapter Tagger choice, kept in step across surfaces. */
-export function useTaggerPreference(): [TaggerPreference, (tagger: TaggerPreference) => void] {
-  const [value, setValue] = useState(readTaggerPreference);
-  useEffect(() => subscribeModelPreference(() => setValue(readTaggerPreference())), []);
-  return [value, writeTaggerPreference];
+export function useTextRolePreference(role: TextRole): [TextRolePreference, (choice: TextRolePreference) => void] {
+  const [value, setValue] = useState(() => readTextRolePreference(role));
+  useEffect(() => subscribeModelPreference(() => setValue(readTextRolePreference(role))), [role]);
+  return [value, choice => writeTextRolePreference(role, choice)];
 }
+
+export const useTaggerPreference = () => useTextRolePreference('tagger');
 
 /** React binding: the saved reasoning levels for every model. */
 export function useReasoningPreferences(): [Record<string, string>, (model: string, level: string | undefined) => void] {

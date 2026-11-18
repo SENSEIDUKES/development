@@ -20,6 +20,8 @@ export interface UsageEntry {
   task?: string;
   inputTokens?: number;
   outputTokens?: number;
+  /** Includes all provider-reported tokens, including separately reported thinking. */
+  totalTokens?: number;
   /** The token counts are the server's estimate: the provider reported none. */
   tokensEstimated?: true;
   /** Live talk: how long the conversation lasted. */

@@ -5,3 +5,24 @@
     min-height: 44px;
   }
 }
+
+[data-full-screen="true"] { padding: 0; }
+[data-full-screen="true"] [role="dialog"] {
+  height: 100dvh;
+  max-height: none;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0 max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+}
+[data-full-screen="true"] [role="dialog"] > div {
+  max-width: 56rem;
+  margin-inline: auto;
+}
+[data-full-screen="true"] [role="dialog"] > div:first-child {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #05070d;
+  padding-block: max(.5rem, env(safe-area-inset-top)) .5rem;
+}

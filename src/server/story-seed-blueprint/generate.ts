@@ -1,7 +1,7 @@
 import { SEN_AUTHOR_IDENTITY } from '@seihouse/sen/generation';
 import { parseModelJson } from '@seihouse/sen/contracts';
 import { STORY_LENGTH_ARCS, arcPlanFromDraft } from '@seihouse/sen/arc-goals';
-import { createModelRouter, ModelRouterError, type GenerationResult, type ReasoningLevel } from '@seihouse/library/model-router-server';
+import { createModelRouter, ModelRouterError, type GenerationResult, type TokenUsage, type ReasoningLevel } from '@seihouse/library/model-router-server';
 import {
   buildBlueprintGenerationPayload,
   finalizeGeneratedWorldBlueprint,
@@ -42,6 +42,7 @@ export interface WorldBlueprintModelProvider {
 const parseBlueprintResponse = async (
   generation: Promise<GenerationResult>,
   maxOutputTokens: number,
+  onUsage?: (usage: TokenUsage) => void,
 ): Promise<unknown> => {
   try {
     const result = await generation;
@@ -49,6 +50,7 @@ const parseBlueprintResponse = async (
     // A fenced answer is still the answer (Claude without enforced structured output).
     const parsed = parseModelJson(result.text);
     if (parsed === undefined) throw new Error('The model\'s answer was not readable JSON.');
+    if (result.usage) onUsage?.(result.usage);
     return parsed;
   } catch (error) {
     if (error instanceof ModelRouterError && error.code === 'output-limit') {
@@ -62,6 +64,7 @@ export class GeminiWorldBlueprintProvider implements WorldBlueprintModelProvider
   constructor(
     private readonly apiKey: string,
     private readonly model: string,
+    private readonly onUsage?: (usage: TokenUsage) => void,
   ) {}
 
   async generate(request: BlueprintModelRequest<object>): Promise<unknown> {
@@ -70,7 +73,7 @@ export class GeminiWorldBlueprintProvider implements WorldBlueprintModelProvider
       userPrompt: request.userPrompt, responseFormat: 'json', responseJsonSchema: request.responseJsonSchema,
       temperature: request.temperature, maxOutputTokens: request.maxOutputTokens, timeoutMs: request.timeoutMs,
       reasoningLevel: request.reasoningLevel,
-    }), request.maxOutputTokens);
+    }), request.maxOutputTokens, this.onUsage);
   }
 }
 
@@ -79,6 +82,7 @@ class RoutedWorldBlueprintProvider implements WorldBlueprintModelProvider {
     private readonly apiKey: string,
     private readonly model: string,
     private readonly provider: 'openrouter' | 'minimax' | 'anthropic' | 'openai',
+    private readonly onUsage?: (usage: TokenUsage) => void,
   ) {}
 
   async generate(request: BlueprintModelRequest<object>): Promise<unknown> {
@@ -90,20 +94,20 @@ class RoutedWorldBlueprintProvider implements WorldBlueprintModelProvider {
       userPrompt: request.userPrompt, responseFormat: 'json', responseJsonSchema: request.responseJsonSchema,
       temperature: request.temperature, maxOutputTokens: request.maxOutputTokens, timeoutMs: request.timeoutMs,
       reasoningLevel: request.reasoningLevel,
-    }), request.maxOutputTokens);
+    }), request.maxOutputTokens, this.onUsage);
   }
 }
 
 export class OpenRouterWorldBlueprintProvider extends RoutedWorldBlueprintProvider {
-  constructor(apiKey: string, model: string) { super(apiKey, model, 'openrouter'); }
+  constructor(apiKey: string, model: string, onUsage?: (usage: TokenUsage) => void) { super(apiKey, model, 'openrouter', onUsage); }
 }
 
 class LocalWorldBlueprintProvider implements WorldBlueprintModelProvider {
-  constructor(private readonly model: string, private readonly apiKey: string) {}
+  constructor(private readonly model: string, private readonly apiKey: string, private readonly onUsage?: (usage: TokenUsage) => void) {}
   async generate(request: BlueprintModelRequest<object>): Promise<unknown> {
     return parseBlueprintResponse(createModelRouter({ credentials: {}, localDevelopment: this.apiKey === 'local-dev' }).generate({
       capability: 'text', model: this.model, ...request, responseFormat: 'json',
-    }), request.maxOutputTokens);
+    }), request.maxOutputTokens, this.onUsage);
   }
 }
 
@@ -159,13 +163,14 @@ export class BlueprintRoadmapError extends Error {
 /** Route the configured Blueprint model to its provider through the Model Router. */
 export const createWorldBlueprintProvider = (
   config: Pick<ResolvedStorySeedBlueprintConfig, "provider" | "model"> & { apiKey: string },
+  onUsage?: (usage: TokenUsage) => void,
 ): WorldBlueprintModelProvider => config.provider === "lmstudio"
-  ? new LocalWorldBlueprintProvider(config.model, config.apiKey)
+  ? new LocalWorldBlueprintProvider(config.model, config.apiKey, onUsage)
   : config.provider === "minimax" || config.provider === "anthropic" || config.provider === "openai"
-  ? new RoutedWorldBlueprintProvider(config.apiKey, config.model, config.provider)
+  ? new RoutedWorldBlueprintProvider(config.apiKey, config.model, config.provider, onUsage)
   : config.provider === "openrouter"
-  ? new OpenRouterWorldBlueprintProvider(config.apiKey, config.model)
-  : new GeminiWorldBlueprintProvider(config.apiKey, config.model);
+  ? new OpenRouterWorldBlueprintProvider(config.apiKey, config.model, onUsage)
+  : new GeminiWorldBlueprintProvider(config.apiKey, config.model, onUsage);
 
 const REQUIRED_STRINGS = [
   "blueprintVersion",

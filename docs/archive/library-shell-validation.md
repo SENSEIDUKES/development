@@ -2,7 +2,7 @@
 
 # Library Shell capture validation
 
-Validated on **2026-09-08** against the commits recorded in [capture provenance](../../src/components/library-shell/capture-manifest.json). Scope and ownership are documented in the [Library Shell README](../../src/components/library-shell/README.md).
+Validated on **2026-09-08** against the commits recorded in [capture provenance](https://github.com/SENSEIDUKES/development/blob/4aaa7894447ad5b3cd9fad97fcf10cad3102efa9/src/components/library-shell/capture-manifest.json). Scope and ownership are documented in the [Library Shell README](../../src/components/library-shell/README.md).
 
 ## Source fidelity
 

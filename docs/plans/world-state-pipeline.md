@@ -19,8 +19,8 @@ call without SENSEI's approval, a model's exact words shown and approved before
 they change, every word a model reads recorded in the Writer Instructions
 history, no compatibility layers, SENSEI merges.
 
-**To hand this to a new chat:** "Read docs/world-state-pipeline.md, then
-docs/world-at-chapter-0.md. Phase 1's architecture is built. We are at its
+**To hand this to a new chat:** "Read docs/plans/world-state-pipeline.md, then
+docs/plans/world-at-chapter-0.md. Phase 1's architecture is built. We are at its
 second half, the words the models read; show SENSEI each change first."
 
 ## Why this doc exists (SENSEI's context, 2026-11-08)

@@ -80,7 +80,7 @@ export const STORY_TAG_COLOR_ACCENTS: Record<StoryTagCategoryColor, string> = {
  * duplicates into one tag, keeping the old wording as aliases so search still
  * finds it; cut tags that asked for the HARNESS's own jobs (continuity, memory,
  * tracking, codex, colors, pacing and tone "control"); Meta & Continuity became
- * Mystery & Lore. The proposal is docs/story-tag-audit-2026-10-25.md.
+ * Mystery & Lore. The proposal is docs/research/story-tag-audit-2026-10-25.md.
  */
 export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   // --- Genre (white) ---

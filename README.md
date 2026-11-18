@@ -2,6 +2,8 @@
 
 The central development and preview space for SEN and Library components and experiences. This repository isolates UI refinement from the main `SENSEIDUKES/Light-Novels` production environment.
 
+Start with the [documentation index](./docs/README.md) for guides, plans, research, and archived reports.
+
 ## SEN and Library are two different products
 
 **SEN (SEIHouse Expanded Novels) is an embeddable expanded-narrative engine** — the same kind of product as the faceless SEIHouse audio player. Another author or company can install SEN inside their own application and supply their own writing, branding, storage, authentication, and generation method. SEN provides the reusable systems: expanded reading behavior, structured chapter contracts, scoring, Color Codes, Codex behavior, cards, and the narrative surfaces built on them. AI chapter generation is an **optional** SEN content source, not a requirement.

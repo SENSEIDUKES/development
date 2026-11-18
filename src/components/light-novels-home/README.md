@@ -89,7 +89,7 @@ adapter, not a complete account/story page.
 
 The multimedia trial passes `npm run build`, the 40 existing Library Shell/Workshop tests, `check:package-boundaries`, and the then-used capture check (now retired). Local browser checks cover 320/390/768/1024/1440px, loaded artwork, a single homepage novel, labeled seals, three connected-media cards, disabled adaptation actions, horizontal keyboard scrolling, direct detail reload, Back/Forward, genre/sort retention, return focus, reduced motion, and 34px bottom safe-area spacing. The original comparison has no seals or connected-media section. Measurements are in `output/playwright/multimedia-world/verification.json`; the build log is beside it. Browser interaction generated no Fetch/XHR requests. This is local preview verification, not a hosted deployment or live account test.
 
-See `docs/history/standalone-home/` for local production browser evidence and the two mobile screenshots. The screenshot browser renders the 390 by 844 CSS viewport at the host display scale; the supplied images capture that rendered area without the tool's black padding.
+See `docs/archive/standalone-home/` for local production browser evidence and the two mobile screenshots. The screenshot browser renders the 390 by 844 CSS viewport at the host display scale; the supplied images capture that rendered area without the tool's black padding.
 
 The build, focused navigation/header/profile/Workshop tests, package boundary checks, and existing locked-capture guard pass. No full production Library/Discover body or production account/backend behavior is claimed as covered.
 

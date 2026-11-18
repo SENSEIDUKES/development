@@ -84,7 +84,7 @@ inside SEIHouse to put their own character on. It lives in its own private repos
 (`SENSEIDUKES/seihouse-front-desk`) and is installed here from `vendor/`, like the UI
 kit; it imports nothing from SEN, the Library or the app, and both may use it. Novel
 Expanded's character on it is the Familiar; SEA's will be the vocal director.
-[The plan](./docs/front-desk-plan.md).
+[The plan](./docs/plans/front-desk-plan.md).
 
 ### SEN and SEA
 
@@ -557,7 +557,7 @@ entries run to 2026-11-11.
     brought in and is expanding; the World rules sheet, the world's frame
     rather than a card, shows either way. The chapter writer reads this world
     too, as THE WORLD AT CHAPTER 0 in its Story Information. The plan is
-    [the World at Chapter 0](./docs/world-at-chapter-0.md).
+    [the World at Chapter 0](./docs/plans/world-at-chapter-0.md).
   - **The Codex, remade on the record (2026-10-13):** a panel like Fate,
     opened from the bottom bar's Codex button, holding only what the record
     knows today. It is a **gallery of cards** (since the same day, from
@@ -721,7 +721,7 @@ entries run to 2026-11-11.
     card, and the World Blueprint inside the same shell (2026-10-26). The Reader stays
     full-screen. Discover is in the navigation too (2026-10-20); since 2026-11-17
     the app shows only its published stories and samples stay in Workshop
-    ([`docs/discover-page.md`](./docs/discover-page.md)).
+    ([`docs/plans/discover-page.md`](./docs/plans/discover-page.md)).
   - **Discover's Eastern Fantasy Encyclopedia** (2026-10-26) is a global genre
     reference inside Discover, separate from story Codexes: 36 core terms in
     six categories, original scripts and pronunciation, fan-translation alias
@@ -783,7 +783,7 @@ entries run to 2026-11-11.
       controller, card and voice engines are their own package, an ecosystem piece in
       its own repository; the Library hands it Novel Expanded's docs, action list,
       codes and wording, the Familiar's name included (`FamiliarFrontDesk`).
-      [The plan](./docs/front-desk-plan.md), eleven steps.
+      [The plan](./docs/plans/front-desk-plan.md), eleven steps.
   - **Story Settings are in the app, off the developer page** (piece 4). The
     story's own settings, the only place a reader meets the HARNESS:
     - **On Story View**, closed until opened: the Story Language (fixed when the
@@ -1006,7 +1006,7 @@ entries run to 2026-11-11.
   - The app's Profile runs on the device and a practice economy: there are no
     accounts, database or server-side storage yet, so nothing the economy holds
     survives a reload, and the account and server pieces wait.
-  - Create as the creator's hub ([docs/create-hub.md](./docs/create-hub.md),
+  - Create as the creator's hub ([docs/plans/create-hub.md](./docs/plans/create-hub.md),
     owner's direction, 2026-10-29) is partly built: the app's Create is the
     Creator Space, and the author's world view with its Chapters tagging list
     is in. Not built yet: the manuscript way in (import), the world's Codex
@@ -1225,7 +1225,7 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
 **The world at Chapter 0 (built 2026-10-22).** Before the tags below can
 complete the record, the world they add to has to exist: the Story Seed and the
 World Blueprint now write every Codex card kind before Chapter 1, and the Codex
-shows them ([the plan](./docs/world-at-chapter-0.md), phase B). The tags still
+shows them ([the plan](./docs/plans/world-at-chapter-0.md), phase B). The tags still
 record what changes; they no longer have to invent what was there at the start.
 The chapter writer now reads that world (THE WORLD AT CHAPTER 0 in Story
 Information). The CTE engine and the world judge are the phases after it, not
@@ -1390,21 +1390,21 @@ same record; none of them adds anything medium-specific to the story itself.
 
 ### Plans kept in other docs
 
-Plans written in their own documents, so none is forgotten. Each document says
-where it stands; this list was checked against the code on 2026-11-06.
+Each plan records the status of its own phases. The [documentation index](./docs/README.md)
+lists all plans, research, and archived reports.
 
-- [Create, the creator's hub](./docs/create-hub.md): phase B (the author's
+- [Create, the creator's hub](./docs/plans/create-hub.md): phase B (the author's
   world view and its Chapters tagging) is built. Open: C, the manuscript way
   in; the rest of D, the speakers step for named characters; E, the world's
   Codex tab; G, tagging a whole story with resume and Clear tags; colored
   words as a third tag style; a focused re-read for each information tag.
-- [The world at Chapter 0](./docs/world-at-chapter-0.md): phase B and the
+- [The world at Chapter 0](./docs/plans/world-at-chapter-0.md): phase B and the
   writer reading the world are built. Open: the CTE engine and its first probe,
   the planner reading CTE and Fate Pressure, the world judge, the other probes,
   the cleanup of what covered for the missing world (faction guessing from
   names, the look writer), cards added by chapters, and the owner's open
   questions.
-- [The world state pipeline](./docs/world-state-pipeline.md): the missing
+- [The world state pipeline](./docs/plans/world-state-pipeline.md): the missing
   half of the world at Chapter 0 (SENSEI, 2026-11-08). Every main card is a
   Codex entry from the start, the tagger uncovers cards instead of inventing
   them, Alter Fate adds real cards, and arc boundaries sort what carries on.
@@ -1414,22 +1414,23 @@ where it stands; this list was checked against the code on 2026-11-06.
   in. Open: phase 1's words (the tagger linking to cards, conditions that
   stack, a card's arc, a companion's card from the Blueprint), then phases 2
   and 3, each with SENSEI's questions first.
-- [CTE consequences](./docs/cte-consequences.md): direction, none built.
-- [SEIHouse Front Desk](./docs/front-desk-plan.md), the Familiar's plan: steps 1
+- [CTE consequences](./docs/plans/cte-consequences.md): direction, none built.
+- [SEIHouse Front Desk](./docs/plans/front-desk-plan.md), the Familiar's plan: steps 1
   and 2 (Front Desk separated, then lifted into its own repository and vendored
   back) and the media spot's phase A (guides in the card) are built. Later, when
   there's time, in order: 3, the bridge for older people; 4, memory and
   first-meeting setup; 5, quiet mode and hands-free listening; 6, pages handing it their content, and the Inbox; 7, the
   channel everywhere; 8, accessibility lenses; 9, the touch lens; 10, the rest of
   the media spot; 11, SEA's vocal director.
-- [Discover](./docs/discover-page.md): structure built on samples. Open: real
-  worlds and releases, Tracker, signals, community lists, credits pages, branch
-  lineage, curated reviews, the posting guardrails, series status and content
-  warnings.
-- [The Story Tag audit](./docs/story-tag-audit-2026-10-25.md): the first pass
-  and the niche engine are built. Open: the Protagonist & Tropes and Slice of
-  Life families, moving farming, food and cozy out of Romance, a one-line
-  meaning for each tag, and filtering Discover and Home by tag.
+- [Discover](./docs/plans/discover-page.md) lists the device's published stories.
+  Workshop supplies samples. Open work includes a shared public catalogue and
+  releases, Tracker, signals, community lists, credits pages, branch lineage,
+  curated reviews, posting guardrails, series status and content warnings.
+
+The [Story Tag audit](./docs/research/story-tag-audit-2026-10-25.md) records the
+first pass and the niche engine. Open work includes the Protagonist & Tropes and
+Slice of Life families, moving farming, food and cozy out of Romance, a one-line
+meaning for each tag, and filtering Discover and Home by tag.
 
 ## Names
 
@@ -1450,7 +1451,7 @@ where it stands; this list was checked against the code on 2026-11-06.
 | Look step | Retired 2026-10-17. Looks are now written on demand: the HARNESS keeps the writer's own description from each tagged passage by code, and writes one entry's full look (the core record a picture, manga or game draws from) only when something needs it, kept on its Codex entry until a new tag changes it (`describeCodexLook`, `planCodexLook`, the `describe-looks` call; Look Describer in the Model Router). |
 | Appeared | The Story Information section listing every character and thing already on the page, with its latest look, so the writer keeps every look (`appearancesSection`). |
 | Codex | The story's world as its record knows it, opened in the Reader as a panel: the world it opened with (below) and what its chapters recorded, in one card each — characters, items, abilities, places, factions, the Bestiary and the World rules sheet — every fact a chapter made linked to its passage (`StoryCodex`, worked out by `deriveStoryCodex`). It grows as each information tag is built. |
-| World at Chapter 0 | The world a story opens with, in the Codex's own card kinds: what the author filled in the Story Seed and the World Blueprint filled for the blanks, carried on the story as `worldAtChapterZero`. The record is complete before Chapter 1; the reader meets each card when the story reaches it, unless the world is open to its reader (`openToTheReader`, an imported novel). Its one definition is `WORLD_CARD_KINDS` (`@seihouse/sen/contracts`); [the plan](./docs/world-at-chapter-0.md) is the owner's direction for it. |
+| World at Chapter 0 | The world a story opens with, in the Codex's own card kinds: what the author filled in the Story Seed and the World Blueprint filled for the blanks, carried on the story as `worldAtChapterZero`. The record is complete before Chapter 1; the reader meets each card when the story reaches it, unless the world is open to its reader (`openToTheReader`, an imported novel). Its one definition is `WORLD_CARD_KINDS` (`@seihouse/sen/contracts`); [the plan](./docs/plans/world-at-chapter-0.md) is the owner's direction for it. |
 | Highlight Engine | SEN's engine for highlighting part of a story and attaching to it: prose today, sequential-art images later. Its lab is at `?preview=highlight-engine`; in the Reader it is Create mode. Never "Text Highlight Engine". |
 | Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. On Story View (`StorySettings`) and in Create's Settings (`CreateStorySettings`), from `@seihouse/library/stories`. |
 | Harness Generation | The developer instrument for the HARNESS (`?preview=harness-generation`). Never a product page. |

@@ -5,7 +5,7 @@
 - **Owner:** SENSEI
 - **Status:** steps 1 and 2 built (2026-11-08); the media spot's phase A built
   (2026-11-07). Steps 3 to 11 come later, when there's time (SENSEI, 2026-11-08: one
-  person, so the separation and porting it back come first, and the features later). [`NOVEL_EXPANDED.md`](../NOVEL_EXPANDED.md)
+  person, so the separation and porting it back come first, and the features later). [`NOVEL_EXPANDED.md`](../../NOVEL_EXPANDED.md)
   stays the source of truth for what is built.
 - **Sources:** conversations with SENSEI on 2026-11-07 and 2026-11-08, including
   Hugging Face's open real-time voice and camera demo (`smolagents/hf-realtime-voice`:

@@ -2,6 +2,9 @@
 
 Prepared for SENSEI.
 
+This report records the tag catalogue and proposals as of 2026-10-25. See the
+[Story Seed guide](../../src/components/story-seed/README.md) for the current tag picker.
+
 ## Decision (SENSEI, 2026-10-25)
 
 Agreed: fix the prompt wording, add the staples, merge true duplicates, and cut the tags that ask for the HARNESS's own jobs. **Not agreed: cutting niche tags or reorganizing the display.** Niche tags (for example the LitRPG point tags, the detailed economy and war tags) stay. The next project, the tagging engine upgrade, gives them proper homes: multiple filters, tagging by genre and niche, and a parent per genre (a LitRPG parent holding its game-element tags, and so on).

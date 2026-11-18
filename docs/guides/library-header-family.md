@@ -95,7 +95,7 @@ and `state=context-absent` or `state=long-context`; the existing source routes r
 content, actions, the Portrait's menu (with and without a host profile, from the sidebar
 card), Help, filtering and focus. `scripts/verifyAppHeader.browser.mjs` checks the built
 app's header geometry from 320px to 1440px, the Portrait's menu, Sign in and Sparks. `scripts/verifyLibraryHeader.mjs` provides browser
-checks. [Earlier verification evidence](history/library-top-navigation-validation.md)
+checks. [Earlier verification evidence](../archive/library-top-navigation-validation.md)
 is historical; use current tests and package-boundary checks for today's graph.
 Workshop routing, mocks, manifests and controls stay outside package consumers.
 

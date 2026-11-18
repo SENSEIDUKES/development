@@ -71,9 +71,9 @@ These adapters simulate existing routes and browser history, not production inte
 
 Focused tests cover order, selection, route no-ops, sidebar/strip behavior, workspace
 controls and immersive exclusions. `scripts/verifyLibraryNavigation.mjs` exercises the
-browser matrix. Historical results are in [the history folder](history/README.md), not
-current readiness claims. Current package ownership and import boundaries remain enforced
-by `check:ownership`, `check:package-boundaries` and `check:app`.
+browser matrix. See the [archive](../README.md#archive) for earlier verification.
+`check:ownership`, `check:package-boundaries` and `check:app` enforce current
+package ownership and import boundaries.
 
 ## History
 

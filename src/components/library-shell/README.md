@@ -68,11 +68,11 @@ Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-ru
 
 ## Top navigation update
 
-Development now uses `Logo | Search | Familiar | Sound | Profile Portrait` (2026-10-30) without page-specific header badges, keeping the header row stable across every bottom navigation tab. Search is a wide field after the logo that opens the Search sheet of host destinations/actions. The public Cave supplies Public View after Search. The Profile Portrait opens one menu: the host's reader, Sign in, Your profile and Settings when the host supplies them (`WorkspaceHeaderProfileProvider`), then Preferred Language (updating both interface and default reading language immediately), Menu music and Help, which opens the original Library Help menu. Search and the Portrait each keep their own 44px target; neither is ever folded into a "…" menu. Sparks (Dao Insights) is no longer in the header. Pages that still supply header commands keep the shared toolbar below the top row; Story Seed no longer does — it owns its Save Draft, Manifest and status row inside its own content, and page titles live directly at the top of the page below the header. See [the header contract](../../../docs/library-header-family.md) and its focused Header slot states preview.
+Development now uses `Logo | Search | Familiar | Sound | Profile Portrait` (2026-10-30) without page-specific header badges, keeping the header row stable across every bottom navigation tab. Search is a wide field after the logo that opens the Search sheet of host destinations/actions. The public Cave supplies Public View after Search. The Profile Portrait opens one menu: the host's reader, Sign in, Your profile and Settings when the host supplies them (`WorkspaceHeaderProfileProvider`), then Preferred Language (updating both interface and default reading language immediately), Menu music and Help, which opens the original Library Help menu. Search and the Portrait each keep their own 44px target; neither is ever folded into a "…" menu. Sparks (Dao Insights) is no longer in the header. Pages that still supply header commands keep the shared toolbar below the top row; Story Seed no longer does — it owns its Save Draft, Manifest and status row inside its own content, and page titles live directly at the top of the page below the header. See [the header contract](../../../docs/guides/library-header-family.md) and its focused Header slot states preview.
 
 ## Bottom navigation update — 2026-09-11
 
-`LibraryNavigation` now owns Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. Its active Development scrubber uses the supplied official SEN Home, Book, Discovery, and Profile icons. The shared navigation/header layer also supplies the official Settings and Exit marks to active consumer controls. The global Section control and drawer were removed on 2026-09-09 at user request; page destinations remain in top Search. Page definitions still supply the Cave’s existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its Sections, Story Bank, Settings and Back controls, now drawn by the shell's workspace mode (2026-09-27, below); Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
+`LibraryNavigation` now owns Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. Its active Development scrubber uses the supplied official SEN Home, Book, Discovery, and Profile icons. The shared navigation/header layer also supplies the official Settings and Exit marks to active consumer controls. The global Section control and drawer were removed on 2026-09-09 at user request; page destinations remain in top Search. Page definitions still supply the Cave’s existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its Sections, Story Bank, Settings and Back controls, now drawn by the shell's workspace mode (2026-09-27, below); Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/guides/library-navigation.md).
 
 ## Platform footer — 2026-09-17
 
@@ -165,7 +165,7 @@ The Library Shell tab's **Laptop navigation** control switches the Development f
 
 ## Development shell
 
-`development/LibraryShell.ts` exports the workspace system: `WorkspaceHeader` as a thin adapter over the canonical `SEIAppHeader`, `WorkspaceShell` as a thin adapter over `SEIAppShell`, and the shared header-action presentation. The custom `HeaderFoundation` and the old `WorkspaceHeader` visual implementation are gone; only one header system remains. `MainLibraryHeader` now supplies Home context and commands to the same shared top header. See [header contract and ownership](../../../docs/library-header-family.md).
+`development/LibraryShell.ts` exports the workspace system: `WorkspaceHeader` as a thin adapter over the canonical `SEIAppHeader`, `WorkspaceShell` as a thin adapter over `SEIAppShell`, and the shared header-action presentation. The custom `HeaderFoundation` and the old `WorkspaceHeader` visual implementation are gone; only one header system remains. `MainLibraryHeader` now supplies Home context and commands to the same shared top header. See [header contract and ownership](../../../docs/guides/library-header-family.md).
 
 ## Inspect the previews
 
@@ -223,7 +223,7 @@ The locked capture and its provenance manifest (`capture-manifest.json`) were re
 
 ## Validation
 
-See [validation evidence](../../../docs/history/library-shell-validation.md) for the checked viewports, interactions, source comparisons, and exact limits of verification.
+See [validation evidence](../../../docs/archive/library-shell-validation.md) for the checked viewports, interactions, source comparisons, and exact limits of verification.
 
 ## Implementation inventory
 

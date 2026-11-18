@@ -1438,7 +1438,7 @@ export class HarnessGenerationController {
   /**
    * Tags one committed chapter of the story (again), replacing the tags it
    * has: any chapter, one at a time (SENSEI, 2026-10-29, phase B of
-   * `docs/create-hub.md`). The path that recovers a chapter whose tagging
+   * `docs/plans/create-hub.md`). The path that recovers a chapter whose tagging
    * failed, the one a changed chapter needs (the reader edits the prose in
    * Create mode, then has it read again), and the experiment bench for the
    * tagging itself: same chapter, another tagger, and the record says what

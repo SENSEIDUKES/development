@@ -108,4 +108,4 @@ Status uses Git's no-renames view so every removed and created path is explicit.
 | A | `skills/sensei-skill/SKILL.md` |
 | M | `skills/workshop-replica/SKILL.md` |
 | A | `skills/workshop-replica/references/faithful-replica.md` |
-| A | `docs/history/skill-system-audit.md` |
+| A | `docs/archive/skill-system-audit.md` |

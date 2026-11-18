@@ -182,7 +182,7 @@ export const MEDIA_TAG_WARNING_CODES: ReadonlySet<HarnessWarning['code']> = new 
  * Why one of this story's committed chapters cannot be tagged (again), when it
  * cannot, in words a reader can act on. `undefined` means it can.
  *
- * Any committed chapter (SENSEI, 2026-10-29, `docs/create-hub.md` phase B:
+ * Any committed chapter (SENSEI, 2026-10-29, `docs/plans/create-hub.md` phase B:
  * "one chapter at a time, a couple chapters at a time, until we get this
  * right"). Until then only the newest was read again, as Create mode and the
  * rewrite work on the newest; what made that safe, taking the chapter's own

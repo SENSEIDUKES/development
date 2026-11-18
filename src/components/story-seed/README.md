@@ -362,7 +362,7 @@ harness:
   - search scoped to the niche and families, with *Search all tags* to widen it.
   Tags are grouped by family, and a tag's hover title names its niches. No
   tag was renamed or cut. The mapping is listed in
-  `docs/story-tag-audit-2026-10-25.md`, section 9.
+  `docs/research/story-tag-audit-2026-10-25.md`, section 9.
 - **2026-10-25 (Story Tag audit, first pass):** From SENSEI. The catalog gains
   a base layer: a **Genre** family (action, adventure, comedy, drama, fantasy,
   horror, martial arts, mystery, psychological, romance, sci-fi, slice of life,
@@ -377,7 +377,7 @@ harness:
   such as the LitRPG point tags, stay for the tagging engine upgrade, which
   gives each genre its own parent. Premise suggestions now find action,
   adventure and horror, and an empty premise falls back to adventure and
-  action. The proposal is `docs/story-tag-audit-2026-10-25.md`. Tags now reach
+  action. The proposal is `docs/research/story-tag-audit-2026-10-25.md`. Tags now reach
   the chapter writer as their own `storyTags` field, read as direction, never
   as declared canon.
 - **2026-10-25 (Survival sparks; Pressure stays Immortal):** A Story Spark
@@ -405,7 +405,7 @@ harness:
   Seed's Origin page exactly as it was. `GENRE_PATH_SIGILS` is exported for
   surfaces that name a path.
 - **2026-10-22 (the world at Chapter 0):** Phase B of
-  [the World at Chapter 0 plan](../../../docs/world-at-chapter-0.md), from
+  [the World at Chapter 0 plan](../../../docs/plans/world-at-chapter-0.md), from
   SENSEI: "everything that's going to be on the Codex needs to be fillable
   inside the story seed first." The Seed now holds every slot of every Codex
   card kind, from their one definition (`WORLD_CARD_KINDS`, `@seihouse/sen/contracts`).
@@ -601,7 +601,7 @@ The section rail moved out of the creation panel's `18rem` column into the shell
 
 ## Development shell integration — 2026-09-08
 
-Integrated WorkspaceHeader through StorySeedWorkspaceChrome, one feature-owned section definition for desktop/mobile navigation, shared bottom controls and Settings sheet. Existing schema, eligibility, storage, Help and generation/review owners are preserved; public header/navigation exports remain compatible. See [shared contracts](../../../docs/library-header-family.md). Locked references and source-comparison dates are unchanged.
+Integrated WorkspaceHeader through StorySeedWorkspaceChrome, one feature-owned section definition for desktop/mobile navigation, shared bottom controls and Settings sheet. Existing schema, eligibility, storage, Help and generation/review owners are preserved; public header/navigation exports remain compatible. See [shared contracts](../../../docs/guides/library-header-family.md). Locked references and source-comparison dates are unchanged.
 
 
 ## 2026-09-09 navigation polish

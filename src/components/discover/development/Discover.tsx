@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import {
   BookOpen,
+  CalendarDays,
   ChevronDown,
   LayoutGrid,
   Shapes,
@@ -26,6 +27,7 @@ const SECTIONS = [
   { id: 'creators', label: 'Creators', icon: Users },
   { id: 'codex', label: 'Codex', icon: Swords },
   { id: 'lore', label: 'Lore', icon: Sparkles },
+  { id: 'events', label: 'Events', icon: CalendarDays },
 ] as const;
 
 /** "Just now", "12m ago", "5h ago", "3d ago", then the date. */
@@ -81,7 +83,9 @@ export function Discover(props: DiscoverProps) {
           </a>
         ))}
       </nav>
-      <DiscoverContent key={section} {...props} />
+      {section === 'events'
+        ? <DiscoverEvents events={props.events ?? []} />
+        : <DiscoverContent key={section} {...props} />}
     </div>
   );
 }
@@ -98,7 +102,6 @@ function DiscoverContent({
   trackedCodexIds,
   fateSurvivalWorldIds = [],
   rankingBoards = [],
-  events = [],
   onOpenWorld,
   renderLore,
   loreArticle,
@@ -398,7 +401,6 @@ function DiscoverContent({
                       />
                     )}
                   </Shelf>
-                  <DiscoverEvents events={events} />
                 </>
               ) : section === 'stories' ? (
                 <>

@@ -14,7 +14,7 @@ Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-ru
 
 ## Boundary and ownership
 
-Events are now owned by Discover and appear only under Rankings; Home opens
+Events are now owned by Discover and have a dedicated Discover tab; Home opens
 with Featured. The existing Home Workshop iframe reflects the same app composition.
 
 The Home workspace's **Development** pane loads the actual NovelExpanded `/app/`
@@ -45,7 +45,7 @@ The extraction retains the source hero JSX, video sequence, six-second backdrop 
 - Profile: the existing Cultivator Cave, including its own nested routes and shared chrome.
 - Novel detail: `screen=detail`, the existing destination, now populated for the sole featured mock novel. Direct loading and reloading select that fixture. Back/Forward and Back to novels preserve Home filters; returning from the detail restores card focus.
 
-These compatibility values are retained. Home and Profile remain mounted while inactive so navigation does not discard unrelated local edits or Home filters. Only the active screen's header and global strip are visible. Back/Forward updates the current destination. Story Seed keeps its existing separate document and specialized navigation. The Home hero's Carve New Destiny opens that existing local Story Seed preview.
+These compatibility values are retained. Home and Profile remain mounted while inactive so navigation does not discard unrelated local edits or Home filters. Only the active screen's header and global strip are visible. Back/Forward updates the current destination. Story Seed keeps its existing separate document and specialized navigation. The Home hero's Create A World opens that existing local Story Seed preview.
 
 
 
@@ -217,3 +217,5 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
   Library's `look.css` (`src/components/library-presentation/`), class
   `.library-look`, worn by every page in the shell through `LibraryLook`. Home's
   own rules (clear media, navigation states, footer clearance) are unchanged there.
+
+- **2026-11-17:** Home welcomes readers with Welcome to NovelExpanded and Create A World.

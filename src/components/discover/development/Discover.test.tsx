@@ -133,10 +133,10 @@ const ENTRIES = [
   { id: 'orphan', kind: 'characters' as const, name: 'Missing world', description: 'Invalid projection', worldId: 'gone' },
 ];
 
-it('links Stories, Creators, Codex and Lore in order and keeps native modified link clicks', () => {
+it('links Stories, Creators, Codex, Lore and Events in order and keeps native modified link clicks', () => {
   const props = renderPage();
   const links = [...container.querySelectorAll<HTMLAnchorElement>('.discover-navigation a')];
-  expect(links.map(link => link.textContent)).toEqual(['Stories', 'Creators', 'Codex', 'Lore']);
+  expect(links.map(link => link.textContent)).toEqual(['Stories', 'Creators', 'Codex', 'Lore', 'Events']);
   act(() => links[3].click());
   expect(props.onSectionChange).toHaveBeenCalledWith('lore');
   const event = new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true });
@@ -247,20 +247,14 @@ it('displays unavailable creator following honestly', () => {
   expect(container.textContent).toContain('Creators updates are not available yet');
 });
 
-it('keeps Events inside Rankings and preserves its expandable announcements', () => {
-  renderPage({ events: [{ id: 'mystery', title: 'Mystery Week', when: 'Coming soon', description: 'A week of mysteries.' }] });
-  expect(container.querySelector('[data-discover-events]')).toBeNull();
-  chooseView('Rankings');
-  const events = container.querySelector<HTMLDetailsElement>('[data-discover-events]')!;
-  expect(events.open).toBe(false);
-  act(() => events.querySelector('summary')!.click());
-  expect(events.open).toBe(true);
+it('shows announcements and the empty state in Events', () => {
+  renderPage({ section: 'events', events: [{ id: 'mystery', title: 'Mystery Week', when: 'Coming soon', description: 'A week of mysteries.' }] });
+  const events = container.querySelector('[data-discover-events]')!;
   expect(events.textContent).toContain('Mystery Week');
   expect(events.textContent).toContain('Coming soon');
-  chooseView('Browse');
-  expect(container.querySelector('[data-discover-events]')).toBeNull();
-  renderPage({ section: 'lore' });
-  expect(container.querySelector('[data-discover-events]')).toBeNull();
+  expect(container.querySelector('.discover-navigation [aria-current="page"]')?.textContent).toBe('Events');
+  renderPage({ section: 'events', events: [] });
+  expect(container.textContent).toContain('No events announced yet');
 });
 
 it('words release ages plainly', () => {

@@ -7,14 +7,13 @@ import type { Navigate } from './routes';
 
 const EMPTY_LIST = {
   title: 'Your stories appear here',
-  description: 'Carve New Destiny to plant a Story Seed and shape its World Blueprint. Every story you start waits here, ready to read and continue.',
 };
 
 /** How many of the reader's stories the Featured hero cycles through after Featured Ascension. */
 const FEATURED_STORIES = 5;
 
 /**
- * Home: the reader's stories, newest first, and the way to start a new one (Carve New Destiny plants a Story Seed at once), inside the Library Shell.
+ * Home: the reader's stories, newest first, and the way to start a new one (Create A World plants a Story Seed at once), inside the Library Shell.
  * Featured cycles through the newest stories that have a cover. Sparks lives in
  * Create (the Creator Space and Story Seed's Origin), not here.
  */

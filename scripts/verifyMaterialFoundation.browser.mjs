@@ -20,7 +20,7 @@ try {
   await page.goto(`${base}/app/`);
   await page.getByTestId('novel-expanded-home').waitFor();
   const shell = await page.locator('.workspace-header').evaluate(material);
-  const panel = await page.locator('[data-home-panel]').nth(1).evaluate(material);
+  const panel = await page.locator('[data-home-panel]:has(.home-filter-label)').evaluate(material);
   const card = await page.locator('[data-slot="empty-state"]').evaluate(material);
   await page.goto(`${base}/?preview=palette-materials`);
   await page.locator('.pm-workbench').waitFor();

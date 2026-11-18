@@ -34,7 +34,8 @@ try {
     await page.goto(`${base}/app/`);
     await page.getByTestId('novel-expanded-home').waitFor();
     const original = await page.locator('.workspace-header').evaluate(fill);
-    const panel = await page.locator('[data-home-panel]').nth(1).evaluate(fill);
+    const filterPanel = page.locator('[data-home-panel]:has(.home-filter-label)');
+    const panel = await filterPanel.evaluate(fill);
     const inset = await page.locator('[data-slot="empty-state"]').evaluate(fill);
     assert.equal(panel[0], 'rgba(11, 14, 30, 0.35)', 'V2 outer panels use Violet inset at 35% opacity');
     assert.equal(inset[0], 'rgba(11, 14, 30, 0.9)', 'V2 nested cards use Midnight violet at 90% opacity');
@@ -73,7 +74,7 @@ try {
       assert.equal(actual[0], 'rgba(50, 21, 35, 0.9)', `${selector} consumes shared tint with V2 opacity`);
       assert.equal(actual[2], 'blur(40px)', 'Tint preserves V2 blur');
     }
-    const tintedPanel = await page.locator('[data-home-panel]').nth(1).evaluate(fill);
+    const tintedPanel = await filterPanel.evaluate(fill);
     const tintedInset = await page.locator('[data-slot="empty-state"]').evaluate(fill);
     assert.equal(tintedPanel[0], 'rgba(50, 21, 35, 0.35)', 'Picker recolors panels without changing opacity');
     assert.equal(tintedInset[0], 'rgba(50, 21, 35, 0.9)', 'Picker recolors cards without changing opacity');
@@ -121,7 +122,7 @@ try {
     assert.equal(await slider.getAttribute('aria-valuetext'), 'Black');
     await page.goto(`${base}/app/`); await page.getByTestId('novel-expanded-home').waitFor();
     assert.equal((await page.locator('.workspace-header').evaluate(fill))[0], 'rgba(0, 0, 0, 0.9)', 'Zero strength offers the black look');
-    assert.equal((await page.locator('[data-home-panel]').nth(1).evaluate(fill))[0], 'rgba(0, 0, 0, 0.35)');
+    assert.equal((await filterPanel.evaluate(fill))[0], 'rgba(0, 0, 0, 0.35)');
     assert.equal((await page.locator('[data-slot="empty-state"]').evaluate(fill))[0], 'rgba(0, 0, 0, 0.9)', 'Zero strength reaches nested cards too');
     await page.goto(`${base}${settings}`); await open(page, 'Background tint');
     await page.getByRole('button', { name: 'Use default background', exact: true }).click();

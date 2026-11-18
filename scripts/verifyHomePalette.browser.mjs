@@ -136,9 +136,10 @@ try {
     await assertClear(page, worldMedia);
     await page.screenshot({ path: `${output}/cards-${width}.png` });
     await page.goto(`${base}/?preview=light-novels-home`);
-    const frame = page.frameLocator('iframe[title*="development"]');
-    await frame.getByTestId('novel-expanded-home').waitFor();
-    if (width >= 1024) await page.getByRole('combobox', { name: /^Viewport/ }).selectOption('laptop');
+    const viewport = width >= 1024 ? 'laptop' : 'mobile';
+    if (viewport === 'laptop') await page.getByRole('combobox', { name: /^Viewport/ }).selectOption(viewport);
+    const frame = page.frameLocator(`iframe[title="Expanded Novels Home development ${viewport}"]`);
+    await frame.locator('.world-card-tile').first().waitFor();
     await assertClear(frame, welcomeMedia);
     await frame.locator('.home-featured .world-card-carousel-step[data-side="next"]').click();
     await frame.locator('.world-card-banner').waitFor();

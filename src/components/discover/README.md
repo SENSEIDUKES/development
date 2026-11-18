@@ -14,13 +14,13 @@ The page has a compact header, sticky destination links, and a left browsing
 rail beside the current results, including on phones. Stories and Creators
 offer Browse, Genres and Rankings; Codex offers Characters, Items and Rankings.
 Novel / Manga / Game / Video sits first, with Stories / Creators / Codex /
-Lore underneath it. Card columns follow their available panel width. The host owns the
+Lore / Events underneath it. Card columns follow their available panel width. The host owns the
 selected medium and its address; catalogue content uses each world's declared
 format. Lore remains shared, with its local language and mode preserved.
 
 | Shelf | What it shows |
 | --- | --- |
-| Header and navigation | Discover, then the medium switcher, followed by Stories / Creators / Codex / Lore as native links |
+| Header and navigation | Discover, then the medium switcher, followed by Stories / Creators / Codex / Lore / Events as native links |
 | Medium | Novel / Manga / Game / Video above section navigation; the same layout and honest upcoming states for unconnected catalogues |
 | Section controls | All / My updates, with search and Genre outside Lore; filters reset on destination changes |
 | Stories | Catalogue first, then New Chapters ordered by time, Featured and Fate Survival; tracked stories in My updates |
@@ -28,6 +28,7 @@ format. Lore remains shared, with its local language and mode preserved.
 | Codex | Characters and Items only; expandable entries with descriptions and source-story cards; tracked entries in My updates |
 | Genres | Cover-backed tiles for Stories or Creators, counting the current search and feed; selecting a tile opens that genre's catalogue |
 | Heavenly Rankings | A separate overall view for stories, creators, characters or items; search and genres preserve original ranks; returning to Browse restores its feed |
+| Events | The existing themed-week announcements, with host-supplied availability; shared across media and reached at `?page=discover&section=events` |
 | Lore | Directly opens the encyclopedia: 398 terms with alias search, a category rail, localized articles and Write it as with Copy on every term; no genres or rankings |
 
 NovelExpanded (`src/novel-expanded/DiscoverPage.tsx`) shows it with sample worlds
@@ -57,6 +58,8 @@ fabricates a personal term list. See the direction document for
 mode behavior and translation-review limits.
 
 ## History
+
+- **2026-11-17:** Restored Events as a Discover navigation tab, moving the existing announcements and display contract out of Home. Events retains its address and selected medium on reload and has no story search or ranking controls.
 
 - **2026-10-30 (Lore as a translator's reference)** — Loaded SENSEI's master
   glossary into Lore: 398 terms in eleven categories, with permanent ids that

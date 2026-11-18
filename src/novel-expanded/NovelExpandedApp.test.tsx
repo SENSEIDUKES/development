@@ -574,7 +574,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(document.querySelector('[data-testid="novel-expanded-home"]')).toBeTruthy();
   });
 
-  it('the Creator Space lists the reader\'s worlds, drafts too: Continue opens the creator\'s Reader, the card opens the world for its author, Studio opens World Info, Energy opens the Cave', async () => {
+  it('the Creator Space lists the reader\'s worlds, drafts too: Continue opens the creator\'s Reader, the card opens the world for its author, Edit opens World Info, Energy opens the Cave', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     // Not yet published: Create still lists it, though Home does not.
@@ -592,8 +592,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(story.generate).toHaveBeenCalledTimes(1);
     await back();
     expect(address()).toBe('/app/?page=create');
-    await click(buttonByText('Studio', hub()), 'Studio', 20);
-    // Studio: the book's World Info, its creator's, in Create.
+    await click(buttonByText('Edit', hub()), 'Edit', 20);
+    // Edit: the book's World Info, its creator's, in Create.
     expect(address()).toBe(infoAddress(created.id));
     expect(worldInfo()).toBeTruthy();
     // World Info, the regular novel page, carries no tagging.
@@ -827,7 +827,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await render(services, '/app/');
     const sheet = () => document.querySelector<HTMLFormElement>('[data-testid="access-token-sheet"]');
     const blueprintFromTheBank = async () => {
-      await click(buttonByText('Carve New Destiny', container), 'Carve New Destiny', 20);
+      await click(buttonByText('Create A World', container), 'Create A World', 20);
       await click(buttonByText('Story Bank', container), 'Story Bank', 200);
       await click(buttonByText('Use Seed', container), 'Use Seed', 200);
       await click(buttonByText('Refine Details', container), 'Refine Details', 200);
@@ -865,8 +865,8 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     const writer = scriptedWriter();
     const services = appServices(writer.writer, { storySeeds: seeds, requestWorldBlueprint: requestWorldBlueprint as unknown as NovelExpandedServices['requestWorldBlueprint'] });
     await render(services, '/app/');
-    // Home's Carve New Destiny opens Create.
-    await click(buttonByText('Carve New Destiny', container), 'Carve New Destiny', 20);
+    // Home's Create A World opens Create.
+    await click(buttonByText('Create A World', container), 'Create A World', 20);
     expect(address()).toBe('/app/?page=create&seed=new');
 
     // The banked seed goes back into Story Seed, then on to a World Blueprint.
@@ -925,7 +925,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     const services = appServices(writer.writer, { storySeeds: seeds, requestWorldBlueprint: (async () => blueprint!) as unknown as NovelExpandedServices['requestWorldBlueprint'] });
     services.accessToken.current = 'owner-token';
     await render(services, '/app/');
-    await click(buttonByText('Carve New Destiny', container), 'Carve New Destiny', 20);
+    await click(buttonByText('Create A World', container), 'Create A World', 20);
     await click(buttonByText('Story Bank', container), 'Story Bank', 200);
     await click(buttonByText('Use Seed', container), 'Use Seed', 200);
     await click(buttonByText('Refine Details', container), 'Refine Details', 200);
@@ -1412,18 +1412,17 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(window.history.length).toBe(entries);
   });
 
-  it('moves Events to Home and retains the selected Discover medium through tabs and Lore', async () => {
+  it('places Events in Discover and retains the selected medium through tabs and Lore', async () => {
     await render(appServices(scriptedWriter().writer));
-    const events = document.querySelector<HTMLDetailsElement>('[data-home-events]')!;
-    expect(events.open).toBe(false);
-    expect(events.compareDocumentPosition(document.querySelector('[data-home-featured]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    await click(events.querySelector('summary'), 'Home Events');
-    expect(events.open).toBe(true);
+    expect(document.querySelector('[data-discover-events]')).toBeNull();
+    await click(buttonByText('Discover', strip()!), 'Discover');
+    await click(document.querySelector('.discover-navigation a[href*="section=events"]'), 'Events');
+    expect(address()).toBe('/app/?page=discover&section=events');
+    const events = document.querySelector('[data-discover-events]')!;
     expect(events.textContent).toContain('Mystery Week');
     expect(events.textContent).toContain('Coming soon');
-    await click(buttonByText('Discover', strip()!), 'Discover');
-    expect(document.querySelector('[data-home-events]')).toBeNull();
-    expect(document.querySelector('[data-testid="novel-expanded-discover"]')?.textContent).not.toContain('Mystery Week');
+    expect(document.querySelector('.discover-filter-bar')).toBeNull();
+    await click(document.querySelector('.discover-navigation a[href="/app/?page=discover"]'), 'Stories');
     const medium = () => document.querySelector('.discover-medium-switcher')!;
     await click(buttonByText('Manga', medium()), 'Manga');
     expect(address()).toBe('/app/?page=discover&medium=manga');

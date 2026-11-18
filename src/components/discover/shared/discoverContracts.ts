@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 
-export type DiscoverSection = 'stories' | 'creators' | 'codex' | 'lore';
+export type DiscoverSection = 'stories' | 'creators' | 'codex' | 'lore' | 'events';
 export type DiscoverMedium = 'novel' | 'manga' | 'game' | 'video';
 
 /** Public directory projections supplied by the host, not another story record. */
@@ -43,11 +43,21 @@ export interface DiscoverRankingBoard {
   entryIds?: readonly string[];
 }
 
+/** A themed Discover event; dates and availability are supplied by the host. */
+export interface DiscoverEvent {
+  id: string;
+  title: string;
+  description: string;
+  when?: string;
+  imageUrl?: string;
+}
+
 /**
  * Discover: the Library's front door. Display data and every destination
  * belong to the host; the page never ranks, recommends or invents a world.
  */
 export interface DiscoverProps {
+  events?: readonly DiscoverEvent[];
   section: DiscoverSection;
   medium: DiscoverMedium;
   onMediumChange: (medium: DiscoverMedium) => void;

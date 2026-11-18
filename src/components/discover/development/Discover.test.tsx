@@ -144,7 +144,7 @@ const ENTRIES = [
 it('links Stories, Creators, Codex and Lore in order and keeps native modified link clicks', () => {
   const props = renderPage();
   const links = [...container.querySelectorAll<HTMLAnchorElement>('.discover-navigation a')];
-  expect(links.map(link => link.textContent)).toEqual(['Stories', 'Creators', 'Codex', 'Lore']);
+  expect(links.map(link => link.textContent)).toEqual(['Stories', 'Creators', 'Codex', 'Lore', 'Events']);
   act(() => links[3].click());
   expect(props.onSectionChange).toHaveBeenCalledWith('lore');
   const event = new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true });
@@ -300,4 +300,17 @@ it('words release ages plainly', () => {
   expect(releaseAge('2026-10-20T11:48:00Z', NOW)).toBe('12m ago');
   expect(releaseAge('2026-10-20T07:00:00Z', NOW)).toBe('5h ago');
   expect(releaseAge('2026-10-17T12:00:00Z', NOW)).toBe('3d ago');
+});
+
+
+it('shows event announcements in their own destination without story filters', () => {
+  renderPage({ section: 'events', medium: 'manga', events: [
+    { id: 'mystery', title: 'Mystery Week', when: 'Coming soon', description: 'For creators and readers.' },
+  ] });
+  expect(container.querySelector('[data-discover-events]')?.textContent).toContain('Mystery Week');
+  expect(container.querySelector('[data-discover-events]')?.textContent).toContain('Coming soon');
+  expect(container.querySelector('.discover-filter-bar')).toBeNull();
+  expect(container.querySelector('.discover-navigation [aria-current="page"]')?.textContent).toBe('Events');
+  renderPage({ section: 'events', events: [] });
+  expect(container.textContent).toContain('No events announced yet');
 });

@@ -717,7 +717,7 @@ entries run to 2026-11-11.
     soon states. Lore stays shared. A compact left rail offers Browse, Genres and Rankings for Stories
     and Creators, Characters, Items and Rankings for Codex, and encyclopedia
     categories for Lore. The story catalogue appears first. Lore opens that
-    encyclopedia directly. Events now expand from one row on Home, above Featured; the other
+    encyclopedia directly. Events has its own Discover tab (owner correction, 2026-11-17); the other
     three destinations have genre filtering and relevant Heavenly Rankings.
     All / My updates follows each section's sample catalogue. Creators expand
     to their stories, and Codex is split into Characters and Items. Public

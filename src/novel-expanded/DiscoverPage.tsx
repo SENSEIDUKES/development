@@ -9,6 +9,7 @@ import {
 import type { UserProfile } from '@seihouse/library/profile';
 import { useLibraryBottomClearance } from '@seihouse/library/shell';
 import { AppShell } from './AppShell';
+import { DISCOVER_SAMPLE_EVENTS } from './discoverEvents';
 import {
   DISCOVER_RANKING_BOARDS,
   DISCOVER_SAMPLE_FATE_SURVIVAL,
@@ -93,6 +94,7 @@ export function DiscoverPage({
               readingMode={readerProfile.defaultChapterWritingStyle}
             />
           )}
+          events={DISCOVER_SAMPLE_EVENTS}
           worlds={DISCOVER_SAMPLE_WORLDS}
           releases={DISCOVER_SAMPLE_RELEASES}
           trackedWorldIds={DISCOVER_SAMPLE_TRACKED}
@@ -104,7 +106,7 @@ export function DiscoverPage({
           rankingBoards={DISCOVER_RANKING_BOARDS}
           onOpenWorld={open}
           notice={
-            route.lore ? undefined : (
+            route.lore || route.section === 'events' ? undefined : (
               <details className="discover-sample-notice">
                 <summary>Sample catalogue</summary>
                 <p>Explore sample stories, creators and Codex entries. Rankings and follows are examples.</p>

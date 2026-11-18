@@ -118,12 +118,12 @@ export interface CreatorSpaceProps {
   onContinueWorld: (worldId: string) => void;
   /** Opens the selected world's Info page. */
   onOpenWorld: (world: CreatorWorld) => void;
-  /** The world's full Studio workspace. */
-  onOpenStudio: (worldId: string) => void;
+  /** Opens the world's in-house editing destination. */
+  onEditWorld: (worldId: string) => void;
   /** Opens the plugin browser, optionally focused on one clicked plugin kind. */
   onBrowseToolkit?: (kind?: CreatorToolkitKind) => void;
   /** Re-reads the worlds after an error. */
   onRetryWorlds?: () => void;
-  /** The host's Sparks button (SEN: `SparksButton`), beside the page title. */
+  /** The host's Sparks button (SEN: `SparksButton`), beside Create at the top of the page. */
   sparks?: ReactNode;
 }

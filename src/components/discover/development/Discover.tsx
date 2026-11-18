@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import {
   BookOpen,
+  CalendarDays,
   ChevronDown,
   Film,
   Gamepad2,
@@ -21,6 +22,7 @@ import { WorldCardCompactGrid, WorldCardCompactTile } from '../../world-card/dev
 import { WorldCardMenu } from '../../world-card/development/WorldCardMenu';
 import type { DiscoverCodexEntry, DiscoverCreator, DiscoverProps } from '../shared/discoverContracts';
 import './discover.css';
+import { DiscoverEvents } from './DiscoverEvents';
 
 type Feed = 'all' | 'mine';
 type BrowseView = 'browse' | 'genres' | 'rankings';
@@ -35,6 +37,7 @@ const SECTIONS = [
   { id: 'creators', label: 'Creators', icon: Users },
   { id: 'codex', label: 'Codex', icon: Swords },
   { id: 'lore', label: 'Lore', icon: Sparkles },
+  { id: 'events', label: 'Events', icon: CalendarDays },
 ] as const;
 
 /** "Just now", "12m ago", "5h ago", "3d ago", then the date. */
@@ -111,7 +114,8 @@ export function Discover(props: DiscoverProps) {
           </a>
         ))}
       </nav>
-      <DiscoverContent key={section === 'lore' ? section : `${section}:${medium}`} {...props} />
+      {section === 'events' ? <DiscoverEvents events={props.events ?? []} />
+        : <DiscoverContent key={section === 'lore' ? section : `${section}:${medium}`} {...props} />}
     </div>
   );
 }

@@ -1,0 +1,8 @@
+[data-discover-events] .discover-events-list { display: grid; grid-template-columns: minmax(0,1fr); gap: .875rem; padding: .125rem 0 .5rem; list-style: none; }
+[data-discover-events] .discover-event { position: relative; display: flex; min-width: 0; min-height: 12rem; border-radius: .625rem; overflow: hidden; border: 1px solid rgba(255,255,255,.1); background: #0a0d14; }
+[data-discover-events] .discover-event-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .55; }
+[data-discover-events] .discover-event-body { position: relative; display: grid; align-content: end; gap: .25rem; width: 100%; padding: .875rem; background: linear-gradient(0deg,rgba(5,5,5,.92),rgba(5,5,5,.15) 85%); }
+[data-discover-events] .discover-event-when { color: rgba(223,216,207,.65); font-size: .625rem; letter-spacing: .12em; text-transform: uppercase; }
+[data-discover-events] .discover-event-title { color: #f3eee7; font-size: 1.125rem; font-weight: 700; }
+[data-discover-events] .discover-event-description { color: rgba(243,238,231,.74); font-size: .8125rem; line-height: 1.5; }
+@media (min-width: 768px) { [data-discover-events] .discover-events-list { grid-template-columns: repeat(2,minmax(0,1fr)); } }

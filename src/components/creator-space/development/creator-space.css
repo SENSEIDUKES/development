@@ -6,13 +6,19 @@
 [data-creator-space] .creator-space-title {
   font-size: clamp(1.625rem, 7.4vw, 2.75rem);
 }
-/* The closing action: its own band at the end of the page, centred on wider screens. */
-[data-creator-space] .creator-space-carve {
+[data-creator-space] .creator-space-heading {
   display: flex;
-  justify-content: center;
-  padding-top: 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
+[data-creator-space] .creator-space-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+[data-creator-space] .creator-space-actions button { min-height: 44px; }
 
 /* The two creator tiles: compact, workspace-like, never a banner. */
 [data-creator-space] .creator-space-stat {
@@ -101,7 +107,7 @@
   padding: 0;
   list-style: none;
 }
-[data-creator-space] .creator-space-toolkit > li {
+[data-creator-space] .creator-space-toolkit > * {
   min-width: 0;
 }
 [data-creator-space] .creator-space-tool {
@@ -109,9 +115,9 @@
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 6.25rem;
+  min-height: 10rem;
   overflow: hidden;
-  padding: 0.75rem 0.875rem;
+  padding: 1rem;
   border-radius: 1rem;
   border: 1px solid rgba(190, 216, 255, 0.2);
   background: rgba(8, 12, 20, 0.9);
@@ -236,13 +242,19 @@
   }
 }
 
-@container (min-width: 1120px) {
-  [data-creator-space] .creator-space-toolkit {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   [data-creator-space] .creator-space-rail { scroll-behavior: auto; }
   [data-creator-space] :is(.creator-space-stat, .creator-space-link, .creator-space-tool, .creator-plugin-filter, .creator-plugin-spp, .creator-space-dots > span) { transition: none; }
 }
+
+[data-creator-space] .creator-space-studios {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid rgba(190, 216, 255, 0.2);
+  border-radius: 1rem;
+  background: rgba(8, 12, 20, 0.9);
+}
+[data-creator-space] .creator-space-studios > div { margin-top: auto; padding-top: 0.5rem; }

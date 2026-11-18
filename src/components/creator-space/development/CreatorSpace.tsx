@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { ArrowRight, AudioLines, ChevronRight, FileText, Landmark, Paintbrush, Play, Volume2, Wind } from 'lucide-react';
+import { ArrowRight, ChevronRight, ExternalLink, Landmark, Package, Pencil, Play } from 'lucide-react';
 import {
-  LibraryButton, LibraryCard, LibraryCardMedia, LibraryCardTitle, LibraryPanel, ManifestButton,
+  LibraryButton, LibraryPanel,
   LibraryManifestingIcon as SENManifestingIcon, LibraryNavigationIcon as SENNavigationIcon,
 } from '@seihouse/library-ui';
 import { SEIEmptyState, SEIErrorState, SEISkeleton } from '@seihouse/ui';
@@ -12,8 +12,7 @@ import { WorldCard, WORLD_STATUS_LABELS } from '../../world-card/development/Wor
 import './creator-space.css';
 import { EnergySunIcon } from '../../energy/development/EnergySunIcon';
 
-const TOOLKIT_ICONS = { style: Paintbrush, soundscape: AudioLines, cue: Volume2, atmosphere: Wind } as const;
-const TOOLKIT_PREVIEW_NOTICE = 'The plugin browser is still being built. For now, each world’s styles, soundscapes, cues and atmospheres are chosen in its Studio.';
+const TOOLKIT_PREVIEW_NOTICE = 'The plugin browser is still being built. For now, open a world to choose its styles, soundscapes, cues and atmospheres.';
 
 export const creatorWorldMeta = (world: CreatorWorld) =>
   `Ch. ${world.chapterCount} · ${WORLD_STATUS_LABELS[world.status]}`;
@@ -33,7 +32,7 @@ function fallbackCover(id: string, images: readonly string[]) {
  * presents them and reports which world the creator wants to work on.
  */
 export function CreatorSpace({
-  worlds, energy, toolkit, onCreate, onOpenEnergy, onContinueWorld, onOpenWorld, onOpenStudio, onBrowseToolkit, onRetryWorlds, sparks,
+  worlds, energy, toolkit, onCreate, onOpenEnergy, onContinueWorld, onOpenWorld, onEditWorld, onBrowseToolkit, onRetryWorlds, sparks,
 }: CreatorSpaceProps) {
   const items = useMemo(() => worlds.status === 'ready'
     ? [...worlds.items].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
@@ -45,9 +44,12 @@ export function CreatorSpace({
 
   return <div data-creator-space className="creator-space space-y-6 pb-4 text-signal sm:space-y-9">
     <section aria-labelledby="creator-space-title" className="space-y-4 md:max-w-3xl">
-      <div className="flex items-center justify-between gap-3">
+      <div className="creator-space-heading">
         <h1 id="creator-space-title" className="creator-space-title font-display font-bold leading-none tracking-tight text-signal">Creator Space</h1>
-        {sparks}
+        <div className="creator-space-actions">
+          <LibraryButton type="button" size="md" icon={SENManifestingIcon} onClick={onCreate}>Create</LibraryButton>
+          {sparks}
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <CreatorStat label="Energy" value={energyValue} note={energyNote} onSelect={onOpenEnergy}
@@ -56,8 +58,6 @@ export function CreatorSpace({
           icon={<SENNavigationIcon name="scroll" size={26} className="text-portal" aria-hidden="true" />} />
       </div>
     </section>
-
-    <CreatorToolkit items={toolkit} onBrowse={onBrowseToolkit} />
 
     <section aria-labelledby="creator-worlds-title" className="space-y-3">
       <div className="flex items-baseline justify-between gap-3">
@@ -72,18 +72,13 @@ export function CreatorSpace({
       </LibraryPanel>}
       {worlds.status === 'ready' && items.length === 0 && <LibraryPanel padding="sm">
         <SEIEmptyState titleAs="h3" size="sm" icon={SENManifestingIcon} title="No worlds yet"
-          description="Create, at the end of this page, starts your first world from a Story Seed. It will appear here as soon as its story begins." />
+          description="Use Create above to start your first world from a Story Seed. It will appear here as soon as its story begins." />
       </LibraryPanel>}
       {worlds.status === 'ready' && items.length > 0 && <WorldsRow worlds={items}
-        onContinueWorld={onContinueWorld} onOpenWorld={onOpenWorld} onOpenStudio={onOpenStudio} />}
+        onContinueWorld={onContinueWorld} onOpenWorld={onOpenWorld} onEditWorld={onEditWorld} />}
     </section>
 
-    {/* The page closes on starting something new, after the worlds already in progress. */}
-    <div className="creator-space-carve">
-      <ManifestButton icon={SENManifestingIcon} size="lg" fullWidth className="sm:w-auto" onClick={() => onCreate()}>
-        Create
-      </ManifestButton>
-    </div>
+    <CreatorToolkit items={toolkit} onBrowse={onBrowseToolkit} />
   </div>;
 }
 
@@ -106,33 +101,34 @@ function CreatorStat({ icon, label, value, note, onSelect }: {
 
 function CreatorToolkit({ items, onBrowse }: { items: readonly CreatorToolkitItem[]; onBrowse?: (kind?: CreatorToolkitKind) => void }) {
   const [notice, setNotice] = useState(false);
-  const browse = (kind?: CreatorToolkitKind) => { if (onBrowse) onBrowse(kind); else setNotice(true); };
-  if (!items.length && !onBrowse) return null;
+  const browse = () => { if (onBrowse) onBrowse(); else setNotice(true); };
+  const art = items.find(item => item.imageUrl)?.imageUrl;
   return <section aria-labelledby="creator-toolkit-title" className="space-y-3">
-    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-      <div className="flex items-center gap-2">
-        <h2 id="creator-toolkit-title" className="font-display text-xl font-bold text-signal sm:text-2xl">Creator Toolkit</h2>
-        {!onBrowse && <span className="creator-space-tag">Preview</span>}
-      </div>
-      <button type="button" className="creator-space-link" onClick={() => browse()}>
-        Browse plugins <ArrowRight size={16} aria-hidden="true" />
-      </button>
+    <div className="flex items-center gap-2">
+      <h2 id="creator-toolkit-title" className="font-display text-xl font-bold text-signal sm:text-2xl">Creator Toolkit</h2>
+      {!onBrowse && <span className="creator-space-tag">Preview</span>}
     </div>
-    {items.length > 0 && <ul className="creator-space-toolkit" aria-label="Creator Toolkit">
-      {items.map(item => {
-        const Icon = TOOLKIT_ICONS[item.kind];
-        return <li key={item.id}>
-          <button type="button" className="creator-space-tool" onClick={() => browse(item.kind)}>
-            {item.imageUrl && <img src={item.imageUrl} alt="" className="creator-space-tool-art" loading="lazy" referrerPolicy="no-referrer" />}
-            <span className="relative z-[1] flex h-full flex-col items-start gap-1 text-left">
-              <span className="creator-space-tool-icon mb-1"><Icon size={16} aria-hidden="true" /></span>
-              <span className="mt-auto block font-display text-lg font-semibold leading-tight text-signal">{item.title}</span>
-              <span className="block max-w-[11.5rem] font-sans text-xs leading-snug text-neutral-300">{item.description}</span>
-            </span>
-          </button>
-        </li>;
-      })}
-    </ul>}
+    <div className="creator-space-toolkit">
+      <button type="button" className="creator-space-tool" onClick={browse}>
+        {art && <img src={art} alt="" className="creator-space-tool-art" loading="lazy" referrerPolicy="no-referrer" />}
+        <span className="relative z-[1] flex flex-col items-start gap-2 text-left">
+          <span className="creator-space-tool-icon"><Package size={18} aria-hidden="true" /></span>
+          <span className="flex items-center gap-3 font-display text-xl font-semibold text-signal">Browse plugins <ArrowRight size={18} aria-hidden="true" /></span>
+          <span className="max-w-64 font-sans text-sm leading-relaxed text-neutral-300">Style packs, soundscapes, cues and atmospheres for your worlds.</span>
+        </span>
+      </button>
+      <div className="creator-space-studios">
+        <span className="creator-space-tool-icon"><Landmark size={18} aria-hidden="true" /></span>
+        <h3 className="font-display text-xl font-semibold text-signal">Studios</h3>
+        <p className="font-sans text-sm leading-relaxed text-neutral-300">Create your own plugins in Studio, then bring your exported packages back to your worlds.</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <a className="creator-space-link" href="https://studio.novelexpanded.com" target="_blank" rel="noopener noreferrer">
+            Open Studio <ExternalLink size={16} aria-hidden="true" /><span className="sr-only"> (opens in a new tab)</span>
+          </a>
+          {onBrowse && <button type="button" className="creator-space-link" onClick={browse}>Import plugins <ArrowRight size={16} aria-hidden="true" /></button>}
+        </div>
+      </div>
+    </div>
     <p role="status" className="font-sans text-xs leading-relaxed text-neutral-300 empty:hidden">{notice ? TOOLKIT_PREVIEW_NOTICE : ''}</p>
   </section>;
 }
@@ -143,11 +139,11 @@ function WorldsLoading() {
   </div>;
 }
 
-function WorldsRow({ worlds, onContinueWorld, onOpenWorld, onOpenStudio }: {
+function WorldsRow({ worlds, onContinueWorld, onOpenWorld, onEditWorld }: {
   worlds: readonly CreatorWorld[];
   onContinueWorld: (worldId: string) => void;
   onOpenWorld: (world: CreatorWorld) => void;
-  onOpenStudio: (worldId: string) => void;
+  onEditWorld: (worldId: string) => void;
 }) {
   const { homeImages = [] } = useLibraryAssets();
   const [selectedId, setSelectedId] = useState<string>();
@@ -176,13 +172,13 @@ function WorldsRow({ worlds, onContinueWorld, onOpenWorld, onOpenStudio }: {
       <h3 id={titleId} className="font-display text-xl font-bold leading-snug text-signal sm:text-2xl">{selected.title}</h3>
       <p className="mt-1 font-sans text-xs text-neutral-300">{creatorWorldMeta(selected)}</p>
       <div className="mt-3 grid grid-cols-2 gap-3">
-        <LibraryButton type="button" variant="primary" size="lg" fullWidth icon={Play} disabled={complete}
+        <LibraryButton type="button" variant="primary" size="md" fullWidth icon={Play} disabled={complete}
           aria-describedby={complete ? `${titleId} ${noteId}` : titleId} onClick={() => onContinueWorld(selected.id)}>
           Continue
         </LibraryButton>
-        <LibraryButton type="button" variant="secondary" size="lg" fullWidth icon={Landmark}
-          aria-describedby={titleId} onClick={() => onOpenStudio(selected.id)}>
-          Studio
+        <LibraryButton type="button" variant="secondary" size="md" fullWidth icon={Pencil}
+          aria-describedby={titleId} onClick={() => onEditWorld(selected.id)}>
+          Edit
         </LibraryButton>
       </div>
       {complete && <p id={noteId} className="mt-2 font-sans text-xs text-neutral-300">This story has reached its ending.</p>}

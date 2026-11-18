@@ -14,10 +14,10 @@ Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-ru
 
 ## Boundary and ownership
 
-Home includes the expandable Events notice above Featured. `HomeEvents` and its
-display contract live in this Home owner; NovelExpanded supplies the Coming soon
-sample announcements from `homeEvents.ts`. Discover no longer owns or displays
-Events. The Home Workshop's app iframe shows this same placement.
+Home's opening hero says **Welcome to NovelExpanded**, with **Create A World**
+opening Story Seed. Events lives in Discover's **Events** tab; the existing event
+announcements and display contract moved to Discover's owner. The Home Workshop
+continues loading the app directly, so it shows this same wording and placement.
 
 The Home workspace's **Development** pane loads the actual NovelExpanded `/app/`
 document at the selected mobile, tablet or laptop viewport. This reuses
@@ -216,3 +216,5 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
   Library's `look.css` (`src/components/library-presentation/`), class
   `.library-look`, worn by every page in the shell through `LibraryLook`. Home's
   own rules (clear media, navigation states, footer clearance) are unchanged there.
+
+- **2026-11-17:** Renamed the hero to Welcome to NovelExpanded and its action to Create A World. Moved Events and its existing announcements into Discover’s Events tab.

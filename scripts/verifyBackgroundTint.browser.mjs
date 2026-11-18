@@ -38,7 +38,7 @@ try {
     const inset = await page.locator('[data-slot="empty-state"]').evaluate(fill);
     assert.equal(panel[0], 'rgba(11, 14, 30, 0.35)', 'V2 outer panels use Violet inset at 35% opacity');
     assert.equal(inset[0], 'rgba(11, 14, 30, 0.9)', 'V2 nested cards use Midnight violet at 90% opacity');
-    const cta = page.getByRole('button', { name: 'Carve New Destiny', exact: true });
+    const cta = page.getByRole('button', { name: 'Create A World', exact: true });
     const ring = await cta.evaluate(rainbow);
     await page.goto(`${base}${settings}`);
     await open(page, 'Accent color');
@@ -83,8 +83,7 @@ try {
     assert.deepEqual(await cta.evaluate(rainbow), ring, 'Rainbow effects are unchanged');
     assert.equal(await page.locator('.home-filter-label').evaluate(e => getComputedStyle(e).color), 'rgb(167, 139, 250)', 'Background tint preserves the independent accent');
     assert.match(await page.locator('.library-look').evaluate(e => getComputedStyle(e).backgroundImage), /url\(/, 'Artwork remains visible');
-    await page.locator('[data-home-events] summary').click();
-    const media = await page.locator('.home-event-art, .home-event-body, .world-card-banner-backdrop, .world-card-banner-video').evaluateAll(elements => elements.map(e => [getComputedStyle(e).filter, getComputedStyle(e).backdropFilter]));
+    const media = await page.locator('.home-featured video, .home-featured img, .world-card-banner-backdrop, .world-card-banner-video').evaluateAll(elements => elements.map(e => [getComputedStyle(e).filter, getComputedStyle(e).backdropFilter]));
     assert.ok(media.length > 0);
     assert.ok(media.every(([filter, backdrop]) => filter === 'none' && backdrop === 'none'));
     await page.screenshot({ path: `${output}/home-${width}.png` });
@@ -94,7 +93,7 @@ try {
       await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }] });
       const reduced = await page.locator('.workspace-header').evaluate(fill);
       assert.equal(reduced[0], 'rgb(50, 21, 35)'); assert.equal(reduced[2], 'none');
-      for (const selector of ['[data-home-events]', '[data-slot="empty-state"]']) {
+      for (const selector of ['[data-home-panel]:not(.home-featured [data-home-panel])', '[data-slot="empty-state"]']) {
         await page.waitForFunction(({ selector, color }) => getComputedStyle(document.querySelector(selector)).backgroundColor === color, { selector, color: reduced[0] });
         const solid = await page.locator(selector).evaluate(fill);
         assert.equal(solid[0], reduced[0]); assert.equal(solid[2], 'none');

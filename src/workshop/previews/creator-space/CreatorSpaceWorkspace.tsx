@@ -7,13 +7,13 @@ import type { CreatorWorldsSource } from './CreatorSpaceHost';
 const viewports = {
   mobile: { label: 'Mobile', width: 390, height: 844 },
   tablet: { label: 'Tablet', width: 768, height: 1024 },
-  laptop: { label: 'Laptop', width: 1440, height: 900 },
+  laptop: { label: 'Laptop', width: 1280, height: 800 },
 } as const;
 type Viewport = keyof typeof viewports;
 
 const WORLD_SOURCES: Record<CreatorWorldsSource, { label: string; description: string }> = {
-  sample: { label: 'Sample worlds', description: 'The Library shell composition with six Workshop sample worlds (existing art, a finished story, one without a cover), for judging the page’s own layout. Continue and Studio say where they would go; it does not wear the app’s look.' },
-  local: { label: 'This browser’s stories', description: 'The app’s own Create at /app/?page=create, with the Library’s look: this browser’s stories, the live Energy account and the real destinations (Story Seed, the Reader, World Info and the Cave’s Energy page).' },
+  sample: { label: 'Sample worlds', description: 'The Library shell composition with six Workshop sample worlds (existing art, a finished story, one without a cover), for judging the page’s own layout. Continue and Edit say where they would go; it does not wear the app’s look.' },
+  local: { label: 'This browser’s stories', description: 'The app’s own Create at /app/?page=create, with the Library’s look: this browser’s stories, the live Energy account and the real destinations (Story Seed, the Reader, World Info, Creator Plugins, external Studio and the Cave’s Energy page).' },
 };
 
 export function CreatorSpaceWorkspace() {

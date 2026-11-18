@@ -15,7 +15,7 @@ Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-ru
   `/library-shell.html?variant=development&source=main-library&screen=creator-space`
   (add `&worlds=sample` for the sample set)
 - **Created:** 2026-09-26
-- **Last recorded Workshop update:** 2026-11-01
+- **Last recorded Workshop update:** 2026-11-17
 - **Historical source inspection:** 2026-09-26 (Library shell navigation, Home cards, Energy,
   and the chapter workspace were inspected in this repository)
 - **Status:** approved reconstruction (Workshop Replica Mode B), first usable pass
@@ -26,34 +26,22 @@ The Library's Create tab. It replaces the bottom-strip **Library** tab, which on
 Home with its My Library collection selected. My Library itself is unchanged and still
 reachable from header Search and the footer.
 
-The page has three parts and a closing action, in this order, sized so the worlds row is inside the first phone
-screen:
+The page leads with a normal-sized **Create** button beside the title and Sparks,
+followed by Energy and In progress. Create opens the existing Story Seed flow.
 
-1. **Creator Space** — the page title and two readings: **Energy** (the live available balance; opens the
-   Cave's Energy page) and **In progress** (worlds that have not reached their ending; a
-   plain reading with no destination). "Ready to share" is deliberately absent until
-   publishing exists.
-2. **Creator Toolkit** — a responsive grid of **Style Packs** (the official Chinese,
-   Korean and Japanese writing styles), **Soundscapes** (the first-party ambient catalog), **Cues** (the
-   first-party inline sound effects) and **Atmospheres** (the first-party weather and place sounds).
-   When the host supplies `onBrowseToolkit`, **Browse plugins** and each card open **Creator Plugins**
-   (`CreatorPlugins`), showing the built-in Style Packs, Soundscapes, Cues and Atmospheres alongside
-   `.spp` skill and audio pack import. Without `onBrowseToolkit`, a Preview tag and one honest status
-   line appear instead.
-3. **Your worlds** — the main focus. A native, swipeable scroll-snap row of Home-style
-   `LibraryCard` covers with title and "Ch. N · Draft/Shared/Public/Complete", the most
-   recently changed world first and selected. Tapping a card selects it; beneath the row
-   sit its title and exactly two actions:
-   - **Continue** — keep writing: the world's chapter workspace, landed on its Generate
-     Chapter panel. Disabled, with a note, for a world that reached its ending.
-   - **Studio** — the same world's full workspace from the top (story direction, CAPA
-     skills, media, Blueprint).
+**Your worlds** comes next: the most recently changed world is selected first,
+with **Continue | Edit** beneath the swipeable covers. Continue opens the creator's
+Reader; Edit opens the world's existing in-house editing destination (World Info
+in the app). Completed worlds keep Edit available and disable Continue.
+Loading, empty and failed-read states remain distinct.
 
-   The count reads "N worlds". Loading, empty ("No worlds yet") and failed-read states are
-   distinct. A world without cover art shows the Library's own celestial art, dimmed; an
-   unreachable image leaves the card's own blue-gold wash rather than a broken image.
-4. **Create** — the page closes on one full-width Manifest button, below the worlds and
-   their actions, that opens Story Seed to start a new world.
+**Creator Toolkit** groups two destinations below the worlds. One large **Browse
+plugins** card opens Creator Plugins, which retains the style, soundscape, cue and
+atmosphere catalogs and existing audio/skill `.spp` import controls. The **Studios**
+card links to `https://studio.novelexpanded.com` in a new tab and offers **Import
+plugins** back into that same plugin browser. Studio always refers to the external
+creation app, never the in-house world editor. Without a host plugin browser, the
+preview shows an honest availability notice and omits Import plugins.
 
 ## Ownership and contracts
 
@@ -66,7 +54,7 @@ destination:
 | `worlds` | The creator's worlds with a request lifecycle (`loading` / `ready` / `error`) |
 | `energy` | The `useEnergyAccount` read; the page never computes a balance |
 | `toolkit` | Preview items (title, description, kind, art) |
-| `onCreate`, `onOpenEnergy`, `onContinueWorld`, `onOpenStudio` | Existing destinations |
+| `onCreate`, `onOpenEnergy`, `onContinueWorld`, `onEditWorld` | Existing destinations |
 | `onBrowseToolkit`, `onRetryWorlds` | Optional; `onBrowseToolkit(kind?)` opens `CreatorPlugins`, omitted means "not built" |
 
 The selected world is local UI state. The shell keeps the page mounted after its first visit,
@@ -82,16 +70,16 @@ Each `HarnessStory` becomes a world: distinct committed chapter numbers are its 
 count, `conclusion` makes it Complete, and `visibility` public/shared are shown as such
 (private is Draft). Stories carry no cover art or genre yet. Energy comes from the Energy
 client the shell already mounts. Continue opens
-`/?preview=harness-generation&story=<id>&focus=next-chapter` and Studio
+`/?preview=harness-generation&story=<id>&focus=next-chapter` and Edit
 `/?preview=harness-generation&story=<id>`, in the top window so a Workshop frame is left.
 
 `worlds=sample` swaps in six Workshop sample worlds (`previewData.ts`, existing local art,
 one finished, one without a cover). Sample worlds are not in the chapter workspace, so
-Continue/Studio report where they would go instead of navigating. The Workshop entry
+Continue/Edit report where they would go instead of navigating. The Workshop entry
 defaults to the app's own Create (`/app/?page=create`, this browser's stories); the
 sample composition is a layout aid behind the Worlds control.
 
-To support Continue and Studio, the Library chapter workspace gained two additive props,
+To support Continue and Edit, the Library chapter workspace gained two additive props,
 `initialStoryId` and `initialFocus: 'next-chapter'`, read from the `story`/`focus` URL
 parameters by its Workshop wrapper. Story Seed's existing "start story" handoff already
 sent `story=<id>`; it now opens that story instead of the list's first.
@@ -134,6 +122,12 @@ destinations, tab switches and history, empty and local states, 320/768/1440 wid
 reduced motion. Evidence: `output/playwright/creator-space/`.
 
 ## Workshop history
+
+- **2026-11-17 (Create layout):** Moved Create to a compact top action, brought
+  Your worlds ahead of the toolkit, and renamed the story action to Edit. Replaced
+  four plugin preview cards with one Browse plugins card and added a dedicated
+  Studios card with the external Studio link and a return path to package import.
+  The app and existing Workshop preview share this Library surface.
 
 - **2026-11-01 (Toolkit plugins & Creator Plugins view):** Added **Cues** and **Atmospheres**
   beside Style Packs and Soundscapes in the Creator Toolkit, switched the Toolkit from a

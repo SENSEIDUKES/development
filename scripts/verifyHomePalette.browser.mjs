@@ -11,8 +11,8 @@ const base = process.argv[2] ?? 'http://localhost:5173';
 const output = 'output/playwright/home-palette-regression';
 mkdirSync(output, { recursive: true });
 const results = [];
-const media = '.home-event, .home-event-art, .home-event-body, .world-card-base, .world-card-base-media, .world-card-banner, .world-card-banner-backdrop, .world-card-banner-video, .world-card-banner-wash';
-const nativeColors = '[data-slot="navigation-label"], [data-slot="navigation-account-name"], .home-featured-label, .home-events-label, .home-filter-label';
+const media = '.world-card-base, .world-card-base-media, .world-card-banner, .world-card-banner-backdrop, .world-card-banner-video, .world-card-banner-wash';
+const nativeColors = '[data-slot="navigation-label"], [data-slot="navigation-account-name"], .home-featured-label, .home-filter-label';
 const assertClear = async page => {
   const surfaces = await page.locator(media).evaluateAll(elements => elements.map(element => {
     const style = getComputedStyle(element);
@@ -45,9 +45,8 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${base}/app/`);
     await page.getByTestId('novel-expanded-home').waitFor();
-    await page.locator('[data-home-events] summary').click();
     await assertClear(page);
-    const cta = page.getByRole('button', { name: 'Carve New Destiny', exact: true });
+    const cta = page.getByRole('button', { name: 'Create A World', exact: true });
     assert.equal(await cta.evaluate(element => getComputedStyle(element.parentElement.parentElement).backdropFilter), 'none');
     await page.waitForFunction(() => {
       const video = document.querySelector('video');
@@ -130,7 +129,6 @@ try {
     });
     await page.reload();
     await page.locator('.world-card-tile').first().waitFor();
-    await page.locator('[data-home-events] summary').click();
     await page.locator('.home-featured-dot').nth(1).click();
     await page.locator('.world-card-banner').waitFor();
     await assertClear(page);
@@ -139,7 +137,6 @@ try {
     const frame = page.frameLocator('iframe[title*="development"]');
     await frame.getByTestId('novel-expanded-home').waitFor();
     if (width >= 1024) await page.getByRole('combobox', { name: /^Viewport/ }).selectOption('laptop');
-    await frame.locator('[data-home-events] summary').click();
     await assertClear(frame);
     assert.deepEqual(errors, []);
     results.push({ width, mediaClear: true, navigationEffectsPreserved: true, nativeTextColors: true, whiteIcons: true, workshopChecked: true });

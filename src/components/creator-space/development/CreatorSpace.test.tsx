@@ -34,7 +34,7 @@ function renderPage(overrides: Partial<CreatorSpaceProps> = {}) {
       { id: 'cue', kind: 'cue', title: 'Cues', description: 'Sound effects.' },
       { id: 'atmosphere', kind: 'atmosphere', title: 'Atmospheres', description: 'Place sounds.' },
     ],
-    onCreate: vi.fn(), onOpenEnergy: vi.fn(), onContinueWorld: vi.fn(), onOpenWorld: vi.fn(), onOpenStudio: vi.fn(),
+    onCreate: vi.fn(), onOpenEnergy: vi.fn(), onContinueWorld: vi.fn(), onOpenWorld: vi.fn(), onEditWorld: vi.fn(),
     ...overrides,
   };
   act(() => root.render(<LibraryPresentationProvider><CreatorSpace {...props} /></LibraryPresentationProvider>));
@@ -77,7 +77,7 @@ it('selects the most recent world first and retargets exactly two actions to the
   ]);
   expect(cards[0].getAttribute('data-selected')).toBe('true');
   expect(selected()?.querySelector('h3')?.textContent).toBe('The Last Lotus of the Jade Empire');
-  expect(Array.from(selected()!.querySelectorAll('button')).map(item => item.textContent?.trim())).toEqual(['Continue', 'Studio']);
+  expect(Array.from(selected()!.querySelectorAll('button')).map(item => item.textContent?.trim())).toEqual(['Continue', 'Edit']);
 
   click(opens[1]);
   expect(cards[1].getAttribute('data-selected')).toBe('true');
@@ -86,20 +86,20 @@ it('selects the most recent world first and retargets exactly two actions to the
   expect(selected()?.querySelector('h3')?.textContent).toBe('Ashes of the Nine Moons');
   click(button('Continue'));
   expect(props.onContinueWorld).toHaveBeenCalledWith('older');
-  click(button('Studio'));
-  expect(props.onOpenStudio).toHaveBeenCalledWith('older');
+  click(button('Edit'));
+  expect(props.onEditWorld).toHaveBeenCalledWith('older');
   // Both actions name the world they act on.
   const description = button('Continue')!.getAttribute('aria-describedby')!.split(' ')[0];
   expect(document.getElementById(description)?.textContent).toBe('Ashes of the Nine Moons');
 });
 
-it('keeps Studio open but stops Continue for a world that reached its ending', () => {
+it('keeps Edit open but stops Continue for a world that reached its ending', () => {
   const props = renderPage();
   click(container.querySelectorAll<HTMLElement>('.world-card-compact .world-card-base-open')[2]);
   expect((button('Continue') as HTMLButtonElement).disabled).toBe(true);
   expect(selected()?.textContent).toContain('This story has reached its ending.');
-  click(button('Studio'));
-  expect(props.onOpenStudio).toHaveBeenCalledWith('ended');
+  click(button('Edit'));
+  expect(props.onEditWorld).toHaveBeenCalledWith('ended');
 });
 
 it('says honestly that the plugin browser is not open yet, unless the host supplies one', () => {
@@ -113,10 +113,12 @@ it('says honestly that the plugin browser is not open yet, unless the host suppl
   const browse = vi.fn();
   renderPage({ onBrowseToolkit: browse });
   click(button(/^Browse plugins/));
-  click(button(/^Style Packs/));
-  click(button(/^Cues/));
-  click(button(/^Atmospheres/));
-  expect(browse.mock.calls).toEqual([[undefined], ['style'], ['cue'], ['atmosphere']]);
+  click(button(/^Import plugins/));
+  expect(browse.mock.calls).toEqual([[], []]);
+  expect(container.querySelectorAll('button.creator-space-tool')).toHaveLength(1);
+  const studio = container.querySelector<HTMLAnchorElement>('a[href="https://studio.novelexpanded.com"]')!;
+  expect(studio.target).toBe('_blank');
+  expect(studio.rel).toContain('noopener');
 });
 
 it('lists parent .spp packs first and reveals individual files only when a parent .spp is clicked', () => {

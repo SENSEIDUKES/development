@@ -43,9 +43,9 @@ rewrites and every page survives a reload.
 
 | Page | Address | What it is |
 | --- | --- | --- |
-| Home | `/app/` | Events above Featured, the reader's stories, newest first, and Carve New Destiny |
-| Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); Novel / Manga / Game / Video (`medium`) above section navigation, left browsing rail, scoped All / My updates, genres and rankings outside Lore |
-| Create | `/app/?page=create` | The Library's Creator Space: the reader's worlds (Continue, Studio), Energy, the Creator Toolkit previews and Create |
+| Home | `/app/` | Welcome to NovelExpanded, Create A World, and the reader's stories, newest first |
+| Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`), Events (`section=events`); Novel / Manga / Game / Video (`medium`) above section navigation, left browsing rail, scoped All / My updates, genres and rankings outside Lore |
+| Create | `/app/?page=create` | The Library's Creator Space: a compact Create action, Energy, the reader's worlds (Continue, Edit), Browse plugins and external Studios |
 | A world, for its author | `/app/?page=create&world=<id>` | What a world opens to when its author taps it under Your worlds: the author's worlds as mini world cards, Novel (Sequential Art later), and Blueprint, Chapters, Codex (coming), Assets and Info (`AuthorWorldView`). Chapters is the iTunes list where chapters are checked and tagged a few at a time; a chapter opens in the creator's Reader, below, in Create mode with its tags lit |
 | Story Seed | `/app/?page=create&seed=new` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story; `&seed=<id>` opens a saved seed |
 | The creator's Reader | `/app/?page=create&world=<id>&read=1` (`&chapter=<n>` to open at a chapter, `&create=1` for Create mode with its tags lit) | The Reader with Fate and Create together, where the creator writes the next chapter and tags each chapter (Create mode); opened by Start Story, Continue and a chapter in the world's Chapters. Back returns to Chapters for a chapter opened there, else to the book's World Info in Create |
@@ -354,7 +354,7 @@ task needs something the list does not allow.
 | `services.ts` | Storage, the writer, the official skills, the Blueprint client, the reader's profile and the practice economy |
 | `HomePage.tsx` | Home: the reader's stories, in `AppShell` |
 | `DiscoverPage.tsx`, `discoverSamples.ts` | Discover (`@seihouse/library/discover`) in `AppShell`, with medium selection and sample stories, creators, Codex projections, follows, releases and boards; Lore uses the authored encyclopedia |
-| `homeEvents.ts` | Coming soon sample announcements supplied to Home's Events notice |
+| `discoverEvents.ts` | Coming soon sample announcements supplied to Discover's Events tab |
 | `CreatePage.tsx` | Create: `CreationModal` in a guest Story Seed runtime, starting new seeds from the profile's defaults; asks for the token before a Blueprint |
 | `AccessTokenSheet.tsx` | The access token sheet, one for the whole app |
 | `accessToken.ts` | The chapter writer with the owner's token: a chapter at the limit asks for it and is sent again |
@@ -671,3 +671,11 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - **2026-11-02** — Story Seed keeps compact Back/Next actions in the form and the styled Library navigation below it on phones and tablets. Its order is Origin → World → ARC → Create; Fun Settings follows Style in Origin. Sections opens the drawer with Save Draft, story preview, Story Bank, Blueprint, Settings and Home. Completion checks stay visible on active tabs and saved drafts retain confirmations of defaults or deliberate blanks. The Workshop uses the same shared surface with isolated preview storage.
 
 - **2026-11-13:** Blueprint portraits survive into the Codex; covers require the main character image and support a selected second image through the Router’s existing reference input.
+
+- **2026-11-17 (Create layout):** Create is a compact top action; Your worlds
+  precedes one Browse plugins card and a dedicated Studios card. Edit keeps the
+  world's existing World Info destination. Open Studio opens
+  `https://studio.novelexpanded.com` in a new tab, while Import plugins opens the
+  existing Creator Plugins audio/skill package import view.
+
+- **2026-11-17 (Home and Events):** Home now welcomes readers with Welcome to NovelExpanded and Create A World. Events is a dedicated Discover tab; the existing Coming soon announcements moved with it, and its address survives reload.

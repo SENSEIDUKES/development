@@ -32,7 +32,7 @@ const isToolkitFilter = (value: string | null): value is CreatorToolkitFilter =>
  */
 export type NovelExpandedRoute =
   | { page: 'home' }
-  | { page: 'discover'; section?: 'creators' | 'codex'; medium?: DiscoverMedium; lore?: string; query?: string; category?: string }
+  | { page: 'discover'; section?: 'creators' | 'codex' | 'events'; medium?: DiscoverMedium; lore?: string; query?: string; category?: string }
   | { page: 'create'; seedId?: string; newSeed?: boolean; plugins?: CreatorToolkitFilter; pluginPack?: string }
   /** A world as its author sees it in Create: its Blueprint, Chapters, Codex, Assets and Info. */
   | { page: 'world'; storyId: string }
@@ -63,7 +63,7 @@ export function parseRoute(search: string): NovelExpandedRoute {
     const medium = query.get('medium');
     const base: Extract<NovelExpandedRoute, { page: 'discover' }> = { page: 'discover', ...((medium === 'novel' || medium === 'manga' || medium === 'game' || medium === 'video') ? { medium } : {}) };
     return lore ? { ...base, lore, ...(query.get('q') ? { query: query.get('q')! } : {}), ...(query.get('category') ? { category: query.get('category')! } : {}) }
-      : section === 'creators' || section === 'codex' ? { ...base, section } : base;
+      : section === 'creators' || section === 'codex' || section === 'events' ? { ...base, section } : base;
   }
   if (query.get('page') === 'create') {
     const worldId = query.get('world')?.trim();

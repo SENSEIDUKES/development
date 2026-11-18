@@ -4,7 +4,7 @@ import { materialStyle, type MaterialId, type MeasuredMaterial, type PaletteSett
 export type MaterialMeasurements = Partial<Record<MaterialId, MeasuredMaterial>>;
 const selectors = {
   navigation: ':is(.workspace-header, [data-slot="app-shell-sidebar"], .library-global-navigation > div, .library-footer)',
-  panel: ':is([data-home-events], [data-home-panel]:not(.home-featured [data-home-panel]))',
+  panel: '[data-home-panel]:not(.home-featured [data-home-panel])',
   card: '[data-slot="empty-state"]',
   button: '.home-featured .library-glass-button',
 };

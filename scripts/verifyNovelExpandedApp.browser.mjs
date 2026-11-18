@@ -413,13 +413,13 @@ async function walk(browser, viewport, sample) {
 
   // 2. Create, from a banked Story Seed, asks for the token before its Blueprint.
   await page.evaluate(record => localStorage.setItem('novelexpanded-story-seeds-v1', JSON.stringify([record])), sample.record);
-  await visibleButton('Carve New Destiny').click();
+  await visibleButton('Create A World').click();
   await page.getByTestId('novel-expanded-create').waitFor();
   await noteInPlace('Story Seed');
   // The app's theme songs start with the first tap, with no model.
   await musicOf('menu');
   check(pieces().every(path => piecesOf('menu').has(path)), `The app's menu music should use its theme songs, got ${JSON.stringify(pieces())}.`);
-  check(address() === '/app/?page=create&seed=new', `Carve New Destiny should open a new Story Seed, got ${address()}`);
+  check(address() === '/app/?page=create&seed=new', `Create A World should open a new Story Seed, got ${address()}`);
   // Story Settings in Create: Story Seed's Settings holds the language and Reading Mode, then the media the
   // story will start with; Plugins holds its Writer CAPA skill slots.
   const seedUtility = async name => {

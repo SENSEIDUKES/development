@@ -14,8 +14,8 @@ describe('NovelExpanded addresses', () => {
     expect(parseRoute('?page=discover&section=codex&medium=unknown')).toEqual({ page: 'discover', section: 'codex' });
   });
   it('retains Discover destinations on reload and treats Lore addresses as the encyclopedia', () => {
-    for (const section of ['creators', 'codex'] as const) {
-      const route = { page: 'discover', section } as const;
+    for (const section of ['creators', 'codex', 'events'] as const) {
+      const route = { page: 'discover', section, medium: 'manga' } as const;
       expect(parseRoute(routeSearch(route))).toEqual(route);
     }
     expect(parseRoute('?page=discover&section=unknown')).toEqual({ page: 'discover' });

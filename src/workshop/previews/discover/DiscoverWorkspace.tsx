@@ -6,7 +6,7 @@ import { workshopEntries } from '../../manifest';
 const viewports = {
   mobile: { label: 'Mobile', width: 390, height: 844 },
   tablet: { label: 'Tablet', width: 768, height: 1024 },
-  laptop: { label: 'Laptop', width: 1440, height: 900 },
+  laptop: { label: 'Laptop', width: 1280, height: 800 },
 } as const;
 type Viewport = keyof typeof viewports;
 
@@ -37,7 +37,7 @@ export function DiscoverWorkspace() {
   return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'discover')!}
     renderDevelopment={render}
     workshopControls={{
-      description: 'Development opens the app’s Discover page: Novel / Manga / Game / Video first, then Stories, Creators, Codex and Lore with a left browsing rail. Novel has the sample catalogue; the other mediums show coming soon states. Events are on Home. Lore is authored reference content shared across mediums. This preview uses the app’s saved language and Reading Mode preferences.',
+      description: 'Development opens the app’s Discover page: Novel / Manga / Game / Video first, then Stories, Creators, Codex, Lore and Events. Novel has the sample catalogue; the other mediums show coming soon states. Events shows the existing Coming soon announcements. Lore is authored reference content shared across mediums. This preview uses the app’s saved language and Reading Mode preferences.',
       defaultSection: 'pages',
       sections: [{
         id: 'pages',

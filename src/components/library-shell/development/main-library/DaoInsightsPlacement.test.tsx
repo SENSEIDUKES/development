@@ -66,7 +66,7 @@ it('regression: Sparks is no longer in the header: Logo, Search and the Profile 
 
 it('sits beside the Creator Space title without a Copy action', async () => {
   await render(<CreatorSpace worlds={{ status: 'ready', items: [] }} energy={{ status: 'loading', snapshot: null }} toolkit={[]}
-    onCreate={vi.fn()} onContinueWorld={vi.fn()} onOpenWorld={vi.fn()} onOpenStudio={vi.fn()}
+    onCreate={vi.fn()} onContinueWorld={vi.fn()} onOpenWorld={vi.fn()} onEditWorld={vi.fn()}
     sparks={<SparksButton />} />);
   const title = container.querySelector('#creator-space-title')!;
   expect(title.parentElement!.contains(trigger())).toBe(true);

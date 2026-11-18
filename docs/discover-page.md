@@ -73,7 +73,7 @@ both something to chase.
 - **Rankings:** leaderboards like Webtoon's character rankings, extended to
   items, beasts, pets and Familiars. Cultivation stories already run on ranking
   lists, so the audience knows this language. Working name: Heavenly Rankings.
-- **Events (on Home):** themed challenges such as Mystery Week or Dark Fantasy
+- **Events (in Discover):** themed challenges such as Mystery Week or Dark Fantasy
   Week, for creators and readers.
 
 ## Platform guardrails Discover relies on
@@ -117,17 +117,17 @@ in the app and `?preview=discover` in the Workshop. Every world on it is a sampl
 
 Discover uses a compact header, a persistent row of destinations and a left
 browsing rail beside the results. **Novel / Manga / Game / Video** is the first
-navigation layer, with **Stories / Creators / Codex / Lore** directly underneath.
+navigation layer, with **Stories / Creators / Codex / Lore / Events** directly underneath.
 Readers choose a medium, then what to explore within it. Every medium uses the same
 layout. Novel has the current sample catalogue; the other mediums show coming
 soon states until their catalogues are supplied. The `medium` address parameter
 keeps the selection across destinations, reload and browser Back.
 
-- **Navigation:** Stories | Creators | Codex | Lore, in that order. Stories
-  is the default; Creators and Codex have reloadable `section` addresses. Lore
+- **Navigation:** Stories | Creators | Codex | Lore | Events, in that order. Stories
+  is the default; Creators, Codex and Events have reloadable `section` addresses. Lore
   links directly to the existing encyclopedia at `?page=discover&lore=index`.
-- **Events** have moved to Home, above Featured, as an expandable row with the
-  existing Coming soon event cards. Discover no longer displays them.
+- **Events** has its own Discover tab (`section=events`), with the
+  existing Coming soon event cards. Home no longer displays them.
 - **All / My updates** follows the selected section: stories use tracked series,
   creators use followed creators, and Codex uses tracked entries. These follows
   are host-supplied samples. Lore's My updates explains that term tracking is
@@ -245,3 +245,5 @@ Ownership stays in `src/components/discover/`, exported through the existing
 profile. The existing `?preview=discover` Workshop iframe shows this same app
 and uses its real saved profile preferences. Discover's world shelves remain
 the existing sample worlds.
+
+- **2026-11-17, owner correction:** Events belongs in Discover. Restored it as a tab alongside Stories, Creators, Codex and Lore, using the existing themed-week announcements.

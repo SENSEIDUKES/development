@@ -201,7 +201,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'library',
     status: 'active',
     title: 'Create',
-    description: 'The Library’s Create tab, replacing the bottom-strip Library tab that reopened Home: a compact Creator Space with live Energy and In progress readings, an honest Creator Toolkit preview of Style Packs and Soundscapes, a swipeable Your worlds row whose selected world offers exactly Continue and Studio into its chapter workspace, and a closing Create button that opens Story Seed.',
+    description: 'The Library’s Create tab: a compact top Create action, live Energy and In progress readings, Your worlds with Continue and Edit, one Browse plugins card, and a dedicated Studios card linking to external creation and the existing package import flow.',
     category: 'other',
     version: 'v1.0',
     source: {

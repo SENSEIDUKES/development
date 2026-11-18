@@ -8,7 +8,7 @@ import { HarnessGenerationController, type HarnessGenerationModelAdapter, type H
 import type { CreatorWorld } from '../../components/creator-space/shared/creatorSpaceContracts';
 import { AuthorWorldView } from './AuthorWorldView';
 import { useLibraryStories } from './useLibraryStories';
-import { chapterVoiceEnergy, chapterVoicePlan, type ChapterVoiceLine, type ChapterVoiceService } from './chapterVoices';
+import { chapterVoiceEnergy, chapterVoicePlan, storySpeakers, type ChapterVoiceLine, type ChapterVoiceService } from './chapterVoices';
 
 /**
  * The author's world view (SENSEI, 2026-10-30): what a world opens to in
@@ -225,6 +225,11 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
     expect(plan.unvoiced).toBe(1);
     expect(plan.cast.map(character => character.mainCharacter)).toEqual([true, undefined]);
     expect(chapterVoicePlan(state, state.chapters.find(chapter => chapter.chapterNumber === 2)!).lines).toEqual([]);
+    // The narration voice knows them too: Mara by her card, the keeper by what the chapter shows (SENSEI, 2026-11-18).
+    const speakerOf = storySpeakers(state, story.id);
+    expect(speakerOf({ speaker: 'Mara', role: 'protagonist' })).toEqual({ key: 'world:character:mara', gender: 'female', main: true });
+    expect(speakerOf({ speaker: 'the keeper', role: 'side' })).toEqual({ key: 'minor:the keeper', gender: 'male' });
+    expect(speakerOf({ role: 'narrator' })).toBeUndefined();
 
     const kept = new Set<string>();
     const voice = vi.fn<ChapterVoiceService['voice']>(async (_story, _chapter, voicedPlan, onLine) => {

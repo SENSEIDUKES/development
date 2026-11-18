@@ -11,7 +11,7 @@ import { LIBRARY_READER_FONTS } from './readerFonts';
 import { StorySettings } from './settings/StorySettings';
 import { useStoryCoverManifest } from './StoryCoverManifest';
 import { codexPictureRequest, storyCoverRequest, type CodexPictureService, type StoryCoverService } from './storyCover';
-import type { ChapterVoiceService, DeviceNarrationService } from './chapterVoices';
+import { storySpeakers, type ChapterVoiceService, type DeviceNarrationService } from './chapterVoices';
 import { downloadHarnessStory } from './storyExport';
 import { harnessStoryDisplay } from './storyView';
 import { worldInfoChapterMap } from './worldInfoChapterMap';
@@ -174,7 +174,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       }}
       // A line's cast voice first; any other line is made on the device when the reader has that on.
       readAloudClip={(chapterVoices || deviceNarration) && ((chapterId, line, upcoming) => chapterVoices?.clip(storyId, chapterId, line)
-        ?? (english ? deviceNarration?.clip(line, upcoming) : undefined))}
+        ?? (english ? deviceNarration?.clip(line, upcoming, storySpeakers(state, storyId)) : undefined))}
       deviceNarration={deviceNarration && { name: deviceNarration.name, on: deviceNarration.on, onChange: deviceNarration.setOn, status: deviceNarration.status(english) }}
       readerPreferences={readerPreferences} readAloudVoices={LIBRARY_READ_ALOUD_VOICES} readerFonts={LIBRARY_READER_FONTS} soundscapes={soundscapes}
       onGenerateNextChapter={writes ? () => stories.generateNextChapter(storyId) : undefined}

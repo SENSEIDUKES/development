@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ReadAloudLine } from '@seihouse/sen/reader-runtime';
-import { createKokoroNarration, kokoroNarrationStatus, KOKORO_NARRATION_PREFERENCE_KEY, type KokoroLineRequest } from './kokoroNarration';
+import { createKokoroNarration, kokoroNarrationStatus, kokoroVoice, KOKORO_NARRATION_PREFERENCE_KEY, type KokoroLineRequest } from './kokoroNarration';
 
 /** Kokoro from SEIHouse's voice server: each line made once and kept, asked for a few lines ahead. */
 
@@ -20,6 +20,7 @@ const server = () => {
   });
   return { asked, requestLine };
 };
+const KOKORO_NARRATOR = 'bm_lewis';
 const settle = () => new Promise(resolve => setTimeout(resolve, 0));
 
 describe('Kokoro voices from the voice server', () => {
@@ -125,5 +126,30 @@ describe('Kokoro voices from the voice server', () => {
     expect(kokoroNarrationStatus({ on: false, made: 0, kept: 0 }, true)).toContain('made once on SEIHouse\'s voice server');
     expect(kokoroNarrationStatus({ on: true, made: 0, kept: 0 }, true)).toContain('Press Listen');
     expect(kokoroNarrationStatus({ on: true, made: 0, kept: 0 }, false)).toBe('Kokoro reads English. This story is read by your device\'s own voice.');
+  });
+
+  it('gives each character a voice of their own that suits them, the same everywhere', () => {
+    const said = line('"Stay back."', 'side');
+    const shen = kokoroVoice(said, { key: 'shen-yue', gender: 'female' });
+    expect(shen).toMatch(/^[ab]f_/);
+    expect(kokoroVoice(said, { key: 'shen-yue', gender: 'female' })).toBe(shen);
+    expect(kokoroVoice(said, { key: 'elder-mo', gender: 'male' })).toMatch(/^[ab]m_/);
+    expect(kokoroVoice(said, { key: 'elder-mo', gender: 'male' })).not.toBe(KOKORO_NARRATOR);
+    // The main character keeps the main voice, a woman's when she is one.
+    expect(kokoroVoice(line('"Go."', 'protagonist'), { key: 'lin', main: true })).toBe('am_puck');
+    expect(kokoroVoice(line('"Go."', 'protagonist'), { key: 'lin', main: true, gender: 'female' })).toBe('af_heart');
+    // The narrator, and anyone the story says nothing of, keep the role's voice.
+    expect(kokoroVoice(line('The gate.'), { key: 'shen-yue', gender: 'female' })).toBe(KOKORO_NARRATOR);
+    expect(kokoroVoice(said, { key: 'someone' })).toBe('am_fenrir');
+    expect(kokoroVoice(said)).toBe('am_fenrir');
+  });
+
+  it('asks for each line in its speaker\'s voice', () => {
+    const voice = server();
+    const narration = createKokoroNarration({ requestLine: voice.requestLine });
+    narration.setOn(true);
+    const said = { ...line('"Stay back."', 'side'), speaker: 'Shen Yue' };
+    narration.clip(said, [], each => (each.speaker === 'Shen Yue' ? { key: 'shen-yue', gender: 'female' } : undefined));
+    expect(voice.asked[0].voice).toMatch(/^[ab]f_/);
   });
 });

@@ -130,6 +130,64 @@ export function chapterVoicePlan(state: HarnessWorkspaceState, chapter: HarnessC
   return { lines, cast: [...speaking.values()], unvoiced };
 }
 
+/**
+ * Whether a character is a man or a woman, from what their card says ("Female",
+ * "a young woman") or, for a minor figure the record says little of, the name
+ * they go by ("the veiled woman"). A pronoun counts on a card but never in a
+ * name, where it is a surname in some stories (He, Her).
+ */
+export function characterGender(said: string | undefined, name?: string): 'female' | 'male' | undefined {
+  if (said && /\b(?:female|woman|girl|lady|she|her)\b/iu.test(said)) return 'female';
+  if (said && /\b(?:male|man|boy|he|him)\b/iu.test(said)) return 'male';
+  if (name && /\b(?:woman|girl|lady)\b/iu.test(name)) return 'female';
+  if (name && /\b(?:man|boy)\b/iu.test(name)) return 'male';
+  return undefined;
+}
+
+/** Who speaks a line, as the host's narration voice is chosen for them: the same key every time, and a man or a woman when the story says. */
+export interface ChapterSpeaker {
+  /** The character's Codex card, or a minor figure by the name they speak under. */
+  key: string;
+  gender?: 'female' | 'male';
+  /** The story's main character. */
+  main?: boolean;
+}
+
+// Worked out once per saved workspace and story.
+const speakersByState = new WeakMap<HarnessWorkspaceState, Map<string, (line: Pick<ReadAloudLine, 'speaker' | 'role'>) => ChapterSpeaker | undefined>>();
+
+/**
+ * Who speaks each line of a story, for the narration voice (SENSEI, 2026-11-18:
+ * Kokoro read every woman but the narrator in a man's voice). A character is
+ * found by their card's name or another name they answer to, anyone else as a
+ * minor figure by what the chapters show of them. A line with no speaker is
+ * nobody's, except the main character's own part.
+ */
+export function storySpeakers(state: HarnessWorkspaceState, storyId: string): (line: Pick<ReadAloudLine, 'speaker' | 'role'>) => ChapterSpeaker | undefined {
+  let stories = speakersByState.get(state);
+  if (!stories) { stories = new Map(); speakersByState.set(state, stories); }
+  const known = stories.get(storyId);
+  if (known) return known;
+  const cards = state.worldCards.filter(card => card.storyId === storyId && card.kind === 'character');
+  const asSpeaker = (card: typeof cards[number]): ChapterSpeaker => {
+    const gender = characterGender(card.slots.gender, card.name);
+    return { key: card.key, ...(gender ? { gender } : {}), ...(card.mainCharacter ? { main: true } : {}) };
+  };
+  const main = cards.find(card => card.mainCharacter);
+  const byName = new Map(cards.flatMap(card => [card.name, ...(card.aliases ?? [])].map(name => [nameKey(name), card] as const)));
+  const speakerOf = ({ speaker, role }: Pick<ReadAloudLine, 'speaker' | 'role'>): ChapterSpeaker | undefined => {
+    const card = speaker ? byName.get(nameKey(speaker)) : undefined;
+    if (card) return asSpeaker(card);
+    if (role === 'protagonist' && main) return asSpeaker(main);
+    if (!speaker) return undefined;
+    const sex = shown(state, storyId).seen.get(identity(speaker))?.sex;
+    const gender = sex === 'woman' ? 'female' : sex === 'man' ? 'male' : characterGender(undefined, speaker);
+    return { key: minorKey(speaker), ...(gender ? { gender } : {}) };
+  };
+  stories.set(storyId, speakerOf);
+  return speakerOf;
+}
+
 /** The Energy to voice `lines` on `model`: what is spoken, at the voice price. */
 export const chapterVoiceEnergy = (lines: readonly Pick<ChapterVoiceLine, 'text'>[], model: string | undefined): number =>
   voiceEnergyPrice(lines.reduce((total, line) => total + line.text.length, 0), model);
@@ -147,8 +205,12 @@ export interface DeviceNarrationService {
   setOn: (on: boolean) => void;
   /** One line saying where it stands, for a story it can read (`english`) or cannot. */
   status: (english: boolean) => string;
-  /** A line's clip: its address, a promise while it is made, or nothing when this cannot read it. */
-  clip: (line: ReadAloudLine, upcoming: readonly ReadAloudLine[]) => string | Promise<string | undefined> | undefined;
+  /**
+   * A line's clip: its address, a promise while it is made, or nothing when
+   * this cannot read it. `speakerOf` says who speaks a line, so each character
+   * keeps one voice that suits them.
+   */
+  clip: (line: ReadAloudLine, upcoming: readonly ReadAloudLine[], speakerOf?: (line: ReadAloudLine) => ChapterSpeaker | undefined) => string | Promise<string | undefined> | undefined;
 }
 
 /** The host's character voices: making them, keeping them, and handing the Reader a line's clip. */

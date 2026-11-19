@@ -79,7 +79,7 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
     generate,
     tagChapter,
     arcOperation: async () => response({
-      plan: { arcNumber: 1, goals: [{ id: 'arc-1', text: 'Cross the pass.', chapters: 30 }] },
+      plan: { arcNumber: 1, goals: [{ id: 'arc-1', text: 'Cross the pass.', chapters: 8 }, { text: 'Hold the line.', chapters: 8 }, { text: 'Turn the tide.', chapters: 7 }, { text: 'Close the arc.', chapters: 7 }] },
       destinedEnding: 'Reach the city beyond the pass.',
     }),
   };

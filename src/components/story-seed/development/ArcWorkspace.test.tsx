@@ -88,7 +88,7 @@ describe('Story Seed Arc and World ownership', () => {
     expect(container.textContent).toContain('You can alter this outcome later.');
   });
 
-  it('keeps Arc 1 goals in order with optional chapters, reveals them one at a time up to five, and keeps the directions for Arcs 2 and 3', () => {
+  it('keeps Arc 1 goals in order with optional chapters, reveals them one at a time up to ten, and keeps the directions for Arcs 2 and 3', () => {
     render(initial());
     const goalCount = () => container.querySelectorAll('input[id^="arc-one-goal-"]:not([id$="-chapters"])').length;
     fill('arc-one-goal-1', 'Expelled at the sect gate.');
@@ -99,9 +99,17 @@ describe('Story Seed Arc and World ownership', () => {
     expect(container.querySelector('[data-testid="arc-one-chapters-summary"]')!.textContent).toBe('6 of 30 chapters given.');
     fill('arc-one-goal-2-chapters', '4');
     expect(container.querySelector('[data-testid="arc-one-chapters-summary"]')!.textContent).toBe('10 of 30 chapters given. The last goal runs to chapter 30.');
+    // A goal is one step: past eight chapters, the page says to split it.
+    fill('arc-one-goal-2-chapters', '12');
+    expect(container.querySelector('[data-testid="arc-one-chapters-summary"]')!.textContent).toBe('Goal 2 takes 12 chapters; a goal takes at most 8. Split it into two goals.');
+    // A count past the whole arc is left out of the total, and still gets the note.
+    fill('arc-one-goal-1-chapters', '');
+    fill('arc-one-goal-2-chapters', '31');
+    expect(container.querySelector('[data-testid="arc-one-chapters-summary"]')!.textContent).toBe('Goal 2 takes 31 chapters; a goal takes at most 8. Split it into two goals.');
+    fill('arc-one-goal-1-chapters', '6');
     fill('arc-one-goal-2-chapters', '');
     ['Third', 'Fourth', 'Fifth'].forEach((text, i) => fill(`arc-one-goal-${i + 3}`, `${text} goal.`));
-    expect(goalCount()).toBe(5);
+    expect(goalCount()).toBe(6);
     fill('arc-direction-3', 'The sect war spills into the capital.');
     expect(current.story.optional.arcLookahead).toEqual([{ arcNumber: 3, direction: 'The sect war spills into the capital.' }]);
     fill('arc-direction-3', '');

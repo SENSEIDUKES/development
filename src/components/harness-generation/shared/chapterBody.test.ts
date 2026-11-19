@@ -61,7 +61,7 @@ const adapter = (...outputs: HarnessGenerationResponse[]) => {
     }),
     generate,
     arcOperation: async () => response(JSON.stringify({
-      plan: { arcNumber: 1, goals: [{ id: 'arc-1-goal', text: 'Open the sect gate.', chapters: 30 }] },
+      plan: { arcNumber: 1, goals: [{ id: 'arc-1-goal', text: 'Open the sect gate.', chapters: 8 }, { text: 'Hold the line.', chapters: 8 }, { text: 'Turn the tide.', chapters: 7 }, { text: 'Close the arc.', chapters: 7 }] },
       destinedEnding: 'Bring the story to its true conclusion.',
     })),
   };

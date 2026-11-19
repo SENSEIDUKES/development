@@ -79,7 +79,7 @@ export const novelExpandedDocs: DocsCatalog = [
       {
         ...topic('arc', 'Arc'),
         definition: 'A 100-chapter stretch of a novel with its own goals.',
-        howItFits: 'Each arc has one to five sequential Arc Goals, with one active goal at a time and an allocated chapter range for each. The Story Seed ARC section collects the Destined Ending, the Story Length in arcs, up to five Arc 1 goals with optional chapters, one line each for where Arcs 2 and 3 head, optional Hard Pins, and Fun Settings; the World Blueprint plans Arc 1 for that length (or suggests a length when it is left blank), and each later arc is planned when it begins. HARNESS tracks the live arc and its goals as chapters commit.',
+        howItFits: 'Each arc has four to ten sequential Arc Goals, each at most eight chapters, with one active goal at a time and an allocated chapter range for each. The Story Seed ARC section collects the Destined Ending, the Story Length in arcs, up to ten Arc 1 goals with optional chapters, one line each for where Arcs 2 and 3 head, optional Hard Pins, and Fun Settings; the World Blueprint plans Arc 1 for that length (or suggests a length when it is left blank), and each later arc is planned when it begins. HARNESS tracks the live arc and its goals as chapters commit.',
       },
       {
         ...topic('world', 'World'),
@@ -134,7 +134,7 @@ export const novelExpandedDocs: DocsCatalog = [
       {
         ...topic('arc-goal', 'Arc Goal', ['Active Arc Goal', 'allocation', 'deadline']),
         definition: 'A concrete objective for one part of an arc.',
-        howItFits: 'An arc has one to five sequential, weighted goals across its 100 chapters. Only its active goal and allocated deadline guide a given chapter; an early success does not start the next goal before its segment. If a deadline chapter does not achieve the goal, the chapter still commits and the goal is marked missed. Regular reading and Fate Survival give that miss different consequences.',
+        howItFits: 'An arc has four to ten sequential, weighted goals across its 30 chapters, each at most eight chapters. Only its active goal and allocated deadline guide a given chapter; a goal reached early hands over to the next in the following chapter. If a deadline chapter does not achieve the goal, the chapter still commits and the goal is marked missed. Regular reading and Fate Survival give that miss different consequences.',
       },
       {
         ...topic('fate-pressure', 'Fate Pressure'),

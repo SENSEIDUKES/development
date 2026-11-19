@@ -34,7 +34,7 @@ const japaneseSkill = (): HarnessSkillManifest => validateHarnessSkillManifest({
 
 const arcReply = (chapterNumber: number) => ({
   rawProviderResponse: JSON.stringify({
-    plan: { arcNumber: Math.floor((chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] },
+    plan: { arcNumber: Math.floor((chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 8 }, { text: 'Hold the line.', chapters: 8 }, { text: 'Turn the tide.', chapters: 7 }, { text: 'Close the arc.', chapters: 7 }] },
     destinedEnding: 'Bring the story to its true conclusion.',
   }),
   providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: new Date().toISOString(), usage: { source: 'unavailable' as const } },

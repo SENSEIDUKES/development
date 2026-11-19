@@ -1,5 +1,5 @@
 import { validateHardPinInputs } from '@seihouse/sen/harness-generation';
-import { ARC_LENGTH, ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ARC_LOOKAHEAD, createArcChapterPosition } from '@seihouse/sen/arc-goals';
+import { ARC_GOAL_CHAPTERS, ARC_GOAL_COUNT, ARC_LENGTH, ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ARC_LOOKAHEAD, createArcChapterPosition } from '@seihouse/sen/arc-goals';
 import { type CapaPrompt, type HarnessArcRequest, type HarnessChapterDirection, type HarnessChapterRewrite, type HarnessGenerationRequest, type HarnessStoryMode, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET } from '@seihouse/sen/harness-generation';
 import { CHAPTER_FUNCTIONS } from '@seihouse/sen/harness-generation';
@@ -410,7 +410,7 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest, 
 export const buildHarnessArcPrompt = (request: HarnessArcRequest) => ({
     systemInstruction: [
       'You plan one arc of a serialized novel: the arc the story is beginning now. Continue from where the story actually is (the latest recaps and the current canon) and from how the previous arc ended, including any goals it missed, toward the novel-wide Destined Ending. Do not retcon written chapters.',
-      `Return one to five one-line sequential goals for this arc, never an overarching goal or a long-term goal bank. Five is a maximum. Give each goal a positive whole-chapter allocation weighted by what it requires; the allocations sum to ${ARC_LENGTH}. Goals never overlap and never repeat an earlier arc's goal.`,
+      `Return ${ARC_GOAL_COUNT.min} to ${ARC_GOAL_COUNT.max} one-line sequential goals for this arc, never an overarching goal or a long-term goal bank. Each goal is one step of the route: an event a single chapter can show happening (a meeting, a betrayal, a breakthrough, an arrival, a death), never a state the story sits in ("grow closer", "build trust"). Give each goal a whole-chapter allocation of at most ${ARC_GOAL_CHAPTERS.max}, weighted by what it requires; a step that needs more is two goals. The allocations sum to ${ARC_LENGTH}. Goals never overlap and never repeat an earlier arc's goal.`,
       'When planning.finalArc is true, this is the story\'s last arc: its last goal is the story reaching its Destined Ending. Otherwise no goal reaches or resolves the Destined Ending.',
       `The look-ahead is your own earlier private direction for this arc and the next ones. Follow it where it still fits what happened, and change it where the story moved elsewhere. Then return a fresh look-ahead: one line each for at most the next ${MAX_ARC_LOOKAHEAD} arcs after this one, never beyond planning.plannedArcCount; when the next arc is the final one, its line arrives at the Destined Ending. Return an empty look-ahead for the final arc. Readers never see the look-ahead.`,
       'Preserve an existing Destined Ending verbatim; if absent, supply a fitting novel-wide ending.',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ARC_LENGTH, ARC_LOOKAHEAD_TEXT_LIMIT, MAX_ARC_LOOKAHEAD, MAX_ROADMAP_ARCS, activeArcGoal, arcGenerationContext, arcGoalSegments, arcLookaheadFromPlans, arcPlanFromDraft, confirmArcGoal, createArcChapterPosition, editArcPlan, normalizeArcLookahead, validateArcPlan, type ArcPlan } from '@seihouse/sen/arc-goals';
+import { ARC_GOAL_CHAPTERS, ARC_GOAL_COUNT, ARC_LENGTH, ARC_LOOKAHEAD_TEXT_LIMIT, MAX_ARC_GOALS, MAX_ARC_LOOKAHEAD, MAX_ROADMAP_ARCS, activeArcGoal, arcGenerationContext, arcGoalSegments, arcLookaheadFromPlans, arcPlanFromDraft, arcPlanPacingProblem, confirmArcGoal, createArcChapterPosition, editArcPlan, normalizeArcLookahead, validateArcPlan, type ArcPlan } from '@seihouse/sen/arc-goals';
 
 const plan: ArcPlan = { arcNumber: 1, goals: [
   { id: 'rank', text: 'Reach Foundation rank.', chapters: 21 },
@@ -7,17 +7,37 @@ const plan: ArcPlan = { arcNumber: 1, goals: [
 ] };
 
 describe('Central SEN arc authority', () => {
-  it('owns exactly 30 chapters and accepts one through five goals', () => {
+  it('owns exactly 30 chapters and reads any saved plan of one through ten goals', () => {
     expect(ARC_LENGTH).toBe(30);
     expect(createArcChapterPosition(30)).toMatchObject({ arcNumber: 1, chapterInArc: 30, display: 'Arc 1 — Chapter 30/30' });
     expect(createArcChapterPosition(31)).toMatchObject({ arcNumber: 2, chapterInArc: 1 });
     expect(() => createArcChapterPosition(1, 50)).toThrow('exactly 30');
-    for (let count = 1; count <= 5; count++) {
+    expect(MAX_ARC_GOALS).toBe(10);
+    for (let count = 1; count <= MAX_ARC_GOALS; count++) {
       const goals = Array.from({ length: count }, (_, index) => ({ id: String(index), text: 'Goal', chapters: index ? 1 : 31 - count }));
       expect(validateArcPlan({ arcNumber: 1, goals }).goals).toHaveLength(count);
     }
     expect(() => validateArcPlan({ arcNumber: 1, goals: [] })).toThrow();
-    expect(() => validateArcPlan({ arcNumber: 1, goals: Array.from({ length: 6 }, (_, i) => ({ id: String(i), text: 'Goal', chapters: 1 })) })).toThrow();
+    expect(() => validateArcPlan({ arcNumber: 1, goals: Array.from({ length: 11 }, (_, i) => ({ id: String(i), text: 'Goal', chapters: i ? 2 : 10 })) })).toThrow('one through 10');
+  });
+
+  it('works out how many goals a planned arc has from the longest and shortest step', () => {
+    expect(ARC_GOAL_CHAPTERS).toEqual({ min: 3, max: 8 });
+    // 30 chapters at most 8 a goal needs 4 goals; at 3 a goal, 10 fit.
+    expect(ARC_GOAL_COUNT).toEqual({ min: 4, max: 10 });
+  });
+
+  it('holds every model-planned arc to a route of four to ten steps, none longer than eight chapters', () => {
+    const draft = (chapters: number[]) => ({ goals: chapters.map((count, index) => ({ text: `Step ${index + 1}.`, chapters: count })) });
+    // The three long waits models default to are refused, however they split.
+    expect(() => arcPlanFromDraft(draft([10, 10, 10]), 2)).toThrow('4 to 10 goals; this one has 3');
+    expect(() => arcPlanFromDraft(draft([8, 8, 14]), 2)).toThrow('4 to 10 goals');
+    expect(() => arcPlanFromDraft(draft([12, 6, 6, 6]), 2)).toThrow('at most 8 chapters; "Step 1." takes 12');
+    expect(arcPlanFromDraft(draft([8, 8, 7, 7]), 2).goals).toHaveLength(4);
+    expect(arcPlanFromDraft(draft([3, 3, 3, 3, 3, 3, 3, 3, 3, 3]), 2).goals).toHaveLength(10);
+    // A plan saved before the rule still reads; only new plans are held to it.
+    expect(arcPlanPacingProblem(plan)).toContain('this one has 2');
+    expect(arcGoalSegments(plan)).toHaveLength(2);
   });
 
   it('allows unequal weights and covers every chapter with sequential non-overlapping segments', () => {
@@ -86,8 +106,8 @@ describe('Arcs planned as they begin', () => {
   });
 
   it('gives a planned arc its number and goal identities no other arc uses, whatever the draft carried', () => {
-    const plan = arcPlanFromDraft({ arcNumber: 9, goals: [{ id: 'arc-1-a', text: 'Dive\nto the stacks.', chapters: 18 }, { text: 'Reopen the archive.', chapters: 12 }] }, 2, ['arc-2-1']);
-    expect(plan).toEqual({ arcNumber: 2, goals: [{ id: 'arc-2-1-2', text: 'Dive to the stacks.', chapters: 18 }, { id: 'arc-2-2', text: 'Reopen the archive.', chapters: 12 }] });
+    const plan = arcPlanFromDraft({ arcNumber: 9, goals: [{ id: 'arc-1-a', text: 'Dive\nto the stacks.', chapters: 8 }, { text: 'Reopen the archive.', chapters: 8 }, { text: 'Read the sealed index.', chapters: 7 }, { text: 'Escape the stacks.', chapters: 7 }] }, 2, ['arc-2-1']);
+    expect(plan).toEqual({ arcNumber: 2, goals: [{ id: 'arc-2-1-2', text: 'Dive to the stacks.', chapters: 8 }, { id: 'arc-2-2', text: 'Reopen the archive.', chapters: 8 }, { id: 'arc-2-3', text: 'Read the sealed index.', chapters: 7 }, { id: 'arc-2-4', text: 'Escape the stacks.', chapters: 7 }] });
     expect(() => arcPlanFromDraft({ goals: [{ text: 'Too short.', chapters: 12 }] }, 2)).toThrow('total 30');
     expect(() => arcPlanFromDraft({}, 2)).toThrow('no goals');
   });

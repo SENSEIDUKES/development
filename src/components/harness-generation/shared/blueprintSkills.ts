@@ -66,7 +66,7 @@ Choose the scale from the premise, the cast's relationships, the breadth of the 
 
 title and logline: the novel's name, and its promise in one sentence: who, what they want, and what stands in the way.
 
-arcOne: plan only Arc 1, as 1 to 5 goals in order. Each goal is one line, and says what happens, not how it feels. Each takes a whole number of chapters, weighted by what it needs, and together they take exactly 30. Goals never overlap. No Arc 1 goal reaches or resolves the Destined Ending: the story has far to go.
+arcOne: plan only Arc 1, as 4 to 10 goals in order. Each goal is one line, and says what happens, not how it feels: an event a chapter can show happening (they meet, he is betrayed, she breaks through), never a state the story sits in (they grow closer). Each takes a whole number of chapters, at most 8, weighted by what it needs; a step that needs more is two goals, and together they take exactly 30. Goals never overlap. No Arc 1 goal reaches or resolves the Destined Ending: the story has far to go.
 
 arcLookahead: one line each for Arc 2 and Arc 3 (never beyond the story's length), saying where the road goes next on its way to the Destined Ending. When one of them is the final arc, its line arrives at the Destined Ending. Readers never see this; it guides the planning of those arcs, which happens when the story reaches them.`;
 
@@ -94,7 +94,7 @@ export const SEN_WORLD_BUILDER_SKILL: HarnessSkillManifest = {
 
 export const SEN_ARC_PLANNER_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-arc-planner',
-  version: '1.3.0',
+  version: '1.4.0',
   name: 'SEN Arc Planner',
   description: 'Uses the completed cast and world to choose the Destined Ending and story length, then plans Arc 1 toward it.',
   slot: 'arc',

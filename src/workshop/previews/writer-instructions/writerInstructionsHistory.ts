@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-11-19',
+    summary: 'SENSEI found almost every arc planned as three long goals (10, 10, 10 or 8, 8, 14), so a goal like "Su Ming and Ling Chao make a connection", reached in Chapter 1, sat in front of the writer for seven more chapters. Arc 1.4.0 plans 4 to 10 goals, each at most 8 chapters, and asks for each goal as an event a chapter can show happening, never a state the story sits in; a step that needs more is two goals. The numbers are arithmetic: 30 chapters at most 8 a goal needs 4 goals, and at 3 a goal 10 fit (`ARC_GOAL_CHAPTERS`, `ARC_GOAL_COUNT`). The planner for each later arc gets the same rule, and code refuses a plan that breaks it.',
+    changed: { 'arc-skill': '0a2620c254bc84' },
+  },
+  {
     date: '2026-11-16',
     summary: 'SENSEI reviewed the Blueprint wording: Origin should set the Eastern fantasy category without prescribing cultivation tropes or repeating style guidance; the cast should describe the world at Chapter 1 without considering appearance schedules; and length estimates need short, medium and long anchors. Origin 1.4.0 is one sentence. World 1.7.0 reads the chosen style, premise, genre and tags and retains the main opposition while removing later-arc appearance wording. The build checkpoint also describes Chapter 1. Arc 1.3.0 gives approximate 300/600/900-chapter scales (10/20/30 arcs), allows other appropriate lengths and preserves a creator-selected length. An arc number on imported cards remains a separate design idea. Existing Arc 1 planning and brief look-ahead remain unchanged.',
     changed: { 'blueprint-sequence': '171406a0d2efed', 'origin-skill': '0a5a990a512e15', 'world-skill': '1b7dd7344c172d', 'arc-skill': '0c8767bff7122b' },

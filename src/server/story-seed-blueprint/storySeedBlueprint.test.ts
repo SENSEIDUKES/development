@@ -132,7 +132,7 @@ const generatedBlueprint = (): Record<string, unknown> & { arcOne?: unknown; arc
   powerSystem: { flavor: "contradictory", knownRanks: "contradictory" },
   mainOpposition: "Regent Zhao and the forged succession decree",
   // Arc 1's goals only; the server gives them their identities.
-  arcOne: { goals: [{ text: "Survive the hearing.", chapters: 12 }, { text: "Expose the regent's forged decree.", chapters: 18 }] },
+  arcOne: { goals: [{ text: "Survive the hearing.", chapters: 8 }, { text: "Expose the regent's forged decree.", chapters: 8 }, { text: "Win the tide court's ear.", chapters: 7 }, { text: "Break the regent's hold on the court.", chapters: 7 }] },
   arcLookahead: [
     { arcNumber: 2, direction: "LOOKAHEAD_A2 Win a seat on the Vermilion Tribunal." },
     { arcNumber: 3, direction: "LOOKAHEAD_A3 Break the seventh oath and reach the crown." },
@@ -257,20 +257,23 @@ describe("protected Story Seed World Blueprint generation", () => {
     // Only Arc 1 is saved; it opens with the creator's own goal, and the server assigns its identities.
     expect(blueprint.estimatedArcs).toBe(12);
     expect(blueprint.arcPlans).toEqual([{ arcNumber: 1, goals: [
-      { id: 'arc-1-1', text: 'Reach the hearing.', chapters: 12 },
-      { id: 'arc-1-2', text: "Expose the regent's forged decree.", chapters: 18 },
+      { id: 'arc-1-1', text: 'Reach the hearing.', chapters: 8 },
+      { id: 'arc-1-2', text: "Expose the regent's forged decree.", chapters: 8 },
+      { id: 'arc-1-3', text: "Win the tide court's ear.", chapters: 7 },
+      { id: 'arc-1-4', text: "Break the regent's hold on the court.", chapters: 7 },
     ] }]);
     expect(blueprint.arcLookahead?.map(entry => entry.arcNumber)).toEqual([2, 3]);
     const schema = provider.requests[0].responseJsonSchema;
     expect(schema.required).toEqual(expect.arrayContaining(['arcOne', 'arcLookahead', 'estimatedArcs']));
     expect(schema.required).not.toContain('arcPlans');
-    expect(schema.properties.arcOne.properties.goals).toMatchObject({ minItems: 1, maxItems: 5 });
+    expect(schema.properties.arcOne.properties.goals).toMatchObject({ minItems: 4, maxItems: 10 });
+    expect(schema.properties.arcOne.properties.goals.items.properties.chapters).toMatchObject({ minimum: 1, maximum: 8 });
     expect(JSON.stringify(schema.properties.arcOne)).not.toContain('"id"');
     expect(schema.properties.arcLookahead.maxItems).toBe(2);
     // The story's length is no longer bounded by how many arcs one answer can hold.
     expect(schema.properties.estimatedArcs).toMatchObject({ minimum: 10, maximum: 40 });
     const { systemInstruction, userPrompt: prompt } = provider.requests[0];
-    expect(systemInstruction).toContain('arcOne: plan only Arc 1, as 1 to 5 goals in order.');
+    expect(systemInstruction).toContain('arcOne: plan only Arc 1, as 4 to 10 goals in order.');
     expect(systemInstruction).toContain('it guides the planning of those arcs, which happens when the story reaches them');
     expect(systemInstruction).toContain('arcLookahead: one line each for Arc 2 and Arc 3');
     expect(prompt).toContain("- Arc 1 begins with the creator's Arc 1 goals: use each word for word, in order, as Arc 1's first goals, with the chapters the creator gave. Plan any further goals after them so Arc 1 totals 30 chapters.");
@@ -282,6 +285,43 @@ describe("protected Story Seed World Blueprint generation", () => {
     const response = await manifest(provider);
     expect(response.status).toBe(502);
     expect((response.body as { error: string }).error).toBe('The generated Arc 1 is invalid: Goal allocations must total 30 chapters. Nothing was saved; generate again.');
+  });
+
+  it('fails loudly instead of saving an Arc 1 of three long waits (SENSEI, 2026-11-18)', async () => {
+    const provider = new RecordingProvider({ ...generatedBlueprint(), arcOne: { goals: [{ text: 'Survive the hearing.', chapters: 10 }, { text: 'Meet the tide court.', chapters: 10 }, { text: 'Expose the regent.', chapters: 10 }] } });
+    const response = await manifest(provider);
+    expect(response.status).toBe(502);
+    expect((response.body as { error: string }).error).toBe('The generated Arc 1 is invalid: An arc is planned as 4 to 10 goals; this one has 3. Nothing was saved; generate again.');
+  });
+
+  it('never saves an Arc 1 the creator\'s chapters stretch past eight a goal', async () => {
+    const seed = canonicalSeed();
+    seed.story.optional.arcOneGoals = ['Reach the hearing.', 'Meet the court.', 'Find the decree.', 'Expose the regent.'].map(text => ({ text, chapters: 1 }));
+    // A valid draft, but the creator's counts leave its last goal 27 chapters.
+    const provider = new RecordingProvider({ ...generatedBlueprint(), arcOne: { goals: seed.story.optional.arcOneGoals.map((goal, index) => ({ text: goal.text, chapters: [8, 8, 7, 7][index] })) } });
+    const response = await handleStorySeedBlueprintHttp({ method: 'POST', headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed: seed } }, { environment, providerFactory: () => provider });
+    expect(response.status).toBe(502);
+    expect((response.body as { error: string }).error).toBe('The generated Arc 1 is invalid: A goal takes at most 8 chapters; "Expose the regent." takes 27. Nothing was saved; generate again.');
+  });
+
+  it('refuses creator chapters no Arc 1 can keep, before any model call', async () => {
+    const seed = canonicalSeed();
+    seed.story.optional.arcOneGoals = Array.from({ length: 9 }, (_, index) => ({ text: `Step ${index + 1}.`, chapters: 1 }));
+    const provider = new RecordingProvider(generatedBlueprint());
+    const response = await handleStorySeedBlueprintHttp({ method: 'POST', headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed: seed } }, { environment, providerFactory: () => provider });
+    expect(response.status).toBe(400);
+    expect((response.body as { error: string }).error).toBe("Arc 1's goals leave 21 chapters for at most 1 more goal of 8 chapters: give your goals more chapters, or fewer goals.");
+    expect(provider.requests).toHaveLength(0);
+  });
+
+  it('refuses a creator goal longer than eight chapters before any model call', async () => {
+    const seed = canonicalSeed();
+    seed.story.optional.arcOneGoals = [{ text: 'Reach the hearing.', chapters: 12 }];
+    const provider = new RecordingProvider(generatedBlueprint());
+    const response = await handleStorySeedBlueprintHttp({ method: 'POST', headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed: seed } }, { environment, providerFactory: () => provider });
+    expect(response.status).toBe(400);
+    expect((response.body as { error: string }).error).toBe('An Arc 1 goal takes at most 8 chapters: give "Reach the hearing." 8 or fewer, or split it into two goals.');
+    expect(provider.requests).toHaveLength(0);
   });
 
   it('reports the model output limit when the answer is cut off', async () => {
@@ -722,7 +762,7 @@ describe("Cleaned-up Blueprint instructions", () => {
     ]) expect(both).not.toContain(removed);
     // The writer's skeleton (SENSEI, 2026-11-06): who it is, then the Origin, World and Arc skills
     // under How to build, then how to read the Seed, how to return the Blueprint, and the hard rules.
-    const order = ["# ROLE AND MISSION", "# HOW TO BUILD", "Complete these steps in order.", "[Origin] SEN Eastern Fantasy 1.4.0", "[World] SEN World Builder 1.7.0", "[Arc] SEN Arc Planner 1.3.0",
+    const order = ["# ROLE AND MISSION", "# HOW TO BUILD", "Complete these steps in order.", "[Origin] SEN Eastern Fantasy 1.4.0", "[World] SEN World Builder 1.7.0", "[Arc] SEN Arc Planner 1.4.0",
       "# HOW TO READ THE STORY SEED", "The creator's words\n", "# HOW TO RETURN THE BLUEPRINT", "One name for one thing\n", "# HARD RULES"]
       .map(heading => systemInstruction.indexOf(heading));
     expect(order.every(index => index >= 0)).toBe(true);

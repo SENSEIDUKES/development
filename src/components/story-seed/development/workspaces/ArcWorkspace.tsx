@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ARC_LENGTH, ARC_LOOKAHEAD_TEXT_LIMIT, MAX_ARC_GOALS, STORY_LENGTH_ARCS } from '@seihouse/sen/arc-goals';
+import { ARC_GOAL_CHAPTERS, ARC_LENGTH, ARC_LOOKAHEAD_TEXT_LIMIT, MAX_ARC_GOALS, STORY_LENGTH_ARCS } from '@seihouse/sen/arc-goals';
 import { Compass, Hourglass, Milestone, Target, Pin } from 'lucide-react';
 import { HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, type StorySeedArcGoal, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
@@ -91,6 +91,8 @@ export const ArcWorkspace = ({ seed, updateSeed, showArcGoals = true, showStoryL
   const givenChapters = writtenGoals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0);
   // Every goal counted and chapters left over: the last goal runs to the arc's end.
   const lastRunsOn = givenChapters < ARC_LENGTH && writtenGoals.length > 0 && writtenGoals.every(goal => goal.chapters !== undefined);
+  // A goal is one step of the route: the Blueprint will not plan one longer than this.
+  const longGoal = goalDrafts.findIndex(goal => goal.text.trim() && Number(goal.chapters.trim()) > ARC_GOAL_CHAPTERS.max);
   // Where Arcs 2 and 3 head, one line each.
   const direction = (arcNumber: number) => seed.story.optional.arcLookahead?.find(entry => entry.arcNumber === arcNumber)?.direction ?? '';
   const updateDirection = (arcNumber: number, value: string) => updateSeed(current => {
@@ -131,7 +133,7 @@ export const ArcWorkspace = ({ seed, updateSeed, showArcGoals = true, showStoryL
           {showArcGoals && <section aria-labelledby="arc-one-goals-title" className="glass-panel p-4 sm:p-5">
             <h3 id="arc-one-goals-title" className="font-display text-lg text-[#DDC58A]">Arc 1 Goals</h3>
             <p className="mb-3 text-xs text-neutral-400">
-              {`Up to ${MAX_ARC_GOALS}, in order. The first is what is happening when Chapter 1 opens. Chapters are optional; the Blueprint plans the rest so Arc 1 takes ${ARC_LENGTH}.`}
+              {`Up to ${MAX_ARC_GOALS}, in order. The first is what is happening when Chapter 1 opens. Chapters are optional, at most ${ARC_GOAL_CHAPTERS.max} a goal; the Blueprint plans the rest so Arc 1 takes ${ARC_LENGTH}.`}
             </p>
             <div className="space-y-3">
               {Array.from({ length: visibleGoals }, (_, index) => (
@@ -139,14 +141,16 @@ export const ArcWorkspace = ({ seed, updateSeed, showArcGoals = true, showStoryL
                   <LibraryTextBox id={`arc-one-goal-${index + 1}`} label={`Goal ${index + 1}`} icon={Target}
                     value={goalDrafts[index]?.text ?? ''} onChange={value => updateGoal(index, { text: value })} />
                   <LibraryTextBox id={`arc-one-goal-${index + 1}-chapters`} label="Chapters" type="number"
-                    min={1} max={ARC_LENGTH} step={1} inputMode="numeric"
+                    min={1} max={ARC_GOAL_CHAPTERS.max} step={1} inputMode="numeric"
                     value={goalDrafts[index]?.chapters ?? ''} onChange={value => updateGoal(index, { chapters: value })} />
                 </div>
               ))}
             </div>
-            {givenChapters > 0 && (
+            {(longGoal >= 0 || givenChapters > 0) && (
               <p className="mt-2 text-xs text-neutral-400" data-testid="arc-one-chapters-summary">
-                {givenChapters > ARC_LENGTH
+                {longGoal >= 0
+                  ? `Goal ${longGoal + 1} takes ${goalDrafts[longGoal].chapters.trim()} chapters; a goal takes at most ${ARC_GOAL_CHAPTERS.max}. Split it into two goals.`
+                  : givenChapters > ARC_LENGTH
                   ? `These goals take ${givenChapters} chapters; Arc 1 has ${ARC_LENGTH}.`
                   : `${givenChapters} of ${ARC_LENGTH} chapters given.${lastRunsOn ? ` The last goal runs to chapter ${ARC_LENGTH}.` : ''}`}
               </p>

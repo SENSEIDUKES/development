@@ -13,8 +13,10 @@ const arcOne: ArcPlan = { arcNumber: 1, goals: [
 const LOOKAHEAD = 'LOOKAHEAD_A2 Lin dives for the sunken stacks and opens the archive.';
 /** The planner's draft for Arc 2: wording and chapters only, plus identities the HARNESS replaces. */
 const arcTwoDraft = { goals: [
-  { id: 'arc-1-flood', text: 'GOAL_A2G1 Dive to the sunken stacks.', chapters: 21 },
-  { text: 'GOAL_A2G2 Reopen the archive to the valley.', chapters: 9 },
+  { id: 'arc-1-flood', text: 'GOAL_A2G1 Dive to the sunken stacks.', chapters: 8 },
+  { text: 'GOAL_A2G2 Reopen the archive to the valley.', chapters: 8 },
+  { text: 'GOAL_A2G3 Map the drowned halls.', chapters: 7 },
+  { text: 'GOAL_A2G4 Seal the flood gate.', chapters: 7 },
 ] };
 const reply = (body: unknown) => ({ rawProviderResponse: JSON.stringify(body), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } });
 
@@ -100,8 +102,10 @@ describe('HARNESS plans each arc when it begins', () => {
 
     const planned = atArc2.snapshot().stories[0];
     expect(planned.arcPlans?.at(-1)).toEqual({ plan: { arcNumber: 2, goals: [
-      { id: 'arc-2-1', text: 'GOAL_A2G1 Dive to the sunken stacks.', chapters: 21 },
-      { id: 'arc-2-2', text: 'GOAL_A2G2 Reopen the archive to the valley.', chapters: 9 },
+      { id: 'arc-2-1', text: 'GOAL_A2G1 Dive to the sunken stacks.', chapters: 8 },
+      { id: 'arc-2-2', text: 'GOAL_A2G2 Reopen the archive to the valley.', chapters: 8 },
+      { id: 'arc-2-3', text: 'GOAL_A2G3 Map the drowned halls.', chapters: 7 },
+      { id: 'arc-2-4', text: 'GOAL_A2G4 Seal the flood gate.', chapters: 7 },
     ] }, effectiveChapter: 31, reason: 'initial' });
     // The final arc has nothing after it to look ahead to.
     expect(planned.arcLookahead).toBeUndefined();
@@ -112,7 +116,7 @@ describe('HARNESS plans each arc when it begins', () => {
     expect(nextArcStep(atArc2.snapshot(), run.story.id)).toBeUndefined();
     await atArc2.generateNextChapter(run.story.id, 'fixture');
     const request = run.requests.at(-1)!;
-    expect(request.storyInformation.arc).toMatchObject({ arcNumber: 2, chapterInArc: 1, finalArc: true, activeGoal: { id: 'arc-2-1', startChapter: 31, endChapter: 51 } });
+    expect(request.storyInformation.arc).toMatchObject({ arcNumber: 2, chapterInArc: 1, finalArc: true, activeGoal: { id: 'arc-2-1', startChapter: 31, endChapter: 38 } });
     expect(buildHarnessGenerationPrompt(request).userPrompt).not.toContain('LOOKAHEAD_A2');
   });
 
@@ -121,7 +125,7 @@ describe('HARNESS plans each arc when it begins', () => {
     const atArc2 = await run.jumpTo(31, arcOneDone);
     await atArc2.planNextArc(run.story.id, 'fixture');
     const edited = atArc2.snapshot().stories[0].arcPlans!.at(-1)!.plan;
-    await atArc2.editArcGoals(run.story.id, { ...edited, goals: [{ ...edited.goals[0], text: 'Dive with the ferryman.' }, edited.goals[1]] });
+    await atArc2.editArcGoals(run.story.id, { ...edited, goals: [{ ...edited.goals[0], text: 'Dive with the ferryman.' }, ...edited.goals.slice(1)] });
     expect(atArc2.snapshot().stories[0].arcGoalReviews?.find(review => review.arcNumber === 2)).toMatchObject({ edited: true, source: 'novel-blueprint' });
     await atArc2.generateNextChapter(run.story.id, 'fixture');
     expect(run.requests.at(-1)!.storyInformation.arc?.activeGoal.text).toBe('Dive with the ferryman.');
@@ -166,7 +170,7 @@ describe('HARNESS plans each arc when it begins', () => {
     await atArc2.chooseChapterDirection(run.story.id, READER);
     await expect(atArc2.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow("Set Arc 2's goals before it begins");
     const planned = atArc2.snapshot().stories[0].arcPlans!.at(-1)!.plan;
-    await atArc2.editArcGoals(run.story.id, { ...planned, goals: [{ ...planned.goals[0], text: 'Dive with the ferryman.' }, planned.goals[1]] });
+    await atArc2.editArcGoals(run.story.id, { ...planned, goals: [{ ...planned.goals[0], text: 'Dive with the ferryman.' }, ...planned.goals.slice(1)] });
     await expect(atArc2.editArcGoals(run.story.id, planned)).rejects.toThrow('one-time review');
     await expect(atArc2.acceptArcGoals(run.story.id, 2)).rejects.toThrow('one-time review');
     await atArc2.generateNextChapter(run.story.id, 'fixture');

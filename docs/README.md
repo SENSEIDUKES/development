@@ -34,6 +34,7 @@
 
 | Document | Status | Covers |
 | --- | --- | --- |
+| [Arc goals on cards](plans/arc-goals-on-cards.md) | Proposed | 4 to 10 goals per arc (built); one Main Goal per arc proven by a card change. |
 | [Create, the creator's hub](plans/create-hub.md) | Active plan | Author's world view, manuscript import, and chapter tagging. |
 | [CTE consequences](plans/cte-consequences.md) | Proposed | Design and open questions for the consequence layer. |
 | [Discover](plans/discover-page.md) | Active plan | Discover's catalogue, publication, and community features. |

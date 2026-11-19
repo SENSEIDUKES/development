@@ -7,7 +7,7 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import { CAPA_BLUEPRINT_SLOTS, CAPA_SCHEMA, CAPA_WRITER_SLOTS, SEN_BLUEPRINT_DEFAULT_SKILLS, SEN_EASTERN_FANTASY_ORIGIN_SKILL, SEN_READING_MODE_SKILLS, assembleBlueprintSkills, assembleCapaPrompt, buildHarnessOfficialOutputRequirements, createHarnessSkillCatalog, freezeHarnessSkillLoadout, validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
 import { SEN_FATE_SURVIVAL_SKILL, SEN_NOVEL_AUTHOR_SKILL, includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
-import { ARC_LENGTH, MAX_ARC_GOALS, MAX_ARC_LOOKAHEAD } from '@seihouse/sen/arc-goals';
+import { ARC_GOAL_CHAPTERS, ARC_GOAL_COUNT, ARC_LENGTH, MAX_ARC_LOOKAHEAD } from '@seihouse/sen/arc-goals';
 import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../../lib/senLightNovelAuthorInstructions';
 
 const pacingSkill = (): HarnessSkillManifest => ({
@@ -321,7 +321,7 @@ describe('Harness installed skills', () => {
     const text = assembleBlueprintSkills([arc, origin, world]);
     expect(text.indexOf('[Origin] SEN Eastern Fantasy 1.4.0\n')).toBe(0);
     expect(text.indexOf('[World] SEN World Builder 1.7.0\n')).toBeGreaterThan(0);
-    expect(text.indexOf('[Arc] SEN Arc Planner 1.3.0\n')).toBeGreaterThan(text.indexOf('[World]'));
+    expect(text.indexOf('[Arc] SEN Arc Planner 1.4.0\n')).toBeGreaterThan(text.indexOf('[World]'));
     expect(text).not.toMatch(/CAPA|HARNESS/);
     expect(() => assembleBlueprintSkills([origin, world])).toThrow('exactly one Arc skill');
     expect(() => assembleBlueprintSkills([origin, origin, world, arc])).toThrow('exactly one Origin skill');
@@ -333,7 +333,8 @@ describe('Harness installed skills', () => {
     const arc = SEN_BLUEPRINT_DEFAULT_SKILLS.find(skill => skill.slot === 'arc')!.instructions!;
     expect(arc).toContain(`Each arc is exactly ${ARC_LENGTH} chapters.`);
     expect(arc).toContain(`together they take exactly ${ARC_LENGTH}`);
-    expect(arc).toContain(`as 1 to ${MAX_ARC_GOALS} goals in order`);
+    expect(arc).toContain(`as ${ARC_GOAL_COUNT.min} to ${ARC_GOAL_COUNT.max} goals in order`);
+    expect(arc).toContain(`at most ${ARC_GOAL_CHAPTERS.max}, weighted by what it needs`);
     expect(MAX_ARC_LOOKAHEAD).toBe(2);
     for (const [scale, arcs] of [['Short', 10], ['Medium', 20], ['Long', 30]] as const) {
       expect(arc).toContain(`${scale} novel: about ${arcs * ARC_LENGTH} chapters, or ${arcs} arcs.`);

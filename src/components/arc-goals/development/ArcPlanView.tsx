@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ARC_LENGTH, arcGoalSegments, editArcPlan, type ArcPlan } from '../shared/arcGoals';
+import { ARC_GOAL_CHAPTERS, ARC_LENGTH, arcGoalSegments, editArcPlan, type ArcPlan } from '../shared/arcGoals';
 
 export function ArcPlanView({ plan, activeGoalId, generatedThrough = 0, onEdit, defaultOpen = false, lockedGoalIds = [], missedGoalIds = [], editNotice, editLabel = 'Edit arc goals', title }: {
   plan: ArcPlan; activeGoalId?: string; generatedThrough?: number; onEdit?: (plan: ArcPlan) => Promise<void> | void;
@@ -47,7 +47,7 @@ export function ArcPlanView({ plan, activeGoalId, generatedThrough = 0, onEdit, 
         const previousLocked = index > 0 && locked.has(draft.goals[index - 1].id);
         return <fieldset key={goal.id} disabled={saving || goalLocked} className="grid min-w-0 gap-2 rounded border border-neutral-800 p-2">
           <label>Goal {index + 1}{goalLocked ? (missed.has(goal.id) ? ' (missed)' : ' (completed)') : ''}<input className="block min-h-11 w-full bg-neutral-950 p-2" value={goal.text} onChange={event => setDraft({ ...draft, goals: draft.goals.map(item => item.id === goal.id ? { ...item, text: event.target.value } : item) })} /></label>
-          <label>Chapters<input type="number" min={1} max={ARC_LENGTH} className="ms-2 min-h-11 w-20 bg-neutral-950 p-2" value={goal.chapters} onChange={event => setDraft({ ...draft, goals: draft.goals.map(item => item.id === goal.id ? { ...item, chapters: Number(event.target.value) } : item) })} /></label>
+          <label>Chapters<input type="number" min={1} max={ARC_GOAL_CHAPTERS.max} className="ms-2 min-h-11 w-20 bg-neutral-950 p-2" value={goal.chapters} onChange={event => setDraft({ ...draft, goals: draft.goals.map(item => item.id === goal.id ? { ...item, chapters: Number(event.target.value) } : item) })} /></label>
           {index > 0 && !goalLocked && !previousLocked && <button className="min-h-11 underline" onClick={() => { const goals = [...draft.goals]; [goals[index - 1], goals[index]] = [goals[index], goals[index - 1]]; setDraft({ ...draft, goals }); }}>Move goal {index + 1} earlier</button>}
         </fieldset>;
       })}

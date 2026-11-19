@@ -22,7 +22,7 @@ const chapter = (title: string) => JSON.stringify({
 /** A story whose Arc 1 is written to its end, so its next chapter, 31, begins Arc 2. */
 const atArcTwo = async (survival = false) => {
   const arcOperation = vi.fn(async (_request: HarnessArcRequest) => ({ providerReceipt: receipt, rawProviderResponse: JSON.stringify({
-    plan: { goals: [{ text: 'Find the keeper of the drowned law.', chapters: 18 }, { text: 'Reclaim her name before the tide court.', chapters: 12 }] },
+    plan: { goals: [{ text: 'Find the keeper of the drowned law.', chapters: 8 }, { text: 'Win the keeper\'s trust.', chapters: 8 }, { text: 'Stand before the tide court.', chapters: 7 }, { text: 'Reclaim her name before the tide court.', chapters: 7 }] },
     lookahead: [], destinedEnding: 'Mara reclaims her name.',
   }) }));
   const generate = vi.fn(async () => ({ rawProviderResponse: writtenChapterReply(chapter(`Chapter ${generate.mock.calls.length}`)), providerReceipt: receipt }));
@@ -90,7 +90,7 @@ describe('The World Blueprint reappears when a new arc begins', { timeout: 20_00
     expect(run.arcOperation.mock.calls[0][0].planning?.previousArcs).toEqual([{ arcNumber: 1, goals: [{ text: 'Reclaim her name.', outcome: 'missed' }] }]);
     const goals = document.querySelector('[data-testid="blueprint-arc-goals"]')!;
     expect(goals.textContent).toContain('Find the keeper of the drowned law.');
-    expect(goals.textContent).toContain('Chapters 31–48');
+    expect(goals.textContent).toContain('Chapters 31–38');
     // The look-ahead is the planner's alone.
     expect(container.textContent).not.toContain('LOOKAHEAD_HIDDEN');
 

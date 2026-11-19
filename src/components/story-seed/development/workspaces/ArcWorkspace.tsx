@@ -146,7 +146,7 @@ export const ArcWorkspace = ({ seed, updateSeed, showArcGoals = true, showStoryL
                 </div>
               ))}
             </div>
-            {givenChapters > 0 && (
+            {(longGoal >= 0 || givenChapters > 0) && (
               <p className="mt-2 text-xs text-neutral-400" data-testid="arc-one-chapters-summary">
                 {longGoal >= 0
                   ? `Goal ${longGoal + 1} takes ${goalDrafts[longGoal].chapters.trim()} chapters; a goal takes at most ${ARC_GOAL_CHAPTERS.max}. Split it into two goals.`

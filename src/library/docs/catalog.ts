@@ -134,7 +134,7 @@ export const novelExpandedDocs: DocsCatalog = [
       {
         ...topic('arc-goal', 'Arc Goal', ['Active Arc Goal', 'allocation', 'deadline']),
         definition: 'A concrete objective for one part of an arc.',
-        howItFits: 'An arc has one to five sequential, weighted goals across its 100 chapters. Only its active goal and allocated deadline guide a given chapter; an early success does not start the next goal before its segment. If a deadline chapter does not achieve the goal, the chapter still commits and the goal is marked missed. Regular reading and Fate Survival give that miss different consequences.',
+        howItFits: 'An arc has four to ten sequential, weighted goals across its 30 chapters, each at most eight chapters. Only its active goal and allocated deadline guide a given chapter; a goal reached early hands over to the next in the following chapter. If a deadline chapter does not achieve the goal, the chapter still commits and the goal is marked missed. Regular reading and Fate Survival give that miss different consequences.',
       },
       {
         ...topic('fate-pressure', 'Fate Pressure'),

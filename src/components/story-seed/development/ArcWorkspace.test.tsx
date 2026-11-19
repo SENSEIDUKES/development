@@ -102,6 +102,11 @@ describe('Story Seed Arc and World ownership', () => {
     // A goal is one step: past eight chapters, the page says to split it.
     fill('arc-one-goal-2-chapters', '12');
     expect(container.querySelector('[data-testid="arc-one-chapters-summary"]')!.textContent).toBe('Goal 2 takes 12 chapters; a goal takes at most 8. Split it into two goals.');
+    // A count past the whole arc is left out of the total, and still gets the note.
+    fill('arc-one-goal-1-chapters', '');
+    fill('arc-one-goal-2-chapters', '31');
+    expect(container.querySelector('[data-testid="arc-one-chapters-summary"]')!.textContent).toBe('Goal 2 takes 31 chapters; a goal takes at most 8. Split it into two goals.');
+    fill('arc-one-goal-1-chapters', '6');
     fill('arc-one-goal-2-chapters', '');
     ['Third', 'Fourth', 'Fifth'].forEach((text, i) => fill(`arc-one-goal-${i + 3}`, `${text} goal.`));
     expect(goalCount()).toBe(6);

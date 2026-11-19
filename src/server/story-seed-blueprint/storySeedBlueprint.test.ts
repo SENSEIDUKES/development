@@ -294,6 +294,26 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect((response.body as { error: string }).error).toBe('The generated Arc 1 is invalid: An arc is planned as 4 to 10 goals; this one has 3. Nothing was saved; generate again.');
   });
 
+  it('never saves an Arc 1 the creator\'s chapters stretch past eight a goal', async () => {
+    const seed = canonicalSeed();
+    seed.story.optional.arcOneGoals = ['Reach the hearing.', 'Meet the court.', 'Find the decree.', 'Expose the regent.'].map(text => ({ text, chapters: 1 }));
+    // A valid draft, but the creator's counts leave its last goal 27 chapters.
+    const provider = new RecordingProvider({ ...generatedBlueprint(), arcOne: { goals: seed.story.optional.arcOneGoals.map((goal, index) => ({ text: goal.text, chapters: [8, 8, 7, 7][index] })) } });
+    const response = await handleStorySeedBlueprintHttp({ method: 'POST', headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed: seed } }, { environment, providerFactory: () => provider });
+    expect(response.status).toBe(502);
+    expect((response.body as { error: string }).error).toBe('The generated Arc 1 is invalid: A goal takes at most 8 chapters; "Expose the regent." takes 27. Nothing was saved; generate again.');
+  });
+
+  it('refuses creator chapters no Arc 1 can keep, before any model call', async () => {
+    const seed = canonicalSeed();
+    seed.story.optional.arcOneGoals = Array.from({ length: 9 }, (_, index) => ({ text: `Step ${index + 1}.`, chapters: 1 }));
+    const provider = new RecordingProvider(generatedBlueprint());
+    const response = await handleStorySeedBlueprintHttp({ method: 'POST', headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed: seed } }, { environment, providerFactory: () => provider });
+    expect(response.status).toBe(400);
+    expect((response.body as { error: string }).error).toBe("Arc 1's goals leave 21 chapters for at most 1 more goal of 8 chapters: give your goals more chapters, or fewer goals.");
+    expect(provider.requests).toHaveLength(0);
+  });
+
   it('refuses a creator goal longer than eight chapters before any model call', async () => {
     const seed = canonicalSeed();
     seed.story.optional.arcOneGoals = [{ text: 'Reach the hearing.', chapters: 12 }];

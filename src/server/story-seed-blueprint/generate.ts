@@ -1,6 +1,6 @@
 import { SEN_AUTHOR_IDENTITY } from '@seihouse/sen/generation';
 import { parseModelJson } from '@seihouse/sen/contracts';
-import { ARC_GOAL_CHAPTERS, STORY_LENGTH_ARCS, arcPlanFromDraft } from '@seihouse/sen/arc-goals';
+import { ARC_GOAL_CHAPTERS, ARC_GOAL_COUNT, ARC_LENGTH, STORY_LENGTH_ARCS, arcPlanFromDraft, arcPlanPacingProblem } from '@seihouse/sen/arc-goals';
 import { createModelRouter, ModelRouterError, type GenerationResult, type TokenUsage, type ReasoningLevel } from '@seihouse/library/model-router-server';
 import {
   buildBlueprintGenerationPayload,
@@ -227,6 +227,15 @@ export const generateWorldBlueprint = async (
   // longer one is refused before any model call, never shortened quietly.
   const longGoal = storySeed.story.optional.arcOneGoals?.find(goal => (goal.chapters ?? 0) > ARC_GOAL_CHAPTERS.max);
   if (longGoal) throw new BlueprintRequestError(`An Arc 1 goal takes at most ${ARC_GOAL_CHAPTERS.max} chapters: give "${longGoal.text}" ${ARC_GOAL_CHAPTERS.max} or fewer, or split it into two goals.`);
+  // The chapters the creator left must fit in the goals still open: their own
+  // goals without a count, and the goals the Blueprint may add, each at most
+  // ARC_GOAL_CHAPTERS.max. Otherwise no Arc 1 can keep their counts.
+  const seedGoals = storySeed.story.optional.arcOneGoals ?? [];
+  const leftChapters = ARC_LENGTH - seedGoals.reduce((sum, goal) => sum + (goal.chapters ?? 0), 0);
+  const openGoals = seedGoals.filter(goal => goal.chapters === undefined).length + (ARC_GOAL_COUNT.max - seedGoals.length);
+  if (seedGoals.length && leftChapters > openGoals * ARC_GOAL_CHAPTERS.max) {
+    throw new BlueprintRequestError(`Arc 1's goals leave ${leftChapters} chapters for at most ${openGoals} more ${openGoals === 1 ? "goal" : "goals"} of ${ARC_GOAL_CHAPTERS.max} chapters: give your goals more chapters, or fewer goals.`);
+  }
   const generated = await provider.generate({
     systemInstruction: buildWorldBlueprintSystemPrompt(skills, identity),
     userPrompt: buildWorldBlueprintPrompt(storySeed, arcCount, identity),
@@ -266,6 +275,10 @@ export const generateWorldBlueprint = async (
   }
   try { validateBlueprintArcPlan(blueprint); }
   catch (error) { throw new BlueprintRoadmapError(`The generated Arc 1 is invalid: ${reason(error)}. Nothing was saved; generate again.`); }
+  // The creator's chapters are applied after the draft (alignArcOneWithSeed),
+  // so the saved Arc 1 is held to the same steps the draft was.
+  const pacing = blueprint.arcPlans?.[0] ? arcPlanPacingProblem(blueprint.arcPlans[0]) : undefined;
+  if (pacing) throw new BlueprintRoadmapError(`The generated Arc 1 is invalid: ${pacing.replace(/\.$/, "")}. Nothing was saved; generate again.`);
   // HARNESS is the only downstream consumer. These gates plus the Story Seed
   // handoff validation are its contract; no legacy chapter adapter runs here.
   return blueprint;

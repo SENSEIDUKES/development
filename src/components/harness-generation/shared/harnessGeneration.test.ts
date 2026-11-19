@@ -63,7 +63,7 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
       defaultModel: 'google/gemini-3.1-flash-lite',
     }),
     generate,
-    arcOperation: async request => response(JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' })),
+    arcOperation: async request => response(JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 8 }, { text: 'Hold the line.', chapters: 8 }, { text: 'Turn the tide.', chapters: 7 }, { text: 'Close the arc.', chapters: 7 }] }, destinedEnding: 'Bring the story to its true conclusion.' })),
   };
   return { value, generate };
 };

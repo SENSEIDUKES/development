@@ -19,7 +19,8 @@ const modelAdapter: HarnessGenerationModelAdapter = {
   generate: vi.fn(async request => { requests.push(structuredClone(request)); return asWrittenChapter(reply({ title: 'The Quarry', paragraphs: ['Ye Chen hauled stone in the quarry.'] })); }),
   // The arc planner's draft for the arc being begun; the HARNESS assigns its identities.
   arcOperation: vi.fn(async () => reply({ plan: { goals: [
-    { text: 'Climb to the inner sect.', chapters: 18 }, { text: 'Win the sect trial.', chapters: 12 },
+    { text: 'Climb to the inner sect.', chapters: 8 }, { text: 'Win the sect trial.', chapters: 8 },
+    { text: 'Earn the elder\'s seal.', chapters: 7 }, { text: 'Face the sect master\'s envoy.', chapters: 7 },
   ] }, lookahead: [{ arcNumber: 3, direction: 'LOOKAHEAD_A3 Ye Chen faces the sect master.' }], destinedEnding: 'unused' })),
 };
 
@@ -111,7 +112,7 @@ describe('The novel page Blueprint tab', () => {
     await act(async () => setValue(goal, 'Reach the inner sect through the back gate.'));
     await act(async () => button('Save goals')!.click());
     const story = atArc2.snapshot().stories[0];
-    expect(story.arcPlans?.at(-1)).toMatchObject({ reason: 'edit', effectiveChapter: 31, plan: { arcNumber: 2, goals: [{ id: 'arc-2-1', text: 'Reach the inner sect through the back gate.' }, { id: 'arc-2-2' }] } });
+    expect(story.arcPlans?.at(-1)).toMatchObject({ reason: 'edit', effectiveChapter: 31, plan: { arcNumber: 2, goals: [{ id: 'arc-2-1', text: 'Reach the inner sect through the back gate.' }, { id: 'arc-2-2' }, { id: 'arc-2-3' }, { id: 'arc-2-4' }] } });
     expect(story.arcGoalReviews?.find(review => review.arcNumber === 2)).toMatchObject({ edited: true });
     expect(container.querySelector('[data-testid="novel-arc-2"]')!.textContent).toContain('Reviewed');
     // The planner's look-ahead is never on the reader's page.

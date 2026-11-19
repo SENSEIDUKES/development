@@ -8,13 +8,19 @@ import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGene
 import { type ArcPlan } from '@seihouse/sen/arc-goals';
 
 const plan: ArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-first', text: 'Meet the invader.', chapters: 1 }, { id: 'arc-1-second', text: 'Defeat the invader.', chapters: 29 }] };
+// What the planner answers: a route of steps, as every planned arc is.
+const plannedGoals = [
+  { id: 'first', text: 'Meet the invader.', chapters: 1 }, { id: 'second', text: 'Defeat the invader.', chapters: 8 },
+  { id: 'third', text: 'Hold the pass.', chapters: 8 }, { id: 'fourth', text: 'Rally the border towns.', chapters: 7 },
+  { id: 'fifth', text: 'Drive the invader out.', chapters: 6 },
+];
 const response = (body: unknown) => ({ rawProviderResponse: JSON.stringify(body), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } });
 
 const setup = async () => {
   const requests: HarnessGenerationRequest[] = [];
   let output: Record<string, unknown> = { prose: 'She met the invader at the gate.', arcCompletion: { goalId: plan.goals[0].id, completed: true, evidence: 'She met the invader at the gate.' } };
   const arcOperation = vi.fn(async (request: HarnessArcRequest) => response({
-    plan: { ...plan, arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 30) + 1, goals: plan.goals.map(goal => ({ ...goal, id: `arc-${Math.floor((request.storyInformation.chapterNumber - 1) / 30) + 1}-${goal.id}` })) },
+    plan: { ...plan, arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 30) + 1, goals: plannedGoals },
     destinedEnding: 'Unite the kingdoms.',
   }));
   const adapter: HarnessGenerationModelAdapter = {

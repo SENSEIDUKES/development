@@ -4,7 +4,24 @@
  * sells by. A complete novel runs about ten arcs; a long epic thirty to forty.
  */
 export const ARC_LENGTH = 30 as const;
-export const MAX_ARC_GOALS = 5 as const;
+/**
+ * How many chapters one goal may take. A goal is one step of the route: a
+ * change a chapter can show happening, never a state the story sits in. The
+ * longest step is what makes an arc a route of several steps rather than three
+ * long waits (SENSEI, 2026-11-18). `min` sets only how many goals fit.
+ */
+export const ARC_GOAL_CHAPTERS = { min: 3, max: 8 } as const;
+/**
+ * How many goals a planned arc has, from the arithmetic of its steps: at least
+ * enough that none runs past `ARC_GOAL_CHAPTERS.max` (30 / 8, rounded up: 4),
+ * at most as many as fit at `ARC_GOAL_CHAPTERS.min` (30 / 3: 10).
+ */
+export const ARC_GOAL_COUNT = {
+  min: Math.ceil(ARC_LENGTH / ARC_GOAL_CHAPTERS.max),
+  max: Math.floor(ARC_LENGTH / ARC_GOAL_CHAPTERS.min),
+} as const;
+/** The most goals any arc plan holds, whoever wrote it. */
+export const MAX_ARC_GOALS = ARC_GOAL_COUNT.max;
 export interface ArcChapterPosition {
   arcNumber: number; chapterInArc: number; chaptersInArc: number; display: string;
 }
@@ -51,7 +68,7 @@ export const ARC_PLAN_SCHEMA = {
 export function validateArcPlan(value: unknown): ArcPlan {
   const plan = value as ArcPlan;
   if (!plan || !Number.isInteger(plan.arcNumber) || plan.arcNumber < 1 || !Array.isArray(plan.goals)
-    || plan.goals.length < 1 || plan.goals.length > MAX_ARC_GOALS) throw new Error('An arc needs one through five goals.');
+    || plan.goals.length < 1 || plan.goals.length > MAX_ARC_GOALS) throw new Error(`An arc needs one through ${MAX_ARC_GOALS} goals.`);
   const ids = new Set<string>();
   for (const goal of plan.goals) {
     if (!goal || typeof goal.id !== 'string' || !goal.id.trim() || ids.has(goal.id)
@@ -187,16 +204,31 @@ export const arcLookaheadFromPlans = (plans: readonly ArcPlan[], bounds: { after
 /** One arc's goals as a planning model writes them: wording and chapters only. The HARNESS owns arc numbers and goal identities. */
 export const ARC_PLAN_DRAFT_SCHEMA = {
   type: 'object', properties: { goals: {
-    type: 'array', minItems: 1, maxItems: MAX_ARC_GOALS, items: { type: 'object',
-      properties: { text: { type: 'string' }, chapters: { type: 'integer', minimum: 1, maximum: ARC_LENGTH } },
+    type: 'array', minItems: ARC_GOAL_COUNT.min, maxItems: ARC_GOAL_COUNT.max, items: { type: 'object',
+      properties: { text: { type: 'string' }, chapters: { type: 'integer', minimum: 1, maximum: ARC_GOAL_CHAPTERS.max } },
       required: ['text', 'chapters'] },
   } }, required: ['goals'],
 };
 
 /**
+ * Why a planned arc is not a route of steps, or undefined when it is: every
+ * plan a model writes has `ARC_GOAL_COUNT` goals, none longer than
+ * `ARC_GOAL_CHAPTERS.max`. Saved plans are only held to `validateArcPlan`, so
+ * stories planned before this rule keep reading as they are.
+ */
+export function arcPlanPacingProblem(plan: ArcPlan): string | undefined {
+  if (plan.goals.length < ARC_GOAL_COUNT.min || plan.goals.length > ARC_GOAL_COUNT.max) {
+    return `An arc is planned as ${ARC_GOAL_COUNT.min} to ${ARC_GOAL_COUNT.max} goals; this one has ${plan.goals.length}.`;
+  }
+  const long = plan.goals.find(goal => goal.chapters > ARC_GOAL_CHAPTERS.max);
+  return long ? `A goal takes at most ${ARC_GOAL_CHAPTERS.max} chapters; "${long.text}" takes ${long.chapters}.` : undefined;
+}
+
+/**
  * Turns a model's goal draft into an arc's plan. The arc number is the arc
  * being planned, and each goal is given the identity `arc-N-k`, never one
- * already used by another arc, whatever identity the draft carried.
+ * already used by another arc, whatever identity the draft carried. The draft
+ * must be a route of steps (`arcPlanPacingProblem`).
  */
 export function arcPlanFromDraft(draft: unknown, arcNumber: number, takenGoalIds: Iterable<string> = []): ArcPlan {
   const goals = (draft as { goals?: unknown } | null)?.goals;
@@ -212,5 +244,8 @@ export function arcPlanFromDraft(draft: unknown, arcNumber: number, takenGoalIds
       return { id, text: typeof text === 'string' ? text.replace(/\s+/g, ' ').trim() : text, chapters } as ArcGoal;
     }),
   };
-  return validateArcPlan(plan);
+  const valid = validateArcPlan(plan);
+  const problem = arcPlanPacingProblem(valid);
+  if (problem) throw new Error(problem);
+  return valid;
 }

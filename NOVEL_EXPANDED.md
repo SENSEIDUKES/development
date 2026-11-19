@@ -257,6 +257,11 @@ Blueprint, arc and sharing decision.
   not see it.
 - **Every arc is 30 chapters,** one standard size the product prices and sells by. A
   complete novel runs about 10 arcs (300 chapters); a long epic 30 to 40 (900 to 1,200).
+- **An arc is a route of 4 to 10 steps.** A goal takes at most 8 chapters, so 30
+  chapters need at least 4 goals; at 3 chapters a step, 10 fit. Each goal is an event a
+  chapter can show happening, never a state the story sits in (SENSEI, 2026-11-18).
+  One Main Goal per arc, proven by a card change, is
+  [proposed](./docs/plans/arc-goals-on-cards.md).
 - **A goal's chapters are a budget, not a quota.** The story reaches a goal when it earns
   it, and the next goal starts in the following chapter. Every chapter changes something;
   the story never marks time to fill a goal's chapters.
@@ -1393,6 +1398,9 @@ same record; none of them adds anything medium-specific to the story itself.
 Each plan records the status of its own phases. The [documentation index](./docs/README.md)
 lists all plans, research, and archived reports.
 
+- [Arc goals on cards](./docs/plans/arc-goals-on-cards.md): part 1, 4 to 10 goals
+  of at most 8 chapters, is built. Open: part 2, one failable Main Goal per arc proven
+  by a card change on standard tags, the steps as rails, with SENSEI's questions first.
 - [Create, the creator's hub](./docs/plans/create-hub.md): phase B (the author's
   world view and its Chapters tagging) is built. Open: C, the manuscript way
   in; the rest of D, the speakers step for named characters; E, the world's

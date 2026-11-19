@@ -3,7 +3,7 @@
 Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-rule).
 
 - **Created:** 2026-09-13
-- **Last recorded Workshop update:** 2026-10-03
+- **Last recorded Workshop update:** 2026-11-19
 - **Status:** neutral SEN contract integrated with the DEV HARNESS host
 - **Preview:** existing Story Seed ARC workspace and HARNESS Reader Codex chapter recaps
 - **Historical source inspection:** DEV implementation audited 2026-09-13; no production replica imported
@@ -18,7 +18,8 @@ The package exposes these through `@seihouse/sen/arc-goals`.
 
 | Behavior | Owner |
 | --- | --- |
-| Exactly 30 chapters (`ARC_LENGTH`), one standard size the product prices and sells by; one to five weighted sequential goals | Neutral SEN arc contract |
+| Exactly 30 chapters (`ARC_LENGTH`), one standard size the product prices and sells by; a saved plan holds one to ten weighted sequential goals (`MAX_ARC_GOALS`) | Neutral SEN arc contract |
+| Every planned arc is a route of steps: 4 to 10 goals (`ARC_GOAL_COUNT`), none longer than 8 chapters (`ARC_GOAL_CHAPTERS`), each an event a chapter can show happening; refused otherwise (`arcPlanPacingProblem`, in `arcPlanFromDraft`) | Neutral SEN arc contract; both planners are asked for it, and a creator's Arc 1 goal over 8 chapters is refused before the Blueprint call |
 | A goal's chapters are a budget, not a quota: a goal reached early hands over to the next in the following chapter, which keeps its own deadline (`activeArcGoal`) | Neutral SEN arc contract; the HARNESS response contract tells the writer the deadline is a limit and that every chapter changes the story's situation |
 | The story length the creator chooses | Story Seed ARC page, Story Length (`story.optional.arcCount`); left blank, the Blueprint suggests one |
 | Destined Ending, story length, Arc 1's goals and the hidden look-ahead | Existing Story Seed Blueprint provider; the Blueprint plans only Arc 1, for the Seed's Story Length when set |
@@ -81,6 +82,16 @@ missed final goal lets the story continue past its roadmap toward the same endin
 count toward a broken route in Fate Survival. No extension, regeneration, reward,
 penalty, or automatic retry policy is supplied.
 
+## How many goals
+
+One rule decides the count (SENSEI, 2026-11-18): a goal takes at most 8 chapters, so a
+30-chapter arc needs at least 4 goals (30 ÷ 8, rounded up); at 3 chapters a step, at most
+10 fit. Models had planned almost every arc as three long goals, which left the writer
+holding a goal met in Chapter 1 for seven more chapters. Saved plans are read as they
+are; the rule applies to every plan a model writes from now on, so an existing story
+gets it from its next arc. Tying goals to cards and tags is proposed in
+[Arc goals on cards](../../../docs/plans/arc-goals-on-cards.md).
+
 ## Integration boundaries
 
 Story Seed Blueprints saved when every arc was planned keep their Arc 1, and their next
@@ -105,3 +116,8 @@ changes only when the owner asks. Historical references stay untouched.
 Focused tests cover allocation invariants, schema resets, seed export round trips,
 frozen requests, deadline enforcement, evidence-backed completion, unrestricted
 revision-based editing, and automatic boundary planning.
+
+## History
+
+- **2026-11-19:** Every planned arc has 4 to 10 goals of at most 8 chapters, worked
+  out from `ARC_GOAL_CHAPTERS`; saved plans of one to ten goals still read.

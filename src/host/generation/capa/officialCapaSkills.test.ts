@@ -28,7 +28,7 @@ const adapter = (requests: HarnessGenerationRequest[] = []) => ({
   getServerInfo: async () => ({ provider: 'fixture', configured: true, models: [], defaultModel: 'fixture-model' }),
   arcOperation: async () => ({
     rawProviderResponse: JSON.stringify({
-      plan: { arcNumber: 1, goals: [{ id: 'opening', text: 'Enter the mountain school.', chapters: 30 }] },
+      plan: { arcNumber: 1, goals: [{ id: 'opening', text: 'Enter the mountain school.', chapters: 8 }, { text: 'Hold the line.', chapters: 8 }, { text: 'Turn the tide.', chapters: 7 }, { text: 'Close the arc.', chapters: 7 }] },
       destinedEnding: 'Enter the mountain school.',
     }),
     providerReceipt: { provider: 'fixture', model: 'fixture-model', generatedAt: '2026-09-19T12:00:00.000Z', usage: { source: 'unavailable' as const } },

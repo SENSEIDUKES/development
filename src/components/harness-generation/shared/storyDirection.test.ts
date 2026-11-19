@@ -30,6 +30,11 @@ const plan: ArcPlan = { arcNumber: 1, goals: [
   { id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 3 },
   { id: 'arc-1-trial', text: 'Pass the sect trial.', chapters: 27 },
 ] };
+// What the planner answers: a route of steps, as every planned arc is.
+const plannedArc = { goals: [
+  { text: 'Reach the mountain gate.', chapters: 3 }, { text: 'Pass the sect trial.', chapters: 8 },
+  { text: 'Earn an elder\'s notice.', chapters: 8 }, { text: 'Survive the outer court.', chapters: 6 }, { text: 'Enter the inner sect.', chapters: 5 },
+] };
 
 const chapterReply = (overrides: Record<string, unknown> = {}) => ({
   title: 'Ashes',
@@ -47,7 +52,7 @@ const setup = async () => {
   const outputs: unknown[] = [];
   const requests: HarnessGenerationRequest[] = [];
   const arcRequests: HarnessArcRequest[] = [];
-  let arcReply: Record<string, unknown> = { plan, destinedEnding: 'Yi Chen leads the Azure Sect to glory.' };
+  let arcReply: Record<string, unknown> = { plan: plannedArc, destinedEnding: 'Yi Chen leads the Azure Sect to glory.' };
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
     generate: vi.fn(async request => { requests.push(request); return asWrittenChapter(response(outputs.shift() ?? chapterReply())); }),
@@ -128,7 +133,7 @@ describe('Hard Pins', () => {
     const run = await setup();
     const story = await run.controller.createStory({ premise: 'Yi Chen joins the Azure Sect.' });
     const pins = await run.controller.setHardPins(story.id, [{ text: 'Never kill Yi Chen’s master.' }]);
-    run.setArcReply({ plan, destinedEnding: 'Glory.', hardPins: [{ text: 'Planner pin.' }], fatePressure: 'heaven' });
+    run.setArcReply({ plan: plannedArc, destinedEnding: 'Glory.', hardPins: [{ text: 'Planner pin.' }], fatePressure: 'heaven' });
     run.queue(chapterReply({ hardPins: [{ id: pins[0].id, text: 'Kill the master.' }, { text: 'Writer pin.' }], fatePressure: 'heaven', destinedEnding: 'Writer ending.' }));
     const state = await run.controller.generateNextChapter(story.id, 'fixture');
     expect(state.chapters).toHaveLength(1);
@@ -314,12 +319,12 @@ describe('Fate Pressure rhythm recommendation', () => {
 
     // The arc planner's own reply cannot rewrite a story's Fate Pressure either,
     // including when it legitimately supplies the missing Destined Ending.
-    run.setArcReply({ plan: { ...plan, arcNumber: 1 }, destinedEnding: 'Arrival.', fatePressure: 'heaven' });
+    run.setArcReply({ plan: plannedArc, destinedEnding: 'Arrival.', fatePressure: 'heaven' });
     await run.controller.generateNextChapter(unset.id, 'fixture');
     state = run.controller.snapshot();
     expect(state.foundations.filter(foundation => foundation.storyId === unset.id).at(-1)?.input.fatePressure).toBeUndefined();
     const planned = await run.controller.createStory({ premise: 'A planner supplies the ending.', fatePressure: 'mortal' });
-    run.setArcReply({ plan, destinedEnding: 'Planner ending.', fatePressure: 'heaven' });
+    run.setArcReply({ plan: plannedArc, destinedEnding: 'Planner ending.', fatePressure: 'heaven' });
     await run.controller.generateNextChapter(planned.id, 'fixture');
     const plannedFoundation = run.controller.snapshot().foundations.filter(foundation => foundation.storyId === planned.id).at(-1)!;
     expect(plannedFoundation.input).toMatchObject({ destinedEnding: 'Planner ending.', fatePressure: 'mortal' });

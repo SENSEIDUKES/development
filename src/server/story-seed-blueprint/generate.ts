@@ -1,6 +1,6 @@
 import { SEN_AUTHOR_IDENTITY } from '@seihouse/sen/generation';
 import { parseModelJson } from '@seihouse/sen/contracts';
-import { STORY_LENGTH_ARCS, arcPlanFromDraft } from '@seihouse/sen/arc-goals';
+import { ARC_GOAL_CHAPTERS, STORY_LENGTH_ARCS, arcPlanFromDraft } from '@seihouse/sen/arc-goals';
 import { createModelRouter, ModelRouterError, type GenerationResult, type TokenUsage, type ReasoningLevel } from '@seihouse/library/model-router-server';
 import {
   buildBlueprintGenerationPayload,
@@ -222,6 +222,11 @@ export const generateWorldBlueprint = async (
   catch (error) { throw new BlueprintRequestError(error instanceof Error ? error.message : "The Story Seed is invalid."); }
   // The creator's Story Length, when set, is the exact length Arc 1 is planned for.
   const arcCount = storySeed.story.optional.arcCount;
+  // The Blueprint uses the creator's goals word for word with their chapters,
+  // and every planned goal is one step of at most ARC_GOAL_CHAPTERS.max: a
+  // longer one is refused before any model call, never shortened quietly.
+  const longGoal = storySeed.story.optional.arcOneGoals?.find(goal => (goal.chapters ?? 0) > ARC_GOAL_CHAPTERS.max);
+  if (longGoal) throw new BlueprintRequestError(`An Arc 1 goal takes at most ${ARC_GOAL_CHAPTERS.max} chapters: give "${longGoal.text}" ${ARC_GOAL_CHAPTERS.max} or fewer, or split it into two goals.`);
   const generated = await provider.generate({
     systemInstruction: buildWorldBlueprintSystemPrompt(skills, identity),
     userPrompt: buildWorldBlueprintPrompt(storySeed, arcCount, identity),

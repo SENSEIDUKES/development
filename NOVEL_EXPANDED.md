@@ -809,8 +809,8 @@ entries run to 2026-11-11.
       inspection added (each skill's instructions, the Official Requirements, slot
       uploads).
   - **Cover art, made on the cover** (piece 5, remade 2026-10-09): World Info's
-    empty cover says **Manifest**; the reader chooses one cover (5 Energy) or three
-    to choose from (15). Covers come from the story's own words (its title, genre,
+    empty cover says **Manifest**; the reader chooses one cover or three
+    to choose from, priced in Energy by the chosen image model. Covers come from the story's own words (its title, genre,
     tradition, logline, main character, tone, world and tags; never its chapters)
     with the owner's approved cover template, behind the Aura Veil's media reveal.
     One is revealed and worn; three open a picker that shows one cover at a time,

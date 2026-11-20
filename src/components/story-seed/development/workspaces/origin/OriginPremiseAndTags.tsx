@@ -19,7 +19,7 @@ import {
   CATEGORY_COLORS,
   CURATED_PREMISE_EXAMPLES,
   findStoryTagNiche,
-  GENRE_PRESETS,
+  findGenrePreset,
   getTagMetadata,
   normalizeStoryTagIdentity,
   STORY_TAG_CATALOG,
@@ -44,11 +44,17 @@ const ALL_CURATED_PREMISE_EXAMPLES = Object.values(CURATED_PREMISE_EXAMPLES).fla
 /** The browser's niche choice: one genre path's niche, or every tag. */
 const ALL_TAGS = 'all';
 const FAMILY_ORDER = Object.keys(CATEGORY_COLORS) as StoryTagCategory[];
-const NICHE_OPTIONS = [
-  { id: ALL_TAGS, label: 'All tags', count: STORY_TAG_CATALOG.length },
-  ...STORY_TAG_NICHES.map(niche => ({ id: niche.id, label: niche.label, count: niche.tags.length })),
-];
-const PRESET_NAMES = new Map(GENRE_PRESETS.map(preset => [preset.id, preset.name]));
+const ALL_TAGS_OPTION = { id: ALL_TAGS, label: 'All tags', count: STORY_TAG_CATALOG.length };
+const nicheOption = (niche: typeof STORY_TAG_NICHES[number]) => ({ id: niche.id, label: niche.label, count: niche.tags.length });
+/**
+ * All tags, then the niches on the story's genre shelf: a story's own lane and
+ * its neighbours, never a row of every genre. A custom genre sees every niche.
+ */
+const nicheOptionsFor = (genre: string | undefined) => {
+  const shelf = findGenrePreset(genre)?.shelf;
+  const niches = shelf ? STORY_TAG_NICHES.filter(niche => findGenrePreset(niche.id)?.shelf === shelf) : STORY_TAG_NICHES;
+  return [ALL_TAGS_OPTION, ...niches.map(nicheOption)];
+};
 const nicheIdForGenre = (genre: string | undefined) => findStoryTagNiche(genre)?.id ?? ALL_TAGS;
 
 interface OriginPremiseAndTagsProps {
@@ -339,12 +345,12 @@ const OriginTagEditor = memo(({
         <div>
           <p className={workspaceCompactLabelClass}>Niches</p>
           <div ref={nicheRowRef} role="radiogroup" aria-label="Tag niches" id="tag-niches" className="scrollbar-thin mt-2 flex gap-1.5 overflow-x-auto pb-1">
-            {NICHE_OPTIONS.map((option, index) => {
+            {nicheOptionsFor(genre).map((option, index) => {
               const selected = option.id === activeNicheId;
               const Sigil = GENRE_PATH_SIGILS[option.id];
               return (
                 <button key={option.id} type="button" role="radio" aria-checked={selected} tabIndex={radioGroupTabIndex(selected, true, index)}
-                  onKeyDown={handleRadioGroupKeyDown} onClick={() => chooseNiche(option.id)} title={option.id === ALL_TAGS ? 'Every tag in every family' : `Tags for ${PRESET_NAMES.get(option.id) ?? option.label} stories`}
+                  onKeyDown={handleRadioGroupKeyDown} onClick={() => chooseNiche(option.id)} title={option.id === ALL_TAGS ? 'Every tag in every family' : `Tags for ${option.label} stories`}
                   className={`story-seed-touch-target inline-flex min-h-[2.25rem] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 font-sc text-[10px] font-bold uppercase tracking-[0.14em] transition-all ${selected ? 'border-portal/60 bg-portal/10 text-portal shadow-[0_0_10px_rgba(4,172,255,0.18)]' : 'border-[rgba(150,166,220,0.22)] bg-[#0d1126]/60 text-neutral-300 hover:border-[rgba(150,166,220,0.45)] hover:text-signal'}`}>
                   {Sigil && <Sigil size={12} aria-hidden="true" />}{option.label}
                   <span className="font-sans text-[10px] font-normal tracking-normal text-neutral-400">{option.count}</span>

@@ -13,17 +13,19 @@ describe('Story Tag niches', () => {
   });
 
   it('opens a niche from the genre a story saved, never from a custom genre', () => {
-    expect(findStoryTagNiche('LitRPG / System')?.label).toBe('System');
-    expect(findStoryTagNiche('litrpg system')?.id).toBe('LitRPG / System');
-    expect(findStoryTagNiche('cozy slice of life')?.id).toBe('Cozy Slice-of-Life');
+    expect(findStoryTagNiche('System')?.label).toBe('System');
+    expect(findStoryTagNiche('gates & dungeons')?.id).toBe('Gates & Dungeons');
+    expect(findStoryTagNiche('sect building')?.id).toBe('Sect Building');
+    // A genre that became a tag no longer opens a niche.
+    expect(findStoryTagNiche('Regression')).toBeUndefined();
     expect(findStoryTagNiche('urban xianxia mystery')).toBeUndefined();
     expect(findStoryTagNiche('')).toBeUndefined();
   });
 
   it('gives the LitRPG parent its game-element tags, and lets a tag sit under several parents', () => {
-    const system = findStoryTagNiche('LitRPG / System')!;
+    const system = findStoryTagNiche('System')!;
     for (const tag of ['status window', 'skill trees', 'admin points', 'logistics points', 'save points']) expect(system.tags).toContain(tag);
-    expect(getStoryTagNiches('Status Window').map(niche => niche.id)).toEqual(['LitRPG / System', 'Tower Climb']);
+    expect(getStoryTagNiches('Status Window').map(niche => niche.id)).toEqual(['Isekai', 'Monster Reincarnation', 'System', 'LitRPG', 'Tower Climb', 'Gates & Dungeons', 'Hunter']);
     expect(getStoryTagNiches('comedy')).toEqual([]);
   });
 });

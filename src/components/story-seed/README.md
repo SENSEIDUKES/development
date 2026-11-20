@@ -716,3 +716,13 @@ returned it to the end of the form, so it floated mid-screen in a box short of t
 screen edges. The footer and the bar now read as one edge-to-edge dock, and the
 music note rises above both. Buttons and the bar come from `@seihouse/ui/sen`, the
 UI kit's current Library skin, which replaced the retired `@seihouse/library-ui`.
+
+## 2026-11-20 — Genre shelves
+
+Story Paths are 52 genres on eight shelves (Martial, Fantasy, System, Modern,
+Horror, Political, Sci-fi, Discipline), each with a one-line definition and its
+own starter tags. A shelf only helps a creator find a genre; it is never saved,
+and style, genre and tags stay independent. Devices that ride on any genre
+(regression, reincarnation, transmigration, rebirth of the strong, villain
+protagonist, cozy, slow life) are tags. The saved genre is its plain name, so a
+story saved with a retired name keeps it as its own genre.

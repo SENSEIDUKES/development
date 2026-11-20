@@ -15,7 +15,7 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-10-16
+- Last updated: 2026-11-20
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
 
@@ -194,7 +194,9 @@ in the existing device store; JSON story/Blueprint exports do not embed the imag
 The cover on World Info is where covers are made. A story without one shows
 **Manifest** across its cover; tapping it opens a short sheet: the chances left,
 **Title on the cover** (On | Off), the optional **Second character**, and two
-tiles, **One cover** (5 Energy) or **Three to choose from** (15 Energy). The
+tiles, **One cover** or **Three to choose from**, each showing its Energy. A
+cover's price follows the image model chosen for covers (its grade in
+`src/components/energy/shared/energyGrades.ts`), and three cost three times one. The
 covers are made from the story's own words (title, genre, tradition, logline,
 main character, tone, world and tags; never its chapters) with the owner's
 approved cover template, through `/api/story-cover`, one request per cover,
@@ -397,6 +399,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-20** — The guide no longer gives fixed cover prices (it said 5 and 15 Energy). A cover costs what its image model's grade costs, and three cost three times one, as the sheet shows (Model Router defaults, #619).
 - **2026-11-18** — **Kokoro casts each character by gender** (SENSEI's chapter test: women were read in a man's voice). Kokoro had three voices, narrator, main character and one man's voice for everyone else. Now each speaking character gets their own Kokoro voice, a woman's or a man's as their Codex card or the chapters say, the same one every time and on every device so kept lines are shared. A heroine gets a woman's main voice. Library's `storySpeakers` says who speaks each line; the narrator keeps one voice.
 - **2026-11-17** — Simplified Discovery controls and phone tabs, moved Events
   from Home into Rankings, and kept catalogue samples only in Workshop.

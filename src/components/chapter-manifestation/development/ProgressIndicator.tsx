@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react';
-import { LibraryScrubber } from '@seihouse/library-ui';
+import { LibraryScrubber } from '@seihouse/ui/sen';
 
 export type ProgressIndicatorProps = ComponentProps<typeof LibraryScrubber>;
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { SEIDialog, SEIDialogContent, SEIDialogTitle, SEIDialogDescription } from '@seihouse/ui';
 import { Camera, Check, Download, Image as ImageIcon, RefreshCw, X } from 'lucide-react';
-import { LibraryButton } from '@seihouse/library-ui';
-import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
+import { LibraryButton } from '@seihouse/ui/sen';
+import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/ui/sen';
 import './portraitBuilder.css';
 import { UserProfile } from './types';
 import { EnergyActionCost } from '../../energy/development/EnergyActionCost';

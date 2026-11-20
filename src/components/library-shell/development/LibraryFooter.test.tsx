@@ -9,7 +9,7 @@ import type { MainLibraryAdapter } from '../shared/MainLibraryAdapter';
 import { MainLibraryHeader } from './MainLibraryHeader';
 import { MainLibraryPreview } from '../../../workshop/previews/library-shell/MainLibraryPreview';
 
-vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
+vi.mock('@seihouse/ui/sen', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/ui/sen')>(), ParticleEffect: () => null }));
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;

@@ -9,7 +9,7 @@ import {
   Star,
   User,
 } from 'lucide-react';
-import { LibraryCharactersIcon as SENCharactersIcon } from '@seihouse/library-ui';
+import { LibraryCharactersIcon as SENCharactersIcon } from '@seihouse/ui/sen';
 import { type StorySeedCharacter, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { normalizeCodexAliases, parseCodexAliases } from '@seihouse/sen/story-seed';
 import { patchMainCharacter, worldFoundations, type UpdateSeed } from '../seedState';

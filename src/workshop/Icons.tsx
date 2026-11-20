@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { LibraryIcon, type LibraryIconName } from '@seihouse/library-ui';
+import { LibraryIcon, type LibraryIconName } from '@seihouse/ui/sen';
 import { LIBRARY_ICON_CATALOG as icons } from '@seihouse/library/presentation';
 
 const GROUPS = [

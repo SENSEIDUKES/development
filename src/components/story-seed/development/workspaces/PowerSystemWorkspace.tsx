@@ -1,5 +1,5 @@
 import { Layers } from 'lucide-react';
-import { LibraryPowerSystemIcon as SENPowerSystemIcon } from '@seihouse/library-ui';
+import { LibraryPowerSystemIcon as SENPowerSystemIcon } from '@seihouse/ui/sen';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import { patchPowerSystem, worldFoundations, type UpdateSeed } from '../seedState';

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Download } from 'lucide-react';
-import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryStoreIcon as SENStoreIcon } from '@seihouse/library-ui';
-import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
+import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryStoreIcon as SENStoreIcon } from '@seihouse/ui/sen';
+import { LibraryButton, LibraryPanel } from '@seihouse/ui/sen';
 import { SEIEmptyState, SEIInlineAlert } from '@seihouse/ui';
 import { useUserProfileServices } from './userProfileServices';
 import { publicCreatorWorlds, type PublicCreator } from './creatorWorlds';

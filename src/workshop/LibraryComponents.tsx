@@ -33,7 +33,7 @@ import {
   SwordCultivatorClash,
   type LibraryNavigationDrawerSection,
   type LibraryScrollPhase,
-} from '@seihouse/library-ui';
+} from '@seihouse/ui/sen';
 
 /** Live Library UI families from UI's workbench catalog, using the installed
  * canonical package. Workshop fixtures and interactions stay here; domain

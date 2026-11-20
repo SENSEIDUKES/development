@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react';
-import { ParticleEffect } from '@seihouse/library-ui';
+import { ParticleEffect } from '@seihouse/ui/sen';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 

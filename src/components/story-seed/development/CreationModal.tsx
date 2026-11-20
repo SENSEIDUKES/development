@@ -49,7 +49,7 @@ import './creator/creator.css';
 import { DeferredStorySeedView } from './DeferredStorySeedView';
 import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 import { useDesktopNavigation, usePhone } from '../../library-shell/development/workspaceMedia';
-import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
+import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/ui/sen';
 import { useStoryBankRecords } from './useStoryBankRecords';
 import { downloadStorySeed, downloadStorySeedCollection } from '@seihouse/sen/story-seed';
 

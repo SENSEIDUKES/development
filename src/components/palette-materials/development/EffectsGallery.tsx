@@ -1,4 +1,4 @@
-import { LibraryButton } from '@seihouse/library-ui';
+import { LibraryButton } from '@seihouse/ui/sen';
 import { LibraryMaterialSurface } from '@seihouse/library/presentation';
 import { NovelExpandedLogo } from '@library-studios/brand';
 import '@library-studios/brand/styles.css';

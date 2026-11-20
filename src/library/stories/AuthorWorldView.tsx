@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent
 import { ArrowLeft, BookOpen, Check, ChevronRight, Download, Globe, LoaderCircle, Mic, Sparkles, Square } from 'lucide-react';
 import { SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
 import { describeChapterTagging, findStory, storyTaggingSummary, type HarnessChapter, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
-import { LibraryButton, ManifestButton } from '@seihouse/library-ui';
+import { LibraryButton, ManifestButton } from '@seihouse/ui/sen';
 import type { CreatorWorld } from '../../components/creator-space/shared/creatorSpaceContracts';
 import { WorldCard } from '../../components/world-card/development/WorldCard';
 import { useLibraryAssets } from '../assets';

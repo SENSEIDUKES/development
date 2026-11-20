@@ -9,7 +9,7 @@ import {
   type FamiliarBondRank,
   type OfferQiResponse,
 } from '../../../library/familiars/contracts';
-import { LibraryGlobalIcon } from '@seihouse/library-ui';
+import { LibraryGlobalIcon } from '@seihouse/ui/sen';
 import { useOverlayScrollbar } from '@seihouse/ui';
 import { BalancePills } from '../../energy/development/BalancePill';
 import type { FrontDeskGuide } from '@seihouse/front-desk';

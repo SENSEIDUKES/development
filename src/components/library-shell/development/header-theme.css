@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "@seihouse/library-ui/styles.css";
+@import "@seihouse/ui/sen.css";
 
 /* Header preview local copies of the font files requested by the source stylesheet.
    Keeping them local prevents CSP, network, or upstream font changes from

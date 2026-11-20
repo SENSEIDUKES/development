@@ -16,7 +16,7 @@ import { WorkspaceSheet } from '../../library-shell/development/WorkspaceSheet';
 import { SENStorySeedIcon } from './SENStorySeedIcon';
 import { StorySeedLiveCard } from './creator/StorySeedLiveCard';
 import { useDesktopNavigation } from '../../library-shell/development/workspaceMedia';
-import { LibraryBankIcon as SENBankIcon, LibraryHelpIcon as SENHelpIcon, LibraryManifestingIcon as SENManifestingIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
+import { LibraryBankIcon as SENBankIcon, LibraryHelpIcon as SENHelpIcon, LibraryManifestingIcon as SENManifestingIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/ui/sen';
 import './story-seed.css';
 
 interface StorySeedWorkspaceChromeProps {

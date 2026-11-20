@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { NarrativeButton, NarrativeTextBox } from '@seihouse/sen/presentation';
-import { LibrarySearchIcon as SENSearchIcon } from '@seihouse/library-ui';
+import { LibrarySearchIcon as SENSearchIcon } from '@seihouse/ui/sen';
 import type { SenLanguageCode } from '@seihouse/sen/contracts';
 import { WorkspaceSheet } from './WorkspaceSheet';
 import type { HeaderAction } from './WorkspaceHeaderActions';

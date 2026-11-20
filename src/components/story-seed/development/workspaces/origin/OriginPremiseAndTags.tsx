@@ -11,7 +11,7 @@ import {
   type SetStateAction,
 } from 'react';
 import { ChevronDown, Feather, Sparkles, Tag, Wand2, X } from 'lucide-react';
-import { LibrarySearchIcon as SENSearchIcon } from '@seihouse/library-ui';
+import { LibrarySearchIcon as SENSearchIcon } from '@seihouse/ui/sen';
 import { AnimatePresence, motion } from 'motion/react';
 import { STORY_PREMISE_MAX_LENGTH, STORY_TAG_LIMIT } from '@seihouse/sen/story-seed';
 import { type StoryStyle } from '@seihouse/sen/story-seed';

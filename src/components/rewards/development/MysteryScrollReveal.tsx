@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'motion/react';
 import { ScrollText } from 'lucide-react';
-import { CelestialScrollVessel } from '@seihouse/library-ui';
+import { CelestialScrollVessel } from '@seihouse/ui/sen';
 import { ManifestationReveal } from '@seihouse/sen/manifestations';
 import { REWARD_CURRENCY_LABELS, orderRewardGrants, type RewardGrant } from '../../../library/rewards/contracts';
 import { ACHIEVEMENT_CATEGORY_LABELS, type MysteryScrollView, type OpenMysteryScrollResponse } from '../../../library/rewards/achievements';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Compass } from 'lucide-react';
-import { LibraryButton } from '@seihouse/library-ui';
+import { LibraryButton } from '@seihouse/ui/sen';
 import { WorkspaceHeader } from '@seihouse/library/shell';
 import { WorkspaceShell } from '@seihouse/library/shell';
 

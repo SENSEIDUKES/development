@@ -8,7 +8,7 @@ import {
   type PointerEvent,
 } from 'react';
 import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
-import { LibraryNavigationIcon } from '@seihouse/library-ui';
+import { LibraryNavigationIcon } from '@seihouse/ui/sen';
 import type { QiAccountState } from '../../../library/cultivation/contracts';
 import { formatQi, QiAmount } from '../../../library/cultivation/QiAmount';
 import { BalancePills } from '../../energy/development/BalancePill';

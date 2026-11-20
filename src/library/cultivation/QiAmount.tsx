@@ -1,4 +1,4 @@
-import { LibraryGlobalIcon } from '@seihouse/library-ui';
+import { LibraryGlobalIcon } from '@seihouse/ui/sen';
 
 const formatter = new Intl.NumberFormat('en-US');
 

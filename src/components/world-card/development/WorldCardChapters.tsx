@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Circle, CircleDot, GitBranch, ListOrdered, Minus } from 'lucide-react';
-import { LibraryButton } from '@seihouse/library-ui';
+import { LibraryButton } from '@seihouse/ui/sen';
 import { SEIDialog, SEIDialogContent, SEIDialogDescription, SEIDialogTitle, useOverlayScrollbar } from '@seihouse/ui';
 import type { WorldInfoArc, WorldInfoBranch, WorldInfoChapter } from '../shared/worldCardContracts';
 import { buildChapterMap, type ChapterMapGoal, type ChapterMapPage, type ChapterMapRow, type ChapterMapSection } from './worldCardChapterMap';

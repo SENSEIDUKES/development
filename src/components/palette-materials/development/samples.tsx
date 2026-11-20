@@ -1,6 +1,6 @@
 import { LIBRARY_MATERIALS, ARCHIVED_LIBRARY_MATERIALS, LibraryMaterialSurface, type LibraryMaterialId } from '@seihouse/library/presentation';
 import type { CSSProperties, ReactNode } from 'react';
-import { LibraryButton, LibraryNavigationDrawerPanel, LibraryPanel } from '@seihouse/library-ui';
+import { LibraryButton, LibraryNavigationDrawerPanel, LibraryPanel } from '@seihouse/ui/sen';
 import { Home, Feather } from 'lucide-react';
 import '@seihouse/library/styles.css';
 import type { MaterialId } from './model';

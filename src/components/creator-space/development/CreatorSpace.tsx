@@ -3,7 +3,7 @@ import { ArrowRight, ChevronRight, ExternalLink, Landmark, Package, Pencil, Play
 import {
   LibraryButton, LibraryPanel,
   LibraryManifestingIcon as SENManifestingIcon, LibraryNavigationIcon as SENNavigationIcon,
-} from '@seihouse/library-ui';
+} from '@seihouse/ui/sen';
 import { SEIEmptyState, SEIErrorState, SEISkeleton } from '@seihouse/ui';
 import { useLibraryAssets } from '../../../library/assets';
 import { formatEnergy } from '../../energy/development/EnergyAmount';

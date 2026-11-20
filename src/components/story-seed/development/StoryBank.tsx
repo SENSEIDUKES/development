@@ -18,7 +18,7 @@ import {
 import { getStoryStyleLabel, type StorySeedRecord } from '@seihouse/sen/story-seed';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { SENStorySeedIcon } from './SENStorySeedIcon';
-import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
+import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/ui/sen';
 
 /**
  * Story Bank — the permanent home for every saved Story Seed and its latest

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { BookOpen, Compass, Feather, Lock, Radio, ScrollText, type LucideIcon } from 'lucide-react';
-import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
+import { LibraryButton, LibraryPanel } from '@seihouse/ui/sen';
 import { SEIInlineAlert, SEILoadingState } from '@seihouse/ui';
 import {
   ACHIEVEMENT_CATEGORY_LABELS,

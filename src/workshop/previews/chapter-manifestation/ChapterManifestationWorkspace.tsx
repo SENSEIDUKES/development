@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AGENTS } from '../../../lib/agents';
 import { GenerationOverlay as GenerationOverlay, LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/library/manifestations';
 import { defaultFamiliar, familiarCatalogue, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
-import { defaultDestinationFor } from '@seihouse/library-ui';
+import { defaultDestinationFor } from '@seihouse/ui/sen';
 import {
   manifestationModeForOperation,
   type MediaRevealState,

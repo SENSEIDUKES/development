@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ManifestationChamber, ChamberForegroundMotes } from '@seihouse/library-ui';
+import { ManifestationChamber, ChamberForegroundMotes } from '@seihouse/ui/sen';
 import { ManifestationReveal } from '@seihouse/sen/manifestations';
-import { CelestialScrollVessel } from '@seihouse/library-ui';
+import { CelestialScrollVessel } from '@seihouse/ui/sen';
 import { type MediaManifestation, type MediaRevealState } from '@seihouse/sen/manifestations';
 import { MEDIA_KIND_LABEL } from '@seihouse/sen/manifestations';
 import { type RevealedContent } from '@seihouse/sen/manifestations';

@@ -3,7 +3,7 @@ import { createPortal, flushSync } from 'react-dom';
 import FocusLock from 'react-focus-lock';
 import { SEISwitch } from '@seihouse/ui';
 import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
-import { LibraryHelpIcon, LibraryNavigationIcon, LibraryProfileIcon } from '@seihouse/library-ui';
+import { LibraryHelpIcon, LibraryNavigationIcon, LibraryProfileIcon } from '@seihouse/ui/sen';
 import { ChevronDown, Languages, LogIn, Music } from 'lucide-react';
 import { getActiveInterfaceLanguage, setFallbackInterfaceLanguage } from '../../../library/language/interfaceTranslation';
 import { WorkspaceSheet } from './WorkspaceSheet';

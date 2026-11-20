@@ -9,7 +9,7 @@ import type { SparkHost } from '../shared/SparkHost';
 import { SparksButton } from './SparksButton';
 import { EXAMPLE_SPARK } from '../shared/builtInSparks';
 
-vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
+vi.mock('@seihouse/ui/sen', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/ui/sen')>(), ParticleEffect: () => null }));
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;

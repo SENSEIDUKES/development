@@ -12,7 +12,7 @@ import { OriginWorkspace } from '../../../story-seed/development/workspaces/Orig
 import { OriginSparksContext } from '../../../story-seed/development/workspaces/origin/OriginSparksContext';
 import { fillOriginFromSpark } from '../../../story-seed/development/seedState';
 
-vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
+vi.mock('@seihouse/ui/sen', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/ui/sen')>(), ParticleEffect: () => null }));
 vi.mock('../../../../audio/playback', () => ({ useNarrativeAudio: () => ({
   isPlaying: false, currentTrackId: null, stop: vi.fn(),
 }) }));

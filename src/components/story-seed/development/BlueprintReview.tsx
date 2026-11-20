@@ -14,7 +14,7 @@ import { STORY_TAG_LIMIT, type StorySeedInput, type StorySeedStoryRequired, type
 import { useStoryCreationRuntime, useStoryCreationStore } from '../../../library/story-seed/runtime';
 import { NarrativeButton as LibraryButton, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { patchStoryRequired, patchWorldIdentity, type UpdateSeed } from './seedState';
-import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
+import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/ui/sen';
 import {
   BlueprintHeaderSection,
   BlueprintOriginSection,

@@ -16,7 +16,7 @@ import {
 import {
   LibraryButton,
   LibraryCaveBackdrop,
-} from '@seihouse/library-ui';
+} from '@seihouse/ui/sen';
 import {
   SEIDialog,
   SEIDialogContent,
@@ -54,7 +54,7 @@ import { LibraryNavigation, LibrarySectionSidebar, useLibraryDesktopNavigation }
 import type { LibraryLocation } from '../../library-shell/development/libraryRoutes';
 import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
 import { LIBRARY_EMBLEM } from '../../library-shell/development/libraryBrand';
-import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/library-ui';
+import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/ui/sen';
 import { EnergyPanel } from '../../energy/development/EnergyPanel';
 import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
 import { CelestialStorePanel } from '../../celestial-store/development/CelestialStorePanel';

@@ -1,6 +1,6 @@
 import { Check, ChevronRight, Sparkle } from 'lucide-react';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
-import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
+import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/ui/sen';
 import { NarrativeButton as LibraryButton } from '@seihouse/sen/presentation';
 import { REQUIRED_STORY_SECTIONS } from '../seedSections';
 import { StorySeedLiveCard } from './StorySeedLiveCard';

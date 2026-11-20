@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import { LibraryButton } from '@seihouse/library-ui';
+import { LibraryButton } from '@seihouse/ui/sen';
 import { WorldCardInfo } from '../../world-card/development/WorldCardInfo';
 import type { StoryDetailScreenProps } from '../shared/storyDetailContracts';
 import type { CreatorWorld } from '../../creator-space/shared/creatorSpaceContracts';

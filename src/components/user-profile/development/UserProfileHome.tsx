@@ -6,7 +6,7 @@ import {
   Sigma,
   Sparkles,
 } from "lucide-react";
-import { LibraryButton, LibraryPanel } from "@seihouse/library-ui";
+import { LibraryButton, LibraryPanel } from "@seihouse/ui/sen";
 import {
   SEIDialog,
   SEIDialogContent,
@@ -36,8 +36,8 @@ import {
   resolvePermanentDaoXp,
   rankBackground,
 } from "../../../library/cultivation/progression";
-import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/library-ui';
-import { LibraryProfileIcon as SENProfileIcon, LibraryQiYinYangIcon as SENQiYinYangIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
+import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/ui/sen';
+import { LibraryProfileIcon as SENProfileIcon, LibraryQiYinYangIcon as SENQiYinYangIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/ui/sen';
 import { EnergySunIcon } from '../../energy/development/EnergySunIcon';
 
 const tiers: Record<PremiumTier, string> = {

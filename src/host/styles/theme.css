@@ -14,7 +14,7 @@
 /* The interface's fonts and lettering for scripts beyond Latin and Cyrillic. */
 @import "./script-lettering.css";
 @import "tailwindcss";
-@import "@seihouse/library-ui/styles.css";
+@import "@seihouse/ui/sen.css";
 @import "@seihouse/library/styles.css";
 /* The SEIHouse audio player: the story audio note, and the Audio settings
    panel built from SEIHouse UI controls (its classes are scanned below). */

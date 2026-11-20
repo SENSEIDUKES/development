@@ -1,7 +1,7 @@
 import type { StoryCoverRequest } from '@seihouse/library/stories';
-import { createModelRouter, DEFAULT_IMAGE_MODEL, IMAGE_MODELS, ModelRouterError } from '@seihouse/library/model-router-server';
+import { createModelRouter, IMAGE_MODELS, ModelRouterError } from '@seihouse/library/model-router-server';
 import { parseAttachedImage } from '../shared/imageAttachments';
-import { MODEL_PROVIDERS, providerKey, type ModelEnvironment } from '../model-router/catalog';
+import { imageJobDefaultModel, MODEL_PROVIDERS, providerKey, type ModelEnvironment } from '../model-router/catalog';
 import { buildStoryCoverPrompt, STORY_COVER_ASPECT_RATIO, STORY_COVER_FIELD_LIMITS } from './prompt';
 import { buildCodexPicturePrompt, CODEX_PICTURE_ASPECT_RATIO, parseCodexPictureRequest } from './codexPicture';
 
@@ -28,7 +28,7 @@ export interface StoryCoverHttpDependencies {
 
 export { STORY_COVER_VISITOR_LIMIT } from './limits';
 
-/** A cover is one image; Nano Banana 2 usually answers in well under a minute. */
+/** Leave time for one image and its reference processing. */
 export const STORY_COVER_TIMEOUT_MS = 120_000;
 
 const LIMITS = STORY_COVER_FIELD_LIMITS;
@@ -100,10 +100,10 @@ const parseCoverRequest = (parsed: unknown): { story: StoryCoverRequest; model?:
 
 /**
  * The story cover route: one image made from the story's own words, with the
- * image model chosen in the Model Router (Nano Banana 2 Lite when none is). The
+ * Cover art / profile model chosen in the Model Router. The
  * reply is the image itself, in base64; the host keeps it. A request carrying
  * a Codex card makes that card's picture instead (see `codexPicture.ts`), with
- * the same model, limit and reply.
+ * the Codex model and the same limit and reply format.
  */
 export async function handleStoryCoverHttp(
   request: StoryCoverHttpRequest,
@@ -118,7 +118,7 @@ export async function handleStoryCoverHttp(
     const message = error instanceof Error ? error.message : 'Invalid JSON request.';
     return errorResponse(400, message === 'Unexpected end of JSON input' ? 'The request body is empty.' : message);
   }
-  const model = parsed.model ?? (dependencies.environment.STORY_COVER_DEFAULT_MODEL?.trim() || DEFAULT_IMAGE_MODEL);
+  const model = parsed.model ?? imageJobDefaultModel(dependencies.environment, parsed.noun === 'picture' ? 'codex-images' : 'images');
   const option = IMAGE_MODELS.find(item => item.id === model);
   if (!option) return errorResponse(400, `Model '${model}' cannot make images.`);
   const key = providerKey(dependencies.environment, option.provider);

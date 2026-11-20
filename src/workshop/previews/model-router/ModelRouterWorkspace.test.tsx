@@ -4,7 +4,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ModelRouterGear } from '../../../host/model-router/ModelRouterSettings';
-import { readExactModel, readModelPreference, readReasoningPreference, readTaggerPreference, readTextRolePreference, readTierPreference } from '../../../host/generation/modelPreference';
+import { readExactModel, readModelPreference, readReasoningPreference, readTaggerPreference, readTextRolePreference, readTierPreference, writeModelPreference } from '../../../host/generation/modelPreference';
 import { recordUsage } from '../../../host/usage/usageLog';
 import { modelRouterStatus } from '../../../server/model-router/status';
 
@@ -29,6 +29,7 @@ const pick = (name: string, value: string) => act(async () => {
   select(name).dispatchEvent(new Event('change', { bubbles: true }));
 });
 const switchJob = (job: string) => click([...document.querySelectorAll<HTMLButtonElement>('[aria-label="Text task"] button')].find(button => button.textContent === job)!);
+const switchImageJob = (job: string) => click([...document.querySelectorAll<HTMLButtonElement>('[aria-label="Image task"] button')].find(button => button.textContent === job)!);
 const row = (id: string) => document.querySelector<HTMLButtonElement>(`[data-model="${id}"] button`);
 const listedModels = () => [...document.querySelectorAll('[data-model]')].map(item => item.getAttribute('data-model'));
 
@@ -89,6 +90,7 @@ it('grades rounded Text and Image quotes at their inclusive cutoffs', () => {
 it('selects the model and its quoted tier together', async () => {
   await openRouter({ GEMINI_API_KEY: 'g', ANTHROPIC_API_KEY: 'a', OPENAI_API_KEY: 'o', 'OpenRouter-Dev': 'r' });
   const tier = (grade: string) => document.querySelector<HTMLButtonElement>('[data-tier="' + grade + '"]')!;
+  await pick('Provider', 'gemini');
   await click(row('google/gemini-3.8-flash')!);
   expect(readTierPreference('chapters')).toBe('immortal');
   expect(readModelPreference('chapters')).toBe('google/gemini-3.8-flash');
@@ -105,6 +107,29 @@ it('selects the model and its quoted tier together', async () => {
   expect(tier('immortal').querySelector('[aria-label="From 10 Energy/min"] .energy-action-cost.energy-badge')).toBeTruthy();
 });
 
+it('selects and prices cover and Codex images independently, including after reopening', async () => {
+  writeModelPreference('images', 'google/gemini-3-pro-image');
+  await openRouter({ OPENAI_API_KEY: 'o', Minimax: 'm', GEMINI_API_KEY: 'g' });
+  await pick('Capability', 'images');
+  expect(row('google/gemini-3-pro-image')?.getAttribute('aria-pressed')).toBe('true');
+  expect(document.querySelector('[aria-label="Used by"]')?.textContent).toContain('Profile Picture');
+  await switchImageJob('Codex');
+  expect(row('minimax/MiniMax-H3-Image')?.getAttribute('aria-pressed')).toBe('true');
+  expect(document.querySelector('[aria-label="Used by"]')?.textContent).toContain('Codex Picture');
+  await click(row('minimax/MiniMax-H3-Image-Highspeed')!);
+  expect(readTierPreference('codex-images')).toBe('immortal');
+  expect(readModelPreference('images')).toBe('google/gemini-3-pro-image');
+  await switchImageJob('Cover art / profile');
+  await pick('Provider', 'openai');
+  await click(row('openai/gpt-image-2.6-flare')!);
+  await click(document.querySelector<HTMLButtonElement>('[aria-label="Close Model Router"]')!);
+  await click(container.querySelector<HTMLButtonElement>('[aria-label="Model Router settings"]')!);
+  await pick('Capability', 'images');
+  expect(row('openai/gpt-image-2.6-flare')?.getAttribute('aria-pressed')).toBe('true');
+  await switchImageJob('Codex');
+  expect(row('minimax/MiniMax-H3-Image-Highspeed')?.getAttribute('aria-pressed')).toBe('true');
+});
+
 it('uses the selected task’s reported workload, including thinking tokens, for the quote', async () => {
   recordUsage({ kind: 'chapter', inputTokens: 14_000, outputTokens: 7_000, totalTokens: 22_000 });
   recordUsage({ kind: 'blueprint', inputTokens: 10_000, outputTokens: 8_000 });
@@ -114,6 +139,8 @@ it('uses the selected task’s reported workload, including thinking tokens, for
   expect(document.body.textContent).toContain('$0.0054 provider cost');
   expect(row('openai/gpt-6-luna')!.querySelector('[aria-label="Approximately 2 Energy"] .energy-action-cost.energy-badge')).toBeTruthy();
   await switchJob('Blueprint');
+  await pick('Provider', 'openai');
+  await pick('Blueprint model', 'openai/gpt-6-luna');
   expect(document.body.textContent).toContain('Last blueprint receipt');
   expect(document.body.textContent).toContain('$0.005 provider cost');
   expect(document.body.querySelector('[aria-label="Approximately 1 Energy"] .energy-action-cost.energy-badge')).toBeTruthy();
@@ -179,18 +206,23 @@ it('lets GPT-6 Luna be selected once the OpenRouter key exists, and closes with 
 });
 
 it('keeps all three text jobs independent and remembers them after reopening', async () => {
-  await openRouter({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o' });
+  await openRouter({ GEMINI_API_KEY: 'g', OPENAI_API_KEY: 'o', ANTHROPIC_API_KEY: 'a' });
+  expect(row('anthropic/claude-haiku-5-5')?.getAttribute('aria-pressed')).toBe('true');
+  expect(select('Reasoning').options[0].textContent).toBe('Default (low)');
+  await pick('Provider', 'gemini');
   await click(row('google/gemini-3.8-flash')!);
   await pick('Reasoning', 'high');
   await switchJob('Tagger');
   expect(select('Tagger model').value).toBe('');
-  expect(select('Reasoning').options[0].textContent).toBe('Default (low)');
+  expect(select('Tagger model').options[0].textContent).toBe('Default · GPT-6 Luna');
+  expect(select('Reasoning').options[0].textContent).toBe('Default (medium)');
   expect([...select('Tagger model').options].some(item => item.value.startsWith('openrouter/'))).toBe(false);
   await pick('Provider', 'openai');
   await pick('Tagger model', 'openai/gpt-6-luna');
   await pick('Reasoning', 'medium');
   await switchJob('Blueprint');
   expect(select('Blueprint model').value).toBe('');
+  expect(select('Blueprint model').options[0].textContent).toBe('Default · Claude Haiku 5.5');
   expect(select('Reasoning').options[0].textContent).toBe('Default (high)');
   expect(document.querySelector('[aria-label="Used by"]')?.textContent).toContain('Story Seed Blueprint');
   await pick('Provider', 'gemini');

@@ -1,10 +1,16 @@
 import {
   providerKey as sharedProviderKey,
   resolveChapterModelRoute as sharedResolveChapterModelRoute,
+  CHAPTER_MODELS,
+  DEFAULT_CHAPTER_MODEL,
+  IMAGE_MODELS,
+  lowestReasoningLevel,
+  resolveReasoningLevel,
   type ModelEnvironment,
   type ModelProviderId,
   type ModelCapability,
 } from '@seihouse/library/model-router-server';
+import { BLUEPRINT_DEFAULT_MODEL, BLUEPRINT_DEFAULT_REASONING, CHAPTER_DEFAULT_MODEL, IMAGE_JOB_DEFAULTS, TAGGER_DEFAULT_MODEL, TAGGER_DEFAULT_REASONING, type ImageJob } from '../../host/generation/modelDefaults';
 
 export { LOCAL_LM_STUDIO_MODEL, isLocalModelDevelopment, CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, LIVE_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, DEFAULT_LIVE_MODEL, lowestReasoningLevel, providerModelName, resolveReasoningLevel, textModelProvider, textModelLabel } from '@seihouse/library/model-router-server';
 export const isMissingKeyMessage = (message: string) => /(?:OPENAI_API_KEY|GEMINI_API_KEY|OPENROUTER_API_KEY|OpenRouter-Dev|MINIMAX_API_KEY|Minimax|ANTHROPIC_API_KEY|claude_sen) is not configured/.test(message);
@@ -41,12 +47,30 @@ export const resolveChapterModelRoute = (
   environment: ModelEnvironment,
   listVariable: string,
   defaultVariable: string,
-) => sharedResolveChapterModelRoute(environmentForRouter(environment), listVariable, defaultVariable);
+) => sharedResolveChapterModelRoute(environmentForRouter(environment), listVariable, defaultVariable,
+  providerKey(environment, 'anthropic') ? CHAPTER_DEFAULT_MODEL : DEFAULT_CHAPTER_MODEL);
+
+export const blueprintDefaultModel = (environment: ModelEnvironment) =>
+  environment.STORY_SEED_BLUEPRINT_MODEL?.trim()
+  || (providerKey(environment, 'anthropic') ? BLUEPRINT_DEFAULT_MODEL : DEFAULT_CHAPTER_MODEL);
+
+export const imageJobDefaultModel = (environment: ModelEnvironment, job: ImageJob) => {
+  const configured = job === 'images' ? environment.STORY_COVER_DEFAULT_MODEL?.trim() : undefined;
+  return IMAGE_MODELS.find(model => model.id === configured)?.id ?? IMAGE_JOB_DEFAULTS[job];
+};
+
+export const resolveTextJobReasoning = (job: 'Tagger' | 'Blueprint', model: string, requested: unknown) => {
+  const override = CHAPTER_MODELS.find(option => option.id === model)?.reasoning?.levels.find(level => level === requested);
+  if (override) return override;
+  if (job === 'Tagger') return model === TAGGER_DEFAULT_MODEL ? TAGGER_DEFAULT_REASONING : lowestReasoningLevel(model);
+  return resolveReasoningLevel(model, model === BLUEPRINT_DEFAULT_MODEL ? BLUEPRINT_DEFAULT_REASONING : undefined);
+};
 
 export interface GenerationConsumer {
   name: string;
   capability: ModelCapability;
   textJob?: 'Tagger' | 'Blueprint';
+  imageJob?: ImageJob;
   entry: string;
   modelChoice: 'router' | 'server-default';
 }
@@ -68,10 +92,10 @@ export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   // A one-off trial of Qwen3-TTS as a foundation voice, run as a Cloud Run GPU job (services/qwen-voice-test).
   { name: 'Qwen Voice Trial', capability: 'tts', entry: 'services/qwen-voice-test/test.py', modelChoice: 'server-default' },
   { name: 'Familiar Live Talk', capability: 'live', entry: 'src/server/familiar-live/http.ts', modelChoice: 'router' },
-  { name: 'Story Cover', capability: 'images', entry: 'src/server/story-cover/http.ts', modelChoice: 'router' },
-  { name: 'Codex Picture', capability: 'images', entry: 'src/server/story-cover/codexPicture.ts', modelChoice: 'router' },
-  { name: 'Image Lab', capability: 'images', entry: 'src/server/image-lab/http.ts', modelChoice: 'router' },
-  { name: 'Profile Picture', capability: 'images', entry: 'src/server/profile-picture/http.ts', modelChoice: 'router' },
+  { name: 'Story Cover', capability: 'images', imageJob: 'images', entry: 'src/server/story-cover/http.ts', modelChoice: 'router' },
+  { name: 'Codex Picture', capability: 'images', imageJob: 'codex-images', entry: 'src/server/story-cover/codexPicture.ts', modelChoice: 'router' },
+  { name: 'Image Lab', capability: 'images', imageJob: 'images', entry: 'src/server/image-lab/http.ts', modelChoice: 'router' },
+  { name: 'Profile Picture', capability: 'images', imageJob: 'images', entry: 'src/server/profile-picture/http.ts', modelChoice: 'router' },
 ];
 
 export const PROVIDER_ADAPTERS: readonly string[] = [

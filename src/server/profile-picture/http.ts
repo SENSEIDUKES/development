@@ -1,5 +1,5 @@
-import { createModelRouter, DEFAULT_IMAGE_MODEL, IMAGE_MODELS, ModelRouterError } from '@seihouse/library/model-router-server';
-import { MODEL_PROVIDERS, providerKey, type ModelEnvironment } from '../model-router/catalog';
+import { createModelRouter, IMAGE_MODELS, ModelRouterError } from '@seihouse/library/model-router-server';
+import { imageJobDefaultModel, MODEL_PROVIDERS, providerKey, type ModelEnvironment } from '../model-router/catalog';
 import { parseAttachedImage } from '../shared/imageAttachments';
 import { PROFILE_PICTURE_ASPECT_RATIO, PROFILE_PICTURE_PROMPT } from './prompt';
 
@@ -56,7 +56,7 @@ export async function handleProfilePictureHttp(
   if ('error' in photo) return errorResponse(photo.tooLarge ? 413 : 400, photo.error);
   if (parsed.model !== undefined && typeof parsed.model !== 'string') return errorResponse(400, 'Choose an image model from the Model Router.');
 
-  const model = (parsed.model as string | undefined) || DEFAULT_IMAGE_MODEL;
+  const model = (parsed.model as string | undefined) || imageJobDefaultModel(dependencies.environment, 'images');
   const option = IMAGE_MODELS.find(item => item.id === model);
   if (!option) return errorResponse(400, `Model '${model}' cannot make portraits.`);
   const key = providerKey(dependencies.environment, option.provider);

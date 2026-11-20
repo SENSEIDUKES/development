@@ -7,6 +7,18 @@ afterEach(() => vi.unstubAllGlobals());
 const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aSAAAAABJRU5ErkJggg==';
 const environment = { Minimax: 'secret', STORY_SEED_BLUEPRINT_ACCESS_TOKEN: 'access' };
 
+it('routes an unset Codex image model to the standard H3 generation endpoint', async () => {
+  const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => new Response(JSON.stringify({ data: [{ b64_json: png }] })));
+  vi.stubGlobal('fetch', fetchMock);
+  const result = await handleStoryCoverHttp({ method: 'POST', body: {
+    card: { subject: 'thing', name: 'The Wind', look: { summary: 'A blade of glass.' } },
+  } }, { environment });
+  expect(result).toMatchObject({ status: 200, body: { image: png, model: 'minimax/MiniMax-H3-Image' } });
+  const [url, init] = fetchMock.mock.calls[0];
+  expect(url).toBe('https://api.minimax.io/v1/images/generations');
+  expect(JSON.parse(String(init.body))).toMatchObject({ model: 'MiniMax-H3-Image', aspect_ratio: '3:4' });
+});
+
 it('routes covers, Image Lab, and profile pictures through the MiniMax adapter with the Vercel alias', async () => {
   const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: { image_base64: [png] }, base_resp: { status_code: 0 } })));
   vi.stubGlobal('fetch', fetchMock);

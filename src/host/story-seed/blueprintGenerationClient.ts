@@ -1,7 +1,6 @@
 import { type BlueprintGenerationPayload, type WorldBlueprint } from '@seihouse/sen/story-seed';
-import { isLocalDevelopmentModel, readReasoningPreference, readTextRolePreference } from '../generation/modelPreference';
+import { isLocalDevelopmentModel, readTextRolePreference } from '../generation/modelPreference';
 import { recordUsage } from '../usage/usageLog';
-import { chosenEnergyGrade } from '../generation/modelPreference';
 
 const ENDPOINT = '/api/generate-blueprint';
 /** Longer than the server's 180-second route, so the server's own answer, a deadline included, arrives first. */
@@ -38,12 +37,6 @@ const requestSignalWithTimeout = (callerSignal?: AbortSignal, timeoutMs = REQUES
       callerSignal?.removeEventListener('abort', abortFromCaller);
     },
   };
-};
-
-const withBlueprintModel = (payload: BlueprintGenerationPayload, model?: string) => {
-  const blueprint = readTextRolePreference('blueprint');
-  const reasoningLevel = blueprint.reasoningLevel ?? (model && !blueprint.model ? readReasoningPreference(model) : undefined);
-  return { ...payload, ...(model ? { model } : {}), ...(reasoningLevel ? { reasoningLevel } : {}) };
 };
 
 const readResponseBody = async (response: Response): Promise<unknown> => {
@@ -97,7 +90,7 @@ const postBlueprintRequest = async (
 };
 
 /**
- * An explicit Blueprint choice uses its own reasoning. Otherwise it follows Chapter.
+ * The Blueprint has its own model and reasoning preferences. Omitted values use the server defaults.
  */
 export const requestWorldBlueprint = async (
   payload: BlueprintGenerationPayload,
@@ -105,8 +98,10 @@ export const requestWorldBlueprint = async (
   signal?: AbortSignal,
   model?: string,
 ): Promise<WorldBlueprint> => {
-  const grade = readTextRolePreference('blueprint').model ? undefined : chosenEnergyGrade('chapters', model);
-  const { blueprint, headers } = await postBlueprintRequest(withBlueprintModel(payload, model), accessToken, {
+  const choice = readTextRolePreference('blueprint');
+  const { blueprint, headers } = await postBlueprintRequest({
+    ...payload, model: model ?? choice.model, reasoningLevel: choice.reasoningLevel,
+  }, accessToken, {
     missingToken: 'Enter the Development access token before manifesting the World Blueprint.',
     failed: status => `World Blueprint generation failed with status ${status}.`,
     timedOut: 'World Blueprint generation timed out. No Story Seed data was changed; please retry.',
@@ -116,6 +111,7 @@ export const requestWorldBlueprint = async (
     const count = Number(raw);
     return raw && Number.isSafeInteger(count) && count >= 0 ? count : undefined;
   };
-  recordUsage({ kind: 'blueprint', model, grade, inputTokens: tokens('Input'), outputTokens: tokens('Output'), totalTokens: tokens('Total') });
+  recordUsage({ kind: 'blueprint', model: headers.get('X-Blueprint-Model') ?? model ?? choice.model,
+    inputTokens: tokens('Input'), outputTokens: tokens('Output'), totalTokens: tokens('Total') });
   return blueprint;
 };

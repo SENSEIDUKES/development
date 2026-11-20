@@ -6,13 +6,15 @@ and on every preview (`src/host/model-router/ModelRouterSettings.tsx`); the old
 `?preview=model-router` page is archived but still reachable.
 
 - **Created:** 2026-09-23
-- **Last Workshop update:** 2026-11-18
+- **Last Workshop update:** 2026-11-19
 - **Last source comparison:** 2026-09-23 (DEV-native; no production counterpart)
 - **Status:** active (gear); Systems card archived; owner `deferred` (server/host infrastructure, in no package)
 
 ## Text routing and Energy estimates
 
-Chapter selects the writer. Tagger and Blueprint each have their own model and reasoning control. An unset model follows Chapter. Tagger defaults to the lowest supported reasoning level. An inherited Blueprint also follows the chapter reasoning level unless the creator overrides it. The app and Workshop save these choices in the same browser preference.
+Chapter defaults to Claude Haiku 5.5 at low effort. Tagger defaults to GPT-6 Luna at medium effort. Blueprint defaults to Claude Haiku 5.5 at high effort. Each job has its own model and reasoning controls, shared by the app and Workshop on this device. Without an Anthropic key, Chapter and Blueprint retain their Gemini defaults. Without an OpenAI key, the tagger uses the chapter's writer at its lowest supported effort unless a tagger override is available. The existing Chapter and Blueprint server model variables can override their defaults.
+
+Images offers **Cover art / profile** and **Codex**. Cover and profile generation share GPT Image 2.6 Flare by default. Image Lab starts with this choice and can select a different model for an individual request. Codex pictures, including Blueprint portraits and character portraits used as cover references, default to MiniMax H3 Image. The existing saved image choice applies to cover and profile, and Codex has a separate device preference.
 
 The Router compares assigned models at four times the estimated provider cost, rounded up to whole Energy at $0.02 each. Text uses the last provider-reported workload for that task within the standard context band, or a labelled reference of 9,000 input and 3,500 output tokens from the documented chapter measurements. Successful Blueprint responses carry available provider token counts in response headers for the device’s usage record. Image estimates name their size or provider example. Connected-minute base prices are marked “From” when model tokens are additional. These comparisons are separate from the Library's practice Usage totals and ledger schedule.
 
@@ -22,7 +24,7 @@ Direct routes use the standard rate card in `pricing.ts`. OpenRouter text routes
 
 Verified against the [OpenAI model catalog](https://developers.openai.com/api/docs/models/all) on 2026-11-10. Text offers GPT-6.1 Terra and Sol, GPT-6 Astra, Luna and Sol, GPT-5.6 Sol/Terra/Luna, GPT-5.5 and Pro, GPT-5.4/Pro/Mini, GPT-5.2/Pro, and Chat Latest. Images offers GPT Image 2.6 and 2.5, each in Sunburst and Flare. GPT-Live 1 remains the connected live voice model.
 
-Direct `openai/<model>` routes use `OPENAI_API_KEY`, independently of OpenRouter credits. Text uses Responses with provider-supported reasoning (low, or medium for Pro models whose minimum is medium), no custom sampling, and the complete host schema in instructions. Host validation is authoritative. Pro models can exceed the existing chapter deadline. Images use generations for text and multipart edits for references, returning PNG through the existing storage paths; medium quality and the nearest square/portrait/landscape size are used. Existing default models and tier selections stay unchanged.
+Direct `openai/<model>` routes use `OPENAI_API_KEY`, independently of OpenRouter credits. Text uses Responses with provider-supported reasoning, no custom sampling, and the complete host schema in instructions. Host validation is authoritative. Pro models can exceed the existing chapter deadline. Images use generations for text and multipart edits for references, returning PNG through the existing storage paths. The adapter uses medium quality and the nearest square, portrait or landscape size.
 
 This is the complete non-deprecated general-purpose writing and image catalog, not every specialized OpenAI endpoint. Embeddings, moderation, transcription, research/cyber access programs, and open-weight models are not chapter/image models. Realtime models use a different protocol from the existing GPT-Live engine and are not advertised as connected. Retired/deprecated models are not newly offered. Configuration status means a key is present, not that every model is entitled or has available credit.
 
@@ -30,8 +32,8 @@ This is the complete non-deprecated general-purpose writing and image catalog, n
 
 | Capability | Providers | Consumers |
 | --- | --- | --- |
-| Text | Gemini, OpenRouter, MiniMax, Anthropic, OpenAI, local LM Studio | Harness Generation, Holdings Fixer, Look Describer, Chapter Tagger (its own choice, else the chapter model), Story Seed Blueprint, Story Spark, Reader Translation |
-| Images | Gemini, OpenRouter, MiniMax, OpenAI | Story Cover, Image Lab, Profile Picture |
+| Text | Gemini, OpenRouter, MiniMax, Anthropic, OpenAI, local LM Studio | Harness Generation, Holdings Fixer, Look Describer, Chapter Tagger, Story Seed Blueprint, Story Spark, Reader Translation |
+| Images | Gemini, OpenRouter, MiniMax, OpenAI | Story Cover, Image Lab, Profile Picture, Codex Picture |
 | TTS | ElevenLabs, MiniMax | Codex Voice Quote uses ElevenLabs; MiniMax adapter available for server integrations |
 | Live voice | OpenAI, Gemini, ElevenLabs | Familiar Live Talk |
 | Audio | Gemini | none yet (catalog only) |
@@ -65,7 +67,8 @@ any model call that is not registered. See AGENTS.md.
 | `OPENROUTER_MODELS` | Extra OpenRouter models, comma-separated (`openai/gpt-5.6-luna`) |
 | `OPENROUTER_REASONING_EFFORT` | Optional server fallback reasoning effort for OpenRouter models (the Router's Advanced setting wins; models that send their own default, below, never use it) |
 | `HARNESS_GENERATION_MODELS` | Models pinned ahead of the catalog |
-| `*_DEFAULT_MODEL` | Default model per surface (otherwise Gemini 3.1 Flash Lite) |
+| `HARNESS_GENERATION_DEFAULT_MODEL`, `STORY_SEED_BLUEPRINT_MODEL` | Optional server overrides for Chapter and Blueprint |
+| `STORY_COVER_DEFAULT_MODEL` | Optional server override for Cover art / profile |
 | `ELEVENLABS_API_KEY` | ElevenLabs TTS and live voice |
 | `ELEVENLABS_MODEL_ID` | TTS model |
 | `FAMILIAR_LIVE_MODEL` | Live voice model; by default the first listed whose key is set (GPT-Live 1 with `OPENAI_API_KEY`, else Gemini 3.8 Live with `GEMINI_API_KEY`); ElevenLabs Realtime is never the default, only chosen |
@@ -133,7 +136,8 @@ local development for a same-origin browser request. Cloud-provider requests
 retain their existing token requirement. A checkout may select local inference
 by setting `HARNESS_GENERATION_DEFAULT_MODEL=lmstudio/loaded` in its ignored
 `.env.local`; deployed model lists still exclude the local route.
-Development's local chapter and Blueprint requests wait up to 15 minutes for
+Choose Local (LM Studio) in the Blueprint tab to use local inference there as
+well. Development's local chapter and Blueprint requests wait up to 15 minutes for
 local inference; cloud-provider deadlines stay unchanged. The Blueprint client
 waits 20 seconds longer so the server can report its own timeout.
 
@@ -155,20 +159,21 @@ are unchanged.
 ## The Chapter Tagger's own choice
 
 Text → Tagger selects the model that reads
-each finished chapter for its tags, and how hard it thinks. By default it is
-the chapter's own writer, thinking as little as the model allows. The owner's
+each finished chapter for its tags, and how hard it thinks. The owner's
 experiment (2026-10-29): a cheap model with high reasoning may tag better than
 an expensive one with none. The choice is saved in this browser
 (`modelPreference.ts`, `tagger`), apart from the chapter model's reasoning
 level, so one model can write at one level and tag at another. It reaches the
 HARNESS as `HarnessTaggerChoice` (`HarnessGenerationController.setTagger`),
 travels on the tag request (`model`, `reasoningLevel`), and the server checks
-the level against the model's catalog levels, dropping one the model does not
-offer back to its lowest. A tagger model the server no longer offers falls back
+the level against the model's catalog levels and uses the job's default when
+the requested level is unsupported. A tagger model the server no longer offers falls back
 to the chapter's writer. The chapter's tagging record names the model that
 read it.
 
 ## Workshop history
+
+- 2026-11-19 — Set separate Chapter, Tagger and Blueprint defaults. Split Cover art / profile from Codex image routing, including the model selection and projected Energy shown for each image action.
 
 - 2026-11-18 — Split Text into Chapter, Tagger and Blueprint. Provider lists show each model’s rounded Energy estimate. Text grades change above 2 and 8 Energy, and image grades above 5 and 12. Picking a priced Chapter or Images model selects its grade automatically. Tagger and Blueprint use their own workloads for the displayed grade.
 

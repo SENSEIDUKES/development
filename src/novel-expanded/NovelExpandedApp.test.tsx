@@ -628,12 +628,13 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     await click(buttonByText('Create', hub), 'Create on the Creator Space', 20);
     expect(address()).toBe('/app/?page=create&seed=new');
     expect(document.querySelector('[data-testid="novel-expanded-create"]')).toBeTruthy();
-    // Create, on the creator's last step, wears the Energy badge with the World Blueprint's price (a chapter's, for now).
     await click(document.querySelector('[data-seed-creator-strip] button[data-step="manifest"]'), 'the Manifest step', 20);
-    expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('2');
-    // Its price follows the Router: a Heaven writer costs a Heaven chapter's Energy.
+    const blueprintCost = () => document.querySelector('.seed-manifest-price .energy-badge, [data-seed-creator-footer] .energy-badge')?.textContent;
+    expect(blueprintCost()).toBe('2');
     await act(async () => writeModelPreference('chapters', 'anthropic/claude-opus-5-5'));
-    expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('8');
+    expect(blueprintCost()).toBe('2');
+    await act(async () => writeTextRolePreference('blueprint', { model: 'anthropic/claude-opus-5-5' }));
+    expect(blueprintCost()).toBe('8');
     // Story Seed's own task bar stands where the global strip was; the note floats above it.
     expect(strip()).toBeNull();
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
@@ -837,8 +838,8 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await typeInto(sheet()!.querySelector('input[type="password"]')!, 'visit-token');
     await click(buttonByText('Continue', sheet()!), 'Continue', 300);
     expect(requestWorldBlueprint).toHaveBeenCalledTimes(1);
-    // The Blueprint is written by the model chapters are written with.
-    expect((requestWorldBlueprint.mock.calls[0] as unknown[])[3]).toBe('fixture');
+    // An unset Blueprint choice uses the Blueprint endpoint's default.
+    expect((requestWorldBlueprint.mock.calls[0] as unknown[])[3]).toBeUndefined();
 
     // Leave Create for Home, then come back for another Blueprint.
     await act(async () => { window.history.back(); });
@@ -1299,6 +1300,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     // jsdom has no object URLs; a browser shows the kept image through one.
     Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:cover-1'), revokeObjectURL: vi.fn() });
     writeModelPreference('images', 'google/gemini-3-pro-image');
+    writeModelPreference('codex-images', 'minimax/MiniMax-H3-Image-Highspeed');
     const storyCovers = createMemoryStoryCoverStore();
     const requestStoryCover = vi.fn(async () => new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' }));
     const writer = scriptedWriter();
@@ -1312,7 +1314,8 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     await click(worldInfo()!.querySelector('[aria-label="Manifest cover art"]'), 'Manifest on the cover', 20);
     expect(document.querySelector<HTMLButtonElement>('.story-cover-option[data-count="1"]')?.disabled).toBe(true);
     await click(document.querySelector('button[aria-label^="Manifest "][aria-label$=" portrait"]'), 'Manifest protagonist', 40);
-    expect(services.requestCodexPicture).toHaveBeenCalledTimes(1);
+    expect(services.requestCodexPicture).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ card: expect.anything() }),
+      { model: 'minimax/MiniMax-H3-Image-Highspeed', accessToken: undefined });
     expect(document.querySelector<HTMLButtonElement>('.story-cover-option[data-count="1"]')?.disabled, document.querySelector('[role="dialog"]')?.textContent).toBe(false);
 
 
@@ -1651,7 +1654,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     const make = () => [...dialog().querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.startsWith('Make my portraits'));
     // A photo first; the cost shows beside the button.
     expect(make()?.disabled).toBe(true);
-    expect(dialog().querySelector('.energy-action-cost')?.textContent).toBe('15');
+    expect(dialog().querySelector('.energy-action-cost')?.textContent).toBe('30');
     const input = dialog().querySelector<HTMLInputElement>('[data-portrait-photo]')!;
     Object.defineProperty(input, 'files', { value: [new File(['me'], 'me.jpg', { type: 'image/jpeg' })], configurable: true });
     await act(async () => { input.dispatchEvent(new Event('change', { bubbles: true })); });
@@ -1662,7 +1665,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     const choices = [...dialog().querySelectorAll<HTMLButtonElement>('.portrait-builder-choice')];
     expect(choices).toHaveLength(3);
     expect(dialog().querySelectorAll('.portrait-builder-download')).toHaveLength(3);
-    expect(dialog().querySelector('[data-energy-spend]')?.getAttribute('data-energy-spend')).toBe('15');
+    expect(dialog().querySelector('[data-energy-spend]')?.getAttribute('data-energy-spend')).toBe('30');
     await click(choices[1], 'the second portrait');
     await click(buttonByText('Use this portrait', dialog()), 'Use this portrait', 50);
     expect(services.profile.read().avatarUrl).toBe(`data:image/png;base64,${btoa(String.fromCharCode(2))}`);

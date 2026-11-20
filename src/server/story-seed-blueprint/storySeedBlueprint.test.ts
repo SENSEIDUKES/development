@@ -578,7 +578,7 @@ const post = (body: Record<string, unknown>, provider: WorldBlueprintModelProvid
 
 const errorOf = (response: { body: unknown }) => (response.body as { error: string }).error;
 
-describe("Blueprint model: the chapter model the reader chose", () => {
+describe("Blueprint model: the independent Router choice", () => {
   const withRouter = { ...environment, OPENROUTER_API_KEY: "server-only-router-key" };
   const send = (body: Record<string, unknown>, env: Record<string, string> = withRouter) => {
     const provider = new RecordingProvider();
@@ -587,7 +587,7 @@ describe("Blueprint model: the chapter model the reader chose", () => {
       .then(response => ({ response, provider, providerFactory }));
   };
 
-  it("writes the Blueprint with the chapter model sent, at its reasoning level, and keeps the server's model when none is sent", async () => {
+  it("writes with the requested Blueprint model and reasoning or the server's default", async () => {
     const chosen = await send({ storySeed: canonicalSeed(), model: "openrouter/openai/gpt-6-luna", reasoningLevel: "high" });
     expect(chosen.response.status).toBe(200);
     expect(chosen.providerFactory).toHaveBeenCalledWith("server-only-router-key", "openrouter/openai/gpt-6-luna");
@@ -599,6 +599,16 @@ describe("Blueprint model: the chapter model the reader chose", () => {
     const fallback = await send({ storySeed: canonicalSeed() });
     expect(fallback.providerFactory).toHaveBeenCalledWith("server-only-gemini-key", "google/gemini-test");
     expect(fallback.provider.requests[0]).not.toHaveProperty("reasoningLevel");
+  });
+
+  it('defaults to Haiku at high effort and drops stale reasoning overrides', async () => {
+    const environment = { ...withRouter, STORY_SEED_BLUEPRINT_MODEL: '', claude_sen: 'claude-key' };
+    for (const [reasoningLevel, expected] of [[undefined, 'high'], ['minimal', 'high'], ['medium', 'medium']]) {
+      const result = await send({ storySeed: canonicalSeed(), reasoningLevel }, environment);
+      expect(result.response).toMatchObject({ status: 200, headers: { 'X-Blueprint-Model': 'anthropic/claude-haiku-5-5' } });
+      expect(result.providerFactory).toHaveBeenCalledWith('claude-key', 'anthropic/claude-haiku-5-5');
+      expect(result.provider.requests[0].reasoningLevel).toBe(expected);
+    }
   });
 
   it("refuses a model chapters cannot use, before any model call, and needs only the chosen model's key", async () => {

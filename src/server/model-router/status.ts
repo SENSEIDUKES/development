@@ -4,7 +4,8 @@ import {
   textModelProvider,
   AUDIO_MODELS,
   CHAPTER_MODELS,
-  DEFAULT_IMAGE_MODEL,
+  blueprintDefaultModel,
+  imageJobDefaultModel,
   DEFAULT_TTS_MODEL,
   DEFAULT_LIVE_MODEL,
   LIVE_MODELS,
@@ -24,6 +25,7 @@ import {
   type ModelStage,
   type RoutedModel,
 } from './catalog';
+import { TAGGER_DEFAULT_MODEL, type ImageJob } from '../../host/generation/modelDefaults';
 
 export interface ModelRouterProviderStatus {
   id: ModelProviderId;
@@ -52,8 +54,10 @@ export interface ModelRouterCapabilityStatus {
   label: string;
   description: string;
   /** Features that currently generate through this capability (from `GENERATION_CONSUMERS`). */
-  consumers: Array<Pick<GenerationConsumer, 'name' | 'modelChoice' | 'textJob'>>;
+  consumers: Array<Pick<GenerationConsumer, 'name' | 'modelChoice' | 'textJob' | 'imageJob'>>;
   defaultModel?: string;
+  textDefaults?: Partial<Record<NonNullable<GenerationConsumer['textJob']>, string>>;
+  imageDefaults?: Record<ImageJob, string>;
   providers: ModelRouterProviderStatus[];
   models: ModelRouterModelStatus[];
 }
@@ -64,7 +68,7 @@ export interface ModelRouterStatus {
 
 const consumersFor = (capability: ModelCapability) => GENERATION_CONSUMERS
   .filter(consumer => consumer.capability === capability)
-  .map(({ name, modelChoice, textJob }) => ({ name, modelChoice, ...(textJob ? { textJob } : {}) }));
+  .map(({ entry: _entry, capability: _capability, ...consumer }) => consumer);
 
 const providerStatus = (environment: ModelEnvironment, ids: ModelProviderId[]): ModelRouterProviderStatus[] =>
   ids.map(id => ({ id, label: MODEL_PROVIDERS[id].label, keyVariable: MODEL_PROVIDERS[id].keyVariable, configured: Boolean(providerKey(environment, id)) }));
@@ -113,8 +117,7 @@ export function modelRouterStatus(environment: ModelEnvironment, routedRates?: R
   ];
   const ttsDefault = environment.ELEVENLABS_MODEL_ID?.trim() || DEFAULT_TTS_MODEL;
   // Story covers: the reader's Router choice, else this.
-  const configuredImageDefault = environment.STORY_COVER_DEFAULT_MODEL?.trim();
-  const imageDefault = IMAGE_MODELS.some(model => model.id === configuredImageDefault) ? configuredImageDefault! : DEFAULT_IMAGE_MODEL;
+  const imageDefault = imageJobDefaultModel(environment, 'images');
   const ttsModels: RoutedModel[] = TTS_MODELS.some(model => model.id === ttsDefault)
     ? [...TTS_MODELS]
     : [...TTS_MODELS, { id: ttsDefault, label: ttsDefault, provider: 'elevenlabs', stage: 'current' }];
@@ -127,6 +130,10 @@ export function modelRouterStatus(environment: ModelEnvironment, routedRates?: R
         description: 'Text models that write chapters, Story Seed Blueprints, and reader translations.',
         consumers: consumersFor('chapters'),
         defaultModel: chapters.defaultModel,
+        textDefaults: {
+          Tagger: chapters.keys.openai ? TAGGER_DEFAULT_MODEL : undefined,
+          Blueprint: blueprintDefaultModel(environment),
+        },
         providers: providerStatus(environment, ['gemini', 'openrouter', 'minimax', 'anthropic', 'openai', ...(isLocalModelDevelopment(environment) ? ['lmstudio' as const] : [])]),
         models: modelStatus(environment, chapterModels, chapters.defaultModel, true).map(model =>
           model.provider === 'openrouter' ? { ...model, price: routedRates?.get(model.id) } : model),
@@ -137,6 +144,7 @@ export function modelRouterStatus(environment: ModelEnvironment, routedRates?: R
         description: 'Image models for covers, portraits, and scene art.',
         consumers: consumersFor('images'),
         defaultModel: imageDefault,
+        imageDefaults: { images: imageDefault, 'codex-images': imageJobDefaultModel(environment, 'codex-images') },
         providers: providerStatus(environment, ['gemini', 'openrouter', 'minimax', 'openai']),
         models: modelStatus(environment, IMAGE_MODELS, imageDefault, true),
       },

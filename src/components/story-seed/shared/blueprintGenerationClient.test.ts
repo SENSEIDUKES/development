@@ -37,21 +37,25 @@ afterEach(() => {
   fetchUntilAborted.mockClear();
 });
 
-describe('Blueprint generation client: the chapter model', () => {
-  it('sends the chapter model the reader chose with its saved reasoning level, and nothing when there is none', async () => {
+describe('Blueprint generation client: the Blueprint model', () => {
+  it('uses the Blueprint preference independently of the chapter model and reasoning', async () => {
     const bodies: unknown[] = [];
     vi.stubGlobal('fetch', vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       bodies.push(JSON.parse(String(init?.body)));
       return new Response(JSON.stringify({ title: 'Blueprint' }), { status: 200 });
     }));
-    vi.stubGlobal('window', { localStorage: { getItem: () => JSON.stringify({ chapters: 'openrouter/z-ai/glm-5.3-flash', reasoning: { 'openrouter/z-ai/glm-5.3-flash': 'medium' } }) } });
-    await requestWorldBlueprint(payload, 'development-token', undefined, 'openrouter/z-ai/glm-5.3-flash');
-    await requestWorldBlueprint(payload, 'development-token', undefined, 'openrouter/openai/gpt-6-luna');
+    const model = 'anthropic/claude-haiku-5-5';
+    let blueprint: { model?: string; reasoningLevel?: string } = {};
+    vi.stubGlobal('window', { localStorage: { getItem: () => JSON.stringify({ chapters: model, reasoning: { [model]: 'low' }, blueprint }) } });
+    await requestWorldBlueprint(payload, 'development-token');
+    blueprint = { model, reasoningLevel: 'high' };
+    await requestWorldBlueprint(payload, 'development-token');
+    blueprint = { reasoningLevel: 'medium' };
     await requestWorldBlueprint(payload, 'development-token');
     expect(bodies).toEqual([
-      { ...payload, model: 'openrouter/z-ai/glm-5.3-flash', reasoningLevel: 'medium' },
-      { ...payload, model: 'openrouter/openai/gpt-6-luna' },
       payload,
+      { ...payload, model, reasoningLevel: 'high' },
+      { ...payload, reasoningLevel: 'medium' },
     ]);
   });
 });

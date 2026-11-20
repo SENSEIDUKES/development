@@ -1,5 +1,5 @@
-import { createModelRouter, DEFAULT_IMAGE_MODEL, IMAGE_MODELS, ModelRouterError } from '@seihouse/library/model-router-server';
-import { MODEL_PROVIDERS, providerKey, type ModelEnvironment } from '../model-router/catalog';
+import { createModelRouter, IMAGE_MODELS, ModelRouterError } from '@seihouse/library/model-router-server';
+import { imageJobDefaultModel, MODEL_PROVIDERS, providerKey, type ModelEnvironment } from '../model-router/catalog';
 import { hasValidBearerToken } from '../shared/bearerToken';
 import { developmentAccessToken } from '../shared/publicGenerationGuard';
 import { parseAttachedImage } from '../shared/imageAttachments';
@@ -68,7 +68,7 @@ export async function handleImageLabHttp(request: ImageLabHttpRequest, dependenc
     referenceImages.push(read.image);
   }
 
-  const model = (parsed.model as string | undefined) || DEFAULT_IMAGE_MODEL;
+  const model = (parsed.model as string | undefined) || imageJobDefaultModel(dependencies.environment, 'images');
   const option = IMAGE_MODELS.find(item => item.id === model);
   if (!option) return errorResponse(400, `Model '${model}' cannot make images.`);
   const key = providerKey(dependencies.environment, option.provider);

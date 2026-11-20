@@ -7,6 +7,7 @@ import { EnergySunIcon } from './EnergySunIcon';
 
 export type EnergyActionCostProps = {
   className?: string;
+  imageUse?: 'codex';
   /** A price-only total of a projected catalog action (several chapters tagged at once), labeled as projected too. */
   projected?: boolean;
 } & ({ actionId: EnergyActionId; price?: never } | { price: number; actionId?: never });
@@ -17,9 +18,9 @@ export type EnergyActionCostProps = {
  * renders nothing for an action that has no price yet. A chapter or image
  * shows its grade's price for the host's model (`EnergyModelsProvider`).
  */
-export function EnergyActionCost({ actionId, price, className = '', projected = false }: EnergyActionCostProps) {
+export function EnergyActionCost({ actionId, price, imageUse, className = '', projected = false }: EnergyActionCostProps) {
   const entry = actionId ? getEnergyPriceEntry(actionId) : null;
-  const graded = useActionEnergyPrice(actionId ?? 'chapter.generate');
+  const graded = useActionEnergyPrice(actionId ?? 'chapter.generate', imageUse);
   const resolved = entry ? (entry.price === null ? null : graded) : price ?? null;
   if (resolved === null) return null;
   const display = entry && entry.price !== null ? formatEnergyPriceRange({ ...entry, price: resolved }) : formatEnergy(resolved);

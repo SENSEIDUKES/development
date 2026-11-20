@@ -159,12 +159,12 @@ function NovelExpandedRoutes({ services, writer, askForToken, discoverCatalogue,
   const [chapterModel] = useModelPreference('chapters');
   // The Chapter Tagger reads each chapter with the Router's own choice for it, when there is one.
   const [taggerChoice] = useTaggerPreference();
-  // Covers are made with the Model Router's image choice, read when each is asked for.
   const [imageModel] = useModelPreference('images');
+  const [codexImageModel] = useModelPreference('codex-images');
   const makeCovers = useMemo(() => coverMakerWithAccessToken(services.requestStoryCover, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
   const covers = useStoryCovers(services.storyCovers, makeCovers);
   // Codex pictures: the same image choice, token and server as covers.
-  const makeCodexPicture = useMemo(() => codexPictureMakerWithAccessToken(services.requestCodexPicture, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
+  const makeCodexPicture = useMemo(() => codexPictureMakerWithAccessToken(services.requestCodexPicture, services.accessToken, askForToken, () => codexImageModel), [services, askForToken, codexImageModel]);
   const codexPictures = useCodexPictures(services.codexPictures, makeCodexPicture);
   // Character voices: a chapter's spoken lines in their cast voices, with the same token.
   const voiceClient = useMemo(() => chapterVoiceClientWithAccessToken(services.chapterVoiceServer, services.accessToken, askForToken), [services, askForToken]);
@@ -304,7 +304,7 @@ function NovelExpandedRoutes({ services, writer, askForToken, discoverCatalogue,
   // Create: the Creator Space, unless a Story Seed (new or saved) is open.
   if (route.page === 'create' && !route.seedId && !route.newSeed) return withFamiliar(<CreateHubPage worlds={creatorWorlds} stories={worlds} navigate={navigate} readerProfile={profile} sparks={sparks} plugins={route.plugins} pluginPack={route.pluginPack} pluginStories={stories} />);
 
-  if (route.page === 'create') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
+  if (route.page === 'create') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds}
     seedId={route.seedId} accentColor={profile.accentColor}
     blueprintPictures={{
       pictureOf: (seedId, character) => codexPictures.pictureOf(blueprintPictureOwner(seedId), blueprintPictureKey(character)),

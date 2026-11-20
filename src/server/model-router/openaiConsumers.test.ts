@@ -17,15 +17,15 @@ it('enables generation controls with only an OpenAI key, and disables them with 
   expect(harnessGenerationServerInfo(environment).models).toContainEqual({ id: 'openai/gpt-6.1-terra', label: 'GPT-6.1 Terra' });
 });
 
-it('connects covers, Image Lab and reference-based profile pictures to direct OpenAI', async () => {
+it('uses direct GPT Image 2.6 Flare by default for covers, Image Lab and profile pictures', async () => {
   const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [{ b64_json: png }] })));
   vi.stubGlobal('fetch', fetchMock);
   const model = 'openai/gpt-image-2.6-flare';
-  const cover = await handleStoryCoverHttp({ method: 'POST', body: { story: { characters: [{ name: 'Mara', role: 'protagonist', image: { data: png, mimeType: 'image/png' } }], title: 'The Wind', synopsis: 'A journey.' }, model } }, { environment });
-  const lab = await handleImageLabHttp({ method: 'POST', headers: { authorization: 'Bearer access' }, body: { prompt: 'A mountain.', model } }, { environment });
-  const portrait = await handleProfilePictureHttp({ method: 'POST', body: { photo: { data: png, mimeType: 'image/png' }, model } }, { environment });
+  const cover = await handleStoryCoverHttp({ method: 'POST', body: { story: { characters: [{ name: 'Mara', role: 'protagonist', image: { data: png, mimeType: 'image/png' } }], title: 'The Wind', synopsis: 'A journey.' } } }, { environment });
+  const lab = await handleImageLabHttp({ method: 'POST', headers: { authorization: 'Bearer access' }, body: { prompt: 'A mountain.' } }, { environment });
+  const portrait = await handleProfilePictureHttp({ method: 'POST', body: { photo: { data: png, mimeType: 'image/png' } } }, { environment });
   for (const result of [cover, lab, portrait]) {
-    expect(result).toMatchObject({ status: 200, body: { image: png, mimeType: 'image/png' } });
+    expect(result).toMatchObject({ status: 200, body: { image: png, mimeType: 'image/png', model } });
     expect(JSON.stringify(result)).not.toContain('direct-secret');
   }
   expect(fetchMock.mock.calls.map(call => (call as unknown as [string])[0])).toEqual([
@@ -49,7 +49,7 @@ it('routes both the Blueprint and chapter writer through Responses with OpenAI r
   }
 });
 
-it('shows OpenAI in each supported selector, with no credential disclosure or changed default', () => {
+it('reports which OpenAI routes are configured without exposing credentials', () => {
   for (const env of [{}, environment]) {
     const status = modelRouterStatus(env);
     for (const id of ['chapters', 'images', 'live']) {

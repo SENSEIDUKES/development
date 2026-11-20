@@ -213,8 +213,7 @@ the others are let go). World Info and Home's card wear the kept cover.
 - **The title is the reader's choice** when the cover is made: Title on the cover
   is off unless they turn it on (`titled`). It is no longer earned by reaching
   the ending.
-- The image model is the Model Router's Images choice (`useModelPreference('images')`),
-  Nano Banana 2 Lite unless the reader picks another.
+- Cover art and profile pictures share the Model Router's **Cover art / profile** choice, GPT Image 2.6 Flare by default. The **Codex** choice applies to card pictures and the character portraits used as cover references, with MiniMax H3 Image as its default.
 - Visitors may make 3 covers every 30 minutes, so three to choose from uses the
   whole allowance; the owner's access token lifts the limit, asked for once for
   all three in the same sheet as chapters (`coverMakerWithAccessToken`).

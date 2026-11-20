@@ -12,7 +12,7 @@ import { CreationModal as DevelopmentCreationModal } from '@seihouse/library/sto
 import { LibraryLook } from '@seihouse/library/presentation';
 import { requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
 import { createSavedAccessToken } from '../../../host/generation/accessToken';
-import { readModelPreference, readTextRolePreference } from '../../../host/generation/modelPreference';
+import { readModelPreference } from '../../../host/generation/modelPreference';
 import { resetStorySeedRepository, setStorySeedRepository } from './storySeedStorage';
 import { finalizeGeneratedWorldBlueprint, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
 import {
@@ -241,7 +241,7 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('development');
   const [blueprintAccessToken, setBlueprintAccessToken] = useState('');
   const [pictureStore] = useState(() => new IndexedDbStoryCoverStore('workshop-codex-pictures-v1'));
-  const pictures = useCodexPictures(pictureStore, request => requestCodexPicture(request, { model: readModelPreference('images') ?? undefined, accessToken: blueprintAccessToken || createSavedAccessToken().current }));
+  const pictures = useCodexPictures(pictureStore, request => requestCodexPicture(request, { model: readModelPreference('codex-images'), accessToken: blueprintAccessToken || createSavedAccessToken().current }));
   const [blueprintGenerating, setBlueprintGenerating] = useState(false);
   const activeBlueprintRequestRef = useRef<AbortController | null>(null);
   const currentUser = useAppStore(state => state.currentUser);
@@ -356,7 +356,7 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
           );
         }
         // An empty token box uses the access token saved on this device.
-        return await requestWorldBlueprint(payload, blueprintAccessToken || createSavedAccessToken().current || '', controller.signal, readTextRolePreference('blueprint').model ?? readModelPreference('chapters'));
+        return await requestWorldBlueprint(payload, blueprintAccessToken || createSavedAccessToken().current || '', controller.signal);
       } finally {
         if (activeBlueprintRequestRef.current === controller) {
           activeBlueprintRequestRef.current = null;

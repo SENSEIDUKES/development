@@ -3,8 +3,8 @@ import { handleStoryCoverHttp } from './http';
 import { buildCodexPicturePrompt, CODEX_PICTURE_FIELD_LIMITS, parseCodexPictureRequest } from './codexPicture';
 import { GENERATION_CONSUMERS } from '../model-router/catalog';
 
-const image = { capability: 'image' as const, provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite-image', data: 'aW1hZ2U=', mimeType: 'image/png' };
-const environment = { GEMINI_API_KEY: 'secret-gemini' };
+const image = { capability: 'image' as const, provider: 'minimax' as const, model: 'minimax/MiniMax-H3-Image', data: 'aW1hZ2U=', mimeType: 'image/png' };
+const environment = { Minimax: 'secret-minimax', STORY_COVER_DEFAULT_MODEL: 'google/gemini-3-pro-image' };
 const story = { style: 'chinese', genre: 'Xianxia', tone: 'Grim and hungry.', world: 'Furnace sects rule the ash plains.' };
 const sword = { subject: 'thing' as const, name: 'Crimson Broadsword', look: { summary: 'A heavy black-iron broadsword veined with red.', traits: { colour: 'red veins', material: 'black iron' } } };
 
@@ -61,8 +61,8 @@ describe('A Codex card\'s picture', () => {
   it('is made on the cover route, at 3:4, and a malformed card is refused before any model is called', async () => {
     const generate = vi.fn(async () => image);
     const result = await handleStoryCoverHttp({ method: 'POST', body: { card: sword, story } }, { environment, generate });
-    expect(result).toMatchObject({ status: 200, body: { image: 'aW1hZ2U=', mimeType: 'image/png' } });
-    expect(generate).toHaveBeenCalledWith(expect.objectContaining({ capability: 'image', aspectRatio: '3:4', prompt: buildCodexPicturePrompt({ card: sword, story }) }));
+    expect(result).toMatchObject({ status: 200, body: { image: 'aW1hZ2U=', mimeType: 'image/png', model: 'minimax/MiniMax-H3-Image' } });
+    expect(generate).toHaveBeenCalledWith(expect.objectContaining({ capability: 'image', model: image.model, aspectRatio: '3:4', prompt: buildCodexPicturePrompt({ card: sword, story }) }));
     for (const card of [{ ...sword, subject: 'place' }, { ...sword, name: ' ' }, { ...sword, look: undefined }, { ...sword, look: { summary: '' } }, { ...sword, look: { ...sword.look, traits: 'iron' } }]) {
       expect((await handleStoryCoverHttp({ method: 'POST', body: { card, story } }, { environment, generate })).status).toBe(400);
     }
@@ -73,6 +73,6 @@ describe('A Codex card\'s picture', () => {
   });
 
   it('is registered in the Model Router, following the Router\'s image choice', () => {
-    expect(GENERATION_CONSUMERS).toContainEqual({ name: 'Codex Picture', capability: 'images', entry: 'src/server/story-cover/codexPicture.ts', modelChoice: 'router' });
+    expect(GENERATION_CONSUMERS).toContainEqual({ name: 'Codex Picture', capability: 'images', imageJob: 'codex-images', entry: 'src/server/story-cover/codexPicture.ts', modelChoice: 'router' });
   });
 });

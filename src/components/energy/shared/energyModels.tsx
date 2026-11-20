@@ -12,10 +12,16 @@ export type EnergyModels = Partial<Record<GradedEnergyKind, string | undefined>>
 /** The grade a kind is priced at when the reader chose a tier, which can differ from its model's own. */
 export type EnergyGrades = Partial<Record<GradedEnergyKind, EnergyGrade>>;
 
-const EnergyModelsContext = createContext<{ models: EnergyModels; grades: EnergyGrades } | null>(null);
+interface EnergyModelSelection {
+  models: EnergyModels;
+  grades?: EnergyGrades;
+  codexImageGrade?: EnergyGrade;
+}
 
-export function EnergyModelsProvider({ models, grades = {}, children }: { models: EnergyModels; grades?: EnergyGrades; children: ReactNode }) {
-  return <EnergyModelsContext.Provider value={{ models, grades }}>{children}</EnergyModelsContext.Provider>;
+const EnergyModelsContext = createContext<EnergyModelSelection | null>(null);
+
+export function EnergyModelsProvider({ models, grades, codexImageGrade, children }: EnergyModelSelection & { children: ReactNode }) {
+  return <EnergyModelsContext.Provider value={{ models, grades, codexImageGrade }}>{children}</EnergyModelsContext.Provider>;
 }
 
 const GRADED_ACTIONS: Partial<Record<EnergyActionId, GradedEnergyKind>> = {
@@ -24,10 +30,11 @@ const GRADED_ACTIONS: Partial<Record<EnergyActionId, GradedEnergyKind>> = {
 };
 
 /** One action's price: the reader's tier, else its model's grade, or the catalog price. `null` when unpriced. */
-export function useActionEnergyPrice(actionId: EnergyActionId): number | null {
+export function useActionEnergyPrice(actionId: EnergyActionId, imageUse?: 'codex'): number | null {
   const host = useContext(EnergyModelsContext);
   const kind = GRADED_ACTIONS[actionId];
   const catalog = getEnergyPriceEntry(actionId).price;
   if (!host || !kind || catalog === null) return catalog;
-  return GRADED_ENERGY_PRICES[kind][host.grades[kind] ?? modelEnergyGrade(host.models[kind])];
+  const grade = kind === 'image' && imageUse === 'codex' ? host.codexImageGrade : undefined;
+  return GRADED_ENERGY_PRICES[kind][grade ?? host.grades?.[kind] ?? modelEnergyGrade(host.models[kind])];
 }

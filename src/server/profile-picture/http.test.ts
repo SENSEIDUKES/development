@@ -4,17 +4,17 @@ import { ATTACHED_IMAGE_MAX_BASE64 } from '../shared/imageAttachments';
 import { handleProfilePictureHttp, PROFILE_PICTURE_TIMEOUT_MS } from './http';
 import { PROFILE_PICTURE_PROMPT } from './prompt';
 
-const environment = { GEMINI_API_KEY: 'secret-gemini' };
+const environment = { GEMINI_API_KEY: 'secret-gemini', OPENAI_API_KEY: 'secret-openai' };
 const photo = { data: 'cGhvdG8=', mimeType: 'image/jpeg' };
-const image = { capability: 'image' as const, provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite-image', data: 'aW1hZ2U=', mimeType: 'image/png' };
+const image = { capability: 'image' as const, provider: 'openai' as const, model: 'openai/gpt-image-2.6-flare', data: 'aW1hZ2U=', mimeType: 'image/png' };
 
 describe('The profile picture route', () => {
-  it('gives the reader\'s photo to the image model with the approved prompt, square, with Nano Banana 2 Lite by default', async () => {
+  it('gives the reader\'s photo to the image model with the approved prompt, square, with GPT Image 2.6 Flare by default', async () => {
     const generate = vi.fn(async () => image);
     const result = await handleProfilePictureHttp({ method: 'POST', body: { photo } }, { environment, generate });
-    expect(result).toMatchObject({ status: 200, body: { image: 'aW1hZ2U=', mimeType: 'image/png', model: 'google/gemini-3.1-flash-lite-image' } });
+    expect(result).toMatchObject({ status: 200, body: { image: 'aW1hZ2U=', mimeType: 'image/png', model: 'openai/gpt-image-2.6-flare' } });
     expect(generate).toHaveBeenCalledWith({
-      capability: 'image', model: 'google/gemini-3.1-flash-lite-image', prompt: PROFILE_PICTURE_PROMPT,
+      capability: 'image', model: 'openai/gpt-image-2.6-flare', prompt: PROFILE_PICTURE_PROMPT,
       aspectRatio: '1:1', referenceImages: [photo], timeoutMs: PROFILE_PICTURE_TIMEOUT_MS,
     });
     expect(JSON.stringify(result.body)).not.toContain('secret');

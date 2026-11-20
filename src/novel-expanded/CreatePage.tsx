@@ -8,6 +8,7 @@ import type { AskForAccessToken } from './accessToken';
 import type { NovelExpandedServices } from './services';
 import { useNovelExpandedStoryCreation } from './storyCreationRuntime';
 import { isLocalDevelopmentModel, useTextRolePreference } from '../host/generation/modelPreference';
+import { BLUEPRINT_DEFAULT_MODEL } from '../host/generation/modelDefaults';
 
 type CreationModalProps = ComponentProps<typeof CreationModal>;
 
@@ -18,8 +19,6 @@ export interface CreatePageProps {
   askForToken: AskForAccessToken;
   /** The Story Seeds the reader's stories started from. */
   startedSeedIds: readonly string[];
-  /** The model chapters are written with; used when the Blueprint follows Chapter. */
-  chapterModel?: string;
   /** The profile's default reading language: a new Story Seed's Original Language starts there. */
   accountDefaultLanguage?: CreationModalProps['accountDefaultLanguage'];
   /** The profile's default Reading Mode: a new Story Seed starts with it. */
@@ -40,9 +39,8 @@ export interface CreatePageProps {
 }
 
 /** Create: the Story Seed and its World Blueprint, the same journey the Library ships. */
-export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, renderStoryPlugins, accentColor, seedId, originSparks, onHome, onStartStory, blueprintPictures }: CreatePageProps) {
-  const [blueprint] = useTextRolePreference('blueprint');
-  const blueprintModel = blueprint.model ?? chapterModel;
+export function CreatePage({ services, askForToken, startedSeedIds, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, renderStoryPlugins, accentColor, seedId, originSparks, onHome, onStartStory, blueprintPictures }: CreatePageProps) {
+  const [{ model: blueprintModel }] = useTextRolePreference('blueprint');
   const runtime = useNovelExpandedStoryCreation(services.storySeeds, startedSeedIds);
   const activeRequest = useRef<AbortController | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -85,7 +83,7 @@ export function CreatePage({ services, askForToken, startedSeedIds, chapterModel
     <LibraryLook accentColor={accentColor} className="min-h-screen bg-void" data-testid="novel-expanded-create">
       <CreationModal blueprintPictures={blueprintPictures} onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
         accountDefaultLanguage={accountDefaultLanguage} accountDefaultChapterWritingStyle={accountDefaultChapterWritingStyle}
-        renderStorySettings={renderStorySettings} renderStoryPlugins={renderStoryPlugins} manifestAside={<BlueprintEnergyCost model={blueprint.model} />} initialSeedId={seedId} originSparks={originSparks}
+        renderStorySettings={renderStorySettings} renderStoryPlugins={renderStoryPlugins} manifestAside={<BlueprintEnergyCost model={blueprintModel ?? BLUEPRINT_DEFAULT_MODEL} />} initialSeedId={seedId} originSparks={originSparks}
         onGenerateBlueprint={payload => isLocalDevelopmentModel(blueprintModel)
           ? track(signal => services.requestWorldBlueprint(payload, '', signal, blueprintModel))
           : withToken('The World Blueprint needs the development access token. Nothing was changed.',

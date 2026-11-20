@@ -6,6 +6,7 @@ import type {
 } from '../../server/model-router/status';
 import { quotedEnergyGrade, EnergyActionCost, ENERGY_GRADE_LABELS, ENERGY_GRADES, ENERGY_TIER_MODELS, ENERGY_USD, GENERATION_ENERGY_MARGIN, type GradedEnergyKind } from '@seihouse/library/energy';
 import { selectQuotedModel, useModelPreference, useReasoningPreferences, useTextRolePreference, useTierPreference, writeTierModel, writeTierPreference, type ModelPreferenceCapability } from '../generation/modelPreference';
+import { BLUEPRINT_DEFAULT_MODEL, BLUEPRINT_DEFAULT_REASONING, TAGGER_DEFAULT_MODEL, TAGGER_DEFAULT_REASONING, type ImageJob } from '../generation/modelDefaults';
 import { useUsageLog } from '../usage/usageLog';
 import { TierBadge } from './TierBadge';
 import { HostDialog } from '../dialog/HostDialog';
@@ -130,14 +131,17 @@ function TextRoleSettings({ job, capability, chapter, workload }: {
   job: 'Tagger' | 'Blueprint'; capability: ModelRouterCapabilityStatus; chapter?: RouterModel; workload: Workload;
 }) {
   const [choice, setChoice] = useTextRolePreference(job === 'Tagger' ? 'tagger' : 'blueprint');
-  const [levels] = useReasoningPreferences();
   const own = capability.models.find(model => model.available && model.id === choice.model);
-  const unavailableBlueprint = job === 'Blueprint' && !!choice.model && !own;
-  const model = unavailableBlueprint ? undefined : own ?? chapter;
+  const unavailable = !!choice.model && !own;
+  const defaultId = capability.textDefaults?.[job];
+  const defaultModel = capability.models.find(item => item.id === defaultId) ?? (job === 'Tagger' ? chapter : undefined);
+  const model = unavailable ? (job === 'Tagger' ? chapter : undefined) : own ?? defaultModel;
   const providers = sortedProviders(capability).filter(item => capability.models.some(model => model.available && model.provider === item.id));
-  const [provider, setProvider] = useState(model?.provider ?? providers[0]?.id);
+  const [provider, setProvider] = useState(model?.available ? model.provider : providers[0]?.id);
   const browsingOther = !!own && own.provider !== provider;
-  const defaultLevel = job === 'Tagger' ? model?.reasoning?.levels[0] : !own && model ? levels[model.id] : undefined;
+  const defaultLevel = job === 'Tagger'
+    ? model?.id === TAGGER_DEFAULT_MODEL ? TAGGER_DEFAULT_REASONING : model?.reasoning?.levels[0]
+    : model?.id === BLUEPRINT_DEFAULT_MODEL ? BLUEPRINT_DEFAULT_REASONING : undefined;
   return <div className="space-y-3">
     <label className="block"><span className={label}>Provider</span>
       <select aria-label="Provider" className={field} value={provider ?? ''} onChange={event => setProvider(event.target.value as RouterProvider['id'])}>
@@ -145,21 +149,21 @@ function TextRoleSettings({ job, capability, chapter, workload }: {
       </select>
     </label>
     <label className="block"><span className={label}>{job} model</span>
-      <select aria-label={job + ' model'} className={field} value={browsingOther ? 'browse' : (unavailableBlueprint ? choice.model : own?.id) ?? ''} onChange={event => {
+      <select aria-label={job + ' model'} className={field} value={browsingOther ? 'browse' : choice.model ?? ''} onChange={event => {
         const next = event.target.value || undefined;
-        const nextModel = capability.models.find(item => item.id === next) ?? chapter;
+        const nextModel = capability.models.find(item => item.id === next) ?? defaultModel;
         const level = nextModel?.reasoning?.levels.find(level => level === choice.reasoningLevel);
         setChoice({ model: next, reasoningLevel: level });
       }}>
         {browsingOther && <option value="browse" disabled>Current · {nameOf(own)}</option>}
-        <option value="">Follow Chapter{chapter ? ' · ' + nameOf(chapter) : ''}</option>
-        {unavailableBlueprint && <option value={choice.model} disabled>{choice.model} · unavailable</option>}
+        <option value="">Default · {defaultModel ? nameOf(defaultModel) : defaultId ?? 'Unavailable'}{defaultModel && !defaultModel.available ? ' · unavailable' : ''}</option>
+        {unavailable && <option value={choice.model} disabled>{choice.model} · unavailable{job === 'Tagger' && model ? ` · using ${nameOf(model)}` : ''}</option>}
         {provider && providerModels(capability, provider).filter(item => item.available).map(item =>
           <option key={item.id} value={item.id}>{nameOf(item)}</option>)}
       </select>
     </label>
     <Reasoning model={model} value={choice.reasoningLevel} defaultLevel={defaultLevel}
-      onChange={reasoningLevel => setChoice({ model: own?.id, reasoningLevel })} />
+      onChange={reasoningLevel => setChoice({ model: choice.model, reasoningLevel })} />
     <QuoteDetails kind="chapter" model={model} workload={workload} />
   </div>;
 }
@@ -167,7 +171,6 @@ function TextRoleSettings({ job, capability, chapter, workload }: {
 /** Capabilities whose model the reader chooses here; the rest are set on the server. */
 const SELECTABLE: Partial<Record<ModelRouterCapabilityStatus['id'], { preference: ModelPreferenceCapability; note?: string }>> = {
   chapters: { preference: 'chapters' },
-  images: { preference: 'images' },
   live: { preference: 'live', note: 'Hears and answers in one conversation: the Familiar\'s live talk (Familiar page → settings → Live talk) uses the model chosen here.' },
 };
 
@@ -218,11 +221,12 @@ function TierSettings({ capability, kind, preference, selected, workload }: {
   </section>;
 }
 
-function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStatus }) {
-  const choice = SELECTABLE[capability.id];
+function CapabilitySettings({ capability, imageJob }: { capability: ModelRouterCapabilityStatus; imageJob?: ImageJob }) {
+  const choice = imageJob ? { preference: imageJob } : SELECTABLE[capability.id];
   const [saved, setSaved] = useModelPreference(choice?.preference ?? 'chapters');
+  const defaultModel = imageJob ? capability.imageDefaults?.[imageJob] : capability.defaultModel;
   const selected = capability.models.find(model => model.available && model.id === saved)
-    ?? capability.models.find(model => model.id === capability.defaultModel);
+    ?? capability.models.find(model => model.id === defaultModel);
   const [provider, setProvider] = useState(selected?.provider ?? capability.providers[0].id);
   const activeProvider = capability.providers.find(item => item.id === provider)!;
   const [reasoning, setReasoning] = useReasoningPreferences();
@@ -231,7 +235,8 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
   const isText = capability.id === 'chapters';
   const kind = ENERGY_KIND[capability.id];
   const note = choice?.note ?? SERVER_OWNED_NOTE[capability.id];
-  const consumers = capability.consumers.filter(consumer => !isText || (consumer.textJob ?? 'Chapter') === job);
+  const consumers = capability.consumers.filter(consumer => (!isText || (consumer.textJob ?? 'Chapter') === job)
+    && (!imageJob || consumer.imageJob === imageJob));
   const browser = <div className="space-y-2 pb-2">
     <label className="block"><span className={label}>Provider</span>
       <select aria-label="Provider" className={field} value={provider} onChange={event => setProvider(event.target.value as RouterProvider['id'])}>
@@ -257,7 +262,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
         {selectedHere && <Check size={14} aria-label="Selected" className="shrink-0 text-cyan-300" />}</>;
         return <li key={model.id} data-model={model.id}>{choice
           ? <button type="button" aria-pressed={selectedHere} disabled={!model.available} onClick={() => {
-              if (capability.id === 'chapters' || capability.id === 'images') selectQuotedModel(capability.id, model.id, grade);
+              if (choice.preference !== 'live') selectQuotedModel(choice.preference, model.id, grade);
               else setSaved(model.id);
             }}
               className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left disabled:opacity-45">{body}</button>
@@ -291,6 +296,21 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
         {consumers.map(consumer => <li key={consumer.name}>{consumer.name} · {consumer.modelChoice === 'router' ? 'follows router' : 'server default'}</li>)}
       </ul> : <p className="text-xs text-white/55">No connected feature yet.</p>}
     </details>
+  </div>;
+}
+
+const IMAGE_JOB_LABELS: Record<ImageJob, string> = { images: 'Cover art / profile', 'codex-images': 'Codex' };
+
+function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStatus }) {
+  const [imageJob, setImageJob] = useState<ImageJob>('images');
+  if (capability.id !== 'images') return <CapabilitySettings capability={capability} />;
+  return <div className="space-y-3">
+    <div role="group" aria-label="Image task" className="grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-white/[0.025] p-1">
+      {(Object.keys(IMAGE_JOB_LABELS) as ImageJob[]).map(item => <button key={item} type="button" aria-pressed={imageJob === item}
+        className={'min-h-11 rounded-md px-2 text-sm ' + (imageJob === item ? 'bg-cyan-400/15 font-semibold text-cyan-100' : 'text-white/65')}
+        onClick={() => setImageJob(item)}>{IMAGE_JOB_LABELS[item]}</button>)}
+    </div>
+    <CapabilitySettings key={imageJob} capability={capability} imageJob={imageJob} />
   </div>;
 }
 

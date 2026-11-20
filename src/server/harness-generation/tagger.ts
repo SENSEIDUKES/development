@@ -20,7 +20,7 @@ import {
 import { resolveConfiguredHarnessModel, type ResolvedHarnessGenerationConfig } from './config';
 import { createHarnessTextProvider } from './provider';
 import { HarnessGenerationExecutionError, type HarnessProviderFactory } from './execute';
-import { CHAPTER_MODELS, lowestReasoningLevel, requireTextModelKey, type ReasoningLevel } from '../model-router/catalog';
+import { requireTextModelKey, resolveTextJobReasoning, type ReasoningLevel } from '../model-router/catalog';
 
 /**
  * The tagger (SENSEI, 2026-10-24): one call that reads a chapter already
@@ -195,7 +195,7 @@ export const TAGGER_TIMEOUT_MS = 120_000;
  * reason to refuse the tagging.
  */
 export const taggerReasoningLevel = (model: string, requested: unknown): ReasoningLevel | undefined =>
-  CHAPTER_MODELS.find(option => option.id === model)?.reasoning?.levels.find(level => level === requested) ?? lowestReasoningLevel(model);
+  resolveTextJobReasoning('Tagger', model, requested);
 
 export const buildHarnessTagPrompt = (request: HarnessTagRequest) => ({
   systemInstruction: [

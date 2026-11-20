@@ -5,7 +5,7 @@ import { CodexProfileHeader, type CodexPictureMade, type CodexPictureMaker } fro
 import { NarrativeButton } from '@seihouse/sen/presentation';
 
 /** The same saved portrait and Manifest action in a Blueprint and the cover prerequisite. */
-export function CharacterPortrait({ character, pictures, readOnly, cost = <EnergyActionCost actionId="image.generate" /> }: {
+export function CharacterPortrait({ character, pictures, readOnly, cost = <EnergyActionCost actionId="image.generate" imageUse="codex" /> }: {
   character: CodexPictureMade; pictures?: CodexPictureMaker; readOnly?: boolean; cost?: ReactNode;
 }) {
   const [making, setMaking] = useState(false);

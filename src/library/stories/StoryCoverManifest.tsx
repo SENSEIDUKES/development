@@ -211,7 +211,7 @@ export function useStoryCoverManifest({ covers, storyId, request, agent, charact
           : !pictures.pictureOf(protagonist.key) && <div className="story-cover-references">
               <p className="text-sm text-neutral-200">A cover is drawn from your main character’s portrait. Manifest it first.</p>
               <div className="story-cover-reference">
-                <CharacterPortrait key={protagonist.key} character={protagonist} pictures={pictures} cost={<EnergyActionCost price={imagePrice} />} />
+                <CharacterPortrait key={protagonist.key} character={protagonist} pictures={pictures} />
               </div>
             </div>}
         <div className="story-cover-settings">

@@ -16,7 +16,7 @@ import {
   generateWorldBlueprint,
   type WorldBlueprintModelProvider,
 } from "./generate";
-import { missingKeyMessage, providerKey, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider } from "../model-router/catalog";
+import { missingKeyMessage, providerKey, resolveChapterModelRoute, resolveTextJobReasoning, textModelProvider } from "../model-router/catalog";
 import { ModelRouterError } from "@seihouse/library/model-router-server";
 import { isLocalModelDevelopment, LOCAL_LM_STUDIO_MODEL } from '../model-router/catalog';
 import { isSameOriginBrowserRequest } from '../shared/publicGenerationGuard';
@@ -134,9 +134,7 @@ export async function handleStorySeedBlueprintHttp(
       : message);
   }
 
-  // The Blueprint is written by the chapter model the reader chose in the
-  // Model Router, from the same list chapters are; a request without one
-  // keeps the server's Blueprint model.
+  // A Blueprint override uses the same text catalog as Chapter.
   let model = config.model;
   let apiKey = config.apiKey;
   if (parsed.model === undefined && !apiKey) return errorResponse(503, missingKeyMessage(model));
@@ -156,7 +154,7 @@ export async function handleStorySeedBlueprintHttp(
 
   const started = Date.now();
   try {
-    const headers: Record<string, string> = { 'Cache-Control': 'no-store' };
+    const headers: Record<string, string> = { 'Cache-Control': 'no-store', 'X-Blueprint-Model': model };
     const provider = dependencies.providerFactory
       ? dependencies.providerFactory(chosen.apiKey, model)
       : createWorldBlueprintProvider(chosen, usage => {
@@ -164,7 +162,8 @@ export async function handleStorySeedBlueprintHttp(
         headers['X-Blueprint-Output-Tokens'] = String(usage.outputTokens);
         headers['X-Blueprint-Total-Tokens'] = String(usage.totalTokens);
       });
-    const body = await generateWorldBlueprint({ storySeed: parsed.storySeed }, chosen, provider, resolveReasoningLevel(model, parsed.reasoningLevel));
+    const reasoning = resolveTextJobReasoning('Blueprint', model, parsed.reasoningLevel);
+    const body = await generateWorldBlueprint({ storySeed: parsed.storySeed }, chosen, provider, reasoning);
     dependencies.onAnswer?.({ model, durationMs: Date.now() - started });
     return {
       status: 200,

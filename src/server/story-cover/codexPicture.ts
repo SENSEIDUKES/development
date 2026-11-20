@@ -6,7 +6,7 @@ import { COVER_TRADITIONS, STORY_COVER_FIELD_LIMITS } from './prompt';
  * A Codex card's picture: one image of a character or thing, made from the
  * look the story's record wrote down for it (its line and each trait the
  * chapters state), set in the story's own tradition, genre, tone and world.
- * Made with the Model Router's image choice, on the cover route.
+ * Made with the Model Router's Codex image choice, on the cover route.
  */
 export const CODEX_CHARACTER_PROMPT_TEMPLATE = `Create a professional Eastern fantasy character art, high-quality animation, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration when appropriate to this story.
 Tradition: {tradition}

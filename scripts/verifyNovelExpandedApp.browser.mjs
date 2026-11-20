@@ -299,7 +299,7 @@ async function walk(browser, viewport, sample) {
       ? { status: 200, contentType: 'application/json', body: JSON.stringify(sample.blueprint) }
       : { status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'A valid Development Story Seed access token is required.' }) });
   });
-  // The cover server: one portrait from the story's own words, a moment later, as Nano Banana 2 answers.
+  // The cover server returns either cover art or a Codex picture after a short delay.
   await context.route('**/api/story-cover', async route => {
     const request = route.request();
     // A Codex card's picture rides the cover route; it carries the card.
@@ -311,7 +311,8 @@ async function walk(browser, viewport, sample) {
     }
     (body.card ? counts.pictures : counts.covers).push({ body, token: request.headers().authorization === `Bearer ${TOKEN}` });
     await new Promise(resolve => setTimeout(resolve, 1500));
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ image: COVER.toString('base64'), mimeType: 'image/jpeg', model: 'google/gemini-3.1-flash-image' }) });
+    const model = body.model ?? (body.card ? 'minimax/MiniMax-H3-Image' : 'openai/gpt-image-2.6-flare');
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ image: COVER.toString('base64'), mimeType: 'image/jpeg', model }) });
   });
   await context.route('**/api/harness-generation', async route => {
     const request = route.request();
@@ -1060,8 +1061,8 @@ async function walk(browser, viewport, sample) {
   await page.waitForFunction(() => !document.querySelector('.story-cover-option[data-count="3"]')?.disabled);
   check(counts.pictures.length >= 1, 'The cover should reuse the Blueprint protagonist portrait.');
 
-  check((await page.locator('.story-cover-option[data-count="1"]').textContent())?.includes('5'), 'One cover should cost 5 Energy.');
-  check((await threeCovers.textContent())?.includes('15'), 'Three covers should cost 15 Energy.');
+  check(await page.locator('.story-cover-option[data-count="1"]').getByRole('img', { name: 'Costs 10 Energy', exact: true }).count() === 1, 'One Flare cover should show 10 Energy.');
+  check(await threeCovers.getByRole('img', { name: 'Costs 30 Energy', exact: true }).count() === 1, 'Three Flare covers should show 30 Energy.');
   await page.getByRole('button', { name: 'Next cover character' }).click();
   await page.waitForTimeout(500);
   await shot('4e-cover-choice');

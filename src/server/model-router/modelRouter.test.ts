@@ -5,6 +5,7 @@ import {
   providerModelName,
   requireTextModelKey,
   resolveChapterModelRoute,
+  resolveTextJobReasoning,
   textModelProvider,
 } from './catalog';
 import { generateOpenRouterText } from './openRouter';
@@ -122,12 +123,27 @@ describe('Model Router status', () => {
     expect(chapters.models.find(model => model.id === 'openrouter/openai/gpt-6-luna')?.available).toBe(false);
     expect(chapters.models.find(model => model.id === 'google/gemini-3.8-flash')?.available).toBe(true);
     expect(chapters.models.find(model => model.id === 'google/gemini-3.8-flash')?.implemented).toBe(true);
-    // Story covers are made through the Router's image models, Nano Banana 2 unless the reader chooses another.
-    expect(status.capabilities.find(capability => capability.id === 'images')?.models[0].implemented).toBe(true);
-    expect(status.capabilities.find(capability => capability.id === 'images')?.defaultModel).toBe('google/gemini-3.1-flash-lite-image');
-    expect(status.capabilities.find(capability => capability.id === 'images')?.consumers).toEqual([{ name: 'Story Cover', modelChoice: 'router' }, { name: 'Codex Picture', modelChoice: 'router' }, { name: 'Image Lab', modelChoice: 'router' }, { name: 'Profile Picture', modelChoice: 'router' }]);
+    const images = status.capabilities.find(capability => capability.id === 'images')!;
+    expect(images.models[0].implemented).toBe(true);
+    expect(images.imageDefaults).toEqual({ images: 'openai/gpt-image-2.6-flare', 'codex-images': 'minimax/MiniMax-H3-Image' });
+    expect(images.consumers).toEqual([
+      { name: 'Story Cover', modelChoice: 'router', imageJob: 'images' },
+      { name: 'Codex Picture', modelChoice: 'router', imageJob: 'codex-images' },
+      { name: 'Image Lab', modelChoice: 'router', imageJob: 'images' },
+      { name: 'Profile Picture', modelChoice: 'router', imageJob: 'images' },
+    ]);
     expect(status.capabilities.find(capability => capability.id === 'tts')?.models[0].implemented).toBe(true);
     expect(status.capabilities[2].defaultModel).toBe('eleven_multilingual_v2');
+  });
+
+  it('shows the same Chapter default as HARNESS and distinct Tagger and Blueprint defaults', () => {
+    const environment = { claude_sen: 'claude-key', OPENAI_API_KEY: 'openai-key' };
+    const chapters = modelRouterStatus(environment).capabilities[0];
+    expect(resolveHarnessGenerationConfig(environment).defaultModel).toBe('anthropic/claude-haiku-5-5');
+    expect(chapters).toMatchObject({ defaultModel: 'anthropic/claude-haiku-5-5', textDefaults: {
+      Tagger: 'openai/gpt-6-luna', Blueprint: 'anthropic/claude-haiku-5-5',
+    } });
+    expect(resolveReasoningLevel(chapters.defaultModel!, undefined)).toBe('low');
   });
 });
 
@@ -140,6 +156,12 @@ describe('Model Router live voice', () => {
 });
 
 describe('Model Router reasoning levels', () => {
+  it('sends medium by default when direct Luna reads tags, with independent overrides', () => {
+    expect(resolveTextJobReasoning('Tagger', 'openai/gpt-6-luna', undefined)).toBe('medium');
+    expect(resolveTextJobReasoning('Tagger', 'openai/gpt-6-luna', 'minimal')).toBe('medium');
+    expect(resolveTextJobReasoning('Tagger', 'openai/gpt-6-luna', 'high')).toBe('high');
+    expect(resolveReasoningLevel('openai/gpt-6-luna', undefined)).toBe('low');
+  });
   it('accepts only the levels each model supports', () => {
     expect(resolveReasoningLevel('google/gemini-3.8-flash', 'high')).toBe('high');
     // A level the model does not offer falls back to its sent default.

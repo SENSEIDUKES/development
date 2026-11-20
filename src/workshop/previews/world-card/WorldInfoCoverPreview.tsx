@@ -16,8 +16,9 @@ export function WorldInfoCoverPreview(props: ComponentProps<typeof StoryDetailSc
   const [coverStore] = useState(() => new IndexedDbStoryCoverStore('workshop-story-covers-v1'));
   const [record] = useState(() => createMockStorySeedRecord());
   const characters = blueprintCharacters(fillBlankSeedSlots(record.seed, createMockSeedSlotAnswer()));
-  const options = () => ({ model: readModelPreference('images') ?? undefined, accessToken: createSavedAccessToken().current });
-  const pictures = useCodexPictures(store, request => requestCodexPicture(request, options()));
+  const pictures = useCodexPictures(store, request => requestCodexPicture(request, {
+    model: readModelPreference('codex-images'), accessToken: createSavedAccessToken().current,
+  }));
   const makeCovers = useCallback<StoryCoverMaker>(async (story, count) => {
     const requestOptions = { model: readModelPreference('images') ?? undefined, accessToken: createSavedAccessToken().current };
     const results = await Promise.allSettled(Array.from({ length: count }, () => requestStoryCover(story, requestOptions)));

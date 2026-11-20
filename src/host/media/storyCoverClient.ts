@@ -2,6 +2,7 @@ import type { CodexPictureRequest, StoryCoverRequest } from '@seihouse/library/s
 import { base64ToBlob } from './imageFiles';
 import { recordUsage } from '../usage/usageLog';
 import { chosenEnergyGrade } from '../generation/modelPreference';
+import type { ImageJob } from '../generation/modelDefaults';
 
 export const STORY_COVER_ENDPOINT = '/api/story-cover';
 
@@ -20,7 +21,7 @@ interface ImageRequestOptions {
 }
 
 /** Sends one request to the cover server and reads the image it answers with. */
-async function requestImage(body: Record<string, unknown>, options: ImageRequestOptions): Promise<Blob> {
+async function requestImage(body: Record<string, unknown>, options: ImageRequestOptions, job: ImageJob): Promise<Blob> {
   const response = await (options.fetchImpl ?? fetch)(STORY_COVER_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -37,7 +38,7 @@ async function requestImage(body: Record<string, unknown>, options: ImageRequest
     throw new StoryCoverRequestError('The cover server answered without an image.', 502);
   }
   const used = typeof answer.model === 'string' ? answer.model : options.model;
-  recordUsage({ kind: 'image', model: used, grade: chosenEnergyGrade('images', used) });
+  recordUsage({ kind: 'image', model: used, grade: chosenEnergyGrade(job, used) });
   return base64ToBlob(answer.image, answer.mimeType);
 }
 
@@ -47,11 +48,11 @@ async function requestImage(body: Record<string, unknown>, options: ImageRequest
  * the visitor limit.
  */
 export const requestStoryCover = (story: StoryCoverRequest, options: ImageRequestOptions = {}): Promise<Blob> =>
-  requestImage({ story }, options);
+  requestImage({ story }, options, 'images');
 
 /**
  * Asks the cover server for a Codex card's picture, made from the card's look
- * and the story's own words, with the same image choice, token and limit.
+ * and the story's own words, with the Codex image choice and the shared token and limit.
  */
 export const requestCodexPicture = (request: CodexPictureRequest, options: ImageRequestOptions = {}): Promise<Blob> =>
-  requestImage({ card: request.card, story: request.story }, options);
+  requestImage({ card: request.card, story: request.story }, options, 'codex-images');

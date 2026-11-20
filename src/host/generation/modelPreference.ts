@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ENERGY_TIER_MODELS, modelEnergyGrade, type EnergyGrade, type GradedEnergyKind } from '@seihouse/library/energy';
+import { TAGGER_DEFAULT_MODEL, type ImageJob } from './modelDefaults';
 /**
  * The reader's Model Router choice, per capability, kept in this browser.
  *
@@ -7,7 +8,7 @@ import { ENERGY_TIER_MODELS, modelEnergyGrade, type EnergyGrade, type GradedEner
  * starting model and write it back when their own selector changes, so there
  * is one choice everywhere. The server still validates every model it is sent.
  */
-export type ModelPreferenceCapability = 'chapters' | 'images' | 'live';
+export type ModelPreferenceCapability = 'chapters' | ImageJob | 'live';
 
 /** Browser convenience only; the server independently enforces the local-development gate. */
 export const isLocalDevelopmentModel = (model?: string): boolean =>
@@ -23,7 +24,9 @@ export interface TextRolePreference {
 }
 
 /** The Energy kind each Router capability is priced as. */
-export const CAPABILITY_ENERGY_KIND: Record<ModelPreferenceCapability, GradedEnergyKind> = { chapters: 'chapter', images: 'image', live: 'live-minute' };
+export const CAPABILITY_ENERGY_KIND: Record<ModelPreferenceCapability, GradedEnergyKind> = {
+  chapters: 'chapter', images: 'image', 'codex-images': 'image', live: 'live-minute',
+};
 
 type Selection = Partial<Record<ModelPreferenceCapability, string>> & {
   /** The reader's tier per capability; with no exact model picked, the tier's model is used. */
@@ -102,7 +105,7 @@ export const writeModelPreference = (capability: ModelPreferenceCapability, mode
   save({ ...readAll(), [capability]: model }, { capability, model });
 
 /** Select a priced model and its cost band together. An unquoted model stays an exact pick. */
-export function selectQuotedModel(capability: 'chapters' | 'images', model: string, grade?: EnergyGrade) {
+export function selectQuotedModel(capability: 'chapters' | ImageJob, model: string, grade?: EnergyGrade) {
   const current = readAll();
   const tier = { ...current.tier };
   if (!grade) {
@@ -212,7 +215,10 @@ export function useTextRolePreference(role: TextRole): [TextRolePreference, (cho
   return [value, choice => writeTextRolePreference(role, choice)];
 }
 
-export const useTaggerPreference = () => useTextRolePreference('tagger');
+export function useTaggerPreference() {
+  const [choice, update] = useTextRolePreference('tagger');
+  return [{ ...choice, model: choice.model ?? TAGGER_DEFAULT_MODEL }, update] as const;
+}
 
 /** React binding: the saved reasoning levels for every model. */
 export function useReasoningPreferences(): [Record<string, string>, (model: string, level: string | undefined) => void] {

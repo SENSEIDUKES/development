@@ -3,16 +3,16 @@ import { ModelRouterError } from '@seihouse/library/model-router-server';
 import { handleImageLabHttp, IMAGE_LAB_PROMPT_LIMIT, IMAGE_LAB_TIMEOUT_MS } from './http';
 import { IMAGE_LAB_ATTACHMENT_MAX_BASE64 } from './limits';
 
-const environment = { GEMINI_API_KEY: 'secret-gemini', STORY_SEED_BLUEPRINT_ACCESS_TOKEN: 'owner-token' };
+const environment = { GEMINI_API_KEY: 'secret-gemini', OPENAI_API_KEY: 'secret-openai', STORY_SEED_BLUEPRINT_ACCESS_TOKEN: 'owner-token' };
 const owner = { authorization: 'Bearer owner-token' };
-const image = { capability: 'image' as const, provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite-image', data: 'aW1hZ2U=', mimeType: 'image/png' };
+const image = { capability: 'image' as const, provider: 'openai' as const, model: 'openai/gpt-image-2.6-flare', data: 'aW1hZ2U=', mimeType: 'image/png' };
 
 describe('The Image Lab route', () => {
-  it('makes an image from the owner\'s prompt with Nano Banana 2 Lite by default, square unless asked otherwise', async () => {
+  it('makes an image from the owner\'s prompt with GPT Image 2.6 Flare by default, square unless asked otherwise', async () => {
     const generate = vi.fn(async () => image);
     const result = await handleImageLabHttp({ method: 'POST', headers: owner, body: { prompt: '  A jade dragon over misty peaks.  ' } }, { environment, generate });
-    expect(result).toMatchObject({ status: 200, body: { image: 'aW1hZ2U=', mimeType: 'image/png', model: 'google/gemini-3.1-flash-lite-image' } });
-    expect(generate).toHaveBeenCalledWith({ capability: 'image', model: 'google/gemini-3.1-flash-lite-image', prompt: 'A jade dragon over misty peaks.', aspectRatio: '1:1', timeoutMs: IMAGE_LAB_TIMEOUT_MS });
+    expect(result).toMatchObject({ status: 200, body: { image: 'aW1hZ2U=', mimeType: 'image/png', model: 'openai/gpt-image-2.6-flare' } });
+    expect(generate).toHaveBeenCalledWith({ capability: 'image', model: 'openai/gpt-image-2.6-flare', prompt: 'A jade dragon over misty peaks.', aspectRatio: '1:1', timeoutMs: IMAGE_LAB_TIMEOUT_MS });
     expect(JSON.stringify(result.body)).not.toContain('secret');
   });
 

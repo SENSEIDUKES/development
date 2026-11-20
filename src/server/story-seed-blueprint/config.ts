@@ -1,5 +1,5 @@
 import {
-  DEFAULT_CHAPTER_MODEL,
+  blueprintDefaultModel,
   providerKey,
   providerModelName,
   textModelProvider,
@@ -29,8 +29,7 @@ export function resolveStorySeedBlueprintConfig(
   environment: StorySeedBlueprintEnvironment,
 ): ResolvedStorySeedBlueprintConfig {
   const accessToken = environment.STORY_SEED_BLUEPRINT_ACCESS_TOKEN?.trim() || undefined;
-  const model = environment.STORY_SEED_BLUEPRINT_MODEL?.trim()
-    || DEFAULT_CHAPTER_MODEL;
+  const model = blueprintDefaultModel(environment);
   const provider = textModelProvider(model);
   if (!provider) {
     throw new Error("STORY_SEED_BLUEPRINT_MODEL does not contain a valid text model.");
@@ -52,8 +51,7 @@ export function resolveStorySeedBlueprintConfig(
       environment.STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS,
       16_384,
     )))),
-    // The Blueprint is written by the chapter model, so it has a chapter's
-    // deadline: Vercel allows this route 180 seconds, as it does chapters.
+    // Vercel allows this route 180 seconds, as it does chapters.
     timeoutMs: Math.min(170_000, Math.max(10_000, Math.floor(finiteNumber(
       environment.STORY_SEED_BLUEPRINT_TIMEOUT_MS,
       170_000,

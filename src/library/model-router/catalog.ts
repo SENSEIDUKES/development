@@ -304,6 +304,7 @@ export const resolveChapterModelRoute = (
   environment: ModelEnvironment,
   listVariable: string,
   defaultVariable: string,
+  fallbackModel = DEFAULT_CHAPTER_MODEL,
 ): ChapterModelRoute => {
   const keys = {
     openai: providerKey(environment, 'openai'),
@@ -325,7 +326,7 @@ export const resolveChapterModelRoute = (
   const requested = environment[defaultVariable]?.trim();
   const defaultModel = requested && ids.includes(requested)
     ? requested
-    : pinned.find(model => ids.includes(model)) ?? DEFAULT_CHAPTER_MODEL;
+    : pinned.find(model => ids.includes(model)) ?? fallbackModel;
   return {
     models: ids.map(id => ({ id, label: textModelLabel(id) })),
     defaultModel: ids.includes(defaultModel) ? defaultModel : ids[0],

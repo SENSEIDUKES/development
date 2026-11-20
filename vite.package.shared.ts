@@ -23,7 +23,7 @@ import { packageAliases } from './scripts/packageAliases.mjs';
 export const HOST_PROVIDED = [
   /^@seihouse\/elemental-title(\/.*)?$/,
   /^@library-studios\/brand(\/.*)?$/,
-  /^@seihouse\/(ui|library-ui)(\/.*)?$/,
+  /^@seihouse\/ui(\/.*)?$/,
   'react',
   'react/jsx-runtime',
   'react-dom',

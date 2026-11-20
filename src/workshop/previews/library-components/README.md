@@ -2,7 +2,7 @@
 
 `?preview=library-components` is the Workshop's live inventory of Celestial Library
 presentation. `src/workshop/LibraryComponents.tsx` owns its fixtures and local demo
-controls; every component is imported from `@seihouse/library-ui`, owned by the UI
+controls; every component is imported from `@seihouse/ui/sen`, owned by the UI
 repository. No component implementation is copied into Development.
 
 The catalog follows the 16 Library UI families in UI's

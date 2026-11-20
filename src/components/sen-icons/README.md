@@ -1,6 +1,6 @@
 # SEN icons
 
-Library owns the first-party artwork selection. The existing `@seihouse/library-ui` renderer and named adapters still own markup, identifiers, size and currentColor. SEN's portable defaults remain host-independent.
+Library owns the first-party artwork selection. The existing `@seihouse/ui/sen` renderer and named adapters still own markup, identifiers, size and currentColor. SEN's portable defaults remain host-independent.
 
 - [URLS.md](./URLS.md) lists all 33 public SVG URLs from the supplied Basic and Special R2 folders.
 - `r2-icons.json` records exact object keys, URLs, ETags and existing Library identifiers.

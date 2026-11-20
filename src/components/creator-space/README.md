@@ -99,7 +99,7 @@ The existing local files named by this inventory are:
 
 ## Host boundary
 
-The page depends on `@seihouse/library-ui`, `@seihouse/ui`, `lucide-react`, the Library
+The page depends on `@seihouse/ui/sen`, `@seihouse/ui`, `lucide-react`, the Library
 Energy entry and `useLibraryAssets`. The host supplies its story list and cover art,
 Energy client, and destinations for Story Seed, Energy and the chapter workspace.
 `CreatorSpaceHost`, sample data, the Workshop entry and `worlds=sample` are preview-only.

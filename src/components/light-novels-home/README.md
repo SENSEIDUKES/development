@@ -78,7 +78,7 @@ The existing local files named by this inventory are:
 
 ## Host boundary
 
-The display uses `@seihouse/library-ui`, `@seihouse/ui`, `motion` and `lucide-react`.
+The display uses `@seihouse/ui/sen`, `@seihouse/ui`, `motion` and `lucide-react`.
 The host supplies published-world display fields, navigation/acquisition callbacks
 and approved public media. Workshop wrappers, fixtures and in-memory navigation
 transport are preview-only. `WorldExpressions` is the multimedia presentation;

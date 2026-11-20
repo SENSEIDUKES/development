@@ -448,7 +448,7 @@ export function LibraryComponentsGrid() {
         ))}
       </section>
       <p className="workshop-library-note">
-        All 16 Library UI families render the real components from <code>@seihouse/library-ui</code>.
+        All 16 Library UI families render the real components from <code>@seihouse/ui/sen</code>.
         Controls use isolated preview state; they do not save data or call generation services.
         Compound parts and artwork registries are grouped with their parent family. Universal primitives
         belong to <code>@seihouse/ui</code>; the full icon inventory lives in the Icons workspace.

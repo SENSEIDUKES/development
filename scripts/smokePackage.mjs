@@ -77,10 +77,10 @@ try {
     private: true,
     type: 'module',
     // Validate the host overrides for consumers that pin older UI peers.
-    overrides: { '@seihouse/audio-player': { '@seihouse/ui': `file:${uiTarball}` }, '@seihouse/library-ui': { '@seihouse/ui': `file:${uiTarball}` }, '@seihouse/front-desk': { '@seihouse/ui': `file:${uiTarball}` } },
+    overrides: { '@seihouse/audio-player': { '@seihouse/ui': `file:${uiTarball}` }, '@seihouse/front-desk': { '@seihouse/ui': `file:${uiTarball}` } },
   }, null, 2));
   runNpm(
-    ['install', '--ignore-scripts', ...peers, uiTarball, join(root, 'vendor/seihouse-elemental-title-0.1.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.10.1.tgz'), join(root, 'vendor/library-studios-brand-0.1.0.tgz')] : []), audioPlayer, frontDeskTarball, ...dependencyTarballs, tarballPath],
+    ['install', '--ignore-scripts', ...peers, uiTarball, join(root, 'vendor/seihouse-elemental-title-0.1.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/library-studios-brand-0.1.0.tgz')] : []), audioPlayer, frontDeskTarball, ...dependencyTarballs, tarballPath],
     consumerDirectory,
   );
 

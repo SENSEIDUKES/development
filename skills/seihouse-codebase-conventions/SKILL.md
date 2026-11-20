@@ -39,7 +39,7 @@ belongs to, and `npm run check:package-boundaries` enforces it.
 | --- | --- | --- |
 | `@seihouse/sen` | this repository, `src/package/sen/` | Reusable narrative behavior and surfaces, independent of the Library |
 | `@seihouse/library` | this repository, `src/package/library/` | First-party Library surfaces and behavior built on SEN |
-| `@seihouse/ui`, `@seihouse/library-ui` | UI repository | Universal primitives and tokens; branded Library presentation |
+| `@seihouse/ui` (and its `@seihouse/ui/sen` entry) | UI repository | Universal primitives and tokens; branded Library presentation in `@seihouse/ui/sen` |
 | `@seihouse/audio-player`, `@seihouse/seireader`, `@seihouse/living-titles`, SPP (`seihouse-productions-package`) | their own repositories | Shared SEIHouse infrastructure consumed here |
 
 Consume external SEIHouse packages; do not copy or fork them into this repository.

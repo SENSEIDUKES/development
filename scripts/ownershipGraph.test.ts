@@ -41,6 +41,8 @@ describe('ownership guardrails', () => {
         { specifier: '../../energy/shared/energyContracts', target: 'src/components/energy/shared/energyContracts.ts' },
         { specifier: '../shared/stubs', target: 'src/components/reader-chamber/shared/stubs.ts' },
         { specifier: '@seihouse/library-ui' },
+        { specifier: '@seihouse/ui/sen' },
+        { specifier: '@seihouse/ui/sen.css' },
       ]],
     ]);
     const failures = validateOwnership(graph, {}, ownershipOf, {}).failures.join('\n');
@@ -48,6 +50,8 @@ describe('ownership guardrails', () => {
     expect(failures).toContain('SEN_BOUNDARY');
     expect(failures).toContain('stubs');
     expect(failures).toContain('@seihouse/library-ui');
+    expect(failures).toContain('-> @seihouse/ui/sen\n');
+    expect(failures).toContain('-> @seihouse/ui/sen.css');
   });
   it('treats Front Desk as an installed package: SEN and the Library use it by name, as declared', () => {
     // Its source lives in its own repository; here it resolves to node_modules, like the UI kit.

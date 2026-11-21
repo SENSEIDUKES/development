@@ -26,19 +26,22 @@ export interface StoryTagNiche {
 }
 
 const niche = (name: string, core: string[], more: string[]): StoryTagNiche =>
-  ({ id: name, label: name, core, tags: [...core, ...more.filter(tag => !core.includes(tag))] });
+  ({ id: name, label: name, core, tags: [...new Set([...core, ...more])] });
 
 export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
   niche('Xianxia', ['cultivation realms', 'sect politics', 'dao comprehension', 'heavenly tribulation'], [
+    'immortals',
+    'cultivation',
     'breakthrough pressure', 'bottleneck arcs', 'power scaling', 'martial techniques', 'bloodline awakening',
     'inheritance trials', 'artifact growth', 'weapon spirits', 'artifact refining', 'alchemy', 'formations & arrays',
     'talisman design', 'forbidden manual', 'immortal ascension', 'heaven defiance', "heaven's punishment", 'sect diplomacy',
     'sect rankings', 'righteous sect', 'demonic path', 'ancient clan', 'clan politics', 'young master rivalry',
-    'face slapping', 'master-disciple bond', 'dual cultivation', 'adult-only double cultivation politics', 'karmic bonds',
+    'face slapping', 'master-disciple bond', 'dual cultivation', 'karmic bonds',
     'karmic debt', 'secret realms', 'ancient ruins', 'spirit beast', 'auction politics', 'rare materials', 'ancient grudges',
     'mythic history', 'sworn brotherhood', 'hidden instructors', 'borrowed lifespan', 'stolen fate',
   ]),
   niche('Xuanhuan', ['bloodline awakening', 'martial techniques', 'heavenly tribulation'], [
+    'cultivation',
     'cultivation realms', 'power scaling', 'breakthrough pressure', 'inheritance trials', 'artifact growth', 'weapon spirits',
     'heaven defiance', 'immortal ascension', 'magic', 'secret bloodlines', 'ancient clan', 'clan politics',
     'young master rivalry', 'face slapping', 'demonic path', 'secret realms', 'ancient ruins', 'spirit beast',
@@ -66,6 +69,8 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'master-disciple bond', 'senpai-kouhai', 'rivalry', 'young master rivalry',
   ]),
   niche('High Fantasy', ['magic', 'gods & deities', 'ancient ruins'], [
+    'demons',
+    'dragons',
     'map expansion', 'mythic history', 'lost history', 'prophecy', 'chosen one', 'demon king',
     'hero party', 'summoned hero', 'secret realms', 'kingdom economy', 'political pressure', 'war', 
   ]),
@@ -88,7 +93,7 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'demon king', 'weak to strong', 'overpowered protagonist', 'map expansion',
   ]),
   niche('Villainess', ['villainess', 'otome game', 'death flags'], [
-    'transmigration', 'reincarnation', 'regression', 'foreknowledge', 'saving the doomed', 'destined death', 'fate correction',
+    'transmigration', 'reincarnation', 'regression', 'foreknowledge', 'saving the doomed', 'destined death', 'fate repair',
     'arranged marriage', 'political romance', 'court intrigue', 'succession crisis', 'public scandal', 'reverse harem',
     'enemies to lovers', 'clever protagonist',
   ]),
@@ -114,12 +119,14 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'arena rankings', 'ranker', 'respawn logic', 'death penalties', 'hiding true strength',
   ]),
   niche('Tower Climb', ['tower climbing', 'floor bosses', 'trial rooms'], [
+    'dungeons',
     'ancient tower rankings', 'dungeon systems', 'dungeon gates', 'boss mechanics', 'raid mechanics', 'raid team',
     'hero party', 'party roles', 'party chemistry', 'party conflict', 'party banishment', 'loot systems', 'hidden quests',
     'safe zones', 'tutorial systems', 'level progression', 'status window', 'death penalties', 'respawn logic',
     'constellation sponsors', 'streamed trials', 'ranker', 'survival games',
   ]),
   niche('Gates & Dungeons', ['dungeon gates', 'gate outbreaks', 'hunter rankings'], [
+    'dungeons',
     'dungeon systems', 'raid team', 'raid mechanics', 'boss mechanics', 'loot systems', 'awakened citizens',
     'association politics', 'hunter society', 'ranker', 'system awakening', 'awakening', 'level progression', 'status window',
     'weak to strong', 'hiding true strength',
@@ -133,6 +140,7 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'streamed trials', 'survival rules', 'clever protagonist', 'assassination plots', 
   ]),
   niche('Urban Cultivation', ['urban cultivation', 'hidden society', 'social status growth'], [
+    'cultivation',
     'corporate clans', 'chaebol clans', 'district control', 'urban territory', 'underworld sects', 'spiritual black markets',
     'apartment spirits', 'subway realms', 'convenience spirits', 'celebrity vessels', 'idol factions', 'media pressure',
     'viral reputation', 'public scandal', 'modern artifacts', 'phone talismans', 'contract rewriting', 'spiritual real estate',
@@ -145,6 +153,7 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'overpowered protagonist', 'face slapping',
   ]),
   niche('Hunter', ['hunter rankings', 'hunter society', 'dungeon gates'], [
+    'monsters',
     'gate outbreaks', 'ranker', 'raid team', 'association politics', 'awakened citizens', 'guild politics', 'guild ranks',
     'loot systems', 'level progression', 'status window', 'media pressure', 'corporate clans', 'weak to strong', 'returner',
     'regression',
@@ -159,24 +168,29 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'senpai-kouhai', 'childhood friend', 'rivalry', 'romantic tension', 'social status growth', 'family pressure', 
   ]),
   niche('Entertainment Industry', ['idol factions', 'celebrity vessels', 'media pressure'], [
+    'showbiz',
     'viral reputation', 'public scandal', 'social status growth', 'rivalry', 'revenge climb', 'corporate clans',
     'chaebol clans', 'family pressure', 'romantic tension', 'hidden identity', 'regression', 
   ]),
   niche('Business Tycoon', ['corporate clans', 'market control', 'monopoly strategy'], [
+    'CEO',
     'chaebol clans', 'banking influence', 'foreign investment', 'trade routes', 'supply chains', 'merchant politics',
     'debt crisis', 'revenge climb', 'social status growth', 'family pressure', 'media pressure', 'modern knowledge uplift',
     'regression', 'clever protagonist',
   ]),
   niche('Sports & E-sports', ['tournament', 'training arc', 'rivalry'], [
+    'e-sports',
     'arena rankings', 'ranker', 'weak to strong', 'underdog', 'party chemistry', 'party conflict', 'media pressure',
     'viral reputation', 'virtual reality', 'regression', 
   ]),
   niche('Apocalypse', ['apocalypse cultivation', 'survival camps', 'mutated beasts'], [
+    'zombies',
     'apocalypse survival', 'ruined worlds', 'broken heavenly laws', 'gate outbreaks', 'system awakening', 'awakening',
     'survival games', 'doom timers', 'monster evolution', 'scarcity economy', 'famine pressure', 'refugee crisis',
     'resource management',
   ]),
   niche('Occult Mystery', ['mystery cultivation', 'forbidden cases', 'hidden murders'], [
+    'vampires',
     'secret bloodlines', 'sealed memories', 'lost history', 'mythic history', 'cursed relics', 'ancient sealed truths',
     'forbidden libraries', 'hidden identity', 'hidden patrons', 'spy networks', 'assassination plots', 'curses', 'debt curses',
     'campus secrets', 'ancient ruins',
@@ -194,16 +208,18 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'monster companions', 'spirit beast', 'oaths & vows', 'village bonds', 
   ]),
   niche('Exorcist', ['exorcism', 'curses', 'cursed relics'], [
+    'demons',
     'yokai', 'forbidden cases', 'hidden murders', 'spirit contracts', 'apartment spirits',
     'subway realms', 'debt curses', 'hidden society', 'talisman design', 'phone talismans',
   ]),
   niche('Sect Building', ['sect politics', 'resource management', 'sect rankings'], [
+    'cultivation',
     'sect diplomacy', 'righteous sect', 'demonic path', 'master-disciple bond', 'hidden instructors', 'forbidden manual',
     'martial techniques', 'cultivation realms', 'alchemy', 'formations & arrays', 'rare materials', 'territory control',
     'alliance building', 'rival factions', 'ancient grudges', 'young master rivalry', 'tribute systems', 'auction politics',
   ]),
-  niche('Kingdom Building', ['kingdom building', 'territory control', 'resource management', 'laws'], [
-    'kingdom economy', 'city building', 'village growth', 'settlement upgrades', 'territory upgrades', 'infrastructure growth',
+  niche('Kingdom Building', ['kingdom building', 'territory control', 'resource management', 'law reform'], [
+    'kingdom economy', 'city building', 'village growth', 'settlement upgrades', 'settlement upgrades', 'infrastructure growth',
     'trade routes', 'supply chains', 'port economy', 'mining economy', 'tax reform', 'law reform', 'public order',
     'land rights', 'tribute systems', 'famine pressure', 'scarcity economy', 'refugee crisis', 'labor shortage',
     'grain pricing', 'currency pressure', 'debt crisis', 'trade embargo', 'war economy', 'economic recovery',
@@ -224,6 +240,7 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'prisoner politics', 'war', 'villainess', 'clever protagonist',
   ]),
   niche('Palace Intrigue', ['court intrigue', 'succession crisis', 'harem jealousy'], [
+    'harem',
     'imperial oversight', 'political pressure', 'assassination plots', 'arranged marriage', 'marriage alliances',
     'political romance', 'hidden patrons', 'spy networks', 'public scandal', 'legitimacy crisis', 'betrayal', 'revenge',
     'villainess', 'clever protagonist',
@@ -233,6 +250,7 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'betrayal', 'revenge', 'villainess', 'land rights', 'debt crisis', 'clever protagonist',
   ]),
   niche('War & Strategy', ['military strategy', 'battlefield tactics', 'campaign planning'], [
+    'military',
     'war', 'siege warfare', 'fortress defense', 'border defense', 'guerrilla warfare', 'border raids', 'supply raids',
     'troop morale', 'officer loyalty', 'unit progression', 'elite units', 'special corps', 'military doctrine',
     'weapon upgrades', 'mercenary contracts', 'enemy generals', 'battlefield reputation', 'war economy', 'war exhaustion',
@@ -248,6 +266,7 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'rebirth of the strong',
   ]),
   niche('Cosmic Cultivation', ['cosmic cultivation', 'star realms', 'galactic inheritances'], [
+    'cultivation',
     'planetary sects', 'void beasts', 'immortal ascension', 'gods & deities', 'power scaling', 'mythic history',
     'map expansion', 'world events',
   ]),
@@ -256,6 +275,7 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'military strategy', 'trade routes', 'foreign investment', 'mecha',
   ]),
   niche('Mecha', ['mecha', 'military strategy', 'elite units'], [
+    'military',
     'war', 'battlefield tactics', 'unit progression', 'weapon upgrades', 'special corps', 'academy rankings',
     'tournament', 'rivalry', 'veteran trauma', 'space travel',
   ]),
@@ -278,8 +298,8 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'artisan production', 'guild economy', 'auction politics', 'artifact economy', 'talisman design', 'formations & arrays',
   ]),
   niche('Farming & Territory', ['farming', 'village growth', 'territory control'], [
-    'resource management', 'settlement upgrades', 'territory upgrades', 'infrastructure growth', 'land rights',
-    'grain pricing', 'trade routes', 'village bonds', 'low-stakes daily progress', 'food', 
+    'resource management', 'settlement upgrades', 'settlement upgrades', 'infrastructure growth', 'land rights',
+    'grain pricing', 'trade routes', 'village bonds', 'food', 
     'monster companions',
   ]),
   niche('Merchant & Shop', ['merchant politics', 'market control', 'trade routes'], [
@@ -287,9 +307,10 @@ export const STORY_TAG_NICHES: readonly StoryTagNiche[] = [
     'currency pressure', 'banking influence', 'rare materials', 'artisan production', 'contract enforcement', 
   ]),
   niche('Culinary', ['food', 'cooking skill', 'artisan production'], [
-    'tournament', 'rivalry', 'village bonds', 'low-stakes daily progress', 'rare materials', 'magical resources', 
+    'tournament', 'rivalry', 'village bonds', 'rare materials', 'magical resources', 
   ]),
   niche('Divine Doctor', ['healing', 'alchemy', 'hidden identity'], [
+    'medicine',
     'rare materials', 'magical resources', 'curses', 'borrowed lifespan', 'face slapping', 'social status growth',
     'corporate clans', 'family pressure', 'hiding true strength', 'overpowered protagonist',
   ]),

@@ -34,7 +34,6 @@ import {
   assertValidStoryAdministrativeMetadata,
   type StoryAdministrativeMetadata,
 } from './storyAdministrativeMetadata';
-import { inferStoryTags } from './storyTagInference';
 import { normalizeStoryStyle, type StoryStyle } from './storyStyle';
 
 /**
@@ -771,10 +770,9 @@ export const validateStorySeedDraft = (value: unknown): StorySeedValidationResul
 };
 
 /**
- * Generation readiness — the four required Story inputs. Story Tags belong
- * here like the other three; they never block a creator because
- * `applyInferredStoryTags` fills an empty set from Premise, Genre, and Style
- * before the generation payload builders assert.
+ * Generation readiness — the four required Story inputs. Story Tags are the
+ * creator's own choice (SENSEI, 2026-11-21): the tag engine suggests, nothing
+ * fills an empty set, and a seed without tags is not ready.
  */
 export const validateStorySeedInput = (value: unknown): StorySeedValidationResult => {
   const draft = validateStorySeedDraft(value);
@@ -838,22 +836,6 @@ export const normalizeStorySeedInput = (value: unknown): StorySeedInput => {
       optional: normalizeWorldOptional(world.optional),
     },
   };
-};
-
-/**
- * Fills empty Story Tags from Premise, Genre, and Style. Manually chosen tags
- * are always preserved untouched; this only ever fires on an empty set. The
- * returned seed is what gets saved *and* what enters the generation pipeline,
- * so the stored seed and the generated novel always share one tag set.
- */
-export const applyInferredStoryTags = (seed: StorySeedInput): StorySeedInput => {
-  if (seed.story.required.storyTags.length > 0) return seed;
-  const storyTags = inferStoryTags({
-    premise: seed.story.required.premise,
-    genre: seed.story.required.genre,
-    style: seed.story.required.style,
-  });
-  return { ...seed, story: { ...seed.story, required: { ...seed.story.required, storyTags } } };
 };
 
 // ─── Generation boundary ─────────────────────────────────────────────────────
@@ -1778,7 +1760,7 @@ const withoutStorySettings = (seed: StorySeedInput): StorySeedInput => {
 };
 
 export const buildBlueprintGenerationPayload = (seed: StorySeedInput): BlueprintGenerationPayload => {
-  const storySeed = withoutStorySettings(applyInferredStoryTags(normalizeStorySeedInput(seed)));
+  const storySeed = withoutStorySettings(normalizeStorySeedInput(seed));
   assertValidStorySeedInput(storySeed);
   return { storySeed };
 };
@@ -1789,7 +1771,7 @@ export const buildInitialStoryGenerationPayload = (
   blueprint: WorldBlueprint,
   chapterCount: number,
 ): InitialStoryGenerationPayload => {
-  const storySeed = applyInferredStoryTags(normalizeStorySeedInput(seed));
+  const storySeed = normalizeStorySeedInput(seed);
   assertValidStorySeedInput(storySeed);
   assertValidStoryAdministrativeMetadata(administrative);
   const arcPlan = validateBlueprintArcPlan(blueprint);

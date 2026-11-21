@@ -12,7 +12,7 @@ import {
 } from '@seihouse/library/model-router-server';
 import { BLUEPRINT_DEFAULT_MODEL, BLUEPRINT_DEFAULT_REASONING, CHAPTER_DEFAULT_MODEL, IMAGE_JOB_DEFAULTS, TAGGER_DEFAULT_MODEL, TAGGER_DEFAULT_REASONING, type ImageJob } from '../../host/generation/modelDefaults';
 
-export { LOCAL_LM_STUDIO_MODEL, isLocalModelDevelopment, CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, LIVE_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, DEFAULT_LIVE_MODEL, lowestReasoningLevel, providerModelName, resolveReasoningLevel, textModelProvider, textModelLabel } from '@seihouse/library/model-router-server';
+export { LOCAL_LM_STUDIO_MODEL, isLocalModelDevelopment, CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, LIVE_MODELS, MEANING_MODELS, DEFAULT_MEANING_MODEL, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, DEFAULT_LIVE_MODEL, lowestReasoningLevel, providerModelName, resolveReasoningLevel, textModelProvider, textModelLabel } from '@seihouse/library/model-router-server';
 export const isMissingKeyMessage = (message: string) => /(?:OPENAI_API_KEY|GEMINI_API_KEY|OPENROUTER_API_KEY|OpenRouter-Dev|MINIMAX_API_KEY|Minimax|ANTHROPIC_API_KEY|claude_sen) is not configured/.test(message);
 import { MODEL_PROVIDERS as sharedProviders } from '@seihouse/library/model-router-server';
 export const MODEL_PROVIDERS = {
@@ -92,6 +92,9 @@ export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   // A one-off trial of Qwen3-TTS as a foundation voice, run as a Cloud Run GPU job (services/qwen-voice-test).
   { name: 'Qwen Voice Trial', capability: 'tts', entry: 'services/qwen-voice-test/test.py', modelChoice: 'server-default' },
   { name: 'Familiar Live Talk', capability: 'live', entry: 'src/server/familiar-live/http.ts', modelChoice: 'router' },
+  { name: 'Meaning Fingerprint', capability: 'meaning', entry: 'src/server/meaning-fingerprint/http.ts', modelChoice: 'server-default' },
+  // Rebuilds the stored tag fingerprints when a tag or its meaning changes (`npm run build:tag-fingerprints`).
+  { name: 'Story Tag Fingerprints', capability: 'meaning', entry: 'scripts/buildStoryTagFingerprints.mjs', modelChoice: 'server-default' },
   { name: 'Story Cover', capability: 'images', imageJob: 'images', entry: 'src/server/story-cover/http.ts', modelChoice: 'router' },
   { name: 'Codex Picture', capability: 'images', imageJob: 'codex-images', entry: 'src/server/story-cover/codexPicture.ts', modelChoice: 'router' },
   { name: 'Image Lab', capability: 'images', imageJob: 'images', entry: 'src/server/image-lab/http.ts', modelChoice: 'router' },

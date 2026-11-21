@@ -17,7 +17,7 @@
  */
 
 export type ModelEnvironment = Record<string, string | undefined>;
-export type ModelCapability = 'chapters' | 'images' | 'tts' | 'live' | 'audio' | 'video' | '3d';
+export type ModelCapability = 'chapters' | 'images' | 'tts' | 'live' | 'meaning' | 'audio' | 'video' | '3d';
 export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo' | 'lmstudio' | 'minimax' | 'anthropic' | 'openai';
 /** Providers that serve chapter-capable text models. */
 export type TextProviderId = 'openai' | 'gemini' | 'openrouter' | 'lmstudio' | 'minimax' | 'anthropic';
@@ -208,6 +208,20 @@ export const LIVE_MODELS: readonly RoutedModel[] = [
 
 /** The live voice model used when the server names none (`FAMILIAR_LIVE_MODEL`). */
 export const DEFAULT_LIVE_MODEL = 'google/gemini-3.8-live';
+
+/**
+ * Meaning: embedding models, which write nothing. They turn text into a
+ * fingerprint of what it means, so the Meaning Engine can match a synopsis to
+ * tags (and later stories to readers) without sharing words. Stored
+ * fingerprints only compare with fingerprints from the same model, so changing
+ * it means rebuilding them (`npm run build:tag-fingerprints`).
+ */
+export const MEANING_MODELS: readonly RoutedModel[] = [
+  { id: 'openrouter/google/gemini-embedding-2', label: 'Gemini Embedding 2 · OpenRouter', provider: 'openrouter', stage: 'current' },
+];
+
+/** The one model every stored fingerprint was made with. */
+export const DEFAULT_MEANING_MODEL = 'openrouter/google/gemini-embedding-2';
 
 /** Gemini music-generation models. Catalogued for the Router; no DEV surface calls them yet. */
 export const AUDIO_MODELS: readonly RoutedModel[] = [

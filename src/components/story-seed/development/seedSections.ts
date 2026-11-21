@@ -63,7 +63,8 @@ export const SEED_SECTIONS: SeedSection[] = [
     isFilled: seed => Boolean(
       normalizeStoryStyle(storyRequired(seed).style)
       && hasText(storyRequired(seed).genre)
-      && hasText(storyRequired(seed).premise),
+      && hasText(storyRequired(seed).premise)
+      && storyRequired(seed).storyTags.some(hasText),
     ),
   },
   {
@@ -170,28 +171,29 @@ export const FAMILY_SECTIONS: Record<SeedFamily, SeedSection[]> = {
 };
 
 export interface RequiredStoryInput {
-  id: 'style' | 'genre' | 'premise';
-  label: 'Style' | 'Genre' | 'Synopsis';
+  id: 'style' | 'premise' | 'tags';
+  label: 'Style' | 'Synopsis' | 'Tags';
   isFilled: (seed: StorySeedInput) => boolean;
 }
 
-// The gate stays granular so validation messages identify the missing Origin
-// input even though those inputs share one visible editing surface.
+// The three things a creator owes before a story can be made (SENSEI,
+// 2026-11-21): Style (the tradition and the genre chosen with it), Synopsis and
+// Tags. Fate is not among them: it starts on Immortal, already answered.
 export const REQUIRED_STORY_SECTIONS: RequiredStoryInput[] = [
   {
     id: 'style',
     label: 'Style',
-    isFilled: seed => Boolean(normalizeStoryStyle(storyRequired(seed).style)),
-  },
-  {
-    id: 'genre',
-    label: 'Genre',
-    isFilled: seed => hasText(storyRequired(seed).genre),
+    isFilled: seed => Boolean(normalizeStoryStyle(storyRequired(seed).style)) && hasText(storyRequired(seed).genre),
   },
   {
     id: 'premise',
     label: 'Synopsis',
     isFilled: seed => hasText(storyRequired(seed).premise),
+  },
+  {
+    id: 'tags',
+    label: 'Tags',
+    isFilled: seed => storyRequired(seed).storyTags.some(hasText),
   },
 ];
 

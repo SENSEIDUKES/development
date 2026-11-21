@@ -8,6 +8,8 @@ import { handleImageLabHttp } from '../server/image-lab/http';
 import { handleProfilePictureHttp, PROFILE_PICTURE_VISITOR_LIMIT } from '../server/profile-picture/http';
 import { handleReaderTranslationHttp } from '../server/reader-translation/http';
 import { handleStorySparkHttp } from '../server/story-spark/http';
+import { handleMeaningFingerprintHttp } from '../server/meaning-fingerprint/http';
+import { MEANING_FINGERPRINT_VISITOR_LIMIT } from '../server/meaning-fingerprint/limits';
 import { STORY_SPARK_VISITOR_LIMIT, storySparkUsageHeaders } from '../server/story-spark/limits';
 import { handleFamiliarLiveHttp } from '../server/familiar-live/http';
 import { FAMILIAR_LIVE_VISITOR_LIMIT } from '../server/familiar-live/limits';
@@ -61,6 +63,7 @@ export const generationApis = (
   const guardStoryCover = createPublicGenerationGuard(STORY_COVER_VISITOR_LIMIT);
   const guardProfilePicture = createPublicGenerationGuard(PROFILE_PICTURE_VISITOR_LIMIT);
   const guardStorySpark = createPublicGenerationGuard(STORY_SPARK_VISITOR_LIMIT);
+  const guardMeaningFingerprint = createPublicGenerationGuard(MEANING_FINGERPRINT_VISITOR_LIMIT);
   const guardFamiliarLive = createPublicGenerationGuard(FAMILIAR_LIVE_VISITOR_LIMIT);
   const guardCodexVoiceQuote = createPublicGenerationGuard({
     key: 'codex-voice-quote',
@@ -119,6 +122,7 @@ export const generationApis = (
         && pathname !== '/api/chapter-voice'
         && pathname !== '/api/reader-translation'
         && pathname !== '/api/story-spark'
+        && pathname !== '/api/meaning-fingerprint'
         && pathname !== '/api/familiar-live'
       ) {
         next();
@@ -143,6 +147,8 @@ export const generationApis = (
               ? guardReaderTranslation(request)
             : pathname === '/api/story-spark'
               ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardStorySpark(request)
+            : pathname === '/api/meaning-fingerprint'
+              ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardMeaningFingerprint(request)
             : pathname === '/api/familiar-live'
               ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardFamiliarLive(request)
               : { allowed: true };
@@ -247,6 +253,14 @@ export const generationApis = (
             ...result.headers,
             ...storySparkUsageHeaders(request, guardStorySpark, developmentAccessToken(environment)),
           });
+          return;
+        }
+        if (pathname === '/api/meaning-fingerprint') {
+          const result = await handleMeaningFingerprintHttp(
+            { method: request.method, body },
+            { environment, onError: error => console.error('[meaning-fingerprint]', error) },
+          );
+          writeJson(response, result.status, result.body, result.headers);
           return;
         }
         if (pathname === '/api/familiar-live') {

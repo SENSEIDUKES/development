@@ -1,5 +1,6 @@
 import { useMemo, useSyncExternalStore, type PropsWithChildren } from 'react';
 import { StoryCreationProvider, type StoryCreationRuntime } from '@seihouse/library/story-seed';
+import { requestMeaningFingerprints } from '../host/meaning/meaningFingerprintClient';
 import { AGENTS, LOCAL_ONLY_MODE, mockLogin, storyCreationPreviewStore } from '../components/story-seed/shared/stubs';
 import { LOCAL_WORKSHOP_STORY_SEED_OWNER_ID, previewStorySeedRepository } from './previews/story-seed/storySeedStorage';
 
@@ -12,6 +13,8 @@ export function StoryCreationPreviewRuntime({ children }: PropsWithChildren) {
     guestOwnerId: LOCAL_ONLY_MODE ? LOCAL_WORKSHOP_STORY_SEED_OWNER_ID : undefined,
     authorMarkUrl: AGENTS.VERSA.logoUrl,
     authenticate: mockLogin,
+    // The dev server serves the real route; without a model key suggestions fall back to genre and words.
+    fingerprintMeaning: requestMeaningFingerprints,
   }), [snapshot]);
   return <StoryCreationProvider value={runtime}>{children}</StoryCreationProvider>;
 }

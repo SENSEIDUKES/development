@@ -10,6 +10,7 @@ generated/codex-voice-api
 generated/chapter-voice-api
 generated/reader-translation-api
 generated/story-spark-api
+generated/meaning-fingerprint-api
 generated/familiar-live-api
 generated/model-router-api
 generated/energy-api

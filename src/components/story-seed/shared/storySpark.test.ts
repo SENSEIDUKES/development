@@ -3,9 +3,9 @@ import { createEmptyStorySeedInput, normalizeStorySeedInput } from './storySeedS
 import { applyStorySparkToSeed, parseStorySpark, parseStorySparkRequest, storySeedInputFromSpark, storySparkTags, STORY_SPARK_AVOID_LIMIT, STORY_SPARK_PREMISE_MAX_LENGTH } from './storySpark';
 
 describe('Story Sparks', () => {
-  it('plants chosen tags first, followed by inferred tags without duplicates', () => {
+  it('plants chosen tags first, followed by suggested tags without duplicates', () => {
     const spark = parseStorySpark({ premise: 'A disciple investigates a disappearance at an academy.', tags: ['romance'] },
-      parseStorySparkRequest({ genre: 'Mystery Cultivation', tags: [' Academy ', 'mystery', 'ACADEMY'] }));
+      parseStorySparkRequest({ genre: 'Occult Mystery', tags: [' Academy ', 'mystery', 'ACADEMY'] }));
     expect(spark.tags).toEqual(['academy', 'mystery']);
     for (const seed of [storySeedInputFromSpark(spark), applyStorySparkToSeed(createEmptyStorySeedInput(), spark)]) {
       const tags = seed.story.required.storyTags;

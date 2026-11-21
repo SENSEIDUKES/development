@@ -204,18 +204,18 @@ describe('Story Seed keyboard and mobile navigation', () => {
       Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, value);
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    setPremise('Two lovers run a cozy bakery in a port city.');
+    setPremise('Two lovers build a found family around a cozy bakery.');
     const suggestions = () => container.querySelector('#style-suggested-tags')!;
     expect(suggestions().textContent).toContain('cozy');
-    expect(suggestions().textContent).toContain('port economy');
-    const port = Array.from(suggestions().querySelectorAll('button')).find(button => button.textContent?.includes('port economy'))!;
+    expect(suggestions().textContent).toContain('found family');
+    const port = Array.from(suggestions().querySelectorAll('button')).find(button => button.textContent?.includes('found family'))!;
     act(() => port.click());
-    expect(currentSeed.story.required.storyTags).toContain('port economy');
-    expect(suggestions().textContent).not.toContain('port economy');
+    expect(currentSeed.story.required.storyTags).toContain('found family');
+    expect(suggestions().textContent).not.toContain('found family');
     setPremise('A detective investigates ancient ruins and clues.');
     expect(suggestions().textContent).toContain('ancient ruins');
     expect(suggestions().textContent).not.toContain('romantic tension');
-    expect(currentSeed.story.required.storyTags).toContain('port economy');
+    expect(currentSeed.story.required.storyTags).toContain('found family');
   });
 
   it('uses custom tag identity for catalog selection, duplicate prevention, and removal', () => {
@@ -390,7 +390,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     act(() => container.querySelector<HTMLButtonElement>('[data-seed-creator-strip] button[data-step="manifest"]')!.click());
     const manifest = container.querySelector<HTMLButtonElement>('[data-seed-creator-footer] button[aria-label^="Create disabled"]');
     expect(manifest?.disabled).toBe(true);
-    expect(manifest?.getAttribute('aria-label')).toBe('Create disabled — missing: Style, Genre, Synopsis');
+    expect(manifest?.getAttribute('aria-label')).toBe('Create disabled — missing: Style, Synopsis, Tags');
     expect(container.querySelector('[data-story-seed-action-row] button[data-variant="manifest"]')).toBeNull();
   });
 

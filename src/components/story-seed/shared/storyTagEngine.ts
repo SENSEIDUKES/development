@@ -66,8 +66,17 @@ const catalog = [...new Map(STORY_TAG_CATALOG.map(entry => [normalizeStoryTagIde
 }));
 
 const NEGATION = /\b(?:no|without|not|never)\s+([^,.!?;]+?)(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi;
-/** What the synopsis rules out ("no romance"). Word-level only: implied intent is the fingerprint's job. */
-const ruledOut = (synopsis: string) => [...synopsis.matchAll(NEGATION)].map(match => normalize(match[1]));
+/**
+ * What the synopsis rules out, as the things named right after the negation
+ * ("no romance", "without fighting or magic"). Words further along the clause are
+ * not ruled out: "no money studies magic" still has magic. Word-level only:
+ * implied intent is the fingerprint's job.
+ */
+const ruledOut = (synopsis: string) => [...synopsis.matchAll(NEGATION)]
+  .flatMap(match => normalize(match[1]).split(/ (?:or|nor|and) /))
+  .map(part => part.replace(/^(?:(?:no|not|without|never|any|a|an|the|more) )+/, ''))
+  .filter(Boolean);
+const startsWithPhrase = (text: string, phrase: string) => text === phrase || text.startsWith(`${phrase} `);
 
 /** Read `storyTagFingerprints.json` into the map the engine compares against. */
 export const readStoryTagFingerprints = (stored: { tags: Record<string, readonly [string, string]> }): Map<string, Fingerprint> =>
@@ -77,7 +86,7 @@ export const readStoryTagFingerprints = (stored: { tags: Record<string, readonly
 export const suggestStoryTags = (input: StoryTagSuggestionInput): StoryTagMetadata[] => {
   const raw = input.synopsis ?? '';
   const exclusions = ruledOut(raw);
-  const synopsis = normalize(raw.replace(NEGATION, ' '));
+  const synopsis = normalize(raw);
   const picked = new Set((input.picked ?? []).map(normalizeStoryTagIdentity));
   const skip = new Set((input.skip ?? []).map(normalizeStoryTagIdentity));
   const niche = findStoryTagNiche(input.genre);
@@ -91,7 +100,7 @@ export const suggestStoryTags = (input: StoryTagSuggestionInput): StoryTagMetada
   const candidates: SpreadCandidate<string>[] = [];
   for (const { identity, entry, phrases } of catalog) {
     if (picked.has(identity) || skip.has(identity)) continue;
-    if (exclusions.some(text => phrases.some(phrase => containsPhrase(text, phrase)))) continue;
+    if (exclusions.some(text => phrases.some(phrase => startsWithPhrase(text, phrase)))) continue;
     const fingerprint = meaning?.tags.get(identity);
     const named = synopsis && phrases.some(phrase => containsPhrase(synopsis, phrase)) ? 1 : 0;
     const nearest = fingerprint ? Math.max(0, ...company.map(other => meaningSimilarity(fingerprint, other))) : 0;

@@ -20,7 +20,8 @@ export const meaningFit = <Key extends string>(
   const mean = raw.reduce((sum, [, value]) => sum + value, 0) / raw.length;
   const spread = Math.sqrt(raw.reduce((sum, [, value]) => sum + (value - mean) ** 2, 0) / raw.length);
   // One deviation above the field is where a real fit starts; three and a half is a clear match.
-  return new Map(raw.map(([key, value]) => [key, spread ? Math.max(0, Math.min(1, ((value - mean) / spread - 1) / 2.5)) : 0]));
+  // A candidate pointing away from the query never fits, however far below it the rest of the field sits.
+  return new Map(raw.map(([key, value]) => [key, spread && value > 0 ? Math.max(0, Math.min(1, ((value - mean) / spread - 1) / 2.5)) : 0]));
 };
 
 export interface SpreadCandidate<Key extends string> {
@@ -56,7 +57,9 @@ export const pickSpread = <Key extends string>(
 ): Key[] => {
   const chosen: { fingerprint?: Fingerprint }[] = [...taken];
   const groups = new Map<string, number>();
-  const pool = candidates.filter(candidate => candidate.score > 0);
+  // A key that is taken, or offered twice, is never picked, with or without a fingerprint.
+  const seen = new Set<Key>([...taken].map(entry => entry.key));
+  const pool = candidates.filter(candidate => candidate.score > 0 && !seen.has(candidate.key) && Boolean(seen.add(candidate.key)));
   const picked: Key[] = [];
   while (pool.length && picked.length < limit) {
     let best = -1;

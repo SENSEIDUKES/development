@@ -39,6 +39,9 @@ describe('ranking by meaning', () => {
     expect(fit.get('match')).toBeGreaterThan(0.9);
     expect(fit.get('other0')).toBe(0);
     expect(meaningFit(print(1, 0), []).size).toBe(0);
+    // Nothing fits a query the whole field points away from, not even the least bad candidate.
+    const away: [string, Int8Array][] = [['sideways', print(0, 1)], ...Array.from({ length: 12 }, (_, index) => [`opposite${index}`, print(-1, 0)] as [string, Int8Array])];
+    expect([...meaningFit(print(1, 0), away).values()].every(value => value === 0)).toBe(true);
   });
 
   it('never picks two candidates that mean the same thing, or one that repeats what is taken', () => {
@@ -51,6 +54,10 @@ describe('ranking by meaning', () => {
       { key: 'nothing to say', score: 0 },
     ], { limit: 5, sameMeaning: 0.95, taken: [{ key: 'tax reform', fingerprint: print(0.21, -1) }] });
     expect(picked).toEqual(['city building', 'slow-burn romance', 'trade routes']);
+  });
+
+  it('never picks a key that is taken or offered twice, with or without fingerprints', () => {
+    expect(pickSpread([{ key: 'a', score: 1 }, { key: 'b', score: 0.5 }, { key: 'b', score: 0.4 }], { limit: 5, sameMeaning: 0.9, taken: [{ key: 'a' }] })).toEqual(['b']);
   });
 
   it('lets each further pick from one group count for less', () => {

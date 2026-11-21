@@ -118,7 +118,7 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'cultivation realms', category: 'System & Progression', styles: ['chinese'], aliases: ['realms', 'dantian', 'qi'], color: 'gray' },
   { label: 'breakthrough pressure', category: 'System & Progression', styles: ['chinese', 'korean'], aliases: ['breakthrough', 'bottleneck'], color: 'gray' },
   { label: 'bottleneck arcs', category: 'System & Progression', styles: ['chinese', 'korean'], aliases: ['bottleneck', 'stagnation'], color: 'gray' },
-  { label: 'dao comprehension', category: 'System & Progression', styles: ['chinese'], aliases: ['dao', 'enlightenment', 'laws'], color: 'gray' },
+  { label: 'dao comprehension', category: 'System & Progression', styles: ['chinese'], aliases: ['dao', 'enlightenment', 'laws of heaven'], color: 'gray' },
   { label: 'martial techniques', category: 'System & Progression', styles: ['chinese', 'korean'], aliases: ['martial arts', 'skills'], color: 'gray' },
   { label: 'bloodline awakening', category: 'System & Progression', styles: ['chinese', 'korean'], aliases: ['bloodline', 'heritage', 'bloodline awakenings', 'beast bloodline', 'ancient blood', 'bloodline inheritance', 'hereditary power'], color: 'gray' },
   { label: 'artifact growth', category: 'System & Progression', styles: ['chinese', 'korean'], aliases: ['growing weapon', 'sentient artifact'], color: 'gray' },

@@ -25,10 +25,9 @@ export const useStoryTagMeaning = (synopsis: string, storyTags: readonly string[
   const lastSynopsis = useRef<Fingerprint | undefined>(undefined);
   const unavailable = useRef(false);
   const text = synopsis.trim();
-  const customTags = useMemo(
-    () => storyTags.map(tag => tag.trim()).filter(tag => tag && !getTagMetadata(tag)),
-    [storyTags],
-  );
+  // Keyed by their text, so picking a catalog tag changes nothing here and never restarts a request.
+  const customTagKey = storyTags.map(tag => tag.trim()).filter(tag => tag && !getTagMetadata(tag)).join('\u0000');
+  const customTags = useMemo(() => customTagKey ? customTagKey.split('\u0000') : [], [customTagKey]);
   const wanted = useMemo(
     () => [...(text.length >= MINIMUM_SYNOPSIS_LENGTH ? [text] : []), ...customTags].filter(entry => !known.has(entry)),
     [text, customTags],
@@ -49,8 +48,12 @@ export const useStoryTagMeaning = (synopsis: string, storyTags: readonly string[
         wanted.forEach((entry, index) => known.set(entry, decodeFingerprint(encoded[index])));
         setArrived(count => count + 1);
       }).catch(() => {
-        // No model, or the day's allowance is spent: stop asking and keep the plain suggestions.
-        if (!controller.signal.aborted) unavailable.current = true;
+        if (controller.signal.aborted) return;
+        // No model, or the day's allowance is spent: stop asking, and drop the earlier synopsis's
+        // fingerprint so it is never read as the meaning of this one.
+        unavailable.current = true;
+        lastSynopsis.current = undefined;
+        setArrived(count => count + 1);
       });
     }, TYPING_PAUSE_MS);
     return () => {
@@ -66,7 +69,7 @@ export const useStoryTagMeaning = (synopsis: string, storyTags: readonly string[
       return fingerprint ? [[normalizeStoryTagIdentity(tag), fingerprint] as const] : [];
     }));
     if (text.length < MINIMUM_SYNOPSIS_LENGTH) lastSynopsis.current = undefined;
-    else lastSynopsis.current = known.get(text) ?? lastSynopsis.current;
+    else lastSynopsis.current = known.get(text) ?? (unavailable.current ? undefined : lastSynopsis.current);
     return { tags, synopsis: lastSynopsis.current, custom };
     // `arrived` re-reads the session's fingerprints when new ones land.
   }, [tags, text, customTags, arrived]);

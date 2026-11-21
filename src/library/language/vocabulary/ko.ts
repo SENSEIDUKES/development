@@ -509,7 +509,7 @@ const vocabulary: StoryVocabulary = {
     "zombies": "좀비",
     "military": "밀리터리",
     "medicine": "의학",
-    "CEO": "재벌",
+    "CEO": "CEO",
     "showbiz": "연예계",
     "e-sports": "e스포츠",
   },

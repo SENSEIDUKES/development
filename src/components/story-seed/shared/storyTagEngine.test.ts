@@ -44,6 +44,9 @@ describe('Story Tag suggestions', () => {
     const ruledOut = labels(suggestStoryTags({ genre: 'Xianxia', synopsis: 'A sect disciple rises with no romance and no harem.', meaning: { tags } }));
     expect(ruledOut).not.toContain('romance');
     expect(ruledOut).not.toContain('harem');
+    expect(labels(suggestStoryTags({ synopsis: 'A chef story without any fighting or magic.' }))).not.toContain('magic');
+    // Only what is named right after the negation is ruled out.
+    expect(labels(suggestStoryTags({ synopsis: 'A hero with no money studies magic.' }))).toContain('magic');
   });
 
   it('ranks by what the synopsis means, ahead of the genre', () => {

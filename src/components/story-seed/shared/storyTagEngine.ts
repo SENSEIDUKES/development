@@ -69,16 +69,20 @@ const NEGATION = /\b(?:no|without|not|never)\s+([^,.!?;]+?)(?=\b(?:but|instead|y
 /**
  * What the synopsis rules out, as the things named right after the negation
  * ("no romance", "without fighting or magic"). Words further along the clause are
- * not ruled out: "no money studies magic and romance" still has both. A list
- * only carries on while each item is a bare thing of a word or two; a longer
- * item has moved on to saying something else. Word-level only: implied intent
- * is the fingerprint's job.
+ * not ruled out: "no money studies magic and romance" and "no money and studies
+ * magic and romance" both still have magic and romance. A list carries on only
+ * from a bare first item of a word or two, and only through items that are a
+ * tag's own name; anything else has moved on to saying something new.
+ * Word-level only: implied intent is the fingerprint's job.
  */
 const LEADING = /^(?:(?:no|not|without|never|any|a|an|the|more) )+/;
+const tagPhrases = new Set(catalog.flatMap(entry => entry.phrases));
 const ruledOut = (synopsis: string) => [...synopsis.matchAll(NEGATION)].flatMap(match => {
-  const items = normalize(match[1]).split(/ (?:or|nor|and) /).map(part => part.replace(LEADING, '')).filter(Boolean);
-  const end = items.findIndex(item => item.split(' ').length > 2);
-  return end < 0 ? items : items.slice(0, end + 1);
+  const [first, ...rest] = normalize(match[1]).split(/ (?:or|nor|and) /).map(part => part.replace(LEADING, '')).filter(Boolean);
+  if (!first) return [];
+  if (first.split(' ').length > 2) return [first];
+  const stop = rest.findIndex(item => !tagPhrases.has(item));
+  return [first, ...(stop < 0 ? rest : rest.slice(0, stop))];
 });
 const startsWithPhrase = (text: string, phrase: string) => text === phrase || text.startsWith(`${phrase} `);
 

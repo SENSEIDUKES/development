@@ -48,6 +48,7 @@ describe('Story Tag suggestions', () => {
     // Only what is named right after the negation is ruled out.
     expect(labels(suggestStoryTags({ synopsis: 'A hero with no money studies magic.' }))).toContain('magic');
     expect(labels(suggestStoryTags({ synopsis: 'A hero with no money studies magic and romance.' }))).toEqual(expect.arrayContaining(['magic', 'romance']));
+    expect(labels(suggestStoryTags({ synopsis: 'A hero has no money and studies magic and romance.' }))).toEqual(expect.arrayContaining(['magic', 'romance']));
   });
 
   it('ranks by what the synopsis means, ahead of the genre', () => {

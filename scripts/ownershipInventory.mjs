@@ -1,6 +1,7 @@
 /** Explicit capability ownership. More specific rules win; new source trees fail closed. */
 export const ownershipRules = [
   ['src/components/highlight-engine/', 'sen', 'highlight engine'],
+  ['src/components/meaning-engine/', 'sen', 'meaning engine'],
   ['api/', 'host', 'HTTP deployment adapters'],
   ['database/', 'host', 'reference storage schemas'],
   ['scripts/', 'tooling', 'repository validation and build tooling'],

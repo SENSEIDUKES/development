@@ -16,10 +16,11 @@ const common = id => ({
 export const PACKAGE_TARGETS = {
   sen: {
     ...common('sen'),
-    unstyledEntries: ['index', 'audio', 'contracts', 'generation', 'reader-runtime', 'translation', 'arc-goals', 'harness-generation', 'presentation'],
+    unstyledEntries: ['index', 'audio', 'contracts', 'generation', 'reader-runtime', 'translation', 'arc-goals', 'harness-generation', 'presentation', 'meaning-engine'],
     forbiddenBundleContents: [...NEVER_PUBLISHED, ['@seihouse/library', 'Library dependency'], ['celestialaudio.seihouse.org', 'first-party catalog'], ['library-auth-backdrop', 'Library auth artwork']],
     typeDependencies: [], smokeDependencies: [],
     smokeExports: {
+      '@seihouse/sen/meaning-engine': ['packFingerprint', 'meaningSimilarity', 'meaningFit', 'pickSpread'],
       '@seihouse/sen/highlight-engine': ['HighlightEngine', 'usePassageSelection', 'normalizePassageSelection', 'replacePassage', 'createManualSoundCue', 'ManualCuePicker'],
       '@seihouse/sen': ['NarrativePresentationProvider', 'SEN_PACKAGE_VERSION'],
       '@seihouse/sen/presentation': ['NarrativeArtProvider', 'NarrativeTextBox', 'AmbientEffect'],

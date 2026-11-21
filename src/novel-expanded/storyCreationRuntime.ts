@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { requestMeaningFingerprints } from '../host/meaning/meaningFingerprintClient';
 import type { StoryCreationRuntime, StoryCreationSnapshot } from '@seihouse/library/story-seed';
 import { findFoundationRevision, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import type { StorySeedRepository } from '@seihouse/sen/story-seed';
@@ -61,5 +62,6 @@ export function useNovelExpandedStoryCreation(repository: StorySeedRepository, s
     authorMarkUrl: AGENTS.VERSA.logoUrl,
     // A guest workspace never shows the sign-in gate.
     authenticate: async () => { throw new Error('NovelExpanded has no sign-in yet.'); },
+    fingerprintMeaning: requestMeaningFingerprints,
   }), [store, repository]);
 }

@@ -106,11 +106,10 @@ export const partComplete = (page: CreatorPageId, part: string, seed: StorySeedI
   const required = seed.story.required;
   if (page === 'origin' && part === 'style') return Boolean(normalizeStoryStyle(required.style) && hasText(required.genre));
   if (page === 'origin' && part === 'synopsis') return hasText(required.premise);
+  if (page === 'origin' && part === 'tags') return required.storyTags.some(hasText);
+  // Fate starts answered: Immortal is the default, and it is a real choice.
+  if (page === 'origin' && part === 'fate') return true;
   if (confirmed.includes(tabKey({ page, part }))) return true;
-  if (page === 'origin') {
-    if (part === 'tags') return required.storyTags.some(hasText);
-    if (part === 'fate') return seed.story.optional.fateSurvival.enabled || seed.story.optional.fateSurvival.pressure !== 'immortal';
-  }
   if (page === 'arc') {
     if (part === 'pins') return Boolean(seed.story.optional.hardPins?.some(pin => hasText(pin.text)));
     if (part === 'ending') return hasText(seed.world.optional.worldFoundations.destinedEnding) || seed.story.optional.arcCount !== undefined;

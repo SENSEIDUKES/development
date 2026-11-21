@@ -61,7 +61,7 @@ export function StorySeedLiveCard({ seed, variant = 'summary' }: {
       <dl id={bodyId} className="seed-live-card-body">
         <Row label="Synopsis">{premise ? <span className="seed-live-card-premise">{premise}</span> : <span className="seed-live-card-missing">Required</span>}</Row>
         <Row label="Tags">
-          {tags.length ? <span className="seed-live-card-tags">{tags.map(tag => <span key={tag}>{tag}</span>)}</span> : <FateDecides />}
+          {tags.length ? <span className="seed-live-card-tags">{tags.map(tag => <span key={tag}>{tag}</span>)}</span> : <span className="seed-live-card-missing">Required</span>}
         </Row>
         <Row label="Length">
           {typeof arcCount === 'number' && Number.isFinite(arcCount)

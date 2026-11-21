@@ -15,7 +15,7 @@
  */
 import { createEmptyStorySeedInput, STORY_TAG_LIMIT, type StorySeedInput } from './storySeedSchema';
 import { normalizeStoryStyle, type StoryStyle } from './storyStyle';
-import { inferStoryTags } from './storyTagInference';
+import { suggestStoryTags } from './storyTagEngine';
 import { getTagMetadata, normalizeStoryTagIdentity } from './storyTagCatalog';
 
 /** A spark's premise is a hook, never a synopsis. */
@@ -161,7 +161,7 @@ export const parseStorySpark = (value: unknown, request: StorySparkRequest): Sto
 
 /** Chosen tags first, then Story Seed's own recommendations, within its existing limit. */
 export const storySparkTags = (spark: Pick<StorySpark, 'premise' | 'genre' | 'style' | 'tags'>): string[] => {
-  const tags = [...(spark.tags ?? []), ...inferStoryTags({ premise: spark.premise, genre: spark.genre, style: spark.style })];
+  const tags = [...(spark.tags ?? []), ...suggestStoryTags({ synopsis: spark.premise, genre: spark.genre, style: spark.style }).map(tag => tag.label)];
   const seen = new Set<string>();
   return tags.filter(tag => {
     const identity = normalizeStoryTagIdentity(tag);

@@ -68,7 +68,8 @@ Story Seed is one creation flow with these visible destinations:
   Codex cards and editing sheets. Tablets and laptops show whole pages.
 - **Fun Settings.** Console rows place each name beside a Low/Medium/High
   stepper, with swipe and keyboard controls, focused help, and Restore defaults.
-- **Completion.** Required checks follow Style + Genre and Synopsis. Optional
+- **Completion.** Required checks follow Style + Genre, Synopsis and Tags; Fate
+  starts checked, since Immortal is its default. Optional
   tabs check when filled, when a setting is chosen, or when Next confirms
   defaults/blank answers; jumping tabs confirms nothing. A parent checks when
   all children are complete, even while active. Next confirms all displayed
@@ -726,3 +727,26 @@ and style, genre and tags stay independent. Devices that ride on any genre
 (regression, reincarnation, transmigration, rebirth of the strong, villain
 protagonist, cozy, slow life) are tags. The saved genre is its plain name, so a
 story saved with a retired name keeps it as its own genre.
+
+## 2026-11-21 — Tag engine; Tags are required
+
+The creator always chooses their own tags; the app only suggests (SENSEI). The
+three required items are Style (with its genre), Synopsis and Tags. Nothing
+fills an empty tag set any more: `applyInferredStoryTags` and the word-matching
+`storyTagInference` are gone, a seed without tags is not ready, and Fate reads
+as answered from the start because Immortal is its default.
+
+Suggestions come from the Story Tag engine (`shared/storyTagEngine.ts`), built
+on the Meaning Engine (`src/components/meaning-engine/`). Every tag has a
+one-line meaning (`storyTagMeanings.ts`) with a stored fingerprint
+(`storyTagFingerprints.json`, rebuilt by `npm run build:tag-fingerprints`). The
+host fingerprints the synopsis once after the creator pauses typing
+(`/api/meaning-fingerprint`), and the engine blends fit to the synopsis, the
+genre's starter tags, the company of tags already picked, and spread: it never
+offers two tags that say the same thing. More gives a fresh batch. Without a
+model key it suggests from the genre and the words of the synopsis.
+
+Catalog: six duplicates merged into their twins (kept as aliases) and sixteen
+core tags added (cultivation, harem, boys love, girls love, immortals, dungeons,
+dragons, monsters, demons, vampires, zombies, military, medicine, CEO, showbiz,
+e-sports).

@@ -9,7 +9,7 @@ import type { SparkHost } from '../shared/SparkHost';
 import { SparksButton } from './SparksButton';
 import { EXAMPLE_SPARK } from '../shared/builtInSparks';
 
-vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
+vi.mock('@seihouse/ui/sen', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/ui/sen')>(), ParticleEffect: () => null }));
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;
@@ -155,11 +155,11 @@ it('works as a standalone SEN surface without a Library presentation provider', 
   await settle();
   expect(dialog().textContent).toContain('Protagonist');
   expect(dialog().closest('.library-look')).toBeNull();
-  await choosePath(/Regression/);
+  await choosePath(/Murim/);
   await click(button(/Seek a spark/));
   await settle(1100);
   await click(button(/Use this spark/));
-  expect(beginSpark).toHaveBeenCalledWith(expect.objectContaining({ genre: 'Regression' }));
+  expect(beginSpark).toHaveBeenCalledWith(expect.objectContaining({ genre: 'Murim' }));
 });
 
 it('keeps the overlay within the host look so saved appearance reaches portaled content', async () => {
@@ -217,7 +217,9 @@ it('offers two modes and the genre first, then asks the host for a spark in the 
   await click(button(/Pick a path$/));
   expect(dialog().querySelector('[role="radiogroup"][aria-label="Story paths"]')).toBeTruthy();
   expect(dialog().textContent).toContain('Invent a genre');
-  await click(Array.from(dialog().querySelectorAll('[role="radio"]')).find(item => item.textContent?.includes('Tower Climb')));
+  // Tower Climb sits on the System shelf: open that shelf, then pick the genre.
+  await click(Array.from(dialog().querySelectorAll('[aria-label="Genre shelves"] [role="radio"]')).find(item => item.textContent === 'System'));
+  await click(Array.from(dialog().querySelectorAll('[aria-label="Story paths"] [role="radio"]')).find(item => item.textContent?.includes('Tower Climb')));
   await click(button(/Seek a spark/));
   await settle(1100);
   expect(requestSpark).toHaveBeenCalledWith(expect.objectContaining({ genre: 'Tower Climb' }), expect.any(AbortSignal), expect.any(Function));
@@ -285,14 +287,14 @@ it('opens the Story Paths in the spark\'s place, and a path brings the spark bac
   expect(dialog().querySelector('[aria-label="Story spark"]')).toBeNull();
   expect(dialog().querySelector('[role="radiogroup"][aria-label="Story paths"]')).toBeTruthy();
   // Arrow keys move through the paths without closing them.
-  const regression = Array.from(dialog().querySelectorAll<HTMLElement>('[role="radio"]')).find(item => item.textContent?.includes('Regression'))!;
-  await act(async () => { regression.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
+  const murim = Array.from(dialog().querySelectorAll<HTMLElement>('[aria-label="Story paths"] [role="radio"]')).find(item => item.textContent?.includes('Murim'))!;
+  await act(async () => { murim.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
   expect(dialog().querySelector('[role="radiogroup"]')).toBeTruthy();
-  expect(dialog().querySelector('[role="radio"][aria-checked="true"]')?.textContent).toContain('Urban');
-  await click(regression);
+  expect(dialog().querySelector('[aria-label="Story paths"] [role="radio"][aria-checked="true"]')?.textContent).toContain('High Martial');
+  await click(murim);
   expect(dialog().querySelector('[role="radiogroup"]')).toBeNull();
   expect(dialog().querySelector('[aria-label="Story spark"]')).toBeTruthy();
-  expect(button(/Pick a path$/)?.textContent).toContain('Regression');
+  expect(button(/Pick a path$/)?.textContent).toContain('Murim');
   await click(button(/Pick a path$/));
   await click(button(/Back to the spark/));
   expect(dialog().querySelector('[aria-label="Story spark"]')).toBeTruthy();
@@ -338,7 +340,7 @@ it('shows what an action did while the Story Paths are open, and an empty beginn
 it('without a model, Random shows the example and Custom keeps the writer\'s words as written', async () => {
   const keepSpark = vi.fn(async (_spark: StorySpark) => {});
   await open({ keepSpark });
-  await choosePath(/Regression/);
+  await choosePath(/Murim/);
   await click(button(/Seek a spark/));
   await settle(1100);
   expect(dialog().querySelector('textarea')?.placeholder).toBe(EXAMPLE_SPARK.premise);
@@ -365,11 +367,11 @@ it('requires a model to invent a Custom genre and keeps the reader’s words for
   expect(dialog().querySelector('[role="alert"]')?.textContent).toContain('Inventing a genre needs a connected model');
   expect(dialog().querySelector('textarea')?.value).toBe(ownWords);
   expect(button(/Keep in Story Bank/)?.hasAttribute('disabled')).toBe(true);
-  await choosePath(/Regression/);
+  await choosePath(/Murim/);
   await click(button(/Shape my premise/));
   await settle(1100);
   await click(button(/Keep in Story Bank/));
-  expect(keepSpark.mock.lastCall?.[0]).toMatchObject({ premise: ownWords, genre: 'Regression' });
+  expect(keepSpark.mock.lastCall?.[0]).toMatchObject({ premise: ownWords, genre: 'Murim' });
 });
 
 it('a failed Random request keeps the example and says why', async () => {

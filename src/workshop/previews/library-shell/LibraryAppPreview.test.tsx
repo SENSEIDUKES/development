@@ -7,7 +7,7 @@ import { DevelopmentHeaderPreview } from './DevelopmentHeaderPreview';
 import { libraryPreviewUrl, navigateLibraryPreview } from './libraryPreviewNavigation';
 import { getPreviewScenario } from '../user-profile/previewData';
 
-vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
+vi.mock('@seihouse/ui/sen', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/ui/sen')>(), ParticleEffect: () => null }));
 vi.mock('../user-profile/UserProfileWorkspace', () => ({ UserProfileWorkspace: () => <section data-profile><button onClick={() => navigateLibraryPreview({ screen: 'home', collection: 'featured' })}>Return from Profile</button></section> }));
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let container: HTMLDivElement;

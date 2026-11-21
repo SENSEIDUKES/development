@@ -3,14 +3,14 @@ import { List } from 'lucide-react';
 import {
   LibraryBottomNavigation, LibraryNavigationDrawer, LibraryNavigationDrawerPanel,
   type LibraryNavigationDrawerSection, type LibraryNavigationDrawerPanelProps,
-} from '@seihouse/library-ui';
+} from '@seihouse/ui/sen';
 import { activeLibraryDestination, LIBRARY_DESTINATIONS, libraryLocationKey, libraryNavigationMode, type LibraryDestination, type LibraryLocation, type LibraryNavigationMode } from './libraryRoutes';
 import { DESKTOP_NAVIGATION_QUERY, useDesktopNavigation, usePhone, useShortLandscape } from './workspaceMedia';
 import { useLibrarySidebarMode, type LibrarySidebarMode } from './librarySidebarMode';
 import { useLibraryAssets } from '../../../library/assets';
 import './library-navigation.css';
-import { LibraryNavigationIcon as SENNavigationIcon, type LibraryNavigationIconName as SENNavigationIconName } from '@seihouse/library-ui';
-import { LibraryExitIcon as SENExitIcon, LibraryProfileIcon as SENProfileIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
+import { LibraryNavigationIcon as SENNavigationIcon, type LibraryNavigationIconName as SENNavigationIconName } from '@seihouse/ui/sen';
+import { LibraryExitIcon as SENExitIcon, LibraryProfileIcon as SENProfileIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/ui/sen';
 
 type SectionItem = LibraryNavigationDrawerSection['items'][number] & { onSelect?: (id: string) => void };
 type Section = Omit<LibraryNavigationDrawerSection, 'items'> & { items: SectionItem[] };

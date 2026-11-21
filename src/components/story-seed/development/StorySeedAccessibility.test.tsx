@@ -279,7 +279,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
       />;
     };
     const render = (genre: string) => act(() => root.render(<LibraryPresentationProvider>{<Harness genre={genre} />}</LibraryPresentationProvider>));
-    render('LitRPG / System');
+    render('System');
     act(() => container.querySelector<HTMLButtonElement>('[aria-controls="origin-tag-browser"]')!.click());
     const niche = (name: string) => Array.from(container.querySelectorAll<HTMLButtonElement>('#tag-niches [role="radio"]'))
       .find(button => button.textContent?.startsWith(name))!;
@@ -292,6 +292,9 @@ describe('Story Seed keyboard and mobile navigation', () => {
 
     // The System genre opens the System niche, holding its game elements and no Genre tags.
     expect(niche('System').getAttribute('aria-checked')).toBe('true');
+    // The row holds the System shelf's genres, not every genre.
+    expect(niche('Tower Climb')).toBeTruthy();
+    expect(niche('Xianxia')).toBeUndefined();
     expect(listed()).toEqual(expect.arrayContaining(['status window', 'admin points', 'skill trees']));
     expect(listed()).not.toContain('comedy');
 
@@ -411,12 +414,20 @@ describe('Story Seed keyboard and mobile navigation', () => {
     const onGenreChange = vi.fn();
     act(() => root.render(<LibraryPresentationProvider>{<OriginGenrePicker genre="" onChange={onGenreChange} />}</LibraryPresentationProvider>));
     act(() => buttonNamed('Pick a path')!.click());
-    radios = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="radio"]'));
+    // Shelves and the open shelf's genres are two groups, one Tab stop each.
+    const shelves = Array.from(container.querySelectorAll<HTMLButtonElement>('[aria-label="Genre shelves"] [role="radio"]'));
+    expect(shelves.filter(radio => radio.tabIndex === 0)).toHaveLength(1);
+    shelves[0].focus();
+    act(() => shelves[0].dispatchEvent(keyboardEvent('End')));
+    expect(document.activeElement).toBe(shelves[shelves.length - 1]);
+    expect(shelves[shelves.length - 1].getAttribute('aria-checked')).toBe('true');
+    expect(onGenreChange).not.toHaveBeenCalled();
+    radios = Array.from(container.querySelectorAll<HTMLButtonElement>('[aria-label="Story paths"] [role="radio"]'));
     expect(radios.filter(radio => radio.tabIndex === 0)).toHaveLength(1);
     radios[0].focus();
     act(() => radios[0].dispatchEvent(keyboardEvent('End')));
     expect(document.activeElement).toBe(radios[radios.length - 1]);
-    expect(onGenreChange).toHaveBeenLastCalledWith('Mystery Cultivation');
+    expect(onGenreChange).toHaveBeenLastCalledWith('Divine Doctor');
 
     const funUpdate = vi.fn();
     act(() => root.render(<LibraryPresentationProvider>{<FunSettingsPanel seed={createEmptyStorySeedInput()} updateSeed={funUpdate} />}</LibraryPresentationProvider>));

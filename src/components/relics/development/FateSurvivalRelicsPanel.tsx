@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Swords } from 'lucide-react';
-import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
+import { LibraryButton, LibraryPanel } from '@seihouse/ui/sen';
 import { SEIInlineAlert, SEILoadingState } from '@seihouse/ui';
 import type { RelicsState } from '../../../library/relics/relicsClient';
 import { RewardGrants } from '../../rewards/development/RewardGrants';

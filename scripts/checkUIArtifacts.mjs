@@ -62,7 +62,7 @@ const VENDORED = [
       assert.equal(release.integrity, artifact.integrity, 'Elemental Title release integrity');
       assert.equal(release.sha256, createHash('sha256').update(readFileSync(path.join(root, artifact.file))).digest('hex'), 'Elemental Title release archive');
     } },
-  { record: 'vendor/ui-artifacts.json', repository: 'https://github.com/SENSEIDUKES/UI', names: ['ui', 'library-ui'],
+  { record: 'vendor/ui-artifacts.json', repository: 'https://github.com/SENSEIDUKES/UI', names: ['ui'],
     source: artifact => assert.match(artifact.pullRequest, /^https:\/\/github\.com\/SENSEIDUKES\/UI\/pull\/[1-9]\d*$/, 'requires a UI pull request') },
   { record: 'vendor/front-desk-artifacts.json', repository: 'https://github.com/SENSEIDUKES/seihouse-front-desk', names: ['front-desk'],
     source: artifact => assert.equal(artifact.commit, `https://github.com/SENSEIDUKES/seihouse-front-desk/commit/${artifact.sourceCommit}`, 'requires its source commit') },

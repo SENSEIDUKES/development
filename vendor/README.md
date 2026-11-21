@@ -3,7 +3,7 @@
 The shared UI artifact is built from reviewed UI PR [#120](https://github.com/SENSEIDUKES/UI/pull/120), merged source `8321596193b13c1f18066153d09511197247da50`:
 
 - `@seihouse/ui@0.25.0` supplies the full-header decorative layer, shared choreography player and opt-in NovelExpanded artwork. The source PR's complete CI passed and both review threads were resolved before adoption.
-- `@seihouse/library-ui@0.10.1` keeps its existing artifact from `8371b71aea79e52d591072bb65bd5590d3c21911` (UI #94). Its old UI peer range is explicitly overridden to the root artifact, alongside Front Desk 0.2.0's exact 0.12.0 UI peer. Package consumers apply the same overrides and verify the current distribution together.
+- The Library skin is the `@seihouse/ui/sen` entry of that same tarball (with `@seihouse/ui/sen.css`). UI retired the separate `@seihouse/library-ui` package in 0.21.0; Development stopped installing its 0.10.1 artifact on 2026-11-20. Front Desk 0.2.0's exact 0.12.0 UI peer is explicitly overridden to the root artifact.
 
 The locked `@seihouse/audio-player@5.2.0` build declares an exact optional UI
 0.10.1 peer. Development scopes an npm override to that package's UI peer, using
@@ -52,7 +52,6 @@ To reproduce an artifact, check out its recorded UI commit (the per-artifact com
 ```sh
 pnpm build:package
 npm pack ./packages/seihouse-ui --pack-destination /path/to/development/vendor
-npm pack ./packages/seihouse-library-ui --pack-destination /path/to/development/vendor
 ```
 
 UI's `pnpm test:package` checks repeated-pack integrity and fresh ESM, TypeScript, and Tailwind CSS consumption. Development's `npm run test:package` installs SEN and Library into consumers outside the repository; the SEN consumer must have no Library UI installed.

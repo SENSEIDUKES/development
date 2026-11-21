@@ -1,5 +1,5 @@
 import { Check, Lock } from 'lucide-react';
-import { LibraryButton } from '@seihouse/library-ui';
+import { LibraryButton } from '@seihouse/ui/sen';
 import { SEIInlineAlert, SEILoadingState } from '@seihouse/ui';
 import {
   bondRankLabel,

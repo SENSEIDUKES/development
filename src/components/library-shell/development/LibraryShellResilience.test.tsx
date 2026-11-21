@@ -11,7 +11,7 @@ import { MainLibraryNavigation } from './MainLibraryNavigation';
 import { SparksButton } from '@seihouse/sen/story-seed';
 import type { MainLibraryHeaderAdapter } from './MainLibraryHeader';
 
-vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
+vi.mock('@seihouse/ui/sen', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/ui/sen')>(), ParticleEffect: () => null }));
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;

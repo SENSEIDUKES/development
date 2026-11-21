@@ -3,7 +3,7 @@ import { SEN_LANGUAGES } from '@seihouse/sen/contracts';
 import { STORY_STYLE_OPTIONS } from '../../components/story-seed/shared/storyStyle';
 import { CATEGORY_COLORS, STORY_TAG_CATALOG } from '../../components/story-seed/shared/storyTagCatalog';
 import { STORY_TAG_NICHES } from '../../components/story-seed/shared/storyTagNiches';
-import { GENRE_PRESETS } from '../../components/story-seed/development/constants';
+import { GENRE_PRESETS, GENRE_SHELVES } from '../../components/story-seed/development/constants';
 import { loadLanguagePack, translateInterfaceText } from './interfaceTranslation';
 import type { NonEnglishSenLanguageCode, StoryVocabulary } from './types';
 
@@ -13,7 +13,7 @@ const languages = SEN_LANGUAGES.map(language => language.code).filter((code): co
 /** Every story word the reader can meet, exactly as the catalogue writes it. */
 const expected: Record<keyof StoryVocabulary, string[]> = {
   traditions: STORY_STYLE_OPTIONS.flatMap(option => [option.label, `${option.label} tradition`]),
-  genres: [...GENRE_PRESETS.flatMap(genre => [genre.id, genre.name]), ...STORY_TAG_NICHES.flatMap(niche => [niche.id, niche.label])],
+  genres: [...GENRE_SHELVES.map(shelf => shelf.name), ...GENRE_PRESETS.flatMap(genre => [genre.id, genre.name]), ...STORY_TAG_NICHES.flatMap(niche => [niche.id, niche.label])],
   categories: Object.keys(CATEGORY_COLORS),
   tags: STORY_TAG_CATALOG.map(tag => tag.label),
 };

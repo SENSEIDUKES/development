@@ -1,6 +1,6 @@
 import React from 'react';
 import { SEIErrorState, SEIInlineAlert, SEILoadingState } from '@seihouse/ui';
-import { LibraryButton } from '@seihouse/library-ui';
+import { LibraryButton } from '@seihouse/ui/sen';
 import { describeRewards, type DaoPillarCalendarSnapshot } from '../shared/daoPillarContracts';
 import type { DaoPillarCalendarState } from '../shared/useDaoPillarCalendar';
 import { DaoPillarCalendar } from './DaoPillarCalendar';

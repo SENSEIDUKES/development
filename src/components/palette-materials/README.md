@@ -13,7 +13,7 @@ package API, account action or authentication behavior is changed.
 
 `samples.tsx` records each material's usage and owning source, distinguishing
 package presentation from app overrides. Home and buttons come from
-`@seihouse/library-ui`; Create adds the current scoped Story Seed CSS; navigation
+`@seihouse/ui/sen`; Create adds the current scoped Story Seed CSS; navigation
 uses the package's Pathways variant; Familiar uses `.front-desk-card` with only
 position and sample geometry overridden. All samples use the same chosen
 background. Artwork comes from the host's existing `authImage`, never its video.

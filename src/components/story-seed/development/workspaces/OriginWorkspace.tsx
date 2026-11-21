@@ -1,5 +1,5 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { LibraryStoryIcon as SENStoryIcon } from '@seihouse/library-ui';
+import { LibraryStoryIcon as SENStoryIcon } from '@seihouse/ui/sen';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { normalizeStoryStyle } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';

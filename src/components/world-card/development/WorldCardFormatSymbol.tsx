@@ -1,4 +1,4 @@
-import { LibraryStoryIcon } from '@seihouse/library-ui';
+import { LibraryStoryIcon } from '@seihouse/ui/sen';
 
 /** The same format mark on the Full card's trigger and the Info cover. */
 export function WorldCardFormatSymbol({ format }: { format: string }) {

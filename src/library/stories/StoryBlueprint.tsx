@@ -3,7 +3,7 @@ import { codexPictureRequest, type CodexPictureService } from './storyCover';
 import type { CodexPictureMaker } from '@seihouse/sen/harness-generation';
 import { useMemo, useState } from 'react';
 import { ArrowLeft, Copy, Lock } from 'lucide-react';
-import { LibraryButton } from '@seihouse/library-ui';
+import { LibraryButton } from '@seihouse/ui/sen';
 import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
 import type { StorySeedInput, WorldBlueprint } from '@seihouse/sen/story-seed';
 import { NovelBlueprintEditor, type NovelBlueprintSnapshot } from '../../components/story-seed/development/NovelBlueprintEditor';

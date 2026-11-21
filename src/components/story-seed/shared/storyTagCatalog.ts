@@ -128,6 +128,7 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'skill trees', category: 'System & Progression', styles: ['korean', 'japanese'], aliases: ['skill node', 'ability tree'], color: 'gray' },
   { label: 'job classes', category: 'System & Progression', styles: ['korean', 'japanese'], aliases: ['class system', 'job system'], color: 'gray' },
   { label: 'level progression', category: 'System & Progression', styles: ['korean', 'japanese'], aliases: ['exp', 'leveling'], color: 'gray' },
+  { label: 'virtual reality', category: 'System & Progression', styles: ['all'], aliases: ['vrmmo', 'full dive', 'virtual game world'], color: 'gray' },
   { label: 'stat growth', category: 'System & Progression', styles: ['korean', 'japanese'], aliases: ['stat points', 'attributes'], color: 'gray' },
   { label: 'quest systems', category: 'System & Progression', styles: ['korean', 'japanese'], aliases: ['system quests', 'missions'], color: 'gray' },
   { label: 'achievement systems', category: 'System & Progression', styles: ['korean', 'japanese'], aliases: ['achievements', 'titles'], color: 'gray' },
@@ -387,6 +388,8 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'revenge returner', category: 'Destiny & Karma', styles: ['korean'], aliases: ['regressed for revenge', 'avenger returner', 'revenge through preparation', 'calculated revenge', 'long game'], color: 'gold' },
   { label: 'karmic debt', category: 'Destiny & Karma', styles: ['chinese', 'korean'], aliases: ['karmic retribution', 'moral debt'], color: 'gold' },
   { label: 'transmigration', category: 'Destiny & Karma', styles: ['all'], aliases: ['transmigrated', 'body swap into another world'], color: 'gold' },
+  { label: 'reincarnation', category: 'Destiny & Karma', styles: ['all'], aliases: ['reincarnated', 'past life', 'reborn into a new life'], color: 'gold' },
+  { label: 'rebirth of the strong', category: 'Destiny & Karma', styles: ['chinese'], aliases: ['reborn expert', 'strong rebirth', 'rebirth of a master'], color: 'gold' },
   { label: 'gods & deities', category: 'Destiny & Karma', styles: ['all'], aliases: ['gods', 'divine beings', 'pantheon'], color: 'gold' },
 
   // --- Adventure (blue) ---
@@ -435,6 +438,9 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'reincarnated monster', category: 'Adventure', styles: ['japanese'], aliases: ['reborn as slime', 'monster mc'], color: 'blue' },
   { label: 'monster companions', category: 'Adventure', styles: ['japanese'], aliases: ['tamed monsters', 'monster allies'], color: 'blue' },
   { label: 'spirit beast', category: 'Adventure', styles: ['chinese'], aliases: ['divine beast', 'spirit pet'], color: 'blue' },
+  { label: 'jianghu', category: 'Adventure', styles: ['chinese'], aliases: ['martial world', 'rivers and lakes'], color: 'blue' },
+  { label: 'space travel', category: 'Adventure', styles: ['all'], aliases: ['starships', 'space exploration'], color: 'blue' },
+  { label: 'mecha', category: 'Adventure', styles: ['all'], aliases: ['giant robots', 'mech pilot'], color: 'blue' },
 
   // --- Modern (teal) ---
   { label: 'urban cultivation', category: 'Modern', styles: ['chinese', 'korean'], aliases: ['modern xianxia', 'city cultivator', 'urban/modern cultivation', 'city cultivation', 'modern dao'], color: 'teal' },
@@ -478,6 +484,7 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'ranker', category: 'Modern', styles: ['korean'], aliases: ['top ranker', 'high ranker'], color: 'teal' },
   { label: 'apocalypse survival', category: 'Modern', styles: ['all'], aliases: ['post-apocalyptic survival', 'zombie apocalypse'], color: 'teal' },
   { label: 'otome game', category: 'Modern', styles: ['japanese', 'korean'], aliases: ['otome world', 'dating sim'], color: 'teal' },
+  { label: 'cyberpunk', category: 'Modern', styles: ['all'], aliases: ['high tech low life', 'cybernetics'], color: 'teal' },
 
   // --- Academy & Training (orange) ---
   { label: 'school hierarchy', category: 'Academy & Training', styles: ['japanese', 'korean'], aliases: ['student ranks', 'delinquents vs council'], color: 'orange' },
@@ -512,6 +519,10 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'cursed relics', category: 'Mystery & Lore', styles: ['all'], aliases: ['haunted artifact', 'damned tool'], color: 'black' },
   { label: 'hidden murders', category: 'Mystery & Lore', styles: ['all'], aliases: ['secret assassination', 'unsolved murder'], color: 'black' },
   { label: 'ancient sealed truths', category: 'Mystery & Lore', styles: ['chinese', 'all'], aliases: ['forbidden lore', 'sealed divine secret'], color: 'black' },
+  { label: 'survival rules', category: 'Mystery & Lore', styles: ['chinese'], aliases: ['rule horror', 'rules to survive', 'strange rules'], color: 'black' },
+  { label: 'eldritch horror', category: 'Mystery & Lore', styles: ['all'], aliases: ['lovecraftian', 'cthulhu', 'unknowable gods'], color: 'black' },
+  { label: 'yokai', category: 'Mystery & Lore', styles: ['japanese'], aliases: ['youkai', 'spirits of legend', 'ayakashi'], color: 'black' },
+  { label: 'exorcism', category: 'Mystery & Lore', styles: ['all'], aliases: ['exorcist', 'ghost hunting', 'demon banishing'], color: 'black' },
 ];
 
 /** Derived map of simplified category names to tag label arrays for UI compatibility. */

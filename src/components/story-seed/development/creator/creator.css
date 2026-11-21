@@ -321,9 +321,6 @@
 /* Step actions belong to the form, above the Library navigation, never inside it. */
 .seed-bank-return, .seed-manifest-price { display: block; }
 .seed-manifest-price { margin-bottom: 12px; }
-.seed-creator-footer { position: static; margin-top: 16px; padding: 8px 0; background: transparent; border-top: 1px solid rgba(205,178,113,.16); }
-.seed-creator-footer :is(button, a) { min-height: 44px; }
-.seed-creator, .bp-dossier { padding-bottom: 16px; }
 @media (min-width: 1024px) {
   .seed-bank-return, .seed-manifest-price { display: none; }
 }
@@ -339,9 +336,6 @@
   background: #0b0e1e;
   color: #f3ede0;
   font-size: 12px;
-}
-@media (min-width: 1024px) {
-  .seed-creator-footer { position: sticky; margin-top: 0; padding: 8px 24px; background: #05070e; }
 }
 
 @media (max-width: 419px) {
@@ -401,6 +395,12 @@
    covering it. */
 @media (max-width: 1023px) {
   .library-navigation-layout:not([data-compact-bar='true']):has(.seed-creator-footer) .library-sound-slot {
-    inset-block-end: calc(var(--library-bar-height, 5.125rem) + .5rem);
+    inset-block-end: calc(var(--library-bar-height, 5.125rem) + 4.0625rem + .5rem);
+  }
+  /* The pinned footer and the workspace bar read as one dock, edge to edge:
+     the bar's floor wears the footer's fill, so the page never shows through
+     beside the bar's pill or between the two. */
+  .library-navigation-layout:has(.seed-creator-footer) > .library-workspace-navigation {
+    background: var(--library-material-shell-fill, #05070e);
   }
 }

@@ -309,7 +309,7 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 - **2026-09-08:** Redesigned `development/` into the **Cultivator Cave**: a portrait, compact
   identity and rank plaque over a stock Immortal Land backdrop; four destinations (Stories, Relics,
   Dao Pillar, Active Status Effects); and one gear-triggered Settings panel. Built on canonical
-  `@seihouse/library-ui` and `@seihouse/ui` components and the `@seihouse/library/relics` relic
+  `@seihouse/ui/sen` and `@seihouse/ui` components and the `@seihouse/library/relics` relic
   card. `reference/` is unchanged. Added the component test suite and `npm run test:user-profile`.
 - **2026-09-08:** Recovered the existing cinematic OAuth gate from Story Seed and connected it to
   the Cave's signed-out state. It replaces the intermediate **Spirit Unlinked** plaque entirely,
@@ -344,7 +344,7 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | --- | --- |
 | `UserProfile.tsx` | The Cave workspace: shared header and navigation, persistent controller, four page destinations, portrait and language dialogs |
 | `UserProfileCaveDestination.tsx` | The frame every destination opens into (back control, title, heading focus) |
-| `LibraryTierBadge.tsx` / `library-tier-badge.css` | **The subscription-tier capsule** beside the username — self-contained material, lighting, sheen and reduced-motion fallback, staged for extraction into `@seihouse/library-ui` |
+| `LibraryTierBadge.tsx` / `library-tier-badge.css` | **The subscription-tier capsule** beside the username — self-contained material, lighting, sheen and reduced-motion fallback, staged for extraction into `@seihouse/ui/sen` |
 | `UserProfileStoriesPanel.tsx` | **Stories** — Manifested Stories and Story Seeds in one destination |
 | `UserProfileInventoryPanel.tsx` | **Relics** — inventory, soul attunement, the Offering Hall pouch, submitted history, and rewards |
 | *(`src/components/dao-pillar/`)* | **Dao Pillar** — the server-owned 30-day reward calendar and its active theme banner, opened as the `/home/dao-pillar` destination |
@@ -481,7 +481,7 @@ SVG bust, and the Divine Mirror flow still seals a new one.
 ### Canonical components used
 
 `LibraryPanel`, `LibraryCard` (+ title/description slots), `LibraryButton`, `LibraryTextBox`, and
-`ParticleEffect` from `@seihouse/library-ui`; `SEIDrawer`, `SEIDialog`, `SEIDisclosureGroup`,
+`ParticleEffect` from `@seihouse/ui/sen`; `SEIDrawer`, `SEIDialog`, `SEIDisclosureGroup`,
 `SEITabs`, `SEIProgressBar`, `SEIInlineAlert`, `SEIEmptyState`, `SEILoadingState`, `SEIField`,
 `SEISelect`, and `SEISwitch` from `@seihouse/ui`; `RelicCard` and `renderArtifactIcon` from
 `@seihouse/library/relics`. The Workshop's `--color-neutral-500` is darker than production's, so
@@ -627,7 +627,7 @@ The host services port owns authentication, local-only state, Library sync, offe
 Story Seed lists/downloads and profile edits. It is separate from Workshop mocks.
 `shared/types.ts` and `shared/offeringWeek.ts` are trimmed historical contracts; they
 must not replace a complete host domain model. Approved backdrop assets and the
-sacred-tree icon retain their paths. The reusable display consumes `@seihouse/library-ui`,
+sacred-tree icon retain their paths. The reusable display consumes `@seihouse/ui/sen`,
 `@seihouse/ui` and `@seihouse/library/relics`.
 
 - Persisted values and API compatibility strings were kept exactly as production has them —

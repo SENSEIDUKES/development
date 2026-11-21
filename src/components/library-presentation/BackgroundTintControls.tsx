@@ -1,4 +1,4 @@
-import { LibraryButton } from '@seihouse/library-ui';
+import { LibraryButton } from '@seihouse/ui/sen';
 import { LibraryAppearanceScope } from './LibraryAppearanceScope';
 import { LibraryMaterialSurface } from './LibraryMaterialSurface';
 import { backgroundTintColor, DEFAULT_BACKGROUND_TINT, type BackgroundTint } from './backgroundTint';

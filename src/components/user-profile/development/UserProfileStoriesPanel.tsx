@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BookOpen, Download, Sprout } from 'lucide-react';
-import { LibraryStoriesIcon as SENStoriesIcon } from '@seihouse/library-ui';
-import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
+import { LibraryStoriesIcon as SENStoriesIcon } from '@seihouse/ui/sen';
+import { LibraryButton, LibraryPanel } from '@seihouse/ui/sen';
 import { SEIEmptyState, SEIInlineAlert, SEILoadingState } from '@seihouse/ui';
 import type { AppUser, Story, StorySeed, UserProfile as UserProfileType } from './types';
 import { useUserProfileServices } from './userProfileServices';

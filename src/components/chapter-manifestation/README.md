@@ -95,7 +95,7 @@ layout, equipped Familiar, progress indicator, activity scene, progress label an
 status message. `generationOverlay.css` supplies the Familiar accents.
 
 `ProgressIndicator` delegates to the existing `LibraryScrubber` in
-`@seihouse/library-ui`. `AmbientEffects` delegates to SEN's existing `AmbientEffect`.
+`@seihouse/ui/sen`. `AmbientEffects` delegates to SEN's existing `AmbientEffect`.
 These named Library components add no DOM wrapper or duplicate implementation.
 The original UI geometry, particle engine and motion remain owned by those packages.
 
@@ -166,7 +166,7 @@ The chamber is `isolate`d, so no effect — inside or outside — can slip betwe
 ### Progress Indicator contract
 
 The `ProgressIndicator` component renders through `LibraryScrubber`
-from `@seihouse/library-ui`; Library owns its generation lifecycle:
+from `@seihouse/ui/sen`; Library owns its generation lifecycle:
 
 - **Progress:** one normalized 0–1 position. `GenerationOverlayController` follows known task progress; with unknown progress it advances from elapsed time, using the supplied initial estimate or the previous successful duration for that operation in this mounted session (45 seconds until either is available). This is a visual journey, not a generated-work percentage: unknown progress keeps both the pill and accessible description free of a made-up number. It never reaches the destination while the operation is pending.
 - **Completion:** the host sets `completed` only after success, or supplies a finished measured task / revealed media asset. When `active` ends, the full-screen overlay retains the result for one second so the scrubber's 800ms arrival finishes before the existing fade. Failures and cancellations close without arrival. A new run resets its position; minimization does not restart the clock. No timer changes a request or writes story data.

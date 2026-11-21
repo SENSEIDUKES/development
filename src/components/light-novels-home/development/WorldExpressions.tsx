@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { BookOpen, Gamepad2, PanelsTopLeft, ArrowRight } from 'lucide-react';
-import { LibraryCard, LibraryCardMedia, LibraryCardTitle } from '@seihouse/library-ui';
+import { LibraryCard, LibraryCardMedia, LibraryCardTitle } from '@seihouse/ui/sen';
 import type { HomeWorld } from '../shared/homeContracts';
 import './world-expressions.css';
 

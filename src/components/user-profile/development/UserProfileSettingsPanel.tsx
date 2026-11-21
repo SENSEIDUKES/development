@@ -25,7 +25,7 @@ import {
   Sparkles,
   Upload,
 } from 'lucide-react';
-import { LibraryButton, LibraryTextBox } from '@seihouse/library-ui';
+import { LibraryButton, LibraryTextBox } from '@seihouse/ui/sen';
 import {
   SEIDisclosure,
   SEIDisclosureGroup,
@@ -68,7 +68,7 @@ import {
   handleProfileRadioGroupKeyDown,
   profileRadioTabIndex,
 } from './radioGroupKeyboard';
-import { LibraryExitIcon as SENExitIcon, LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
+import { LibraryExitIcon as SENExitIcon, LibraryProfileIcon as SENProfileIcon } from '@seihouse/ui/sen';
 
 const IDENTITY_FIELDS = ['displayName', 'displayNameColor'] as const;
 

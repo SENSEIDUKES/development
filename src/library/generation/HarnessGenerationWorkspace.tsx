@@ -8,7 +8,7 @@ import { CHAPTER_FUNCTIONS, CHAPTER_FUNCTION_LABELS, FATE_MODE_LABELS, FATE_PRES
 import type { ChapterDirectionChoice, HardPinInput, HarnessChapter, HarnessMissionReminder, StoryFoundationRevision } from '@seihouse/sen/harness-generation';
 import { type MediaPack, type MediaPackEntitlement, type MediaPackReference, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
-import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
+import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/ui/sen';
 import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER } from '@seihouse/sen/harness-generation';

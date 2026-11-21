@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode, HTMLAttributes } from 'react';
-import { ManifestButton } from '@seihouse/library-ui';
+import { ManifestButton } from '@seihouse/ui/sen';
 
 /** Stable material identities describe appearance, never a page or component. */
 export const LIBRARY_MATERIALS = [

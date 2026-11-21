@@ -1,6 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import { type LibraryNavigationIconName as SENNavigationIconName } from '@seihouse/library-ui';
-import { LibraryExitIcon as SENExitIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
+import { type LibraryNavigationIconName as SENNavigationIconName } from '@seihouse/ui/sen';
+import { LibraryExitIcon as SENExitIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/ui/sen';
 
 /** Cave-owned routes. Query transport coexists with Workshop and host URLs. */
 export const CAVE_DESTINATIONS = [

@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { LibraryHelpIcon as SENHelpIcon, LibraryNavigationIcon as SENNavigationIcon, LibrarySearchIcon as SENSearchIcon, LibraryStoryIcon as SENStoryIcon, LibraryStorySeedIcon as SENStorySeedIcon, LibraryStoriesIcon as SENStoriesIcon } from '@seihouse/library-ui';
+import { LibraryHelpIcon as SENHelpIcon, LibraryNavigationIcon as SENNavigationIcon, LibrarySearchIcon as SENSearchIcon, LibraryStoryIcon as SENStoryIcon, LibraryStorySeedIcon as SENStorySeedIcon, LibraryStoriesIcon as SENStoriesIcon } from '@seihouse/ui/sen';
 
 describe('SENIcon', () => {
   it('renders source-owned named adapters with canonical identifiers', () => {

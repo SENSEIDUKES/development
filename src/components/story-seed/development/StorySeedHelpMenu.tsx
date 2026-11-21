@@ -5,7 +5,7 @@ import { ChevronRight, Pause, Play, X } from 'lucide-react';
 import { cn } from '@seihouse/ui';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '@seihouse/sen/presentation';
 import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
-import { LibraryHelpIcon as SENHelpIcon, LibrarySearchIcon as SENSearchIcon } from '@seihouse/library-ui';
+import { LibraryHelpIcon as SENHelpIcon, LibrarySearchIcon as SENSearchIcon } from '@seihouse/ui/sen';
 import {
   DEFAULT_HELP_LANGUAGE,
   STORY_SEED_HELP_ITEMS,

@@ -707,3 +707,22 @@ that the first choices fit fully in the upper half of the viewport.
 - **2026-11-13:** Blueprint Cast gains saved character portraits through the existing Codex image service; those images carry into a created novel and serve as cover references.
 - **2026-11-14:** Fate Will Decide stays before generation. Once a World Blueprint exists (its Review and the view-only Blueprint after Chapter 1), a character, world card or biography slot the Blueprint left blank stays blank instead of reading Fate Will Decide. The Seed's live card and the Create step keep it, since there it still describes what generation will do.
 - **2026-11-16:** Blueprint instructions and response order complete the principal cast and main opposition from the Origin before generating the Destined Ending and arc plan. The chosen style, premise, genre and tags shape the cast as Chapter 1 opens, without scheduling appearances. Length guidance gives approximate 10/20/30-arc scales. The call count, card limits and saved data shape are unchanged.
+
+## 2026-11-20 — Docked footer and current UI kit
+
+On phones and tablets the creator's and the Blueprint's Back/Next footer is pinned
+again, resting on the workspace bar as `PinnedFooter` intends; a later rule had
+returned it to the end of the form, so it floated mid-screen in a box short of the
+screen edges. The footer and the bar now read as one edge-to-edge dock, and the
+music note rises above both. Buttons and the bar come from `@seihouse/ui/sen`, the
+UI kit's current Library skin, which replaced the retired `@seihouse/library-ui`.
+
+## 2026-11-20 — Genre shelves
+
+Story Paths are 52 genres on eight shelves (Martial, Fantasy, System, Modern,
+Horror, Political, Sci-fi, Discipline), each with a one-line definition and its
+own starter tags. A shelf only helps a creator find a genre; it is never saved,
+and style, genre and tags stay independent. Devices that ride on any genre
+(regression, reincarnation, transmigration, rebirth of the strong, villain
+protagonist, cozy, slow life) are tags. The saved genre is its plain name, so a
+story saved with a retired name keeps it as its own genre.

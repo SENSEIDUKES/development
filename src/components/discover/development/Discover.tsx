@@ -10,7 +10,7 @@ import {
   Trophy,
   Users,
 } from 'lucide-react';
-import { LibraryPanel, LibraryDiscoveryIcon } from '@seihouse/library-ui';
+import { LibraryPanel, LibraryDiscoveryIcon } from '@seihouse/ui/sen';
 import { SEIEmptyState } from '@seihouse/ui';
 import { DiscoverEvents } from './DiscoverEvents';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';

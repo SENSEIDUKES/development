@@ -1,7 +1,7 @@
 import { useLibraryAssets } from '../../../library/assets';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { LibraryPanel, ManifestButton, ParticleEffect } from '@seihouse/library-ui';
+import { LibraryPanel, ManifestButton, ParticleEffect } from '@seihouse/ui/sen';
 import { SEIFilterChip, SEISelect, SEIEmptyState } from '@seihouse/ui';
 import type { LightNovelsHomeProps } from '../shared/homeContracts';
 import { WorldCard } from '../../world-card/development/WorldCard';
@@ -9,7 +9,7 @@ import { WorldCardFeature } from '../../world-card/development/WorldCardFeature'
 import { WorldCardFeatureCarousel, type WorldCardFeatureSlide } from '../../world-card/development/WorldCardFeatureCarousel';
 import { resolveWorldTitle, useWorldCardReaderLanguage } from '../../world-card/development/worldCardText';
 import { SpokenCode } from '@seihouse/sen/presentation';
-import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
+import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/ui/sen';
 import '../shared/home.css';
 /** Existing LibraryScreen Home presentation. Data and navigation belong to the host. */
 export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, onVisibleWorldsChange, emptyState, featuredWorlds = [], children }: LightNovelsHomeProps) {

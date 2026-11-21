@@ -11,7 +11,7 @@ import {
   MapPin,
   Tag,
 } from 'lucide-react';
-import { LibraryPowerSystemIcon as SENPowerSystemIcon, LibraryWorldIdentityIcon as SENWorldIdentityIcon } from '@seihouse/library-ui';
+import { LibraryPowerSystemIcon as SENPowerSystemIcon, LibraryWorldIdentityIcon as SENWorldIdentityIcon } from '@seihouse/ui/sen';
 import {
   type StorySeedInput,
   type WorldBlueprint,
@@ -31,7 +31,7 @@ import {
   MetadataChip,
 } from './BlueprintDossierPrimitives';
 import { formatBlueprintDate } from './createBlueprintMarkdown';
-import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
+import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/ui/sen';
 import { type UpdateSeed } from '../seedState';
 import { AbilitiesFields } from '../workspaces/AbilitiesWorkspace';
 import { PowerSystemFields } from '../workspaces/PowerSystemWorkspace';

@@ -6,14 +6,14 @@ import type { BackgroundTint } from './backgroundTint';
 import { LibraryAppearanceScope } from './LibraryAppearanceScope';
 import { LoadingFamiliarProvider, type LoadingFamiliarPresentation } from '../../library/manifestations/familiar';
 import { LibraryAssetsProvider, type LibraryAssets } from '../../library/assets';
-import * as LibraryUI from '@seihouse/library-ui';
+import * as LibraryUI from '@seihouse/ui/sen';
 import {
   NarrativePresentationProvider,
   NarrativeArtProvider,
   type NarrativeIconProps,
   type NarrativePresentation,
 } from '@seihouse/sen/presentation';
-import { LibraryCharactersIcon as SENCharactersIcon, LibrarySettingsIcon as SENSettingsIcon, LibrarySearchIcon as SENSearchIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
+import { LibraryCharactersIcon as SENCharactersIcon, LibrarySettingsIcon as SENSettingsIcon, LibrarySearchIcon as SENSearchIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/ui/sen';
 
 function LibraryNarrativeIcon({ name, ...props }: NarrativeIconProps) {
   const icons = { characters: SENCharactersIcon, settings: SENSettingsIcon, search: SENSearchIcon, generating: SENManifestingIcon, spark: LibraryDaoInsightIcon, save: LibrarySaveIcon };

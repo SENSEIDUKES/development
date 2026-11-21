@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { LibraryStoriesIcon, LibraryBookIcon, LibraryDiscoveryIcon, LibraryStoryIcon, LibrarySettingsIcon, LibraryProfileIcon } from '@seihouse/library-ui';
+import { LibraryStoriesIcon, LibraryBookIcon, LibraryDiscoveryIcon, LibraryStoryIcon, LibrarySettingsIcon, LibraryProfileIcon } from '@seihouse/ui/sen';
 import {
   LibraryFooter, LibraryNavigation, LibrarySectionSidebar, NovelExpandedIcon, WorkspaceHeader, WorkspaceShell,
   useLibraryDesktopNavigation, useLibraryLegalDocuments,

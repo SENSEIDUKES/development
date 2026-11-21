@@ -1,5 +1,5 @@
 import React from 'react';
-import { LibraryPanel } from '@seihouse/library-ui';
+import { LibraryPanel } from '@seihouse/ui/sen';
 import { SEIInlineAlert } from '@seihouse/ui';
 
 /**

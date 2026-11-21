@@ -1,5 +1,5 @@
 import { Route } from 'lucide-react';
-import { LibraryAbilityIcon as SENAbilityIcon } from '@seihouse/library-ui';
+import { LibraryAbilityIcon as SENAbilityIcon } from '@seihouse/ui/sen';
 import { SEED_ABILITY_LIMIT, type StorySeedAbilityCard, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import { patchAbilities, setStartingAbilities, worldFoundations, type UpdateSeed } from '../seedState';

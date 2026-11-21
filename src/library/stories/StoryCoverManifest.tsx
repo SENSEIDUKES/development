@@ -4,7 +4,7 @@ import type { CodexPictureMaker } from '@seihouse/sen/harness-generation';
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type TouchEvent } from 'react';
 import { Check, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { SEIDialog, SEIDialogContent, SEIDialogDescription, SEIDialogTitle } from '@seihouse/ui';
-import { LibraryManifestingIcon, ManifestButton } from '@seihouse/library-ui';
+import { LibraryManifestingIcon, ManifestButton } from '@seihouse/ui/sen';
 import type { RevealedMediaAsset } from '@seihouse/sen/manifestations';
 import GenerationOverlay from '../../components/chapter-manifestation/development/GenerationOverlay';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';

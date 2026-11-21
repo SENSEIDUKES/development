@@ -131,7 +131,7 @@ export function validateOwnership(graph, packages, classify = ownershipOf, requi
         }
       }
       if (PACKAGE_OWNERS.includes(source.owner) && packageOf(specifier) && !target && !specifier.endsWith('.css')) failures.push(`MISSING_EXPORT ${file} -> ${specifier}`);
-      if (source.owner === 'sen' && (/^@seihouse\/library(?:-ui)?(?:\/|$)/.test(specifier) || (destination && destination.owner !== 'sen' && !PACKAGE_USES.sen.includes(destination.owner)))) failures.push(`SEN_BOUNDARY ${file} -> ${specifier}`);
+      if (source.owner === 'sen' && (/^@seihouse\/(?:library(?:-ui)?(?:\/|$)|ui\/sen(?:\.css)?$)/.test(specifier) || (destination && destination.owner !== 'sen' && !PACKAGE_USES.sen.includes(destination.owner)))) failures.push(`SEN_BOUNDARY ${file} -> ${specifier}`);
       if (source.owner === 'library' && destination && !['library', ...PACKAGE_USES.library].includes(destination.owner)) failures.push(`LIBRARY_BOUNDARY ${file} -> ${specifier}`);
       if (destination && source.owner !== destination.owner && PACKAGE_OWNERS.includes(destination.owner) && packageOf(specifier) !== destination.owner) failures.push(`SOURCE_BYPASS ${file} -> ${target}`);
     }

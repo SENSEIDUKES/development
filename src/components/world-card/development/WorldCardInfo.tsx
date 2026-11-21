@@ -2,7 +2,7 @@ import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type Reac
 import { BookOpen, ChevronDown, ChevronRight, ChevronUp, Film, Flower2, Info, Orbit, Settings2, Sparkles, Square } from 'lucide-react';
 import { ElementalTitle } from '@seihouse/elemental-title';
 import { SEIBadge } from '@seihouse/ui';
-import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, ManifestButton, type LibraryIconName } from '@seihouse/library-ui';
+import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, ManifestButton, type LibraryIconName } from '@seihouse/ui/sen';
 import { getTagMetadata, normalizeStoryTagIdentity, STORY_TAG_COLOR_ACCENTS, type StoryTagMetadata } from '@seihouse/sen/story-seed';
 import type { WorldCardInfoProps } from '../shared/worldCardContracts';
 import { useDominantColor } from '@seihouse/sen/motion-picture';

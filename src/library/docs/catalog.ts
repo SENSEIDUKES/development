@@ -186,12 +186,12 @@ export const novelExpandedDocs: DocsCatalog = [
       {
         ...topic('seihouse-ui', '@seihouse/ui'),
         definition: 'Our shared building blocks for interfaces.',
-        howItFits: 'The UI repository owns this software package. It supplies universal visual primitives and experience tokens that SEN and Library surfaces can use without carrying Library branding or product rules. SEN depends on this neutral UI layer; our branded presentation stays in @seihouse/library-ui.',
+        howItFits: 'The UI repository owns this software package. It supplies universal visual primitives and experience tokens that SEN and Library surfaces can use without carrying Library branding or product rules. SEN depends on this neutral UI layer; our branded presentation is its @seihouse/ui/sen entry.',
       },
       {
-        ...topic('seihouse-library-ui', '@seihouse/library-ui'),
+        ...topic('seihouse-library-ui', '@seihouse/ui/sen'),
         definition: 'Our visual language for NovelExpanded.',
-        howItFits: 'The UI repository owns this separate software package of stateless Library presentation. @seihouse/library composes these visuals over reusable SEN behavior and supplies host asset locations. @seihouse/sen does not depend on Library UI, so another publisher can present the same narrative capabilities in its own style.',
+        howItFits: 'The UI repository ships this stateless Library presentation as the sen entry of its one UI package. @seihouse/library composes these visuals over reusable SEN behavior and supplies host asset locations. @seihouse/sen does not depend on Library UI, so another publisher can present the same narrative capabilities in its own style.',
       },
       {
         ...topic('seihouse-sen', '@seihouse/sen'),

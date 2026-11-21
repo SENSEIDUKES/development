@@ -1,4 +1,4 @@
-import { LibraryGlobalIcon } from '@seihouse/library-ui';
+import { LibraryGlobalIcon } from '@seihouse/ui/sen';
 import { EnergySunIcon } from './EnergySunIcon';
 import './balancePill.css';
 

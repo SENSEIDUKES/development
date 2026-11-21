@@ -1,7 +1,7 @@
 import { FRONT_DESK_BACK_ACTION_ID, FRONT_DESK_BACK_PHRASES, type FrontDeskContext } from '@seihouse/front-desk';
 import type { FamiliarPage } from '@seihouse/library/familiar';
 import { ArrowLeft, PenLine } from 'lucide-react';
-import { LibraryHomeIcon, LibraryProfileIcon, LibrarySettingsIcon, LibraryStoreIcon } from '@seihouse/library-ui';
+import { LibraryHomeIcon, LibraryProfileIcon, LibrarySettingsIcon, LibraryStoreIcon } from '@seihouse/ui/sen';
 import { EnergySunIcon } from '@seihouse/library/energy';
 import { HOME_ROUTE, goBack, type Navigate, type NovelExpandedRoute } from './routes';
 

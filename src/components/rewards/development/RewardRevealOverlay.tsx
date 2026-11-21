@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ParticleEffect } from '@seihouse/library-ui';
+import { ParticleEffect } from '@seihouse/ui/sen';
 import './rewards.css';
 
 /**

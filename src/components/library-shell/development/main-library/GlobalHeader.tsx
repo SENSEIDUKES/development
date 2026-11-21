@@ -1,9 +1,9 @@
 import { Gem, Keyboard, PenLine, Scroll, ScrollText, Sliders, Users, PenTool, Sword } from 'lucide-react';
-import { LibraryHomeIcon, LibraryStoriesIcon, LibraryBookIcon } from '@seihouse/library-ui';
+import { LibraryHomeIcon, LibraryStoriesIcon, LibraryBookIcon } from '@seihouse/ui/sen';
 import { useMainLibraryAdapter } from '../../shared/MainLibraryAdapter';
 import { WorkspaceHeader } from '../WorkspaceHeader';
 import type { HeaderSearchItem } from '../WorkspaceHeaderUtilities';
-import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
+import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/ui/sen';
 import { LIBRARY_EMBLEM } from '../libraryBrand';
 import './main-library-header.css';
 

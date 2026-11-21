@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { LibraryButton } from '@seihouse/library-ui';
+import { LibraryButton } from '@seihouse/ui/sen';
 
 /**
  * The frame every Cave destination opens into: a back control, the

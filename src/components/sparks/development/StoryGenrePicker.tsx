@@ -118,23 +118,33 @@ export const OriginGenrePicker = ({
    */
   const genreRowRef = useRef<HTMLDivElement>(null);
   const [rowEnds, setRowEnds] = useState({ start: true, end: false });
+  // A right-to-left interface scrolls the row from 0 into negative offsets, so
+  // the row's ends and its steps are read from the distance travelled.
+  const isRtl = (row: HTMLElement) => getComputedStyle(row).direction === 'rtl';
   const followRow = () => {
     const row = genreRowRef.current;
     if (!row) return;
-    setRowEnds({ start: row.scrollLeft <= 4, end: row.scrollLeft + row.clientWidth >= row.scrollWidth - 4 });
+    const travelled = Math.abs(row.scrollLeft);
+    setRowEnds({ start: travelled <= 4, end: travelled + row.clientWidth >= row.scrollWidth - 4 });
   };
   const stepRow = (step: 1 | -1) => {
     const row = genreRowRef.current;
     const card = row?.querySelector<HTMLElement>('[role="radio"]');
     if (!row || !card) return;
-    row.scrollBy({ left: step * (card.offsetWidth + 8), behavior: 'smooth' });
+    row.scrollBy({ left: (isRtl(row) ? -step : step) * (card.offsetWidth + 8), behavior: 'smooth' });
   };
   // Opening a shelf shows its start, or the chosen genre, without moving the page.
   useEffect(() => {
     const row = genreRowRef.current;
     if (!row) return;
     const chosen = row.querySelector<HTMLElement>('[aria-checked="true"]');
-    row.scrollLeft = chosen ? chosen.offsetLeft - row.offsetLeft : 0;
+    if (chosen) {
+      const card = chosen.getBoundingClientRect();
+      const frame = row.getBoundingClientRect();
+      row.scrollLeft += isRtl(row) ? card.right - frame.right : card.left - frame.left;
+    } else {
+      row.scrollLeft = 0;
+    }
     followRow();
   }, [openShelf, isGenrePickerOpen]);
   const isCustomPathActive = !conjuring && (isCustomPathOpen || isCustomGenre);
@@ -236,12 +246,12 @@ export const OriginGenrePicker = ({
             <div className="mt-3 flex items-center justify-between gap-2 md:hidden">
               <button type="button" aria-label="Previous genres" aria-controls={shelfPanelId} disabled={rowEnds.start} onClick={() => stepRow(-1)}
                 className="story-seed-touch-target inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(150,166,220,0.22)] text-neutral-300 transition-opacity disabled:opacity-30">
-                <ChevronLeft size={18} aria-hidden="true" />
+                <ChevronLeft size={18} aria-hidden="true" className="rtl:-scale-x-100" />
               </button>
               <p className="font-sc text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-400">{shelfGenres.length} genres · swipe</p>
               <button type="button" aria-label="Next genres" aria-controls={shelfPanelId} disabled={rowEnds.end} onClick={() => stepRow(1)}
                 className="story-seed-touch-target inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(150,166,220,0.22)] text-neutral-300 transition-opacity disabled:opacity-30">
-                <ChevronRight size={18} aria-hidden="true" />
+                <ChevronRight size={18} aria-hidden="true" className="rtl:-scale-x-100" />
               </button>
             </div>
 

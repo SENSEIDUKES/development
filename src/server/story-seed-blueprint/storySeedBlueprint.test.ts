@@ -222,7 +222,7 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(response.status).toBe(200);
     expect(provider.requests).toHaveLength(1);
     expect(provider.requests[0].userPrompt).toContain(spark.premise);
-    expect(storySeed.story.required.storyTags).toEqual(expect.arrayContaining(['revenge', 'cultivation realms']));
+    expect(storySeed.story.required.storyTags).toEqual(expect.arrayContaining(['revenge', 'cosmic cultivation']));
     expect(response.body).toMatchObject({ title: spark.title });
     expect(storySeed).toEqual(before);
   });

@@ -92,17 +92,18 @@ describe('Story Seed on a phone', () => {
     expect(part('tags').hidden).toBe(false);
   });
 
-  it('confirms defaults with Next, keeps checks while active, and leaves jumped tabs unchecked', () => {
+  it('shows Fate answered from the start, and never checks a required tab by passing it', () => {
     renderCreator();
     const tab = (id: string) => container.querySelector<HTMLButtonElement>(`[data-part="${id}"]`)!;
-    expect(tab('fate').getAttribute('data-filled')).toBe('false');
-    act(() => tab('fate').click());
-    expect(tab('fate').getAttribute('data-filled')).toBe('false');
-    act(() => next().click());
-    act(() => tab('fate').click());
+    // Immortal is Fate's default, and it is an answer.
+    expect(tab('fate').getAttribute('data-filled')).toBe('true');
     expect(tab('fate').querySelector('[aria-label="complete"]')).not.toBeNull();
-    // Style was jumped past, never confirmed.
-    expect(tab('style').querySelector('[aria-label="complete"]')).toBeNull();
+    act(() => next().click());
+    act(() => tab('tags').click());
+    // Style, Synopsis and Tags are owed: jumping past or pressing Next answers none of them.
+    for (const required of ['style', 'synopsis', 'tags']) {
+      expect(tab(required).querySelector('[aria-label="complete"]')).toBeNull();
+    }
   });
 
   it('saves confirmations through More and restores them when the draft is reopened', async () => {

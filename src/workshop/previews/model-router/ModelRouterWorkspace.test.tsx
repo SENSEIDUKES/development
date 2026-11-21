@@ -37,7 +37,7 @@ it('opens from the gear with a selector for each model capability', async () => 
   await openRouter({ GEMINI_API_KEY: 'g' });
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
 
-  expect([...select('Capability').options].map(option => option.textContent)).toEqual(['Text', 'Images', 'Text to speech', 'Live speech', 'Audio', 'Video', '3D']);
+  expect([...select('Capability').options].map(option => option.textContent)).toEqual(['Text', 'Images', 'Text to speech', 'Live speech', 'Meaning', 'Audio', 'Video', '3D']);
   await pick('Capability', 'tts');
   expect(document.querySelector('[data-model="eleven_multilingual_v2"] [aria-label="Selected"]')).not.toBeNull();
   expect(row('eleven_v3')).toBeNull();

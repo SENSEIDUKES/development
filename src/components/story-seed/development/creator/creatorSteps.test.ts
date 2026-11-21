@@ -33,16 +33,22 @@ describe('Story Seed creator steps', () => {
     expect(stepStatus('world', empty)).toBe('empty');
 
     const ready = patchStoryRequired({ style: 'chinese', genre: 'Xianxia', premise: 'A courier crosses the sea.' })(empty);
-    expect(stepStatus('origin', ready)).toBe('empty');
-    expect(stepStatus('origin', ready, ['origin.fate', 'origin.tags'])).toBe('filled');
-    expect(stepStatus('manifest', ready)).toBe('filled');
+    // Tags are the third required input; confirming the tab is not choosing one.
+    expect(stepStatus('origin', ready)).toBe('missing');
+    expect(stepStatus('origin', ready, ['origin.tags'])).toBe('missing');
+    expect(stepStatus('manifest', ready)).toBe('empty');
+    const tagged = patchStoryRequired({ storyTags: ['face slapping'] })(ready);
+    expect(stepStatus('origin', tagged)).toBe('filled');
+    expect(stepStatus('manifest', tagged)).toBe('filled');
   });
 
   it('never treats untouched defaults as reviewed or lets confirmations replace required answers', () => {
     const seed = createEmptyStorySeedInput();
     // Fun Settings sit on the ARC page (SENSEI, 2026-11-06).
     expect(partComplete('arc', 'fun', seed)).toBe(false);
-    expect(partComplete('origin', 'fate', seed)).toBe(false);
+    // Fate starts on Immortal, which is an answer.
+    expect(partComplete('origin', 'fate', seed)).toBe(true);
+    expect(partComplete('origin', 'tags', seed, ['origin.tags'])).toBe(false);
     expect(partComplete('arc', 'fun', seed, ['arc.fun'])).toBe(true);
     expect(partComplete('origin', 'style', seed, ['origin.style'])).toBe(false);
     expect(partComplete('origin', 'synopsis', seed, ['origin.synopsis'])).toBe(false);

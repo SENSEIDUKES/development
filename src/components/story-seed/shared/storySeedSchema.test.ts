@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
-import { applyInferredStoryTags, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createBlueprintOriginSnapshot, createEmptyStorySeedInput, normalizeStorySeedInput, normalizeWorldBlueprint, STORY_PREMISE_MAX_LENGTH, validateStorySeedDraft, validateStorySeedInput, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createBlueprintOriginSnapshot, createEmptyStorySeedInput, normalizeStorySeedInput, normalizeWorldBlueprint, STORY_PREMISE_MAX_LENGTH, validateStorySeedDraft, validateStorySeedInput, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStorySeedCollectionExport, createStorySeedExport, parseStorySeedJson } from '@seihouse/sen/story-seed';
 import { createStorySeed, listStorySeeds, resetStorySeedRepository, setStorySeedRepository, updateStorySeed } from '../../../workshop/previews/story-seed/storySeedStorage';
 import { type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/story-seed';
@@ -374,31 +374,16 @@ describe('Story Seed creator/story/world contract', () => {
     expect(validateStorySeedInput(blank)).toEqual({ valid: true, errors: [] });
   });
 
-  it('infers Story Tags from Premise, Genre, and Style so they never block generation', () => {
+  it('never fills Story Tags in: a seed without any is not ready, and chosen tags are kept', () => {
     const untagged = normalizeStorySeedInput({
       ...completeSeed(),
       story: { ...completeSeed().story, required: { ...completeSeed().story.required, storyTags: [] } },
     });
-    expect(untagged.story.required.storyTags).toEqual([]);
+    expect(validateStorySeedInput(untagged).errors).toContain('Story Tags are required.');
+    expect(() => buildBlueprintGenerationPayload(untagged)).toThrow(/Story Tags are required/);
+    expect(() => buildInitialStoryGenerationPayload(untagged, administrative(), blueprint, 10)).toThrow(/Story Tags are required/);
 
-    const inferred = applyInferredStoryTags(untagged).story.required.storyTags;
-    expect(inferred.length).toBeGreaterThan(0);
-    expect(inferred).toContain('cultivation realms');
-    expect(inferred).toContain('destined death');
-
-    // The inferred set reaches both generation entry points despite Story Tags
-    // being a required field.
-    expect(buildBlueprintGenerationPayload(untagged).storySeed.story.required.storyTags).toEqual(inferred);
-    expect(
-      buildInitialStoryGenerationPayload(untagged, administrative(), blueprint, 10)
-        .storySeed.story.required.storyTags,
-    ).toEqual(inferred);
-  });
-
-  it('preserves manually chosen Story Tags untouched', () => {
-    const seed = completeSeed();
-    expect(applyInferredStoryTags(seed).story.required.storyTags).toEqual(['death flags', 'foreknowledge']);
-    expect(buildBlueprintGenerationPayload(seed).storySeed.story.required.storyTags)
+    expect(buildBlueprintGenerationPayload(completeSeed()).storySeed.story.required.storyTags)
       .toEqual(['death flags', 'foreknowledge']);
   });
 

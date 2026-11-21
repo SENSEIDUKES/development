@@ -16,11 +16,11 @@ import {
 } from './catalog';
 
 export type { ModelCapability, ReasoningLevel } from './catalog';
-export { CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, LIVE_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, REASONING_LEVELS } from './catalog';
-export { DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, DEFAULT_LIVE_MODEL, imageModelProvider, MODEL_PROVIDERS, lowestReasoningLevel, providerKey, providerModelName, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider, textModelLabel, requireTextModelKey, missingKeyMessage, isMissingKeyMessage } from './catalog';
+export { CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, LIVE_MODELS, MEANING_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, REASONING_LEVELS } from './catalog';
+export { DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, DEFAULT_LIVE_MODEL, DEFAULT_MEANING_MODEL, imageModelProvider, MODEL_PROVIDERS, lowestReasoningLevel, providerKey, providerModelName, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider, textModelLabel, requireTextModelKey, missingKeyMessage, isMissingKeyMessage } from './catalog';
 export type { ModelEnvironment, ModelProviderId, TextProviderId, ModelStage, ModelReasoning, RoutedModel, ChapterModelRoute } from './catalog';
 export { LOCAL_LM_STUDIO_MODEL, isLocalModelDevelopment } from './catalog';
-export { generateOpenRouterImage, generateOpenRouterText } from './openRouter';
+export { fingerprintWithOpenRouter, generateOpenRouterImage, generateOpenRouterText, type OpenRouterFingerprintRequest } from './openRouter';
 export type { OpenRouterImageRequest, OpenRouterTextRequest, OpenRouterTextResult } from './openRouter';
 export { geminiThinkingConfig } from './geminiThinking';
 

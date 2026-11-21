@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CatalogTagChip, matchesTagSearch } from '../../story-seed/shared/StoryTagPickerParts';
 import { STORY_TAG_CATALOG, normalizeStoryTagIdentity } from '../../story-seed/shared/storyTagCatalog';
-import { recommendStoryTags } from '../../story-seed/shared/storyTagInference';
+import { suggestStoryTags } from '../../story-seed/shared/storyTagEngine';
 import { NarrativeTextBox } from '@seihouse/sen/presentation';
 
 /** A compact catalog view using Origin's chips, search and recommendations. */
@@ -14,7 +14,7 @@ export const SparkTags = ({ genre, tags, onToggle, disabled }: {
 }) => {
   const [search, setSearch] = useState('');
   const row = useRef<HTMLDivElement>(null);
-  const suggestions = useMemo(() => recommendStoryTags({ genre }, tags), [genre, tags]);
+  const suggestions = useMemo(() => suggestStoryTags({ genre, picked: tags, limit: 10 }), [genre, tags]);
   const query = search.trim().toLowerCase();
   const entries = query ? STORY_TAG_CATALOG.filter(entry => matchesTagSearch(entry, query))
     .sort((first, second) => Number(second.label === query) - Number(first.label === query)).slice(0, 24) : suggestions;

@@ -16,7 +16,7 @@ import { type StorySpark, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { generateUUID } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore, type StoryCreationSnapshot } from '../../../library/story-seed/runtime';
 import { normalizeStorySeedEditorProgress, type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
-import { applyInferredStoryTags, buildBlueprintGenerationPayload, describeBlueprintArcPlanProblem, describeStoryLengthProblem, fillBlankSeedSlots, type GeneratedWorldBlueprint, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { buildBlueprintGenerationPayload, describeBlueprintArcPlanProblem, describeStoryLengthProblem, fillBlankSeedSlots, type GeneratedWorldBlueprint, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeChapterWritingStyle, normalizeSenLanguageCode, type ChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 import StoryAuthGate, { STORY_AUTH_DISSOLVE_MS } from './StoryAuthGate';
@@ -538,9 +538,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
    */
   const handleGenerateBlueprintClick = async () => {
     if (isGenerating || runtime.store.getSnapshot().isGenerating) return;
-    // Story Tags are filled by inference first, so only Style, Genre, and
-    // Premise can ever leave the seed short of generation readiness.
-    const seedInput = applyInferredStoryTags(normalizeStorySeedInput(seed));
+    const seedInput = normalizeStorySeedInput(seed);
     const validation = validateStorySeedInput(seedInput);
     if (!validation.valid) {
       setSeedError(validation.errors.join(' '));
@@ -560,11 +558,6 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
    * thrown to the caller, and the Seed changes only when one succeeds.
    */
   const generateBlueprintFrom = async (seedInput: StorySeedInput) => {
-    // Write the inferred tags back so the creator sees exactly what is saved.
-    if (seed.story.required.storyTags.length === 0) {
-      const storyTags = seedInput.story.required.storyTags;
-      setSeed(current => ({ ...current, story: { ...current.story, required: { ...current.story.required, storyTags } } }));
-    }
     // Blueprint review code downloads while the provider is generating, so
     // the dossier is ready when the response arrives without burdening the
     // initial Story Seed route.
@@ -601,7 +594,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
    */
   const handleRegenerateBlueprint = async (arcCount: number) => {
     if (runtime.store.getSnapshot().isGenerating) throw new Error('Another generation is still running. Try again when it finishes.');
-    const reviewed = applyInferredStoryTags(normalizeStorySeedInput(seed));
+    const reviewed = normalizeStorySeedInput(seed);
     const seedInput = { ...reviewed, story: { ...reviewed.story, optional: { ...reviewed.story.optional, arcCount } } };
     const validation = validateStorySeedInput(seedInput);
     if (!validation.valid) throw new Error(validation.errors.join(' '));
@@ -687,7 +680,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const handleStartStoryClick = async () => {
     if (isGenerating || runtime.store.getSnapshot().isGenerating) return;
     if (!blueprint) return;
-    const seedInput = applyInferredStoryTags(normalizeStorySeedInput(seed));
+    const seedInput = normalizeStorySeedInput(seed);
     await startStoryFromSeed(seedInput, blueprint, currentSeed, originalLanguage);
   };
 
@@ -701,7 +694,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const handleManifestSeed = async (record: StorySeedRecord) => {
     if (isGenerating || runtime.store.getSnapshot().isGenerating) return;
     if (!record.blueprint) return;
-    const seedInput = applyInferredStoryTags(normalizeStorySeedInput(record.seed));
+    const seedInput = normalizeStorySeedInput(record.seed);
     loadSeedIntoWorkspace(record);
     setShowStoryBank(false);
     const validation = validateStorySeedInput(seedInput);

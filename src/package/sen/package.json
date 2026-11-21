@@ -10,6 +10,10 @@
     "dist"
   ],
   "exports": {
+    "./meaning-engine": {
+      "types": "./dist/types/package/sen/meaning-engine.d.ts",
+      "import": "./dist/meaning-engine.js"
+    },
     "./highlight-engine": {
       "types": "./dist/types/package/sen/highlight-engine.d.ts",
       "import": "./dist/highlight-engine.js"

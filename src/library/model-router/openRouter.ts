@@ -2,6 +2,7 @@ import { CHAPTER_MODELS, providerModelName, resolveReasoningLevel } from './cata
 import { claudeSystemInstruction } from './anthropic';
 
 const OPENROUTER_CHAT_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_EMBEDDINGS_ENDPOINT = 'https://openrouter.ai/api/v1/embeddings';
 
 /**
  * Reasoning models (GPT-6 Luna, for example) spend hidden reasoning tokens from
@@ -232,5 +233,52 @@ export async function generateOpenRouterImage(request: OpenRouterImageRequest): 
     throw error;
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+export interface OpenRouterFingerprintRequest {
+  apiKey: string;
+  /** Router model id (`openrouter/google/gemini-embedding-2`) or a bare OpenRouter model name. */
+  model: string;
+  texts: readonly string[];
+  timeoutMs?: number;
+  attribution?: { referer?: string; title?: string };
+  fetchImpl?: typeof fetch;
+}
+
+/**
+ * One embedding vector per text, in order, from an OpenRouter embedding model.
+ * It writes nothing: the vectors are what the Meaning Engine compares.
+ */
+export async function fingerprintWithOpenRouter(request: OpenRouterFingerprintRequest): Promise<number[][]> {
+  const controller = new AbortController();
+  const timeout = request.timeoutMs ? setTimeout(() => controller.abort(), request.timeoutMs) : undefined;
+  try {
+    const response = await (request.fetchImpl ?? fetch)(OPENROUTER_EMBEDDINGS_ENDPOINT, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${request.apiKey}`,
+        'Content-Type': 'application/json',
+        ...(request.attribution?.referer ? { 'HTTP-Referer': request.attribution.referer } : {}),
+        ...(request.attribution?.title ? { 'X-Title': request.attribution.title } : {}),
+      },
+      body: JSON.stringify({ model: request.model.replace(/^openrouter\//, ''), input: request.texts }),
+    });
+    const body = await response.json().catch(() => undefined) as
+      { data?: Array<{ index?: number; embedding?: unknown }>; error?: { message?: string } } | undefined;
+    if (!response.ok || !body?.data) {
+      throw new Error(`OpenRouter embedding request failed (${response.status})${body?.error?.message ? `: ${body.error.message}` : ''}.`);
+    }
+    const vectors = [...body.data]
+      .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+      .map(entry => entry.embedding);
+    if (vectors.length !== request.texts.length
+      || !vectors.every((vector): vector is number[] => Array.isArray(vector) && vector.length > 0 && vector.every(value => typeof value === 'number' && Number.isFinite(value)))) {
+      throw new Error('OpenRouter returned an unusable embedding.');
+    }
+    return vectors;
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
 }

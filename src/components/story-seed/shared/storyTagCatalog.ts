@@ -103,14 +103,14 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
 
   // --- Tone (lime) ---
   { label: 'bittersweet', category: 'Tone', styles: ['all'], aliases: ['melancholy', 'happy-sad'], color: 'lime' },
-  { label: 'cozy', category: 'Tone', styles: ['all'], aliases: ['wholesome', 'comfort read', 'cozy fantasy', 'wholesome fantasy'], color: 'lime' },
+  { label: 'cozy', category: 'Tone', styles: ['all'], aliases: ['wholesome', 'comfort read', 'cozy fantasy', 'wholesome fantasy', 'cozy cultivation'], color: 'lime' },
   { label: 'dark', category: 'Tone', styles: ['all'], aliases: ['dark tone', 'bleak'], color: 'lime' },
   { label: 'epic', category: 'Tone', styles: ['all'], aliases: ['grand scale', 'legendary'], color: 'lime' },
   { label: 'grimdark', category: 'Tone', styles: ['all'], aliases: ['brutal', 'no heroes'], color: 'lime' },
   { label: 'gritty', category: 'Tone', styles: ['all'], aliases: ['realistic', 'harsh'], color: 'lime' },
   { label: 'hopeful', category: 'Tone', styles: ['all'], aliases: ['uplifting', 'optimistic'], color: 'lime' },
   { label: 'lighthearted', category: 'Tone', styles: ['all'], aliases: ['lighthearted tone', 'upbeat'], color: 'lime' },
-  { label: 'slow life', category: 'Tone', styles: ['all'], aliases: ['relaxing', 'peaceful life'], color: 'lime' },
+  { label: 'slow life', category: 'Tone', styles: ['all'], aliases: ['relaxing', 'peaceful life', 'low-stakes daily progress', 'chill progression'], color: 'lime' },
 
   // --- System & Progression (gray) ---
   { label: 'game systems', category: 'System & Progression', styles: ['all'], aliases: ['system', 'litrpg', 'interface'], color: 'gray' },
@@ -118,7 +118,7 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'cultivation realms', category: 'System & Progression', styles: ['chinese'], aliases: ['realms', 'dantian', 'qi'], color: 'gray' },
   { label: 'breakthrough pressure', category: 'System & Progression', styles: ['chinese', 'korean'], aliases: ['breakthrough', 'bottleneck'], color: 'gray' },
   { label: 'bottleneck arcs', category: 'System & Progression', styles: ['chinese', 'korean'], aliases: ['bottleneck', 'stagnation'], color: 'gray' },
-  { label: 'dao comprehension', category: 'System & Progression', styles: ['chinese'], aliases: ['dao', 'enlightenment', 'laws'], color: 'gray' },
+  { label: 'dao comprehension', category: 'System & Progression', styles: ['chinese'], aliases: ['dao', 'enlightenment', 'laws of heaven'], color: 'gray' },
   { label: 'martial techniques', category: 'System & Progression', styles: ['chinese', 'korean'], aliases: ['martial arts', 'skills'], color: 'gray' },
   { label: 'bloodline awakening', category: 'System & Progression', styles: ['chinese', 'korean'], aliases: ['bloodline', 'heritage', 'bloodline awakenings', 'beast bloodline', 'ancient blood', 'bloodline inheritance', 'hereditary power'], color: 'gray' },
   { label: 'artifact growth', category: 'System & Progression', styles: ['chinese', 'korean'], aliases: ['growing weapon', 'sentient artifact'], color: 'gray' },
@@ -166,6 +166,7 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'artifact refining', category: 'System & Progression', styles: ['chinese'], aliases: ['forging', 'item refinement'], color: 'gray' },
   { label: 'formations & arrays', category: 'System & Progression', styles: ['chinese'], aliases: ['formations', 'arrays', 'spirit arrays'], color: 'gray' },
   { label: 'magic', category: 'System & Progression', styles: ['all'], aliases: ['spells', 'mana', 'magic system'], color: 'gray' },
+  { label: 'cultivation', category: 'System & Progression', styles: ['all'], aliases: ['cultivator', 'qi cultivation', 'cultivating', 'xiuxian'], color: 'gray' },
 
   // --- Fate Threats (red) ---
   { label: 'death flags', category: 'Fate Threats', styles: ['all'], aliases: ['doomed', 'death flag'], color: 'red' },
@@ -204,12 +205,12 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'trade routes', category: 'Society & Economy', styles: ['all'], aliases: ['caravans', 'merchant paths'], color: 'green' },
   { label: 'supply chains', category: 'Society & Economy', styles: ['all'], aliases: ['logistics', 'supply line'], color: 'green' },
   { label: 'infrastructure growth', category: 'Society & Economy', styles: ['japanese'], aliases: ['road building', 'city works'], color: 'green' },
-  { label: 'settlement upgrades', category: 'Society & Economy', styles: ['japanese'], aliases: ['village upgrade', 'town building'], color: 'green' },
+  { label: 'settlement upgrades', category: 'Society & Economy', styles: ['japanese'], aliases: ['village upgrade', 'town building', 'territory upgrades', 'outpost upgrade', 'fortress expansion'], color: 'green' },
   { label: 'city building', category: 'Society & Economy', styles: ['japanese', 'korean'], aliases: ['base building', 'city creation', 'city expansion', 'wall expansion', 'district building'], color: 'green' },
   { label: 'village growth', category: 'Society & Economy', styles: ['japanese'], aliases: ['slow life farming', 'village development'], color: 'green' },
   { label: 'guild systems', category: 'Society & Economy', styles: ['japanese', 'korean'], aliases: ['adventurers guild', 'merchants guild'], color: 'green' },
   { label: 'tax reform', category: 'Society & Economy', styles: ['japanese'], aliases: ['taxation', 'economic policy'], color: 'green' },
-  { label: 'law reform', category: 'Society & Economy', styles: ['all'], aliases: ['legal system', 'justice'], color: 'green' },
+  { label: 'law reform', category: 'Society & Economy', styles: ['all'], aliases: ['legal system', 'justice', 'laws', 'legislation', 'decrees'], color: 'green' },
   { label: 'public order', category: 'Society & Economy', styles: ['all'], aliases: ['policing', 'crime control'], color: 'green' },
   { label: 'famine pressure', category: 'Society & Economy', styles: ['all'], aliases: ['food shortage', 'starvation'], color: 'green' },
   { label: 'refugee crisis', category: 'Society & Economy', styles: ['all'], aliases: ['displaced citizens', 'refugees'], color: 'green' },
@@ -237,13 +238,12 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'magical resources', category: 'Society & Economy', styles: ['japanese', 'korean'], aliases: ['mana stones', 'spirit stones'], color: 'green' },
   { label: 'contract enforcement', category: 'Society & Economy', styles: ['all'], aliases: ['magic contract', 'binding deal'], color: 'green' },
   { label: 'kingdom building', category: 'Society & Economy', styles: ['japanese'], aliases: ['statecraft', 'nation building'], color: 'green' },
-  { label: 'territory upgrades', category: 'Society & Economy', styles: ['japanese', 'korean'], aliases: ['outpost upgrade', 'fortress expansion'], color: 'green' },
-  { label: 'laws', category: 'Society & Economy', styles: ['all'], aliases: ['legislation', 'decrees'], color: 'green' },
   { label: 'diplomacy', category: 'Society & Economy', styles: ['all'], aliases: ['treaties', 'negotiations'], color: 'green' },
   { label: 'master workshops', category: 'Society & Economy', styles: ['chinese', 'japanese'], aliases: ['forge guild', 'alchemy hall'], color: 'green' },
   { label: 'adventurer guild', category: 'Society & Economy', styles: ['japanese'], aliases: ['guild hall', 'quest board'], color: 'green' },
   { label: 'monopoly strategy', category: 'Society & Economy', styles: ['korean'], aliases: ['market cornering', 'monopolization'], color: 'green' },
   { label: 'modern knowledge uplift', category: 'Society & Economy', styles: ['all'], aliases: ['modern knowledge', 'industrial revolution', 'isekai inventions', 'industrial growth', 'technology leap', 'factory'], color: 'green' },
+  { label: 'medicine', category: 'Society & Economy', styles: ['all'], aliases: ['doctor', 'physician', 'medical', 'surgeon', 'healer'], color: 'green' },
 
   // --- Politics & War (purple) ---
   { label: 'political pressure', category: 'Politics & War', styles: ['all'], aliases: ['court pressure', 'political maneuvering'], color: 'purple' },
@@ -315,6 +315,7 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'regional politics', category: 'Politics & War', styles: ['all'], aliases: ['provincial conflict', 'border politics'], color: 'purple' },
   { label: 'cultural tension', category: 'Politics & War', styles: ['all'], aliases: ['clash of cultures', 'tradition vs reform'], color: 'purple' },
   { label: 'religious pressure', category: 'Politics & War', styles: ['all'], aliases: ['holy church', 'fanatic cult'], color: 'purple' },
+  { label: 'military', category: 'Politics & War', styles: ['all'], aliases: ['army life', 'soldier', 'armed forces', 'special forces'], color: 'purple' },
 
   // --- Romance & Affection (pink) ---
   { label: 'romantic trust', category: 'Romance & Affection', styles: ['all'], aliases: ['emotional intimacy', 'trust'], color: 'pink' },
@@ -344,21 +345,21 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'companion ambition', category: 'Romance & Affection', styles: ['all'], aliases: ['ally goals', 'independent companion'], color: 'pink' },
   { label: 'party chemistry', category: 'Romance & Affection', styles: ['all'], aliases: ['banter', 'found family dynamic'], color: 'pink' },
   { label: 'party conflict', category: 'Romance & Affection', styles: ['all'], aliases: ['party argument', 'internal strife'], color: 'pink' },
-  { label: 'cozy / slice-of-life cultivation', category: 'Romance & Affection', styles: ['japanese', 'chinese'], aliases: ['cozy cultivation', 'farming qi'], color: 'pink' },
   { label: 'farming', category: 'Romance & Affection', styles: ['japanese'], aliases: ['agriculture', 'spirit crops'], color: 'pink' },
   { label: 'food', category: 'Romance & Affection', styles: ['japanese'], aliases: ['gourmet', 'cooking'], color: 'pink' },
   { label: 'healing', category: 'Romance & Affection', styles: ['all'], aliases: ['recovery', 'doctor', 'alchemist healer'], color: 'pink' },
   { label: 'village bonds', category: 'Romance & Affection', styles: ['japanese'], aliases: ['community', 'peaceful town'], color: 'pink' },
-  { label: 'low-stakes daily progress', category: 'Romance & Affection', styles: ['japanese'], aliases: ['slice of life', 'chill progression'], color: 'pink' },
   { label: 'romantic tension', category: 'Romance & Affection', styles: ['all'], aliases: ['chemistry', 'will-they-won-t-they'], color: 'pink' },
-  { label: 'adult-only double cultivation politics', category: 'Romance & Affection', styles: ['chinese'], aliases: ['dual cultivation politics', 'yin yang'], color: 'pink' },
   { label: 'forbidden love', category: 'Romance & Affection', styles: ['all'], aliases: ['taboo attraction', 'secret lovers', 'forbidden romance', 'taboo love', 'star-crossed'], color: 'pink' },
   { label: 'childhood friend', category: 'Romance & Affection', styles: ['japanese'], aliases: ['childhood sweetheart', 'osananajimi'], color: 'pink' },
   { label: 'senpai-kouhai', category: 'Romance & Affection', styles: ['japanese'], aliases: ['senior junior', 'senpai'], color: 'pink' },
   { label: 'master-disciple bond', category: 'Romance & Affection', styles: ['chinese'], aliases: ['master apprentice', 'shifu', 'mentor bond', 'master and disciple', 'teacher', 'mentor', 'wise teacher', 'guide', 'disciple growth', 'apprentice progress', 'student'], color: 'pink' },
-  { label: 'dual cultivation', category: 'Romance & Affection', styles: ['chinese'], aliases: ['yin-yang cultivation', 'dual partner', 'spiritual bond cultivation', 'soul bond'], color: 'pink' },
+  { label: 'dual cultivation', category: 'Romance & Affection', styles: ['chinese'], aliases: ['yin-yang cultivation', 'dual partner', 'spiritual bond cultivation', 'soul bond', 'double cultivation', 'yin yang'], color: 'pink' },
   { label: 'villainess', category: 'Romance & Affection', styles: ['japanese', 'korean'], aliases: ['otome villainess', 'reincarnated villainess'], color: 'pink' },
   { label: 'reverse harem', category: 'Romance & Affection', styles: ['all'], aliases: ['many suitors', 'otome harem'], color: 'pink' },
+  { label: 'harem', category: 'Romance & Affection', styles: ['all'], aliases: ['multiple love interests', 'many wives'], color: 'pink' },
+  { label: 'boys love', category: 'Romance & Affection', styles: ['all'], aliases: ['bl', 'danmei', 'yaoi', 'mlm romance'], color: 'pink' },
+  { label: 'girls love', category: 'Romance & Affection', styles: ['all'], aliases: ['gl', 'baihe', 'yuri', 'wlw romance'], color: 'pink' },
 
   // --- Destiny & Karma (gold) ---
   { label: 'karmic bonds', category: 'Destiny & Karma', styles: ['chinese', 'korean'], aliases: ['karma tie', 'destiny link'], color: 'gold' },
@@ -366,7 +367,7 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'fate bonds', category: 'Destiny & Karma', styles: ['all'], aliases: ['destined connection', 'red string of fate'], color: 'gold' },
   { label: 'destiny recovery', category: 'Destiny & Karma', styles: ['all'], aliases: ['reclaiming fate', 'restoration'], color: 'gold' },
   { label: 'lost fate', category: 'Destiny & Karma', styles: ['all'], aliases: ['severed destiny', 'fated emptiness'], color: 'gold' },
-  { label: 'fate repair', category: 'Destiny & Karma', styles: ['chinese', 'korean'], aliases: ['mending destiny', 'timeline repair'], color: 'gold' },
+  { label: 'fate repair', category: 'Destiny & Karma', styles: ['chinese', 'korean'], aliases: ['mending destiny', 'timeline repair', 'fate correction', 'defying prophecy', 'altering destiny'], color: 'gold' },
   { label: 'prophecy', category: 'Destiny & Karma', styles: ['all'], aliases: ['fulfillment of prophecy', 'oracle'], color: 'gold' },
   { label: 'villain redemption', category: 'Destiny & Karma', styles: ['all'], aliases: ['redeemed antagonist', 'turning good'], color: 'gold' },
   { label: 'revenge spiral', category: 'Destiny & Karma', styles: ['all'], aliases: ['vicious cycle', 'relentless vengeance'], color: 'gold' },
@@ -382,7 +383,6 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'found family', category: 'Destiny & Karma', styles: ['all'], aliases: ['chosen family', 'comrades'], color: 'gold' },
   { label: 'sworn brotherhood', category: 'Destiny & Karma', styles: ['chinese'], aliases: ['sworn brothers', 'oath of the peach garden'], color: 'gold' },
   { label: 'second chances', category: 'Destiny & Karma', styles: ['all'], aliases: ['do-over', 'fresh start'], color: 'gold' },
-  { label: 'fate correction', category: 'Destiny & Karma', styles: ['all'], aliases: ['defying prophecy', 'altering destiny'], color: 'gold' },
   { label: 'regression', category: 'Destiny & Karma', styles: ['korean'], aliases: ['regressor', 'turner', 'regression/reincarnation', 'second chance', 'regression rules', 'time loop', 'returner rules'], color: 'gold' },
   { label: 'returner', category: 'Destiny & Karma', styles: ['korean'], aliases: ['returned hero', 'max level returner'], color: 'gold' },
   { label: 'revenge returner', category: 'Destiny & Karma', styles: ['korean'], aliases: ['regressed for revenge', 'avenger returner', 'revenge through preparation', 'calculated revenge', 'long game'], color: 'gold' },
@@ -391,6 +391,7 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'reincarnation', category: 'Destiny & Karma', styles: ['all'], aliases: ['reincarnated', 'past life', 'reborn into a new life'], color: 'gold' },
   { label: 'rebirth of the strong', category: 'Destiny & Karma', styles: ['chinese'], aliases: ['reborn expert', 'strong rebirth', 'rebirth of a master'], color: 'gold' },
   { label: 'gods & deities', category: 'Destiny & Karma', styles: ['all'], aliases: ['gods', 'divine beings', 'pantheon'], color: 'gold' },
+  { label: 'immortals', category: 'Destiny & Karma', styles: ['all'], aliases: ['immortal', 'xian', 'undying beings'], color: 'gold' },
 
   // --- Adventure (blue) ---
   { label: 'map expansion', category: 'Adventure', styles: ['all'], aliases: ['unexplored lands', 'world map'], color: 'blue' },
@@ -441,6 +442,9 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'jianghu', category: 'Adventure', styles: ['chinese'], aliases: ['martial world', 'rivers and lakes'], color: 'blue' },
   { label: 'space travel', category: 'Adventure', styles: ['all'], aliases: ['starships', 'space exploration'], color: 'blue' },
   { label: 'mecha', category: 'Adventure', styles: ['all'], aliases: ['giant robots', 'mech pilot'], color: 'blue' },
+  { label: 'dungeons', category: 'Adventure', styles: ['all'], aliases: ['dungeon', 'dungeon crawl', 'dungeon diving', 'labyrinth'], color: 'blue' },
+  { label: 'dragons', category: 'Adventure', styles: ['all'], aliases: ['dragon', 'wyrm', 'dragon rider'], color: 'blue' },
+  { label: 'monsters', category: 'Adventure', styles: ['all'], aliases: ['monster', 'monster hunting', 'beasts'], color: 'blue' },
 
   // --- Modern (teal) ---
   { label: 'urban cultivation', category: 'Modern', styles: ['chinese', 'korean'], aliases: ['modern xianxia', 'city cultivator', 'urban/modern cultivation', 'city cultivation', 'modern dao'], color: 'teal' },
@@ -485,6 +489,9 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'apocalypse survival', category: 'Modern', styles: ['all'], aliases: ['post-apocalyptic survival', 'zombie apocalypse'], color: 'teal' },
   { label: 'otome game', category: 'Modern', styles: ['japanese', 'korean'], aliases: ['otome world', 'dating sim'], color: 'teal' },
   { label: 'cyberpunk', category: 'Modern', styles: ['all'], aliases: ['high tech low life', 'cybernetics'], color: 'teal' },
+  { label: 'CEO', category: 'Modern', styles: ['all'], aliases: ['boss', 'president', 'billionaire', 'company head'], color: 'teal' },
+  { label: 'showbiz', category: 'Modern', styles: ['all'], aliases: ['entertainment circle', 'acting', 'film industry', 'celebrity life'], color: 'teal' },
+  { label: 'e-sports', category: 'Modern', styles: ['all'], aliases: ['esports', 'pro gaming', 'competitive gaming'], color: 'teal' },
 
   // --- Academy & Training (orange) ---
   { label: 'school hierarchy', category: 'Academy & Training', styles: ['japanese', 'korean'], aliases: ['student ranks', 'delinquents vs council'], color: 'orange' },
@@ -523,6 +530,9 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'eldritch horror', category: 'Mystery & Lore', styles: ['all'], aliases: ['lovecraftian', 'cthulhu', 'unknowable gods'], color: 'black' },
   { label: 'yokai', category: 'Mystery & Lore', styles: ['japanese'], aliases: ['youkai', 'spirits of legend', 'ayakashi'], color: 'black' },
   { label: 'exorcism', category: 'Mystery & Lore', styles: ['all'], aliases: ['exorcist', 'ghost hunting', 'demon banishing'], color: 'black' },
+  { label: 'demons', category: 'Mystery & Lore', styles: ['all'], aliases: ['demon', 'devils', 'demonic beings', 'fiends'], color: 'black' },
+  { label: 'vampires', category: 'Mystery & Lore', styles: ['all'], aliases: ['vampire', 'blood drinkers', 'night clans'], color: 'black' },
+  { label: 'zombies', category: 'Mystery & Lore', styles: ['all'], aliases: ['zombie', 'undead horde', 'walking dead', 'infected'], color: 'black' },
 ];
 
 /** Derived map of simplified category names to tag label arrays for UI compatibility. */

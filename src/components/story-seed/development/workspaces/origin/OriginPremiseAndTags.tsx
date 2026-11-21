@@ -10,7 +10,7 @@ import {
   type ReactNode,
   type SetStateAction,
 } from 'react';
-import { ChevronDown, Feather, Sparkles, Tag, Wand2, X } from 'lucide-react';
+import { ChevronDown, Feather, RefreshCw, Sparkles, Tag, Wand2, X } from 'lucide-react';
 import { LibrarySearchIcon as SENSearchIcon } from '@seihouse/ui/sen';
 import { AnimatePresence, motion } from 'motion/react';
 import { STORY_PREMISE_MAX_LENGTH, STORY_TAG_LIMIT } from '@seihouse/sen/story-seed';
@@ -27,7 +27,8 @@ import {
   storyTagNicheEntries,
   type StoryTagCategory,
 } from '../../constants';
-import { recommendStoryTags } from '@seihouse/sen/story-seed';
+import { suggestStoryTags, type StoryTagMeaning } from '@seihouse/sen/story-seed';
+import { useStoryTagMeaning } from './useStoryTagMeaning';
 import { SeedPart } from '../../creator/SeedPart';
 import { updateStoryTags, type UpdateSeed } from '../../seedState';
 import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
@@ -84,11 +85,12 @@ export const OriginPremiseAndTags = ({
     ? CURATED_PREMISE_EXAMPLES[selectedStyle]
     : ALL_CURATED_PREMISE_EXAMPLES;
   const premiseExample = premiseBank[exampleIndex % premiseBank.length];
+  const meaning = useStoryTagMeaning(premise, storyTags);
   const ghostSuggestionCandidate = useMemo(
     () => premise.trim() && storyTags.length < TAG_LIMIT
-      ? recommendStoryTags({ premise, genre, style: selectedStyle }, storyTags, 1)[0]?.label ?? null
+      ? suggestStoryTags({ synopsis: premise, genre, style: selectedStyle, picked: storyTags, limit: 1, meaning })[0]?.label ?? null
       : null,
-    [premise, genre, selectedStyle, storyTags],
+    [premise, genre, selectedStyle, storyTags, meaning],
   );
   const ghostSuggestionKey = ghostSuggestionCandidate
     ? `${premise}\u0000${ghostSuggestionCandidate}`
@@ -176,6 +178,7 @@ export const OriginPremiseAndTags = ({
           genre={genre}
           storyTags={storyTags}
           selectedStyle={selectedStyle}
+          meaning={meaning}
           updateSeed={updateSeed}
           addTag={addTag}
           tagLimitError={tagLimitError}
@@ -191,6 +194,7 @@ interface OriginTagEditorProps {
   genre?: string;
   storyTags: string[];
   selectedStyle?: StoryStyle;
+  meaning?: StoryTagMeaning;
   updateSeed: UpdateSeed;
   addTag: (tag: string) => boolean;
   tagLimitError: string | null;
@@ -202,6 +206,7 @@ const OriginTagEditor = memo(({
   genre,
   storyTags,
   selectedStyle,
+  meaning,
   updateSeed,
   addTag,
   tagLimitError,
@@ -212,10 +217,17 @@ const OriginTagEditor = memo(({
   const [customTagInput, setCustomTagInput] = useState('');
   const [tagSearch, setTagSearch] = useState('');
   const [browseOpen, setBrowseOpen] = useState(false);
+  // Suggestions the creator passed over by asking for more; a new story direction starts over.
+  const [passedOver, setPassedOver] = useState<string[]>([]);
+  useEffect(() => setPassedOver([]), [premise, genre, selectedStyle]);
   const tagSuggestions = useMemo(
-    () => recommendStoryTags({ premise, genre, style: selectedStyle }, storyTags),
-    [premise, genre, selectedStyle, storyTags],
+    () => suggestStoryTags({ synopsis: premise, genre, style: selectedStyle, picked: storyTags, skip: passedOver, meaning }),
+    [premise, genre, selectedStyle, storyTags, passedOver, meaning],
   );
+  // Asking for more sets the shown ones aside; once every tag with a case has been shown, the round starts again.
+  const moreSuggestions = () => setPassedOver(previous => tagSuggestions.length
+    ? [...previous, ...tagSuggestions.map(entry => entry.label)]
+    : []);
 
   // Choosing a genre path opens its niche; a custom genre opens every tag.
   useEffect(() => {
@@ -299,7 +311,7 @@ const OriginTagEditor = memo(({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p id="origin-tags-title" className="flex items-center gap-2 font-sc text-[11px] font-bold uppercase tracking-widest text-signal"><Tag size={13} className="text-[#CDB271]" aria-hidden="true" />Tags</p>
-            <p className="mt-1 font-sans text-xs text-neutral-400">Optional — inferred from your origin if left empty.</p>
+            <p className="mt-1 font-sans text-xs text-neutral-400">Required — choose at least one. The writer reads your tags every chapter.</p>
           </div>
           <div className="flex shrink-0 items-center gap-2 font-sans text-[11px] text-neutral-400">
             <span title={TAG_RECOMMENDED_COPY}>{storyTags.length} / {TAG_LIMIT}</span>
@@ -310,11 +322,19 @@ const OriginTagEditor = memo(({
         {yourTags}
 
         <div>
-          <p className="mb-1.5 flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-widest text-neutral-300"><Wand2 size={12} className="text-[#CDB271]" aria-hidden="true" />Suggested
-            <span className="font-sans text-[11px] font-normal normal-case tracking-normal text-neutral-400">· {premise.trim() ? 'from your premise and genre' : 'describe your premise to tune these'}</span>
-          </p>
-          <div className="scrollbar-thin flex gap-1.5 overflow-x-auto pb-1" id="style-suggested-tags">
-            {tagSuggestions.length === 0 && <p className="font-sans text-xs text-neutral-400">Add more premise detail, or browse all tags.</p>}
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <p className="flex min-w-0 items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-widest text-neutral-300"><Wand2 size={12} className="shrink-0 text-[#CDB271]" aria-hidden="true" />Suggested
+              <span className="min-w-0 truncate font-sans text-[11px] font-normal normal-case tracking-normal text-neutral-400">· {premise.trim() ? 'for your synopsis and genre' : genre ? 'for your genre' : 'choose a genre or write a synopsis'}</span>
+            </p>
+            {(tagSuggestions.length > 0 || passedOver.length > 0) && (
+              <button type="button" onClick={moreSuggestions} aria-label="Show more tag suggestions"
+                className="story-seed-touch-target inline-flex min-h-[2.75rem] shrink-0 items-center gap-1.5 rounded-full border border-portal/40 bg-portal/10 px-3 font-sc text-[10px] font-bold uppercase tracking-widest text-portal transition-colors hover:border-portal hover:bg-portal/20">
+                <RefreshCw size={12} aria-hidden="true" />More
+              </button>
+            )}
+          </div>
+          <div className="scrollbar-thin flex gap-1.5 overflow-x-auto pb-1" id="style-suggested-tags" aria-live="polite">
+            {tagSuggestions.length === 0 && <p className="font-sans text-xs text-neutral-400">{passedOver.length ? 'That is every suggestion. Tap More to see them again, or browse all tags.' : 'Choose a genre or write your synopsis, or browse all tags.'}</p>}
             {tagSuggestions.map(entry => (
               <CatalogTagChip key={entry.label} entry={entry} selected={isSelected(entry.label)} onToggle={toggleTag} className="shrink-0 whitespace-nowrap" />
             ))}

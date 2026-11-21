@@ -25,6 +25,14 @@ The panel works with universal defaults; Library supplies its visual preset
 through presentation adapters and `--spark-*` tokens. The host retains generation,
 usage policy and saving. See [Sparks](../../components/sparks/README.md).
 
+**Unreleased (2026-11-21, breaking):** New `./meaning-engine`: compare text by
+meaning from fingerprints a host supplies (`packFingerprint`, `encodeFingerprint`,
+`decodeFingerprint`, `meaningSimilarity`, `meaningFit`, `pickSpread`, `textStamp`).
+`./story-seed` replaces `recommendStoryTags`, `inferStoryTags` and
+`applyInferredStoryTags` with the Story Tag engine: `suggestStoryTags`,
+`loadStoryTagFingerprints`, `readStoryTagFingerprints`, `STORY_TAG_MEANINGS`. Story
+Tags are no longer filled in for the creator; a seed without tags is not ready.
+
 **Unreleased (2026-10-30):** `./story-seed` exports `applyStorySparkToSeed`: a
 Story Spark's whole Origin (premise, genre, tradition, Story Tags, Survival and a
 title when it has one) into an existing seed, keeping every other choice and where
@@ -393,6 +401,7 @@ palette checks alone do not establish accessibility for a finished surface.
 
 | Import | Owner responsibility |
 | --- | --- |
+| `./meaning-engine` | Compares text by meaning: packed fingerprints, similarity, fit against a field of candidates, and picking without repeats. Calls no model; the host supplies fingerprints. |
 | `./highlight-engine` | Single-block selection, nested actions, local editing, host-approved manual cue placement, and the manuscript page (permanent paragraph/sentence IDs, paragraph/sentence/span anchors, one edit rule, draft/sealed); no chapter dependency |
 | `@seihouse/sen` | Neutral presentation contracts/defaults and version |
 | `./contracts` | Story, chapter, block, identity, voice, usage and language contracts |

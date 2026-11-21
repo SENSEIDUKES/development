@@ -69,13 +69,17 @@ const NEGATION = /\b(?:no|without|not|never)\s+([^,.!?;]+?)(?=\b(?:but|instead|y
 /**
  * What the synopsis rules out, as the things named right after the negation
  * ("no romance", "without fighting or magic"). Words further along the clause are
- * not ruled out: "no money studies magic" still has magic. Word-level only:
- * implied intent is the fingerprint's job.
+ * not ruled out: "no money studies magic and romance" still has both. A list
+ * only carries on while each item is a bare thing of a word or two; a longer
+ * item has moved on to saying something else. Word-level only: implied intent
+ * is the fingerprint's job.
  */
-const ruledOut = (synopsis: string) => [...synopsis.matchAll(NEGATION)]
-  .flatMap(match => normalize(match[1]).split(/ (?:or|nor|and) /))
-  .map(part => part.replace(/^(?:(?:no|not|without|never|any|a|an|the|more) )+/, ''))
-  .filter(Boolean);
+const LEADING = /^(?:(?:no|not|without|never|any|a|an|the|more) )+/;
+const ruledOut = (synopsis: string) => [...synopsis.matchAll(NEGATION)].flatMap(match => {
+  const items = normalize(match[1]).split(/ (?:or|nor|and) /).map(part => part.replace(LEADING, '')).filter(Boolean);
+  const end = items.findIndex(item => item.split(' ').length > 2);
+  return end < 0 ? items : items.slice(0, end + 1);
+});
 const startsWithPhrase = (text: string, phrase: string) => text === phrase || text.startsWith(`${phrase} `);
 
 /** Read `storyTagFingerprints.json` into the map the engine compares against. */

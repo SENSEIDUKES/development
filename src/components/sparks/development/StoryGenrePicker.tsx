@@ -1,7 +1,8 @@
-import { useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import {
   Building2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Crown,
   Ghost,
@@ -111,6 +112,31 @@ export const OriginGenrePicker = ({
   const [browsedShelf, setBrowsedShelf] = useState<GenreShelfId | null>(null);
   const openShelf: GenreShelfId = browsedShelf ?? chosenPreset?.shelf ?? GENRE_SHELVES[0].id;
   const shelfGenres = genresOnShelf(openShelf);
+  /**
+   * On a phone the open shelf's genres are one swipe row (◀ ▶ step it, arrow
+   * keys move the choice); from md they lay out as a grid and the arrows go.
+   */
+  const genreRowRef = useRef<HTMLDivElement>(null);
+  const [rowEnds, setRowEnds] = useState({ start: true, end: false });
+  const followRow = () => {
+    const row = genreRowRef.current;
+    if (!row) return;
+    setRowEnds({ start: row.scrollLeft <= 4, end: row.scrollLeft + row.clientWidth >= row.scrollWidth - 4 });
+  };
+  const stepRow = (step: 1 | -1) => {
+    const row = genreRowRef.current;
+    const card = row?.querySelector<HTMLElement>('[role="radio"]');
+    if (!row || !card) return;
+    row.scrollBy({ left: step * (card.offsetWidth + 8), behavior: 'smooth' });
+  };
+  // Opening a shelf shows its start, or the chosen genre, without moving the page.
+  useEffect(() => {
+    const row = genreRowRef.current;
+    if (!row) return;
+    const chosen = row.querySelector<HTMLElement>('[aria-checked="true"]');
+    row.scrollLeft = chosen ? chosen.offsetLeft - row.offsetLeft : 0;
+    followRow();
+  }, [openShelf, isGenrePickerOpen]);
   const isCustomPathActive = !conjuring && (isCustomPathOpen || isCustomGenre);
   const SelectedGenreSigil = GENRE_PATH_SIGILS[trimmedGenre];
   const leaveConjure = () => { if (conjuring) conjure!.onSelect(); };
@@ -207,7 +233,21 @@ export const OriginGenrePicker = ({
               })}
             </div>
 
-            <div id={shelfPanelId} role="radiogroup" aria-label="Story paths" className="mt-3 grid gap-2 min-[560px]:grid-cols-2">
+            <div className="mt-3 flex items-center justify-between gap-2 md:hidden">
+              <button type="button" aria-label="Previous genres" aria-controls={shelfPanelId} disabled={rowEnds.start} onClick={() => stepRow(-1)}
+                className="story-seed-touch-target inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(150,166,220,0.22)] text-neutral-300 transition-opacity disabled:opacity-30">
+                <ChevronLeft size={18} aria-hidden="true" />
+              </button>
+              <p className="font-sc text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-400">{shelfGenres.length} genres · swipe</p>
+              <button type="button" aria-label="Next genres" aria-controls={shelfPanelId} disabled={rowEnds.end} onClick={() => stepRow(1)}
+                className="story-seed-touch-target inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(150,166,220,0.22)] text-neutral-300 transition-opacity disabled:opacity-30">
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
+            </div>
+
+            <div ref={genreRowRef} onScroll={followRow} id={shelfPanelId} role="radiogroup" aria-label="Story paths"
+              style={{ scrollbarWidth: 'none' }}
+              className="mt-2 flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain md:mt-3 md:grid md:grid-cols-2 md:overflow-visible">
               {shelfGenres.map((preset, index) => {
                 const selected = trimmedGenre === preset.id;
                 const definitionId = `${idPrefix}-genre-${index}-definition`;
@@ -220,7 +260,7 @@ export const OriginGenrePicker = ({
                       if (!arrowingRef.current) onSelectPath?.(preset.id);
                     }} onKeyDown={arrowThroughPaths}
                     data-selected={selected} style={{ '--choice-accent': GENRE_PATH_ACCENT } as CSSProperties}
-                    className="glass-choice flex min-h-[3.25rem] w-full flex-col items-start justify-center gap-0.5 px-3.5 py-2.5 text-start">
+                    className="glass-choice flex min-h-[5.5rem] w-[82%] shrink-0 snap-start flex-col items-start justify-center gap-1 px-3.5 py-3 text-start md:min-h-[3.25rem] md:w-full md:gap-0.5 md:py-2.5">
                     <span className={`font-sc text-[11px] font-bold uppercase leading-tight tracking-[0.1em] ${selected ? 'text-signal' : 'text-neutral-200'}`}>{preset.name}</span>
                     <span id={definitionId} className="font-sans text-[11px] leading-snug text-neutral-400">{preset.definition}</span>
                   </button>

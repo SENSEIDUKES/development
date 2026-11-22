@@ -92,6 +92,8 @@ export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   // A one-off trial of Qwen3-TTS as a foundation voice, run as a Cloud Run GPU job (services/qwen-voice-test).
   { name: 'Qwen Voice Trial', capability: 'tts', entry: 'services/qwen-voice-test/test.py', modelChoice: 'server-default' },
   { name: 'Familiar Live Talk', capability: 'live', entry: 'src/server/familiar-live/http.ts', modelChoice: 'router' },
+  // A spark's premise is fingerprinted so it is planted with tags that fit it.
+  { name: 'Story Spark Tags', capability: 'meaning', entry: 'src/server/story-spark/http.ts', modelChoice: 'server-default' },
   { name: 'Meaning Fingerprint', capability: 'meaning', entry: 'src/server/meaning-fingerprint/http.ts', modelChoice: 'server-default' },
   // Rebuilds the stored tag fingerprints when a tag or its meaning changes (`npm run build:tag-fingerprints`).
   { name: 'Story Tag Fingerprints', capability: 'meaning', entry: 'scripts/buildStoryTagFingerprints.mjs', modelChoice: 'server-default' },

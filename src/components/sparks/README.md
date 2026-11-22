@@ -20,3 +20,4 @@ The canonical genre picker and genre list are shared by Sparks and Story Seed. T
 
 - **2026-10-30:** Moved the Spark panel, trigger, host contract, built-in beginnings and shared genre picker from Library to SEN. Removed the Library exports and updated app/preview consumers. Kept the app's visual preset through host presentation, with neutral defaults and packed-consumer checks for SEN alone.
 - **2026-10-30:** Simplified prompts and presentation, removed Survival and Copy controls, added server-backed usage and Any/Male/Female protagonist selection. Existing visitor allowance and owner bypass remain unchanged.
+- **2026-11-22:** A spark is planted with tags that fit its premise by meaning. The Story Spark route fingerprints the premise and attaches six Story Tag engine suggestions (`suggestedTags`) that never repeat an idea, after the writer's own chosen tags. Without a Meaning model, planting falls back to the genre and the words of the premise.

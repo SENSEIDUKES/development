@@ -173,10 +173,10 @@ describe('Story Seed keyboard and mobile navigation', () => {
         beforeTags={<button type="button">Pressure</button>}
       />}</LibraryPresentationProvider>,
     ));
-    expect(container.textContent).toContain('Add tag:');
+    // Suggestions are plain buttons in the Tags panel, never an overlay on the Synopsis box.
+    expect(container.textContent).not.toContain('Add tag:');
     expect(container.textContent).not.toContain('Tab:');
-    const suggestion = Array.from(container.querySelectorAll<HTMLButtonElement>('button'))
-      .find(button => button.textContent?.includes('Add tag:'));
+    const suggestion = container.querySelector<HTMLButtonElement>('#style-suggested-tags button');
     expect(suggestion).toBeTruthy();
     expect(suggestion?.closest('.glass-field-wrap')).toBeNull();
   });
@@ -238,33 +238,35 @@ describe('Story Seed keyboard and mobile navigation', () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    // Custom tags, search and families wait behind Browse all tags.
-    expect(container.querySelector('#custom-tag-input')).toBeNull();
-    act(() => container.querySelector<HTMLButtonElement>('[aria-controls="origin-tag-browser"]')!.click());
-    const addCustom = (value: string) => {
-      fill('#custom-tag-input', value);
-      act(() => container.querySelector('#custom-tag-input')!.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
-      ));
-    };
-    addCustom('Slow Life');
-    addCustom('slow life');
-    expect(currentSeed.story.required.storyTags).toEqual(['Slow Life']);
-    expect(container.querySelector('#style-suggested-tags')!.textContent).not.toContain('slow life');
-    fill('#celestial-tag-search-input', 'slow life');
-    const chip = () => Array.from(container.querySelectorAll<HTMLButtonElement>('#filtered-tags-list button'))
-      .find(button => button.textContent?.includes('slow life'))!;
-    expect(chip().textContent).toContain('✓');
-    act(() => chip().click());
-    expect(currentSeed.story.required.storyTags).toEqual([]);
-    expect(chip().textContent).toContain('+');
-    act(() => chip().click());
-    expect(currentSeed.story.required.storyTags).toEqual(['slow life']);
-    act(() => container.querySelector<HTMLButtonElement>('[aria-label="Remove tag slow life"]')!.click());
+    const search = (value: string) => fill('#celestial-tag-search-input', value);
+    const row = (name: string) => Array.from(container.querySelectorAll<HTMLButtonElement>('#origin-tag-results button[aria-pressed]'))
+      .find(button => button.textContent?.includes(name))!;
+    // One box searches the catalog and adds the creator's own wording.
+    search('Bakery Wars');
+    act(() => container.querySelector<HTMLButtonElement>('#custom-tag-add')!.click());
+    expect(currentSeed.story.required.storyTags).toEqual(['Bakery Wars']);
+    expect(container.querySelector<HTMLInputElement>('#celestial-tag-search-input')!.value).toBe('');
+    // The same tag in another case is already theirs, and a catalog tag's name is never added as their own.
+    search('bakery wars');
+    expect(container.querySelector('#custom-tag-add')).toBeNull();
+    search('Slow Life');
+    expect(container.querySelector('#custom-tag-add')).toBeNull();
+    expect(row('slow life').getAttribute('aria-pressed')).toBe('false');
+    act(() => row('slow life').click());
+    expect(currentSeed.story.required.storyTags).toEqual(['Bakery Wars', 'slow life']);
+    expect(row('slow life').getAttribute('aria-pressed')).toBe('true');
+    act(() => row('slow life').click());
+    expect(currentSeed.story.required.storyTags).toEqual(['Bakery Wars']);
+    // A genre's name finds its starter tags.
+    search('tower climb');
+    expect(row('floor bosses')).toBeTruthy();
+    search('');
+    expect(container.querySelector('#origin-tag-results')).toBeNull();
+    act(() => container.querySelector<HTMLButtonElement>('[aria-label="Remove tag Bakery Wars"]')!.click());
     expect(currentSeed.story.required.storyTags).toEqual([]);
   });
 
-  it('opens the story genre niche and filters it by family and search', () => {
+  it('opens every tag in a sheet, on the story genre first, then by family', () => {
     let currentSeed = createEmptyStorySeedInput();
     const Harness = ({ genre }: { genre: string }) => {
       const [seed, setSeed] = useState(currentSeed);
@@ -280,53 +282,42 @@ describe('Story Seed keyboard and mobile navigation', () => {
     };
     const render = (genre: string) => act(() => root.render(<LibraryPresentationProvider>{<Harness genre={genre} />}</LibraryPresentationProvider>));
     render('System');
-    act(() => container.querySelector<HTMLButtonElement>('[aria-controls="origin-tag-browser"]')!.click());
-    const niche = (name: string) => Array.from(container.querySelectorAll<HTMLButtonElement>('#tag-niches [role="radio"]'))
+    const open = () => act(() => container.querySelector<HTMLButtonElement>('#origin-tag-browse')!.click());
+    const sheet = () => document.querySelector<HTMLElement>('#origin-tag-browser')!;
+    const group = (name: string) => Array.from(sheet().querySelectorAll<HTMLButtonElement>('#tag-categories [role="radio"]'))
       .find(button => button.textContent?.startsWith(name))!;
-    const listed = () => Array.from(container.querySelectorAll('#filtered-tags-list button')).map(button => button.textContent!.replace(/^[✓+] /, ''));
-    const fill = (value: string) => act(() => {
-      const input = container.querySelector<HTMLInputElement>('#celestial-tag-search-input')!;
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    const listed = () => Array.from(sheet().querySelectorAll('#filtered-tags-list button')).map(button => button.textContent!.replace(/^[✓+] /, ''));
 
-    // The System genre opens the System niche, holding its game elements and no Genre tags.
-    expect(niche('System').getAttribute('aria-checked')).toBe('true');
-    // The row holds the System shelf's genres, not every genre.
-    expect(niche('Tower Climb')).toBeTruthy();
-    expect(niche('Xianxia')).toBeUndefined();
+    // Every other tag waits in a sheet, never in a scrolling box on the page.
+    expect(document.querySelector('#origin-tag-browser')).toBeNull();
+    open();
+    expect(sheet().getAttribute('role')).toBe('dialog');
+    // It opens on the story's own genre: its game elements, and no Genre tags.
+    expect(group('System').getAttribute('aria-checked')).toBe('true');
     expect(listed()).toEqual(expect.arrayContaining(['status window', 'admin points', 'skill trees']));
     expect(listed()).not.toContain('comedy');
 
-    // A family chip narrows the niche to that family.
-    const family = (name: string) => Array.from(container.querySelectorAll<HTMLButtonElement>('#tag-categories button'))
-      .find(button => button.textContent?.startsWith(name))!;
-    act(() => family('Adventure').click());
-    expect(family('Adventure').getAttribute('aria-pressed')).toBe('true');
+    // A family shows that whole family.
+    act(() => group('Adventure').click());
+    expect(group('Adventure').getAttribute('aria-checked')).toBe('true');
     expect(listed()).toContain('loot systems');
     expect(listed()).not.toContain('admin points');
+    act(() => group('All tags').click());
+    expect(listed()).toEqual(expect.arrayContaining(['comedy', 'admin points', 'loot systems']));
 
-    // Search stays inside the niche until the creator widens it.
-    act(() => family('Adventure').click());
-    fill('romance');
-    expect(listed()).toEqual([]);
-    const widen = Array.from(container.querySelectorAll<HTMLButtonElement>('button')).find(button => button.textContent === 'Search all tags')!;
-    act(() => widen.click());
-    expect(niche('All tags').getAttribute('aria-checked')).toBe('true');
-    expect(listed()).toContain('romance');
-
-    // A tag chosen from a niche is a Story Tag like any other.
-    fill('');
-    act(() => niche('Tower Climb').click());
-    const floorBosses = Array.from(container.querySelectorAll<HTMLButtonElement>('#filtered-tags-list button')).find(button => button.textContent?.includes('floor bosses'))!;
-    expect(floorBosses.title).toContain('In: Tower Climb');
+    // A tag chosen in the sheet is a Story Tag like any other, counted beside Done.
+    const floorBosses = Array.from(sheet().querySelectorAll<HTMLButtonElement>('#filtered-tags-list button')).find(button => button.textContent?.includes('floor bosses'))!;
     act(() => floorBosses.click());
     expect(currentSeed.story.required.storyTags).toEqual(['floor bosses']);
+    expect(sheet().textContent).toContain('1 / 12 chosen');
+    act(() => Array.from(sheet().querySelectorAll<HTMLButtonElement>('button')).find(button => button.textContent === 'Done')!.click());
+    expect(container.querySelector('#origin-tag-browse')!.getAttribute('aria-expanded')).toBe('false');
 
-    // A custom genre opens every tag.
+    // A custom genre has no starter tags: the sheet opens on every tag.
     render('urban xianxia mystery');
-    expect(niche('All tags').getAttribute('aria-checked')).toBe('true');
-    expect(listed()).toEqual(expect.arrayContaining(['comedy', 'admin points']));
+    open();
+    expect(group('All tags').getAttribute('aria-checked')).toBe('true');
+    expect(group('System').textContent).toContain('System & Progression');
   });
 
   it('keeps five navigation entries regardless of Manifest eligibility', () => {

@@ -750,3 +750,25 @@ Catalog: six duplicates merged into their twins (kept as aliases) and sixteen
 core tags added (cultivation, harem, boys love, girls love, immortals, dungeons,
 dragons, monsters, demons, vampires, zombies, military, medicine, CEO, showbiz,
 e-sports).
+
+## 2026-11-22 — Tags built for a phone; sparks planted by meaning
+
+The Tags part holds only what a thumb needs: the creator's tags, one search box,
+and the engine's suggestions, all visible at once (`OriginTagEditor`). The box
+finds a tag by name or alias, by a genre's name (its starter tags), or by what the
+creator describes ("enemies who fall in love" finds "enemies to lovers",
+`searchStoryTags`), and adds their own wording as a tag. Every other tag waits in a
+full-height sheet: one row of groups to swipe (the story's genre, all tags, each
+family), one list that scrolls, and the count with Done pinned at the foot. The
+niche-and-family filter pair, the separate custom-tag box, the scrolling box inside
+the page and the floating "Add tag" hint are gone.
+
+Suggestions no longer offer one idea twice. Two tags count as the same idea when
+their meanings sit close ("dungeons" and "dungeon gates", "returner" and
+"regression") or one name sits inside the other ("monsters" in "monster
+evolution"). Hand-picking is untouched.
+
+A Story Spark is planted with the writer's chosen tags plus six the engine suggests
+for its premise by meaning: the Story Spark route fingerprints the premise and
+sends them as `suggestedTags`. Without a Meaning model, planting falls back to the
+genre and the words of the premise.

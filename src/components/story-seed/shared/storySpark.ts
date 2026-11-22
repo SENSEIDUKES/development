@@ -3,8 +3,9 @@
  *
  * A spark is a whole Origin: a premise, a genre, a novel tradition (Style) and
  * a title, written for Fate Survival when the writer asks for it. Planting it
- * fills every Origin input of a new seed — the Story Tags are recommended from
- * the premise by Story Seed's own tag inference, Pressure stays Story Seed's
+ * fills every Origin input of a new seed — the Story Tags are the ones the
+ * writer chose plus the Story Tag engine's suggestions for the premise (by
+ * meaning when the host fingerprinted it, `suggestedTags`), Pressure stays Story Seed's
  * default (Immortal) and Survival is on only for a Survival spark — and marks
  * the seed as `startedFrom: 'story-spark'` so a Story Bank can keep sparks
  * apart from seeds the writer built. The world and every later choice stay
@@ -32,6 +33,8 @@ export const STORY_SPARK_IDEA_MAX_LENGTH = 1_000;
 /** Recent premises a request may name so the writer does not repeat them. */
 export const STORY_SPARK_AVOID_LIMIT = 6;
 export const STORY_SPARK_TAG_LIMIT = 2;
+/** How many tags a spark is planted with beyond the writer's own: a start, with room left to choose. */
+export const STORY_SPARK_SUGGESTED_TAGS = 6;
 
 interface StorySparkRequestBase {
   /** Omitted when the writer has no preference for the protagonist's gender. */
@@ -62,6 +65,12 @@ export type StorySparkRequest =
 export interface StorySpark {
   /** Reader-chosen catalog tags, carried from the request rather than invented by the model. */
   tags?: string[];
+  /**
+   * Catalog tags the Story Tag engine suggests for this premise by its meaning,
+   * set by a host that fingerprinted it. Absent, planting falls back to the
+   * genre and the words of the premise.
+   */
+  suggestedTags?: string[];
   premise: string;
   genre: string;
   /** The novel's name. Empty when the writer's own words stand untitled. */
@@ -153,15 +162,30 @@ export const parseStorySpark = (value: unknown, request: StorySparkRequest): Sto
     survival: request.fateSurvival === true,
     inventedGenre: Boolean(request.inventGenre),
     ...(request.tags?.length ? { tags: [...request.tags] } : {}),
+    // A host's own suggestions pass through; anything that is not a catalog tag is dropped.
+    ...(Array.isArray(value.suggestedTags)
+      ? { suggestedTags: catalogStoryTags(value.suggestedTags).filter(tag => !request.tags?.includes(tag)) }
+      : {}),
     ...(genreNote ? { genreNote } : {}),
     ...(aside ? { aside } : {}),
     ...(voice ? { voice } : {}),
   };
 };
 
-/** Chosen tags first, then Story Seed's own recommendations, within its existing limit. */
-export const storySparkTags = (spark: Pick<StorySpark, 'premise' | 'genre' | 'style' | 'tags'>): string[] => {
-  const tags = [...(spark.tags ?? []), ...suggestStoryTags({ synopsis: spark.premise, genre: spark.genre, style: spark.style }).map(tag => tag.label)];
+/** The catalog tags among these, by their catalog spelling, without repeats. */
+export const catalogStoryTags = (value: unknown, limit = STORY_TAG_LIMIT): string[] => Array.isArray(value)
+  ? [...new Set(value.flatMap(tag => {
+    const label = typeof tag === 'string' ? getTagMetadata(normalizeStoryTagIdentity(tag))?.label : undefined;
+    return typeof label === 'string' ? [label] : [];
+  }))].slice(0, limit)
+  : [];
+
+/** Chosen tags first, then the engine's suggestions for the premise, within Story Seed's limit. */
+export const storySparkTags = (spark: Pick<StorySpark, 'premise' | 'genre' | 'style' | 'tags' | 'suggestedTags'>): string[] => {
+  const chosen = spark.tags ?? [];
+  const suggested = spark.suggestedTags
+    ?? suggestStoryTags({ synopsis: spark.premise, genre: spark.genre, style: spark.style, picked: chosen, limit: STORY_SPARK_SUGGESTED_TAGS }).map(tag => tag.label);
+  const tags = [...chosen, ...suggested];
   const seen = new Set<string>();
   return tags.filter(tag => {
     const identity = normalizeStoryTagIdentity(tag);

@@ -15,7 +15,7 @@ fingerprints text and hands the numbers over, and the engine does arithmetic:
   through JSON; `meaningSimilarity` compares two; `textStamp` marks a stored
   fingerprint so a check can tell when its text changed.
 - `rank.ts`: `meaningFit` scores every candidate against one query on a shared
-  0..1 scale; `pickSpread` picks the best candidates without saying the same
+  scale that starts at 0: a clear match is about 1 and a stronger one is higher; `pickSpread` picks the best candidates without saying the same
   thing twice.
 
 ## Ownership
@@ -28,5 +28,8 @@ compared, so stored ones are rebuilt when the model changes.
 
 ## History
 
+- 2026-11-22: `pickSpread` takes the host's own word on two keys saying the same
+  thing (`sameAs`); `meaningFit` no longer caps a strong match, so the best one
+  always leads.
 - 2026-11-21: Created for the Story Tag engine (SENSEI: tags and search are the
   same primitive, so it is built once and reused).

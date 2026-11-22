@@ -25,6 +25,13 @@ The panel works with universal defaults; Library supplies its visual preset
 through presentation adapters and `--spark-*` tokens. The host retains generation,
 usage policy and saving. See [Sparks](../../components/sparks/README.md).
 
+**Unreleased (2026-11-22):** `./story-seed` adds `searchStoryTags` (tags by name,
+by a genre's name, or by a described meaning), `StorySpark.suggestedTags` (the tag
+engine's suggestions for the premise, set by a host that fingerprinted it; planted
+after the writer's chosen tags), `catalogStoryTags` and `STORY_SPARK_SUGGESTED_TAGS`.
+`./meaning-engine`: `pickSpread` accepts `sameAs`; `meaningFit` is no longer capped
+at 1.
+
 **Unreleased (2026-11-21, breaking):** New `./meaning-engine`: compare text by
 meaning from fingerprints a host supplies (`packFingerprint`, `encodeFingerprint`,
 `decodeFingerprint`, `meaningSimilarity`, `meaningFit`, `pickSpread`, `textStamp`).

@@ -53,8 +53,9 @@ describe('Story Tag suggestions', () => {
 
   it('ranks by what the synopsis means, ahead of the genre', () => {
     const suggested = labels(suggestStoryTags({ genre: 'Xianxia', limit: 20, meaning: about('infrastructure growth') }));
-    expect(suggested.slice(0, 3)).toContain('infrastructure growth');
-    expect(suggested).toEqual(expect.arrayContaining(['economic recovery', 'cultivation realms']));
+    expect(suggested[0]).toBe('infrastructure growth');
+    // The genre still has its say further down the list.
+    expect(suggested.some(label => ['cultivation', 'cultivation realms', 'sect politics', 'dao comprehension'].includes(label))).toBe(true);
     expect(labels(suggestStoryTags({ genre: 'Xianxia' }))).not.toContain('infrastructure growth');
   });
 
@@ -63,6 +64,10 @@ describe('Story Tag suggestions', () => {
     const suggested = suggestStoryTags({ genre: 'Hunter', picked, limit: 12, meaning: about('regression') });
     expect(labels(suggested)).not.toContain('returner');
     expect(labels(suggested)).not.toContain('revenge returner');
+    // Close in meaning, or one name inside another, is one idea: only one of them is offered.
+    expect(labels(suggested)).not.toContain('regression');
+    const offered = labels(suggestStoryTags({ genre: 'Gates & Dungeons', limit: 12, meaning: about('dungeons') }));
+    expect(offered.filter(label => label.includes('dungeon'))).toHaveLength(1);
     const prints = [...picked, ...labels(suggested)].map(label => tags.get(normalizeStoryTagIdentity(label))!);
     for (let a = 0; a < prints.length; a += 1) {
       for (let b = a + 1; b < prints.length; b += 1) expect(meaningSimilarity(prints[a], prints[b])).toBeLessThan(SAME_TAG_MEANING);
@@ -83,6 +88,6 @@ describe('Story Tag suggestions', () => {
     const suggested = labels(suggestStoryTags({ picked: ['My Own Tag'], limit: 12, meaning: { tags, custom } }));
     expect(suggested.length).toBeGreaterThan(0);
     expect(suggested).not.toContain('alchemy');
-    expect(suggested).toContain('crafting systems');
+    for (const label of suggested) expect(meaningSimilarity(tags.get(label)!, tags.get('alchemy')!)).toBeLessThan(SAME_TAG_MEANING);
   });
 });

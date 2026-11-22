@@ -130,7 +130,7 @@ export const OriginTagEditor = memo(({
             <button type="button" id="custom-tag-add" onClick={addOwnTag}
               className="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-dashed border-portal/40 px-2.5 text-start font-sans text-sm text-portal transition-colors hover:bg-portal/10">
               <Plus size={16} aria-hidden="true" className="shrink-0" />
-              <span className="min-w-0 flex-1 truncate">Add “{ownTag}” as your own tag</span>
+              <span className="min-w-0 flex-1 truncate">{`Add “${ownTag}” as your own tag`}</span>
             </button>
           )}
           {results.length === 0 && !canAddOwn && <p className="py-2 font-sans text-xs text-neutral-400">No tag matches that yet.</p>}
@@ -262,7 +262,7 @@ const TagBrowserSheet = ({ open, onClose, genre, storyTags, isSelected, onToggle
               <div className="shrink-0 border-t border-neutral-800/80 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
                 {tagLimitError && <p role="alert" className="mb-2 font-sans text-xs text-red-400">{tagLimitError}</p>}
                 <div className="flex items-center gap-3">
-                  <p className="min-w-0 flex-1 font-sans text-xs text-neutral-300" aria-live="polite">{storyTags.length} / {TAG_LIMIT} chosen</p>
+                  <p className="min-w-0 flex-1 font-sans text-xs text-neutral-300" aria-live="polite">{`${storyTags.length} / ${TAG_LIMIT} chosen`}</p>
                   <button type="button" onClick={onClose}
                     className="min-h-11 rounded-xl border border-portal/50 bg-portal/10 px-6 font-sc text-[11px] font-bold uppercase tracking-widest text-portal transition-colors hover:border-portal hover:bg-portal/20">Done</button>
                 </div>

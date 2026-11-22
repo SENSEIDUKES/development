@@ -10,6 +10,12 @@ export interface LanguageFormatters {
   toSpend: (amount: string) => string;
   dayStreak: (days: string) => string;
   sealedScrolls: (count: string) => string;
+  /** The aria-label of a creator's chosen Story Tag: "Remove tag slow life". */
+  removeTag: (tag: string) => string;
+  /** The row that adds the creator's own wording as a Story Tag: "Add “bakery wars” as your own tag". */
+  addOwnTag: (tag: string) => string;
+  /** The Story Tag sheet's count beside Done: "3 / 12 chosen". */
+  tagsChosen: (count: string, limit: string) => string;
 }
 
 /**

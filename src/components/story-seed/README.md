@@ -772,3 +772,14 @@ A Story Spark is planted with the writer's chosen tags plus six the engine sugge
 for its premise by meaning: the Story Spark route fingerprints the premise and
 sends them as `suggestedTags`. Without a Meaning model, planting falls back to the
 genre and the words of the premise.
+
+## 2026-11-22 — Tags screen in 29 languages
+
+The Tags screen's own wording (the tag part, its search box and its browse sheet) is
+translated into all 29 languages. `tagScreenTranslation.test.ts` lists
+every fixed English phrase on it, and each language pack holds them all; the three
+that carry a name or a number (Remove tag …, Add “…” as your own tag, 3 / 12 chosen)
+are formatters. That test fails when a language lacks one, when
+a whole screen is left in English, or when the screen's wording changes without the
+list. The rest of Origin (Synopsis, Style, Fate) is still English in the interface
+language files; only the tag names, genres and tag families were translated before.

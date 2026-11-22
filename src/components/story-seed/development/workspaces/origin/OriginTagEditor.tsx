@@ -144,12 +144,12 @@ export const OriginTagEditor = memo(({
             {(suggestions.length > 0 || passedOver.length > 0) && (
               <button type="button" onClick={moreSuggestions} aria-label="Show more tag suggestions"
                 className="story-seed-touch-target inline-flex min-h-[2.75rem] shrink-0 items-center gap-1.5 rounded-full border border-portal/40 bg-portal/10 px-3 font-sc text-[10px] font-bold uppercase tracking-widest text-portal transition-colors hover:border-portal hover:bg-portal/20">
-                <RefreshCw size={12} aria-hidden="true" />More
+                <RefreshCw size={12} aria-hidden="true" />More tags
               </button>
             )}
           </div>
           <div className="flex flex-wrap gap-1.5" id="style-suggested-tags" aria-live="polite">
-            {suggestions.length === 0 && <p className="font-sans text-xs text-neutral-400">{passedOver.length ? 'That is every suggestion. Tap More to see them again, or browse all tags.' : 'Choose a genre or write your synopsis, or browse all tags.'}</p>}
+            {suggestions.length === 0 && <p className="font-sans text-xs text-neutral-400">{passedOver.length ? 'That is every suggestion. Tap More tags to see them again, or browse all tags.' : 'Choose a genre or write your synopsis, or browse all tags.'}</p>}
             {suggestions.map(entry => <CatalogTagChip key={entry.label} entry={entry} selected={false} onToggle={toggleTag} />)}
           </div>
         </div>

@@ -13,6 +13,11 @@ const languages = SEN_LANGUAGES.map(language => language.code).filter((code): co
  * holds all of them. Phrases that carry a name or a number (Remove tag …,
  * Add “…” as your own tag, 3 / 12 chosen) are `formatters` instead. Add a
  * phrase here when the screen gains one.
+ *
+ * The interface matches exact text across the whole app, so a phrase here must
+ * not be the exact English of something that means something else elsewhere:
+ * the suggestions button reads "More tags", not "More", because the world
+ * card's synopsis has its own "More".
  */
 const TAG_SCREEN_PHRASES: readonly string[] = [
   'Tags',
@@ -29,8 +34,8 @@ const TAG_SCREEN_PHRASES: readonly string[] = [
   'for your genre',
   'choose a genre or write a synopsis',
   'Show more tag suggestions',
-  'More',
-  'That is every suggestion. Tap More to see them again, or browse all tags.',
+  'More tags',
+  'That is every suggestion. Tap More tags to see them again, or browse all tags.',
   'Choose a genre or write your synopsis, or browse all tags.',
   'Browse all tags',
   'by genre and family',

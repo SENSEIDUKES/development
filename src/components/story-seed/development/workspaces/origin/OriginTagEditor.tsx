@@ -38,7 +38,7 @@ export interface OriginTagEditorProps {
 
 /** One search result: a full-width row, easy to hit with a thumb. */
 const TagRow = ({ entry, selected, onToggle }: { entry: StoryTagMetadata; selected: boolean; onToggle: (tag: string) => void }) => (
-  <button type="button" role="option" aria-selected={selected} onClick={() => onToggle(entry.label)}
+  <button type="button" aria-pressed={selected} onClick={() => onToggle(entry.label)}
     className={`flex min-h-11 w-full items-center gap-2.5 rounded-lg px-2.5 text-start font-sans text-sm transition-colors ${selected ? 'bg-portal/10 text-portal' : 'text-neutral-200 hover:bg-white/5'}`}>
     <CategoryColorDot color={entry.color} />
     <span className="min-w-0 flex-1 truncate">{entry.label}</span>
@@ -95,7 +95,7 @@ export const OriginTagEditor = memo(({
         </div>
         <div className="flex shrink-0 items-center gap-2 font-sans text-[11px] text-neutral-400">
           <span title="Recommended: 4–8 tags.">{storyTags.length} / {TAG_LIMIT}</span>
-          {storyTags.length > 0 && <button type="button" onClick={() => updateSeed(updateStoryTags(() => []))} className="story-seed-compact-hit-target font-sc text-[10px] uppercase tracking-widest text-neutral-400 transition-colors hover:text-red-300">Clear all</button>}
+          {storyTags.length > 0 && <button type="button" onClick={() => { setTagLimitError(null); updateSeed(updateStoryTags(() => [])); }} className="story-seed-compact-hit-target font-sc text-[10px] uppercase tracking-widest text-neutral-400 transition-colors hover:text-red-300">Clear all</button>}
         </div>
       </div>
 
@@ -124,7 +124,7 @@ export const OriginTagEditor = memo(({
         placeholder="Search, describe, or add your own tag" aria-label="Search story tags" aria-controls="origin-tag-results" />
 
       {query ? (
-        <div id="origin-tag-results" role="listbox" aria-label="Matching tags" aria-multiselectable="true" className="space-y-0.5">
+        <div id="origin-tag-results" role="group" aria-label="Matching tags" className="space-y-0.5">
           {results.map(entry => <TagRow key={entry.label} entry={entry} selected={isSelected(entry.label)} onToggle={toggleTag} />)}
           {canAddOwn && (
             <button type="button" id="custom-tag-add" onClick={addOwnTag}

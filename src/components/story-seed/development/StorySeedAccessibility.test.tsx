@@ -239,7 +239,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     const search = (value: string) => fill('#celestial-tag-search-input', value);
-    const row = (name: string) => Array.from(container.querySelectorAll<HTMLButtonElement>('#origin-tag-results [role="option"]'))
+    const row = (name: string) => Array.from(container.querySelectorAll<HTMLButtonElement>('#origin-tag-results button[aria-pressed]'))
       .find(button => button.textContent?.includes(name))!;
     // One box searches the catalog and adds the creator's own wording.
     search('Bakery Wars');
@@ -251,10 +251,10 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(container.querySelector('#custom-tag-add')).toBeNull();
     search('Slow Life');
     expect(container.querySelector('#custom-tag-add')).toBeNull();
-    expect(row('slow life').getAttribute('aria-selected')).toBe('false');
+    expect(row('slow life').getAttribute('aria-pressed')).toBe('false');
     act(() => row('slow life').click());
     expect(currentSeed.story.required.storyTags).toEqual(['Bakery Wars', 'slow life']);
-    expect(row('slow life').getAttribute('aria-selected')).toBe('true');
+    expect(row('slow life').getAttribute('aria-pressed')).toBe('true');
     act(() => row('slow life').click());
     expect(currentSeed.story.required.storyTags).toEqual(['Bakery Wars']);
     // A genre's name finds its starter tags.

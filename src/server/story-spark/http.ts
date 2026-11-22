@@ -44,6 +44,13 @@ const SPARK_MAX_OUTPUT_TOKENS = 1_024;
 const SPARK_TIMEOUT_MS = 45_000;
 /** Tags are a courtesy on top of the spark: never keep a writer waiting for them. */
 const SPARK_TAGS_TIMEOUT_MS = 8_000;
+/**
+ * The whole answer, writing and tags together, stays inside the browser's 50
+ * second wait (`storySparkClient`): a spark that was written is never thrown
+ * away because its tags were slow.
+ */
+const SPARK_TOTAL_BUDGET_MS = 47_000;
+const SPARK_TAGS_MINIMUM_MS = 1_000;
 
 /**
  * The spark with the Story Tag engine's suggestions for its premise, read by
@@ -51,16 +58,19 @@ const SPARK_TAGS_TIMEOUT_MS = 8_000;
  * no Meaning model, or when it does not answer, the spark goes out without
  * them and planting falls back to the genre and the words of the premise.
  */
-const withSuggestedTags = async (spark: StorySpark, dependencies: StorySparkHttpDependencies): Promise<StorySpark> => {
+const withSuggestedTags = async (spark: StorySpark, dependencies: StorySparkHttpDependencies, budgetMs: number): Promise<StorySpark> => {
   const { suggestedTags: _fromTheWriter, ...plain } = spark;
   const apiKey = providerKey(dependencies.environment, 'openrouter');
-  if (!apiKey) return plain;
+  const timeoutMs = Math.min(SPARK_TAGS_TIMEOUT_MS, budgetMs);
+  if (!apiKey || timeoutMs < SPARK_TAGS_MINIMUM_MS) return plain;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const outOfTime = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Spark tags ran out of time.')), timeoutMs); });
   try {
     const request = { apiKey, model: DEFAULT_MEANING_MODEL, texts: [spark.premise] };
-    const [[vector], tags] = await Promise.all([
-      dependencies.fingerprint ? dependencies.fingerprint(request) : fingerprintWithOpenRouter({ ...request, timeoutMs: SPARK_TAGS_TIMEOUT_MS }),
+    const [[vector], tags] = await Promise.race([Promise.all([
+      dependencies.fingerprint ? dependencies.fingerprint(request) : fingerprintWithOpenRouter({ ...request, timeoutMs }),
       loadStoryTagFingerprints(),
-    ]);
+    ]), outOfTime]);
     // Packed and read back exactly as a browser would receive it, so both suggest the same tags.
     const synopsis = decodeFingerprint(encodeFingerprint(packFingerprint(vector)));
     const suggestedTags = suggestStoryTags({
@@ -71,6 +81,8 @@ const withSuggestedTags = async (spark: StorySpark, dependencies: StorySparkHttp
   } catch (error) {
     dependencies.onError?.(error);
     return plain;
+  } finally {
+    clearTimeout(timer);
   }
 };
 
@@ -102,6 +114,7 @@ export const handleStorySparkHttp = async (
   }
   if (!apiKey) return reply(503, { error: missingKeyMessage(model) });
 
+  const startedAt = Date.now();
   try {
     const textProvider = dependencies.providerFactory
       ? dependencies.providerFactory({ apiKey, model })
@@ -115,7 +128,7 @@ export const handleStorySparkHttp = async (
       responseJsonSchema: STORY_SPARK_RESPONSE_SCHEMA,
     });
     const raw = result.rawProviderResponse.trim().replace(/^```(?:json)?\s*|\s*```$/g, '');
-    return reply(200, await withSuggestedTags(parseStorySpark(JSON.parse(raw), parsed), dependencies));
+    return reply(200, await withSuggestedTags(parseStorySpark(JSON.parse(raw), parsed), dependencies, SPARK_TOTAL_BUDGET_MS - (Date.now() - startedAt)));
   } catch (error) {
     dependencies.onError?.(error);
     return reply(502, { error: 'The Dao was silent. Seek again.' });

@@ -6,8 +6,9 @@ import { meaningSimilarity, type Fingerprint } from './fingerprint';
  * Raw similarities from an embedding model sit in a narrow band that moves with
  * the model and the query, so they cannot be blended with other signals as they
  * are. This measures each candidate against the whole field for one query: a
- * candidate has to stand clearly above the field to count at all, and one far
- * above it scores 1. A query nothing fits well gives a field of zeros instead of
+ * candidate has to stand clearly above the field to count at all, a clear
+ * match scores about 1, and a stronger one scores higher still, so the best
+ * match always leads. A query nothing fits well gives a field of zeros instead of
  * a confident winner.
  */
 export const meaningFit = <Key extends string>(
@@ -21,7 +22,7 @@ export const meaningFit = <Key extends string>(
   const spread = Math.sqrt(raw.reduce((sum, [, value]) => sum + (value - mean) ** 2, 0) / raw.length);
   // One deviation above the field is where a real fit starts; three and a half is a clear match.
   // A candidate pointing away from the query never fits, however far below it the rest of the field sits.
-  return new Map(raw.map(([key, value]) => [key, spread && value > 0 ? Math.max(0, Math.min(1, ((value - mean) / spread - 1) / 2.5)) : 0]));
+  return new Map(raw.map(([key, value]) => [key, spread && value > 0 ? Math.max(0, ((value - mean) / spread - 1) / 2.5) : 0]));
 };
 
 export interface SpreadCandidate<Key extends string> {
@@ -41,6 +42,8 @@ export interface SpreadOptions<Key extends string> {
   sameMeaning: number;
   /** How strongly closeness to an earlier pick lowers a candidate, from 0 (ignore) to 1. */
   variety?: number;
+  /** The host's own word on two keys saying the same thing, beside what the fingerprints say. */
+  sameAs?: (a: Key, b: Key) => boolean;
 }
 
 /**
@@ -53,9 +56,9 @@ export interface SpreadOptions<Key extends string> {
  */
 export const pickSpread = <Key extends string>(
   candidates: readonly SpreadCandidate<Key>[],
-  { limit, taken = [], sameMeaning, variety = 0.35 }: SpreadOptions<Key>,
+  { limit, taken = [], sameMeaning, variety = 0.35, sameAs }: SpreadOptions<Key>,
 ): Key[] => {
-  const chosen: { fingerprint?: Fingerprint }[] = [...taken];
+  const chosen: { key: Key; fingerprint?: Fingerprint }[] = [...taken];
   const groups = new Map<string, number>();
   // A key that is taken, or offered twice, is never picked, with or without a fingerprint.
   const seen = new Set<Key>([...taken].map(entry => entry.key));
@@ -72,7 +75,7 @@ export const pickSpread = <Key extends string>(
           if (other.fingerprint) closest = Math.max(closest, meaningSimilarity(candidate.fingerprint, other.fingerprint));
         }
       }
-      if (closest >= sameMeaning) {
+      if (closest >= sameMeaning || (sameAs && chosen.some(other => sameAs(candidate.key, other.key)))) {
         pool.splice(index, 1);
         if (best > index) best -= 1;
         continue;

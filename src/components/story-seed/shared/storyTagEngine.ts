@@ -1,7 +1,7 @@
 import { decodeFingerprint, meaningSimilarity, type Fingerprint } from '../../meaning-engine/shared/fingerprint';
 import { meaningFit, pickSpread, type SpreadCandidate } from '../../meaning-engine/shared/rank';
 import { normalizeStoryTagIdentity, STORY_TAG_CATALOG, type StoryTagMetadata } from './storyTagCatalog';
-import { findStoryTagNiche } from './storyTagNiches';
+import { findStoryTagNiche, STORY_TAG_NICHES } from './storyTagNiches';
 
 /**
  * The Story Tag engine: which tags to suggest for this story, next.
@@ -28,6 +28,8 @@ export interface StoryTagMeaning {
   synopsis?: Fingerprint;
   /** Fingerprints of the creator's own tags, by tag identity. */
   custom?: ReadonlyMap<string, Fingerprint>;
+  /** What the creator typed into tag search, fingerprinted by the host, so search can match by meaning. */
+  search?: Fingerprint;
 }
 
 export interface StoryTagSuggestionInput {
@@ -45,13 +47,22 @@ export interface StoryTagSuggestionInput {
 export const STORY_TAG_SUGGESTION_LIMIT = 8;
 
 /**
- * Two tag meanings at least this alike say one thing in two wordings ("returner"
- * and "revenge returner", "quest systems" and "system missions"). Measured on
- * the stored fingerprints: about one pair of tags in a thousand is this close.
+ * Two tag meanings at least this alike read to a creator as one idea said twice
+ * ("dungeons" and "dungeon gates", "returner" and "regression", "kingdom
+ * building" and "kingdom economy"), so only one of them is suggested. Measured
+ * on the stored fingerprints, where unrelated tags sit near 0.47: about one
+ * pair of tags in fifty is this close.
  */
-export const SAME_TAG_MEANING = 0.75;
+export const SAME_TAG_MEANING = 0.64;
 /** Around this, two tags are merely both story tags; above it they keep company. */
-const UNRELATED_TAG_MEANING = 0.56;
+const UNRELATED_TAG_MEANING = 0.5;
+
+const words = (identity: string) => normalize(identity).split(' ').map(word => word.replace(/s$/, ''));
+/** One tag's name sits whole inside the other's: "monsters" in "monster evolution", "harem" in "reverse harem". */
+const namedInside = (a: string, b: string) => {
+  const [short, long] = words(a).length <= words(b).length ? [words(a), words(b)] : [words(b), words(a)];
+  return short.every(word => long.includes(word));
+};
 
 const WEIGHT = { named: 1, fit: 1, genreCore: 0.45, genreNiche: 0.2, company: 0.25, style: 0.05 };
 /** Below this a tag has no real case: no filler when the story says little. */
@@ -129,5 +140,49 @@ export const suggestStoryTags = (input: StoryTagSuggestionInput): StoryTagMetada
     limit: Math.max(0, Math.min(input.limit ?? STORY_TAG_SUGGESTION_LIMIT, 30)),
     taken,
     sameMeaning: SAME_TAG_MEANING,
+    sameAs: namedInside,
   }).map(identity => byIdentity.get(identity)!);
+};
+
+export const STORY_TAG_SEARCH_LIMIT = 8;
+/** A tag has to fit a search phrase at least this well to be offered for its meaning alone. */
+const SEARCH_MEANING_FIT = 0.3;
+
+/**
+ * Tags for what a creator typed into search, best first: a tag or alias with
+ * those words, then a genre's starter tags when they typed its name, then tags
+ * that mean what they described ("enemies who fall in love" finds "enemies to
+ * lovers") when the host fingerprinted the phrase.
+ */
+export const searchStoryTags = (input: { query: string; limit?: number; meaning?: Pick<StoryTagMeaning, 'tags' | 'search'> }): StoryTagMetadata[] => {
+  const query = normalize(input.query);
+  if (!query) return [];
+  const found = new Map<string, StoryTagMetadata>();
+  const named = catalog.flatMap(({ identity, entry, phrases }) => {
+    const [label, ...aliases] = phrases;
+    const rank = label === query ? 0 : label.startsWith(query) ? 1 : label.includes(query) ? 2
+      : aliases.includes(query) ? 3 : aliases.some(alias => alias.includes(query)) ? 4 : -1;
+    return rank < 0 ? [] : [{ identity, entry, rank }];
+  }).sort((a, b) => a.rank - b.rank || a.entry.label.localeCompare(b.entry.label));
+  for (const { identity, entry } of named) found.set(identity, entry);
+  if (query.length >= 3) {
+    for (const niche of STORY_TAG_NICHES) {
+      if (!normalize(niche.label).startsWith(query)) continue;
+      for (const tag of niche.tags) {
+        const identity = normalizeStoryTagIdentity(tag);
+        const entry = catalog.find(candidate => candidate.identity === identity)?.entry;
+        if (entry && !found.has(identity)) found.set(identity, entry);
+      }
+    }
+  }
+  if (input.meaning?.search) {
+    const byMeaning = [...meaningFit(input.meaning.search, input.meaning.tags)]
+      .filter(([, fit]) => fit >= SEARCH_MEANING_FIT)
+      .sort((a, b) => b[1] - a[1]);
+    for (const [identity] of byMeaning) {
+      const entry = catalog.find(candidate => candidate.identity === identity)?.entry;
+      if (entry && !found.has(identity)) found.set(identity, entry);
+    }
+  }
+  return [...found.values()].slice(0, Math.max(0, input.limit ?? STORY_TAG_SEARCH_LIMIT));
 };

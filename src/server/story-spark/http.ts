@@ -4,10 +4,15 @@
  * Story Seed, from the server's default text model. GET reports whether a
  * model is configured, so the page can fall back to its own sparks.
  */
-import { parseStorySpark, parseStorySparkRequest, type StorySparkRequest } from '@seihouse/sen/story-seed';
+import { decodeFingerprint, encodeFingerprint, packFingerprint } from '@seihouse/sen/meaning-engine';
+import {
+  loadStoryTagFingerprints, parseStorySpark, parseStorySparkRequest, STORY_SPARK_SUGGESTED_TAGS, suggestStoryTags,
+  type StorySpark, type StorySparkRequest,
+} from '@seihouse/sen/story-seed';
 import { resolveHarnessGenerationConfig, type HarnessGenerationEnvironment } from '../harness-generation/config';
 import { createHarnessTextProvider, type HarnessTextModelProvider } from '../harness-generation/provider';
-import { missingKeyMessage, textModelProvider } from '../model-router/catalog';
+import { DEFAULT_MEANING_MODEL, missingKeyMessage, providerKey, textModelProvider } from '../model-router/catalog';
+import { fingerprintWithOpenRouter } from '../model-router/openRouter';
 import { buildStorySparkPrompt, STORY_SPARK_RESPONSE_SCHEMA } from './prompt';
 
 export interface StorySparkHttpRequest {
@@ -25,6 +30,8 @@ export interface StorySparkHttpResponse {
 export interface StorySparkHttpDependencies {
   environment: HarnessGenerationEnvironment;
   providerFactory?: (input: { apiKey: string; model: string }) => HarnessTextModelProvider;
+  /** The premise's embedding vector, for tests; the Meaning model serves it otherwise. */
+  fingerprint?: (input: { apiKey: string; model: string; texts: string[] }) => Promise<number[][]>;
   onError?: (error: unknown) => void;
 }
 
@@ -35,6 +42,37 @@ const reply = (status: number, body: unknown, headers: Record<string, string> = 
 /** A spark is small: answers stay short and quick. */
 const SPARK_MAX_OUTPUT_TOKENS = 1_024;
 const SPARK_TIMEOUT_MS = 45_000;
+/** Tags are a courtesy on top of the spark: never keep a writer waiting for them. */
+const SPARK_TAGS_TIMEOUT_MS = 8_000;
+
+/**
+ * The spark with the Story Tag engine's suggestions for its premise, read by
+ * meaning: the tags a planted spark starts with, beside the writer's own. With
+ * no Meaning model, or when it does not answer, the spark goes out without
+ * them and planting falls back to the genre and the words of the premise.
+ */
+const withSuggestedTags = async (spark: StorySpark, dependencies: StorySparkHttpDependencies): Promise<StorySpark> => {
+  const { suggestedTags: _fromTheWriter, ...plain } = spark;
+  const apiKey = providerKey(dependencies.environment, 'openrouter');
+  if (!apiKey) return plain;
+  try {
+    const request = { apiKey, model: DEFAULT_MEANING_MODEL, texts: [spark.premise] };
+    const [[vector], tags] = await Promise.all([
+      dependencies.fingerprint ? dependencies.fingerprint(request) : fingerprintWithOpenRouter({ ...request, timeoutMs: SPARK_TAGS_TIMEOUT_MS }),
+      loadStoryTagFingerprints(),
+    ]);
+    // Packed and read back exactly as a browser would receive it, so both suggest the same tags.
+    const synopsis = decodeFingerprint(encodeFingerprint(packFingerprint(vector)));
+    const suggestedTags = suggestStoryTags({
+      synopsis: spark.premise, genre: spark.genre, style: spark.style, picked: spark.tags,
+      limit: STORY_SPARK_SUGGESTED_TAGS, meaning: { tags, synopsis },
+    }).map(tag => tag.label);
+    return suggestedTags.length ? { ...plain, suggestedTags } : plain;
+  } catch (error) {
+    dependencies.onError?.(error);
+    return plain;
+  }
+};
 
 export const handleStorySparkHttp = async (
   request: StorySparkHttpRequest,
@@ -77,7 +115,7 @@ export const handleStorySparkHttp = async (
       responseJsonSchema: STORY_SPARK_RESPONSE_SCHEMA,
     });
     const raw = result.rawProviderResponse.trim().replace(/^```(?:json)?\s*|\s*```$/g, '');
-    return reply(200, parseStorySpark(JSON.parse(raw), parsed));
+    return reply(200, await withSuggestedTags(parseStorySpark(JSON.parse(raw), parsed), dependencies));
   } catch (error) {
     dependencies.onError?.(error);
     return reply(502, { error: 'The Dao was silent. Seek again.' });

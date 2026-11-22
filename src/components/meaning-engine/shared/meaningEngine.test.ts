@@ -37,6 +37,7 @@ describe('ranking by meaning', () => {
     ];
     const fit = meaningFit(print(1, 0), candidates);
     expect(fit.get('match')).toBeGreaterThan(0.9);
+    expect(fit.get('match')).toBe(Math.max(...fit.values()));
     expect(fit.get('other0')).toBe(0);
     expect(meaningFit(print(1, 0), []).size).toBe(0);
     // Nothing fits a query the whole field points away from, not even the least bad candidate.

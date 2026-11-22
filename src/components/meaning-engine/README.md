@@ -28,5 +28,8 @@ compared, so stored ones are rebuilt when the model changes.
 
 ## History
 
+- 2026-11-22: `pickSpread` takes the host's own word on two keys saying the same
+  thing (`sameAs`); `meaningFit` no longer caps a strong match, so the best one
+  always leads.
 - 2026-11-21: Created for the Story Tag engine (SENSEI: tags and search are the
   same primitive, so it is built once and reused).

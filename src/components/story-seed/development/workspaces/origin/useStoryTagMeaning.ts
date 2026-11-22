@@ -17,7 +17,7 @@ const known = new Map<string, Fingerprint>();
  * own tags from the host's model. Without a host model it stays undefined and
  * suggestions come from the genre and the words of the synopsis.
  */
-export const useStoryTagMeaning = (synopsis: string, storyTags: readonly string[]): StoryTagMeaning | undefined => {
+export const useStoryTagMeaning = (synopsis: string, storyTags: readonly string[], search = ''): StoryTagMeaning | undefined => {
   const fingerprintMeaning = useOptionalStoryCreationRuntime()?.fingerprintMeaning;
   const [tags, setTags] = useState<Map<string, Fingerprint>>();
   const [arrived, setArrived] = useState(0);
@@ -25,12 +25,14 @@ export const useStoryTagMeaning = (synopsis: string, storyTags: readonly string[
   const lastSynopsis = useRef<Fingerprint | undefined>(undefined);
   const unavailable = useRef(false);
   const text = synopsis.trim();
+  // A word or two is found by name; a described tag ("enemies who fall in love") needs its meaning.
+  const phrase = search.trim().split(/\s+/).length >= 2 ? search.trim() : '';
   // Keyed by their text, so picking a catalog tag changes nothing here and never restarts a request.
   const customTagKey = storyTags.map(tag => tag.trim()).filter(tag => tag && !getTagMetadata(tag)).join('\u0000');
   const customTags = useMemo(() => customTagKey ? customTagKey.split('\u0000') : [], [customTagKey]);
   const wanted = useMemo(
-    () => [...(text.length >= MINIMUM_SYNOPSIS_LENGTH ? [text] : []), ...customTags].filter(entry => !known.has(entry)),
-    [text, customTags],
+    () => [...new Set([...(text.length >= MINIMUM_SYNOPSIS_LENGTH ? [text] : []), ...customTags, ...(phrase ? [phrase] : [])])].filter(entry => !known.has(entry)),
+    [text, customTags, phrase],
   );
 
   useEffect(() => {
@@ -70,7 +72,7 @@ export const useStoryTagMeaning = (synopsis: string, storyTags: readonly string[
     }));
     if (text.length < MINIMUM_SYNOPSIS_LENGTH) lastSynopsis.current = undefined;
     else lastSynopsis.current = known.get(text) ?? (unavailable.current ? undefined : lastSynopsis.current);
-    return { tags, synopsis: lastSynopsis.current, custom };
+    return { tags, synopsis: lastSynopsis.current, custom, search: phrase ? known.get(phrase) : undefined };
     // `arrived` re-reads the session's fingerprints when new ones land.
-  }, [tags, text, customTags, arrived]);
+  }, [tags, text, customTags, phrase, arrived]);
 };

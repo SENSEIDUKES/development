@@ -107,7 +107,8 @@ export const OriginTagEditor = memo(({
               <button key={tag} type="button" onClick={() => toggleTag(tag)} aria-label={`Remove tag ${tag}`}
                 className="glass-chip story-seed-touch-target animate-fadeIn px-2.5 py-1 font-sans text-xs transition-colors hover:border-red-300/40">
                 {metadata && <CategoryColorDot color={metadata.color} />}
-                <span className="font-semibold">{tag}</span>
+                {/* A catalog tag reads in the creator's language; their own wording is never translated. */}
+                <span className="font-semibold" data-no-interface-translate={metadata ? undefined : ''}>{tag}</span>
                 <X size={12} aria-hidden="true" className="text-neutral-400" />
               </button>
             );

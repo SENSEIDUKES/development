@@ -70,4 +70,21 @@ describe('Story Tags screen in another language', () => {
     expect(sheet.textContent).toContain(pack.formatters.tagsChosen('1', '12'));
     expect(sheet.querySelector('#tag-categories')?.getAttribute('aria-label')).toBe(pack.strings['Tag groups']);
   });
+
+  it('never translates a creator\'s own tag, even when it is a word the interface knows', async () => {
+    await loadLanguagePack('ja');
+    const seed = createEmptyStorySeedInput();
+    seed.story.required.storyTags = ['Done', 'slow life'];
+    const Harness = () => {
+      const [current, setSeed] = useState(seed);
+      useInterfaceLanguageTranslation('ja');
+      return <OriginPremiseAndTags premise="" storyTags={current.story.required.storyTags} onPremiseChange={() => {}} updateSeed={setSeed} beforeTags={null} />;
+    };
+    await act(async () => { root.render(<LibraryPresentationProvider><Harness /></LibraryPresentationProvider>); });
+    const chips = Array.from(container.querySelectorAll('.glass-chip')).map(chip => chip.textContent);
+    // "Done" is the creator's own wording; "slow life" is a catalog tag and reads in Japanese.
+    expect(chips[0]).toBe('Done');
+    expect(chips[1]).not.toBe('slow life');
+    expect(chips[1]).toBeTruthy();
+  });
 });

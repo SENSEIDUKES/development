@@ -4,7 +4,7 @@
 in the session that moved the Chapter Tagger to notes in the margin
 ([#482](https://github.com/SENSEIDUKES/development/pull/482)) and gave it its
 own model choice ([#484](https://github.com/SENSEIDUKES/development/pull/484)).
-Phase B is built (the author's world view, below); the Phases table says where
+Phase B is built (the author's world view, below; named the **World Space** on 2026-11-23); the Phases table says where
 each phase stands (checked against the code 2026-11-06). Any agent
 picking this up should read it top to bottom, then
 [NOVEL_EXPANDED.md](../../NOVEL_EXPANDED.md) (the product map and How we build),
@@ -141,10 +141,14 @@ and phase B closes on SENSEI's run in it."
 
 ## The author's world view (designed with SENSEI, 2026-10-30)
 
-**Built** (`src/library/stories/AuthorWorldView.tsx`, checked 2026-11-06): the
-Worlds column, Novel (Sequential Art shown, not yet working), Blueprint,
-Chapters, Codex (coming soon), Assets and an Info tab. It has no name of its
-own: it is what a world opens to in Create.
+**Built**, and since 2026-11-23 named the **World Space**
+([`src/components/world-space/`](../../src/components/world-space/README.md),
+`?preview=world-space`): Novel (Sequential Art shown, not yet working),
+Blueprint, Chapters, Codex (coming soon), Assets and an Info tab. It shows one
+world at a time: the Worlds column drawn below gave way to the chosen world on
+the Library's Feature card, named Your World (another world is chosen back in
+the Creator Space), and the Creator Space's Edit opens it too (SENSEI, 2026-11-23). The
+design below is the 2026-10-30 record.
 
 > "This page is going to be essentially the author's tool, where the real
 > authors can go into these novels and tag multiple chapters at a time, or see
@@ -292,6 +296,10 @@ chapters first, until the tagging is right):
 
 ## History
 
+- **2026-11-23 (the World Space):** SENSEI named the author's world view the
+  World Space, sent the Creator Space's Edit to it, and had it show one world
+  at a time on the Library's Feature card, named Your World. Its
+  code moved to `src/components/world-space/` and it has a Workshop entry.
 - **2026-10-29:** Written from SENSEI's direction after the first real run of
   the margin-note tagger. Phase A awaiting approval.
 - **2026-10-29 (review):** Phase B gains its decisions (a run that stops,

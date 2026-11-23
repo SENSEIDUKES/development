@@ -44,7 +44,7 @@ function archiveToggle() {
 }
 
 const ACTIVE_GROUPS = {
-  Pages: ['light-novels-home', 'library-shell', 'creator-space', 'story-seed', 'discover', 'reader-chamber', 'reader-codex', 'oauth', 'user-profile', 'celestial-store', 'user-shop'],
+  Pages: ['light-novels-home', 'library-shell', 'creator-space', 'world-space', 'story-seed', 'discover', 'reader-chamber', 'reader-codex', 'oauth', 'user-profile', 'celestial-store', 'user-shop'],
   Rewards: ['reward-loop', 'achievements', 'relics-gallery', 'familiar-training', 'dao-pillar', 'idle-cultivation'],
   Customization: ['familiar'],
   Systems: ['novel-expanded-docs', 'library-help', 'harness-generation', 'writer-instructions', 'image-prompts', 'chapter-generation-manifestation', 'character-voice', 'provenance', 'energy'],
@@ -92,7 +92,7 @@ describe('WorkshopHome', () => {
     }));
     expect(groups).toEqual([
       { label: 'Home', ids: ['light-novels-home', 'library-shell'] },
-      { label: 'Create', ids: ['creator-space', 'story-seed'] },
+      { label: 'Create', ids: ['creator-space', 'world-space', 'story-seed'] },
       { label: 'Discover', ids: ['discover'] },
       { label: 'Read', ids: ['reader-chamber', 'reader-codex'] },
       { label: 'Account', ids: ['oauth', 'user-profile'] },
@@ -126,7 +126,7 @@ describe('WorkshopHome', () => {
       }
     }
     expect(Object.fromEntries(workshopEntries.map((entry) => [entry.id, entry.owner]))).toEqual({
-      'light-novels-home': 'library', 'library-shell': 'library', 'creator-space': 'library', 'discover': 'library', 'story-seed': 'library',
+      'light-novels-home': 'library', 'library-shell': 'library', 'creator-space': 'library', 'world-space': 'library', 'discover': 'library', 'story-seed': 'library',
       'reader-chamber': 'sen', 'reader-codex': 'sen', 'oauth': 'library', 'user-profile': 'library', 'dao-pillar': 'library', 'celestial-store': 'library', 'user-shop': 'library',
       'reward-loop': 'workshop', achievements: 'library', 'familiar-training': 'library',
       familiar: 'library', 'relics-gallery': 'library', 'idle-cultivation': 'library',

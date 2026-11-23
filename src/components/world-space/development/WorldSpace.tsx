@@ -1,37 +1,42 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
-import { ArrowLeft, BookOpen, Check, ChevronRight, Download, Globe, LoaderCircle, Mic, Sparkles, Square } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, Download, Globe, LoaderCircle, Mic, Sparkles, Square } from 'lucide-react';
 import { SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
 import { describeChapterTagging, findStory, storyTaggingSummary, type HarnessChapter, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { LibraryButton, ManifestButton } from '@seihouse/ui/sen';
-import type { CreatorWorld } from '../../components/creator-space/shared/creatorSpaceContracts';
-import { WorldCard } from '../../components/world-card/development/WorldCard';
-import { useLibraryAssets } from '../assets';
-import { EnergyActionCost } from '../../components/energy/development/EnergyActionCost';
-import { useActionEnergyPrice } from '../../components/energy/shared/energyModels';
-import { getEnergyPriceEntry } from '../../components/energy/shared/energyContracts';
-import { StoryBlueprintPage } from './StoryBlueprint';
-import { inheritBlueprintPictures } from '../story-seed/blueprintPictures';
-import { StorySettings } from './settings/StorySettings';
-import { isStoryPublished, storyOrigin } from './storyView';
-import { downloadHarnessStory } from './storyExport';
-import type { LibraryStories } from './useLibraryStories';
-import { chapterVoiceEnergy, chapterVoicePlan, type ChapterVoiceService } from './chapterVoices';
+import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
+import { WorldCardFeature } from '../../world-card/development/WorldCardFeature';
+import { useLibraryAssets } from '../../../library/assets';
+import { EnergyActionCost } from '../../energy/development/EnergyActionCost';
+import { useActionEnergyPrice } from '../../energy/shared/energyModels';
+import { getEnergyPriceEntry } from '../../energy/shared/energyContracts';
+import { StoryBlueprintPage } from '../../../library/stories/StoryBlueprint';
+import { inheritBlueprintPictures } from '../../../library/story-seed/blueprintPictures';
+import { StorySettings } from '../../../library/stories/settings/StorySettings';
+import { isStoryPublished, storyOrigin } from '../../../library/stories/storyView';
+import { downloadHarnessStory } from '../../../library/stories/storyExport';
+import type { LibraryStories } from '../../../library/stories/useLibraryStories';
+import type { CodexPictureService } from '../../../library/stories/storyCover';
+import { chapterVoiceEnergy, chapterVoicePlan, type ChapterVoiceService } from '../../../library/stories/chapterVoices';
+import './world-space.css';
 
 /**
- * The author's world view (SENSEI, 2026-10-30): what a world opens to when
- * its author taps it under Your worlds in Create. The author's tool, iTunes
- * plain: the author's worlds as mini world cards (a column on a laptop, a row
- * on a phone), a medium switcher (Novel; Sequential Art later), and the chosen
- * world's Blueprint, Chapters, Codex and Assets. Tagging lives here and
- * nowhere else: a reader never sees any of it. A world stays here, its
- * creator's alone, until they publish it; Read opens its World Info (its
- * cover, Start or Continue into the creator's Reader), a chapter's Read it
- * opens that chapter in the creator's Reader, and Info holds its dates and Export.
+ * The World Space (named by SENSEI, 2026-11-23; designed 2026-10-30): all
+ * available information about one of the creator's worlds, and where that
+ * world is worked on. It opens from the Creator Space, by a world's card or
+ * its Edit button, and shows one world at a time: the chosen world on the
+ * Library's own Feature card, named Your World (a tap enters the world: its
+ * World Info), where it stands, then its medium (Novel; Sequential Art
+ * later) and its Blueprint, Chapters, Codex, Assets and Info. Another world
+ * is chosen back in the Creator Space, never here (SENSEI, 2026-11-23).
+ * Tagging lives here and nowhere else: a reader never sees any of it. A world
+ * stays here, its creator's alone, until they publish it; Read opens its
+ * World Info (its cover, Start or Continue into the creator's Reader), a
+ * chapter opens in the creator's Reader, and Info holds its dates and Export.
  */
 
-export type AuthorWorldTab = 'blueprint' | 'chapters' | 'codex' | 'assets' | 'info';
+export type WorldSpaceTab = 'blueprint' | 'chapters' | 'codex' | 'assets' | 'info';
 
-const TABS: ReadonlyArray<{ id: AuthorWorldTab; label: string }> = [
+const TABS: ReadonlyArray<{ id: WorldSpaceTab; label: string }> = [
   { id: 'blueprint', label: 'Blueprint' },
   { id: 'chapters', label: 'Chapters' },
   { id: 'codex', label: 'Codex' },
@@ -39,7 +44,7 @@ const TABS: ReadonlyArray<{ id: AuthorWorldTab; label: string }> = [
   { id: 'info', label: 'Info' },
 ];
 
-/** Library art for a world with no cover yet, the same pick Create's row makes. */
+/** Library art for a world with no cover yet, the same pick the Creator Space's row makes. */
 function fallbackCover(id: string, images: readonly string[]) {
   if (!images.length) return undefined;
   let hash = 0;
@@ -47,111 +52,94 @@ function fallbackCover(id: string, images: readonly string[]) {
   return images[hash % images.length];
 }
 
-export function AuthorWorldView({ codexPictures, chapterVoices, stories, worlds, storyId, onChooseWorld, onOpenChapter, onBack, onRead }: {
-  codexPictures?: import('./storyCover').CodexPictureService;
+export function WorldSpace({ codexPictures, chapterVoices, stories, world, storyId, onOpenChapter, onBack, onRead }: {
+  codexPictures?: CodexPictureService;
   /** The host's character voices: each chapter offers its spoken lines voiced, at their Energy price. Without it, chapters offer none. */
   chapterVoices?: ChapterVoiceService;
   stories: LibraryStories;
-  /** Every world the author has, as Create's Your worlds shows them. */
-  worlds: readonly CreatorWorld[];
-  /** The chosen world. */
+  /** The chosen world as its World Card shows it (Home's card data): its title, cover, creator and genre. */
+  world?: HomeWorld;
+  /** The chosen world's story. */
   storyId: string;
-  onChooseWorld: (storyId: string) => void;
   /** A chapter opened from the Chapters tab: the creator's Reader at that chapter, in Create mode with its tags lit. */
   onOpenChapter: (chapterNumber: number) => void;
-  /** Back to Create. */
+  /** Back to the Creator Space, where another world is chosen. */
   onBack: () => void;
-  /** Read: the book's World Info in Create. Without it, there is no Read. */
+  /** Entering the world from its card: the book's World Info in Create. Without it, the card is not a door. */
   onRead?: () => void;
 }) {
-  const { homeImages = [] } = useLibraryAssets();
-  const [tab, setTab] = useState<AuthorWorldTab>('chapters');
-  const shown = tab;
-  const world = worlds.find(entry => entry.id === storyId);
+  const [tab, setTab] = useState<WorldSpaceTab>('chapters');
 
-  return <div className="mx-auto w-full max-w-7xl" data-testid="author-world" data-world={storyId}>
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <LibraryButton variant="ghost" size="icon" icon={ArrowLeft} aria-label="Back to Create" onClick={onBack} className="shrink-0" />
+  return <div className="world-space mx-auto w-full max-w-7xl" data-testid="world-space" data-world={storyId}>
+    <div className="world-space-heading">
+      <LibraryButton variant="ghost" size="icon" icon={ArrowLeft} aria-label="Back to the Creator Space" onClick={onBack} className="shrink-0" />
+      <h1 className="world-space-title font-display font-bold leading-none tracking-tight text-white">World Space</h1>
       {/* The medium: Novel today; Sequential Art once it exists. */}
-      <div role="group" aria-label="Medium" className="flex rounded-full border border-white/15 bg-black/30 p-1 text-sm" data-testid="author-world-medium">
+      <div role="group" aria-label="Medium" className="world-space-medium flex rounded-full border border-white/15 bg-black/30 p-1 text-sm" data-testid="world-space-medium">
         <button type="button" aria-pressed="true" className="min-h-9 rounded-full bg-white/10 px-4 font-medium text-white">Novel</button>
         <button type="button" aria-pressed="false" disabled title="Coming later"
           className="min-h-9 rounded-full px-4 text-neutral-500">Sequential Art</button>
       </div>
     </div>
 
-    <div className="mt-5 lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:items-start lg:gap-8">
-      <nav aria-label="Worlds" className="lg:sticky lg:top-24">
-        <p className="mb-2 hidden font-sc text-[0.625rem] font-bold uppercase tracking-[0.25em] text-[#d4af37] lg:block">Worlds</p>
-        <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 lg:mx-0 lg:max-h-[calc(100dvh-9rem)] lg:flex-col lg:overflow-y-auto lg:overflow-x-visible lg:px-0"
-          data-testid="author-world-worlds">
-          {worlds.map(entry => {
-            const cover = entry.imageUrl ?? fallbackCover(entry.id, homeImages);
-            return <li key={entry.id} className="w-28 shrink-0 lg:w-full" data-world-id={entry.id} aria-current={entry.id === storyId ? 'true' : undefined}>
-              <WorldCard face="compact" world={entry} cover={cover} fallbackCover={!entry.imageUrl}
-                selected={entry.id === storyId} onOpen={() => onChooseWorld(entry.id)} />
-            </li>;
-          })}
-        </ul>
-      </nav>
+    <WorldSpotlight stories={stories} storyId={storyId} world={world} onRead={onRead} />
 
-      <section className="mt-4 min-w-0 lg:mt-0" aria-label={world?.title ?? 'World'}>
-        <WorldHeader stories={stories} storyId={storyId} title={world?.title} onRead={onRead} />
-        <div role="tablist" aria-label="This world" className="mt-5 flex gap-1 overflow-x-auto border-b border-white/10" data-testid="author-world-tabs">
-          {TABS.map(entry => <button key={entry.id} type="button" role="tab" aria-selected={shown === entry.id}
-            onClick={() => setTab(entry.id)}
-            className={`min-h-11 shrink-0 border-b-2 px-4 text-sm transition-colors ${shown === entry.id ? 'border-[#d4af37] text-white' : 'border-transparent text-neutral-400 hover:text-neutral-200'}`}>
-            {entry.label}
-          </button>)}
-        </div>
-        <div className="mt-5" role="tabpanel" aria-label={TABS.find(entry => entry.id === shown)!.label}>
-          {shown === 'chapters' && <ChapterTable key={storyId} stories={stories} storyId={storyId} onOpenChapter={onOpenChapter} voices={chapterVoices} />}
-          {shown === 'blueprint' && <WorldBlueprint codexPictures={codexPictures} stories={stories} storyId={storyId} />}
-          {shown === 'codex' && <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-neutral-300" data-testid="author-world-codex">
-            Coming soon: every card and every picture of this world, all in one place, ahead of what a reader has reached.
-          </p>}
-          {shown === 'assets' && <StorySettings stories={stories} storyId={storyId} only="assets" />}
-          {shown === 'info' && <WorldInfoTab stories={stories} storyId={storyId} />}
-        </div>
-      </section>
-    </div>
+    <section className="mt-5 min-w-0" aria-label={world?.title ?? 'World'}>
+      <div role="tablist" aria-label="This world" className="flex gap-1 overflow-x-auto border-b border-white/10" data-testid="world-space-tabs">
+        {TABS.map(entry => <button key={entry.id} type="button" role="tab" aria-selected={tab === entry.id}
+          onClick={() => setTab(entry.id)}
+          className={`min-h-11 shrink-0 border-b-2 px-4 text-sm transition-colors ${tab === entry.id ? 'border-[#d4af37] text-white' : 'border-transparent text-neutral-400 hover:text-neutral-200'}`}>
+          {entry.label}
+        </button>)}
+      </div>
+      <div className="mt-5" role="tabpanel" aria-label={TABS.find(entry => entry.id === tab)!.label}>
+        {tab === 'chapters' && <ChapterTable key={storyId} stories={stories} storyId={storyId} onOpenChapter={onOpenChapter} voices={chapterVoices} />}
+        {tab === 'blueprint' && <WorldBlueprint codexPictures={codexPictures} stories={stories} storyId={storyId} />}
+        {tab === 'codex' && <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-neutral-300" data-testid="world-space-codex">
+          Coming soon: every card and every picture of this world, all in one place, ahead of what a reader has reached.
+        </p>}
+        {tab === 'assets' && <StorySettings stories={stories} storyId={storyId} only="assets" />}
+        {tab === 'info' && <WorldInfoTab stories={stories} storyId={storyId} />}
+      </div>
+    </section>
   </div>;
 }
 
 /**
- * The top of the author's world view: the title, one line saying where the
- * world stands (Draft or Published, Made in SEN or Imported, its chapters) and
- * what that origin means for its chapters, then Read (its World Info, the
- * creator's). Publish is in Info (SENSEI, 2026-11-04): publishing will come
+ * The spotlight: the one world this World Space is open on, so its creator
+ * always knows which story they are working on. It is the Library's own
+ * Feature card (Home's spotlight), named Your World: the world's cover (the
+ * Library's own art for a world with no cover yet), title, creator and
+ * genre, and a tap anywhere enters the world (its World Info, the
+ * creator's). Beneath it, where the world stands (Draft or Published, Made
+ * in SEN or Imported, its chapters) and what its origin means for its
+ * chapters. Publish is in Info (SENSEI, 2026-11-04): publishing will come
  * with user agreements and a subscription, so it is never a button up here.
  */
-function WorldHeader({ stories, storyId, title, onRead }: {
-  codexPictures?: import('./storyCover').CodexPictureService;
-  stories: LibraryStories; storyId: string; title?: string; onRead?: () => void;
+function WorldSpotlight({ stories, storyId, world, onRead }: {
+  stories: LibraryStories; storyId: string; world?: HomeWorld; onRead?: () => void;
 }) {
+  const { homeImages = [] } = useLibraryAssets();
   const story = stories.state ? findStory(stories.state, storyId) : undefined;
-  if (!story) return <h1 className="font-display text-2xl text-white sm:text-3xl">{title}</h1>;
-  const published = isStoryPublished(story);
-  const origin = storyOrigin(story);
-  const chapters = stories.state!.chapters.filter(entry => entry.storyId === storyId).length;
-  return <header data-testid="author-world-header" data-origin={origin}>
-    <h1 className="font-display text-2xl text-white sm:text-3xl">{title}</h1>
-    <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-neutral-400" data-testid="author-world-standing">
+  const published = story ? isStoryPublished(story) : false;
+  const origin = story ? storyOrigin(story) : undefined;
+  const chapters = story ? stories.state!.chapters.filter(entry => entry.storyId === storyId).length : 0;
+  const featured = world && !world.imageUrl.trim() ? { ...world, imageUrl: fallbackCover(storyId, homeImages) ?? '' } : world;
+  return <header className="mt-4" data-testid="world-space-header" data-origin={origin}>
+    {featured && <div className="world-space-hero" data-testid="world-space-hero">
+      <WorldCardFeature world={featured} label="Your World" onOpen={() => onRead?.()} actionLabel={onRead ? undefined : null} />
+    </div>}
+    {story && <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-neutral-400" data-testid="world-space-standing">
       <span className={`rounded-full border px-2.5 py-0.5 font-semibold uppercase tracking-[0.15em] ${published ? 'border-[#d4af37]/50 text-[#d4af37]' : 'border-white/20 text-neutral-200'}`}>{published ? 'Published' : 'Draft'}</span>
       <span className={`rounded-full border px-2.5 py-0.5 font-semibold uppercase tracking-[0.15em] ${origin === 'sen' ? 'border-cyan-300/40 text-cyan-200' : 'border-violet-300/40 text-violet-200'}`}
-        data-testid="author-world-origin">{origin === 'sen' ? 'Made in SEN' : 'Imported'}</span>
+        data-testid="world-space-origin">{origin === 'sen' ? 'Made in SEN' : 'Imported'}</span>
       <span>{chapters === 1 ? '1 chapter' : `${chapters} chapters`}</span>
-    </p>
-    <p className="mt-1.5 text-xs text-neutral-500" data-testid="author-world-origin-rule">
+    </p>}
+    {story && <p className="mt-1.5 text-xs text-neutral-500" data-testid="world-space-origin-rule">
       {origin === 'sen'
         ? 'Each chapter seals once the next one is written, so the Codex stays true. Sounds and media can still change.'
         : 'Already written, so any chapter can be reopened. Sounds and media can change too.'}
-    </p>
-    {/* Fixed row: two even buttons on a phone, side by side on wider screens. Publish's question opens from it. */}
-    {/* One action here, Read; Publish lives in Info until publishing grows its agreements and subscriber terms. */}
-    {onRead && <div className="mt-4 sm:max-w-56" data-testid="author-world-actions">
-      <LibraryButton variant="primary" fullWidth icon={BookOpen} onClick={() => onRead()} data-testid="author-world-read">Read</LibraryButton>
-    </div>}
+    </p>}
   </header>;
 }
 
@@ -181,10 +169,10 @@ function PublishControl({ stories, storyId, published, hasChapters }: { stories:
   };
   return <SEIPopover modal={false} open={open} onOpenChange={next => { setOpen(next); if (!next) setProblem(undefined); }}>
     <SEIPopoverTrigger render={<LibraryButton variant="secondary" fullWidth icon={published ? Check : Globe}  aria-label={published ? 'Published: change who can read it' : 'Publish'} />}
-      data-testid="author-world-publish" data-published={published || undefined}>
+      data-testid="world-space-publish" data-published={published || undefined}>
       {published ? 'Published' : 'Publish'}
     </SEIPopoverTrigger>
-    <SEIPopoverContent side="bottom" align="end" sideOffset={10} collisionPadding={16} variant="dark" className="w-72 p-4" data-testid="author-world-publish-sheet">
+    <SEIPopoverContent side="bottom" align="end" sideOffset={10} collisionPadding={16} variant="dark" className="w-72 p-4" data-testid="world-space-publish-sheet">
       <SEIPopoverTitle className="font-display text-base text-white">{published ? 'Readers can find this world' : 'Publish this world?'}</SEIPopoverTitle>
       <p className="mt-1.5 text-sm text-neutral-300">{published
         ? 'It is on Home and in Search. Return it to a draft to keep it in Create only.'
@@ -228,20 +216,20 @@ function WorldInfoTab({ stories, storyId }: { stories: LibraryStories; storyId: 
       setProblem(error instanceof Error ? error.message : 'The book could not be exported.');
     }
   };
-  return <section className="max-w-xl" data-testid="author-world-info">
+  return <section className="max-w-xl" data-testid="world-space-info">
     <dl className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03]">
       <div className="flex items-center justify-between gap-4 px-4 py-3">
         <dt className="text-sm text-neutral-400">Created</dt>
-        <dd className="text-right text-sm text-neutral-100" data-testid="author-world-created"><time dateTime={story.createdAt}>{shownDate(story.createdAt)}</time></dd>
+        <dd className="text-right text-sm text-neutral-100" data-testid="world-space-created"><time dateTime={story.createdAt}>{shownDate(story.createdAt)}</time></dd>
       </div>
       <div className="flex items-center justify-between gap-4 px-4 py-3">
         <dt className="text-sm text-neutral-400">Last updated</dt>
-        <dd className="text-right text-sm text-neutral-100" data-testid="author-world-updated"><time dateTime={story.updatedAt}>{shownDate(story.updatedAt)}</time></dd>
+        <dd className="text-right text-sm text-neutral-100" data-testid="world-space-updated"><time dateTime={story.updatedAt}>{shownDate(story.updatedAt)}</time></dd>
       </div>
     </dl>
     <div className="mt-5 flex max-w-xs flex-col gap-3">
       <PublishControl key={storyId} stories={stories} storyId={storyId} published={isStoryPublished(story)} hasChapters={chapters > 0} />
-      <LibraryButton variant="secondary" fullWidth icon={Download} onClick={exportBook} data-testid="author-world-export">Export book</LibraryButton>
+      <LibraryButton variant="secondary" fullWidth icon={Download} onClick={exportBook} data-testid="world-space-export">Export book</LibraryButton>
       <p className="text-xs text-neutral-500">Saves the whole book as one file: every chapter and what the writer was given for it.</p>
       {problem && <p role="alert" className="text-xs text-amber-200">{problem}</p>}
     </div>
@@ -249,7 +237,7 @@ function WorldInfoTab({ stories, storyId }: { stories: LibraryStories; storyId: 
 }
 
 /** The world's Blueprint, or a plain note when the world has none (an imported novel, or one begun from a premise). */
-function WorldBlueprint({ stories, storyId, codexPictures }: { stories: LibraryStories; storyId: string; codexPictures?: import('./storyCover').CodexPictureService }) {
+function WorldBlueprint({ stories, storyId, codexPictures }: { stories: LibraryStories; storyId: string; codexPictures?: CodexPictureService }) {
   const { state } = stories;
   const story = state ? findStory(state, storyId) : undefined;
   const input = state && story ? state.foundations.find(entry => entry.id === story.activeFoundationRevisionId)?.input : undefined;
@@ -259,7 +247,7 @@ function WorldBlueprint({ stories, storyId, codexPictures }: { stories: LibraryS
     void inheritBlueprintPictures(state, storyId, codexPictures).catch(() => undefined);
   }, [storyId, foundationId, codexPictures]);
   if (input?.sourceSnapshot?.kind !== 'story-seed' || !input.sourceSnapshot.blueprint) {
-    return <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-neutral-300" data-testid="author-world-no-blueprint">
+    return <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-neutral-300" data-testid="world-space-no-blueprint">
       This world has no Blueprint. An imported novel doesn&rsquo;t have one, and neither does a novel begun from a premise.
     </p>;
   }
@@ -341,7 +329,7 @@ function ChapterTable({ stories, storyId, onOpenChapter, voices }: { stories: Li
   const chapters = useMemo(() => (state?.chapters ?? []).filter(chapter => chapter.storyId === storyId)
     .sort((left, right) => left.chapterNumber - right.chapterNumber), [state, storyId]);
   if (!state) return null;
-  if (!chapters.length) return <p className="text-sm text-neutral-400" data-testid="author-world-no-chapters">This world has no chapters yet.</p>;
+  if (!chapters.length) return <p className="text-sm text-neutral-400" data-testid="world-space-no-chapters">This world has no chapters yet.</p>;
 
   const gapOf = (chapter: HarnessChapter) => (canGenerate ? controller.retagChapterGap(storyId, chapter.id) : 'The tagger cannot be reached here right now.');
   const taggable = chapters.filter(chapter => !gapOf(chapter));
@@ -387,11 +375,11 @@ function ChapterTable({ stories, storyId, onOpenChapter, voices }: { stories: Li
   };
 
   const done = run ? run.queue.indexOf(run.current ?? '') : -1;
-  return <div data-testid="author-world-chapters">
+  return <div data-testid="world-space-chapters">
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       {running
         ? <>
-            <p className="text-sm text-neutral-200" role="status" data-testid="author-world-tagging">
+            <p className="text-sm text-neutral-200" role="status" data-testid="world-space-tagging">
               <LoaderCircle size={16} aria-hidden="true" className="me-2 inline animate-spin align-[-3px] text-cyan-200" />
               Tagging {Math.max(done, 0) + 1} of {run!.queue.length}
             </p>
@@ -402,7 +390,7 @@ function ChapterTable({ stories, storyId, onOpenChapter, voices }: { stories: Li
               {chosen.length ? `Tag ${chosen.length === 1 ? '1 chapter' : `${chosen.length} chapters`}` : 'Tag'}
               {chosen.length > 0 && tagPrice !== null && <EnergyActionCost price={tagPrice * chosen.length} projected={getEnergyPriceEntry('chapter.tag').projected} className="ms-2" />}
             </ManifestButton>
-            <p className="text-xs text-neutral-400" data-testid="author-world-cost">
+            <p className="text-xs text-neutral-400" data-testid="world-space-cost">
               {chosen.length
                 ? `${chosen.length === 1 ? 'One tagging call' : `${chosen.length} tagging calls`}, one per chapter${tagPrice !== null ? `, ${tagPrice} Energy each` : ''}.`
                 : canGenerate ? 'Check the chapters to tag.' : 'The tagger cannot be reached here right now.'}
@@ -435,7 +423,7 @@ function ChapterTable({ stories, storyId, onOpenChapter, voices }: { stories: Li
           const found = chapter.tagging?.status === 'tagged'
             ? describeChapterTagging(chapter, { entries: state.codexEntries }).kinds.filter(line => line.state === 'found').map(line => line.kind)
             : [];
-          return <tr key={chapter.id} data-testid="author-world-chapter" data-chapter-number={chapter.chapterNumber} data-checked={checked ? 'true' : 'false'}
+          return <tr key={chapter.id} data-testid="world-space-chapter" data-chapter-number={chapter.chapterNumber} data-checked={checked ? 'true' : 'false'}
             className={`border-b border-white/5 transition-colors ${checked ? 'bg-[#d4af37]/[0.08]' : 'hover:bg-white/[0.03]'} ${gap ? '' : 'cursor-pointer'}`}
             onClick={(event: ReactMouseEvent) => choose(index, event.shiftKey)}
             onDoubleClick={() => onOpenChapter(chapter.chapterNumber)}>
@@ -455,7 +443,7 @@ function ChapterTable({ stories, storyId, onOpenChapter, voices }: { stories: Li
             </td>
             <td className="hidden py-2.5 pe-4 text-right align-top tabular-nums text-neutral-400 sm:table-cell">{chapter.metrics.wordCount.toLocaleString()}</td>
             <td className={`py-2.5 pe-1 text-right align-top text-xs ${status.tone === 'done' ? 'text-emerald-200/80' : status.tone === 'warn' ? 'text-amber-200' : status.tone === 'busy' ? 'text-cyan-200' : 'text-neutral-500'}`}
-              data-testid="author-world-chapter-state">{status.label}</td>
+              data-testid="world-space-chapter-state">{status.label}</td>
             <td className="py-1.5 align-top">
               <button type="button" aria-label={`Open Chapter ${chapter.chapterNumber}`} className="ms-auto grid h-9 w-9 place-items-center text-[#d4af37] hover:text-white"
                 onClick={event => { event.stopPropagation(); onOpenChapter(chapter.chapterNumber); }}>
@@ -466,6 +454,6 @@ function ChapterTable({ stories, storyId, onOpenChapter, voices }: { stories: Li
         })}
       </tbody>
     </table>
-    <p className="mt-3 text-xs text-neutral-500" data-testid="author-world-summary">{storyTaggingSummary(chapters)}</p>
+    <p className="mt-3 text-xs text-neutral-500" data-testid="world-space-summary">{storyTaggingSummary(chapters)}</p>
   </div>;
 }

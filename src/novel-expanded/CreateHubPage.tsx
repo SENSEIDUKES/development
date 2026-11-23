@@ -43,9 +43,9 @@ export function creatorWorldsOf(state: HarnessWorkspaceState, worlds: readonly H
  * each thing a creator does next: Create plants a new Story Seed, Sparks
  * offers a story idea and begins it as a new Story Seed, Browse plugins opens Creator Plugins over parent `.spp` packs, Continue
  * opens the creator's Reader of a world (Fate and Create, where its next
- * chapter is written), the card itself
- * opens the world as its author sees it (its Blueprint, Chapters, Codex and
- * Assets), Edit opens its World Info, and Energy opens the Cave's Energy page.
+ * chapter is written), the card itself and Edit both open the world's World
+ * Space (its Blueprint, Chapters, Codex, Assets and Info), and Energy opens
+ * the Cave's Energy page.
  */
 export function CreateHubPage({ worlds, stories, navigate, readerProfile, sparks, plugins, pluginPack, pluginStories }: {
   worlds: readonly CreatorWorld[];
@@ -94,7 +94,7 @@ export function CreateHubPage({ worlds, stories, navigate, readerProfile, sparks
             canImportPlugins={canImport}
             onContinueWorld={storyId => navigate({ page: 'write', storyId })}
             onOpenWorld={world => navigate({ page: 'world', storyId: world.id })}
-            onEditWorld={storyId => navigate({ page: 'story', storyId, inCreate: true })} />}
+            onEditWorld={storyId => navigate({ page: 'world', storyId })} />}
     </div>
   </AppShell>;
 }

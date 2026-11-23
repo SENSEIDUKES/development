@@ -2,18 +2,19 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
-import { writtenChapterReply } from '../../test-utils/writtenChapter';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessTagRequest } from '@seihouse/sen/harness-generation';
-import type { CreatorWorld } from '../../components/creator-space/shared/creatorSpaceContracts';
-import { AuthorWorldView } from './AuthorWorldView';
-import { useLibraryStories } from './useLibraryStories';
-import { chapterVoiceEnergy, chapterVoicePlan, storySpeakers, type ChapterVoiceLine, type ChapterVoiceService } from './chapterVoices';
+import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
+import { WorldSpace } from './WorldSpace';
+import { useLibraryStories } from '../../../library/stories/useLibraryStories';
+import { chapterVoiceEnergy, chapterVoicePlan, storySpeakers, type ChapterVoiceLine, type ChapterVoiceService } from '../../../library/stories/chapterVoices';
 
 /**
- * The author's world view (SENSEI, 2026-10-30): what a world opens to in
- * Create. The chapters as an iTunes list, tagged a few at a time; the only
- * place in the app where tagging is seen.
+ * The World Space (named by SENSEI, 2026-11-23; designed 2026-10-30): one of
+ * the creator's worlds, on its Feature card, with everything about it. The chapters
+ * as an iTunes list, tagged a few at a time; the only place in the app where
+ * tagging is seen.
  */
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -35,10 +36,10 @@ const click = async (element: Element | null | undefined, label: string, init: M
   await act(async () => { element!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ...init })); });
   await flush();
 };
-const view = () => container.querySelector<HTMLElement>('[data-testid="author-world"]')!;
-const rows = () => [...view().querySelectorAll<HTMLElement>('[data-testid="author-world-chapter"]')];
-const row = (n: number) => view().querySelector<HTMLElement>(`[data-testid="author-world-chapter"][data-chapter-number="${n}"]`)!;
-const stateOf = (n: number) => row(n).querySelector('[data-testid="author-world-chapter-state"]')!.textContent;
+const view = () => container.querySelector<HTMLElement>('[data-testid="world-space"]')!;
+const rows = () => [...view().querySelectorAll<HTMLElement>('[data-testid="world-space-chapter"]')];
+const row = (n: number) => view().querySelector<HTMLElement>(`[data-testid="world-space-chapter"][data-chapter-number="${n}"]`)!;
+const stateOf = (n: number) => row(n).querySelector('[data-testid="world-space-chapter-state"]')!.textContent;
 const buttonByText = (text: string) => [...view().querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === text);
 const tab = (name: string) => [...view().querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(button => button.textContent === name);
 
@@ -66,14 +67,15 @@ const threeChapters = async () => {
   return { repository, storyId: story.id };
 };
 
-function Host({ repository, adapter, storyId, worlds, onOpenChapter = () => undefined, chapterVoices }: {
-  repository: InMemoryHarnessGenerationRepository; adapter: HarnessGenerationModelAdapter; storyId: string; worlds: CreatorWorld[];
+function Host({ repository, adapter, storyId, world, onOpenChapter = () => undefined, onRead, chapterVoices }: {
+  repository: InMemoryHarnessGenerationRepository; adapter: HarnessGenerationModelAdapter; storyId: string; world?: HomeWorld;
+  onRead?: () => void;
   onOpenChapter?: (chapterNumber: number) => void; chapterVoices?: ChapterVoiceService;
 }) {
   const stories = useLibraryStories({ repository, modelAdapter: adapter });
   if (!stories.state) return null;
-  return <AuthorWorldView stories={stories} worlds={worlds} storyId={storyId} chapterVoices={chapterVoices}
-    onChooseWorld={() => undefined} onOpenChapter={onOpenChapter} onBack={() => undefined} />;
+  return <WorldSpace stories={stories} world={world} storyId={storyId} chapterVoices={chapterVoices}
+    onOpenChapter={onOpenChapter} onBack={() => undefined} onRead={onRead} />;
 }
 
 const rects = Range.prototype.getClientRects;
@@ -92,7 +94,7 @@ afterEach(() => {
   Range.prototype.getClientRects = rects;
 });
 
-describe('the author\'s world view', { timeout: 20_000 }, () => {
+describe('the World Space', { timeout: 20_000 }, () => {
   it('lists the chapters, tags the ones the author checks, in order, and opens one in the Reader', async () => {
     const { repository, storyId } = await threeChapters();
     const tagChapter = vi.fn(async (request: HarnessTagRequest) => ({
@@ -105,19 +107,32 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
       arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
       tagChapter,
     };
-    const worlds: CreatorWorld[] = [{ id: storyId, title: 'The Drowned Name', chapterCount: 3, status: 'draft', updatedAt: '2026-10-30T12:00:00.000Z' }];
+    const world: HomeWorld = { id: storyId, title: 'The Drowned Name', chapterCount: 3, genre: 'Mystery', createdAt: '2026-10-30T12:00:00.000Z', reads: 0, mcName: 'Mara', powerStage: '', imageUrl: '/covers/drowned-name.png' };
     const opened: number[] = [];
-    await act(async () => root.render(<Host repository={repository} adapter={adapter} storyId={storyId} worlds={worlds} onOpenChapter={number => opened.push(number)} />));
+    const read = vi.fn();
+    await act(async () => root.render(<Host repository={repository} adapter={adapter} storyId={storyId} world={world} onOpenChapter={number => opened.push(number)} onRead={read} />));
     await flush(20);
 
     // The world, its medium (Sequential Art waits), and Chapters open first.
-    expect(view().querySelector('h1')!.textContent).toBe('The Drowned Name');
-    expect(view().querySelector(`[data-world-id="${storyId}"]`)!.getAttribute('aria-current')).toBe('true');
+    // The page is named, and its one world stands on the Library's Feature card, named Your World; where it stands sits beneath.
+    expect(view().querySelector('h1')!.textContent).toBe('World Space');
+    const hero = view().querySelector<HTMLElement>('[data-testid="world-space-hero"]')!;
+    expect(hero.querySelectorAll('[data-world-card="feature"]')).toHaveLength(1);
+    expect(hero.querySelector('.world-card-banner-title')!.textContent).toBe('The Drowned Name');
+    expect(hero.querySelector('.world-card-banner-eyebrow')!.textContent).toBe('Your World');
+    expect(hero.querySelector<HTMLImageElement>('img.world-card-banner-still')!.getAttribute('src')).toBe('/covers/drowned-name.png');
+    expect(view().querySelector('[data-testid="world-space-standing"]')!.textContent).toBe('DraftMade in SEN3 chapters');
+    // One world at a time: no other world is listed, and nothing here moves to another world.
+    expect(view().querySelector('[data-world-card="compact"]')).toBeNull();
+    expect(view().querySelector('[aria-label="Next world"], [aria-label="Previous world"]')).toBeNull();
+    // A tap on the card enters the world: its World Info.
+    await click(hero.querySelector('.world-card-banner-open'), 'the world card');
+    expect(read).toHaveBeenCalledTimes(1);
     expect(buttonByText('Sequential Art')!.disabled).toBe(true);
     expect(tab('Chapters')!.getAttribute('aria-selected')).toBe('true');
     expect(rows().map(entry => entry.getAttribute('data-chapter-number'))).toEqual(['1', '2', '3']);
     expect([1, 2, 3].map(stateOf)).toEqual(['Not yet', 'Not yet', 'Not yet']);
-    expect(view().querySelector('[data-testid="author-world-summary"]')!.textContent).toBe('3 chapters · 0 tagged · 3 not tagged yet');
+    expect(view().querySelector('[data-testid="world-space-summary"]')!.textContent).toBe('3 chapters · 0 tagged · 3 not tagged yet');
 
     // Click one, shift-click to the last: a run of three. Click the middle again to leave it out.
     await click(row(1), 'Chapter 1');
@@ -126,7 +141,7 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
     // Its price, one Energy a chapter, rides on the button.
     expect(buttonByText('Tag 3 chapters3')).toBeTruthy();
     expect(view().querySelector('[data-energy-action]') ?? view().querySelector('.energy-action-cost')).toBeTruthy();
-    expect(view().querySelector('[data-testid="author-world-cost"]')!.textContent).toContain('3 tagging calls, one per chapter, 1 Energy each');
+    expect(view().querySelector('[data-testid="world-space-cost"]')!.textContent).toContain('3 tagging calls, one per chapter, 1 Energy each');
     await click(row(2), 'Chapter 2');
     expect(buttonByText('Tag 2 chapters2')).toBeTruthy();
 
@@ -135,7 +150,7 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
     expect(tagChapter.mock.calls.map(([request]) => request.chapterNumber)).toEqual([1, 3]);
     expect([1, 2, 3].map(stateOf)).toEqual(['Tagged', 'Not yet', 'Tagged']);
     expect(row(1).textContent).toContain('Appearances');
-    expect(view().querySelector('[data-testid="author-world-summary"]')!.textContent).toBe('3 chapters · 2 tagged · 1 not tagged yet');
+    expect(view().querySelector('[data-testid="world-space-summary"]')!.textContent).toBe('3 chapters · 2 tagged · 1 not tagged yet');
     expect(rows().every(entry => entry.getAttribute('data-checked') === 'false')).toBe(true);
 
     // Its arrow opens the chapter: the host opens it in the creator's Reader, in Create mode with its tags lit.
@@ -151,8 +166,8 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
       generate: vi.fn(),
       arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
     };
-    const worlds: CreatorWorld[] = [{ id: storyId, title: 'The Drowned Name', chapterCount: 3, status: 'draft', updatedAt: '2026-10-30T12:00:00.000Z' }];
-    await act(async () => root.render(<Host repository={repository} adapter={adapter} storyId={storyId} worlds={worlds} />));
+    const world: HomeWorld = { id: storyId, title: 'The Drowned Name', chapterCount: 3, genre: 'Mystery', createdAt: '2026-10-30T12:00:00.000Z', reads: 0, mcName: 'Mara', powerStage: '', imageUrl: '' };
+    await act(async () => root.render(<Host repository={repository} adapter={adapter} storyId={storyId} world={world} />));
     await flush(20);
 
     // No tagger here: nothing can be checked, and it says why.
@@ -160,9 +175,9 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
     expect(row(1).textContent).toContain('The tagger cannot be reached here right now.');
     // A world begun from a premise has no Blueprint, and says so.
     await click(tab('Blueprint'), 'Blueprint');
-    expect(view().querySelector('[data-testid="author-world-no-blueprint"]')!.textContent).toContain('An imported novel doesn’t have one');
+    expect(view().querySelector('[data-testid="world-space-no-blueprint"]')!.textContent).toContain('An imported novel doesn’t have one');
     await click(tab('Codex'), 'Codex');
-    expect(view().querySelector('[data-testid="author-world-codex"]')!.textContent).toContain('Coming soon');
+    expect(view().querySelector('[data-testid="world-space-codex"]')!.textContent).toContain('Coming soon');
     // Assets: the world's CAPA skills and media, and nothing else of Story Settings.
     await click(tab('Assets'), 'Assets');
     const assets = view().querySelector<HTMLElement>('[data-testid="story-assets"]')!;
@@ -243,7 +258,7 @@ describe('the author\'s world view', { timeout: 20_000 }, () => {
       clip: () => undefined, voice,
     });
     const show = async () => {
-      await act(async () => { root.render(<Host repository={repository} adapter={adapter} storyId={story.id} worlds={[]} chapterVoices={voices()} />); });
+      await act(async () => { root.render(<Host repository={repository} adapter={adapter} storyId={story.id} chapterVoices={voices()} />); });
       await flush(20);
     };
     await show();

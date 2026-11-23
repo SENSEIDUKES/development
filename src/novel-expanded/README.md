@@ -15,7 +15,7 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-11-20
+- Last updated: 2026-11-23
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
 
@@ -35,6 +35,8 @@ historical references and verify both destinations on mobile and desktop.
 
 - **2026-10-10:** Connected the existing Home Workshop Development pane to the
   actual app route to prevent shell and page drift; kept the original comparison.
+- **2026-11-23:** The World Space has its own Workshop entry (`?preview=world-space`),
+  which loads the app's route on one of this browser's real worlds.
 
 ## Pages and addresses
 
@@ -45,10 +47,10 @@ rewrites and every page survives a reload.
 | --- | --- | --- |
 | Home | `/app/` | Welcome to NovelExpanded, Create A World, and the reader's stories, newest first |
 | Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); phone-fitting section navigation, left browsing rail, scoped All / My updates beside Genre, and a dedicated Events tab |
-| Create | `/app/?page=create` | The Library's Creator Space: a compact Create action, the reader's worlds (Continue, Edit), Browse plugins and Studios |
-| A world, for its author | `/app/?page=create&world=<id>` | What a world opens to when its author taps it under Your worlds: the author's worlds as mini world cards, Novel (Sequential Art later), and Blueprint, Chapters, Codex (coming), Assets and Info (`AuthorWorldView`). Chapters is the iTunes list where chapters are checked and tagged a few at a time; a chapter opens in the creator's Reader, below, in Create mode with its tags lit |
+| Create | `/app/?page=create` | The Library's Creator Space: a compact Create action, the reader's worlds (Continue; the card and Edit open the World Space), Browse plugins and Studios |
+| World Space | `/app/?page=create&world=<id>` | One of the creator's worlds and everything about it ([`WorldSpace`](../components/world-space/README.md)), opened from the Creator Space by a world's card or its Edit: the world on the Library's Feature card, named Your World (a tap enters its World Info), with where it stands, Novel (Sequential Art later), and Blueprint, Chapters, Codex (coming), Assets and Info. Chapters is the list where chapters are checked and tagged a few at a time; a chapter opens in the creator's Reader, below, in Create mode with its tags lit |
 | Story Seed | `/app/?page=create&seed=new` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story; `&seed=<id>` opens a saved seed |
-| The creator's Reader | `/app/?page=create&world=<id>&read=1` (`&chapter=<n>` to open at a chapter, `&create=1` for Create mode with its tags lit) | The Reader with Fate and Create together, where the creator writes the next chapter and tags each chapter (Create mode); opened by Start Story, Continue and a chapter in the world's Chapters. Back returns to Chapters for a chapter opened there, else to the book's World Info in Create |
+| The creator's Reader | `/app/?page=create&world=<id>&read=1` (`&chapter=<n>` to open at a chapter, `&create=1` for Create mode with its tags lit) | The Reader with Fate and Create together, where the creator writes the next chapter and tags each chapter (Create mode); opened by Start Story, Continue and a chapter in the World Space's Chapters. Back returns to the World Space's Chapters for a chapter opened there, else to the book's World Info in Create |
 | Story View | `/app/?story=<id>`; the creator's, from Create: `/app/?page=create&world=<id>&info=1` | The story's World Info page: Begin Story or Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | A reader's Reader for a published book: Fate alone, never writing. A draft opened here goes to the creator's Reader |
 | Blueprint | `/app/?story=<id>&blueprint=1` | The story's own World Blueprint, opened from World Info's Blueprint button. Every story on the device is the reader's own, so it opens for its creator: editable while the novel is private, saved as a new Foundation revision the next chapter uses |
@@ -399,6 +401,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-11-23** — **The World Space, named, one world at a time** (SENSEI). The page a world opens to in Create had no name; it is now the **World Space** (all available information about one of your worlds), with its title on the page, its own folder ([`src/components/world-space/`](../components/world-space/README.md)) and its own Workshop entry (`?preview=world-space`, which loads this app's route). The Creator Space's **Edit** opens the World Space instead of World Info (World Info is still one tap away: the world's card). The World Space shows only the chosen world, on the Library's own Feature card named Your World, with where it stands beneath; the row of every world is gone, and another world is chosen back in the Creator Space. Its address is unchanged (`?page=create&world=<id>`).
 - **2026-11-20** — The guide no longer gives fixed cover prices (it said 5 and 15 Energy). A cover costs what its image model's grade costs, and three cost three times one, as the sheet shows (Model Router defaults, #619).
 - **2026-11-18** — **Kokoro casts each character by gender** (SENSEI's chapter test: women were read in a man's voice). Kokoro had three voices, narrator, main character and one man's voice for everyone else. Now each speaking character gets their own Kokoro voice, a woman's or a man's as their Codex card or the chapters say, the same one every time and on every device so kept lines are shared. A heroine gets a woman's main voice. Library's `storySpeakers` says who speaks each line; the narrator keeps one voice.
 - **2026-11-17** — Simplified Discovery controls and phone tabs, moved Events

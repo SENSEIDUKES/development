@@ -35,7 +35,7 @@
 | Document | Status | Covers |
 | --- | --- | --- |
 | [Arc goals on cards](plans/arc-goals-on-cards.md) | Proposed | 4 to 10 goals per arc (built); one Main Goal per arc proven by a card change. |
-| [Create, the creator's hub](plans/create-hub.md) | Active plan | Author's world view, manuscript import, and chapter tagging. |
+| [Create, the creator's hub](plans/create-hub.md) | Active plan | The World Space (author's world view), manuscript import, and chapter tagging. |
 | [CTE consequences](plans/cte-consequences.md) | Proposed | Design and open questions for the consequence layer. |
 | [Discover](plans/discover-page.md) | Active plan | Discover's catalogue, publication, and community features. |
 | [SEIHouse Front Desk](plans/front-desk-plan.md) | Active plan | Front Desk rollout, Familiar guides, and accessibility. |
@@ -89,6 +89,7 @@
 | [Generation Overlay](../src/components/chapter-manifestation/README.md) | Current | Chapter generation presentation. |
 | [Closed-Door Cultivation](../src/components/closed-door-cultivation/README.md) | Current | Cultivation experience and preview. |
 | [Creator Space](../src/components/creator-space/README.md) | Current | Create page and creator tools. |
+| [World Space](../src/components/world-space/README.md) | Current | One of the creator's worlds: its Feature card, Blueprint, Chapters and tagging, Assets, Info. |
 | [Daily Dao Pillar](../src/components/dao-pillar/README.md) | Current | Daily practice and its reward surface. |
 | [Discover implementation](../src/components/discover/README.md) | Current | Shared Discover surface, catalogue, and Lore. |
 | [Energy](../src/components/energy/README.md) | Current | Energy surfaces and host connections. |

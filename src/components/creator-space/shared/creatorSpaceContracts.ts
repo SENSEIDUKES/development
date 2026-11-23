@@ -118,9 +118,9 @@ export interface CreatorSpaceProps {
   onOpenEnergy?: () => void;
   /** Continue writing the world: its chapter workspace, ready for the next chapter. */
   onContinueWorld: (worldId: string) => void;
-  /** Opens the selected world's Info page. */
+  /** Opens the tapped world's own page (in the app, its World Space). */
   onOpenWorld: (world: CreatorWorld) => void;
-  /** Opens the world's in-house editing destination. */
+  /** Opens the world's in-house editing destination (in the app, its World Space). */
   onEditWorld: (worldId: string) => void;
   /** Opens the plugin browser, optionally focused on one clicked plugin kind. */
   onBrowseToolkit?: (kind?: CreatorToolkitKind) => void;

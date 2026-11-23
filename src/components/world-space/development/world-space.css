@@ -1,0 +1,21 @@
+/* World Space (the Library's page for one of the creator's worlds). Scoped to the page root. */
+.world-space {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+/* Back, the page's name, then the medium: one row where there is room, the medium beneath on a phone. */
+.world-space-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.world-space-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  /* The Creator Space's title size: the two pages are one family. */
+  font-size: clamp(1.625rem, 7.4vw, 2.75rem);
+}
+.world-space-medium { margin-inline-start: auto; }

@@ -8,7 +8,7 @@ import { familiarPage } from './appFamiliarActions';
 import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
 import { HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderProfileProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode } from '@seihouse/library/shell';
 import { SparksButton } from '@seihouse/sen/story-seed';
-import { AuthorWorldView, CreateStoryPlugins, CreateStorySettings, StoryPages, isStoryPublished, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
+import { WorldSpace, CreateStoryPlugins, CreateStorySettings, StoryPages, isStoryPublished, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { createOfficialCapaDefaultLoadout, officialCapaUpgrades } from '../host/generation/capa/officialCapaSkills';
 import { NarrativeButton } from '@seihouse/sen/presentation';
@@ -113,7 +113,7 @@ function familiarPlace(page: ReturnType<typeof useAppRoute>[0]['page']): { title
   const where = familiarPage(page);
   switch (page) {
     case 'create': return { title: 'Create', help: 'story-seed', page: where };
-    case 'world': return { title: 'Create', help: 'library', page: where };
+    case 'world': return { title: 'World Space', help: 'library', page: where };
     case 'read':
     case 'write': return { title: 'Reader', help: 'reader', page: where };
     case 'discover': return { title: 'Discover', help: 'library', page: where };
@@ -287,16 +287,16 @@ function NovelExpandedRoutes({ services, writer, askForToken, discoverCatalogue,
 
   if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} menuMusic={menuMusicSlot} accentColor={profile.accentColor} />);
 
-  // A world as its author sees it: tapped under Your worlds in Create. Tagging lives here and nowhere else.
+  // The World Space: one world, opened from the Creator Space by its card or its Edit. Tagging lives here and nowhere else.
   if (route.page === 'world') return withFamiliar(missingWorld ? null : <AppShell route={{ page: 'create' }} navigate={navigate} stories={worlds}
-    readerProfile={profile} mainLabel="Create">
+    readerProfile={profile} mainLabel="World Space">
     <div className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6">
-      <AuthorWorldView codexPictures={codexPictures} chapterVoices={chapterVoices} stories={stories} worlds={creatorWorlds} storyId={route.storyId}
-        onChooseWorld={id => navigate({ page: 'world', storyId: id }, { replace: true })}
+      <WorldSpace codexPictures={codexPictures} chapterVoices={chapterVoices} stories={stories}
+        world={allWorlds.find(world => world.id === route.storyId)} storyId={route.storyId}
         // A chapter opens in the creator's Reader, in Create mode with its tags lit: what a reader will get, with every tag on it.
         onOpenChapter={chapterNumber => navigate({ page: 'write', storyId: route.storyId, chapterNumber, create: true })}
         onBack={() => navigate({ page: 'create' })}
-        // Read: the book's World Info first (its cover, Start or Continue).
+        // Entering the world from its card: the book's World Info first (its cover, Start or Continue).
         onRead={() => navigate({ page: 'story', storyId: route.storyId, inCreate: true })} />
     </div>
   </AppShell>);
@@ -359,12 +359,12 @@ function NovelExpandedRoutes({ services, writer, askForToken, discoverCatalogue,
     onCloseBlueprint={() => navigate({ page: 'story', storyId })}
     // World Info's Start or Continue: the creator's World Info (or a draft's) opens the creator's Reader; a reader's, the reader's.
     onOpenReader={() => navigate({ page: creatorInfo || draft ? 'write' : 'read', storyId })}
-    // Back from the creator's Reader: to the world's Chapters a chapter was opened from, otherwise to the creator's World Info.
+    // Back from the creator's Reader: to the World Space's Chapters a chapter was opened from, otherwise to the creator's World Info.
     onCloseReader={() => navigate(route.page === 'write'
       ? route.create ? { page: 'world', storyId } : { page: 'story', storyId, inCreate: true }
       : { page: 'story', storyId })}
-    // World Info's Back: the creator's returns to the book in Create; a reader's goes Home.
-    backLabel={creatorInfo ? 'Back to the book in Create' : 'Back to your stories'}
+    // World Info's Back: the creator's returns to the book's World Space; a reader's goes Home.
+    backLabel={creatorInfo ? 'Back to the World Space' : 'Back to your stories'}
     onBack={() => navigate(creatorInfo ? { page: 'world', storyId } : HOME_ROUTE)} />);
 
   if (route.page === 'discover') return withFamiliar(<DiscoverPage route={route} navigate={navigate} stories={worlds} readerProfile={profile} catalogue={discoverCatalogue} hrefFor={hrefFor} />);

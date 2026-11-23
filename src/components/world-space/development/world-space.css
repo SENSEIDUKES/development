@@ -1,0 +1,236 @@
+/* World Space (the Library's page for one of the creator's worlds). Scoped to the page root. */
+.world-space {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+/* Back, the page's name, then the medium: one row where there is room, the medium beneath on a phone. */
+.world-space-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.world-space-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  /* The Creator Space's title size: the two pages are one family. */
+  font-size: clamp(1.625rem, 7.4vw, 2.75rem);
+}
+.world-space-medium { margin-inline-start: auto; }
+
+/*
+ * The spotlight: the one world this page is open on. On a phone its cover fills the card and the
+ * words sit along the bottom; on a wide screen the cover holds the far side, fading into a soft
+ * copy of itself behind the words. A creator with more than one world moves between them here:
+ * the arrows in its corner, a sideways swipe, or the keyboard's arrows.
+ */
+.world-space-hero {
+  --world-space-floor: #04060d;
+  --world-space-outline: 0 0 1px rgba(0, 0, 0, 0.95), 0 0 1px rgba(0, 0, 0, 0.95), 0 1px 2px rgba(0, 0, 0, 0.85);
+  --world-space-hero-height: 16rem;
+  --world-space-hero-padding: 1rem;
+  position: relative;
+  overflow: hidden;
+  min-height: var(--world-space-hero-height);
+  border: 1px solid rgba(190, 216, 255, 0.18);
+  border-radius: 1.5rem;
+  background: radial-gradient(120% 90% at 50% 0%, #14233a, var(--world-space-floor));
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+/* Swiping sideways changes the world; up and down still scrolls the page. */
+.world-space-hero[data-swipe='true'] { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.world-space-hero:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
+/* The chosen world. A new one arrives from the side it was reached from. */
+.world-space-hero-slide {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: var(--world-space-hero-height);
+  padding: var(--world-space-hero-padding);
+}
+.world-space-hero-slide[data-direction='next'] { animation: world-space-in-next 0.32s ease-out; }
+.world-space-hero-slide[data-direction='previous'] { animation: world-space-in-previous 0.32s ease-out; }
+@keyframes world-space-in-next { from { opacity: 0; transform: translateX(8%); } }
+@keyframes world-space-in-previous { from { opacity: 0; transform: translateX(-8%); } }
+@media (prefers-reduced-motion: reduce) {
+  .world-space-hero-slide[data-direction] { animation: none; }
+}
+.world-space-hero-glow,
+.world-space-hero-art {
+  position: absolute;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+/* Only a wide card shows the soft copy; on a phone the cover itself fills the card. */
+.world-space-hero-glow {
+  display: none;
+  z-index: -3;
+  inset: -12%;
+  width: 124%;
+  height: 124%;
+  filter: blur(32px) saturate(1.25) brightness(0.6);
+}
+.world-space-hero-art {
+  z-index: -2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Keeps a cover's faces and lettering in frame. */
+  object-position: center 22%;
+}
+/* The art stays clear above; the shade gathers where the words sit. */
+.world-space-hero-wash {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(4, 6, 13, 0.45) 0%, rgba(4, 6, 13, 0) 22%, rgba(4, 6, 13, 0.12) 36%,
+    rgba(4, 6, 13, 0.74) 64%, rgba(4, 6, 13, 0.94) 86%, var(--world-space-floor) 100%);
+}
+.world-space-hero-eyebrow {
+  position: absolute;
+  z-index: 1;
+  top: 1.1rem;
+  inset-inline-start: 0.9rem;
+  pointer-events: none;
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(226, 191, 79, 0.35);
+  border-radius: 999px;
+  background: rgba(5, 8, 16, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #e2bf4f;
+  font-family: var(--font-sc, serif);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+/* Previous, where this world stands among the creator's worlds, next: in the corner, clear of the art's heart and the words. */
+.world-space-hero-nav {
+  position: absolute;
+  z-index: 1;
+  top: 0.5rem;
+  inset-inline-end: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  /* One dark glass pill, so the count reads on any art. */
+  border-radius: 9999px;
+  background: rgba(3, 6, 12, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  /* The arrows keep their sides in every language: left is always the previous world. */
+  direction: ltr;
+}
+.world-space-hero-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 9999px;
+  background: rgba(3, 6, 12, 0.6);
+  color: #f1f1f1;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+.world-space-hero-step:hover { border-color: rgba(226, 191, 79, 0.7); background: rgba(3, 6, 12, 0.8); }
+.world-space-hero-step:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
+.world-space-hero-step:active { transform: scale(0.94); }
+.world-space-hero-count {
+  min-width: 2.5rem;
+  color: #f1f1f1;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.72rem;
+  text-align: center;
+  text-shadow: var(--world-space-outline);
+}
+/* The top margin keeps a long title clear of the corner tag and the arrows. */
+.world-space-hero-body {
+  position: relative;
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+  margin-top: 3.75rem;
+}
+.world-space-hero-title {
+  margin: 0;
+  color: #f8f6f1;
+  font-size: clamp(1.5rem, 7.2cqw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  /* A thin dark outline, then a soft shadow, so the title holds on any art. */
+  text-shadow: var(--world-space-outline), 0 2px 18px rgba(0, 0, 0, 0.7);
+}
+.world-space-hero-standing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin: 0;
+  color: #e5e5e5;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  text-shadow: var(--world-space-outline);
+}
+.world-space-chip {
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 999px;
+  padding: 0.125rem 0.625rem;
+  background: rgba(5, 8, 16, 0.55);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+.world-space-hero-actions { width: 100%; }
+
+@container (min-width: 30rem) {
+  .world-space-hero-actions { max-width: 14rem; }
+}
+@container (min-width: 44rem) {
+  .world-space-hero { --world-space-hero-height: 20rem; --world-space-hero-padding: 1.75rem 2rem; }
+  .world-space-hero-glow { display: block; }
+  .world-space-hero-art {
+    inset-inline-start: auto;
+    width: min(62%, 48rem);
+    object-position: center 25%;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 42%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 42%);
+  }
+  .world-space-hero-art:dir(rtl) {
+    -webkit-mask-image: linear-gradient(270deg, transparent 0%, #000 42%);
+    mask-image: linear-gradient(270deg, transparent 0%, #000 42%);
+  }
+  .world-space-hero-wash {
+    background: linear-gradient(90deg, rgba(4, 6, 13, 0.82) 0%, rgba(4, 6, 13, 0.5) 40%, rgba(4, 6, 13, 0) 72%),
+      linear-gradient(180deg, rgba(4, 6, 13, 0.3) 0%, rgba(4, 6, 13, 0) 30%, rgba(4, 6, 13, 0.55) 100%);
+  }
+  .world-space-hero-wash:dir(rtl) {
+    background: linear-gradient(270deg, rgba(4, 6, 13, 0.82) 0%, rgba(4, 6, 13, 0.5) 40%, rgba(4, 6, 13, 0) 72%),
+      linear-gradient(180deg, rgba(4, 6, 13, 0.3) 0%, rgba(4, 6, 13, 0) 30%, rgba(4, 6, 13, 0.55) 100%);
+  }
+  .world-space-hero-eyebrow { top: 1.6rem; inset-inline-start: 1.25rem; font-size: 0.6875rem; }
+  .world-space-hero-nav { top: 1rem; inset-inline-end: 1rem; }
+  .world-space-hero-body { max-width: min(34rem, 52%); }
+}
+@container (min-width: 64rem) {
+  .world-space-hero { --world-space-hero-height: 22rem; }
+}

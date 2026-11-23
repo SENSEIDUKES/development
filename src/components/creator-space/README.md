@@ -15,7 +15,7 @@ Repository lifecycle and reference rules: [AGENTS.md](../../../AGENTS.md#core-ru
   `/library-shell.html?variant=development&source=main-library&screen=creator-space`
   (add `&worlds=sample` for the sample set)
 - **Created:** 2026-09-26
-- **Last recorded Workshop update:** 2026-11-01
+- **Last recorded Workshop update:** 2026-11-23
 - **Historical source inspection:** 2026-09-26 (Library shell navigation, Home cards, Energy,
   and the chapter workspace were inspected in this repository)
 - **Status:** approved reconstruction (Workshop Replica Mode B), first usable pass
@@ -31,8 +31,8 @@ followed by Energy and In progress. Create opens the existing Story Seed flow.
 
 **Your worlds** comes next: the most recently changed world is selected first,
 with **Continue | Edit** beneath the swipeable covers. Continue opens the creator's
-Reader; Edit opens the world's existing in-house editing destination (World Info
-in the app). Completed worlds keep Edit available and disable Continue.
+Reader; Edit opens the world's in-house editing destination (in the app, its
+[World Space](../world-space/README.md), as the card does). Completed worlds keep Edit available and disable Continue.
 Loading, empty and failed-read states remain distinct.
 
 **Creator Toolkit** groups two destinations below the worlds. One large **Browse
@@ -54,7 +54,7 @@ destination:
 | `worlds` | The creator's worlds with a request lifecycle (`loading` / `ready` / `error`) |
 | `energy` | The `useEnergyAccount` read; the page never computes a balance |
 | `toolkit` | Preview items (title, description, kind, art) |
-| `onCreate`, `onOpenEnergy`, `onContinueWorld`, `onEditWorld` | Existing destinations |
+| `onCreate`, `onOpenEnergy`, `onContinueWorld`, `onOpenWorld`, `onEditWorld` | Existing destinations (in the app, the card and Edit both open the World Space) |
 | `onBrowseToolkit`, `onRetryWorlds` | Optional; `onBrowseToolkit(kind?)` opens `CreatorPlugins`, omitted means "not built" |
 
 The selected world is local UI state. The shell keeps the page mounted after its first visit,
@@ -122,6 +122,8 @@ destinations, tab switches and history, empty and local states, 320/768/1440 wid
 reduced motion. Evidence: `output/playwright/creator-space/`.
 
 ## Workshop history
+
+- **2026-11-23:** In the app, **Edit** opens the world's [World Space](../world-space/README.md) instead of its World Info (SENSEI), the same place the world's card opens.
 
 - **2026-11-17:** Moved Create to the top, consolidated Browse plugins, and added a Studios card. Worlds use Continue and Edit.
 

@@ -29,7 +29,7 @@ export interface StoryBlueprintViewProps {
   /** False once the novel is shared or public: its creator then views it too. */
   isPrivate: boolean;
   busy?: boolean;
-  /** The way back. Without it the page shows no back row (inside the author's world view, which has its own). */
+  /** The way back. Without it the page shows no back row (inside the World Space, which has its own). */
   onBack?: () => void;
   backLabel?: string;
   /** Saves the creator's edit as the novel's next Foundation revision. */

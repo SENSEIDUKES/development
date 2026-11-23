@@ -5,8 +5,8 @@ import type { LibraryStories } from './useLibraryStories';
 /**
  * A chapter's tagging record in words and Tag this chapter on any committed
  * chapter, for the Workshop's HARNESS workspace (a developer instrument). In
- * the app, tagging lives only in the author's world view in Create
- * (`AuthorWorldView`).
+ * the app, tagging lives only in the World Space in Create
+ * (`WorldSpace`).
  */
 
 /** What the tagger made of one chapter: read or not, by what, and one line per kind of tag. */

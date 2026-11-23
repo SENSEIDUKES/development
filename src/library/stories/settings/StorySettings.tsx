@@ -29,7 +29,7 @@ export function StorySettings({ stories, storyId, only }: {
   storyId: string;
   /**
    * `assets`: only the world's skill packs (its CAPA skills, Media Loadout and
-   * Sound Words), for the Assets tab of the author's world view in Create.
+   * Sound Words), for the Assets tab of the World Space in Create.
    */
   only?: 'assets';
 }) {

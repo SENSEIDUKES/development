@@ -23,7 +23,8 @@ export { LIBRARY_READ_ALOUD_VOICES } from '../../library/stories/readAloudVoices
 export { LIBRARY_READER_FONTS } from '../../library/stories/readerFonts';
 export { StorySettings } from '../../library/stories/settings/StorySettings';
 export { ChapterTaggingRecord, TagChapterAction } from '../../library/stories/ChapterTaggingControls';
-export { AuthorWorldView, type AuthorWorldTab } from '../../library/stories/AuthorWorldView';
+// The World Space: one of the creator's worlds and everything about it, opened from the Creator Space.
+export { WorldSpace, type WorldSpaceTab } from '../../components/world-space/development/WorldSpace';
 export { CreateStoryPlugins, CreateStorySettings, type CreateStoryPluginsProps, type CreateStorySettingsProps } from '../../library/stories/settings/CreateStorySettings';
 export { SoundWordsPanel } from '../../library/stories/settings/SoundWordsPanel';
 export {

@@ -211,6 +211,22 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'world-space',
+    section: 'pages',
+    group: 'create',
+    owner: 'library',
+    status: 'active',
+    title: 'World Space',
+    description: 'All available information about one of your worlds, one world at a time: the chosen world in a spotlight (cover, title, standing, Read), then its Blueprint, Chapters with tagging, Codex, Assets and Info. Opened from the Creator Space by a world’s card or its Edit button. Loads the app’s own page on this browser’s real worlds.',
+    category: 'other',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/development',
+      path: 'src/components/world-space/; app route /app/?page=create&world=<id>',
+      lastCompared: 'Not applicable — live app route',
+    },
+  },
+  {
     id: 'story-seed',
     section: 'pages',
     group: 'create',

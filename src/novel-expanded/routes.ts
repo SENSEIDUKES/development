@@ -15,12 +15,13 @@ const isToolkitFilter = (value: string | null): value is CreatorToolkitFilter =>
  *   the way to start a new one; `&plugins=all|<kind>` opens Creator Plugins;
  *   `&seed=new` opens Story Seed (and its World Blueprint) for a new story,
  *   `&seed=<id>` a saved Story Seed (a Sparks spark begun from Home)
- * - A world as its author sees it (Blueprint, Chapters, Codex, Assets), opened
- *   from Your worlds in Create: `/app/?page=create&world=<id>`
+ * - The World Space, one of the creator's worlds and everything about it
+ *   (Blueprint, Chapters, Codex, Assets, Info), opened from the Creator Space
+ *   by a world's card or its Edit: `/app/?page=create&world=<id>`
  * - The creator's Reader, opened from Create (Fate and Create together; the
  *   next chapter is written here): `/app/?page=create&world=<id>&read=1`, with
  *   `&chapter=<n>` to open at a chapter, and `&create=1` for a chapter opened
- *   from the world's Chapters, in Create mode with its tags lit
+ *   from the World Space's Chapters, in Create mode with its tags lit
  * - Story View (World Info): `/app/?story=<id>`; opened from Create, its
  *   creator's: `/app/?page=create&world=<id>&info=1`
  * - Reader: `/app/?story=<id>&read=1`, a reader's Reader: Fate alone
@@ -33,7 +34,7 @@ export type NovelExpandedRoute =
   | { page: 'home' }
   | { page: 'discover'; section?: 'creators' | 'codex' | 'events'; lore?: string; query?: string; category?: string }
   | { page: 'create'; seedId?: string; newSeed?: boolean; plugins?: CreatorToolkitFilter; pluginPack?: string }
-  /** A world as its author sees it in Create: its Blueprint, Chapters, Codex, Assets and Info. */
+  /** The World Space: one of the creator's worlds, with its Blueprint, Chapters, Codex, Assets and Info. */
   | { page: 'world'; storyId: string }
   /**
    * The creator's Reader, opened from Create: Fate and Create together, at a
@@ -42,7 +43,7 @@ export type NovelExpandedRoute =
   | { page: 'write'; storyId: string; chapterNumber?: number; create?: boolean }
   /**
    * A story's World Info. Opened from Create (`inCreate`), it is its creator's:
-   * Start and Continue open the creator's Reader and Back returns to the book in Create.
+   * Start and Continue open the creator's Reader and Back returns to the book's World Space.
    */
   | { page: 'story'; storyId: string; inCreate?: boolean }
   | { page: 'read'; storyId: string }

@@ -1005,27 +1005,27 @@ async function walk(browser, viewport, sample) {
   // Leaving the Reader brings the app's theme songs back.
   await musicOf('menu', beforeLeaving);
   check(address() === infoAddress, `Back from the creator's Reader should return to its World Info, got ${address()}`);
-  await visibleButton('Back to the book in Create').click();
-  await page.getByTestId('author-world').waitFor();
+  await visibleButton('Back to the World Space').click();
+  await page.getByTestId('world-space').waitFor();
   check(address() === worldAddress, `World Info's Back should return to the book in Create, got ${address()}`);
-  check((await page.getByTestId('author-world-origin').textContent()) === 'Made in SEN', 'The book should be marked Made in SEN.');
+  check((await page.getByTestId('world-space-origin').textContent()) === 'Made in SEN', 'The book should be marked Made in SEN.');
   // A draft is offered to no reader until its creator publishes it.
-  check((await page.getByTestId('author-world-standing').textContent()).includes('Draft'), 'A new book should be a draft.');
+  check((await page.getByTestId('world-space-standing').textContent()).includes('Draft'), 'A new book should be a draft.');
   // Publish lives in Info, beside Export.
   await page.getByRole('tab', { name: 'Info' }).click();
-  await page.getByTestId('author-world-info').waitFor();
-  await page.getByTestId('author-world-publish').evaluate(button => button.click());
-  const publishSheet = page.getByTestId('author-world-publish-sheet');
+  await page.getByTestId('world-space-info').waitFor();
+  await page.getByTestId('world-space-publish').evaluate(button => button.click());
+  const publishSheet = page.getByTestId('world-space-publish-sheet');
   await publishSheet.waitFor();
   await page.waitForTimeout(300);
   await shot('4-publish');
   await publishSheet.getByRole('button', { name: 'Publish', exact: true }).click();
   await publishSheet.waitFor({ state: 'detached' });
-  check((await page.getByTestId('author-world-standing').textContent()).includes('Published'), 'Publish should publish the book.');
-  check(!(await page.evaluate(slidesSideways)), 'The world view must never scroll sideways.');
+  check((await page.getByTestId('world-space-standing').textContent()).includes('Published'), 'Publish should publish the book.');
+  check(!(await page.evaluate(slidesSideways)), 'The World Space must never scroll sideways.');
   // Info also holds when the book was created and last updated, and Export.
-  check(await page.getByTestId('author-world-export').count() === 1, 'Info should offer Export.');
-  check((await page.getByTestId('author-world-created').textContent()).trim().length > 0, 'Info should show when the book was created.');
+  check(await page.getByTestId('world-space-export').count() === 1, 'Info should offer Export.');
+  check((await page.getByTestId('world-space-created').textContent()).trim().length > 0, 'Info should show when the book was created.');
   await shot('4-world-info-tab');
   // Published, the book is on Home; its card opens a reader's Story View.
   await navigation().getByRole('button', { name: 'Home' }).click();
@@ -1170,26 +1170,37 @@ async function walk(browser, viewport, sample) {
   await navigation().getByRole('button', { name: 'Create' }).click();
   await page.getByTestId('novel-expanded-create-hub').waitFor();
   check(address() === '/app/?page=create', `Create in the navigation should open the Creator Space, got ${address()}`);
-  // A world's card opens it as its author sees it: tagging lives here and nowhere else.
+  // Edit opens the world's World Space, never its World Info.
+  await page.getByTestId('novel-expanded-create-hub').getByRole('button', { name: 'Edit', exact: true }).click();
+  const worldSpace = page.getByTestId('world-space');
+  await worldSpace.waitFor();
+  check(/^\/app\/\?page=create&world=[^&]+$/.test(address()), `Edit should open the world's World Space, got ${address()}`);
+  // The browser's Back, so the walk's history stays as the steps below expect it.
+  await page.goBack();
+  await page.getByTestId('novel-expanded-create-hub').waitFor();
+  // A world's card opens the same World Space: tagging lives here and nowhere else.
   await page.locator('[data-testid="novel-expanded-create-hub"] .creator-space-worlds li button').first().click();
-  const authorWorld = page.getByTestId('author-world');
-  await authorWorld.waitFor();
-  check(/^\/app\/\?page=create&world=[^&]+$/.test(address()), `A world's card should open the world in Create, got ${address()}`);
-  check(JSON.stringify(await authorWorld.getByRole('tab').allTextContents()) === JSON.stringify(['Blueprint', 'Chapters', 'Codex', 'Assets', 'Info']),
+  await worldSpace.waitFor();
+  check(/^\/app\/\?page=create&world=[^&]+$/.test(address()), `A world's card should open its World Space, got ${address()}`);
+  // The page is named, and shows one world: the chosen one, in its spotlight, and no list of the others.
+  check((await worldSpace.getByRole('heading', { level: 1 }).textContent()) === 'World Space', 'The World Space should carry its name.');
+  check((await worldSpace.getByTestId('world-space-world-title').textContent()).trim().length > 0, 'The spotlight should name the world being worked on.');
+  check(await worldSpace.locator('[data-world-card]').count() === 0, 'The World Space should show one world, never the list of them.');
+  check(JSON.stringify(await worldSpace.getByRole('tab').allTextContents()) === JSON.stringify(['Blueprint', 'Chapters', 'Codex', 'Assets', 'Info']),
     'The world should show Blueprint, Chapters, Codex, Assets and Info.');
-  check(await authorWorld.getByRole('button', { name: 'Sequential Art' }).isDisabled(), 'Sequential Art waits until it exists.');
-  const firstChapter = authorWorld.locator('[data-testid="author-world-chapter"][data-chapter-number="1"]');
+  check(await worldSpace.getByRole('button', { name: 'Sequential Art' }).isDisabled(), 'Sequential Art waits until it exists.');
+  const firstChapter = worldSpace.locator('[data-testid="world-space-chapter"][data-chapter-number="1"]');
   await firstChapter.waitFor();
-  check((await firstChapter.getByTestId('author-world-chapter-state').textContent()) === 'Tagged', 'Chapter 1 should show it was tagged as it was written.');
-  check(!(await page.evaluate(slidesSideways)), 'The world view must never scroll sideways.');
-  await shot('7a-author-world');
+  check((await firstChapter.getByTestId('world-space-chapter-state').textContent()) === 'Tagged', 'Chapter 1 should show it was tagged as it was written.');
+  check(!(await page.evaluate(slidesSideways)), 'The World Space must never scroll sideways.');
+  await shot('7a-world-space');
   const taggedBefore = counts.tags.length;
   await firstChapter.locator('td').nth(2).click();
-  await authorWorld.getByRole('button', { name: 'Tag 1 chapter' }).click();
+  await worldSpace.getByRole('button', { name: 'Tag 1 chapter' }).click();
   for (let waited = 0; waited < 100 && counts.tags.length === taggedBefore; waited += 1) await page.waitForTimeout(100);
   check(counts.tags.length === taggedBefore + 1 && counts.tags.at(-1).chapterNumber === 1 && counts.tags.at(-1).token,
     `Tag should read the checked chapter once, with the token, got ${counts.tags.length - taggedBefore} taggings.`);
-  await authorWorld.getByRole('button', { name: 'Tag', exact: true }).waitFor();
+  await worldSpace.getByRole('button', { name: 'Tag', exact: true }).waitFor();
   // A chapter opens in the creator's Reader, in Create mode: the Reader's own look, every tag lit, Media and Story info apart.
   await firstChapter.getByRole('button', { name: 'Open Chapter 1' }).click();
   const authoring = page.getByTestId('chapter-authoring');
@@ -1239,7 +1250,7 @@ async function walk(browser, viewport, sample) {
   await shot('7a-create-mode-menu');
   await page.keyboard.press('Escape');
   await page.goBack();
-  await authorWorld.locator('[data-testid="author-world-chapter"]').first().waitFor();
+  await worldSpace.locator('[data-testid="world-space-chapter"]').first().waitFor();
   await page.goBack();
   await page.getByTestId('novel-expanded-create-hub').waitFor();
   await page.goBack();

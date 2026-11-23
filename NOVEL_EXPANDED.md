@@ -464,7 +464,7 @@ entries run to 2026-11-11.
     Blueprint → **Start Story** → the **creator's Reader** in Create, where
     Chapter 1 is written under the Aura Veil and opens when it is saved. The
     book stays in Create, its creator's alone, until they **Publish** it from
-    the author's world view; only then do readers find it, and a reader's
+    its World Space; only then do readers find it, and a reader's
     Reader has Fate alone (SENSEI, 2026-11-03). Create mode in the creator's
     Reader is the tagger's page: every tag lit in the Reader's own look,
     Media and Story info apart, on any chapter (SENSEI, 2026-11-04).
@@ -1013,8 +1013,9 @@ entries run to 2026-11-11.
     survives a reload, and the account and server pieces wait.
   - Create as the creator's hub ([docs/plans/create-hub.md](./docs/plans/create-hub.md),
     owner's direction, 2026-10-29) is partly built: the app's Create is the
-    Creator Space, and the author's world view with its Chapters tagging list
-    is in. Not built yet: the manuscript way in (import), the world's Codex
+    Creator Space, and the World Space (one world at a time, opened by a
+    world's card or Edit; named by SENSEI 2026-11-23) with its Chapters
+    tagging list is in. Not built yet: the manuscript way in (import), the world's Codex
     tab, a whole-story tagging run with resume, and Clear tags.
   - Discover lists this device's published stories; the shared public catalogue,
     releases, Tracker, signals and ranking boards are not connected. Samples
@@ -1449,6 +1450,8 @@ meaning for each tag, and filtering Discover and Home by tag.
 | SEA | SEIHouse Expanded Albums: SEIHouse's expanded-music product, separate from SEN. It inherits the shared infrastructure SEN pressure-tests. |
 | NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader; piece 2: the Library Shell around it; piece 3: Profile, with the Familiar and a practice economy; piece 4: Story Settings in Create and Story View; piece 5: cover art on Story View), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
+| Creator Space | Where you view and edit your worlds: Create in the app (`/app/?page=create`, `CreatorSpace`). |
+| World Space | All available information pertaining to one of your worlds, one world at a time: its spotlight, Blueprint, Chapters (tagging), Codex, Assets and Info (`/app/?page=create&world=<id>`, `WorldSpace`, `?preview=world-space`). Opened from the Creator Space by a world's card or Edit. Named by SENSEI, 2026-11-23; before that, "the author's world view". |
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Begin Story or Continue leads into the Reader Chamber, with Manifest on its cover and the story's Story Settings below it. |
 | Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). Its Workshop card (`?preview=reader-chamber`) shows this Reader as Development, beside production's Reader as the Original Reference; the older development Reader is no longer on it. |
 | Listen / Read Aloud | The Reader reading a chapter aloud in three voices with the spoken sentence lit (`useReadAloud`, SEN's `reader-runtime`). Its voices and speed live in Reader Settings → Narration. |

@@ -26,12 +26,15 @@ describe('NovelExpanded addresses', () => {
       { page: 'story', storyId: 'hst_1' },
       { page: 'read', storyId: 'hst_1' },
       { page: 'blueprint', storyId: 'hst_1' },
+      { page: 'blueprint', storyId: 'hst_1', inCreate: true },
       { page: 'world', storyId: 'hst_1' },
       { page: 'write', storyId: 'hst_1' },
       { page: 'write', storyId: 'hst_1', chapterNumber: 3 },
       { page: 'write', storyId: 'hst_1', chapterNumber: 3, create: true },
     ];
     expect(pages.map(routeSearch)).toEqual(['', '?page=discover', '?page=create', '?story=hst_1', '?story=hst_1&read=1', '?story=hst_1&blueprint=1',
+      // The creator's Blueprint lives in Create, apart from a reader's.
+      '?page=create&world=hst_1&blueprint=1',
       '?page=create&world=hst_1',
       // The creator's Reader lives in Create, apart from a reader's Reader; a chapter from Chapters opens in Create mode.
       '?page=create&world=hst_1&read=1', '?page=create&world=hst_1&read=1&chapter=3', '?page=create&world=hst_1&read=1&chapter=3&create=1']);

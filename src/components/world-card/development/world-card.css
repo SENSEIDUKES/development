@@ -303,7 +303,6 @@
 .world-card-chapters-goal { --chapter-goal: var(--map-quiet); }
 .world-card-chapters-goal[data-status='reached'] { --chapter-goal: var(--map-done); }
 .world-card-chapters-goal[data-status='current'] { --chapter-goal: var(--map-you); }
-.world-card-chapters-goal-hidden { color: var(--map-quiet); font-family: var(--font-sans, sans-serif); font-size: 0.75rem; font-style: italic; }
 .world-card-chapters-goal-text, .world-card-chapters-fork-text {
   display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 0; padding: 0.25rem 0.6rem;
   border-inline-start: 2px solid var(--chapter-goal, #04acff); border-radius: 0.5rem; background: rgba(255, 255, 255, 0.035);

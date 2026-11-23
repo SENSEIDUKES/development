@@ -394,6 +394,10 @@ Workshop sample data remains outside the host adapter.
 
 ## Workshop history
 
+- **2026-11-23** — World Info gains a **Blueprint** row above Portal (`onOpenBlueprint`; no row
+  without it: the host supplies it for the creator, and for readers the creator shares the
+  Blueprint with). The chapter sheet no longer lists goals still ahead: only goals reached or
+  missed and the current one (SENSEI).
 - **2026-11-04** — One details line on every card (genre | creator | status), no chapter
   counts, and Branching as a small mark at its end. The activity mark on every card but World
   Info. The Full card's information opens with a press and hold; its MP control stays. (Tried

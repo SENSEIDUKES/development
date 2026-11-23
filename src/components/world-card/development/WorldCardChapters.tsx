@@ -46,7 +46,8 @@ export function WorldCardChapters({ title, chapters, arcs, branch, readingChapte
   const current = pages[at];
   const turn = (step: number) => setPageIndex(Math.min(Math.max(0, at + step), pages.length - 1));
   // The arcs, each reached at its first page.
-  const arcStarts = sections.filter(section => section.arc).map(section => pages.findIndex(entry => entry.section === section));
+  // An arc with nothing to show yet (no chapter written, its goals all ahead) has no page to step to.
+  const arcStarts = sections.filter(section => section.arc && section.pages.length > 0).map(section => pages.findIndex(entry => entry.section === section));
   const arcAt = current ? arcStarts.findIndex(start => pages[start]?.section === current.section) : -1;
 
   // A turned page takes away the row that had focus; focus stays on the page, so the keys keep turning it.
@@ -203,10 +204,8 @@ function Row({ row, language, onOpen }: { row: ChapterMapRow; language?: string;
       <span className="world-card-chapters-rail" aria-hidden="true"><Icon /></span>
       <span className="world-card-chapters-goal-text">
         <span className="world-card-chapters-goal-label">{GOAL_LABEL[row.goal.status]}<span className="sr-only">, {goalWhere(row.goal)}</span></span>
-        {/* A goal ahead keeps its words until the reader gets there: the map never spoils the story. */}
-        {row.goal.status === 'ahead'
-          ? <span className="world-card-chapters-goal-hidden">Revealed when you get there</span>
-          : <span {...authorText(language)}>{row.goal.text}</span>}
+        {/* Goals still ahead are never listed, so the map never spoils the story. */}
+        <span {...authorText(language)}>{row.goal.text}</span>
       </span>
     </li>;
   }

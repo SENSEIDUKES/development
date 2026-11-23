@@ -517,6 +517,16 @@ async function walk(browser, viewport, sample) {
   const storyAddress = `/app/?story=${storyId}`;
   check(await page.locator('[data-testid="novel-expanded-shell"] [data-testid="harness-world-info"]').count() === 1, 'World Info should sit in the Library Shell.');
   await shot('4-story-view');
+  // The creator's World Info has the Blueprint row above Portal; it opens the creator's Blueprint, and Back returns here.
+  const creatorTools = await page.locator('.world-card-info-tools .world-card-info-tool-title').allTextContents();
+  check(creatorTools[0] === 'Blueprint' && creatorTools[1] === 'Portal', `The creator's World Info should offer Blueprint above Portal, got ${JSON.stringify(creatorTools)}`);
+  await page.getByTestId('world-info-blueprint').evaluate(row => row.scrollIntoView({ block: 'center' }));
+  await shot('4-story-view-blueprint-row');
+  await page.getByTestId('world-info-blueprint').click();
+  await page.getByTestId('harness-story-blueprint').waitFor();
+  check(address() === `${worldAddress}&blueprint=1`, `The Blueprint row should open the creator's Blueprint, got ${address()}`);
+  await page.goBack();
+  await page.getByTestId('harness-world-info').waitFor();
   await page.locator('[data-world-info-chapters="action"]').click();
   await page.locator('[data-testid="generation-overlay"][data-familiar-id="quill"] [aria-label="Quill, Waving"]').waitFor();
   check(address() === `${worldAddress}&read=1`, `Start Story should open the creator's Reader, got ${address()}`);

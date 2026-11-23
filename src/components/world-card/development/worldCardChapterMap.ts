@@ -93,16 +93,18 @@ export function buildChapterMap({ chapters, arcs = [], branch, readingChapter }:
     // A goal sits after the chapter that resolved it, or, while unresolved, after its last chapter;
     // a goal whose chapter is not written yet waits at the end of the arc.
     const anchor = (goal: ChapterMapGoal) => goal.resolved?.chapterNumber ?? goal.endChapter;
+    // Only what the reader has reached and the one goal being worked toward: goals still ahead are not listed at all (SENSEI, 2026-11-23).
+    const shown = goals.filter(goal => goal.status !== 'ahead');
     const rows: PlacedRow[] = [];
     for (const chapter of inArc) {
       if (forkBefore(chapter.number)) rows.push({ at: chapter.number, row: forkRow() });
       rows.push({ at: chapter.number, row: chapterRow(chapter) });
       placed.add(chapter.number);
-      for (const goal of goals) if (anchor(goal) === chapter.number) rows.push({ at: chapter.number, row: { kind: 'goal', key: goal.key, goal } });
+      for (const goal of shown) if (anchor(goal) === chapter.number) rows.push({ at: chapter.number, row: { kind: 'goal', key: goal.key, goal } });
     }
     // Goals whose chapters are not written yet wait after the last written one, on its page.
     const tail = inArc.at(-1)?.number ?? arc.firstChapter;
-    for (const goal of goals) if (!written.has(anchor(goal))) rows.push({ at: tail, row: { kind: 'goal', key: goal.key, goal } });
+    for (const goal of shown) if (!written.has(anchor(goal))) rows.push({ at: tail, row: { kind: 'goal', key: goal.key, goal } });
     const length = arc.lastChapter - arc.firstChapter + 1;
     const read = inArc.filter(chapter => isRead(chapter.number)).length;
     sections.push({

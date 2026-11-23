@@ -603,9 +603,10 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(address()).toBe(`/app/?page=create&world=${created.id}`);
     const world = document.querySelector<HTMLElement>('[data-testid="world-space"]')!;
     expect(world.querySelector('h1')!.textContent).toBe('World Space');
-    expect(world.querySelector('[data-testid="world-space-world-title"]')!.textContent).toBe(created.title);
+    expect(world.querySelector('[data-testid="world-space-hero"] .world-card-banner-title')!.textContent).toBe(created.title);
+    expect(world.querySelector('.world-card-banner-eyebrow')!.textContent).toBe('Your World');
     // One world at a time: the World Space lists no other worlds.
-    expect(world.querySelector('[data-world-card]')).toBeNull();
+    expect(world.querySelector('[data-world-card="compact"]')).toBeNull();
     expect([...world.querySelectorAll('[role="tab"]')].map(entry => entry.textContent)).toEqual(['Blueprint', 'Chapters', 'Codex', 'Assets', 'Info']);
     // Chapter 1 is still being written, so the world has no chapters yet.
     expect(world.querySelector('[data-testid="world-space-no-chapters"]')).toBeTruthy();
@@ -971,7 +972,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await flush(20);
     expect(document.querySelector('[data-testid="world-space-chapter"][data-chapter-number="1"]')).toBeTruthy();
     // Come back through the world's Read (its World Info) and Continue: Chapter 1 is there, written once.
-    await click(document.querySelector('[data-testid="world-space-read"]'), 'Read', 10);
+    await click(document.querySelector('[data-testid="world-space-hero"] .world-card-banner-open'), 'the world card', 10);
     expect(address()).toBe(infoAddress(created.id));
     await click(chaptersAction(), 'Continue', 10);
     expect(address()).toBe(writeAddress(created.id));
@@ -1135,7 +1136,7 @@ describe('NovelExpanded: publishing, and the creator\'s and the reader\'s Reader
     const services = appServices(story.writer);
     const created = await publishedStoryWithChapter(services.stories as InMemoryHarnessGenerationRepository);
     await render(services, `/app/?page=create&world=${created.id}`);
-    await click(document.querySelector('[data-testid="world-space-read"]'), 'Read', 20);
+    await click(document.querySelector('[data-testid="world-space-hero"] .world-card-banner-open'), 'the world card', 20);
     expect(address()).toBe(infoAddress(created.id));
     expect(worldInfo()).toBeTruthy();
     // Even a published book's World Info, opened from Create, is its creator's.

@@ -89,7 +89,7 @@
 | [Generation Overlay](../src/components/chapter-manifestation/README.md) | Current | Chapter generation presentation. |
 | [Closed-Door Cultivation](../src/components/closed-door-cultivation/README.md) | Current | Cultivation experience and preview. |
 | [Creator Space](../src/components/creator-space/README.md) | Current | Create page and creator tools. |
-| [World Space](../src/components/world-space/README.md) | Current | One of the creator's worlds: spotlight, Blueprint, Chapters and tagging, Assets, Info. |
+| [World Space](../src/components/world-space/README.md) | Current | One of the creator's worlds: its Feature card, Blueprint, Chapters and tagging, Assets, Info. |
 | [Daily Dao Pillar](../src/components/dao-pillar/README.md) | Current | Daily practice and its reward surface. |
 | [Discover implementation](../src/components/discover/README.md) | Current | Shared Discover surface, catalogue, and Lore. |
 | [Energy](../src/components/energy/README.md) | Current | Energy surfaces and host connections. |

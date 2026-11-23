@@ -35,11 +35,14 @@ export function WorldSpaceWorkspace() {
   const [chosenId, setChosenId] = useState<string>();
   useEffect(() => {
     let current = true;
-    readAppWorlds().then(
+    const reread = () => readAppWorlds().then(
       worlds => { if (current) setRead({ status: 'ready', worlds }); },
       (error: unknown) => { if (current) setRead({ status: 'error', error: error instanceof Error ? error.message : 'This browser’s story storage could not be read.' }); },
     );
-    return () => { current = false; };
+    void reread();
+    // A world created in another tab (the empty state's link) shows up on returning here; the chosen world stays chosen.
+    window.addEventListener('focus', reread);
+    return () => { current = false; window.removeEventListener('focus', reread); };
   }, []);
   const worlds = read.status === 'ready' ? read.worlds : [];
   const world = worlds.find(entry => entry.id === chosenId) ?? worlds[0];

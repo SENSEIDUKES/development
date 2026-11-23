@@ -1182,10 +1182,11 @@ async function walk(browser, viewport, sample) {
   await page.locator('[data-testid="novel-expanded-create-hub"] .creator-space-worlds li button').first().click();
   await worldSpace.waitFor();
   check(/^\/app\/\?page=create&world=[^&]+$/.test(address()), `A world's card should open its World Space, got ${address()}`);
-  // The page is named, and shows one world: the chosen one, in its spotlight, and no list of the others.
+  // The page is named, and shows one world: the chosen one, on its Feature card named Your World, and no list of the others.
+  check((await worldSpace.locator('.world-card-banner-eyebrow').textContent()).trim() === 'Your World', 'The world card should be named Your World.');
   check((await worldSpace.getByRole('heading', { level: 1 }).textContent()) === 'World Space', 'The World Space should carry its name.');
-  check((await worldSpace.getByTestId('world-space-world-title').textContent()).trim().length > 0, 'The spotlight should name the world being worked on.');
-  check(await worldSpace.locator('[data-world-card]').count() === 0, 'The World Space should show one world, never the list of them.');
+  check((await worldSpace.locator('[data-testid="world-space-hero"] .world-card-banner-title').textContent()).trim().length > 0, 'The spotlight should name the world being worked on.');
+  check(await worldSpace.locator('[data-world-card="compact"]').count() === 0, 'The World Space should show one world, never the list of them.');
   check(JSON.stringify(await worldSpace.getByRole('tab').allTextContents()) === JSON.stringify(['Blueprint', 'Chapters', 'Codex', 'Assets', 'Info']),
     'The world should show Blueprint, Chapters, Codex, Assets and Info.');
   check(await worldSpace.getByRole('button', { name: 'Sequential Art' }).isDisabled(), 'Sequential Art waits until it exists.');

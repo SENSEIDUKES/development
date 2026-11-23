@@ -24,18 +24,13 @@ One world at a time, never the list of them.
 
 1. **Back · World Space · the medium.** Back returns to the Creator Space. The medium is
    Novel; Sequential Art is shown but waits until it exists.
-2. **The spotlight.** The chosen world's cover fills the card (the Library's own art when
-   the world has no cover yet), with its title, where it stands (Draft or Published, Made
-   in SEN or Imported, its chapters) and **Read**, which opens its World Info, the
-   creator's. On a phone the cover fills the card with the words along the bottom; on a
-   wide screen the cover holds the far side and fades into a soft copy of itself behind
-   the words.
-3. **Other worlds, one step away.** A creator with more than one world gets `◀ 2 / 6 ▶`
-   in the spotlight's corner. The arrows, a sideways swipe on the spotlight, or the
-   keyboard's left and right arrows move to the previous or next world, in the order the
-   Creator Space lists them (most recently changed first), going round from the last to
-   the first. The open tab and the page's scroll position are kept, and the browser's Back
-   still returns to the Creator Space. A creator with one world sees no arrows.
+2. **The spotlight.** The chosen world on the Library's own Feature card (`WorldCardFeature`,
+   Home's spotlight card), named **Your World** where Home says Featured: its cover (the
+   Library's own art when the world has no cover yet), title, creator and genre. A tap
+   anywhere on it enters the world: its World Info, the creator's. Beneath it, where the
+   world stands (Draft or Published, Made in SEN or Imported, its chapters).
+3. **Another world is chosen in the Creator Space.** The World Space has no arrows, swipe or
+   list of worlds (SENSEI, 2026-11-23): back out and tap the right world.
 4. **Tabs for the chosen world:** Blueprint, Chapters (the list where chapters are checked
    and tagged a few at a time, and voiced), Codex (coming), Assets and Info (dates, Publish,
    Export). Tagging lives here and nowhere else: a reader never sees it.
@@ -48,13 +43,12 @@ story record and every destination.
 | Prop | Host responsibility |
 | --- | --- |
 | `stories` | The `useLibraryStories` state and controller: chapters, tagging, visibility, export |
-| `worlds`, `storyId` | The creator's worlds as the Creator Space shows them, and the chosen one |
-| `onChooseWorld` | Another world chosen from the spotlight; the app replaces the address, keeping the scroll position |
+| `world`, `storyId` | The chosen world as its World Card shows it (Home's card data), and its story |
 | `onOpenChapter` | A chapter opened from Chapters: the creator's Reader in Create mode |
-| `onRead`, `onBack` | The world's World Info; the Creator Space |
+| `onRead`, `onBack` | The world's World Info, entered from the card; the Creator Space |
 | `codexPictures`, `chapterVoices` | Optional host services for Blueprint pictures and character voices |
 
-It builds on the Library's existing pieces (`StoryBlueprintPage`, `StorySettings`, the story
+It builds on the Library's existing pieces (`WorldCardFeature`, `StoryBlueprintPage`, `StorySettings`, the story
 view helpers, Energy prices) and adds no store of its own. SEN never imports it.
 
 ## Known limits
@@ -66,8 +60,8 @@ view helpers, Energy prices) and adds no store of its own. SEN never imports it.
 
 ## Verification
 
-`development/WorldSpace.test.tsx` (the spotlight, one world at a time, arrows, swipe and
-keyboard, tagging, voices), `src/novel-expanded/NovelExpandedApp.test.tsx` (Edit and the
+`development/WorldSpace.test.tsx` (the Feature card named Your World, one world at a time,
+tagging, voices), `src/novel-expanded/NovelExpandedApp.test.tsx` (Edit and the
 card both open it; Back, Read, Publish, Export), and the browser walk
 `scripts/verifyNovelExpandedApp.browser.mjs` at 390 and 1280 wide.
 
@@ -77,8 +71,10 @@ card both open it; Back, Read, Publish, Export), and the browser walk
   name ("the author's world view") and lived among the story files. It is now the World
   Space, with its own title on the page, this folder, a Workshop entry and preview. The
   Creator Space's **Edit** opens it instead of World Info. The row of every world is gone:
-  the chosen world stands in a spotlight, and arrows, a swipe or the keyboard move to the
-  creator's other worlds.
+  the chosen world stands on the Library's Feature card, named Your World. A first pass
+  the same day drew its own hero with arrows and a swipe between worlds; SENSEI replaced
+  it with the existing card and took the switching out, so another world is chosen back
+  in the Creator Space.
 - **2026-11-04** — Info tab (dates, Publish, Export); Read opens World Info first; a chapter
   opens in the creator's Reader in Create mode.
 - **2026-10-30** — Built as the author's world view: the Worlds column, the medium switcher,

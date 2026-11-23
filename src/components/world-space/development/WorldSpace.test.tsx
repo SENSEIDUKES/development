@@ -1,18 +1,18 @@
 // @vitest-environment jsdom
-import { act, useState } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessTagRequest } from '@seihouse/sen/harness-generation';
-import type { CreatorWorld } from '../../creator-space/shared/creatorSpaceContracts';
+import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldSpace } from './WorldSpace';
 import { useLibraryStories } from '../../../library/stories/useLibraryStories';
 import { chapterVoiceEnergy, chapterVoicePlan, storySpeakers, type ChapterVoiceLine, type ChapterVoiceService } from '../../../library/stories/chapterVoices';
 
 /**
  * The World Space (named by SENSEI, 2026-11-23; designed 2026-10-30): one of
- * the creator's worlds, in a spotlight, with everything about it. The chapters
+ * the creator's worlds, on its Feature card, with everything about it. The chapters
  * as an iTunes list, tagged a few at a time; the only place in the app where
  * tagging is seen.
  */
@@ -67,16 +67,14 @@ const threeChapters = async () => {
   return { repository, storyId: story.id };
 };
 
-function Host({ repository, adapter, storyId, worlds = [], onOpenChapter = () => undefined, onRead, chapterVoices }: {
-  repository: InMemoryHarnessGenerationRepository; adapter: HarnessGenerationModelAdapter; storyId: string; worlds?: CreatorWorld[];
+function Host({ repository, adapter, storyId, world, onOpenChapter = () => undefined, onRead, chapterVoices }: {
+  repository: InMemoryHarnessGenerationRepository; adapter: HarnessGenerationModelAdapter; storyId: string; world?: HomeWorld;
   onRead?: () => void;
   onOpenChapter?: (chapterNumber: number) => void; chapterVoices?: ChapterVoiceService;
 }) {
   const stories = useLibraryStories({ repository, modelAdapter: adapter });
-  // The host follows the spotlight's arrows and swipes, as the app does with its address.
-  const [chosen, setChosen] = useState(storyId);
   if (!stories.state) return null;
-  return <WorldSpace stories={stories} worlds={worlds} storyId={chosen} onChooseWorld={setChosen} chapterVoices={chapterVoices}
+  return <WorldSpace stories={stories} world={world} storyId={storyId} chapterVoices={chapterVoices}
     onOpenChapter={onOpenChapter} onBack={() => undefined} onRead={onRead} />;
 }
 
@@ -97,69 +95,6 @@ afterEach(() => {
 });
 
 describe('the World Space', { timeout: 20_000 }, () => {
-  it('moves between the creator\'s worlds from the spotlight: the arrows, a sideways swipe and the keyboard, one world at a time', async () => {
-    const { repository, storyId } = await threeChapters();
-    const adapter: HarnessGenerationModelAdapter = {
-      getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'fixture', label: 'Fixture' }], defaultModel: 'fixture' }),
-      generate: vi.fn(),
-      arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
-    };
-    // Given out of order: the spotlight walks them as the Creator Space lists them, the most recently changed first.
-    const worlds: CreatorWorld[] = [
-      { id: 'ashes', title: 'Ashes of the Ninth Meridian', chapterCount: 0, status: 'draft', updatedAt: '2026-10-29T12:00:00.000Z' },
-      { id: storyId, title: 'The Drowned Name', chapterCount: 3, status: 'draft', updatedAt: '2026-10-30T12:00:00.000Z' },
-      { id: 'guild', title: 'The Guild of Laughing Alchemy', chapterCount: 0, status: 'draft', updatedAt: '2026-10-28T12:00:00.000Z' },
-    ];
-    await act(async () => root.render(<Host repository={repository} adapter={adapter} storyId={storyId} worlds={worlds} />));
-    await flush(20);
-    const hero = () => view().querySelector<HTMLElement>('[data-testid="world-space-hero"]')!;
-    const shown = () => hero().querySelector('h2')!.textContent;
-    const count = () => hero().querySelector('[data-testid="world-space-world-count"]')!.textContent;
-    const step = (name: string) => hero().querySelector<HTMLButtonElement>(`button[aria-label="${name}"]`);
-    const drag = async (from: number, to: number, target: Element = hero()) => {
-      await act(async () => {
-        target.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: from, clientY: 100 }));
-        hero().dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: to, clientY: 104 }));
-      });
-      await flush();
-    };
-
-    // Only the chosen world is on the page, with where it stands among the others.
-    expect([shown(), count()]).toEqual(['The Drowned Name', '1 / 3']);
-    expect(view().querySelectorAll('h2')).toHaveLength(1);
-    expect(hero().querySelector('[aria-roledescription="slide"]')!.getAttribute('aria-label')).toBe('1 of 3: The Drowned Name');
-    expect(rows()).toHaveLength(3);
-
-    // The arrows: next, then previous; from the first world, previous goes round to the last.
-    await click(step('Next world'), 'Next world');
-    expect([shown(), count()]).toEqual(['Ashes of the Ninth Meridian', '2 / 3']);
-    // The page below follows the world: this one has no chapters.
-    expect(rows()).toHaveLength(0);
-    await click(step('Previous world'), 'Previous world');
-    expect([shown(), count()]).toEqual(['The Drowned Name', '1 / 3']);
-    await click(step('Previous world'), 'Previous world');
-    expect([shown(), count()]).toEqual(['The Guild of Laughing Alchemy', '3 / 3']);
-    await click(step('Next world'), 'Next world');
-    expect(shown()).toBe('The Drowned Name');
-
-    // A swipe to the left brings the next world, to the right the previous; a short drag, or one begun on a button, is not a swipe.
-    await drag(300, 180);
-    expect(shown()).toBe('Ashes of the Ninth Meridian');
-    await drag(120, 260);
-    expect(shown()).toBe('The Drowned Name');
-    await drag(200, 170);
-    expect(shown()).toBe('The Drowned Name');
-    await drag(300, 180, step('Next world')!);
-    expect(shown()).toBe('The Drowned Name');
-
-    // The keyboard's arrows, with the spotlight in focus.
-    expect(hero().getAttribute('tabindex')).toBe('0');
-    await act(async () => { hero().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })); });
-    expect(shown()).toBe('Ashes of the Ninth Meridian');
-    await act(async () => { hero().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true })); });
-    expect(shown()).toBe('The Drowned Name');
-  });
-
   it('lists the chapters, tags the ones the author checks, in order, and opens one in the Reader', async () => {
     const { repository, storyId } = await threeChapters();
     const tagChapter = vi.fn(async (request: HarnessTagRequest) => ({
@@ -172,24 +107,26 @@ describe('the World Space', { timeout: 20_000 }, () => {
       arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
       tagChapter,
     };
-    const world: CreatorWorld = { id: storyId, title: 'The Drowned Name', chapterCount: 3, status: 'draft', updatedAt: '2026-10-30T12:00:00.000Z', imageUrl: '/covers/drowned-name.png' };
+    const world: HomeWorld = { id: storyId, title: 'The Drowned Name', chapterCount: 3, genre: 'Mystery', createdAt: '2026-10-30T12:00:00.000Z', reads: 0, mcName: 'Mara', powerStage: '', imageUrl: '/covers/drowned-name.png' };
     const opened: number[] = [];
     const read = vi.fn();
-    await act(async () => root.render(<Host repository={repository} adapter={adapter} storyId={storyId} worlds={[world]} onOpenChapter={number => opened.push(number)} onRead={read} />));
+    await act(async () => root.render(<Host repository={repository} adapter={adapter} storyId={storyId} world={world} onOpenChapter={number => opened.push(number)} onRead={read} />));
     await flush(20);
 
     // The world, its medium (Sequential Art waits), and Chapters open first.
-    // The page is named, and its one world stands in the spotlight: its cover, its title, where it stands, and Read.
+    // The page is named, and its one world stands on the Library's Feature card, named Your World; where it stands sits beneath.
     expect(view().querySelector('h1')!.textContent).toBe('World Space');
     const hero = view().querySelector<HTMLElement>('[data-testid="world-space-hero"]')!;
-    expect(hero.querySelector('h2')!.textContent).toBe('The Drowned Name');
-    expect(hero.querySelector<HTMLImageElement>('img.world-space-hero-art')!.getAttribute('src')).toBe('/covers/drowned-name.png');
-    expect(hero.querySelector('[data-testid="world-space-standing"]')!.textContent).toBe('DraftMade in SEN3 chapters');
-    // One world at a time: no other world is listed here, and a creator with one world has nowhere to swipe to.
-    expect(view().querySelector('[data-world-card]')).toBeNull();
-    expect(view().querySelector('[data-testid="world-space-world-nav"]')).toBeNull();
-    expect(hero.hasAttribute('tabindex')).toBe(false);
-    await click(hero.querySelector('[data-testid="world-space-read"]'), 'Read');
+    expect(hero.querySelectorAll('[data-world-card="feature"]')).toHaveLength(1);
+    expect(hero.querySelector('.world-card-banner-title')!.textContent).toBe('The Drowned Name');
+    expect(hero.querySelector('.world-card-banner-eyebrow')!.textContent).toBe('Your World');
+    expect(hero.querySelector<HTMLImageElement>('img.world-card-banner-still')!.getAttribute('src')).toBe('/covers/drowned-name.png');
+    expect(view().querySelector('[data-testid="world-space-standing"]')!.textContent).toBe('DraftMade in SEN3 chapters');
+    // One world at a time: no other world is listed, and nothing here moves to another world.
+    expect(view().querySelector('[data-world-card="compact"]')).toBeNull();
+    expect(view().querySelector('[aria-label="Next world"], [aria-label="Previous world"]')).toBeNull();
+    // A tap on the card enters the world: its World Info.
+    await click(hero.querySelector('.world-card-banner-open'), 'the world card');
     expect(read).toHaveBeenCalledTimes(1);
     expect(buttonByText('Sequential Art')!.disabled).toBe(true);
     expect(tab('Chapters')!.getAttribute('aria-selected')).toBe('true');
@@ -229,8 +166,8 @@ describe('the World Space', { timeout: 20_000 }, () => {
       generate: vi.fn(),
       arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
     };
-    const world: CreatorWorld = { id: storyId, title: 'The Drowned Name', chapterCount: 3, status: 'draft', updatedAt: '2026-10-30T12:00:00.000Z' };
-    await act(async () => root.render(<Host repository={repository} adapter={adapter} storyId={storyId} worlds={[world]} />));
+    const world: HomeWorld = { id: storyId, title: 'The Drowned Name', chapterCount: 3, genre: 'Mystery', createdAt: '2026-10-30T12:00:00.000Z', reads: 0, mcName: 'Mara', powerStage: '', imageUrl: '' };
+    await act(async () => root.render(<Host repository={repository} adapter={adapter} storyId={storyId} world={world} />));
     await flush(20);
 
     // No tagger here: nothing can be checked, and it says why.

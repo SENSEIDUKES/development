@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent } from 'react';
-import { ArrowLeft, BookOpen, Check, ChevronLeft, ChevronRight, Download, Globe, LoaderCircle, Mic, Sparkles, Square } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
+import { ArrowLeft, Check, ChevronRight, Download, Globe, LoaderCircle, Mic, Sparkles, Square } from 'lucide-react';
 import { SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
 import { describeChapterTagging, findStory, storyTaggingSummary, type HarnessChapter, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { LibraryButton, ManifestButton } from '@seihouse/ui/sen';
-import type { CreatorWorld } from '../../creator-space/shared/creatorSpaceContracts';
+import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
+import { WorldCardFeature } from '../../world-card/development/WorldCardFeature';
 import { useLibraryAssets } from '../../../library/assets';
 import { EnergyActionCost } from '../../energy/development/EnergyActionCost';
 import { useActionEnergyPrice } from '../../energy/shared/energyModels';
@@ -22,12 +23,11 @@ import './world-space.css';
  * The World Space (named by SENSEI, 2026-11-23; designed 2026-10-30): all
  * available information about one of the creator's worlds, and where that
  * world is worked on. It opens from the Creator Space, by a world's card or
- * its Edit button, and shows one world at a time: the chosen world in a
- * spotlight (its cover, its title, where it stands, and Read), then its
- * medium (Novel; Sequential Art later) and its Blueprint, Chapters, Codex,
- * Assets and Info. The spotlight's arrows, a sideways swipe on it, or the
- * keyboard's arrows move to the creator's next or previous world, in the
- * order the Creator Space lists them.
+ * its Edit button, and shows one world at a time: the chosen world on the
+ * Library's own Feature card, named Your World (a tap enters the world: its
+ * World Info), where it stands, then its medium (Novel; Sequential Art
+ * later) and its Blueprint, Chapters, Codex, Assets and Info. Another world
+ * is chosen back in the Creator Space, never here (SENSEI, 2026-11-23).
  * Tagging lives here and nowhere else: a reader never sees any of it. A world
  * stays here, its creator's alone, until they publish it; Read opens its
  * World Info (its cover, Start or Continue into the creator's Reader), a
@@ -44,9 +44,6 @@ const TABS: ReadonlyArray<{ id: WorldSpaceTab; label: string }> = [
   { id: 'info', label: 'Info' },
 ];
 
-/** A sideways drag at least this long, in pixels, is a swipe to another world. */
-const SWIPE_DISTANCE = 48;
-
 /** Library art for a world with no cover yet, the same pick the Creator Space's row makes. */
 function fallbackCover(id: string, images: readonly string[]) {
   if (!images.length) return undefined;
@@ -55,28 +52,23 @@ function fallbackCover(id: string, images: readonly string[]) {
   return images[hash % images.length];
 }
 
-export function WorldSpace({ codexPictures, chapterVoices, stories, worlds, storyId, onChooseWorld, onOpenChapter, onBack, onRead }: {
+export function WorldSpace({ codexPictures, chapterVoices, stories, world, storyId, onOpenChapter, onBack, onRead }: {
   codexPictures?: CodexPictureService;
   /** The host's character voices: each chapter offers its spoken lines voiced, at their Energy price. Without it, chapters offer none. */
   chapterVoices?: ChapterVoiceService;
   stories: LibraryStories;
-  /** Every world the creator has, as the Creator Space's Your worlds shows them; one is shown at a time. */
-  worlds: readonly CreatorWorld[];
-  /** The chosen world: the one this World Space shows. */
+  /** The chosen world as its World Card shows it (Home's card data): its title, cover, creator and genre. */
+  world?: HomeWorld;
+  /** The chosen world's story. */
   storyId: string;
-  /** Another of the creator's worlds, chosen with the spotlight's arrows or a swipe. */
-  onChooseWorld: (storyId: string) => void;
   /** A chapter opened from the Chapters tab: the creator's Reader at that chapter, in Create mode with its tags lit. */
   onOpenChapter: (chapterNumber: number) => void;
-  /** Back to the Creator Space. */
+  /** Back to the Creator Space, where another world is chosen. */
   onBack: () => void;
-  /** Read: the book's World Info in Create. Without it, there is no Read. */
+  /** Entering the world from its card: the book's World Info in Create. Without it, the card is not a door. */
   onRead?: () => void;
 }) {
   const [tab, setTab] = useState<WorldSpaceTab>('chapters');
-  // The Creator Space's own order: the most recently changed world first.
-  const ordered = useMemo(() => [...worlds].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)), [worlds]);
-  const world = ordered.find(entry => entry.id === storyId);
 
   return <div className="world-space mx-auto w-full max-w-7xl" data-testid="world-space" data-world={storyId}>
     <div className="world-space-heading">
@@ -90,7 +82,7 @@ export function WorldSpace({ codexPictures, chapterVoices, stories, worlds, stor
       </div>
     </div>
 
-    <WorldSpotlight stories={stories} storyId={storyId} world={world} worlds={ordered} onChooseWorld={onChooseWorld} onRead={onRead} />
+    <WorldSpotlight stories={stories} storyId={storyId} world={world} onRead={onRead} />
 
     <section className="mt-5 min-w-0" aria-label={world?.title ?? 'World'}>
       <div role="tablist" aria-label="This world" className="flex gap-1 overflow-x-auto border-b border-white/10" data-testid="world-space-tabs">
@@ -115,101 +107,35 @@ export function WorldSpace({ codexPictures, chapterVoices, stories, worlds, stor
 
 /**
  * The spotlight: the one world this World Space is open on, so its creator
- * always knows which story they are working on. Its cover fills the card (the
- * Library's own art for a world with no cover yet), and over it sit the
- * world's title, where it stands (Draft or Published, Made in SEN or
- * Imported, its chapters) and Read (its World Info, the creator's). A creator
- * with more than one world moves between them here, one at a time: the two
- * arrows, a sideways swipe on the card, or the keyboard's arrows, going round
- * from the last world to the first. Beneath, one line says what the world's
- * origin means for its chapters. Publish is in Info (SENSEI, 2026-11-04):
- * publishing will come with user agreements and a subscription, so it is
- * never a button up here.
+ * always knows which story they are working on. It is the Library's own
+ * Feature card (Home's spotlight), named Your World: the world's cover (the
+ * Library's own art for a world with no cover yet), title, creator and
+ * genre, and a tap anywhere enters the world (its World Info, the
+ * creator's). Beneath it, where the world stands (Draft or Published, Made
+ * in SEN or Imported, its chapters) and what its origin means for its
+ * chapters. Publish is in Info (SENSEI, 2026-11-04): publishing will come
+ * with user agreements and a subscription, so it is never a button up here.
  */
-function WorldSpotlight({ stories, storyId, world, worlds, onChooseWorld, onRead }: {
-  stories: LibraryStories; storyId: string; world?: CreatorWorld;
-  /** The creator's worlds in the order the arrows walk them. */
-  worlds: readonly CreatorWorld[];
-  onChooseWorld: (storyId: string) => void;
-  onRead?: () => void;
+function WorldSpotlight({ stories, storyId, world, onRead }: {
+  stories: LibraryStories; storyId: string; world?: HomeWorld; onRead?: () => void;
 }) {
   const { homeImages = [] } = useLibraryAssets();
-  const cover = world?.imageUrl?.trim() || fallbackCover(storyId, homeImages);
-  // Art that fails to load leaves the card's own dark ground, never a broken picture.
-  const [failedCover, setFailedCover] = useState<string>();
-  const art = cover && cover !== failedCover ? cover : undefined;
   const story = stories.state ? findStory(stories.state, storyId) : undefined;
   const published = story ? isStoryPublished(story) : false;
   const origin = story ? storyOrigin(story) : undefined;
   const chapters = story ? stories.state!.chapters.filter(entry => entry.storyId === storyId).length : 0;
-  const title = world?.title ?? story?.title;
-
-  const position = worlds.findIndex(entry => entry.id === storyId);
-  const canMove = position >= 0 && worlds.length > 1;
-  // Which way the last move went, so the arriving world slides in from that side.
-  const [direction, setDirection] = useState<'next' | 'previous'>();
-  const go = (step: 1 | -1) => {
-    if (!canMove) return;
-    setDirection(step > 0 ? 'next' : 'previous');
-    onChooseWorld(worlds[(position + step + worlds.length) % worlds.length].id);
-  };
-  const pointer = useRef<{ x: number; y: number } | null>(null);
-  // A drag that starts on a button (the arrows, Read) is that button's, never a swipe.
-  const onPointerDown = (event: PointerEvent) => {
-    pointer.current = (event.target as Element).closest('button, a') ? null : { x: event.clientX, y: event.clientY };
-  };
-  const onPointerUp = (event: PointerEvent) => {
-    const start = pointer.current;
-    pointer.current = null;
-    if (!start) return;
-    const dx = event.clientX - start.x;
-    const dy = event.clientY - start.y;
-    if (Math.abs(dx) >= SWIPE_DISTANCE && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1);
-  };
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'ArrowRight') { event.preventDefault(); go(1); }
-    if (event.key === 'ArrowLeft') { event.preventDefault(); go(-1); }
-  };
-  const carousel = canMove ? {
-    role: 'group', 'aria-roledescription': 'carousel', 'aria-label': 'Your worlds', tabIndex: 0,
-    onKeyDown, onPointerDown, onPointerUp, onPointerCancel: () => { pointer.current = null; },
-  } as const : {};
-
+  const featured = world && !world.imageUrl.trim() ? { ...world, imageUrl: fallbackCover(storyId, homeImages) ?? '' } : world;
   return <header className="mt-4" data-testid="world-space-header" data-origin={origin}>
-    <div className="world-space-hero" data-testid="world-space-hero" data-art={art ? 'true' : 'false'} data-swipe={canMove ? 'true' : undefined} {...carousel}>
-      {/* One world at a time: the slide is the chosen world, and a new one slides in from the side it was reached from. */}
-      <div key={storyId} className="world-space-hero-slide" data-direction={direction}
-        {...(canMove ? { role: 'group', 'aria-roledescription': 'slide', 'aria-label': `${position + 1} of ${worlds.length}: ${title ?? ''}` } : {})}>
-        {art && <>
-          {/* The same cover twice: soft behind the whole card, sharp where the art sits. */}
-          <img className="world-space-hero-glow" src={art} alt="" aria-hidden="true" draggable={false} referrerPolicy="no-referrer" />
-          <img className="world-space-hero-art" src={art} alt="" aria-hidden="true" draggable={false} referrerPolicy="no-referrer"
-            onError={() => setFailedCover(art)} />
-        </>}
-        <span className="world-space-hero-wash" aria-hidden="true" />
-        <div className="world-space-hero-body">
-          <h2 className="world-space-hero-title font-display" data-testid="world-space-world-title">{title}</h2>
-          {story && <p className="world-space-hero-standing" data-testid="world-space-standing">
-            <span className={`world-space-chip ${published ? 'border-[#d4af37]/60 text-[#e9cf73]' : 'border-white/30 text-neutral-100'}`}>{published ? 'Published' : 'Draft'}</span>
-            <span className={`world-space-chip ${origin === 'sen' ? 'border-cyan-300/50 text-cyan-200' : 'border-violet-300/50 text-violet-200'}`}
-              data-testid="world-space-origin">{origin === 'sen' ? 'Made in SEN' : 'Imported'}</span>
-            <span>{chapters === 1 ? '1 chapter' : `${chapters} chapters`}</span>
-          </p>}
-          {/* One action here, Read; Publish lives in Info until publishing grows its agreements and subscriber terms. */}
-          {story && onRead && <div className="world-space-hero-actions" data-testid="world-space-actions">
-            <LibraryButton variant="primary" fullWidth icon={BookOpen} onClick={() => onRead()} data-testid="world-space-read">Read</LibraryButton>
-          </div>}
-        </div>
-      </div>
-      <p className="world-space-hero-eyebrow">Your world</p>
-      {/* The creator's other worlds, one step away: previous, where this one stands among them, next. */}
-      {canMove && <div className="world-space-hero-nav" data-testid="world-space-world-nav">
-        <button type="button" className="world-space-hero-step" aria-label="Previous world" onClick={() => go(-1)}><ChevronLeft size={22} aria-hidden="true" /></button>
-        <span className="world-space-hero-count" aria-hidden="true" data-testid="world-space-world-count">{position + 1} / {worlds.length}</span>
-        <button type="button" className="world-space-hero-step" aria-label="Next world" onClick={() => go(1)}><ChevronRight size={22} aria-hidden="true" /></button>
-      </div>}
-    </div>
-    {story && <p className="mt-2.5 text-xs text-neutral-400" data-testid="world-space-origin-rule">
+    {featured && <div className="world-space-hero" data-testid="world-space-hero">
+      <WorldCardFeature world={featured} label="Your World" onOpen={() => onRead?.()} actionLabel={onRead ? undefined : null} />
+    </div>}
+    {story && <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-neutral-400" data-testid="world-space-standing">
+      <span className={`rounded-full border px-2.5 py-0.5 font-semibold uppercase tracking-[0.15em] ${published ? 'border-[#d4af37]/50 text-[#d4af37]' : 'border-white/20 text-neutral-200'}`}>{published ? 'Published' : 'Draft'}</span>
+      <span className={`rounded-full border px-2.5 py-0.5 font-semibold uppercase tracking-[0.15em] ${origin === 'sen' ? 'border-cyan-300/40 text-cyan-200' : 'border-violet-300/40 text-violet-200'}`}
+        data-testid="world-space-origin">{origin === 'sen' ? 'Made in SEN' : 'Imported'}</span>
+      <span>{chapters === 1 ? '1 chapter' : `${chapters} chapters`}</span>
+    </p>}
+    {story && <p className="mt-1.5 text-xs text-neutral-500" data-testid="world-space-origin-rule">
       {origin === 'sen'
         ? 'Each chapter seals once the next one is written, so the Codex stays true. Sounds and media can still change.'
         : 'Already written, so any chapter can be reopened. Sounds and media can change too.'}

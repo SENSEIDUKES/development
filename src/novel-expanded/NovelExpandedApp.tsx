@@ -291,13 +291,12 @@ function NovelExpandedRoutes({ services, writer, askForToken, discoverCatalogue,
   if (route.page === 'world') return withFamiliar(missingWorld ? null : <AppShell route={{ page: 'create' }} navigate={navigate} stories={worlds}
     readerProfile={profile} mainLabel="World Space">
     <div className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6">
-      <WorldSpace codexPictures={codexPictures} chapterVoices={chapterVoices} stories={stories} worlds={creatorWorlds} storyId={route.storyId}
-        // The spotlight's arrows and swipe: another world in the same World Space, the page kept where it is; Back still returns to the Creator Space.
-        onChooseWorld={id => navigate({ page: 'world', storyId: id }, { replace: true, scroll: false })}
+      <WorldSpace codexPictures={codexPictures} chapterVoices={chapterVoices} stories={stories}
+        world={allWorlds.find(world => world.id === route.storyId)} storyId={route.storyId}
         // A chapter opens in the creator's Reader, in Create mode with its tags lit: what a reader will get, with every tag on it.
         onOpenChapter={chapterNumber => navigate({ page: 'write', storyId: route.storyId, chapterNumber, create: true })}
         onBack={() => navigate({ page: 'create' })}
-        // Read: the book's World Info first (its cover, Start or Continue).
+        // Entering the world from its card: the book's World Info first (its cover, Start or Continue).
         onRead={() => navigate({ page: 'story', storyId: route.storyId, inCreate: true })} />
     </div>
   </AppShell>);

@@ -145,9 +145,9 @@ and phase B closes on SENSEI's run in it."
 ([`src/components/world-space/`](../../src/components/world-space/README.md),
 `?preview=world-space`): Novel (Sequential Art shown, not yet working),
 Blueprint, Chapters, Codex (coming soon), Assets and an Info tab. It shows one
-world at a time: the Worlds column drawn below gave way to a spotlight of the
-chosen world, with arrows, a swipe or the keyboard to the author's other
-worlds, and the Creator Space's Edit opens it too (SENSEI, 2026-11-23). The
+world at a time: the Worlds column drawn below gave way to the chosen world on
+the Library's Feature card, named Your World (another world is chosen back in
+the Creator Space), and the Creator Space's Edit opens it too (SENSEI, 2026-11-23). The
 design below is the 2026-10-30 record.
 
 > "This page is going to be essentially the author's tool, where the real
@@ -298,7 +298,7 @@ chapters first, until the tagging is right):
 
 - **2026-11-23 (the World Space):** SENSEI named the author's world view the
   World Space, sent the Creator Space's Edit to it, and had it show one world
-  at a time in a spotlight, with arrows and a swipe to the other worlds. Its
+  at a time on the Library's Feature card, named Your World. Its
   code moved to `src/components/world-space/` and it has a Workshop entry.
 - **2026-10-29:** Written from SENSEI's direction after the first real run of
   the margin-note tagger. Phase A awaiting approval.

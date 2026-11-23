@@ -41,6 +41,18 @@ const DYNAMIC_PATTERNS: readonly DynamicPattern[] = [
     pattern: /^([\d,.\s]+)\s+sealed scrolls?$/,
     apply: (f, n) => f.sealedScrolls(n),
   },
+  {
+    pattern: /^Remove tag\s+(.+)$/,
+    apply: (f, tag) => f.removeTag(tag),
+  },
+  {
+    pattern: /^Add “(.+)” as your own tag$/,
+    apply: (f, tag) => f.addOwnTag(tag),
+  },
+  {
+    pattern: /^(\d+) \/ (\d+) chosen$/,
+    apply: (f, count, limit) => f.tagsChosen(count, limit),
+  },
 ];
 
 /**

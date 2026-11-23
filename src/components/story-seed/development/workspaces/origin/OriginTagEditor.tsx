@@ -107,7 +107,8 @@ export const OriginTagEditor = memo(({
               <button key={tag} type="button" onClick={() => toggleTag(tag)} aria-label={`Remove tag ${tag}`}
                 className="glass-chip story-seed-touch-target animate-fadeIn px-2.5 py-1 font-sans text-xs transition-colors hover:border-red-300/40">
                 {metadata && <CategoryColorDot color={metadata.color} />}
-                <span className="font-semibold">{tag}</span>
+                {/* A catalog tag reads in the creator's language; their own wording is never translated. */}
+                <span className="font-semibold" data-no-interface-translate={metadata ? undefined : ''}>{tag}</span>
                 <X size={12} aria-hidden="true" className="text-neutral-400" />
               </button>
             );
@@ -130,7 +131,7 @@ export const OriginTagEditor = memo(({
             <button type="button" id="custom-tag-add" onClick={addOwnTag}
               className="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-dashed border-portal/40 px-2.5 text-start font-sans text-sm text-portal transition-colors hover:bg-portal/10">
               <Plus size={16} aria-hidden="true" className="shrink-0" />
-              <span className="min-w-0 flex-1 truncate">Add “{ownTag}” as your own tag</span>
+              <span className="min-w-0 flex-1 truncate">{`Add “${ownTag}” as your own tag`}</span>
             </button>
           )}
           {results.length === 0 && !canAddOwn && <p className="py-2 font-sans text-xs text-neutral-400">No tag matches that yet.</p>}
@@ -144,12 +145,12 @@ export const OriginTagEditor = memo(({
             {(suggestions.length > 0 || passedOver.length > 0) && (
               <button type="button" onClick={moreSuggestions} aria-label="Show more tag suggestions"
                 className="story-seed-touch-target inline-flex min-h-[2.75rem] shrink-0 items-center gap-1.5 rounded-full border border-portal/40 bg-portal/10 px-3 font-sc text-[10px] font-bold uppercase tracking-widest text-portal transition-colors hover:border-portal hover:bg-portal/20">
-                <RefreshCw size={12} aria-hidden="true" />More
+                <RefreshCw size={12} aria-hidden="true" />More tags
               </button>
             )}
           </div>
           <div className="flex flex-wrap gap-1.5" id="style-suggested-tags" aria-live="polite">
-            {suggestions.length === 0 && <p className="font-sans text-xs text-neutral-400">{passedOver.length ? 'That is every suggestion. Tap More to see them again, or browse all tags.' : 'Choose a genre or write your synopsis, or browse all tags.'}</p>}
+            {suggestions.length === 0 && <p className="font-sans text-xs text-neutral-400">{passedOver.length ? 'That is every suggestion. Tap More tags to see them again, or browse all tags.' : 'Choose a genre or write your synopsis, or browse all tags.'}</p>}
             {suggestions.map(entry => <CatalogTagChip key={entry.label} entry={entry} selected={false} onToggle={toggleTag} />)}
           </div>
         </div>
@@ -262,7 +263,7 @@ const TagBrowserSheet = ({ open, onClose, genre, storyTags, isSelected, onToggle
               <div className="shrink-0 border-t border-neutral-800/80 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
                 {tagLimitError && <p role="alert" className="mb-2 font-sans text-xs text-red-400">{tagLimitError}</p>}
                 <div className="flex items-center gap-3">
-                  <p className="min-w-0 flex-1 font-sans text-xs text-neutral-300" aria-live="polite">{storyTags.length} / {TAG_LIMIT} chosen</p>
+                  <p className="min-w-0 flex-1 font-sans text-xs text-neutral-300" aria-live="polite">{`${storyTags.length} / ${TAG_LIMIT} chosen`}</p>
                   <button type="button" onClick={onClose}
                     className="min-h-11 rounded-xl border border-portal/50 bg-portal/10 px-6 font-sc text-[11px] font-bold uppercase tracking-widest text-portal transition-colors hover:border-portal hover:bg-portal/20">Done</button>
                 </div>

@@ -111,7 +111,10 @@ it('offers the whole book from World Info: the chapter selector reports the chos
   act(() => root.render(<LibraryPresentationProvider>
     <WorldCardStage view="info" state={{ ...state, reading: 'chapter-7' }} onAction={onAction} />
   </LibraryPresentationProvider>));
-  expect(container.querySelector('.world-card-info-blueprint')).toBeNull();
+  // The Blueprint row leads Portal, and reports its world.
+  expect([...container.querySelectorAll('.world-card-info-tools .world-card-info-tool-title')].map(title => title.textContent).slice(0, 3)).toEqual(['Codex', 'Blueprint', 'Portal']);
+  act(() => container.querySelector<HTMLButtonElement>('.world-card-info-blueprint')!.click());
+  expect(onAction).toHaveBeenLastCalledWith('Open the Blueprint of The Last Lotus of the Jade Empire');
   act(() => container.querySelector<HTMLButtonElement>('button.world-card-info-chapters-button')!.click());
   // One page of ten at a time, opening on the reader's page (Chapter 7).
   let rows = [...document.querySelectorAll<HTMLButtonElement>('.world-card-chapters-row')];
@@ -127,6 +130,7 @@ it('offers the whole book from World Info: the chapter selector reports the chos
   act(() => root.render(<LibraryPresentationProvider>
     <WorldCardStage view="info" state={{ ...state, destinations: 'none' }} onAction={onAction} />
   </LibraryPresentationProvider>));
+  expect(container.querySelector('.world-card-info-blueprint')).toBeNull();
   expect(container.querySelector('.world-card-info-chapters-button')).toBeNull();
 
   act(() => root.unmount());

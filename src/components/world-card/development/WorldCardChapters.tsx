@@ -203,10 +203,8 @@ function Row({ row, language, onOpen }: { row: ChapterMapRow; language?: string;
       <span className="world-card-chapters-rail" aria-hidden="true"><Icon /></span>
       <span className="world-card-chapters-goal-text">
         <span className="world-card-chapters-goal-label">{GOAL_LABEL[row.goal.status]}<span className="sr-only">, {goalWhere(row.goal)}</span></span>
-        {/* A goal ahead keeps its words until the reader gets there: the map never spoils the story. */}
-        {row.goal.status === 'ahead'
-          ? <span className="world-card-chapters-goal-hidden">Revealed when you get there</span>
-          : <span {...authorText(language)}>{row.goal.text}</span>}
+        {/* Goals still ahead are never listed, so the map never spoils the story. */}
+        <span {...authorText(language)}>{row.goal.text}</span>
       </span>
     </li>;
   }

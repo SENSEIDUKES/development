@@ -952,6 +952,30 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     expect(writer.generate).toHaveBeenCalledTimes(1);
   });
 
+  it('the Blueprint row sits above Portal on the creator\'s World Info and opens the creator\'s Blueprint; a reader\'s World Info has none until it is shared', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    const navigateTo = async (url: string) => { await act(async () => { window.history.pushState({}, '', url); window.dispatchEvent(new PopStateEvent('popstate')); }); await flush(20); };
+    // The creator's World Info, opened from Create.
+    await render(services, infoAddress(created.id));
+    const titles = () => [...worldInfo()!.querySelectorAll('.world-card-info-tools .world-card-info-tool-title')].map(title => title.textContent);
+    expect(titles().slice(0, 2)).toEqual(['Blueprint', 'Portal']);
+    await click(worldInfo()!.querySelector('[data-testid="world-info-blueprint"]'), 'Blueprint', 20);
+    expect(address()).toBe(`/app/?page=create&world=${created.id}&blueprint=1`);
+    expect(document.querySelector('[data-testid="harness-story-blueprint"] [data-blueprint-view="creator"]')).toBeTruthy();
+    // Its Back returns to the creator's World Info.
+    await click(document.querySelector('[data-testid="harness-story-blueprint"] button[aria-label="Back to World Info"]'), 'Back to World Info', 20);
+    expect(address()).toBe(infoAddress(created.id));
+    // A reader's World Info of the published book: no Blueprint row, since its creator has not shared it.
+    await navigateTo(`/app/?story=${created.id}`);
+    expect(titles()).not.toContain('Blueprint');
+    // A reader's Blueprint address shows the world's page, never the Blueprint.
+    await navigateTo(`/app/?story=${created.id}&blueprint=1`);
+    expect(document.querySelector('[data-testid="harness-story-blueprint"]')).toBeNull();
+    expect(worldInfo()).toBeTruthy();
+  });
+
   it('a chapter keeps writing when the reader leaves the Reader, and is there when they come back', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);

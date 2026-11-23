@@ -105,6 +105,8 @@ export interface StoryDetailScreenProps {
   branch?: WorldInfoBranch;
   /** See `WorldCardInfoProps.onOpenChapter`. */
   onOpenChapter?: (chapterNumber: number) => void;
+  /** See `WorldCardInfoProps.onOpenBlueprint`. */
+  onOpenBlueprint?: () => void;
   /** See `WorldCardInfoProps.portal`. */
   portal?: { expansions: readonly WorldExpansionPreview[] };
   /** See `WorldCardInfoProps.settings`. */

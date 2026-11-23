@@ -1,5 +1,5 @@
 import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { BookOpen, ChevronDown, ChevronRight, ChevronUp, Film, Flower2, Info, Orbit, Settings2, Sparkles, Square } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight, ChevronUp, Film, Flower2, Info, Orbit, ScrollText, Settings2, Sparkles, Square } from 'lucide-react';
 import { ElementalTitle } from '@seihouse/elemental-title';
 import { SEIBadge } from '@seihouse/ui';
 import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, ManifestButton, type LibraryIconName } from '@seihouse/ui/sen';
@@ -30,7 +30,7 @@ import { WorldCardChapters } from './WorldCardChapters';
  * This is the public view a reader sees. It shows no owner or library states
  * (visibility, draft, acquisition); the owner's view is a separate Story View.
  */
-export function WorldCardInfo({ story, onRead, onStart, startCost, startCostLabel, onOpenCodex, chapters, arcs, branch, onOpenChapter, portal, settings, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
+export function WorldCardInfo({ story, onRead, onStart, startCost, startCostLabel, onOpenCodex, onOpenBlueprint, chapters, arcs, branch, onOpenChapter, portal, settings, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
   const videoUrl = 'videoUrl' in story ? story.videoUrl?.trim() || undefined : undefined;
@@ -75,7 +75,7 @@ export function WorldCardInfo({ story, onRead, onStart, startCost, startCostLabe
             <div className="world-card-info-buttons">
               <ReadingAction title={infoTitle.text} count={count} countLabel={countLabel} currentArc={currentArc}
                 onRead={onRead} onStart={onStart} startCost={startCost} startCostLabel={startCostLabel} readingPosition={readingPosition} />
-              {/* The whole book, a small companion to the reading pill. (The Blueprint lives in Create.) */}
+              {/* The whole book, a small companion to the reading pill. */}
               {onOpenChapter && chapters && chapters.length > 0 && <WorldCardChapters title={infoTitle.text} chapters={chapters} arcs={arcs} branch={branch}
                 readingChapter={readingPosition?.chapterNumber} language={'originalLanguage' in story ? story.originalLanguage : undefined} onOpenChapter={onOpenChapter} />}
             </div>
@@ -121,7 +121,7 @@ export function WorldCardInfo({ story, onRead, onStart, startCost, startCostLabe
 
       <WorldSynopsis key={story.id} storyId={story.id} synopsis={detail?.synopsis?.trim()} />
 
-      <WorldInfoTools key={`${story.id}-tools`} world={detail} onOpenCodex={onOpenCodex} portal={portal} settings={settings} readingLanguage={readingLanguage} />
+      <WorldInfoTools key={`${story.id}-tools`} world={detail} onOpenCodex={onOpenCodex} onOpenBlueprint={onOpenBlueprint} portal={portal} settings={settings} readingLanguage={readingLanguage} />
     </div>
   </LibraryPanel>;
 }
@@ -248,14 +248,17 @@ function ToolCardFace({ icon, title, description }: { icon: ReactNode; title: st
 }
 
 /**
- * The cards under the synopsis: Codex, Portal, Information and Settings.
+ * The cards under the synopsis: Codex, Blueprint, Portal, Information and Settings.
+ * Blueprint (the world's foundation, which a reader may start their own story from)
+ * shows only when the host opens it: for the creator, and for readers the creator shares it with.
  * Information opens everything that describes the world, marked with its
  * format; Portal (its other media) and Settings (what the reader changes
  * about their reading) open below the cards, on this page, one at a time.
  */
-function WorldInfoTools({ world, onOpenCodex, portal, settings, readingLanguage }: {
+function WorldInfoTools({ world, onOpenCodex, onOpenBlueprint, portal, settings, readingLanguage }: {
   world?: StoryDetailDisplay;
   onOpenCodex?: () => void;
+  onOpenBlueprint?: () => void;
   portal?: WorldCardInfoProps['portal'];
   settings?: ReactNode;
   readingLanguage?: WorldCardInfoProps['readingLanguage'];
@@ -265,13 +268,17 @@ function WorldInfoTools({ world, onOpenCodex, portal, settings, readingLanguage 
   const settingsId = useId();
   const showPortal = Boolean(portal && world);
   const showSettings = Boolean(world && (settings || readingLanguage));
-  if (!onOpenCodex && !world) return null;
+  if (!onOpenCodex && !onOpenBlueprint && !world) return null;
   const toggle = (part: 'portal' | 'settings') => setOpen(current => current === part ? undefined : part);
   const format = world?.format?.trim();
   return <>
     <div className="world-card-info-tools">
       {onOpenCodex && <StoryToolCard icon="navigation-book" title="Codex"
         description="Explore the lore, sects, and world" onOpen={onOpenCodex} />}
+      {onOpenBlueprint && <button type="button" className="world-card-info-tool world-card-info-information world-card-info-blueprint"
+        data-testid="world-info-blueprint" onClick={() => onOpenBlueprint()}>
+        <ToolCardFace icon={<ScrollText size={24} aria-hidden="true" />} title="Blueprint" description="The foundation this world grows from" />
+      </button>}
       {showPortal && <ExpandingToolCard className="world-card-info-portal" icon={<Orbit size={24} aria-hidden="true" />}
         title="Portal" description={portalSummary(portal!.expansions)}
         open={open === 'portal'} controls={portalId} onToggle={() => toggle('portal')} />}

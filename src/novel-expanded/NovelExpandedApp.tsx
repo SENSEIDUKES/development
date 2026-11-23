@@ -232,10 +232,10 @@ function NovelExpandedRoutes({ services, writer, askForToken, discoverCatalogue,
   useEffect(() => {
     if (route.page === 'read' && draft) navigate({ page: 'write', storyId: route.storyId }, { replace: true });
     // Its World Info too is its creator's, in Create.
-    else if (route.page === 'story' && !route.inCreate && draft) navigate({ page: 'story', storyId: route.storyId, inCreate: true }, { replace: true });
+    else if ((route.page === 'story' || route.page === 'blueprint') && !route.inCreate && draft) navigate({ page: route.page, storyId: route.storyId, inCreate: true }, { replace: true });
   }, [route, draft, navigate]);
   // World Info opened from Create (or a draft's) is the creator's: its Reader is the creator's, and Back returns to Create.
-  const creatorInfo = route.page === 'story' && Boolean(route.inCreate);
+  const creatorInfo = (route.page === 'story' || route.page === 'blueprint') && Boolean(route.inCreate);
   const worldId = route.page === 'world' ? route.storyId : undefined;
   const missing = Boolean(state && storyId && !findStory(state, storyId));
   // A world that is not here (an old link, another browser) goes back to Create.
@@ -356,7 +356,10 @@ function NovelExpandedRoutes({ services, writer, askForToken, discoverCatalogue,
     // World Info sits in the Library Shell; the Reader never does.
     frame={info => <AppShell route={{ page: 'story', storyId, ...(creatorInfo ? { inCreate: true } : {}) }} navigate={navigate} stories={worlds}
       readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}
-    onCloseBlueprint={() => navigate({ page: 'story', storyId })}
+    // The Blueprint row on World Info: the creator's World Info always has it; a reader's only once the creator shares the Blueprint.
+    blueprintAccess={creatorInfo || draft ? { view: 'creator' } : { view: 'reader', copy: false }}
+    onOpenBlueprint={() => navigate({ page: 'blueprint', storyId, ...(creatorInfo || draft ? { inCreate: true } : {}) })}
+    onCloseBlueprint={() => navigate({ page: 'story', storyId, ...(creatorInfo ? { inCreate: true } : {}) })}
     // World Info's Start or Continue: the creator's World Info (or a draft's) opens the creator's Reader; a reader's, the reader's.
     onOpenReader={() => navigate({ page: creatorInfo || draft ? 'write' : 'read', storyId })}
     // Back from the creator's Reader: to the World Space's Chapters a chapter was opened from, otherwise to the creator's World Info.

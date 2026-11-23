@@ -35,6 +35,11 @@ export interface WorldCardInfoProps {
   startCostLabel?: string;
   onOpenCodex?: () => void;
   /**
+   * Opens the world's Blueprint: its own row above Portal. The host supplies it for the world's
+   * creator, and for a reader only when the creator shares the Blueprint; without it there is no row.
+   */
+  onOpenBlueprint?: () => void;
+  /**
    * The book's chapters for World Info's chapter selector, beside the reading pill: the whole
    * table of contents, with the reader's place marked. A tap opens that chapter. Without
    * chapters or `onOpenChapter`, there is no selector.

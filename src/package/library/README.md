@@ -1,5 +1,11 @@
 # `@seihouse/library`
 
+**Unreleased (2026-11-23):** `./world-card` `WorldCardInfo` (and `StoryDetailScreen`) take
+`onOpenBlueprint`: a Blueprint row above Portal, absent without it. `./stories` `StoryPages`
+takes `onOpenBlueprint` and shows the row for the creator (`blueprintAccess`), or for a reader
+when the story's `permissions.blueprint` is `view` or `copy`. The chapter sheet no longer
+lists goals still ahead.
+
 **Unreleased (2026-11-23, breaking):** `./stories` exports `WorldSpace` and
 `WorldSpaceTab` in place of `AuthorWorldView` and `AuthorWorldTab`. The page is named
 the World Space and lives in `src/components/world-space/`. It shows one world at a

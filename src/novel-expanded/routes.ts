@@ -25,7 +25,8 @@ const isToolkitFilter = (value: string | null): value is CreatorToolkitFilter =>
  * - Story View (World Info): `/app/?story=<id>`; opened from Create, its
  *   creator's: `/app/?page=create&world=<id>&info=1`
  * - Reader: `/app/?story=<id>&read=1`, a reader's Reader: Fate alone
- * - A story's Blueprint: `/app/?story=<id>&blueprint=1`
+ * - A story's Blueprint, opened from World Info's Blueprint row: the creator's, from Create,
+ *   `/app/?page=create&world=<id>&blueprint=1`; a reader's, once its creator shares it, `/app/?story=<id>&blueprint=1`
  * - Profile (the Cultivator Cave): `/app/?page=profile`, with the Cave's own
  *   page in `cave` (Settings: `&cave=/settings`). The Cave moves between its
  *   pages itself, through that one parameter.
@@ -47,7 +48,8 @@ export type NovelExpandedRoute =
    */
   | { page: 'story'; storyId: string; inCreate?: boolean }
   | { page: 'read'; storyId: string }
-  | { page: 'blueprint'; storyId: string }
+  /** A story's Blueprint. Opened from Create (`inCreate`), it is its creator's, and Back returns to their World Info. */
+  | { page: 'blueprint'; storyId: string; inCreate?: boolean }
   | { page: 'profile'; cave?: string };
 
 export const HOME_ROUTE: NovelExpandedRoute = { page: 'home' };
@@ -69,6 +71,7 @@ export function parseRoute(search: string): NovelExpandedRoute {
     if (worldId) {
       const chapterNumber = Number(query.get('chapter'));
       if (query.get('info') === '1') return { page: 'story', storyId: worldId, inCreate: true };
+      if (query.get('blueprint') === '1') return { page: 'blueprint', storyId: worldId, inCreate: true };
       if (query.get('read') !== '1') return { page: 'world', storyId: worldId };
       const create = query.get('create') === '1' ? { create: true } : {};
       return Number.isInteger(chapterNumber) && chapterNumber > 0 ? { page: 'write', storyId: worldId, chapterNumber, ...create } : { page: 'write', storyId: worldId, ...create };
@@ -102,7 +105,7 @@ export function routeSearch(route: NovelExpandedRoute): string {
     case 'world': return `?${new URLSearchParams({ page: 'create', world: route.storyId })}`;
     case 'story': return route.inCreate ? `?${new URLSearchParams({ page: 'create', world: route.storyId, info: '1' })}` : `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;
-    case 'blueprint': return `?story=${encodeURIComponent(route.storyId)}&blueprint=1`;
+    case 'blueprint': return route.inCreate ? `?${new URLSearchParams({ page: 'create', world: route.storyId, blueprint: '1' })}` : `?story=${encodeURIComponent(route.storyId)}&blueprint=1`;
     case 'profile': return `?${new URLSearchParams(route.cave ? { page: 'profile', cave: route.cave } : { page: 'profile' })}`;
   }
 }

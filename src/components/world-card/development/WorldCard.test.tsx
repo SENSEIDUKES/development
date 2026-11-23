@@ -680,9 +680,10 @@ it('maps the book by arc, in pages: progress, a finished arc, and goals revealed
   expect(range()).toBe('Ch. 31–40');
   expect(rows()).toEqual(['31', '32', '33', '34']);
   // The story reached the seal at Chapter 33, but the reader is at 32: it is their current goal, not a spoiler.
-  // A goal ahead keeps its words, and waits after the last written chapter.
+  // Goals still ahead are not listed at all: only the one being worked toward.
   // Only words on screen; where each goal falls is its place on the path (and spoken to screen readers).
-  expect(goals()).toEqual(['current: Current goal, by Chapter 33Reclaim the seal', 'ahead: Goal ahead, Chapters 34 to 60Revealed when you get there']);
+  expect(goals()).toEqual(['current: Current goal, by Chapter 33Reclaim the seal']);
+  expect(document.body.textContent).not.toContain('Goal ahead');
   expect(document.body.textContent).not.toContain('Open the last lotus');
   expect(button('Next page').disabled).toBe(true);
   // A step back through the arcs: Arc 1 is read through, complete, both goals resolved.

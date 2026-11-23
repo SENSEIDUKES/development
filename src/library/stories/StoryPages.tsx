@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { inheritBlueprintPictures, storyPortraitCharacters } from '../story-seed/blueprintPictures';
-import { findStory, HarnessReaderSession } from '@seihouse/sen/harness-generation';
+import { findFoundationRevision, findStory, HarnessReaderSession } from '@seihouse/sen/harness-generation';
 import { type ReaderPreferenceStorage, type ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
 import GenerationOverlay from '../../components/chapter-manifestation/development/GenerationOverlay';
@@ -35,6 +35,12 @@ export interface StoryPagesProps {
   blueprintAccess?: StoryBlueprintAccess;
   /** The Blueprint page's Copy, for a reader the creator allows to copy. */
   onCopyBlueprint?: StoryBlueprintViewProps['onCopy'];
+  /**
+   * World Info's Blueprint row: show the story's Blueprint page. The row shows for the creator
+   * (`blueprintAccess`), and for a reader only when the creator shares the Blueprint; a story
+   * with no Blueprint (an imported novel, one begun from a premise) has no row.
+   */
+  onOpenBlueprint?: () => void;
   /** The Blueprint page's Back. */
   onCloseBlueprint?: () => void;
   /** World Info's Start Story, Start Reading or Continue: show the Reader. */
@@ -97,7 +103,7 @@ const keepVeilOpen = () => undefined;
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, chapterVoices, deviceNarration, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint, creator = true, openAtChapter, openInCreate = false, beginOnOpen = false }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, chapterVoices, deviceNarration, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onOpenBlueprint, onCloseBlueprint, creator = true, openAtChapter, openInCreate = false, beginOnOpen = false }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   const portraitHandoff = useRef<Promise<void>>(Promise.resolve());
   const [portraitProblem, setPortraitProblem] = useState<string>();
@@ -218,7 +224,15 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
   const settings = <StorySettings stories={stories} storyId={storyId} />;
   // Inside a host's frame, World Info is the frame's content, not a second <main>.
   const Page = frame ? 'div' : 'main';
-  if (page === 'blueprint') {
+  // The Blueprint is its creator's, and a reader's only when the creator shares it. A story's
+  // record has no sharing choice yet, so today only the creator's World Info shows the row.
+  const foundationSource = findFoundationRevision(state, findStory(state, storyId)!.activeFoundationRevisionId)?.input.sourceSnapshot;
+  const hasBlueprint = foundationSource?.kind === 'story-seed' && Boolean(foundationSource.blueprint);
+  const sharing = display.permissions?.blueprint;
+  const blueprintOpen = hasBlueprint && (blueprintAccess.view === 'creator' || sharing === 'view' || sharing === 'copy');
+  const openBlueprint = blueprintOpen ? onOpenBlueprint : undefined;
+  // A Blueprint address a reader may not open shows the world's page instead.
+  if (page === 'blueprint' && blueprintOpen) {
     const blueprint = <>
       {writerAlert}
       <Page className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-story-blueprint">
@@ -243,11 +257,11 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
             } : undefined}
             referenceOf={codexPictures ? key => codexPictures.referenceOf(storyId, key) : undefined}
             story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
-            chapters={chapters} arcs={arcs} onOpenChapter={openChapter} portal={NO_ADAPTATIONS_YET} settings={settings}
+            chapters={chapters} arcs={arcs} onOpenChapter={openChapter} onOpenBlueprint={openBlueprint} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} startCost={startCost} startCostLabel={startCostLabel} />
         : <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
-            onBack={onBack} chapters={chapters} arcs={arcs} onOpenChapter={openChapter} portal={NO_ADAPTATIONS_YET} settings={settings}
+            onBack={onBack} chapters={chapters} arcs={arcs} onOpenChapter={openChapter} onOpenBlueprint={openBlueprint} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} startCost={startCost} startCostLabel={startCostLabel} />}
       {/* For testing: the whole story as one file, so a test can be shared. */}

@@ -140,7 +140,8 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
   useEffect(() => {
     setReadingPosition(undefined);
     setReadChapters([]);
-    if (page !== 'info' || !readerStateRepository) return;
+    // Every page but the Reader: a Blueprint address a reader may not open shows World Info, which needs the place too.
+    if (page === 'read' || !readerStateRepository) return;
     let active = true;
     readerStateRepository.load(storyId).then(saved => {
       if (!active || !saved) return;

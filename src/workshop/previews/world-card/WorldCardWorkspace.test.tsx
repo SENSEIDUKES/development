@@ -132,6 +132,11 @@ it('offers the whole book from World Info: the chapter selector reports the chos
   </LibraryPresentationProvider>));
   expect(container.querySelector('.world-card-info-blueprint')).toBeNull();
   expect(container.querySelector('.world-card-info-chapters-button')).toBeNull();
+  // A public novel whose creator turned Blueprint sharing off: a reader gets no Blueprint row.
+  act(() => root.render(<LibraryPresentationProvider>
+    <WorldCardStage view="info" state={{ ...state, blueprint: 'reader-off' }} onAction={onAction} />
+  </LibraryPresentationProvider>));
+  expect(container.querySelector('.world-card-info-blueprint')).toBeNull();
 
   act(() => root.unmount());
   container.remove();

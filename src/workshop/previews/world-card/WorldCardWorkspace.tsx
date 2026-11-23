@@ -109,8 +109,8 @@ function WorldCardStageCards({ view, state, onAction }: {
             onRead={state.destinations === 'none' ? undefined : () => onAction(`${state.reading === 'chapter-7' ? 'Continue' : 'Start'} reading ${infoWorld.title}`)}
             onStart={state.destinations === 'none' ? undefined : () => onAction(`Start story ${infoWorld.title}`)}
             onOpenCodex={state.destinations === 'all' ? () => onAction(`Open Codex for ${infoWorld.title}`) : undefined}
-            onOpenBlueprint={state.destinations === 'all' ? () => onAction(`Open the Blueprint of ${infoWorld.title}`) : undefined}
-            // The whole book: the chapter selector beside Continue, mapped by arc and branch. (The Blueprint lives in Create.)
+            onOpenBlueprint={state.destinations === 'all' && state.blueprint !== 'reader-off' ? () => onAction(`Open the Blueprint of ${infoWorld.title}`) : undefined}
+            // The whole book: the chapter selector beside Continue, mapped by arc and branch.
             chapters={state.destinations === 'all' ? previewChapters(infoWorld.chapterCount, state.reading === 'chapter-7' ? previewReadingChapter(state.chapterMap) : 0) : undefined}
             arcs={state.chapterMap === 'plain' ? undefined : previewArcs(state.chapterMap)}
             branch={state.chapterMap === 'branched' ? PREVIEW_BRANCH : undefined}

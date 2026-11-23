@@ -46,7 +46,8 @@ export function WorldCardChapters({ title, chapters, arcs, branch, readingChapte
   const current = pages[at];
   const turn = (step: number) => setPageIndex(Math.min(Math.max(0, at + step), pages.length - 1));
   // The arcs, each reached at its first page.
-  const arcStarts = sections.filter(section => section.arc).map(section => pages.findIndex(entry => entry.section === section));
+  // An arc with nothing to show yet (no chapter written, its goals all ahead) has no page to step to.
+  const arcStarts = sections.filter(section => section.arc && section.pages.length > 0).map(section => pages.findIndex(entry => entry.section === section));
   const arcAt = current ? arcStarts.findIndex(start => pages[start]?.section === current.section) : -1;
 
   // A turned page takes away the row that had focus; focus stays on the page, so the keys keep turning it.

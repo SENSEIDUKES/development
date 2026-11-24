@@ -5,7 +5,7 @@ import type { ReaderFonts } from '@seihouse/sen/reader-runtime';
  * reading font built for hundreds of chapters on a phone, and the four
  * SEIHouse Display cuts for chapter titles, all four offered while the owner
  * tests them. The fonts the Reader used before stay as choices. The host loads
- * the faces (`@seihouse/seireader/sans.css` and `@seihouse/living-titles/fonts.css`);
+ * the faces through host-fonts.css;
  * each stack falls back to the theme's fonts for scripts these do not cover.
  * Arabic, Persian, Urdu and Hebrew, which these do not cover, are set in Noto
  * on purpose (the host loads those faces too): Naskh and Serif Hebrew beside

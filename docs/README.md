@@ -26,6 +26,7 @@
 | [Package ownership](../src/package/README.md) | Current | Where SEN and Library features belong. |
 | [SEN package](../src/package/sen/README.md) | Current | Portable engine entry points and host integration. |
 | [Library package](../src/package/library/README.md) | Current | First-party surfaces and package entry points. |
+| [Fonts and typography](guides/fonts.md) | Current | Font inventory, source files, and how to add or remove a font. |
 | [Adding a Workshop component](guides/ADDING-A-COMPONENT.md) | Current | Component ownership, preview registration, and checks. |
 | [Library header family](guides/library-header-family.md) | Current | Shared header composition, controls, and ownership. |
 | [Library navigation](guides/library-navigation.md) | Current | Destinations, responsive shell, and focused workspaces. |

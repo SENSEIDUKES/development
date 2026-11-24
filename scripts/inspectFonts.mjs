@@ -13,6 +13,10 @@ const errors = [];
 const families = new Set();
 const localFonts = new Map();
 const checkOnly = process.argv.includes('--check');
+const genericFamilies = new Set([
+  'serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui',
+  'ui-serif', 'ui-sans-serif', 'ui-monospace', 'ui-rounded', 'math', 'emoji', 'fangsong',
+]);
 
 function filesIn(directory) {
   return readdirSync(join(root, directory), { withFileTypes: true }).flatMap(entry => {
@@ -48,7 +52,7 @@ function recordFace(rule, source, packageEntry) {
   const style = /font-style:\s*([^;}]*)/.exec(rule)?.[1].trim() ?? 'normal';
   const weight = /font-weight:\s*([^;}]*)/.exec(rule)?.[1].trim() ?? '400';
   const scriptFallback = source === `${typography}/script-fonts.css`;
-  if (!scriptFallback) families.add(family);
+  if (!scriptFallback) families.add(family.toLowerCase());
   const urls = [...rule.matchAll(/url\(\s*['"]?([^'"\s)]+)['"]?\s*\)/g)];
   if (!urls.length) errors.push(`${source}: no file URL for ${family}`);
   for (const [, url] of urls) {
@@ -88,7 +92,7 @@ for (const source of stylesheets) {
   for (const [url] of googleImports) {
     for (const specifier of new URL(url.replaceAll('&amp;', '&')).searchParams.getAll('family')) {
       const [family, variants] = specifier.split(':');
-      families.add(family);
+      families.add(family.toLowerCase());
       remoteFonts.push(`${family}${variants ? ` (${variants})` : ''}`);
     }
   }
@@ -117,9 +121,14 @@ const stacks = [
   ...[...LIBRARY_READER_FONTS.text, ...LIBRARY_READER_FONTS.titles].map(choice => [`Reader choice ${choice.id}`, choice.family]),
 ];
 for (const [name, stack] of stacks) {
-  // A quoted primary family is a web font here. System stacks start with a generic family.
-  const primary = /^['"]([^'"]+)['"]/.exec(stack)?.[1];
-  if (primary && !families.has(primary)) errors.push(`${name} still uses ${primary}, which has no registered face`);
+  const value = stack.trim();
+  // A variable refers to another stack rather than naming a typeface itself.
+  if (/^var\(/i.test(value)) continue;
+  const quoted = /^(['"])(.*?)\1/.exec(value)?.[2];
+  const primary = quoted ?? value.split(',', 1)[0].trim();
+  const normalized = primary.toLowerCase();
+  if (quoted === undefined && genericFamilies.has(normalized)) continue;
+  if (primary && !families.has(normalized)) errors.push(`${name} still uses ${primary}, which has no registered face`);
 }
 
 if (errors.length) {

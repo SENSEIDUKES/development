@@ -85,7 +85,7 @@ builds/consumer smoke tests. **It does not run browser checks or build the
 production app.** The full automated check in
 [CI](./.github/workflows/ci.yml) includes those additional checks.
 
-To run all CI checks locally, use Node.js 22 (the CI version), install with
+To run all CI checks locally, use the latest Node.js 22 release (the CI version), install with
 `npm ci`, then:
 
 ```bash

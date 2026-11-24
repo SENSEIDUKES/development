@@ -32,6 +32,7 @@ such as System Mono use fonts supplied by the device.
 2. Assign it where needed. Change the relevant role in `tokens.css` for a
    shared UI font, or add a choice in `readerFonts.ts` for the Reader.
    Keep a generic fallback such as `serif` or `system-ui` in the stack.
+   Use a generic primary family for a stack that relies on device fonts.
 3. Run `npm run check:fonts` and check the affected screen in NovelExpanded
    and its Workshop preview. Check real italics and non-Latin text when the
    change touches those faces.

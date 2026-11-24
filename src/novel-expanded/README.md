@@ -355,7 +355,7 @@ task needs something the list does not allow.
 | File | Responsibility |
 | --- | --- |
 | `app/index.html` (repository root) | The app's page; loads `main.tsx` |
-| `main.tsx` | Stylesheets (`src/host/styles/theme.css`, which also loads the SEIHouse fonts, SEIHouse Sans and the four SEIHouse Display cuts; `@seihouse/sen/styles.css`), the Library scrollbar on the page, and the real services |
+| `main.tsx` | Stylesheets (`src/host/styles/theme.css`, which imports [the shared font styles](../../docs/guides/fonts.md), and `@seihouse/sen/styles.css`), the Library scrollbar on the page, and the real services |
 | `NovelExpandedApp.tsx` | Providers (the mixer, the app's places, the music note for every Library header, the remembered sidebar, the economy), the opening gate, the Familiar and the pages; Chapter 1 begins at Manifest Story |
 | `AppShell.tsx` | The Library Shell around Home, Discover and Story View: header, navigation, footer |
 | `appPlaces.ts` | The app's places (Home, Create, Discover, Profile) and where each page sits in the Library's navigation |

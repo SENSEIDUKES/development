@@ -6,12 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build:tag-fingerprints": "node scripts/buildStoryTagFingerprints.mjs",
-    "build": "tsc -b && node scripts/checkNovelExpandedApp.mjs && vite build && node scripts/buildHarnessGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs && node scripts/buildStoryCoverApi.mjs && node scripts/buildImageLabApi.mjs && node scripts/buildProfilePictureApi.mjs && node scripts/buildCodexVoiceApi.mjs && node scripts/buildChapterVoiceApi.mjs && node scripts/buildReaderTranslationApi.mjs && node scripts/buildStorySparkApi.mjs && node scripts/buildMeaningFingerprintApi.mjs && node scripts/buildFamiliarLiveApi.mjs && node scripts/buildLibraryEconomyApi.mjs && node scripts/buildModelRouterApi.mjs",
+    "build": "npm run check:fonts && tsc -b && node scripts/checkNovelExpandedApp.mjs && vite build && node scripts/buildHarnessGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs && node scripts/buildStoryCoverApi.mjs && node scripts/buildImageLabApi.mjs && node scripts/buildProfilePictureApi.mjs && node scripts/buildCodexVoiceApi.mjs && node scripts/buildChapterVoiceApi.mjs && node scripts/buildReaderTranslationApi.mjs && node scripts/buildStorySparkApi.mjs && node scripts/buildMeaningFingerprintApi.mjs && node scripts/buildFamiliarLiveApi.mjs && node scripts/buildLibraryEconomyApi.mjs && node scripts/buildModelRouterApi.mjs",
     "preview": "vite preview",
     "build:package": "npm run build:package:sen && npm run build:package:library",
     "build:package:sen": "node scripts/requirePackageTypes.mjs sen && vite build --config vite.package.config.ts && tsc -p tsconfig.package.json && node scripts/finalizePackage.mjs sen",
     "build:package:library": "node scripts/requirePackageTypes.mjs library && vite build --config vite.library.config.ts && tsc -p tsconfig.library.json && node scripts/finalizePackage.mjs library",
     "check:ui-artifacts": "node scripts/checkUIArtifacts.mjs",
+    "fonts": "node scripts/inspectFonts.mjs",
+    "check:fonts": "node scripts/inspectFonts.mjs --check",
     "check:package-boundaries": "node scripts/checkPackageBoundaries.mjs",
     "check:ownership": "node scripts/checkOwnership.mjs",
     "check:app": "node scripts/checkNovelExpandedApp.mjs",
@@ -48,7 +50,7 @@
     "test:reader-translation": "vitest run src/server/reader-translation",
     "test:public-generation-guard": "vitest run src/server/shared",
     "test:workshop": "vitest run src/workshop/FeatureWorkspace.test.tsx src/workshop/WorkshopHome.test.tsx src/workshop/docs",
-    "verify": "npm run typecheck && npm test && npm run check:ownership && npm run check:package-boundaries && npm run check:app && npm run test:package"
+    "verify": "npm run check:fonts && npm run typecheck && npm test && npm run check:ownership && npm run check:package-boundaries && npm run check:app && npm run test:package"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

@@ -1,0 +1,6 @@
+@theme {
+  --font-sans: "Rubik", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Noto Serif", ui-serif, Georgia, serif;
+  --font-display: "Alegreya", serif;
+  --font-sc: "Alegreya SC", serif;
+}

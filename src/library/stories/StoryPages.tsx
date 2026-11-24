@@ -7,7 +7,7 @@ import GenerationOverlay from '../../components/chapter-manifestation/developmen
 import { StoryDetailScreen } from '../../components/light-novels-home/development/StoryDetailScreen';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { LIBRARY_READ_ALOUD_VOICES } from './readAloudVoices';
-import { LIBRARY_READER_FONTS } from './readerFonts';
+import { LIBRARY_READER_FONTS } from '../typography/readerFonts';
 import { StorySettings } from './settings/StorySettings';
 import { useStoryCoverManifest } from './StoryCoverManifest';
 import { codexPictureRequest, storyCoverRequest, type CodexPictureService, type StoryCoverService } from './storyCover';

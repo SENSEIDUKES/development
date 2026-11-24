@@ -10,6 +10,8 @@ export const ownershipRules = [
   ['src/presentation/', 'sen', 'neutral presentation'],
   ['src/narrative/', 'sen', 'narrative contracts'],
   ['src/library/', 'library', 'headless Library behavior'],
+  ['src/library/typography/host-fonts.css', 'host', 'host font imports'],
+  ['src/library/typography/script-fonts.css', 'host', 'host script font faces'],
   ['src/library/model-router/', 'library', 'model router server'],
   ['src/host/', 'host', 'host adapters and records'],
   ['src/novel-expanded/', 'host', 'NovelExpanded app'],

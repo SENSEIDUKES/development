@@ -20,7 +20,7 @@ export {
 } from '../../library/stories/StoryBlueprint';
 export { harnessStoryDisplay, isStoryPublished, storyHomeWorlds, storyOrigin } from '../../library/stories/storyView';
 export { LIBRARY_READ_ALOUD_VOICES } from '../../library/stories/readAloudVoices';
-export { LIBRARY_READER_FONTS } from '../../library/stories/readerFonts';
+export { LIBRARY_READER_FONTS } from '../../library/typography/readerFonts';
 export { StorySettings } from '../../library/stories/settings/StorySettings';
 export { ChapterTaggingRecord, TagChapterAction } from '../../library/stories/ChapterTaggingControls';
 // The World Space: one of the creator's worlds and everything about it, opened from the Creator Space.

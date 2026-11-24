@@ -215,7 +215,7 @@ The **cloud is not the sync spinner**. In current `GlobalHeader`, it is an anima
 
 Account linking, full Profile, collection contents, Story Bank, Help content, editor forms, Blueprint review, reader, and Codex destinations are clearly labeled mock content slots. Their domain implementations are not captured. This preserves the shell's dimensions, classes, breakpoints and interaction structure; **full-page pixel parity and content-dependent footer positions are not claimed**. The neutral fixture's height differs from a complete editor or library hero. The requested work ends at these shell boundaries.
 
-The source-requested Alegreya, Alegreya SC, Noto Serif, and Rubik font payloads are local copies under `public/library-shell/fonts/`. No production data, auth, generation, storage, sync, or media-service calls occur. No backend, API, schema, database, routing store, or auth system was added.
+The source-requested Alegreya, Alegreya SC, Noto Serif, and Rubik font payloads are local copies under `public/fonts/library/`, managed through the [shared typography files](../../../docs/guides/fonts.md). No production data, auth, generation, storage, sync, or media-service calls occur. No backend, API, schema, database, routing store, or auth system was added.
 
 ## Lock and provenance
 

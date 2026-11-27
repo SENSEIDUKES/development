@@ -268,8 +268,9 @@ async function walk(browser, viewport, sample) {
   const audioAsked = [];
   await context.route('https://media.seihouse.org/**', async route => {
     const url = route.request().url();
+    const path = new URL(url).pathname;
     // The Library emblem is an image there too: fetched for real when the network allows, so the pictures show it.
-    if (/\.(?:jpe?g|png|webp|svg)$/i.test(new URL(url).pathname)) {
+    if (/\.(?:jpe?g|png|webp|svg)$/i.test(path)) {
       try {
         const response = await fetch(url);
         await route.fulfill({ status: response.status, contentType: response.headers.get('content-type') ?? 'image/jpeg', body: Buffer.from(await response.arrayBuffer()) });
@@ -278,7 +279,8 @@ async function walk(browser, viewport, sample) {
       }
       return;
     }
-    audioAsked.push(new URL(url).pathname);
+    if (!path.startsWith('/SEN/AUDIO/')) return route.continue();
+    audioAsked.push(path);
     await route.fulfill({ status: 200, contentType: 'audio/wav', headers: { 'Access-Control-Allow-Origin': '*' }, body: SILENCE });
   });
   const pieces = () => audioAsked.filter(path => SOUNDSCAPE_PATH.test(path));

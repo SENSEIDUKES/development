@@ -1,7 +1,7 @@
 [
     {
         "file_path": "DEFAULT/Factions/Demonic_Chant_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Factions/Demonic_Chant_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Factions/Demonic_Chant_1.mp3",
         "metadata": {
             "main_category": "factions",
             "broad_variation": "general",
@@ -20,7 +20,7 @@
     },
     {
         "file_path": "DEFAULT/Factions/Demonic_Chant_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Factions/Demonic_Chant_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Factions/Demonic_Chant_2.mp3",
         "metadata": {
             "main_category": "factions",
             "broad_variation": "general",
@@ -39,7 +39,7 @@
     },
     {
         "file_path": "DEFAULT/Factions/Tribal_Chant_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Factions/Tribal_Chant_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Factions/Tribal_Chant_1.mp3",
         "metadata": {
             "main_category": "factions",
             "broad_variation": "general",
@@ -58,7 +58,7 @@
     },
     {
         "file_path": "DEFAULT/Factions/Warrior_Chant_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Factions/Warrior_Chant_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Factions/Warrior_Chant_1.mp3",
         "metadata": {
             "main_category": "factions",
             "broad_variation": "general",
@@ -77,7 +77,7 @@
     },
     {
         "file_path": "DEFAULT/Factions/Warrior_Chant_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Factions/Warrior_Chant_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Factions/Warrior_Chant_2.mp3",
         "metadata": {
             "main_category": "factions",
             "broad_variation": "general",
@@ -96,7 +96,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Electric/Mecha_Suit_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Electric/Mecha_Suit_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Electric/Mecha_Suit_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "electric",
@@ -115,7 +115,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Magic/Fire_Magic_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Magic/Fire_Magic_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Magic/Fire_Magic_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "magic",
@@ -134,7 +134,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Magic/Heal_Magic_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Magic/Heal_Magic_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Magic/Heal_Magic_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "magic",
@@ -152,7 +152,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Magic/Regular_Magic_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Magic/Regular_Magic_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Magic/Regular_Magic_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "magic",
@@ -171,7 +171,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Magic/Wind_Magic_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Magic/Wind_Magic_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Magic/Wind_Magic_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "magic",
@@ -190,7 +190,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Unsheathe/Dagger_Unsheathe_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Dagger_Unsheathe_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Unsheathe/Dagger_Unsheathe_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "unsheathe",
@@ -209,7 +209,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Unsheathe/Epic_Sword_Unsheathe_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Epic_Sword_Unsheathe_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Unsheathe/Epic_Sword_Unsheathe_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "unsheathe",
@@ -231,7 +231,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Unsheathe/Heavy_Sword_Unsheathe_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Heavy_Sword_Unsheathe_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Unsheathe/Heavy_Sword_Unsheathe_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "unsheathe",
@@ -253,7 +253,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Unsheathe/Sword_Unsheathe_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "unsheathe",
@@ -272,7 +272,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Unsheathe/Sword_Unsheathe_2.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "unsheathe",
@@ -291,7 +291,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Unsheathe/Sword_Unsheathe_3.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "unsheathe",
@@ -310,7 +310,7 @@
     },
     {
         "file_path": "DEFAULT/System/Closed/Closed_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/System/Closed/Closed_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/System/Closed/Closed_1.mp3",
         "metadata": {
             "main_category": "system",
             "broad_variation": "closed",
@@ -327,7 +327,7 @@
     },
     {
         "file_path": "DEFAULT/System/Confirm/Confirm_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/System/Confirm/Confirm_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/System/Confirm/Confirm_1.mp3",
         "metadata": {
             "main_category": "system",
             "broad_variation": "confirm",
@@ -345,7 +345,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Academy_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Academy_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Academy_1.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -364,7 +364,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Church_Bell_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Church_Bell_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Church_Bell_1.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -383,7 +383,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Danger_Hit_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Danger_Hit_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Danger_Hit_1.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -402,7 +402,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Dungeon_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Dungeon_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Dungeon_1.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -421,7 +421,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Evil_Gong_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Evil_Gong_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Evil_Gong_1.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -440,7 +440,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Imperial_Hit_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Imperial_Hit_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Imperial_Hit_2.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -459,7 +459,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Magic_Chime_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Magic_Chime_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Magic_Chime_1.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -478,7 +478,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Sect_Gong_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Sect_Gong_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Sect_Gong_2.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -497,7 +497,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Temple_Bell_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Temple_Bell_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Temple_Bell_1.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -515,7 +515,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Temple_Bell_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Temple_Bell_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Temple_Bell_2.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -534,7 +534,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Call/Dragon_Call_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Call/Dragon_Call_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Call/Dragon_Call_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "call",
@@ -552,7 +552,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Call/Dragon_Call_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Call/Dragon_Call_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Call/Dragon_Call_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "call",
@@ -571,7 +571,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Call/Dragon_Call_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Call/Dragon_Call_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Call/Dragon_Call_3.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "call",
@@ -590,7 +590,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Call/Medium_Beast_Call_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Call/Medium_Beast_Call_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Call/Medium_Beast_Call_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "call",
@@ -611,7 +611,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Call/Medium_Beast_Call_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Call/Medium_Beast_Call_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Call/Medium_Beast_Call_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "call",
@@ -633,7 +633,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Call/Medium_Beast_Call_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Call/Medium_Beast_Call_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Call/Medium_Beast_Call_3.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "call",
@@ -655,7 +655,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Call/Small_Beast_Call_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Call/Small_Beast_Call_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Call/Small_Beast_Call_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "call",
@@ -676,7 +676,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Call/Small_Beast_Call_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Call/Small_Beast_Call_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Call/Small_Beast_Call_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "call",
@@ -698,7 +698,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Call/Small_Beast_Call_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Call/Small_Beast_Call_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Call/Small_Beast_Call_3.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "call",
@@ -720,7 +720,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Growl/Medium_Growl_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Medium_Growl_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Growl/Medium_Growl_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "growl",
@@ -742,7 +742,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Howl/Giant_Beast_Howl_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Howl/Giant_Beast_Howl_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Howl/Giant_Beast_Howl_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "howl",
@@ -764,7 +764,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Howl/Giant_Beast_Howl_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Howl/Giant_Beast_Howl_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Howl/Giant_Beast_Howl_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "howl",
@@ -786,7 +786,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Howl/Medium_Beast_Howl_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Howl/Medium_Beast_Howl_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Howl/Medium_Beast_Howl_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "howl",
@@ -807,7 +807,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Roar/Giant_Beast_Roar_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Roar/Giant_Beast_Roar_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Roar/Giant_Beast_Roar_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "roar",
@@ -828,7 +828,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Roar/Giant_Beast_Roar_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Roar/Giant_Beast_Roar_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Roar/Giant_Beast_Roar_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "roar",
@@ -849,7 +849,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Roar/Giant_Beast_Roar_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Roar/Giant_Beast_Roar_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Roar/Giant_Beast_Roar_3.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "roar",
@@ -870,7 +870,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Roar/Giant_Beast_Roar_4.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Roar/Giant_Beast_Roar_4.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Roar/Giant_Beast_Roar_4.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "roar",
@@ -892,7 +892,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Roar/Medium_Beast_Roar_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Roar/Medium_Beast_Roar_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Roar/Medium_Beast_Roar_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "roar",
@@ -913,7 +913,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Roar/Medium_Beast_Roar_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Roar/Medium_Beast_Roar_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Roar/Medium_Beast_Roar_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "roar",
@@ -934,7 +934,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Roar/Medium_Beast_Roar_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Roar/Medium_Beast_Roar_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Roar/Medium_Beast_Roar_3.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "roar",
@@ -955,7 +955,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Roar/Medium_Beast_Roar_4.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Roar/Medium_Beast_Roar_4.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Roar/Medium_Beast_Roar_4.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "roar",
@@ -976,7 +976,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Roar/Small_Beast_Roar_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Roar/Small_Beast_Roar_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Roar/Small_Beast_Roar_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "roar",
@@ -997,7 +997,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Screech/Horse_Screech_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Screech/Horse_Screech_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Screech/Horse_Screech_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "screech",
@@ -1015,7 +1015,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Screech/Zombie_Screech_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Screech/Zombie_Screech_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Screech/Zombie_Screech_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "screech",
@@ -1034,7 +1034,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/WingBeat/Small_Wings_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/WingBeat/Small_Wings_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/WingBeat/Small_Wings_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "wingbeat",
@@ -1056,7 +1056,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/WingBeat/Small_Wings_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/WingBeat/Small_Wings_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/WingBeat/Small_Wings_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "wingbeat",
@@ -1078,7 +1078,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Combat/Ancient_Battlefield_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Combat/Ancient_Battlefield_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Ancient_Battlefield_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "combat",
@@ -1096,7 +1096,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Combat/Ancient_Battlefield_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Combat/Ancient_Battlefield_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Ancient_Battlefield_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "combat",
@@ -1114,7 +1114,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Combat/Ancient_Battlefield_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Combat/Ancient_Battlefield_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Ancient_Battlefield_3.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "combat",
@@ -1132,7 +1132,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Combat/Magic_Arts_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Combat/Magic_Arts_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Magic_Arts_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "combat",
@@ -1150,7 +1150,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Combat/Magic_Arts_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Combat/Magic_Arts_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Magic_Arts_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "combat",
@@ -1168,7 +1168,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Combat/Magic_Arts_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Combat/Magic_Arts_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Magic_Arts_3.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "combat",
@@ -1186,7 +1186,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Crowd/Crowd_Chatter_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Crowd/Crowd_Chatter_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Chatter_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "crowd",
@@ -1203,7 +1203,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Crowd/Crowd_Chatter_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Crowd/Crowd_Chatter_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Chatter_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "crowd",
@@ -1221,7 +1221,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Crowd/Crowd_Chatter_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Crowd/Crowd_Chatter_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Chatter_3.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "crowd",
@@ -1239,7 +1239,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Crowd/Crowd_Cheer_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Crowd/Crowd_Cheer_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Cheer_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "crowd",
@@ -1256,7 +1256,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Crowd/Crowd_Roar_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Crowd/Crowd_Roar_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Roar_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "crowd",
@@ -1274,7 +1274,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Crowd/Crowd_Roar_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Crowd/Crowd_Roar_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Roar_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "crowd",
@@ -1291,7 +1291,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Crowd/Crowd_Roar_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Crowd/Crowd_Roar_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Roar_3.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "crowd",
@@ -1308,7 +1308,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Noise/Cave_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Noise/Cave_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Cave_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "noise",
@@ -1326,7 +1326,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Noise/Cyberpunk_City_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Noise/Cyberpunk_City_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Cyberpunk_City_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "noise",
@@ -1343,7 +1343,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Noise/Cyberpunk_City_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Noise/Cyberpunk_City_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Cyberpunk_City_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "noise",
@@ -1361,7 +1361,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Noise/Forest_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Noise/Forest_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Forest_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "noise",
@@ -1379,7 +1379,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Noise/Forest_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Noise/Forest_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Forest_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "noise",
@@ -1397,7 +1397,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Noise/Horror_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Noise/Horror_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Horror_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "noise",
@@ -1415,7 +1415,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Noise/Modern_City_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Noise/Modern_City_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Modern_City_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "noise",
@@ -1433,7 +1433,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Noise/Under_Water_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Noise/Under_Water_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Under_Water_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "noise",
@@ -1451,7 +1451,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Noise/Village_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Noise/Village_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Village_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "noise",
@@ -1469,7 +1469,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Rain/Gentle_Rain_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Rain/Gentle_Rain_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Gentle_Rain_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "rain",
@@ -1487,7 +1487,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Rain/Gentle_Rain_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Rain/Gentle_Rain_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Gentle_Rain_3.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "rain",
@@ -1505,7 +1505,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Rain/Gentle_Rain_4.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Rain/Gentle_Rain_4.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Gentle_Rain_4.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "rain",
@@ -1522,7 +1522,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Rain/Heavy_Rainstorm_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Rain/Heavy_Rainstorm_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rainstorm_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "rain",
@@ -1540,7 +1540,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Rain/Heavy_Rainstorm_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Rain/Heavy_Rainstorm_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rainstorm_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "rain",
@@ -1558,7 +1558,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Rain/Heavy_Rainstorm_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Rain/Heavy_Rainstorm_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rainstorm_3.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "rain",
@@ -1576,7 +1576,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Rain/Heavy_Rain_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Rain/Heavy_Rain_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rain_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "rain",
@@ -1593,7 +1593,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Rain/Heavy_Rain_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Rain/Heavy_Rain_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rain_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "rain",
@@ -1611,7 +1611,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Waves/Gentle_Waves_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Waves/Gentle_Waves_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Gentle_Waves_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "waves",
@@ -1628,7 +1628,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Waves/Gentle_Waves_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Waves/Gentle_Waves_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Gentle_Waves_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "waves",
@@ -1646,7 +1646,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Waves/Gentle_Waves_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Waves/Gentle_Waves_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Gentle_Waves_3.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "waves",
@@ -1664,7 +1664,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Waves/Strong_Waves_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Waves/Strong_Waves_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Strong_Waves_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "waves",
@@ -1682,7 +1682,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Waves/Strong_Waves_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Waves/Strong_Waves_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Strong_Waves_3.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "waves",
@@ -1700,7 +1700,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Wind/Strong_Wind_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Wind/Strong_Wind_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Strong_Wind_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "wind",
@@ -1717,7 +1717,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Wind/Strong_Wind_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Wind/Strong_Wind_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Strong_Wind_3.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "wind",
@@ -1734,7 +1734,7 @@
     },
     {
         "file_path": "DEFAULT/Artifacts/Activation/Activation_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Artifacts/Activation/Activation_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Artifacts/Activation/Activation_1.mp3",
         "metadata": {
             "main_category": "artifacts",
             "broad_variation": "activation",
@@ -1753,7 +1753,7 @@
     },
     {
         "file_path": "DEFAULT/Artifacts/Upgrade/Upgrade_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Artifacts/Upgrade/Upgrade_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Artifacts/Upgrade/Upgrade_1.mp3",
         "metadata": {
             "main_category": "artifacts",
             "broad_variation": "upgrade",
@@ -1772,7 +1772,7 @@
     },
     {
         "file_path": "DEFAULT/Artifacts/Relics/Resonance/Resonance_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Artifacts/Relics/Resonance/Resonance_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Artifacts/Relics/Resonance/Resonance_1.mp3",
         "metadata": {
             "main_category": "artifacts",
             "broad_variation": "relics",
@@ -1791,7 +1791,7 @@
     },
     {
         "file_path": "DEFAULT/System/Alert/Alert_1.wav",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/System/Alert/Alert_1.wav",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/System/Alert/Alert_1.wav",
         "metadata": {
             "main_category": "system",
             "broad_variation": "alert",
@@ -1809,7 +1809,7 @@
     },
     {
         "file_path": "DEFAULT/System/Open/Open_1.wav",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/System/Open/Open_1.wav",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/System/Open/Open_1.wav",
         "metadata": {
             "main_category": "system",
             "broad_variation": "open",
@@ -1827,7 +1827,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Howl/Medium_Beast_Howl_3.wav",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Howl/Medium_Beast_Howl_3.wav",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Howl/Medium_Beast_Howl_3.wav",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "howl",
@@ -1848,7 +1848,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Combat/Martial_Arts_3.wav",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Combat/Martial_Arts_3.wav",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Martial_Arts_3.wav",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "combat",
@@ -1866,7 +1866,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Wind/Gentle_Wind_2.wav",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Wind/Gentle_Wind_2.wav",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Gentle_Wind_2.wav",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "wind",
@@ -1883,7 +1883,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Wind/Gentle_Wind_3.wav",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Wind/Gentle_Wind_3.wav",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Gentle_Wind_3.wav",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "wind",
@@ -1900,7 +1900,7 @@
     },
     {
         "file_path": "DEFAULT/Factions/Monastery_Chant_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Factions/Monastery_Chant_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Factions/Monastery_Chant_1.mp3",
         "metadata": {
             "main_category": "factions",
             "broad_variation": "general",
@@ -1919,7 +1919,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Magic/Spell_Cast_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Magic/Spell_Cast_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Magic/Spell_Cast_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "magic",
@@ -1938,7 +1938,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Magic/Spell_Cast_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Magic/Spell_Cast_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Magic/Spell_Cast_2.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "magic",
@@ -1956,7 +1956,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Magic/Spell_Cast_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Magic/Spell_Cast_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Magic/Spell_Cast_3.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "magic",
@@ -1975,7 +1975,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Reload/Old_Gun_Reload_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Reload/Old_Gun_Reload_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Reload/Old_Gun_Reload_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "reload",
@@ -1994,7 +1994,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Reload/Tech_Reload_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Reload/Tech_Reload_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Reload/Tech_Reload_1.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "reload",
@@ -2013,7 +2013,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Reload/Tech_Reload_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Reload/Tech_Reload_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Reload/Tech_Reload_2.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "reload",
@@ -2032,7 +2032,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Unsheathe/Epic_Sword_Unsheathe_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Epic_Sword_Unsheathe_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Unsheathe/Epic_Sword_Unsheathe_2.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "unsheathe",
@@ -2054,7 +2054,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Unsheathe/Heavy_Sword_Unsheathe_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Heavy_Sword_Unsheathe_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Unsheathe/Heavy_Sword_Unsheathe_2.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "unsheathe",
@@ -2076,7 +2076,7 @@
     },
     {
         "file_path": "DEFAULT/Weapons/Unsheathe/Heavy_Sword_Unsheathe_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Heavy_Sword_Unsheathe_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Weapons/Unsheathe/Heavy_Sword_Unsheathe_3.mp3",
         "metadata": {
             "main_category": "weapons",
             "broad_variation": "unsheathe",
@@ -2098,7 +2098,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Evil_Gong_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Evil_Gong_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Evil_Gong_2.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -2117,7 +2117,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Imperial_Hit_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Imperial_Hit_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Imperial_Hit_1.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -2136,7 +2136,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Imperial_Hit_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Imperial_Hit_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Imperial_Hit_3.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -2155,7 +2155,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Mystery_Chime_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Mystery_Chime_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Mystery_Chime_1.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -2173,7 +2173,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Rattle_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Rattle_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Rattle_1.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -2191,7 +2191,7 @@
     },
     {
         "file_path": "DEFAULT/Locations/Signatures/Sect_Gong_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Sect_Gong_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Locations/Signatures/Sect_Gong_1.mp3",
         "metadata": {
             "main_category": "locations",
             "broad_variation": "signatures",
@@ -2210,7 +2210,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Growl/Tiger_Growl_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "growl",
@@ -2229,7 +2229,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Hiss/Giant_Serpent_Hiss_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Hiss/Giant_Serpent_Hiss_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Hiss/Giant_Serpent_Hiss_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "hiss",
@@ -2251,7 +2251,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Hiss/Medium_Serpent_Hiss_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Hiss/Medium_Serpent_Hiss_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Hiss/Medium_Serpent_Hiss_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "hiss",
@@ -2273,7 +2273,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Hiss/Medium_Serpent_Hiss_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Hiss/Medium_Serpent_Hiss_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Hiss/Medium_Serpent_Hiss_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "hiss",
@@ -2294,7 +2294,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Hiss/Small_Beast_Hiss_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Hiss/Small_Beast_Hiss_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Hiss/Small_Beast_Hiss_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "hiss",
@@ -2315,7 +2315,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Hiss/Small_Beast_Hiss_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Hiss/Small_Beast_Hiss_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Hiss/Small_Beast_Hiss_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "hiss",
@@ -2337,7 +2337,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Hiss/Small_Beast_Hiss_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Hiss/Small_Beast_Hiss_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Hiss/Small_Beast_Hiss_3.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "hiss",
@@ -2359,7 +2359,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Hiss/Small_Serpent_Hiss_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Hiss/Small_Serpent_Hiss_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Hiss/Small_Serpent_Hiss_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "hiss",
@@ -2381,7 +2381,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Howl/Giant_Beast_Howl_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Howl/Giant_Beast_Howl_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Howl/Giant_Beast_Howl_3.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "howl",
@@ -2403,7 +2403,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Howl/Medium_Beast_Howl_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Howl/Medium_Beast_Howl_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Howl/Medium_Beast_Howl_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "howl",
@@ -2425,7 +2425,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Howl/Small_Beast_Howl_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Howl/Small_Beast_Howl_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Howl/Small_Beast_Howl_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "howl",
@@ -2447,7 +2447,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Howl/Small_Beast_Howl_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Howl/Small_Beast_Howl_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Howl/Small_Beast_Howl_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "howl",
@@ -2469,7 +2469,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Howl/Small_Beast_Howl_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Howl/Small_Beast_Howl_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Howl/Small_Beast_Howl_3.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "howl",
@@ -2491,7 +2491,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Roar/Small_Beast_Roar_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Roar/Small_Beast_Roar_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Roar/Small_Beast_Roar_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "roar",
@@ -2513,7 +2513,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Roar/Small_Beast_Roar_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Roar/Small_Beast_Roar_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Roar/Small_Beast_Roar_3.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "roar",
@@ -2535,7 +2535,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Screech/Cat_Screech_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Screech/Cat_Screech_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Screech/Cat_Screech_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "screech",
@@ -2554,7 +2554,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/Screech/Ghoul_Screech_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/Screech/Ghoul_Screech_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/Screech/Ghoul_Screech_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "screech",
@@ -2573,7 +2573,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/WingBeat/Large_Wings_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/WingBeat/Large_Wings_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/WingBeat/Large_Wings_1.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "wingbeat",
@@ -2594,7 +2594,7 @@
     },
     {
         "file_path": "DEFAULT/Beasts/WingBeat/Large_Wings_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Beasts/WingBeat/Large_Wings_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Beasts/WingBeat/Large_Wings_2.mp3",
         "metadata": {
             "main_category": "beasts",
             "broad_variation": "wingbeat",
@@ -2616,7 +2616,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Combat/Martial_Arts_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Combat/Martial_Arts_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Martial_Arts_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "combat",
@@ -2634,7 +2634,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Combat/Martial_Arts_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Combat/Martial_Arts_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Martial_Arts_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "combat",
@@ -2651,7 +2651,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Noise/Cave_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Noise/Cave_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Cave_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "noise",
@@ -2669,7 +2669,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Noise/Forest_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Noise/Forest_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Forest_3.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "noise",
@@ -2687,7 +2687,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Rain/Gentle_Rain_2.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Rain/Gentle_Rain_2.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Gentle_Rain_2.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "rain",
@@ -2705,7 +2705,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Rain/Gentle_Rain_5.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Rain/Gentle_Rain_5.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Gentle_Rain_5.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "rain",
@@ -2723,7 +2723,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Rain/Heavy_Rain_3.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Rain/Heavy_Rain_3.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rain_3.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "rain",
@@ -2741,7 +2741,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Waves/Strong_Waves_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Waves/Strong_Waves_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Strong_Waves_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "waves",
@@ -2759,7 +2759,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Wind/Gentle_Wind_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Wind/Gentle_Wind_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Gentle_Wind_1.mp3",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "wind",
@@ -2776,7 +2776,7 @@
     },
     {
         "file_path": "DEFAULT/Artifacts/Relics/Pulse/Pulse_1.mp3",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/Artifacts/Relics/Pulse/Pulse_1.mp3",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/Artifacts/Relics/Pulse/Pulse_1.mp3",
         "metadata": {
             "main_category": "artifacts",
             "broad_variation": "relics",
@@ -2795,7 +2795,7 @@
     },
     {
         "file_path": "DEFAULT/System/Confirm/Confirm_2.wav",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/System/Confirm/Confirm_2.wav",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/CUE/System/Confirm/Confirm_2.wav",
         "metadata": {
             "main_category": "system",
             "broad_variation": "confirm",
@@ -2813,7 +2813,7 @@
     },
     {
         "file_path": "DEFAULT/atmosphere/Wind/Strong_Wind_1.wav",
-        "public_url": "https://celestialaudio.seihouse.org/DEFAULT/atmosphere/Wind/Strong_Wind_1.wav",
+        "public_url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Strong_Wind_1.wav",
         "metadata": {
             "main_category": "atmosphere",
             "broad_variation": "wind",

@@ -15,7 +15,7 @@ export const AGENTS = {
     title: 'The Writer',
     purpose: 'Language / lyrics',
     role: 'Wordsmith. Drafts, rewrites, sharpens phrasing.',
-    logoUrl: 'https://images.seihouse.org/AGENT%20EMBLEM/Versa/VERSA_OFFICAL.png',
+    logoUrl: 'https://media.seihouse.org/SHARED/IMAGE/AGENT/Versa/VERSA_OFFICAL.png',
     colorClass: 'text-human'
   } as AgentProfile,
   SCOUT: {
@@ -24,7 +24,7 @@ export const AGENTS = {
     title: 'The Retriever',
     purpose: 'Retrieval / discovery',
     role: 'Finder. Scans, surfaces, locates.',
-    logoUrl: 'https://images.seihouse.org/AGENT%20EMBLEM/Scout/master-scout-emblem.svg',
+    logoUrl: 'https://media.seihouse.org/SHARED/IMAGE/AGENT/Scout/master-scout-emblem.svg',
     colorClass: 'text-portal'
   } as AgentProfile
 };

@@ -3,7 +3,7 @@ import { LIBRARY_ASSETS } from '../../../host/media/libraryAssets';
 import { Lightbulb } from 'lucide-react';
 import { STORY_SEED_HELP_ITEMS, getLibraryHelpItems, type StorySeedHelpItem } from '@seihouse/library/story-seed';
 
-const helpLinesBase = 'https://lines.seihouse.org/LIBRARY/Lines/SYSTEM/SYSTEM/HELP%20LINES';
+const helpLinesBase = 'https://media.seihouse.org/SEN/AUDIO/TTS/SYSTEM/SYSTEM/HELP%20LINES';
 
 const expectedLibraryTopics = [
   ['Story Seed', 'Your Story Seed is the first spark of the novel. Give the Library enough information for it to create your universe.', `${helpLinesBase}/STORY%20SEED%20ENG.mp3`, ['story-seed']],

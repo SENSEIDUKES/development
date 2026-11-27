@@ -32,5 +32,6 @@ describe('SEN Soundscapes, Volume 1', () => {
     expect(LIBRARY_BASE_MEDIA.soundscapes.map(entry => entry.track)).toEqual(SEN_SOUNDSCAPES);
     expect(LIBRARY_BASE_MEDIA.soundscapes.every(entry => entry.provenance.catalogId === 'sen-soundscapes-volume-1' && entry.provenance.version === '1.0.1')).toBe(true);
     expect(TRACK_LIBRARY).toHaveLength(23);
+    expect([...new Set(TRACK_LIBRARY.map(track => track.group))]).toEqual(['ADVENTURE', 'AMBIENT', 'EMOTIONS', 'FIGHTING', 'WAR']);
   });
 });

@@ -15,7 +15,7 @@ import { WebReaderTranslationRepository, READER_TRANSLATION_STORAGE_KEY } from '
 const runtime: ReaderRuntime = {
   store: readerPreviewStore,
   useNarration: useWebSpeechNarration,
-  tracks: TRACK_LIBRARY.map(track => ({ ...track, group: track.url.split('/AUDIO/')[1]?.split('/')[0] || 'OTHER' })),
+  tracks: TRACK_LIBRARY,
   requestVoice: requestCodexVoice,
   manifestImages: async ({ id, name, type, description }) => ({
     urls: [0, 1, 2].map(variant => makeWorkshopManifestation(id, name, type, variant)),

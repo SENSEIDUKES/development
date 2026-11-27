@@ -17,7 +17,7 @@ export const PACKAGE_TARGETS = {
   sen: {
     ...common('sen'),
     unstyledEntries: ['index', 'audio', 'contracts', 'generation', 'reader-runtime', 'translation', 'arc-goals', 'harness-generation', 'presentation', 'meaning-engine'],
-    forbiddenBundleContents: [...NEVER_PUBLISHED, ['@seihouse/library', 'Library dependency'], ['celestialaudio.seihouse.org', 'first-party catalog'], ['library-auth-backdrop', 'Library auth artwork']],
+    forbiddenBundleContents: [...NEVER_PUBLISHED, ['@seihouse/library', 'Library dependency'], ['media.seihouse.org/SEN/AUDIO/', 'first-party audio catalog'], ['library-auth-backdrop', 'Library auth artwork']],
     typeDependencies: [], smokeDependencies: [],
     smokeExports: {
       '@seihouse/sen/meaning-engine': ['packFingerprint', 'meaningSimilarity', 'meaningFit', 'pickSpread'],

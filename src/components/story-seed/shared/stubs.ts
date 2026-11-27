@@ -8,7 +8,6 @@
  * - `selectIsGenerating` — the generation-store selector signature.
  * - `LOCAL_ONLY_MODE` — `true` unless the `auth-gated` preview state turns it
  *   off with a local override.
- * - `AGENTS` — the `VERSA` profile shown beside the generating state.
  * - `mockLogin` — flips the mock `currentUser` instead of opening real auth.
  */
 
@@ -31,30 +30,6 @@ export function setMockLocalOnlyMode(enabled: boolean) {
   state = { ...state };
   emit();
 }
-
-// ─── Agents (VERSA profile only) ─────────────────────────────────────────────
-
-export interface AgentProfile {
-  id: 'versa' | 'scout';
-  name: string;
-  title: string;
-  purpose: string;
-  role: string;
-  logoUrl: string;
-  colorClass: string;
-}
-
-export const AGENTS = {
-  VERSA: {
-    id: 'versa',
-    name: 'VERSA',
-    title: 'The Writer',
-    purpose: 'Language / lyrics',
-    role: 'Wordsmith. Drafts, rewrites, sharpens phrasing.',
-    logoUrl: 'https://images.seihouse.org/AGENT%20EMBLEM/Versa/VERSA_OFFICAL.png',
-    colorClass: 'text-human',
-  } as AgentProfile,
-};
 
 // ─── Mock app store ──────────────────────────────────────────────────────────
 

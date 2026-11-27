@@ -1,7 +1,8 @@
 import { useMemo, useSyncExternalStore, type PropsWithChildren } from 'react';
 import { StoryCreationProvider, type StoryCreationRuntime } from '@seihouse/library/story-seed';
 import { requestMeaningFingerprints } from '../host/meaning/meaningFingerprintClient';
-import { AGENTS, LOCAL_ONLY_MODE, mockLogin, storyCreationPreviewStore } from '../components/story-seed/shared/stubs';
+import { LOCAL_ONLY_MODE, mockLogin, storyCreationPreviewStore } from '../components/story-seed/shared/stubs';
+import { AGENTS } from '../lib/agents';
 import { LOCAL_WORKSHOP_STORY_SEED_OWNER_ID, previewStorySeedRepository } from './previews/story-seed/storySeedStorage';
 
 /** Explicit preview-only identity, persistence and authentication. Never published. */

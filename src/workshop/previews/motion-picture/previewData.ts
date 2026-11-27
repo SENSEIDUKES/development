@@ -5,7 +5,7 @@ import type { StoryCardDemoProps } from './StoryCardDemo';
  * motion cover, a Familiar's own clip, never one shared fallback. These are
  * hosted Library assets used for inspection; the component ships no URLs.
  */
-export const STORY_CLIP_URL = 'https://video.seihouse.org/LIGHT%20NOVEL/LIGHT_NOVEL_INTRO.mp4';
+export const STORY_CLIP_URL = 'https://media.seihouse.org/SEN/VIDEO/LIGHT%20NOVEL/LIGHT_NOVEL_INTRO.mp4';
 export const CELESTIAL_GUARDIAN_CLIP_URL = 'https://media.seihouse.org/SEN/VIDEO/Familiar/Celestial%20Guardian%20Canva.mp4';
 
 export const storyCardSample: StoryCardDemoProps = {

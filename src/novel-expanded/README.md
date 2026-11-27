@@ -15,7 +15,7 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-11-23
+- Last updated: 2026-11-26
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
 
@@ -267,6 +267,15 @@ The app writes chapters exactly as the Workshop's HARNESS page does:
 
 The app opens only once its stories are open and the skills are installed. If
 either fails, it says so plainly, with Retry.
+
+## Public media
+
+**2026-11-26** — Development's public media catalogs use `media.seihouse.org`
+on the `seihouse` R2 bucket, including the Library's Help recordings, default
+Sound Cues, backdrops, intro videos, and agent emblems. The cue catalog keeps
+its original asset identifiers. Saved and exported chapters still play the
+URLs recorded when they were written. Keep the old endpoints serving those URLs
+and the Workshop's Original Reference until both uses have a verified replacement.
 
 ## Sound
 
